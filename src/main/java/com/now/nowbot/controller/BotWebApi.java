@@ -638,7 +638,7 @@ public class BotWebApi {
 
         Map<String, Object> data;
         try {
-            data = BPAnalysisService.parseData(osuUser, scores, userApiService);
+            data = BPAnalysisService.Companion.parseData(osuUser, scores, userApiService);
         } catch (Exception e) {
             throw new RuntimeException(BPAnalysisException.Type.BA_Attr_FetchFailed.message);
         }

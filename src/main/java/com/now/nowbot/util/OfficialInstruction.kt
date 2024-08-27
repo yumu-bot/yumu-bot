@@ -84,6 +84,17 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendModeQQUIDName()
     }),
 
+    UU_BA(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("uuba")
+        appendModeQQUIDName()
+    }),
+
+    UU_BAI(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("uuba-i")
+        appendModeQQUIDName()
+    }),
+
+
     // #3 osu! 玩家指令
     INFO(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("i")
@@ -276,8 +287,8 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
 // 检查正则
 fun main() {
-    val test: String? = "/ymsetmode 0"
-    for (i in OfficialInstruction.values()) {
+    val test: String? = "/b 0"
+    for (i in OfficialInstruction.entries) {
         if (test != null) {
             if (i.pattern.matcher(test).find()) {
                 println("${i.name}: ${i.pattern.pattern()}")
