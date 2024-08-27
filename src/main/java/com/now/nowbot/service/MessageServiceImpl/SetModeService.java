@@ -14,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
-import java.util.regex.Matcher;
-
 import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_MODE;
 
 @Service("SET_MODE")
@@ -48,9 +46,9 @@ public class SetModeService implements MessageService<String>, TencentMessageSer
     }
 
     @Override
-    public @Nullable MessageChain reply(@NotNull MessageEvent event, String data) throws Throwable {
+    public @Nullable MessageChain reply(@NotNull MessageEvent event, String param) throws Throwable {
         var user = bindDao.getUserFromQQ(event.getSender().getId());
-        if (user.isAuthorized()) return getReply(data, user);
+        if (user.isAuthorized()) return getReply(param, user);
         return new MessageChain("需要先绑定 yumu 才能使用哦");
     }
 

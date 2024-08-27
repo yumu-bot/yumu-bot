@@ -42,7 +42,7 @@ public class PingService implements MessageService<Matcher>, TencentMessageServi
     }
 
     @Override
-    public @Nullable MessageChain reply(@NotNull MessageEvent event, Matcher data) throws Throwable {
+    public @Nullable MessageChain reply(@NotNull MessageEvent event, Matcher param) throws Throwable {
         var image = getImage();
         if (image == null) return null;
         return QQMsgUtil.getImage(image);

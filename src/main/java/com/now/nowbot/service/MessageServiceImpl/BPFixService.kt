@@ -80,7 +80,7 @@ class BPFixService(
         return BPFixParam(user, processBP(bpMap), mode.data!!)
     }
 
-    override fun reply(event: MessageEvent, data: BPFixParam): MessageChain? = QQMsgUtil.getImage(data.getImage())
+    override fun reply(event: MessageEvent, param: BPFixParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
 
     fun fix(playerPP: Double, bpMap: Map<Int, Score>): Map<String, Any>? {
         val bpList = ArrayList<Score>(bpMap.size)

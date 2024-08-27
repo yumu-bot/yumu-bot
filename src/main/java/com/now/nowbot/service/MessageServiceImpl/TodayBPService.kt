@@ -76,8 +76,8 @@ class TodayBPService(
         }
     }
 
-    override fun reply(event: MessageEvent, data: TodayBPParam): MessageChain? {
-        return QQMsgUtil.getImage(data.getImage())
+    override fun reply(event: MessageEvent, param: TodayBPParam): MessageChain? {
+        return QQMsgUtil.getImage(param.getImage())
     }
 
     private fun getParam(matcher: Matcher, event: MessageEvent): TodayBPParam {

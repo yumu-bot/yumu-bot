@@ -5,6 +5,7 @@ import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
 import com.now.nowbot.util.DataUtil;
 import org.springframework.lang.NonNull;
 import org.springframework.util.CollectionUtils;
@@ -125,6 +126,21 @@ public interface OsuBeatmapApiService {
         js.setCombo(combo);
         js.setMode(mode.toRosuMode());
         return getJniResult(modInt, s, b, js);
+    }
+
+    default JniResult getPP(BeatMap beatMap, MapStatisticsService.Expected e) throws Exception {
+        var b = getBeatMapFile(beatMap.getBeatMapID()).getBytes(StandardCharsets.UTF_8);
+        var m = OsuMod.getModsValueFromAbbrList(e.mods);
+        var t = new Statistics();
+
+        JniScore score = new JniScore();
+        score.setCombo(e.combo);
+        score.setMode(e.mode.toRosuMode());
+        score.setMisses(e.misses);
+        score.setAccuracy(e.accuracy);
+        score.setMods(m);
+
+        return Rosu.calculate(b, score);
     }
 
     default JniResult getPP(Score s) throws Exception {
@@ -279,6 +295,7 @@ public interface OsuBeatmapApiService {
         }
     }
 
+    // 谱面理论sr和pp
     default void applySRAndPP(BeatMap beatMap, OsuMode mode, int modsInt) {
         if (beatMap == null) return; // 谱面没有 PP，所以必须查
         JniResult r;
@@ -291,5 +308,29 @@ public interface OsuBeatmapApiService {
 
         beatMap.setStarRating((float) r.getStar());
         DataUtil.applyBeatMapChanges(beatMap, modsInt);
+    }
+
+    default void applySRAndPP(BeatMap beatMap, MapStatisticsService.Expected expected) {
+        if (beatMap == null) return;
+        JniResult r;
+
+        var m = OsuMod.getModsValueFromAbbrList(expected.mods);
+        try {
+            var b = getBeatMapFile(beatMap.getBeatMapID()).getBytes(StandardCharsets.UTF_8);
+
+            JniScore js = new JniScore();
+            js.setCombo(expected.combo);
+            js.setMode(expected.mode.toRosuMode());
+            js.setMisses(expected.misses);
+            js.setMods(m);
+
+            r = Rosu.calculate(b, js);
+        } catch (Exception e) {
+            NowbotApplication.log.error("计算时出现异常", e);
+            return;
+        }
+
+        beatMap.setStarRating((float) r.getStar());
+        DataUtil.applyBeatMapChanges(beatMap, m);
     }
 }

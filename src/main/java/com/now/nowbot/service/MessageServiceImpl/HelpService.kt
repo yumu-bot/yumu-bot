@@ -6,7 +6,6 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.DataUtil.getPicture
@@ -245,5 +244,5 @@ class HelpService(
         null
     }
 
-    override fun reply(event: MessageEvent, data: String): MessageChain? = QQMsgUtil.getImage(getHelpPicture(data, imageService))
+    override fun reply(event: MessageEvent, param: String): MessageChain? = QQMsgUtil.getImage(getHelpPicture(param, imageService))
 }

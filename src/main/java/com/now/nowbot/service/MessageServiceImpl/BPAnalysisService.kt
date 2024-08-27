@@ -3,7 +3,6 @@ package com.now.nowbot.service.MessageServiceImpl
 import com.now.nowbot.model.JsonData.OsuUser
 import com.now.nowbot.model.JsonData.Score
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -94,7 +93,7 @@ class BPAnalysisService(
        return BAParam(user, bpList, isMyself.get())
     }
 
-    override fun reply(event: MessageEvent, data: BAParam) = QQMsgUtil.getImage(data.getImage())
+    override fun reply(event: MessageEvent, param: BAParam) = QQMsgUtil.getImage(param.getImage())
 
     private fun BAParam.getImage(): ByteArray {
         val bpList = bpList

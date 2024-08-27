@@ -113,8 +113,8 @@ class ScoreService(
         return ScoreParam(user, mode.data, bid, getMod(matcher), isDefault, isMyself.get())
     }
 
-    override fun reply(event: MessageEvent, data: ScoreParam): MessageChain? {
-        return getMessageChain(data)
+    override fun reply(event: MessageEvent, param: ScoreParam): MessageChain? {
+        return getMessageChain(param)
     }
 
     private fun getMessageChain(param: ScoreParam): MessageChain {

@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.JsonData.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -11,7 +10,6 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.MessageServiceImpl.ScorePRCardService.PRCardParam
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService
-import com.now.nowbot.service.OsuApiService.OsuUserApiService
 import com.now.nowbot.throwable.ServiceException.MiniCardException
 import com.now.nowbot.throwable.ServiceException.ScoreException
 import com.now.nowbot.util.CmdUtil.getMode
@@ -128,8 +126,8 @@ class ScorePRCardService(
         return PRCardParam(score)
     }
 
-    override fun reply(event: MessageEvent, data: PRCardParam): MessageChain? {
-        return getMessageChain(data.score)
+    override fun reply(event: MessageEvent, param: PRCardParam): MessageChain? {
+        return getMessageChain(param.score)
     }
 
     private fun getMessageChain(score: Score): MessageChain {

@@ -205,18 +205,18 @@ class UUBAService(
         )
     }
 
-    override fun reply(event: MessageEvent, data: BPHeadTailParam): MessageChain? {
-        val mode = data.user.mode
+    override fun reply(event: MessageEvent, param: BPHeadTailParam): MessageChain? {
+        val mode = param.user.mode
         val bu = BinUser()
         with(bu) {
-            osuID = data.user.qq
-            osuName = data.user.name
+            osuID = param.user.qq
+            osuName = param.user.name
             osuMode = mode
         }
         val bps = scoreApiService.getBestPerformance(bu, mode, 0, 100)
         beatmapApiService.applySRAndPP(bps)
         val modeStr = mode?.getName() ?: ""
-        val lines = if (data.info) {
+        val lines = if (param.info) {
             getAllMsgI(bps, bu.osuName, modeStr)
         } else {
             getAllMsg(bps, bu.osuName, modeStr)

@@ -226,6 +226,80 @@ object DataUtil {
 
         return Range(offset, limit)
     }
+    /**
+     * 根据准确率，通过获取准确率，来构建一个 Statistic。
+     */
+    @NonNull
+    @JvmStatic
+    fun accuracy2Statistics(accuracy: Double, total : Int, osuMode: OsuMode) : Statistics {
+        var stat = Statistics()
+        stat.setCount300(0)
+        stat.setCount100(0)
+        stat.setCount50(0)
+        stat.setCountMiss(0)
+        stat.setCountGeki(0)
+        stat.setCountKatu(0)
+
+        var acc = accuracy;
+
+        //一个物件所占的 Acc 权重
+        if (total <= 0) return stat
+        val weight = 1.0 / total
+
+        fun getTheoricalCount(value : Double) : Int {
+            val count = floor(acc / value).roundToInt()
+            acc -= (value * count)
+            return count
+        }
+
+        when (osuMode) {
+            OSU, DEFAULT -> {
+                val n300 = min(getTheoricalCount(weight), max(total, 0))
+                val n100 = min(getTheoricalCount(weight / 3), max(total - n300, 0))
+                val n50 = min(getTheoricalCount(weight / 6), max(total - n300 - n100, 0))
+                val n0 = max(total - n300 - n100 - n50, 0)
+
+                stat.setCount300(n300)
+                stat.setCount100(n100)
+                stat.setCount50(n50)
+                stat.setCountMiss(n0)
+            }
+
+            TAIKO -> {
+                val n300 = min(getTheoricalCount(weight), max(total, 0))
+                val n100 = min(getTheoricalCount(weight / 3), max(total - n300, 0))
+                val n0 = max(total - n300 - n100, 0)
+
+                stat.setCount300(n300)
+                stat.setCount100(n100)
+                stat.setCountMiss(n0)
+            }
+
+            CATCH -> {
+                val n300 = min(getTheoricalCount(weight), max(total, 0))
+                val n0 = max(total - n300, 0)
+
+                stat.setCount300(n300)
+                stat.setCountMiss(n0)
+            }
+
+            MANIA -> {
+                val n320 = min(getTheoricalCount(weight), max(total, 0))
+                val n200 = min(getTheoricalCount(weight / 1.5), max(total - n320, 0))
+                val n100 = min(getTheoricalCount(weight / 3), max(total - n320 - n200, 0))
+                val n50 = min(getTheoricalCount(weight / 6), max(total - n320 - n200 - n100, 0))
+                val n0 = max(total - n320 - n200 - n100 - n50, 0)
+
+                stat.setCountGeki(n320)
+                stat.setCountKatu(n200)
+                stat.setCount100(n100)
+                stat.setCount50(n50)
+                stat.setCountMiss(n0)
+            }
+        }
+
+        return stat
+    }
 
     /**
      * 根据准确率，通过获取原成绩的判定结果的彩率，来构建一个达到目标准确率的判定结果

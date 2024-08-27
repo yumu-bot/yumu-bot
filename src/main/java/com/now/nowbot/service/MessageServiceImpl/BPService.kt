@@ -18,11 +18,9 @@ import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.CmdUtil.getUserWithRange
-import jakarta.annotation.Resource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
 import org.springframework.util.StringUtils
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -105,7 +103,7 @@ class BPService(
         return BPParam(user, bpMap, isMyself.get())
     }
 
-    override fun reply(event: MessageEvent, data: BPParam): MessageChain? = QQMsgUtil.getImage(data.getImage())
+    override fun reply(event: MessageEvent, param: BPParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
 
     private fun CmdRange<OsuUser>.getBPMap(isMultiple: Boolean, mode: OsuMode): TreeMap<Int, Score> {
         var offset = getValue(1, true) - 1
@@ -159,7 +157,7 @@ class BPService(
                 score = value
             }
 
-            val e5Param = getScore4PanelE5(user, score!!, beatmapApiService)
+            val e5Param = getScore4PanelE5(user!!, score!!, beatmapApiService)
             imageService.getPanelE5(e5Param)
         }
     } catch (e: Exception) {

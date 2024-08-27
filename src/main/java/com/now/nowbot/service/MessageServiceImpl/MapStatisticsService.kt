@@ -1,248 +1,377 @@
-package com.now.nowbot.service.MessageServiceImpl;
-
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.enums.OsuMod;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.util.CmdUtil;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+package com.now.nowbot.service.MessageServiceImpl
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.model.JsonData.BeatMap
+import com.now.nowbot.model.JsonData.OsuUser
+import com.now.nowbot.model.JsonData.Statistics
+import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.tencent.TencentMessageService
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService.MapParam
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService
+import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.ServiceException.BindException
+import com.now.nowbot.util.CmdUtil.getBid
+import com.now.nowbot.util.CmdUtil.isAvoidance
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.QQMsgUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import rosu.Rosu
+import rosu.parameter.JniScore
+import rosu.result.JniResult
+import java.util.*
+import kotlin.collections.HashMap
+import kotlin.math.min
 
 @Service("MAP")
-public class MapStatisticsService implements MessageService<MapStatisticsService.MapParam> {
-    private static final Logger log = LoggerFactory.getLogger(MapStatisticsService.class);
-    @Resource
-    ImageService         imageService;
-    @Resource
-    OsuBeatmapApiService beatmapApiService;
-    @Resource
-    OsuUserApiService    userApiService;
-    @Resource
-    BindDao              bindDao;
+class MapStatisticsService(
+    private val imageService: ImageService,
+    private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val userApiService: OsuUserApiService,
+    private val bindDao: BindDao
+) : MessageService<MapParam>, TencentMessageService<MapParam> {
 
+    @JvmRecord 
+    data class MapParam (
+        @JvmField val user: OsuUser?,
+        @JvmField val beatmap: BeatMap,
+        @JvmField val expected: Expected
+    )
+    
+    @JvmRecord 
+    data class Expected (
+        @JvmField val mode : OsuMode,
+        @JvmField val accuracy : Double,
+        @JvmField val combo : Int,
+        @JvmField val misses : Int,
+        @JvmField val mods : List<String>
+    )
 
-    public record MapParam(@Nullable OsuUser user, BeatMap beatMap, Expected expected) {
-    }
+    @JvmRecord
+    data class PanelE6Param(
+        @JvmField val user: OsuUser?,
+        @JvmField val beatmap: BeatMap,
+        @JvmField val density: IntArray,
+        @JvmField val original: Map<String, Any>,
+        @JvmField val attributes: JniResult,
+        @JvmField val pp: List<Double>,
+        @JvmField val expected: Expected
+    )
 
-    public record Expected(OsuMode mode, double accuracy, int combo, int miss, List<String> mods) {
-    }
-
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<MapParam> data) throws Throwable {
-        var matcher = Instruction.MAP.matcher(messageText);
-        if (!matcher.find()) return false;
-
-        var bid = CmdUtil.getBid(matcher);
-        BeatMap beatMap = null;
-        if (bid != 0) {
-            beatMap = beatmapApiService.getBeatMapInfo(bid);
+    @Throws(Throwable::class)
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<MapParam>): Boolean {
+        val matcher = Instruction.MAP.matcher(messageText)
+        if (!matcher.find()) {
+            return false
         }
 
+        val bid = getBid(matcher)
+        var beatMap: BeatMap? = null
+
+        if (bid != 0L) {
+            beatMap = beatmapApiService.getBeatMapInfo(bid)
+        }
+        
         if (beatMap == null) {
-            if (CmdUtil.isAvoidance(messageText, "！m", "!m")) {
-                log.debug(String.format("指令退避：M 退避成功，被退避的玩家：%s", event.getSender().getName()));
+            if (isAvoidance(messageText, "！m", "!m")) {
+                log.debug(String.format("指令退避：M 退避成功，被退避的玩家：%s", event.sender.name))
             }
-            return false;
+            return false
         }
 
-        OsuUser user;
-        var mode = OsuMode.getMode(matcher.group("mode"));
-
+        var user: OsuUser?
+        var mode = OsuMode.getMode(matcher.group("mode"))
+        
         try {
-            var bind = bindDao.getUserFromQQ(event.getSender().getId());
-            user = userApiService.getPlayerInfo(bind, mode);
-        } catch (BindException e) {
-            user = null;
+            val bind = bindDao.getUserFromQQ(event.sender.id)
+            user = userApiService.getPlayerInfo(bind, mode)
+        } catch (e : BindException) {
+            user = null
         }
-
-        double accuracy;
-        int combo;
-        int miss;
-
-        try {
-            accuracy = Double.parseDouble(matcher.group("accuracy"));
-        } catch (RuntimeException e) {
-            accuracy = 1d;
+        var combo: Int
+        
+        var accuracy = try {
+            matcher.group("accuracy").toDouble()
+        } catch (e : RuntimeException) {
+            1.0
         }
-
-        try {
-            combo = Integer.parseInt(matcher.group("combo"));
-        } catch (RuntimeException e) {
+        
+        try  {
+            combo = matcher.group("combo").toInt()
+        } catch (e : RuntimeException) {
             try {
-                var rate = Double.parseDouble(matcher.group("combo"));
-                if (rate >= 0d && rate <= 1d) {
-                    combo = Math.toIntExact(Math.round(
-                            Objects.requireNonNullElse(beatMap.getMaxCombo(), 0) * rate));
+                val rate = matcher.group("combo").toDouble()
+                combo = if (rate >= 0.0 && rate <= 1.0) {
+                    Math.toIntExact(Math.round(
+                    Objects.requireNonNullElse(beatMap.maxCombo, 0) * rate))
                 } else {
-                    combo = 0;
+                    0
                 }
-            } catch (RuntimeException e1) {
-                combo = 0;
+            } catch (e1 : RuntimeException) {
+                combo = 0
             }
         }
-
-        try {
-            miss = Integer.parseInt(matcher.group("miss"));
-        } catch (RuntimeException e) {
-            miss = 0;
+        
+        var miss = try  {
+            matcher.group("miss").toInt()
+        } catch (e : RuntimeException) {
+            0
         }
-
-        List<String> mods;
-
-        try {
-            mods = OsuMod.getModsAbbrList(matcher.group("mod")).stream().distinct().toList();
-        } catch (RuntimeException e) {
-            mods = new ArrayList<>();
+        
+        var mods = try  {
+            OsuMod.getModsAbbrList(matcher.group("mod")).stream().distinct().toList()
+        } catch (e : RuntimeException) {
+            ArrayList()
         }
 
         // 标准化 acc 和 combo
-        Integer maxCombo = beatMap.getMaxCombo();
+        val maxCombo = beatMap.maxCombo
+        
+        if (maxCombo != null) {
+            combo = if (combo <= 0) {
+                maxCombo
+            } else {
+                min(combo.toDouble(), maxCombo.toDouble()).toInt()
+            }
+        }
+        
+        if (combo < 0) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamCombo)
+        }
+        if (accuracy > 1.0 && accuracy <= 100.0) {
+            accuracy /= 100.0
+        } else if (accuracy > 100.0 && accuracy <= 10000.0) {
+            accuracy /= 10000.0
+        } else if (accuracy <= 0.0 || accuracy > 10000.0) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamAccuracy)
+        }
+
+        //只有转谱才能赋予游戏模式
+        val beatMapMode = beatMap.osuMode
+        
+        if (beatMapMode != OsuMode.OSU || OsuMode.isDefaultOrNull(mode)) {
+            mode = beatMapMode
+        }
+        
+        val expected = Expected(mode, accuracy, combo, miss, mods)
+        
+        data.value = MapParam(user, beatMap, expected)
+        return true
+    }
+    
+    @Throws(Throwable::class)
+    override fun HandleMessage(event : MessageEvent, param : MapParam) {
+        val from = event.subject
+        val image: ByteArray
+        
+        try {
+            // image = imageService.getPanelE2(param.user, param.beatMap, param.expected)
+            image = imageService.getPanelE6(
+                getExpectedScore4PanelE6(param.user, param.beatmap, param.expected, beatmapApiService)
+            )
+        } catch (e : Exception) {
+            log.error("谱面信息：渲染失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "谱面信息")
+        }
+        
+        try {
+            from?.sendImage(image)
+        } catch (e : Exception) {
+            log.error("谱面信息：发送失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "谱面信息")
+        }
+    }
+
+    override fun accept(event: MessageEvent, messageText: String): MapParam? {
+        val matcher = Instruction.MAP.matcher(messageText)
+        if (!matcher.find()) {
+            return null
+        }
+
+        val bid = getBid(matcher)
+        var beatMap: BeatMap? = null
+
+        if (bid != 0L) {
+            beatMap = beatmapApiService.getBeatMapInfo(bid)
+        }
+
+        if (beatMap == null) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
+        }
+
+        var user: OsuUser?
+        var mode = OsuMode.getMode(matcher.group("mode"))
+
+        try {
+            val bind = bindDao.getUserFromQQ(event.sender.id)
+            user = userApiService.getPlayerInfo(bind, mode)
+        } catch (e : BindException) {
+            user = null
+        }
+        var combo: Int
+
+        var accuracy = try {
+            matcher.group("accuracy").toDouble()
+        } catch (e : RuntimeException) {
+            1.0
+        }
+
+        try {
+            combo = matcher.group("combo").toInt()
+        } catch (e : RuntimeException) {
+            try {
+                val rate = matcher.group("combo").toDouble()
+                combo = if (rate >= 0.0 && rate <= 1.0) {
+                    Math.toIntExact(Math.round(
+                    Objects.requireNonNullElse(beatMap.maxCombo, 0) * rate))
+                } else {
+                    0
+                }
+            } catch (e1 : RuntimeException) {
+                combo = 0
+            }
+        }
+
+        var miss = try  {
+            matcher.group("miss").toInt()
+        } catch (e : RuntimeException) {
+            0
+        }
+
+        var mods = try  {
+            OsuMod.getModsAbbrList(matcher.group("mod")).stream().distinct().toList()
+        } catch (e : RuntimeException) {
+            ArrayList()
+        }
+
+        // 标准化 acc 和 combo
+        val maxCombo = beatMap.maxCombo
 
         if (maxCombo != null) {
-            if (combo <= 0) {
-                combo = maxCombo;
+            combo = if (combo <= 0) {
+                maxCombo
             } else {
-                combo = Math.min(combo, maxCombo);
+                min(combo.toDouble(), maxCombo.toDouble()).toInt()
             }
         }
 
         if (combo < 0) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamCombo);
+            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamCombo)
         }
-        if (accuracy > 1d && accuracy <= 100d) {
-            accuracy /= 100d;
-        } else if (accuracy > 100d && accuracy <= 10000d) {
-            accuracy /= 10000d;
-        } else if (accuracy <= 0d || accuracy > 10000d) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamAccuracy);
+        if (accuracy > 1.0 && accuracy <= 100.0) {
+            accuracy /= 100.0
+        } else if (accuracy > 100.0 && accuracy <= 10000.0) {
+            accuracy /= 10000.0
+        } else if (accuracy <= 0.0 || accuracy > 10000.0) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamAccuracy)
         }
 
         //只有转谱才能赋予游戏模式
+        val beatMapMode = beatMap.osuMode
 
-        var beatMapMode = beatMap.getOsuMode();
-
-        if (beatMapMode != OsuMode.OSU && OsuMode.isDefaultOrNull(mode)) {
-            mode = beatMapMode;
+        if (beatMapMode != OsuMode.OSU || OsuMode.isDefaultOrNull(mode)) {
+            mode = beatMapMode
         }
 
-        var expected = new Expected(mode, accuracy, combo, miss, mods);
+        val expected = Expected(mode, accuracy, combo, miss, mods)
 
-        data.setValue(new MapParam(user, beatMap, expected));
-        return true;
+        return MapParam(user, beatMap, expected)
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, MapParam param) throws Throwable {
-        var from = event.getSubject();
-
-        /*
-        BinUser binUser;
-        Optional<OsuUser> osuUser;
-
-        var qq = event.getSender().getId();
-        try {
-            binUser = bindDao.getUserFromQQ(qq);
-            try {
-                osuUser = Optional.of(osuUserApiService.getPlayerInfo(binUser, binUser.getMode()));
-            } catch (HttpClientErrorException | WebClientResponseException e) {
-                osuUser = Optional.empty();
-            }
-        } catch (BindException e) {
-            //传null过去，让面板生成一个默认的 card A1
-            osuUser = Optional.empty();
-        } catch (Exception e) {
-            log.error("谱面信息：无法生成空对象", e);
-            throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
-        }
-
-         */
-
-        byte[] image;
+    override fun reply(event: MessageEvent, param: MapParam): MessageChain? {
+        val image: ByteArray
 
         try {
-            image = imageService.getPanelE2(param.user(), param.beatMap(), param.expected());
-            //var image = getImage(param, osuUser);
-        } catch (Exception e) {
-            log.error("谱面信息：渲染失败", e);
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "谱面信息");
+            // image = imageService.getPanelE2(param.user, param.beatMap, param.expected)
+            image = imageService.getPanelE6(
+                getExpectedScore4PanelE6(param.user, param.beatmap, param.expected, beatmapApiService)
+            )
+        } catch (e : Exception) {
+            log.error("谱面信息：渲染失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "谱面信息")
         }
 
         try {
-            from.sendImage(image);
-        } catch (Exception e) {
-            log.error("谱面信息：发送失败", e);
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "谱面信息");
+            return QQMsgUtil.getImage(image)
+        } catch (e : Exception) {
+            log.error("谱面信息：发送失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "谱面信息")
         }
     }
 
-    /*
-    public byte[] getImage(MapParam param, Optional<OsuUser> osuUser) throws Exception {
+    companion object {
+        private val log : Logger = LoggerFactory.getLogger(MapStatisticsService::class.java)
 
-        BeatMap beatMap;
-        int combo;
-        double acc;
-        OsuMode mode;
+        @JvmStatic
+        @Throws(Exception::class)
+        fun getExpectedScore4PanelE6(user: OsuUser?, beatmap: BeatMap, expected: Expected, beatmapApiService: OsuBeatmapApiService): PanelE6Param {
 
-        Expected expected;
+            val original = HashMap<String, Any>(6)
+            original["cs"] = beatmap.cs
+            original["ar"] = beatmap.ar
+            original["od"] = beatmap.od
+            original["hp"] = beatmap.hp
+            original["bpm"] = beatmap.bpm
+            original["drain"] = beatmap.hitLength
+            original["total"] = beatmap.totalLength
 
+            beatmapApiService.applySRAndPP(beatmap, expected)
 
-        //没有bid，且有绑定
-        if (param.bid == 0 && osuUser.isPresent()) {
-            var o = osuUser.get();
+            val pp = getPPList(beatmap, expected, beatmapApiService);
+            val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
+            val attributes = beatmapApiService.getPP(beatmap, expected)
 
-            try {
-                var score = scoreApiService.getRecentIncludingFail(o.getUID(), o.getOsuMode(), 0, 1).getFirst();
-                beatMap = beatmapApiService.getBeatMapInfo(score.getBeatMap().getId());
-                expected = new Expected(score.getMode(), score.getAccuracy(), score.getMaxCombo(), score.getStatistics().getCountMiss(), score.getMods());
-
-            } catch (Exception ignored) {
-                try {
-                // var md = DataUtil.getMarkdownFile("Help/maps.md");
-                // var image = imageService.getPanelA6(md, "help");
-                    return imageService.getPanelA6(MapStatisticsException.Type.M_Instructions.message, "help");
-                } catch (Exception e) {
-                    throw new MapStatisticsException(MapStatisticsException.Type.M_Instructions);
-                }
-            }
-
-        } else {
-            try {
-                beatMap = beatmapApiService.getBeatMapInfo(param.bid);
-            } catch (HttpClientErrorException | WebClientResponseException e) {
-                throw new MapStatisticsException(MapStatisticsException.Type.M_Map_NotFound);
-            } catch (Exception e) {
-                log.error("谱面信息：谱面获取失败", e);
-                throw new MapStatisticsException(MapStatisticsException.Type.M_Fetch_Error);
-            }
-
-
-
-
-            List<String> mods = null;
-            if (Objects.nonNull(param.modStr)) {
-                mods = Mod.getModsList(param.modStr).stream().map(Mod::getAbbreviation).toList();
-            }
-
-            expected = new Expected(mode, acc, combo, param.miss, mods);
+            return PanelE6Param(user, beatmap, density, original, attributes, pp, expected)
         }
-        return imageService.getPanelE2(osuUser, beatMap, expected);
+
+        // 等于绘图模块的 calcMap
+        // 注意，0 是 iffc，1-6是fc，7-12是nc，acc分别是100 99 98 96 94 92
+        @JvmStatic
+        @Throws(Exception::class)
+        fun getPPList(beatmap: BeatMap, expected: Expected, beatmapApiService: OsuBeatmapApiService) : List<Double> {
+            val result = mutableListOf<Double>()
+            val accArray : DoubleArray = doubleArrayOf(1.0, 0.99, 0.98, 0.96, 0.94, 0.92)
+            val file = beatmapApiService.getBeatMapFile(beatmap.beatMapID).toByteArray(Charsets.UTF_8);
+
+            var scoreFC = JniScore()
+            scoreFC.mode = expected.mode.toRosuMode()
+            scoreFC.mods = OsuMod.getModsValueFromAbbrList(expected.mods)
+            scoreFC.accuracy = expected.accuracy
+            scoreFC.combo = beatmap.maxCombo
+            scoreFC.misses = 0
+
+            result.add(Rosu.calculate(file, scoreFC).pp)
+
+            for (i in 0..5) {
+                scoreFC.accuracy = accArray[i]
+                result.add(Rosu.calculate(file, scoreFC).pp)
+            }
+
+            var scoreNC = JniScore()
+            scoreNC.mode = expected.mode.toRosuMode()
+            scoreNC.mods = OsuMod.getModsValueFromAbbrList(expected.mods)
+            scoreNC.accuracy = expected.accuracy
+            scoreNC.combo = expected.combo
+            scoreNC.misses = expected.misses
+
+            // TODO 一旦这里赋予了 misses，那么结果会变得超级奇怪。我暂时无法解决这个问题（因为无法通过计算补足一个完整的 Statistics），但是 js 这里计算没有问题，怀疑是给其他 stat 默认赋值 0，导致计算错误
+
+            for (i in 0..5) {
+                scoreNC.accuracy = accArray[i]
+                result.add(Rosu.calculate(file, scoreNC).pp)
+            }
+
+            return result
+        }
     }
-    */
 }
 

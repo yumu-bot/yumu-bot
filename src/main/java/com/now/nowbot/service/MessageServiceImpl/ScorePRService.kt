@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.JsonData.OsuUser
 import com.now.nowbot.model.JsonData.Score
 import com.now.nowbot.model.ScoreLegacy
@@ -14,10 +13,8 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.MessageServiceImpl.ScorePRService.ScorePRParam
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService
-import com.now.nowbot.service.OsuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.ServiceException.ScoreException
-import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
@@ -54,8 +51,8 @@ class ScorePRService(
     )
 
     @JvmRecord
-    data class SingleScoreParam(
-        @JvmField val user: OsuUser?,
+    data class PanelE5Param(
+        @JvmField val user: OsuUser,
         @JvmField val score: Score,
         @JvmField val density: IntArray,
         @JvmField val progress: Double,
@@ -177,8 +174,8 @@ class ScorePRService(
     }
 
     @Throws(Throwable::class)
-    override fun reply(event: MessageEvent, data: ScorePRParam): MessageChain? {
-        return getMessageChain(data)
+    override fun reply(event: MessageEvent, param: ScorePRParam): MessageChain? {
+        return getMessageChain(param)
     }
 
     @Throws(ScoreException::class)
@@ -186,7 +183,7 @@ class ScorePRService(
         val d = ScoreLegacy.getInstance(score, beatmapApiService)
 
         val httpEntity = HttpEntity.EMPTY as HttpEntity<Array<Byte>>
-        val imgBytes = template!!.exchange(
+        val imgBytes = template.exchange(
             d.url, HttpMethod.GET, httpEntity,
             ByteArray::class.java
         ).body
@@ -259,13 +256,13 @@ class ScorePRService(
         } else {
             //单成绩发送
             val score: Score = scoreList.first()
-            val e5Param = getScore4PanelE5(user, score, beatmapApiService)
+            val panelE5Param = getScore4PanelE5(user, score, beatmapApiService)
             try {
-                image = imageService.getPanelE5(e5Param)
+                image = imageService.getPanelE5(panelE5Param)
                 return QQMsgUtil.getImage(image)
             } catch (e: Exception) {
-                log.error("成绩：绘图出错, 成绩信息:\n {}", JacksonUtil.objectToJsonPretty(e5Param.score), e)
-                return getTextOutput(e5Param.score)
+                log.error("成绩：绘图出错, 成绩信息:\n {}", JacksonUtil.objectToJsonPretty(panelE5Param.score), e)
+                return getTextOutput(panelE5Param.score)
             }
         }
     }
@@ -275,7 +272,7 @@ class ScorePRService(
 
         @JvmStatic
         @Throws(Exception::class)
-        fun getScore4PanelE5(user: OsuUser?, score: Score, beatmapApiService: OsuBeatmapApiService): SingleScoreParam {
+        fun getScore4PanelE5(user: OsuUser, score: Score, beatmapApiService: OsuBeatmapApiService): PanelE5Param {
             val b = score.beatMap
 
             beatmapApiService.applyBeatMapExtend(score)
@@ -298,7 +295,7 @@ class ScorePRService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(b)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            return SingleScoreParam(user, score, density, progress, original, attributes)
+            return PanelE5Param(user, score, density, progress, original, attributes)
         }
     }
 }

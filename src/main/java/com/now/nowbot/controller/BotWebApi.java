@@ -743,7 +743,7 @@ public class BotWebApi {
                     )
             );
 
-            var image = imageService.getPanelE2(param.user(), param.beatMap(), param.expected());
+            var image = imageService.getPanelE2(param.user, param.beatmap, param.expected);
 
             return new ResponseEntity<>(image, getImageHeader(STR."\{bid}-mapinfo.jpg", image.length), HttpStatus.OK);
         } catch (Exception e) {

@@ -413,7 +413,7 @@ public class ImageService {
         return doPost("panel_E3", httpEntity);
     }
 
-    public byte[] getPanelE5(ScorePRService.SingleScoreParam param) {
+    public byte[] getPanelE5(ScorePRService.PanelE5Param param) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
@@ -426,6 +426,26 @@ public class ImageService {
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_E5", httpEntity);
+    }
+
+    public byte[] getPanelE6(MapStatisticsService.PanelE6Param param) {
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = new HashMap<>(Map.of(
+                "beatmap", param.beatmap,
+                "density", param.density,
+                "original", param.original,
+                "attributes", param.attributes,
+                "pp", param.pp,
+                "expected", param.expected
+        ));
+
+        if (param.user != null) {
+            body.put("user", param.user);
+        }
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_E6", httpEntity);
     }
 
     public byte[] getPanelF(MatchCalculate matchData) {
