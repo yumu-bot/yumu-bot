@@ -8,7 +8,7 @@ package com.now.nowbot.util.command
      * MORE：一个或更多个 (+)
      * EXIST：必须存在 ()，
      */
-    public enum class MatchLevel {
+    enum class MatchLevel {
         ANY_LAZY,
         ANY,
         MAYBE,
