@@ -56,7 +56,7 @@ class RunTimeService : SchedulingConfigurer {
     }
 
 
-    @Scheduled(cron = "0 6 11 * 8,9 *")
+    @Scheduled(cron = "0 30 15 * 8,9 *")
     fun newbiePlayCount() {
         log.info("开始执行新人统计任务")
         val newbiePlayCount: NewbiePlayCountRepository
@@ -87,18 +87,12 @@ class RunTimeService : SchedulingConfigurer {
         val startDay = LocalDate.of(2024, 8, 2)
         val today = LocalDate.now()
 
-        val count = AtomicInteger(0)
         newbieService
-            .countData(users, startDay.atStartOfDay(), today.atStartOfDay())
-            .chunked(200) { records ->
-                val u = records.map {
-                    NewbiePlayCount(it)
-                }
-                count.addAndGet(u.size)
-                newbiePlayCount.saveAllAndFlush(u)
+            .countData(users, startDay.atStartOfDay(), today.atStartOfDay()) {
+                val user = NewbiePlayCount(it)
+                newbiePlayCount.saveAndFlush(user)
             }
-        bot?.sendGroupMsg(695600319, "新人群打图数据统计任务结束, 共计 ${count.get()} 个活跃玩家", true)
-
+        log.info("任务结束")
     }
 
     fun sayBp1() {

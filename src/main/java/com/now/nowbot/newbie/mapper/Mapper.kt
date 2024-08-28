@@ -115,7 +115,12 @@ class NewbieService(
         return UserCount(uid, pp, playData.size, passTime + unpassTime, countTth)
     }
 
-    fun countData(qqIds: List<Long>, start: LocalDateTime, end: LocalDateTime): List<UserCount> {
+    fun countData(
+        qqIds: List<Long>,
+        start: LocalDateTime,
+        end: LocalDateTime,
+        callback: ((UserCount) -> Unit) = { }
+    ): List<UserCount> {
         val users = mapper.queryBind(qqIds)
         val under3K = mutableSetOf<Int>()
         val userPP = mutableMapOf<Int, Float>()
@@ -132,7 +137,7 @@ class NewbieService(
         }
         val timeRange = TimeRange(start, end)
         log.info("ready to count ${under3K.size} users")
-        return getAll(under3K.toList(), timeRange, userPP)
+        return getAll(under3K.toList(), timeRange, userPP, callback = callback)
     }
 
     fun countToday(qqIds: List<Long>): List<UserCount> {
@@ -146,12 +151,24 @@ class NewbieService(
         uid: List<Int>,
         timeRange: TimeRange,
         ppMap: Map<Int, Float>,
-        cache: MutableMap<Int, Boolean> = ConcurrentHashMap()
+        cache: MutableMap<Int, Boolean> = ConcurrentHashMap(),
+        callback: ((UserCount) -> Unit) = { }
     ): List<UserCount> {
         val result = mutableListOf<UserCount>()
+        uid.forEachIndexed { n, id ->
+            val data = AsyncMethodExecutor.doRetry(5) {
+                Thread.sleep(3000)
+                log.info("start to count $id")
+                this.getUserPlayRecords(id, timeRange.start, timeRange.end, ppMap[id] ?: 0f, cache)
+            }
+            if (data.playCount < 1) return@forEachIndexed
+            callback(data)
+            result.add(data)
+        }
+
+        /*
         // 拆分成并发执行, 每 100 个任务一组
         val taskList = mutableListOf<AsyncMethodExecutor.Supplier<List<UserCount>>>()
-        val countAll = AtomicInteger(0)
         uid.chunked(700).forEachIndexed { n, it ->
             val task = AsyncMethodExecutor.Supplier<List<UserCount>> {
                 val resultList = mutableListOf<UserCount>()
@@ -176,6 +193,8 @@ class NewbieService(
             }
         }
         log.info("task over")
+
+         */
         return result
     }
 
