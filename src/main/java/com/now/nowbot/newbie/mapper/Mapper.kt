@@ -1,5 +1,7 @@
 package com.now.nowbot.newbie.mapper
 
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.newbie.entity.Bindings
 import com.now.nowbot.newbie.entity.UserPlayRecords
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.OsuApiService.OsuUserApiService
@@ -50,6 +52,13 @@ interface UserPlayRecordsMapper : JpaRepository<UserPlayRecords, Long> {
     """
     )
     fun queryBind(qqs: List<Long>): List<Int>
+
+    @Query(
+        """
+        select b from Bindings b where b.qq in (:qqs)
+    """
+    )
+    fun queryBindData(qqs: List<Long>): List<Bindings>
 }
 
 @Service
@@ -57,6 +66,7 @@ interface UserPlayRecordsMapper : JpaRepository<UserPlayRecords, Long> {
 @ConditionalOnProperty(prefix = "spring.datasource.newbie", name = ["enable"], havingValue = "true")
 class NewbieService(
     private val mapper: UserPlayRecordsMapper,
+    private val bindDao: BindDao,
     private var osuMapService: OsuBeatmapApiService,
     private val osuUserService: OsuUserApiService,
 ) {
@@ -142,7 +152,7 @@ class NewbieService(
         // 拆分成并发执行, 每 100 个任务一组
         val taskList = mutableListOf<AsyncMethodExecutor.Supplier<List<UserCount>>>()
         val countAll = AtomicInteger(0)
-        uid.chunked(10).forEachIndexed { n, it ->
+        uid.chunked(700).forEachIndexed { n, it ->
             val task = AsyncMethodExecutor.Supplier<List<UserCount>> {
                 val resultList = mutableListOf<UserCount>()
                 for (id in it) {

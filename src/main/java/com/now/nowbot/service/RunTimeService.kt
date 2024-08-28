@@ -56,7 +56,7 @@ class RunTimeService : SchedulingConfigurer {
     }
 
 
-    @Scheduled(cron = "0 6 8 * 8,9 *")
+    @Scheduled(cron = "0 6 11 * 8,9 *")
     fun newbiePlayCount() {
         log.info("开始执行新人统计任务")
         val newbiePlayCount: NewbiePlayCountRepository
@@ -70,7 +70,7 @@ class RunTimeService : SchedulingConfigurer {
         val bot: com.mikuac.shiro.core.Bot?
         val users = try {
             val botContainer = applicationContext!!.getBean(BotContainer::class.java)
-            bot = botContainer.robots[1563653406] ?: botContainer.robots.values.find {
+            bot = botContainer.robots[365246692] ?: botContainer.robots.values.find {
                 it.groupList.data.find { g -> g.groupId == 595985887L } != null
             }
             bot?.getGroupMemberList(595985887L)?.data?.map { it.userId }
@@ -84,32 +84,19 @@ class RunTimeService : SchedulingConfigurer {
         }
 
 
+        val startDay = LocalDate.of(2024, 8, 2)
         val today = LocalDate.now()
-        if (today.monthValue == 8 && today.dayOfMonth == 18) {
-            bot?.sendGroupMsg(695600319, "补充计算 8-17 的数据", true)
-            val count = AtomicInteger(0)
-            val start = LocalDate.of(2021, 8, 16).atStartOfDay()
-            val end = start.plusDays(1)
-            newbieService.countData(users, start, end).chunked(200) { records ->
+
+        val count = AtomicInteger(0)
+        newbieService
+            .countData(users, startDay.atStartOfDay(), today.atStartOfDay())
+            .chunked(200) { records ->
                 val u = records.map {
                     NewbiePlayCount(it)
                 }
                 count.addAndGet(u.size)
                 newbiePlayCount.saveAllAndFlush(u)
             }
-            bot?.sendGroupMsg(695600319, "8-17 数据: ${count.get()} 个活跃玩家", true)
-
-        }
-
-        val count = AtomicInteger(0)
-        newbieService.countToday(users).chunked(200) { records ->
-            val u = records.map {
-                NewbiePlayCount(it)
-            }
-            count.addAndGet(u.size)
-            newbiePlayCount.saveAllAndFlush(u)
-        }
-        log.info("新人统计任务结束")
         bot?.sendGroupMsg(695600319, "新人群打图数据统计任务结束, 共计 ${count.get()} 个活跃玩家", true)
 
     }
@@ -276,8 +263,11 @@ class RunTimeService : SchedulingConfigurer {
 
         @JvmStatic
         @Deprecated("建议替换", replaceWith = ReplaceWith("testNew(s)"))
-        fun test(s:String) {}
+        fun test(s: String) {
+        }
+
         @JvmStatic
-        fun testNew(s:String) {}
+        fun testNew(s: String) {
+        }
     }
 }
