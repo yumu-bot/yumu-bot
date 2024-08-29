@@ -120,8 +120,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendMode()
         appendCaptureGroup("area1", REG_USERNAME, ANY)
         appendGroup(MAYBE) {
-            // ':' 与前面 mode 冲突
-            append(REG_HASH)
+            append(REG_COLON)
             appendSpace()
             appendCaptureGroup("area2", REG_USERNAME, MORE)
         }
@@ -132,8 +131,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendMode()
         appendCaptureGroup("area1", REG_USERNAME, MORE)
         appendGroup(MAYBE) {
-            // ':' 与前面 mode 冲突
-            append(REG_HASH)
+            append(REG_COLON)
             appendSpace()
             appendCaptureGroup("area2", REG_USERNAME, MORE)
         }

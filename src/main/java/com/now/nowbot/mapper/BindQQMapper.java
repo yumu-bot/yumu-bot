@@ -14,21 +14,13 @@ public interface BindQQMapper extends JpaRepository<QQBindLite, Long>, JpaSpecif
     @Query("select qq from QQBindLite qq where qq.osuUser.osuId = :osuId")
     Optional<QQBindLite> findByOsuId(Long osuId);
 
+    @Query("select count(o) from OsuBindUserLite o where o.osuId = :osuId")
+    int countByOsuId(Long osuId);
+
     @Modifying
     @Transactional
     @Query("delete from QQBindLite qq where qq.osuUser.osuId=:osuId and qq.qq != :saveQQ")
     int deleteOtherBind(Long osuId, Long saveQQ);
-
-    @Modifying
-    @Transactional
-    @Query(value = """
-            delete from osu_bind_user
-            using osu_bind_user u left join osu_bind_qq q on u.id =q.osu_user_id
-            where u.osu_id = :osuId and q.osu_user_id is null
-            """, nativeQuery = true)
-    int deleteOtherBindByUid(Long osuId);
-
-
 
     void deleteByQq(Long qq);
     @Modifying

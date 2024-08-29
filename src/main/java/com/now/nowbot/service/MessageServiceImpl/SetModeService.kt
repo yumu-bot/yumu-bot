@@ -1,64 +1,74 @@
-package com.now.nowbot.service.MessageServiceImpl;
+package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.MessageChain;
-import com.now.nowbot.qq.tencent.TencentMessageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.OfficialInstruction;
-import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.springframework.stereotype.Service;
-
-import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_MODE;
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.tencent.TencentMessageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.throwable.ServiceException.BindException
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.command.FLAG_MODE
+import jakarta.annotation.Resource
+import org.springframework.stereotype.Service
 
 @Service("SET_MODE")
-public class SetModeService implements MessageService<String>, TencentMessageService<String> {
-    @Resource
-    BindDao bindDao;
+class SetModeService (
+    private val bindDao: BindDao,
+    private val osuUserApiService: OsuUserApiService,
+): MessageService<String>, TencentMessageService<String> {
 
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<String> data) {
-        var m = Instruction.SET_MODE.matcher(messageText);
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<String>): Boolean {
+        val m = Instruction.SET_MODE.matcher(messageText)
         if (m.find()) {
-            data.setValue(m.group(FLAG_MODE));
-            return true;
-        } else return false;
+            data.setValue(m.group(FLAG_MODE))
+            return true
+        } else return false
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, String modeStr) throws Throwable {
-        var user = bindDao.getUserFromQQ(event.getSender().getId());
-        var from = event.getSubject();
-        var message = getReply(modeStr, user);
-        from.sendMessage(message);
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, modeStr: String) {
+        val user = bindDao.getUserFromQQ(event.sender.id)
+        val from = event.subject
+        val message = getReply(modeStr, user)
+        from.sendMessage(message)
     }
 
-    @Override
-    public @Nullable String accept(@NotNull MessageEvent event, @NotNull String messageText) {
-        var m = OfficialInstruction.SET_MODE.matcher(messageText);
-        if (m.find()) return m.group(FLAG_MODE);
-        return null;
+    override fun accept(event: MessageEvent, messageText: String): String? {
+        val m = OfficialInstruction.SET_MODE.matcher(messageText)
+        if (m.find()) return m.group(FLAG_MODE)
+        return null
     }
 
-    @Override
-    public @Nullable MessageChain reply(@NotNull MessageEvent event, String param) throws Throwable {
-        var user = bindDao.getUserFromQQ(event.getSender().getId());
-        if (user.isAuthorized()) return getReply(param, user);
-        return new MessageChain("需要先绑定 yumu 才能使用哦");
-    }
-
-    MessageChain getReply(String modeStr, BinUser user) throws Throwable {
-        var mode = OsuMode.getMode(modeStr);
-        if (mode == OsuMode.DEFAULT) {
-            return new MessageChain("未知的格式,修改请使用0(osu),1(taiko),2(catch),3(mania)");
+    @Throws(Throwable::class)
+    override fun reply(event: MessageEvent, param: String): MessageChain? {
+        val user = try {
+            bindDao.getUserFromOsuid(-event.sender.id)
+        } catch (e: BindException) {
+            val userInfo = osuUserApiService.getPlayerInfo(-event.sender.id)
+            val binUser = BinUser()
+            with(binUser) {
+                osuID = userInfo.id
+                osuName = userInfo.username
+                osuMode = userInfo.defaultOsuMode
+            }
+            bindDao.saveBind(binUser)
         }
-        user.setOsuMode(mode);
-        bindDao.updateMod(user.getOsuID(), mode);
-        return new MessageChain("已修改主模式为: "+mode.getName());
+
+        return getReply(param, user)
+    }
+
+    fun getReply(modeStr: String?, user: BinUser): MessageChain {
+        val mode = OsuMode.getMode(modeStr)
+        if (mode == OsuMode.DEFAULT) {
+            return MessageChain("未知的格式,修改请使用0(osu),1(taiko),2(catch),3(mania)")
+        }
+        user.osuMode = mode
+        bindDao.updateMod(user.osuID, mode)
+        return MessageChain("已修改主模式为: " + mode.getName())
     }
 }

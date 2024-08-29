@@ -66,6 +66,14 @@ public class BindDao {
         return getUserFromQQ((long) qq);
     }
 
+    public BinUser saveBind(BinUser user) {
+        OsuBindUserLite lite = new OsuBindUserLite(user);
+
+        lite = bindUserMapper.save(lite);
+
+        return fromLite(lite);
+    }
+
     public BinUser getUserFromOsuid(Long osuId) throws BindException {
         if (Objects.isNull(osuId)) throw new BindException(BindException.Type.BIND_Receive_NoName);
 
@@ -97,31 +105,24 @@ public class BindDao {
     }
 
     public QQBindLite bindQQ(Long qq, OsuBindUserLite user) {
-        try {
-            bindQQMapper.deleteOtherBind(user.getOsuID(), qq);
-            var qqBind = new QQBindLite();
-            qqBind.setQq(qq);
-            if (user.getRefreshToken() == null) {
-                Optional<OsuBindUserLite> buLiteOpt;
-                try {
-                    buLiteOpt = bindUserMapper.getByOsuId(user.getOsuID());
-                } catch (Exception e) {
-                    // 查出多个
-                    bindUserMapper.deleteOldByOsuId(user.getOsuID());
-                    buLiteOpt = bindUserMapper.getByOsuId(user.getOsuID());
-                }
-                if (buLiteOpt.isPresent()) {
-                    var uLite = buLiteOpt.get();
-                    qqBind.setOsuUser(uLite);
-                    return bindQQMapper.save(qqBind);
-                }
+        OsuBindUserLite osuBind = user;
+        if (user.getRefreshToken() != null) {
+            var count = bindQQMapper.countByOsuId(user.getOsuID());
+            if (count > 0) bindUserMapper.deleteAllByOsuId(user.getOsuID());
+        } else {
+            Optional<OsuBindUserLite> buLiteOpt =bindUserMapper.getFirstByOsuId(user.getOsuID());
+            if (buLiteOpt.isPresent()) {
+                osuBind = buLiteOpt.get();
+                var id = osuBind.getID();
+                bindUserMapper.deleteByIDNot(id);
             }
-
-            qqBind.setOsuUser(bindUserMapper.checkSave(user));
-            return bindQQMapper.save(qqBind);
-        } finally {
-            bindQQMapper.deleteOtherBindByUid(user.getOsuID());
         }
+
+        var qqBind = new QQBindLite();
+        qqBind.setQq(qq);
+
+        qqBind.setOsuUser(bindUserMapper.checkSave(osuBind));
+        return bindQQMapper.save(qqBind);
     }
 
     public DiscordBindLite bindDiscord(String discordId, BinUser user) {
@@ -224,7 +225,7 @@ public class BindDao {
 
     @Async
     public void refreshOldUserToken(OsuUserApiService osuGetService) {
-        long now = System.currentTimeMillis() + 6*60*60;
+        long now = System.currentTimeMillis() + 6 * 60 * 60;
         int succeedCount = 0;
         int errCount = 0;
         List<OsuBindUserLite> users;
@@ -261,12 +262,12 @@ public class BindDao {
             }
         }
         // 重新尝试失败的
-        while (! (users = bindUserMapper.getOldBindUserHasWrong(now)).isEmpty()) {
+        while (!(users = bindUserMapper.getOldBindUserHasWrong(now)).isEmpty()) {
             OsuBindUserLite u;
             WAIT_UPDATE_USERS = Collections.synchronizedSet(users.stream().map(OsuBindUserLite::getID).collect(Collectors.toSet()));
-            while (! users.isEmpty()) {
+            while (!users.isEmpty()) {
                 u = users.removeLast();
-                if (! WAIT_UPDATE_USERS.remove(u.getID())) continue;
+                if (!WAIT_UPDATE_USERS.remove(u.getID())) continue;
                 if (ObjectUtils.isEmpty(u.getRefreshToken())) {
                     bindUserMapper.backupBindByOsuId(u.getOsuID());
                     continue;

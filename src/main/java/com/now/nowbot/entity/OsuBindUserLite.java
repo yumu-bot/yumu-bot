@@ -18,15 +18,12 @@ public class OsuBindUserLite {
     @Column(name = "osu_id")
     private Long osuId;
 
-//    @Lob
     @Column(name = "osu_name", columnDefinition = "TEXT")
     private String osuName;
 
-//    @Lob
     @Column(name = "access_token", columnDefinition = "TEXT")
     private String accessToken;
 
-//    @Lob
     @Column(name = "refresh_token", columnDefinition = "TEXT")
     private String refreshToken;
 

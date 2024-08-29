@@ -14,8 +14,14 @@ import java.util.Optional;
 
 public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, JpaSpecificationExecutor<OsuBindUserLite> {
 
-
     Optional<OsuBindUserLite> getByOsuId(Long osuId);
+
+    @Query("""
+        select u from OsuBindUserLite u
+        where u.osuId = :osuId and u.refreshToken is not null
+        order by u.id desc limit 1
+        """)
+    Optional<OsuBindUserLite> getFirstByOsuId(Long osuId);
 
     Optional<OsuBindUserLite> getByOsuNameLike(String osuName);
 
@@ -30,6 +36,8 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
             delete from osu_bind_user using del where osu_bind_user.id = del.id and del.row_num >1;
             """, nativeQuery = true)
     void deleteOldByOsuId(Long uid);
+
+    int deleteByIDNot(Long id);
 
     @Modifying
     @Transactional
