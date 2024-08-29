@@ -1,60 +1,76 @@
-package com.now.nowbot.service.MessageServiceImpl;
+package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.throwable.ServiceException.MiniCardException;
-import com.now.nowbot.util.CmdUtil;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.now.nowbot.model.JsonData.OsuUser
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.tencent.TencentMessageService
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.throwable.ServiceException.MiniCardException
+import com.now.nowbot.util.CmdUtil.getMode
+import com.now.nowbot.util.CmdUtil.getUserWithOutRange
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.QQMsgUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Service("INFO_CARD")
-public class InfoCardService implements MessageService<OsuUser> {
+class InfoCardService(
+    val imageService: ImageService,
+) : MessageService<OsuUser>, TencentMessageService<OsuUser> {
 
-    private static final Logger log = LoggerFactory.getLogger(InfoCardService.class);
-    @Resource
-    ImageService imageService;
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<OsuUser>): Boolean {
+        val matcher2 = Instruction.DEPRECATED_YMY.matcher(messageText)
+        if (matcher2.find()) throw MiniCardException(MiniCardException.Type.MINI_Deprecated_Y)
 
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<OsuUser> data) throws Throwable {
-        var matcher2 = Instruction.DEPRECATED_YMY.matcher(messageText);
-        if (matcher2.find()) throw new MiniCardException(MiniCardException.Type.MINI_Deprecated_Y);
+        val matcher = Instruction.INFO_CARD.matcher(messageText)
+        if (!matcher.find()) return false
 
-        var matcher = Instruction.INFO_CARD.matcher(messageText);
-        if (! matcher.find()) return false;
+        val mode = getMode(matcher)
+        val isMyself = AtomicBoolean()
+        val user = getUserWithOutRange(event, matcher, mode, isMyself)
 
-        var mode = CmdUtil.getMode(matcher);
-        var isMyself = new AtomicBoolean();
-        var user = CmdUtil.getUserWithOutRange(event, matcher, mode, isMyself);
-
-        data.setValue(user);
-        return true;
+        data.value = user
+        return true
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, OsuUser osuUser) throws Throwable {
-        var from = event.getSubject();
+    override fun HandleMessage(event: MessageEvent, osuUser: OsuUser) {
+        val from = event.subject
 
-        byte[] image;
+        val image: ByteArray
 
         try {
-            image = imageService.getPanelGamma(osuUser);
-        } catch (Exception e) {
-            log.error("迷你信息面板：渲染失败", e);
-            throw new MiniCardException(MiniCardException.Type.MINI_Render_Error);
+            image = imageService.getPanelGamma(osuUser)
+        } catch (e: Exception) {
+            log.error("迷你信息面板：渲染失败", e)
+            throw MiniCardException(MiniCardException.Type.MINI_Render_Error)
         }
 
         try {
-            from.sendImage(image);
-        } catch (Exception e) {
-            log.error("迷你信息面板：发送失败", e);
-            throw new MiniCardException(MiniCardException.Type.MINI_Send_Error);
+            from.sendImage(image)
+        } catch (e: Exception) {
+            log.error("迷你信息面板：发送失败", e)
+            throw MiniCardException(MiniCardException.Type.MINI_Send_Error)
         }
+    }
+
+    override fun accept(event: MessageEvent, messageText: String): OsuUser? {
+        val matcher = OfficialInstruction.INFO_CARD.matcher(messageText)
+        return if (matcher.find()) {
+            val mode = getMode(matcher)
+            getUserWithOutRange(event, matcher, mode, AtomicBoolean())
+        } else {
+            null
+        }
+    }
+
+    override fun reply(event: MessageEvent, param: OsuUser): MessageChain? = QQMsgUtil.getImage(imageService.getPanelGamma(param))
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(InfoCardService::class.java)
     }
 }
