@@ -58,9 +58,9 @@ class InfoService(
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: InfoParam) {
         val from = event.subject
-
+        val image = param.getImage()
         try {
-            from.sendImage(param.getImage())
+            from.sendImage(image)
         } catch (e: Exception) {
             log.error("玩家信息：发送失败", e)
             throw InfoException(InfoException.Type.I_Send_Error)
@@ -82,7 +82,8 @@ class InfoService(
 
         val isMyself = AtomicBoolean()
 
-        val user = getUserWithOutRange(event, matcher, mode, isMyself) ?: throw InfoException(InfoException.Type.I_Player_NotFound)
+        val user = getUserWithOutRange(event, matcher, mode, isMyself)
+            ?: throw InfoException(InfoException.Type.I_Player_NotFound)
 
         val dayStr = matcher.group(FLAG_DAY)
 
@@ -97,7 +98,7 @@ class InfoService(
         return InfoParam(user, mode.data!!, day, isMyself.get())
     }
 
-    private fun InfoParam.getImage():ByteArray {
+    private fun InfoParam.getImage(): ByteArray {
 
         val BPs: List<Score> = try {
             scoreApiService.getBestPerformance(user.userID, mode, 0, 100)
@@ -116,7 +117,8 @@ class InfoService(
                 LocalDate.now().minusDays(day.toLong())
             ).map { archive: OsuUserInfoArchiveLite? -> OsuUserInfoDao.fromArchive(archive) }
 
-        return try {imageService.getPanelD(user, historyUser, BPs, mode)
+        return try {
+            imageService.getPanelD(user, historyUser, BPs, mode)
         } catch (e: Exception) {
             log.error("玩家信息：图片渲染失败", e)
             throw InfoException(InfoException.Type.I_Fetch_Error)

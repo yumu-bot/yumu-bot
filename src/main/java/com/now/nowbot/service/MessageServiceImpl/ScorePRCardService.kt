@@ -76,9 +76,9 @@ class ScorePRCardService(
         val from = event.subject
 
         val score = param.score
-
+        val message = getMessageChain(score)
         try {
-            from.sendMessage(getMessageChain(score))
+            from.sendMessage(message)
         } catch (e: Exception) {
             log.error("迷你成绩面板：发送失败", e)
             throw MiniCardException(MiniCardException.Type.MINI_Send_Error)

@@ -85,9 +85,9 @@ class ScoreService(
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: ScoreParam) {
         val from = event.subject
-
+        val message = getMessageChain(param)
         try {
-            from.sendMessage(getMessageChain(param))
+            from.sendMessage(message)
         } catch (e: Exception) {
             log.error("成绩：发送失败", e)
             throw ScoreException(ScoreException.Type.SCORE_Send_Error)
@@ -119,7 +119,7 @@ class ScoreService(
 
     private fun getMessageChain(param: ScoreParam): MessageChain {
         val mode = param.mode
-        val user = param.user
+        val user = param.user!!
         val isDefault = param.isDefault
 
         val bid = param.bid

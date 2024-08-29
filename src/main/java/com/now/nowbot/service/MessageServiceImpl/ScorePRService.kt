@@ -182,7 +182,7 @@ class ScorePRService(
     private fun getTextOutput(score: Score): MessageChain {
         val d = ScoreLegacy.getInstance(score, beatmapApiService)
 
-        val httpEntity = HttpEntity.EMPTY as HttpEntity<Array<Byte>>
+        val httpEntity = HttpEntity.EMPTY as HttpEntity<ByteArray>
         val imgBytes = template.exchange(
             d.url, HttpMethod.GET, httpEntity,
             ByteArray::class.java

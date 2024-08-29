@@ -1,6 +1,7 @@
 package com.now.nowbot.newbie.mapper
 
-import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.NewbiePlayCount
+import com.now.nowbot.mapper.NewbiePlayCountRepository
 import com.now.nowbot.newbie.entity.Bindings
 import com.now.nowbot.newbie.entity.UserPlayRecords
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
@@ -12,10 +13,10 @@ import org.springframework.context.annotation.DependsOn
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Service
+import java.io.BufferedWriter
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 
 
 interface UserPlayRecordsMapper : JpaRepository<UserPlayRecords, Long> {
@@ -39,12 +40,12 @@ interface UserPlayRecordsMapper : JpaRepository<UserPlayRecords, Long> {
     @Query(
         """
         select u.id as userId, u.beatmapId as beatmapId, u.rank as rank,
-        u.count300 as n300, u.count100 as n100, u.count50 as n50, u.countMiss as misses, u.date as data
+        u.count300 as n300, u.count100 as n100, u.count50 as n50, u.countMiss as misses, u.date as date
         from UserPlayRecords u
         where u.mode = 0 and u.userId = :uid and u.date between :start and :end
     """
     )
-    fun queryDataAll(uid: Int, start: LocalDateTime, end: LocalDateTime): List<CountUser1>
+    fun queryDataAll(uid: Int, start: LocalDateTime, end: LocalDateTime): List<CountUserDate>
 
     @Query(
         """
@@ -59,6 +60,15 @@ interface UserPlayRecordsMapper : JpaRepository<UserPlayRecords, Long> {
     """
     )
     fun queryBindData(qqs: List<Long>): List<Bindings>
+
+    @Query(
+        """
+        select "UserId" as id, "UserInfo_Name" as name, "UserInfo_Performance" as pp
+        FROM public."UserSnapshots" 
+        where "UserId" = :uid and "Date" > :start and "Mode" = 0  order by "Id" asc limit 1;
+    """, nativeQuery = true
+    )
+    fun getUserPP(uid: Long, start: LocalDateTime): CountUserInfo?
 }
 
 @Service
@@ -66,7 +76,7 @@ interface UserPlayRecordsMapper : JpaRepository<UserPlayRecords, Long> {
 @ConditionalOnProperty(prefix = "spring.datasource.newbie", name = ["enable"], havingValue = "true")
 class NewbieService(
     private val mapper: UserPlayRecordsMapper,
-    private val bindDao: BindDao,
+    private val newbiePlayCountRepository: NewbiePlayCountRepository,
     private var osuMapService: OsuBeatmapApiService,
     private val osuUserService: OsuUserApiService,
 ) {
@@ -165,37 +175,28 @@ class NewbieService(
             callback(data)
             result.add(data)
         }
-
-        /*
-        // 拆分成并发执行, 每 100 个任务一组
-        val taskList = mutableListOf<AsyncMethodExecutor.Supplier<List<UserCount>>>()
-        uid.chunked(700).forEachIndexed { n, it ->
-            val task = AsyncMethodExecutor.Supplier<List<UserCount>> {
-                val resultList = mutableListOf<UserCount>()
-                for (id in it) {
-                    val r = AsyncMethodExecutor.doRetry(5) {
-                        Thread.sleep(3000)
-                        log.info("start to count $id")
-                        this.getUserPlayRecords(id, timeRange.start, timeRange.end, ppMap[id] ?: 0f, cache)
-                    }
-                    val c = countAll.incrementAndGet()
-                    log.info("$c(work $n) - $id done")
-                    resultList.add(r)
-                }
-                return@Supplier resultList
-            }
-            taskList.add(task)
-        }
-        AsyncMethodExecutor.AsyncSupplier(taskList).forEach {
-            if (!it.isNullOrEmpty()) {
-                val playedUser = it.filter { u -> u.playCount > 0 }
-                result.addAll(playedUser)
-            }
-        }
-        log.info("task over")
-
-         */
         return result
+    }
+
+    fun updateUserPP(date: LocalDateTime, out: BufferedWriter) {
+
+        val all = newbiePlayCountRepository.findAll()
+        val new = mutableListOf<NewbiePlayCount>()
+        all.forEach {
+            try {
+                val uid = it.uid ?: throw Exception()
+                val nowPP = it.pp ?: throw Exception()
+                val u = mapper.getUserPP(uid.toLong(), date) ?: throw Exception()
+                it.pp = u.pp
+                new.add(it)
+                val upPP = nowPP - u.pp
+                out.write("${u.name}, ${u.id}, ${upPP}, ${it.playCount}, ${it.playHits}, ${it.playTime}")
+                out.newLine()
+            } catch (e: Exception) {
+                log.error("[${it.uid}] update user pp error", e)
+            }
+        }
+        newbiePlayCountRepository.saveAll(new)
     }
 
     data class TimeRange(
@@ -224,6 +225,12 @@ interface CountBeatmap {
     val beatmapId: Int
 }
 
+interface CountUserInfo {
+    val id: Long
+    val name: String
+    val pp: Float
+}
+
 interface CountUser {
     val userId: Int
     val beatmapId: Int
@@ -234,7 +241,7 @@ interface CountUser {
     val misses: Int
 }
 
-interface CountUser1 {
+interface CountUserDate {
     val userId: Int
     val beatmapId: Int
     val rank: String
@@ -242,5 +249,5 @@ interface CountUser1 {
     val n100: Int
     val n50: Int
     val misses: Int
-    val data: LocalDateTime
+    val date: LocalDateTime
 }

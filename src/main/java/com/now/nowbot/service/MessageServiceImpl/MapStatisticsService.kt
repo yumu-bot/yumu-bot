@@ -356,15 +356,14 @@ class MapStatisticsService(
                 result.add(Rosu.calculate(file, scoreFC).pp)
             }
 
-            var scoreNC = JniScore()
+            val scoreNC = JniScore()
             scoreNC.mode = expected.mode.toRosuMode()
             scoreNC.mods = OsuMod.getModsValueFromAbbrList(expected.mods)
             scoreNC.accuracy = expected.accuracy
             scoreNC.combo = expected.combo
             scoreNC.misses = expected.misses
 
-            // TODO 一旦这里赋予了 misses，那么结果会变得超级奇怪。我暂时无法解决这个问题（因为无法通过计算补足一个完整的 Statistics），但是 js 这里计算没有问题，怀疑是给其他 stat 默认赋值 0，导致计算错误
-
+            // 解决了
             for (i in 0..5) {
                 scoreNC.accuracy = accArray[i]
                 result.add(Rosu.calculate(file, scoreNC).pp)

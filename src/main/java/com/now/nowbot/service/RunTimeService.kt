@@ -17,8 +17,10 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 import java.lang.management.ManagementFactory
+import java.nio.file.Files
 import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.Path
 
 
 /***
@@ -55,8 +57,21 @@ class RunTimeService : SchedulingConfigurer {
         bindDao!!.refreshOldUserToken(userApiService)
     }
 
+    @Scheduled(cron = "0 0 10 29 8 *")
+    fun count() {
+        try {
+            val service = applicationContext!!.getBean(NewbieService::class.java)
+            val startDay = LocalDate.of(2024, 8, 2).atStartOfDay()
+            val write = Files.newBufferedWriter(Path("/home/spring/res.csv"))
+            write.use {
+                service.updateUserPP(startDay, write)
+            }
+            log.info("统计完成")
+        } catch (e: Exception) {
+            log.error("统计出现异常", e)
+        }
+    }
 
-    @Scheduled(cron = "0 30 15 * 8,9 *")
     fun newbiePlayCount() {
         log.info("开始执行新人统计任务")
         val newbiePlayCount: NewbiePlayCountRepository
