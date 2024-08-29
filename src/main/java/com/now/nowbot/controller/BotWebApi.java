@@ -799,7 +799,7 @@ public class BotWebApi {
             @OpenResource(name = "name", desp = "玩家名称") @RequestParam("name") @Nullable String name
     ) {
         var osuUser = getPlayerInfoJson(uid, name, null);
-        var data = IMapperService.parseData(osuUser, userApiService, beatmapApiService);
+        var data = IMapperService.Companion.parseData(osuUser, userApiService, beatmapApiService);
         var image = imageService.getPanelM(data);
 
         return new ResponseEntity<>(image, getImageHeader(STR."\{osuUser.getUserID()}-mapper.jpg", image.length), HttpStatus.OK);
