@@ -8,7 +8,7 @@ public class PPMinusException extends TipsException {
         PM_Me_PlayTimeTooShort("你在 %s 模式上的游戏时长太短了，快去多玩几局吧！"),
         PM_Me_NotFound("找不到你所绑定的玩家。"),
         PM_Me_FetchFailed("获取你的 PP- 失败，有可能是你输错了玩家名，或是指定了错误的模式。"),
-        PM_Player_TokenExpired("此玩家的令牌已过期，请提醒他重新授权。(!ymbind)"), //玩家_对方未绑定
+        PM_Player_TokenExpired("对方玩家的令牌已过期，请提醒他重新授权。(!ymbind)"), //玩家_对方未绑定
         PM_Player_NotFound("找不到此玩家，请检查。"), //获取玩家失败
         PM_Player_VSNotFound("哩个瓜娃子到底要 VS 哪个哦！"),//未搜到vs玩家
         PM_Player_PlayTimeTooShort("此玩家在 %s 模式上的游戏时长太短了，快去多玩几局吧！"),//查询他人_玩家号太新
