@@ -2,7 +2,6 @@ package com.now.nowbot.util
 
 import com.now.nowbot.util.command.*
 import com.now.nowbot.util.command.MatchLevel.*
-import com.now.nowbot.util.command.CommandPatternBuilder
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -15,7 +14,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     // #1 BOT 内部指令
     PING(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("ping")
+        appendOfficialCommandsIgnoreAll("ping", "pi")
     }),
 
     // #2 osu! 成绩指令
@@ -85,12 +84,12 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     UU_BA(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("uuba")
+        appendOfficialCommandsIgnoreAll("uuba", "ua")
         appendModeQQUIDName()
     }),
 
     UU_BAI(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("uuba-i")
+        appendOfficialCommandsIgnoreAll("uuba-i", "uai")
         appendModeQQUIDName()
     }),
 
@@ -287,7 +286,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
 // 检查正则
 fun main() {
-    val test: String? = "/b 0"
+    val test: String? = "/h"
     for (i in OfficialInstruction.entries) {
         if (test != null) {
             if (i.pattern.matcher(test).find()) {

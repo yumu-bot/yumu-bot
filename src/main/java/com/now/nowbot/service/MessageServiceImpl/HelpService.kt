@@ -26,7 +26,7 @@ class HelpService(
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<String>): Boolean {
         val m = Instruction.HELP.matcher(messageText)
         if (m.find()) {
-            data.setValue(m.group("module").trim { it <= ' ' }.lowercase(Locale.getDefault())) //传东西进来
+            data.value=m.group("module").trim { it <= ' ' }.lowercase(Locale.getDefault()) //传东西进来
             return true
         } else return false
     }
@@ -238,11 +238,15 @@ class HelpService(
         }
     }
 
-    override fun accept(event: MessageEvent, messageText: String) = if (OfficialInstruction.HELP.matcher(messageText).find()) {
-        "OFFICIAL"
-    } else {
-        null
+    override fun accept(event: MessageEvent, messageText: String): String? {
+        if (OfficialInstruction.HELP.matcher(messageText).find()) {
+            return "OFFICIAL"
+        } else {
+            return null
+        }
     }
 
-    override fun reply(event: MessageEvent, param: String): MessageChain? = QQMsgUtil.getImage(getHelpPicture(param, imageService))
+    override fun reply(event: MessageEvent, param: String): MessageChain {
+        return QQMsgUtil.getImage(getHelpPicture(param, imageService))
+    }
 }
