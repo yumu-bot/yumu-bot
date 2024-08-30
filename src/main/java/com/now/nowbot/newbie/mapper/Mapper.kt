@@ -179,8 +179,9 @@ class NewbieService(
     }
 
     fun updateUserPP(date: LocalDateTime, out: BufferedWriter) {
-
-        val all = newbiePlayCountRepository.findAll()
+        out.write("name, uid, pp, pc, tth, pt")
+        out.newLine()
+        val all = newbiePlayCountRepository.findAllByDate(date.toLocalDate())
         val new = mutableListOf<NewbiePlayCount>()
         all.forEach {
             try {

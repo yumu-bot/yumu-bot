@@ -30,7 +30,7 @@ public class ImageService {
     private static final Logger log = LoggerFactory.getLogger(ImageService.class);
     @Resource
     RestTemplate restTemplate;
-    public static final String IMAGE_PATH = "http://127.0.0.1:1611/";
+    public static final String IMAGE_PATH = "http://192.168.243.253:1611/";
 
     /**
      * 获取 md 图片，现已经弃用，被 panel A6 代替

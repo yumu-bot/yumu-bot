@@ -57,12 +57,11 @@ class RunTimeService : SchedulingConfigurer {
         bindDao!!.refreshOldUserToken(userApiService)
     }
 
-    @Scheduled(cron = "0 0 10 29 8 *")
     fun count() {
         try {
             val service = applicationContext!!.getBean(NewbieService::class.java)
-            val startDay = LocalDate.of(2024, 8, 2).atStartOfDay()
-            val write = Files.newBufferedWriter(Path("/home/spring/res.csv"))
+            val startDay = LocalDate.of(2024, 8, 12).atStartOfDay()
+            val write = Files.newBufferedWriter(Path("/home/spring/res1.csv"))
             write.use {
                 service.updateUserPP(startDay, write)
             }
@@ -72,6 +71,7 @@ class RunTimeService : SchedulingConfigurer {
         }
     }
 
+    @Scheduled(cron = "0 10 10 30 8 *")
     fun newbiePlayCount() {
         log.info("开始执行新人统计任务")
         val newbiePlayCount: NewbiePlayCountRepository
@@ -99,14 +99,21 @@ class RunTimeService : SchedulingConfigurer {
         }
 
 
-        val startDay = LocalDate.of(2024, 8, 2)
-        val today = LocalDate.now()
+        val startDay = LocalDate.of(2024, 8, 12).atStartOfDay()
+        val today = LocalDate.now().atStartOfDay()
 
         newbieService
-            .countData(users, startDay.atStartOfDay(), today.atStartOfDay()) {
+            .countData(users, startDay, today) {
                 val user = NewbiePlayCount(it)
                 newbiePlayCount.saveAndFlush(user)
+
+                log.info("统计 ${it.id} 完成")
             }
+
+        val write = Files.newBufferedWriter(Path("/home/spring/res1.csv"))
+        write.use {
+            newbieService.updateUserPP(startDay, write)
+        }
         log.info("任务结束")
     }
 
