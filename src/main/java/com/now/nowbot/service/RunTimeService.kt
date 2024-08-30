@@ -57,7 +57,7 @@ class RunTimeService : SchedulingConfigurer {
         bindDao!!.refreshOldUserToken(userApiService)
     }
 
-    @Scheduled(cron = "0 20 16 30 8 *")
+    @Scheduled(cron = "0 30 16 30 8 *")
     fun count() {
         try {
             val service = applicationContext!!.getBean(NewbieService::class.java)
