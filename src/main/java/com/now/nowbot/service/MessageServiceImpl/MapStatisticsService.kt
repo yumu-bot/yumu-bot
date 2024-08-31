@@ -83,8 +83,8 @@ class MapStatisticsService(
         }
 
         data.value =
-                getParam(matcher, event.sender.id, messageText, event.sender.name) ?: return false
-        return false
+                getParam(matcher, event.sender.id, messageText) ?: return false
+        return true
     }
 
     @Throws(Throwable::class)
@@ -113,7 +113,7 @@ class MapStatisticsService(
             return null
         }
 
-        return getParam(matcher, event.sender.id, messageText, "uid: ${-event.sender.id}")
+        return getParam(matcher, event.sender.id, messageText)
     }
 
     override fun reply(event: MessageEvent, param: MapParam): MessageChain? {
@@ -138,7 +138,6 @@ class MapStatisticsService(
             matcher: Matcher,
             userID: Long,
             messageText: String,
-            userName: String
     ): MapParam? {
         val bid = getBid(matcher)
         var beatMap: BeatMap? = null
@@ -149,7 +148,7 @@ class MapStatisticsService(
 
         if (beatMap == null) {
             if (isAvoidance(messageText, "！m", "!m")) {
-                log.debug("指令退避：M 退避成功，被退避的玩家：$userName")
+                log.debug("指令退避：M 退避成功")
             }
             return null
         }
