@@ -37,6 +37,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         }
     }
 
+    // 就不到三个地方使用, 而且里面不到3行的方法很简短没必要单独写
     /**
      * 加命令, 展开后为 (!uu(p|pr))\s*
      * @param commands 连续的命令 ("p", "pr")
@@ -102,6 +103,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     /**
      * 加 qq=(?<qq>\d+) 的匹配。
+     * 不是很懂 qq 为什么要传MathLevel, 难道qq还能有一个字符?
      */
     fun appendQQID() {
         appendGroup(MAYBE) {
@@ -438,6 +440,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendMatchLevel(level)
     }
 
+    // 不到三个地方使用, 而且里面不到3行的方法很简短没必要单独写
     /**
      * 创建一个组, 展开后就是 (...|xxx|aaa)
      */
@@ -445,6 +448,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendGroup(EXIST, *strs)
     }
 
+    // 不到三个地方使用, 而且里面不到3行的方法很简短没必要单独写
     /**
      * 用分隔符来将多个隔开。a, b, c -> **a|b|c**
      */
@@ -452,6 +456,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         append(strs.joinToString(CHAR_SEPARATOR.toString()))
     }
 
+    // 用不到就删, 这个完全可以被 appendColonCaptureGroup 取代
     /**
      * 创建一个组，前面带冒号, ([：:].....)?
      */
