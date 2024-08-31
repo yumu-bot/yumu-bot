@@ -737,13 +737,18 @@ public class BotWebApi {
             var mode = OsuMode.getMode(modeStr, OsuMode.OSU);
             var beatMap = beatmapApiService.getBeatMapInfo(bid);
 
-            var param = new MapStatisticsService.MapParam(null, beatMap,
-                    new MapStatisticsService.Expected(
-                            mode, accuracy, combo, miss, OsuMod.getModsAbbrList(modStr)
-                    )
+            // 不是很明白为什么还要套一层param, 然后在param.xxx
+//            var param = new MapStatisticsService.MapParam(null, beatMap,
+//            );
+            var expected = new MapStatisticsService.Expected(
+                    mode,
+                    accuracy,
+                    combo,
+                    miss,
+                    OsuMod.getModsAbbrList(modStr)
             );
 
-            var image = imageService.getPanelE2(param.user, param.beatmap, param.expected);
+            var image = imageService.getPanelE2(null, beatMap, expected);
 
             return new ResponseEntity<>(image, getImageHeader(STR."\{bid}-mapinfo.jpg", image.length), HttpStatus.OK);
         } catch (Exception e) {

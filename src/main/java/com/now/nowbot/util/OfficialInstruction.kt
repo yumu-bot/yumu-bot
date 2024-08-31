@@ -277,7 +277,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     // #9 自定义
     ;
 
-    fun matcher(text:String):Matcher {
+    fun matcher(text: String): Matcher {
         return pattern.matcher(text)
     }
 }

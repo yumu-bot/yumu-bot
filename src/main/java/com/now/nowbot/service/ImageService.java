@@ -431,18 +431,7 @@ public class ImageService {
     public byte[] getPanelE6(MapStatisticsService.PanelE6Param param) {
         HttpHeaders headers = getDefaultHeader();
 
-        var body = new HashMap<>(Map.of(
-                "beatmap", param.beatmap,
-                "density", param.density,
-                "original", param.original,
-                "attributes", param.attributes,
-                "pp", param.pp,
-                "expected", param.expected
-        ));
-
-        if (param.user != null) {
-            body.put("user", param.user);
-        }
+        var body = param.toMap();
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_E6", httpEntity);
