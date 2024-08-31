@@ -665,13 +665,13 @@ public class BotWebApi {
         try {
             if (Objects.isNull(range)) {
                 if (Objects.isNull(compare)) {
-                    message = String.format("%.0f", DiceService.Companion.getRandom(100));
+                    message = String.format("%.0f", DiceService.getRandom(100));
                 } else {
                     var isOnlyNumbers = Pattern.matches("^[0-9.]+$", compare);
 
                     if (isOnlyNumbers) {
                         try {
-                            var r = DiceService.Companion.getRandom(Integer.parseInt(compare));
+                            var r = DiceService.getRandom(Integer.parseInt(compare));
 
                             if (r <= 1) {
                                 message = String.format("%.2f", r);
@@ -686,7 +686,7 @@ public class BotWebApi {
                     }
                 }
             } else {
-                var r = DiceService.Companion.getRandom(range);
+                var r = DiceService.getRandom(range);
 
                 if (r <= 1) {
                     message = String.format("%.2f", r);
@@ -699,7 +699,7 @@ public class BotWebApi {
 
         } catch (DiceException e) {
             return new ResponseEntity<>(
-                    String.format("%.0f", DiceService.Companion.getRandom(100)).getBytes(StandardCharsets.UTF_8)
+                    String.format("%.0f", DiceService.getRandom(100)).getBytes(StandardCharsets.UTF_8)
                     , HttpStatus.OK);
         } catch (Exception e) {
             log.error("扔骰子：API 异常", e);
