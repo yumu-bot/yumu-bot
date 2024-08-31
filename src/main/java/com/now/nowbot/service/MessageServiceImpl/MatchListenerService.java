@@ -59,8 +59,9 @@ public class MatchListenerService implements MessageService<MatchListenerService
     }
 
     public static class ListenerParam {
-        Integer id      = null;
-        Status  operate = Status.END;
+        Integer id = null;
+        Status operate = Status.END;
+        Integer skip = null;
     }
 
     @Override
@@ -91,8 +92,16 @@ public class MatchListenerService implements MessageService<MatchListenerService
             } catch (Exception e) {
                 throw new MatchListenerException(MatchListenerException.Type.ML_Instructions);
             }
-
         }
+
+        /*
+        if (StringUtils.hasText(matcher.group("skip"))) {
+            param.skip = Integer.parseInt(matcher.group("skip"));
+        } else {
+            param.skip = 0;
+        }
+
+         */
 
         data.setValue(param);
         return true;
@@ -203,8 +212,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
 
             try {
                 byte[] image = switch (status.get()) {
-                    case WAITING ->
-                            getRoundStartImage(matchEvent.getRound(), newMatch.clone()); // 这个 newMatch 在算分的时候，貌似无法更改？
+                    case WAITING -> getRoundStartImage(matchEvent, newMatch.clone());
                     case RESULT -> getRoundResultsImage(matchEvent, newMatch);
                     case null, default -> throw new RuntimeException("状态机状态异常！");
                 };
@@ -215,7 +223,7 @@ public class MatchListenerService implements MessageService<MatchListenerService
                 } catch (Exception e) {
                     throw new RuntimeException(MatchListenerException.Type.ML_Send_Error.message);
                 }
-            } catch (RuntimeException e) {
+            } catch (Throwable e) {
                 log.error("比赛监听：", e);
                 from.sendMessage(e.getMessage());
             }
@@ -287,21 +295,38 @@ public class MatchListenerService implements MessageService<MatchListenerService
         }
     }
 
-    private byte[] getRoundStartImage(@NonNull Match.MatchRound round, Match match) {
+    private byte[] getRoundStartImage(@NonNull Match.MatchEvent event, Match match) throws Throwable {
+        var r = event.getRound();
+
+        if (r.getBeatMap() == null) {
+            return new byte[0];
+        }
+
         // apply changes
-        beatmapApiService.applyBeatMapExtend(round);
-        beatmapApiService.applySRAndPP(round.getBeatMap(), OsuMode.getMode(round.getMode()), round.getModInt());
+        beatmapApiService.applyBeatMapExtend(r);
+        beatmapApiService.applySRAndPP(r.getBeatMap(), OsuMode.getMode(r.getMode()), r.getModInt());
 
-        var d = new MatchCalculate(match,
-                new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true),
-                beatmapApiService);
+        var b = r.getBeatMap();
 
-        var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap(round.getBeatMapID()));
+        var o = DataUtil.getOriginal(b);
 
-        var x = new MapStatisticsService.Expected(OsuMode.getMode(round.getMode()), 1d, b.getMaxCombo(), 0, round.getMods());
+        var c = new MatchCalculate(match, beatmapApiService);
+
+        var d = beatmapApiService.getBeatmapObjectGrouping26(b);
+
+        var p = DataUtil.getPlayersBeforeRoundStart(match, event.getEventID());
+
+        var m = OsuMode.getMode(r.getMode());
+
+        var l = r.getMods();
+
+        // var x = new MapStatisticsService.Expected(OsuMode.getMode(round.getMode()), 1d, b.getMaxCombo(), 0, round.getMods());
+
+        var e7 = new MatchMapService.PanelE7Param(c, m, l, p, b, d, o);
 
         try {
-            return imageService.getPanelE3(d, b, x);
+            return imageService.getPanelE7(e7);
+            //return imageService.getPanelE3(d, b, x);
         } catch (WebClientResponseException ignored) {
             String moreInfo;
             if (Objects.nonNull(b.getBeatMapSet())) {

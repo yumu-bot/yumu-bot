@@ -8,6 +8,7 @@ import com.now.nowbot.model.multiplayer.SeriesCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.PPMinus3;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
+import com.now.nowbot.service.MessageServiceImpl.MatchMapService;
 import com.now.nowbot.service.MessageServiceImpl.ScorePRService;
 import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.DataUtil;
@@ -377,15 +378,19 @@ public class ImageService {
     }
 
     @Deprecated
+    // 请使用 E5
     public byte[] getPanelE(OsuUser user, Score score) throws WebClientResponseException {
         HttpHeaders headers = getDefaultHeader();
-        var body = Map.of("user", user,
+        var body = Map.of(
+                "user", user,
                 "score", score
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_E", httpEntity);
     }
 
+    @Deprecated
+    // 请使用 E6
     public byte[] getPanelE2(@Nullable OsuUser user, BeatMap beatMap, MapStatisticsService.Expected expected) {
         HttpHeaders headers = getDefaultHeader();
         var body = new HashMap<>(Map.of(
@@ -401,6 +406,8 @@ public class ImageService {
         return doPost("panel_E2", httpEntity);
     }
 
+    @Deprecated
+    // 请使用 E7
     public byte[] getPanelE3(MatchCalculate matchCalculate, BeatMap beatMap, MapStatisticsService.Expected expected) {
         HttpHeaders headers = getDefaultHeader();
         var body = Map.of(
@@ -435,6 +442,25 @@ public class ImageService {
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_E6", httpEntity);
+    }
+
+    public byte[] getPanelE7(MatchMapService.PanelE7Param param) {
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of(
+                "match", param.match,
+                "players", param.players,
+                "mode", param.mode,
+                "mods", param.mods,
+                "beatmap", param.beatmap,
+                "density", param.density,
+                "original", param.original
+        );
+
+
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_E7", httpEntity);
     }
 
     public byte[] getPanelF(MatchCalculate matchData) {

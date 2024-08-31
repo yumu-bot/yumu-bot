@@ -13,6 +13,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.MessageServiceImpl.InfoService.InfoParam
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.ServiceException.InfoException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.CmdUtil.getMode
@@ -63,7 +64,7 @@ class InfoService(
             from.sendImage(image)
         } catch (e: Exception) {
             log.error("玩家信息：发送失败", e)
-            throw InfoException(InfoException.Type.I_Send_Error)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "玩家信息")
         }
     }
 
@@ -77,29 +78,7 @@ class InfoService(
 
     override fun reply(event: MessageEvent, param: InfoParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
 
-    private fun getParam(event: MessageEvent, matcher: Matcher): InfoParam {
-        val mode = getMode(matcher)
-
-        val isMyself = AtomicBoolean()
-
-        val user = getUserWithOutRange(event, matcher, mode, isMyself)
-            ?: throw InfoException(InfoException.Type.I_Player_NotFound)
-
-        val dayStr = matcher.group(FLAG_DAY)
-
-        val day = if (StringUtils.hasText(dayStr)) try {
-            dayStr.toInt()
-        } catch (e: NumberFormatException) {
-            1
-        } else {
-            1
-        }
-
-        return InfoParam(user, mode.data!!, day, isMyself.get())
-    }
-
     private fun InfoParam.getImage(): ByteArray {
-
         val BPs: List<Score> = try {
             scoreApiService.getBestPerformance(user.userID, mode, 0, 100)
         } catch (e: WebClientResponseException.NotFound) {
@@ -121,11 +100,28 @@ class InfoService(
             imageService.getPanelD(user, historyUser, BPs, mode)
         } catch (e: Exception) {
             log.error("玩家信息：图片渲染失败", e)
-            throw InfoException(InfoException.Type.I_Fetch_Error)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "玩家信息")
         }
     }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(InfoService::class.java)
+
+        private fun getParam(event: MessageEvent, matcher: Matcher): InfoParam {
+            val mode = getMode(matcher)
+            val isMyself = AtomicBoolean()
+
+            val user = getUserWithOutRange(event, matcher, mode, isMyself) ?: throw InfoException(InfoException.Type.I_Player_NotFound)
+            val dayStr = matcher.group(FLAG_DAY)
+            val day = if (StringUtils.hasText(dayStr)) try {
+                dayStr.toInt()
+            } catch (e: NumberFormatException) {
+                1
+            } else {
+                1
+            }
+
+            return InfoParam(user, mode.data!!, day, isMyself.get())
+        }
     }
 }

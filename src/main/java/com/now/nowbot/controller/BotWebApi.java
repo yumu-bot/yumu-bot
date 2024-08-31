@@ -737,9 +737,6 @@ public class BotWebApi {
             var mode = OsuMode.getMode(modeStr, OsuMode.OSU);
             var beatMap = beatmapApiService.getBeatMapInfo(bid);
 
-            // 不是很明白为什么还要套一层param, 然后在param.xxx
-//            var param = new MapStatisticsService.MapParam(null, beatMap,
-//            );
             var expected = new MapStatisticsService.Expected(
                     mode,
                     accuracy,
@@ -748,7 +745,7 @@ public class BotWebApi {
                     OsuMod.getModsAbbrList(modStr)
             );
 
-            var image = imageService.getPanelE2(null, beatMap, expected);
+            var image = MapStatisticsService.getPanelE6Image(null, beatMap, expected, beatmapApiService, imageService);
 
             return new ResponseEntity<>(image, getImageHeader(STR."\{bid}-mapinfo.jpg", image.length), HttpStatus.OK);
         } catch (Exception e) {

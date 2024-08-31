@@ -3,21 +3,11 @@ package com.now.nowbot.util
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.now.nowbot.config.NowbotConfig
-import com.now.nowbot.model.JsonData.BeatMap
-import com.now.nowbot.model.JsonData.OsuUser
-import com.now.nowbot.model.JsonData.Score
-import com.now.nowbot.model.JsonData.Statistics
+import com.now.nowbot.model.JsonData.*
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import io.github.humbleui.skija.Typeface
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.lang.NonNull
-import org.springframework.lang.Nullable
-import org.springframework.util.CollectionUtils
-import org.springframework.util.StringUtils
-import java.io.File
 import java.io.IOException
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -25,6 +15,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import kotlin.math.*
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.lang.NonNull
+import org.springframework.lang.Nullable
+import org.springframework.util.CollectionUtils
+import org.springframework.util.StringUtils
 
 object DataUtil {
     private val log: Logger = LoggerFactory.getLogger(DataUtil::class.java)
@@ -32,11 +28,14 @@ object DataUtil {
     private val mapper: ObjectMapper = JsonMapper.builder().build()
 
     var TORUS_REGULAR: Typeface? = null
-        @JvmStatic get() {
+        @JvmStatic
+        get() {
             if (field == null || field!!.isClosed) {
                 try {
-//                InputStream in = class.getClassLoader().getResourceAsStream("static/font/Torus-Regular.ttf");
-//                TORUS_REGULAR = Typeface.makeFromData(Data.makeFromBytes(in.readAllBytes()));
+                    //                InputStream in =
+                    // class.getClassLoader().getResourceAsStream("static/font/Torus-Regular.ttf");
+                    //                TORUS_REGULAR =
+                    // Typeface.makeFromData(Data.makeFromBytes(in.readAllBytes()));
                     field = Typeface.makeFromFile("${NowbotConfig.FONT_PATH}Torus-Regular.ttf")
                 } catch (e: Exception) {
                     log.error("未读取到目标字体:Torus-Regular.ttf", e)
@@ -47,7 +46,8 @@ object DataUtil {
         }
 
     var TORUS_SEMIBOLD: Typeface? = null
-        @JvmStatic get() {
+        @JvmStatic
+        get() {
             if (field == null || field!!.isClosed) {
                 try {
                     field = Typeface.makeFromFile("${NowbotConfig.FONT_PATH}Torus-SemiBold.ttf")
@@ -60,7 +60,8 @@ object DataUtil {
         }
 
     var PUHUITI: Typeface? = null
-        @JvmStatic get() {
+        @JvmStatic
+        get() {
             if (field == null || field!!.isClosed) {
                 try {
                     field = Typeface.makeFromFile("${NowbotConfig.FONT_PATH}Puhuiti.ttf")
@@ -73,10 +74,13 @@ object DataUtil {
         }
 
     var PUHUITI_MEDIUM: Typeface? = null
-        @JvmStatic get() {
+        @JvmStatic
+        get() {
             if (field == null || field!!.isClosed) {
                 try {
-                    field = Typeface.makeFromFile("${NowbotConfig.FONT_PATH}Alibaba-PuHuiTi-Medium.ttf")
+                    field =
+                            Typeface.makeFromFile(
+                                    "${NowbotConfig.FONT_PATH}Alibaba-PuHuiTi-Medium.ttf")
                 } catch (e: Exception) {
                     log.error("Alibaba-PuHuiTi-Medium.ttf", e)
                     field = Typeface.makeDefault()
@@ -86,7 +90,8 @@ object DataUtil {
         }
 
     var EXTRA: Typeface? = null
-        @JvmStatic get() {
+        @JvmStatic
+        get() {
             if (field == null || field!!.isClosed) {
                 try {
                     field = Typeface.makeFromFile(NowbotConfig.FONT_PATH + "extra.ttf")
@@ -99,8 +104,8 @@ object DataUtil {
         }
 
     /**
-     * 将按逗号或者 |、:：分隔的字符串分割
-     * 如果未含有分隔的字符，返回 null
+     * 将按逗号或者 |、:：分隔的字符串分割 如果未含有分隔的字符，返回 null
+     *
      * @param str 需要分析的字符串
      * @return 玩家名列表
      */
@@ -108,35 +113,41 @@ object DataUtil {
     @Nullable
     fun splitString(@Nullable str: String): List<String>? {
         if (!StringUtils.hasText(str)) return null
-        val strings = str.trim { it <= ' ' }.split("[,，|:：`、]+".toRegex()).dropLastWhile { it.isEmpty() }
-            .toTypedArray() //空格和-_不能匹配
+        val strings =
+                str.trim { it <= ' ' }
+                        .split("[,，|:：`、]+".toRegex())
+                        .dropLastWhile { it.isEmpty() }
+                        .toTypedArray() // 空格和-_不能匹配
         if (strings.size == 0) return null
 
-        return Arrays.stream(strings).map { obj: String -> obj.trim { it <= ' ' } }
-            .toList()
+        return Arrays.stream(strings).map { obj: String -> obj.trim { it <= ' ' } }.toList()
     }
 
     /**
      * 判定优秀成绩。用于临时区分 panel E 和 panel E5
+     *
      * @param score 成绩，需要先算好 pp，并使用完全体
      * @return 是否为优秀成绩
      */
     @NonNull
     fun isExcellentScore(@NonNull score: Score, user: OsuUser): Boolean {
-        // 指标分别是：星数 >= 8，星数 >= 6.5，准确率 > 90%，连击 > 98%，PP > 300，PP > 玩家总 PP 减去 400 之后的 1/25 （上 BP，并且计 2 点），失误数 < 1%。
+        // 指标分别是：星数 >= 8，星数 >= 6.5，准确率 > 90%，连击 > 98%，PP > 300，PP > 玩家总 PP 减去 400 之后的 1/25 （上 BP，并且计
+        // 2 点），失误数 < 1%。
         var r = 0
         val p = getPP(score, user)
 
         val ultra = score.beatMap.starRating >= 8f
         val extreme = score.beatMap.starRating >= 6.5f
         val acc = score.accuracy >= 0.9f
-        val combo = 1f * score.maxCombo / Objects.requireNonNullElse(score.beatMap.maxCombo, Int.MAX_VALUE) >= 0.98f
+        val combo =
+                1f * score.maxCombo /
+                        Objects.requireNonNullElse(score.beatMap.maxCombo, Int.MAX_VALUE) >= 0.98f
         val pp = score.pp >= 300f
         val bp = p >= 400f && score.pp >= (p - 400f) / 25f
         val miss =
-            score.statistics.getCountAll(score.mode) > 0 && score.statistics.countMiss <= score.statistics.getCountAll(
-                score.mode
-            ) * 0.01f
+                score.statistics.getCountAll(score.mode) > 0 &&
+                        score.statistics.countMiss <=
+                                score.statistics.getCountAll(score.mode) * 0.01f
 
         val fail = score.rank == null || score.rank == "F"
 
@@ -171,6 +182,7 @@ object DataUtil {
 
     /**
      * 将 !bp 45-55 转成 score API 能看懂的 offset-limit 对
+     *
      * @param start 开始
      * @param end 结束
      * @return offset
@@ -183,6 +195,7 @@ object DataUtil {
 
     /**
      * 将 !bp 45-55 转成 score API 能看懂的 offset-limit 对
+     *
      * @param start 开始
      * @param end 结束
      * @return limit
@@ -195,6 +208,7 @@ object DataUtil {
 
     /**
      * 将 !bp 45-55 转成 score API 能看懂的 offset-limit 对
+     *
      * @param start 开始
      * @param end 结束
      * @return offset-limit 对
@@ -211,7 +225,7 @@ object DataUtil {
             offset = start - 1
             limit = 1
         } else {
-            //分流：正常，相等，相反
+            // 分流：正常，相等，相反
             if (end > start) {
                 offset = start - 1
                 limit = end - start + 1
@@ -226,12 +240,75 @@ object DataUtil {
 
         return Range(offset, limit)
     }
-    /**
-     * 根据准确率，通过获取准确率，来构建一个 Statistic。
-     */
+
+
+
+    @JvmStatic
+    // 获取比赛的某个 event 之前所有玩家
+    fun getPlayersBeforeRoundStart(@NonNull match: Match, eventID: Long): MutableList<MicroUser> {
+        val players = mutableListOf<MicroUser>();
+        val idList = getPlayerListBeforeRoundStart(match, eventID)
+
+        for (id in idList) {
+            for (u in match.players) {
+                if (u.id.equals(id)) {
+                    players.add(u)
+                    break
+                }
+            }
+        }
+
+        return players
+    }
+
+    @JvmStatic
+    // 获取比赛的某个 event 之前所有玩家
+    fun getPlayerListBeforeRoundStart(@NonNull match: Match, eventID: Long): MutableList<Long> {
+        val playerSet: MutableSet<Long> = HashSet()
+
+        for (e in match.events) {
+            if (e.eventID == eventID) {
+                // 跳出
+                return playerSet.stream().toList()
+            } else {
+                when (e.detail.type) {
+                    "player-joined" -> {
+                        try {
+                            playerSet.add(e.userID)
+                        } catch (ignored: java.lang.Exception) {}
+                    }
+                    "player-left" -> {
+                        try {
+                            playerSet.remove(e.userID)
+                        } catch (ignored: java.lang.Exception) {}
+                    }
+                }
+            }
+        }
+
+        // 如果遍历完了还没跳出，则返回空
+        return mutableListOf<Long>()
+    }
+
+    // 获取谱面的原信息，方便成绩面板使用。请在 applyBeatMapExtend 和 applySRAndPP 之前用。
+    @JvmStatic
+    fun getOriginal(beatmap: BeatMap): HashMap<String, Any> {
+        val original = HashMap<String, Any>(6)
+        original["cs"] = beatmap.cs
+        original["ar"] = beatmap.ar
+        original["od"] = beatmap.od
+        original["hp"] = beatmap.hp
+        original["bpm"] = beatmap.bpm
+        original["drain"] = beatmap.hitLength
+        original["total"] = beatmap.totalLength
+
+        return original
+    }
+
+    /** 根据准确率，通过获取准确率，来构建一个 Statistic。 */
     @NonNull
     @JvmStatic
-    fun accuracy2Statistics(accuracy: Double, total : Int, osuMode: OsuMode) : Statistics {
+    fun accuracy2Statistics(accuracy: Double, total: Int, osuMode: OsuMode): Statistics {
         var stat = Statistics()
         stat.setCount300(0)
         stat.setCount100(0)
@@ -240,20 +317,21 @@ object DataUtil {
         stat.setCountGeki(0)
         stat.setCountKatu(0)
 
-        var acc = accuracy;
+        var acc = accuracy
 
-        //一个物件所占的 Acc 权重
+        // 一个物件所占的 Acc 权重
         if (total <= 0) return stat
         val weight = 1.0 / total
 
-        fun getTheoricalCount(value : Double) : Int {
+        fun getTheoricalCount(value: Double): Int {
             val count = floor(acc / value).roundToInt()
             acc -= (value * count)
             return count
         }
 
         when (osuMode) {
-            OSU, DEFAULT -> {
+            OSU,
+            DEFAULT -> {
                 val n300 = min(getTheoricalCount(weight), max(total, 0))
                 val n100 = min(getTheoricalCount(weight / 3), max(total - n300, 0))
                 val n50 = min(getTheoricalCount(weight / 6), max(total - n300 - n100, 0))
@@ -303,6 +381,7 @@ object DataUtil {
 
     /**
      * 根据准确率，通过获取原成绩的判定结果的彩率，来构建一个达到目标准确率的判定结果
+     *
      * @param aiming 准确率，0-10000
      * @param stat 当前的判定结果
      * @return 达到目标准确率时的判定结果
@@ -321,21 +400,29 @@ object DataUtil {
 
         // geki, 300, katu, 100, 50, 0
         val list =
-            Arrays.asList(stat.countGeki, stat.count300, stat.countKatu, stat.count100, stat.count50, stat.countMiss)
+                Arrays.asList(
+                        stat.countGeki,
+                        stat.count300,
+                        stat.countKatu,
+                        stat.count100,
+                        stat.count50,
+                        stat.countMiss)
 
-        //一个物件所占的 Acc 权重
+        // 一个物件所占的 Acc 权重
         if (total <= 0) return stat
         val weight = 1.0 / total
 
-        //彩黄比
+        // 彩黄比
         val ratio =
-            if ((stat.count300 + stat.countGeki > 0)) stat.countGeki * 1.0 / (stat.count300 + stat.countGeki) else 0.0
+                if ((stat.count300 + stat.countGeki > 0))
+                        stat.countGeki * 1.0 / (stat.count300 + stat.countGeki)
+                else 0.0
 
         var current = stat.getAccuracy(MANIA)
 
         if (current >= aiming) return stat
 
-        //交换评级
+        // 交换评级
         if (current < aiming && stat.countMiss > 0) {
             val ex = exchangeJudge(list.first(), list.last(), 1.0, 0.0, current, aiming, weight)
             list[0] = ex.great
@@ -382,13 +469,13 @@ object DataUtil {
     // 交换评级
     @NonNull
     fun exchangeJudge(
-        nGreat: Int,
-        nBad: Int,
-        wGreat: Double,
-        wBad: Double,
-        currentAcc: Double,
-        aimingAcc: Double,
-        weight: Double
+            nGreat: Int,
+            nBad: Int,
+            wGreat: Double,
+            wBad: Double,
+            currentAcc: Double,
+            aimingAcc: Double,
+            weight: Double
     ): Exchange {
         var g = nGreat
         var b = nBad
@@ -407,18 +494,18 @@ object DataUtil {
         return Exchange(g, b, currentAcc)
     }
 
-
     @JvmStatic
     @NonNull
     fun isHelp(@Nullable str: String?): Boolean {
         if (str == null) return false
 
-        return str.trim { it <= ' ' }.equals("help", ignoreCase = true) || str.trim { it <= ' ' }
-            .equals("帮助", ignoreCase = true)
+        return str.trim { it <= ' ' }.equals("help", ignoreCase = true) ||
+                str.trim { it <= ' ' }.equals("帮助", ignoreCase = true)
     }
 
     /**
      * 根据分隔符，分割玩家名
+     *
      * @param str 需要分割的，含分割符和玩家名的长文本
      * @return 分割好的玩家名
      */
@@ -426,11 +513,17 @@ object DataUtil {
     @NonNull
     fun parseUsername(@Nullable str: String): List<String> {
         if (Objects.isNull(str)) return listOf("")
-        val split = str.trim { it <= ' ' }.split("[,，、|:：]+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val split =
+                str.trim { it <= ' ' }
+                        .split("[,，、|:：]+".toRegex())
+                        .dropLastWhile { it.isEmpty() }
+                        .toTypedArray()
         if (split.size == 0) return listOf(str)
 
-        return Arrays.stream(split).map { obj: String -> obj.trim { it <= ' ' } }
-            .filter { str: String? -> StringUtils.hasText(str) }.toList()
+        return Arrays.stream(split)
+                .map { obj: String -> obj.trim { it <= ' ' } }
+                .filter { str: String? -> StringUtils.hasText(str) }
+                .toList()
     }
 
     fun String2Markdown(str: String): String {
@@ -449,15 +542,35 @@ object DataUtil {
         if (level < 1 || level > 2) return '-'
         var m = 1 + level
 
-        if (number < 10.0.pow(m)) {  //level==1->100 level==2->1000
+        if (number < 10.0.pow(m)) { // level==1->100 level==2->1000
             unit = 0.toChar()
-        } else if (number < 10.0.pow(3.let { m += it; m })) {
+        } else if (number <
+                10.0.pow(
+                        3.let {
+                            m += it
+                            m
+                        })) {
             unit = 'K'
-        } else if (number < 10.0.pow(3.let { m += it; m })) {
+        } else if (number <
+                10.0.pow(
+                        3.let {
+                            m += it
+                            m
+                        })) {
             unit = 'M'
-        } else if (number < 10.0.pow(3.let { m += it; m })) {
+        } else if (number <
+                10.0.pow(
+                        3.let {
+                            m += it
+                            m
+                        })) {
             unit = 'G'
-        } else if (number < 10.0.pow(3.let { m += it; m })) {
+        } else if (number <
+                10.0.pow(
+                        3.let {
+                            m += it
+                            m
+                        })) {
             unit = 'T'
         } else if (number < 10.0.pow((m + 3))) {
             unit = 'P'
@@ -466,15 +579,14 @@ object DataUtil {
         return unit
     }
 
-
     fun getRoundedNumber(number: Double, level: Int): Double {
         // lv1.保留1位小数，结果不超4位字符宽(包含单位)
-        //1-99-0.1K-9.9K-10K-99K-0.1M-9.9M-10M-99M-0.1G-9.9G-10G-99G-0.1T-9.9T-10T-99T-Inf.
+        // 1-99-0.1K-9.9K-10K-99K-0.1M-9.9M-10M-99M-0.1G-9.9G-10G-99G-0.1T-9.9T-10T-99T-Inf.
 
         // lv2.保留2位小数，结果不超7位字符宽(包含单位)
-        //1-999-1.00K-999.99K-1.00M-999.99M-1.00G-999.99G-...-999.9T-Inf.
+        // 1-999-1.00K-999.99K-1.00M-999.99M-1.00G-999.99G-...-999.9T-Inf.
 
-        //将负值纳入计算
+        // 将负值纳入计算
 
         var number = number
         while (number >= 1000 || number <= -1000) {
@@ -501,11 +613,12 @@ object DataUtil {
         val intValue: Int
         if (c.code == 0) {
             intValue = number.toInt()
-            isInt = if (level == 1) {
-                number - intValue <= 0.1
-            } else {
-                number - intValue <= 0.001
-            }
+            isInt =
+                    if (level == 1) {
+                        number - intValue <= 0.1
+                    } else {
+                        number - intValue <= 0.001
+                    }
             if (isInt) return intValue.toString()
             return number.toString()
         }
@@ -523,11 +636,12 @@ object DataUtil {
             number = Math.round(number * 1000).toDouble() / 1000.0
         }
         intValue = number.toInt()
-        isInt = if (level == 1) {
-            number - intValue <= 0.1
-        } else {
-            number - intValue <= 0.001
-        }
+        isInt =
+                if (level == 1) {
+                    number - intValue <= 0.1
+                } else {
+                    number - intValue <= 0.001
+                }
 
         if (isInt) {
             return String.format("%d%c", intValue, c)
@@ -549,19 +663,21 @@ object DataUtil {
     }
 
     @JvmStatic
-    fun AR2MS(ar: Float): Int = when {
-        ar > 11f -> 300
-        ar > 5f -> 1200 - (150 * (ar - 5)).toInt()
-        ar > 0f -> 1800 - (120 * ar).toInt()
-        else -> 1800
-    }
+    fun AR2MS(ar: Float): Int =
+            when {
+                ar > 11f -> 300
+                ar > 5f -> 1200 - (150 * (ar - 5)).toInt()
+                ar > 0f -> 1800 - (120 * ar).toInt()
+                else -> 1800
+            }
 
-    fun MS2AR(ms: Float): Float = when {
-        ms < 300 -> 11f
-        ms < 1200 -> 5 + (1200 - ms) / 150f
-        ms < 2400 -> (1800 - ms) / 120f
-        else -> -5f
-    }
+    fun MS2AR(ms: Float): Float =
+            when {
+                ms < 300 -> 11f
+                ms < 1200 -> 5 + (1200 - ms) / 150f
+                ms < 2400 -> (1800 - ms) / 120f
+                else -> -5f
+            }
 
     @JvmStatic
     fun AR(ar: Float, mod: Int): Float {
@@ -583,15 +699,17 @@ object DataUtil {
     }
 
     @JvmStatic
-    fun OD2MS(od: Float): Float = when {
-        od > 11 -> 14f
-        else -> 80 - 6 * od
-    }
+    fun OD2MS(od: Float): Float =
+            when {
+                od > 11 -> 14f
+                else -> 80 - 6 * od
+            }
 
-    fun MS2OD(ms: Float): Float = when {
-        ms < 14 -> 11f
-        else -> (80 - ms) / 6f
-    }
+    fun MS2OD(ms: Float): Float =
+            when {
+                ms < 14 -> 11f
+                else -> (80 - ms) / 6f
+            }
 
     @JvmStatic
     fun OD(od: Float, mod: Int): Float {
@@ -610,7 +728,6 @@ object DataUtil {
         od = MS2OD(ms)
         return roundTwoDecimals(od)
     }
-
 
     @JvmStatic
     fun CS(cs: Float, mod: Int): Float {
@@ -664,8 +781,7 @@ object DataUtil {
     @JvmStatic
     fun applyBeatMapChanges(beatMap: BeatMap, mods: Int) {
         if (OsuMod.hasChangeRating(mods)) {
-            beatMap.bpm =
-                BPM(Optional.ofNullable(beatMap.bpm).orElse(0f), mods)
+            beatMap.bpm = BPM(Optional.ofNullable(beatMap.bpm).orElse(0f), mods)
             beatMap.ar = AR(Optional.ofNullable(beatMap.ar).orElse(0f), mods)
             beatMap.cs = CS(Optional.ofNullable(beatMap.cs).orElse(0f), mods)
             beatMap.od = OD(Optional.ofNullable(beatMap.od).orElse(0f), mods)
@@ -695,11 +811,7 @@ object DataUtil {
         return getBonusPP(playerPP, array)
     }
 
-    /**
-     * 计算bonusPP
-     * 算法是最小二乘 y = kx + b
-     * 输入的PP数组应该是加权之前的数组。
-     */
+    /** 计算bonusPP 算法是最小二乘 y = kx + b 输入的PP数组应该是加权之前的数组。 */
     @JvmStatic
     fun getBonusPP(playerPP: Double, fullPP: DoubleArray?): Float {
         val bonusPP: Double
@@ -720,14 +832,14 @@ object DataUtil {
             val weight: Double = 0.95.pow(i)
             val PP = fullPP[i]
 
-            //只拿最后50个bp来算，这样精准
+            // 只拿最后50个bp来算，这样精准
             if (i >= 50) {
                 x += i.toDouble()
                 y += PP
                 x2 += i.toDouble().pow(2)
                 xy += i * PP
             }
-            bpPP += PP * weight //前 100 的bp上的 pp
+            bpPP += PP * weight // 前 100 的bp上的 pp
         }
 
         val N = (length - 50).toDouble()
@@ -735,15 +847,15 @@ object DataUtil {
         k = (xy - (x * y / N)) / (x2 - (x.pow(2.0) / N))
         b = (y / N) - k * (x / N)
 
-        //找零点
+        // 找零点
         val expectedX = if ((k == 0.0)) -1 else floor(-b / k).toInt()
 
-        //这个预估的零点应该在很后面，不应该小于 100
-        //如果bp没满100，那么bns直接可算得，remainPP = 0
+        // 这个预估的零点应该在很后面，不应该小于 100
+        // 如果bp没满100，那么bns直接可算得，remainPP = 0
         if (length < 100 || expectedX <= 100) {
             bonusPP = playerPP - bpPP
         } else {
-            //对离散数据求和
+            // 对离散数据求和
             for (i in length..expectedX) {
                 val weight: Double = 0.95.pow(i)
                 remainPP += (k * i + b) * weight
@@ -755,14 +867,15 @@ object DataUtil {
         return max(min(bonusPP, 413.894179759), 0.0).toFloat()
     }
 
-    fun getV3ScoreProgress(score: Score): Double { //下下策
+    fun getV3ScoreProgress(score: Score): Double { // 下下策
         val mode = score.mode
 
-        val progress = if (!score.passed) {
-            1.0 * score.statistics.getCountAll(mode) / score.beatMap.maxCombo
-        } else {
-            1.0
-        }
+        val progress =
+                if (!score.passed) {
+                    1.0 * score.statistics.getCountAll(mode) / score.beatMap.maxCombo
+                } else {
+                    1.0
+                }
         return progress
     }
 
@@ -775,17 +888,21 @@ object DataUtil {
 
         val fc = 1000000
         val i = getV3ModsMultiplier(mods, mode)
-        val p = getV3ScoreProgress(score) //下下策
+        val p = getV3ScoreProgress(score) // 下下策
         val c = score.maxCombo
         val m = score.beatMap.maxCombo
         val ap8: Double = score.accuracy.pow(8.0)
-        val v3 = when (score.mode) {
-            OSU, CATCH, DEFAULT, null -> fc * i * (0.7f * c / m + 0.3f * ap8) * p
-            TAIKO -> fc * i * (0.75f * c / m + 0.25f * ap8) * p
-            MANIA -> fc * i * (0.01f * c / m + 0.99f * ap8) * p
-        }
+        val v3 =
+                when (score.mode) {
+                    OSU,
+                    CATCH,
+                    DEFAULT,
+                    null -> fc * i * (0.7f * c / m + 0.3f * ap8) * p
+                    TAIKO -> fc * i * (0.75f * c / m + 0.25f * ap8) * p
+                    MANIA -> fc * i * (0.01f * c / m + 0.99f * ap8) * p
+                }
 
-        return String.format("%07d", Math.round(v3)) //补 7 位达到 v3 分数的要求
+        return String.format("%07d", Math.round(v3)) // 补 7 位达到 v3 分数的要求
     }
 
     // 这东西是啥?
@@ -827,13 +944,15 @@ object DataUtil {
                 if (mod.contains("CO")) index *= 0.90
             }
 
-            null, DEFAULT -> {}
+            null,
+            DEFAULT -> {}
         }
         return index
     }
 
-    /***
+    /**
      * 缩短字符 220924
+     *
      * @param Str 需要被缩短的字符
      * @param MaxWidth 最大宽度
      * @return 返回已缩短的字符
@@ -934,6 +1053,7 @@ object DataUtil {
      */
     /**
      * 获取该文件名的 Markdown 文件并转成字符串
+     *
      * @param path 文件名，和相对路径
      * @return 文件内容
      */
@@ -942,9 +1062,8 @@ object DataUtil {
         val sb = StringBuilder()
 
         try {
-            val bufferedReader = Files.newBufferedReader(
-                Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path)
-            )
+            val bufferedReader =
+                    Files.newBufferedReader(Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path))
 
             // 逐行读取文本内容
             var line: String?
@@ -963,6 +1082,7 @@ object DataUtil {
 
     /**
      * 获取该文件名的图片文件并转成字符串
+     *
      * @param path 图片名，和相对路径
      * @return 图片流
      */
@@ -971,19 +1091,15 @@ object DataUtil {
         if (path.isEmpty()) return null
 
         return try {
-            Files.readAllBytes(
-                Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path)
-            )
+            Files.readAllBytes(Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path))
         } catch (e: IOException) {
             null
         }
     }
 
-    @JvmRecord
-    private data class Range(val offset: Int, val limit: Int)
+    @JvmRecord private data class Range(val offset: Int, val limit: Int)
 
-    @JvmRecord
-    data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
+    @JvmRecord data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
 
     fun Float.limit() = if ((0f..10f).contains(this)) this else if (this > 10) 10f else 0f
 }

@@ -160,7 +160,7 @@ public class Match implements Cloneable {
         OffsetDateTime timestamp;
 
         @JsonProperty("user_id")
-        Integer userID;
+        Long userID;
 
         @JsonProperty("game")
         MatchRound round;
@@ -189,11 +189,11 @@ public class Match implements Cloneable {
             this.timestamp = timestamp;
         }
 
-        public Integer getUserID() {
+        public Long getUserID() {
             return userID;
         }
 
-        public void setUserID(Integer userID) {
+        public void setUserID(Long userID) {
             this.userID = userID;
         }
 

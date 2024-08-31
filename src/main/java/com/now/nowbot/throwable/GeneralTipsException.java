@@ -16,6 +16,7 @@ public class GeneralTipsException extends TipsException {
         G_Null_UserName("请输入正确的玩家名！"),
         G_Null_BID("请输入正确的谱面编号！"),
         G_Null_Map("找不到这张谱面，请检查。"),
+        G_Null_MatchRound("找不到这场对局，请检查。"),
         G_Null_QQ("找不到 %s 所绑定的玩家！"),
         G_Null_Player("找不到玩家 %s，请检查。"),
         G_Null_PlayerRecord("该玩家在 %s 模式内基本没玩过。"),

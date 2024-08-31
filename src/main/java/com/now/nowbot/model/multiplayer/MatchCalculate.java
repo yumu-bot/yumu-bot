@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import jakarta.annotation.Resource;
+import org.springframework.lang.NonNull;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
@@ -34,7 +35,34 @@ public class MatchCalculate {
 
     public MatchCalculate() {}
 
-    public MatchCalculate(Match match, CalculateParam param, OsuBeatmapApiService beatmapApiService) {
+    // 默认设置 param，适合比赛监听使用
+    public MatchCalculate(@NonNull Match match, OsuBeatmapApiService beatmapApiService) {
+        var param = new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true);
+
+        this.match = match;
+        this.beatmapApiService = beatmapApiService;
+
+        getRounds(param);
+        getScores(param);
+        getPlayers();
+
+        this.matchData = new MatchData(param);
+    }
+
+    public MatchCalculate(@NonNull Match match, int skip, OsuBeatmapApiService beatmapApiService) {
+        var param = new MatchCalculate.CalculateParam(skip, 0, null, 1d, true, true);
+
+        this.match = match;
+        this.beatmapApiService = beatmapApiService;
+
+        getRounds(param);
+        getScores(param);
+        getPlayers();
+
+        this.matchData = new MatchData(param);
+    }
+
+    public MatchCalculate(@NonNull Match match, CalculateParam param, OsuBeatmapApiService beatmapApiService) {
         this.match = match;
         this.beatmapApiService = beatmapApiService;
 

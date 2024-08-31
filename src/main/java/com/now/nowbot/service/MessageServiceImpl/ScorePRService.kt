@@ -273,26 +273,17 @@ class ScorePRService(
         @JvmStatic
         @Throws(Exception::class)
         fun getScore4PanelE5(user: OsuUser, score: Score, beatmapApiService: OsuBeatmapApiService): PanelE5Param {
-            val b = score.beatMap
+            val beatmap = score.beatMap
+            val original = DataUtil.getOriginal(beatmap)
 
             beatmapApiService.applyBeatMapExtend(score)
-
-            val original = HashMap<String, Any>(6)
-            original["cs"] = b.cs
-            original["ar"] = b.ar
-            original["od"] = b.od
-            original["hp"] = b.hp
-            original["bpm"] = b.bpm
-            original["drain"] = b.hitLength
-            original["total"] = b.totalLength
-
             beatmapApiService.applySRAndPP(score)
 
             val attributes = beatmapApiService.getStatistics(score)
             attributes["full_pp"] = beatmapApiService.getFcPP(score).pp
             attributes["perfect_pp"] = beatmapApiService.getMaxPP(score).pp
 
-            val density = beatmapApiService.getBeatmapObjectGrouping26(b)
+            val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
             return PanelE5Param(user, score, density, progress, original, attributes)

@@ -246,7 +246,7 @@ class HelpService(
         }
     }
 
-    override fun reply(event: MessageEvent, param: String): MessageChain {
+    override fun reply(event: MessageEvent, param: String): MessageChain? {
         return QQMsgUtil.getImage(getHelpPicture(param, imageService))
     }
 }
