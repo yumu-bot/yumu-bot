@@ -413,6 +413,7 @@ public class MatchCalculate {
         private void calculateAMG() {
             playerDataMap.values().forEach(player -> {
                 player.calculateRWS();
+                player.calculateTMG();
                 player.calculateAverageScore();
                 player.setARC(rounds.size());
                 roundAMG += player.getAMG();
@@ -422,11 +423,9 @@ public class MatchCalculate {
 
         private void calculateMQ() {
             playerDataMap.values().forEach(player -> {
-                player.calculateMQ(roundAMG / playerCount); //除以的是该玩家所有人数
+                player.calculateMQ(roundAMG / playerCount); //除以的是所有玩家数
 
-                if (player.getMQ() < minMQ) {
-                    minMQ = player.getMQ();
-                }
+                minMQ = Math.min(minMQ, player.getMQ());
             });
         }
 
@@ -791,11 +790,14 @@ public class MatchCalculate {
             }
         }
 
-        public void calculateAverageScore() {
+        // 注意。Series 中，不需要再次统计 TMG。
+        public void calculateTMG() {
             for (Double RRA : RRAs) {
                 TMG += RRA;
             }
+        }
 
+        public void calculateAverageScore() {
             if (!RRAs.isEmpty()) {
                 AMG = TMG / RRAs.size();
             }

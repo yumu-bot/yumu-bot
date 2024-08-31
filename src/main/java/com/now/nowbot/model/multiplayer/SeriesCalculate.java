@@ -85,9 +85,7 @@ public class SeriesCalculate extends MatchCalculate {
             this.teamVs = dataList.getFirst().isTeamVs();
             this.matchCount = dataList.size();
 
-
             for (var d : dataList) {
-                this.playerCount += d.getPlayerCount();
                 this.roundCount += d.getRoundCount();
                 this.scoreCount += d.getScoreCount();
 
@@ -115,6 +113,8 @@ public class SeriesCalculate extends MatchCalculate {
             for (var e : playerDataMap.entrySet()) {
                 if (e.getValue().TMG <= 0) playerDataMap.remove(e.getKey());
             }
+
+            this.playerCount = playerDataMap.size();
 
             /*
             this.playerDataMap.putAll(dataList.getFirst().getPlayerDataMap());
@@ -147,6 +147,7 @@ public class SeriesCalculate extends MatchCalculate {
 
             for (var player : playerDataList) {
                 player.setTeam(null);
+                player.calculateRWS();
                 player.calculateTotalScore();
                 player.calculateAverageScore();
                 seriesAMG += player.getAMG();
@@ -155,18 +156,15 @@ public class SeriesCalculate extends MatchCalculate {
             for (var player : playerDataList) {
                 player.calculateMQ(seriesAMG / playerCount); //除以的是该玩家所有人数
 
-                if (player.getMQ() < minMQ) {
-                    minMQ = player.getMQ();
-                }
+                minMQ = Math.min(minMQ, player.getMQ());
             }
 
-            for (var player : playerDataList) {
-                calculateScalingFactor();
+            calculateScalingFactor();
 
-                player.calculateDRA(playerCount, scoreCount);
+            for (var player : playerDataList) {
                 player.calculateERA(minMQ, scalingFactor);
+                player.calculateDRA(playerCount, scoreCount);
                 player.calculateMRA();
-                player.calculateRWS();
             }
 
             for (var player : playerDataList) {
@@ -185,10 +183,11 @@ public class SeriesCalculate extends MatchCalculate {
 
         //缩放因子 Scaling Factor
         private void calculateScalingFactor() {
-            double scalingFactor = 2D / (1D + Math.exp(0.5D - 0.25D * playerCount)) - 1D;
-            if (playerCount <= 2) scalingFactor = 0D;
-
-            this.scalingFactor = scalingFactor;
+            if (playerCount <= 2) {
+                scalingFactor = 0d;
+            } else {
+                scalingFactor = 2d / (1d + Math.exp(0.5d - 0.25d * playerCount)) - 1d;
+            }
         }
 
         private void calculateIndex() {
