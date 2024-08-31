@@ -156,7 +156,7 @@ enum class Instruction(val pattern: Pattern) {
         appendGroup(MAYBE) {
             append(REG_HASH)
             appendMatchLevel(EXIST)
-            appendCaptureGroup(FLAG_DAY, REG_NUMBER)
+            appendCaptureGroup(FLAG_DAY, REG_NUMBER, MORE)
         }
     }),
 
@@ -492,6 +492,13 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup("value", REG_NUMBER_DECIMAL, EXIST, EXIST)
         appendSpace()
         appendMod(plusMust = true)
+    }),
+
+    TEST_MATCH_START(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("teststart", "ts")
+        appendID()
+        appendSpace()
+        appendCaptureGroup("round", REG_NUMBER, MORE)
     }),
 
     DEPRECATED_BPHT(CommandPatternBuilder.create {

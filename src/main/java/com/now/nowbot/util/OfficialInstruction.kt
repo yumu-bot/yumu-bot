@@ -101,7 +101,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendGroup(MAYBE) {
             append(REG_HASH)
             appendMatchLevel(EXIST)
-            appendCaptureGroup(FLAG_DAY, REG_NUMBER)
+            appendCaptureGroup(FLAG_DAY, REG_NUMBER, MORE)
         }
     }),
 
@@ -284,7 +284,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
 // 检查正则
 fun main() {
-    val test: String? = "/h"
+    val test: String? = "/i"
     for (i in OfficialInstruction.entries) {
         if (test != null) {
             if (i.pattern.matcher(test).find()) {
