@@ -1,6 +1,7 @@
 package com.now.nowbot.model.JsonData;
 
 import com.fasterxml.jackson.annotation.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -8,7 +9,7 @@ import java.util.Map;
 @JsonIgnoreProperties(ignoreUnknown = true) // 允许忽略json没有的值赋为空
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY) //扫描非public的值并注入
-public class MicroUser {
+public class MicroUser implements Comparable<MicroUser> {
     @JsonProperty("avatar_url")
     String avatarUrl;
     @JsonProperty("cover_url")
@@ -209,5 +210,10 @@ public class MicroUser {
     @Override
     public String toString() {
         return STR."MicroUser{avatar='\{avatarUrl}\{'\''}, group='\{group}\{'\''}, id=\{id}, active=\{active}, bot=\{isBot}, deleted=\{isDeleted}, online=\{isOnline}, supporter=\{isSupporter}, lastTime='\{lastTime}\{'\''}, pmOnly=\{pmFriendsOnly}, name='\{userName}\{'\''}, countryCode='\{countryCode}\{'\''}, country=\{country}, cover=\{cover}, statistics=\{statistics}\{'}'}";
+    }
+
+    @Override
+    public int compareTo(@NotNull MicroUser u) {
+        return Math.toIntExact(this.getId() - u.getId());
     }
 }

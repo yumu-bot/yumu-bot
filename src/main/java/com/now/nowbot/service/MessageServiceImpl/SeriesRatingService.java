@@ -248,7 +248,7 @@ public class SeriesRatingService implements MessageService<Matcher> {
 
             int v;
             String s = dataStrArray[i];
-            if (s == null || s.isBlank()) continue;
+            if (! StringUtils.hasText(s)) continue;
 
             if (s.contains("[")) {
                 status = Status.REMOVE_RECEIVED;

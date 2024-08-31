@@ -85,22 +85,38 @@ public class SeriesCalculate extends MatchCalculate {
             this.teamVs = dataList.getFirst().isTeamVs();
             this.matchCount = dataList.size();
 
+
             for (var d : dataList) {
                 this.playerCount += d.getPlayerCount();
                 this.roundCount += d.getRoundCount();
                 this.scoreCount += d.getScoreCount();
 
-                this.averageStar += d.averageStar;
+                this.averageStar += d.averageStar * d.getRoundCount();
             }
 
-            this.averageStar /= dataList.size();
+            this.averageStar /= this.roundCount;
 
             this.firstMapSID = dataList.getFirst().firstMapSID;
 
-            initPlayerDataMap();
+            // initPlayerDataMap();
 
-            calculate();
+            // 合并 playerDataMap
+            for (var d : dataList) {
+                for (var e : d.getPlayerDataMap().entrySet()) {
+                    if (playerDataMap.containsKey(e.getKey())) {
+                        playerDataMap.put(e.getKey(), MatchCalculate.merge2PlayerData(playerDataMap.get(e.getKey()), e.getValue()));
+                    } else {
+                        playerDataMap.put(e.getKey(), e.getValue());
+                    }
+                }
+            }
 
+            // 去掉没打的
+            for (var e : playerDataMap.entrySet()) {
+                if (e.getValue().TMG <= 0) playerDataMap.remove(e.getKey());
+            }
+
+            /*
             this.playerDataMap.putAll(dataList.getFirst().getPlayerDataMap());
 
             for (var d : dataList) {
@@ -109,13 +125,20 @@ public class SeriesCalculate extends MatchCalculate {
                         (k, v) -> m.merge(k, v, MatchCalculate::merge2PlayerData)
                 );
             }
+
+             */
+
+            calculate();
         }
 
+        /*
         private void initPlayerDataMap() {
             playerDataMap = players.stream().collect(
                     Collectors.toMap(MicroUser::getUserID, PlayerData::new, (a, b) -> b, LinkedHashMap::new)
             );
         }
+
+         */
 
         //玩家数据已经录入组，现在只需要遍历
         public void calculate(){

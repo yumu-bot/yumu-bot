@@ -178,7 +178,7 @@ class BPAnalysisService(
 
             for (i in 0 until bpSize) {
                 val s = bps[i]
-                val b = s!!.beatMap
+                val b = s.beatMap
 
                 run {
                     val m = BeatMap4BA(
@@ -309,7 +309,7 @@ class BPAnalysisService(
 
             val rankAttr: MutableList<Attr?> = ArrayList(rankMap.size)
             run {
-                val fcList = rankMap.remove("FC")
+                val fcList = rankMap?.remove("FC")
                 val fc: Attr
                 if (fcList.isNullOrEmpty()) {
                     fc = Attr("FC", 0, 0f, 0f)
