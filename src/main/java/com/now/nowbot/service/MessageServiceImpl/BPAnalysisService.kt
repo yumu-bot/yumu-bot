@@ -309,9 +309,9 @@ class BPAnalysisService(
 
             val rankAttr: MutableList<Attr?> = ArrayList(rankMap.size)
             run {
-                val fcList = rankMap.remove("FC")!!
+                val fcList = rankMap.remove("FC")
                 val fc: Attr
-                if (CollectionUtils.isEmpty(fcList)) {
+                if (fcList.isNullOrEmpty()) {
                     fc = Attr("FC", 0, 0f, 0f)
                 } else {
                     val ppSum = fcList.reduceOrNull { acc, fl -> acc + fl } ?: 0f

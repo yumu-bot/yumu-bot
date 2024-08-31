@@ -338,12 +338,10 @@ enum class Instruction(val pattern: Pattern) {
         append(REG_EXCLAMINATION)
         appendSpace()
         appendGroup(MAYBE, "ym")
-        append(
-            "(?<uu>(u{1,2})(seriesrating|series|sra|sa))",
-            "(ym)?(?<main>(seriesrating|series|sa|sra))",
-            "(ym)?(?<csv>(csvseriesrating|csvseries|csa|cs))"
+        appendGroup(
+            "((?<uu>(u{1,2})(seriesrating|series|sra|sa)))|((ym)?(?<main>(seriesrating|series|sa|sra)))|((ym)?(?<csv>(csvseriesrating|csvseries|csa|cs)))"
         )
-
+        appendSpace()
         appendGroup(MAYBE) {
             append(REG_HASH)
             appendCaptureGroup("name", REG_ANYTHING, MORE)
