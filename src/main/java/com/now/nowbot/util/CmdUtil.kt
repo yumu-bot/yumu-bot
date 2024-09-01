@@ -24,6 +24,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
 import org.springframework.util.StringUtils
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 object CmdUtil {
@@ -132,13 +133,6 @@ object CmdUtil {
                 val user = getOsuUser(id, mode.data)
                 result = CmdRange(user, range.start, range.end)
                 break
-            } catch (e: WebClientResponseException.Forbidden) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, range.data)
-            } catch (e: WebClientResponseException.NotFound) {
-                if (! Pattern.compile("\\d+[\\-－—]\\d+").matcher(range.data.toString()).find()) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, range.data)
-                }
-                // 其余的忽略
             } catch (ignore: Exception) {
                 // 其余的忽略
             }

@@ -10,6 +10,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageServiceImpl.FriendService.FriendParam
 import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.ServiceException.FriendException
 import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil
@@ -54,7 +55,10 @@ class FriendService(
             // 如果不是自己代表是 !f xxx / @
             val u = range.data
             data.value = FriendParam(0, 0, u?.userID ?: 0, u?.username)
+        } else if (m.group("ur").isNotBlank()) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, m.group("ur"))
         } else {
+
             val offset = range.getValue(0, false)
             val limit = range.getValue(12, true)
             data.value = FriendParam(offset, limit, 0)
@@ -74,12 +78,10 @@ class FriendService(
 
         if (binUser == null) {
             throw FriendException(FriendException.Type.FRIEND_Me_NoBind)
-            /*
-            } else if (!binUser.isAuthorized) {
-                throw FriendException(FriendException.Type.FRIEND_Me_NoPermission)
-                // 无权限
+        } else if (!binUser.isAuthorized) {
+            throw FriendException(FriendException.Type.FRIEND_Me_NoPermission)
+            // 无权限
 
-                 */
         }
 
         if (param!!.uid != 0L) {
