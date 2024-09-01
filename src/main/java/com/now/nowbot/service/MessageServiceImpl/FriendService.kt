@@ -102,7 +102,11 @@ class FriendService(
         val uid = param.uid
         val friend = friendList.find { it?.userID == uid }
 
-        val other = bindDao.getBindUser(uid) ?: null
+        val other = try {
+            bindDao.getBindUser(uid) ?: null
+        } catch (ignored: Exception) {
+            null
+        }
 
         val isBind = other.isNotNull() && other!!.isAuthorized
 
