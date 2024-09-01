@@ -74,9 +74,12 @@ class FriendService(
 
         if (binUser == null) {
             throw FriendException(FriendException.Type.FRIEND_Me_NoBind)
-        } else if (!binUser.isAuthorized) {
-            throw FriendException(FriendException.Type.FRIEND_Me_NoPermission)
-            // 无权限
+            /*
+            } else if (!binUser.isAuthorized) {
+                throw FriendException(FriendException.Type.FRIEND_Me_NoPermission)
+                // 无权限
+
+                 */
         }
 
         if (param!!.uid != 0L) {
@@ -102,11 +105,12 @@ class FriendService(
         val uid = param.uid
         val friend = friendList.find { it?.userID == uid }
 
-        val other = try {
-            bindDao.getBindUser(uid) ?: null
-        } catch (ignored: Exception) {
-            null
-        }
+        val other =
+                try {
+                    bindDao.getBindUser(uid) ?: null
+                } catch (ignored: Exception) {
+                    null
+                }
 
         val isBind = other.isNotNull() && other!!.isAuthorized
 
@@ -136,11 +140,11 @@ class FriendService(
             }
         } else {
             if (isFollowed) {
-                "你还没有添加了 ${param.name} 作为你的好友，但对方似乎已经悄悄将你添加为他的好友。"
+                "你还没有将 ${param.name} 添加为你的好友，但对方似乎已经悄悄添加了你。"
             } else if (isBind) {
                 "你们暂未互相成为好友。"
             } else {
-                "你还没有添加了 ${param.name} 作为你的好友，也不知道对方有没有添加你。"
+                "你还没有将 ${param.name} 添加为你的好友，也不知道对方有没有添加你。"
             }
         }
     }
