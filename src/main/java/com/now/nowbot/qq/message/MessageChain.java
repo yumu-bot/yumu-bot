@@ -12,6 +12,7 @@ public class MessageChain {
             msgChain.addMessage(new ImageMessage(path));
             return this;
         }
+
         public MessageChainBuilder addImage(byte[] data) {
             msgChain.addMessage(new ImageMessage(data));
             return this;
@@ -34,7 +35,13 @@ public class MessageChain {
             return this;
         }
 
+        public boolean isEmpty() {
+            return msgChain.isEmpty();
+        }
 
+        public boolean isNotEmpty() {
+            return !isEmpty();
+        }
 
         public MessageChain build() {
             return msgChain;
@@ -61,6 +68,13 @@ public class MessageChain {
         return this;
     }
 
+    public boolean isEmpty() {
+        return messageList.isEmpty();
+    }
+
+    public boolean isNotEmpty() {
+        return !isEmpty();
+    }
     public String getRawMessage() {
         var sb = new StringBuilder();
         messageList.forEach(m -> sb.append(m.toString()));

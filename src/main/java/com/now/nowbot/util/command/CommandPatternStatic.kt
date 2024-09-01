@@ -117,3 +117,6 @@ val REG_RANGE: String = "((100|$REG_NUMBER_12)($REG_HYPHEN$REG_NUMBER_13)?)"
 @Language("RegExp")
 val REG_RANGE_DAY: String = "($REG_NUMBER_13($REG_HYPHEN$REG_NUMBER_13)?)"
 
+@Language("RegExp")
+val REG_COVER: String = "[A-Za-z@12]"
+

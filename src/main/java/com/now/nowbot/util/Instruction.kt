@@ -313,6 +313,17 @@ enum class Instruction(val pattern: Pattern) {
         }
     }),
 
+    GET_COVER(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("getcover", "gc")
+        appendGroup(MAYBE) {
+            append(REG_COLON)
+            appendSpace()
+            appendCaptureGroup("type", REG_COVER)
+        }
+        appendSpace()
+        appendCaptureGroup(FLAG_DATA, REG_NUMBER_SEPERATOR, MORE)
+    }),
+
     // #5 osu! 比赛指令
     MATCH_LISTENER(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("make\\s*love", "(match)?listen(er)?", "ml", "li")
