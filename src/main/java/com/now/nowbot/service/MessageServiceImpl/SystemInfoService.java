@@ -3,6 +3,7 @@ package com.now.nowbot.service.MessageServiceImpl;
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.util.Instruction;
 import org.springframework.stereotype.Service;
 
 import java.lang.management.ManagementFactory;
@@ -15,7 +16,9 @@ public class SystemInfoService implements MessageService<Boolean> {
 
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<Boolean> data) throws Throwable {
-        return messageText.equals("!sys");
+        var matcher = Instruction.SYSTEM_INFO.matcher(messageText);
+
+        return matcher.find();
     }
 
     @Override
@@ -27,8 +30,7 @@ public class SystemInfoService implements MessageService<Boolean> {
         var m = ManagementFactory.getMemoryMXBean();
         var t = ManagementFactory.getThreadMXBean();
 
-        sb.append("HeapMemory 已使用: ").append(m.getHeapMemoryUsage().getUsed() / 1024 / 1024)
-                .append("M\n");
+        sb.append("已使用堆内存: ").append(m.getHeapMemoryUsage().getUsed() / 1024 / 1024).append(" MB\n");
         sb.append("当前线程数: ").append(t.getThreadCount());
 
         event.getSubject().sendMessage(sb.toString());

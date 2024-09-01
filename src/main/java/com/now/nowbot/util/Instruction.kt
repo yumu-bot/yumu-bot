@@ -88,6 +88,10 @@ enum class Instruction(val pattern: Pattern) {
         }
     }),
 
+    SYSTEM_INFO(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("systeminfo", "sys", "si")
+    }),
+
     // #2 osu! 成绩指令
     SET_MODE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("setmode", "mode", "sm", "mo")

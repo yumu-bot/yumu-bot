@@ -103,8 +103,8 @@ public class IocAllReadyRunner implements CommandLineRunner {
             var node = JacksonUtil.parseObject(b, JsonNode.class);
             if (Objects.isNull(node)) throw new IOException();
             var map = SystemInfoService.INFO_MAP;
-            map.put("构建时间", node.get("git.build.time").asText("未知"));
-            map.put("代码版本", node.get("git.commit.id.abbrev").asText("未知"));
+            map.put("最近构建时间", node.get("git.build.time").asText("未知"));
+            map.put("最近代码版本", node.get("git.commit.id.abbrev").asText("未知"));
         } catch (Exception e) {
             log.error("解析 git json 出错", e);
         }
