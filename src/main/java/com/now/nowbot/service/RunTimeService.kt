@@ -57,14 +57,19 @@ class RunTimeService : SchedulingConfigurer {
         bindDao!!.refreshOldUserToken(userApiService)
     }
 
-    @Scheduled(cron = "0 30 16 30 8 *")
+    @Scheduled(cron = "0 5 10 1 9 *")
     fun count() {
         try {
             val service = applicationContext!!.getBean(NewbieService::class.java)
             val startDay = LocalDate.of(2024, 8, 12).atStartOfDay()
-            val write = Files.newBufferedWriter(Path("/home/spring/res1.csv"))
+            val write = Files.newBufferedWriter(Path("/home/spring/res2.csv"))
             write.use {
-                service.updateUserPP(startDay, LocalDate.of(2024, 8, 30), write)
+                service.updateUserPP(
+                    startDay,
+                    LocalDate.of(2024, 9, 1).atStartOfDay(),
+                    LocalDate.of(2024, 8, 30),
+                    write
+                )
             }
             log.info("统计完成")
         } catch (e: Exception) {
@@ -103,7 +108,7 @@ class RunTimeService : SchedulingConfigurer {
         val today = LocalDate.now().atStartOfDay()
 
         newbieService
-            .countData(users, startDay, today) {
+            .countDataByQQ(users, startDay, today) {
                 val user = NewbiePlayCount(it)
                 newbiePlayCount.saveAndFlush(user)
 

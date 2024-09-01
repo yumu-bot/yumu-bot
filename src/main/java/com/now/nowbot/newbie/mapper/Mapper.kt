@@ -126,12 +126,12 @@ class NewbieService(
     }
 
     fun countData(
-        qqIds: List<Long>,
+        uid: List<Int>,
         start: LocalDateTime,
         end: LocalDateTime,
         callback: ((UserCount) -> Unit) = { }
     ): List<UserCount> {
-        val users = mapper.queryBind(qqIds)
+        val users = uid
         val under3K = mutableSetOf<Int>()
         val userPP = mutableMapOf<Int, Float>()
 
@@ -150,10 +150,20 @@ class NewbieService(
         return getAll(under3K.toList(), timeRange, userPP, callback = callback)
     }
 
+    fun countDataByQQ(
+        qqIds: List<Long>,
+        start: LocalDateTime,
+        end: LocalDateTime,
+        callback: ((UserCount) -> Unit) = { }
+    ): List<UserCount> {
+        val users = mapper.queryBind(qqIds)
+        return countData(users, start, end, callback)
+    }
+
     fun countToday(qqIds: List<Long>): List<UserCount> {
         val todayTime = LocalDate.now().atTime(0, 0, 0)
         val yesterdayTime = todayTime.minusDays(1)
-        return countData(qqIds, todayTime, yesterdayTime)
+        return countDataByQQ(qqIds, todayTime, yesterdayTime)
     }
 
 
@@ -178,26 +188,22 @@ class NewbieService(
         return result
     }
 
-    fun updateUserPP(date: LocalDateTime, selectDate: LocalDate, out: BufferedWriter) {
+    fun updateUserPP(date: LocalDateTime, end: LocalDateTime, selectDate: LocalDate, out: BufferedWriter) {
         out.write("name, uid, pp, pc, tth, pt")
         out.newLine()
         val all = newbiePlayCountRepository.findAllByDate(selectDate)
-        val new = mutableListOf<NewbiePlayCount>()
-        all.forEach {
-            try {
-                val uid = it.uid ?: throw Exception()
-                val nowPP = it.pp ?: throw Exception()
-                val u = mapper.getUserPP(uid.toLong(), date) ?: throw Exception()
-                it.pp = u.pp
-                new.add(it)
-                val upPP = nowPP - u.pp
-                out.write("${u.name}, ${u.id}, ${upPP}, ${it.playCount}, ${it.playHits}, ${it.playTime}")
-                out.newLine()
-            } catch (e: Exception) {
-                log.error("[${it.uid}] update user pp error", e)
-            }
+        val newbie = all.map { it.uid!! }
+        countData(newbie, date, end) {
+            val user = NewbiePlayCount(it)
+            val uid = it.id
+            val nowPP = it.pp
+            val newUser = mapper.getUserPP(uid.toLong(), date)!!
+            user.pp = newUser.pp
+            newbiePlayCountRepository.saveAndFlush(user)
+            val upPP = nowPP - newUser.pp
+            out.write("${newUser.name}, ${newUser.id}, ${upPP}, ${it.playCount}, ${it.playCount}, ${it.playTime}")
+            out.newLine()
         }
-        newbiePlayCountRepository.saveAll(new)
     }
 
     data class TimeRange(
