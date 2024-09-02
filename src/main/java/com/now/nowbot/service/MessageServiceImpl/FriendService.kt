@@ -186,7 +186,7 @@ class FriendService(
         }
 
         var i = offset
-        while (i < limit && i < friendList.size) {
+        while (i < offset + limit && i < friendList.size) {
             friends.add(friendList[i])
             i++
         }
