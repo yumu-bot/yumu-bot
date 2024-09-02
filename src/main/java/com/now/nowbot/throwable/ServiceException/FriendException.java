@@ -13,7 +13,7 @@ public class FriendException extends TipsException {
         FRIEND_Client_NoFriend("我叫奇异博士找遍了 2000 条世界线，\n都没找到你的游戏好友。"),//查询_好友太少
         FRIEND_Send_Error("好友发送失败，请耐心等待问题修复。"),//默认报错
         ;//逗号分隔
-        final String message;
+        public final String message;
         Type(String message) {
             this.message = message;
         }
