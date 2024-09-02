@@ -4,28 +4,26 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
 import com.now.nowbot.model.JsonData.MicroUser
 import com.now.nowbot.model.JsonData.OsuUser
-import com.now.nowbot.qq.contact.Contact
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageServiceImpl.FriendService.FriendParam
 import com.now.nowbot.service.OsuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.ServiceException.FriendException
 import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.QQMsgUtil
 import com.yumu.core.extensions.isNotNull
-import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.CollectionUtils
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Service("FRIEND")
 class FriendService(
@@ -38,7 +36,7 @@ class FriendService(
         val offset: Int,
         val limit: Int,
         val uid: Long = 0,
-        val name: String? = null
+        val user: OsuUser? = null
     )
 
     override fun isHandle(
@@ -56,11 +54,11 @@ class FriendService(
         if (range.data != null && !isMyself.get()) {
             // 如果不是自己代表是 !f xxx / @
             val u = range.data
-            data.value = FriendParam(0, 0, u?.userID ?: 0, u?.username)
+            data.value = FriendParam(0, 0, u?.userID ?: 0, u)
         } else {
-            val offset = range.getValue(0, false)
-            val limit = range.getValue(12, true)
-            data.value = FriendParam(offset, limit, 0)
+            val offset = range.getValue(0, true)
+            val limit = range.getValue(12, false)
+            data.value = FriendParam(offset, limit, 0, range.data)
         }
         return true
     }
@@ -108,6 +106,7 @@ class FriendService(
         friendList: MutableList<MicroUser?>
     ): String {
         val uid = param.uid
+        val name = param.user?.username ?: binUser.username
         val friend = friendList.find { it?.userID == uid }
 
         val other = try {
@@ -135,19 +134,19 @@ class FriendService(
 
         return if (isFollowing) {
             if (isFollowed) {
-                "你已经与 ${param.name} 互相成为好友了。"
+                "你已经与 $name 互相成为好友了。"
             } else if (isBind) {
-                "你已经添加了 ${param.name} 作为你的好友，但对方似乎还没有添加你。"
+                "你已经添加了 $name 作为你的好友，但对方似乎还没有添加你。"
             } else {
-                "你已经添加了 ${param.name} 作为你的好友，但不知道对方有没有添加你。"
+                "你已经添加了 $name 作为你的好友，但不知道对方有没有添加你。"
             }
         } else {
             if (isFollowed) {
-                "你还没有将 ${param.name} 添加为你的好友，但对方似乎已经悄悄添加了你。"
+                "你还没有将 $name 添加为你的好友，但对方似乎已经悄悄添加了你。"
             } else if (isBind) {
                 "你们暂未互相成为好友。"
             } else {
-                "你还没有将 ${param.name} 添加为你的好友，也不知道对方有没有添加你。"
+                "你还没有将 $name 添加为你的好友，也不知道对方有没有添加你。"
             }
         }
     }
@@ -164,7 +163,7 @@ class FriendService(
             throw FriendException(FriendException.Type.FRIEND_Client_ParameterOutOfBounds)
         }
 
-        val osuUser = try {
+        val osuUser = param.user ?: try {
             userApiService.getPlayerInfo(binUser)
         } catch (e: HttpClientErrorException.Unauthorized) {
             throw FriendException(FriendException.Type.FRIEND_Me_TokenExpired)

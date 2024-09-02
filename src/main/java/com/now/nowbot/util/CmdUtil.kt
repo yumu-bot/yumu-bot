@@ -32,10 +32,10 @@ object CmdUtil {
     @JvmStatic
     @Throws(TipsException::class)
     fun getUserWithOutRange(
-            event: MessageEvent,
-            matcher: Matcher,
-            mode: CmdObject<OsuMode>,
-            isMyself: AtomicBoolean,
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
     ): OsuUser? {
         isMyself.set(false)
         var user = getOsuUser(event, matcher, mode)
@@ -57,10 +57,10 @@ object CmdUtil {
     @JvmStatic
     @Throws(TipsException::class)
     fun getUserWithRange(
-            event: MessageEvent,
-            matcher: Matcher,
-            mode: CmdObject<OsuMode>,
-            isMyself: AtomicBoolean
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean
     ): CmdRange<OsuUser> {
         isMyself.set(false)
         val range = getUserAndRange(matcher, mode)
@@ -78,12 +78,12 @@ object CmdUtil {
      */
     @JvmStatic
     fun getUserAndRangeWithBackoff(
-            event: MessageEvent,
-            matcher: Matcher,
-            mode: CmdObject<OsuMode>,
-            isMyself: AtomicBoolean,
-            text: String,
-            vararg cmd: String,
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
+        text: String,
+        vararg cmd: String,
     ): CmdRange<OsuUser> {
         try {
             return getUserWithRange(event, matcher, mode, isMyself)
@@ -106,7 +106,7 @@ object CmdUtil {
             mode.data = OsuMode.DEFAULT
         }
 
-        val text: String = matcher.group(FLAG_USER_AND_RANGE) ?: ""
+        val text: String = (matcher.group(FLAG_USER_AND_RANGE) ?: "").trim()
         if (text.isBlank()) {
             return CmdRange()
         }
@@ -116,11 +116,11 @@ object CmdUtil {
         }
         // -1 才是没找到
         val ranges =
-                if (text.indexOf(CHAR_HASH) >= 0 || text.indexOf(CHAR_HASH_FULL) >= 0) {
-                    parseNameAndRangeHasHash(text)
-                } else {
-                    parseNameAndRangeWithoutHash(text)
-                }
+            if (text.indexOf(CHAR_HASH) >= 0 || text.indexOf(CHAR_HASH_FULL) >= 0) {
+                parseNameAndRangeHasHash(text)
+            } else {
+                parseNameAndRangeWithoutHash(text)
+            }
 
         var result = CmdRange<OsuUser>()
         for (range in ranges) {
@@ -140,8 +140,9 @@ object CmdUtil {
 
         // 使其顺序
         if (Objects.nonNull(result.end) &&
-                Objects.nonNull(result.start) &&
-                result.start!! > result.end!!) {
+            Objects.nonNull(result.start) &&
+            result.start!! > result.end!!
+        ) {
             val temp = result.start
             result.start = result.end
             result.end = temp
@@ -199,7 +200,7 @@ object CmdUtil {
         // 第二组数字
         i = 0
 
-        while (isNumber(text[index].also { tempChar = it })) {
+        while (index >= 0 && isNumber(text[index].also { tempChar = it })) {
             index--
             i++
         }
@@ -209,11 +210,11 @@ object CmdUtil {
             return ranges
         }
 
-        tempRange =
-                CmdRange(
-                        text.substring(0, index + 1).trim(),
-                        rangeN,
-                        text.substring(index + 1, index + i + 1).toInt())
+        tempRange = CmdRange(
+            text.substring(0, index + 1).trim(),
+            rangeN,
+            text.substring(index + 1, index + i + 1).toInt()
+        )
 
         if (tempChar != ' ') {
             // 优先认为紧贴的数字是名字的一部分, 交换位置
@@ -259,9 +260,9 @@ object CmdUtil {
      */
     @Throws(TipsException::class)
     private fun getOsuUser(
-            event: MessageEvent,
-            matcher: Matcher,
-            mode: CmdObject<OsuMode>
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>
     ): OsuUser? {
         val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
 
@@ -271,7 +272,8 @@ object CmdUtil {
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
             try {
                 qq = matcher.group(FLAG_QQ_ID)?.toLong() ?: 0
-            } catch (ignore: RuntimeException) {}
+            } catch (ignore: RuntimeException) {
+            }
         }
 
         if (qq != 0L) {
@@ -283,7 +285,8 @@ object CmdUtil {
         if (matcher.namedGroups().containsKey(FLAG_UID)) {
             try {
                 uid = matcher.group(FLAG_UID)?.toLong() ?: 0
-            } catch (ignore: RuntimeException) {}
+            } catch (ignore: RuntimeException) {
+            }
             if (uid != 0L) return getOsuUser(uid, mode.data)
         }
 
@@ -414,7 +417,7 @@ object CmdUtil {
     private const val OSU_MIN_INDEX = 2
 
     private val SPLIT_RANGE = "[\\-－ ]".toRegex()
-    private val JUST_RANGE: Pattern = Pattern.compile("^\\s*(\\d{1,2}[\\-－ ]+)?\\d{1,3}\\s*$")
+    private val JUST_RANGE: Pattern = Pattern.compile("^\\s*(\\d{1,3}[\\-－ ]+)?\\d{1,3}\\s*$")
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
     private var bindDao: BindDao? = null
     private var userApiService: OsuUserApiService? = null
@@ -443,17 +446,17 @@ data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int
      * false) 返回 20 如果 range 为 [null, null], getValue(20, true) 返回 20, getValue(20, false) 返回 20
      */
     fun getValue(default: Int = 20, important: Boolean) =
-            if (start != null && end != null) {
-                if (important) {
-                    start!!
-                } else {
-                    end!!
-                }
-            } else if (important && start != null) {
+        if (start != null && end != null) {
+            if (important) {
                 start!!
-            } else if (important && end != null) {
-                end!!
             } else {
-                default
+                end!!
             }
+        } else if (important && start != null) {
+            start!!
+        } else if (important && end != null) {
+            end!!
+        } else {
+            default
+        }
 }
