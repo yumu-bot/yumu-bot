@@ -57,7 +57,7 @@ class FriendService(
             data.value = FriendParam(0, 0, u?.userID ?: 0, u)
         } else {
             val offset = range.getValue(0, true)
-            val limit = range.getValue(12, false)
+            val limit = range.getValue(offset + 12, false) - offset
             data.value = FriendParam(offset, limit, 0, range.data)
         }
         return true
