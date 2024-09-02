@@ -378,25 +378,23 @@ public class BindService implements MessageService<BindService.BindParam> {
             );
             return;
         }
-        if (from.getId() == 728433725L) {
-            from.sendMessage("你不许再答题了!");
-            return;
-        }
-        if (check(event.getSender().getId())) {
-            from.sendMessage(BindException.Type.BIND_TooManyRequests.message);
-            return;
-        }
-        var a = generateQuestion(from);
-        var lock = ASyncMessageUtil.getLock(event, 2 * 60000);
-        event = lock.get();
+        // 官方bot没法发链接, 都使用 name 绑定, 拦着提问也没啥意义了
+//        if (check(event.getSender().getId())) {
+//            from.sendMessage(BindException.Type.BIND_TooManyRequests.message);
+//            return;
+//        }
 
-        if (Objects.isNull(event)) {
-            throw new BindException(BindException.Type.BIND_Question_Overtime);
-        }
+//        var a = generateQuestion(from);
+//        var lock = ASyncMessageUtil.getLock(event, 2 * 60000);
+//        event = lock.get();
 
-        if (!a.contains(event.getTextMessage().trim())) {
-            throw new BindException(BindException.Type.BIND_Question_Wrong);
-        }
+//        if (Objects.isNull(event)) {
+//            throw new BindException(BindException.Type.BIND_Question_Overtime);
+//        }
+//
+//        if (!a.contains(event.getTextMessage().trim())) {
+//            throw new BindException(BindException.Type.BIND_Question_Wrong);
+//        }
 
         bindDao.bindQQ(qq, new BinUser(UID, name));
 
