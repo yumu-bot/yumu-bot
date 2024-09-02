@@ -57,10 +57,7 @@ class FriendService(
             // 如果不是自己代表是 !f xxx / @
             val u = range.data
             data.value = FriendParam(0, 0, u?.userID ?: 0, u?.username)
-        } else if (m.group("ur").isNotBlank()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, m.group("ur"))
         } else {
-
             val offset = range.getValue(0, false)
             val limit = range.getValue(12, true)
             data.value = FriendParam(offset, limit, 0)
