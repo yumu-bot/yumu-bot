@@ -62,10 +62,14 @@ enum class Instruction(val pattern: Pattern) {
 
     SWITCH(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("switch", "sw")
-        appendColonCaptureGroup(MAYBE, FLAG_QQ_GROUP, "${FLAG_QQ_GROUP}=${REG_NUMBER}")
+        appendGroup(MAYBE) {
+            append(REG_COLON)
+            appendSpace()
+            appendCaptureGroup(FLAG_QQ_GROUP, "${FLAG_QQ_GROUP}=${REG_NUMBER}", MORE)
+        }
         appendSpace()
         appendCaptureGroup("service", REG_WORD, MORE)
-        appendSpace(MORE)
+        appendSpace()
         appendCaptureGroup("operate", REG_WORD, MORE)
     }),
 
@@ -159,7 +163,7 @@ enum class Instruction(val pattern: Pattern) {
         appendModeQQUIDName()
         appendGroup(MAYBE) {
             append(REG_HASH)
-            appendMatchLevel(EXIST)
+            appendSpace()
             appendCaptureGroup(FLAG_DAY, REG_NUMBER, MORE)
         }
     }),

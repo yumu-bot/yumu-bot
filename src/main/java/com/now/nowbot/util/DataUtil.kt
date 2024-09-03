@@ -688,14 +688,14 @@ object DataUtil {
         } else if (OsuMod.hasEz(mod)) {
             ar /= 2f
         }
-        var ms = AR2MS(ar.limit()).toFloat()
+        var ms = AR2MS(ar).toFloat()
         if (OsuMod.hasDt(mod)) {
             ms /= (3f / 2f)
         } else if (OsuMod.hasHt(mod)) {
             ms /= (3f / 4f)
         }
         ar = MS2AR(ms)
-        return roundTwoDecimals(ar)
+        return round2Digits2(ar)
     }
 
     @JvmStatic
@@ -719,14 +719,14 @@ object DataUtil {
         } else if (OsuMod.hasEz(mod)) {
             od /= 2f
         }
-        var ms = OD2MS(od.limit())
+        var ms = OD2MS(od)
         if (OsuMod.hasDt(mod)) {
             ms /= (3f / 2)
         } else if (OsuMod.hasHt(mod)) {
             ms /= (3f / 4)
         }
         od = MS2OD(ms)
-        return roundTwoDecimals(od)
+        return round2Digits2(od)
     }
 
     @JvmStatic
@@ -737,7 +737,7 @@ object DataUtil {
         } else if (OsuMod.hasEz(mod)) {
             cs /= 2f
         }
-        return roundTwoDecimals(cs.limit())
+        return round2Digits2(cs.limit())
     }
 
     @JvmStatic
@@ -748,7 +748,7 @@ object DataUtil {
         } else if (OsuMod.hasEz(mod)) {
             hp /= 1.3f
         }
-        return roundTwoDecimals(hp.limit())
+        return round2Digits2(hp.limit())
     }
 
     @JvmStatic
@@ -759,7 +759,7 @@ object DataUtil {
         } else if (OsuMod.hasHt(mod)) {
             bpm *= 0.75f
         }
-        return roundTwoDecimals(bpm)
+        return round2Digits2(bpm)
     }
 
     @JvmStatic
@@ -773,7 +773,7 @@ object DataUtil {
         return Math.round(length)
     }
 
-    private fun roundTwoDecimals(value: Float): Float {
+    private fun round2Digits2(value: Float): Float {
         return BigDecimal(value.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toFloat()
     }
 
@@ -787,6 +787,7 @@ object DataUtil {
             beatMap.od = OD(Optional.ofNullable(beatMap.od).orElse(0f), mods)
             beatMap.hp = HP(Optional.ofNullable(beatMap.hp).orElse(0f), mods)
             beatMap.totalLength = Length(beatMap.totalLength.toFloat(), mods)
+            beatMap.hitLength = Length(beatMap.hitLength.toFloat(), mods)
         }
     }
 
