@@ -109,9 +109,9 @@ class InfoService(
 
         private fun getParam(event: MessageEvent, matcher: Matcher): InfoParam {
             val mode = getMode(matcher)
-            val isMyself = AtomicBoolean()
+            val isMyself = AtomicBoolean(false)
 
-            val user = getUserWithOutRange(event, matcher, mode, isMyself) ?: throw InfoException(InfoException.Type.I_Player_NotFound)
+            val user = getUserWithOutRange(event, matcher, mode, isMyself)
             val dayStr = matcher.group(FLAG_DAY)
             val day = if (StringUtils.hasText(dayStr)) try {
                 dayStr.toInt()

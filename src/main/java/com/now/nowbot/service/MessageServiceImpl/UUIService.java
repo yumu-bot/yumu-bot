@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service("UU_INFO")
 public class UUIService implements MessageService<UUIService.UUIParam> {
@@ -31,13 +30,13 @@ public class UUIService implements MessageService<UUIService.UUIParam> {
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<UUIParam> data) throws TipsException {
         var m = Instruction.UU_INFO.matcher(messageText);
-        if (m.find()) {
-            var mode = CmdUtil.getMode(m);
-            var isMyself = new AtomicBoolean();
-            var user = CmdUtil.getUserWithOutRange(event, m, mode, isMyself);
-            data.setValue(new UUIParam(user, mode.getData()));
-            return true;
-        } else return false;
+        if (!m.find()) {
+            return false;
+        }
+        var mode = CmdUtil.getMode(m);
+        var user = CmdUtil.getUserWithOutRange(event, m, mode);
+        data.setValue(new UUIParam(user, mode.getData()));
+        return true;
     }
 
     @Override
@@ -46,8 +45,7 @@ public class UUIService implements MessageService<UUIService.UUIParam> {
         var user = data.user();
         var mode = data.mode();
 
-        @SuppressWarnings("unchecked")
-        HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
+        @SuppressWarnings("unchecked") HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
 
         byte[] avatar = template.exchange(STR."https://a.ppy.sh/\{user.getUserID()}", HttpMethod.GET, httpEntity, byte[].class).getBody();
 
@@ -67,9 +65,7 @@ public class UUIService implements MessageService<UUIService.UUIParam> {
         // Muziyami(osu):10086PP
         sb.append(user.getUsername()).append(' ').append('(').append(mode).append(')').append(':').append(' ').append(Math.round(user.getPP())).append("PP").append('\n');
         // #114514 CN#1919 (LV.100(32%))
-        sb.append('#').append(user.getGlobalRank()).append(' ')
-                .append(user.getCountry().code()).append('#').append(user.getCountryRank()).append(' ')
-                .append("(LV.").append(user.getLevelCurrent()).append('(').append(user.getLevelProgress()).append("%))").append('\n');
+        sb.append('#').append(user.getGlobalRank()).append(' ').append(user.getCountry().code()).append('#').append(user.getCountryRank()).append(' ').append("(LV.").append(user.getLevelCurrent()).append('(').append(user.getLevelProgress()).append("%))").append('\n');
         // PC: 2.01w TTH: 743.52w
         sb.append("PC: ");
         long PC = user.getPlayCount();
@@ -100,14 +96,9 @@ public class UUIService implements MessageService<UUIService.UUIParam> {
         }
         sb.append(" ACC: ").append(user.getAccuracy()).append('%').append('\n');
         // ♡:320 kds:245 SVIP2
-        sb.append("♡: ").append(user.getFollowerCount())
-                .append(" kds: ").append(user.getKudosu().total()).append('\n');
+        sb.append("♡: ").append(user.getFollowerCount()).append(" kds: ").append(user.getKudosu().total()).append('\n');
         // SS:26(107) S:157(844) A:1083
-        sb.append("SS: ").append(user.getStatistics().getSS())
-                .append('(').append(user.getStatistics().getSSH()).append(')')
-                .append(" S: ").append(user.getStatistics().getS())
-                .append('(').append(user.getStatistics().getSH()).append(')')
-                .append(" A: ").append(user.getStatistics().getA()).append('\n');
+        sb.append("SS: ").append(user.getStatistics().getSS()).append('(').append(user.getStatistics().getSSH()).append(')').append(" S: ").append(user.getStatistics().getS()).append('(').append(user.getStatistics().getSH()).append(')').append(" A: ").append(user.getStatistics().getA()).append('\n');
         // uid:7003013
         sb.append('\n');
         sb.append("uid: ").append(user.getUserID()).append('\n');

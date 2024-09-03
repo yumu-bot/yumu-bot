@@ -116,19 +116,19 @@ class PPMinusService(
 
                     PPMinusStatus.USER_VS -> {
                         //pv 0v@
-                        binMe = bindDao.getUserFromQQ(event.sender.id)
+                        binMe = bindDao.getUserFromQQ(event.sender.id, true)
                         binOther = bindDao.getUserFromQQ(at.target)
                     }
                 }
             } else if (StringUtils.hasText(area1) || StringUtils.hasText(area2)) {
                 isMyself = parseName(area1, area2, binMe, binOther, status)
                 if (isMyself) {
-                    binMe = bindDao.getUserFromQQ(event.sender.id)
+                    binMe = bindDao.getUserFromQQ(event.sender.id, true)
                 }
             } else {
                 // pm 0
                 isMyself = true
-                binMe = bindDao.getUserFromQQ(event.sender.id)
+                binMe = bindDao.getUserFromQQ(event.sender.id, true)
             }
         } catch (e: WebClientResponseException) {
             throw when (e) {
@@ -248,11 +248,11 @@ class PPMinusService(
         try {
             if (StringUtils.hasText(area1) || StringUtils.hasText(area2)) {
                 if (parseName(area1, area2, binMe, binOther, status)) {
-                    binMe = bindDao.getUserFromQQ(event.sender.id)
+                    binMe = bindDao.getUserFromQQ(event.sender.id, true)
                 }
             } else {
                 // pm 0
-                binMe = bindDao.getUserFromQQ(event.sender.id)
+                binMe = bindDao.getUserFromQQ(event.sender.id, true)
             }
         } catch (e: WebClientResponseException) {
             throw when (e) {

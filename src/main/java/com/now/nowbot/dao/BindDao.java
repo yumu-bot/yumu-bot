@@ -45,6 +45,16 @@ public class BindDao {
     }
 
     public BinUser getUserFromQQ(Long qq) throws BindException {
+        return getUserFromQQ(qq, false);
+    }
+
+    /**
+     * 获取绑定的玩家
+     * @param qq qq
+     * @param isMyself 仅影响报错信息，不影响结果
+     * @return 绑定的玩家
+     */
+    public BinUser getUserFromQQ(Long qq, boolean isMyself) throws BindException {
         if (qq < 0) {
             try {
                 return getUserFromOsuid(-qq);
@@ -54,7 +64,11 @@ public class BindDao {
         }
         var liteData = bindQQMapper.findById(qq);
         if (liteData.isEmpty()) {
-            throw new BindException(BindException.Type.BIND_Me_NotBind);
+            if (isMyself) {
+                throw new BindException(BindException.Type.BIND_Me_NotBind);
+            } else {
+                throw new BindException(BindException.Type.BIND_Player_HadNotBind);
+            }
         }
         var u = liteData.get().getOsuUser();
         // 此处防止全局更新中再次被更新

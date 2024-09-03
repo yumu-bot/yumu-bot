@@ -31,8 +31,7 @@ class InfoCardService(
         if (!matcher.find()) return false
 
         val mode = getMode(matcher)
-        val isMyself = AtomicBoolean()
-        val user = getUserWithOutRange(event, matcher, mode, isMyself)
+        val user = getUserWithOutRange(event, matcher, mode)
 
         data.value = user
         return true
@@ -62,7 +61,7 @@ class InfoCardService(
         val matcher = OfficialInstruction.INFO_CARD.matcher(messageText)
         return if (matcher.find()) {
             val mode = getMode(matcher)
-            getUserWithOutRange(event, matcher, mode, AtomicBoolean())
+            getUserWithOutRange(event, matcher, mode)
         } else {
             null
         }

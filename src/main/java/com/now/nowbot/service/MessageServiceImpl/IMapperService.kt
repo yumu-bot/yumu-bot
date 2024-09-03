@@ -34,13 +34,7 @@ class IMapperService(
         val m = Instruction.I_MAPPER.matcher(messageText)
         if (!m.find()) return false
         val mode = CmdObject(OsuMode.DEFAULT)
-        val isMyself = AtomicBoolean(false)
-        val osuUser = getUserWithOutRange(event, m, mode, isMyself)
-            ?: throw if (isMyself.get()) {
-                IMapperException(IMapperException.Type.IM_Me_NotFound)
-            } else {
-                IMapperException(IMapperException.Type.IM_Player_TokenExpired)
-            }
+        val osuUser = getUserWithOutRange(event, m, mode)
         data.value = osuUser
         return true
     }
@@ -76,13 +70,7 @@ class IMapperService(
         val matcher = OfficialInstruction.I_MAPPER.matcher(messageText)
         if (!matcher.find()) return null
         val mode = CmdObject(OsuMode.DEFAULT)
-        val isMyself = AtomicBoolean(false)
-        return getUserWithOutRange(event, matcher, mode, isMyself)
-            ?: throw if (isMyself.get()) {
-                IMapperException(IMapperException.Type.IM_Me_NotFound)
-            } else {
-                IMapperException(IMapperException.Type.IM_Player_TokenExpired)
-            }
+        return getUserWithOutRange(event, matcher, mode)
     }
 
     override fun reply(event: MessageEvent, param: OsuUser): MessageChain? {

@@ -32,7 +32,7 @@ class SetModeService (
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, modeStr: String) {
-        val user = bindDao.getUserFromQQ(event.sender.id)
+        val user = bindDao.getUserFromQQ(event.sender.id, true)
         val from = event.subject
         val message = getReply(modeStr, user)
         from.sendMessage(message)

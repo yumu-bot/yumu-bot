@@ -69,7 +69,7 @@ public class CustomService implements MessageService<CustomService.CustomParam> 
 
         BinUser u;
         try {
-            u = bindDao.getUserFromQQ(event.getSender().getId());
+            u = bindDao.getUserFromQQ(event.getSender().getId(), true);
         } catch (BindException e) {
             throw new CustomException(CustomException.Type.CUSTOM_Me_TokenExpired);
         }

@@ -50,11 +50,11 @@ class BPAnalysisService(
 
         if (!matcher.find()) return false
 
-        val isMyself = AtomicBoolean()
+        val isMyself = AtomicBoolean(false)
 
         val mode = getMode(matcher)
 
-        val user = getUserWithOutRange(event, matcher, mode, isMyself)?: return false
+        val user = getUserWithOutRange(event, matcher, mode, isMyself)
 
         val bpList = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
 
@@ -82,11 +82,11 @@ class BPAnalysisService(
 
         if (!matcher.find()) return null
 
-        val isMyself = AtomicBoolean()
+        val isMyself = AtomicBoolean(false)
 
         val mode = getMode(matcher)
 
-        val user = getUserWithOutRange(event, matcher, mode, isMyself)?: return null
+        val user = getUserWithOutRange(event, matcher, mode, isMyself)
 
         val bpList = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
 

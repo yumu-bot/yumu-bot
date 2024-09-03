@@ -123,27 +123,26 @@ public class OsuUser {
     @JsonProperty("kudosu")
     Kudosu kudosu;
 
-    public record Kudosu(Integer available, Integer total) {}
+    public record Kudosu(Integer available, Integer total) {
+    }
 
     @JsonProperty("account_history")
     @Nullable
     List<UserAccountHistory> accountHistory;
 
     //type: note, restriction, silence.
-    public record UserAccountHistory (
-            @Nullable String description, Long id, Integer length, Boolean permanent, OffsetDateTime timestamp, String type
-    ) {}
+    public record UserAccountHistory(@Nullable String description, Long id, Integer length, Boolean permanent,
+                                     OffsetDateTime timestamp, String type) {
+    }
 
     @JsonProperty("active_tournament_banner")
     @Nullable
     ProfileBanner profileBanner;
 
-    public record ProfileBanner (
-            Long id, Long tournament_id, @Nullable String image,
+    public record ProfileBanner(Long id, Long tournament_id, @Nullable String image,
 
-            @JsonProperty("image@2x")
-            @Nullable String image2x
-    ) {}
+                                @JsonProperty("image@2x") @Nullable String image2x) {
+    }
 
 
     @JsonProperty("active_tournament_banners")
@@ -151,12 +150,10 @@ public class OsuUser {
 
     List<UserBadge> badges;
 
-    public record UserBadge (
-            @JsonProperty("awarded_at") OffsetDateTime awardAt,
-            String description,
-            @JsonProperty("image@2x_url") String image2xUrl,
-            @JsonProperty("image_url") String imageUrl,
-            @Nullable String url) {}
+    public record UserBadge(@JsonProperty("awarded_at") OffsetDateTime awardAt, String description,
+                            @JsonProperty("image@2x_url") String image2xUrl, @JsonProperty("image_url") String imageUrl,
+                            @Nullable String url) {
+    }
 
     @JsonProperty("beatmap_playcounts_count")
     Integer beatmapPlaycount;
@@ -199,14 +196,16 @@ public class OsuUser {
     }
 
 
-    public record UserMonthly (String start_date, Integer count) {}
+    public record UserMonthly(String start_date, Integer count) {
+    }
 
     @JsonProperty("nominated_beatmapset_count")
     Integer nominatedCount;
 
     Page page;
 
-    public record Page(String html, String raw) {}
+    public record Page(String html, String raw) {
+    }
 
     @JsonProperty("pending_beatmapset_count")
     Integer pendingCount;
@@ -218,7 +217,8 @@ public class OsuUser {
     @Nullable
     HighestRank highestRank;
 
-    public record HighestRank(Integer rank, @JsonProperty("updated_at") OffsetDateTime updatedAt) {}
+    public record HighestRank(Integer rank, @JsonProperty("updated_at") OffsetDateTime updatedAt) {
+    }
 
     @JsonProperty("ranked_beatmapset_count")
     Integer rankedCount;
@@ -257,12 +257,15 @@ public class OsuUser {
     @JsonProperty("user_achievements")
     List<UserAchievement> userAchievements;
 
-    public record UserAchievement(@JsonProperty("achieved_at") OffsetDateTime achievedAt, @JsonProperty("achievement_id") Integer achievementID) {}
+    public record UserAchievement(@JsonProperty("achieved_at") OffsetDateTime achievedAt,
+                                  @JsonProperty("achievement_id") Integer achievementID) {
+    }
 
     @JsonProperty("rank_history")
     RankHistory rankHistory;
 
-    public record RankHistory(String mode, List<Integer> data) {}
+    public record RankHistory(String mode, List<Integer> data) {
+    }
 
     // ranked 和 pending
     /*
@@ -276,6 +279,18 @@ public class OsuUser {
 
     //自己算
     Double PP;
+
+    public OsuUser() {
+
+    }
+
+    public OsuUser(Long id) {
+        this.id = id;
+    }
+
+    public OsuUser(String username) {
+        this.username = username;
+    }
 
     public String getAvatarUrl() {
         return avatarUrl;
@@ -828,7 +843,6 @@ public class OsuUser {
     }
 
 
-
     public Double getAccuracy() {
         if (statistics != null) {
             return statistics.getAccuracy();
@@ -968,7 +982,8 @@ public class OsuUser {
 
     /**
      * List<OsuUser> 去重方法
-     * @param to 要合并进去 List
+     *
+     * @param to   要合并进去 List
      * @param from 要用来合并的 List
      * @return 合并好的 List
      */
@@ -985,7 +1000,7 @@ public class OsuUser {
         var toSet = new HashSet<>(to);
         var fromSet = new HashSet<>(from);
 
-        if (! (toSet.containsAll(fromSet) || CollectionUtils.isEmpty(fromSet))) {
+        if (!(toSet.containsAll(fromSet) || CollectionUtils.isEmpty(fromSet))) {
             toSet.addAll(fromSet);
             return new ArrayList<>(toSet);
         }

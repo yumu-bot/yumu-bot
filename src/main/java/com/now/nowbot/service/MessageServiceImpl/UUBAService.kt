@@ -195,10 +195,7 @@ class UUBAService(
             else -> return null
         }
         val mode = CmdUtil.getMode(matcher)
-        val isMyself = AtomicBoolean(false)
-        val user = CmdUtil.getUserWithOutRange(event, matcher, mode, isMyself)
-            ?: throw if (isMyself.get()) TipsException("我还不知道你是谁哦")
-            else BPAnalysisException(BPAnalysisException.Type.BA_Player_NotFound)
+        val user = CmdUtil.getUserWithOutRange(event, matcher, mode)
 
         return BPHeadTailParam(
             UserParam(user.userID, user.username, mode.data, false), info

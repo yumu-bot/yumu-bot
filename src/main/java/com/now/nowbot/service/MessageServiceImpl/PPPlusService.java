@@ -54,7 +54,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
 
         var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
 
-        var me = bindDao.getUserFromQQ(event.getSender().getId());
+        var me = bindDao.getUserFromQQ(event.getSender().getId(), true);
 
         try {
             switch (cmd.toLowerCase()) {

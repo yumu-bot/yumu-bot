@@ -47,7 +47,7 @@ class BPFixService(
         if (!matcher.find()) return false
 
         val mode = getMode(matcher)
-        val user = getUserWithOutRange(event, matcher, mode, AtomicBoolean()) ?: return false
+        val user = getUserWithOutRange(event, matcher, mode)
 
         val bpMap = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
 
@@ -73,7 +73,7 @@ class BPFixService(
         if (!matcher.find()) return null
 
         val mode = getMode(matcher)
-        val user = getUserWithOutRange(event, matcher, mode, AtomicBoolean()) ?: throw Exception("没有找到要查询的玩家")
+        val user = getUserWithOutRange(event, matcher, mode)
 
         val bpMap = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
 

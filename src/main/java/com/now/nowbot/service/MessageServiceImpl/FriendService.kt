@@ -66,11 +66,7 @@ class FriendService(
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: FriendParam?) {
         val from = event.subject
-        val binUser = try {
-            bindDao.getUserFromQQ(event.sender.id) ?: throw Exception()
-        } catch (e: Exception) {
-            throw FriendException(FriendException.Type.FRIEND_Me_NoBind)
-        }
+        val binUser = bindDao.getUserFromQQ(event.sender.id, true)
 
 
         if (!binUser.isAuthorized) {
