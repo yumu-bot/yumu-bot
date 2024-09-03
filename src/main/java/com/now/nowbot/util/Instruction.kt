@@ -60,12 +60,12 @@ enum class Instruction(val pattern: Pattern) {
         appendName()
     }),
 
-    SWITCH(CommandPatternBuilder.create {
+    SERVICE_SWITCH(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("switch", "sw")
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
-            appendCaptureGroup(FLAG_QQ_GROUP, "${FLAG_QQ_GROUP}=${REG_NUMBER}", MORE)
+            appendCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, MORE)
         }
         appendSpace()
         appendCaptureGroup("service", REG_WORD, MORE)

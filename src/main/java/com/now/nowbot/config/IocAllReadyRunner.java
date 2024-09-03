@@ -85,7 +85,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
             MatchListenerService.stopAllListener();
         }, "endThread"));
 
-        log.info("newbie: {}", env.getProperty("spring.datasource.newbie.enable", "false"));
+        log.info("新人群配置: {}", env.getProperty("spring.datasource.newbie.enable", "false"));
 
         try {
             boolean debuging = new ApplicationHome(NowbotConfig.class).getSource().getParentFile().toString().contains("target");

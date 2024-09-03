@@ -387,7 +387,7 @@ public class Permission {
      *
      * @return 所有的功能
      */
-    public static Set<String> getCloseServices() {
+    public static Set<String> getClosedService() {
         return OFF_SERVICE;
     }
 
@@ -409,8 +409,13 @@ public class Permission {
     }
 
     //超级管理员无视此限制
+    @SuppressWarnings("all")
     public static boolean isGroupAdmin(MessageEvent event) {
         return isGroupAdmin(event.getBot(), event.getSubject().getId(), event.getSender().getId()) || isSuperAdmin(event.getSender().getId());
+    }
+
+    public static boolean isCommonUser(MessageEvent event) {
+        return ! isGroupAdmin(event);
     }
 
     public static void stopListener() {

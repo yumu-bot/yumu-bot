@@ -1,5 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl
 
+import com.now.nowbot.config.Permission
 import com.now.nowbot.model.JsonData.BeatMap
 import com.now.nowbot.model.JsonData.Match
 import com.now.nowbot.model.JsonData.MicroUser
@@ -58,10 +59,21 @@ class MatchMapService(
         // return false
 
         val matcher = Instruction.TEST_MATCH_START.matcher(messageText)
-
         if (!matcher.find()) return false
 
-        val match = matchApiService!!.getMatchInfo(matcher.group("id").toLong(), 10)
+        if (!Permission.isSuperAdmin(event.sender.id)) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Super)
+        }
+
+        val matchID =
+                matcher.group("id").let {
+                    if (it.isNullOrEmpty()) {
+                        0
+                    } else {
+                        it.toLong()
+                    }
+                }
+        val match = matchApiService!!.getMatchInfo(matchID, 10)
         val position =
                 matcher.group("round").let {
                     if (it.isNullOrEmpty()) {
@@ -80,7 +92,7 @@ class MatchMapService(
     override fun HandleMessage(event: MessageEvent, param: MatchMapParam) {
         val from = event.subject
         val e7Param = getPanelE7Param(param, beatmapApiService)
-        var image = byteArrayOf();
+        var image = byteArrayOf()
 
         try {
             image = imageService!!.getPanelE7(e7Param)

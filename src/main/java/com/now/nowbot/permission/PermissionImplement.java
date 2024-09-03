@@ -310,7 +310,7 @@ public class PermissionImplement implements PermissionController {
     }
 
     @Override
-    public void switchService(String name, boolean open) {
+    public void serviceSwitch(String name, boolean open) {
         var record = getService(name);
         serviceSwitchMapper.save(new ServiceSwitchLite(name, open));
         record.permission.setEnable(open);
@@ -319,11 +319,11 @@ public class PermissionImplement implements PermissionController {
 
 
     @Override
-    public void switchService(String name, boolean open, Long time) {
-        switchService(name, open);
+    public void serviceSwitch(String name, boolean open, Long time) {
+        serviceSwitch(name, open);
         if (Objects.nonNull(time)) {
             futureMap.computeIfPresent(name, this::cancelFuture);
-            var future = EXECUTOR.schedule(() -> switchService(name, !open), time, TimeUnit.MILLISECONDS);
+            var future = EXECUTOR.schedule(() -> serviceSwitch(name, !open), time, TimeUnit.MILLISECONDS);
             futureMap.put(name, future);
         }
     }

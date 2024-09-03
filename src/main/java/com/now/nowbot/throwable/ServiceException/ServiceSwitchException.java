@@ -2,7 +2,7 @@ package com.now.nowbot.throwable.ServiceException;
 
 import com.now.nowbot.throwable.TipsException;
 
-public class SwitchException extends TipsException {
+public class ServiceSwitchException extends TipsException {
     public enum Type {
         SW_Instructions("""
         欢迎使用 Yumu Switch 功能！食用方法：
@@ -29,11 +29,11 @@ public class SwitchException extends TipsException {
         }
     }
 
-    public SwitchException(SwitchException.Type type) {
+    public ServiceSwitchException(ServiceSwitchException.Type type) {
         super(type.message);
     }
 
-    public SwitchException(SwitchException.Type type, Object... args) {
+    public ServiceSwitchException(ServiceSwitchException.Type type, Object... args) {
         super(String.format(type.message, args));
     }
 }

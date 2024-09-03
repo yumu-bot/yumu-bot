@@ -11,7 +11,7 @@ public interface PermissionController {
      * @param name 名
      * @param open true:开; false:关
      */
-    void switchService(String name, boolean open);
+    void serviceSwitch(String name, boolean open);
 
     /**
      * 功能开关控制
@@ -20,7 +20,7 @@ public interface PermissionController {
      * @param open true:开; false:关
      * @param time 到指定时间撤销修改
      */
-    void switchService(String name, boolean open, Long time);
+    void serviceSwitch(String name, boolean open, Long time);
 
     /**
      * 拉黑群

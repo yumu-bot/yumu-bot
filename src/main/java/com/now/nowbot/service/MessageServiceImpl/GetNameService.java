@@ -35,7 +35,7 @@ public class GetNameService implements MessageService<Matcher> {
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
         var from = event.getSubject();
 
-        if (! Permission.isGroupAdmin(event)) {
+        if (Permission.isCommonUser(event)) {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Permission_Group);
         }
 
