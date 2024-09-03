@@ -24,7 +24,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
 import org.springframework.util.StringUtils
-import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 object CmdUtil {
@@ -74,7 +73,7 @@ object CmdUtil {
      * 前四个参数同 [getUserWithRange]
      *
      * @param text 命令消息文本
-     * @param cmd 需要避免的指令
+     * @param ignores 需要避免的指令
      */
     @JvmStatic
     fun getUserAndRangeWithBackoff(
@@ -83,12 +82,12 @@ object CmdUtil {
         mode: CmdObject<OsuMode>,
         isMyself: AtomicBoolean,
         text: String,
-        vararg cmd: String,
+        vararg ignores: String,
     ): CmdRange<OsuUser> {
         try {
             return getUserWithRange(event, matcher, mode, isMyself)
         } catch (e: BindException) {
-            if (isMyself.get() && isAvoidance(text, *cmd)) throw LogException("退避指令 $cmd")
+            if (isMyself.get() && isAvoidance(text, *ignores)) throw LogException("退避指令 $ignores")
             throw e
         }
     }
@@ -171,9 +170,9 @@ object CmdUtil {
         ranges.push(tempRange)
         var index = text.length - 1
         var i = 0
-        var tempChar: Char
+        var tempChar: Char = '0';
         // 第一个 range
-        while (isNumber(text[index].also { tempChar = it })) {
+        while (index >= 0 && isNumber(text[index].also { tempChar = it })) {
             index--
             i++
         }
