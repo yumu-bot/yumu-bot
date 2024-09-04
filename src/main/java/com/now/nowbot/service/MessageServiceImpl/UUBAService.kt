@@ -167,7 +167,8 @@ class UUBAService(
         }
 
         try {
-            val image = imageService.getPanelAlpha(*lines)
+            val panelParam = lines.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            val image = imageService.getPanelAlpha(*panelParam)
             from.sendImage(image)
         } catch (e: Exception) {
             throw BPAnalysisException(BPAnalysisException.Type.BA_Send_UUError)
@@ -218,10 +219,10 @@ class UUBAService(
         } else {
             getAllMsg(bps, bu.osuName, modeStr)
         }
-        return QQMsgUtil.getImage(imageService.getPanelAlpha(*lines))
+        return MessageChain(lines)
     }
 
-    fun getAllMsg(bps: List<Score>, name: String?, mode: String?): Array<String?> {
+    fun getAllMsg(bps: List<Score>, name: String?, mode: String?): String {
         val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
         var allPP = 0.0
         var sSum = 0
@@ -288,11 +289,11 @@ class UUBAService(
             .append("平均: ").append(String.format("%.2f", allPP / bps.size)).append("PP").append('\n')
             .append("差值: ").append(String.format("%.2f", bps.first().getPP() - bps.last().getPP())).append("PP")
 
-        return sb.toString().split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        return sb.toString()
     }
 
-    fun getAllMsgI(bps: List<Score>, name: String?, mode: String?): Array<String?> {
-        if (bps.isEmpty()) return arrayOfNulls(0)
+    fun getAllMsgI(bps: List<Score>, name: String?, mode: String?): String {
+        if (bps.isEmpty()) return ""
         val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
 
         val BP1: Score = bps.first()
@@ -450,7 +451,7 @@ class UUBAService(
                 .append(')')
                 .append('\n')
         }
-        return sb.toString().split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        return sb.toString()
     }
 
     internal class mapperData(var allPP: Float, var uid: Long) {

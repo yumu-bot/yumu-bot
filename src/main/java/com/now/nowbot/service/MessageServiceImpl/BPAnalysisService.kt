@@ -121,6 +121,7 @@ class BPAnalysisService(
             log.error("最好成绩分析：复杂面板生成失败", e)
             try {
                 val msg = uubaService.getAllMsg(bpList, user.username, user.mode)
+                    .split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                 imageService.getPanelAlpha(*msg)
             } catch (e1: ResourceAccessException) {
                 log.error("最好成绩分析：渲染失败", e1)
