@@ -264,7 +264,8 @@ object CmdUtil {
         val rangeInt = arrayOf<Int?>(null, null)
 
         try {
-            val range = text.split(SPLIT_RANGE).dropLastWhile { it.isEmpty() }.toTypedArray()
+            val range = text.removePrefix("#").removePrefix("＃")
+                .split(SPLIT_RANGE).dropLastWhile { it.isEmpty() }.toTypedArray()
             if (range.size >= 2) {
                 rangeInt[0] = range[range.size - 2].toInt()
                 rangeInt[1] = range[range.size - 1].toInt()
