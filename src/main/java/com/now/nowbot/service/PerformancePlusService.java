@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -77,7 +78,13 @@ public class PerformancePlusService {
     }
 
     public PPPlus.Stats calculateUserPerformance(List<Score> bps) {
-        var ppPlus = getScorePerformancePlus(bps);
+        List<PPPlus> ppPlus;
+        try {
+            ppPlus = getScorePerformancePlus(bps);
+        } catch (WebClientResponseException e) {
+            log.error(e.getResponseBodyAsString());
+            throw e;
+        }
 
         double aim = 0;
         double jumpAim = 0;
