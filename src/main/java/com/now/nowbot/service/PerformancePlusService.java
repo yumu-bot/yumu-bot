@@ -208,6 +208,7 @@ public class PerformancePlusService {
 
     private void checkFile(Long beatmapId) {
         var beatmapFiles = OSU_FILE_DIR.resolve(beatmapId + ".osu");
+        log.info("test file: {}", beatmapFiles);
         if (! Files.isRegularFile(beatmapFiles)) {
             try {
                 beatmapApi.getBeatMapFile(beatmapId);
