@@ -29,7 +29,7 @@ class PPPlusMapService(
     )
 
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<Param?>): Boolean {
-        val matcher = Instruction.PP_PLUS_MAP.matcher(messageText!!)
+        val matcher = Instruction.PP_PLUS_MAP.matcher(messageText)
         if (!matcher.find()) return false
 
         val bidStr = matcher.group(FLAG_BID)

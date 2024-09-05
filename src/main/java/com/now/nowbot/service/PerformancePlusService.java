@@ -1,5 +1,6 @@
 package com.now.nowbot.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.FileConfig;
 import com.now.nowbot.entity.PerformancePlusLite;
@@ -123,7 +124,15 @@ public class PerformancePlusService {
     }
 
     // beatmapId 居然要 String ??? [https://difficalcy.syrin.me/api-reference/difficalcy-osu/#post-apibatchcalculation](啥玩意)
-    record ScorePerformancePlus(String beatmapId, int mods, int combo, int misses, int mehs, int oks) {
+    record ScorePerformancePlus(
+            @JsonProperty("beatmapId")
+            String beatmapId,
+            int mods,
+            int combo,
+            int misses,
+            int mehs,
+            int oks
+    ) {
     }
 
     public List<PPPlus> getScorePerformancePlus(Iterable<Score> scores) {
