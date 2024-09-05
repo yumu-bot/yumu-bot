@@ -184,9 +184,9 @@ object CmdUtil {
         val ranges = LinkedList<CmdRange<String>>()
         var hashIndex: Int = text.indexOf(CHAR_HASH)
         if (hashIndex < 0) hashIndex = text.indexOf(CHAR_HASH_FULL)
-        var nameStr: String? = text.substring(0, hashIndex).trim { it <= ' ' }
+        var nameStr: String? = text.substring(0, hashIndex).trim()
         if (!StringUtils.hasText(nameStr)) nameStr = null
-        val rangeStr = text.substring(hashIndex + 1).trim { it <= ' ' }
+        val rangeStr = text.substring(hashIndex + 1).trim()
         val rangeInt = parseRange(rangeStr)
         ranges.add(CmdRange(nameStr, rangeInt[0], rangeInt[1]))
         return ranges
@@ -264,13 +264,19 @@ object CmdUtil {
         val rangeInt = arrayOf<Int?>(null, null)
 
         try {
-            val range = text.removePrefix("#").removePrefix("＃")
-                .split(SPLIT_RANGE).dropLastWhile { it.isEmpty() }.toTypedArray()
+            val range = text
+                .removePrefix(CHAR_HASH.toString())
+                .removePrefix(CHAR_HASH_FULL.toString())
+                .trim()
+                .split(SPLIT_RANGE)
+                .dropLastWhile { it.isEmpty() }
+                .map { it.toInt() }
+                .toTypedArray()
             if (range.size >= 2) {
-                rangeInt[0] = range[range.size - 2].toInt()
-                rangeInt[1] = range[range.size - 1].toInt()
+                rangeInt[0] = range[0]
+                rangeInt[1] = range[1]
             } else if (range.size == 1) {
-                rangeInt[0] = range[0].toInt()
+                rangeInt[0] = range[0]
             }
         } catch (e: Exception) {
             log.debug("range 解析参数有误: {}", text, e)
