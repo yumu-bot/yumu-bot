@@ -663,12 +663,12 @@ object DataUtil {
     }
 
     @JvmStatic
-    fun AR2MS(ar: Float): Int =
+    fun AR2MS(ar: Float): Float =
             when {
-                ar > 11f -> 300
-                ar > 5f -> 1200 - (150 * (ar - 5)).toInt()
-                ar > 0f -> 1800 - (120 * ar).toInt()
-                else -> 1800
+                ar > 11f -> 300f
+                ar > 5f -> 1200 - (150 * (ar - 5))
+                ar > 0f -> 1800 - (120 * ar)
+                else -> 1800f
             }
 
     fun MS2AR(ms: Float): Float =
@@ -688,7 +688,7 @@ object DataUtil {
         } else if (OsuMod.hasEz(mod)) {
             ar /= 2f
         }
-        var ms = AR2MS(ar).toFloat()
+        var ms = AR2MS(ar.limit())
         if (OsuMod.hasDt(mod)) {
             ms /= (3f / 2f)
         } else if (OsuMod.hasHt(mod)) {
@@ -719,7 +719,7 @@ object DataUtil {
         } else if (OsuMod.hasEz(mod)) {
             od /= 2f
         }
-        var ms = OD2MS(od)
+        var ms = OD2MS(od.limit())
         if (OsuMod.hasDt(mod)) {
             ms /= (3f / 2)
         } else if (OsuMod.hasHt(mod)) {
