@@ -90,7 +90,7 @@ class BPAnalysisService(
 
         val bpList = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
 
-       return BAParam(user, bpList, isMyself.get())
+        return BAParam(user, bpList, isMyself.get())
     }
 
     override fun reply(event: MessageEvent, param: BAParam) = QQMsgUtil.getImage(param.getImage())
@@ -326,7 +326,7 @@ class BPAnalysisService(
                         var ppSum: Float
                         var attr: Attr? = null
                         if (Objects.nonNull(value) && value!!.isNotEmpty()) {
-                            ppSum = value.filterNotNull().reduceOrNull{ acc, fl -> acc + fl } ?: 0f
+                            ppSum = value.filterNotNull().reduceOrNull { acc, fl -> acc + fl } ?: 0f
                             attr = Attr(
                                 rank,
                                 value.count { it != null },

@@ -16,6 +16,7 @@ import com.now.nowbot.throwable.ServiceException.BindException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.command.*
 import com.yumu.core.extensions.isNotNull
+import com.yumu.core.extensions.isNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
@@ -33,9 +34,9 @@ object CmdUtil {
     @JvmStatic
     @Throws(TipsException::class)
     fun getUserWithOutRange(
-            event: MessageEvent,
-            matcher: Matcher,
-            mode: CmdObject<OsuMode>,
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
     ): OsuUser {
         return getUserWithOutRange(event, matcher, mode, AtomicBoolean(false))
     }
@@ -43,26 +44,24 @@ object CmdUtil {
     /**
      * 获取玩家信息, 末尾没有 range
      *
-     * @param isMyself: 如果为真，则在未找到匹配的玩家时，获取申请者自己。如果为假，在未找到匹配的玩家时，抛错
+     * @param isMyself: 作为返回值使用, 如果是自己则结果为 true
      */
     @JvmStatic
     @Throws(TipsException::class)
     fun getUserWithOutRange(
-            event: MessageEvent,
-            matcher: Matcher,
-            mode: CmdObject<OsuMode>,
-            isMyself: AtomicBoolean,
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
     ): OsuUser {
         val user = getOsuUser(event, matcher, mode)
 
-        if (user.userID.isNotNull()) {
-            isMyself.set(true)
-            return user
+        if (user.isNotNull()) {
+            // 找到了别人, 直接返回结果
+            return user!!
         }
-        
-        if (user.username.isNotNull() && user.username.isNotEmpty() && !isMyself.get()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, user.username)
-        }
+
+        isMyself.set(true)
 
         val binUser = bindDao!!.getUserFromQQ(event.sender.id, true)
 
@@ -77,19 +76,19 @@ object CmdUtil {
      * 解析包含 @qq / username / uid= / qq= 的玩家信息, 并且解决后面的 range
      *
      * @param mode 一个可以改变的 mode, 解决当获取到 default, 修改成用户默认绑定时的 mode 无法传出的问题
-     * @param isMyself 传入一个 [AtomicBoolean] 如果是自己则结果为 true (注意, 当包含 qq= 或 uid= 时, 即使是发送者本身也是 false)
+     * @param isMyself 传入一个 [AtomicBoolean] 作为返回值使用, 如果是自己则结果为 true (注意, 当包含 qq= 或 uid= 时, 即使是发送者本身也是 false)
      */
     @JvmStatic
     @Throws(TipsException::class)
     fun getUserWithRange(
-            event: MessageEvent,
-            matcher: Matcher,
-            mode: CmdObject<OsuMode>,
-            isMyself: AtomicBoolean
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean
     ): CmdRange<OsuUser> {
         isMyself.set(false)
         val range = getUserAndRange(matcher, mode)
-        if (Objects.isNull(range.data)) {
+        if (range.data.isNull()) {
             range.data = getUserWithOutRange(event, matcher, mode, isMyself)
         }
         return range
@@ -103,12 +102,12 @@ object CmdUtil {
      */
     @JvmStatic
     fun getUserAndRangeWithBackoff(
-            event: MessageEvent,
-            matcher: Matcher,
-            mode: CmdObject<OsuMode>,
-            isMyself: AtomicBoolean,
-            text: String,
-            vararg ignores: String,
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
+        text: String,
+        vararg ignores: String,
     ): CmdRange<OsuUser> {
         try {
             return getUserWithRange(event, matcher, mode, isMyself)
@@ -123,6 +122,7 @@ object CmdUtil {
      *
      * @param matcher 正则
      * @param mode 包装的模式, 如果给的 mode 非默认则返回对应 mode 的 user 信息
+     * @throws [GeneralTipsException.Type.G_Null_Player] 当输入字符串包含用户名, 并且查找后无此人时抛出
      */
     @Throws(GeneralTipsException::class)
     private fun getUserAndRange(matcher: Matcher, mode: CmdObject<OsuMode>): CmdRange<OsuUser> {
@@ -140,12 +140,11 @@ object CmdUtil {
             return CmdRange(null, range[0], range[1])
         }
         // -1 才是没找到
-        val ranges =
-                if (text.indexOf(CHAR_HASH) >= 0 || text.indexOf(CHAR_HASH_FULL) >= 0) {
-                    parseNameAndRangeHasHash(text)
-                } else {
-                    parseNameAndRangeWithoutHash(text)
-                }
+        val ranges = if (text.indexOf(CHAR_HASH) >= 0 || text.indexOf(CHAR_HASH_FULL) >= 0) {
+            parseNameAndRangeHasHash(text)
+        } else {
+            parseNameAndRangeWithoutHash(text)
+        }
 
         var result = CmdRange<OsuUser>()
         for (range in ranges) {
@@ -164,12 +163,18 @@ object CmdUtil {
         }
 
         // 使其顺序
-        if (Objects.nonNull(result.end) &&
-                Objects.nonNull(result.start) &&
-                result.start!! > result.end!!) {
+        if (
+            Objects.nonNull(result.end) &&
+            Objects.nonNull(result.start) &&
+            result.start!! > result.end!!
+        ) {
             val temp = result.start
             result.start = result.end
             result.end = temp
+        }
+
+        if (result.data.isNull()) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, text)
         }
         return result
     }
@@ -235,10 +240,11 @@ object CmdUtil {
         }
 
         tempRange =
-                CmdRange(
-                        text.substring(0, index + 1).trim(),
-                        rangeN,
-                        text.substring(index + 1, index + i + 1).toInt())
+            CmdRange(
+                text.substring(0, index + 1).trim(),
+                rangeN,
+                text.substring(index + 1, index + i + 1).toInt()
+            )
 
         if (tempChar != ' ') {
             // 优先认为紧贴的数字是名字的一部分, 交换位置
@@ -284,52 +290,45 @@ object CmdUtil {
      */
     @Throws(TipsException::class)
     private fun getOsuUser(
-            event: MessageEvent,
-            matcher: Matcher,
-            mode: CmdObject<OsuMode>
-    ): OsuUser {
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>
+    ): OsuUser? {
         val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
 
-        var text = ""
         var qq = 0L
         if (Objects.nonNull(at)) {
             qq = at!!.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
             try {
                 qq = matcher.group(FLAG_QQ_ID)?.toLong() ?: 0L
-            } catch (ignore: RuntimeException) {}
+            } catch (ignore: RuntimeException) {
+            }
         }
 
         if (qq != 0L) {
-            qq.toString().also { text = it }
             val bind = bindDao!!.getUserFromQQ(qq)
             return getOsuUser(bind, checkOsuMode(mode, bind.osuMode))
         }
 
-        var uid = 0L
         if (matcher.namedGroups().containsKey(FLAG_UID)) {
             try {
-                uid = matcher.group(FLAG_UID)?.toLong() ?: 0L
-            } catch (ignore: RuntimeException) {}
-            if (uid != 0L) {
-            uid.toString().also { text = it }
-                return getOsuUser(uid, mode.data)
+                val uid = matcher.group(FLAG_UID)?.toLong() ?: 0L
+                if (uid != 0L) {
+                    return getOsuUser(uid, mode.data)
+                }
+            } catch (ignore: RuntimeException) {
             }
         }
 
         if (matcher.namedGroups().containsKey(FLAG_NAME)) {
             val name: String = matcher.group(FLAG_NAME) ?: ""
             if (StringUtils.hasText(name)) {
-            name.trim().also { text = it }
                 return getOsuUser(name, mode.data)
             }
         }
 
-        return if (text.isEmpty()) {
-            OsuUser()
-        } else {
-            OsuUser(text)
-        }
+        return null
     }
 
     /**
@@ -451,7 +450,7 @@ object CmdUtil {
     private const val OSU_MIN_INDEX = 2
 
     private val SPLIT_RANGE = "[\\-－ ]".toRegex()
-    private val JUST_RANGE: Pattern = Pattern.compile("^\\s*(\\d{1,3}[\\-－ ]+)?\\d{1,3}\\s*$")
+    private val JUST_RANGE: Pattern = Pattern.compile("^\\s*$REG_HASH\\s*(\\d{1,3}[\\-－ ]+)?\\d{1,3}\\s*$")
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
     private var bindDao: BindDao? = null
     private var userApiService: OsuUserApiService? = null
@@ -480,17 +479,17 @@ data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int
      * false) 返回 20 如果 range 为 [null, null], getValue(20, true) 返回 20, getValue(20, false) 返回 20
      */
     fun getValue(default: Int = 20, important: Boolean) =
-            if (start != null && end != null) {
-                if (important) {
-                    start!!
-                } else {
-                    end!!
-                }
-            } else if (important && start != null) {
+        if (start != null && end != null) {
+            if (important) {
                 start!!
-            } else if (important && end != null) {
-                end!!
             } else {
-                default
+                end!!
             }
+        } else if (important && start != null) {
+            start!!
+        } else if (important && end != null) {
+            end!!
+        } else {
+            default
+        }
 }
