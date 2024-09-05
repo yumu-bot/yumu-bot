@@ -14,7 +14,9 @@ import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD
+import com.yumu.core.constants.log
 import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClientResponseException
 
 @Service("PP_PLUS_MAP")
 class PPPlusMapService(
@@ -58,6 +60,11 @@ class PPPlusMapService(
         val pp = try {
             performancePlusService.getMapPerformancePlus(data.bid, data.mods)
         } catch (e: Exception) {
+            if (e is WebClientResponseException) {
+                log.error { e.responseBodyAsString }
+            } else {
+                log.error { e.message }
+            }
             throw PPPlusException(PPPlusException.Type.PL_Fetch_APIConnectFailed)
         }
 
