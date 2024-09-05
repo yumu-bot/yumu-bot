@@ -120,7 +120,7 @@ class BPAnalysisService(
         } catch (e: HttpServerErrorException.InternalServerError) {
             log.error("最好成绩分析：复杂面板生成失败", e)
             try {
-                val msg = uubaService.getAllMsg(bpList, user.username, user.mode)
+                val msg = uubaService.getTextPlus(bpList, user.username, user.mode)
                     .split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                 imageService.getPanelAlpha(*msg)
             } catch (e1: ResourceAccessException) {

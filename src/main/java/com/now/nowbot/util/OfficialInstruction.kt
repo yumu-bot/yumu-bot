@@ -88,10 +88,13 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendModeQQUIDName()
     }),
 
+    /*
     UU_BAI(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("uuba-i", "uai")
         appendModeQQUIDName()
     }),
+
+    */
 
 
     // #3 osu! 玩家指令

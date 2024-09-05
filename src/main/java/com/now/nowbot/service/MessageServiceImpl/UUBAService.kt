@@ -18,69 +18,69 @@ import com.now.nowbot.service.OsuApiService.OsuScoreApiService
 import com.now.nowbot.service.OsuApiService.OsuUserApiService
 import com.now.nowbot.throwable.ServiceException.BPAnalysisException
 import com.now.nowbot.throwable.ServiceException.BindException
-import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
 import com.now.nowbot.util.command.FLAG_MODE
+import java.text.DecimalFormat
+import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Consumer
+import java.util.regex.Matcher
 import org.apache.logging.log4j.util.Strings
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.text.DecimalFormat
-import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.function.Consumer
-import java.util.regex.Matcher
 
 @Service("UU_BA")
 class UUBAService(
-    private val userApiService: OsuUserApiService,
-    private val scoreApiService: OsuScoreApiService,
-    private val beatmapApiService: OsuBeatmapApiService,
-    private val bindDao: BindDao,
-    private val imageService: ImageService,
+        private val userApiService: OsuUserApiService,
+        private val scoreApiService: OsuScoreApiService,
+        private val beatmapApiService: OsuBeatmapApiService,
+        private val bindDao: BindDao,
+        private val imageService: ImageService,
 ) : MessageService<BPHeadTailParam>, TencentMessageService<BPHeadTailParam> {
 
-    //bpht 的全称大概是 BP Head / Tail
+    // bpht 的全称大概是 BP Head / Tail
     data class BPHeadTailParam(val user: UserParam, val info: Boolean)
 
     @Throws(BPAnalysisException::class)
-    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<BPHeadTailParam>): Boolean {
-        //旧功能指引
+    override fun isHandle(
+            event: MessageEvent,
+            messageText: String,
+            data: DataValue<BPHeadTailParam>
+    ): Boolean {
+        // 旧功能指引
         val matcher2 = Instruction.DEPRECATED_BPHT.matcher(messageText)
-        if (matcher2.find() && Strings.isNotBlank(matcher2.group("bpht"))) {
+        if (matcher2.find()) {
             throw BPAnalysisException(BPAnalysisException.Type.BA_Instruction_Deprecated)
+        }
+
+        val matcher3 = Instruction.DEPRECATED_UUBA_I.matcher(messageText)
+        if (matcher3.find()) {
+            throw BPAnalysisException(BPAnalysisException.Type.BA_I_Deprecated)
         }
 
         val matcher = Instruction.UU_BA.matcher(messageText)
         if (!matcher.find()) return false
-        val info = Strings.isNotBlank(matcher.group("info"))
+
+        val info = true
         val mode: OsuMode = OsuMode.getMode(matcher.group(FLAG_MODE))
         val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
 
         if (Objects.nonNull(at)) {
-            data.value = BPHeadTailParam(
-                UserParam(at!!.target, null, mode, true), info
-            )
+            data.value = BPHeadTailParam(UserParam(at!!.target, null, mode, true), info)
             return true
         }
         val name = matcher.group("name")
         if (Objects.nonNull(name) && Strings.isNotBlank(name)) {
-            data.setValue(
-                BPHeadTailParam(
-                    UserParam(null, name, mode, false), info
-                )
-            )
+            data.value = BPHeadTailParam(UserParam(null, name, mode, false), info)
             return true
         }
-        data.value = BPHeadTailParam(
-            UserParam(event.sender.id, null, mode, false), info
-        )
+        data.value = BPHeadTailParam(UserParam(event.sender.id, null, mode, false), info)
         return true
     }
 
@@ -101,14 +101,14 @@ class UUBAService(
                 }
             }
         } else {
-            //查询其他人 [data]
+            // 查询其他人 [data]
             val name = param.user.name
             var id: Long = 0
             try {
                 id = userApiService.getOsuId(name)
                 bu = bindDao.getUserFromOsuid(id)
             } catch (e: BindException) {
-                //构建只有 data + id 的对象, binUser == null
+                // 构建只有 data + id 的对象, binUser == null
                 bu = BinUser()
                 bu.osuID = id
                 bu.osuName = name
@@ -145,29 +145,25 @@ class UUBAService(
 
         if (bps == null || bps.size <= 10) {
             if (!param.user.at && Objects.isNull(param.user.name)) {
-                throw BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, mode!!.getName())
+                throw BPAnalysisException(
+                        BPAnalysisException.Type.BA_Me_NotEnoughBP, mode!!.getName())
             } else {
-                throw BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, mode!!.getName())
+                throw BPAnalysisException(
+                        BPAnalysisException.Type.BA_Player_NotEnoughBP, mode!!.getName())
             }
         }
 
         beatmapApiService.applySRAndPP(bps)
-        val lines = if (param.info) {
-            if (mode == null || mode == OsuMode.DEFAULT) {
-                getAllMsgI(bps, bu.osuName, "")
-            } else {
-                getAllMsgI(bps, bu.osuName, mode.getName())
-            }
-        } else {
-            if (mode == null || mode == OsuMode.DEFAULT) {
-                getAllMsg(bps, bu.osuName, "")
-            } else {
-                getAllMsg(bps, bu.osuName, mode.getName())
-            }
-        }
+        val lines =
+                if (OsuMode.isDefaultOrNull(mode)) {
+                    getTextPlus(bps, bu.osuName, "")
+                } else {
+                    getTextPlus(bps, bu.osuName, mode.getName())
+                }
 
         try {
-            val panelParam = lines.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            val panelParam =
+                    lines.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
             val image = imageService.getPanelAlpha(*panelParam)
             from.sendImage(image)
         } catch (e: Exception) {
@@ -179,17 +175,7 @@ class UUBAService(
         val info: Boolean
         var matcher: Matcher
         when {
-            OfficialInstruction.UU_BA
-                .matcher(messageText)
-                .apply { matcher = this }
-                .find() -> {
-                info = false
-            }
-
-            OfficialInstruction.UU_BAI
-                .matcher(messageText)
-                .apply { matcher = this }
-                .find() -> {
+            OfficialInstruction.UU_BA.matcher(messageText).apply { matcher = this }.find() -> {
                 info = true
             }
 
@@ -198,9 +184,7 @@ class UUBAService(
         val mode = CmdUtil.getMode(matcher)
         val user = CmdUtil.getUserWithOutRange(event, matcher, mode)
 
-        return BPHeadTailParam(
-            UserParam(user.userID, user.username, mode.data, false), info
-        )
+        return BPHeadTailParam(UserParam(user.userID, user.username, mode.data, false), info)
     }
 
     override fun reply(event: MessageEvent, param: BPHeadTailParam): MessageChain? {
@@ -214,35 +198,32 @@ class UUBAService(
         val bps = scoreApiService.getBestPerformance(bu, mode, 0, 100)
         beatmapApiService.applySRAndPP(bps)
         val modeStr = mode?.getName() ?: ""
-        val lines = if (param.info) {
-            getAllMsgI(bps, bu.osuName, modeStr)
-        } else {
-            getAllMsg(bps, bu.osuName, modeStr)
-        }
+        val lines = getTextPlus(bps, bu.osuName, modeStr)
         return MessageChain(lines)
     }
 
-    fun getAllMsg(bps: List<Score>, name: String?, mode: String?): String {
+    @Deprecated("这个标准获取基本上没人喜欢用了，只有进阶版有人用")
+    fun getText(bps: List<Score>, name: String?, mode: String?): String {
         val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
         var allPP = 0.0
         var sSum = 0
         var xSum = 0
         var fcSum = 0
-        val modTreeMap = TreeMap<String, AtomicInteger>() //各个mod的数量
+        val modTreeMap = TreeMap<String, AtomicInteger>() // 各个mod的数量
 
         for (i in bps.indices) {
             val bp = bps[i]
-            //显示前五跟后五的数据
+            // 显示前五跟后五的数据
             if (i < 5 || i >= bps.size - 5) {
                 sb.append("#")
-                    .append(i + 1)
-                    .append(' ')
-                    .append(String.format("%.2f", bp.pp))
-                    .append(' ')
-                    .append(String.format("%.2f", 100 * bp.accuracy))
-                    .append('%')
-                    .append(' ')
-                    .append(bp.rank)
+                        .append(i + 1)
+                        .append(' ')
+                        .append(String.format("%.2f", bp.pp))
+                        .append(' ')
+                        .append(String.format("%.2f", 100 * bp.accuracy))
+                        .append('%')
+                        .append(' ')
+                        .append(bp.rank)
                 if (!bp.mods.isEmpty()) {
                     sb.append(" +")
                     for (m in bp.mods) {
@@ -253,7 +234,7 @@ class UUBAService(
             } else if (i == 5) {
                 sb.append("...").append('\n')
             }
-            allPP += bp.pp.toDouble() //统计总数
+            allPP += bp.pp.toDouble() // 统计总数
             if (!bp.mods.isEmpty()) {
                 for (j in bp.mods.indices) {
                     val mod = bp.mods[j]
@@ -285,14 +266,22 @@ class UUBAService(
         sb.append("\nS+ 评级: ").append(sSum)
         if (xSum != 0) sb.append("\n     其中 SS: ").append(xSum)
 
-        sb.append('\n').append("完美 FC: ").append(fcSum).append('\n')
-            .append("平均: ").append(String.format("%.2f", allPP / bps.size)).append("PP").append('\n')
-            .append("差值: ").append(String.format("%.2f", bps.first().getPP() - bps.last().getPP())).append("PP")
+        sb.append('\n')
+                .append("完美 FC: ")
+                .append(fcSum)
+                .append('\n')
+                .append("平均: ")
+                .append(String.format("%.2f", allPP / bps.size))
+                .append("PP")
+                .append('\n')
+                .append("差值: ")
+                .append(String.format("%.2f", bps.first().getPP() - bps.last().getPP()))
+                .append("PP")
 
         return sb.toString()
     }
 
-    fun getAllMsgI(bps: List<Score>, name: String?, mode: String?): String {
+    fun getTextPlus(bps: List<Score>, name: String?, mode: String?): String {
         if (bps.isEmpty()) return ""
         val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
 
@@ -325,23 +314,24 @@ class UUBAService(
         var maxTTHPP = 0f
         var nowPP = 0f
 
-        val modSum = TreeMap<String, modData>() //各个mod的数量
+        val modSum = TreeMap<String, modData>() // 各个mod的数量
 
         val mapperSum = TreeMap<Long, mapperData>()
-        val decimalFormat = DecimalFormat("0.00") //acc格式
+        val decimalFormat = DecimalFormat("0.00") // acc格式
 
         for (i in bps.indices) {
             val bp = bps[i]
             val b = bp.beatMap
             val length = b.totalLength.toFloat()
             val bpm = b.bpm
-            bp.mods.forEach(Consumer { r: String ->
-                if (modSum.containsKey(r)) {
-                    modSum[r]!!.add(Optional.ofNullable(bp.weightedPP).orElse(0f))
-                } else {
-                    modSum[r] = modData(Optional.ofNullable(bp.weightedPP).orElse(0f))
-                }
-            })
+            bp.mods.forEach(
+                    Consumer { r: String ->
+                        if (modSum.containsKey(r)) {
+                            modSum[r]!!.add(Optional.ofNullable(bp.weightedPP).orElse(0f))
+                        } else {
+                            modSum[r] = modData(Optional.ofNullable(bp.weightedPP).orElse(0f))
+                        }
+                    })
 
             avgLength += length
             star = bp.beatMap.starRating
@@ -396,60 +386,114 @@ class UUBAService(
         avgStar /= bps.size.toFloat()
 
         sb.append("平均时间: ").append(getTimeStr(avgLength.toInt())).append('\n')
-        sb.append("时间最长: BP").append(maxLengthBP + 1).append(' ').append(getTimeStr(maxLength.toInt())).append('\n')
-        sb.append("时间最短: BP").append(minLengthBP + 1).append(' ').append(getTimeStr(minLength.toInt())).append('\n')
+        sb.append("时间最长: BP")
+                .append(maxLengthBP + 1)
+                .append(' ')
+                .append(getTimeStr(maxLength.toInt()))
+                .append('\n')
+        sb.append("时间最短: BP")
+                .append(minLengthBP + 1)
+                .append(' ')
+                .append(getTimeStr(minLength.toInt()))
+                .append('\n')
         sb.append("——————————").append('\n')
 
         sb.append("平均连击: ").append(avgCombo).append('x').append('\n')
-        sb.append("连击最大: BP").append(maxComboBP + 1).append(' ').append(maxCombo).append('x').append('\n')
-        sb.append("连击最小: BP").append(minComboBP + 1).append(' ').append(minCombo).append('x').append('\n')
+        sb.append("连击最大: BP")
+                .append(maxComboBP + 1)
+                .append(' ')
+                .append(maxCombo)
+                .append('x')
+                .append('\n')
+        sb.append("连击最小: BP")
+                .append(minComboBP + 1)
+                .append(' ')
+                .append(minCombo)
+                .append('x')
+                .append('\n')
         sb.append("——————————").append('\n')
 
         sb.append("平均星数: ").append(String.format("%.2f", avgStar)).append('*').append('\n')
-        sb.append("星数最高: BP").append(maxStarBP + 1).append(' ').append(String.format("%.2f", maxStar)).append('*')
-            .append('\n')
-        sb.append("星数最低: BP").append(minStarBP + 1).append(' ').append(String.format("%.2f", minStar)).append('*')
-            .append('\n')
+        sb.append("星数最高: BP")
+                .append(maxStarBP + 1)
+                .append(' ')
+                .append(String.format("%.2f", maxStar))
+                .append('*')
+                .append('\n')
+        sb.append("星数最低: BP")
+                .append(minStarBP + 1)
+                .append(' ')
+                .append(String.format("%.2f", minStar))
+                .append('*')
+                .append('\n')
         sb.append("——————————").append('\n')
 
-        sb.append("PP/TTH 比例最大: BP").append(maxTTHPPBP + 1)
-            .append("，为").append(decimalFormat.format(maxTTHPP.toDouble())).append('倍').append('\n')
+        sb.append("PP/TTH 比例最大: BP")
+                .append(maxTTHPPBP + 1)
+                .append("，为")
+                .append(decimalFormat.format(maxTTHPP.toDouble()))
+                .append('倍')
+                .append('\n')
 
-        sb.append("BPM 区间: ").append(String.format("%.0f", minBPM)).append('-').append(String.format("%.0f", maxBPM))
-            .append('\n')
+        sb.append("BPM 区间: ")
+                .append(String.format("%.0f", minBPM))
+                .append('-')
+                .append(String.format("%.0f", maxBPM))
+                .append('\n')
         sb.append("——————————").append('\n')
 
         sb.append("谱师: \n")
-        val mappers = mapperSum.values.stream()
-            .sorted { o1: mapperData, o2: mapperData ->
-                if (o1.size != o2.size) return@sorted 2 * (o2.size - o1.size)
-                java.lang.Float.compare(o2.allPP, o1.allPP)
-            }
-            .limit(9).toList()
+        val mappers =
+                mapperSum.values
+                        .stream()
+                        .sorted { o1: mapperData, o2: mapperData ->
+                            if (o1.size != o2.size) return@sorted 2 * (o2.size - o1.size)
+                            java.lang.Float.compare(o2.allPP, o1.allPP)
+                        }
+                        .limit(9)
+                        .toList()
         val mappersId = mappers.stream().map { u: mapperData -> u.uid }.toList()
         val mappersInfo = userApiService.getUsers(mappersId)
         val mapperIdToInfo = HashMap<Long, String>()
         for (node in mappersInfo) {
             mapperIdToInfo[node.userID] = node.userName
         }
-        mappers.forEach(Consumer { mapper: mapperData ->
-            try {
-                sb.append(mapperIdToInfo[mapper.uid]).append(": ").append(mapper.size).append("x ")
-                    .append(decimalFormat.format(mapper.allPP.toDouble())).append("PP").append('\n')
-            } catch (e: Exception) {
-                sb.append("UID: ").append(mapper.uid).append(": ").append(mapper.size).append("x ")
-                    .append(decimalFormat.format(mapper.allPP.toDouble())).append("PP").append('\n')
-            }
-        })
+        mappers.forEach(
+                Consumer { mapper: mapperData ->
+                    try {
+                        sb.append(mapperIdToInfo[mapper.uid])
+                                .append(": ")
+                                .append(mapper.size)
+                                .append("x ")
+                                .append(decimalFormat.format(mapper.allPP.toDouble()))
+                                .append("PP")
+                                .append('\n')
+                    } catch (e: Exception) {
+                        sb.append("UID: ")
+                                .append(mapper.uid)
+                                .append(": ")
+                                .append(mapper.size)
+                                .append("x ")
+                                .append(decimalFormat.format(mapper.allPP.toDouble()))
+                                .append("PP")
+                                .append('\n')
+                    }
+                })
         sb.append("——————————").append('\n')
         sb.append("模组数量: \n")
         val finalAllPP = nowPP
         modSum.forEach { (mod: String, sum: modData) ->
-            sb.append(mod).append(": ").append(sum.size).append("x ")
-                .append(decimalFormat.format(sum.allPP.toDouble())).append("PP ")
-                .append('(').append(decimalFormat.format((100 * sum.allPP / finalAllPP).toDouble())).append('%')
-                .append(')')
-                .append('\n')
+            sb.append(mod)
+                    .append(": ")
+                    .append(sum.size)
+                    .append("x ")
+                    .append(decimalFormat.format(sum.allPP.toDouble()))
+                    .append("PP ")
+                    .append('(')
+                    .append(decimalFormat.format((100 * sum.allPP / finalAllPP).toDouble()))
+                    .append('%')
+                    .append(')')
+                    .append('\n')
         }
         return sb.toString()
     }
@@ -484,5 +528,3 @@ class UUBAService(
         private val log: Logger = LoggerFactory.getLogger(UUBAService::class.java)
     }
 }
-
-

@@ -86,7 +86,7 @@ public interface OsuBeatmapApiService {
      */
     JsonNode lookupBeatmap(String checksum, String filename, Long id);
 
-    Search searchBeatmap(Map<String, Object> query);
+    BeatMapSetSearch searchBeatmap(Map<String, Object> query);
 
     default JniResult getMaxPP(long bid, int modInt) throws Exception {
         var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);

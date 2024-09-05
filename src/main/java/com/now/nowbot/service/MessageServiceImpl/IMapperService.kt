@@ -98,7 +98,7 @@ class IMapperService(
             query["s"] = "any"
             query["page"] = page
 
-            var search: Search? = null
+            var search: BeatMapSetSearch? = null
 
             //依据QualifiedMapService 的逻辑来多次获取
             run {

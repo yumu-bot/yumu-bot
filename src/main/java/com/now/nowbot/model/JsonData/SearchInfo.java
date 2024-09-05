@@ -17,10 +17,10 @@ public class SearchInfo {
     Boolean nsfw;
     @JsonProperty("g")
 
-    byte   genre;
+    byte genre;
     @JsonProperty("l")
 
-    byte   language;
+    byte language;
     @JsonProperty("e")
 
     String others;

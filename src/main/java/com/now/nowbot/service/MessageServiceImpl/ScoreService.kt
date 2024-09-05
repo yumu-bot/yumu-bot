@@ -102,12 +102,7 @@ class ScoreService(
         val mode = getMode(matcher)
         val isMyself = AtomicBoolean(false)
         val isDefault = OsuMode.isDefaultOrNull(mode.data)
-        val user: OsuUser = try {
-            getUserWithOutRange(event, matcher, mode, isMyself)!!
-        } catch (e: BindException) {
-            // 理论上官方直接用的uid绑定, 找不到只可能是名字打错了
-            throw ScoreException(ScoreException.Type.SCORE_Player_NotFound)
-        }
+        val user = getUserWithOutRange(event, matcher, mode, isMyself)
 
         val bid = getBid(matcher)
         return ScoreParam(user, mode.data, bid, getMod(matcher), isDefault, isMyself.get())

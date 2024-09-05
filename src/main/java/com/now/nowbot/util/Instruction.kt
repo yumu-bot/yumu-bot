@@ -153,7 +153,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     UU_BA(CommandPatternBuilder.create {
-        appendUUIgnoreAll("((bp?)?a|bpanalysis)(?<info>(-?i))?")
+        appendUUIgnoreAll("(bp?)?a", "(bp\\s*analysis)")
         appendModeQQUIDName()
     }),
 
@@ -519,9 +519,14 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     DEPRECATED_BPHT(CommandPatternBuilder.create {
-        appendCommands("(?<bpht>bpht)")
+        appendCommands("bpht")
         append("(-i)")
         appendMatchLevel(MAYBE)
+    }),
+
+    DEPRECATED_UUBA_I(CommandPatternBuilder.create {
+        appendCommands("u?uba", "ua")
+        append("(-?i)")
     }),
 
     DEPRECATED_SET(CommandPatternBuilder.create {

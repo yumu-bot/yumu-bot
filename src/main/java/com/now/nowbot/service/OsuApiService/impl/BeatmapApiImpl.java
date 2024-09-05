@@ -362,7 +362,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     }
 
     @Override
-    public Search searchBeatmap(Map<String, Object> query) {
+    public BeatMapSetSearch searchBeatmap(Map<String, Object> query) {
         return base.osuApiWebClient.get()
                 .uri(u -> {
                     u.path("beatmapsets/search");
@@ -374,7 +374,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
                 })
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(Search.class)
+                .bodyToMono(BeatMapSetSearch.class)
                 .block();
     }
 }

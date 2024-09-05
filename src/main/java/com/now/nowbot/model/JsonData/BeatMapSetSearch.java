@@ -8,11 +8,12 @@ import org.springframework.lang.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class Search {
+public class BeatMapSetSearch {
     @JsonProperty("rule")
     String rule;
     @JsonProperty("result_count")
@@ -20,9 +21,9 @@ public class Search {
     @JsonProperty("beatmapsets")
     List<BeatMapSet> beatmapsets;
     @JsonProperty("total")
-    Integer          total;
+    Integer total;
     @JsonProperty("cursor_string")
-    String           cursorString;
+    String cursorString;
     @JsonProperty("cursor")
     SearchCursor cursor;
     @JsonProperty("search")
@@ -33,7 +34,7 @@ public class Search {
     }
 
     public void sortBeatmapDiff() {
-        beatmapsets.forEach(set -> set.getBeatMaps().sort(Comparator.comparing(BeatMap::getStarRating)));
+        beatmapsets.forEach(set -> Objects.requireNonNull(set.getBeatMaps()).sort(Comparator.comparing(BeatMap::getStarRating)));
     }
 
     public void setBeatmapsets(List<BeatMapSet> beatmapsets) {
@@ -63,6 +64,7 @@ public class Search {
     public void setRule(String rule) {
         this.rule = rule;
     }
+
     public int getResultCount() {
         return result_count;
     }
@@ -78,6 +80,7 @@ public class Search {
     public void setCursor(SearchCursor cursor) {
         this.cursor = cursor;
     }
+
     @Nullable
     public SearchInfo getSearchInfo() {
         return searchInfo;

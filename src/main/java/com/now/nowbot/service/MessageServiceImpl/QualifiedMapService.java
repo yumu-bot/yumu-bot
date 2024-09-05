@@ -1,6 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
-import com.now.nowbot.model.JsonData.Search;
+import com.now.nowbot.model.JsonData.BeatMapSetSearch;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -71,7 +71,7 @@ public class QualifiedMapService implements MessageService<Matcher> {
         query.put("page", page);
 
         try {
-            Search data = null;
+            BeatMapSetSearch data = null;
             int resultCount = 0;
             do {
                 if (data == null) {

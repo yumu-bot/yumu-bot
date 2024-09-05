@@ -90,9 +90,9 @@ public class ImageService {
         return doPost("panel_A1", httpEntity);
     }
 
-    public byte[] getPanelA2(Search search) {
+    public byte[] getPanelA2(BeatMapSetSearch search) {
         HttpHeaders headers = getDefaultHeader();
-        HttpEntity<Search> httpEntity = new HttpEntity<>(search, headers);
+        HttpEntity<BeatMapSetSearch> httpEntity = new HttpEntity<>(search, headers);
         return doPost("panel_A2", httpEntity);
     }
 
