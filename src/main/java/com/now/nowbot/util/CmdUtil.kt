@@ -15,7 +15,7 @@ import com.now.nowbot.throwable.LogException
 import com.now.nowbot.throwable.ServiceException.BindException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.command.*
-import com.yumu.core.extensions.isNull
+import com.yumu.core.extensions.isNotNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
@@ -55,23 +55,22 @@ object CmdUtil {
     ): OsuUser {
         val user = getOsuUser(event, matcher, mode)
 
-        if (user.userID.isNull()) {
-            if (user.username.isNullOrEmpty() || isMyself.get()) {
-                val binUser = bindDao!!.getUserFromQQ(event.sender.id, true)
-
-                checkOsuMode(mode, binUser.osuMode)
-
-                return getOsuUser(
-                        { userApiService!!.getPlayerInfo(binUser, mode.data) }, binUser.username)
-            } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, user.username)
-            }
-        } else {
-            // 匹配其他玩家成功
-            isMyself.set(false)
+        if (user.userID.isNotNull()) {
+            isMyself.set(true)
+            return user
+        }
+        
+        if (user.username.isNotNull() && user.username.isNotEmpty() && !isMyself.get()) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, user.username)
         }
 
-        return user
+        val binUser = bindDao!!.getUserFromQQ(event.sender.id, true)
+
+        checkOsuMode(mode, binUser.osuMode)
+
+        return getOsuUser(binUser.username) {
+            userApiService!!.getPlayerInfo(binUser, mode.data)
+        }
     }
 
     /**
@@ -292,7 +291,7 @@ object CmdUtil {
         val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
 
         var text = ""
-        var qq: Long = 0L
+        var qq = 0L
         if (Objects.nonNull(at)) {
             qq = at!!.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
@@ -307,7 +306,7 @@ object CmdUtil {
             return getOsuUser(bind, checkOsuMode(mode, bind.osuMode))
         }
 
-        var uid: Long = 0L
+        var uid = 0L
         if (matcher.namedGroups().containsKey(FLAG_UID)) {
             try {
                 uid = matcher.group(FLAG_UID)?.toLong() ?: 0L
@@ -326,7 +325,7 @@ object CmdUtil {
             }
         }
 
-        return if (text.isNullOrEmpty()) {
+        return if (text.isEmpty()) {
             OsuUser()
         } else {
             OsuUser(text)
@@ -341,7 +340,7 @@ object CmdUtil {
      */
     @Throws(TipsException::class)
     fun getOsuUser(user: BinUser, mode: OsuMode?): OsuUser {
-        return getOsuUser({ userApiService!!.getPlayerInfo(user, mode) }, user.osuID)
+        return getOsuUser(user.osuID) { userApiService!!.getPlayerInfo(user, mode) }
     }
 
     /**
@@ -352,7 +351,7 @@ object CmdUtil {
      */
     @Throws(TipsException::class)
     fun getOsuUser(name: String, mode: OsuMode?): OsuUser {
-        return getOsuUser({ userApiService!!.getPlayerInfo(name, mode) }, name)
+        return getOsuUser(name) { userApiService!!.getPlayerInfo(name, mode) }
     }
 
     /**
@@ -363,12 +362,12 @@ object CmdUtil {
      */
     @Throws(TipsException::class)
     fun getOsuUser(uid: Long, mode: OsuMode?): OsuUser {
-        return getOsuUser({ userApiService!!.getPlayerInfo(uid, mode) }, uid)
+        return getOsuUser(uid) { userApiService!!.getPlayerInfo(uid, mode) }
     }
 
     /** 内部方法 封装获取 user 的方法, 包装出现的异常 */
     @Throws(TipsException::class)
-    private fun <T> getOsuUser(consumer: Supplier<T>, tips: Any): T {
+    private fun <T> getOsuUser(tips: Any, consumer: Supplier<T>): T {
         try {
             return consumer.get()
         } catch (e: WebClientResponseException.NotFound) {

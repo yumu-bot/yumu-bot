@@ -49,7 +49,7 @@ class FriendService(
             return false
         }
 
-        val isMyself = AtomicBoolean(false)
+        val isMyself = AtomicBoolean(true)
         val range = CmdUtil.getUserWithRange(event, m, CmdObject(), isMyself)
         if (range.data != null && !isMyself.get()) {
             // 如果不是自己代表是 !f xxx / @
