@@ -448,6 +448,11 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup("b", REG_NUMBER, EXIST)
     }),
 
+    BP_QUERY(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("bq")
+        appendCaptureGroup("text", ".*", EXIST)
+    }),
+
     KITA(CommandPatternBuilder.create {
         appendCommands("kt(?![^x\\s])", "kita")
         appendCaptureGroup("noBG", "x")

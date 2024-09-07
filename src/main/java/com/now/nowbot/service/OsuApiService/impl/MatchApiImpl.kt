@@ -1,80 +1,100 @@
-package com.now.nowbot.service.OsuApiService.impl;
+package com.now.nowbot.service.OsuApiService.impl
 
-import com.now.nowbot.model.JsonData.Match;
-import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-
-import java.time.Duration;
-import java.util.Optional;
+import com.now.nowbot.model.JsonData.Match
+import com.now.nowbot.model.multiplayer.MatchQuery
+import com.now.nowbot.model.multiplayer.NewMatch
+import com.now.nowbot.service.OsuApiService.OsuMatchApiService
+import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.time.Duration
+import java.util.*
 
 @Service
-public class MatchApiImpl implements OsuMatchApiService {
-    OsuApiBaseService base;
-
-    public MatchApiImpl(OsuApiBaseService baseService) {
-        base = baseService;
-    }
-
-    private Match getMatchInfo(long mid) {
+class MatchApiImpl(
+    private val base: OsuApiBaseService,
+) : OsuMatchApiService {
+    @Throws(WebClientResponseException::class)
+    override fun queryMatch(limit: Int, sort: String, cursor: String?): MatchQuery {
         return base.osuApiWebClient.get()
-                .uri("matches/{mid}", mid)
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToMono(Match.class)
-                .block();
-    }
-
-    private Match getMatchInfo(long mid, long before, long after) {
-        Optional<Long> bef = before == 0 ?
-                Optional.empty() : Optional.of(before);
-        Optional<Long> aft = after == 0 ?
-                Optional.empty() : Optional.of(after);
-
-        return base.osuApiWebClient.get()
-                .uri(u -> u.path("matches/{mid}")
-                        .queryParamIfPresent("before", bef)
-                        .queryParamIfPresent("after", aft)
-                        .queryParam("limit", 100)
-                        .build(mid))
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToMono(Match.class)
-                .timeout(Duration.ofSeconds(5))
-                .block();
-    }
-
-    @Override
-    public Match getMatchInfo(long mid, int limit) {
-        Match match = null;
-        long eventId = 0;
-        do {
-            if (eventId == 0) {
-                match = getMatchInfo(mid);
-            } else {
-                match.parseNextData(getMatchInfoBefore(
-                        mid,
-                        match.getEvents().getFirst().getEventID()
-                ));
+            .uri {
+                it.path("matches")
+                it.queryParam("limit", limit)
+                it.queryParam("sort", sort)
+                if (cursor != null) it.queryParam("cursor_string", cursor)
+                it.build()
             }
-            eventId = match.getEvents().getFirst().getEventID();
-        }
-        while (!match.getFirstEventID().equals(eventId) && --limit >= 0);
-        return match;
+            .headers(base::insertHeader)
+            .retrieve()
+            .bodyToMono(MatchQuery::class.java)
+            .block()!!
     }
 
-    @Override
-    public Match getMatchInfoFirst(long mid) throws WebClientResponseException {
-        return getMatchInfo(mid);
+    override fun getNewMatchInfo(mid: Long, before: Long?, after: Long?, limit: Int) : NewMatch{
+        return base.osuApiWebClient.get()
+            .uri {
+                it.path("matches/{mid}")
+                if (before != null) it.queryParam("before", before)
+                if (after != null) it.queryParam("after", after)
+                it.queryParam("limit", limit)
+                it.build(mid)
+            }
+            .headers(base::insertHeader)
+            .retrieve()
+            .bodyToMono(NewMatch::class.java)
+            .timeout(Duration.ofSeconds(5))
+            .block()!!
     }
 
-    @Override
-    public Match getMatchInfoBefore(long mid, long id) throws WebClientResponseException {
-        return getMatchInfo(mid, id, 0);
+    private fun getMatchInfo(mid: Long): Match {
+        return base.osuApiWebClient.get()
+            .uri("matches/{mid}", mid)
+            .headers(base::insertHeader)
+            .retrieve()
+            .bodyToMono(Match::class.java)
+            .block()!!
     }
 
-    @Override
-    public Match getMatchInfoAfter(long mid, long id) throws WebClientResponseException {
-        return getMatchInfo(mid, 0, id);
+    private fun getMatchInfo(mid: Long, before: Long, after: Long): Match {
+        return base.osuApiWebClient.get()
+            .uri {
+                it.path("matches/{mid}")
+                if (before != 0L) it.queryParam("before", before)
+                if (after != 0L) it.queryParam("after", after)
+                it.queryParam("limit", 100)
+                it.build(mid)
+            }
+            .headers(base::insertHeader)
+            .retrieve()
+            .bodyToMono(Match::class.java)
+            .timeout(Duration.ofSeconds(5))
+            .block()!!
+    }
+
+    @Throws(WebClientResponseException::class)
+    override fun getMatchInfo(mid: Long, limit: Int): Match {
+        var limit = limit
+        var eventId: Long
+        val match: Match = getMatchInfo(mid)
+        do {
+            val newMatch = getMatchInfoBefore(mid, match.events.first().eventID)
+            match.parseNextData(newMatch)
+            eventId = match.events.first().eventID
+        } while (match.firstEventID != eventId && --limit >= 0)
+        return match
+    }
+
+    @Throws(WebClientResponseException::class)
+    override fun getMatchInfoFirst(mid: Long): Match {
+        return getMatchInfo(mid)
+    }
+
+    @Throws(WebClientResponseException::class)
+    override fun getMatchInfoBefore(mid: Long, id: Long): Match {
+        return getMatchInfo(mid, id, 0)
+    }
+
+    @Throws(WebClientResponseException::class)
+    override fun getMatchInfoAfter(mid: Long, id: Long): Match {
+        return getMatchInfo(mid, 0, id)
     }
 }
