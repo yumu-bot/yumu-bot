@@ -3,8 +3,6 @@ package com.now.nowbot.service.MessageServiceImpl
 import com.now.nowbot.model.JsonData.MicroUser
 import com.now.nowbot.model.JsonData.Score
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.MessageChain
-import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageServiceImpl.BPQueryService.Operator.*
@@ -66,11 +64,11 @@ class BPQueryService(
         val filter: (Triple<Operator, String, Score>) -> Boolean,
         vararg val enabledOperator: Operator
     ) {
-        Mapper("mapper", { (operator, value, score) ->
-            if (operator == EQ) {
-                score.beatMapSet.creator.contains(value, true)
+        Mapper("mapper", { (op, v, s) ->
+            if (op == EQ) {
+                s.beatMapSet.creator.contains(v, true)
             } else {
-                !score.beatMapSet.creator.contains(value, true)
+                !s.beatMapSet.creator.contains(v, true)
             }
         }, EQ, NE),
         ScoreNumber("score", { (op, v, s) ->
@@ -79,7 +77,7 @@ class BPQueryService(
             } catch (e: Exception) {
                 throw IllegalArgumentException("'score' invalid value '$v'")
             }
-            when(op) {
+            when (op) {
                 EQ -> s.score == score
                 NE -> s.score != score
                 GT -> s.score > score
@@ -88,8 +86,29 @@ class BPQueryService(
                 LE -> s.score <= score
             }
         }, EQ, NE, GT, GE, LT, LE),
-        Rank("rank", { false }),
-        Accuracy("acc", { false }),
+        Rank("rank", { (op, v, s) ->
+            val socreRank = getRankNumber(s.rank)
+            val rank = getRankNumber(v)
+            when (op) {
+                EQ -> socreRank == rank
+                NE -> socreRank != rank
+                GT -> socreRank > rank
+                GE -> socreRank >= rank
+                LT -> socreRank < rank
+                LE -> socreRank <= rank
+            }
+        }, EQ, NE, GT, GE, LT, LE),
+        Accuracy("acc", { (op, v, s) ->
+            val acc = v.toDouble()
+            when (op) {
+                EQ -> s.accuracy.isEqual(acc)
+                NE -> !s.accuracy.isEqual(acc)
+                GT -> s.accuracy > acc
+                GE -> s.accuracy.isGreaterOrEqual(acc)
+                LT -> s.accuracy < acc
+                LE -> s.accuracy.isLessOrEqual(acc)
+            }
+        }, EQ, NE, GT, GE, LT, LE),
         Combo("combo", { false }),
         Miss("miss", { false }),
         Mode("mode", { false }),
@@ -154,8 +173,14 @@ class BPQueryService(
         private fun getFilter(cmd: String): (Score) -> Boolean {
             val (key, operator, value) = cmd.getOperator()
             return when (key) {
+                Param.Mapper.key -> Param.Mapper(operator, value)
                 Param.ScoreNumber.key -> Param.ScoreNumber(operator, value)
                 Param.Rank.key -> Param.Rank(operator, value)
+                Param.Accuracy.key -> Param.Accuracy(operator, value)
+                Param.Combo.key -> Param.Combo(operator, value)
+                Param.Miss.key -> Param.Miss(operator, value)
+                Param.Mode.key -> Param.Mode(operator, value)
+                Param.Mods.key -> Param.Mods(operator, value)
                 else -> throw IllegalArgumentException("Invalid key")
             }
         }
@@ -171,6 +196,33 @@ class BPQueryService(
                 result.add(f)
             }
             return result
+        }
+
+        private fun getRankNumber(rank: String): Int {
+            return when (rank.uppercase()) {
+                "F" -> 0
+                "D" -> 1
+                "C" -> 2
+                "B" -> 3
+                "A" -> 4
+                "S" -> 5
+                "SH" -> 6
+                "X" -> 7
+                "XH" -> 8
+                else -> throw IllegalArgumentException("Invalid rank")
+            }
+        }
+
+        fun Double.isEqual(other: Double): Boolean {
+            return this - other in -1E-7..1E-7
+        }
+
+        fun Double.isGreaterOrEqual(other: Double): Boolean {
+            return this - other > -1E-7
+        }
+
+        fun Double.isLessOrEqual(other: Double): Boolean {
+            return this - other < 1E-7
         }
     }
 }

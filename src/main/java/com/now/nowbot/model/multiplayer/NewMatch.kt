@@ -4,22 +4,23 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.JsonData.BeatMap
 import com.now.nowbot.model.JsonData.MicroUser
-import com.now.nowbot.model.JsonData.Score
+import com.now.nowbot.model.JsonData.Statistics
+import com.now.nowbot.model.enums.OsuMode
 import java.time.OffsetDateTime
 
 data class NewMatch(
     @JsonProperty("match")
-    val state: MatchStat,
+    var state: MatchStat,
 
     val events: MutableList<MatchEvent>,
 
     val users: MutableList<MicroUser>,
 
     @JsonProperty("first_event_id")
-    val firstEventID: Long,
+    var firstEventID: Long,
 
     @JsonProperty("latest_event_id")
-    val latestEventID: Long,
+    var latestEventID: Long,
 ) {
     val isMatchEnd: Boolean
         get() = state.endTime != null
@@ -65,7 +66,7 @@ data class NewMatch(
         val game: MatchGame?,
     ) {
         val type: EventType
-            get() = EventType.getType(detailObj["type"].asText())
+                get() = EventType.getType(detailObj["type"].asText())
 
         val detail: String
             get() = detailObj["text"].asText()
@@ -80,11 +81,42 @@ data class NewMatch(
         val beatmapID: Long,
         val startTime: OffsetDateTime,
         val endTime: OffsetDateTime?,
-        private val modeInt: Int,
+        val modeInt: Int,
         val mods: List<String>,
-        val scores: List<Score>,
+        val scores: List<MatchScore>,
+        val teamType: String,
+    ) {
+        val mode: OsuMode
+            get() = OsuMode.getMode(modeInt)
+        val isTeamVS = teamType.contains("team-vs")
+    }
 
-        )
+    data class MatchScore(
+        @JsonProperty("match")
+        val playerStat: MatchScorePlayerStat,
+        @JsonProperty("best_id")
+        val bestID: Long,
+        @JsonProperty("user_id")
+        val userID: Long,
+        @JsonProperty("id")
+        val scoreID: Long,
+        val maxCombo: Int,
+        val mode: String,
+        val modeInt: Int,
+        val mods: List<String>,
+        val passed: Boolean,
+        val perfect: Boolean,
+        val pp: Double,
+        val rank: String,
+        val score: Int,
+        val statistics: Statistics,
+    )
+
+    data class MatchScorePlayerStat(
+        val slot: Int,
+        val team: String,
+        val pass: Boolean,
+    )
 
     enum class EventType(val value: String) {
         PlayerJoined("player-joined"),
@@ -105,6 +137,37 @@ data class NewMatch(
                 MatchDisbanded.value -> MatchDisbanded
                 MatchCreated.value -> MatchCreated
                 else -> Other
+            }
+        }
+    }
+
+    operator fun plusAssign(match: NewMatch) {
+        // 更新玩家
+        if (match.users.isNotEmpty()) {
+            val userSet = users.map { it.userID }.toSet()
+            val newUsers = match.users.filter { it.userID in userSet }
+            users.addAll(newUsers)
+        }
+        //更新状态
+        state = match.state
+        latestEventID = match.latestEventID
+        firstEventID = match.firstEventID
+
+        if (match.events.isEmpty()) return
+        when {
+            // 插入新事件
+            events.last().ID < match.events.first().ID -> events.addAll(match.events)
+            // 插入旧事件
+            events.first().ID > match.events.last().ID -> events.addAll(0, match.events)
+            // 中间插入
+            events.last().ID < match.events.last().ID -> {
+                events.removeIf { it.ID >= match.events.first().ID }
+                events.addAll(match.events)
+            }
+            // 中间插入
+            events.first().ID > match.events.first().ID -> {
+                events.removeIf { it.ID <= match.events.last().ID }
+                events.addAll(0, match.events)
             }
         }
     }

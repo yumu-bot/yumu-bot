@@ -287,7 +287,7 @@ object DataUtil {
         }
 
         // 如果遍历完了还没跳出，则返回空
-        return mutableListOf<Long>()
+        return mutableListOf()
     }
 
     // 获取谱面的原信息，方便成绩面板使用。请在 applyBeatMapExtend 和 applySRAndPP 之前用。

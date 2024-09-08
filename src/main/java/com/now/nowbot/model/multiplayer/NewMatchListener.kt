@@ -1,46 +1,41 @@
 package com.now.nowbot.model.multiplayer
 
-import com.now.nowbot.model.JsonData.Match
+import com.now.nowbot.model.JsonData.MicroUser
+import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.multiplayer.NewMatch.EventType
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService
-import com.yumu.core.extensions.toJson
 import org.slf4j.LoggerFactory
-import java.nio.file.FileSystem
-import java.nio.file.FileSystems
-import java.nio.file.Path
-import java.nio.file.StandardWatchEventKinds
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.Path
 
 class NewMatchListener(
     val match: NewMatch,
     val matchApiService: OsuMatchApiService,
 ) {
-    val matchId = match.ID
-    var nowEventID:Long = match.latestEventID
-    val eventListener = mutableListOf<(Iterable<Match.MatchEvent>, NewMatch.EventType, Match) -> Boolean>()
-    var future:ScheduledFuture<*>? = null
-    var kill:ScheduledFuture<*>? = null
+    private val matchId = match.ID
+    private var nowEventID: Long = match.latestEventID
+    private val eventListener = mutableListOf<MatchAdapter>()
+    private val usersIDSet = mutableSetOf<Long>()
+    private val userMap = mutableMapOf<Long, MicroUser>()
+    private var future: ScheduledFuture<*>? = null
+    private var kill: ScheduledFuture<*>? = null
+
+    init {
+        parseUsers(match.events, match.users)
+    }
 
     private fun listen() {
-        try{
-            if (match.isMatchEnd) stopListener(StopType.MATCH_END)
-
-            val newMatch = matchApiService.getNewMatchInfo(matchId, after =  nowEventID)
-
+        try {
+            if (match.isMatchEnd) stop(StopType.MATCH_END)
+            val newMatch = matchApiService.getNewMatchInfo(matchId, after = nowEventID)
             // 对局没有任何新事件
-            if (newMatch.latestEventID == nowEventID) return
-
-            if (newMatch.currentGameID != null) {
-                // 正在进行中
-                TODO("找时间测试")
-            }
+            if (nowEventID == newMatch.latestEventID) return
             nowEventID = newMatch.latestEventID
-
-            println(newMatch.toJson())
-
+            match += newMatch
+            parseUsers(newMatch.events, newMatch.users)
+            onEvent(newMatch)
         } catch (e: Exception) {
             onError(e)
         }
@@ -60,26 +55,63 @@ class NewMatchListener(
 
         future = executorService.scheduleAtFixedRate(this::listen, 0, 10, TimeUnit.SECONDS)
 
-        kill = executorService.schedule( {
-            if (isStart()) stopListener(StopType.TIME_OUT)
+        kill = executorService.schedule({
+            if (isStart()) stop(StopType.TIME_OUT)
         }, 3, TimeUnit.HOURS)
 
         onStart()
     }
 
-    fun onError(e: Exception) {
-
+    private fun onEvent(e: NewMatch) {
+        e.events.forEach {
+            if (it.game == null) return@forEach
+            val game = it.game
+            val isEnd = game.endTime != null
+            if (isEnd) {
+                // 对局结束
+                val event = MatchAdapter.GameEndEvent(
+                    it.ID,
+                    game.beatmap,
+                    game.startTime,
+                    game.endTime!!,
+                    game.mode,
+                    game.mods.map { OsuMod.getModFromAbbreviation(it) },
+                    game.isTeamVS,
+                    userMap,
+                    game.scores
+                )
+                eventListener.forEach { l -> l.onGameEnd(event) }
+            } else {
+                // 对局开始
+                val user = usersIDSet.map { id -> userMap[id] }.filterNotNull()
+                val event = MatchAdapter.GameStartEvent(
+                    it.ID,
+                    match.name,
+                    game.beatmap,
+                    game.startTime,
+                    game.mode,
+                    game.mods.map { OsuMod.getModFromAbbreviation(it) },
+                    game.isTeamVS,
+                    user
+                )
+                eventListener.forEach { l -> l.onGameStart(event) }
+            }
+        }
     }
 
-    fun onStart() {
-
+    private fun onError(e: Exception) {
+        eventListener.forEach { it.onError(e) }
     }
 
-    fun onStop(type: StopType) {
-
+    private fun onStart() {
+        eventListener.forEach { it.onStart() }
     }
 
-    fun stopListener(type: StopType) {
+    private fun onStop(type: StopType) {
+        eventListener.forEach { it.onMatchEnd(type) }
+    }
+
+    fun stop(type: StopType) {
         if (!isStart()) return
         kill?.cancel(true)
         future?.cancel(true)
@@ -87,6 +119,20 @@ class NewMatchListener(
     }
 
     fun isStart() = future?.isDone?.not() ?: false
+
+    private fun parseUsers(events: List<NewMatch.MatchEvent>, users: List<MicroUser>) {
+        users.forEach {
+            userMap[it.id] = it
+        }
+        events.forEach {
+            when (it.type) {
+                EventType.PlayerJoined -> usersIDSet.add(it.userID!!)
+                EventType.PlayerKicked -> usersIDSet.remove(it.userID!!)
+                EventType.PlayerLeft -> usersIDSet.remove(it.userID!!)
+                else -> {}
+            }
+        }
+    }
 
     enum class StopType(val tips: String) {
         MATCH_END("比赛正常结束"),
@@ -105,38 +151,4 @@ class NewMatchListener(
             executorService = Executors.newScheduledThreadPool(Int.MAX_VALUE, threadFactory)
         }
     }
-}
-
-fun main() {
-    val path = Path("/home/spring/Documents/nowbot/osufile/")
-    val observer = FileSystems.getDefault().newWatchService()
-    path.register(
-        observer,
-        StandardWatchEventKinds.ENTRY_CREATE,
-        StandardWatchEventKinds.ENTRY_DELETE,
-        StandardWatchEventKinds.ENTRY_MODIFY,
-        StandardWatchEventKinds.OVERFLOW,
-        )
-    var keep:Boolean
-    do {
-        val key = observer.take()
-        key.pollEvents().forEach {
-            val file = it.context() as Path
-            when(it.kind()) {
-                StandardWatchEventKinds.ENTRY_CREATE -> {
-                    println("创建文件: $file")
-                }
-                StandardWatchEventKinds.ENTRY_DELETE -> {
-                    println("删除文件: $file")
-                }
-                StandardWatchEventKinds.ENTRY_MODIFY -> {
-                    println("修改文件: $file")
-                }
-                StandardWatchEventKinds.OVERFLOW -> {
-                    println("事件丢失: $file")
-                }
-            }
-        }
-        keep = key.reset()
-    }while (keep)
 }
