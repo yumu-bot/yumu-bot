@@ -15,6 +15,7 @@ class NewMatchListener(
     val matchApiService: OsuMatchApiService,
 ) {
     private val matchId = match.ID
+    private var nowGameID: Long? = null
     private var nowEventID: Long = match.latestEventID
     private val eventListener = mutableListOf<MatchAdapter>()
     private val usersIDSet = mutableSetOf<Long>()
@@ -23,6 +24,10 @@ class NewMatchListener(
     private var kill: ScheduledFuture<*>? = null
 
     init {
+        val firstHost = match.events.find { it.type == EventType.HostChanged }
+        if (firstHost != null) {
+            usersIDSet.add(firstHost.userID!!)
+        }
         parseUsers(match.events, match.users)
     }
 
@@ -32,14 +37,28 @@ class NewMatchListener(
             val newMatch = matchApiService.getNewMatchInfo(matchId, after = nowEventID)
             // 对局没有任何新事件
             if (nowEventID == newMatch.latestEventID) return
-            nowEventID = newMatch.latestEventID
+            if (newMatch.currentGameID != null) {
+                // 现在有对局正在进行中
+                val gameEvent = newMatch.events.last { it.game != null }
+                var isAbort = false
+                if (newMatch.currentGameID != nowGameID) {
+                    nowGameID = newMatch.currentGameID
+                    isAbort = true
+                }
+                if (nowEventID == gameEvent.ID - 1 && isAbort.not()) {
+                    return
+                } else {
+                    nowEventID = gameEvent.ID - 1
+                }
+            } else {
+                nowEventID = newMatch.latestEventID
+            }
             match += newMatch
             parseUsers(newMatch.events, newMatch.users)
             onEvent(newMatch)
         } catch (e: Exception) {
             onError(e)
         }
-
     }
 
     fun start() {
@@ -60,6 +79,17 @@ class NewMatchListener(
         }, 3, TimeUnit.HOURS)
 
         onStart()
+    }
+
+    fun stop(type: StopType) {
+        if (!isStart()) return
+        kill?.cancel(true)
+        future?.cancel(true)
+        onStop(type)
+    }
+
+    fun addListener(listener: MatchAdapter) {
+        eventListener.add(listener)
     }
 
     private fun onEvent(e: NewMatch) {
@@ -109,13 +139,6 @@ class NewMatchListener(
 
     private fun onStop(type: StopType) {
         eventListener.forEach { it.onMatchEnd(type) }
-    }
-
-    fun stop(type: StopType) {
-        if (!isStart()) return
-        kill?.cancel(true)
-        future?.cancel(true)
-        onStop(type)
     }
 
     fun isStart() = future?.isDone?.not() ?: false
