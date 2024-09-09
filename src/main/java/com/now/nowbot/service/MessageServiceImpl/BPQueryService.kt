@@ -67,7 +67,7 @@ class BPQueryService(
         } else {
 
             val indexMap = bpList.mapIndexed { i, s -> s.scoreID to i }.toMap()
-            val ranks = result.map { indexMap[it.scoreID]!! }
+            val ranks = result.map { indexMap[it.scoreID]!! + 1 }
             imageService.getPanelA4(user, result, ranks)
         }
         QQMsgUtil.sendImage(event, image)
@@ -239,7 +239,7 @@ class BPQueryService(
     }
 
     companion object {
-        val pattern = Pattern.compile("(\\w+)([><]=?|=|[!！]=)(\\w+)")
+        val pattern = Pattern.compile("(\\w+)([><]=?|=|[!！]=)(\\w+|\\d+(\\.\\d+)?)")
         val split = Pattern.compile("(\\s+)|[|,，]")
 
         private fun String.getOperator(): Triple<String, Operator, String> {
