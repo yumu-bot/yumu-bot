@@ -47,7 +47,12 @@ class BPQueryService(
     override fun HandleMessage(event: MessageEvent, data: String) {
         val bindUser = bindDao.getUserFromQQ(event.sender.id)
         val bpList = scoreApiService.getBestPerformance(bindUser, bindUser.osuMode, 0, 100)
-        val result = getBP(data, bpList)
+        val result = try {
+            getBP(data, bpList)
+        } catch (e: IllegalArgumentException) {
+            event.reply("解析表达式出错了, ${e.message}")
+            return
+        }
         val user = userApiService.getPlayerInfo(bindUser)
 
         if (result.isEmpty()) {
