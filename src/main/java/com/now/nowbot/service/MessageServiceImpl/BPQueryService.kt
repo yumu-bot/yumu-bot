@@ -239,7 +239,7 @@ class BPQueryService(
     }
 
     companion object {
-        val pattern = Pattern.compile("(\\w+)([><]=?|=|[!！]=)(\\w+|\\d+(\\.\\d+)?)")
+        val pattern = Pattern.compile("(\\w+)([><]=?|=|[!！]=)(\\w+(\\.\\d+)?)")
         val split = Pattern.compile("(\\s+)|[|,，]")
 
         private fun String.getOperator(): Triple<String, Operator, String> {
