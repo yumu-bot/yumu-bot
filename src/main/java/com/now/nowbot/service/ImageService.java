@@ -107,7 +107,7 @@ public class ImageService {
         return doPost("panel_A3", httpEntity);
     }
 
-    public byte[] getPanelA4(OsuUser osuUser, List<Score> todayBPs, ArrayList<Integer> BPRanks) {
+    public byte[] getPanelA4(OsuUser osuUser, List<Score> todayBPs, List<Integer> BPRanks) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(

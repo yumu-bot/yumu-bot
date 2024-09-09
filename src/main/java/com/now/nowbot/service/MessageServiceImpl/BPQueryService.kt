@@ -1,15 +1,22 @@
 package com.now.nowbot.service.MessageServiceImpl
 
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.JsonData.MicroUser
 import com.now.nowbot.model.JsonData.Score
+import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageServiceImpl.BPQueryService.Companion.isEqual
+import com.now.nowbot.service.MessageServiceImpl.BPQueryService.Companion.isGreaterOrEqual
+import com.now.nowbot.service.MessageServiceImpl.BPQueryService.Companion.isLessOrEqual
 import com.now.nowbot.service.MessageServiceImpl.BPQueryService.Operator.*
+import com.now.nowbot.service.MessageServiceImpl.ScorePRService.Companion.getScore4PanelE5
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService
 import com.now.nowbot.service.OsuApiService.OsuUserApiService
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.QQMsgUtil
 import org.springframework.stereotype.Service
 import java.util.regex.Pattern
 
@@ -17,6 +24,7 @@ import java.util.regex.Pattern
 class BPQueryService(
     private var beatmapApiService: OsuBeatmapApiService,
     private var userApiService: OsuUserApiService,
+    private var bindDao: BindDao,
     private var scoreApiService: OsuScoreApiService,
     private var imageService: ImageService,
 ) : MessageService<String> {
@@ -26,8 +34,9 @@ class BPQueryService(
         messageText: String,
         data: MessageService.DataValue<String?>
     ): Boolean {
-        return if (Instruction.BP_QUERY.matcher(messageText).find()) {
-            data.value = messageText
+        val matcher = Instruction.BP_QUERY.matcher(messageText)
+        return if (matcher.find()) {
+            data.value = matcher.group("text")
             true
         } else {
             false
@@ -35,8 +44,28 @@ class BPQueryService(
     }
 
 
-    override fun HandleMessage(event: MessageEvent?, data: String?) {
-        //todo: 没处理解析谁的bp
+    override fun HandleMessage(event: MessageEvent, data: String) {
+        val bindUser = bindDao.getUserFromQQ(event.sender.id)
+        val bpList = scoreApiService.getBestPerformance(bindUser, bindUser.osuMode, 0, 100)
+        val result = getBP(data, bpList)
+        val user = userApiService.getPlayerInfo(bindUser)
+
+        if (result.isEmpty()) {
+            event.reply("没有找到符合条件的bp")
+            return
+        }
+
+        val image = if (result.size == 1) {
+            val score = result.first()
+            val e5Param = getScore4PanelE5(user, score, beatmapApiService)
+            imageService.getPanelE5(e5Param)
+        } else {
+
+            val indexMap = bpList.mapIndexed { i, s -> s.scoreID to i }.toMap()
+            val ranks = result.map { indexMap[it.scoreID]!! }
+            imageService.getPanelA4(user, result, ranks)
+        }
+        QQMsgUtil.sendImage(event, image)
     }
 
     enum class Operator(val op: String) {
@@ -65,6 +94,7 @@ class BPQueryService(
         vararg val enabledOperator: Operator
     ) {
         Mapper("mapper", { (op, v, s) ->
+            // 对字符串的 == / != 操作转为 包含 / 不包含
             if (op == EQ) {
                 s.beatMapSet.creator.contains(v, true)
             } else {
@@ -99,7 +129,8 @@ class BPQueryService(
             }
         }, EQ, NE, GT, GE, LT, LE),
         Accuracy("acc", { (op, v, s) ->
-            val acc = v.toDouble()
+            var acc = v.toDouble()
+            if (acc > 1.0) acc /= 100
             when (op) {
                 EQ -> s.accuracy.isEqual(acc)
                 NE -> !s.accuracy.isEqual(acc)
@@ -109,10 +140,60 @@ class BPQueryService(
                 LE -> s.accuracy.isLessOrEqual(acc)
             }
         }, EQ, NE, GT, GE, LT, LE),
-        Combo("combo", { false }),
-        Miss("miss", { false }),
-        Mode("mode", { false }),
-        Mods("mod", { false }),
+        Bpm("bpm", { (op, v, s) ->
+            val bpm = v.toFloat()
+            when (op) {
+                EQ -> s.beatMap.bpm.isEqual(bpm)
+                NE -> !s.beatMap.bpm.isEqual(bpm)
+                GT -> s.beatMap.bpm > bpm
+                GE -> s.beatMap.bpm.isGreaterOrEqual(bpm)
+                LT -> s.beatMap.bpm < bpm
+                LE -> s.beatMap.bpm.isLessOrEqual(bpm)
+            }
+        }, EQ, NE, GT, GE, LT, LE),
+        Combo("combo", { (op, v, s) ->
+            val combo = v.toInt()
+            when (op) {
+                EQ -> s.maxCombo == combo
+                NE -> s.maxCombo != combo
+                GT -> s.maxCombo > combo
+                GE -> s.maxCombo >= combo
+                LT -> s.maxCombo < combo
+                LE -> s.maxCombo <= combo
+            }
+        }, EQ, NE, GT, GE, LT, LE),
+        Length("length", { (op, v, s) ->
+            val length = v.toInt()
+            when (op) {
+                EQ -> s.beatMap.hitLength == length
+                NE -> s.beatMap.hitLength != length
+                GT -> s.beatMap.hitLength > length
+                GE -> s.beatMap.hitLength >= length
+                LT -> s.beatMap.hitLength < length
+                LE -> s.beatMap.hitLength <= length
+            }
+        }, EQ, NE, GT, GE, LT, LE),
+        Miss("miss", { (op, v, s) ->
+            val misses = v.toInt()
+            when (op) {
+                EQ -> s.statistics.countMiss == misses
+                NE -> s.statistics.countMiss != misses
+                GT -> s.statistics.countMiss > misses
+                GE -> s.statistics.countMiss >= misses
+                LT -> s.statistics.countMiss < misses
+                LE -> s.statistics.countMiss <= misses
+            }
+        }, EQ, NE, GT, GE, LT, LE),
+        Mods("mod", { (op, v, s) ->
+            // mod 处理是 = 为严格等于, > 为包含mod
+            val mods = OsuMod.getModsValue(v)
+            val scoreMods = OsuMod.getModsValue(s.mods.toTypedArray())
+            when (op) {
+                EQ -> mods == scoreMods
+                GT -> mods and scoreMods == mods
+                else -> throw IllegalArgumentException("'mod' invalid operator '${op.op}'")
+            }
+        }, EQ, GT)
         ;
 
         operator fun invoke(operator: Operator, value: String): (Score) -> Boolean {
@@ -142,7 +223,7 @@ class BPQueryService(
                     val users = userApiService.getUsers(ids)
                     users.forEach { rawMapperMap[it.id] = it }
                 }
-            mapperMap.forEach { index, mapperID ->
+            mapperMap.forEach { (index, mapperID) ->
                 val score = scores[index]
                 val mapper = rawMapperMap[mapperID] ?: return@forEach
                 score.beatMapSet.creator = mapper.userName
@@ -154,6 +235,7 @@ class BPQueryService(
 
     companion object {
         val pattern = Pattern.compile("(\\w+)([><]=?|=|[!！]=)(\\w+)")
+        val split = Pattern.compile("(\\s+)|[|,，]")
 
         private fun String.getOperator(): Triple<String, Operator, String> {
             val m = pattern.matcher(this)
@@ -176,10 +258,11 @@ class BPQueryService(
                 Param.Mapper.key -> Param.Mapper(operator, value)
                 Param.ScoreNumber.key -> Param.ScoreNumber(operator, value)
                 Param.Rank.key -> Param.Rank(operator, value)
+                Param.Length.key -> Param.Length(operator, value)
+                Param.Bpm.key -> Param.Bpm(operator, value)
                 Param.Accuracy.key -> Param.Accuracy(operator, value)
                 Param.Combo.key -> Param.Combo(operator, value)
                 Param.Miss.key -> Param.Miss(operator, value)
-                Param.Mode.key -> Param.Mode(operator, value)
                 Param.Mods.key -> Param.Mods(operator, value)
                 else -> throw IllegalArgumentException("Invalid key")
             }
@@ -187,7 +270,7 @@ class BPQueryService(
 
         private fun getAllFilter(text: String): List<(Score) -> Boolean> {
             val result = mutableListOf<(Score) -> Boolean>()
-            text.split(" ").filter { it.isBlank() }.forEach {
+            text.split(split).filter { it.isNotBlank() }.forEach {
                 val f = try {
                     getFilter(it.trim().lowercase())
                 } catch (e: Exception) {
@@ -222,6 +305,18 @@ class BPQueryService(
         }
 
         fun Double.isLessOrEqual(other: Double): Boolean {
+            return this - other < 1E-7
+        }
+
+        fun Float.isEqual(other: Float): Boolean {
+            return this - other in -1E-7..1E-7
+        }
+
+        fun Float.isGreaterOrEqual(other: Float): Boolean {
+            return this - other > -1E-7
+        }
+
+        fun Float.isLessOrEqual(other: Float): Boolean {
             return this - other < 1E-7
         }
     }
