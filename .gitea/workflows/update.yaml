@@ -17,10 +17,10 @@ jobs:
           git reset --hard origin/master
           git pull
           git lfs pull
-      - name: Set up maven
-        run: export MAVEN_OPTS="--enable-preview"
       - name: Build project
         run: |
+          cd ~/nowbot
+          export MAVEN_OPTS="--enable-preview"
           mvn clean
           mvn package
   update:
