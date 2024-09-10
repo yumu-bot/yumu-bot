@@ -317,7 +317,7 @@ class BPQueryService(
     }
 
     companion object {
-        val pattern: Regex = "(\\S+)([><]=?|=|[!！]=)(\\w+(\\.\\d+)?)".toRegex()
+        val pattern: Regex = "(\\S+)([><]=?|=|[!！]=)(\\S+(\\.\\d+)?)".toRegex()
 
         val split: Regex = "(\\s+)|[|,，]".toRegex()
 
