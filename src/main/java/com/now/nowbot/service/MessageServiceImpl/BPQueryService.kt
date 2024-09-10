@@ -317,7 +317,7 @@ class BPQueryService(
     }
 
     companion object {
-        val pattern: Regex = "(\\S+)([><]=?|=|[!！]=)(\\S+(\\.\\d+)?)".toRegex()
+        val pattern: Regex = "(\\S+?)([><]=?|=|[!！]=)(\\S+(\\.\\d+)?)".toRegex()
 
         val split: Regex = "(\\s+)|[|,，]".toRegex()
 
@@ -390,7 +390,10 @@ class BPQueryService(
             }
         }
 
-        fun String.process(): String {
+        /**
+         * 将双引号内的空格替换为 $ 符号
+         */
+        private fun String.process(): String {
             val quoteCount = this.count { it == '"' }
             when {
                 quoteCount == 0 -> return this
