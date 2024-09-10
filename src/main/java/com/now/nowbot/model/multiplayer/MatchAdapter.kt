@@ -7,11 +7,11 @@ import com.now.nowbot.model.enums.OsuMode
 import java.time.OffsetDateTime
 
 interface MatchAdapter {
-    fun onStart() {}
+    fun onStart()
 
-    fun onGameStart(event: GameStartEvent) {}
+    fun onGameStart(event: GameStartEvent)
 
-    fun onGameEnd(event: GameEndEvent) {}
+    fun onGameEnd(event: GameEndEvent)
 
     fun onMatchEnd(type: NewMatchListener.StopType)
 
@@ -20,7 +20,7 @@ interface MatchAdapter {
     data class GameStartEvent(
         // 游戏 id, 用来确认是否是同一场游戏, 用于处理 abort 的情况
         val ID: Long,
-        val matchName:String,
+        val matchName: String,
         val beatmap: BeatMap,
         val start: OffsetDateTime,
         val mode: OsuMode,
