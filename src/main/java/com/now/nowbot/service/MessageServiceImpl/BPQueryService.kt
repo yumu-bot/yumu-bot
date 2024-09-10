@@ -7,18 +7,15 @@ import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.MessageServiceImpl.BPQueryService.Companion.isEqual
-import com.now.nowbot.service.MessageServiceImpl.BPQueryService.Companion.isGreaterOrEqual
-import com.now.nowbot.service.MessageServiceImpl.BPQueryService.Companion.isLessOrEqual
 import com.now.nowbot.service.MessageServiceImpl.BPQueryService.Operator.*
 import com.now.nowbot.service.MessageServiceImpl.ScorePRService.Companion.getScore4PanelE5
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService
 import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.util.ContextUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.QQMsgUtil
 import org.springframework.stereotype.Service
-import java.util.regex.Pattern
 
 @Service("BP_QUERY")
 class BPQueryService(
@@ -46,9 +43,11 @@ class BPQueryService(
 
     override fun HandleMessage(event: MessageEvent, data: String) {
         val bindUser = bindDao.getUserFromQQ(event.sender.id)
-        val bpList = scoreApiService.getBestPerformance(bindUser, bindUser.osuMode, 0, 100)
+        val bpList: List<Score>
         val result = try {
-            getBP(data, bpList)
+            val filters = getAllFilter(data)
+            bpList = scoreApiService.getBestPerformance(bindUser, bindUser.osuMode, 0, 100)
+            getBP(filters, bpList)
         } catch (e: IllegalArgumentException) {
             event.reply("解析表达式出错了, ${e.message}")
             return
@@ -62,10 +61,10 @@ class BPQueryService(
 
         val image = if (result.size == 1) {
             val score = result.first()
+            ContextUtil.setContext("notBreakApplySR", false)
             val e5Param = getScore4PanelE5(user, score, beatmapApiService)
             imageService.getPanelE5(e5Param)
         } else {
-
             val indexMap = bpList.mapIndexed { i, s -> s.scoreID to i }.toMap()
             val ranks = result.map { indexMap[it.scoreID]!! + 1 }
             imageService.getPanelA4(user, result, ranks)
@@ -100,12 +99,33 @@ class BPQueryService(
     ) {
         Mapper("mapper", { (op, v, s) ->
             // 对字符串的 == / != 操作转为 包含 / 不包含
+            val name = v.replace("$", " ")
             if (op == EQ) {
-                s.beatMapSet.creator.contains(v, true)
+                s.beatMapSet.creator.contains(name, true)
             } else {
-                !s.beatMapSet.creator.contains(v, true)
+                !s.beatMapSet.creator.contains(name, true)
             }
         }, EQ, NE),
+        Name("name", { (op, v, s) ->
+            val name = v.replace("$", " ")
+            val hasName = s.beatMapSet.title.contains(name, true) || s.beatMapSet.titleUnicode.contains(name, true)
+            if (op == EQ) {
+                hasName
+            } else {
+                hasName.not()
+            }
+        }, EQ, NE),
+        Star("star", { (op, v, s) ->
+            val star = v.toFloat()
+            when (op) {
+                EQ -> s.beatMap.starRating.isEqual(star)
+                NE -> !s.beatMap.starRating.isEqual(star)
+                GT -> s.beatMap.starRating > star
+                GE -> s.beatMap.starRating.isGreaterOrEqual(star)
+                LT -> s.beatMap.starRating < star
+                LE -> s.beatMap.starRating.isLessOrEqual(star)
+            }
+        }, EQ, NE, GT, GE, LT, LE),
         ScoreNumber("score", { (op, v, s) ->
             val score = try {
                 v.toInt()
@@ -121,16 +141,75 @@ class BPQueryService(
                 LE -> s.score <= score
             }
         }, EQ, NE, GT, GE, LT, LE),
+        Index("index", { (op, v, s) ->
+            val index = try {
+                v.toInt()
+            } catch (e: Exception) {
+                throw IllegalArgumentException("'index' invalid value '$v'")
+            }
+            when (op) {
+                EQ -> s.weight.index == index
+                NE -> s.weight.index != index
+                GT -> s.weight.index > index
+                GE -> s.weight.index >= index
+                LT -> s.weight.index < index
+                LE -> s.weight.index <= index
+            }
+        }, EQ, NE, GT, GE, LT, LE),
+        AR("ar", { (op, v, s) ->
+            val ar = v.toFloat()
+            when (op) {
+                EQ -> s.beatMap.ar.isEqual(ar)
+                NE -> !s.beatMap.ar.isEqual(ar)
+                GT -> s.beatMap.ar > ar
+                GE -> s.beatMap.ar.isGreaterOrEqual(ar)
+                LT -> s.beatMap.ar < ar
+                LE -> s.beatMap.ar.isLessOrEqual(ar)
+            }
+        }, EQ, NE, GT, GE, LT, LE),
+        OD("od", { (op, v, s) ->
+            val od = v.toFloat()
+            when (op) {
+                EQ -> s.beatMap.od.isEqual(od)
+                NE -> !s.beatMap.od.isEqual(od)
+                GT -> s.beatMap.od > od
+                GE -> s.beatMap.od.isGreaterOrEqual(od)
+                LT -> s.beatMap.od < od
+                LE -> s.beatMap.od.isLessOrEqual(od)
+            }
+        }, EQ, NE, GT, GE, LT, LE),
+        CS("cs", { (op, v, s) ->
+            val cs = v.toFloat()
+            when (op) {
+                EQ -> s.beatMap.cs.isEqual(cs)
+                NE -> !s.beatMap.cs.isEqual(cs)
+                GT -> s.beatMap.cs > cs
+                GE -> s.beatMap.cs.isGreaterOrEqual(cs)
+                LT -> s.beatMap.cs < cs
+                LE -> s.beatMap.cs.isLessOrEqual(cs)
+            }
+        }, EQ, NE, GT, GE, LT, LE),
+        HP("hp", { (op, v, s) ->
+            val hp = v.toFloat()
+            when (op) {
+                EQ -> s.beatMap.hp.isEqual(hp)
+                NE -> !s.beatMap.hp.isEqual(hp)
+                GT -> s.beatMap.hp > hp
+                GE -> s.beatMap.hp.isGreaterOrEqual(hp)
+                LT -> s.beatMap.hp < hp
+                LE -> s.beatMap.hp.isLessOrEqual(hp)
+            }
+        }, EQ, NE, GT, GE, LT, LE),
         Rank("rank", { (op, v, s) ->
-            val socreRank = getRankNumber(s.rank)
+            val scoreRank = getRankNumber(s.rank)
             val rank = getRankNumber(v)
             when (op) {
-                EQ -> socreRank == rank
-                NE -> socreRank != rank
-                GT -> socreRank > rank
-                GE -> socreRank >= rank
-                LT -> socreRank < rank
-                LE -> socreRank <= rank
+                EQ -> scoreRank == rank
+                NE -> scoreRank != rank
+                GT -> scoreRank > rank
+                GE -> scoreRank >= rank
+                LT -> scoreRank < rank
+                LE -> scoreRank <= rank
             }
         }, EQ, NE, GT, GE, LT, LE),
         Accuracy("acc", { (op, v, s) ->
@@ -195,10 +274,11 @@ class BPQueryService(
             val scoreMods = OsuMod.getModsValue(s.mods.toTypedArray())
             when (op) {
                 EQ -> mods == scoreMods
+                NE -> mods and scoreMods == 0
                 GT -> mods and scoreMods == mods
                 else -> throw IllegalArgumentException("'mod' invalid operator '${op.op}'")
             }
-        }, EQ, GT)
+        }, EQ, NE, GT)
         ;
 
         operator fun invoke(operator: Operator, value: String): (Score) -> Boolean {
@@ -207,9 +287,7 @@ class BPQueryService(
         }
     }
 
-    private fun getBP(text: String, scores: List<Score>): List<Score> {
-        val conditions = getAllFilter(text)
-
+    private fun getBP(filters: List<(Score) -> Boolean>, scores: List<Score>): List<Score> {
         // 处理带 mod 的
         beatmapApiService.applySRAndPP(scores)
 
@@ -235,26 +313,26 @@ class BPQueryService(
                 score.beatMapSet.creatorID = mapperID
             }
         }
-        return scores.filter { s -> conditions.all { it(s) } }
+        return scores.filter { s -> filters.all { it(s) } }
     }
 
     companion object {
-        val pattern = Pattern.compile("(\\w+)([><]=?|=|[!！]=)(\\w+(\\.\\d+)?)")
-        val split = Pattern.compile("(\\s+)|[|,，]")
+        val pattern: Regex = "(\\S+)([><]=?|=|[!！]=)(\\w+(\\.\\d+)?)".toRegex()
+
+        val split: Regex = "(\\s+)|[|,，]".toRegex()
 
         private fun String.getOperator(): Triple<String, Operator, String> {
-            val m = pattern.matcher(this)
-            if (!m.find()) throw IllegalArgumentException("Invalid query")
-            val operator = when (m.group(2)) {
+            val m = pattern.matchEntire(this) ?: throw IllegalArgumentException("Invalid query")
+            val operator = when (m.groupValues[2]) {
                 EQ.op -> EQ
                 NE.op -> NE
                 GT.op -> GT
                 GE.op -> GE
                 LT.op -> LT
                 LE.op -> LE
-                else -> throw IllegalArgumentException("Invalid operator '${m.group(2)}'")
+                else -> throw IllegalArgumentException("Invalid operator '${m.groupValues[2]}'")
             }
-            return Triple(m.group(1), operator, m.group(3))
+            return Triple(m.groupValues[1], operator, m.groupValues[3])
         }
 
         private fun getFilter(cmd: String): (Score) -> Boolean {
@@ -262,6 +340,13 @@ class BPQueryService(
             return when (key) {
                 Param.Mapper.key -> Param.Mapper(operator, value)
                 Param.ScoreNumber.key -> Param.ScoreNumber(operator, value)
+                Param.Name.key -> Param.Name(operator, value)
+                Param.Star.key -> Param.Star(operator, value)
+                Param.Index.key -> Param.Index(operator, value)
+                Param.AR.key -> Param.AR(operator, value)
+                Param.OD.key -> Param.OD(operator, value)
+                Param.CS.key -> Param.CS(operator, value)
+                Param.HP.key -> Param.HP(operator, value)
                 Param.Rank.key -> Param.Rank(operator, value)
                 Param.Length.key -> Param.Length(operator, value)
                 Param.Bpm.key -> Param.Bpm(operator, value)
@@ -275,14 +360,18 @@ class BPQueryService(
 
         private fun getAllFilter(text: String): List<(Score) -> Boolean> {
             val result = mutableListOf<(Score) -> Boolean>()
-            text.split(split).filter { it.isNotBlank() }.forEach {
-                val f = try {
-                    getFilter(it.trim().lowercase())
-                } catch (e: Exception) {
-                    throw IllegalArgumentException("err: '$it' ${e.message}")
+
+            text.process()
+                .split(split)
+                .filter { it.isNotBlank() }
+                .forEach {
+                    val f = try {
+                        getFilter(it.trim().lowercase())
+                    } catch (e: Exception) {
+                        throw IllegalArgumentException("err: '$it' ${e.message}")
+                    }
+                    result.add(f)
                 }
-                result.add(f)
-            }
             return result
         }
 
@@ -299,6 +388,35 @@ class BPQueryService(
                 "XH" -> 8
                 else -> throw IllegalArgumentException("Invalid rank")
             }
+        }
+
+        fun String.process(): String {
+            val quoteCount = this.count { it == '"' }
+            when {
+                quoteCount == 0 -> return this
+                quoteCount % 2 != 0 -> throw IllegalArgumentException("Invalid quote")
+            }
+            val result = StringBuilder()
+            var insideQuotes = false
+            val currentContent = StringBuilder()
+            this.forEach {
+                if (it == '"') {
+                    if (insideQuotes) {
+                        result.append(currentContent.toString().replace(" ", "$"))
+                        currentContent.clear()
+                    }
+                    insideQuotes = !insideQuotes
+                } else {
+                    if (insideQuotes) {
+                        // 如果在双引号内，收集内容
+                        currentContent.append(it)
+                    } else {
+                        // 如果不在双引号内，正常添加字符到结果
+                        result.append(it)
+                    }
+                }
+            }
+            return result.toString()
         }
 
         fun Double.isEqual(other: Double): Boolean {

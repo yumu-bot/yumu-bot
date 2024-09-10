@@ -277,7 +277,9 @@ class ScorePRService(
             val original = DataUtil.getOriginal(beatmap)
 
             beatmapApiService.applyBeatMapExtend(score)
-            beatmapApiService.applySRAndPP(score)
+            if (ContextUtil.getContext("notBreakApplySR", true, Boolean::class.java)) {
+                beatmapApiService.applySRAndPP(score)
+            }
 
             val attributes = beatmapApiService.getStatistics(score)
             attributes["full_pp"] = beatmapApiService.getFcPP(score).pp

@@ -29,7 +29,11 @@ public class ContextUtil {
         if (threadLocalService.get() == null){
             threadLocalService.set(new ConcurrentHashMap<>());
         }
-        threadLocalService.get().put(name, o);
+        if (o == null) {
+            threadLocalService.get().remove(name);
+        } else {
+            threadLocalService.get().put(name, o);
+        }
     }
 
     public static boolean isTestUser() {

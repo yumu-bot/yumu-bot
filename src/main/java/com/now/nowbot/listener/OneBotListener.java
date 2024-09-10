@@ -52,7 +52,11 @@ public class OneBotListener {
         if (event.getSender().getId() == 365246692L) {
             ContextUtil.setContext("isTest", Boolean.TRUE);
         }
-        PermissionImplement.onMessage(event, this::errorHandle);
+        try {
+            PermissionImplement.onMessage(event, this::errorHandle);
+        } finally {
+            ContextUtil.remove();
+        }
     }
 
     public void errorHandle(com.now.nowbot.qq.event.MessageEvent event, Throwable e) {

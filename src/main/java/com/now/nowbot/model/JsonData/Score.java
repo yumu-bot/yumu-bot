@@ -71,7 +71,12 @@ public class Score {
 
     public record Weight(
             @JsonProperty("percentage") Float percentage,
-            @JsonProperty("pp") Float weightedPP) {}
+            @JsonProperty("pp") Float weightedPP) {
+        public int getIndex() {
+            var i = Math.log(percentage / 100) / Math.log(0.95);
+            return (int) Math.round(i);
+        }
+    }
 
     @JsonProperty("beatmap")
     BeatMap beatMap;
