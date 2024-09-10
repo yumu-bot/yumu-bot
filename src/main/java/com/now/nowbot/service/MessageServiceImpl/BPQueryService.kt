@@ -68,7 +68,7 @@ class BPQueryService(
         } else {
             val indexMap = bpList.mapIndexed { i, s -> s.scoreID to i }.toMap()
             val ranks = result.map { indexMap[it.scoreID]!! + 1 }
-            imageService.getPanelA4(user, result, ranks)
+            imageService.getPanelA4BQ(user, result, ranks)
         }
         QQMsgUtil.sendImage(event, image)
     }

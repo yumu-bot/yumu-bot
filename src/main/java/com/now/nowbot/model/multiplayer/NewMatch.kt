@@ -76,14 +76,14 @@ data class NewMatch(
 
     data class MatchGame(
         val id: Long,
-        val beatmap: BeatMap,
+        var beatmap: BeatMap?,
 
         val beatmapID: Long,
         val startTime: OffsetDateTime,
         val endTime: OffsetDateTime?,
         val modeInt: Int,
         val mods: List<String>,
-        val scores: List<MatchScore>,
+        var scores: List<MatchScore>,
         val teamType: String,
     ) {
         val mode: OsuMode

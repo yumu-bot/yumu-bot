@@ -1,8 +1,11 @@
 package com.now.nowbot.model.multiplayer
 
+import com.now.nowbot.model.JsonData.BeatMap
 import com.now.nowbot.model.JsonData.MicroUser
 import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.multiplayer.NewMatch.EventType
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
@@ -12,23 +15,28 @@ import java.util.concurrent.TimeUnit
 
 class NewMatchListener(
     val match: NewMatch,
+    val beatmapApiService: OsuBeatmapApiService,
     val matchApiService: OsuMatchApiService,
+    vararg listerner: MatchAdapter
 ) {
     private val matchId = match.ID
     private var nowGameID: Long? = null
     private var nowEventID: Long = match.latestEventID
-    private val eventListener = mutableListOf<MatchAdapter>()
+    private val eventListener = mutableSetOf<MatchAdapter>()
     private val usersIDSet = mutableSetOf<Long>()
     private val userMap = mutableMapOf<Long, MicroUser>()
     private var future: ScheduledFuture<*>? = null
     private var kill: ScheduledFuture<*>? = null
 
     init {
-        val firstHost = match.events.find { it.type == EventType.HostChanged }
-        if (firstHost != null) {
-            usersIDSet.add(firstHost.userID!!)
-        }
+        eventListener.addAll(listerner)
         parseUsers(match.events, match.users)
+        if (match.currentGameID != null) {
+            val gameEvent = match.events.last { it.game != null }
+            nowGameID = match.currentGameID
+            nowEventID = gameEvent.ID - 1
+            onEvent(listOf(gameEvent))
+        }
     }
 
     private fun listen() {
@@ -47,6 +55,9 @@ class NewMatchListener(
                 }
                 if (nowEventID == gameEvent.ID - 1 && isAbort.not()) {
                     return
+                } else if (gameEvent.game?.endTime!= null) {
+                    // 对局结束之后的 abort
+                    nowGameID = gameEvent.ID
                 } else {
                     nowEventID = gameEvent.ID - 1
                 }
@@ -55,7 +66,7 @@ class NewMatchListener(
             }
             match += newMatch
             parseUsers(newMatch.events, newMatch.users)
-            onEvent(newMatch)
+            onEvent(newMatch.events)
         } catch (e: Exception) {
             onError(e)
         }
@@ -72,7 +83,7 @@ class NewMatchListener(
 
         nowEventID = match.latestEventID
 
-        future = executorService.scheduleAtFixedRate(this::listen, 0, 10, TimeUnit.SECONDS)
+        future = executorService.scheduleAtFixedRate(this::listen, 0, 8, TimeUnit.SECONDS)
 
         kill = executorService.schedule({
             if (isStart()) stop(StopType.TIME_OUT)
@@ -92,38 +103,66 @@ class NewMatchListener(
         eventListener.add(listener)
     }
 
-    private fun onEvent(e: NewMatch) {
-        e.events.forEach {
+    /**
+     * 当没有任何监听者的时候, 会自动关闭监听
+     *
+     * @return 返回 true 代表不存在 ListenerAdapter 了
+     */
+    fun removeListener(listener: MatchAdapter) : Boolean{
+        eventListener.remove(listener)
+        if (eventListener.isEmpty()) {
+            stop(StopType.SERVICE_STOP)
+            return true
+        }
+        return false
+    }
+
+    private fun onEvent(events: List<NewMatch.MatchEvent>) {
+        events.forEach {
             if (it.game == null) return@forEach
             val game = it.game
             val isEnd = game.endTime != null
             if (isEnd) {
                 // 对局结束
+                with(game) {
+                    if (beatmap != null) {
+                        beatmap = beatmapApiService.getBeatMapInfo(beatmapID)
+                        beatmapApiService.applySRAndPP(beatmap, mode, OsuMod.getModsValueFromAbbrList(mods))
+                    } else {
+                        beatmap = BeatMap(beatmapID)
+                    }
+                }
+
                 val event = MatchAdapter.GameEndEvent(
+                    game,
                     it.ID,
-                    game.beatmap,
-                    game.startTime,
-                    game.endTime!!,
-                    game.mode,
-                    game.mods.map { OsuMod.getModFromAbbreviation(it) },
-                    game.isTeamVS,
                     userMap,
-                    game.scores
+                    match.name,
+                    match.startTime
                 )
                 eventListener.forEach { l -> l.onGameEnd(event) }
             } else {
                 // 对局开始
                 val user = usersIDSet.map { id -> userMap[id] }.filterNotNull()
-                val event = MatchAdapter.GameStartEvent(
-                    it.ID,
-                    match.name,
-                    game.beatmap,
-                    game.startTime,
-                    game.mode,
-                    game.mods.map { OsuMod.getModFromAbbreviation(it) },
-                    game.isTeamVS,
-                    user
-                )
+
+                val event = with(game) {
+                    if (beatmap != null) {
+                        beatmap = beatmapApiService.getBeatMapInfo(beatmapID)
+                        beatmapApiService.applySRAndPP(beatmap, mode, OsuMod.getModsValueFromAbbrList(mods))
+                    }
+                    MatchAdapter.GameStartEvent(
+                        it.ID,
+                        match.name,
+                        beatmapID,
+                        beatmap ?: BeatMap(beatmapID),
+                        startTime,
+                        mode,
+                        mods.map { OsuMod.getModFromAbbreviation(it) },
+                        isTeamVS,
+                        teamType,
+                        user
+                    )
+                }
                 eventListener.forEach { l -> l.onGameStart(event) }
             }
         }
@@ -149,9 +188,16 @@ class NewMatchListener(
         }
         events.forEach {
             when (it.type) {
+                EventType.HostChanged -> usersIDSet.add(it.userID!!)
                 EventType.PlayerJoined -> usersIDSet.add(it.userID!!)
                 EventType.PlayerKicked -> usersIDSet.remove(it.userID!!)
                 EventType.PlayerLeft -> usersIDSet.remove(it.userID!!)
+                EventType.Other -> {
+                    if (it.game?.endTime == null) return@forEach
+                    val game = it.game
+                    game.scores.forEach { s -> usersIDSet.add(s.userID) }
+                }
+
                 else -> {}
             }
         }

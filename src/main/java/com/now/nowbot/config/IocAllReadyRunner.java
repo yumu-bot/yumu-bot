@@ -7,6 +7,7 @@ import com.now.nowbot.permission.PermissionImplement;
 import com.now.nowbot.qq.tencent.YumuServer;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.MessageServiceImpl.MatchListenerService;
+import com.now.nowbot.service.MessageServiceImpl.MatchListenerServiceOld;
 import com.now.nowbot.service.MessageServiceImpl.SystemInfoService;
 import com.now.nowbot.service.OsuApiService.OsuUserApiService;
 import com.now.nowbot.service.PerformancePlusService;
@@ -82,7 +83,8 @@ public class IocAllReadyRunner implements CommandLineRunner {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { //jvm结束钩子
             check.doEnd();
             ((ThreadPoolTaskExecutor) executor).shutdown();
-            MatchListenerService.stopAllListener();
+            MatchListenerServiceOld.stopAllListener();
+            MatchListenerService.Companion.stopAllListener();
         }, "endThread"));
 
         log.info("新人群配置: {}", env.getProperty("spring.datasource.newbie.enable", "false"));

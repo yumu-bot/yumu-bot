@@ -42,8 +42,8 @@ class MatchMapService(
     data class PanelE7Param(
             @JvmField val match: MatchCalculate,
             @JvmField val mode: OsuMode,
-            @JvmField val mods: MutableList<String>,
-            @JvmField val players: MutableList<MicroUser>,
+            @JvmField val mods: List<String>,
+            @JvmField val players: List<MicroUser>,
             @JvmField val beatmap: BeatMap,
             @JvmField val density: IntArray,
             @JvmField val original: Map<String, Any>,

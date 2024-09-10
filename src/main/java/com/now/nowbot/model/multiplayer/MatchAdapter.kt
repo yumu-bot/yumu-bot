@@ -21,23 +21,21 @@ interface MatchAdapter {
         // 游戏 id, 用来确认是否是同一场游戏, 用于处理 abort 的情况
         val ID: Long,
         val matchName: String,
-        val beatmap: BeatMap,
+         val beatmapID: Long,
+        var beatmap: BeatMap,
         val start: OffsetDateTime,
         val mode: OsuMode,
         val mods: List<OsuMod>,
         val isTeamVS: Boolean,
+        val teamType:String,
         val users: List<MicroUser>,
     )
 
     data class GameEndEvent(
+        val game: NewMatch.MatchGame,
         val ID: Long,
-        val beatmap: BeatMap,
-        val start: OffsetDateTime,
-        val end: OffsetDateTime,
-        val mode: OsuMode,
-        val mods: List<OsuMod>,
-        val isTeamVS: Boolean,
         val users: Map<Long, MicroUser>,
-        val scores: List<NewMatch.MatchScore>,
+        val name: String,
+        val startTime: OffsetDateTime,
     )
 }

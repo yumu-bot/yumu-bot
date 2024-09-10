@@ -1,7 +1,6 @@
 package com.now.nowbot.service.MessageServiceImpl;
 
 import com.now.nowbot.config.Permission;
-import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Match;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.enums.OsuMode;
@@ -39,8 +38,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service("MATCH_LISTENER")
-public class MatchListenerService implements MessageService<MatchListenerService.ListenerParam> {
-    static final Logger log = LoggerFactory.getLogger(MatchListenerService.class);
+public class MatchListenerServiceOld implements MessageService<MatchListenerServiceOld.ListenerParam> {
+    static final Logger log = LoggerFactory.getLogger(MatchListenerServiceOld.class);
     static final int    BREAK_ROUND = 15;
 
     @Resource

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.multiplayer.MatchCalculate;
+import com.now.nowbot.model.multiplayer.NewMatch;
 import com.now.nowbot.model.multiplayer.SeriesCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.PPMinus3;
@@ -31,7 +32,7 @@ public class ImageService {
     private static final Logger log = LoggerFactory.getLogger(ImageService.class);
     @Resource
     RestTemplate restTemplate;
-    public static final String IMAGE_PATH = "http://192.168.243.253:1611/";
+    public static final String IMAGE_PATH = "http://127.0.0.1:1611/";
 
     /**
      * 获取 md 图片，现已经弃用，被 panel A6 代替
@@ -111,6 +112,19 @@ public class ImageService {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
+                "me", osuUser,
+                "bps", todayBPs,
+                "rank", BPRanks
+        );
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_A4", httpEntity);
+    }
+
+    public byte[] getPanelA4BQ(OsuUser osuUser, List<Score> todayBPs, List<Integer> BPRanks) {
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of(
+                "panel", "BQ:"+ todayBPs.size(),
                 "me", osuUser,
                 "bps", todayBPs,
                 "rank", BPRanks
@@ -476,6 +490,19 @@ public class ImageService {
         var body = Map.of(
                 "MatchStat", matchStat,
                 "MatchRound", matchRound,
+                "index", index
+        );
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_F2", httpEntity);
+    }
+
+    public byte[] getPanelF2(NewMatch.MatchStat stat, NewMatch.MatchGame game, int index) {
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = Map.of(
+                "MatchStat", stat,
+                "MatchRound", game,
                 "index", index
         );
 
