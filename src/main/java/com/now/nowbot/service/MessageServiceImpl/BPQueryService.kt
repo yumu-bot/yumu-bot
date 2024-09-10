@@ -115,6 +115,15 @@ class BPQueryService(
                 hasName.not()
             }
         }, EQ, NE),
+        Artist("artist", { (op, v, s) ->
+            val artist = v.replace("$", " ")
+            val hasArtist = s.beatMapSet.artist.contains(artist, true) || s.beatMapSet.artistUnicode.contains(artist, true)
+            if (op == EQ) {
+                hasArtist
+            } else {
+                hasArtist.not()
+            }
+        }, EQ, NE),
         Star("star", { (op, v, s) ->
             val star = v.toFloat()
             when (op) {
@@ -341,6 +350,7 @@ class BPQueryService(
                 Param.Mapper.key -> Param.Mapper(operator, value)
                 Param.ScoreNumber.key -> Param.ScoreNumber(operator, value)
                 Param.Name.key -> Param.Name(operator, value)
+                Param.Artist.key -> Param.Artist(operator, value)
                 Param.Star.key -> Param.Star(operator, value)
                 Param.Index.key -> Param.Index(operator, value)
                 Param.AR.key -> Param.AR(operator, value)
