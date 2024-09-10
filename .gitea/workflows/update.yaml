@@ -1,0 +1,34 @@
+name: update bot
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: self-hosted
+    env:
+      MAVEN_OPTS: --enable-preview
+    steps:
+      - name: Set up repository
+        run: |
+          cd ~/nowbot
+          git fetch --all
+          git reset --hard origin/master
+          git pull
+          git lfs pull
+      - name: Set up maven
+        run: export MAVEN_OPTS="--enable-preview"
+      - name: Build project
+        run: |
+          mvn clean
+          mvn package
+  update:
+    runs-on: self-hosted
+    needs: build
+    steps:
+      - name: Update
+        run: |
+          cd ~/nowbot
+          mv ~/nowbot/target/nowbot-linux.jar ~/work
+          sudo systemctl restart nowbot
