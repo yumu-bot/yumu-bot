@@ -16,6 +16,7 @@ import com.now.nowbot.util.ContextUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.QQMsgUtil
 import org.springframework.stereotype.Service
+import kotlin.math.min
 
 @Service("BP_QUERY")
 class BPQueryService(
@@ -59,9 +60,9 @@ class BPQueryService(
             return
         }
 
+        ContextUtil.setContext("breakApplySR", true)
         val image = if (result.size == 1) {
             val score = result.first()
-            ContextUtil.setContext("notBreakApplySR", false)
             val e5Param = getScore4PanelE5(user, score, beatmapApiService)
             imageService.getPanelE5(e5Param)
         } else {
@@ -95,7 +96,7 @@ class BPQueryService(
     enum class Param(
         val key: String,
         val filter: (Triple<Operator, String, Score>) -> Boolean,
-        vararg val enabledOperator: Operator
+        private vararg val enabledOperator: Operator
     ) {
         Mapper("mapper", { (op, v, s) ->
             // 对字符串的 == / != 操作转为 包含 / 不包含
@@ -407,7 +408,10 @@ class BPQueryService(
             val quoteCount = this.count { it == '"' }
             when {
                 quoteCount == 0 -> return this
-                quoteCount % 2 != 0 -> throw IllegalArgumentException("Invalid quote")
+                quoteCount % 2 != 0 -> {
+                    val end = this.substring(min(4, this.length))
+                    throw IllegalArgumentException("Invalid quote '$end'")
+                }
             }
             val result = StringBuilder()
             var insideQuotes = false

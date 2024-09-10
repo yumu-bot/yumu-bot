@@ -6,6 +6,7 @@ import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
+import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.DataUtil;
 import org.springframework.lang.NonNull;
 import org.springframework.util.CollectionUtils;
@@ -268,6 +269,7 @@ public interface OsuBeatmapApiService {
     }
 
     default void applySRAndPP(Score score) {
+        if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
         var modsInt = OsuMod.getModsValueFromAbbrList(score.getMods());
 
         // 没有变星数，并且有 PP，略过
@@ -288,6 +290,7 @@ public interface OsuBeatmapApiService {
     }
 
     default void applySRAndPP(List<Score> scoreList) {
+        if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
         if (CollectionUtils.isEmpty(scoreList)) return;
 
         for (var score : scoreList) {
@@ -297,6 +300,7 @@ public interface OsuBeatmapApiService {
 
     // 谱面理论sr和pp
     default void applySRAndPP(BeatMap beatMap, OsuMode mode, int modsInt) {
+        if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
         if (beatMap == null) return; // 谱面没有 PP，所以必须查
         JniResult r;
         try {
@@ -311,6 +315,7 @@ public interface OsuBeatmapApiService {
     }
 
     default void applySRAndPP(BeatMap beatMap, MapStatisticsService.Expected expected) {
+        if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
         if (beatMap == null) return;
         JniResult r;
 
