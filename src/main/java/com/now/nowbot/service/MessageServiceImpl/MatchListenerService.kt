@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
-@Service("MATCH_LISTENER")
+
 class MatchListenerService(
     private val matchApiService: OsuMatchApiService,
     private val beatmapApiService: OsuBeatmapApiService,
