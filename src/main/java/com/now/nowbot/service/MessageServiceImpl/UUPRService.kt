@@ -1,93 +1,97 @@
-package com.now.nowbot.service.MessageServiceImpl;
+package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.ScoreLegacy;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.qq.contact.Contact;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
-import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.ServiceException.ScoreException;
-import com.now.nowbot.util.CmdUtil;
-import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.QQMsgUtil;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.model.JsonData.OsuUser
+import com.now.nowbot.model.JsonData.Score
+import com.now.nowbot.model.ScoreLegacy
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.qq.contact.Contact
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.MessageServiceImpl.UUPRService.UUPRParam
+import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService
+import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.util.*
+import com.now.nowbot.util.CmdUtil.getMode
+import com.now.nowbot.util.CmdUtil.getUserWithRange
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpMethod
+import org.springframework.stereotype.Service
+import org.springframework.util.StringUtils
+import org.springframework.web.client.RestTemplate
+import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 @Service("UU_PR")
-public class UUPRService implements MessageService<UUPRService.UUPRParam> {
-    private static final Logger log = LoggerFactory.getLogger(UUPRService.class);
+class UUPRService(
+    private val template: RestTemplate,
+    private val userApiService: OsuUserApiService,
+    private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val bindDao: BindDao
+                 ) : MessageService<UUPRParam> {
 
-    @Resource
-    RestTemplate template;
-    @Resource
-    OsuUserApiService userApiService;
-    @Resource
-    OsuScoreApiService scoreApiService;
-    @Resource
-    OsuBeatmapApiService beatmapApiService;
-    @Resource
-    BindDao bindDao;
+    @JvmRecord data class UUPRParam(val user: OsuUser?, val score: Score, val mode: OsuMode?)
 
-    public record UUPRParam(OsuUser user, Score score, OsuMode mode) {}
+    @Throws(Throwable::class)
+    override fun isHandle(
+            event: MessageEvent,
+            messageText: String,
+            data: DataValue<UUPRParam>
+    ): Boolean {
+        val matcher = Instruction.UU_PR.matcher(messageText)
 
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<UUPRParam> data) throws Throwable {
-        var matcher = Instruction.UU_PR.matcher(messageText);
+        if (!matcher.find()) return false
 
-        if (! matcher.find()) return false;
-
-        var mode = CmdUtil.getMode(matcher);
-        var range = CmdUtil.getUserWithRange(event, matcher, mode, new AtomicBoolean());
-        if (Objects.isNull(range.getData())) {
-            return false;
+        val mode = getMode(matcher)
+        val range = getUserWithRange(event, matcher, mode, AtomicBoolean())
+        if (Objects.isNull(range.data)) {
+            return false
         }
-        var uid = range.getData().getUserID();
-        boolean includeFail = StringUtils.hasText(matcher.group("recent"));
-        int offset=  range.getValue(0, true);
+        val uid = range.data!!.userID
+        val includeFail = StringUtils.hasText(matcher.group("recent"))
+        val offset = range.getOffset(0, false)
 
-        var list = scoreApiService.getRecent(uid, mode.getData(), offset, 1, includeFail);
-        if (list.isEmpty()) throw new ScoreException(ScoreException.Type.SCORE_Recent_NotFound, range.getData().getUsername());
-        data.setValue(new UUPRParam(range.getData(), list.getFirst(), mode.getData()));
-        return true;
+        val list = scoreApiService.getRecent(uid, mode.data, offset, 1, includeFail)
+        if (list.isEmpty())
+                throw GeneralTipsException(
+                        GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.name ?: "默认")
+        data.value = UUPRParam(range.data, list.first(), mode.data)
+        return true
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, UUPRParam param) throws Throwable {
-        var from = event.getSubject();
-        var score = param.score();
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, param: UUPRParam) {
+        val from = event.subject
+        val score = param.score
 
-        //单成绩发送
+        // 单成绩发送
         try {
-            getTextOutput(score, from);
-        } catch (ScoreException e) {
-            throw e;
-        } catch (Exception e) {
-            from.sendMessage("最近成绩文字：发送失败，请重试");
-            log.error("最近成绩文字：发送失败", e);
+            getTextOutput(score, from)
+        } catch (e: GeneralTipsException) {
+            throw e
+        } catch (e: Exception) {
+            from.sendMessage("最近成绩文字：发送失败，请重试")
+            log.error("最近成绩文字：发送失败", e)
         }
     }
 
-    private void getTextOutput(Score score, Contact from) throws ScoreException {
-        var d = ScoreLegacy.getInstance(score, beatmapApiService);
+    @Throws(GeneralTipsException::class)
+    private fun getTextOutput(score: Score, from: Contact) {
+        val d = ScoreLegacy.getInstance(score, beatmapApiService)
 
-        @SuppressWarnings("unchecked")
-        HttpEntity<Byte[]> httpEntity = (HttpEntity<Byte[]>) HttpEntity.EMPTY;
-        var imgBytes = template.exchange(d.getUrl(), HttpMethod.GET, httpEntity, byte[].class).getBody();
-        QQMsgUtil.sendImageAndText(from, imgBytes, d.getScoreLegacyOutput());
+        val httpEntity = HttpEntity.EMPTY as HttpEntity<Array<Byte>>
+        val imgBytes =
+                template.exchange(d.url, HttpMethod.GET, httpEntity, ByteArray::class.java).body
+        QQMsgUtil.sendImageAndText(from, imgBytes, d.scoreLegacyOutput)
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(UUPRService::class.java)
     }
 }
-

@@ -15,8 +15,8 @@ import com.now.nowbot.service.MessageServiceImpl.ScorePRService.Companion.getSco
 import com.now.nowbot.service.MessageServiceImpl.ScoreService.ScoreParam
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.ServiceException.BindException
-import com.now.nowbot.throwable.ServiceException.ScoreException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.getMod
@@ -67,13 +67,15 @@ class ScoreService(
                 log.info("score 退避")
                 return false
             }
-            throw if (isMyself.get()) ScoreException(ScoreException.Type.SCORE_Me_TokenExpired) else ScoreException(
-                ScoreException.Type.SCORE_Player_TokenExpired
-            )
+            throw if (isMyself.get()) {
+                GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
+            } else {
+                GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
+            }
         }
 
         if (Objects.isNull(user)) {
-            throw ScoreException(ScoreException.Type.SCORE_Me_TokenExpired)
+            throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
         }
 
         val bid = getBid(matcher)
@@ -89,8 +91,8 @@ class ScoreService(
         try {
             from.sendMessage(message)
         } catch (e: Exception) {
-            log.error("成绩：发送失败", e)
-            throw ScoreException(ScoreException.Type.SCORE_Send_Error)
+            log.error("谱面成绩：发送失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "谱面成绩")
         }
     }
 
@@ -127,31 +129,31 @@ class ScoreService(
             val scoreall: BeatmapUserScore
             val osuMods = OsuMod.getModsList(modsStr)
             try {
-                scoreall = scoreApiService.getScore(bid, user!!.userID, mode, osuMods)
+                scoreall = scoreApiService.getScore(bid, user.userID, mode, osuMods)
                 score = scoreall.score
             } catch (e: WebClientResponseException) {
-                throw ScoreException(ScoreException.Type.SCORE_Score_NotFound, bid.toString())
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, bid.toString())
             }
             beatmapApiService.applyBeatMapExtend(score)
         } else {
             score = try {
-                scoreApiService.getScore(bid, user!!.userID, mode).score
+                scoreApiService.getScore(bid, user.userID, mode).score
             } catch (e: WebClientResponseException.NotFound) {
                 //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
                 if (isDefault) {
                     try {
-                        scoreApiService.getScore(bid, user!!.userID, OsuMode.DEFAULT).score
+                        scoreApiService.getScore(bid, user.userID, OsuMode.DEFAULT).score
                     } catch (e1: WebClientResponseException) {
-                        throw ScoreException(ScoreException.Type.SCORE_Mode_NotFound)
+                        throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, bid.toString())
                     }
                 } else {
-                    throw ScoreException(ScoreException.Type.SCORE_Mode_SpecifiedNotFound, mode!!.getName())
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_SpecifiedMode, mode!!.getName())
                 }
             } catch (e: WebClientResponseException.Unauthorized) {
                 if (param.isMyself) {
-                    throw ScoreException(ScoreException.Type.SCORE_Me_TokenExpired)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
                 } else {
-                    throw ScoreException(ScoreException.Type.SCORE_Player_TokenExpired)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
                 }
             }
         }
@@ -164,7 +166,7 @@ class ScoreService(
             return QQMsgUtil.getImage(image)
         } catch (e: Exception) {
             log.error("成绩：渲染失败", e)
-            throw ScoreException(ScoreException.Type.SCORE_Render_Error)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "成绩")
         }
     }
 

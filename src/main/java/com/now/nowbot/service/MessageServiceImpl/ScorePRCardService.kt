@@ -10,8 +10,8 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.MessageServiceImpl.ScorePRCardService.PRCardParam
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.ServiceException.MiniCardException
-import com.now.nowbot.throwable.ServiceException.ScoreException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithRange
 import com.now.nowbot.util.Instruction
@@ -24,7 +24,6 @@ import org.springframework.util.StringUtils
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.math.max
 
 @Service("PR_CARD")
 class ScorePRCardService(
@@ -49,20 +48,20 @@ class ScorePRCardService(
         val mode = getMode(matcher)
         val range = getUserWithRange(event, matcher, mode, AtomicBoolean())
 
-        val offset = max(0.0, range.getValue(0, true).toDouble()).toInt()
+        val offset = range.getOffset(0, false)
         val scores = if (StringUtils.hasText(matcher.group("recent"))) {
             scoreApiService.getRecent(range.data!!.userID, mode.data, offset, 1)
         } else if (StringUtils.hasText(matcher.group("pass"))) {
             scoreApiService.getRecentIncludingFail(range.data!!.userID, mode.data, offset, 1)
         } else {
-            throw MiniCardException(MiniCardException.Type.MINI_Classification_Error)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Classification, "迷你")
         }
-        if (range.data == null) throw ScoreException(ScoreException.Type.SCORE_Player_NotFound)
+        if (range.data == null) throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
 
         score = if (scores.isNotEmpty()) {
             scores.first()
         } else {
-            throw ScoreException(ScoreException.Type.SCORE_Recent_NotFound, range.data!!.username)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.name?: "默认")
         }
 
         data.value = PRCardParam(score)
@@ -81,7 +80,7 @@ class ScorePRCardService(
             from.sendMessage(message)
         } catch (e: Exception) {
             log.error("迷你成绩面板：发送失败", e)
-            throw MiniCardException(MiniCardException.Type.MINI_Send_Error)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "迷你")
         }
     }
 
@@ -111,7 +110,7 @@ class ScorePRCardService(
         val mode = getMode(matcher)
         val range = getUserWithRange(event, matcher, mode, AtomicBoolean())
 
-        val offset = max(0, range.getValue(0, true))
+        val offset = range.getOffset(0, false)
 
         val scores = if (isRecentAll) {
             scoreApiService.getRecentIncludingFail(range.data!!.userID, mode.data, offset, 1)
@@ -119,9 +118,13 @@ class ScorePRCardService(
             scoreApiService.getRecent(range.data!!.userID, mode.data, offset, 1)
         }
 
-        if (range.data == null) throw ScoreException(ScoreException.Type.SCORE_Player_NotFound)
+        if (range.data == null) throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
 
-        if (scores.isNotEmpty()) score = scores.first() else throw ScoreException(ScoreException.Type.SCORE_Recent_NotFound, range.data!!.username)
+        if (scores.isNotEmpty()) {
+            score = scores.first()
+        } else {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.name ?: "默认")
+        }
 
         return PRCardParam(score)
     }
@@ -134,7 +137,7 @@ class ScorePRCardService(
         try {
             beatmapApiService.applyBeatMapExtend(score)
         } catch (e: Exception) {
-            throw MiniCardException(MiniCardException.Type.MINI_Map_FetchError)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_BeatMap)
         }
 
         val image: ByteArray
@@ -143,7 +146,7 @@ class ScorePRCardService(
             image = imageService.getPanelGamma(score)
         } catch (e: Exception) {
             log.error("迷你成绩面板：渲染失败", e)
-            throw MiniCardException(MiniCardException.Type.MINI_Render_Error)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "迷你")
         }
 
         return QQMsgUtil.getImage(image)

@@ -3,7 +3,7 @@ package com.now.nowbot.model;
 import com.now.nowbot.model.JsonData.BeatMap;
 import com.now.nowbot.model.JsonData.Score;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import com.now.nowbot.throwable.ServiceException.ScoreException;
+import com.now.nowbot.throwable.GeneralTipsException;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -48,7 +48,7 @@ public class ScoreLegacy {
         return url;
     }
 
-    public ScoreLegacy(Score score, OsuBeatmapApiService osuBeatmapApiService) throws ScoreException {
+    public ScoreLegacy(Score score, OsuBeatmapApiService osuBeatmapApiService) throws GeneralTipsException {
         var user = score.getUser();
         bid = Math.toIntExact(score.getBeatMap().getBeatMapID());
 
@@ -57,7 +57,7 @@ public class ScoreLegacy {
         try {
             b = osuBeatmapApiService.getBeatMapInfoFromDataBase(bid);
         } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
-            throw new ScoreException(ScoreException.Type.SCORE_Me_TokenExpired);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me);
         }
 
         var s = b.getBeatMapSet();
@@ -113,7 +113,7 @@ public class ScoreLegacy {
         if (!passed) rank = "F";
     }
 
-    public static ScoreLegacy getInstance(Score score, OsuBeatmapApiService beatmapApiService) throws ScoreException {
+    public static ScoreLegacy getInstance(Score score, OsuBeatmapApiService beatmapApiService) throws GeneralTipsException {
         return new ScoreLegacy(score, beatmapApiService);
     }
 

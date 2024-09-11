@@ -106,19 +106,15 @@ class BPService(
     override fun reply(event: MessageEvent, param: BPParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
 
     private fun CmdRange<OsuUser>.getBPMap(isMultiple: Boolean, mode: OsuMode): TreeMap<Int, Score> {
-        var offset = getValue(1, true) - 1
-        var limit = getValue(0, false)
+        val offset: Int
+        val limit: Int
 
         if (isMultiple) {
-            offset = max(0, offset)
-            if (limit < 1) {
-                limit = if (offset == 0) DEFAULT_BP_COUNT else offset + 1
-                offset = 0
-            }
-        } else if (limit <= 1) {
-            limit = 1
+            offset = getOffset(0, true)
+            limit = getLimit(20, true)
         } else {
-            limit = max(1, limit - offset)
+            offset = getOffset(0, false)
+            limit = getLimit(1, false)
         }
 
         val bpList = scoreApiService.getBestPerformance(data!!.userID, mode, offset, limit)
@@ -167,6 +163,5 @@ class BPService(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BPService::class.java)
-        private const val DEFAULT_BP_COUNT = 20
     }
 }

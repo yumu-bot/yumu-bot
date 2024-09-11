@@ -85,18 +85,16 @@ class TodayBPService(
         val isMyself = AtomicBoolean()
         val range = getUserWithRange(event, matcher, mode, isMyself)
         val user = range.data ?: throw TipsException("没找到玩家")
-        var dayStart = range.getValue(1, false) - 1
-        var dayEnd = range.getValue(1, true)
-        dayStart = min(0, dayStart)
-        dayEnd = max(dayEnd, dayStart + 1)
+        val dayStart = range.getStart(1) - 1
+        val dayEnd = max(range.getEnd(1), dayStart + 1)
 
         val bpList: List<Score>
         try {
-            bpList = scoreApiService.getBestPerformance(user!!.userID, mode.data, 0, 100)
+            bpList = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
         } catch (e: WebClientResponseException.Forbidden) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user!!.username)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.username)
         } catch (e: WebClientResponseException.NotFound) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, user!!.username)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, user.username)
         } catch (e: WebClientResponseException) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
         } catch (e: Exception) {

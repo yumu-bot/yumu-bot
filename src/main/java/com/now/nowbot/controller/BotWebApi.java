@@ -16,6 +16,7 @@ import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageServiceImpl.*;
 import com.now.nowbot.service.OsuApiService.*;
+import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.ServiceException.*;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.QQMsgUtil;
@@ -325,7 +326,7 @@ public class BotWebApi {
                         var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), beatmapApiService);
                         data = imageService.getPanelE5(e5Param);
                     } catch (Exception e) {
-                        throw new RuntimeException(ScoreException.Type.SCORE_Render_Error.message);
+                        throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩"));
                     }
                     suffix = "-bp.jpg";
                 }
@@ -344,7 +345,7 @@ public class BotWebApi {
                         var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), beatmapApiService);
                         data = imageService.getPanelE5(e5Param);
                     } catch (Exception e) {
-                        throw new RuntimeException(ScoreException.Type.SCORE_Render_Error.message);
+                        throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "通过成绩"));
                     }
                     suffix = "-pass.jpg";
                 }
@@ -364,7 +365,7 @@ public class BotWebApi {
                         var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), beatmapApiService);
                         data = imageService.getPanelE5(e5Param);
                     } catch (Exception e) {
-                        throw new RuntimeException(ScoreException.Type.SCORE_Render_Error.message);
+                        throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最近成绩"));
                     }
                     suffix = "-recent.jpg";
                 }
@@ -575,7 +576,7 @@ public class BotWebApi {
             osuUser = userApiService.getPlayerInfo(name);
             uid = osuUser.getUserID();
         } catch (WebClientResponseException.NotFound e) {
-            throw new RuntimeException(ScoreException.Type.SCORE_Score_FetchFailed.message);
+            throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name));
         }
 
         if (Objects.isNull(mods)) {
@@ -590,12 +591,12 @@ public class BotWebApi {
                     }
                 }
             } catch (WebClientResponseException.NotFound e) {
-                throw new RuntimeException(ScoreException.Type.SCORE_Score_FetchFailed.message);
+                throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "成绩列表"));
             }
         }
 
         if (Objects.isNull(score)) {
-            throw new RuntimeException(ScoreException.Type.SCORE_Mod_NotFound.message);
+            throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Null_Score, bid.toString()));
         }
 
         byte[] image;
@@ -604,7 +605,7 @@ public class BotWebApi {
             var e5Param = ScorePRService.getScore4PanelE5(osuUser, score, beatmapApiService);
             image = imageService.getPanelE5(e5Param);
         } catch (Exception e) {
-            throw new RuntimeException(ScoreException.Type.SCORE_Render_Error.message);
+            throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "成绩列表"));
         }
         return new ResponseEntity<>(image, getImageHeader(STR."\{name}@\{bid}-score.jpg", image.length), HttpStatus.OK);
     }
