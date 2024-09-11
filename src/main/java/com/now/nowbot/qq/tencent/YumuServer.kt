@@ -47,7 +47,10 @@ object YumuServer : YumuService {
     fun messageToResponse(messageChain: MessageChain): Command.Response {
         val (textList, imageList) = messageChain.messageList.filter { it is TextMessage || it is ImageMessage }
             .partition { it is TextMessage }
-        val text = textList.joinToString { it.toString() }
+        var text = textList.joinToString { it.toString() }
+        if (text.contains("!ymbind")) {
+            text = text.replace("!ymbind", "/bind [osu name]")
+        }
         var image: String? = null
         var isUrl = false
         if (imageList.isNotEmpty()) {
