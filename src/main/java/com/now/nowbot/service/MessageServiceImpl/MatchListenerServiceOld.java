@@ -37,7 +37,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Service("MATCH_LISTENER")
+
 public class MatchListenerServiceOld implements MessageService<MatchListenerServiceOld.ListenerParam> {
     static final Logger log = LoggerFactory.getLogger(MatchListenerServiceOld.class);
     static final int    BREAK_ROUND = 15;

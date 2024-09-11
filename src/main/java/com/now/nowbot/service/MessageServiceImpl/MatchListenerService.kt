@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
-
+@Service("MATCH_LISTENER")
 class MatchListenerService(
     private val matchApiService: OsuMatchApiService,
     private val beatmapApiService: OsuBeatmapApiService,
@@ -139,6 +139,7 @@ class MatchListenerService(
         val matchID: Long,
     ) : MatchAdapter {
         var round = 0
+        override lateinit var match:NewMatch
 
         /**
          * 判断是否继续
@@ -194,7 +195,7 @@ class MatchListenerService(
             game.scores = game.scores.filter { s-> s.score >= 1000 }
             val index = 1
             val image = try {
-                val stat = NewMatch.MatchStat(matchID, startTime, null, name)
+                val stat = match.state
                 imageService.getPanelF2(stat, game, index)
             } catch (e: java.lang.Exception) {
                 MatchListenerServiceOld.log.error("对局信息图片渲染失败：", e)

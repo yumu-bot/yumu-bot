@@ -100,6 +100,7 @@ class NewMatchListener(
     }
 
     fun addListener(listener: MatchAdapter) {
+        listener.match = match
         eventListener.add(listener)
     }
 
@@ -121,24 +122,23 @@ class NewMatchListener(
         events.forEach {
             if (it.game == null) return@forEach
             val game = it.game
+
+            with(game) {
+                if (beatmap != null) {
+                    beatmap = beatmapApiService.getBeatMapInfo(beatmapID)
+                    beatmapApiService.applySRAndPP(beatmap, mode, OsuMod.getModsValueFromAbbrList(mods))
+                } else {
+                    beatmap = BeatMap(beatmapID)
+                }
+            }
+
             val isEnd = game.endTime != null
             if (isEnd) {
                 // 对局结束
-                with(game) {
-                    if (beatmap != null) {
-                        beatmap = beatmapApiService.getBeatMapInfo(beatmapID)
-                        beatmapApiService.applySRAndPP(beatmap, mode, OsuMod.getModsValueFromAbbrList(mods))
-                    } else {
-                        beatmap = BeatMap(beatmapID)
-                    }
-                }
-
                 val event = MatchAdapter.GameEndEvent(
                     game,
                     it.ID,
                     userMap,
-                    match.name,
-                    match.startTime
                 )
                 eventListener.forEach { l -> l.onGameEnd(event) }
             } else {
@@ -146,15 +146,11 @@ class NewMatchListener(
                 val user = usersIDSet.map { id -> userMap[id] }.filterNotNull()
 
                 val event = with(game) {
-                    if (beatmap != null) {
-                        beatmap = beatmapApiService.getBeatMapInfo(beatmapID)
-                        beatmapApiService.applySRAndPP(beatmap, mode, OsuMod.getModsValueFromAbbrList(mods))
-                    }
                     MatchAdapter.GameStartEvent(
                         it.ID,
                         match.name,
                         beatmapID,
-                        beatmap ?: BeatMap(beatmapID),
+                        beatmap!!,
                         startTime,
                         mode,
                         mods.map { OsuMod.getModFromAbbreviation(it) },
