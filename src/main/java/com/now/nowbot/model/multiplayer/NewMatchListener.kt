@@ -35,7 +35,11 @@ class NewMatchListener(
             val gameEvent = match.events.last { it.game != null }
             nowGameID = match.currentGameID
             nowEventID = gameEvent.ID - 1
-            onEvent(listOf(gameEvent))
+            try {
+                onEvent(listOf(gameEvent))
+            } catch (e: Exception) {
+                onError(e)
+            }
         }
     }
 
@@ -55,9 +59,6 @@ class NewMatchListener(
                 }
                 if (nowEventID == gameEvent.ID - 1 && isAbort.not()) {
                     return
-                } else if (gameEvent.game?.endTime!= null) {
-                    // 对局结束之后的 abort
-                    nowGameID = gameEvent.ID
                 } else {
                     nowEventID = gameEvent.ID - 1
                 }
@@ -87,7 +88,7 @@ class NewMatchListener(
 
         kill = executorService.schedule({
             if (isStart()) stop(StopType.TIME_OUT)
-        }, 3, TimeUnit.HOURS)
+        }, 6, TimeUnit.HOURS)
 
         onStart()
     }

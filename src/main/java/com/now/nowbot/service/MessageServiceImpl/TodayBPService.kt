@@ -85,8 +85,10 @@ class TodayBPService(
         val isMyself = AtomicBoolean()
         val range = getUserWithRange(event, matcher, mode, isMyself)
         val user = range.data ?: throw TipsException("没找到玩家")
-        val dayStart = range.getStart(1) - 1
-        val dayEnd = max(range.getEnd(1), dayStart + 1)
+        var dayStart = range.getValue(1, false) - 1
+        var dayEnd = range.getValue(1, true)
+        dayStart = min(0, dayStart)
+        dayEnd = max(dayEnd, dayStart + 1)
 
         val bpList: List<Score>
         try {
