@@ -20,12 +20,11 @@ import org.springframework.util.StringUtils
 import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
-@Service("SWITCH") // 修改service名 "switch" 一定要修改 Permission
-class ServiceSwitchService : MessageService<SwitchParam> {
-    @Resource var controller: PermissionController? = null
-    @Resource var imageService: ImageService? = null
-
-    @JvmRecord
+@Service(ServiceSwitchService.SWITCH_SERVICE_NAME)
+class ServiceSwitchService(
+    val controller: PermissionController,
+    val imageService: ImageService,
+) : MessageService<SwitchParam> {
     data class SwitchParam(val groupID: Long, val serviceName: String?, val operation: Operation)
 
     enum class Operation {
@@ -36,9 +35,9 @@ class ServiceSwitchService : MessageService<SwitchParam> {
 
     @Throws(Throwable::class)
     override fun isHandle(
-            event: MessageEvent,
-            messageText: String,
-            data: DataValue<SwitchParam>
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<SwitchParam>
     ): Boolean {
         val m = Instruction.SERVICE_SWITCH.matcher(messageText)
         if (!m.find()) {
@@ -49,26 +48,30 @@ class ServiceSwitchService : MessageService<SwitchParam> {
             throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Super)
         }
 
-        val service = m.group("service")
-        val operate = m.group("operate")
+        val service = m.group("service") ?: ""
+        val operate = m.group("operate") ?: ""
 
         // var o = Pattern.compile("(black|white)?list|on|off|start|close|[bkwlofsc]+");
-        val groupStr: String = m.group(FLAG_QQ_GROUP)
+        val groupStr: String = m.group(FLAG_QQ_GROUP) ?: ""
 
         if (StringUtils.hasText(service)) {
             if (StringUtils.hasText(operate)) {
                 if (StringUtils.hasText(groupStr)) {
                     data.setValue(
-                            SwitchParam(
-                                    groupStr.toLong(),
-                                    service.uppercase(Locale.getDefault()),
-                                    getOperation(operate)))
+                        SwitchParam(
+                            groupStr.toLong(),
+                            service.uppercase(Locale.getDefault()),
+                            getOperation(operate)
+                        )
+                    )
                 } else {
                     data.setValue(
-                            SwitchParam(
-                                    -1L,
-                                    service.uppercase(Locale.getDefault()),
-                                    getOperation(operate)))
+                        SwitchParam(
+                            -1L,
+                            service.uppercase(Locale.getDefault()),
+                            getOperation(operate)
+                        )
+                    )
                 }
             } else {
                 if (StringUtils.hasText(groupStr)) {
@@ -103,7 +106,7 @@ class ServiceSwitchService : MessageService<SwitchParam> {
             Operation.ON -> {
                 try {
                     if (group == -1L) {
-                        controller!!.serviceSwitch(service, true)
+                        controller.serviceSwitch(service, true)
                         //                        Permission.openService(service);
                         from.sendMessage("已启动 ${service} 服务")
                     } else if (group == 0L) {
@@ -113,46 +116,51 @@ class ServiceSwitchService : MessageService<SwitchParam> {
                         //                        from.sendMessage(STR."已全面清除 \{service} 服务的禁止状态");
                         from.sendMessage("已全面解禁 ${service} 服务（并未修好）")
                     } else {
-                        controller!!.unblockGroup(service, group)
+                        controller.unblockGroup(service, group)
                         //                        permission.removeGroup(service, group, true,
                         // false);
                         from.sendMessage("已解禁群聊 ${group} 的 ${service} 服务")
                     }
                 } catch (e: TipsRuntimeException) {
                     throw ServiceSwitchException(
-                            ServiceSwitchException.Type.SW_Service_RemoveNotExists, service)
+                        ServiceSwitchException.Type.SW_Service_RemoveNotExists, service
+                    )
                 } catch (e: RuntimeException) {
                     throw ServiceSwitchException(
-                            ServiceSwitchException.Type.SW_Service_NotFound, service)
+                        ServiceSwitchException.Type.SW_Service_NotFound, service
+                    )
                 }
             }
+
             Operation.OFF -> {
                 try {
                     if (group == -1L) {
-                        controller!!.serviceSwitch(service, false)
+                        controller.serviceSwitch(service, false)
                         from.sendMessage("已关闭 ${service} 服务")
                     } else if (group == 0L) {
                         //                        permission.removeGroupAll(service, true);
                         //                        from.sendMessage(STR."已全面清除 \{service} 服务的禁止状态");
                         from.sendMessage("已全面禁止 ${service} 服务（并未修好）")
                     } else {
-                        controller!!.unblockGroup(service, group)
+                        controller.unblockGroup(service, group)
                         //                        permission.addGroup(service, group, true, false);
                         from.sendMessage("已禁止群聊 ${group} 的 ${service} 服务")
                     }
                 } catch (e: TipsRuntimeException) {
                     throw ServiceSwitchException(
-                            ServiceSwitchException.Type.SW_Service_AddExists, service)
+                        ServiceSwitchException.Type.SW_Service_AddExists, service
+                    )
                 } catch (e: RuntimeException) {
                     throw ServiceSwitchException(
-                            ServiceSwitchException.Type.SW_Service_NotFound, service)
+                        ServiceSwitchException.Type.SW_Service_NotFound, service
+                    )
                 }
             }
 
             Operation.REVIEW -> {
                 val md = serviceListMarkdown
                 try {
-                    val image = imageService!!.getPanelA6(md, "switch")
+                    val image = imageService.getPanelA6(md, "switch")
                     from.sendImage(image)
                 } catch (e: HttpServerErrorException.InternalServerError) {
                     throw ServiceSwitchException(ServiceSwitchException.Type.SW_Render_Failed)
@@ -166,7 +174,7 @@ class ServiceSwitchService : MessageService<SwitchParam> {
     private val serviceListMarkdown: String
         get() {
             // 这里的状态很复杂, 每个服务有三个id list(群, qq, ignore的群)
-            val data = controller!!.queryAllBlock()
+            val data = controller.queryAllBlock()
             val service1 = data.first()
             // 是否为开启状态
             service1.enable
@@ -189,41 +197,45 @@ class ServiceSwitchService : MessageService<SwitchParam> {
             sb.append("## 服务：开关状态\n")
 
             sb.append(
-                    """
+                """
                 | 状态 | 服务名 | 无法使用的群聊 |
                 | :-: | :-- | :-- |
                 
                 """
-                            .trimIndent())
+                    .trimIndent()
+            )
 
             val list = Permission.getClosedService()
 
             for (serviceName in Permission.getAllService()) {
                 sb.append("| ")
-                        .append(if (list.contains(serviceName)) "-" else "O")
-                        .append(" | ")
-                        .append(serviceName)
-                        .append(" | ")
-                        .append("-") // 114514, 1919810
-                        .append(" |\n")
+                    .append(if (list.contains(serviceName)) "-" else "O")
+                    .append(" | ")
+                    .append(serviceName)
+                    .append(" | ")
+                    .append("-") // 114514, 1919810
+                    .append(" |\n")
             }
 
             return sb.toString()
         }
 
     companion object {
+        const val SWITCH_SERVICE_NAME = "SWITCH"
         private fun getOperation(str: String): Operation {
             return when (str) {
                 "on",
                 "start",
                 "o",
                 "s" -> Operation.ON
+
                 "off",
                 "close",
                 "end",
                 "f",
                 "c",
                 "e" -> Operation.OFF
+
                 else -> Operation.REVIEW
             }
         }

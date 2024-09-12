@@ -12,6 +12,7 @@ import com.now.nowbot.qq.contact.GroupContact;
 import com.now.nowbot.qq.enums.Role;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.MessageServiceImpl.ServiceSwitchService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.ContextUtil;
 import org.slf4j.Logger;
@@ -30,12 +31,12 @@ import java.util.stream.Collectors;
 
 @Component()
 public class Permission {
-    private static final Logger log = LoggerFactory.getLogger(Permission.class);
-    private static Set<Long> supetList;
-    private static Set<Long> testerList;
-    private static final String PERMISSION_ALL = "PERMISSION_ALL";
+    private static final Logger    log                 = LoggerFactory.getLogger(Permission.class);
+    private static       Set<Long> superList;
+    private static       Set<Long> testerList;
+    private static final String    PERMISSION_ALL      = "PERMISSION_ALL";
 
-    private static PermissionDao permissionDao;
+    private static PermissionDao       permissionDao;
     private static ServiceSwitchMapper serviceSwitchMapper;
 
     private final boolean isAllWhite = true;
@@ -46,12 +47,12 @@ public class Permission {
     }
 
     //全局名单
-    private static PermissionParam WHITELIST;
-    private static PermissionParam BLACKLIST;
+    private static       PermissionParam              WHITELIST;
+    private static       PermissionParam              BLACKLIST;
     //service名单
     private static final Map<String, PermissionParam> PERMISSIONS = new ConcurrentHashMap<>();
 
-    private static ArrayList<String> ALL_SERVICE = null;
+    private static ArrayList<String>           ALL_SERVICE = null;
     private static CopyOnWriteArraySet<String> OFF_SERVICE = null;
 
     public static void closeService(String name) {
@@ -213,7 +214,8 @@ public class Permission {
             if ($beansCheck == null) {
                 try {
                     $beansCheck = Permission.class.getDeclaredMethod("CheckPermission").getAnnotation(CheckPermission.class);
-                } catch (NoSuchMethodException ignore) {}
+                } catch (NoSuchMethodException ignore) {
+                }
             }
 
             // 如果包含权限注解 则初始化权限列表
@@ -256,9 +258,9 @@ public class Permission {
                 .collect(Collectors.toCollection(ArrayList::new));
 
 
-        //初始化暗杀名单( 末尾的-10086 作为本地测试用户
-        supetList = Set.of(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L, - 10086L);
-        testerList = Set.of(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L, - 10086L);
+        //初始化暗杀名单(-17064371L 作为本地测试用户
+        superList = Set.of(-17064371L, 732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
+        testerList = Set.of(-17064371L, 732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
 
         log.info("名单初始化完成");
     }
@@ -355,19 +357,18 @@ public class Permission {
     }
 
     public static boolean isSuperAdmin(Long id) {
-        return supetList.contains(id);
+        return superList.contains(id);
     }
 
     public static boolean isSuperAdmin(MessageEvent event) {
-        return supetList.contains(event.getSender().getId());
+        return superList.contains(event.getSender().getId());
     }
 
     /**
      * 单功能开关
-     *
      */
     public static boolean isServiceClose(String name) {
-        return OFF_SERVICE.contains(name) && !name.equals("SWITCH");
+        return OFF_SERVICE.contains(name) && !name.equals(ServiceSwitchService.SWITCH_SERVICE_NAME);
     }
 
     public boolean addUser(String name, Long id) {
@@ -415,7 +416,7 @@ public class Permission {
     }
 
     public static boolean isCommonUser(MessageEvent event) {
-        return ! isGroupAdmin(event);
+        return !isGroupAdmin(event);
     }
 
     public static void stopListener() {
@@ -435,7 +436,7 @@ public class Permission {
     public void removeGroupAll(String name, boolean isSuper) {
         String service = getServiceName(name);
         var param = PERMISSIONS.get(service);
-        if (param == null || (! isSuper && param.isAdministrator())) {
+        if (param == null || (!isSuper && param.isAdministrator())) {
             return;
         }
 
