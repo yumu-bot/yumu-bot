@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -79,7 +78,7 @@ public class LeaderBoardService implements MessageService<Matcher> {
         boolean isRanked;
 
         try {
-            beatMap = beatmapApiService.getBeatMapInfoFromDataBase(bid);
+            beatMap = beatmapApiService.getBeatMapFromDataBase(bid);
             isRanked = beatMap.hasLeaderBoard();
         } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
             throw new LeaderBoardException(LeaderBoardException.Type.LIST_Map_NotFound);

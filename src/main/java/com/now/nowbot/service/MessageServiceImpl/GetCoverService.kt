@@ -124,7 +124,7 @@ class GetCoverService(val beatmapApiService: OsuBeatmapApiService? = null) :
             if (bids.isNullOrEmpty()) return listOf()
 
             for (bid in bids) {
-                list.add(beatmapApiService!!.getBeatMapInfoFromDataBase(bid))
+                list.add(beatmapApiService!!.getBeatMapFromDataBase(bid))
             }
 
             return list

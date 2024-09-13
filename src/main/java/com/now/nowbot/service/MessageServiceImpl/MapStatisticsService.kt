@@ -143,7 +143,7 @@ class MapStatisticsService(
         var beatMap: BeatMap? = null
 
         if (bid != 0L) {
-            beatMap = beatmapApiService.getBeatMapInfo(bid)
+            beatMap = beatmapApiService.getBeatMap(bid)
         }
 
         if (beatMap == null) {
@@ -286,7 +286,7 @@ class MapStatisticsService(
             val result = mutableListOf<Double>()
             val accArray: DoubleArray = doubleArrayOf(1.0, 0.99, 0.98, 0.96, 0.94, 0.92)
             val file =
-                    beatmapApiService.getBeatMapFile(beatmap.beatMapID).toByteArray(Charsets.UTF_8)
+                    beatmapApiService.getBeatMapFileStr(beatmap.beatMapID).toByteArray(Charsets.UTF_8)
 
             var scoreFC = JniScore()
             scoreFC.mode = expected.mode.toRosuMode()

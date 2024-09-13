@@ -83,7 +83,7 @@ class NewbieService(
     private val log = LoggerFactory.getLogger(NewbieService::class.java)
 
     fun checkRank(bid: Int, cache: MutableMap<Int, Boolean>) = cache.getOrPut(bid) {
-        osuMapService.testNewbieCountMap(bid.toLong())
+        osuMapService.isNewbieMap(bid.toLong())
     }
 
     fun getUserPlayRecords(
@@ -108,7 +108,7 @@ class NewbieService(
 
         val passTime = pass.sumOf {
             with(it) {
-                val b = osuMapService.getBeatMapInfoFromDataBase(beatmapId.toLong())
+                val b = osuMapService.getBeatMapFromDataBase(beatmapId.toLong())
                 b.hitLength
             }
         }

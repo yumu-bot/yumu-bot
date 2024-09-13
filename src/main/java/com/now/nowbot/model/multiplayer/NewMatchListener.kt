@@ -3,7 +3,6 @@ package com.now.nowbot.model.multiplayer
 import com.now.nowbot.model.JsonData.BeatMap
 import com.now.nowbot.model.JsonData.MicroUser
 import com.now.nowbot.model.enums.OsuMod
-import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.multiplayer.NewMatch.EventType
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService
@@ -126,7 +125,7 @@ class NewMatchListener(
 
             with(game) {
                 if (beatmap != null) {
-                    beatmap = beatmapApiService.getBeatMapInfo(beatmapID)
+                    beatmap = beatmapApiService.getBeatMap(beatmapID)
                     beatmapApiService.applySRAndPP(beatmap, mode, OsuMod.getModsValueFromAbbrList(mods))
                 } else {
                     beatmap = BeatMap(beatmapID)

@@ -736,7 +736,7 @@ public class BotWebApi {
 
         try {
             var mode = OsuMode.getMode(modeStr, OsuMode.OSU);
-            var beatMap = beatmapApiService.getBeatMapInfo(bid);
+            var beatMap = beatmapApiService.getBeatMap(bid);
 
             var expected = new MapStatisticsService.Expected(
                     mode,
@@ -887,7 +887,7 @@ public class BotWebApi {
             @RequestParam("bid") @Nullable Long bid
     ) {
         if (Objects.nonNull(bid)) {
-            return beatmapApiService.getBeatMapInfo(bid);
+            return beatmapApiService.getBeatMap(bid);
         } else {
             return new BeatMap();
         }

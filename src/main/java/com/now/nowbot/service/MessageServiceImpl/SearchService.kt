@@ -31,7 +31,7 @@ class SearchService(val beatmapApiService: OsuBeatmapApiService) :
 
     override fun HandleMessage(event: MessageEvent, param: SearchParam) {
         val query = constructQuery(param)
-        val result = beatmapApiService.searchBeatmap(query)
+        val result = beatmapApiService.searchBeatMapSet(query)
         // do nothing
     }
 

@@ -97,12 +97,12 @@ public class NominationService implements MessageService<Matcher> {
 
         if (isSID) {
             try {
-                s = beatmapApiService.getBeatMapSetInfo(sid);
+                s = beatmapApiService.getBeatMapSet(sid);
             } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
                 try {
-                    var b = beatmapApiService.getBeatMapInfoFromDataBase(sid);
+                    var b = beatmapApiService.getBeatMapFromDataBase(sid);
                     sid = b.getSetID();
-                    s = beatmapApiService.getBeatMapSetInfo(sid);
+                    s = beatmapApiService.getBeatMapSet(sid);
                 } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e1) {
                     throw new NominationException(NominationException.Type.N_Map_NotFound);
                 } catch (Exception e1) {
@@ -117,9 +117,9 @@ public class NominationService implements MessageService<Matcher> {
             }
         } else {
             try {
-                var b = beatmapApiService.getBeatMapInfoFromDataBase(sid);
+                var b = beatmapApiService.getBeatMapFromDataBase(sid);
                 sid = b.getSetID();
-                s = beatmapApiService.getBeatMapSetInfo(sid);
+                s = beatmapApiService.getBeatMapSet(sid);
             } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
                 throw new NominationException(NominationException.Type.N_Map_NotFound);
             } catch (WebClientResponseException.BadGateway | WebClientResponseException.ServiceUnavailable e) {

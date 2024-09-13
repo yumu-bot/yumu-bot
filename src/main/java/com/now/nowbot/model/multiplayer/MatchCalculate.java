@@ -182,7 +182,7 @@ public class MatchCalculate {
             var i = r.getModInt();
 
             // extend beatmap
-            b = beatmapApiService.getBeatMapInfoFromDataBase(b.getBeatMapID());
+            b = beatmapApiService.getBeatMapFromDataBase(b.getBeatMapID());
 
             // apply changes
             beatmapApiService.applySRAndPP(b, m, i);

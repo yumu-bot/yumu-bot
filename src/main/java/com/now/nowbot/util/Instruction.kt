@@ -431,14 +431,14 @@ enum class Instruction(val pattern: Pattern) {
 
     // #8 辅助指令
     OLD_AVATAR(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(old|osu)?avatar", "oa")
+        appendCommandsIgnoreAll("(old|osu)?\\s*avatar", "oa")
         appendQQID()
         appendUID()
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),
 
     OVER_SR(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("overstarrating", "overrating", "overstar", "oversr", "or")
+        appendCommandsIgnoreAll("over\\s*starrating", "over\\s*rating", "overstar", "oversr", "or")
         appendCaptureGroup("SR", REG_NUMBER_DECIMAL)
     }),
 
@@ -449,8 +449,13 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     BP_QUERY(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("bq")
+        appendCommandsIgnoreAll("bp\\s*query", "bq")
         appendCaptureGroup("text", ".*", EXIST)
+    }),
+
+    REFRESH_FILE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("refresh\\s*file", "rf")
+        appendCaptureGroup("bid", REG_NUMBER, MORE)
     }),
 
     KITA(CommandPatternBuilder.create {

@@ -14,6 +14,7 @@ import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
@@ -31,19 +32,13 @@ import java.util.stream.Collectors;
 public class BeatmapApiImpl implements OsuBeatmapApiService {
     private static final Logger log = LoggerFactory.getLogger(BeatmapApiImpl.class);
 
-    private final OsuApiBaseService base;
-    private final BeatMapDao        beatMapDao;
-    private final Path              osuDir;
-    private final BsApiService      bsApiService;
+    private final OsuApiBaseService        base;
+    private final BeatMapDao               beatMapDao;
+    private final Path                     osuDir;
+    private final BsApiService             bsApiService;
     private final BeatmapObjectCountMapper beatmapObjectCountMapper;
 
-    public BeatmapApiImpl(
-            OsuApiBaseService baseService,
-            FileConfig config,
-            BeatMapDao mapDao,
-            BsApiService bs,
-            BeatmapObjectCountMapper beatmapObjectCountMapper
-    ) {
+    public BeatmapApiImpl(OsuApiBaseService baseService, FileConfig config, BeatMapDao mapDao, BsApiService bs, BeatmapObjectCountMapper beatmapObjectCountMapper) {
         base = baseService;
         osuDir = Path.of(config.getOsuFilePath());
         beatMapDao = mapDao;
@@ -52,34 +47,88 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     }
 
     @Override
-    public String getBeatMapFile(long bid) throws Exception {
-        if (Files.isRegularFile(osuDir.resolve(bid + ".osu"))) {
-            return Files.readString(osuDir.resolve(bid + ".osu"));
+    @Nullable
+    public String getBeatMapFileStr(long bid) throws Exception {
+        var path = osuDir.resolve(bid + ".osu");
+        if (hasBeatMapFile(bid)) {
+            return Files.readString(path);
         } else {
-            return AsyncMethodExecutor.execute(() -> downloadBeatMapFileForce(bid), "_getBetamapFile" + bid, (String) null);
+            return AsyncMethodExecutor.execute(() -> downloadBeatMapFileStrForce(bid), "_getBeatMapFile" + bid, (String) null);
         }
     }
 
     @Override
-    public String downloadBeatMapFileForce(long bid) {
+    public boolean hasBeatMapFile(long bid) {
+        var path = osuDir.resolve(bid + ".osu");
+        return Files.isRegularFile(path);
+    }
+
+    @Override
+    public boolean refreshBeatMapFile(long bid) throws IOException {
+        var path = osuDir.resolve(bid + ".osu");
+
+        if (hasBeatMapFile(bid)) {
+            Files.deleteIfExists(path);
+            return writeBeatMapFile(bid);
+        } else {
+            return false;
+        }
+    }
+
+    private boolean writeBeatMapFile(long bid) {
+        var path = osuDir.resolve(bid + ".osu");
+        String osuStr = downloadBeatMapFileStr(bid);
+
+        if (Objects.isNull(osuStr)) {
+            return false;
+        }
+
+        try {
+            Files.writeString(path, osuStr);
+            return true;
+        } catch (IOException e) {
+            log.error("文件写入失败: ", e);
+            return false;
+        }
+    }
+
+    @Nullable
+    private String downloadBeatMapFileStr(long bid) {
+        try {
+            String osuStr = base.osuApiWebClient.get().uri("https://osu.ppy.sh/osu/{bid}", bid).retrieve().bodyToMono(String.class).block();
+
+            if (Objects.isNull(osuStr)) {
+                return null;
+            } else {
+                return osuStr;
+            }
+
+        } catch (WebClientResponseException e) {
+            log.error("请求失败: ", e);
+            return null;
+        }
+    }
+
+    @Override
+    public String downloadBeatMapFileStrForce(long bid) {
         try {
             return bsApiService.getOsuFile(bid);
         } catch (Exception ignore) {}
 
-        try {
-            String osuStr = base.osuApiWebClient.get()
-                    .uri("https://osu.ppy.sh/osu/{bid}", bid)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-            if (Objects.isNull(osuStr)) return null;
-            Files.writeString(osuDir.resolve(bid + ".osu"), osuStr);
-            return osuStr;
-        } catch (WebClientResponseException e) {
-            log.error("请求失败: ", e);
-        } catch (IOException e) {
-            log.error("文件写入失败: ", e);
+        if (writeBeatMapFile(bid)) {
+            try {
+                String osuStr = Files.readString(osuDir.resolve(bid + ".osu"));
+
+                if (Objects.isNull(osuStr)) {
+                    return null;
+                } else {
+                    return osuStr;
+                }
+            } catch (IOException e) {
+                log.error("文件读取失败: ", e);
+            }
         }
+
         return null;
     }
 
@@ -114,56 +163,37 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         if (!OsuMode.isDefaultOrNull(mode)) {
             body.put("ruleset_id", mode.getModeValue());
         }
-        return base.osuApiWebClient.post()
-                .uri("beatmaps/{id}/attributes", id)
-                .headers(base::insertHeader)
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .mapNotNull(j -> JacksonUtil.parseObject(j.get("attributes"), BeatmapDifficultyAttributes.class))
-                .block();
+        return base.osuApiWebClient.post().uri("beatmaps/{id}/attributes", id).headers(base::insertHeader).bodyValue(body).retrieve().bodyToMono(JsonNode.class).mapNotNull(j -> JacksonUtil.parseObject(j.get("attributes"), BeatmapDifficultyAttributes.class)).block();
     }
 
     @Override
-    public BeatMap getBeatMapInfo(long bid) {
-        return base.osuApiWebClient.get()
-                .uri("beatmaps/{bid}", bid)
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToMono(BeatMap.class)
-                .map(b -> {
-                    beatMapDao.saveMap(b);
-                    return b;
-                })
-                .block();
+    public BeatMap getBeatMap(long bid) {
+        return base.osuApiWebClient.get().uri("beatmaps/{bid}", bid).headers(base::insertHeader).retrieve().bodyToMono(BeatMap.class).map(b -> {
+            beatMapDao.saveMap(b);
+            return b;
+        }).block();
     }
 
     @Override
-    public BeatMapSet getBeatMapSetInfo(long sid) {
-        return base.osuApiWebClient.get()
-                .uri("beatmapsets/{sid}", sid)
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToMono(BeatMapSet.class)
-                .map(s -> {
-                    beatMapDao.saveMapSet(s);
-                    return s;
-                })
-                .block();
+    public BeatMapSet getBeatMapSet(long sid) {
+        return base.osuApiWebClient.get().uri("beatmapsets/{sid}", sid).headers(base::insertHeader).retrieve().bodyToMono(BeatMapSet.class).map(s -> {
+            beatMapDao.saveMapSet(s);
+            return s;
+        }).block();
     }
 
     @Override
-    public BeatMap getBeatMapInfoFromDataBase(long bid) {
+    public BeatMap getBeatMapFromDataBase(long bid) {
         try {
             var lite = beatMapDao.getBeatMapLite(bid);
             return BeatMapDao.fromBeatmapLite(lite);
         } catch (Exception e) {
-            return getBeatMapInfo(bid);
+            return getBeatMap(bid);
         }
     }
 
     @Override
-    public boolean testNewbieCountMap(long bid) {
+    public boolean isNewbieMap(long bid) {
         try {
             var map = beatMapDao.getBeatMapLite(bid);
             return map.getStatus().equalsIgnoreCase("ranked") && map.getDifficultyRating() < 5.7;
@@ -171,7 +201,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         }
 
         try {
-            var map = getBeatMapInfo(bid);
+            var map = getBeatMap(bid);
             return map.getStatus().equalsIgnoreCase("ranked") && map.getStarRating() < 5.7;
         } catch (WebClientResponseException.NotFound e) {
             return false;
@@ -198,15 +228,14 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
 
         var p = Pattern.compile("^\\d+,\\d+,(\\d+)");
 
-        ArrayList<Integer> result = hitObjectStr.stream()
-                .map((m) -> {
-                    var m2 = p.matcher(m);
-                    if (m2.find()) {
-                        return Integer.parseInt(m2.group(1));
-                    } else {
-                        return 0;
-                    }
-                }).collect(Collectors.toCollection(ArrayList::new));
+        ArrayList<Integer> result = hitObjectStr.stream().map((m) -> {
+            var m2 = p.matcher(m);
+            if (m2.find()) {
+                return Integer.parseInt(m2.group(1));
+            } else {
+                return 0;
+            }
+        }).collect(Collectors.toCollection(ArrayList::new));
         return result;
     }
 
@@ -232,7 +261,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     BeatmapObjectCountLite getNewCount(long bid) throws Exception {
         var result = new BeatmapObjectCountLite();
         result.setBid(bid);
-        var file = getBeatMapFile(bid);
+        var file = getBeatMapFileStr(bid);
         var md5 = beatmapMd5(file);
         result.setCheck(md5);
 
@@ -306,6 +335,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
 
     /**
      * 计算成绩f时, 打到的进度
+     *
      * @param score 成绩
      * @return double 0-1
      */
@@ -337,44 +367,23 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         if (modsValue != 0) {
             body.put("mods", modsValue);
         }
-        return base.osuApiWebClient.post()
-                .uri("beatmaps/{id}/attributes", id)
-                .headers(base::insertHeader)
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .mapNotNull(j -> JacksonUtil.parseObject(j.get("attributes"), BeatmapDifficultyAttributes.class))
-                .block();
+        return base.osuApiWebClient.post().uri("beatmaps/{id}/attributes", id).headers(base::insertHeader).bodyValue(body).retrieve().bodyToMono(JsonNode.class).mapNotNull(j -> JacksonUtil.parseObject(j.get("attributes"), BeatmapDifficultyAttributes.class)).block();
     }
 
     @Override
     public JsonNode lookupBeatmap(String checksum, String filename, Long id) {
-        return base.osuApiWebClient.get()
-                .uri(u -> u.path("beatmapsets/lookup")
-                        .queryParamIfPresent("checksum", Optional.ofNullable(checksum))
-                        .queryParamIfPresent("filename", Optional.ofNullable(filename))
-                        .queryParamIfPresent("id", Optional.ofNullable(id))
-                        .build())
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .block();
+        return base.osuApiWebClient.get().uri(u -> u.path("beatmapsets/lookup").queryParamIfPresent("checksum", Optional.ofNullable(checksum)).queryParamIfPresent("filename", Optional.ofNullable(filename)).queryParamIfPresent("id", Optional.ofNullable(id)).build()).headers(base::insertHeader).retrieve().bodyToMono(JsonNode.class).block();
     }
 
     @Override
-    public BeatMapSetSearch searchBeatmap(Map<String, Object> query) {
-        return base.osuApiWebClient.get()
-                .uri(u -> {
-                    u.path("beatmapsets/search");
-                    query.forEach((k, v) -> {
-                        if (Objects.nonNull(v)) u.queryParam(k, v);
-                        else u.queryParam(k);
-                    });
-                    return u.build();
-                })
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToMono(BeatMapSetSearch.class)
-                .block();
+    public BeatMapSetSearch searchBeatMapSet(Map<String, Object> query) {
+        return base.osuApiWebClient.get().uri(u -> {
+            u.path("beatmapsets/search");
+            query.forEach((k, v) -> {
+                if (Objects.nonNull(v)) u.queryParam(k, v);
+                else u.queryParam(k);
+            });
+            return u.build();
+        }).headers(base::insertHeader).retrieve().bodyToMono(BeatMapSetSearch.class).block();
     }
 }

@@ -80,7 +80,7 @@ public class KitaService implements MessageService<Matcher> {
         }
 
         try {
-            beatMap = beatmapApiService.getBeatMapInfoFromDataBase(bid);
+            beatMap = beatmapApiService.getBeatMapFromDataBase(bid);
         } catch (Exception e) {
             throw new KitaException(KitaException.Type.KITA_Map_FetchFailed);
         }

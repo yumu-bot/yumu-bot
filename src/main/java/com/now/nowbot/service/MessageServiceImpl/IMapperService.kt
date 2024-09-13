@@ -105,12 +105,12 @@ class IMapperService(
                 var resultCount = 0
                 do {
                     if (Objects.isNull(search)) {
-                        search = beatmapApiService.searchBeatmap(query)
+                        search = beatmapApiService.searchBeatMapSet(query)
                         resultCount += search!!.beatmapSets.size
                     } else {
                         page++
                         query["page"] = page
-                        val result = beatmapApiService.searchBeatmap(query)
+                        val result = beatmapApiService.searchBeatMapSet(query)
                         resultCount += result.beatmapSets.size
                         search!!.beatmapSets.addAll(result.beatmapSets)
                     }
@@ -154,7 +154,7 @@ class IMapperService(
                     newQuery["s"] = "any"
                     newQuery["page"] = 1
 
-                    val newSearch = beatmapApiService.searchBeatmap(newQuery)
+                    val newSearch = beatmapApiService.searchBeatMapSet(newQuery)
                     mostRecentRankedBeatmap = newSearch.beatmapSets.find { it.hasLeaderBoard() }
                 } catch (ignored: Exception) {
                 }

@@ -98,7 +98,7 @@ public class TestLevelService implements MessageService<BinUser> {
 
     public double getLevel(List<Score> bp, BinUser user) throws TipsException {
         var mapIdSet = new HashSet<Long>();
-        bp.forEach(s -> s.setBeatMap(beatmapApiService.getBeatMapInfoFromDataBase(s.getBeatMap().getBeatMapID())));
+        bp.forEach(s -> s.setBeatMap(beatmapApiService.getBeatMapFromDataBase(s.getBeatMap().getBeatMapID())));
         // 随机取数
         for (var index : getRandomIndex(user.getOsuID())) {
             mapIdSet.add(bp.get(index).getBeatMap().getBeatMapID());

@@ -185,7 +185,7 @@ class MatchMapService(
                 }
             }
 
-            val beatmap = beatmapApiService!!.getBeatMapInfo(round.beatMapID)
+            val beatmap = beatmapApiService!!.getBeatMap(round.beatMapID)
 
             // 只有转谱才能赋予游戏模式
             val mode: OsuMode

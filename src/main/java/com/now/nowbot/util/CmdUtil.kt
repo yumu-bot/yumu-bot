@@ -23,6 +23,7 @@ import java.util.function.Supplier
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import kotlin.math.max
+import kotlin.math.min
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
@@ -84,7 +85,7 @@ object CmdUtil {
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
-        isMyself: AtomicBoolean
+        isMyself: AtomicBoolean,
     ): CmdRange<OsuUser> {
         isMyself.set(false)
         val range = getUserAndRange(matcher, mode)
@@ -164,9 +165,10 @@ object CmdUtil {
         }
 
         // 使其顺序
-        if (Objects.nonNull(result.end) &&
-            Objects.nonNull(result.start) &&
-            result.start!! > result.end!!
+        if (
+            Objects.nonNull(result.end) &&
+                Objects.nonNull(result.start) &&
+                result.start!! > result.end!!
         ) {
             val temp = result.start
             result.start = result.end
@@ -243,7 +245,7 @@ object CmdUtil {
             CmdRange(
                 text.substring(0, index + 1).trim(),
                 rangeN,
-                text.substring(index + 1, index + i + 1).toInt()
+                text.substring(index + 1, index + i + 1).toInt(),
             )
 
         if (tempChar != ' ') {
@@ -265,7 +267,8 @@ object CmdUtil {
 
         try {
             val range =
-                text.removePrefix(CHAR_HASH.toString())
+                text
+                    .removePrefix(CHAR_HASH.toString())
                     .removePrefix(CHAR_HASH_FULL.toString())
                     .trim()
                     .split(SPLIT_RANGE)
@@ -299,7 +302,7 @@ object CmdUtil {
     private fun getOsuUser(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>
+        mode: CmdObject<OsuMode>,
     ): OsuUser? {
         val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
 
@@ -309,8 +312,7 @@ object CmdUtil {
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
             try {
                 qq = matcher.group(FLAG_QQ_ID)?.toLong() ?: 0L
-            } catch (ignore: RuntimeException) {
-            }
+            } catch (ignore: RuntimeException) {}
         }
 
         if (qq != 0L) {
@@ -324,8 +326,7 @@ object CmdUtil {
                 if (uid != 0L) {
                     return getOsuUser(uid, mode.data)
                 }
-            } catch (ignore: RuntimeException) {
-            }
+            } catch (ignore: RuntimeException) {}
         }
 
         if (matcher.namedGroups().containsKey(FLAG_NAME)) {
@@ -486,7 +487,6 @@ data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int
     fun fullRange() = start != null && end != null
 
     // 30: 30 - 1, 2-30: 2-1  // 30: 0, 2-30: 2-1
-    @Deprecated("写的什么牛逼玩意儿，您真的是算法大师！")
     fun getOffset(default: Int = 0, isMulti: Boolean = false): Int {
         return if (fullRange()) {
             max(0, start!! - 1)
@@ -502,7 +502,6 @@ data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int
     }
 
     // 30: 1, 2-30: 30-2  // 30: 30, 1-30: 30-2
-    @Deprecated("写的什么牛逼玩意儿，您真的是算法大师！")
     fun getLimit(default: Int = 1, isMulti: Boolean = false): Int {
         return if (fullRange()) {
             max(end!! - start!!, 1)
@@ -517,12 +516,24 @@ data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int
         }
     }
 
-    fun getStart(default: Int): Int {
-        return start ?: default
+    // 30: 0, 2-30：1, 32-30：29
+    fun getDayStart(default: Int = 0): Int {
+        return if (fullRange()) {
+            max(min(start!!, end!!) - 1, default)
+        } else {
+            default
+        }
     }
 
-    fun getEnd(default: Int): Int {
-        return end ?: default
+    // 30: 30, 2-30：30, 32-30：32
+    fun getDayEnd(default: Int = 1): Int {
+        return if (fullRange()) {
+            max(max(start!!, end!!), default)
+        } else if (halfRange()) {
+            max(start!!, default)
+        } else {
+            default
+        }
     }
 
     /**
@@ -530,18 +541,5 @@ data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int
      * 5, getValue(20, false) 返回 9 如果 range 为 [5, null], getValue(20, true) 返回 5, getValue(20,
      * false) 返回 20 如果 range 为 [null, null], getValue(20, true) 返回 20, getValue(20, false) 返回 20
      */
-    fun getValue(default: Int = 20, important: Boolean) =
-        if (start != null && end != null) {
-            if (important) {
-                start!!
-            } else {
-                end!!
-            }
-        } else if (important && start != null) {
-            start!!
-        } else if (important && end != null) {
-            end!!
-        } else {
-            default
-        }
+    // 你有毛病？
 }

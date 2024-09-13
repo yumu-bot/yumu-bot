@@ -49,7 +49,7 @@ class PPPlusMapService(
 
     override fun HandleMessage(event: MessageEvent, data: Param) {
         val map = try {
-            beatmapApiService.getBeatMapInfoFromDataBase(data.bid)
+            beatmapApiService.getBeatMapFromDataBase(data.bid)
         } catch (e: Exception) {
             throw PPPlusException(PPPlusException.Type.PL_Map_NotFound)
         }

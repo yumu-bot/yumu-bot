@@ -10,7 +10,6 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.ServiceException.MapMinusException;
-import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -71,11 +70,11 @@ public class MapMinusService implements MessageService<Matcher> {
 
 
         try {
-            beatMap = beatmapApiService.getBeatMapInfoFromDataBase(bid);
+            beatMap = beatmapApiService.getBeatMapFromDataBase(bid);
             mode = OsuMode.getMode(beatMap.getModeInt());
             int mods = OsuMod.getModsValue(modsList);
             beatmapApiService.applySRAndPP(beatMap, beatMap.getOsuMode(), mods);
-            fileStr = beatmapApiService.getBeatMapFile(bid);
+            fileStr = beatmapApiService.getBeatMapFileStr(bid);
         } catch (Exception e) {
             throw new MapMinusException(MapMinusException.Type.MM_Map_NotFound);
         }

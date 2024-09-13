@@ -20,7 +20,7 @@ public class MapPoolDto {
             List<BeatMap> beatmaps = new ArrayList<>();
 
             for (var bid : value) {
-                var b = osuBeatmapApiService.getBeatMapInfo(bid);
+                var b = osuBeatmapApiService.getBeatMap(bid);
 
                 beatmaps.add(b);
             }

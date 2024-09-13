@@ -25,9 +25,13 @@ public interface OsuBeatmapApiService {
      * @param bid 谱面id
      * @return osu文件字符串
      */
-    String getBeatMapFile(long bid) throws Exception;
+    String getBeatMapFileStr(long bid) throws Exception;
 
-    String downloadBeatMapFileForce(long bid);
+    boolean hasBeatMapFile(long bid);
+
+    boolean refreshBeatMapFile(long bid) throws IOException;
+
+    String downloadBeatMapFileStrForce(long bid);
 
     /**
      * 查一下文件是否跟 checksum 是否对起来
@@ -39,25 +43,25 @@ public interface OsuBeatmapApiService {
     boolean checkBeatMap(long bid, String checkStr) throws IOException;
 
     // 尽量用 FromDataBase，这样可以节省 API 开支
-    BeatMap getBeatMapInfo(long bid);
+    BeatMap getBeatMap(long bid);
 
-    default BeatMap getBeatMapInfo(int bid) {
-        return getBeatMapInfo((long) bid);
+    default BeatMap getBeatMap(int bid) {
+        return getBeatMap((long) bid);
     }
 
-    BeatMapSet getBeatMapSetInfo(long sid);
+    BeatMapSet getBeatMapSet(long sid);
 
-    default BeatMapSet getBeatMapSetInfo(int sid) {
-        return getBeatMapSetInfo((long) sid);
+    default BeatMapSet getBeatMapSet(int sid) {
+        return getBeatMapSet((long) sid);
     }
 
-    default BeatMap getBeatMapInfoFromDataBase(int bid) {
-        return getBeatMapInfoFromDataBase((long) bid);
+    default BeatMap getBeatMapFromDataBase(int bid) {
+        return getBeatMapFromDataBase((long) bid);
     }
 
-    BeatMap getBeatMapInfoFromDataBase(long bid);
+    BeatMap getBeatMapFromDataBase(long bid);
 
-    boolean testNewbieCountMap(long bid);
+    boolean isNewbieMap(long bid);
 
     int[] getBeatmapObjectGrouping26(BeatMap map) throws Exception;
 
@@ -87,10 +91,10 @@ public interface OsuBeatmapApiService {
      */
     JsonNode lookupBeatmap(String checksum, String filename, Long id);
 
-    BeatMapSetSearch searchBeatmap(Map<String, Object> query);
+    BeatMapSetSearch searchBeatMapSet(Map<String, Object> query);
 
     default JniResult getMaxPP(long bid, int modInt) throws Exception {
-        var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
+        var b = getBeatMapFileStr(bid).getBytes(StandardCharsets.UTF_8);
         JniScore js = new JniScore();
         js.setAccuracy(100);
         js.setMods(modInt);
@@ -102,7 +106,7 @@ public interface OsuBeatmapApiService {
     }
 
     default JniResult getMaxPP(long bid, OsuMode mode, int modInt) throws Exception {
-        var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
+        var b = getBeatMapFileStr(bid).getBytes(StandardCharsets.UTF_8);
         JniScore js = new JniScore();
 
         js.setMode(mode.toRosuMode());
@@ -115,14 +119,14 @@ public interface OsuBeatmapApiService {
     }
 
     default JniResult getPP(long bid, int modInt, Statistics s, int combo) throws Exception {
-        var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
+        var b = getBeatMapFileStr(bid).getBytes(StandardCharsets.UTF_8);
         JniScore js = new JniScore();
         js.setCombo(combo);
         return getJniResult(modInt, s, b, js);
     }
 
     default JniResult getPP(long bid, OsuMode mode, int modInt, Statistics s, int combo) throws Exception {
-        var b = getBeatMapFile(bid).getBytes(StandardCharsets.UTF_8);
+        var b = getBeatMapFileStr(bid).getBytes(StandardCharsets.UTF_8);
         JniScore js = new JniScore();
         js.setCombo(combo);
         js.setMode(mode.toRosuMode());
@@ -130,7 +134,7 @@ public interface OsuBeatmapApiService {
     }
 
     default JniResult getPP(BeatMap beatMap, MapStatisticsService.Expected e) throws Exception {
-        var b = getBeatMapFile(beatMap.getBeatMapID()).getBytes(StandardCharsets.UTF_8);
+        var b = getBeatMapFileStr(beatMap.getBeatMapID()).getBytes(StandardCharsets.UTF_8);
         var m = OsuMod.getModsValueFromAbbrList(e.mods);
         var t = new Statistics();
 
@@ -145,7 +149,7 @@ public interface OsuBeatmapApiService {
     }
 
     default JniResult getPP(Score s) throws Exception {
-        var b = getBeatMapFile(s.getBeatMap().getBeatMapID()).getBytes(StandardCharsets.UTF_8);
+        var b = getBeatMapFileStr(s.getBeatMap().getBeatMapID()).getBytes(StandardCharsets.UTF_8);
         var m = OsuMod.getModsValueFromAbbrList(s.getMods());
         var t = s.getStatistics();
 
@@ -156,7 +160,7 @@ public interface OsuBeatmapApiService {
     }
 
     default JniResult getFcPP(Score s) throws Exception {
-        var b = getBeatMapFile(s.getBeatMap().getBeatMapID()).getBytes(StandardCharsets.UTF_8);
+        var b = getBeatMapFileStr(s.getBeatMap().getBeatMapID()).getBytes(StandardCharsets.UTF_8);
         var m = OsuMod.getModsValueFromAbbrList(s.getMods());
         var t = s.getStatistics().clone();
 
@@ -247,12 +251,12 @@ public interface OsuBeatmapApiService {
     // 给标准谱面添加完整的谱面
     default void applyBeatMapExtend(Match.MatchRound round) {
         var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap(round.getBeatMapID()));
-        round.setBeatMap(getBeatMapInfo(b.getBeatMapID()));
+        round.setBeatMap(getBeatMap(b.getBeatMapID()));
     }
 
     // 给成绩添加完整的谱面
     default void applyBeatMapExtend(Score score) {
-        var extended = getBeatMapInfo(score.getBeatMap().getBeatMapID());
+        var extended = getBeatMap(score.getBeatMap().getBeatMapID());
         var lite = score.getBeatMap();
 
         score.setBeatMap(BeatMap.extend(lite, extended));
@@ -261,7 +265,7 @@ public interface OsuBeatmapApiService {
 
     // 给成绩添加完整的谱面
     default void applyBeatMapExtendFromDataBase(Score score) {
-        var extended = getBeatMapInfoFromDataBase(score.getBeatMap().getBeatMapID());
+        var extended = getBeatMapFromDataBase(score.getBeatMap().getBeatMapID());
         var lite = score.getBeatMap();
 
         score.setBeatMap(BeatMap.extend(lite, extended));
@@ -321,7 +325,7 @@ public interface OsuBeatmapApiService {
 
         var m = OsuMod.getModsValueFromAbbrList(expected.mods);
         try {
-            var b = getBeatMapFile(beatMap.getBeatMapID()).getBytes(StandardCharsets.UTF_8);
+            var b = getBeatMapFileStr(beatMap.getBeatMapID()).getBytes(StandardCharsets.UTF_8);
 
             JniScore js = new JniScore();
             js.setCombo(expected.combo);

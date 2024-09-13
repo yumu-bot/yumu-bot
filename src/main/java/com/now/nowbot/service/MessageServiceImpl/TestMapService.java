@@ -31,7 +31,7 @@ public class TestMapService implements MessageService<Matcher> {
         int bid = Integer.parseInt(matcher.group("id"));
         String mod = matcher.group("mod");
 
-        var b = beatmapApiService.getBeatMapInfo(bid);
+        var b = beatmapApiService.getBeatMap(bid);
         var sb = new StringBuilder();
 
         sb.append(bid).append(',');

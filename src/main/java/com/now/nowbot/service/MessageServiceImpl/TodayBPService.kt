@@ -13,7 +13,6 @@ import com.now.nowbot.service.MessageServiceImpl.TodayBPService.TodayBPParam
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithRange
@@ -26,8 +25,6 @@ import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.math.max
-import kotlin.math.min
 
 @Service("TODAY_BP")
 class TodayBPService(
@@ -40,7 +37,8 @@ class TodayBPService(
         val user: OsuUser,
         val mode: OsuMode,
         val scores: Map<Int, Score>,
-        val isMyself: Boolean
+        val isMyself: Boolean,
+        val isToday: Boolean
     )
 
     @Throws(Throwable::class)
@@ -84,11 +82,10 @@ class TodayBPService(
         val mode = getMode(matcher)
         val isMyself = AtomicBoolean()
         val range = getUserWithRange(event, matcher, mode, isMyself)
-        val user = range.data ?: throw TipsException("没找到玩家")
-        var dayStart = range.getValue(1, false) - 1
-        var dayEnd = range.getValue(1, true)
-        dayStart = min(0, dayStart)
-        dayEnd = max(dayEnd, dayStart + 1)
+        val user = range.data ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
+        val dayStart = range.getDayStart()
+        val dayEnd = range.getDayEnd()
+        val isToday = (dayStart == 0 && dayEnd == 1)
 
         val bpList: List<Score>
         try {
@@ -100,8 +97,8 @@ class TodayBPService(
         } catch (e: WebClientResponseException) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
         } catch (e: Exception) {
-            log.error("HandleUtil：获取今日最好成绩失败！", e)
-            throw TipsException("HandleUtil：获取今日最好成绩失败！")
+            log.error("今日最好成绩：获取失败！", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "今日最好成绩")
         }
         val laterDay = LocalDateTime.now().minusDays(dayStart.toLong())
         val earlierDay = LocalDateTime.now().minusDays(dayEnd.toLong())
@@ -114,7 +111,7 @@ class TodayBPService(
                 }
             }
         )
-        return TodayBPParam(user, mode.data!!, dataMap, isMyself.get())
+        return TodayBPParam(user, mode.data!!, dataMap, isMyself.get(), isToday)
     }
 
     fun TodayBPParam.getImage(): ByteArray {
@@ -123,8 +120,11 @@ class TodayBPService(
         if (CollectionUtils.isEmpty(todayMap)) {
             if (!user.active) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerInactive, user.username)
+            } else if (isToday) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Empty_TodayBP, user.username, mode)
+            } else {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Empty_PeriodBP, user.username, mode)
             }
-            throw GeneralTipsException(GeneralTipsException.Type.G_Empty_PeriodBP, user.username, mode)
         }
 
         val ranks = ArrayList<Int>()
