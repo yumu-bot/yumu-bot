@@ -61,14 +61,10 @@ class BPService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: BPParam) {
-        val from = event.subject
-
-        // 校验为空提取到预处理部分
-
         val image: ByteArray = param.getImage()
 
         try {
-            from.sendImage(image)
+            event.reply(image)
         } catch (e: Exception) {
             log.error("最好成绩：发送失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "最好成绩")

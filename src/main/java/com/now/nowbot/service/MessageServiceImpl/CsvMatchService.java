@@ -46,7 +46,6 @@ public class CsvMatchService implements MessageService<Matcher> {
     @Override
     @CheckPermission(isGroupAdmin = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
         var isMultiple = matcher.group("x") != null;
         int id = 0;
         List<Integer> ids = null;
@@ -55,7 +54,7 @@ public class CsvMatchService implements MessageService<Matcher> {
         if (isMultiple) {
             try {
                 ids = parseDataString(matcher.group("data"));
-                from.sendMessage("正在处理系列赛");
+                event.reply("正在处理系列赛");
                 parseCRAs(sb, ids);
             } catch (MRAException e) {
                 throw e;
@@ -66,7 +65,7 @@ public class CsvMatchService implements MessageService<Matcher> {
         } else {
             try {
                 id = Integer.parseInt(matcher.group("data"));
-                from.sendMessage(STR."正在处理\{id}");
+                event.reply(STR."正在处理\{id}");
                 parseCRA(sb, id);
             } catch (NullPointerException e) {
                 throw new MRAException(MRAException.Type.RATING_Match_NotFound);
@@ -79,7 +78,7 @@ public class CsvMatchService implements MessageService<Matcher> {
         }
 
         //必须群聊
-        if (from instanceof Group group) {
+        if (event.getSubject() instanceof Group group) {
             try {
                 if (isMultiple) {
                     if (Objects.nonNull(ids)) {

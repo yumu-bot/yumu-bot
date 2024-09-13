@@ -135,6 +135,15 @@ public class BeatMap implements Cloneable {
     //自己算
     Boolean hasLeaderBoard;
 
+    //自己取
+    public String getPreviewName() {
+        if (beatMapSet != null) {
+            return beatMapSet.artist + " - " + beatMapSet.title + " (" + beatMapSet.creator + ") [" + difficultyName + "]";
+        } else {
+            return id.toString();
+        }
+    }
+
     //不能动（因为有数据库存储
     public Long getId() {
         return id;

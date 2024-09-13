@@ -86,13 +86,11 @@ class GetCoverService(val beatmapApiService: OsuBeatmapApiService? = null) :
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: CoverParam) {
-        val from = event.subject
-
         val beatmaps = getBeatMap(param.bids, beatmapApiService)
         val messageChains = getMessageChains(param.type, beatmaps)
 
         for (msg in messageChains) {
-            from.sendMessage(msg)
+            event.reply(msg)
             Thread.sleep(1000)
         }
     }

@@ -1,169 +1,172 @@
-package com.now.nowbot.service.MessageServiceImpl;
+package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.config.Permission;
-import com.now.nowbot.config.PermissionParam;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.AtMessage;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.throwable.ServiceException.BanException;
-import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.QQMsgUtil;
-import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
-
-import java.util.Objects;
-
-import static com.now.nowbot.util.command.CommandPatternStaticKt.*;
+import com.now.nowbot.config.Permission
+import com.now.nowbot.config.PermissionParam
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.AtMessage
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.MessageServiceImpl.BanService.BanParam
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.ServiceException.BanException
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.QQMsgUtil
+import com.now.nowbot.util.command.FLAG_NAME
+import com.now.nowbot.util.command.FLAG_QQ_GROUP
+import com.now.nowbot.util.command.FLAG_QQ_ID
+import java.util.*
+import org.springframework.stereotype.Service
 
 @Service("BAN")
-public class BanService implements MessageService<BanService.BanParam> {
-    @Resource
-    Permission permission;
-    @Resource
-    ImageService imageService;
+class BanService(private val permission: Permission, private val imageService: ImageService) :
+    MessageService<BanParam> {
 
-    public record BanParam(Long qq, String name, String operate, boolean isUser) {
+    @JvmRecord
+    data class BanParam(val qq: Long?, val name: String?, val operate: String, val isUser: Boolean)
 
-    }
+    override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<BanParam>,
+    ): Boolean {
+        val matcher = Instruction.BAN.matcher(messageText)
+        if (!matcher.find()) return false
 
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<BanParam> data) {
-        var matcher = Instruction.BAN.matcher(messageText);
-        if (!matcher.find()) return false;
+        val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
 
-        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-
-        var qq = matcher.group(FLAG_QQ_ID);
-        var group = matcher.group(FLAG_QQ_GROUP);
-        var name = matcher.group(FLAG_NAME);
-        var operate = matcher.group("operate");
+        val qq: String = matcher.group(FLAG_QQ_ID)
+        val group: String = matcher.group(FLAG_QQ_GROUP)
+        val name: String = matcher.group(FLAG_NAME)
+        val operate = matcher.group("operate")
 
         if (Objects.nonNull(at)) {
-            data.setValue(new BanParam(at.getTarget(), null, operate, true));
-            return true;
+            data.value = BanParam(at!!.target, null, operate, true)
+            return true
         }
 
         if (Objects.nonNull(qq)) {
-            data.setValue(new BanParam(Long.parseLong(qq), null, operate, true));
-            return true;
+            data.value = BanParam(qq.toLong(), null, operate, true)
+            return true
         }
 
         if (Objects.nonNull(group)) {
-            data.setValue(new BanParam(Long.parseLong(group), null, operate, false));
-            return true;
+            data.value = BanParam(group.toLong(), null, operate, false)
+            return true
         }
 
         if (Objects.nonNull(name)) {
-            data.setValue(new BanParam(null, name, operate, true));
-            return true;
+            data.value = BanParam(null, name, operate, true)
+            return true
         }
 
-        data.setValue(new BanParam(null, null, operate, false));
-        return true;
+        data.value = BanParam(null, null, operate, false)
+        return true
     }
 
-
-    @Override
-    public void HandleMessage(MessageEvent event, BanParam param) throws Throwable {
-        if (!Permission.isSuperAdmin(event.getSender().getId())) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Permission_Super);
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, param: BanParam) {
+        if (!Permission.isSuperAdmin(event.sender.id)) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Super)
         }
 
-        var from = event.getSubject();
-
-        switch (param.operate()) {
-            case "list", "whitelist", "l", "w" -> SendImage(event, Permission.getWhiteList(), "白名单包含：");
-            case "banlist", "blacklist", "k" -> SendImage(event, Permission.getBlackList(), "黑名单包含：");
-            case "add", "a" -> {
-                if (Objects.nonNull(param.qq()) && param.isUser()) {
-                    var add = permission.addUser(param.qq(), true);
+        when (param.operate) {
+            "list",
+            "whitelist",
+            "l",
+            "w" -> SendImage(event, Permission.getWhiteList(), "白名单包含：")
+            "banlist",
+            "blacklist",
+            "k" -> SendImage(event, Permission.getBlackList(), "黑名单包含：")
+            "add",
+            "a" -> {
+                if (Objects.nonNull(param.qq) && param.isUser) {
+                    val add = permission.addUser(param.qq, true)
                     if (add) {
-                        from.sendMessage(STR."成功添加用户 \{param.qq()} 进白名单");
+                        event.reply("成功添加用户 ${param.qq} 进白名单")
                     }
-                } else if (Objects.nonNull(param.qq())) {
-                    //throw new TipsException("群组功能还在制作中");
-                    var add = permission.addGroup(param.qq(), true, true);
+                } else if (Objects.nonNull(param.qq)) {
+                    // throw new TipsException("群组功能还在制作中");
+                    val add = permission.addGroup(param.qq, true, true)
                     if (add) {
-                        from.sendMessage(STR."成功添加群组 \{param.qq()} 进白名单");
+                        event.reply("成功添加群组 ${param.qq} 进白名单")
                     }
                 } else {
-                    throw new BanException(BanException.Type.SUPER_Receive_NoQQ, "add", "add");
+                    throw BanException(BanException.Type.SUPER_Receive_NoQQ, "add", "add")
                 }
             }
-            case "remove", "r" -> {
-                if (Objects.nonNull(param.qq()) && param.isUser()) {
-                    var remove = permission.removeUser(param.qq(), true);
+            "remove",
+            "r" -> {
+                if (Objects.nonNull(param.qq) && param.isUser) {
+                    val remove = permission.removeUser(param.qq, true)
                     if (remove) {
-                        from.sendMessage(STR."成功移除用户 \{param.qq()} 出白名单");
+                        event.reply("成功添加群组 ${param.qq} 出白名单")
                     }
-                } else if (Objects.nonNull(param.qq())) {
-                    //throw new TipsException("群组功能还在制作中");
-                    var add = permission.removeGroup(param.qq(), false, true);
+                } else if (Objects.nonNull(param.qq)) {
+                    // throw new TipsException("群组功能还在制作中");
+                    val add = permission.removeGroup(param.qq, false, true)
                     if (add) {
-                        from.sendMessage(STR."成功移除群组 \{param.qq()} 出白名单");
+                        event.reply("成功移除群组 ${param.qq} 出白名单")
                     }
                 } else {
-                    throw new BanException(BanException.Type.SUPER_Receive_NoQQ, "remove", "remove");
+                    throw BanException(BanException.Type.SUPER_Receive_NoQQ, "remove", "remove")
                 }
             }
-            case "ban", "b" -> {
-                if (Objects.nonNull(param.qq()) && param.isUser()) {
-                    var add = permission.addUser(param.qq(), false);
+            "ban",
+            "b" -> {
+                if (Objects.nonNull(param.qq) && param.isUser) {
+                    val add = permission.addUser(param.qq, false)
                     if (add) {
-                        from.sendMessage(STR."成功拉黑用户 \{param.qq()}");
+                        event.reply("成功拉黑用户 ${param.qq}")
                     }
-                } else if (Objects.nonNull(param.qq())) {
-                    //throw new TipsException("群组功能还在制作中");
-                    var add = permission.addGroup(param.qq(), false, true);
+                } else if (Objects.nonNull(param.qq)) {
+                    // throw new TipsException("群组功能还在制作中");
+                    val add = permission.addGroup(param.qq, false, true)
                     if (add) {
-                        from.sendMessage(STR."成功拉黑群组 \{param.qq()}");
+                        event.reply("成功拉黑群组 ${param.qq}")
                     }
                 } else {
-                    throw new BanException(BanException.Type.SUPER_Receive_NoQQ, "ban", "ban");
+                    throw BanException(BanException.Type.SUPER_Receive_NoQQ, "ban", "ban")
                 }
             }
-            case "unban", "u" -> {
-                if (Objects.nonNull(param.qq()) && param.isUser()) {
-                    var add = permission.removeUser(param.qq(), false);
+            "unban",
+            "u" -> {
+                if (Objects.nonNull(param.qq) && param.isUser) {
+                    val add = permission.removeUser(param.qq, false)
                     if (add) {
-                        from.sendMessage(STR."成功恢复用户 \{param.qq()}");
+                        event.reply("成功恢复用户 ${param.qq}")
                     }
-                } else if (Objects.nonNull(param.qq())) {
-                    //throw new TipsException("群组功能还在制作中");
-                    var add = permission.removeGroup(param.qq(), false, true);
+                } else if (Objects.nonNull(param.qq)) {
+                    // throw new TipsException("群组功能还在制作中");
+                    val add = permission.removeGroup(param.qq, false, true)
                     if (add) {
-                        from.sendMessage(STR."成功恢复群组 \{param.qq()}");
+                        event.reply("成功恢复群组 ${param.qq}")
                     }
                 } else {
-                    throw new BanException(BanException.Type.SUPER_Receive_NoQQ, "unban", "unban");
+                    throw BanException(BanException.Type.SUPER_Receive_NoQQ, "unban", "unban")
                 }
             }
-
-            case null, default -> throw new BanException(BanException.Type.SUPER_Instruction);
+            else -> throw BanException(BanException.Type.SUPER_Instruction)
         }
     }
 
-    private void SendImage(MessageEvent event, PermissionParam param, String info) {
-        var from = event.getSubject();
-        var users = param.getUserList();
-        var groups = param.getGroupList();
+    private fun SendImage(event: MessageEvent, param: PermissionParam, info: String) {
+        val users = param.userList
+        val groups = param.groupList
 
+        val sb: StringBuilder = StringBuilder("${info}\nqq:")
 
-        StringBuilder sb = new StringBuilder(STR."\{info}\nqq:");
-
-        for (Long qq : users) {
-            sb.append(qq).append("\n");
+        for (qq in users) {
+            sb.append(qq).append("\n")
         }
 
-        sb.append("group:").append('\n');
+        sb.append("group:").append('\n')
 
-        for (Long qq : groups) {
-            sb.append(qq).append("\n");
+        for (qq in groups) {
+            sb.append(qq).append("\n")
         }
 
-        var image = imageService.getPanelAlpha(sb);
-        from.sendImage(image);
+        val image = imageService.getPanelAlpha(sb)
+        event.reply(image)
     }
 }

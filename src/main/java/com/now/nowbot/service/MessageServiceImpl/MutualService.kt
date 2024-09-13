@@ -1,126 +1,108 @@
-package com.now.nowbot.service.MessageServiceImpl;
+package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.AtMessage;
-import com.now.nowbot.qq.message.MessageChain;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.ServiceException.BindException;
-import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.QQMsgUtil;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.AtMessage
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.MessageServiceImpl.MutualService.MutualParam
+import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.throwable.ServiceException.BindException
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.QQMsgUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import org.springframework.util.CollectionUtils
+import org.springframework.util.StringUtils
+import java.util.*
 
 @Service("MUTUAL")
-public class MutualService implements MessageService<List<MutualService.MutualParam>> {
-    private static final Logger log = LoggerFactory.getLogger(MutualService.class);
+class MutualService(private val userApiService: OsuUserApiService, private val bindDao: BindDao) :
+    MessageService<List<MutualParam>> {
 
-    @Resource
-    OsuUserApiService userApiService;
+    @JvmRecord data class MutualParam(val uid: Long?, val qq: Long?, val name: String)
 
-    @Resource
-    BindDao bindDao;
+    @Throws(Throwable::class)
+    override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<List<MutualParam>>,
+    ): Boolean {
+        val m = Instruction.MUTUAL.matcher(messageText)
+        if (!m.find()) return false
 
-    public record MutualParam(Long uid, Long qq, String name) {}
+        val name = m.group("names")
+        val atList = QQMsgUtil.getTypeAll(event.message, AtMessage::class.java)
 
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<List<MutualParam>> data) throws Throwable {
-        var m = Instruction.MUTUAL.matcher(messageText);
-        if (!m.find()) return false;
-
-        var name = m.group("names");
-        var atList = QQMsgUtil.getTypeAll(event.getMessage(), AtMessage.class);
-
-        List<MutualParam> users;
-
-        if (! CollectionUtils.isEmpty(atList)){
-            users = atList.stream().map(this::at2Mutual).toList();
-        } else if (StringUtils.hasText(name)){
-            users = Arrays.stream(name.split(",")).map(this::name2Mutual).toList();
-        } else {
-            users = List.of(qq2Mutual(event.getSender().getId()));
-        }
-
-        data.setValue(users);
-        return true;
-    }
-
-    @Override
-    public void HandleMessage(MessageEvent event, List<MutualParam> users) throws Throwable {
-        var from = event.getSubject();
-
-        try {
-            from.sendMessage(mutual2MessageChain(users)).recallIn(60 * 1000);
-        } catch (Exception e) {
-            log.error("添加好友：发送失败！", e);
-        }
-    }
-
-    private MutualParam at2Mutual(AtMessage at) {
-        return qq2Mutual(at.getTarget());
-    }
-
-    private MutualParam qq2Mutual(long qq) {
-        try {
-            var u = bindDao.getUserFromQQ(qq);
-            return new MutualParam(u.getOsuID(), qq, u.getOsuName());
-        } catch (BindException e) {
-            return new MutualParam(null, qq, STR."\{qq} : 未绑定或绑定状态失效！");
-        }
-    }
-
-    private MutualParam name2Mutual(String name) {
-        try {
-            Long id = userApiService.getOsuId(name);
-            return new MutualParam(id, null, name);
-        } catch (Exception e) {
-            return new MutualParam(null, null, STR."\{name} : 找不到玩家或网络错误！");
-        }
-    }
-
-    private MessageChain mutual2MessageChain(Collection<MutualParam> users) {
-        var sb = new MessageChain.MessageChainBuilder();
-        users.forEach(u -> {
-            if (Objects.isNull(u.uid)) {
-                sb.addText('\n' + u.name);
-                return;
-            }
-
-            if (Objects.nonNull(u.qq)) {
-                sb.addAt(u.qq);
-            }
-
-            sb.addText(STR."\n\{u.name}：https://osu.ppy.sh/users/\{u.uid}");
-
-            /*
-            var name4Url = u.data
-                    .replaceAll("\\s", "%20")
-                    .replaceAll("-", "%2D")
-                    .replaceAll("\\[", "%5B")
-                    .replaceAll("]", "%5D")
-                    .replaceAll("_", "%5F");
-
-            var m = NumberPattern.matcher(name4Url);
-
-            if (m.find()) {
-                //有数字，只能 uid
-                sb.addText(STR." \{u.data} : : https://osu.ppy.sh/users/\{u.uid}\n");
+        val users =
+            if (!CollectionUtils.isEmpty(atList)) {
+                atList.stream().map { at: AtMessage? -> this.at2Mutual(at) }.toList()
+            } else if (StringUtils.hasText(name)) {
+                Arrays.stream(
+                        name.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                    )
+                    .map { n: String -> this.name2Mutual(name) }
+                    .toList()
             } else {
-                sb.addText(STR." \{u.data} : https://osu.ppy.sh/users/\{name4Url}\n");
+                java.util.List.of(qq2Mutual(event.sender.id))
             }
 
-             */
-        });
-        return sb.build();
+        data.value = users
+        return true
+    }
+
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, users: List<MutualParam>) {
+        try {
+            event.reply(mutual2MessageChain(users)).recallIn((60 * 1000).toLong())
+        } catch (e: Exception) {
+            log.error("添加好友：发送失败！", e)
+        }
+    }
+
+    private fun at2Mutual(at: AtMessage?): MutualParam {
+        return qq2Mutual(at!!.target)
+    }
+
+    private fun qq2Mutual(qq: Long): MutualParam {
+        try {
+            val u = bindDao.getUserFromQQ(qq)
+            return MutualParam(u.osuID, qq, u.osuName)
+        } catch (e: BindException) {
+            return MutualParam(null, qq, "${qq} : 未绑定或绑定状态失效！")
+        }
+    }
+
+    private fun name2Mutual(name: String): MutualParam {
+        try {
+            val id = userApiService.getOsuId(name)
+            return MutualParam(id, null, name)
+        } catch (e: Exception) {
+            return MutualParam(null, null, "${name} : 找不到玩家或网络错误！")
+        }
+    }
+
+    private fun mutual2MessageChain(users: List<MutualParam>): MessageChain {
+        val sb = MessageChainBuilder()
+
+        for (u in users) {
+            if (Objects.isNull(u.uid)) {
+                sb.addText("${u.name}\n")
+                break
+            }
+            if (Objects.nonNull(u.qq)) {
+                sb.addAt(u.qq!!)
+            }
+            sb.addText("${u.name}：https://osu.ppy.sh/users/${u.uid}\n")
+        }
+
+        return sb.build()
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(MutualService::class.java)
     }
 }

@@ -152,6 +152,12 @@ enum class Instruction(val pattern: Pattern) {
         appendModeQQUIDName()
     }),
 
+    BP_QUERY(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("bp\\s*query", "bq")
+        appendMode()
+        appendCaptureGroup("text", ".*", EXIST)
+    }),
+
     UU_BA(CommandPatternBuilder.create {
         appendUUIgnoreAll("(bp?)?a", "(bp\\s*analysis)")
         appendModeQQUIDName()
@@ -332,6 +338,11 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_DATA, REG_NUMBER_SEPERATOR, MORE)
     }),
 
+    REFRESH_FILE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("refresh\\s*file", "rf")
+        appendCaptureGroup("bid", REG_NUMBER, MORE)
+    }),
+
     // #5 osu! 比赛指令
     MATCH_LISTENER(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("make\\s*love", "(match)?listen(er)?", "ml", "li")
@@ -446,16 +457,6 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("trans", "tr")
         appendCaptureGroup("a", "[A-G][＃#]?", EXIST)
         appendCaptureGroup("b", REG_NUMBER, EXIST)
-    }),
-
-    BP_QUERY(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("bp\\s*query", "bq")
-        appendCaptureGroup("text", ".*", EXIST)
-    }),
-
-    REFRESH_FILE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("refresh\\s*file", "rf")
-        appendCaptureGroup("bid", REG_NUMBER, MORE)
     }),
 
     KITA(CommandPatternBuilder.create {

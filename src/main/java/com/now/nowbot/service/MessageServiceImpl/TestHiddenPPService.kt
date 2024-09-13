@@ -1,93 +1,92 @@
-package com.now.nowbot.service.MessageServiceImpl;
+package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.config.Permission;
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.model.enums.OsuMod;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuScoreApiService;
-import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
-import java.util.List;
-import java.util.regex.Matcher;
+import com.now.nowbot.config.Permission
+import com.now.nowbot.model.JsonData.OsuUser
+import com.now.nowbot.model.JsonData.Score
+import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.OsuApiService.OsuScoreApiService
+import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.util.DataUtil.splitString
+import com.now.nowbot.util.Instruction
+import java.util.regex.Matcher
+import org.springframework.stereotype.Service
+import org.springframework.util.CollectionUtils
+import org.springframework.util.StringUtils
 
 @Service("TEST_HD")
-public class TestHiddenPPService implements MessageService<Matcher> {
-    @Resource
-    OsuUserApiService userApiService;
-    @Resource
-    OsuScoreApiService scoreApiService;
-    
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
-        var m = Instruction.TEST_HD.matcher(messageText);
+class TestHiddenPPService(
+    private val userApiService: OsuUserApiService,
+    private val scoreApiService: OsuScoreApiService,
+) : MessageService<Matcher> {
+
+    @Throws(Throwable::class)
+    override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<Matcher>,
+    ): Boolean {
+        val m = Instruction.TEST_HD.matcher(messageText)
         if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
+            data.value = m
+            return true
+        } else return false
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
-
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
         if (Permission.isCommonUser(event)) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Permission_Group);
+            throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Group)
         }
 
-        var names = DataUtil.splitString(matcher.group("data"));
-        var mode = OsuMode.getMode(matcher.group("mode"));
+        val names: List<String?>? = splitString(matcher.group("data"))
+        var mode = OsuMode.getMode(matcher.group("mode"))
 
-        if (CollectionUtils.isEmpty(names)) throw new GeneralTipsException(GeneralTipsException.Type.G_Fetch_List);
-        
-        StringBuilder sb = new StringBuilder();
-        
-        for (var name : names) {
-            if (! StringUtils.hasText(name)) {
-                break;
+        if (CollectionUtils.isEmpty(names))
+            throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
+
+        val sb = StringBuilder()
+
+        for (name in names!!) {
+            if (!StringUtils.hasText(name)) {
+                break
             }
 
-            OsuUser user;
-            List<Score> bps;
-            double hiddenPP = 0d;
+            var user: OsuUser
+            var bps: List<Score?>
+            var hiddenPP = 0.0
 
             try {
-                var id = userApiService.getOsuId(name);
-                user = userApiService.getPlayerOsuInfo(id);
-                
+                val id = userApiService.getOsuId(name)
+                user = userApiService.getPlayerOsuInfo(id)
+
                 if (mode == OsuMode.DEFAULT) {
-                    mode = user.getCurrentOsuMode();
+                    mode = user.currentOsuMode
                 }
-                
-                bps = scoreApiService.getBestPerformance(id, mode, 0, 100);
-            } catch (Exception e) {
-                sb.append("name=").append(name).append(" not found").append('\n');
-                break;
+
+                bps = scoreApiService.getBestPerformance(id, mode, 0, 100)
+            } catch (e: Exception) {
+                sb.append("name=").append(name).append(" not found").append('\n')
+                break
             }
-            
+
             if (CollectionUtils.isEmpty(bps)) {
-                sb.append("name=").append(name).append(" bp is empty").append('\n');
+                sb.append("name=").append(name).append(" bp is empty").append('\n')
             }
-            
-            for (var bp : bps) {
-                if (OsuMod.hasMod(bp.getMods(), OsuMod.Hidden)) {
-                    hiddenPP += bp.getWeightedPP();
+
+            for (bp in bps) {
+                if (OsuMod.hasMod(bp!!.mods, OsuMod.Hidden)) {
+                    hiddenPP += bp.weightedPP.toDouble()
                 }
             }
 
-            sb.append(Math.round(hiddenPP)).append(',').append(' ');
+            sb.append(Math.round(hiddenPP)).append(',').append(' ')
         }
 
-
-        from.sendMessage(sb.substring(0, sb.length() - 2));
+        event.reply(sb.substring(0, sb.length - 2))
     }
 }

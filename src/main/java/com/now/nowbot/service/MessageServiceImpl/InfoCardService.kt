@@ -38,8 +38,6 @@ class InfoCardService(
     }
 
     override fun HandleMessage(event: MessageEvent, osuUser: OsuUser) {
-        val from = event.subject
-
         val image: ByteArray
 
         try {
@@ -50,7 +48,7 @@ class InfoCardService(
         }
 
         try {
-            from.sendImage(image)
+            event.reply(image)
         } catch (e: Exception) {
             log.error("迷你信息面板：发送失败", e)
             throw MiniCardException(MiniCardException.Type.MINI_Send_Error)

@@ -30,7 +30,7 @@ class FriendService(
     private val bindDao: BindDao,
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
-) : MessageService<FriendParam?> {
+) : MessageService<FriendParam> {
 
     data class FriendParam(
         val offset: Int,
@@ -42,7 +42,7 @@ class FriendService(
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: MessageService.DataValue<FriendParam?>
+        data: MessageService.DataValue<FriendParam>
     ): Boolean {
         val m = Instruction.FRIEND.matcher(messageText)
         if (!m.find()) {
@@ -64,8 +64,7 @@ class FriendService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: FriendParam?) {
-        val from = event.subject
+    override fun HandleMessage(event: MessageEvent, param: FriendParam) {
         val binUser = bindDao.getUserFromQQ(event.sender.id, true)
 
 
@@ -74,14 +73,14 @@ class FriendService(
             // 无权限
         }
 
-        val message = if (param!!.uid != 0L) {
+        val message = if (param.uid != 0L) {
             // 判断是不是好友
             checkMultiFriend(binUser, param)
         } else {
             sendFriendList(binUser, param)
         }
 
-        from.sendMessage(message)
+        event.reply(message)
     }
 
     fun checkMultiFriend(binUser: BinUser, param: FriendParam): MessageChain {

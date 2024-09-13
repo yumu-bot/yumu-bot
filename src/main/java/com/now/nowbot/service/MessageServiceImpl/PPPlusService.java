@@ -93,8 +93,6 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
 
     @Override
     public void HandleMessage(MessageEvent event, PPPlusParam param) throws Throwable {
-        var from = event.getSubject();
-
         var dataMap = new HashMap<String, Object>(6);
 
         // user 对比
@@ -121,7 +119,7 @@ public class PPPlusService implements MessageService<PPPlusService.PPPlusParam> 
             throw new PPPlusException(PPPlusException.Type.PL_Render_Error);
         }
         try {
-            from.sendImage(image);
+            event.reply(image);
         } catch (Exception e) {
             log.error("PP+ 发送失败", e);
             throw new PPPlusException(PPPlusException.Type.PL_Send_Error);

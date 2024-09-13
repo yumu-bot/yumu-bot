@@ -50,7 +50,6 @@ public class PrivateMessageService implements MessageService<PrivateMessageServi
     @Override
     @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, PMParam param) throws Throwable {
-        var from = event.getSubject();
         var bin = bindDao.getUserFromQQ(event.getSender().getId(), true);
         JsonNode json;
         try {
@@ -58,7 +57,7 @@ public class PrivateMessageService implements MessageService<PrivateMessageServi
         } catch (WebClientResponseException.Forbidden e) {
             throw new TipsException("权限不足");
         }
-        from.sendImage(getCodeImage(JacksonUtil.objectToJsonPretty(json)));
+        event.reply(getCodeImage(JacksonUtil.objectToJsonPretty(json)));
     }
 
     enum Type {

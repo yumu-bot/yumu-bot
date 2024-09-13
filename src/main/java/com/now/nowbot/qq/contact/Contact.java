@@ -6,13 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
+import java.util.List;
 
 public interface Contact {
     Logger log = LoggerFactory.getLogger(Contact.class);
+
     long getId();
 
     String getName();
-
 
     MessageReceipt sendMessage(MessageChain msg);
 

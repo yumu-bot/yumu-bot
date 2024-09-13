@@ -96,7 +96,7 @@ public class BindService implements MessageService<BindService.BindParam> {
             }
 
             // 提问
-            var receipt = from.sendMessage(BindException.Type.BIND_Question_BindRetreat.message);
+            var receipt = event.reply(BindException.Type.BIND_Question_BindRetreat.message);
 
             var lock = ASyncMessageUtil.getLock(event, 30 * 1000);
             event = lock.get();
@@ -200,12 +200,11 @@ public class BindService implements MessageService<BindService.BindParam> {
 
     private void bindQQAt(MessageEvent event, long qq, boolean isFull) {
         if (isFull) {
-            bindUrl(event.getSubject(), qq);
+            bindUrl(event, qq);
             return;
         }
         // 只有管理才有权力@人绑定,提示就不改了
-        var from = event.getSubject();
-        from.sendMessage(BindException.Type.BIND_Receive_NoName.message);
+        event.reply(BindException.Type.BIND_Receive_NoName.message);
 
         var lock = ASyncMessageUtil.getLock(event);
         var s = lock.get();
@@ -227,7 +226,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         var bind = bindDao.getQQLiteFromOsuId(UID);
 
         if (bind.isEmpty()) {
-            from.sendMessage(
+            event.reply(
                     String.format(BindException.Type.BIND_Progress_Binding.message, qq, UID, name)
             );
             bindDao.bindQQ(qq, new BinUser(UID, name));
@@ -236,16 +235,16 @@ public class BindService implements MessageService<BindService.BindParam> {
 
         var u = bind.get();
 
-        from.sendMessage(
+        event.reply(
                 String.format(BindException.Type.BIND_Progress_BindingRecover.message, u.getOsuUser().getOsuName(), qq)
         );
 
         s = lock.get();
         if (Objects.nonNull(s) && s.getRawMessage().toUpperCase().startsWith("OK")) {
             bindDao.bindQQ(qq, u.getOsuUser());
-            from.sendMessage(BindException.Type.BIND_Response_Success.message);
+            event.reply(BindException.Type.BIND_Response_Success.message);
         } else {
-            from.sendMessage(BindException.Type.BIND_Receive_Refused.message);
+            event.reply(BindException.Type.BIND_Receive_Refused.message);
         }
     }
 
@@ -254,7 +253,6 @@ public class BindService implements MessageService<BindService.BindParam> {
 
     //默认绑定路径
     private void bindQQ(MessageEvent event, long qq, boolean isFull) throws BindException {
-        var from = event.getSubject();
         BinUser binUser;
         OsuUser osuUser = null;
 
@@ -266,11 +264,11 @@ public class BindService implements MessageService<BindService.BindParam> {
             try {
                 try {
                     osuUser = userApiService.getPlayerInfo(binUser, OsuMode.DEFAULT);
-                    from.sendMessage(
+                    event.reply(
                             String.format(BindException.Type.BIND_Progress_BindingRecoverInfo.message, binUser.getOsuID(), binUser.getOsuName())
                     );
                 } catch (WebClientResponseException.Unauthorized e) {
-                    from.sendMessage(
+                    event.reply(
                             String.format(BindException.Type.BIND_Progress_NeedToReBindInfo.message,
                                     binUser.getOsuID(), Optional.ofNullable(binUser.getOsuName()).orElse("?")
                             )
@@ -284,7 +282,7 @@ public class BindService implements MessageService<BindService.BindParam> {
                 var lock = ASyncMessageUtil.getLock(event);
                 var s = lock.get();
                 if (Objects.isNull(s) || !s.getRawMessage().toUpperCase().contains("OK")) {
-                    from.sendMessage(BindException.Type.BIND_Receive_Refused.message);
+                    event.reply(BindException.Type.BIND_Receive_Refused.message);
                     return;
                 }
 
@@ -297,10 +295,10 @@ public class BindService implements MessageService<BindService.BindParam> {
         }
 
         // 需要绑定
-        bindUrl(from, qq);
+        bindUrl(event, qq);
     }
 
-    void bindUrl(Contact from, long qq) {
+    void bindUrl(MessageEvent event, long qq) {
         // 将当前毫秒时间戳作为 key
         long timeMillis = System.currentTimeMillis();
         String state = STR."\{qq}+\{timeMillis}";
@@ -314,10 +312,10 @@ public class BindService implements MessageService<BindService.BindParam> {
                 .build();
 
         MessageReceipt receipt;
-        if (Objects.nonNull(from)) {
-            receipt = from.sendMessage(send);
+        if (Objects.nonNull(event)) {
+            receipt = event.reply(send);
 
-            from.recallIn(receipt, 110 * 1000);
+            receipt.recallIn(110 * 1000);
             //此处在 controller.msgController 处理
             putBind(timeMillis, new BindData(timeMillis, receipt, qq));
         }
@@ -358,7 +356,6 @@ public class BindService implements MessageService<BindService.BindParam> {
     }
 
     private void bindQQName(MessageEvent event, String name, long qq) {
-        Contact from = event.getSubject();
         var u = bindDao.getQQLiteFromQQ(qq);
         if (u.isPresent()) throw new BindException(BindException.Type.BIND_Response_AlreadyBound);
 
@@ -373,14 +370,14 @@ public class BindService implements MessageService<BindService.BindParam> {
 
         var userFromID = bindDao.getQQLiteFromOsuId(UID);
         if (userFromID.isPresent()) {
-            from.sendMessage(
+            event.reply(
                     String.format(BindException.Type.BIND_Response_AlreadyBoundInfo.message, userFromID.get().getQq(), name)
             );
             return;
         }
         // 官方bot没法发链接, 都使用 name 绑定, 拦着提问也没啥意义了
 //        if (check(event.getSender().getId())) {
-//            from.sendMessage(BindException.Type.BIND_TooManyRequests.message);
+//            event.reply(BindException.Type.BIND_TooManyRequests.message);
 //            return;
 //        }
 
@@ -398,7 +395,7 @@ public class BindService implements MessageService<BindService.BindParam> {
 
         bindDao.bindQQ(qq, new BinUser(UID, name));
 
-        from.sendMessage(
+        event.reply(
                 String.format(BindException.Type.BIND_Progress_Binding.message, qq, UID, name)
         );
     }
@@ -441,12 +438,12 @@ public class BindService implements MessageService<BindService.BindParam> {
     }
 
     // 重申一遍，门槛至少设为普通高等院校大一年级学生会接触到的难度，而不是计算机专业的学生会接触到的难度
-    public Set<String> getSimplifiedQuestion(@NonNull Contact from) {
-        from.sendMessage("不定积分 ∫dx 在 x=1144770 到 x=1146381 上的积分值是多少？");
+    public Set<String> getSimplifiedQuestion(@NonNull MessageEvent event) {
+        event.reply("不定积分 ∫dx 在 x=1144770 到 x=1146381 上的积分值是多少？");
         return new HashSet<>(List.of("1611", "一六一一", "guozi", "Guozi", "guo zi", "Guo Zi", "果子", "guozi on osu"));
     }
 
-    static Set<String> generateQuestion(@NonNull Contact from) {
+    static Set<String> generateQuestion(@NonNull MessageEvent event) {
         Random random = new Random();
         int a0 = random.nextInt(2, 5);
         int multi = random.nextInt(2, 5);
@@ -468,7 +465,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         如果不想回答, 请不要在绑定命令后面加上你的 osu 名字!!!
         如果不想回答, 请不要在绑定命令后面加上你的 osu 名字!!!
         """;
-        from.sendMessage(question);
+        event.reply(question);
         int d;
         if (isMuzi) {
             d = t * v2 / a0;
@@ -495,7 +492,7 @@ public class BindService implements MessageService<BindService.BindParam> {
         return timeList.size() > 3;
     }
 
-    public Set<String> getQuestion(@NonNull Contact from) {
+    public Set<String> getQuestion(@NonNull MessageEvent event) {
         Random random = new Random();
         int start = random.nextInt(0, 5);
         int end = random.nextInt(5, 10);
@@ -528,8 +525,8 @@ public class BindService implements MessageService<BindService.BindParam> {
                 """;
         var result = find(cost, 10, start, end);
         log.info("bind result: {}", result);
-        var image = imageService.getMarkdownImage(question, 730);
-        from.sendImage(image);
+        var image = imageService.getPanelA6(question);
+        event.reply(image);
         return new HashSet<>(Collections.singletonList(String.valueOf(result)));
     }
 }

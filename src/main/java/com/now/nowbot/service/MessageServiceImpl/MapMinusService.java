@@ -40,7 +40,6 @@ public class MapMinusService implements MessageService<Matcher> {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
         long bid;
         double rate = 1d;
         OsuMode mode;
@@ -108,7 +107,7 @@ public class MapMinusService implements MessageService<Matcher> {
         }
 
         try {
-            from.sendImage(image);
+            event.reply(image);
         } catch (Exception e) {
             log.error("谱面 Minus：发送失败", e);
             throw new MapMinusException(MapMinusException.Type.MM_Send_Error);

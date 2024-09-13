@@ -110,8 +110,7 @@ class ScorePRService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: ScorePRParam) {
-        val from = event.subject
-        getMessageChain(param, event)?.let { from.sendMessage(it) }
+        getMessageChain(param, event)?.let { event.reply(it) }
     }
 
     override fun accept(event: MessageEvent, messageText: String): ScorePRParam? {

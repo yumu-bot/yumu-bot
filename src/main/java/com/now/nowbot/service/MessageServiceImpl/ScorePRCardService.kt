@@ -72,12 +72,10 @@ class ScorePRCardService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: PRCardParam) {
-        val from = event.subject
-
         val score = param.score
         val message = getMessageChain(score)
         try {
-            from.sendMessage(message)
+            event.reply(message)
         } catch (e: Exception) {
             log.error("迷你成绩面板：发送失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "迷你")

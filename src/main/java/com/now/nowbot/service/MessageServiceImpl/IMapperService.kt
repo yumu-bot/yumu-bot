@@ -41,8 +41,6 @@ class IMapperService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, osuUser: OsuUser) {
-        val from = event.subject
-
         val map = parseData(
             osuUser,
             userApiService,
@@ -59,7 +57,7 @@ class IMapperService(
         }
 
         try {
-            from.sendImage(image)
+            event.reply(image)
         } catch (e: Exception) {
             log.error("谱师信息：发送失败", e)
             throw IMapperException(IMapperException.Type.IM_Send_Error)

@@ -86,10 +86,9 @@ class ScoreService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: ScoreParam) {
-        val from = event.subject
         val message = getMessageChain(param)
         try {
-            from.sendMessage(message)
+            event.reply(message)
         } catch (e: Exception) {
             log.error("谱面成绩：发送失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "谱面成绩")

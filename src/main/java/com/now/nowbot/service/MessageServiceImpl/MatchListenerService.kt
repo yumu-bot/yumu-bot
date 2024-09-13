@@ -5,7 +5,6 @@ import com.now.nowbot.model.multiplayer.MatchAdapter
 import com.now.nowbot.model.multiplayer.MatchCalculate
 import com.now.nowbot.model.multiplayer.NewMatch
 import com.now.nowbot.model.multiplayer.NewMatchListener
-import com.now.nowbot.qq.contact.Contact
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -21,10 +20,8 @@ import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.DataUtil.getOriginal
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.QQMsgUtil
 import com.yumu.core.extensions.isNotNull
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
@@ -55,7 +52,7 @@ class MatchListenerService(
             operate != Status.INFO -> try {
                 val md = getMarkdownFile("Help/listen.md")
                 val image = imageService.getPanelA6(md, "help")
-                QQMsgUtil.sendImage(event, image)
+                event.reply(image)
                 return false
             } catch (e: Exception) {
                 throw MatchListenerException(MatchListenerException.Type.ML_Instructions)
@@ -70,7 +67,6 @@ class MatchListenerService(
     }
 
     override fun HandleMessage(event: MessageEvent, data: ListenerParam) {
-        val from = event.subject
         val match: NewMatch
 
         if (event !is GroupMessageEvent) {
@@ -88,7 +84,7 @@ class MatchListenerService(
                     val allID = list.joinToString { "\n" }
                     String.format(MatchListenerException.Type.ML_Info_List.message, allID)
                 }
-                from.sendMessage(message)
+                event.reply(message)
                 return
             }
 
@@ -104,7 +100,7 @@ class MatchListenerService(
                     throw MatchListenerException(MatchListenerException.Type.ML_Match_End)
                 }
 
-                from.sendMessage(String.format(MatchListenerException.Type.ML_Listen_Start.message, data.id))
+                event.reply(String.format(MatchListenerException.Type.ML_Listen_Start.message, data.id))
             }
 
             Status.STOP -> {
@@ -124,7 +120,7 @@ class MatchListenerService(
             MatchListenerImplement(
                 beatmapApiService,
                 imageService,
-                from,
+                event,
                 data.id
             ),
             matchApiService,
@@ -135,7 +131,7 @@ class MatchListenerService(
     class MatchListenerImplement(
         val beatmapApiService: OsuBeatmapApiService,
         val imageService: ImageService,
-        val contact: Contact,
+        val messageEvent: MessageEvent,
         val matchID: Long,
     ) : MatchAdapter {
         var round = 0
@@ -151,8 +147,8 @@ class MatchListenerService(
                 比赛($matchID)已经监听${round}轮, 如果要继续监听, 请60秒内任意一人回复
                 "$matchID" (不要带引号)
                 """.trimIndent()
-            contact.sendMessage(message)
-            val lock = ASyncMessageUtil.getLock(contact.id, null, 60 * 1000) {
+            messageEvent.reply(message)
+            val lock = ASyncMessageUtil.getLock(messageEvent.subject.id, null, 60 * 1000) {
                 it.rawMessage.equals(matchID.toString())
             }
             return lock.get().isNotNull()
@@ -162,7 +158,7 @@ class MatchListenerService(
 
         override fun onGameStart(event: MatchAdapter.GameStartEvent) = with(event) {
             if (!isTeamVS && !hasNext()) {
-                consoleListener(contact.id, false, matchID)
+                consoleListener(messageEvent.subject.id, false, matchID)
             }
             val calculate = MatchCalculate()
             val objectGroup = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
@@ -187,7 +183,7 @@ class MatchListenerService(
                     )
                 )
             }
-            contact.sendImage(image)
+            messageEvent.reply(image)
             return@with
         }
 
@@ -201,24 +197,24 @@ class MatchListenerService(
                 MatchListenerServiceOld.log.error("对局信息图片渲染失败：", e)
                 throw MatchRoundException(MatchRoundException.Type.MR_Fetch_Error)
             }
-            contact.sendImage(image)
+            messageEvent.reply(image)
             return@with
         }
 
         override fun onMatchEnd(type: NewMatchListener.StopType) {
             if (type == NewMatchListener.StopType.SERVICE_STOP || type == NewMatchListener.StopType.USER_STOP) return
-            consoleListener(contact.id, false, matchID)
+            consoleListener(messageEvent.subject.id, false, matchID)
             val message = String.format(
                 MatchListenerException.Type.ML_Listen_Stop.message,
                 matchID,
                 type.tips
             )
-            contact.sendMessage(message)
+            messageEvent.reply(message)
         }
 
         override fun onError(e: Exception) {
             log.error(e) { "比赛监听异常" }
-            contact.sendMessage("监听期间出现错误, id: $matchID")
+            messageEvent.reply("监听期间出现错误, id: $matchID")
         }
 
         override fun equals(other: Any?): Boolean {
@@ -226,13 +222,13 @@ class MatchListenerService(
             if (other !is MatchListenerImplement) return false
 
             if (matchID != other.matchID) return false
-            if (contact.id != other.contact.id) return false
+            if (messageEvent.subject.id != other.messageEvent.subject.id) return false
 
             return true
         }
 
         override fun hashCode(): Int {
-            var result = contact.id.hashCode()
+            var result = messageEvent.subject.id.hashCode()
             result = 31 * result + matchID.hashCode()
             return result
         }

@@ -4,6 +4,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.JsonData.MicroUser
 import com.now.nowbot.model.JsonData.Score
 import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -12,7 +13,9 @@ import com.now.nowbot.service.MessageServiceImpl.ScorePRService.Companion.getSco
 import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.OsuApiService.OsuScoreApiService
 import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.ContextUtil
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.QQMsgUtil
 import org.springframework.stereotype.Service
@@ -25,16 +28,18 @@ class BPQueryService(
     private var bindDao: BindDao,
     private var scoreApiService: OsuScoreApiService,
     private var imageService: ImageService,
-) : MessageService<String> {
+) : MessageService<BPQueryService.BPQueryParam> {
+
+    data class BPQueryParam(val filter: String, val mode: OsuMode)
 
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: MessageService.DataValue<String?>
+        data: MessageService.DataValue<BPQueryParam>
     ): Boolean {
         val matcher = Instruction.BP_QUERY.matcher(messageText)
         return if (matcher.find()) {
-            data.value = matcher.group("text")
+            data.value = BPQueryParam(matcher.group("text"), OsuMode.getMode(matcher.group("mod")))
             true
         } else {
             false
@@ -42,12 +47,18 @@ class BPQueryService(
     }
 
 
-    override fun HandleMessage(event: MessageEvent, data: String) {
+    override fun HandleMessage(event: MessageEvent, param: BPQueryParam) {
         val bindUser = bindDao.getUserFromQQ(event.sender.id)
+        val mode = if (OsuMode.isDefaultOrNull(param.mode)) {
+            bindUser.osuMode
+        } else {
+            param.mode
+        }
+
         val bpList: List<Score>
         val result = try {
-            val filters = getAllFilter(data)
-            bpList = scoreApiService.getBestPerformance(bindUser, bindUser.osuMode, 0, 100)
+            val filters = getAllFilter(param.filter)
+            bpList = scoreApiService.getBestPerformance(bindUser, mode, 0, 100)
             getBP(filters, bpList)
         } catch (e: IllegalArgumentException) {
             event.reply("解析表达式出错了, ${e.message}")
@@ -56,7 +67,7 @@ class BPQueryService(
         val user = userApiService.getPlayerInfo(bindUser)
 
         if (result.isEmpty()) {
-            event.reply("没有找到符合条件的bp")
+            event.reply(GeneralTipsException(GeneralTipsException.Type.G_Null_FilterBP, user.username))
             return
         }
 
@@ -70,7 +81,7 @@ class BPQueryService(
             val ranks = result.map { indexMap[it.scoreID]!! + 1 }
             imageService.getPanelA4BQ(user, result, ranks)
         }
-        QQMsgUtil.sendImage(event, image)
+        event.reply(image)
     }
 
     enum class Operator(val op: String) {
@@ -153,7 +164,7 @@ class BPQueryService(
         }, EQ, NE, GT, GE, LT, LE),
         Index("index", { (op, v, s) ->
             val index = try {
-                v.toInt()
+                v.toInt() - 1 //自然数是 1-100，不是计算机需要的0-99
             } catch (e: Exception) {
                 throw IllegalArgumentException("'index' invalid value '$v'")
             }

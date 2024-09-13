@@ -37,11 +37,6 @@ public class QQMsgUtil {
         return (T) msg.getMessageList().stream().filter(m -> T.isAssignableFrom(m.getClass())).findFirst().orElse(null);
     }
 
-    public static void sendImage(MessageEvent event, byte[] image) {
-        var from = event.getSubject();
-        from.sendImage(image);
-    }
-
     public static MessageChain getImage(byte[] image) {
         return new MessageChain.MessageChainBuilder().addImage(image).build();
     }
@@ -52,7 +47,6 @@ public class QQMsgUtil {
 
 
     public static void sendImages(MessageEvent event, List<byte[]> images) throws InterruptedException {
-        var from = event.getSubject();
         var b = new MessageChain.MessageChainBuilder();
 
         for (int i = 0; i < images.size(); i++) {
@@ -60,7 +54,7 @@ public class QQMsgUtil {
 
             // qq 一次性只能发 20 张图
             if (i >= 20 && i % 20 == 0) {
-                from.sendMessage(b.build());
+                event.reply(b.build());
                 Thread.sleep(1000L);
                 b = new MessageChain.MessageChainBuilder();
             }
@@ -68,7 +62,7 @@ public class QQMsgUtil {
             b.addImage(image);
         }
 
-        from.sendMessage(b.build());
+        event.reply(b.build());
     }
 
     private static void beforeContact(Contact from) {
@@ -85,6 +79,7 @@ public class QQMsgUtil {
         sendImageAndText(from, image, text);
     }
 
+    @Deprecated
     public static void sendImageAndText(Contact from, byte[] image, String text) {
         beforeContact(from);
         from.sendMessage(new MessageChain.MessageChainBuilder().addImage(image).addText(text).build());

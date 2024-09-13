@@ -1,167 +1,183 @@
-package com.now.nowbot.service.MessageServiceImpl;
+package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.AtMessage;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.OsuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.QQMsgUtil;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-import static com.now.nowbot.util.command.CommandPatternStaticKt.*;
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.JsonData.OsuUser
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.AtMessage
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.MessageServiceImpl.OldAvatarService.OAParam
+import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.QQMsgUtil
+import com.now.nowbot.util.command.FLAG_DATA
+import com.now.nowbot.util.command.FLAG_QQ_ID
+import com.now.nowbot.util.command.FLAG_UID
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import org.springframework.util.CollectionUtils
+import org.springframework.util.StringUtils
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.*
 
 @Service("OLD_AVATAR")
-public class OldAvatarService implements MessageService<OldAvatarService.OAParam> {
-    private static final Logger log = LoggerFactory.getLogger(OldAvatarService.class);
-    @Resource
-    OsuUserApiService userApiService;
-    @Resource
-    BindDao bindDao;
-    @Resource
-    ImageService imageService;
+class OldAvatarService(
+    private val userApiService: OsuUserApiService,
+    private val bindDao: BindDao,
+    private val imageService: ImageService,
+) : MessageService<OAParam> {
 
-    public record OAParam(Long qq, Long uid, String name, OsuMode mode, boolean at, boolean isMyself) {}
+    @JvmRecord
+    data class OAParam(
+        val qq: Long?,
+        val uid: Long?,
+        val name: String?,
+        val mode: OsuMode?,
+        val at: Boolean,
+        val isMyself: Boolean,
+    )
 
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<OAParam> data) {
-        var matcher = Instruction.OLD_AVATAR.matcher(messageText);
-        if (!matcher.find()) return false;
+    override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<OAParam>,
+    ): Boolean {
+        val matcher = Instruction.OLD_AVATAR.matcher(messageText)
+        if (!matcher.find()) return false
 
-        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
-        var qqStr = matcher.group(FLAG_QQ_ID);
-        var uidStr = matcher.group(FLAG_UID);
-        var name = matcher.group(FLAG_DATA);
+        val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
+        val qqStr: String = matcher.group(FLAG_QQ_ID)
+        val uidStr: String = matcher.group(FLAG_UID)
+        val name: String = matcher.group(FLAG_DATA)
 
         if (Objects.nonNull(at)) {
-            data.setValue(new OAParam(at.getTarget(), null, null, null, true, false));
-            return true;
+            data.setValue(OAParam(at!!.target, null, null, null, true, false))
+            return true
         } else if (StringUtils.hasText(qqStr)) {
-            data.setValue(new OAParam(Long.parseLong(qqStr), null, null, null, false, false));
-            return true;
+            data.value = OAParam(qqStr.toLong(), null, null, null, false, false)
+            return true
         }
 
         if (StringUtils.hasText(uidStr)) {
-            data.setValue(new OAParam(null, Long.parseLong(uidStr), null, null, false, false));
-            return true;
+            data.value = OAParam(null, uidStr.toLong(), null, null, false, false)
+            return true
         } else if (StringUtils.hasText(name)) {
-            data.setValue(new OAParam(null, null, name.trim(), null, false, false));
-            return true;
+            data.value = OAParam(null, null, name.trim { it <= ' ' }, null, false, false)
+            return true
         } else {
-            data.setValue(new OAParam(event.getSender().getId(), null, null, null, false, true));
-            return true;
+            data.value = OAParam(event.sender.id, null, null, null, false, true)
+            return true
         }
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, OAParam param) throws Throwable {
-        var from = event.getSubject();
-        OsuUser user;
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, param: OAParam) {
+        val user: OsuUser
 
         if (Objects.nonNull(param.uid)) {
             try {
-                user = userApiService.getPlayerInfo(param.uid);
-            } catch (Exception e) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, param.uid);
+                user = userApiService.getPlayerInfo(param.uid)
+            } catch (e: Exception) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, param.uid)
             }
-
         } else if (Objects.nonNull(param.qq)) {
-            BinUser binUser;
+            val binUser: BinUser
             try {
-                binUser = bindDao.getUserFromQQ(param.qq);
-            } catch (Exception e) {
+                binUser = bindDao.getUserFromQQ(param.qq)
+            } catch (e: Exception) {
                 if (param.isMyself) {
-                    throw new GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me);
+                    throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
                 } else {
-                    throw new GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player);
+                    throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
                 }
             }
 
             try {
-                user = userApiService.getPlayerInfo(binUser);
-            } catch (WebClientResponseException e) {
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, binUser.getOsuName());
-            } catch (Exception e) {
-                log.error("旧头像：获取玩家信息失败: ", e);
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Fetch_PlayerInfo);
+                user = userApiService.getPlayerInfo(binUser)
+            } catch (e: WebClientResponseException) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, binUser.osuName)
+            } catch (e: Exception) {
+                log.error("旧头像：获取玩家信息失败: ", e)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_PlayerInfo)
             }
         } else {
-            List<OsuUser> users = parseDataString(param.name);
+            val users = parseDataString(param.name)
 
-            if (CollectionUtils.isEmpty(users)) throw new GeneralTipsException(GeneralTipsException.Type.G_Fetch_List);
+            if (CollectionUtils.isEmpty(users))
+                throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
 
-            var images = new ArrayList<byte[]>(users.size());
+            val images = ArrayList<ByteArray>(users!!.size)
 
             try {
-                for (var u : users) {
-                    images.add(imageService.getPanelEpsilon(u));
+                for (u in users) {
+                    images.add(imageService.getPanelEpsilon(u))
                 }
 
-                QQMsgUtil.sendImages(event, images);
-                return;
-            } catch (Exception e) {
-                log.error("旧头像：发送失败", e);
-                throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "官网头像");
+                QQMsgUtil.sendImages(event, images)
+                return
+            } catch (e: Exception) {
+                log.error("旧头像：发送失败", e)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "官网头像")
             }
         }
 
         try {
-            var image = imageService.getPanelEpsilon(user);
-            from.sendImage(image);
-        } catch (Exception e) {
-            log.error("旧头像：发送失败", e);
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "官网头像");
+            val image = imageService.getPanelEpsilon(user)
+            event.reply(image)
+        } catch (e: Exception) {
+            log.error("旧头像：发送失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "官网头像")
         }
     }
 
-    private List<OsuUser> parseDataString(String dataStr) throws GeneralTipsException {
-        String[] dataStrArray = dataStr.trim().split("[,，|:：]+");
-        if (dataStr.isBlank() || dataStrArray.length == 0) return null;
+    @Throws(GeneralTipsException::class)
+    private fun parseDataString(dataStr: String?): List<OsuUser?>? {
+        val dataStrArray =
+            dataStr!!
+                .trim { it <= ' ' }
+                .split("[,，|:：]+".toRegex())
+                .dropLastWhile { it.isEmpty() }
+                .toTypedArray()
+        if (dataStr.isBlank() || dataStrArray.size == 0) return null
 
-        var ids = new ArrayList<Long>();
-        var users = new ArrayList<OsuUser>();
+        val ids = ArrayList<Long>()
+        val users = ArrayList<OsuUser?>()
 
-        for (String s: dataStrArray) {
-            if (! StringUtils.hasText(s)) continue;
+        for (s in dataStrArray) {
+            if (!StringUtils.hasText(s)) continue
 
             try {
-                ids.add(userApiService.getOsuId(s.trim()));
-            } catch (WebClientResponseException e) {
+                ids.add(userApiService.getOsuId(s.trim { it <= ' ' }))
+            } catch (e: WebClientResponseException) {
                 try {
-                    ids.add(Long.parseLong(s.trim()));
-                } catch (NumberFormatException e1) {
-                    throw new GeneralTipsException(GeneralTipsException.Type.G_Null_UserName);
+                    ids.add(s.trim { it <= ' ' }.toLong())
+                } catch (e1: NumberFormatException) {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_UserName)
                 }
             }
         }
 
-        for (var id : ids) {
+        for (id in ids) {
             try {
-                users.add(userApiService.getPlayerInfo(id));
-            } catch (WebClientResponseException e) {
+                users.add(userApiService.getPlayerInfo(id))
+            } catch (e: WebClientResponseException) {
                 try {
-                    users.add(userApiService.getPlayerInfo(id.toString()));
-                } catch (WebClientResponseException e1) {
-                    throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, id);
+                    users.add(userApiService.getPlayerInfo(id.toString()))
+                } catch (e1: WebClientResponseException) {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, id)
                 }
             }
         }
 
-        return users;
+        return users
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(OldAvatarService::class.java)
     }
 }

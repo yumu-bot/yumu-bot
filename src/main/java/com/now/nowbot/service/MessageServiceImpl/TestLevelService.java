@@ -81,9 +81,8 @@ public class TestLevelService implements MessageService<BinUser> {
         double level = getLevel(bp, user);
         var b = new MessageChain.MessageChainBuilder();
         double s = level / 3;
-        String out;
         b.addAt(event.getSender().getId()).addText(String.format(" 你的评分 %s, 击败%.2f%%的人", getLevelStr(level), s));
-        event.getSubject().sendMessage(b.build());
+        event.reply(b.build());
     }
 
     static final Function<Integer, Double> calculator = (i) -> {

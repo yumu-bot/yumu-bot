@@ -64,14 +64,14 @@ public class OneBotListener {
         // 网络请求异常都在服务里处理掉了, 即使未处理也不应该直接发送出来
         if (e instanceof BotException botException) {
             if (botException.hasImage()) {
-                from.sendImage(((BotException) e).getImage());
+                event.reply(((BotException) e).getImage());
                 //QQMsgUtil.sendImage(from, ((BotException) e).getImage());
             } else {
-                from.sendMessage(e.getMessage()).recallIn(RECAL_TIME);
+                event.reply(e.getMessage()).recallIn(RECAL_TIME);
             }
         } else if (e instanceof SocketTimeoutException || e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
             log.info("连接超时:", e);
-            from.sendMessage("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。").recallIn(RECAL_TIME);
+            event.reply("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。").recallIn(RECAL_TIME);
         } else if (e instanceof LogException) {
             log.info(e.getMessage(), ((LogException) e).getThrowable());
         } else if (e instanceof IllegalArgumentException) {
@@ -79,7 +79,7 @@ public class OneBotListener {
         } else if (e instanceof PermissionException) {
             log.error(e.getMessage());
         } else {
-            if (Permission.isSuperAdmin(event.getSender().getId())) event.getSubject().sendMessage(e.getMessage());
+            if (Permission.isSuperAdmin(event.getSender().getId())) event.reply(e.getMessage());
             log.error("捕捉其他异常", e);
         }
     }

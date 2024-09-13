@@ -47,14 +47,13 @@ public class MuRatingService implements MessageService<Matcher> {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
 
         var matchIDStr = matcher.group("matchid");
         if (Objects.isNull(matchIDStr) || matchIDStr.isBlank()) {
             try {
                 var md = DataUtil.getMarkdownFile("Help/rating.md");
                 var image = imageService.getPanelA6(md, "help");
-                from.sendImage(image);
+                event.reply(image);
                 return;
             } catch (Exception e) {
                 throw new MRAException(MRAException.Type.RATING_Instructions);
@@ -77,7 +76,7 @@ public class MuRatingService implements MessageService<Matcher> {
             byte[] image;
             try {
                 image = imageService.getPanelC(mc);
-                from.sendImage(image);
+                event.reply(image);
             } catch (Exception e) {
                 log.error("MRA 数据请求失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_MRAFailed);
@@ -85,7 +84,7 @@ public class MuRatingService implements MessageService<Matcher> {
         } else if (matcher.group("uu") != null) {
             String str = parseCSA(mc);
             try {
-                from.sendMessage(str).recallIn(60000);
+                event.reply(str).recallIn(60000);
             } catch (Exception e) {
                 log.error("URA 数据请求失败", e);
                 throw new MRAException(MRAException.Type.RATING_Send_URAFailed);

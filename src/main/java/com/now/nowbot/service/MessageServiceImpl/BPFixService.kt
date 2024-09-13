@@ -59,10 +59,9 @@ class BPFixService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: BPFixParam) {
-        val from = event.subject
         val image = param.getImage()
         try {
-            from.sendImage(image)
+            event.reply(image)
         } catch (e: java.lang.Exception) {
             log.error("理论最好成绩：发送失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "理论最好成绩")

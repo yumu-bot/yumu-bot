@@ -65,12 +65,10 @@ class BPAnalysisService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: BAParam) {
-        val from = event.subject
-
         val image = param.getImage()
 
         try {
-            from.sendImage(image)
+            event.reply(image)
         } catch (e: Exception) {
             log.error("最好成绩分析：发送失败", e)
             throw BPAnalysisException(BPAnalysisException.Type.BA_Send_Error)

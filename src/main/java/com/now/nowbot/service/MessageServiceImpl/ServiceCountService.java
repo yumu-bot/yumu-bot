@@ -64,8 +64,6 @@ public class ServiceCountService implements MessageService<Integer> {
     @Override
     @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, Integer hours) throws Throwable {
-        var from = event.getSubject();
-
         StringBuilder sb = new StringBuilder();
         List<ServiceCallLite.ServiceCallResult> result;
 
@@ -110,14 +108,14 @@ public class ServiceCountService implements MessageService<Integer> {
         Consumer(sb, result, r1, r50, r80, r99);
 
         var image = imageService.getPanelA6(sb.toString(), "service");
-        from.sendImage(image);
+        event.reply(image);
     }
 
     //
     private void Consumer(StringBuilder sb, List<ServiceCallLite.ServiceCallResult> result,
                           Map<String, Long> r1, Map<String, Long> r50, Map<String, Long> r80, Map<String, Long> r99) {
         if (Objects.isNull(result)) return;
-        
+
         sb.append("""
                 | 服务名 | 调用次数 | 最长用时 (100%) | 99% | 80% | 50% | 1% | 最短用时 (0%) |
                 | :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
@@ -130,7 +128,7 @@ public class ServiceCountService implements MessageService<Integer> {
         var r50List = new ArrayList<Long>();
         var r1List = new ArrayList<Long>();
         var minList = new ArrayList<Long>();
-        
+
         for (var r : result) {
             var s = r.getService();
             var size = Optional.ofNullable(r.getSize()).orElse(0);
@@ -142,7 +140,7 @@ public class ServiceCountService implements MessageService<Integer> {
             r50List.add(r50.getOrDefault(s, 0L) * size);
             r1List.add(r1.getOrDefault(s, 0L) * size);
             minList.add(r.getMinTime() * size);
-            
+
             sb.append("| ").append(r.getService())
                     .append(" | ").append(size)
                     .append(" | ").append(getString(r.getMaxTime())).append('s')

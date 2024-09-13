@@ -66,7 +66,6 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
 
     @Override
     public void HandleMessage(MessageEvent event, PoolParam param) throws Throwable {
-        var from = event.getSubject();
         byte[] image;
         if (StringUtils.hasText(param.name())) {
             var result = searchByName(param.name());
@@ -82,7 +81,7 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
                 sb.append("p.s. 请直接发送选项对应的数字");
 
                 var image2 = imageService.getPanelAlpha(sb);
-                from.sendImage(image2);
+                event.reply(image2);
 
                 var lock = ASyncMessageUtil.getLock(event);
                 var newEvent = lock.get();
@@ -101,7 +100,7 @@ public class MapPoolService implements MessageService<MapPoolService.PoolParam> 
             image = imageService.getPanelH(p.map(pool -> new MapPoolDto(pool, osuBeatmapApiService)).orElseThrow(() -> new TipsException(STR."未找到id为 \{param.id()} 的图池")), param.mode());
         }
 
-        from.sendImage(image);
+        event.reply(image);
     }
 
     public List<Pool> searchByName(String name) {

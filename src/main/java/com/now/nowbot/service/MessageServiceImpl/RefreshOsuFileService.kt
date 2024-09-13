@@ -27,7 +27,7 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
         }
     }
 
-    override fun HandleMessage(event: MessageEvent?, param: Long) {
+    override fun HandleMessage(event: MessageEvent, param: Long) {
         val sid =
             try {
                 osuBeatmapApiService.getBeatMapFromDataBase(param).setID
@@ -49,13 +49,13 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
             }
         } catch (e: IOException) {
             log.error("刷新文件：IO 异常", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_IOException)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_IOException, "刷新文件")
         }
 
         if (count == 0) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_MapFile)
+            event.reply(GeneralTipsException(GeneralTipsException.Type.G_Null_MapFile))
         } else {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Success_RefreshFile, param, count)
+            event.reply(GeneralTipsException(GeneralTipsException.Type.G_Success_RefreshFile, param, count))
         }
     }
 
