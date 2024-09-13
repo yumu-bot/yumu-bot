@@ -51,23 +51,23 @@ class OldAvatarService(
         if (!matcher.find()) return false
 
         val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
-        val qqStr: String = matcher.group(FLAG_QQ_ID)
-        val uidStr: String = matcher.group(FLAG_UID)
-        val name: String = matcher.group(FLAG_DATA)
+        val qqStr: String? = matcher.group(FLAG_QQ_ID)
+        val uidStr: String? = matcher.group(FLAG_UID)
+        val name: String? = matcher.group(FLAG_DATA)
 
         if (Objects.nonNull(at)) {
             data.setValue(OAParam(at!!.target, null, null, null, true, false))
             return true
         } else if (StringUtils.hasText(qqStr)) {
-            data.value = OAParam(qqStr.toLong(), null, null, null, false, false)
+            data.value = OAParam(qqStr!!.toLong(), null, null, null, false, false)
             return true
         }
 
         if (StringUtils.hasText(uidStr)) {
-            data.value = OAParam(null, uidStr.toLong(), null, null, false, false)
+            data.value = OAParam(null, uidStr!!.toLong(), null, null, false, false)
             return true
         } else if (StringUtils.hasText(name)) {
-            data.value = OAParam(null, null, name.trim { it <= ' ' }, null, false, false)
+            data.value = OAParam(null, null, name!!.trim { it <= ' ' }, null, false, false)
             return true
         } else {
             data.value = OAParam(event.sender.id, null, null, null, false, true)

@@ -35,9 +35,9 @@ class BanService(private val permission: Permission, private val imageService: I
 
         val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
 
-        val qq: String = matcher.group(FLAG_QQ_ID)
-        val group: String = matcher.group(FLAG_QQ_GROUP)
-        val name: String = matcher.group(FLAG_NAME)
+        val qq: String? = matcher.group(FLAG_QQ_ID)
+        val group: String? = matcher.group(FLAG_QQ_GROUP)
+        val name: String? = matcher.group(FLAG_NAME)
         val operate = matcher.group("operate")
 
         if (Objects.nonNull(at)) {
@@ -46,12 +46,12 @@ class BanService(private val permission: Permission, private val imageService: I
         }
 
         if (Objects.nonNull(qq)) {
-            data.value = BanParam(qq.toLong(), null, operate, true)
+            data.value = BanParam(qq!!.toLong(), null, operate, true)
             return true
         }
 
         if (Objects.nonNull(group)) {
-            data.value = BanParam(group.toLong(), null, operate, false)
+            data.value = BanParam(group!!.toLong(), null, operate, false)
             return true
         }
 
