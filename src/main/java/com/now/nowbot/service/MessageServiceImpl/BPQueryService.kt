@@ -39,7 +39,7 @@ class BPQueryService(
     ): Boolean {
         val matcher = Instruction.BP_QUERY.matcher(messageText)
         return if (matcher.find()) {
-            data.value = BPQueryParam(matcher.group("text"), OsuMode.getMode(matcher.group("mod")))
+            data.value = BPQueryParam(matcher.group("text"), OsuMode.getMode(matcher.group("mode")))
             true
         } else {
             false

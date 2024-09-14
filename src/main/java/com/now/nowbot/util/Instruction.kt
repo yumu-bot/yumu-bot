@@ -155,7 +155,7 @@ enum class Instruction(val pattern: Pattern) {
     BP_QUERY(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("bp\\s*query", "bq")
         appendMode()
-        appendCaptureGroup("text", ".*", EXIST)
+        appendCaptureGroup("text", ".", MORE)
     }),
 
     UU_BA(CommandPatternBuilder.create {
