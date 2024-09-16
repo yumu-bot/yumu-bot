@@ -4,17 +4,18 @@ import com.now.nowbot.model.JsonData.MaiBestPerformance;
 import com.now.nowbot.model.JsonData.MaiRanking;
 import com.now.nowbot.model.JsonData.MaiSong;
 import com.now.nowbot.model.enums.MaiVersion;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 
 public interface MaimaiApiService {
-    MaiBestPerformance getMaimaiBest50(Long qq);
+    MaiBestPerformance getMaimaiBest50(Long qq) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
-    MaiBestPerformance getMaimaiBest50(String probername);
+    MaiBestPerformance getMaimaiBest50(String probername) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
-    MaiBestPerformance getMaimaiScoreByVersion(Long qq, List<MaiVersion> version);
+    MaiBestPerformance getMaimaiScoreByVersion(Long qq, List<MaiVersion> version) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
-    MaiBestPerformance getMaimaiScoreByVersion(String probername, List<MaiVersion> version);
+    MaiBestPerformance getMaimaiScoreByVersion(String probername, List<MaiVersion> version) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
     default byte[] getMaimaiCover(Integer songID) {
         return getMaimaiCover(songID.longValue());

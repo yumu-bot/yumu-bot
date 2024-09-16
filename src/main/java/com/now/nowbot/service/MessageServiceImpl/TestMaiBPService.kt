@@ -61,17 +61,18 @@ class TestMaiBPService(private val maimaiApiService: MaimaiApiService) :
             }
         }
 
-        event.reply(getMessage(score))
+        event.reply(getMessage(score, maimaiApiService.getMaimaiCover(score.songID)))
     }
 
     companion object {
-        fun getMessage(score: MaiScore): MessageChain {
+        fun getMessage(score: MaiScore, image: ByteArray): MessageChain {
             var sb = MessageChain.MessageChainBuilder()
 
-            sb.addText("[${score.type}] ${score.title} [${score.difficulty} ${score.level}] ${score.star}\n")
-            sb.addText("${String.format("%.4f", score.achievements)}% ${getRank(score.rank)}\n")
-            sb.addText("[${getCombo(score.combo)}] [${getSync(score.sync)}] ${score.rating} rt\n")
-            sb.addText("s${score.songID}")
+            sb.addImage(image)
+            sb.addText("\n")
+            sb.addText("[${score.type}] ${score.title} [${score.difficulty} ${score.level}] (${score.star})\n")
+            sb.addText("${String.format("%.4f", score.achievements)}% ${getRank(score.rank)} // ${score.rating} ra\n")
+            sb.addText("[${getCombo(score.combo)}] [${getSync(score.sync)}] // s${score.songID}")
 
             return sb.build()
         }
