@@ -1,6 +1,5 @@
 package com.now.nowbot.service.MessageServiceImpl
 
-import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.model.JsonData.MaiScore
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 @Service("MAI_BP")
-@CheckPermission(isSuperAdmin = true)
 class TestMaiBPService(private val maimaiApiService: MaimaiApiService) :
     MessageService<TestMaiBPService.MaiBPParam> {
 
@@ -40,7 +38,7 @@ class TestMaiBPService(private val maimaiApiService: MaimaiApiService) :
             try {
                 maimaiApiService.getMaimaiBest50(event.sender.id)
             } catch (e: WebClientResponseException.BadRequest) {
-                throw TipsException("找不到您的水鱼绑定账号。")
+                throw TipsException("找不到您的水鱼绑定账号，或者是网络连接不稳定。")
             } catch (e: WebClientResponseException.Forbidden) {
                 throw TipsException("您或者对方不允许其他人查询成绩。")
             }

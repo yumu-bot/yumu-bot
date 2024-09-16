@@ -501,10 +501,10 @@ data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int
         }
     }
 
-    // 30: 1, 2-30: 30-2  // 30: 30, 1-30: 30-2
+    // 30: 1, 2-30: 30-1  // 30: 30, 2-30: 30-1
     fun getLimit(default: Int = 1, isMulti: Boolean = false): Int {
         return if (fullRange()) {
-            max(end!! - start!!, 1)
+            max(end!! - max(start!!, 1) + 1, 1)
         } else if (halfRange()) {
             if (isMulti) {
                 max(start!!, 1)

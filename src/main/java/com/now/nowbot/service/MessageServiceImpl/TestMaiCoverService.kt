@@ -8,7 +8,6 @@ import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 
 @Service("MAI_COVER")
-@CheckPermission(isSuperAdmin = true)
 class TestMaiCoverService(private val maimaiApiService: MaimaiApiService) :
     MessageService<TestMaiCoverService.MaiCoverParam> {
 
@@ -31,6 +30,7 @@ class TestMaiCoverService(private val maimaiApiService: MaimaiApiService) :
         return true
     }
 
+    @CheckPermission(isSuperAdmin = true)
     override fun HandleMessage(event: MessageEvent, param: MaiCoverParam) {
         event.reply(maimaiApiService.getMaimaiCover(param.songID))
     }
