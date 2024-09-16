@@ -1,6 +1,10 @@
 package com.now.nowbot.model.enums;
 
 
+import org.springframework.util.CollectionUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public enum MaiVersion {
     DEFAULT("maimai", ""),
@@ -39,6 +43,19 @@ public enum MaiVersion {
     MaiVersion(String name, String abbr) {
         this.name = name;
         this.abbr = abbr;
+    }
+
+    public static List<String> getNameList(List<MaiVersion> versions) {
+        var list = new ArrayList<String>();
+        if (CollectionUtils.isEmpty(versions)) {
+            return list;
+        }
+
+        for (var v : versions) {
+            list.add(v.name);
+        }
+
+        return list;
     }
 
     public static MaiVersion getVersion(String name) {

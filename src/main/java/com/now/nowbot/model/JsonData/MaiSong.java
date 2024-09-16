@@ -2,6 +2,8 @@ package com.now.nowbot.model.JsonData;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.model.enums.MaiVersion;
 
 import java.util.List;
 
@@ -98,7 +100,8 @@ public class MaiSong {
         String releaseDate;
 
         // 加入 maimai 时的版本
-        String from;
+        @JsonProperty("from")
+        String version;
 
         // 歌曲是否为当前版本的新歌
         @JsonProperty("is_new")
@@ -144,12 +147,12 @@ public class MaiSong {
             this.releaseDate = releaseDate;
         }
 
-        public String getFrom() {
-            return from;
+        public String getVersion() {
+            return version;
         }
 
-        public void setFrom(String from) {
-            this.from = from;
+        public void setVersion(String version) {
+            this.version = version;
         }
 
         public boolean isNew() {

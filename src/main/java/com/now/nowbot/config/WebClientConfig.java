@@ -31,6 +31,45 @@ public class WebClientConfig implements WebFluxConfigurer {
         configurer.defaultCodecs().maxInMemorySize(20 * 1024 * 1024);
     }
 
+
+    @Bean("divingFishApiWebClient")
+    public WebClient DivingFishApiWebClient(WebClient.Builder builder, NowbotConfig config) {
+        ConnectionProvider connectionProvider = ConnectionProvider.builder("connectionProvider")
+                .maxIdleTime(Duration.ofSeconds(30))
+                .build();
+        HttpClient httpClient = HttpClient.create(connectionProvider)
+                // 国内访问即可
+                /*
+                .proxy(proxy ->
+                        proxy.type("HTTP".equalsIgnoreCase(config.proxyType) ? ProxyProvider.Proxy.HTTP : ProxyProvider.Proxy.SOCKS5)
+                                .host(config.proxyHost)
+                                .port(config.proxyPort)
+                )
+
+                 */
+                .followRedirect(true)
+                .responseTimeout(Duration.ofSeconds(30));
+        ReactorClientHttpConnector connector = new ReactorClientHttpConnector(httpClient);
+        ExchangeStrategies strategies = ExchangeStrategies
+                .builder()
+                .codecs(clientDefaultCodecsConfigurer -> {
+                    clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(JacksonUtil.mapper, MediaType.APPLICATION_JSON));
+                    clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder(JacksonUtil.mapper, MediaType.APPLICATION_JSON));
+                }).build();
+
+        return builder
+                .clientConnector(connector)
+                .exchangeStrategies(strategies)
+                .defaultHeaders((headers) -> {
+                    headers.setContentType(MediaType.APPLICATION_JSON);
+                    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+                })
+                .baseUrl(DivingFishConfig.url)
+                .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(Integer.MAX_VALUE))
+                .filter(this::doRetryFilter)
+                .build();
+    }
+
     @Bean("osuApiWebClient")
     @Primary
     public WebClient OsuApiWebClient(WebClient.Builder builder, NowbotConfig config) {

@@ -560,6 +560,18 @@ enum class Instruction(val pattern: Pattern) {
         appendCommands("(?<y>y)")
     }),
 
+    // #11 maimai
+
+    MAI_COVER(CommandPatternBuilder.create {
+        appendCommands("mai\\s*cover", "mc")
+        appendSID()
+    }),
+
+    MAI_BP(CommandPatternBuilder.create {
+        appendCommands("mai\\s*best", "mb")
+        appendRange()
+    }),
+
     ;
 
     fun matcher(input: CharSequence): Matcher = this.pattern.matcher(input)
