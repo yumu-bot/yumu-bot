@@ -299,7 +299,23 @@ class BPQueryService(
                 GT -> mods and scoreMods == mods
                 else -> throw IllegalArgumentException("'mod' invalid operator '${op.op}'")
             }
-        }, EQ, NE, GT)
+        }, EQ, NE, GT),
+        Rate("rate", { (op, v, s) ->
+            val value = v.toDouble()
+            val rate = if (s.statistics.count300 == 0) {
+                Double.MAX_VALUE
+            } else {
+                1.0 * s.statistics.countGeki / s.statistics.count300
+            }
+            when (op) {
+                EQ -> rate.isEqual(value)
+                NE -> !rate.isEqual(value)
+                GT -> rate > value
+                GE -> rate.isGreaterOrEqual(value)
+                LT -> rate < value
+                LE -> rate.isLessOrEqual(value)
+            }
+        }, EQ, NE, GT, GE, LT, LE),
         ;
 
         operator fun invoke(operator: Operator, value: String): (Score) -> Boolean {
@@ -376,6 +392,7 @@ class BPQueryService(
                 Param.Combo.key -> Param.Combo(operator, value)
                 Param.Miss.key -> Param.Miss(operator, value)
                 Param.Mods.key -> Param.Mods(operator, value)
+                Param.Rate.key -> Param.Rate(operator, value)
                 else -> throw IllegalArgumentException("Invalid key")
             }
         }
