@@ -24,9 +24,6 @@ class InfoCardService(
 ) : MessageService<OsuUser>, TencentMessageService<OsuUser> {
 
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<OsuUser>): Boolean {
-        val matcher2 = Instruction.DEPRECATED_YMY.matcher(messageText)
-        if (matcher2.find()) throw MiniCardException(MiniCardException.Type.MINI_Deprecated_Y)
-
         val matcher = Instruction.INFO_CARD.matcher(messageText)
         if (!matcher.find()) return false
 

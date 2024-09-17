@@ -552,17 +552,9 @@ enum class Instruction(val pattern: Pattern) {
         appendCommands("(?<k>k)")
     }),
 
-    DEPRECATED_YMX(CommandPatternBuilder.create {
-        appendCommands("(?<x>x)")
-    }),
-
-    DEPRECATED_YMY(CommandPatternBuilder.create {
-        appendCommands("(?<y>y)")
-    }),
-
     // #11 maimai
     MAI_BP(CommandPatternBuilder.create {
-        appendCommands("mai\\s*best", "mb", "x")
+        appendCommands("mai(mai)?\\s*best", "mb", "x")
         appendName()
         appendQQID()
         appendRange()
