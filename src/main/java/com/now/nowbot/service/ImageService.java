@@ -8,6 +8,7 @@ import com.now.nowbot.model.multiplayer.NewMatch;
 import com.now.nowbot.model.multiplayer.SeriesCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.PPMinus3;
+import com.now.nowbot.service.MessageServiceImpl.MaiBestPerformanceService;
 import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
 import com.now.nowbot.service.MessageServiceImpl.MatchMapService;
 import com.now.nowbot.service.MessageServiceImpl.ScorePRService;
@@ -625,6 +626,17 @@ public class ImageService {
 
     public byte[] getPanelAlpha(StringBuilder sb) {
         return getPanelAlpha(sb.toString().split("\n"));
+    }
+
+
+
+    public byte[] getPanelME(MaiBestPerformanceService.PanelMEParam param) {
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = param.toMap();
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_ME", httpEntity);
     }
 
     private HttpHeaders getDefaultHeader() {

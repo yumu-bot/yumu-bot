@@ -2,13 +2,14 @@ package com.now.nowbot.model.JsonData;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.util.JacksonUtil;
 
 import java.util.List;
 
 public class MaiSong {
-
-    @JsonProperty("id")
-    Integer songID;
+    @JsonIgnoreProperties
+    String songIDStr;
 
     // 曲名
     String title;
@@ -54,11 +55,11 @@ public class MaiSong {
         String charter;
 
         public record MaiNote (
-            Integer tapNote,
-            Integer holdNote,
-            Integer slideNote,
-            Integer touchNote, // 仅 DX 有
-            Integer breakNote
+                Integer tap,
+                Integer hold,
+                Integer slide,
+                Integer touch, // 仅 DX 有
+                Integer break_
         ) {}
 
         public MaiNote getNotes() {
@@ -163,11 +164,16 @@ public class MaiSong {
     }
 
     public Integer getSongID() {
-        return songID;
+        return Integer.parseInt(songIDStr);
     }
 
     public void setSongID(Integer songID) {
-        this.songID = songID;
+        this.songIDStr = songID.toString();
+    }
+
+    @JsonProperty("id")
+    void setSongID(JsonNode n) {
+        this.songIDStr = JacksonUtil.parseObject(n, String.class);
     }
 
     public String getTitle() {

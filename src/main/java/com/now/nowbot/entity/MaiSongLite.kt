@@ -116,22 +116,22 @@ class MaiChartLite(
     var charter:String
 ){
     fun toModel():MaiSong.MaiChart = with(MaiSong.MaiChart()) {
-        val dbNotes = this@MaiChartLite.notes
+        val noteList = this@MaiChartLite.notes
         if (this@MaiChartLite.notes.size == 5) {
             this.notes = MaiSong.MaiChart.MaiNote(
-                dbNotes[0],
-                dbNotes[1],
-                dbNotes[2],
-                dbNotes[3],
-                dbNotes[4],
+                noteList[0],
+                noteList[1],
+                noteList[2],
+                noteList[3],
+                noteList[4],
             )
         } else {
             this.notes = MaiSong.MaiChart.MaiNote(
-                dbNotes[0],
-                dbNotes[1],
-                dbNotes[2],
+                noteList[0],
+                noteList[1],
+                noteList[2],
                 0,
-                dbNotes[3],
+                noteList[3],
             )
         }
         charter = this@MaiChartLite.charter
@@ -140,7 +140,7 @@ class MaiChartLite(
     companion object {
         @JvmStatic
         fun from(id:Int, chart: MaiSong.MaiChart):MaiChartLite {
-            val notes = if (chart.notes.touchNote == 0) with(IntArray(4)) {
+            val notes = if (chart.notes.touch == 0) with(IntArray(4)) {
                 this
             } else with(IntArray(5)) {
                 this

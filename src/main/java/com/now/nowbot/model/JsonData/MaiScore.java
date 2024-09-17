@@ -1,5 +1,6 @@
 package com.now.nowbot.model.JsonData;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -68,6 +69,10 @@ public class MaiScore {
     @NonNull
     String type = "";
 
+    // 通过 MaiSong 算出来的理论 DX Score
+    @JsonIgnoreProperties
+    Integer max;
+
     public Double getAchievements() {
         return achievements;
     }
@@ -94,13 +99,13 @@ public class MaiScore {
         this.score = score;
     }
 
-    @Nullable
+    @NonNull
     public String getCombo() {
         return combo;
     }
 
-    @NonNull
-    public void setCombo(String combo) {
+
+    public void setCombo(@NonNull String combo) {
         this.combo = combo;
     }
 
@@ -109,8 +114,8 @@ public class MaiScore {
         return sync;
     }
 
-    @NonNull
-    public void setSync(String sync) {
+
+    public void setSync(@NonNull String sync) {
         this.sync = sync;
     }
 
@@ -119,8 +124,8 @@ public class MaiScore {
         return level;
     }
 
-    @NonNull
-    public void setLevel(String level) {
+
+    public void setLevel(@NonNull String level) {
         this.level = level;
     }
 
@@ -129,8 +134,7 @@ public class MaiScore {
         return index;
     }
 
-    @NonNull
-    public void setIndex(Integer index) {
+    public void setIndex(@NonNull Integer index) {
         this.index = index;
     }
 
@@ -186,5 +190,17 @@ public class MaiScore {
 
     public void setType(@NonNull String type) {
         this.type = type;
+    }
+
+    public Integer getMax() {
+        return max;
+    }
+
+    public void setMax(MaiSong song) {
+        var notes = song.getCharts().get(this.index).getNotes();
+
+        if (notes != null) {
+            this.max = 3 * (notes.tap() + notes.touch() + notes.hold() + notes.slide() + notes.break_());
+        }
     }
 }

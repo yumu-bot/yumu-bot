@@ -1,20 +1,23 @@
 package com.now.nowbot.service.DivingFishApiService.impl;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.now.nowbot.model.JsonData.MaiBestPerformance;
-import com.now.nowbot.model.JsonData.MaiRanking;
-import com.now.nowbot.model.JsonData.MaiSong;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.MaiVersion;
 import com.now.nowbot.service.DivingFishApiService.MaimaiApiService;
+import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class MaimaiApiImpl implements MaimaiApiService {
@@ -25,55 +28,73 @@ public class MaimaiApiImpl implements MaimaiApiService {
         base = baseService;
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private record MaimaiBestScoreBody(@Nullable Long qq, @Nullable String username, Boolean b50) {}
+    private record MaimaiBestScoreQQBody(Long qq, Boolean b50) {}
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private record MaimaiByVersionBody(@Nullable Long qq, @Nullable String username, @NonNull List<String> version) {}
+    private record MaimaiBestScoreNameBody(String username, Boolean b50) {}
+
+    private record MaimaiByVersionQQBody(Long qq, @NonNull List<String> version) {}
+
+    private record MaimaiByVersionNameBody(String username, @NonNull List<String> version) {}
 
     @Override
     public MaiBestPerformance getMaimaiBest50(Long qq) {
-        return getMaimaiBest(qq, null);
-    }
-
-    @Override
-    public MaiBestPerformance getMaimaiBest50(String probername) {
-        return getMaimaiBest(null, probername);
-    }
-
-    @Override
-    public MaiBestPerformance getMaimaiScoreByVersion(String probername, List<MaiVersion> versions) {
-        return getMaimaiScoreByVersion(null, probername, versions);
-    }
-
-    @Override
-    public MaiBestPerformance getMaimaiScoreByVersion(Long qq, List<MaiVersion> versions) {
-        return getMaimaiScoreByVersion(qq, null, versions);
-    }
-
-    private MaiBestPerformance getMaimaiBest(Long qq, String probername) {
-        var b = new MaimaiBestScoreBody(qq, probername, true);
+        var b = new MaimaiBestScoreQQBody(qq, true);
 
         return base.divingFishApiWebClient.post()
                 .uri(uriBuilder -> uriBuilder
                         .path("api/maimaidxprober/query/player")
                         .build())
-                .body(Mono.just(b), MaimaiBestScoreBody.class)
-                .headers(v -> v.set("Content-Type", "application/json"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(b), MaimaiBestScoreQQBody.class)
+                .headers(base::insertJSONHeader)
                 .retrieve()
                 .bodyToMono(MaiBestPerformance.class)
                 .block();
     }
 
-    private MaiBestPerformance getMaimaiScoreByVersion(Long qq, String probername, List<MaiVersion> versions) {
-        var b = new MaimaiByVersionBody(qq, probername, MaiVersion.getNameList(versions));
+    @Override
+    public MaiBestPerformance getMaimaiBest50(String username) {
+        var b = new MaimaiBestScoreNameBody(username, true);
+
+        return base.divingFishApiWebClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("api/maimaidxprober/query/player")
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(b), MaimaiBestScoreNameBody.class)
+
+                .retrieve()
+                .bodyToMono(MaiBestPerformance.class)
+                .block();
+    }
+
+    @Override
+    public MaiBestPerformance getMaimaiScoreByVersion(String username, List<MaiVersion> versions) {
+        var b = new MaimaiByVersionNameBody(username, MaiVersion.getNameList(versions));
 
         return base.divingFishApiWebClient.post()
                 .uri(uriBuilder -> uriBuilder
                         .path("api/maimaidxprober/query/plate")
                         .build())
-                .body(Mono.just(b), MaimaiByVersionBody.class)
-                .headers(v -> v.set("Content-Type", "application/json"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(b), MaimaiByVersionNameBody.class)
+                .headers(base::insertJSONHeader)
+                .retrieve()
+                .bodyToMono(MaiBestPerformance.class)
+                .block();
+    }
+
+    @Override
+    public MaiBestPerformance getMaimaiScoreByVersion(Long qq, List<MaiVersion> versions) {
+        var b = new MaimaiByVersionQQBody(qq, MaiVersion.getNameList(versions));
+
+        return base.divingFishApiWebClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("api/maimaidxprober/query/plate")
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(b), MaimaiByVersionQQBody.class)
+                .headers(base::insertJSONHeader)
                 .retrieve()
                 .bodyToMono(MaiBestPerformance.class)
                 .block();
@@ -117,8 +138,9 @@ public class MaimaiApiImpl implements MaimaiApiService {
     }
 
     @Override
-    public List<MaiSong> getMaimaiSongLibrary() {
-        return base.divingFishApiWebClient.get()
+    // TODO 临时方案
+    public List<MaiSong> getMaimaiSongLibrary() throws IOException {
+        var out = base.divingFishApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("api/maimaidxprober/music_data")
                         .build())
@@ -126,11 +148,16 @@ public class MaimaiApiImpl implements MaimaiApiService {
                 .bodyToFlux(MaiSong.class)
                 .collectList()
                 .block();
+
+        var path = Path.of("/home/spring/cache/nowbot/bg/ExportFileV3/maimai/data-songs.json");
+        Files.write(path, Objects.requireNonNull(JacksonUtil.objectToJson(out)).getBytes());
+
+        return out;
     }
 
     @Override
-    public List<MaiRanking> getMaimaiRankLibrary() {
-        return base.divingFishApiWebClient.post()
+    public List<MaiRanking> getMaimaiRankLibrary() throws IOException {
+        var out = base.divingFishApiWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("api/maimaidxprober/rating_ranking")
                         .build())
@@ -138,6 +165,11 @@ public class MaimaiApiImpl implements MaimaiApiService {
                 .bodyToFlux(MaiRanking.class)
                 .collectList()
                 .block();
+
+        var path = Path.of("/home/spring/cache/nowbot/bg/ExportFileV3/maimai/data-ranking.json");
+        Files.write(path, Objects.requireNonNull(JacksonUtil.objectToJson(out)).getBytes());
+
+        return out;
     }
 
     @Override
@@ -148,5 +180,74 @@ public class MaimaiApiImpl implements MaimaiApiService {
     @Override
     public MaiSong getMaimaiSong(String title) {
         return null;
+    }
+
+    @Override
+    public MaiScore getMaimaiScore(Long qq, Integer songID) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
+        return null;
+    }
+
+    @Override
+    public List<MaiScore> getMaimaiScores(Long qq, List<Integer> songIDs) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
+        return List.of();
+    }
+
+    @Override
+    public MaiScore getMaimaiScore(String username, Integer songID) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
+        return null;
+    }
+
+    @Override
+    public List<MaiScore> getMaimaiScores(String username, List<Integer> songIDs) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
+        return List.of();
+    }
+
+    @Override
+    public MaiBestPerformance getMaimaiBest50P(Long qq) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
+        var b = new MaimaiBestScoreQQBody(qq, true);
+
+        return base.divingFishApiWebClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("api/maimaidxprober/query/player")
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(b), MaimaiBestScoreQQBody.class)
+                .headers(base::insertDeveloperHeader)
+                .retrieve()
+                .bodyToMono(MaiBestPerformance.class)
+                .block();
+    }
+
+    @Override
+    public MaiBestPerformance getMaimaiBest50P(String probername) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
+        var b = new MaimaiBestScoreNameBody(probername, true);
+
+        return base.divingFishApiWebClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("api/maimaidxprober/query/player")
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(b), MaimaiBestScoreNameBody.class)
+                .headers(base::insertDeveloperHeader)
+                .retrieve()
+                .bodyToMono(MaiBestPerformance.class)
+                .block();
+    }
+
+
+    @Override
+    public MaiFit getMaimaiFit() throws IOException {
+        var out = base.divingFishApiWebClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("api/maimaidxprober/chart_stats")
+                        .build())
+                .retrieve()
+                .bodyToMono(MaiFit.class)
+                .block();
+
+        var path = Path.of("/home/spring/cache/nowbot/bg/ExportFileV3/maimai/data-fit.json");
+        Files.write(path, Objects.requireNonNull(JacksonUtil.objectToJson(out)).getBytes());
+
+        return out;
     }
 }

@@ -1,6 +1,8 @@
 package com.now.nowbot.model.JsonData;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.checkerframework.checker.units.qual.C;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Map;
 import java.util.List;
@@ -164,5 +166,21 @@ public class MaiFit {
 
     public void setDiffData(Map<String, DiffData> diffData) {
         this.diffData = diffData;
+    }
+
+    public ChartData getChartData(String songID, Integer index) {
+        var charts = this.charts.get(songID);
+        if (CollectionUtils.isEmpty(charts)) {
+            return new ChartData();
+        }
+        if (index >= charts.size()) {
+            return charts.getLast();
+        } else {
+            return charts.get(index);
+        }
+    }
+
+    public DiffData getDiffData(ChartData chartData) {
+        return this.diffData.get(chartData.level);
     }
 }

@@ -5,12 +5,10 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.DivingFishApiService.MaimaiApiService
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 
-@Service("MAI_BP")
+@Service("TEST_MAI_BP")
 class TestMaiBPService(private val maimaiApiService: MaimaiApiService) :
     MessageService<TestMaiBPService.MaiBPParam> {
 
@@ -21,7 +19,7 @@ class TestMaiBPService(private val maimaiApiService: MaimaiApiService) :
         messageText: String,
         data: MessageService.DataValue<MaiBPParam>,
     ): Boolean {
-        val matcher = Instruction.MAI_BP.matcher(messageText)
+        val matcher = Instruction.TEST_MAI_BP.matcher(messageText)
 
         if (!matcher.find()) {
             return false
@@ -34,30 +32,8 @@ class TestMaiBPService(private val maimaiApiService: MaimaiApiService) :
     }
 
     override fun HandleMessage(event: MessageEvent, param: MaiBPParam) {
-        val scores =
-            try {
-                maimaiApiService.getMaimaiBest50(event.sender.id)
-            } catch (e: WebClientResponseException.BadRequest) {
-                throw TipsException("找不到您的水鱼绑定账号，或者是网络连接不稳定。")
-            } catch (e: WebClientResponseException.Forbidden) {
-                throw TipsException("您或者对方不允许其他人查询成绩。")
-            }
-
-        var score: MaiScore
-
-        if (param.range > 35) {
-            if (param.range - 35 > scores.charts.deluxe.size) {
-                throw TipsException("请输入正确的范围！(<${scores.charts.deluxe.size + 35})")
-            } else {
-                score = scores.charts.deluxe.get(param.range - 36)
-            }
-        } else {
-            if (param.range > scores.charts.standard.size) {
-                throw TipsException("请输入正确的范围！(<${scores.charts.standard.size})")
-            } else {
-                score = scores.charts.standard.get(param.range - 1)
-            }
-        }
+        val scores = MaiBestPerformanceService.getScores(event.sender.id, null, maimaiApiService)
+        var score = MaiBestPerformanceService.getScore(param.range, scores)
 
         event.reply(getMessage(score, maimaiApiService.getMaimaiCover(score.songID)))
     }
@@ -70,7 +46,7 @@ class TestMaiBPService(private val maimaiApiService: MaimaiApiService) :
             sb.addText("\n")
             sb.addText("[${score.type}] ${score.title} [${score.difficulty} ${score.level}] (${score.star})\n")
             sb.addText("${String.format("%.4f", score.achievements)}% ${getRank(score.rank)} // ${score.rating} ra\n")
-            sb.addText("[${getCombo(score.combo)}] [${getSync(score.sync)}] // s${score.songID}")
+            sb.addText("[${getCombo(score.combo)}] [${getSync(score.sync)}] // id ${score.songID}")
 
             return sb.build()
         }
@@ -92,8 +68,10 @@ class TestMaiBPService(private val maimaiApiService: MaimaiApiService) :
 
         fun getSync(sync: String?): String {
             return when (sync?.lowercase()) {
-                "", "sync" -> "SY"
-                "fs" -> "FSY"
+                "" -> "1P"
+                "sync" -> "SY"
+                "fs" -> "FS"
+                "fsp" -> "FS+"
                 "fsd" -> "FDX"
                 "fsdp" -> "FDX+"
                 else -> "?"

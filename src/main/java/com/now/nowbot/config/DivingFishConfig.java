@@ -9,14 +9,14 @@ public class DivingFishConfig {
     /**
      * 接口路径, 一般不用改
      */
-    public static final String url = "https://www.diving-fish.com/";
-    public static final String api = "https://www.diving-fish.com/api/maimaidxprober/";
+    public static final String url   = "https://www.diving-fish.com/";
+    public static final String token = "";
 
     public String getUrl() {
         return url;
     }
 
-    public String getApi() {
-        return api;
+    public String getToken() {
+        return token;
     }
 }

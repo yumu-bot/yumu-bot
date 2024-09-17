@@ -561,14 +561,15 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     // #11 maimai
-
-    MAI_COVER(CommandPatternBuilder.create {
-        appendCommands("mai\\s*cover", "mc")
-        appendSID()
+    MAI_BP(CommandPatternBuilder.create {
+        appendCommands("mai\\s*best", "mb", "x")
+        appendName()
+        appendQQID()
+        appendRange()
     }),
 
-    MAI_BP(CommandPatternBuilder.create {
-        appendCommands("mai\\s*best", "mb")
+    TEST_MAI_BP(CommandPatternBuilder.create {
+        appendCommands("test\\s*best", "tb")
         appendRange()
     }),
 

@@ -3,11 +3,12 @@ package com.now.nowbot.model.JsonData;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 
 public class MaiBestPerformance {
     // 看用户段位信息，其中0-10对应初学者-十段，11-20对应真初段-真十段，21-22对应真皆传-里皆传
     @JsonProperty("additional_rating")
-    Integer additional;
+    Integer dan;
 
     // b40 和 b50 一样，但区别是 dx 其实是最新版本的 b15，sd 是综合的 b35
     // 这就是 BP
@@ -36,12 +37,12 @@ public class MaiBestPerformance {
     @JsonProperty("username")
     String probername;
 
-    public Integer getAdditional() {
-        return additional;
+    public Integer getDan() {
+        return dan;
     }
 
-    public void setAdditional(Integer additional) {
-        this.additional = additional;
+    public void setDan(Integer dan) {
+        this.dan = dan;
     }
 
     public Charts getCharts() {
@@ -82,5 +83,16 @@ public class MaiBestPerformance {
 
     public void setProbername(String probername) {
         this.probername = probername;
+    }
+
+    public record User(String name, String probername, Integer dan, String plate, Integer rating, Integer base, Integer additional) {}
+
+    public User getUser() {
+        var best35 = this.charts.standard.stream().map(MaiScore::getRating)
+                .filter(Objects::nonNull).reduce(Integer::sum).orElse(0);
+        var best15 = this.charts.deluxe.stream().map(MaiScore::getRating)
+                .filter(Objects::nonNull).reduce(Integer::sum).orElse(0);
+
+        return new User(this.name, this.probername, this.dan, this.plate, this.rating, best35, best15);
     }
 }
