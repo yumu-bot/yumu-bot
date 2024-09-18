@@ -101,9 +101,9 @@ class MaiBestPerformanceService(
         val score = getScore(param.range, scores)
 
         val user = scores.user
-        val song = maimaiApiService.getMaimaiSong(score.songID, true)
+        val song = maimaiApiService.getMaimaiSong(score.songID)
         score.setMax(song)
-        val fit = maimaiApiService.getMaimaiFit(true)
+        val fit = maimaiApiService.getMaimaiFit()
 
         val chart = fit.getChartData(score.songID?.toString(), score.index)
         val diff = fit.getDiffData(chart)

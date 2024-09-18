@@ -1,6 +1,5 @@
 package com.now.nowbot.service.DivingFishApiService.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.MaiVersion;
 import com.now.nowbot.service.DivingFishApiService.MaimaiApiService;
@@ -16,88 +15,69 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class MaimaiApiImpl implements MaimaiApiService {
     private static final Logger log = LoggerFactory.getLogger(MaimaiApiService.class);
+
+    // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
+    // /home/spring/work/img/ExportFileV3/Maimai
+    private static final Path path = Path.of("/home/spring/work/img/ExportFileV3/Maimai");
+
+    private static final long updatePeriodMillis = 86400000L; // 1 天： 86400000L，30 秒：30000L
+
     DivingFishBaseService base;
+
 
     public MaimaiApiImpl(DivingFishBaseService baseService) {
         base = baseService;
     }
 
-    private record MaimaiBestScoreQQBody(Long qq, Boolean b50) {}
+    private record MaimaiBestScoreQQBody(Long qq, Boolean b50) {
+    }
 
-    private record MaimaiBestScoreNameBody(String username, Boolean b50) {}
+    private record MaimaiBestScoreNameBody(String username, Boolean b50) {
+    }
 
-    private record MaimaiByVersionQQBody(Long qq, @NonNull List<String> version) {}
+    private record MaimaiByVersionQQBody(Long qq, @NonNull List<String> version) {
+    }
 
-    private record MaimaiByVersionNameBody(String username, @NonNull List<String> version) {}
+    private record MaimaiByVersionNameBody(String username, @NonNull List<String> version) {
+    }
 
     @Override
     public MaiBestPerformance getMaimaiBest50(Long qq) {
         var b = new MaimaiBestScoreQQBody(qq, true);
 
-        return base.divingFishApiWebClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("api/maimaidxprober/query/player")
-                        .build())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(b), MaimaiBestScoreQQBody.class)
-                .headers(base::insertJSONHeader)
-                .retrieve()
-                .bodyToMono(MaiBestPerformance.class)
-                .block();
+        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestScoreQQBody.class).headers(base::insertJSONHeader).retrieve().bodyToMono(MaiBestPerformance.class).block();
     }
 
     @Override
     public MaiBestPerformance getMaimaiBest50(String username) {
         var b = new MaimaiBestScoreNameBody(username, true);
 
-        return base.divingFishApiWebClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("api/maimaidxprober/query/player")
-                        .build())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(b), MaimaiBestScoreNameBody.class)
+        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestScoreNameBody.class)
 
-                .retrieve()
-                .bodyToMono(MaiBestPerformance.class)
-                .block();
+                .retrieve().bodyToMono(MaiBestPerformance.class).block();
     }
 
     @Override
     public MaiBestPerformance getMaimaiScoreByVersion(String username, List<MaiVersion> versions) {
         var b = new MaimaiByVersionNameBody(username, MaiVersion.getNameList(versions));
 
-        return base.divingFishApiWebClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("api/maimaidxprober/query/plate")
-                        .build())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(b), MaimaiByVersionNameBody.class)
-                .headers(base::insertJSONHeader)
-                .retrieve()
-                .bodyToMono(MaiBestPerformance.class)
-                .block();
+        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/plate").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiByVersionNameBody.class).headers(base::insertJSONHeader).retrieve().bodyToMono(MaiBestPerformance.class).block();
     }
 
     @Override
     public MaiBestPerformance getMaimaiScoreByVersion(Long qq, List<MaiVersion> versions) {
         var b = new MaimaiByVersionQQBody(qq, MaiVersion.getNameList(versions));
 
-        return base.divingFishApiWebClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("api/maimaidxprober/query/plate")
-                        .build())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(b), MaimaiByVersionQQBody.class)
-                .headers(base::insertJSONHeader)
-                .retrieve()
-                .bodyToMono(MaiBestPerformance.class)
-                .block();
+        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/plate").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiByVersionQQBody.class).headers(base::insertJSONHeader).retrieve().bodyToMono(MaiBestPerformance.class).block();
     }
 
     @Override
@@ -109,7 +89,7 @@ public class MaimaiApiImpl implements MaimaiApiService {
             id = 1L;
         } else if (songID.equals(1235L)) {
             id = songID + 10000L; // 这是水鱼的 bug，不关我们的事
-        } else if (songID > 10000L && songID < 11000L){
+        } else if (songID > 10000L && songID < 11000L) {
             id = songID - 10000L;
         } else {
             id = songID;
@@ -119,19 +99,9 @@ public class MaimaiApiImpl implements MaimaiApiService {
 
         byte[] cover;
         try {
-            cover = base.divingFishApiWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("covers/" + song + ".png")
-                            .build())
-                    .retrieve()
-                    .bodyToMono(byte[].class).block();
+            cover = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("covers/" + song + ".png").build()).retrieve().bodyToMono(byte[].class).block();
         } catch (WebClientResponseException.NotFound e) {
-            cover = base.divingFishApiWebClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("covers/00000.png")
-                            .build())
-                    .retrieve()
-                    .bodyToMono(byte[].class).block();
+            cover = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("covers/00000.png").build()).retrieve().bodyToMono(byte[].class).block();
         }
 
         return cover;
@@ -139,37 +109,48 @@ public class MaimaiApiImpl implements MaimaiApiService {
 
     @Override
     // TODO 临时方案
-    public List<MaiSong> getMaimaiSongLibrary() throws IOException {
-        var out = base.divingFishApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("api/maimaidxprober/music_data")
-                        .build())
-                .retrieve()
-                .bodyToFlux(MaiSong.class)
-                .collectList()
-                .block();
+    public Map<Integer, MaiSong> getMaimaiSongLibrary() {
+        if (isFileOutdated("data-songs.json")) {
+            log.info("maimai: 歌曲库不存在或者已过期，更新中");
 
-        var path = Path.of("/home/spring/cache/nowbot/bg/ExportFileV3/maimai/data-songs.json");
-        Files.write(path, Objects.requireNonNull(JacksonUtil.objectToJson(out)).getBytes());
+            String data = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/music_data").build()).retrieve().bodyToMono(String.class).block();
 
-        return out;
+            saveFile(data, "data-songs.json", "歌曲");
+            return Objects.requireNonNull(JacksonUtil.parseObjectList(data, MaiSong.class))
+                    .stream().collect(Collectors.toMap(MaiSong::getSongID, s -> s));
+        } else {
+            return Objects.requireNonNull(file2Objects("data-songs.json", MaiSong.class))
+                    .stream().collect(Collectors.toMap(MaiSong::getSongID, s -> s));
+        }
     }
 
     @Override
-    public List<MaiRanking> getMaimaiRankLibrary() throws IOException {
-        var out = base.divingFishApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("api/maimaidxprober/rating_ranking")
-                        .build())
-                .retrieve()
-                .bodyToFlux(MaiRanking.class)
-                .collectList()
-                .block();
+    public List<MaiRanking> getMaimaiRankLibrary() {
+        if (isFileOutdated("data-ranking.json")) {
+            log.info("maimai: 排名库不存在或者已过期，更新中");
 
-        var path = Path.of("/home/spring/cache/nowbot/bg/ExportFileV3/maimai/data-ranking.json");
-        Files.write(path, Objects.requireNonNull(JacksonUtil.objectToJson(out)).getBytes());
+            var data = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/rating_ranking").build()).retrieve().bodyToMono(String.class).block();
 
-        return out;
+            saveFile(data, "data-ranking.json", "排名");
+            return JacksonUtil.parseObjectList(data, MaiRanking.class);
+        } else {
+            return file2Objects("data-ranking.json", MaiRanking.class);
+        }
+    }
+
+    @Override
+    public MaiFit getMaimaiFit() {
+        if (isFileOutdated("data-fit.json")) {
+            log.info("maimai: 统计库不存在或者已过期，更新中");
+
+            var data = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/chart_stats").build()).retrieve().bodyToMono(String.class).block();
+
+            saveFile(data, "data-fit.json", "统计");
+
+            return JacksonUtil.parseObject(data, MaiFit.class);
+        } else {
+            return file2Object("data-fit.json", MaiFit.class);
+        }
     }
 
     @Override
@@ -206,48 +187,64 @@ public class MaimaiApiImpl implements MaimaiApiService {
     public MaiBestPerformance getMaimaiBest50P(Long qq) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
         var b = new MaimaiBestScoreQQBody(qq, true);
 
-        return base.divingFishApiWebClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("api/maimaidxprober/query/player")
-                        .build())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(b), MaimaiBestScoreQQBody.class)
-                .headers(base::insertDeveloperHeader)
-                .retrieve()
-                .bodyToMono(MaiBestPerformance.class)
-                .block();
+        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestScoreQQBody.class).headers(base::insertDeveloperHeader).retrieve().bodyToMono(MaiBestPerformance.class).block();
     }
 
     @Override
     public MaiBestPerformance getMaimaiBest50P(String probername) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
         var b = new MaimaiBestScoreNameBody(probername, true);
 
-        return base.divingFishApiWebClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("api/maimaidxprober/query/player")
-                        .build())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(b), MaimaiBestScoreNameBody.class)
-                .headers(base::insertDeveloperHeader)
-                .retrieve()
-                .bodyToMono(MaiBestPerformance.class)
-                .block();
+        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestScoreNameBody.class).headers(base::insertDeveloperHeader).retrieve().bodyToMono(MaiBestPerformance.class).block();
     }
 
+    // TODO 临时的解决方案
+    private <T> T file2Object(String fileName, Class<T> clazz) {
+        var file = path.resolve(fileName);
+        try {
+            var s = Files.readString(file);
+            return JacksonUtil.parseObject(s, clazz);
+        } catch (IOException e) {
+            log.error("maimai: 获取文件失败", e);
+            return null;
+        }
+    }
 
-    @Override
-    public MaiFit getMaimaiFit() throws IOException {
-        var out = base.divingFishApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("api/maimaidxprober/chart_stats")
-                        .build())
-                .retrieve()
-                .bodyToMono(MaiFit.class)
-                .block();
+    private <T> List<T> file2Objects(String fileName, Class<T> clazz) {
+        var file = path.resolve(fileName);
+        try {
+            var s = Files.readString(file);
+            return JacksonUtil.parseObjectList(s, clazz);
+        } catch (IOException e) {
+            log.error("maimai: 获取文件失败", e);
+            return null;
+        }
+    }
 
-        var path = Path.of("/home/spring/cache/nowbot/bg/ExportFileV3/maimai/data-fit.json");
-        Files.write(path, Objects.requireNonNull(JacksonUtil.objectToJson(out)).getBytes());
+    private void saveFile(String data, String fileName, String dictionaryName) {
+        var file = path.resolve(fileName);
 
-        return out;
+        try {
+            if (isFileOutdated(fileName)) {
+                Files.write(file, Objects.requireNonNull(data).getBytes());
+                log.info(String.format("maimai: 已更新%s库", dictionaryName));
+            } else if (Files.isDirectory(path)) {
+                Files.write(file, Objects.requireNonNull(data).getBytes());
+                log.info(String.format("maimai: 已保存%s库", dictionaryName));
+            } else {
+                log.info(String.format("maimai: 未保存%s库", dictionaryName));
+            }
+        } catch (IOException e) {
+            log.error(String.format("maimai: %s库保存失败", dictionaryName), e);
+        }
+    }
+
+    private boolean isFileOutdated(String fileName) {
+        var file = path.resolve(fileName);
+
+        try {
+            return (Files.isRegularFile(file) && System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis() > updatePeriodMillis);
+        } catch (IOException e) {
+            return true;
+        }
     }
 }

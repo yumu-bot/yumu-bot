@@ -473,8 +473,8 @@ public class SkiaUtil {
     }
 
     public static void main(String[] args) throws IOException {
-        var img = SkiaImageUtil.getImage("/home/spring/cache/nowbot/bg/ExportFileV3/object-beatmap-mask.png");
-        var image1 = SkiaImageUtil.getImage("/home/spring/cache/nowbot/bg/ExportFileV3/object-score-backimage-C.jpg");
+        var img = SkiaImageUtil.getImage("/home/spring/work/img/ExportFileV3/object-beatmap-mask.png");
+        var image1 = SkiaImageUtil.getImage("/home/spring/work/img/ExportFileV3/object-score-backimage-C.jpg");
         var s = Surface.makeRasterN32Premul(150,150);
         var c = s.getCanvas();
 
