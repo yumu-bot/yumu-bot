@@ -15,7 +15,6 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -242,7 +241,7 @@ public class MaimaiApiImpl implements MaimaiApiService {
         var file = path.resolve(fileName);
 
         try {
-            return (Files.isRegularFile(file) && System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis() > updatePeriodMillis);
+            return (Files.isWritable(path) && Files.isRegularFile(file) && System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis() > updatePeriodMillis);
         } catch (IOException e) {
             return true;
         }
