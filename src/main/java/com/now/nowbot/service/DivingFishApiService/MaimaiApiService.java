@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -29,18 +28,21 @@ public interface MaimaiApiService {
     byte[] getMaimaiCover(Long songID);
 
     default MaiSong getMaimaiSong(Long songID) {
-        try {
-            return getMaimaiSongLibrary().get(songID.intValue());
-        } catch (IOException e) {
-            return new MaiSong();
-        }
+        return getMaimaiSongLibrary().get(songID.intValue());
     }
 
-    Map<Integer, MaiSong> getMaimaiSongLibrary() throws IOException; // 开销大，这个方法应该是每周用来存数据库的
+    Map<Integer, MaiSong> getMaimaiSongLibrary();
 
-    List<MaiRanking> getMaimaiRankLibrary(); // 开销大，这个方法应该是每周用来存数据库的
+    Map<String, Integer> getMaimaiRankLibrary();
 
-    MaiFit getMaimaiFit(); // 开销大，这个方法应该是每周用来存数据库的
+    MaiFit getMaimaiFit();
+
+    // 开销大，这3个方法应该是每周用来存数据库的
+    void updateMaimaiSongLibrary();
+
+    void updateMaimaiRankLibrary();
+
+    void updateMaimaiFit();
 
     MaiSong getMaimaiSong(Integer songID); // 查数据库
 
@@ -98,5 +100,6 @@ public interface MaimaiApiService {
     MaiBestPerformance getMaimaiBest50P(Long qq) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
     MaiBestPerformance getMaimaiBest50P(String probername) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
+
 
 }

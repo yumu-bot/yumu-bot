@@ -60,23 +60,38 @@ public class MaimaiApiImpl implements MaimaiApiService {
     public MaiBestPerformance getMaimaiBest50(String username) {
         var b = new MaimaiBestScoreNameBody(username, true);
 
-        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestScoreNameBody.class)
-
-                .retrieve().bodyToMono(MaiBestPerformance.class).block();
+        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(b), MaimaiBestScoreNameBody.class)
+                .retrieve()
+                .bodyToMono(MaiBestPerformance.class)
+                .block();
     }
 
     @Override
     public MaiBestPerformance getMaimaiScoreByVersion(String username, List<MaiVersion> versions) {
         var b = new MaimaiByVersionNameBody(username, MaiVersion.getNameList(versions));
 
-        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/plate").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiByVersionNameBody.class).headers(base::insertJSONHeader).retrieve().bodyToMono(MaiBestPerformance.class).block();
+        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/plate").build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(b), MaimaiByVersionNameBody.class)
+                .headers(base::insertJSONHeader)
+                .retrieve()
+                .bodyToMono(MaiBestPerformance.class)
+                .block();
     }
 
     @Override
     public MaiBestPerformance getMaimaiScoreByVersion(Long qq, List<MaiVersion> versions) {
         var b = new MaimaiByVersionQQBody(qq, MaiVersion.getNameList(versions));
 
-        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/plate").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiByVersionQQBody.class).headers(base::insertJSONHeader).retrieve().bodyToMono(MaiBestPerformance.class).block();
+        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/plate")
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(b), MaimaiByVersionQQBody.class)
+                .headers(base::insertJSONHeader)
+                .retrieve()
+                .bodyToMono(MaiBestPerformance.class).block();
     }
 
     @Override
@@ -107,49 +122,57 @@ public class MaimaiApiImpl implements MaimaiApiService {
     }
 
     @Override
-    // TODO 临时方案
     public Map<Integer, MaiSong> getMaimaiSongLibrary() {
         if (isFileOutdated("data-songs.json")) {
             log.info("maimai: 歌曲库不存在或者已过期，更新中");
-
-            String data = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/music_data").build()).retrieve().bodyToMono(String.class).block();
-
-            saveFile(data, "data-songs.json", "歌曲");
-            return Objects.requireNonNull(JacksonUtil.parseObjectList(data, MaiSong.class))
-                    .stream().collect(Collectors.toMap(MaiSong::getSongID, s -> s));
-        } else {
-            return Objects.requireNonNull(file2Objects("data-songs.json", MaiSong.class))
-                    .stream().collect(Collectors.toMap(MaiSong::getSongID, s -> s));
+            updateMaimaiSongLibrary();
         }
+
+        return Objects.requireNonNull(file2Objects("data-songs.json", MaiSong.class))
+                .stream().collect(Collectors.toMap(MaiSong::getSongID, s -> s));
     }
 
     @Override
-    public List<MaiRanking> getMaimaiRankLibrary() {
+    public Map<String, Integer> getMaimaiRankLibrary() {
         if (isFileOutdated("data-ranking.json")) {
             log.info("maimai: 排名库不存在或者已过期，更新中");
-
-            var data = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/rating_ranking").build()).retrieve().bodyToMono(String.class).block();
-
-            saveFile(data, "data-ranking.json", "排名");
-            return JacksonUtil.parseObjectList(data, MaiRanking.class);
-        } else {
-            return file2Objects("data-ranking.json", MaiRanking.class);
+            updateMaimaiRankLibrary();
         }
+
+        return Objects.requireNonNull(file2Objects("data-ranking.json", MaiRanking.class))
+                .stream().collect(Collectors.toMap(MaiRanking::getName, MaiRanking::getRating));
+
     }
 
     @Override
     public MaiFit getMaimaiFit() {
         if (isFileOutdated("data-fit.json")) {
             log.info("maimai: 统计库不存在或者已过期，更新中");
-
-            var data = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/chart_stats").build()).retrieve().bodyToMono(String.class).block();
-
-            saveFile(data, "data-fit.json", "统计");
-
-            return JacksonUtil.parseObject(data, MaiFit.class);
-        } else {
-            return file2Object("data-fit.json", MaiFit.class);
+            updateMaimaiFit();
         }
+
+        return file2Object("data-fit.json", MaiFit.class);
+    }
+
+    @Override
+    public void updateMaimaiSongLibrary() {
+        var data = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/music_data").build()).retrieve().bodyToMono(String.class).block();
+
+        saveFile(data, "data-songs.json", "歌曲");
+    }
+
+    @Override
+    public void updateMaimaiRankLibrary() {
+        var data = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/rating_ranking").build()).retrieve().bodyToMono(String.class).block();
+
+        saveFile(data, "data-ranking.json", "排名");
+    }
+
+    @Override
+    public void updateMaimaiFit() {
+        var data = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/chart_stats").build()).retrieve().bodyToMono(String.class).block();
+
+        saveFile(data, "data-fit.json", "统计");
     }
 
     @Override
@@ -196,7 +219,6 @@ public class MaimaiApiImpl implements MaimaiApiService {
         return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestScoreNameBody.class).headers(base::insertDeveloperHeader).retrieve().bodyToMono(MaiBestPerformance.class).block();
     }
 
-    // TODO 临时的解决方案
     private <T> T file2Object(String fileName, Class<T> clazz) {
         var file = path.resolve(fileName);
         try {
@@ -241,7 +263,7 @@ public class MaimaiApiImpl implements MaimaiApiService {
         var file = path.resolve(fileName);
 
         try {
-            return (! Files.isWritable(path) || ! Files.isRegularFile(file) || System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis() > updatePeriodMillis);
+            return (!Files.isWritable(path) || !Files.isRegularFile(file) || System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis() > updatePeriodMillis);
         } catch (IOException e) {
             return true;
         }
