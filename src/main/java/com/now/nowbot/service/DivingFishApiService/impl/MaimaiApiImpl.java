@@ -241,7 +241,7 @@ public class MaimaiApiImpl implements MaimaiApiService {
         var file = path.resolve(fileName);
 
         try {
-            return (Files.isWritable(path) && Files.isRegularFile(file) && System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis() > updatePeriodMillis);
+            return (! Files.isWritable(path) || ! Files.isRegularFile(file) || System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis() > updatePeriodMillis);
         } catch (IOException e) {
             return true;
         }
