@@ -1,13 +1,11 @@
 package com.now.nowbot.entity
 
+import com.now.nowbot.model.JsonData.MaiFit
 import com.now.nowbot.model.JsonData.MaiSong
 import io.hypersistence.utils.hibernate.type.array.DoubleArrayType
 import io.hypersistence.utils.hibernate.type.array.IntArrayType
 import io.hypersistence.utils.hibernate.type.array.StringArrayType
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.Id
-import jakarta.persistence.Transient
+import jakarta.persistence.*
 import org.hibernate.annotations.Type
 
 @Entity(name = "maimai_song")
@@ -47,9 +45,9 @@ class MaiSongLite(
     var isNew: Boolean,
 ) {
     @Transient
-    var charts:ArrayList<MaiChartLite>?=null
+    var charts: ArrayList<MaiChartLite>? = null
 
-    fun toModel():MaiSong = with(MaiSong()) {
+    fun toModel(): MaiSong = with(MaiSong()) {
         this.songID = songID
         this.title = title
         this.type = type
@@ -77,7 +75,7 @@ class MaiSongLite(
 
     companion object {
         @JvmStatic
-        fun from(song: MaiSong):MaiSongLite {
+        fun from(song: MaiSong): MaiSongLite {
             val result = MaiSongLite(
                 songID = song.songID,
                 title = song.title,
@@ -94,7 +92,7 @@ class MaiSongLite(
                 isNew = song.info.isNew
             )
 
-            result.charts = song.charts.mapIndexed{i, c ->
+            result.charts = song.charts.mapIndexed { i, c ->
                 MaiChartLite.from(result.chartIDs[i], c)
             }.toCollection(ArrayList())
 
@@ -110,12 +108,12 @@ class MaiChartLite(
 
     @Type(IntArrayType::class)
     @Column(columnDefinition = "integer[]")
-    var notes:IntArray,
+    var notes: IntArray,
 
-    @Column(columnDefinition = "text[]")
-    var charter:String
-){
-    fun toModel():MaiSong.MaiChart = with(MaiSong.MaiChart()) {
+    @Column(columnDefinition = "text")
+    var charter: String
+) {
+    fun toModel(): MaiSong.MaiChart = with(MaiSong.MaiChart()) {
         val noteList = this@MaiChartLite.notes
         if (this@MaiChartLite.notes.size == 5) {
             this.notes = MaiSong.MaiChart.MaiNote(
@@ -137,9 +135,10 @@ class MaiChartLite(
         charter = this@MaiChartLite.charter
         this
     }
+
     companion object {
         @JvmStatic
-        fun from(id:Int, chart: MaiSong.MaiChart):MaiChartLite {
+        fun from(id: Int, chart: MaiSong.MaiChart): MaiChartLite {
             val notes = if (chart.notes.touch == 0) with(IntArray(4)) {
                 this
             } else with(IntArray(5)) {
@@ -150,6 +149,103 @@ class MaiChartLite(
                 id = id,
                 notes = notes,
                 charter = chart.charter
+            )
+        }
+    }
+}
+
+@Entity(name = "maimai_fit_chart")
+class MaiFitChartLite(
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    var id: Int? = null,
+
+    var songID: Int,
+
+    var count: Int,
+
+    @Column(columnDefinition = "text")
+    var level: String,
+
+    var fit: Double,
+
+    var achievements: Double,
+
+    var score: Double,
+
+    @Column(name = "standard_deviation")
+    var standardDeviation: Double,
+
+    @Type(DoubleArrayType::class)
+    @Column(name = "distribution", columnDefinition = "float[]")
+    var distribution: DoubleArray,
+
+    @Type(DoubleArrayType::class)
+    @Column(name = "fc_distribution", columnDefinition = "float[]")
+    var fullComboDistribution: DoubleArray,
+) {
+    fun toModel(): MaiFit.ChartData  {
+        val data = MaiFit.ChartData()
+        data.count = count
+        data.level = level
+        data.fit = fit
+        data.achievements = achievements
+        data.score = score
+        data.standardDeviation = standardDeviation
+        data.distribution = distribution.toList()
+        data.fullComboDistribution = fullComboDistribution.toList()
+        return data
+    }
+
+    companion object {
+        @JvmStatic
+        fun from(sid:String,chart: MaiFit.ChartData): MaiFitChartLite {
+            return MaiFitChartLite(
+                songID = sid.toInt(),
+                count = chart.count,
+                level = chart.level,
+                fit = chart.fit,
+                achievements = chart.achievements,
+                score = chart.score,
+                standardDeviation = chart.standardDeviation,
+                distribution = chart.distribution.toDoubleArray(),
+                fullComboDistribution = chart.fullComboDistribution.toDoubleArray()
+            )
+        }
+    }
+}
+@Entity(name = "maimai_fit_diff")
+class MaiFitDiffLite(
+    @Id
+    @Column(columnDefinition = "text")
+    var id: String,
+
+    var achievements: Double,
+
+    @Type(DoubleArrayType::class)
+    @Column(name = "distribution", columnDefinition = "float[]")
+    var distribution: DoubleArray,
+
+    @Type(DoubleArrayType::class)
+    @Column(name = "fc_distribution", columnDefinition = "float[]")
+    var fullComboDistribution: DoubleArray,
+) {
+    fun toModel(): MaiFit.DiffData{
+        val data = MaiFit.DiffData()
+        data.achievements = achievements
+        data.distribution = distribution.toList()
+        data.fullComboDistribution = fullComboDistribution.toList()
+        return data
+    }
+
+    companion object {
+        @JvmStatic
+        fun from(id:String,diff: MaiFit.DiffData): MaiFitDiffLite {
+            return MaiFitDiffLite(
+                id = id,
+                achievements = diff.achievements,
+                distribution = diff.distribution.toDoubleArray(),
+                fullComboDistribution = diff.fullComboDistribution.toDoubleArray()
             )
         }
     }

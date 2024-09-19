@@ -1,17 +1,25 @@
 package com.now.nowbot.dao
 
 import com.now.nowbot.entity.MaiChartLite
+import com.now.nowbot.entity.MaiFitChartLite
+import com.now.nowbot.entity.MaiFitDiffLite
 import com.now.nowbot.entity.MaiSongLite
 import com.now.nowbot.mapper.MaiChartLiteRepository
+import com.now.nowbot.mapper.MaiFitChartLiteRepository
+import com.now.nowbot.mapper.MaiFitDiffLiteRepository
 import com.now.nowbot.mapper.MaiSongLiteRepository
+import com.now.nowbot.model.JsonData.MaiFit
 import com.now.nowbot.model.JsonData.MaiSong
 import jakarta.persistence.Transient
 import org.springframework.stereotype.Component
+import kotlin.jvm.optionals.getOrNull
 
 @Component
-class MaiDao (
+class MaiDao(
     val maiSongLiteRepository: MaiSongLiteRepository,
     val maiChartLiteRepository: MaiChartLiteRepository,
+    val maiFitChartLiteRepository: MaiFitChartLiteRepository,
+    val maiFitDiffLiteRepository: MaiFitDiffLiteRepository,
 ) {
 
     fun findMaiSongById(id: Int): MaiSong {
@@ -58,5 +66,38 @@ class MaiDao (
         return charts.mapIndexed { i, chart ->
             MaiChartLite.from(chartIDs[i], chart)
         }
+    }
+
+    @Transient
+    fun saveMaiFit(maiFit: MaiFit) {
+        val allChart = maiFit
+            .charts
+            .entries
+            .map { (id, charts) -> charts.map { MaiFitChartLite.from(id, it) } }
+            .flatten()
+
+        for (chart in allChart) {
+            // 更新策略是 sid 与 level 一致是更新, 否则插入
+            if (maiFitChartLiteRepository.existsMaiFitChartLiteBySongIDAndLevel(chart.songID, chart.level)) {
+                maiFitChartLiteRepository.updateMaiFitChartLiteBySongIDAndLevel(chart.songID, chart.level, chart)
+            } else {
+                maiFitChartLiteRepository.save(chart)
+            }
+        }
+
+        val allDiff = maiFit
+            .diffData
+            .map { (id, diff) -> MaiFitDiffLite.from(id, diff) }
+        maiFitDiffLiteRepository.saveAll(allDiff)
+    }
+
+    fun getMaiFitChartDataBySID(sid:Int):List<MaiFit.ChartData> {
+        val data = maiFitChartLiteRepository.findMaiFitChartLitesBySongID(sid)
+        return data.map { it.toModel() }
+    }
+
+    fun getMaiFitDiffDataByKey(ket:String):MaiFit.DiffData? {
+        val data = maiFitDiffLiteRepository.findById(ket)
+        return data.map { it.toModel() }.getOrNull()
     }
 }
