@@ -105,6 +105,9 @@ public class PermissionImplement implements PermissionController {
         if (event.getRawMessage().contains("/")) {
             log.info("腾讯消息类：未含有对应的功能：{}", event.getRawMessage());
             onMessage.accept(new MessageChain("没找到对应的功能, 是不是打错命令了呢"));
+        } else {
+            // Consumer 一定要出一个结果吗
+            onMessage.accept(new MessageChain("喵"));
         }
     }
 
