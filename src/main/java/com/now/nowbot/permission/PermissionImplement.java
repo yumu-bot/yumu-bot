@@ -90,7 +90,7 @@ public class PermissionImplement implements PermissionController {
                 if (e instanceof BotException) {
                     reply = new MessageChain(e.getMessage());
                 } else {
-                    log.error("其他错误", e);
+                    log.error("腾讯消息类：其他错误", e);
                     continue;
                 }
             }
@@ -101,7 +101,11 @@ public class PermissionImplement implements PermissionController {
             onMessage.accept(reply);
             return;
         }
-        onMessage.accept(new MessageChain("没找到对应的功能, 是不是打错命令了呢"));
+
+        if (event.getRawMessage().contains("/")) {
+            log.info("腾讯消息类：未含有对应的功能：{}", event.getRawMessage());
+            onMessage.accept(new MessageChain("没找到对应的功能, 是不是打错命令了呢"));
+        }
     }
 
     private static boolean checkStopListener() {
