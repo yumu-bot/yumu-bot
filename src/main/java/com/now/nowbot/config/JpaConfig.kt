@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.core.env.Environment
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
-import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter
@@ -44,7 +43,7 @@ class JpaConfig(
         prop["hibernate.ddl-auto"] = env.getProperty("spring.jpa.hibernate.ddl-auto", "none")
         prop["hibernate.physical_naming_strategy"] =
             "org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy"
-        prop["hibernate.globally_quoted_identifiers"] = "true"
+        prop["hibernate.globally_quoted_identifiers"] = "false"
         factory.setJpaProperties(prop)
         return factory
     }
@@ -95,7 +94,7 @@ class NewbieJpa(
         prop["hibernate.show_sql"] = env.getProperty("spring.jpa.show-sql")
         prop["database-platform"] = env.getProperty("spring.jpa.database-platform")
         prop["hibernate.ddl-auto"] = "none"
-        prop["hibernate.globally_quoted_identifiers"] = "true"
+        prop["hibernate.globally_quoted_identifiers"] = "false"
         factory.setJpaProperties(prop)
         return factory
     }
