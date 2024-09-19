@@ -10,7 +10,7 @@ public class DivingFishConfig {
      * 接口路径, 一般不用改
      */
     public static final String url   = "https://www.diving-fish.com/";
-    public static final String token = "";
+    public static final String token = "BMurCyOaA0cfist6VpNvb7ZXK5h1noSE";
 
     public String getUrl() {
         return url;

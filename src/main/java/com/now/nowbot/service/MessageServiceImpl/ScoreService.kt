@@ -99,7 +99,6 @@ class ScoreService(
         val matcher = OfficialInstruction.SCORE.matcher(messageText)
         if (!matcher.find()) return null
 
-
         val mode = getMode(matcher)
         val isMyself = AtomicBoolean(false)
         val isDefault = OsuMode.isDefaultOrNull(mode.data)
@@ -119,6 +118,8 @@ class ScoreService(
         val isDefault = param.isDefault
 
         val bid = param.bid
+
+        if (bid == 0L) throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
 
         // 处理 mods
         val modsStr = param.modsStr

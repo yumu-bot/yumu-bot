@@ -560,9 +560,13 @@ enum class Instruction(val pattern: Pattern) {
         appendRange()
     }),
 
-    TEST_MAI_BP(CommandPatternBuilder.create {
-        appendCommands("test\\s*best", "tb")
-        appendRange()
+    MAI_SCORE(CommandPatternBuilder.create {
+        appendCommands("mai(mai)?\\s*(score|song)", "ms")
+        appendGroup(MAYBE) {
+            append(REG_COLON)
+            appendSpace()
+            appendCaptureGroup("diff", REG_DIFF)
+        }
     }),
 
     ;

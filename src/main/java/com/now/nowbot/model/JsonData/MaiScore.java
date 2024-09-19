@@ -4,6 +4,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class MaiScore {
     // 也就是准确率
@@ -72,6 +77,18 @@ public class MaiScore {
     // 通过 MaiSong 算出来的理论 DX Score
     @JsonIgnoreProperties
     Integer max;
+
+    // BP 多少
+    @JsonIgnoreProperties
+    Integer position;
+
+    // 自己拿
+    @JsonIgnoreProperties
+    String artist;
+
+    // 自己拿
+    @JsonIgnoreProperties
+    String charter;
 
     public Double getAchievements() {
         return achievements;
@@ -196,11 +213,70 @@ public class MaiScore {
         return max;
     }
 
-    public void setMax(MaiSong song) {
-        var notes = song.getCharts().get(this.index).getNotes();
+    public void setMax(Integer max) {
+        this.max = max;
+    }
 
-        if (notes != null) {
-            this.max = 3 * (notes.tap() + notes.touch() + notes.hold() + notes.slide() + notes.break_());
+    public Integer getPosition() {
+        return position;
+    }
+
+    public void setPosition(Integer position) {
+        this.position = position;
+    }
+
+    public String getArtist() {
+        return artist;
+    }
+
+    public void setArtist(String artist) {
+        this.artist = artist;
+    }
+
+    public String getCharter() {
+        return charter;
+    }
+
+    public void setCharter(String charter) {
+        this.charter = charter;
+    }
+
+    public static void insertSongData(List<MaiScore> scores, Map<Integer, MaiSong> data) {
+        for (var s : scores) {
+            if (s.getSongID() == null) {
+                continue;
+            }
+
+            var d = data.get(s.getSongID().intValue());
+            if (Objects.isNull(d)) continue;
+
+            insertSongData(s, d);
+        }
+    }
+
+    public static void insertSongData(MaiScore score, MaiSong song) {
+        if (score == null || song == null) return;
+
+        var chart = song.getCharts().get(score.getIndex());
+        var notes = chart.getNotes();
+
+        score.setCharter(chart.getCharter());
+        score.max = 3 * (notes.tap() + notes.touch() + notes.hold() + notes.slide() + notes.break_());
+
+        score.setArtist(song.getInfo().getArtist());
+    }
+
+    public static void insertPosition(List<MaiScore> scores, boolean isBest30) {
+        if (CollectionUtils.isEmpty(scores)) return;
+
+        for (int i = 0; i < scores.size(); i++) {
+            var s = scores.get(i);
+
+            if (isBest30) {
+                s.setPosition(i + 1);
+            } else {
+                s.setPosition(i + 36);
+            }
         }
     }
 }

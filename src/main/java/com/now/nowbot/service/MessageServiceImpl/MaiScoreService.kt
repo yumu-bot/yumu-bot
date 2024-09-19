@@ -8,34 +8,31 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 
-@Service("TEST_MAI_BP")
-class TestMaiBPService(private val maimaiApiService: MaimaiApiService) :
-    MessageService<TestMaiBPService.MaiBPParam> {
+@Service("MAI_SCORE")
+class MaiScoreService(private val maimaiApiService: MaimaiApiService) :
+    MessageService<MaiScoreService.MaiScoreParam> {
 
-    data class MaiBPParam(val range: Int)
+    data class MaiScoreParam(val id : Int)
 
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: MessageService.DataValue<MaiBPParam>,
+        data: MessageService.DataValue<MaiScoreParam>,
     ): Boolean {
-        val matcher = Instruction.TEST_MAI_BP.matcher(messageText)
+        val matcher = Instruction.MAI_SCORE.matcher(messageText)
 
         if (!matcher.find()) {
             return false
         }
 
-        val range = matcher.group("range")?.toInt() ?: 1
 
-        data.value = MaiBPParam(range)
+
+        data.value = MaiScoreParam(1)
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: MaiBPParam) {
-        val scores = MaiBestPerformanceService.getScores(event.sender.id, null, maimaiApiService)
-        var score = MaiBestPerformanceService.getScore(param.range, scores)
+    override fun HandleMessage(event: MessageEvent, param: MaiScoreParam) {
 
-        event.reply(getMessage(score, maimaiApiService.getMaimaiCover(score.songID)))
     }
 
     companion object {

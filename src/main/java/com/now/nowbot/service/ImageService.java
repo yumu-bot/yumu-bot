@@ -630,6 +630,15 @@ public class ImageService {
 
 
 
+    public byte[] getPanelMA(MaiBestPerformanceService.PanelMAParam param) {
+        HttpHeaders headers = getDefaultHeader();
+
+        var body = param.toMap();
+
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_MA", httpEntity);
+    }
+
     public byte[] getPanelME(MaiBestPerformanceService.PanelMEParam param) {
         HttpHeaders headers = getDefaultHeader();
 
