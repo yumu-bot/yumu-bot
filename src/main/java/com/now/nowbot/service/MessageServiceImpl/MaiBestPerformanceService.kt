@@ -17,14 +17,14 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.QQMsgUtil
 import com.now.nowbot.util.command.REG_HYPHEN
 import com.yumu.core.extensions.isNotNull
-import kotlin.math.max
-import kotlin.math.min
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.CollectionUtils
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import kotlin.math.max
+import kotlin.math.min
 
 @Service("MAI_BP")
 class MaiBestPerformanceService(
@@ -32,7 +32,7 @@ class MaiBestPerformanceService(
     private val imageService: ImageService,
 ) : MessageService<MaiBestPerformanceService.MaiScoreParam> {
 
-    data class MaiScoreParam(val name: String?, val qq: Long?, val range: CmdRange<Int>)
+    data class MaiScoreParam(val name: String?, val qq: Long?, val range: CmdRange<Int>, val isMyself: Boolean = false)
 
     @JvmRecord
     data class PanelMEParam(
@@ -132,14 +132,14 @@ class MaiBestPerformanceService(
         } else if (at != null) {
             data.value = MaiScoreParam(null, at.target, range)
         } else {
-            data.value = MaiScoreParam(null, event.sender.id, range)
+            data.value = MaiScoreParam(null, event.sender.id, range, true)
         }
 
         return true
     }
 
     override fun HandleMessage(event: MessageEvent, param: MaiScoreParam) {
-        val scores = getBestScores(param.qq, param.name, maimaiApiService)
+        val scores = getBestScores(param.qq, param.name, param.isMyself, maimaiApiService)
         val songs = maimaiApiService.getMaimaiSongLibrary()
         val charts = getScore(param.range, scores, songs)
         val isMultipleScore = charts.deluxe.size + charts.standard.size > 1
@@ -174,6 +174,7 @@ class MaiBestPerformanceService(
         fun getBestScores(
             qq: Long?,
             name: String?,
+            isMyself: Boolean,
             maimaiApiService: MaimaiApiService,
         ): MaiBestPerformance {
 
@@ -181,18 +182,25 @@ class MaiBestPerformanceService(
                 try {
                     maimaiApiService.getMaimaiBest50(qq)
                 } catch (e: WebClientResponseException.BadRequest) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_QQBadRequest)
+                    if (isMyself) {
+                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouBadRequest)
+                    } else {
+                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_QQBadRequest)
+                    }
                 } catch (e: WebClientResponseException.Forbidden) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_Forbidden)
+                    if (isMyself) {
+                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouForbidden)
+                    } else {
+                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_PlayerForbidden)
+                    }
                 }
             } else if (name.isNotNull()) {
                 try {
                     maimaiApiService.getMaimaiBest50(name)
                 } catch (e: WebClientResponseException.BadRequest) {
-                    log.error("?", e)
                     throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_NameBadRequest)
                 } catch (e: WebClientResponseException.Forbidden) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_Forbidden)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_PlayerForbidden)
                 }
             } else {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)

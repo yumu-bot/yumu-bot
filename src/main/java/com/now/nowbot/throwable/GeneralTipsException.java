@@ -9,9 +9,11 @@ public class GeneralTipsException extends TipsException {
         G_Banned_Me("你被办了。"),
         G_Banned_Player("%s 被办了。"),
 
-        G_Maimai_Forbidden("该玩家禁止其他人获取数据。"),
-        G_Maimai_QQBadRequest("您的水鱼账号似乎没有绑定此 QQ，或者是网络连接不稳定。"),
-        G_Maimai_NameBadRequest("找不到叫这个名字的水鱼用户，或者是网络连接不稳定。"),
+        G_Maimai_YouForbidden("您已禁止其他人获取数据。"),
+        G_Maimai_PlayerForbidden("该玩家已禁止其他人获取数据。"),
+        G_Maimai_YouBadRequest("您的 QQ 似乎并没有和您的水鱼账号绑定。"),
+        G_Maimai_QQBadRequest("这个 QQ 似乎并没有和该玩家的水鱼账号绑定。"),
+        G_Maimai_NameBadRequest("找不到叫这个名字的水鱼账号。"),
         G_Maimai_NoDeveloperToken("机器人没有配置开发者授权，暂时无法获取。"),
 
         G_Exceed_Param("请输入正确的编号或范围！"),
