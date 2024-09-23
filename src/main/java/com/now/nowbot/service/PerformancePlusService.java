@@ -9,6 +9,8 @@ import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.json.PPPlus;
 import com.now.nowbot.model.json.Score;
 import com.now.nowbot.service.osuApiService.impl.BeatmapApiImpl;
+import com.now.nowbot.throwable.GeneralTipsException;
+import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.AsyncMethodExecutor;
 import com.now.nowbot.util.JacksonUtil;
 import jakarta.annotation.Resource;
@@ -77,14 +79,9 @@ public class PerformancePlusService {
                 .block();
     }
 
-    public PPPlus.Stats calculateUserPerformance(List<Score> bps) {
+    public PPPlus.Stats calculateUserPerformance(List<Score> bps) throws TipsException {
         List<PPPlus> ppPlus;
-        try {
-            ppPlus = getScorePerformancePlus(bps);
-        } catch (WebClientResponseException e) {
-            log.error(e.getResponseBodyAsString());
-            throw e;
-        }
+        ppPlus = getScorePerformancePlus(bps);
 
         double aim = 0;
         double jumpAim = 0;
@@ -142,7 +139,7 @@ public class PerformancePlusService {
     ) {
     }
 
-    public List<PPPlus> getScorePerformancePlus(Iterable<Score> scores) {
+    public List<PPPlus> getScorePerformancePlus(Iterable<Score> scores) throws TipsException {
         var scoreIds = StreamSupport.stream(scores.spliterator(), true).map(Score::getScoreID).toList();
         var ppPlusList = performancePlusLiteRepository.findScorePPP(scoreIds);
         var ppPlusMap = ppPlusList.stream().collect(Collectors.toMap(PerformancePlusLite::getId, p -> p));
@@ -174,14 +171,21 @@ public class PerformancePlusService {
                 return ppp;
             }).collect(Collectors.toList());
         }
-        var result = webClient.post()
-                .uri(u -> u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/batch/calculation").build())
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(JacksonUtil.toJson(body))
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .map(node -> JacksonUtil.parseObjectList(node, PPPlus.class))
-                .block();
+        List<PPPlus> result;
+
+        try {
+            result = webClient.post()
+                    .uri(u -> u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/batch/calculation").build())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(JacksonUtil.toJson(body))
+                    .retrieve()
+                    .bodyToMono(JsonNode.class)
+                    .map(node -> JacksonUtil.parseObjectList(node, PPPlus.class))
+                    .block();
+        } catch (WebClientResponseException e) {
+            log.error("PP+ 获取失败", e);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PP+");
+        }
 
         int i = 0;
         var data = new ArrayList<PerformancePlusLite>(postDataId.size());

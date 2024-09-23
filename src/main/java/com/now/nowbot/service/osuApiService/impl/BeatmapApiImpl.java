@@ -208,7 +208,10 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         }
     }
 
-    private List<Integer> getMapObjectList(String mapStr) {
+    /**
+     * @throws IndexOutOfBoundsException 谱面不完整的时候会丢这个
+     */
+    private List<Integer> getMapObjectList(String mapStr) throws IndexOutOfBoundsException {
         int start = mapStr.indexOf("[HitObjects]") + 12;
         int end = mapStr.indexOf("[", start);
         String hit;
@@ -228,7 +231,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
 
         var p = Pattern.compile("^\\d+,\\d+,(\\d+)");
 
-        ArrayList<Integer> result = hitObjectStr.stream().map((m) -> {
+        return hitObjectStr.stream().map((m) -> {
             var m2 = p.matcher(m);
             if (m2.find()) {
                 return Integer.parseInt(m2.group(1));
@@ -236,12 +239,11 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
                 return 0;
             }
         }).collect(Collectors.toCollection(ArrayList::new));
-        return result;
     }
 
     private List<Integer> getGrouping(List<Integer> x, int groups) {
         if (groups < 1) throw new IllegalArgumentException();
-        var steps = (x.getLast() - x.getFirst()) / groups + 1;
+        var steps = (x.getLast() - x.getFirst()) / (groups + 1);
         var out = new LinkedList<Integer>();
         int m = x.getFirst() + steps;
         short sum = 0;
@@ -258,18 +260,27 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         return out;
     }
 
-    BeatmapObjectCountLite getNewCount(long bid) throws Exception {
+    BeatmapObjectCountLite getCount(long bid) throws Exception {
         var result = new BeatmapObjectCountLite();
         result.setBid(bid);
         var file = getBeatMapFileStr(bid);
-        var md5 = beatmapMd5(file);
+        if (file == null) {
+            refreshBeatMapFile(bid);
+            file = getBeatMapFileStr(bid);
+            if (file == null) {
+                return null;
+            }
+        }
+        String md5 = beatmapMd5(file);
+
         result.setCheck(md5);
 
         var objectList = getMapObjectList(file);
 
         result.setTimestamp(objectList.stream().mapToInt(Integer::intValue).toArray());
         // ??? debug 看起来结果数组长度是25, 不知道你那边有没有校验, 先参数 +1
-        var grouping = getGrouping(objectList, 26 + 1);
+        // 你妈的 上面忘记加括号了吧
+        var grouping = getGrouping(objectList, 26);
         result.setDensity(grouping.stream().mapToInt(Integer::intValue).toArray());
 
         return result;
@@ -308,8 +319,14 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
             if (!r.isEmpty()) result = r.getFirst();
         }
         if (result == null) {
-            var dataObj = getNewCount(map.getBeatMapID());
-            dataObj = beatmapObjectCountMapper.saveAndFlush(dataObj);
+            BeatmapObjectCountLite dataObj;
+            try {
+                dataObj = getCount(map.getBeatMapID());
+                dataObj = beatmapObjectCountMapper.saveAndFlush(dataObj);
+            } catch (Exception e) {
+                refreshBeatMapFile(map.getBeatMapID());
+                return null;
+            }
             result = dataObj.getDensity();
         }
         return result;
@@ -321,7 +338,8 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         var time = beatmapObjectCountMapper.getTimeStampByBidAndIndex(bid, passObj);
         if (time == null) {
             try {
-                var dataObj = getNewCount(bid);
+                var dataObj = getCount(bid);
+                if (dataObj == null) return 0;
                 if (Objects.requireNonNull(dataObj.getTimestamp()).length < passObj) return 0;
                 dataObj = beatmapObjectCountMapper.saveAndFlush(dataObj);
                 var start = Objects.requireNonNull(dataObj.getTimestamp())[0];
