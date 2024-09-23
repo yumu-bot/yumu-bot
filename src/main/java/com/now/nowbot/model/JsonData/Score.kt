@@ -1,303 +1,306 @@
-package com.now.nowbot.model.JsonData;
+package com.now.nowbot.model.jsonData
 
-import com.fasterxml.jackson.annotation.*;
-import com.now.nowbot.model.enums.OsuMode;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.util.List;
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.jsonData.Score.Weight
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
+import java.util.Objects
+import kotlin.math.ln
+import kotlin.math.roundToInt
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true, allowSetters = true, allowGetters = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class Score {
-    static final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-            .appendPattern("yyyy-MM-dd")
-            .appendLiteral("T")
-            .appendPattern("HH:mm:ss")
-            .appendZoneId().toFormatter();
+open class Score {
+    //@JsonProperty("statistics")
+    var accuracy: Double? = null
 
-    //    @JsonProperty("statistics")
-    Double accuracy;
+    @JsonProperty("best_id") var bestID: Long? = null
 
-    @JsonProperty("best_id")
-    Long bestID;
+    @JsonProperty("max_combo") var maxCombo: Int? = null
 
-    @JsonProperty("max_combo")
-    Integer maxCombo;
+    @JsonProperty("user_id") var UID: Long? = null
 
-    @JsonProperty("user_id")
-    Long UID;
+    @JsonAlias("created_at") var createTime: String? = null
 
-    @JsonAlias("created_at")
-    String createTime;
+    @JsonProperty("id") var scoreID: Long? = null
 
-    @JsonProperty("id")
-    Long scoreID;
+    @JsonIgnoreProperties var mode: OsuMode? = null
 
-    @JsonIgnoreProperties
-    OsuMode mode;
+    @JsonProperty("mode_int") var modeInt: Int? = null
 
-    @JsonProperty("mode_int")
-    Integer modeInt;
+    var osuMods: MutableList<String?>? = null
 
-    List<String> osuMods;
+    var passed: Boolean? = null
 
-    Boolean passed;
+    var perfect: Boolean? = null
 
-    Boolean perfect;
+    @JsonProperty("pp") var PP: Float? = null
 
-    @JsonProperty("pp")
-    Float PP;
+    var rank: String? = null
 
-    String rank;
+    var replay: Boolean? = null
 
-    Boolean replay;
+    var score: Int? = null
 
-    Integer score;
+    var statistics: Statistics? = null
 
-    Statistics statistics;
+    var type: String? = null
 
-    String type;
-
-    @JsonIgnoreProperties
-    boolean legacy;
+    @JsonIgnoreProperties var legacy: Boolean = false
 
     // 仅查询bp时存在
-    @JsonProperty("weight")
-    Weight weight;
+    @JsonProperty("weight") var weight: Weight? = null
 
-    public record Weight(
-            @JsonProperty("percentage") Float percentage,
-            @JsonProperty("pp") Float weightedPP) {
-        public int getIndex() {
-            var i = Math.log(percentage / 100) / Math.log(0.95);
-            return (int) Math.round(i);
+    @JvmRecord
+    data class Weight(
+        @JsonProperty("percentage") val percentage: Float?,
+        @JsonProperty("pp") val weightedPP: Float,
+    ) {
+        fun getIndex(): Int {
+            val i = ln((percentage!! / 100).toDouble()) / ln(0.95)
+            return i.roundToInt()
         }
     }
 
-    @JsonProperty("beatmap")
-    BeatMap beatMap;
+    @JsonProperty("beatmap") var beatMap: BeatMap? = null
 
-    @JsonProperty("beatmapset")
-    BeatMapSet beatMapSet;
+    @JsonProperty("beatmapset") var beatMapSet: BeatMapSet? = null
 
-    MicroUser user;
+    var user: MicroUser? = null
 
     @JsonProperty("mode")
-    public void setMode(String mode){
-        this.mode = OsuMode.getMode(mode);
+    fun setMode(mode: String?) {
+        this.mode = OsuMode.getMode(mode)
     }
 
-    public Double getAccuracy() {
-        return accuracy;
+    fun getAccuracy(): Double? {
+        return accuracy
     }
 
-    public void setAccuracy(Double accuracy) {
-        this.accuracy = accuracy;
+    fun setAccuracy(accuracy: Double?) {
+        this.accuracy = accuracy
     }
 
-    public Long getBestID() {
-        return bestID;
+    fun getBestID(): Long? {
+        return bestID
     }
 
-    public void setBestID(Long bestID) {
-        this.bestID = bestID;
+    fun setBestID(bestID: Long?) {
+        this.bestID = bestID
     }
 
-    public Long getUID() {
-        return UID;
+    fun getUID(): Long? {
+        return UID
     }
 
-    public void setUID(Long UID) {
-        this.UID = UID;
+    fun setUID(UID: Long?) {
+        this.UID = UID
     }
 
-    public LocalDateTime getCreateTimePretty() {
-        if (createTime != null) return LocalDateTime.parse(createTime, formatter).plusHours(8L);
-        return LocalDateTime.now();
+    fun getCreateTimePretty(): LocalDateTime {
+        if (createTime == null) return LocalDateTime.now()
+        else return LocalDateTime.parse(createTime!!, formatter).plusHours(8L)
     }
 
     @JsonProperty("create_at_str")
-    public String getCreateTime() {
-        return createTime;
+    fun getCreateTime(): String? {
+        return createTime
     }
 
-    public void setCreateTime(String createTime) {
-        this.createTime = createTime;
+    fun setCreateTime(createTime: String?) {
+        this.createTime = createTime
     }
 
-    public Long getScoreID() {
-        return scoreID;
+    fun getScoreID(): Long? {
+        return scoreID
     }
 
-    public void setScoreID(Long scoreID) {
-        this.scoreID = scoreID;
+    fun setScoreID(scoreID: Long?) {
+        this.scoreID = scoreID
     }
 
-    public OsuMode getMode() {
-        return mode;
+    fun getMode(): OsuMode? {
+        return mode
     }
 
-    public void setMode(OsuMode mode) {
-        this.mode = mode;
+    fun setMode(mode: OsuMode?) {
+        this.mode = mode
     }
 
-    public Integer getModeInt() {
-        return modeInt;
+    fun getModeInt(): Int? {
+        return modeInt
     }
 
-    public void setModeInt(Integer modeInt) {
-        this.modeInt = modeInt;
+    fun setModeInt(modeInt: Int?) {
+        this.modeInt = modeInt
     }
 
-    public List<String> getMods() {
-        return osuMods;
+    fun getMods(): MutableList<String?>? {
+        return osuMods
     }
 
-    public void setMods(List<String> osuMods) {
-        this.osuMods = osuMods;
+    fun setMods(osuMods: MutableList<String?>?) {
+        this.osuMods = osuMods
     }
 
-    public Boolean getPassed() {
-        return passed;
+    fun getPassed(): Boolean? {
+        return passed
     }
 
-    public void setPassed(Boolean passed) {
-        this.passed = passed;
+    fun setPassed(passed: Boolean?) {
+        this.passed = passed
     }
 
-    public Boolean getPerfect() {
-        return perfect;
+    fun getPerfect(): Boolean? {
+        return perfect
     }
 
-    public void setPerfect(Boolean perfect) {
-        this.perfect = perfect;
+    fun setPerfect(perfect: Boolean?) {
+        this.perfect = perfect
     }
 
-    public Float getPP() {
+    fun getPP(): Float {
         if (Objects.nonNull(PP)) {
-            return PP;
+            return PP!!
         }
 
         // PPY PP 有时候是 null
-        if (Objects.nonNull(weight) && Objects.nonNull(weight.percentage) && Objects.nonNull(weight.weightedPP) && weight.percentage > 0) {
-            return weight.weightedPP / (weight.percentage / 100f);
+        if (
+            Objects.nonNull(weight) &&
+                Objects.nonNull(weight!!.percentage) &&
+                Objects.nonNull(weight!!.weightedPP) &&
+                weight!!.percentage!! > 0
+        ) {
+            return weight!!.weightedPP / (weight!!.percentage!! / 100f)
         }
 
-        return 0f;
+        return 0f
     }
 
-    public void setPP(Float pp) {
-        this.PP = pp;
+    fun setPP(pp: Float) {
+        this.PP = pp
     }
 
-    public Float getWeightedPP() {
-        if (Objects.nonNull(weight) && Objects.nonNull(weight.weightedPP)) {
-            return weight.weightedPP;
+    fun getWeightedPP(): Float {
+        if (Objects.nonNull(weight) && Objects.nonNull(weight!!.weightedPP)) {
+            return weight!!.weightedPP
         }
 
-        return 0f;
+        return 0f
     }
 
-    public String getRank() {
-        return rank;
+    fun getRank(): String? {
+        return rank
     }
 
-    public void setRank(String rank) {
-        this.rank = rank;
+    fun setRank(rank: String?) {
+        this.rank = rank
     }
 
-    public Boolean getReplay() {
-        return replay;
+    fun getReplay(): Boolean? {
+        return replay
     }
 
-    public void setReplay(Boolean replay) {
-        this.replay = replay;
+    fun setReplay(replay: Boolean?) {
+        this.replay = replay
     }
 
-    public Integer getScore() {
-        return score;
+    fun getScore(): Int? {
+        return score
     }
 
-    public void setScore(Integer score) {
-        this.score = score;
+    fun setScore(score: Int?) {
+        this.score = score
     }
 
-    public String getType() {
-        return type;
+    fun getType(): String? {
+        return type
     }
 
-    public void setType(String type) {
-        this.type = type;
+    fun setType(type: String?) {
+        this.type = type
     }
 
-    public boolean isLegacy() {
-        legacy = Objects.nonNull(type) && !Objects.equals(type, "solo_score"); //目前只看见有这个类别，mp 房也是这个类别
-        return legacy;
+    fun isLegacy(): Boolean {
+        legacy = Objects.nonNull(type) && type != "solo_score" // 目前只看见有这个类别，mp 房也是这个类别
+        return legacy
     }
 
-    public void setLegacy(boolean legacy) {
-        this.legacy = legacy;
+    fun setLegacy(legacy: Boolean) {
+        this.legacy = legacy
     }
 
-    public Statistics getStatistics() {
-        return statistics;
+    fun getStatistics(): Statistics? {
+        return statistics
     }
 
-    public void setStatistics(Statistics statistics) {
-        this.statistics = statistics;
+    fun setStatistics(statistics: Statistics?) {
+        this.statistics = statistics
     }
 
-    public BeatMap getBeatMap() {
-        return beatMap;
+    fun getBeatMap(): BeatMap? {
+        return beatMap
     }
 
-    public void setBeatMap(BeatMap beatMap) {
-        this.beatMap = beatMap;
+    fun setBeatMap(beatMap: BeatMap?) {
+        this.beatMap = beatMap
     }
 
-    public BeatMapSet getBeatMapSet() {
-        return beatMapSet;
+    fun getBeatMapSet(): BeatMapSet? {
+        return beatMapSet
     }
 
-    public void setBeatMapSet(BeatMapSet beatMapSet) {
-        this.beatMapSet = beatMapSet;
+    fun setBeatMapSet(beatMapSet: BeatMapSet?) {
+        this.beatMapSet = beatMapSet
     }
 
-    public MicroUser getUser() {
-        return user;
+    fun getUser(): MicroUser? {
+        return user
     }
 
-    public void setUser(MicroUser user) {
-        this.user = user;
+    fun setUser(user: MicroUser?) {
+        this.user = user
     }
 
-    public Integer getMaxCombo() {
-        return maxCombo;
+    fun getMaxCombo(): Int? {
+        return maxCombo
     }
 
-    public void setMaxCombo(Integer maxCombo) {
-        this.maxCombo = maxCombo;
+    fun setMaxCombo(maxCombo: Int?) {
+        this.maxCombo = maxCombo
     }
 
-    public Boolean isPerfect() {
-        return perfect;
+    fun isPerfect(): Boolean? {
+        return perfect
     }
 
-    public Weight getWeight() {
-        return weight;
+    fun getWeight(): Weight? {
+        return weight
     }
 
-    public void setWeight(Weight weight) {
-        this.weight = weight;
+    fun setWeight(weight: Weight?) {
+        this.weight = weight
     }
 
+    override fun toString(): String {
+        return "Score{accuracy=${accuracy}, bestID=${bestID}, maxCombo=${maxCombo}, UID=${UID}, createTime='${createTime}${'\''}, scoreID=${scoreID}, mode=${mode}, modeInt=${modeInt}, osuMods=${osuMods}, passed=${passed}, perfect=${perfect}, PP=${PP}, rank='${rank}${'\''}, replay=${replay}, score=${score}, statistics=${statistics}, type='${type}${'\''}, legacy=${legacy}, weight=${weight}, beatMap=${beatMap}, beatMapSet=${beatMapSet}, user=${user}${'}'}"
+    }
 
-    @Override
-    public String toString() {
-        return STR."Score{accuracy=\{accuracy}, bestID=\{bestID}, maxCombo=\{maxCombo}, UID=\{UID}, createTime='\{createTime}\{'\''}, scoreID=\{scoreID}, mode=\{mode}, modeInt=\{modeInt}, osuMods=\{osuMods}, passed=\{passed}, perfect=\{perfect}, PP=\{PP}, rank='\{rank}\{'\''}, replay=\{replay}, score=\{score}, statistics=\{statistics}, type='\{type}\{'\''}, legacy=\{legacy}, weight=\{weight}, beatMap=\{beatMap}, beatMapSet=\{beatMapSet}, user=\{user}\{'}'}";
+    companion object {
+        @JvmField
+        val formatter: DateTimeFormatter =
+            DateTimeFormatterBuilder()
+                .appendPattern("yyyy-MM-dd")
+                .appendLiteral("T")
+                .appendPattern("HH:mm:ss")
+                .appendZoneId()
+                .toFormatter()
     }
 }
