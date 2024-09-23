@@ -287,6 +287,7 @@ public interface OsuBeatmapApiService {
             r = getPP(score);
 
             if (r.getPp() == 0) try {
+                NowbotApplication.log.info("无法获取 {} 的 PP，正在刷新谱面文件！", beatMap.getBeatMapID());
                 refreshBeatMapFile(beatMap.getBeatMapID());
                 r = getPP(score);
             } catch (IOException ignored) {
@@ -300,8 +301,6 @@ public interface OsuBeatmapApiService {
         if (r.getPp() > 0) {
             score.setPP((float) r.getPp());
             beatMap.setStarRating((float) r.getStar());
-        } else {
-            NowbotApplication.log.info("无法获取{}的 PP！", beatMap.getBeatMapID());
         }
 
         DataUtil.applyBeatMapChanges(beatMap, modsInt);
@@ -328,6 +327,7 @@ public interface OsuBeatmapApiService {
             r = getMaxPP(id, mode, modsInt);
 
             if (r.getPp() == 0) try {
+                NowbotApplication.log.info("无法获取 {} 的 PP，正在刷新谱面文件！", beatMap.getBeatMapID());
                 refreshBeatMapFile(id);
                 r = getMaxPP(id, mode, modsInt);
             } catch (IOException ignored) {
@@ -338,7 +338,10 @@ public interface OsuBeatmapApiService {
             return;
         }
 
-        beatMap.setStarRating((float) r.getStar());
+        if (r.getPp() > 0) {
+            beatMap.setStarRating((float) r.getStar());
+        }
+
         DataUtil.applyBeatMapChanges(beatMap, modsInt);
     }
 
@@ -359,8 +362,8 @@ public interface OsuBeatmapApiService {
 
             r = Rosu.calculate(b, js);
 
-
             if (r.getPp() == 0) try {
+                NowbotApplication.log.info("无法获取 {} 的 PP，正在刷新谱面文件！", beatMap.getBeatMapID());
                 refreshBeatMapFile(beatMap.getBeatMapID());
                 r = Rosu.calculate(b, js);
             } catch (IOException ignored) {
@@ -371,7 +374,10 @@ public interface OsuBeatmapApiService {
             return;
         }
 
-        beatMap.setStarRating((float) r.getStar());
+        if (r.getPp() > 0) {
+            beatMap.setStarRating((float) r.getStar());
+        }
+
         DataUtil.applyBeatMapChanges(beatMap, m);
     }
 }
