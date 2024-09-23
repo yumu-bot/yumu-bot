@@ -15,7 +15,7 @@ public class BsApiService {
     private static final Optional<String> TOKEN = NowbotConfig.BS_TOKEN;
 
     public String getOsuFile(long bid) {
-        if (TOKEN.isEmpty()) throw new RuntimeException("无法权限访问");
+        if (TOKEN.isEmpty()) throw new RuntimeException("获取 osu 文件：无权限访问");
         return webClient.get()
                 .uri(URL, b -> b.path("/api/file/map/osufile/{bid}").build(bid))
                 .header("AuthorizationX", TOKEN.get())
