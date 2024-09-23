@@ -113,7 +113,8 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     public String downloadBeatMapFileStrForce(long bid) {
         try {
             return bsApiService.getOsuFile(bid);
-        } catch (Exception ignore) {}
+        } catch (Exception ignore) {
+        }
 
         if (writeBeatMapFile(bid)) {
             try {
@@ -309,6 +310,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     }
 
     @Override
+    @NonNull
     public int[] getBeatmapObjectGrouping26(BeatMap map) throws Exception {
         int[] result = null;
         if (StringUtils.hasText(map.getMd5())) {
@@ -325,11 +327,18 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
                 dataObj = beatmapObjectCountMapper.saveAndFlush(dataObj);
             } catch (Exception e) {
                 refreshBeatMapFile(map.getBeatMapID());
-                return null;
+                try {
+                    dataObj = getCount(map.getBeatMapID());
+                    dataObj = beatmapObjectCountMapper.saveAndFlush(dataObj);
+                } catch (Exception e1) {
+                    log.error("谱面密度：获取失败", e1);
+                    return new int[0];
+                }
             }
             result = dataObj.getDensity();
         }
-        return result;
+
+        return Objects.requireNonNullElseGet(result, () -> new int[0]);
     }
 
     @Override
