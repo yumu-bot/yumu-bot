@@ -1,10 +1,10 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
-import com.now.nowbot.model.jsonData.OsuUser
-import com.now.nowbot.model.jsonData.Score
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -13,10 +13,10 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
-import java.util.regex.Matcher
 import org.springframework.stereotype.Service
 import org.springframework.util.CollectionUtils
 import org.springframework.util.StringUtils
+import java.util.regex.Matcher
 
 @Service("TEST_HD")
 class TestHiddenPPService(

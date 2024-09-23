@@ -1,10 +1,10 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.jsonData.MaiScore
+import com.now.nowbot.model.json.MaiScore
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
-import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 

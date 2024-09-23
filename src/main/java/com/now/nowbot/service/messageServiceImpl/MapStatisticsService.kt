@@ -1,10 +1,10 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.model.jsonData.BeatMap
-import com.now.nowbot.model.jsonData.OsuUser
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -21,15 +21,15 @@ import com.now.nowbot.util.CmdUtil.isAvoidance
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
-import java.util.regex.Matcher
-import kotlin.math.min
-import kotlin.math.round
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import rosu.Rosu
 import rosu.parameter.JniScore
 import rosu.result.JniResult
+import java.util.regex.Matcher
+import kotlin.math.min
+import kotlin.math.round
 
 @Service("MAP")
 class MapStatisticsService(

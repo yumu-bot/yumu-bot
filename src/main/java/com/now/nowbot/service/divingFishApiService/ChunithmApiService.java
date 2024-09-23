@@ -1,6 +1,6 @@
 package com.now.nowbot.service.divingFishApiService;
 
-import com.now.nowbot.model.jsonData.ChuBestPerformance;
+import com.now.nowbot.model.json.ChuBestPerformance;
 
 public interface ChunithmApiService {
 

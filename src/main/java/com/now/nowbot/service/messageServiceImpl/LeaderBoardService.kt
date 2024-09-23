@@ -1,8 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.jsonData.BeatMap
-import com.now.nowbot.model.jsonData.Score
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -12,13 +12,13 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.serviceException.LeaderBoardException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
-import java.util.regex.Matcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.CollectionUtils
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.regex.Matcher
 
 @Service("LEADER_BOARD")
 class LeaderBoardService(

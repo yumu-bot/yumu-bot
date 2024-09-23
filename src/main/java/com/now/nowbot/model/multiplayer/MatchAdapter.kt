@@ -1,9 +1,9 @@
 package com.now.nowbot.model.multiplayer
 
-import com.now.nowbot.model.jsonData.BeatMap
-import com.now.nowbot.model.jsonData.MicroUser
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.json.MicroUser
 import java.time.OffsetDateTime
 
 interface MatchAdapter {

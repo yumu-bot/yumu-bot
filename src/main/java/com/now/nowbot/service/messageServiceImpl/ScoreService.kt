@@ -1,10 +1,10 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.jsonData.BeatmapUserScore
-import com.now.nowbot.model.jsonData.OsuUser
-import com.now.nowbot.model.jsonData.Score
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.BeatmapUserScore
+import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -16,8 +16,8 @@ import com.now.nowbot.service.messageServiceImpl.ScoreService.ScoreParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.getMod
 import com.now.nowbot.util.CmdUtil.getMode

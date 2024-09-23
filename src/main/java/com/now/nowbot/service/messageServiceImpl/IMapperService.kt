@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.jsonData.*
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.*
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService

@@ -1,7 +1,7 @@
 package com.now.nowbot.model;
 
-import com.now.nowbot.model.jsonData.BeatMap;
-import com.now.nowbot.model.jsonData.Score;
+import com.now.nowbot.model.json.BeatMap;
+import com.now.nowbot.model.json.Score;
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import org.springframework.web.client.HttpClientErrorException;

@@ -1,7 +1,7 @@
 package com.now.nowbot.service.score;
 
-import com.now.nowbot.model.jsonData.OsuUser;
-import com.now.nowbot.model.jsonData.Score;
+import com.now.nowbot.model.json.OsuUser;
+import com.now.nowbot.model.json.Score;
 
 public class JumpFarCheck implements ScoreChecker{
     @Override

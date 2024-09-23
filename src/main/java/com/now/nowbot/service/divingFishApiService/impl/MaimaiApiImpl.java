@@ -1,7 +1,7 @@
 package com.now.nowbot.service.divingFishApiService.impl;
 
-import com.now.nowbot.model.jsonData.*;
 import com.now.nowbot.model.enums.MaiVersion;
+import com.now.nowbot.model.json.*;
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;

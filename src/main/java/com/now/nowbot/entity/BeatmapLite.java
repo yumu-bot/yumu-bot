@@ -1,7 +1,7 @@
 package com.now.nowbot.entity;
 
-import com.now.nowbot.model.jsonData.BeatMap;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.json.BeatMap;
 import jakarta.persistence.*;
 @Entity
 @Table(name = "osu_beatmap",indexes = {

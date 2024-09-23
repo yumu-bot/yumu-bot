@@ -2,10 +2,10 @@ package com.now.nowbot.model.multiplayer
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
-import com.now.nowbot.model.jsonData.BeatMap
-import com.now.nowbot.model.jsonData.MicroUser
-import com.now.nowbot.model.jsonData.Statistics
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.json.MicroUser
+import com.now.nowbot.model.json.Statistics
 import java.time.OffsetDateTime
 
 data class MonitoredMatch(

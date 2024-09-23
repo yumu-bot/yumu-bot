@@ -1,7 +1,7 @@
 package com.now.nowbot.service.osuApiService;
 
-import com.now.nowbot.model.jsonData.Discussion;
-import com.now.nowbot.model.jsonData.DiscussionDetails;
+import com.now.nowbot.model.json.Discussion;
+import com.now.nowbot.model.json.DiscussionDetails;
 import com.now.nowbot.service.osuApiService.impl.DiscussionApiImpl;
 import org.springframework.lang.Nullable;
 

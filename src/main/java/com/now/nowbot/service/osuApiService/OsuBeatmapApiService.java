@@ -2,9 +2,9 @@ package com.now.nowbot.service.osuApiService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.NowbotApplication;
-import com.now.nowbot.model.jsonData.*;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.json.*;
 import com.now.nowbot.service.messageServiceImpl.MapStatisticsService;
 import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.DataUtil;
@@ -12,7 +12,10 @@ import org.springframework.lang.NonNull;
 import org.springframework.util.CollectionUtils;
 import rosu.Rosu;
 import rosu.parameter.JniScore;
-import rosu.result.*;
+import rosu.result.JniResult;
+import rosu.result.ManiaResult;
+import rosu.result.OsuResult;
+import rosu.result.TaikoResult;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

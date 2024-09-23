@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.mikuac.shiro.core.BotContainer;
 import com.mikuac.shiro.dto.action.response.GroupMemberInfoResp;
 import com.now.nowbot.config.FileConfig;
-import com.now.nowbot.model.jsonData.MicroUser;
+import com.now.nowbot.model.json.MicroUser;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;

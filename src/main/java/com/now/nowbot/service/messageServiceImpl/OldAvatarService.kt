@@ -2,8 +2,8 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
-import com.now.nowbot.model.jsonData.OsuUser
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.AtMessage
 import com.now.nowbot.service.ImageService

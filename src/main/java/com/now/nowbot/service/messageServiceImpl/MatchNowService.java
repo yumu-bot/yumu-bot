@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl;
 
-import com.now.nowbot.model.jsonData.Match;
+import com.now.nowbot.model.json.Match;
 import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;

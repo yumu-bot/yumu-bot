@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.jsonData.BeatMap
+import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -11,11 +11,11 @@ import com.now.nowbot.throwable.serviceException.KitaException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD
-import java.util.*
-import java.util.regex.Matcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.*
+import java.util.regex.Matcher
 
 @Service("KITA")
 class KitaService(

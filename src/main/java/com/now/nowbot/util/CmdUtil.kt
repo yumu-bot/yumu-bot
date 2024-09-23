@@ -2,9 +2,9 @@ package com.now.nowbot.util
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
-import com.now.nowbot.model.jsonData.OsuUser
-import com.now.nowbot.model.jsonData.Score
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.AtMessage
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -12,11 +12,16 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.LogException
-import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.command.*
 import com.yumu.core.extensions.isNotNull
 import com.yumu.core.extensions.isNull
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.context.ApplicationContext
+import org.springframework.util.StringUtils
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
@@ -24,11 +29,6 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 import kotlin.math.max
 import kotlin.math.min
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.context.ApplicationContext
-import org.springframework.util.StringUtils
-import org.springframework.web.reactive.function.client.WebClientResponseException
 
 object CmdUtil {
 

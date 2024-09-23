@@ -1,14 +1,14 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.jsonData.BeatMap
-import com.now.nowbot.model.jsonData.PPPlus
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.json.PPPlus
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.PerformancePlusService
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.serviceException.PPPlusException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction

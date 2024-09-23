@@ -1,9 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl;
 
 import com.now.nowbot.config.Permission;
-import com.now.nowbot.model.jsonData.OsuUser;
-import com.now.nowbot.model.jsonData.Score;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.json.OsuUser;
+import com.now.nowbot.model.json.Score;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;

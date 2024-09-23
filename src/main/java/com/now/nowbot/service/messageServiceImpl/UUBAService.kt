@@ -2,9 +2,9 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
-import com.now.nowbot.model.jsonData.Score
-import com.now.nowbot.model.service.UserParam
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.Score
+import com.now.nowbot.model.service.UserParam
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.AtMessage
 import com.now.nowbot.qq.message.MessageChain
@@ -23,17 +23,17 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
 import com.now.nowbot.util.command.FLAG_MODE
-import java.text.DecimalFormat
-import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.function.Consumer
-import java.util.regex.Matcher
 import org.apache.logging.log4j.util.Strings
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.text.DecimalFormat
+import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Consumer
+import java.util.regex.Matcher
 
 @Service("UU_BA")
 class UUBAService(

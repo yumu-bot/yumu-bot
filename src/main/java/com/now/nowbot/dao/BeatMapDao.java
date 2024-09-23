@@ -4,9 +4,9 @@ import com.now.nowbot.entity.BeatmapLite;
 import com.now.nowbot.entity.MapSetLite;
 import com.now.nowbot.mapper.BeatMapMapper;
 import com.now.nowbot.mapper.MapSetMapper;
-import com.now.nowbot.model.jsonData.BeatMap;
-import com.now.nowbot.model.jsonData.BeatMapSet;
-import com.now.nowbot.model.jsonData.Covers;
+import com.now.nowbot.model.json.BeatMap;
+import com.now.nowbot.model.json.BeatMapSet;
+import com.now.nowbot.model.json.Covers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

@@ -1,7 +1,7 @@
 package com.now.nowbot.service;
 
-import com.now.nowbot.model.jsonData.OsuUser;
-import com.now.nowbot.model.jsonData.Score;
+import com.now.nowbot.model.json.OsuUser;
+import com.now.nowbot.model.json.Score;
 import com.now.nowbot.service.score.ScoreChecker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;

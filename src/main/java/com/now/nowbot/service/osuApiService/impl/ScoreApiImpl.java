@@ -2,10 +2,10 @@ package com.now.nowbot.service.osuApiService.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.jsonData.BeatmapUserScore;
-import com.now.nowbot.model.jsonData.Score;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.json.BeatmapUserScore;
+import com.now.nowbot.model.json.Score;
 import com.now.nowbot.service.osuApiService.OsuScoreApiService;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;

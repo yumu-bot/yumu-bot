@@ -1,6 +1,6 @@
 package com.now.nowbot.service.osuApiService.impl
 
-import com.now.nowbot.model.jsonData.Match
+import com.now.nowbot.model.json.Match
 import com.now.nowbot.model.multiplayer.MatchQuery
 import com.now.nowbot.model.multiplayer.MonitoredMatch
 import com.now.nowbot.service.osuApiService.OsuMatchApiService

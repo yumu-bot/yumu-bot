@@ -1,8 +1,10 @@
 package com.now.nowbot.entity;
 
-import com.now.nowbot.model.jsonData.BeatMapSet;
-
-import jakarta.persistence.*;
+import com.now.nowbot.model.json.BeatMapSet;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "beat_map_set_info")

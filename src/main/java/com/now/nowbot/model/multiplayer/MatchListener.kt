@@ -1,8 +1,8 @@
 package com.now.nowbot.model.multiplayer
 
-import com.now.nowbot.model.jsonData.BeatMap
-import com.now.nowbot.model.jsonData.MicroUser
 import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.json.MicroUser
 import com.now.nowbot.model.multiplayer.MonitoredMatch.EventType
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService

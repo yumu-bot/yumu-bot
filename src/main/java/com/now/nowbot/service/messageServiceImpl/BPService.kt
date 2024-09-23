@@ -1,8 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.jsonData.OsuUser
-import com.now.nowbot.model.jsonData.Score
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -18,13 +18,13 @@ import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.CmdUtil.getUserWithRange
-import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.regex.Matcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
+import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.regex.Matcher
 
 @Service("BP")
 class BPService(

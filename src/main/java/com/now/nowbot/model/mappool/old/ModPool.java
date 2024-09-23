@@ -1,6 +1,6 @@
 package com.now.nowbot.model.mappool.old;
 
-import com.now.nowbot.model.jsonData.BeatMap;
+import com.now.nowbot.model.json.BeatMap;
 
 import java.util.List;
 

@@ -1,11 +1,11 @@
 package com.now.nowbot.service.osuApiService;
 
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.jsonData.BeatmapUserScore;
-import com.now.nowbot.model.jsonData.OsuUser;
-import com.now.nowbot.model.jsonData.Score;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.json.BeatmapUserScore;
+import com.now.nowbot.model.json.OsuUser;
+import com.now.nowbot.model.json.Score;
 
 import java.util.List;
 

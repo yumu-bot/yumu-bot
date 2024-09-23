@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.jsonData.Match
+import com.now.nowbot.model.json.Match
 import com.now.nowbot.model.multiplayer.MatchCalculate.CalculateParam
 import com.now.nowbot.model.multiplayer.MatchCalculate.PlayerData
 import com.now.nowbot.model.multiplayer.SeriesCalculate
@@ -15,9 +15,6 @@ import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.serviceException.MRAException
 import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.Instruction
-import java.nio.charset.StandardCharsets
-import java.util.*
-import java.util.regex.Matcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.lang.NonNull
@@ -26,6 +23,9 @@ import org.springframework.util.CollectionUtils
 import org.springframework.util.StringUtils
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.nio.charset.StandardCharsets
+import java.util.*
+import java.util.regex.Matcher
 
 @Service("SERIES_RATING")
 class SeriesRatingService(

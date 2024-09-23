@@ -1,9 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl;
 
-import com.now.nowbot.model.jsonData.BeatMap;
-import com.now.nowbot.model.jsonData.BeatMapSet;
-import com.now.nowbot.model.jsonData.Discussion;
-import com.now.nowbot.model.jsonData.DiscussionDetails;
+import com.now.nowbot.model.json.BeatMap;
+import com.now.nowbot.model.json.BeatMapSet;
+import com.now.nowbot.model.json.Discussion;
+import com.now.nowbot.model.json.DiscussionDetails;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;

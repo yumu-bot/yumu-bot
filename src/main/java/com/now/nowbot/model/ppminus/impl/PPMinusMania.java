@@ -1,7 +1,7 @@
 package com.now.nowbot.model.ppminus.impl;
 
-import com.now.nowbot.model.jsonData.OsuUser;
-import com.now.nowbot.model.jsonData.Score;
+import com.now.nowbot.model.json.OsuUser;
+import com.now.nowbot.model.json.Score;
 import com.now.nowbot.model.ppminus.PPMinus;
 
 import java.util.List;

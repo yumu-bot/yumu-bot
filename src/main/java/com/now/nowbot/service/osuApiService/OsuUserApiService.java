@@ -2,11 +2,11 @@ package com.now.nowbot.service.osuApiService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.jsonData.ActivityEvent;
-import com.now.nowbot.model.jsonData.KudosuHistory;
-import com.now.nowbot.model.jsonData.MicroUser;
-import com.now.nowbot.model.jsonData.OsuUser;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.json.ActivityEvent;
+import com.now.nowbot.model.json.KudosuHistory;
+import com.now.nowbot.model.json.MicroUser;
+import com.now.nowbot.model.json.OsuUser;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Collection;

@@ -1,9 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl;
 
-import com.now.nowbot.model.jsonData.BeatMap;
 import com.now.nowbot.model.beatmapParse.OsuFile;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.json.BeatMap;
 import com.now.nowbot.model.mapminus.PPMinus3;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
