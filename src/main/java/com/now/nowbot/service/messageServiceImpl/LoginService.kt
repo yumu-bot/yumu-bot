@@ -1,75 +1,85 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.MessageService;
-import org.springframework.stereotype.Service;
-
-import java.time.Duration;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.random.RandomGenerator;
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.messageServiceImpl.LoginService.LoginUser
+import org.springframework.stereotype.Service
+import java.time.Duration
+import java.util.Locale
+import java.util.Random
+import java.util.concurrent.ConcurrentHashMap
+import java.util.random.RandomGenerator
 
 @Service("LOGIN")
-public class LoginService implements MessageService<String> {
-    public static final Map<String, LoginUser> LOGIN_USER_MAP = new ConcurrentHashMap<>();
-    static final private int CODE_SIZE = 6;
-    static Random random = Random.from(RandomGenerator.getDefault());
-    BindDao bindDao;
-
-    public LoginService(BindDao bindDao) {
-        this.bindDao = bindDao;
-        Thread.startVirtualThread(() -> {
-            while (true) {
-                try {
-                    Thread.sleep(Duration.ofSeconds(120));
-                } catch (InterruptedException ignore) {
-
-                }
-                final long t = System.currentTimeMillis();
-                LOGIN_USER_MAP.entrySet().removeIf((entry) -> t - entry.getValue().time > 60 * 1000);
-            }
-        });
+class LoginService(private val bindDao: BindDao) : MessageService<String> {
+    init {
+        Thread.startVirtualThread(
+                Runnable {
+                    while (true) {
+                        try {
+                            Thread.sleep(Duration.ofSeconds(120))
+                        } catch (ignore: InterruptedException) {}
+                        val t = System.currentTimeMillis()
+                        LOGIN_USER_MAP.entries.removeIf {
+                                entry: MutableMap.MutableEntry<String?, LoginUser?> ->
+                            t.minus(entry.value!!.time) > 60 * 1000
+                        }
+                    }
+                })
     }
 
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<String> data) throws Throwable {
-        return "!login".equals(messageText);
+    @Throws(Throwable::class)
+    override fun isHandle(
+            event: MessageEvent,
+            messageText: String,
+            data: DataValue<String>
+    ): Boolean {
+        return "!login" == messageText
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, String data) throws Throwable {
-        var qq = event.getSender().getId();
-        var u = bindDao.getUserFromQQ(qq);
-        String code;
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, data: String?) {
+        val qq = event.getSender().getId()
+        val u = bindDao.getUserFromQQ(qq)
+        var code: String?
         // 防止key重复, 循环构造随机字符串
-        while (LOGIN_USER_MAP.containsKey((code = getRoStr()).toUpperCase())) {
-        }
-        event.getSubject().sendMessage(STR."您的登录验证码: \{code}");
-        LOGIN_USER_MAP.put(code.toUpperCase(), new LoginUser(u.getOsuID(), u.getOsuName(), System.currentTimeMillis()));
+        while (LOGIN_USER_MAP.containsKey(
+                (getRoStr().also { code = it }).uppercase(Locale.getDefault()))) {}
+        event.reply("您的登录验证码: " + code)
+        LOGIN_USER_MAP.put(
+                code!!.uppercase(Locale.getDefault()),
+                LoginUser(u.getOsuID(), u.getOsuName(), System.currentTimeMillis()))
     }
 
-    static String getRoStr() {
-        char[] t = new char[CODE_SIZE];
-        for (int i = 0; i < CODE_SIZE; i++) {
-            int temp = random.nextInt(0, 36);
-            if (temp < 10) {
-                t[i] = (char) ('0' + temp);
-            } else {
-                // 防止 'l' 与 'I', 0 与 'O' 混淆
-                if (temp == 'o' - 'a') temp += 3;
-                if (temp != 18 && (temp == 21 || random.nextBoolean())) {
-                    temp -= 10;
+    @JvmRecord data class LoginUser(val uid: Long, val name: String, val time: Long)
+
+    companion object {
+        @JvmField
+        val LOGIN_USER_MAP: MutableMap<String?, LoginUser?> =
+                ConcurrentHashMap<String?, LoginUser?>()
+        private const val CODE_SIZE = 6
+        var random: Random = Random.from(RandomGenerator.getDefault())
+
+        fun getRoStr(): String {
+            val t = CharArray(CODE_SIZE)
+            for (i in 0 until CODE_SIZE) {
+                var temp = random.nextInt(0, 36)
+                if (temp < 10) {
+                    t[i] = ('0'.code + temp).toChar()
                 } else {
-                    temp -= 42;
+                    // 防止 'l' 与 'I', 0 与 'O' 混淆
+                    if (temp == 'o'.code - 'a'.code) temp += 3
+                    if (temp != 18 && (temp == 21 || random.nextBoolean())) {
+                        temp -= 10
+                    } else {
+                        temp -= 42
+                    }
+                    t[i] = ('a'.code + temp).toChar()
                 }
-                t[i] = (char) ('a' + temp);
             }
+            return String(t)
         }
-        return new String(t);
-    }
-
-    public record LoginUser(Long uid, String name, Long time) {
     }
 }
