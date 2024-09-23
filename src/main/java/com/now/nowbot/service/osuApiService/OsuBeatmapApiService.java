@@ -286,7 +286,7 @@ public interface OsuBeatmapApiService {
         try {
             r = getPP(score);
 
-            if (r.getPp() == 0) try {
+            if (r.getPp() <= 1) try {
                 refreshBeatMapFile(beatMap.getBeatMapID());
                 r = getPP(score);
             } catch (IOException ignored) {
@@ -297,8 +297,13 @@ public interface OsuBeatmapApiService {
             return;
         }
 
-        score.setPP((float) r.getPp());
-        beatMap.setStarRating((float) r.getStar());
+        if (r.getPp() > 0) {
+            score.setPP((float) r.getPp());
+            beatMap.setStarRating((float) r.getStar());
+        } else {
+            NowbotApplication.log.info("无法获取{}的 PP！", beatMap.getBeatMapID());
+        }
+
         DataUtil.applyBeatMapChanges(beatMap, modsInt);
     }
 
