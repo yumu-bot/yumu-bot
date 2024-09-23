@@ -8,8 +8,8 @@ import com.now.nowbot.mapper.MaiChartLiteRepository
 import com.now.nowbot.mapper.MaiFitChartLiteRepository
 import com.now.nowbot.mapper.MaiFitDiffLiteRepository
 import com.now.nowbot.mapper.MaiSongLiteRepository
-import com.now.nowbot.model.JsonData.MaiFit
-import com.now.nowbot.model.JsonData.MaiSong
+import com.now.nowbot.model.jsonData.MaiFit
+import com.now.nowbot.model.jsonData.MaiSong
 import jakarta.persistence.Transient
 import org.springframework.stereotype.Component
 import kotlin.jvm.optionals.getOrNull

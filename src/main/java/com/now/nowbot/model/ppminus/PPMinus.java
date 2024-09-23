@@ -1,7 +1,7 @@
 package com.now.nowbot.model.ppminus;
 
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.jsonData.OsuUser;
+import com.now.nowbot.model.jsonData.Score;
 import com.now.nowbot.model.ppminus.impl.PPMinusCatch;
 import com.now.nowbot.model.ppminus.impl.PPMinusMania;
 import com.now.nowbot.model.ppminus.impl.PPMinusOsu;

@@ -1,6 +1,6 @@
 package com.now.nowbot.model.recommended;
 
-import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.jsonData.BeatMap;
 
 public class RecommendedMap {
     Long bid;

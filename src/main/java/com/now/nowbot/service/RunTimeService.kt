@@ -5,7 +5,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.NewbiePlayCount
 import com.now.nowbot.mapper.NewbiePlayCountRepository
 import com.now.nowbot.newbie.mapper.NewbieService
-import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.service.osuApiService.OsuUserApiService
 import jakarta.annotation.Resource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -19,7 +19,6 @@ import org.springframework.web.client.RestTemplate
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.time.LocalDate
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.Path
 
 

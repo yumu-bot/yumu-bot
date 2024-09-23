@@ -1,7 +1,7 @@
 package com.now.nowbot.entity
 
-import com.now.nowbot.model.JsonData.MaiFit
-import com.now.nowbot.model.JsonData.MaiSong
+import com.now.nowbot.model.jsonData.MaiFit
+import com.now.nowbot.model.jsonData.MaiSong
 import io.hypersistence.utils.hibernate.type.array.DoubleArrayType
 import io.hypersistence.utils.hibernate.type.array.IntArrayType
 import io.hypersistence.utils.hibernate.type.array.StringArrayType

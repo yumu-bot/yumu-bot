@@ -1,8 +1,8 @@
 package com.now.nowbot.model;
 
-import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.JsonData.Score;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.model.jsonData.BeatMap;
+import com.now.nowbot.model.jsonData.Score;
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -157,7 +157,6 @@ public class ScoreLegacy {
         //  "count_300" /  "count_100" / "count_50" / "count_miss"
         switch (mode) {
             // "osu" 与其他走默认分支
-            default -> sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
             case "taiko" -> sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_0).append('\n').append('\n');
             case "mania" -> {
                 sb.append(n_300).append('+').append(n_geki).append('(');
@@ -172,6 +171,7 @@ public class ScoreLegacy {
             }
             case "catch", "fruits" ->  sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('(').append('-').append(n_katu).append(')').append('\n').append('\n');
 
+            default -> sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ").append(n_0).append('\n').append('\n');
         }
 
         //DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(play_time) 格式化 ISO-8601 日期格式

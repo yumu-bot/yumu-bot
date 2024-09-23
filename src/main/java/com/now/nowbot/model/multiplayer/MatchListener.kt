@@ -1,11 +1,11 @@
 package com.now.nowbot.model.multiplayer
 
-import com.now.nowbot.model.JsonData.BeatMap
-import com.now.nowbot.model.JsonData.MicroUser
+import com.now.nowbot.model.jsonData.BeatMap
+import com.now.nowbot.model.jsonData.MicroUser
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.multiplayer.MonitoredMatch.EventType
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
-import com.now.nowbot.service.OsuApiService.OsuMatchApiService
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService

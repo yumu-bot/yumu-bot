@@ -1,6 +1,6 @@
 package com.now.nowbot.entity;
 
-import com.now.nowbot.model.JsonData.BeatMapSet;
+import com.now.nowbot.model.jsonData.BeatMapSet;
 
 import jakarta.persistence.*;
 

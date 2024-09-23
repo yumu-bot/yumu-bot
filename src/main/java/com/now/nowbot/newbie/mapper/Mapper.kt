@@ -4,8 +4,8 @@ import com.now.nowbot.entity.NewbiePlayCount
 import com.now.nowbot.mapper.NewbiePlayCountRepository
 import com.now.nowbot.newbie.entity.Bindings
 import com.now.nowbot.newbie.entity.UserPlayRecords
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
-import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.util.AsyncMethodExecutor
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty

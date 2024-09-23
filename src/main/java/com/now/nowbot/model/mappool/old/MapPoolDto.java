@@ -1,8 +1,8 @@
 package com.now.nowbot.model.mappool.old;
 
-import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.jsonData.BeatMap;
 import com.now.nowbot.model.mappool.now.Pool;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
 import org.springframework.lang.Nullable;
 
 import java.util.*;

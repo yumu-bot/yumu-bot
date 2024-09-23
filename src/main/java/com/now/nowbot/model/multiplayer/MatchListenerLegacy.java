@@ -1,7 +1,7 @@
 package com.now.nowbot.model.multiplayer;
 
-import com.now.nowbot.model.JsonData.Match;
-import com.now.nowbot.service.OsuApiService.OsuMatchApiService;
+import com.now.nowbot.model.jsonData.Match;
+import com.now.nowbot.service.osuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

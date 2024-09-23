@@ -1,6 +1,6 @@
 package com.now.nowbot.entity;
 
-import com.now.nowbot.model.JsonData.PPPlus;
+import com.now.nowbot.model.jsonData.PPPlus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

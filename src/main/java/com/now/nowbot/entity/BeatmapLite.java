@@ -1,6 +1,6 @@
 package com.now.nowbot.entity;
 
-import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.jsonData.BeatMap;
 import com.now.nowbot.model.enums.OsuMode;
 import jakarta.persistence.*;
 @Entity

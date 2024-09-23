@@ -4,20 +4,20 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.dao.OsuUserInfoDao;
-import com.now.nowbot.model.JsonData.BeatMap;
-import com.now.nowbot.model.JsonData.BeatmapDifficultyAttributes;
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.JsonData.Score;
+import com.now.nowbot.model.jsonData.BeatMap;
+import com.now.nowbot.model.jsonData.BeatmapDifficultyAttributes;
+import com.now.nowbot.model.jsonData.OsuUser;
+import com.now.nowbot.model.jsonData.Score;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.mappool.old.MapPoolDto;
 import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageServiceImpl.*;
-import com.now.nowbot.service.OsuApiService.*;
+import com.now.nowbot.service.messageServiceImpl.*;
+import com.now.nowbot.service.osuApiService.*;
 import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.throwable.ServiceException.*;
+import com.now.nowbot.throwable.serviceException.*;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
@@ -36,7 +36,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static com.now.nowbot.service.MessageServiceImpl.LoginService.LOGIN_USER_MAP;
+import static com.now.nowbot.service.messageServiceImpl.LoginService.LOGIN_USER_MAP;
 
 @RestController
 @ResponseBody

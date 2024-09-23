@@ -1,9 +1,9 @@
 package com.now.nowbot.model.multiplayer;
 
-import com.now.nowbot.model.JsonData.Match;
-import com.now.nowbot.model.JsonData.MicroUser;
-import com.now.nowbot.model.JsonData.Series;
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
+import com.now.nowbot.model.jsonData.Match;
+import com.now.nowbot.model.jsonData.MicroUser;
+import com.now.nowbot.model.jsonData.Series;
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;

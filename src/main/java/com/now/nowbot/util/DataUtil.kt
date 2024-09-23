@@ -3,7 +3,7 @@ package com.now.nowbot.util
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.now.nowbot.config.NowbotConfig
-import com.now.nowbot.model.JsonData.*
+import com.now.nowbot.model.jsonData.*
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*

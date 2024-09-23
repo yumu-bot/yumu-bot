@@ -1,17 +1,17 @@
 package com.now.nowbot.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.model.JsonData.*;
+import com.now.nowbot.model.jsonData.*;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.model.multiplayer.MonitoredMatch;
 import com.now.nowbot.model.multiplayer.SeriesCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
-import com.now.nowbot.model.ppminus3.PPMinus3;
-import com.now.nowbot.service.MessageServiceImpl.MaiBestPerformanceService;
-import com.now.nowbot.service.MessageServiceImpl.MapStatisticsService;
-import com.now.nowbot.service.MessageServiceImpl.MatchMapService;
-import com.now.nowbot.service.MessageServiceImpl.ScorePRService;
+import com.now.nowbot.model.mapminus.PPMinus3;
+import com.now.nowbot.service.messageServiceImpl.MaiBestPerformanceService;
+import com.now.nowbot.service.messageServiceImpl.MapStatisticsService;
+import com.now.nowbot.service.messageServiceImpl.MatchMapService;
+import com.now.nowbot.service.messageServiceImpl.ScorePRService;
 import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.DataUtil;
 import jakarta.annotation.Resource;

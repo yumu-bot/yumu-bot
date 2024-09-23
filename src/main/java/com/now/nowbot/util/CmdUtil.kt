@@ -2,17 +2,17 @@ package com.now.nowbot.util
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
-import com.now.nowbot.model.JsonData.OsuUser
-import com.now.nowbot.model.JsonData.Score
+import com.now.nowbot.model.jsonData.OsuUser
+import com.now.nowbot.model.jsonData.Score
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.AtMessage
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService
-import com.now.nowbot.service.OsuApiService.OsuScoreApiService
-import com.now.nowbot.service.OsuApiService.OsuUserApiService
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuScoreApiService
+import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.LogException
-import com.now.nowbot.throwable.ServiceException.BindException
+import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.command.*
 import com.yumu.core.extensions.isNotNull

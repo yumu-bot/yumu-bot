@@ -12,7 +12,7 @@ import com.now.nowbot.qq.contact.GroupContact;
 import com.now.nowbot.qq.enums.Role;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.MessageServiceImpl.ServiceSwitchService;
+import com.now.nowbot.service.messageServiceImpl.ServiceSwitchService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.ContextUtil;
 import org.slf4j.Logger;

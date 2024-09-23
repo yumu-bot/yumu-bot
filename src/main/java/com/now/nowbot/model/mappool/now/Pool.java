@@ -1,7 +1,7 @@
 package com.now.nowbot.model.mappool.now;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.now.nowbot.model.JsonData.BeatMap;
+import com.now.nowbot.model.jsonData.BeatMap;
 
 import java.util.List;
 

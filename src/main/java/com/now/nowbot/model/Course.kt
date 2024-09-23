@@ -2,7 +2,7 @@ package com.now.nowbot.model
 
 import com.now.nowbot.entity.OsuCourseLite
 import com.now.nowbot.entity.OsuCourseSingleLite
-import com.now.nowbot.model.JsonData.BeatMap
+import com.now.nowbot.model.jsonData.BeatMap
 
 data class Course(
     // id 在数据库中生成, 初始为空

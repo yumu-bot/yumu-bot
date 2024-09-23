@@ -2,10 +2,10 @@ package com.now.nowbot.dao;
 
 import com.now.nowbot.entity.OsuUserInfoArchiveLite;
 import com.now.nowbot.mapper.OsuUserInfoMapper;
-import com.now.nowbot.model.JsonData.InfoLogStatistics;
-import com.now.nowbot.model.JsonData.MicroUser;
-import com.now.nowbot.model.JsonData.OsuUser;
-import com.now.nowbot.model.JsonData.Statistics;
+import com.now.nowbot.model.jsonData.InfoLogStatistics;
+import com.now.nowbot.model.jsonData.MicroUser;
+import com.now.nowbot.model.jsonData.OsuUser;
+import com.now.nowbot.model.jsonData.Statistics;
 import com.now.nowbot.model.enums.OsuMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

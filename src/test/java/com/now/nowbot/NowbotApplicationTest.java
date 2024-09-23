@@ -1,11 +1,8 @@
 package com.now.nowbot;
 
-import com.now.nowbot.service.OsuApiService.OsuBeatmapApiService;
-import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 

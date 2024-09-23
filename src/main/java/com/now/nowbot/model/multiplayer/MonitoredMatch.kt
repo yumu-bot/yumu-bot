@@ -2,9 +2,9 @@ package com.now.nowbot.model.multiplayer
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
-import com.now.nowbot.model.JsonData.BeatMap
-import com.now.nowbot.model.JsonData.MicroUser
-import com.now.nowbot.model.JsonData.Statistics
+import com.now.nowbot.model.jsonData.BeatMap
+import com.now.nowbot.model.jsonData.MicroUser
+import com.now.nowbot.model.jsonData.Statistics
 import com.now.nowbot.model.enums.OsuMode
 import java.time.OffsetDateTime
 
