@@ -143,7 +143,7 @@ class MaiBestPerformanceService(
         val charts = getScore(param.range, scores, songs)
         val isMultipleScore = charts.deluxe.size + charts.standard.size > 1
 
-        val user = scores.user
+        val user = scores.getUser()
         val fit = maimaiApiService.getMaimaiFit()
 
         val image =

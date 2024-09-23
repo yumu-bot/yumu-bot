@@ -65,11 +65,11 @@ public class CheckAspect {
     public void userSave() {
     }
 
-    @Pointcut("execution(* com.now.nowbot.service.OsuApiService.OsuBeatmapApiService.*(..)) ||" +
-            "execution(* com.now.nowbot.service.OsuApiService.OsuUserApiService.*(..)) ||" +
-            "execution(* com.now.nowbot.service.OsuApiService.OsuMatchApiService.*(..)) ||" +
-            "execution(* com.now.nowbot.service.OsuApiService.OsuDiscussionApiService.*(..)) ||" +
-            "execution(* com.now.nowbot.service.OsuApiService.OsuScoreApiService.*(..))")
+    @Pointcut("execution(* com.now.nowbot.service.osuApiService.OsuBeatmapApiService.*(..)) ||" +
+            "execution(* com.now.nowbot.service.osuApiService.OsuUserApiService.*(..)) ||" +
+            "execution(* com.now.nowbot.service.osuApiService.OsuMatchApiService.*(..)) ||" +
+            "execution(* com.now.nowbot.service.osuApiService.OsuDiscussionApiService.*(..)) ||" +
+            "execution(* com.now.nowbot.service.osuApiService.OsuScoreApiService.*(..))")
     public void apiService() {
     }
 
