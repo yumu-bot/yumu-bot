@@ -301,6 +301,10 @@ public interface OsuBeatmapApiService {
         if (r.getPp() > 0) {
             score.setPP((float) r.getPp());
             beatMap.setStarRating((float) r.getStar());
+        } else {
+            var attr = getAttributes(beatMap.getId(), score.getMode(), score.getModeInt());
+            beatMap.setStarRating(attr.getStarRating());
+            NowbotApplication.log.info("无法获取 {} 的 PP，正在获取 API 提供的 PP：{}", beatMap.getBeatMapID(), attr.getStarRating());
         }
 
         DataUtil.applyBeatMapChanges(beatMap, modsInt);
@@ -340,6 +344,10 @@ public interface OsuBeatmapApiService {
 
         if (r.getPp() > 0) {
             beatMap.setStarRating((float) r.getStar());
+        } else {
+            var attr = getAttributes(beatMap.getId(), mode, modsInt);
+            beatMap.setStarRating(attr.getStarRating());
+            NowbotApplication.log.info("无法获取 {} 的 PP，正在获取 API 提供的 PP：{}", beatMap.getBeatMapID(), attr.getStarRating());
         }
 
         DataUtil.applyBeatMapChanges(beatMap, modsInt);
@@ -376,6 +384,10 @@ public interface OsuBeatmapApiService {
 
         if (r.getPp() > 0) {
             beatMap.setStarRating((float) r.getStar());
+        } else {
+            var attr = getAttributes(beatMap.getId(), expected.mode, OsuMod.getModsValueFromAbbrList(expected.mods));
+            beatMap.setStarRating(attr.getStarRating());
+            NowbotApplication.log.info("无法获取 {} 的 PP，正在获取 API 提供的 PP：{}", beatMap.getBeatMapID(), attr.getStarRating());
         }
 
         DataUtil.applyBeatMapChanges(beatMap, m);
