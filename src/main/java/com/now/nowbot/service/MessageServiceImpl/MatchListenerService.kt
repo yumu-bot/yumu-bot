@@ -3,8 +3,8 @@ package com.now.nowbot.service.MessageServiceImpl
 import com.now.nowbot.config.Permission
 import com.now.nowbot.model.multiplayer.MatchAdapter
 import com.now.nowbot.model.multiplayer.MatchCalculate
-import com.now.nowbot.model.multiplayer.MonitoredMatch
 import com.now.nowbot.model.multiplayer.MatchListener
+import com.now.nowbot.model.multiplayer.MonitoredMatch
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -22,7 +22,6 @@ import com.now.nowbot.util.DataUtil.getOriginal
 import com.now.nowbot.util.Instruction
 import com.yumu.core.extensions.isNotNull
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
@@ -36,8 +35,6 @@ class MatchListenerService(
         messageText: String,
         data: MessageService.DataValue<ListenerParam?>
     ): Boolean {
-        return false
-
         val matcher = Instruction.MATCH_LISTENER.matcher(messageText)
         if (!matcher.find()) return false
 
@@ -158,6 +155,10 @@ class MatchListenerService(
 
         override fun onStart() {}
 
+        override fun onGameAbort(beatmapID: Long) {
+            messageEvent.reply("上一场对局强制结束了")
+        }
+
         override fun onGameStart(event: MatchAdapter.GameStartEvent) = with(event) {
             if (!isTeamVS && !hasNext()) {
                 consoleListener(messageEvent.subject.id, false, matchID)
@@ -268,7 +269,9 @@ class MatchListenerService(
             senderSet.add(key)
             val l = listeners.computeIfAbsent(listener.matchID) {
                 val match = matchApiService.getNewMatchInfo(it)
-                MatchListener(match, beatmapApiService, matchApiService, listener)
+                val newMatchListener = MatchListener(match, beatmapApiService, matchApiService, listener)
+                newMatchListener.start()
+                newMatchListener
             }
             l.addListener(listener)
         }

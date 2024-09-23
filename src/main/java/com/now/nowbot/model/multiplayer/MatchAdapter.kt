@@ -11,6 +11,8 @@ interface MatchAdapter {
 
     fun onStart()
 
+    fun onGameAbort(beatmapID: Long)
+
     fun onGameStart(event: GameStartEvent)
 
     fun onGameEnd(event: GameEndEvent)
