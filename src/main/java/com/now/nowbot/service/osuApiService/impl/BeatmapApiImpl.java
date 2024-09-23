@@ -276,7 +276,20 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
 
         result.setCheck(md5);
 
-        var objectList = getMapObjectList(file);
+        List<Integer> objectList;
+
+        try {
+            objectList = getMapObjectList(file);
+        } catch (IndexOutOfBoundsException e) {
+            refreshBeatMapFile(bid);
+            try {
+                objectList = getMapObjectList(file);
+            } catch (IndexOutOfBoundsException e1) {
+                result.setTimestamp(new int[0]);
+                result.setDensity(new int[0]);
+                return result;
+            }
+        }
 
         result.setTimestamp(objectList.stream().mapToInt(Integer::intValue).toArray());
         // ??? debug 看起来结果数组长度是25, 不知道你那边有没有校验, 先参数 +1

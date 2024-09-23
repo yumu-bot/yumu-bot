@@ -286,7 +286,7 @@ public interface OsuBeatmapApiService {
         try {
             r = getPP(score);
 
-            if (r.getPp() <= 1) try {
+            if (r.getPp() == 0) try {
                 refreshBeatMapFile(beatMap.getBeatMapID());
                 r = getPP(score);
             } catch (IOException ignored) {
