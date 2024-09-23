@@ -47,7 +47,7 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
                     .map { n: String -> this.name2Mutual(name) }
                     .toList()
             } else {
-                java.util.List.of(qq2Mutual(event.sender.id))
+                mutableListOf(qq2Mutual(event.sender.id))
             }
 
         data.value = users
@@ -93,9 +93,12 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
                 sb.addText("${u.name}\n")
                 break
             }
+
             if (Objects.nonNull(u.qq)) {
                 sb.addAt(u.qq!!)
+                sb.addText("\n")
             }
+
             sb.addText("${u.name}：https://osu.ppy.sh/users/${u.uid}\n")
         }
 

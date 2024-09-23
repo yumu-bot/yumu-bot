@@ -17,6 +17,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
+import kotlin.math.roundToInt
 
 @Service("DICE")
 class DiceService : MessageService<DiceParam> {
@@ -159,7 +160,7 @@ class DiceService : MessageService<DiceParam> {
             }
 
             if (Objects.nonNull(param.text)) {
-                val message = Compare(param.text)
+                val message = compare(param.text)
 
                 // 用于匹配是否被和谐
                 val h = Pattern.compile("○|(\\[和谐])")
@@ -203,7 +204,7 @@ class DiceService : MessageService<DiceParam> {
         ), // 皮秒 飞秒
         TIMES(
             Pattern.compile(
-                "(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-:：\\[\\]_，。*()&^！？!?]*)?(?<c3>((几多?|多少|什么|啥|哪个|何)?(频率|次数?))(之?[后内])?)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-:：\\[\\]_，。*()&^！？!?]*)?"
+                "(?<m1>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-:：\\[\\]_，。*()&^！？!?]*)?(?<c3>((几多?|多少|什么|啥|哪个|何)?(频率|(?<![一两二三四五六七八九十百千万亿])次数?))(之?[后内])?)(?<m2>[\\u4e00-\\u9fa5\\uf900-\\ufa2d\\w\\s.\\-:：\\[\\]_，。*()&^！？!?]*)?"
             )
         ), // 皮秒 飞秒
         POSSIBILITY(
@@ -391,13 +392,13 @@ class DiceService : MessageService<DiceParam> {
         /**
          * 超级复杂™的语言学选择器
          *
-         * @param s 输入含有比较关系的文本
+         * @param str 输入含有比较关系的文本
          * @return 返回随机一个子项
          * @throws DiceException 错
          */
         @JvmStatic
         @Throws(DiceException::class)
-        fun Compare(str: String?): String {
+        fun compare(str: String?): String {
             val s = transferApostrophe(str ?: "")
 
             val result = getRandom(0)
@@ -405,7 +406,7 @@ class DiceService : MessageService<DiceParam> {
             var left = ""
             var right = ""
             var num = 0f
-            var _is = ""
+            var is_ = ""
             var not = ""
             var leftFormat: String
             var rightFormat: String
@@ -413,7 +414,7 @@ class DiceService : MessageService<DiceParam> {
 
             // 记得这里才是需要查询的顺序
             val splits =
-                Arrays.asList(
+                listOf(
                     Split.TIME,
                     Split.TIMES,
                     Split.POSSIBILITY,
@@ -515,51 +516,51 @@ class DiceService : MessageService<DiceParam> {
 
                             if (c3.contains("年")) {
                                 num = getRandom(100)
-                                _is = "年"
+                                is_ = "年"
                             } else if (c3.contains("月")) {
                                 num = getRandom(12)
-                                _is = "个月"
+                                is_ = "个月"
                             } else if (c3.contains("周")) {
                                 num = getRandom(52)
-                                _is = "周"
+                                is_ = "周"
                             } else if (c3.contains("日") || c3.contains("天")) {
                                 num = getRandom(30)
-                                _is = "天"
+                                is_ = "天"
                             } else if (c3.contains("时辰")) {
                                 num = getRandom(12)
-                                _is = "时辰"
+                                is_ = "时辰"
                             } else if (
                                 (c3.contains("时") && !(c3.contains("时候") || c3.contains("时间"))) ||
                                     c3.contains("小时")
                             ) {
                                 num = getRandom(24)
-                                _is = "小时"
+                                is_ = "小时"
                             } else if (c3.contains("点")) {
                                 num = getRandom(24)
-                                _is = "点"
+                                is_ = "点"
                             } else if (c3.contains("柱香")) {
                                 num = getRandom(48)
-                                _is = "柱香"
+                                is_ = "柱香"
                             } else if (c3.contains("分")) {
                                 num = getRandom(60)
-                                _is = "分钟"
+                                is_ = "分钟"
                             } else if (c3.contains("毫秒")) {
                                 num = getRandom(1000)
-                                _is = "毫秒"
+                                is_ = "毫秒"
                             } else if (c3.contains("微秒")) {
                                 num = getRandom(1000000)
-                                _is = "微秒"
+                                is_ = "微秒"
                             } else if (c3.contains("纳秒")) {
                                 num = getRandom(100000000)
-                                _is = "纳秒"
+                                is_ = "纳秒"
                             } else if (c3.contains("秒")) {
                                 num = getRandom(60)
-                                _is = "秒"
+                                is_ = "秒"
                             } else {
                                 // 未指定时间单位，比如多久
                                 val timeList = arrayOf("年", "个月", "周", "天", "小时", "分钟", "秒")
                                 num = getRandom(100)
-                                _is = timeList[getRandom(timeList.size).toInt() - 1]
+                                is_ = timeList[getRandom(timeList.size).toInt() - 1]
                             }
                         }
                         Split.TIMES -> {
@@ -569,16 +570,16 @@ class DiceService : MessageService<DiceParam> {
 
                             if (i > 0.98) num = 2147483647f else if (i > 0.95) num = 114514f
 
-                            _is = "次"
+                            is_ = "次"
                         }
                         Split.WHETHER -> {
-                            _is = matcher.group("c3")
+                            is_ = matcher.group("c3")
                             not = matcher.group("m3")
 
                             try {
                                 val is2 = matcher.group("c2")
                                 // 要不要，如果不是ABA那么不能匹配
-                                if (is2 != _is) {
+                                if (is2 != is_) {
                                     split = null
                                     continue
                                 }
@@ -589,7 +590,7 @@ class DiceService : MessageService<DiceParam> {
                             }
                         }
                         Split.COULD -> {
-                            _is = matcher.group("c3")
+                            is_ = matcher.group("c3")
                             not = "不"
                             if (!StringUtils.hasText(left)) left = "..."
                             if (!StringUtils.hasText(right)) right = ""
@@ -597,15 +598,15 @@ class DiceService : MessageService<DiceParam> {
                         Split.POSSIBILITY -> {
                             // 做点手脚，让 0% 和 100% 更容易出现 -4 ~ 104
                             // 7.07% 触发彩蛋。
-                            num = (Math.round(getRandom(1) * 10800f) / 100f) - 4f
+                            num = ((getRandom(1) * 10800f).roundToInt() / 100f) - 4f
 
-                            _is = ""
+                            is_ = ""
 
                             // 钳位
                             if (num >= 102f) {
                                 // 2% 买卖理论值
                                 num = 101.00f
-                                _is = "00"
+                                is_ = "00"
                             }
                             if (num >= 100f) num = 100f
                             if (num <= 0f) num = 0f
@@ -619,15 +620,15 @@ class DiceService : MessageService<DiceParam> {
                                     (sqrt(getRandom(1).toDouble()) * 9000f / 100f).toFloat()
                                 }
 
-                            _is = ""
+                            is_ = ""
 
                             // 钳位
                             if (num >= 100f) num = 100f
                             if (num <= 0f) num = 0f
                         }
-                        Split.LIKE -> _is = matcher.group("c3")
+                        Split.LIKE -> is_ = matcher.group("c3")
                         Split.IS -> {
-                            _is = matcher.group("c3")
+                            is_ = matcher.group("c3")
                             // 有时候，”是“结尾的句子并不是问是否，还可以问比如时间。
                             // 比如，“OWC 的开启时间是？”
                             if (!StringUtils.hasText(right)) return "我怎么知道。"
@@ -750,9 +751,9 @@ class DiceService : MessageService<DiceParam> {
 
             // 更换主语、和谐
             run {
-                left = ChangeCase(left)
-                right = ChangeCase(right)
-                _is = ChangeCase(_is)
+                left = changeCase(left)
+                right = changeCase(right)
+                is_ = changeCase(is_)
             }
 
             // 如果还是有空格，那么进入多匹配模式。
@@ -811,7 +812,7 @@ class DiceService : MessageService<DiceParam> {
                     Split.TIMES,
                     Split.POSSIBILITY,
                     Split.ACCURACY -> {
-                        return String.format(leftFormat, num, _is)
+                        return String.format(leftFormat, num, is_)
                     }
                     Split.BETTER,
                     Split.COMPARE,
@@ -827,11 +828,11 @@ class DiceService : MessageService<DiceParam> {
                     }
                     Split.COULD,
                     Split.WHETHER -> {
-                        return String.format(leftFormat, left, _is, right)
+                        return String.format(leftFormat, left, is_, right)
                     }
                     Split.LIKE,
                     Split.IS -> {
-                        return String.format(leftFormat, _is)
+                        return String.format(leftFormat, is_)
                     }
                     Split.OR -> {
                         if (left.contains("是")) {
@@ -864,7 +865,7 @@ class DiceService : MessageService<DiceParam> {
                     Split.TIMES,
                     Split.POSSIBILITY,
                     Split.ACCURACY -> {
-                        return String.format(rightFormat, num, _is)
+                        return String.format(rightFormat, num, is_)
                     }
                     Split.BETTER,
                     Split.COMPARE,
@@ -882,11 +883,11 @@ class DiceService : MessageService<DiceParam> {
                     }
                     Split.COULD,
                     Split.WHETHER -> {
-                        return String.format(rightFormat, left, not, _is, right)
+                        return String.format(rightFormat, left, not, is_, right)
                     }
                     Split.LIKE,
                     Split.IS -> {
-                        return String.format(rightFormat, _is)
+                        return String.format(rightFormat, is_)
                     }
                     else -> {}
                 }
@@ -955,7 +956,7 @@ class DiceService : MessageService<DiceParam> {
             }
 
             val r = Math.round(getRandom(stringList.size) - 1)
-            return String.format("当然%s啦！", ChangeCase(stringList[r])) // lr format一样的
+            return String.format("当然%s啦！", changeCase(stringList[r])) // lr format一样的
         }
 
         /**
@@ -990,7 +991,7 @@ class DiceService : MessageService<DiceParam> {
          * @param <T> 数字的子类 </T>
          * @return 如果范围是 1，返回 1。如果范围大于 1，返回 1-范围内的数（Float 的整数），其他则返回 0-1。
          */
-        fun <T : Number?> getRandomInstantly(range: T): Double {
+        fun <T : Number?> getRandomInstantly(range: T?): Double {
             val random = Math.random()
 
             var r =
@@ -999,7 +1000,7 @@ class DiceService : MessageService<DiceParam> {
                 } catch (e: NumberFormatException) {
                     try {
                         if (Objects.nonNull(range)) {
-                            Math.round(range!!.toFloat())
+                            range!!.toInt()
                         } else {
                             100
                         }
@@ -1009,7 +1010,7 @@ class DiceService : MessageService<DiceParam> {
                 }
 
             return if (r > 1) {
-                Math.round(random * (r - 1)) + 1.0
+                (random * (r - 1)).roundToInt() + 1.0
             } else {
                 random
             }
@@ -1032,7 +1033,7 @@ class DiceService : MessageService<DiceParam> {
                 } catch (e: NumberFormatException) {
                     try {
                         if (Objects.nonNull(range)) {
-                            Math.round(range!!.toFloat())
+                            range!!.toFloat().roundToInt()
                         } else {
                             100
                         }
@@ -1042,7 +1043,7 @@ class DiceService : MessageService<DiceParam> {
                 }
 
             return if (r > 1) {
-                Math.round(millis / 999f * (r - 1)) + 1f
+                (millis / 999f * (r - 1)).roundToInt() + 1f
             } else {
                 millis / 999f
             }
@@ -1051,10 +1052,10 @@ class DiceService : MessageService<DiceParam> {
         /**
          * 改变主宾格，删除语气助词，和谐违禁词
          *
-         * @param s 未和谐
+         * @param str 未和谐
          * @return 和谐
          */
-        private fun ChangeCase(str: String?): String {
+        private fun changeCase(str: String?): String {
             var s = str ?: ""
             s = recoveryApostrophe(s)
 

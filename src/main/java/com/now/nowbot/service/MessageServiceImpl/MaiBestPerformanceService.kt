@@ -17,8 +17,7 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.QQMsgUtil
 import com.now.nowbot.util.command.REG_HYPHEN
 import com.yumu.core.extensions.isNotNull
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.util.CollectionUtils
 import org.springframework.util.StringUtils
@@ -58,14 +57,14 @@ class MaiBestPerformanceService(
     data class PanelMAParam(
         val user: MaiBestPerformance.User,
         val scores: List<MaiScore>,
-        val scores_latest: List<MaiScore>,
+        val scoresLatest: List<MaiScore>,
     ) {
         fun toMap(): Map<String, Any> {
             var out = mutableMapOf<String, Any>()
 
             out["user"] = user
             out["scores"] = scores
-            out["scores_latest"] = scores_latest
+            out["scores_latest"] = scoresLatest
 
             return out
         }
@@ -169,7 +168,7 @@ class MaiBestPerformanceService(
     }
 
     companion object {
-        private val log: Logger = LoggerFactory.getLogger(MaiBestPerformanceService::class.java)
+        val log = KotlinLogging.logger { }
 
         fun getBestScores(
             qq: Long?,

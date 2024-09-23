@@ -396,7 +396,7 @@ public class BotWebApi {
             // todaybp
             case null, default -> {
                 // 时间计算
-                var day = Objects.nonNull(start) ? Math.max(Math.min(start, 999), 1) : 1;
+                var day = Math.max(Math.min(Optional.ofNullable(start).orElse(1), 999), 1);
                 var bps = scoreApiService.getBestPerformance(osuUser.getUserID(), mode, 0, 100);
                 ArrayList<Integer> ranks = new ArrayList<>();
 
@@ -680,10 +680,10 @@ public class BotWebApi {
                                 message = String.format("%.0f", r);
                             }
                         } catch (NumberFormatException e) {
-                            message = DiceService.Compare(compare);
+                            message = DiceService.compare(compare);
                         }
                     } else {
-                        message = DiceService.Compare(compare);
+                        message = DiceService.compare(compare);
                     }
                 }
             } else {

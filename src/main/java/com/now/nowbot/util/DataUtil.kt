@@ -8,6 +8,12 @@ import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import io.github.humbleui.skija.Typeface
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.lang.NonNull
+import org.springframework.lang.Nullable
+import org.springframework.util.CollectionUtils
+import org.springframework.util.StringUtils
 import java.io.IOException
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -15,12 +21,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import kotlin.math.*
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.lang.NonNull
-import org.springframework.lang.Nullable
-import org.springframework.util.CollectionUtils
-import org.springframework.util.StringUtils
+import kotlin.math.roundToInt
 
 object DataUtil {
     private val log: Logger = LoggerFactory.getLogger(DataUtil::class.java)
@@ -118,7 +119,7 @@ object DataUtil {
                         .split("[,，|:：`、]+".toRegex())
                         .dropLastWhile { it.isEmpty() }
                         .toTypedArray() // 空格和-_不能匹配
-        if (strings.size == 0) return null
+        if (strings.isEmpty()) return null
 
         return Arrays.stream(strings).map { obj: String -> obj.trim { it <= ' ' } }.toList()
     }
@@ -189,7 +190,7 @@ object DataUtil {
      */
     @JvmStatic
     @NonNull
-    fun parseRange2Offset(@Nullable start: Int, @Nullable end: Int): Int {
+    fun parseRange2Offset(start: Int?, end: Int?): Int {
         return parseRange(start, end).offset
     }
 
@@ -202,7 +203,7 @@ object DataUtil {
      */
     @JvmStatic
     @NonNull
-    fun parseRange2Limit(@Nullable start: Int, @Nullable end: Int): Int {
+    fun parseRange2Limit(start: Int?, end: Int?): Int {
         return parseRange(start, end).limit
     }
 
@@ -214,14 +215,19 @@ object DataUtil {
      * @return offset-limit 对
      */
     @NonNull
-    private fun parseRange(@Nullable start: Int, @Nullable end: Int): Range {
-        var start = start
+    private fun parseRange(start: Int?, end: Int?): Range {
+        val start = start.let {
+            if (it == null || it < 1 || it > 100) {
+                1
+            } else {
+                it
+            }
+        }
+
         val offset: Int
         val limit: Int
 
-        if (Objects.isNull(start) || start < 1 || start > 100) start = 1
-
-        if (Objects.isNull(end) || end < 1 || end > 100) {
+        if (end == null || end < 1 || end > 100) {
             offset = start - 1
             limit = 1
         } else {
@@ -246,7 +252,7 @@ object DataUtil {
     @JvmStatic
     // 获取比赛的某个 event 之前所有玩家
     fun getPlayersBeforeRoundStart(@NonNull match: Match, eventID: Long): MutableList<MicroUser> {
-        val players = mutableListOf<MicroUser>();
+        val players = mutableListOf<MicroUser>()
         val idList = getPlayerListBeforeRoundStart(match, eventID)
 
         for (id in idList) {
@@ -399,14 +405,14 @@ object DataUtil {
         val total = stat.getCountAll(MANIA)
 
         // geki, 300, katu, 100, 50, 0
-        val list =
-                Arrays.asList(
-                        stat.countGeki,
-                        stat.count300,
-                        stat.countKatu,
-                        stat.count100,
-                        stat.count50,
-                        stat.countMiss)
+        val list = mutableListOf<Int>(
+                stat.countGeki,
+                stat.count300,
+                stat.countKatu,
+                stat.count100,
+                stat.count50,
+                stat.countMiss
+            )
 
         // 一个物件所占的 Acc 权重
         if (total <= 0) return stat
@@ -518,7 +524,7 @@ object DataUtil {
                         .split("[,，、|:：]+".toRegex())
                         .dropLastWhile { it.isEmpty() }
                         .toTypedArray()
-        if (split.size == 0) return listOf(str)
+        if (split.isEmpty()) return listOf(str)
 
         return Arrays.stream(split)
                 .map { obj: String -> obj.trim { it <= ' ' } }
@@ -526,11 +532,11 @@ object DataUtil {
                 .toList()
     }
 
-    fun String2Markdown(str: String): String {
+    fun string2Markdown(str: String): String {
         return str.replace("\n", "\n\n")
     }
 
-    fun JsonString2Markdown(str: String): String? {
+    fun jsonString2Markdown(str: String): String? {
         if (Objects.isNull(str)) return null
         return str.replace("},", "},\n\n")
     }
@@ -597,11 +603,11 @@ object DataUtil {
             if (number >= 100) {
                 number /= 1000.0
             }
-            number = Math.round(number * 10).toDouble() / 10.0
+            number = (number * 10).roundToInt().toDouble() / 10.0
         } else if (level == 2) {
-            number = Math.round(number * 1000).toDouble() / 1000.0
+            number = (number * 1000).roundToInt().toDouble() / 1000.0
         }
-        if (number - Math.round(number) <= 0.0001) number = Math.round(number).toDouble()
+        if (number - number.roundToInt() <= 0.0001) number = number.roundToInt().toDouble()
 
         return number
     }
@@ -629,11 +635,11 @@ object DataUtil {
 
         if (level == 1) {
             if (number >= 100) {
-                number /= 1000.0
+                number /= 1000
             }
-            number = Math.round(number * 10).toDouble() / 10.0
+            number = (number * 10).roundToInt().toDouble() / 10
         } else if (level == 2) {
-            number = Math.round(number * 1000).toDouble() / 1000.0
+            number = (number * 1000).roundToInt().toDouble() / 1000
         }
         intValue = number.toInt()
         isInt =
@@ -653,7 +659,7 @@ object DataUtil {
         return out
     }
 
-    fun Time2HourAndMinient(time: Long): String {
+    fun time2HourAndMinute(time: Long): String {
         if (time < 3600000) {
             return String.format("%dM", time / 60000)
         }
@@ -903,7 +909,7 @@ object DataUtil {
                     MANIA -> fc * i * (0.01f * c / m + 0.99f * ap8) * p
                 }
 
-        return String.format("%07d", Math.round(v3)) // 补 7 位达到 v3 分数的要求
+        return String.format("%07d", round(v3)) // 补 7 位达到 v3 分数的要求
     }
 
     // 这东西是啥?
@@ -954,27 +960,27 @@ object DataUtil {
     /**
      * 缩短字符 220924
      *
-     * @param Str 需要被缩短的字符
-     * @param MaxWidth 最大宽度
+     * @param str 需要被缩短的字符
+     * @param maxWidth 最大宽度
      * @return 返回已缩短的字符
      */
-    fun getShortenStr(Str: String, MaxWidth: Int): String {
+    fun getShortenStr(str: String, maxWidth: Int): String {
         val sb = StringBuilder()
-        val Char = Str.toCharArray()
+        val char = str.toCharArray()
 
         var allWidth = 0f
         var backL = 0
 
-        for (thisChar in Char) {
-            if (allWidth > MaxWidth) {
+        for (thisChar in char) {
+            if (allWidth > maxWidth) {
                 break
             }
             sb.append(thisChar)
-            if ((allWidth) < MaxWidth) {
+            if ((allWidth) < maxWidth) {
                 backL++
             }
         }
-        if (allWidth > MaxWidth) {
+        if (allWidth > maxWidth) {
             sb.delete(backL, sb.length)
             sb.append("...")
         }
@@ -1064,7 +1070,7 @@ object DataUtil {
 
         try {
             val bufferedReader =
-                    Files.newBufferedReader(Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path))
+                    Files.newBufferedReader(Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path ?: return ""))
 
             // 逐行读取文本内容
             var line: String?
