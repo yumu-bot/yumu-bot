@@ -407,7 +407,7 @@ public interface OsuBeatmapApiService {
     }
 
     private boolean isNotAvailable(BeatMap beatMap) {
-        return beatMap.getBeatMapSet() != null && beatMap.getBeatMapSet().getAvailability() != null && ! beatMap.getBeatMapSet().getAvailability().downloadDisabled();
+        return ! (beatMap.getBeatMapSet() != null && beatMap.getBeatMapSet().getAvailability() != null && ! beatMap.getBeatMapSet().getAvailability().downloadDisabled());
     }
 
     private void getStarFromAttributes(BeatMap beatMap, OsuMode mode, Integer modsInt, Boolean isNotAvailable) {
