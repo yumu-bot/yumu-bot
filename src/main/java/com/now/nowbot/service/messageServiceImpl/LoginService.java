@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.random.RandomGenerator;
 
 @Service("LOGIN")
 public class LoginService implements MessageService<String> {
