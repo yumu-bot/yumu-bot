@@ -139,7 +139,6 @@ public interface OsuBeatmapApiService {
     default JniResult getPP(BeatMap beatMap, MapStatisticsService.Expected e) throws Exception {
         var b = getBeatMapFileStr(beatMap.getBeatMapID()).getBytes(StandardCharsets.UTF_8);
         var m = OsuMod.getModsValueFromAbbrList(e.mods);
-        var t = new Statistics();
 
         JniScore score = new JniScore();
         score.setCombo(e.combo);
@@ -286,6 +285,13 @@ public interface OsuBeatmapApiService {
         JniResult r;
         try {
             r = getPP(score);
+
+            if (r.getPp() == 0) try {
+                refreshBeatMapFile(beatMap.getBeatMapID());
+                r = getPP(score);
+            } catch (IOException ignored) {
+
+            }
         } catch (Exception e) {
             NowbotApplication.log.error("计算时出现异常", e);
             return;
@@ -309,9 +315,19 @@ public interface OsuBeatmapApiService {
     default void applySRAndPP(BeatMap beatMap, OsuMode mode, int modsInt) {
         if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
         if (beatMap == null) return; // 谱面没有 PP，所以必须查
+
+        var id = beatMap.getBeatMapID();
+
         JniResult r;
         try {
-            r = getMaxPP(beatMap.getBeatMapID(), mode, modsInt);
+            r = getMaxPP(id, mode, modsInt);
+
+            if (r.getPp() == 0) try {
+                refreshBeatMapFile(id);
+                r = getMaxPP(id, mode, modsInt);
+            } catch (IOException ignored) {
+
+            }
         } catch (Exception e) {
             NowbotApplication.log.error("计算时出现异常", e);
             return;
@@ -337,6 +353,14 @@ public interface OsuBeatmapApiService {
             js.setMods(m);
 
             r = Rosu.calculate(b, js);
+
+
+            if (r.getPp() == 0) try {
+                refreshBeatMapFile(beatMap.getBeatMapID());
+                r = Rosu.calculate(b, js);
+            } catch (IOException ignored) {
+
+            }
         } catch (Exception e) {
             NowbotApplication.log.error("计算时出现异常", e);
             return;
