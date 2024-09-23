@@ -5,7 +5,7 @@ import com.now.nowbot.model.JsonData.Match;
 import com.now.nowbot.model.JsonData.MicroUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.multiplayer.MatchCalculate;
-import com.now.nowbot.model.multiplayer.MatchListener;
+import com.now.nowbot.model.multiplayer.MatchListenerLegacy;
 import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
@@ -38,8 +38,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service("MATCH_LISTENER")
-public class MatchListenerServiceOld implements MessageService<MatchListenerServiceOld.ListenerParam> {
-    static final Logger log = LoggerFactory.getLogger(MatchListenerServiceOld.class);
+public class MatchListenerServiceLegacy implements MessageService<MatchListenerServiceLegacy.ListenerParam> {
+    static final Logger log = LoggerFactory.getLogger(MatchListenerServiceLegacy.class);
     static final int    BREAK_ROUND = 15;
 
     @Resource
@@ -50,7 +50,7 @@ public class MatchListenerServiceOld implements MessageService<MatchListenerServ
     ImageService         imageService;
 
     public static void stopAllListener() {
-        ListenerCheck.listenerMap.values().forEach(l -> l.stopListener(MatchListener.StopType.SERVICE_STOP));
+        ListenerCheck.listenerMap.values().forEach(l -> l.stopListener(MatchListenerLegacy.StopType.SERVICE_STOP));
     }
 
     public enum Status {
@@ -66,7 +66,7 @@ public class MatchListenerServiceOld implements MessageService<MatchListenerServ
     @Override
     public boolean isHandle(MessageEvent event, String messageText, DataValue<ListenerParam> data) throws Throwable {
         var matcher = Instruction.MATCH_LISTENER.matcher(messageText);
-        if (!matcher.find()) return false;
+        if (true) return false;
 
         var param = new ListenerParam();
         var from = event.getSubject();
@@ -157,7 +157,7 @@ public class MatchListenerServiceOld implements MessageService<MatchListenerServ
         }
 
         // 监听房间结束
-        BiConsumer<Match, MatchListener.StopType> handleStop = (m, type) -> from.sendMessage(
+        BiConsumer<Match, MatchListenerLegacy.StopType> handleStop = (m, type) -> from.sendMessage(
                 String.format(
                         MatchListenerException.Type.ML_Listen_Stop.message,
                         m.getMatchStat().getMatchID(),
@@ -386,14 +386,14 @@ public class MatchListenerServiceOld implements MessageService<MatchListenerServ
 
     record Handlers(Consumer<Match> start,
                     BiConsumer<List<Match.MatchEvent>, Match> event,
-                    BiConsumer<Match, MatchListener.StopType> stop) {
+                    BiConsumer<Match, MatchListenerLegacy.StopType> stop) {
     }
 
     private static class ListenerCheck {
         private final static int                           USER_MAX    = 3;
         private final static int                           GROUP_MAX   = 3;
-        private final static Map<QQ_GroupRecord, Handlers> listeners   = new ConcurrentHashMap<>();
-        private final static Map<Long, MatchListener>      listenerMap = new ConcurrentHashMap<>();
+        private final static Map<QQ_GroupRecord, Handlers>  listeners   = new ConcurrentHashMap<>();
+        private final static Map<Long, MatchListenerLegacy> listenerMap = new ConcurrentHashMap<>();
 
         static QQ_GroupRecord add(
                 long qq,
@@ -402,7 +402,7 @@ public class MatchListenerServiceOld implements MessageService<MatchListenerServ
                 boolean isSuper,
                 Consumer<Match> start,
                 ThreeArgConsumer<List<Match.MatchEvent>, Match, QQ_GroupRecord> event,
-                BiConsumer<Match, MatchListener.StopType> stop,
+                BiConsumer<Match, MatchListenerLegacy.StopType> stop,
                 Match match,
                 OsuMatchApiService matchApiService
         ) throws MatchListenerException {
@@ -427,11 +427,11 @@ public class MatchListenerServiceOld implements MessageService<MatchListenerServ
             if (groupSum.get() >= GROUP_MAX && notSuper)
                 throw new TipsRuntimeException(MatchListenerException.Type.ML_Listen_MaxInstanceGroup.message);
 
-            var listener = listenerMap.computeIfAbsent(mid, (k) -> new MatchListener(match, matchApiService));
-            BiConsumer<Match, MatchListener.StopType> nStop = (m, type) -> {
+            var listener = listenerMap.computeIfAbsent(mid, (k) -> new MatchListenerLegacy(match, matchApiService));
+            BiConsumer<Match, MatchListenerLegacy.StopType> nStop = (m, type) -> {
                 listeners.remove(key);
                 // 用户停止可能会多次调用, 不直接删除
-                if (!MatchListener.StopType.USER_STOP.equals(type)) {
+                if (!MatchListenerLegacy.StopType.USER_STOP.equals(type)) {
                     listenerMap.remove(mid);
                 }
             };
@@ -463,7 +463,7 @@ public class MatchListenerServiceOld implements MessageService<MatchListenerServ
             if (Objects.nonNull(handle)) {
                 listener.removeListener(handle.start());
                 listener.removeListener(handle.event());
-                listener.removeListener(handle.stop(), MatchListener.StopType.USER_STOP);
+                listener.removeListener(handle.stop(), MatchListenerLegacy.StopType.USER_STOP);
                 listeners.remove(key);
 
                 // 如果没有其他群在监听则停止监听
@@ -474,7 +474,7 @@ public class MatchListenerServiceOld implements MessageService<MatchListenerServ
                     }
                 }
                 if (lCount == 0) {
-                    listener.stopListener(MatchListener.StopType.USER_STOP);
+                    listener.stopListener(MatchListenerLegacy.StopType.USER_STOP);
                     listenerMap.remove(matchID);
                 }
 
@@ -496,12 +496,12 @@ public class MatchListenerServiceOld implements MessageService<MatchListenerServ
                     if (handler != null) {
                         listener.removeListener(handler.start());
                         listener.removeListener(handler.event());
-                        listener.removeListener(handler.stop(), MatchListener.StopType.SUPER_STOP);
+                        listener.removeListener(handler.stop(), MatchListenerLegacy.StopType.SUPER_STOP);
                     }
                 }
 
                 // 不在任何监听的群里, 停止所有群的监听
-                listener.stopListener(MatchListener.StopType.SUPER_STOP);
+                listener.stopListener(MatchListenerLegacy.StopType.SUPER_STOP);
             }
         }
     }

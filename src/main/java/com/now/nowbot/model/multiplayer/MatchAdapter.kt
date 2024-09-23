@@ -7,7 +7,7 @@ import com.now.nowbot.model.enums.OsuMode
 import java.time.OffsetDateTime
 
 interface MatchAdapter {
-    var match:NewMatch
+    var match : MonitoredMatch
 
     fun onStart()
 
@@ -34,8 +34,8 @@ interface MatchAdapter {
     )
 
     data class GameEndEvent(
-        val game: NewMatch.MatchGame,
-        val ID: Long,
+        val game: MonitoredMatch.MatchGame,
+        val id: Long,
         val users: Map<Long, MicroUser>,
     )
 }

@@ -2,12 +2,11 @@ package com.now.nowbot.service.OsuApiService.impl
 
 import com.now.nowbot.model.JsonData.Match
 import com.now.nowbot.model.multiplayer.MatchQuery
-import com.now.nowbot.model.multiplayer.NewMatch
+import com.now.nowbot.model.multiplayer.MonitoredMatch
 import com.now.nowbot.service.OsuApiService.OsuMatchApiService
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.time.Duration
-import java.util.*
 
 @Service
 class MatchApiImpl(
@@ -29,7 +28,7 @@ class MatchApiImpl(
             .block()!!
     }
 
-    override fun getNewMatchInfo(mid: Long, before: Long?, after: Long?, limit: Int) : NewMatch{
+    override fun getNewMatchInfo(mid: Long, before: Long?, after: Long?, limit: Int) : MonitoredMatch{
         return base.osuApiWebClient.get()
             .uri {
                 it.path("matches/{mid}")
@@ -40,7 +39,7 @@ class MatchApiImpl(
             }
             .headers(base::insertHeader)
             .retrieve()
-            .bodyToMono(NewMatch::class.java)
+            .bodyToMono(MonitoredMatch::class.java)
             .timeout(Duration.ofSeconds(5))
             .block()!!
     }

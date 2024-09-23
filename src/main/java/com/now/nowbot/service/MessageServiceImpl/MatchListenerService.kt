@@ -3,8 +3,8 @@ package com.now.nowbot.service.MessageServiceImpl
 import com.now.nowbot.config.Permission
 import com.now.nowbot.model.multiplayer.MatchAdapter
 import com.now.nowbot.model.multiplayer.MatchCalculate
-import com.now.nowbot.model.multiplayer.NewMatch
-import com.now.nowbot.model.multiplayer.NewMatchListener
+import com.now.nowbot.model.multiplayer.MonitoredMatch
+import com.now.nowbot.model.multiplayer.MatchListener
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -22,9 +22,9 @@ import com.now.nowbot.util.DataUtil.getOriginal
 import com.now.nowbot.util.Instruction
 import com.yumu.core.extensions.isNotNull
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
-
 
 class MatchListenerService(
     private val matchApiService: OsuMatchApiService,
@@ -36,6 +36,8 @@ class MatchListenerService(
         messageText: String,
         data: MessageService.DataValue<ListenerParam?>
     ): Boolean {
+        return false
+
         val matcher = Instruction.MATCH_LISTENER.matcher(messageText)
         if (!matcher.find()) return false
 
@@ -67,7 +69,7 @@ class MatchListenerService(
     }
 
     override fun HandleMessage(event: MessageEvent, data: ListenerParam) {
-        val match: NewMatch
+        val match: MonitoredMatch
 
         if (event !is GroupMessageEvent) {
             throw TipsException(MatchListenerException.Type.ML_Send_NotGroup.message)
@@ -135,7 +137,7 @@ class MatchListenerService(
         val matchID: Long,
     ) : MatchAdapter {
         var round = 0
-        override lateinit var match:NewMatch
+        override lateinit var match : MonitoredMatch
 
         /**
          * 判断是否继续
@@ -144,7 +146,7 @@ class MatchListenerService(
             if (round <= BREAK_ROUND) return true
             round++
             val message = """
-                比赛($matchID)已经监听${round}轮, 如果要继续监听, 请60秒内任意一人回复
+                比赛 ($matchID) 已经监听 ${round} 轮, 如果要继续监听, 请60秒内任意一人回复
                 "$matchID" (不要带引号)
                 """.trimIndent()
             messageEvent.reply(message)
@@ -194,15 +196,15 @@ class MatchListenerService(
                 val stat = match.state
                 imageService.getPanelF2(stat, game, index)
             } catch (e: java.lang.Exception) {
-                MatchListenerServiceOld.log.error("对局信息图片渲染失败：", e)
+                log.error(e) {"对局信息图片渲染失败："}
                 throw MatchRoundException(MatchRoundException.Type.MR_Fetch_Error)
             }
             messageEvent.reply(image)
             return@with
         }
 
-        override fun onMatchEnd(type: NewMatchListener.StopType) {
-            if (type == NewMatchListener.StopType.SERVICE_STOP || type == NewMatchListener.StopType.USER_STOP) return
+        override fun onMatchEnd(type: MatchListener.StopType) {
+            if (type == MatchListener.StopType.SERVICE_STOP || type == MatchListener.StopType.USER_STOP) return
             consoleListener(messageEvent.subject.id, false, matchID)
             val message = String.format(
                 MatchListenerException.Type.ML_Listen_Stop.message,
@@ -243,7 +245,7 @@ class MatchListenerService(
         const val USER_MAX = 3
         const val GROUP_MAX = 3
 
-        val listeners = mutableMapOf<Long, NewMatchListener>()
+        val listeners = mutableMapOf<Long, MatchListener>()
 
         // group user listener
         val senderSet = mutableSetOf<Triple<Long, Long, MatchListenerImplement>>()
@@ -266,7 +268,7 @@ class MatchListenerService(
             senderSet.add(key)
             val l = listeners.computeIfAbsent(listener.matchID) {
                 val match = matchApiService.getNewMatchInfo(it)
-                NewMatchListener(match, beatmapApiService, matchApiService, listener)
+                MatchListener(match, beatmapApiService, matchApiService, listener)
             }
             l.addListener(listener)
         }
@@ -283,7 +285,7 @@ class MatchListenerService(
                 return
             }
 
-            val stopType = if (isSuper) NewMatchListener.StopType.SUPER_STOP else NewMatchListener.StopType.USER_STOP
+            val stopType = if (isSuper) MatchListener.StopType.SUPER_STOP else MatchListener.StopType.USER_STOP
 
             triples.forEach { (_, _, l) ->
                 l.onMatchEnd(stopType)
@@ -296,7 +298,7 @@ class MatchListenerService(
 
         fun stopAllListener() {
             listeners.forEach { (_, u) ->
-                u.stop(NewMatchListener.StopType.SERVICE_STOP)
+                u.stop(MatchListener.StopType.SERVICE_STOP)
             }
         }
 

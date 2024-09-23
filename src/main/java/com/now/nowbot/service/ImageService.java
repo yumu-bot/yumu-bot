@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.JsonData.*;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.multiplayer.MatchCalculate;
-import com.now.nowbot.model.multiplayer.NewMatch;
+import com.now.nowbot.model.multiplayer.MonitoredMatch;
 import com.now.nowbot.model.multiplayer.SeriesCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.ppminus3.PPMinus3;
@@ -498,7 +498,7 @@ public class ImageService {
         return doPost("panel_F2", httpEntity);
     }
 
-    public byte[] getPanelF2(NewMatch.MatchStat stat, NewMatch.MatchGame game, int index) {
+    public byte[] getPanelF2(MonitoredMatch.MatchStat stat, MonitoredMatch.MatchGame game, int index) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(

@@ -8,7 +8,7 @@ import com.now.nowbot.model.JsonData.Statistics
 import com.now.nowbot.model.enums.OsuMode
 import java.time.OffsetDateTime
 
-data class NewMatch(
+data class MonitoredMatch(
     @JsonProperty("match")
     var state: MatchStat,
 
@@ -141,7 +141,7 @@ data class NewMatch(
         }
     }
 
-    operator fun plusAssign(match: NewMatch) {
+    operator fun plusAssign(match: MonitoredMatch) {
         // 更新玩家
         if (match.users.isNotEmpty()) {
             val userSet = users.map { it.userID }.toSet()
