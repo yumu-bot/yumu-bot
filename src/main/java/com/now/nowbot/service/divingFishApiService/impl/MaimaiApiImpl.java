@@ -50,26 +50,26 @@ public class MaimaiApiImpl implements MaimaiApiService {
     }
 
     @Override
-    public MaiBestPerformance getMaimaiBest50(Long qq) {
+    public MaiBestScore getMaimaiBest50(Long qq) {
         var b = new MaimaiBestScoreQQBody(qq, true);
 
-        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestScoreQQBody.class).headers(base::insertJSONHeader).retrieve().bodyToMono(MaiBestPerformance.class).block();
+        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestScoreQQBody.class).headers(base::insertJSONHeader).retrieve().bodyToMono(MaiBestScore.class).block();
     }
 
     @Override
-    public MaiBestPerformance getMaimaiBest50(String username) {
+    public MaiBestScore getMaimaiBest50(String username) {
         var b = new MaimaiBestScoreNameBody(username, true);
 
         return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(b), MaimaiBestScoreNameBody.class)
                 .retrieve()
-                .bodyToMono(MaiBestPerformance.class)
+                .bodyToMono(MaiBestScore.class)
                 .block();
     }
 
     @Override
-    public MaiBestPerformance getMaimaiScoreByVersion(String username, List<MaiVersion> versions) {
+    public MaiVersionScore getMaimaiScoreByVersion(String username, List<MaiVersion> versions) {
         var b = new MaimaiByVersionNameBody(username, MaiVersion.getNameList(versions));
 
         return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/plate").build())
@@ -77,12 +77,12 @@ public class MaimaiApiImpl implements MaimaiApiService {
                 .body(Mono.just(b), MaimaiByVersionNameBody.class)
                 .headers(base::insertJSONHeader)
                 .retrieve()
-                .bodyToMono(MaiBestPerformance.class)
+                .bodyToMono(MaiVersionScore.class)
                 .block();
     }
 
     @Override
-    public MaiBestPerformance getMaimaiScoreByVersion(Long qq, List<MaiVersion> versions) {
+    public MaiVersionScore getMaimaiScoreByVersion(Long qq, List<MaiVersion> versions) {
         var b = new MaimaiByVersionQQBody(qq, MaiVersion.getNameList(versions));
 
         return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/plate")
@@ -91,7 +91,7 @@ public class MaimaiApiImpl implements MaimaiApiService {
                 .body(Mono.just(b), MaimaiByVersionQQBody.class)
                 .headers(base::insertJSONHeader)
                 .retrieve()
-                .bodyToMono(MaiBestPerformance.class).block();
+                .bodyToMono(MaiVersionScore.class).block();
     }
 
     @Override
@@ -206,17 +206,27 @@ public class MaimaiApiImpl implements MaimaiApiService {
     }
 
     @Override
-    public MaiBestPerformance getMaimaiBest50P(Long qq) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
-        var b = new MaimaiBestScoreQQBody(qq, true);
-
-        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestScoreQQBody.class).headers(base::insertDeveloperHeader).retrieve().bodyToMono(MaiBestPerformance.class).block();
+    public MaiBestScore getMaimaiFullScores(Long qq) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
+        return base.divingFishApiWebClient.get()
+                .uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/dev/player/records")
+                        .queryParam("qq", qq)
+                        .build())
+                .headers(base::insertDeveloperHeader)
+                .retrieve()
+                .bodyToMono(MaiBestScore.class)
+                .block();
     }
 
     @Override
-    public MaiBestPerformance getMaimaiBest50P(String probername) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
-        var b = new MaimaiBestScoreNameBody(probername, true);
-
-        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestScoreNameBody.class).headers(base::insertDeveloperHeader).retrieve().bodyToMono(MaiBestPerformance.class).block();
+    public MaiBestScore getMaimaiFullScores(String probername) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
+        return base.divingFishApiWebClient.get()
+                .uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/dev/player/records")
+                        .queryParam("username", probername)
+                        .build())
+                .headers(base::insertDeveloperHeader)
+                .retrieve()
+                .bodyToMono(MaiBestScore.class)
+                .block();
     }
 
     private <T> T file2Object(String fileName, Class<T> clazz) {
