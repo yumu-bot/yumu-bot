@@ -72,7 +72,7 @@ public class NominationService implements MessageService<Matcher> {
         byte[] image;
 
         try {
-            image = imageService.getPanelN(data);
+            image = imageService.getPanel(data, "N");
         } catch (Exception e) {
             log.error("提名信息：渲染失败", e);
             throw new NominationException(NominationException.Type.N_Render_Failed);

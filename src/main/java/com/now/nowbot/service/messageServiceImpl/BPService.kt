@@ -163,7 +163,7 @@ class BPService(
                 }
 
                 val e5Param = getScore4PanelE5(user!!, score!!, beatmapApiService)
-                imageService.getPanelE5(e5Param)
+                imageService.getPanel(e5Param.toMap(), "E5")
             }
         } catch (e: Exception) {
             log.error("最好成绩：渲染失败", e)

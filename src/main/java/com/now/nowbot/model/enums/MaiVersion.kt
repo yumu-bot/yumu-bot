@@ -1,14 +1,10 @@
-package com.now.nowbot.model.enums;
+package com.now.nowbot.model.enums
 
+import java.util.Locale
+import org.springframework.util.CollectionUtils
 
-import org.springframework.util.CollectionUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-
-public enum MaiVersion {
+enum class MaiVersion(versionName: String, versionAbbreviation: String) {
     DEFAULT("maimai", ""),
-
     PLUS("maimai PLUS", "真"),
     GREEN("maimai GreeN", "超"),
     GREEN_PLUS("maimai GreeN PLUS", "檄"),
@@ -34,78 +30,239 @@ public enum MaiVersion {
     BUDDIES_PLUS("maimai でらっくす BUDDiES PLUS", ""),
     PRISM("maimai でらっくす PRiSM", ""),
     PRISM_PLUS("maimai でらっくす PRiSM PLUS", ""),
-
     ;
 
-    final String name;
-    final String abbr;
+    val full: String = versionName
+    val abbr: String = versionAbbreviation
 
-    MaiVersion(String name, String abbr) {
-        this.name = name;
-        this.abbr = abbr;
-    }
-
-    public static List<String> getNameList(List<MaiVersion> versions) {
-        var list = new ArrayList<String>();
-        if (CollectionUtils.isEmpty(versions)) {
-            return list;
-        }
-
-        for (var v : versions) {
-            list.add(v.name);
-        }
-
-        return list;
-    }
-
-    public static MaiVersion getVersion(String name) {
-        if (name == null) return DEFAULT;
-
-        return switch (name.trim().toLowerCase()) {
-            case "maimai", "mi", "0.1", "0.10" -> DEFAULT;
-            case "plus", "maimaiplus", "maimai plus", "pl", "pls", "0.11" -> PLUS;
-            case "green", "gr", "grn", "0.2", "0.20" -> GREEN;
-            case "greenplus", "green plus", "grp", "0.21" -> GREEN_PLUS;
-            case "orange", "or", "org", "0.3", "0.30" -> ORANGE;
-            case "orangeplus", "orange plus", "orp", "0.31" -> ORANGE_PLUS;
-            case "pink", "pk", "pnk", "0.4", "0.40" -> PINK;
-            case "pinkplus", "pink plus", "pkp", "0.41" -> PINK_PLUS;
-            case "murasaki", "ms", "msk", "0.5", "0.50" -> MURASAKI;
-            case "murasakiplus", "murasaki plus", "msp", "0.51" -> MURASAKI_PLUS;
-            case "milk", "white", "mk", "mlk", "0.6", "0.60" -> MILK;
-            case "milkplus", "milk plus", "mkp", "0.61" -> MILK_PLUS;
-            case "finale", "final", "fn", "fnl", "0.7", "0.70" -> FINALE;
-            case "allfinale", "all finale", "finale plus", "afn", "0.71" -> ALL_FINALE;
-            case "deluxe", "dx", "dlx", "1.0", "1.00" -> DX;
-            case "deluxeplus", "deluxe plus", "dxp", "dlxp", "1.01" -> DX_PLUS;
-            case "splash", "sp", "spl", "1.1", "1.10" -> SPLASH;
-            case "splashplus", "splash plus", "spp", "splp", "1.11" -> SPLASH_PLUS;
-            case "festival", "fs", "fes", "fst", "1.2", "1.20" -> FESTIVAL;
-            case "festivalplus", "festival plus", "fep", "fsp", "fesp", "1.21" -> FESTIVAL_PLUS;
-            case "universe", "un", "uv", "uni", "1.3", "1.30" -> UNIVERSE;
-            case "universeplus", "universe plus", "unp", "uvp", "unvp", "1.31" -> UNIVERSE_PLUS;
-            case "buddies", "bd", "bud", "1.4", "1.40" -> BUDDIES;
-            case "buddiesplus", "buddies plus", "bdp", "budp", "1.41" -> BUDDIES_PLUS;
-
-            default -> {
-                for (var v: MaiVersion.values()) {
-                    if (name.equals(v.name) || name.equals(v.abbr)) {
-                        yield v;
-                    }
-                }
-                yield DEFAULT;
+    companion object {
+        @JvmStatic
+        fun getNameList(versions: MutableList<MaiVersion>): MutableList<String> {
+            if (CollectionUtils.isEmpty(versions)) {
+                return mutableListOf<String>()
             }
-        };
 
+            return versions.stream().map(MaiVersion::full).toList()
+        }
 
+        @JvmStatic
+        fun getAbbreviationList(versions: MutableList<MaiVersion>): MutableList<String> {
+            if (CollectionUtils.isEmpty(versions)) {
+                return mutableListOf<String>()
+            }
 
-    }
+            return versions.stream().map(MaiVersion::abbr).toList()
+        }
 
-    public String getName() {
-        return name;
-    }
+        fun getMutableVersion(str: String?): MutableList<MaiVersion> {
+            if (str == null) return mutableListOf(DEFAULT)
 
-    public String getAbbr() {
-        return abbr;
+            val out = mutableSetOf<MaiVersion>()
+            val strList = str.split(Regex("[,，|:：]"))
+
+            if (strList.isEmpty()) return mutableListOf(DEFAULT)
+
+            for (s in strList) {
+                out.add(MaiVersion.getVersion(s))
+            }
+
+            return out.stream().toList()
+        }
+
+        fun getVersion(str: String?): MaiVersion {
+            if (str == null) return DEFAULT
+
+            return when (str.trim { it <= ' ' }.replace('-', ' ').lowercase(Locale.getDefault())) {
+                "maimai",
+                "mi",
+                "mai",
+                "0.1",
+                "0.10" -> DEFAULT
+                "plus",
+                "maimaiplus",
+                "maimai plus",
+                "maimai+",
+                "pl",
+                "pls",
+                "mai+",
+                "0.11" -> PLUS
+                "green",
+                "gr",
+                "gre",
+                "grn",
+                "0.2",
+                "0.20" -> GREEN
+                "greenplus",
+                "green plus",
+                "grep",
+                "grp",
+                "gre+",
+                "grn+",
+                "gr+",
+                "0.21" -> GREEN_PLUS
+                "orange",
+                "or",
+                "org",
+                "0.3",
+                "0.30" -> ORANGE
+                "orangeplus",
+                "orange plus",
+                "orgp",
+                "orp",
+                "or+",
+                "org+",
+                "0.31" -> ORANGE_PLUS
+                "pink",
+                "pk",
+                "pnk",
+                "0.4",
+                "0.40" -> PINK
+                "pinkplus",
+                "pink plus",
+                "pkp",
+                "pink+",
+                "pk+",
+                "pnk+",
+                "0.41" -> PINK_PLUS
+                "murasaki",
+                "ms",
+                "msk",
+                "0.5",
+                "0.50" -> MURASAKI
+                "murasakiplus",
+                "murasaki plus",
+                "msp",
+                "murasaki+",
+                "ms+",
+                "msk+",
+                "0.51" -> MURASAKI_PLUS
+                "milk",
+                "white",
+                "mk",
+                "mlk",
+                "0.6",
+                "0.60" -> MILK
+                "milkplus",
+                "milk plus",
+                "mkp",
+                "milk+",
+                "white+",
+                "mk+",
+                "mlk+",
+                "0.61" -> MILK_PLUS
+                "finale",
+                "final",
+                "fn",
+                "fnl",
+                "0.7",
+                "0.70" -> FINALE
+                "allfinale",
+                "all finale",
+                "finale plus",
+                "before deluxe",
+                "beforedeluxe",
+                "afn",
+                "finale+",
+                "final+",
+                "fn+",
+                "fnl+",
+                "0.71" -> ALL_FINALE
+                "deluxe",
+                "dx",
+                "dlx",
+                "1.0",
+                "1.00" -> DX
+                "deluxeplus",
+                "deluxe plus",
+                "dxp",
+                "dlxp",
+                "deluxe+",
+                "dx+",
+                "dlx+",
+                "1.01" -> DX_PLUS
+                "splash",
+                "sp",
+                "spl",
+                "1.1",
+                "1.10" -> SPLASH
+                "splashplus",
+                "splash plus",
+                "spp",
+                "splp",
+                "splash+",
+                "sp+",
+                "spl+",
+                "1.11" -> SPLASH_PLUS
+                "festival",
+                "fs",
+                "fes",
+                "fst",
+                "1.2",
+                "1.20" -> FESTIVAL
+                "festivalplus",
+                "festival plus",
+                "fep",
+                "fsp",
+                "fesp",
+                "festival+",
+                "fs+",
+                "fes+",
+                "fst+",
+                "1.21" -> FESTIVAL_PLUS
+                "universe",
+                "un",
+                "uv",
+                "uni",
+                "1.3",
+                "1.30" -> UNIVERSE
+                "universeplus",
+                "universe plus",
+                "unp",
+                "uvp",
+                "unvp",
+                "universe+",
+                "un+",
+                "uv+",
+                "uni+",
+                "1.31" -> UNIVERSE_PLUS
+                "buddies",
+                "bd",
+                "bud",
+                "1.4",
+                "1.40" -> BUDDIES
+                "buddiesplus",
+                "buddies plus",
+                "bdp",
+                "budp",
+                "buddies+",
+                "bd+",
+                "bud+",
+                "1.41" -> BUDDIES_PLUS
+                "prism",
+                "pr",
+                "pri",
+                "prs",
+                "1.5",
+                "1.50" -> PRISM
+                "prismplus",
+                "prism plus",
+                "prp",
+                "prip",
+                "prsp",
+                "prism+",
+                "pr+",
+                "pri+",
+                "prs+",
+                "1.51" -> PRISM_PLUS
+                else -> {
+                    for (v in entries) {
+                        if (str == v.full || str == v.abbr) {
+                            return v
+                        }
+                    }
+                    return DEFAULT
+                }
+            }
+        }
     }
 }

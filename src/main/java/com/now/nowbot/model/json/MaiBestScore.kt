@@ -3,17 +3,20 @@ package com.now.nowbot.model.json
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.util.*
 
-class MaiBestPerformance {
+class MaiBestScore {
     // 看用户段位信息，其中0-10对应初学者-十段，11-20对应真初段-真十段，21-22对应真皆传-里皆传
     @JsonProperty("additional_rating") var dan: Int = 0
 
     // b40 和 b50 一样，但区别是 dx 其实是最新版本的 b15，sd 是综合的 b35
-    // 这就是 BP
+    // 这就是 BP，在所有成绩里没有
     @JsonProperty("charts") var charts: Charts = Charts()
 
+    // 这就是所有成绩，在 BP 里没有
+    @JsonProperty("records") var records = mutableListOf<MaiScore>()
+
     data class Charts(
-        @JsonProperty("dx") val deluxe: MutableList<MaiScore> = mutableListOf<MaiScore>(),
-        @JsonProperty("sd") val standard: MutableList<MaiScore> = mutableListOf<MaiScore>(),
+        @JsonProperty("dx") val deluxe: MutableList<MaiScore> = mutableListOf(),
+        @JsonProperty("sd") val standard: MutableList<MaiScore> = mutableListOf(),
     )
 
     // 在游戏里的名字
@@ -46,14 +49,14 @@ class MaiBestPerformance {
         val best35 =
             this.charts.standard
                 .stream()
-                .map<Int> { obj: MaiScore? -> obj!!.getRating() }
+                .map<Int> { obj: MaiScore? -> obj!!.rating }
                 .filter { obj: Int? -> Objects.nonNull(obj) }
                 .reduce { a: Int, b: Int -> Integer.sum(a, b) }
                 .orElse(0)
         val best15 =
             this.charts.deluxe
                 .stream()
-                .map<Int> { obj: MaiScore? -> obj!!.getRating() }
+                .map<Int> { obj: MaiScore? -> obj!!.rating }
                 .filter { obj: Int? -> Objects.nonNull(obj) }
                 .reduce { a: Int, b: Int -> Integer.sum(a, b) }
                 .orElse(0)

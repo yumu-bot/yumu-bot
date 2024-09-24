@@ -12,17 +12,17 @@ import com.now.nowbot.model.json.OsuUser;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
-import org.springframework.http.HttpStatusCode;
+import org.codehaus.plexus.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class UserApiImpl implements OsuUserApiService {
+    private static final Logger log = LoggerFactory.getLogger(UserApiImpl.class);
     OsuApiBaseService base;
     BindDao           bindDao;
     OsuUserInfoDao    userInfoDao;
@@ -40,22 +40,15 @@ public class UserApiImpl implements OsuUserApiService {
     // 用来确认玩家是否存在于服务器，而无需使用 API 请求。
     @Override
     public boolean isPlayerExist(String name) {
-        var uri = UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/users").pathSegment(name).toUriString();
         var response = base.osuApiWebClient.get()
-                .uri(uri)
+                .uri("https://osu.ppy.sh/users/{name}", name)
                 .headers(base::insertHeader)
-                .exchange()
+                .retrieve()
+                .bodyToMono(String.class)
+                .onErrorReturn("")
                 .block();
 
-        HttpStatusCode status;
-
-        if (response != null) {
-            status = response.statusCode();
-        } else {
-            status = HttpStatusCode.valueOf(404);
-        }
-
-        return status.is2xxSuccessful();
+        return StringUtils.isNotEmpty(response);
     }
 
     @Override

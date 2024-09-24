@@ -162,7 +162,7 @@ class ScoreService(
         val e5Param = getScore4PanelE5(user, score!!, beatmapApiService)
 
         try {
-            image = imageService.getPanelE5(e5Param)
+            image = imageService.getPanel(e5Param.toMap(), "E5")
             return QQMsgUtil.getImage(image)
         } catch (e: Exception) {
             log.error("成绩：渲染失败", e)

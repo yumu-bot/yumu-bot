@@ -112,7 +112,7 @@ class BPAnalysisService(
         )
 
         return try {
-            imageService.getPanelJ(data)
+            imageService.getPanel(data, "J")
         } catch (e: HttpServerErrorException.InternalServerError) {
             log.error("最好成绩分析：复杂面板生成失败", e)
             try {
@@ -306,7 +306,7 @@ class BPAnalysisService(
 
             val rankAttr: MutableList<Attr?> = ArrayList(rankMap.size)
             run {
-                val fcList = rankMap?.remove("FC")
+                val fcList = rankMap.remove("FC")
                 val fc: Attr
                 if (fcList.isNullOrEmpty()) {
                     fc = Attr("FC", 0, 0f, 0f)

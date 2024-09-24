@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.MaiBestPerformance
+import com.now.nowbot.model.json.MaiBestScore
 import com.now.nowbot.model.json.MaiFit.ChartData
 import com.now.nowbot.model.json.MaiFit.DiffData
 import com.now.nowbot.model.json.MaiScore
@@ -26,23 +26,23 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Service("MAI_BP")
-class MaiBestPerformanceService(
+class MaiBestScoreService(
     private val maimaiApiService: MaimaiApiService,
     private val imageService: ImageService,
-) : MessageService<MaiBestPerformanceService.MaiScoreParam> {
+) : MessageService<MaiBestScoreService.MaiBestScoreParam> {
 
-    data class MaiScoreParam(val name: String?, val qq: Long?, val range: CmdRange<Int>, val isMyself: Boolean = false)
+    data class MaiBestScoreParam(val name: String?, val qq: Long?, val range: CmdRange<Int>, val isMyself: Boolean = false)
 
     @JvmRecord
     data class PanelMEParam(
-        val user: MaiBestPerformance.User,
+        val user: MaiBestScore.User,
         val score: MaiScore,
         val song: MaiSong,
         val chart: ChartData,
         val diff: DiffData,
     ) {
         fun toMap(): Map<String, Any> {
-            var out = mutableMapOf<String, Any>()
+            val out = mutableMapOf<String, Any>()
 
             out["user"] = user
             out["score"] = score
@@ -55,16 +55,17 @@ class MaiBestPerformanceService(
 
     @JvmRecord
     data class PanelMAParam(
-        val user: MaiBestPerformance.User,
+        val user: MaiBestScore.User,
         val scores: List<MaiScore>,
         val scoresLatest: List<MaiScore>,
     ) {
         fun toMap(): Map<String, Any> {
-            var out = mutableMapOf<String, Any>()
+            val out = mutableMapOf<String, Any>()
 
             out["user"] = user
             out["scores"] = scores
             out["scores_latest"] = scoresLatest
+            out["panel"] = "MB"
 
             return out
         }
@@ -73,7 +74,7 @@ class MaiBestPerformanceService(
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: MessageService.DataValue<MaiScoreParam>,
+        data: MessageService.DataValue<MaiBestScoreParam>,
     ): Boolean {
         val matcher = Instruction.MAI_BP.matcher(messageText)
 
@@ -87,7 +88,7 @@ class MaiBestPerformanceService(
         val range =
             if (StringUtils.hasText(rangeStr)) {
                 if (rangeStr.contains(Regex(REG_HYPHEN))) {
-                    var s = rangeStr.split(Regex(REG_HYPHEN))
+                    val s = rangeStr.split(Regex(REG_HYPHEN))
 
                     if (s.size == 2) {
                         CmdRange<Int>(null, s.first().toInt(), s.last().toInt())
@@ -112,7 +113,7 @@ class MaiBestPerformanceService(
 
                 if (strs.size == 2 && Regex("\\d{1,3}").matches(strs.last())) {
                     data.value =
-                        MaiScoreParam(
+                        MaiBestScoreParam(
                             strs.first().trim(),
                             null,
                             CmdRange<Int>(null, strs.last().toInt(), null),
@@ -121,26 +122,26 @@ class MaiBestPerformanceService(
                 }
             } else if (Regex("\\d{1,3}").matches(name)) {
                 data.value =
-                    MaiScoreParam(null, event.sender.id, CmdRange<Int>(null, name.toInt(), null))
+                    MaiBestScoreParam(null, event.sender.id, CmdRange<Int>(null, name.toInt(), null))
                 return true
             }
 
-            data.value = MaiScoreParam(matcher.group("name").trim(), null, range)
+            data.value = MaiBestScoreParam(matcher.group("name").trim(), null, range)
         } else if (StringUtils.hasText(matcher.group("qq"))) {
-            data.value = MaiScoreParam(null, matcher.group("qq").toLong(), range)
+            data.value = MaiBestScoreParam(null, matcher.group("qq").toLong(), range)
         } else if (at != null) {
-            data.value = MaiScoreParam(null, at.target, range)
+            data.value = MaiBestScoreParam(null, at.target, range)
         } else {
-            data.value = MaiScoreParam(null, event.sender.id, range, true)
+            data.value = MaiBestScoreParam(null, event.sender.id, range, true)
         }
 
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: MaiScoreParam) {
+    override fun HandleMessage(event: MessageEvent, param: MaiBestScoreParam) {
         val scores = getBestScores(param.qq, param.name, param.isMyself, maimaiApiService)
         val songs = maimaiApiService.getMaimaiSongLibrary()
-        val charts = getScore(param.range, scores, songs)
+        val charts = implementScore(param.range, scores, songs)
         val isMultipleScore = charts.deluxe.size + charts.standard.size > 1
 
         val user = scores.getUser()
@@ -148,7 +149,7 @@ class MaiBestPerformanceService(
 
         val image =
             if (isMultipleScore) {
-                imageService.getPanelMA(PanelMAParam(user, charts.standard, charts.deluxe))
+                imageService.getPanel(PanelMAParam(user, charts.standard, charts.deluxe).toMap(), "MA")
             } else {
                 val score =
                     if (charts.deluxe.size > 0) {
@@ -157,12 +158,12 @@ class MaiBestPerformanceService(
                         charts.standard.first()
                     }
 
-                val chart = fit.getChartData(score.songID?.toString(), score.index)
+                val chart = fit.getChartData(score.songID.toString(), score.index)
                 val diff = fit.getDiffData(chart)
 
-                val song = songs.get(score.songID?.toInt()) ?: MaiSong()
+                val song = songs.get(score.songID.toInt()) ?: MaiSong()
 
-                imageService.getPanelME(PanelMEParam(user, score, song, chart, diff))
+                imageService.getPanel(PanelMEParam(user, score, song, chart, diff).toMap(), "ME")
             }
         event.reply(image)
     }
@@ -170,13 +171,13 @@ class MaiBestPerformanceService(
     companion object {
         val log = KotlinLogging.logger { }
 
+        @JvmStatic
         fun getBestScores(
             qq: Long?,
             name: String?,
             isMyself: Boolean,
             maimaiApiService: MaimaiApiService,
-        ): MaiBestPerformance {
-
+        ): MaiBestScore {
             return if (qq.isNotNull()) {
                 try {
                     maimaiApiService.getMaimaiBest50(qq)
@@ -207,11 +208,11 @@ class MaiBestPerformanceService(
         }
 
         @JvmStatic
-        fun getScore(
+        fun implementScore(
             range: CmdRange<Int>,
-            bp: MaiBestPerformance,
+            bp: MaiBestScore,
             song: MutableMap<Int, MaiSong>,
-        ): MaiBestPerformance.Charts {
+        ): MaiBestScore.Charts {
             val offset = range.getOffset()
             val limit = range.getLimit()
 
@@ -228,7 +229,7 @@ class MaiBestPerformanceService(
                     MaiScore.insertSongData(c.deluxe, song)
                     MaiScore.insertPosition(c.deluxe, false)
 
-                    return MaiBestPerformance.Charts(
+                    return MaiBestScore.Charts(
                         c.deluxe.subList(
                             min(max(offset - 35, 0), c.deluxe.size - 1),
                             min(offset + limit - 35, c.deluxe.size),
@@ -244,7 +245,7 @@ class MaiBestPerformanceService(
                     MaiScore.insertSongData(c.standard, song)
                     MaiScore.insertPosition(c.standard, true)
 
-                    return MaiBestPerformance.Charts(
+                    return MaiBestScore.Charts(
                         mutableListOf(),
                         c.standard.subList(
                             min(max(offset, 0), c.standard.size - 1),
@@ -261,7 +262,7 @@ class MaiBestPerformanceService(
                     MaiScore.insertSongData(c.standard, song)
                     MaiScore.insertPosition(c.standard, true)
 
-                    return MaiBestPerformance.Charts(
+                    return MaiBestScore.Charts(
                         mutableListOf(),
                         c.standard.subList(
                             min(max(offset, 0), c.standard.size - 1),
@@ -272,7 +273,7 @@ class MaiBestPerformanceService(
                     MaiScore.insertSongData(c.deluxe, song)
                     MaiScore.insertPosition(c.deluxe, false)
 
-                    return MaiBestPerformance.Charts(
+                    return MaiBestScore.Charts(
                         c.deluxe.subList(
                             min(max(offset - 35, 0), c.deluxe.size - 1),
                             min(offset + limit - 35, c.deluxe.size),
@@ -285,7 +286,7 @@ class MaiBestPerformanceService(
 
                     MaiScore.insertPosition(c.standard, true)
                     MaiScore.insertPosition(c.deluxe, false)
-                    return MaiBestPerformance.Charts(
+                    return MaiBestScore.Charts(
                         c.deluxe.subList(
                             min(max(offset - 35, 0), c.deluxe.size - 1),
                             min(offset + limit - 35, c.deluxe.size),

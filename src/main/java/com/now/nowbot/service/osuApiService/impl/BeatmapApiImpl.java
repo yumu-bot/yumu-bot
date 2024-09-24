@@ -149,12 +149,17 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     public boolean checkBeatMap(long bid, String checkStr) throws IOException {
         var path = osuDir.resolve(bid + ".osu");
         if (Files.isRegularFile(path) && StringUtils.hasText(checkStr)) {
-            return beatmapMd5(Files.readString(path)).equals(checkStr);
+            return getBeatMapMD5(Files.readString(path)).equals(checkStr);
         }
         return false;
     }
 
-    private String beatmapMd5(String fileStr) {
+    @Override
+    public boolean checkBeatMap(BeatMap beatMap, String fileStr) {
+        return getBeatMapMD5(fileStr).equals(beatMap.getMd5());
+    }
+
+    private String getBeatMapMD5(String fileStr) {
         return DigestUtils.md5DigestAsHex(fileStr.getBytes(StandardCharsets.UTF_8));
     }
 
@@ -272,7 +277,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
                 return null;
             }
         }
-        String md5 = beatmapMd5(file);
+        String md5 = getBeatMapMD5(file);
 
         result.setCheck(md5);
 

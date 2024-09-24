@@ -73,7 +73,7 @@ class BPQueryService(
         val image = if (result.size == 1) {
             val score = result.first()
             val e5Param = getScore4PanelE5(user, score, beatmapApiService)
-            imageService.getPanelE5(e5Param)
+            imageService.getPanel(e5Param.toMap(), "E5")
         } else {
             val indexMap = bpList.mapIndexed { i, s -> s.scoreID to i }.toMap()
             val ranks = result.map { indexMap[it.scoreID]!! + 1 }

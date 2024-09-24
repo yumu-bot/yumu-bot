@@ -324,7 +324,7 @@ public class BotWebApi {
                 } else {
                     try {
                         var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), beatmapApiService);
-                        data = imageService.getPanelE5(e5Param);
+                        data = imageService.getPanel(e5Param.toMap(), "E5");
                     } catch (Exception e) {
                         throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩"));
                     }
@@ -343,7 +343,7 @@ public class BotWebApi {
                 } else {
                     try {
                         var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), beatmapApiService);
-                        data = imageService.getPanelE5(e5Param);
+                        data = imageService.getPanel(e5Param.toMap(), "E5");
                     } catch (Exception e) {
                         throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "通过成绩"));
                     }
@@ -363,7 +363,7 @@ public class BotWebApi {
                 } else {
                     try {
                         var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), beatmapApiService);
-                        data = imageService.getPanelE5(e5Param);
+                        data = imageService.getPanel(e5Param.toMap(), "E5");
                     } catch (Exception e) {
                         throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最近成绩"));
                     }
@@ -603,7 +603,7 @@ public class BotWebApi {
 
         try {
             var e5Param = ScorePRService.getScore4PanelE5(osuUser, score, beatmapApiService);
-            image = imageService.getPanelE5(e5Param);
+            image = imageService.getPanel(e5Param.toMap(), "E5");
         } catch (Exception e) {
             throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "成绩列表"));
         }
@@ -644,7 +644,7 @@ public class BotWebApi {
             throw new RuntimeException(BPAnalysisException.Type.BA_Attr_FetchFailed.message);
         }
 
-        var image = imageService.getPanelJ(data);
+        var image = imageService.getPanel(data, "J");
         return new ResponseEntity<>(image, getImageHeader(STR."\{name}-ba.jpg", image.length), HttpStatus.OK);
     }
 
@@ -803,7 +803,7 @@ public class BotWebApi {
     ) {
         var osuUser = getPlayerInfoJson(uid, name, null);
         var data = IMapperService.Companion.parseData(osuUser, userApiService, beatmapApiService);
-        var image = imageService.getPanelM(data);
+        var image = imageService.getPanel(data, "M");
 
         return new ResponseEntity<>(image, getImageHeader(STR."\{osuUser.getUserID()}-mapper.jpg", image.length), HttpStatus.OK);
     }
@@ -839,7 +839,7 @@ public class BotWebApi {
         }
 
         try {
-            byte[] image = imageService.getPanelN(data);
+            byte[] image = imageService.getPanel(data, "N");
 
             return new ResponseEntity<>(image, getImageHeader(STR."\{Optional.ofNullable(sid).orElse(bid)}-nomination.jpg", image.length), HttpStatus.OK);
         } catch (Exception e) {

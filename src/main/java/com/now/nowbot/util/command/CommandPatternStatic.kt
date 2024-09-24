@@ -36,6 +36,7 @@ const val FLAG_DAY: String = "day"
 const val FLAG_RANGE: String = "range"
 const val FLAG_QQ_ID: String = "qq"
 const val FLAG_QQ_GROUP: String = "group"
+const val FLAG_VERSION: String = "version"
 
 @Language("RegExp")
 val REG_CAPS_INSENSITIVE: String = "(?i)"

@@ -50,7 +50,7 @@ class IMapperService(
         val image: ByteArray
 
         try {
-            image = imageService.getPanelM(map)
+            image = imageService.getPanel(map, "M")
         } catch (e: Exception) {
             log.error("谱师信息：图片渲染失败", e)
             throw IMapperException(IMapperException.Type.IM_Fetch_Error)
@@ -78,7 +78,7 @@ class IMapperService(
             beatmapApiService
         )
 
-        return QQMsgUtil.getImage(imageService.getPanelM(map))
+        return QQMsgUtil.getImage(imageService.getPanel(map, "M"))
     }
 
     companion object {

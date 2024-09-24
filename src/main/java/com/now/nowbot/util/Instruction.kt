@@ -369,7 +369,7 @@ enum class Instruction(val pattern: Pattern) {
         appendSpace()
         appendGroup(MAYBE, "ym")
         appendGroup(
-            "((?<uu>(u{1,2})(seriesrating|series|sra|sa)))|((ym)?(?<main>(seriesrating|series|sa|sra)))|((ym)?(?<csv>(csvseriesrating|csvseries|csa|cs)))"
+            "(?<uu>(u{1,2})(seriesrating|series|sra|sa))|((ym)?(?<main>(seriesrating|series|sa|sra)))|((ym)?(?<csv>(csvseriesrating|csvseries|csa|cs)))"
         )
         appendSpace()
         appendGroup(MAYBE) {
@@ -567,6 +567,19 @@ enum class Instruction(val pattern: Pattern) {
             appendSpace()
             appendCaptureGroup("diff", REG_DIFF)
         }
+        appendBID()
+    }),
+
+    MAI_VERSION(CommandPatternBuilder.create {
+        appendCommands("mai(mai)?\\s*version", "mv")
+        appendName()
+        appendQQID()
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendMatchLevel(MAYBE)
+            appendSpace()
+            appendCaptureGroup("version", REG_ANYTHING, MORE)
+        }
     }),
 
     ;
@@ -576,7 +589,7 @@ enum class Instruction(val pattern: Pattern) {
 
 // 检查正则
 fun main() {
-    for (i in Instruction.values()) {
+    for (i in Instruction.entries) {
         println("${i.name}: ${i.pattern.pattern()}")
     }
 }

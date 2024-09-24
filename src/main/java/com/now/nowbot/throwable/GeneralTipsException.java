@@ -18,6 +18,7 @@ public class GeneralTipsException extends TipsException {
 
         G_Exceed_Param("请输入正确的编号或范围！"),
         G_Exceed_Day("你输入的天数范围太久远了！"),
+        G_Exceed_Version("符合筛选版本的成绩太多了！请缩小查询范围。"),
 
         G_Null_Param("请输入正确的参数！"),
         G_Null_UserName("请输入正确的玩家名！"),
@@ -35,6 +36,7 @@ public class GeneralTipsException extends TipsException {
         G_Null_SelectedBP("无法获取玩家 %s 在 %s 模式内指定的最好成绩。"),
         G_Null_TheoreticalBP("您（选中）的最好成绩已经全是理论值了！"),
         G_Null_Score("找不到您在谱面 %s 内的成绩，请检查。"),
+        G_Null_Version("找不到您在版本 %s 内的成绩，请检查。"),
         G_Null_RecentScore("找不到玩家 %s 在 %s 模式内的最近成绩，请检查。"),
         G_Null_SpecifiedMode("找不到这张谱面在指定 %s 模式内的成绩，请检查。\n或者，不要设定游戏模式，让机器人自行处理。"),
 

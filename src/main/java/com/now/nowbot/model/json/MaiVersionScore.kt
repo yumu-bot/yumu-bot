@@ -1,16 +1,7 @@
-package com.now.nowbot.model.json;
+package com.now.nowbot.model.json
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty
 
-public class MaiVersionScore {
-
-    List<MaiScore> verlist;
-
-    public List<MaiScore> getVerlist() {
-        return verlist;
-    }
-
-    public void setVerlist(List<MaiScore> verlist) {
-        this.verlist = verlist;
-    }
+class MaiVersionScore {
+    @JsonProperty("verlist") var scores: MutableList<MaiScoreLite> = mutableListOf()
 }

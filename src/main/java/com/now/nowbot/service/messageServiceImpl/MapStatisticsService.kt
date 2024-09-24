@@ -271,8 +271,8 @@ class MapStatisticsService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val attributes = beatmapApiService.getPP(beatmap, expected)
 
-            return imageService.getPanelE6(
-                    PanelE6Param(user, beatmap, density, original, attributes, pp, expected))
+            return imageService.getPanel(
+                    PanelE6Param(user, beatmap, density, original, attributes, pp, expected).toMap(), "E6")
         }
 
         // 等于绘图模块的 calcMap
@@ -287,7 +287,7 @@ class MapStatisticsService(
             val file =
                     beatmapApiService.getBeatMapFileStr(beatmap.beatMapID).toByteArray(Charsets.UTF_8)
 
-            var scoreFC = JniScore()
+            val scoreFC = JniScore()
             scoreFC.mode = expected.mode.toRosuMode()
             scoreFC.mods = OsuMod.getModsValueFromAbbrList(expected.mods)
             scoreFC.accuracy = expected.accuracy

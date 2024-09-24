@@ -45,6 +45,8 @@ public interface OsuBeatmapApiService {
 
     boolean checkBeatMap(long bid, String checkStr) throws IOException;
 
+    boolean checkBeatMap(BeatMap beatMap, String fileStr) throws IOException;
+
     // 尽量用 FromDataBase，这样可以节省 API 开支
     BeatMap getBeatMap(long bid);
 

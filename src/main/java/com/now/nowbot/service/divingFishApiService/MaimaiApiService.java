@@ -1,10 +1,7 @@
 package com.now.nowbot.service.divingFishApiService;
 
 import com.now.nowbot.model.enums.MaiVersion;
-import com.now.nowbot.model.json.MaiBestPerformance;
-import com.now.nowbot.model.json.MaiFit;
-import com.now.nowbot.model.json.MaiScore;
-import com.now.nowbot.model.json.MaiSong;
+import com.now.nowbot.model.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -15,13 +12,13 @@ import java.util.Map;
 public interface MaimaiApiService {
     Logger log = LoggerFactory.getLogger(MaimaiApiService.class);
 
-    MaiBestPerformance getMaimaiBest50(Long qq) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
+    MaiBestScore getMaimaiBest50(Long qq) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
-    MaiBestPerformance getMaimaiBest50(String probername) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
+    MaiBestScore getMaimaiBest50(String probername) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
-    MaiBestPerformance getMaimaiScoreByVersion(Long qq, List<MaiVersion> version) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
+    MaiVersionScore getMaimaiScoreByVersion(Long qq, List<MaiVersion> version) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
-    MaiBestPerformance getMaimaiScoreByVersion(String probername, List<MaiVersion> version) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
+    MaiVersionScore getMaimaiScoreByVersion(String probername, List<MaiVersion> version) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
     default byte[] getMaimaiCover(Integer songID) {
         return getMaimaiCover(songID.longValue());
@@ -92,17 +89,17 @@ public interface MaimaiApiService {
     // 这个是太鼓的
 
     // 以下需要从水鱼那里拿 DeveloperToken
-    MaiScore getMaimaiScore(Long qq, Integer songID) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
+    MaiScore getMaimaiSongScore(Long qq, Integer songID) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
-    List<MaiScore> getMaimaiScores(Long qq, List<Integer> songIDs) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
+    List<MaiScore> getMaimaiSongsScore(Long qq, List<Integer> songIDs) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
-    MaiScore getMaimaiScore(String probername, Integer songID) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
+    MaiScore getMaimaiSongScore(String probername, Integer songID) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
-    List<MaiScore> getMaimaiScores(String probername, List<Integer> songIDs) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
+    List<MaiScore> getMaimaiSongsScore(String probername, List<Integer> songIDs) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
-    MaiBestPerformance getMaimaiBest50P(Long qq) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
+    MaiBestScore getMaimaiFullScores(Long qq) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
-    MaiBestPerformance getMaimaiBest50P(String probername) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
+    MaiBestScore getMaimaiFullScores(String probername) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
 
 }

@@ -186,22 +186,22 @@ public class MaimaiApiImpl implements MaimaiApiService {
     }
 
     @Override
-    public MaiScore getMaimaiScore(Long qq, Integer songID) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
+    public MaiScore getMaimaiSongScore(Long qq, Integer songID) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
         return null;
     }
 
     @Override
-    public List<MaiScore> getMaimaiScores(Long qq, List<Integer> songIDs) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
+    public List<MaiScore> getMaimaiSongsScore(Long qq, List<Integer> songIDs) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
         return List.of();
     }
 
     @Override
-    public MaiScore getMaimaiScore(String username, Integer songID) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
+    public MaiScore getMaimaiSongScore(String username, Integer songID) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
         return null;
     }
 
     @Override
-    public List<MaiScore> getMaimaiScores(String username, List<Integer> songIDs) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
+    public List<MaiScore> getMaimaiSongsScore(String username, List<Integer> songIDs) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
         return List.of();
     }
 

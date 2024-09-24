@@ -56,7 +56,21 @@ class ScorePRService(
             @JvmField val progress: Double,
             @JvmField val original: Map<String, Any>,
             @JvmField val attributes: Map<String, Any>
-    )
+    ) {
+        fun toMap(): Map<String, Any> {
+
+            val out = mutableMapOf<String, Any>()
+
+            out["user"] = user
+            out["score"] = score
+            out["density"] = density
+            out["progress"] = progress
+            out["original"] = original
+            out["attributes"] = attributes
+
+            return out
+        }
+    }
 
     @Throws(Throwable::class)
     override fun isHandle(
@@ -72,8 +86,8 @@ class ScorePRService(
 
         val isMulti = (Objects.nonNull(s) || Objects.nonNull(es))
 
-        var offset: Int
-        var limit: Int
+        val offset: Int
+        val limit: Int
 
         val isRecent =
                 if (matcher.group("recent") != null) {
@@ -147,8 +161,8 @@ class ScorePRService(
             else -> return null
         }
 
-        var offset: Int
-        var limit: Int
+        val offset: Int
+        val limit: Int
 
         val isMyself = AtomicBoolean()
         val mode = getMode(matcher)
@@ -267,16 +281,16 @@ class ScorePRService(
         } else {
             // 单成绩发送
             val score: Score = scoreList.first()
-            val panelE5Param = getScore4PanelE5(user, score, beatmapApiService)
+            val e5Param = getScore4PanelE5(user, score, beatmapApiService)
             try {
-                image = imageService.getPanelE5(panelE5Param)
+                image = imageService.getPanel(e5Param.toMap(), "E5")
                 return QQMsgUtil.getImage(image)
             } catch (e: Exception) {
                 log.error(
                         "成绩：绘图出错, 成绩信息:\n {}",
-                        JacksonUtil.objectToJsonPretty(panelE5Param.score),
+                        JacksonUtil.objectToJsonPretty(e5Param.score),
                         e)
-                return getTextOutput(panelE5Param.score)
+                return getTextOutput(e5Param.score)
             }
         }
     }

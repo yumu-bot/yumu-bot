@@ -8,10 +8,7 @@ import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.model.multiplayer.MonitoredMatch;
 import com.now.nowbot.model.multiplayer.SeriesCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
-import com.now.nowbot.service.messageServiceImpl.MaiBestPerformanceService;
-import com.now.nowbot.service.messageServiceImpl.MapStatisticsService;
-import com.now.nowbot.service.messageServiceImpl.MatchMapService;
-import com.now.nowbot.service.messageServiceImpl.ScorePRService;
+import com.now.nowbot.service.messageServiceImpl.*;
 import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.DataUtil;
 import jakarta.annotation.Resource;
@@ -34,6 +31,13 @@ public class ImageService {
     @Resource
     RestTemplate restTemplate;
     public static final String IMAGE_PATH = "http://127.0.0.1:1611/";
+
+    // 2024+ 统一获取方法
+    public byte[] getPanel(Map<String, Object> body, String name) {
+        HttpHeaders headers = getDefaultHeader();
+        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
+        return doPost("panel_" + name, httpEntity);
+    }
 
     /**
      * 获取 md 图片，现已经弃用，被 panel A6 代替
@@ -435,30 +439,6 @@ public class ImageService {
         return doPost("panel_E3", httpEntity);
     }
 
-    public byte[] getPanelE5(ScorePRService.PanelE5Param param) {
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = Map.of(
-                "user", param.user,
-                "score", param.score,
-                "density", param.density,
-                "progress", param.progress,
-                "original", param.original,
-                "attributes", param.attributes
-        );
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_E5", httpEntity);
-    }
-
-    public byte[] getPanelE6(MapStatisticsService.PanelE6Param param) {
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = param.toMap();
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_E6", httpEntity);
-    }
-
     public byte[] getPanelE7(MatchMapService.PanelE7Param param) {
         HttpHeaders headers = getDefaultHeader();
 
@@ -471,8 +451,6 @@ public class ImageService {
                 "density", param.density,
                 "original", param.original
         );
-
-
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_E7", httpEntity);
@@ -523,26 +501,6 @@ public class ImageService {
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_H", httpEntity);
-    }
-
-
-    public byte[] getPanelJ(Map<String, Object> data) {
-        var headers = getDefaultHeader();
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(data, headers);
-        return doPost("panel_J", httpEntity);
-    }
-    //2023-07-12T12:42:37Z
-
-    public byte[] getPanelM(Map<String, Object> data) {
-        var headers = getDefaultHeader();
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(data, headers);
-        return doPost("panel_M", httpEntity);
-    }
-
-    public byte[] getPanelN(Map<String, Object> data) {
-        var headers = getDefaultHeader();
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(data, headers);
-        return doPost("panel_N", httpEntity);
     }
 
     public byte[] getPanelAlpha(String... lines) {
@@ -626,26 +584,6 @@ public class ImageService {
 
     public byte[] getPanelAlpha(StringBuilder sb) {
         return getPanelAlpha(sb.toString().split("\n"));
-    }
-
-
-
-    public byte[] getPanelMA(MaiBestPerformanceService.PanelMAParam param) {
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = param.toMap();
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_MA", httpEntity);
-    }
-
-    public byte[] getPanelME(MaiBestPerformanceService.PanelMEParam param) {
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = param.toMap();
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_ME", httpEntity);
     }
 
     private HttpHeaders getDefaultHeader() {
