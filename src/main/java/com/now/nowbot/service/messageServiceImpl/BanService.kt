@@ -3,7 +3,6 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.config.Permission
 import com.now.nowbot.config.PermissionParam
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.AtMessage
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -11,7 +10,6 @@ import com.now.nowbot.service.messageServiceImpl.BanService.BanParam
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.serviceException.BanException
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.QQMsgUtil
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_QQ_ID
@@ -33,15 +31,13 @@ class BanService(private val permission: Permission, private val imageService: I
         val matcher = Instruction.BAN.matcher(messageText)
         if (!matcher.find()) return false
 
-        val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
-
         val qq: String? = matcher.group(FLAG_QQ_ID)
         val group: String? = matcher.group(FLAG_QQ_GROUP)
         val name: String? = matcher.group(FLAG_NAME)
         val operate = matcher.group("operate")
 
-        if (Objects.nonNull(at)) {
-            data.value = BanParam(at!!.target, null, operate, true)
+        if (event.isAt) {
+            data.value = BanParam(event.target, null, operate, true)
             return true
         }
 

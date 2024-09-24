@@ -6,7 +6,6 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.Score
 import com.now.nowbot.model.service.UserParam
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.AtMessage
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
@@ -21,7 +20,6 @@ import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.QQMsgUtil
 import com.now.nowbot.util.command.FLAG_MODE
 import org.apache.logging.log4j.util.Strings
 import org.slf4j.Logger
@@ -69,10 +67,9 @@ class UUBAService(
 
         val info = true
         val mode: OsuMode = OsuMode.getMode(matcher.group(FLAG_MODE))
-        val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
 
-        if (Objects.nonNull(at)) {
-            data.value = BPHeadTailParam(UserParam(at!!.target, null, mode, true), info)
+        if (event.isAt) {
+            data.value = BPHeadTailParam(UserParam(event.target, null, mode, true), info)
             return true
         }
         val name = matcher.group("name")
@@ -172,19 +169,16 @@ class UUBAService(
     }
 
     override fun accept(event: MessageEvent, messageText: String): BPHeadTailParam? {
-        val info: Boolean
         var matcher: Matcher
         when {
-            OfficialInstruction.UU_BA.matcher(messageText).apply { matcher = this }.find() -> {
-                info = true
-            }
+            OfficialInstruction.UU_BA.matcher(messageText).apply { matcher = this }.find() -> {}
 
             else -> return null
         }
         val mode = CmdUtil.getMode(matcher)
         val user = CmdUtil.getUserWithOutRange(event, matcher, mode)
 
-        return BPHeadTailParam(UserParam(user.userID, user.username, mode.data, false), info)
+        return BPHeadTailParam(UserParam(user.userID, user.username, mode.data, false), info = true)
     }
 
     override fun reply(event: MessageEvent, param: BPHeadTailParam): MessageChain? {
@@ -224,7 +218,7 @@ class UUBAService(
                         .append('%')
                         .append(' ')
                         .append(bp.rank)
-                if (!bp.mods.isEmpty()) {
+                if (bp.mods.isNotEmpty()) {
                     sb.append(" +")
                     for (m in bp.mods) {
                         sb.append(m).append(' ')
@@ -235,7 +229,7 @@ class UUBAService(
                 sb.append("...").append('\n')
             }
             allPP += bp.pp.toDouble() // 统计总数
-            if (!bp.mods.isEmpty()) {
+            if (bp.mods.isNotEmpty()) {
                 for (j in bp.mods.indices) {
                     val mod = bp.mods[j]
                     if (!modTreeMap.containsKey(mod)) modTreeMap[mod] = AtomicInteger()
@@ -314,9 +308,9 @@ class UUBAService(
         var maxTTHPP = 0f
         var nowPP = 0f
 
-        val modSum = TreeMap<String, modData>() // 各个mod的数量
+        val modSum = TreeMap<String, ModData>() // 各个mod的数量
 
-        val mapperSum = TreeMap<Long, mapperData>()
+        val mapperSum = TreeMap<Long, FavoriteMapperData>()
         val decimalFormat = DecimalFormat("0.00") // acc格式
 
         for (i in bps.indices) {
@@ -329,7 +323,7 @@ class UUBAService(
                         if (modSum.containsKey(r)) {
                             modSum[r]!!.add(Optional.ofNullable(bp.weightedPP).orElse(0f))
                         } else {
-                            modSum[r] = modData(Optional.ofNullable(bp.weightedPP).orElse(0f))
+                            modSum[r] = ModData(Optional.ofNullable(bp.weightedPP).orElse(0f))
                         }
                     })
 
@@ -377,7 +371,7 @@ class UUBAService(
             if (mapperSum.containsKey(b.mapperID)) {
                 mapperSum[b.mapperID]!!.add(bp.pp)
             } else {
-                mapperSum[b.mapperID] = mapperData(bp.pp, b.mapperID)
+                mapperSum[b.mapperID] = FavoriteMapperData(bp.pp, b.mapperID)
             }
             nowPP += bp.weightedPP
         }
@@ -446,20 +440,20 @@ class UUBAService(
         val mappers =
                 mapperSum.values
                         .stream()
-                        .sorted { o1: mapperData, o2: mapperData ->
+                        .sorted { o1: FavoriteMapperData, o2: FavoriteMapperData ->
                             if (o1.size != o2.size) return@sorted 2 * (o2.size - o1.size)
-                            java.lang.Float.compare(o2.allPP, o1.allPP)
+                            o2.allPP.compareTo(o1.allPP)
                         }
                         .limit(9)
                         .toList()
-        val mappersId = mappers.stream().map { u: mapperData -> u.uid }.toList()
+        val mappersId = mappers.stream().map { u: FavoriteMapperData -> u.uid }.toList()
         val mappersInfo = userApiService.getUsers(mappersId)
         val mapperIdToInfo = HashMap<Long, String>()
         for (node in mappersInfo) {
             mapperIdToInfo[node.userID] = node.userName
         }
         mappers.forEach(
-                Consumer { mapper: mapperData ->
+                Consumer { mapper: FavoriteMapperData ->
                     try {
                         sb.append(mapperIdToInfo[mapper.uid])
                                 .append(": ")
@@ -482,7 +476,7 @@ class UUBAService(
         sb.append("——————————").append('\n')
         sb.append("模组数量: \n")
         val finalAllPP = nowPP
-        modSum.forEach { (mod: String, sum: modData) ->
+        modSum.forEach { (mod: String, sum: ModData) ->
             sb.append(mod)
                     .append(": ")
                     .append(sum.size)
@@ -498,7 +492,7 @@ class UUBAService(
         return sb.toString()
     }
 
-    internal class mapperData(var allPP: Float, var uid: Long) {
+    internal class FavoriteMapperData(var allPP: Float, var uid: Long) {
         var size: Int = 1
 
         fun add(pp: Float) {
@@ -507,7 +501,7 @@ class UUBAService(
         }
     }
 
-    internal class modData(var allPP: Float) {
+    internal class ModData(var allPP: Float) {
         var size: Int = 1
 
         fun add(pp: Float) {

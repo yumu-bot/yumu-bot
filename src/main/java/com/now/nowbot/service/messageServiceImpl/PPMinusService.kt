@@ -7,7 +7,6 @@ import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.model.json.Score
 import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.AtMessage
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
@@ -100,8 +99,6 @@ class PPMinusService(
         val area1 = matcher.group("area1")
         val area2 = matcher.group("area2")
 
-        val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
-
         var binMe = BinUser()
         var binOther = BinUser()
 
@@ -109,15 +106,15 @@ class PPMinusService(
 
         // 艾特
         try {
-            if (at != null) {
+            if (event.isAt) {
                 when (status) {
                     PPMinusStatus.USER ->  //pm @
-                        binMe = bindDao.getUserFromQQ(at.target)
+                        binMe = bindDao.getUserFromQQ(event.target)
 
                     PPMinusStatus.USER_VS -> {
                         //pv 0v@
                         binMe = bindDao.getUserFromQQ(event.sender.id, true)
-                        binOther = bindDao.getUserFromQQ(at.target)
+                        binOther = bindDao.getUserFromQQ(event.target)
                     }
                 }
             } else if (StringUtils.hasText(area1) || StringUtils.hasText(area2)) {

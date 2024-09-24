@@ -2,10 +2,8 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
-import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.AtMessage
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -37,7 +35,6 @@ class OldAvatarService(
         val qq: Long?,
         val uid: Long?,
         val name: String?,
-        val mode: OsuMode?,
         val at: Boolean,
         val isMyself: Boolean,
     )
@@ -50,27 +47,26 @@ class OldAvatarService(
         val matcher = Instruction.OLD_AVATAR.matcher(messageText)
         if (!matcher.find()) return false
 
-        val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
         val qqStr: String? = matcher.group(FLAG_QQ_ID)
         val uidStr: String? = matcher.group(FLAG_UID)
         val name: String? = matcher.group(FLAG_DATA)
 
-        if (Objects.nonNull(at)) {
-            data.setValue(OAParam(at!!.target, null, null, null, true, false))
+        if (event.isAt) {
+            data.value = OAParam(event.target, null, null, at = true,  isMyself = false)
             return true
         } else if (StringUtils.hasText(qqStr)) {
-            data.value = OAParam(qqStr!!.toLong(), null, null, null, false, false)
+            data.value = OAParam(qqStr!!.toLong(), null, null, at = false, isMyself = false)
             return true
         }
 
         if (StringUtils.hasText(uidStr)) {
-            data.value = OAParam(null, uidStr!!.toLong(), null, null, false, false)
+            data.value = OAParam(null, uidStr!!.toLong(), null, at = false, isMyself = false)
             return true
         } else if (StringUtils.hasText(name)) {
-            data.value = OAParam(null, null, name!!.trim { it <= ' ' }, null, false, false)
+            data.value = OAParam(null, null, name!!.trim { it <= ' ' }, at = false, isMyself = false)
             return true
         } else {
-            data.value = OAParam(event.sender.id, null, null, null, false, true)
+            data.value = OAParam(event.sender.id, null, null, at = false, isMyself = true)
             return true
         }
     }

@@ -33,6 +33,7 @@ public class QQMsgUtil {
 
     @Nullable
     @SuppressWarnings("unchecked")
+    @Deprecated
     public static <T extends Message> T getType(MessageChain msg, Class<T> T) {
         return (T) msg.getMessageList().stream().filter(m -> T.isAssignableFrom(m.getClass())).findFirst().orElse(null);
     }
@@ -74,6 +75,7 @@ public class QQMsgUtil {
         return msg.getMessageList().stream().filter(m ->T.isAssignableFrom(m.getClass())).map(it -> (T) it).toList();
     }
 
+    @Deprecated
     public static void sendImageAndText(MessageEvent event, byte[] image, String text) {
         var from = event.getSubject();
         sendImageAndText(from, image, text);

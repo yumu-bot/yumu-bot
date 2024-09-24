@@ -1,12 +1,10 @@
 package com.now.nowbot.qq.event;
 
 import com.now.nowbot.qq.contact.Contact;
-import com.now.nowbot.qq.contact.Group;
-import com.now.nowbot.qq.message.MessageChain;
-import com.now.nowbot.qq.message.MessageReceipt;
+import com.now.nowbot.qq.message.*;
+import org.springframework.lang.Nullable;
 
 import java.net.URL;
-import java.util.List;
 
 public interface MessageEvent extends Event{
     Contact getSubject();
@@ -30,6 +28,7 @@ public interface MessageEvent extends Event{
     default MessageReceipt reply(byte[] image) {
         return getSubject().sendImage(image);
     }
+
     default MessageReceipt reply(byte[] image, String message) {
         return getSubject().sendMessage(new MessageChain.MessageChainBuilder().addImage(image).addText(message).build());
     }
@@ -45,4 +44,37 @@ public interface MessageEvent extends Event{
     String getRawMessage();
 
     String getTextMessage();
+
+    // 这个太常用了，所以写进来了，本来是 QQMsgUtil 的 getType
+    @Nullable
+    @SuppressWarnings("unchecked")
+    private static <T extends Message> T getMessageType(MessageEvent event, Class<T> T) {
+        return (T) event.getMessage().getMessageList().stream().filter(m -> T.isAssignableFrom(m.getClass())).findFirst().orElse(null);
+    }
+
+    @Nullable
+    default ImageMessage getImage() {
+        return getMessageType(this, ImageMessage.class);
+    }
+
+    default boolean isImage() {
+        return getImage() != null;
+    }
+
+    @Nullable
+    default AtMessage getAt() {
+        return getMessageType(this, AtMessage.class);
+    }
+
+    default boolean isAt() {
+        return getAt() != null;
+    }
+
+    default long getTarget() {
+        if (getAt() != null) {
+            return getAt().getTarget();
+        } else {
+            return 0L;
+        }
+    }
 }

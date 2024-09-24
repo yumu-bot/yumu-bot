@@ -7,7 +7,6 @@ import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.OsuUser;
 import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.AtMessage;
 import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.qq.message.MessageReceipt;
 import com.now.nowbot.service.ImageService;
@@ -17,7 +16,6 @@ import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.serviceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +69,6 @@ public class BindService implements MessageService<BindService.BindParam> {
 
         var qqStr = m.group(FLAG_QQ_ID);
         var name = m.group(FLAG_NAME);
-        var at = QQMsgUtil.getType(event.getMessage(), AtMessage.class);
         // 带着 ym 以及特殊短链不用问
         boolean isYmBot = messageText.substring(0, 3).contains("ym") ||
                 m.group("bi") != null ||
@@ -115,9 +112,9 @@ public class BindService implements MessageService<BindService.BindParam> {
 
         BindParam param;
 
-        if (Objects.nonNull(at)) {
+        if (event.isAt()) {
             // bi/ub @
-            param = new BindParam(at.getTarget(), name, true, unbind, isSuper, isFull);
+            param = new BindParam(event.getTarget(), name, true, unbind, isSuper, isFull);
         } else if (StringUtils.hasText(qqStr) && !qqStr.trim().equals("0")) {
             // bi qq=123
             param = new BindParam(Long.parseLong(qqStr), name, false, unbind, isSuper, isFull);

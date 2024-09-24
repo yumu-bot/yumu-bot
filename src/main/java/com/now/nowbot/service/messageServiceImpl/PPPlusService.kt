@@ -7,7 +7,6 @@ import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.model.json.PPPlus
 import com.now.nowbot.model.json.PPPlus.AdvancedStats
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.AtMessage
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -19,16 +18,15 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.throwable.serviceException.PPPlusException
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.QQMsgUtil
-import java.util.Objects
-import kotlin.math.atan
-import kotlin.math.floor
-import kotlin.math.sqrt
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.*
+import kotlin.math.atan
+import kotlin.math.floor
+import kotlin.math.sqrt
 
 @Service("PP_PLUS")
 class PPPlusService(
@@ -49,11 +47,9 @@ class PPPlusService(
         val matcher = Instruction.PP_PLUS.matcher(messageText)
         if (!matcher.find()) return false
 
-        val cmd = Objects.requireNonNullElse<String>(matcher.group("function"), "pp")
+        val cmd = Objects.requireNonNullElse(matcher.group("function"), "pp")
         var a1 = matcher.group("area1")
         var a2 = matcher.group("area2")
-
-        val at = QQMsgUtil.getType<AtMessage>(event.getMessage(), AtMessage::class.java)
 
         val me = bindDao.getUserFromQQ(event.getSender().getId(), true)
 
@@ -68,8 +64,7 @@ class PPPlusService(
                     // user 非vs
                     if (Objects.nonNull(a1) && a1!!.isBlank()) a1 = null
                     if (Objects.nonNull(a2) && a2!!.isBlank()) a2 = null
-                    if (Objects.nonNull(at))
-                            setUser(null, null, bindDao.getUserFromQQ(at!!.target), false, data)
+                    if (event.isAt) setUser(null, null, bindDao.getUserFromQQ(event.target), false, data)
                     else setUser(a1, a2, me, false, data)
                 }
                 "px",
@@ -80,10 +75,10 @@ class PPPlusService(
                 "ppplusvs",
                 "plusvs" -> {
                     // user vs
-                    if (Objects.nonNull(at)) {
+                    if (event.isAt) {
                         setUser(
                                 null,
-                                bindDao.getUserFromQQ(at!!.target).getOsuName(),
+                                bindDao.getUserFromQQ(event.target).osuName,
                                 me,
                                 true,
                                 data)
@@ -111,10 +106,10 @@ class PPPlusService(
         val dataMap = HashMap<String, Any>(6)
 
         // user 对比
-        dataMap.put("isUser", true)
+        dataMap["isUser"] = true
         val u1 = param.me as OsuUser
-        dataMap.put("me", u1)
-        dataMap.put("my", getUserPerformancePlus(u1.userID))
+        dataMap["me"] = u1
+        dataMap["my"] = getUserPerformancePlus(u1.userID)
 
         if (Objects.nonNull(param.other)) {
             // 包含另一个就是 vs, 直接判断了
@@ -123,11 +118,11 @@ class PPPlusService(
 
             beforePost(u2, pp2)
 
-            dataMap.put("other", u2)
-            dataMap.put("others", pp2)
+            dataMap["other"] = u2
+            dataMap["others"] = pp2
         }
 
-        var image: ByteArray?
+        val image: ByteArray
 
         try {
             image = imageService.getPanelB3(dataMap)
@@ -150,8 +145,8 @@ class PPPlusService(
         val performance = performancePlusService.calculateUserPerformance(bps)
 
         val plus = PPPlus()
-        plus.setPerformance(performance)
-        plus.setAdvancedStats(calculateUserAdvancedStats(performance))
+        plus.performance = performance
+        plus.advancedStats = calculateUserAdvancedStats(performance)
 
         return plus
     }
@@ -188,7 +183,7 @@ class PPPlusService(
             throw PPPlusException(PPPlusException.Type.PL_API_NotAccessible)
         }
 
-        data.setValue(PPPlusParam(true, p1, p2))
+        data.value = PPPlusParam(true, p1, p2)
     }
 
     // 计算进阶指数的等级
@@ -255,10 +250,7 @@ class PPPlusService(
         val accuracyArray =
                 intArrayOf(
                         600, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1750, 2100, 2550, 3400, 4400)
-
-        // 常规指数和进阶指数，进阶指数是以上情况的第二大的值，达标情况的目标是以上第二大值 * 6 - 4，
-        var generalIndex: Double
-        var advancedIndex: Double
+        val advancedIndex: Double
 
         val jumpAim = calculateLevel(performance.jumpAim, jumpArray)
         val flowAim = calculateLevel(performance.flowAim, flowArray)
@@ -267,8 +259,8 @@ class PPPlusService(
         val stamina = calculateLevel(performance.stamina, staminaArray)
         val accuracy = calculateLevel(performance.accuracy, accuracyArray)
 
-        generalIndex =
-                (sqrt(getPiCent(performance.jumpAim, 1300, 1700) + 8.0) *
+        // 常规指数和进阶指数，进阶指数是以上情况的第二大的值，达标情况的目标是以上第二大值 * 6 - 4，
+        val generalIndex: Double = (sqrt(getPiCent(performance.jumpAim, 1300, 1700) + 8.0) *
                         (getPiCent(performance.flowAim, 200, 450) + 3.0) *
                         10.0 +
                         getPiCent(performance.precision, 200, 400) +
@@ -276,33 +268,31 @@ class PPPlusService(
                         getPiCent(performance.speed, 950, 1250) * 3.0 +
                         getPiCent(performance.accuracy, 600, 1200) * 10.0)
 
-        advancedIndex =
-                mutableListOf<Double>(
-                                getDetail(
-                                        performance.jumpAim, jumpAim, jumpArray[0], jumpArray[11]),
-                                getDetail(
-                                        performance.flowAim, flowAim, flowArray[0], flowArray[11]),
-                                getDetail(
-                                        performance.precision,
-                                        precision,
-                                        precisionArray[0],
-                                        precisionArray[11]),
-                                getDetail(performance.speed, speed, speedArray[0], speedArray[11]),
-                                getDetail(
-                                        performance.stamina,
-                                        stamina,
-                                        staminaArray[0],
-                                        staminaArray[11]),
-                                getDetail(
-                                        performance.accuracy,
-                                        accuracy,
-                                        accuracyArray[0],
-                                        accuracyArray[11]))
-                        .sorted()
-                        .toList()
-                        .get(4) // 第二大
+        advancedIndex = mutableListOf(
+            getDetail(
+                performance.jumpAim, jumpAim, jumpArray[0], jumpArray[11]),
+            getDetail(
+                performance.flowAim, flowAim, flowArray[0], flowArray[11]),
+            getDetail(
+                performance.precision,
+                precision,
+                precisionArray[0],
+                precisionArray[11]),
+            getDetail(performance.speed, speed, speedArray[0], speedArray[11]),
+            getDetail(
+                performance.stamina,
+                stamina,
+                staminaArray[0],
+                staminaArray[11]),
+            getDetail(
+                performance.accuracy,
+                accuracy,
+                accuracyArray[0],
+                accuracyArray[11]))
+            .sorted()
+            .toList()[4] // 第二大
 
-        val index = mutableListOf<Double>(jumpAim, flowAim, accuracy, stamina, speed, precision)
+        val index = mutableListOf(jumpAim, flowAim, accuracy, stamina, speed, precision)
         val sum: Double = index.stream().reduce { a: Double, b: Double -> a + b }.orElse(0.0)
 
         return AdvancedStats(index, generalIndex, advancedIndex, sum, advancedIndex * 6 - 4)
@@ -316,14 +306,14 @@ class PPPlusService(
 
     // 化学式进阶指数 获取详细情况（用于进阶指数求和）
     private fun getDetail(value: Double, level: Double, percent75: Int, percentEX: Int): Double {
-        if (value < percent75) return -2.0
-        else if (value > percentEX) return floor(value / percentEX * 10.0) + 1.0 else return level
+        return if (value < percent75) -2.0
+        else if (value > percentEX) floor(value / percentEX * 10.0) + 1.0 else level
     }
 
     // 、、、、、、、、、、、、、、、、、、
     // 不要多看, 反正不影响用
     private fun beforePost(user: OsuUser, plus: PPPlus) {
-        if (user.getId() == 17064371L) {
+        if (user.id == 17064371L) {
             plus.performance = PPPlus.getMaxStats()
         }
     }

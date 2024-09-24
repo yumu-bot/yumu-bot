@@ -6,7 +6,6 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.AtMessage
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -202,7 +201,7 @@ object CmdUtil {
         ranges.push(tempRange)
         var index = text.length - 1
         var i = 0
-        var tempChar: Char = '0'
+        var tempChar = '0'
         // 第一个 range
         while (index >= 0 && isNumber(text[index].also { tempChar = it })) {
             index--
@@ -304,11 +303,10 @@ object CmdUtil {
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
     ): OsuUser? {
-        val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
 
         var qq = 0L
-        if (Objects.nonNull(at)) {
-            qq = at!!.target
+        if (event.isAt) {
+            qq = event.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
             try {
                 qq = matcher.group(FLAG_QQ_ID)?.toLong() ?: 0L

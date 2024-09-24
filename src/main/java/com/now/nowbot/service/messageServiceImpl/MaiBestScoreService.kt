@@ -6,7 +6,6 @@ import com.now.nowbot.model.json.MaiFit.DiffData
 import com.now.nowbot.model.json.MaiScore
 import com.now.nowbot.model.json.MaiSong
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.AtMessage
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
@@ -14,7 +13,6 @@ import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.QQMsgUtil
 import com.now.nowbot.util.command.REG_HYPHEN
 import com.yumu.core.extensions.isNotNull
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -104,8 +102,6 @@ class MaiBestScoreService(
                 CmdRange<Int>(null, 1, 50)
             }
 
-        val at = QQMsgUtil.getType(event.message, AtMessage::class.java)
-
         if (StringUtils.hasText(matcher.group("name"))) {
             val name = matcher.group("name").trim()
             if (name.contains(Regex("\\s+"))) {
@@ -129,8 +125,8 @@ class MaiBestScoreService(
             data.value = MaiBestScoreParam(matcher.group("name").trim(), null, range)
         } else if (StringUtils.hasText(matcher.group("qq"))) {
             data.value = MaiBestScoreParam(null, matcher.group("qq").toLong(), range)
-        } else if (at != null) {
-            data.value = MaiBestScoreParam(null, at.target, range)
+        } else if (event.isAt) {
+            data.value = MaiBestScoreParam(null, event.target, range)
         } else {
             data.value = MaiBestScoreParam(null, event.sender.id, range, true)
         }

@@ -78,6 +78,9 @@ class MaiVersionScoreService(val maimaiApiService: MaimaiApiService, val imageSe
         } else if (matcher.group(FLAG_QQ_ID).isNotNull()) {
             data.value = MaiVersionParam(null, matcher.group(FLAG_QQ_ID).toLong(), versions, false)
             return true
+        } else if (event.isAt) {
+            data.value = MaiVersionParam(null, event.target, versions, false)
+            return true
         } else {
             data.value = MaiVersionParam(null, event.sender.id, versions, true)
             return true

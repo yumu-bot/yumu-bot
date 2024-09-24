@@ -54,6 +54,7 @@ public class CustomService implements MessageService<CustomService.CustomParam> 
     }
 
     @Override
+    @SuppressWarnings("all")
     public boolean isHandle(MessageEvent event, String messageText, DataValue<CustomParam> data) throws Throwable {
         var from = event.getSubject();
 

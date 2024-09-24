@@ -40,7 +40,7 @@ enum class MaiVersion(versionName: String, versionAbbreviation: String) {
         @JvmStatic
         fun getNameList(versions: MutableList<MaiVersion>): MutableList<String> {
             if (CollectionUtils.isEmpty(versions)) {
-                return mutableListOf<String>()
+                return mutableListOf()
             }
 
             return versions.stream().map(MaiVersion::full).toList()
@@ -49,7 +49,7 @@ enum class MaiVersion(versionName: String, versionAbbreviation: String) {
         @JvmStatic
         fun getAbbreviationList(versions: MutableList<MaiVersion>): MutableList<String> {
             if (CollectionUtils.isEmpty(versions)) {
-                return mutableListOf<String>()
+                return mutableListOf()
             }
 
             return versions.stream().map(MaiVersion::abbr).toList()
