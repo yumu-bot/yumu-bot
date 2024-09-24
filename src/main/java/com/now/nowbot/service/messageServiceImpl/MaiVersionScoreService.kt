@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.MaiVersion
+import com.now.nowbot.model.enums.MaiVersion.Companion.listToString
 import com.now.nowbot.model.json.MaiBestScore
 import com.now.nowbot.model.json.MaiScore
 import com.now.nowbot.model.json.MaiScoreLite
@@ -60,18 +61,18 @@ class MaiVersionScoreService(val maimaiApiService: MaimaiApiService, val imageSe
             mutableListOf(newest)
         }
 
-        if (versions.first() == MaiVersion.DEFAULT) {
+        if (versions.first() == MaiVersion.NULL) {
             versions = mutableListOf(newest)
         }
 
         if (matcher.group(FLAG_NAME).isNotNull()) {
-            val versionInName = MaiVersion.getMutableVersion(matcher.group(FLAG_NAME))
+            val versionInName = MaiVersion.getVersion(matcher.group(FLAG_NAME))
 
-            if (versionInName.first() == MaiVersion.DEFAULT) {
+            if (versionInName == MaiVersion.NULL) {
                 data.value = MaiVersionParam(matcher.group(FLAG_NAME), null, versions, false)
                 return true
             } else {
-                data.value = MaiVersionParam(null, event.sender.id, versionInName, true)
+                data.value = MaiVersionParam(null, event.sender.id, mutableListOf(versionInName), true)
                 return true
             }
         } else if (matcher.group(FLAG_QQ_ID).isNotNull()) {
@@ -85,7 +86,7 @@ class MaiVersionScoreService(val maimaiApiService: MaimaiApiService, val imageSe
 
     override fun HandleMessage(event: MessageEvent, param: MaiVersionParam) {
         val vs = getVersionScores(param.qq, param.name, param.versions, param.isMyself, maimaiApiService)
-        if (vs.scores.isEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_Version, param.versions.toString())
+        if (vs.scores.isEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_Version, param.versions.listToString())
         if (vs.scores.size > 220) throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Version)
 
         val full = getFullScore(param.qq, param.name, param.isMyself, maimaiApiService)
