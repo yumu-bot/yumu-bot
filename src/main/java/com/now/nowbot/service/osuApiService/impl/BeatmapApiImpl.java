@@ -113,24 +113,15 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     public String downloadBeatMapFileStrForce(long bid) {
         try {
             return bsApiService.getOsuFile(bid);
-        } catch (Exception ignore) {
-        }
-
-        if (writeBeatMapFile(bid)) {
+        } catch (Exception e) {
+            log.error("从 bs 服务下载文件出现异常", e);
+            String str = downloadBeatMapFileStr(bid);
+            if (str == null) return null;
             try {
-                String osuStr = Files.readString(osuDir.resolve(bid + ".osu"));
-
-                if (Objects.isNull(osuStr)) {
-                    return null;
-                } else {
-                    return osuStr;
-                }
-            } catch (IOException e) {
-                log.error("文件读取失败: ", e);
-            }
+                Files.writeString(osuDir.resolve(bid + ".osu"), str);
+            } catch (IOException ignore) { }
+            return str;
         }
-
-        return null;
     }
 
     /**
