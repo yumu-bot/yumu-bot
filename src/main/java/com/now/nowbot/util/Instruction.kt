@@ -572,6 +572,11 @@ enum class Instruction(val pattern: Pattern) {
 
     MAI_VERSION(CommandPatternBuilder.create {
         appendCommands("mai(mai)?\\s*version", "mv")
+        appendGroup(MAYBE) {
+            append(REG_COLON)
+            appendSpace()
+            appendCaptureGroup("diff", REG_DIFF)
+        }
         appendNameAny()
         appendQQID()
         appendGroup(MAYBE) {

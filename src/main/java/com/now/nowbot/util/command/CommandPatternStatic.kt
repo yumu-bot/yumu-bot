@@ -37,6 +37,7 @@ const val FLAG_RANGE: String = "range"
 const val FLAG_QQ_ID: String = "qq"
 const val FLAG_QQ_GROUP: String = "group"
 const val FLAG_VERSION: String = "version"
+const val FLAG_DIFF: String = "diff"
 
 @Language("RegExp")
 val REG_CAPS_INSENSITIVE: String = "(?i)"
@@ -116,7 +117,7 @@ val REG_MOD: String = "(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)"
 val REG_MODE: String = "(osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)"
 
 @Language("RegExp")
-val REG_DIFF: String = "([0-4baemr]|bsc|adv|exp|mas|rem|basic|advanced|expert|master|re:\\smaster)"
+val REG_DIFF: String = "([0-4baemr]|bsc|adv|exp|mas|rem|rms|ba|ad|ex|ma|re|basic|advanced|expert|master|re[:：]?\\s*master)"
 
 @Language("RegExp")
 val REG_RANGE: String = "((100|$REG_NUMBER_12)($REG_HYPHEN$REG_NUMBER_13)?)"

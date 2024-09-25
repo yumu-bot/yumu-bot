@@ -79,8 +79,7 @@ class MaiScore {
                     continue
                 }
 
-                val d = data[s.songID.toInt()]
-                if (d == null) continue
+                val d = data[s.songID.toInt()] ?: continue
 
                 insertSongData(s, d)
             }

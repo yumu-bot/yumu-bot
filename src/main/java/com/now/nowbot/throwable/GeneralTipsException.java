@@ -18,7 +18,8 @@ public class GeneralTipsException extends TipsException {
 
         G_Exceed_Param("请输入正确的编号或范围！"),
         G_Exceed_Day("你输入的天数范围太久远了！"),
-        G_Exceed_Version("符合筛选版本的成绩太多了！请缩小查询范围。"),
+        G_Exceed_Version("符合筛选版本的成绩太多了！请减少版本，缩小查询范围。"),
+        G_Exceed_Version_Default("符合筛选版本的成绩太多了！请指定难度（\":\" + \"b、a、e、m、r\"），缩小查询范围。"),
 
         G_Null_Param("请输入正确的参数！"),
         G_Null_UserName("请输入正确的玩家名！"),
