@@ -22,25 +22,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public interface OsuBeatmapApiService {
-    /**
-     * 下载beatmap(.osu)文件
-     *
-     * @param bid 谱面id
-     * @return osu文件字符串
-     */
-    String getBeatMapFileStr(long bid) throws Exception;
+    // 获取谱面：先获取本地，再获取 bs api，最后获取网页
+    String getBeatMapFileString(long bid);
 
-    boolean hasBeatMapFile(long bid);
+    byte[] getBeatMapFileByte(long bid);
 
-    boolean refreshBeatMapFile(long bid) throws IOException;
+    boolean hasBeatMapFileFromDirectory(long bid);
 
-    String downloadBeatMapFileStrForce(long bid);
+    boolean refreshBeatMapFileFromDirectory(long bid);
 
-    /**
-     * 查一下文件是否跟 checksum 是否对起来
-     *
-     * @return 是否对得上
-     */
+    // 查一下文件是否跟 checksum 是否对得上
     boolean checkBeatMap(BeatMap beatMap) throws IOException;
 
     boolean checkBeatMap(long bid, String checkStr) throws IOException;
@@ -98,20 +89,20 @@ public interface OsuBeatmapApiService {
 
     BeatMapSetSearch searchBeatMapSet(Map<String, Object> query);
 
-    default JniResult getMaxPP(long bid, int modInt) throws Exception {
-        var b = getBeatMapFileStr(bid).getBytes(StandardCharsets.UTF_8);
+    default JniResult getMaxPP(long bid, int modInt) {
+        var b = getBeatMapFileByte(bid);
         JniScore js = new JniScore();
         js.setAccuracy(100);
         js.setMods(modInt);
         return Rosu.calculate(b, js);
     }
 
-    default JniResult getMaxPP(Score s) throws Exception {
+    default JniResult getMaxPP(Score s) {
         return getMaxPP(s.getBeatMap().getBeatMapID(), s.getMode(), OsuMod.getModsValueFromAbbrList(s.getMods()));
     }
 
-    default JniResult getMaxPP(long bid, OsuMode mode, int modInt) throws Exception {
-        var b = getBeatMapFileStr(bid).getBytes(StandardCharsets.UTF_8);
+    default JniResult getMaxPP(long bid, OsuMode mode, int modInt) {
+        var b = getBeatMapFileByte(bid);
         JniScore js = new JniScore();
 
         js.setMode(mode.toRosuMode());
@@ -124,14 +115,14 @@ public interface OsuBeatmapApiService {
     }
 
     default JniResult getPP(long bid, int modInt, Statistics s, int combo) throws Exception {
-        var b = getBeatMapFileStr(bid).getBytes(StandardCharsets.UTF_8);
+        var b = getBeatMapFileByte(bid);
         JniScore js = new JniScore();
         js.setCombo(combo);
         return getJniResult(modInt, s, b, js);
     }
 
-    default JniResult getPP(long bid, OsuMode mode, int modInt, Statistics s, int combo) throws Exception {
-        var b = getBeatMapFileStr(bid).getBytes(StandardCharsets.UTF_8);
+    default JniResult getPP(long bid, OsuMode mode, int modInt, Statistics s, int combo) {
+        var b = getBeatMapFileByte(bid);
         JniScore js = new JniScore();
         js.setCombo(combo);
         js.setMode(mode.toRosuMode());
@@ -139,7 +130,7 @@ public interface OsuBeatmapApiService {
     }
 
     default JniResult getPP(BeatMap beatMap, MapStatisticsService.Expected e) throws Exception {
-        var b = getBeatMapFileStr(beatMap.getBeatMapID()).getBytes(StandardCharsets.UTF_8);
+        var b = getBeatMapFileString(beatMap.getBeatMapID()).getBytes(StandardCharsets.UTF_8);
         var m = OsuMod.getModsValueFromAbbrList(e.mods);
 
         JniScore score = new JniScore();
@@ -152,8 +143,8 @@ public interface OsuBeatmapApiService {
         return Rosu.calculate(b, score);
     }
 
-    default JniResult getPP(Score s) throws Exception {
-        var b = getBeatMapFileStr(s.getBeatMap().getBeatMapID()).getBytes(StandardCharsets.UTF_8);
+    default JniResult getPP(Score s) {
+        var b = getBeatMapFileByte(s.getBeatMap().getBeatMapID());
         var m = OsuMod.getModsValueFromAbbrList(s.getMods());
         var t = s.getStatistics();
 
@@ -163,8 +154,8 @@ public interface OsuBeatmapApiService {
         return getJniResult(m, t, b, js);
     }
 
-    default JniResult getFcPP(Score s) throws Exception {
-        var b = getBeatMapFileStr(s.getBeatMap().getBeatMapID()).getBytes(StandardCharsets.UTF_8);
+    default JniResult getFcPP(Score s) {
+        var b = getBeatMapFileByte(s.getBeatMap().getBeatMapID());
         var m = OsuMod.getModsValueFromAbbrList(s.getMods());
         var t = s.getStatistics().clone();
 
@@ -184,13 +175,13 @@ public interface OsuBeatmapApiService {
         return getJniResult(m, t, b, js);
     }
 
-    default Map<String, Object> getFullStatistics(Score s) throws Exception {
+    default Map<String, Object> getFullStatistics(Score s) {
         var jniResult = getMaxPP(s);
 
         return getStats(jniResult);
     }
 
-    default Map<String, Object> getStatistics(Score s) throws Exception {
+    default Map<String, Object> getStatistics(Score s) {
         var jniResult = getPP(s);
 
         return getStats(jniResult);
@@ -286,7 +277,7 @@ public interface OsuBeatmapApiService {
         var beatMap = score.getBeatMap();
 
         if (isNotAvailable(beatMap)) {
-            getStarFromAttributes(beatMap, score.getMode(), modsInt, true);
+            applyStarFromAttributes(beatMap, score.getMode(), modsInt, true);
             DataUtil.applyBeatMapChanges(beatMap, modsInt);
             return;
         }
@@ -295,12 +286,10 @@ public interface OsuBeatmapApiService {
         try {
             r = getPP(score);
 
-            if (r.getPp() == 0) try {
+            if (r.getPp() == 0) {
                 NowbotApplication.log.info("无法获取谱面 {} 的 PP，正在刷新谱面文件！", beatMap.getBeatMapID());
-                refreshBeatMapFile(beatMap.getBeatMapID());
+                refreshBeatMapFileFromDirectory(beatMap.getBeatMapID());
                 r = getPP(score);
-            } catch (IOException ignored) {
-
             }
         } catch (Exception e) {
             NowbotApplication.log.error("计算时出现异常", e);
@@ -311,7 +300,7 @@ public interface OsuBeatmapApiService {
             score.setPP((float) r.getPp());
             beatMap.setStarRating((float) r.getStar());
         } else {
-            getStarFromAttributes(beatMap, score.getMode(), modsInt, false);
+            applyStarFromAttributes(beatMap, score.getMode(), modsInt, false);
         }
 
         DataUtil.applyBeatMapChanges(beatMap, modsInt);
@@ -332,7 +321,7 @@ public interface OsuBeatmapApiService {
         if (beatMap == null) return; // 谱面没有 PP，所以必须查
 
         if (isNotAvailable(beatMap)) {
-            getStarFromAttributes(beatMap, mode, modsInt, true);
+            applyStarFromAttributes(beatMap, mode, modsInt, true);
             DataUtil.applyBeatMapChanges(beatMap, modsInt);
             return;
         }
@@ -343,12 +332,10 @@ public interface OsuBeatmapApiService {
         try {
             r = getMaxPP(id, mode, modsInt);
 
-            if (r.getPp() == 0) try {
+            if (r.getPp() == 0) {
                 NowbotApplication.log.info("无法获取谱面 {} 的 PP，正在刷新谱面文件！", beatMap.getBeatMapID());
-                refreshBeatMapFile(id);
+                refreshBeatMapFileFromDirectory(id);
                 r = getMaxPP(id, mode, modsInt);
-            } catch (IOException ignored) {
-
             }
         } catch (Exception e) {
             NowbotApplication.log.error("计算时出现异常", e);
@@ -358,7 +345,7 @@ public interface OsuBeatmapApiService {
         if (r.getPp() > 0) {
             beatMap.setStarRating((float) r.getStar());
         } else {
-            getStarFromAttributes(beatMap, mode, modsInt, false);
+            applyStarFromAttributes(beatMap, mode, modsInt, false);
         }
 
         DataUtil.applyBeatMapChanges(beatMap, modsInt);
@@ -370,14 +357,14 @@ public interface OsuBeatmapApiService {
         var m = OsuMod.getModsValueFromAbbrList(expected.mods);
 
         if (isNotAvailable(beatMap)) {
-            getStarFromAttributes(beatMap, expected.mode, m, false);
+            applyStarFromAttributes(beatMap, expected.mode, m, false);
             DataUtil.applyBeatMapChanges(beatMap, m);
             return;
         }
         JniResult r;
 
         try {
-            var b = getBeatMapFileStr(beatMap.getBeatMapID()).getBytes(StandardCharsets.UTF_8);
+            var b = getBeatMapFileString(beatMap.getBeatMapID()).getBytes(StandardCharsets.UTF_8);
 
             JniScore js = new JniScore();
             js.setCombo(expected.combo);
@@ -387,12 +374,10 @@ public interface OsuBeatmapApiService {
 
             r = Rosu.calculate(b, js);
 
-            if (r.getPp() == 0) try {
+            if (r.getPp() == 0) {
                 NowbotApplication.log.info("无法获取谱面 {} 的 PP，正在刷新谱面文件！", beatMap.getBeatMapID());
-                refreshBeatMapFile(beatMap.getBeatMapID());
+                refreshBeatMapFileFromDirectory(beatMap.getBeatMapID());
                 r = Rosu.calculate(b, js);
-            } catch (IOException ignored) {
-
             }
         } catch (Exception e) {
             NowbotApplication.log.error("计算时出现异常", e);
@@ -402,7 +387,7 @@ public interface OsuBeatmapApiService {
         if (r.getPp() > 0) {
             beatMap.setStarRating((float) r.getStar());
         } else {
-            getStarFromAttributes(beatMap, expected.mode, m, false);
+            applyStarFromAttributes(beatMap, expected.mode, m, false);
         }
 
         DataUtil.applyBeatMapChanges(beatMap, m);
@@ -412,7 +397,7 @@ public interface OsuBeatmapApiService {
         return ! (beatMap.getBeatMapSet() != null && beatMap.getBeatMapSet().getAvailability() != null && ! beatMap.getBeatMapSet().getAvailability().downloadDisabled());
     }
 
-    private void getStarFromAttributes(BeatMap beatMap, OsuMode mode, Integer modsInt, Boolean isNotAvailable) {
+    private void applyStarFromAttributes(BeatMap beatMap, OsuMode mode, Integer modsInt, Boolean isNotAvailable) {
         var attr = getAttributes(beatMap.getId(), mode, modsInt);
         beatMap.setStarRating(attr.getStarRating());
         if (isNotAvailable) {

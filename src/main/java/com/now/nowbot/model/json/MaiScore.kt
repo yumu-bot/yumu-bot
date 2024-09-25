@@ -6,7 +6,7 @@ import org.springframework.util.CollectionUtils
 
 class MaiScore {
     // 也就是准确率
-    var achievements: Double = 0.0
+    @JsonProperty("achievements") var achievements: Double = 0.0
 
     // 定数，也就是实际难度，类似于 osu 的星数
     @JsonProperty("ds") var star: Double = 0.0

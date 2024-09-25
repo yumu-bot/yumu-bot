@@ -47,98 +47,130 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     }
 
     @Override
-    @Nullable
-    public String getBeatMapFileStr(long bid) throws Exception {
-        var path = osuDir.resolve(bid + ".osu");
-        if (hasBeatMapFile(bid)) {
-            return Files.readString(path);
-        } else {
-            return AsyncMethodExecutor.execute(() -> downloadBeatMapFileStrForce(bid), "_getBeatMapFile" + bid, (String) null);
-        }
-    }
-
-    @Override
-    public boolean hasBeatMapFile(long bid) {
+    public boolean hasBeatMapFileFromDirectory(long bid) {
         var path = osuDir.resolve(bid + ".osu");
         return Files.isRegularFile(path);
     }
 
-    @Override
-    public boolean refreshBeatMapFile(long bid) throws IOException {
+    @Nullable
+    private String getBeatMapFileFromDirectory(long bid) {
         var path = osuDir.resolve(bid + ".osu");
 
-        if (hasBeatMapFile(bid)) {
-            Files.deleteIfExists(path);
-            return writeBeatMapFile(bid);
+        if (hasBeatMapFileFromDirectory(bid)) {
+            try {
+                return Files.readString(path, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                log.error("osu 谱面 API：读取本地谱面文件失败: ", e);
+                return null;
+            }
         } else {
-            return false;
-        }
-    }
-
-    private boolean writeBeatMapFile(long bid) {
-        var path = osuDir.resolve(bid + ".osu");
-        String osuStr = downloadBeatMapFileStr(bid);
-
-        if (Objects.isNull(osuStr)) {
-            return false;
-        }
-
-        try {
-            Files.writeString(path, osuStr);
-            return true;
-        } catch (IOException e) {
-            log.error("文件写入失败: ", e);
-            return false;
+            return null;
         }
     }
 
     @Nullable
-    private String downloadBeatMapFileStr(long bid) {
+    private String getBeatMapFileFromLocalService(long bid) {
         try {
-            String osuStr = base.osuApiWebClient.get().uri("https://osu.ppy.sh/osu/{bid}", bid).retrieve().bodyToMono(String.class).block();
+            return bsApiService.getOsuFile(bid);
+        } catch (Exception e) {
+            log.error("osu 谱面 API：获取本地服务谱面失败: ", e);
+            return null;
+        }
+    }
 
-            if (Objects.isNull(osuStr)) {
-                return null;
-            } else {
+    @Nullable
+    private String getBeatMapFileFromOfficialWebsite(long bid) {
+        try {
+            String osuStr = base.osuApiWebClient.get().uri("https://osu.ppy.sh/osu/{bid}", bid).retrieve().bodyToMono(String.class).onErrorReturn("").block();
+
+            if (StringUtils.hasText(osuStr)) {
                 return osuStr;
+            } else {
+                return null;
             }
 
         } catch (WebClientResponseException e) {
-            log.error("请求失败: ", e);
+            log.error("osu 谱面 API：请求官网谱面失败: ", e);
             return null;
         }
     }
 
     @Override
-    public String downloadBeatMapFileStrForce(long bid) {
-        try {
-            return bsApiService.getOsuFile(bid);
-        } catch (Exception ignore) {
-        }
+    public boolean refreshBeatMapFileFromDirectory(long bid) {
+        var path = osuDir.resolve(bid + ".osu");
 
-        if (writeBeatMapFile(bid)) {
+        if (hasBeatMapFileFromDirectory(bid)) {
             try {
-                String osuStr = Files.readString(osuDir.resolve(bid + ".osu"));
-
-                if (Objects.isNull(osuStr)) {
-                    return null;
-                } else {
-                    return osuStr;
-                }
+                Files.delete(path);
             } catch (IOException e) {
-                log.error("文件读取失败: ", e);
+                log.error("osu 谱面 API：删除本地谱面文件失败: ", e);
+                return false;
+            }
+
+            String str = getBeatMapFileString(bid);
+
+            if (StringUtils.hasText(str)) {
+                return writeBeatMapFileToDirectory(str, bid);
             }
         }
 
-        return null;
+        return false;
     }
 
-    /**
-     * 查一下文件是否跟 checksum 是否对起来
-     *
-     * @param beatMap 谱面
-     * @return 是否对得上
-     */
+    private boolean writeBeatMapFileToDirectory(String str, long bid) {
+        var path = osuDir.resolve(bid + ".osu");
+
+        if (StringUtils.hasText(str)) {
+            try {
+                Files.writeString(path, str, StandardCharsets.UTF_8);
+                return true;
+            } catch (IOException e) {
+                log.error("osu 谱面 API：写入本地谱面文件失败: ", e);
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public byte[] getBeatMapFileByte(long bid) {
+        return Objects.requireNonNullElse(getBeatMapFileString(bid), "").getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Override
+    @Nullable
+    public String getBeatMapFileString(long bid) {
+        String str = null;
+
+        if (hasBeatMapFileFromDirectory(bid)) {
+            str = getBeatMapFileFromDirectory(bid);
+        }
+
+        if (StringUtils.hasText(str)) {
+            return str;
+        } else {
+            try {
+                str = AsyncMethodExecutor.execute(() -> getBeatMapFileFromLocalService(bid), "_getBeatMapFileFromLocalService" + bid, (String) null);
+            } catch (Exception e) {
+                str = null;
+            }
+        }
+
+        if (StringUtils.hasText(str)) {
+            return str;
+        } else {
+            try {
+                str = AsyncMethodExecutor.execute(() -> getBeatMapFileFromOfficialWebsite(bid), "_getBeatMapFileFromWebsite" + bid, (String) null);
+            } catch (Exception e) {
+                str = null;
+            }
+        }
+
+        return str;
+    }
+
+    // 查一下文件是否跟 checksum 是否对得上
     @Override
     public boolean checkBeatMap(BeatMap beatMap) throws IOException {
         if (beatMap == null) return false;
@@ -266,13 +298,13 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         return out;
     }
 
-    BeatmapObjectCountLite getCount(long bid) throws Exception {
+    BeatmapObjectCountLite getCount(long bid) {
         var result = new BeatmapObjectCountLite();
         result.setBid(bid);
-        var file = getBeatMapFileStr(bid);
+        var file = getBeatMapFileString(bid);
         if (file == null) {
-            refreshBeatMapFile(bid);
-            file = getBeatMapFileStr(bid);
+            refreshBeatMapFileFromDirectory(bid);
+            file = getBeatMapFileString(bid);
             if (file == null) {
                 return null;
             }
@@ -286,7 +318,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         try {
             objectList = getMapObjectList(file);
         } catch (IndexOutOfBoundsException e) {
-            refreshBeatMapFile(bid);
+            refreshBeatMapFileFromDirectory(bid);
             try {
                 objectList = getMapObjectList(file);
             } catch (IndexOutOfBoundsException e1) {
@@ -329,30 +361,22 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
 
     @Override
     @NonNull
-    public int[] getBeatmapObjectGrouping26(BeatMap map) throws Exception {
+    public int[] getBeatmapObjectGrouping26(BeatMap b) {
         int[] result = null;
-        if (StringUtils.hasText(map.getMd5())) {
-            var r = beatmapObjectCountMapper.getDensityByBidAndCheck(map.getBeatMapID(), map.getMd5());
+        if (StringUtils.hasText(b.getMd5())) {
+            var r = beatmapObjectCountMapper.getDensityByBidAndCheck(b.getBeatMapID(), b.getMd5());
             if (!r.isEmpty()) result = r.getFirst();
         } else {
-            var r = beatmapObjectCountMapper.getDensityByBid(map.getBeatMapID());
+            var r = beatmapObjectCountMapper.getDensityByBid(b.getBeatMapID());
             if (!r.isEmpty()) result = r.getFirst();
         }
+
         if (result == null) {
             BeatmapObjectCountLite dataObj;
-            try {
-                dataObj = getCount(map.getBeatMapID());
-                dataObj = beatmapObjectCountMapper.saveAndFlush(dataObj);
-            } catch (Exception e) {
-                refreshBeatMapFile(map.getBeatMapID());
-                try {
-                    dataObj = getCount(map.getBeatMapID());
-                    dataObj = beatmapObjectCountMapper.saveAndFlush(dataObj);
-                } catch (Exception e1) {
-                    log.error("谱面密度：获取失败", e1);
-                    return new int[0];
-                }
-            }
+
+            dataObj = getCount(b.getBeatMapID());
+            dataObj = beatmapObjectCountMapper.saveAndFlush(dataObj);
+
             result = dataObj.getDensity();
         }
 

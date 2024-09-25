@@ -214,7 +214,7 @@ public class PerformancePlusService {
         var beatmapFiles = OSU_FILE_DIR.resolve(beatmapId + ".osu");
         if (! Files.isRegularFile(beatmapFiles)) {
             try {
-                beatmapApi.getBeatMapFileStr(beatmapId);
+                beatmapApi.getBeatMapFileString(beatmapId);
             } catch (Exception e) {
                 log.error("下载谱面文件失败", e);
                 throw new RuntimeException("下载谱面文件失败");

@@ -1,10 +1,10 @@
 package com.now.nowbot.service.divingFishApiService;
 
-import com.now.nowbot.model.json.ChuBestPerformance;
+import com.now.nowbot.model.json.ChuBestScore;
 
 public interface ChunithmApiService {
 
-    ChuBestPerformance getChunithmBest30Recent10(Long qq);
+    ChuBestScore getChunithmBest30Recent10(Long qq);
 
-    ChuBestPerformance getChunithmBest30Recent10(String probername);
+    ChuBestScore getChunithmBest30Recent10(String probername);
 }

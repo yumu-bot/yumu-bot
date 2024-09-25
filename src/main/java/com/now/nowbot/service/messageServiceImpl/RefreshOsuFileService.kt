@@ -44,7 +44,7 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
         var count = 0
 
         for (b in s.beatMaps!!) try {
-            if (osuBeatmapApiService.refreshBeatMapFile(b.beatMapID)) {
+            if (osuBeatmapApiService.refreshBeatMapFileFromDirectory(b.beatMapID)) {
                 count++
             }
         } catch (e: IOException) {
