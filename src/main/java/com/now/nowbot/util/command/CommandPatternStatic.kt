@@ -45,6 +45,9 @@ val REG_CAPS_INSENSITIVE: String = "(?i)"
 val REG_ANYTHING: String = "[\\s\\S]"
 
 @Language("RegExp")
+val REG_ANYTHING_BUT_NO_CHAR: String = "[^:：#＃]"
+
+@Language("RegExp")
 val REG_SPACE: String = "\\s"
 
 @Language("RegExp")
@@ -113,7 +116,7 @@ val REG_MOD: String = "(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)"
 val REG_MODE: String = "(osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)"
 
 @Language("RegExp")
-val REG_DIFF: String = "([0-4baemr]|bsc|adv|exp|mas|rem|basic|advanced|expert|master|re\\:\\smaster)"
+val REG_DIFF: String = "([0-4baemr]|bsc|adv|exp|mas|rem|basic|advanced|expert|master|re:\\smaster)"
 
 @Language("RegExp")
 val REG_RANGE: String = "((100|$REG_NUMBER_12)($REG_HYPHEN$REG_NUMBER_13)?)"

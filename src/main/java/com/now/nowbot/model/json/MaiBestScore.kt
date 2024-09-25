@@ -23,10 +23,10 @@ class MaiBestScore {
     @JsonProperty("nickname") var name: String = ""
 
     // 牌子信息，比如“舞神”
-    var plate: String = ""
+    @JsonProperty("plate") var plate: String? = ""
 
     // PP，理论上限 1w6 多
-    var rating: Int = 0
+    var rating: Int? = 0
 
     // 没有用
     // @JsonIgnoreProperties("user_general_data")

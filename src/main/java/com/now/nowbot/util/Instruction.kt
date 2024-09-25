@@ -555,7 +555,7 @@ enum class Instruction(val pattern: Pattern) {
     // #11 maimai
     MAI_BP(CommandPatternBuilder.create {
         appendCommands("mai(mai)?\\s*best", "mb", "x")
-        appendName()
+        appendNameAny()
         appendQQID()
         appendRange()
     }),
@@ -572,7 +572,7 @@ enum class Instruction(val pattern: Pattern) {
 
     MAI_VERSION(CommandPatternBuilder.create {
         appendCommands("mai(mai)?\\s*version", "mv")
-        appendName()
+        appendNameAny()
         appendQQID()
         appendGroup(MAYBE) {
             append(REG_HASH)

@@ -145,6 +145,15 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
+     * maimai 合法名称（基本就是啥都匹配）
+     * (?<name> X X+ X)
+     */
+    fun appendNameAny() {
+        appendCaptureGroup(FLAG_NAME, REG_ANYTHING_BUT_NO_CHAR, MORE)
+        appendSpace()
+    }
+
+    /**
      * uid=(?<uid>\d+)。**默认一个或更多个 (+)。注意！**
      */
     fun appendUID() {
@@ -184,7 +193,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     /**
      * [:：](?<mode>mode)。
-     * @param level 匹配等级。**默认没有或者一个 (?)。注意！**
+     * level 匹配等级。**默认没有或者一个 (?)。注意！**
      */
     fun appendMode() {
         appendGroup(MAYBE) {
@@ -260,7 +269,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendGroup(MAYBE) {
             append("\\[")
             appendCaptureGroup("remove", REG_NUMBER_SEPERATOR, MORE)
-            append("\\]")
+            append("]")
         }
         appendSpace()
         appendCaptureGroup("rematch", "r")
