@@ -95,21 +95,39 @@ public class MaimaiApiImpl implements MaimaiApiService {
     }
 
     @Override
-    public byte[] getMaimaiCover(Long songID) {
-        String song;
+    public byte[] getMaimaiCoverFromV3(Long songID) {
+        String song = getStandardisedSongID(songID);
+        Path path = Path.of("/home/spring/work/img/ExportFileV3/Maimai/Cover/" + song + ".png");
+
+        if (Files.isRegularFile(path)) try {
+            return Files.readAllBytes(path);
+        } catch (IOException ignored) {
+
+        }
+
+        return getMaimaiCover(songID);
+    }
+
+    private String getStandardisedSongID(Long songID) {
         long id;
 
         if (songID == null) {
-            id = 1L;
+            id = 0L;
         } else if (songID.equals(1235L)) {
-            id = songID + 10000L; // 这是水鱼的 bug，不关我们的事
+            id = 11235L; // 这是水鱼的 bug，不关我们的事
         } else if (songID > 10000L && songID < 11000L) {
             id = songID - 10000L;
+        } else if (songID >= 100000L) {
+            id = songID - 100000L;
         } else {
             id = songID;
         }
 
-        song = String.format("%05d", id);
+        return String.format("%05d", id);
+    }
+
+    public byte[] getMaimaiCover(Long songID) {
+        String song = getStandardisedSongID(songID);
 
         byte[] cover;
         try {

@@ -20,12 +20,12 @@ public interface MaimaiApiService {
 
     MaiVersionScore getMaimaiScoreByVersion(String probername, List<MaiVersion> version) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway;
 
-    default byte[] getMaimaiCover(Integer songID) {
-        return getMaimaiCover(songID.longValue());
+    default byte[] getMaimaiCoverFromV3(Integer songID) {
+        return getMaimaiCoverFromV3(songID.longValue());
     }
 
     // TODO 临时方案，目前是完全获取 但是最好自己维护一个可用的背景库，可以放在 V3 里，并且在里面更新
-    byte[] getMaimaiCover(Long songID);
+    byte[] getMaimaiCoverFromV3(Long songID);
 
     default MaiSong getMaimaiSong(Long songID) {
         return getMaimaiSongLibrary().get(songID.intValue());
