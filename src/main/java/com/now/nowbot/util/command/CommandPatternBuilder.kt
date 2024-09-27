@@ -30,7 +30,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     private fun __appendCommands(@Language("RegExp") vararg commands: String) {
         appendGroup {
-            append(REG_EXCLAMINATION)
+            append(REG_EXCLAMATION)
             appendSpace()
             appendGroup(MAYBE, "ym")
             appendGroup(*commands)
@@ -63,7 +63,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     private fun __appendUU(@Language("RegExp") vararg commands: String) {
         appendGroup() {
-            append(REG_EXCLAMINATION)
+            append(REG_EXCLAMATION)
             appendSpace()
             append("uu?")
             appendGroup(*commands)
@@ -148,8 +148,17 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * maimai 合法名称（基本就是啥都匹配）
      * (?<name> X X+ X)
      */
+    fun appendNameAnyButNoHash() {
+        appendCaptureGroup(FLAG_NAME, REG_ANYTHING_BUT_NO_HASH, MORE)
+        appendSpace()
+    }
+
+    /**
+     * maimai 合法名称（啥都匹配）
+     * (?<name> X X+ X)
+     */
     fun appendNameAny() {
-        appendCaptureGroup(FLAG_NAME, REG_ANYTHING_BUT_NO_CHAR, MORE)
+        appendCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
         appendSpace()
     }
 

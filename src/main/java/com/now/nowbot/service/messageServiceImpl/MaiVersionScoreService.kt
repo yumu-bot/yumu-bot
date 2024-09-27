@@ -129,7 +129,7 @@ class MaiVersionScoreService(
                 throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Version_Default)
 
         val full = getFullScore(param.qq, param.name, param.isMyself, maimaiApiService)
-        val songs = maimaiApiService.getMaimaiSongLibrary()
+        val songs = maimaiApiService.maimaiSongLibrary
 
         val user = full.getUser()
         val scores =
@@ -137,7 +137,7 @@ class MaiVersionScoreService(
                         .stream()
                         .filter { MaiDifficulty.getIndex(it.index).equalDefault(param.difficulty) }
                         .toList()
-        MaiScore.insertSongData(scores, songs)
+        MaiScore.insertSongData(scores, songs.toMutableMap())
 
         val image =
                 imageService.getPanel(
@@ -158,7 +158,7 @@ class MaiVersionScoreService(
         ): MaiBestScore {
             return if (qq.isNotNull()) {
                 try {
-                    maimaiApiService.getMaimaiFullScores(qq)
+                    maimaiApiService.getMaimaiFullScores(qq!!)
                 } catch (e: WebClientResponseException.BadRequest) {
                     if (isMyself) {
                         throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouBadRequest)
@@ -175,7 +175,7 @@ class MaiVersionScoreService(
                 }
             } else if (name.isNotNull()) {
                 try {
-                    maimaiApiService.getMaimaiFullScores(name)
+                    maimaiApiService.getMaimaiFullScores(name!!)
                 } catch (e: WebClientResponseException.BadRequest) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_NameBadRequest)
                 } catch (e: WebClientResponseException.Forbidden) {
@@ -195,7 +195,7 @@ class MaiVersionScoreService(
         ): MaiVersionScore {
             return if (qq.isNotNull()) {
                 try {
-                    maimaiApiService.getMaimaiScoreByVersion(qq, version)
+                    maimaiApiService.getMaimaiScoreByVersion(qq!!, version)
                 } catch (e: WebClientResponseException.BadRequest) {
                     if (isMyself) {
                         throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouBadRequest)
@@ -212,7 +212,7 @@ class MaiVersionScoreService(
                 }
             } else if (name.isNotNull()) {
                 try {
-                    maimaiApiService.getMaimaiScoreByVersion(name, version)
+                    maimaiApiService.getMaimaiScoreByVersion(name!!, version)
                 } catch (e: WebClientResponseException.BadRequest) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_NameBadRequest)
                 } catch (e: WebClientResponseException.Forbidden) {

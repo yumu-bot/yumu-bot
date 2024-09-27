@@ -86,13 +86,13 @@ class MaiScore {
         }
 
         fun insertSongData(score: MaiScore, song: MaiSong) {
-            val chart = song.getCharts().get(score.index)
-            val notes = chart.getNotes()
+            val chart = song.charts.get(score.index)
+            val notes = chart.notes
 
-            score.charter = chart.getCharter()
+            score.charter = chart.charter
             score.max = 3 * (notes.tap + notes.touch + notes.hold + notes.slide + notes.break_)
 
-            score.artist = song.getInfo().getArtist()
+            score.artist = song.info.artist
         }
 
         fun insertPosition(scores: MutableList<MaiScore>, isBest30: Boolean) {

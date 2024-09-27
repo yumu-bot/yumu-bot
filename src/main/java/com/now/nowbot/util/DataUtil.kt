@@ -3,17 +3,13 @@ package com.now.nowbot.util
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.now.nowbot.config.NowbotConfig
-import com.now.nowbot.model.json.*
+import com.now.nowbot.model.enums.JaChar
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
+import com.now.nowbot.model.json.*
+import com.now.nowbot.util.command.*
 import io.github.humbleui.skija.Typeface
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.lang.NonNull
-import org.springframework.lang.Nullable
-import org.springframework.util.CollectionUtils
-import org.springframework.util.StringUtils
 import java.io.IOException
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -21,7 +17,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import kotlin.math.*
-import kotlin.math.roundToInt
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.lang.NonNull
+import org.springframework.lang.Nullable
+import org.springframework.util.CollectionUtils
+import org.springframework.util.StringUtils
 
 object DataUtil {
     private val log: Logger = LoggerFactory.getLogger(DataUtil::class.java)
@@ -216,13 +217,14 @@ object DataUtil {
      */
     @NonNull
     private fun parseRange(start: Int?, end: Int?): Range {
-        val start = start.let {
-            if (it == null || it < 1 || it > 100) {
-                1
-            } else {
-                it
-            }
-        }
+        val start =
+                start.let {
+                    if (it == null || it < 1 || it > 100) {
+                        1
+                    } else {
+                        it
+                    }
+                }
 
         val offset: Int
         val limit: Int
@@ -246,8 +248,6 @@ object DataUtil {
 
         return Range(offset, limit)
     }
-
-
 
     @JvmStatic
     // 获取比赛的某个 event 之前所有玩家
@@ -315,7 +315,7 @@ object DataUtil {
     @NonNull
     @JvmStatic
     fun accuracy2Statistics(accuracy: Double, total: Int, osuMode: OsuMode): Statistics {
-        var stat = Statistics()
+        val stat = Statistics()
         stat.setCount300(0)
         stat.setCount100(0)
         stat.setCount50(0)
@@ -405,14 +405,14 @@ object DataUtil {
         val total = stat.getCountAll(MANIA)
 
         // geki, 300, katu, 100, 50, 0
-        val list = mutableListOf<Int>(
-                stat.countGeki,
-                stat.count300,
-                stat.countKatu,
-                stat.count100,
-                stat.count50,
-                stat.countMiss
-            )
+        val list =
+                mutableListOf(
+                        stat.countGeki,
+                        stat.count300,
+                        stat.countKatu,
+                        stat.count100,
+                        stat.count50,
+                        stat.countMiss)
 
         // 一个物件所占的 Acc 权重
         if (total <= 0) return stat
@@ -528,7 +528,7 @@ object DataUtil {
 
         return Arrays.stream(split)
                 .map { obj: String -> obj.trim { it <= ' ' } }
-                .filter { str: String? -> StringUtils.hasText(str) }
+                .filter { s: String? -> StringUtils.hasText(s) }
                 .toList()
     }
 
@@ -837,16 +837,16 @@ object DataUtil {
 
         for (i in 0 until length) {
             val weight: Double = 0.95.pow(i)
-            val PP = fullPP[i]
+            val pp = fullPP[i]
 
             // 只拿最后50个bp来算，这样精准
             if (i >= 50) {
                 x += i.toDouble()
-                y += PP
+                y += pp
                 x2 += i.toDouble().pow(2)
-                xy += i * PP
+                xy += i * pp
             }
-            bpPP += PP * weight // 前 100 的bp上的 pp
+            bpPP += pp * weight // 前 100 的bp上的 pp
         }
 
         val N = (length - 50).toDouble()
@@ -968,7 +968,7 @@ object DataUtil {
         val sb = StringBuilder()
         val char = str.toCharArray()
 
-        var allWidth = 0f
+        val allWidth = 0f
         var backL = 0
 
         for (thisChar in char) {
@@ -1070,7 +1070,8 @@ object DataUtil {
 
         try {
             val bufferedReader =
-                    Files.newBufferedReader(Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path ?: return ""))
+                    Files.newBufferedReader(
+                            Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path ?: return ""))
 
             // 逐行读取文本内容
             var line: String?
@@ -1102,6 +1103,61 @@ object DataUtil {
         } catch (e: IOException) {
             null
         }
+    }
+
+    @JvmStatic
+    // 获取两个字符串的相似度。
+    fun getStringSimilarity(compare: String?, to: String?): Double {
+        if (compare.isNullOrEmpty() || to.isNullOrEmpty()) return 0.0
+
+        val cs = getStandardisedString(compare)
+        val ts = getStandardisedString(to)
+
+        return max(getSimilarity(cs, ts), 0.75 * getSimilarity(cs.reversed(), ts.reversed()))
+    }
+
+    private fun getSimilarity(compare: String, to: String): Double {
+        val c1 = compare
+        var t1 = to
+        val c1l = compare.length
+        val t1l = to.length
+
+        var count = 0.0
+        if (StringUtils.hasText(c1) && StringUtils.hasText(t1)) {
+
+            outer@ for (v in c1) {
+                for (w in t1) {
+                    if (v == w) {
+                        t1 = t1.substring(t1.indexOf(w) + 1)
+                        count++
+                        continue@outer
+                    }
+                }
+            }
+
+            // to 1 matched length
+            val m1 = max(t1l - t1.length, 1)
+
+            if (c1l > 0 && t1l > 0) {
+                return count.pow(2) / (c1l * m1)
+            }
+        }
+
+        return 0.0
+    }
+
+    @JvmStatic
+    private fun getStandardisedString(str: String): String {
+        return JaChar.getRomanized(str).lowercase()
+                .replace(Regex(REG_HYPHEN), "-")
+                .replace(Regex(REG_PLUS), "+")
+                .replace(Regex(REG_COLON), ":")
+                .replace(Regex(REG_HASH), "#")
+                .replace(Regex(REG_EXCLAMATION), "!")
+                .replace(Regex(REG_QUESTION), "?")
+                .replace(Regex(REG_QUOTATION), "\"")
+                .replace(Regex(REG_FULL_STOP), ".")
+                .replace(Regex("\\s+"), "")
     }
 
     @JvmRecord private data class Range(val offset: Int, val limit: Int)

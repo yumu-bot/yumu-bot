@@ -46,19 +46,25 @@ val REG_CAPS_INSENSITIVE: String = "(?i)"
 val REG_ANYTHING: String = "[\\s\\S]"
 
 @Language("RegExp")
-val REG_ANYTHING_BUT_NO_CHAR: String = "[^:：#＃]"
+val REG_ANYTHING_BUT_NO_HASH: String = "[^:：#＃]"
 
 @Language("RegExp")
 val REG_SPACE: String = "\\s"
 
 @Language("RegExp")
-val REG_STAR: String = "\\*"
+val REG_STAR: String = "[✪☆★*⋆٭]"
+
+@Language("RegExp")
+val REG_FULL_STOP: String = "[.։܁܂۔。﹒．｡︒]"
 
 @Language("RegExp")
 val REG_NUMBER_12: String = "\\d{1,2}"
 
 @Language("RegExp")
 val REG_NUMBER_13: String = "\\d{1,3}"
+
+@Language("RegExp")
+val REG_NUMBER_15: String = "\\d{1,5}"
 
 @Language("RegExp")
 val REG_NUMBER: String = "\\d"
@@ -73,7 +79,7 @@ val REG_NUMBER_SEPERATOR: String = "[\\d\\-\\s_,，|:：`、]"
 val REG_NUMBER_DECIMAL: String = "\\d+\\.?\\d*"
 
 @Language("RegExp")
-val REG_PLUS: String = "\\+"
+val REG_PLUS: String = "[＋+]"
 
 @Language("RegExp")
 val REG_COLON: String = "[:：]"
@@ -88,7 +94,10 @@ val REG_HASH: String = "[#＃]"
 val REG_HYPHEN: String = "[\\-－—]"
 
 @Language("RegExp")
-val REG_EXCLAMINATION: String = "[!！]"
+val REG_EXCLAMATION: String = "[!！]"
+
+@Language("RegExp")
+val REG_QUOTATION : String = "[“”\"«»《》＂‟]"
 
 @Language("RegExp")
 val REG_IGNORE: String = "(?![A-Za-z\\-_])"

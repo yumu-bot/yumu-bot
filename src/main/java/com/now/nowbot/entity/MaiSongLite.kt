@@ -48,12 +48,6 @@ class MaiSongLite(
     var charts: ArrayList<MaiChartLite>? = null
 
     fun toModel(): MaiSong = with(MaiSong()) {
-        this.songID = songID
-        this.title = title
-        this.type = type
-        this.star = star
-        this.level = level
-        this.chartIDs = chartIDs
         this.info = with(MaiSong.SongInfo()) {
             title = songTitle
             artist = songArtist

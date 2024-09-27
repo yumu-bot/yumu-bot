@@ -5,6 +5,8 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.NewbiePlayCount
 import com.now.nowbot.mapper.NewbiePlayCountRepository
 import com.now.nowbot.newbie.mapper.NewbieService
+import com.now.nowbot.service.divingFishApiService.ChunithmApiService
+import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import jakarta.annotation.Resource
 import org.slf4j.Logger
@@ -37,6 +39,12 @@ class RunTimeService : SchedulingConfigurer {
     var restTemplate: RestTemplate? = null
 
     @Resource
+    var maimaiApiService: MaimaiApiService? = null
+
+    @Resource
+    var chunithmApiService: ChunithmApiService ? = null
+
+    @Resource
     var userApiService: OsuUserApiService? = null
 
     @Resource
@@ -55,6 +63,25 @@ class RunTimeService : SchedulingConfigurer {
         log.info("开始执行更新令牌任务")
         bindDao!!.refreshOldUserToken(userApiService)
     }
+
+    @Scheduled(cron = "0 0 6 * * *")
+    fun updateMaimaiSongLibrary() {
+        log.info("开始执行更新 maimai 歌曲库任务")
+        maimaiApiService!!.updateMaimaiSongLibrary()
+    }
+
+    @Scheduled(cron = "20 0 6 * * *")
+    fun updateMaimaiRankLibrary() {
+        log.info("开始执行更新 maimai 排名库任务")
+        maimaiApiService!!.updateMaimaiRankLibrary()
+    }
+
+    @Scheduled(cron = "40 0 6 * * *")
+    fun updateMaimaiFitLibrary() {
+        log.info("开始执行更新 maimai 统计库任务")
+        maimaiApiService!!.updateMaimaiFitLibrary()
+    }
+
 
     @Scheduled(cron = "0 5 10 1 9 *")
     fun count() {

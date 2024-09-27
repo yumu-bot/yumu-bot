@@ -119,7 +119,7 @@ enum class Instruction(val pattern: Pattern) {
 
     SCORE(CommandPatternBuilder.create {
         appendGroup {
-            append(REG_EXCLAMINATION)
+            append(REG_EXCLAMATION)
             appendSpace()
             append("(?<score>(ym)?(score|s))")
             appendIgnore()
@@ -129,7 +129,7 @@ enum class Instruction(val pattern: Pattern) {
 
     BP(CommandPatternBuilder.create {
         appendGroup {
-            append(REG_EXCLAMINATION)
+            append(REG_EXCLAMATION)
             appendSpace()
             append("(?<bp>(ym)?(bestperformance|best|bp|b))(?<s>s)?")
             appendIgnore()
@@ -354,7 +354,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     MU_RATING(CommandPatternBuilder.create {
-        append(REG_EXCLAMINATION)
+        append(REG_EXCLAMATION)
         appendSpace()
         append("((?<uu>(u{1,2})(rating|ra))|(?<main>((ym)?rating|(ym)?ra|mra)))")
         appendIgnore()
@@ -365,7 +365,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SERIES_RATING(CommandPatternBuilder.create {
-        append(REG_EXCLAMINATION)
+        append(REG_EXCLAMATION)
         appendSpace()
         appendGroup(MAYBE, "ym")
         appendGroup(
@@ -429,7 +429,7 @@ enum class Instruction(val pattern: Pattern) {
     // #7 娱乐指令
 
     DICE(CommandPatternBuilder.create {
-        append("($REG_EXCLAMINATION|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d${REG_IGNORE})")
+        append("($REG_EXCLAMATION|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d${REG_IGNORE})")
         appendCaptureGroup("number", "-?\\d", ANY)
         appendSpace()
         appendCaptureGroup("text", REG_ANYTHING, MORE)
@@ -555,7 +555,7 @@ enum class Instruction(val pattern: Pattern) {
     // #11 maimai
     MAI_BP(CommandPatternBuilder.create {
         appendCommands("mai(mai)?\\s*best", "mb", "x")
-        appendNameAny()
+        appendNameAnyButNoHash()
         appendQQID()
         appendRange()
     }),
@@ -567,7 +567,8 @@ enum class Instruction(val pattern: Pattern) {
             appendSpace()
             appendCaptureGroup("diff", REG_DIFF)
         }
-        appendBID()
+        appendNameAny()
+        appendQQID()
     }),
 
     MAI_VERSION(CommandPatternBuilder.create {
@@ -577,7 +578,7 @@ enum class Instruction(val pattern: Pattern) {
             appendSpace()
             appendCaptureGroup("diff", REG_DIFF)
         }
-        appendNameAny()
+        appendNameAnyButNoHash()
         appendQQID()
         appendGroup(MAYBE) {
             append(REG_HASH)

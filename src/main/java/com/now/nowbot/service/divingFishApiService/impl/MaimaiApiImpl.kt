@@ -1,299 +1,406 @@
-package com.now.nowbot.service.divingFishApiService.impl;
+package com.now.nowbot.service.divingFishApiService.impl
 
-import com.now.nowbot.model.enums.MaiVersion;
-import com.now.nowbot.model.json.*;
-import com.now.nowbot.service.divingFishApiService.MaimaiApiService;
-import com.now.nowbot.util.JacksonUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Mono;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import com.now.nowbot.model.enums.MaiVersion
+import com.now.nowbot.model.enums.MaiVersion.Companion.getNameList
+import com.now.nowbot.model.json.*
+import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.JacksonUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
+import org.springframework.lang.NonNull
+import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.util.UriBuilder
+import reactor.core.publisher.Mono
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.stream.Collectors
+import kotlin.text.Charsets.UTF_8
 
 @Service
-public class MaimaiApiImpl implements MaimaiApiService {
-    private static final Logger log = LoggerFactory.getLogger(MaimaiApiService.class);
+class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService {
+    @JvmRecord private data class MaimaiBestScoreQQBody(val qq: Long, val b50: Boolean)
 
-    // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
-    // /home/spring/work/img/ExportFileV3/Maimai
-    private static final Path path = Path.of("/home/spring/work/img/ExportFileV3/Maimai");
+    @JvmRecord private data class MaimaiBestScoreNameBody(val username: String, val b50: Boolean)
 
-    private static final long updatePeriodMillis = 86400000L; // 1 天： 86400000L，30 秒：30000L
+    @JvmRecord
+    private data class MaimaiByVersionQQBody(
+            val qq: Long,
+            @field:NonNull @param:NonNull val version: List<String>
+    )
 
-    DivingFishBaseService base;
+    @JvmRecord
+    private data class MaimaiByVersionNameBody(
+            val username: String,
+            @field:NonNull @param:NonNull val version: List<String>
+    )
 
+    override fun getMaimaiBest50(qq: Long): MaiBestScore {
+        val b = MaimaiBestScoreQQBody(qq, true)
 
-    public MaimaiApiImpl(DivingFishBaseService baseService) {
-        base = baseService;
-    }
-
-    private record MaimaiBestScoreQQBody(Long qq, Boolean b50) {
-    }
-
-    private record MaimaiBestScoreNameBody(String username, Boolean b50) {
-    }
-
-    private record MaimaiByVersionQQBody(Long qq, @NonNull List<String> version) {
-    }
-
-    private record MaimaiByVersionNameBody(String username, @NonNull List<String> version) {
-    }
-
-    @Override
-    public MaiBestScore getMaimaiBest50(Long qq) {
-        var b = new MaimaiBestScoreQQBody(qq, true);
-
-        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build()).contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestScoreQQBody.class).headers(base::insertJSONHeader).retrieve().bodyToMono(MaiBestScore.class).block();
-    }
-
-    @Override
-    public MaiBestScore getMaimaiBest50(String username) {
-        var b = new MaimaiBestScoreNameBody(username, true);
-
-        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/player").build())
+        return base.divingFishApiWebClient
+                .post()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder.path("api/maimaidxprober/query/player").build()
+                }
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(b), MaimaiBestScoreNameBody.class)
+                .body(Mono.just(b), MaimaiBestScoreQQBody::class.java)
+                .headers { headers: HttpHeaders? -> base.insertJSONHeader(headers) }
                 .retrieve()
-                .bodyToMono(MaiBestScore.class)
-                .block();
+                .bodyToMono(MaiBestScore::class.java)
+                .block() ?: MaiBestScore()
     }
 
-    @Override
-    public MaiVersionScore getMaimaiScoreByVersion(String username, List<MaiVersion> versions) {
-        var b = new MaimaiByVersionNameBody(username, MaiVersion.getNameList(versions));
+    override fun getMaimaiBest50(username: String): MaiBestScore {
+        val b = MaimaiBestScoreNameBody(username, true)
 
-        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/plate").build())
+        return base.divingFishApiWebClient
+                .post()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder.path("api/maimaidxprober/query/player").build()
+                }
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(b), MaimaiByVersionNameBody.class)
-                .headers(base::insertJSONHeader)
+                .body(Mono.just(b), MaimaiBestScoreNameBody::class.java)
                 .retrieve()
-                .bodyToMono(MaiVersionScore.class)
-                .block();
+                .bodyToMono(MaiBestScore::class.java)
+                .block() ?: MaiBestScore()
     }
 
-    @Override
-    public MaiVersionScore getMaimaiScoreByVersion(Long qq, List<MaiVersion> versions) {
-        var b = new MaimaiByVersionQQBody(qq, MaiVersion.getNameList(versions));
+    override fun getMaimaiScoreByVersion(
+            username: String,
+            versions: MutableList<MaiVersion>
+    ): MaiVersionScore {
+        val b = MaimaiByVersionNameBody(username, getNameList(versions))
 
-        return base.divingFishApiWebClient.post().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/query/plate")
-                        .build())
+        return base.divingFishApiWebClient
+                .post()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder.path("api/maimaidxprober/query/plate").build()
+                }
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(b), MaimaiByVersionQQBody.class)
-                .headers(base::insertJSONHeader)
+                .body(Mono.just(b), MaimaiByVersionNameBody::class.java)
+                .headers { headers: HttpHeaders? -> base.insertJSONHeader(headers) }
                 .retrieve()
-                .bodyToMono(MaiVersionScore.class).block();
+                .bodyToMono(MaiVersionScore::class.java)
+                .block() ?: MaiVersionScore()
     }
 
-    @Override
-    public byte[] getMaimaiCoverFromV3(Long songID) {
-        String song = getStandardisedSongID(songID);
-        Path path = Path.of("/home/spring/work/img/ExportFileV3/Maimai/Cover/" + song + ".png");
+    override fun getMaimaiScoreByVersion(
+            qq: Long,
+            versions: MutableList<MaiVersion>
+    ): MaiVersionScore {
+        val b = MaimaiByVersionQQBody(qq, getNameList(versions))
 
-        if (Files.isRegularFile(path)) try {
-            return Files.readAllBytes(path);
-        } catch (IOException ignored) {
-
-        }
-
-        return getMaimaiCover(songID);
+        return base.divingFishApiWebClient
+                .post()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder.path("api/maimaidxprober/query/plate").build()
+                }
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(b), MaimaiByVersionQQBody::class.java)
+                .headers { headers: HttpHeaders? -> base.insertJSONHeader(headers) }
+                .retrieve()
+                .bodyToMono(MaiVersionScore::class.java)
+                .block() ?: MaiVersionScore()
     }
 
-    private String getStandardisedSongID(Long songID) {
-        long id;
+    override fun getMaimaiCover(songID: Long): ByteArray {
+        val song = getStandardisedSongID(songID)
+        val f = path.resolve("Cover").resolve("$song.png")
 
-        if (songID == null) {
-            id = 0L;
-        } else if (songID.equals(1235L)) {
-            id = 11235L; // 这是水鱼的 bug，不关我们的事
-        } else if (songID > 10000L && songID < 11000L) {
-            id = songID - 10000L;
-        } else if (songID >= 100000L) {
-            id = songID - 100000L;
+        if (Files.isRegularFile(f))
+                try {
+                    return Files.readAllBytes(f)
+                } catch (ignored: IOException) {}
+
+        return getMaimaiCoverFromAPI(songID)
+    }
+
+    private fun getStandardisedSongID(songID: Long?): String {
+        val id =
+                if (songID == null) {
+                    0L
+                } else if (songID == 1235L) {
+                    11235L // 这是水鱼的 bug，不关我们的事
+                } else if (songID in 10001..10999) {
+                    songID - 10000L
+                } else if (songID >= 100000L) {
+                    songID - 100000L
+                } else {
+                    songID
+                }
+
+        return String.format("%05d", id)
+    }
+
+    override fun getMaimaiCoverFromAPI(songID: Long): ByteArray {
+        val song = getStandardisedSongID(songID)
+        val cover =
+                try {
+                    base.divingFishApiWebClient
+                            .get()
+                            .uri { uriBuilder: UriBuilder ->
+                                uriBuilder.path("covers/$song.png").build()
+                            }
+                            .retrieve()
+                            .bodyToMono(ByteArray::class.java)
+                            .block()
+                } catch (e: WebClientResponseException.NotFound) {
+                    base.divingFishApiWebClient
+                            .get()
+                            .uri { uriBuilder: UriBuilder ->
+                                uriBuilder.path("covers/00000.png").build()
+                            }
+                            .retrieve()
+                            .bodyToMono(ByteArray::class.java)
+                            .block()
+                }
+
+        return cover!!
+    }
+
+    override val maimaiSongLibrary: Map<Int, MaiSong>
+        get() = _getMaimaiSongLibrary()
+
+    override val maimaiRankLibrary: Map<String, Int>
+        get() = _getMaimaiRankLibrary()
+
+    override val maimaiFitLibrary: MaiFit
+        get() = _getMaimaiFitLibrary()
+
+    private fun _getMaimaiSongLibrary(): Map<Int, MaiSong> {
+        val song: List<MaiSong>
+
+        if (isRegularFile("data-songs.json")) {
+            song = parseFileList("data-songs.json", MaiSong::class.java)
         } else {
-            id = songID;
+            log.info("maimai: 本地歌曲库不存在，获取 API 版本")
+            song = JacksonUtil.parseObjectList(maimaiSongLibraryFromAPI, MaiSong::class.java)
         }
 
-        return String.format("%05d", id);
+        return song.stream().collect(Collectors.toMap(MaiSong::songID) { s: MaiSong -> s })
     }
 
-    public byte[] getMaimaiCover(Long songID) {
-        String song = getStandardisedSongID(songID);
+    private fun _getMaimaiRankLibrary(): Map<String, Int> {
+        val ranking: List<MaiRanking>
 
-        byte[] cover;
-        try {
-            cover = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("covers/" + song + ".png").build()).retrieve().bodyToMono(byte[].class).block();
-        } catch (WebClientResponseException.NotFound e) {
-            cover = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("covers/00000.png").build()).retrieve().bodyToMono(byte[].class).block();
+        if (isRegularFile("data-songs.json")) {
+            ranking = parseFileList("data-ranking.json", MaiRanking::class.java)
+        } else {
+            log.info("maimai: 本地排名库不存在，获取 API 版本")
+            ranking = JacksonUtil.parseObjectList(maimaiRankLibraryFromAPI, MaiRanking::class.java)
         }
 
-        return cover;
+        return ranking.stream().collect(Collectors.toMap(MaiRanking::name, MaiRanking::rating))
     }
 
-    @Override
-    public Map<Integer, MaiSong> getMaimaiSongLibrary() {
-        if (isFileOutdated("data-songs.json")) {
-            log.info("maimai: 歌曲库不存在或者已过期，更新中");
-            updateMaimaiSongLibrary();
+    private fun _getMaimaiFitLibrary(): MaiFit {
+        if (isRegularFile("data-fit.json")) {
+            return parseFile("data-fit.json", MaiFit::class.java)
+                    ?: return JacksonUtil.parseObject(maimaiFitLibraryFromAPI, MaiFit::class.java)
+        } else {
+            log.info("maimai: 本地统计库不存在，获取 API 版本")
+            return JacksonUtil.parseObject(maimaiFitLibraryFromAPI, MaiFit::class.java)
         }
-
-        return Objects.requireNonNull(file2Objects("data-songs.json", MaiSong.class))
-                .stream().collect(Collectors.toMap(MaiSong::getSongID, s -> s));
     }
 
-    @Override
-    public Map<String, Integer> getMaimaiRankLibrary() {
-        if (isFileOutdated("data-ranking.json")) {
-            log.info("maimai: 排名库不存在或者已过期，更新中");
-            updateMaimaiRankLibrary();
-        }
-
-        return Objects.requireNonNull(file2Objects("data-ranking.json", MaiRanking.class))
-                .stream().collect(Collectors.toMap(MaiRanking::getName, MaiRanking::getRating));
-
+    override fun updateMaimaiSongLibrary() {
+        saveFile(maimaiSongLibraryFromAPI, "data-songs.json", "歌曲")
     }
 
-    @Override
-    public MaiFit getMaimaiFit() {
-        if (isFileOutdated("data-fit.json")) {
-            log.info("maimai: 统计库不存在或者已过期，更新中");
-            updateMaimaiFit();
-        }
-
-        return file2Object("data-fit.json", MaiFit.class);
+    override fun updateMaimaiRankLibrary() {
+        saveFile(maimaiRankLibraryFromAPI, "data-ranking.json", "排名")
     }
 
-    @Override
-    public void updateMaimaiSongLibrary() {
-        var data = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/music_data").build()).retrieve().bodyToMono(String.class).block();
-
-        saveFile(data, "data-songs.json", "歌曲");
+    override fun updateMaimaiFitLibrary() {
+        saveFile(maimaiFitLibraryFromAPI, "data-fit.json", "统计")
     }
 
-    @Override
-    public void updateMaimaiRankLibrary() {
-        var data = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/rating_ranking").build()).retrieve().bodyToMono(String.class).block();
-
-        saveFile(data, "data-ranking.json", "排名");
+    override fun getMaimaiSong(songID: Int): MaiSong {
+        return MaiSong()
     }
 
-    @Override
-    public void updateMaimaiFit() {
-        var data = base.divingFishApiWebClient.get().uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/chart_stats").build()).retrieve().bodyToMono(String.class).block();
-
-        saveFile(data, "data-fit.json", "统计");
+    override fun getMaimaiSong(title: String): MaiSong {
+        return MaiSong()
     }
 
-    @Override
-    public MaiSong getMaimaiSong(Integer songID) {
-        return null;
+    @Throws(
+            WebClientResponseException.Forbidden::class,
+            WebClientResponseException.BadGateway::class)
+    override fun getMaimaiSongScore(qq: Long, songID: Int): MaiScore {
+        return MaiScore()
     }
 
-    @Override
-    public MaiSong getMaimaiSong(String title) {
-        return null;
+    @Throws(
+            WebClientResponseException.Forbidden::class,
+            WebClientResponseException.BadGateway::class)
+    override fun getMaimaiSongsScore(qq: Long, songIDs: List<Int>): List<MaiScore> {
+        return listOf()
     }
 
-    @Override
-    public MaiScore getMaimaiSongScore(Long qq, Integer songID) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
-        return null;
+    @Throws(
+            WebClientResponseException.Forbidden::class,
+            WebClientResponseException.BadGateway::class)
+    override fun getMaimaiSongScore(username: String, songID: Int): MaiScore {
+        return MaiScore()
     }
 
-    @Override
-    public List<MaiScore> getMaimaiSongsScore(Long qq, List<Integer> songIDs) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
-        return List.of();
+    @Throws(
+            WebClientResponseException.Forbidden::class,
+            WebClientResponseException.BadGateway::class)
+    override fun getMaimaiSongsScore(username: String, songIDs: List<Int>): List<MaiScore> {
+        return listOf()
     }
 
-    @Override
-    public MaiScore getMaimaiSongScore(String username, Integer songID) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
-        return null;
-    }
-
-    @Override
-    public List<MaiScore> getMaimaiSongsScore(String username, List<Integer> songIDs) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
-        return List.of();
-    }
-
-    @Override
-    public MaiBestScore getMaimaiFullScores(Long qq) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
-        return base.divingFishApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/dev/player/records")
-                        .queryParam("qq", qq)
-                        .build())
-                .headers(base::insertDeveloperHeader)
+    @Throws(
+            WebClientResponseException.Forbidden::class,
+            WebClientResponseException.BadGateway::class)
+    override fun getMaimaiFullScores(qq: Long): MaiBestScore {
+        return base.divingFishApiWebClient
+                .get()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                            .path("api/maimaidxprober/dev/player/records")
+                            .queryParam("qq", qq)
+                            .build()
+                }
+                .headers { headers: HttpHeaders? -> base.insertDeveloperHeader(headers) }
                 .retrieve()
-                .bodyToMono(MaiBestScore.class)
-                .block();
+                .bodyToMono(MaiBestScore::class.java)
+                .block() ?: MaiBestScore()
     }
 
-    @Override
-    public MaiBestScore getMaimaiFullScores(String probername) throws WebClientResponseException.Forbidden, WebClientResponseException.BadGateway {
-        return base.divingFishApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder.path("api/maimaidxprober/dev/player/records")
-                        .queryParam("username", probername)
-                        .build())
-                .headers(base::insertDeveloperHeader)
+    @Throws(
+            WebClientResponseException.Forbidden::class,
+            WebClientResponseException.BadGateway::class)
+    override fun getMaimaiFullScores(username: String): MaiBestScore {
+        return base.divingFishApiWebClient
+                .get()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                            .path("api/maimaidxprober/dev/player/records")
+                            .queryParam("username", username)
+                            .build()
+                }
+                .headers { headers: HttpHeaders? -> base.insertDeveloperHeader(headers) }
                 .retrieve()
-                .bodyToMono(MaiBestScore.class)
-                .block();
+                .bodyToMono(MaiBestScore::class.java)
+                .block() ?: MaiBestScore()
     }
 
-    private <T> T file2Object(String fileName, Class<T> clazz) {
-        var file = path.resolve(fileName);
-        try {
-            var s = Files.readString(file);
-            return JacksonUtil.parseObject(s, clazz);
-        } catch (IOException e) {
-            log.error("maimai: 获取文件失败", e);
-            return null;
-        }
-    }
+    override fun getMaimaiPossibleSong(text: String): Map<Double, MaiSong>? {
+        val songs = maimaiSongLibrary
 
-    private <T> List<T> file2Objects(String fileName, Class<T> clazz) {
-        var file = path.resolve(fileName);
-        try {
-            var s = Files.readString(file);
-            return JacksonUtil.parseObjectList(s, clazz);
-        } catch (IOException e) {
-            log.error("maimai: 获取文件失败", e);
-            return null;
-        }
-    }
+        val result = mutableMapOf<Double, MaiSong>()
 
-    private void saveFile(String data, String fileName, String dictionaryName) {
-        var file = path.resolve(fileName);
+        for (s in songs) {
+            val similarity = DataUtil.getStringSimilarity(text, s.value.title)
 
-        try {
-            if (isFileOutdated(fileName)) {
-                Files.write(file, Objects.requireNonNull(data).getBytes());
-                log.info(String.format("maimai: 已更新%s库", dictionaryName));
-            } else if (Files.isDirectory(path)) {
-                Files.write(file, Objects.requireNonNull(data).getBytes());
-                log.info(String.format("maimai: 已保存%s库", dictionaryName));
-            } else {
-                log.info(String.format("maimai: 未保存%s库", dictionaryName));
+            if (similarity >= 0.5) {
+                result[similarity] = s.value
             }
-        } catch (IOException e) {
-            log.error(String.format("maimai: %s库保存失败", dictionaryName), e);
+        }
+
+        if (result.isEmpty()) {
+            return null
+        }
+
+        return result.toSortedMap().reversed()
+    }
+
+    private val maimaiSongLibraryFromAPI: String
+        get() =
+                base.divingFishApiWebClient
+                        .get()
+                        .uri { uriBuilder: UriBuilder ->
+                            uriBuilder.path("api/maimaidxprober/music_data").build()
+                        }
+                        .retrieve()
+                        .bodyToMono(String::class.java)
+                        .block() ?: ""
+
+    private val maimaiRankLibraryFromAPI: String
+        get() =
+                base.divingFishApiWebClient
+                        .get()
+                        .uri { uriBuilder: UriBuilder ->
+                            uriBuilder.path("api/maimaidxprober/rating_ranking").build()
+                        }
+                        .retrieve()
+                        .bodyToMono(String::class.java)
+                        .block() ?: ""
+
+    private val maimaiFitLibraryFromAPI: String
+        get() =
+                base.divingFishApiWebClient
+                        .get()
+                        .uri { uriBuilder: UriBuilder ->
+                            uriBuilder.path("api/maimaidxprober/chart_stats").build()
+                        }
+                        .retrieve()
+                        .bodyToMono(String::class.java)
+                        .block() ?: ""
+
+    private fun <T> parseFile(fileName: String, clazz: Class<T>): T? {
+        val file = path.resolve(fileName)
+        try {
+            val s = Files.readString(file)
+
+            if (Files.isRegularFile(file)) {
+                return JacksonUtil.parseObject(s, clazz)
+            } else {
+                log.info("maimai: 文件{}不存在", fileName)
+                return null
+            }
+
+        } catch (e: IOException) {
+            log.error("maimai: 获取文件失败", e)
+            return null
         }
     }
 
-    private boolean isFileOutdated(String fileName) {
-        var file = path.resolve(fileName);
+    private fun <T> parseFileList(fileName: String, clazz: Class<T>): List<T> {
+        val file = path.resolve(fileName)
+        try {
+            val s = Files.readString(file)
+            return JacksonUtil.parseObjectList(s, clazz)
+        } catch (e: IOException) {
+            log.error("maimai: 获取文件失败", e)
+            return listOf()
+        }
+    }
+
+    private fun saveFile(data: String, fileName: String, dictionaryName: String) {
+        val file = path.resolve(fileName)
 
         try {
-            return (!Files.isWritable(path) || !Files.isRegularFile(file) || System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis() > updatePeriodMillis);
-        } catch (IOException e) {
-            return true;
+            if (isRegularFile(fileName)) {
+                Files.writeString(file, data, UTF_8)
+                log.info("maimai: 已更新{}库", dictionaryName)
+            } else if (Files.isWritable(path)) {
+                Files.writeString(file, data, UTF_8)
+                log.info("maimai: 已保存{}库", dictionaryName)
+            } else {
+                log.info("maimai: 未保存{}库", dictionaryName)
+            }
+        } catch (e: IOException) {
+            log.error(String.format("maimai: %s库保存失败", dictionaryName), e)
         }
+    }
+
+    private fun isRegularFile(fileName: String): Boolean {
+        return Files.isRegularFile(path.resolve(fileName))
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(MaimaiApiImpl::class.java)
+
+        // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
+        // /home/spring/work/img/ExportFileV3/Maimai
+        private val path: Path = Path.of("/home/spring/work/img/ExportFileV3/Maimai")
     }
 }

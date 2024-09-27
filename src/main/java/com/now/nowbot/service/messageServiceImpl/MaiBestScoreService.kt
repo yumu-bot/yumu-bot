@@ -136,12 +136,12 @@ class MaiBestScoreService(
 
     override fun HandleMessage(event: MessageEvent, param: MaiBestScoreParam) {
         val scores = getBestScores(param.qq, param.name, param.isMyself, maimaiApiService)
-        val songs = maimaiApiService.getMaimaiSongLibrary()
-        val charts = implementScore(param.range, scores, songs)
+        val songs = maimaiApiService.maimaiSongLibrary
+        val charts = implementScore(param.range, scores, songs.toMutableMap())
         val isMultipleScore = charts.deluxe.size + charts.standard.size > 1
 
         val user = scores.getUser()
-        val fit = maimaiApiService.getMaimaiFit()
+        val fit = maimaiApiService.maimaiFitLibrary
 
         val image =
             if (isMultipleScore) {
@@ -176,7 +176,7 @@ class MaiBestScoreService(
         ): MaiBestScore {
             return if (qq.isNotNull()) {
                 try {
-                    maimaiApiService.getMaimaiBest50(qq)
+                    maimaiApiService.getMaimaiBest50(qq!!)
                 } catch (e: WebClientResponseException.BadRequest) {
                     if (isMyself) {
                         throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouBadRequest)
@@ -192,7 +192,7 @@ class MaiBestScoreService(
                 }
             } else if (name.isNotNull()) {
                 try {
-                    maimaiApiService.getMaimaiBest50(name)
+                    maimaiApiService.getMaimaiBest50(name!!)
                 } catch (e: WebClientResponseException.BadRequest) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_NameBadRequest)
                 } catch (e: WebClientResponseException.Forbidden) {

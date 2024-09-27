@@ -15,15 +15,18 @@ class MaiBestScore {
     @JsonProperty("records") var records = mutableListOf<MaiScore>()
 
     data class Charts(
-        @JsonProperty("dx") val deluxe: MutableList<MaiScore> = mutableListOf(),
-        @JsonProperty("sd") val standard: MutableList<MaiScore> = mutableListOf(),
+            @JsonProperty("dx") val deluxe: MutableList<MaiScore> = mutableListOf(),
+            @JsonProperty("sd") val standard: MutableList<MaiScore> = mutableListOf(),
     )
 
     // 在游戏里的名字
     @JsonProperty("nickname") var name: String = ""
 
     // 牌子信息，比如“舞神”
-    @JsonProperty("plate") var plate: String? = ""
+    @JsonProperty("plate")
+    // TODO 这个不对？
+    // @JsonDeserialize(using = PlateJsonDeserializer::class)
+    var plate: String? = ""
 
     // PP，理论上限 1w6 多
     var rating: Int? = 0
@@ -36,31 +39,41 @@ class MaiBestScore {
 
     @JvmRecord
     data class User(
-        val name: String?,
-        val probername: String?,
-        val dan: Int?,
-        val plate: String?,
-        val rating: Int?,
-        val base: Int?,
-        val additional: Int?,
+            val name: String?,
+            val probername: String?,
+            val dan: Int?,
+            val plate: String?,
+            val rating: Int?,
+            val base: Int?,
+            val additional: Int?,
     )
 
     fun getUser(): User {
         val best35 =
-            this.charts.standard
-                .stream()
-                .map<Int> { obj: MaiScore? -> obj!!.rating }
-                .filter { obj: Int? -> Objects.nonNull(obj) }
-                .reduce { a: Int, b: Int -> Integer.sum(a, b) }
-                .orElse(0)
+                this.charts.standard
+                        .stream()
+                        .map(MaiScore::rating)
+                        .filter(Objects::nonNull)
+                        .reduce { a: Int, b: Int -> a + b }
+                        .orElse(0)
         val best15 =
-            this.charts.deluxe
-                .stream()
-                .map<Int> { obj: MaiScore? -> obj!!.rating }
-                .filter { obj: Int? -> Objects.nonNull(obj) }
-                .reduce { a: Int, b: Int -> Integer.sum(a, b) }
-                .orElse(0)
+                this.charts.deluxe
+                        .stream()
+                        .map(MaiScore::rating)
+                        .filter(Objects::nonNull)
+                        .reduce { a: Int, b: Int -> a + b }
+                        .orElse(0)
 
         return User(this.name, this.probername, this.dan, this.plate, this.rating, best35, best15)
     }
+
+    /*
+    class PlateJsonDeserializer : JsonDeserializer<String?>() {
+        @Throws(IOException::class)
+        override fun deserialize(p: JsonParser, text: DeserializationContext): String {
+            return p.text ?: ""
+        }
+    }
+
+     */
 }
