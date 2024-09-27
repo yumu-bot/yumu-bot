@@ -39,10 +39,10 @@ class MaiSongLite(
     var songGenre: String,
     var songBPM: Int,
     @Column(columnDefinition = "text[]")
-    var releaseDate: String,
+    var release: String,
     @Column(columnDefinition = "text[]")
     var version: String,
-    var isNew: Boolean,
+    var current: Boolean,
 ) {
     @Transient
     var charts: ArrayList<MaiChartLite>? = null
@@ -53,9 +53,9 @@ class MaiSongLite(
             artist = songArtist
             genre = songGenre
             bpm = songBPM
-            releaseDate = this@MaiSongLite.releaseDate
+            release = this@MaiSongLite.release
             version = this@MaiSongLite.version
-            isNew = this@MaiSongLite.isNew
+            current = this@MaiSongLite.current
             this
         }
         val dbCharts = this@MaiSongLite.charts
@@ -81,9 +81,9 @@ class MaiSongLite(
                 songArtist = song.info.artist,
                 songGenre = song.info.genre,
                 songBPM = song.info.bpm,
-                releaseDate = song.info.releaseDate,
+                release = song.info.release,
                 version = song.info.version,
-                isNew = song.info.isNew
+                current = song.info.current
             )
 
             result.charts = song.charts.mapIndexed { i, c ->

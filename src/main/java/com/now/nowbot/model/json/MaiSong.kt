@@ -60,24 +60,24 @@ class MaiSong {
 
     class SongInfo {
         // 曲名
-        var title: String = ""
+        @JsonProperty("title") var title: String = ""
 
         // 艺术家名
-        var artist: String = ""
+        @JsonProperty("artist") var artist: String = ""
 
         // 歌曲分类，有东方Project，niconico & VOCALOID，其他游戏等等
-        var genre: String = ""
+        @JsonProperty("genre") var genre: String = ""
 
         // 曲速，向下取整过的
         @JsonProperty("bpm") var bpm: Int = 0
 
         // 预期解禁时间，这个默认为空字符串
-        @JsonProperty("release_date") var releaseDate: String = ""
+        @JsonProperty("release_date") var release: String = ""
 
         // 加入 maimai 时的版本
         @JsonProperty("from") var version: String = ""
 
         // 歌曲是否为当前版本的新歌
-        @JsonProperty("is_new") var isNew: Boolean = false
+        @JsonProperty("is_new") var current: Boolean = false
     }
 }

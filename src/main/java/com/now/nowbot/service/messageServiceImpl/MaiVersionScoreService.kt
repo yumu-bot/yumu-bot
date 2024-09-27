@@ -75,19 +75,19 @@ class MaiVersionScoreService(
 
         var versions =
                 if (matcher.group(FLAG_VERSION).isNotNull()) {
-                    MaiVersion.getMutableVersion(matcher.group(FLAG_VERSION))
+                    MaiVersion.getVersionList(matcher.group(FLAG_VERSION))
                 } else {
                     mutableListOf(newest)
                 }
 
-        if (versions.first() == MaiVersion.NULL) {
+        if (versions.first() == MaiVersion.DEFAULT) {
             versions = mutableListOf(newest)
         }
 
         if (matcher.group(FLAG_NAME).isNotNull()) {
             val versionInName = MaiVersion.getVersion(matcher.group(FLAG_NAME))
 
-            if (versionInName == MaiVersion.NULL) {
+            if (versionInName == MaiVersion.DEFAULT) {
                 data.value =
                         MaiVersionParam(
                                 matcher.group(FLAG_NAME).trim(), null, difficulty, versions, false)

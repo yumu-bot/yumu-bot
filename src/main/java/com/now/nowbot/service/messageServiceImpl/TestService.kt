@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.json.MaiSong
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -57,14 +58,19 @@ class TestService(private val maimaiApiService: MaimaiApiService) : MessageServi
 
         val sort = result.toSortedMap().reversed()
 
-        val sb = StringBuilder()
+        val sb = StringBuilder("\n")
 
         var i = 1
         for(e in sort) {
+            val code = MaiVersion.getCodeList(MaiVersion.getVersionList(e.value.info.version)).first()
+            val category = MaiVersion.getCategoryAbbreviation(e.value.info.genre)
+
             sb.append("#${i}:").append(" ")
-                .append(String.format("%.2f", e.key * 100)).append("%").append(" ")
+                .append(String.format("%.0f", e.key * 100)).append("%").append(" ")
                 .append("[${e.value.songID}]").append(" ")
-                .append(e.value.title).append("\n")
+                .append(e.value.title).append(" ")
+                .append("[${code}]").append(" / ")
+                .append("[${category}]").append("\n")
 
             i++
 
