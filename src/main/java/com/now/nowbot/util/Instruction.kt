@@ -554,14 +554,14 @@ enum class Instruction(val pattern: Pattern) {
 
     // #11 maimai & CHUNITHM
     MAI_BP(CommandPatternBuilder.create {
-        appendCommands("mai(mai)?\\s*best", "mb", "x")
+        appendCommandsIgnoreAll("mai(mai)?\\s*best", "mb", "x")
         appendNameAnyButNoHash()
         appendQQID()
         appendRange()
     }),
 
     MAI_SCORE(CommandPatternBuilder.create {
-        appendCommands("mai(mai)?\\s*(score|song)", "ms")
+        appendCommandsIgnoreAll("mai(mai)?\\s*(score|song)", "ms")
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
@@ -572,7 +572,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     MAI_VERSION(CommandPatternBuilder.create {
-        appendCommands("mai(mai)?\\s*version", "mv")
+        appendCommandsIgnoreAll("mai(mai)?\\s*version", "mv")
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
@@ -589,7 +589,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     CHU_BP(CommandPatternBuilder.create {
-        appendCommands("chu(nithm)?\\s*best", "cb", "y")
+        appendCommandsIgnoreAll("chu(nithm)?\\s*best", "cb", "y")
         appendNameAnyButNoHash()
         appendQQID()
         appendRange()
