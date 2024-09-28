@@ -98,23 +98,21 @@ class ChunithmApiImpl(private val base: DivingFishBaseService) : ChunithmApiServ
                             .get()
                             .uri { uriBuilder: UriBuilder ->
                                 uriBuilder
-                                    .host("https://assets2.lxns.net")
+                                    .scheme("https")
+                                    .host("assets2.lxns.net")
                                     .path("chunithm/jacket/${song}.png").build()
                             }
                             .retrieve()
                             .bodyToMono(ByteArray::class.java)
                             .block()
                 } catch (e: WebClientResponseException.NotFound) {
-                    base.webClient!!
-                            .get()
-                            .uri { uriBuilder: UriBuilder ->
-                                uriBuilder
-                                    .host("https://assets2.lxns.net")
-                                    .path("chunithm/jacket/0.png").build()
-                            }
-                            .retrieve()
-                            .bodyToMono(ByteArray::class.java)
-                            .block()
+                    val path = path.resolve("Cover").resolve("0.png")
+
+                    try {
+                        return Files.readAllBytes(path)
+                    } catch (e: IOException) {
+                        return byteArrayOf()
+                    }
                 }
 
         return cover ?: byteArrayOf()

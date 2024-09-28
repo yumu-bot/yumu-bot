@@ -136,6 +136,18 @@ class ChuBestScoreService(
         val charts = implementScore(param.range, scores, songs.toMutableMap())
         val isMultipleScore = charts.recent10.size + charts.best30.size > 1
 
+        if (charts.recent10.isNotEmpty()) {
+            for(s in charts.recent10) {
+                chunithmApiService.downloadChunithmCover(s.songID)
+            }
+        }
+
+        if (charts.best30.isNotEmpty()) {
+            for(s in charts.best30) {
+                chunithmApiService.downloadChunithmCover(s.songID)
+            }
+        }
+
         val user = scores.getUser()
 
         val image =
