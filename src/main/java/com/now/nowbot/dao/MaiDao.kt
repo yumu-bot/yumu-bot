@@ -73,13 +73,18 @@ class MaiDao(
         val allChart = maiFit
             .charts
             .entries
-            .map { (id, charts) -> charts.map { MaiFitChartLite.from(id, it) } }
+            .map { (id, charts) ->
+                charts.mapIndexed { index, it ->
+                    if (it.count == null) return@mapIndexed null
+                    MaiFitChartLite.from(id, index, it)
+                }.filterNotNull()
+            }
             .flatten()
 
         for (chart in allChart) {
             // 更新策略是 sid 与 level 一致是更新, 否则插入
-            if (maiFitChartLiteRepository.existsMaiFitChartLiteBySongIDAndLevel(chart.songID, chart.level)) {
-                maiFitChartLiteRepository.updateMaiFitChartLiteBySongIDAndLevel(chart.songID, chart.level, chart)
+            if (maiFitChartLiteRepository.existsMaiFitChartLiteBySongIDAndSort(chart.songID, chart.sort)) {
+                maiFitChartLiteRepository.updateMaiFitChartLiteBySongIDAndSort(chart.songID, chart.sort, chart)
             } else {
                 maiFitChartLiteRepository.save(chart)
             }
@@ -91,12 +96,22 @@ class MaiDao(
         maiFitDiffLiteRepository.saveAll(allDiff)
     }
 
-    fun getMaiFitChartDataBySID(sid:Int):List<MaiFit.ChartData> {
-        val data = maiFitChartLiteRepository.findMaiFitChartLitesBySongID(sid)
+    fun getMaiFitChartDataBySID(sid: Int): List<MaiFit.ChartData> {
+        val data = maiFitChartLiteRepository.findMaiFitChartLitesBySongIDOrderBySortAsc(sid)
+        var nowIndex = 0
+        val result = ArrayList<MaiFit.ChartData>(5)
+        for (i in 0..4) {
+            if (nowIndex < data.size && data[nowIndex].sort == i) {
+                result.add(data[nowIndex].toModel())
+                nowIndex++
+            } else {
+                result.add(MaiFit.ChartData())
+            }
+        }
         return data.map { it.toModel() }
     }
 
-    fun getMaiFitDiffDataByKey(ket:String):MaiFit.DiffData? {
+    fun getMaiFitDiffDataByKey(ket: String): MaiFit.DiffData? {
         val data = maiFitDiffLiteRepository.findById(ket)
         return data.map { it.toModel() }.getOrNull()
     }

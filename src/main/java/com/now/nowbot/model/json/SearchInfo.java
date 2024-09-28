@@ -4,31 +4,30 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SearchInfo {
     @JsonProperty("c")
-
     String general;
+
     @JsonProperty("sort")
-
     String sort;
+
     @JsonProperty("s")
-
     String status;
+
     @JsonProperty("nsfw")
-
     Boolean nsfw;
+
     @JsonProperty("g")
-
     byte genre;
+
     @JsonProperty("l")
-
     byte language;
+
     @JsonProperty("e")
-
     String others;
+
     @JsonProperty("r")
-
     String rank;
-    @JsonProperty("played")
 
+    @JsonProperty("played")
     String played;
 
     public String getGeneral() {

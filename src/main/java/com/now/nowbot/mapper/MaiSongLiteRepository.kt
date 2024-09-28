@@ -12,7 +12,8 @@ import org.springframework.data.jpa.repository.Query
 interface MaiSongLiteRepository : JpaRepository<MaiSongLite, Int>
 interface MaiChartLiteRepository : JpaRepository<MaiChartLite, Int>
 interface MaiFitChartLiteRepository : JpaRepository<MaiFitChartLite, Int> {
-    fun existsMaiFitChartLiteBySongIDAndLevel(songID: Int, level: String): Boolean
+    fun existsMaiFitChartLiteBySongIDAndSort(songID: Int, sort: Int): Boolean
+
     @Transient
     @Modifying
     @Query("""
@@ -24,9 +25,10 @@ interface MaiFitChartLiteRepository : JpaRepository<MaiFitChartLite, Int> {
             m.standardDeviation = :#{#maiFit.standardDeviation},
             m.distribution = :#{#maiFit.distribution},
             m.fullComboDistribution = :#{#maiFit.fullComboDistribution}
-        where m.songID = :songID and m.level = :level
+        where m.songID = :songID and m.sort = :sort
     """)
-    fun updateMaiFitChartLiteBySongIDAndLevel(songID: Int, level: String, maiFit: MaiFitChartLite)
-    fun findMaiFitChartLitesBySongID(songID: Int): List<MaiFitChartLite>
+    fun updateMaiFitChartLiteBySongIDAndSort(songID: Int, sort: Int, maiFit: MaiFitChartLite)
+
+    fun findMaiFitChartLitesBySongIDOrderBySortAsc(songID: Int): List<MaiFitChartLite>
 }
 interface MaiFitDiffLiteRepository : JpaRepository<MaiFitDiffLite, String>

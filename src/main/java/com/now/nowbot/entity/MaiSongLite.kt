@@ -154,6 +154,8 @@ class MaiFitChartLite(
     @GeneratedValue(strategy = GenerationType.AUTO)
     var id: Int? = null,
 
+    var sort: Int,
+
     var songID: Int,
 
     var count: Int,
@@ -178,7 +180,7 @@ class MaiFitChartLite(
     @Column(name = "fc_distribution", columnDefinition = "float[]")
     var fullComboDistribution: DoubleArray,
 ) {
-    fun toModel(): MaiFit.ChartData  {
+    fun toModel(): MaiFit.ChartData {
         val data = MaiFit.ChartData()
         data.count = count
         data.level = level
@@ -193,8 +195,9 @@ class MaiFitChartLite(
 
     companion object {
         @JvmStatic
-        fun from(sid:String,chart: MaiFit.ChartData): MaiFitChartLite {
+        fun from(sid: String, sort: Int, chart: MaiFit.ChartData): MaiFitChartLite {
             return MaiFitChartLite(
+                sort = sort,
                 songID = sid.toInt(),
                 count = chart.count,
                 level = chart.level,
@@ -208,6 +211,7 @@ class MaiFitChartLite(
         }
     }
 }
+
 @Entity(name = "maimai_fit_diff")
 class MaiFitDiffLite(
     @Id
@@ -224,7 +228,7 @@ class MaiFitDiffLite(
     @Column(name = "fc_distribution", columnDefinition = "float[]")
     var fullComboDistribution: DoubleArray,
 ) {
-    fun toModel(): MaiFit.DiffData{
+    fun toModel(): MaiFit.DiffData {
         val data = MaiFit.DiffData()
         data.achievements = achievements
         data.distribution = distribution.toList()
@@ -234,7 +238,7 @@ class MaiFitDiffLite(
 
     companion object {
         @JvmStatic
-        fun from(id:String,diff: MaiFit.DiffData): MaiFitDiffLite {
+        fun from(id: String, diff: MaiFit.DiffData): MaiFitDiffLite {
             return MaiFitDiffLite(
                 id = id,
                 achievements = diff.achievements,
