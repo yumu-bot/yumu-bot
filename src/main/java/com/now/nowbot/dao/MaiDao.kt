@@ -1,14 +1,9 @@
 package com.now.nowbot.dao
 
-import com.now.nowbot.entity.MaiChartLite
-import com.now.nowbot.entity.MaiFitChartLite
-import com.now.nowbot.entity.MaiFitDiffLite
-import com.now.nowbot.entity.MaiSongLite
-import com.now.nowbot.mapper.MaiChartLiteRepository
-import com.now.nowbot.mapper.MaiFitChartLiteRepository
-import com.now.nowbot.mapper.MaiFitDiffLiteRepository
-import com.now.nowbot.mapper.MaiSongLiteRepository
+import com.now.nowbot.entity.*
+import com.now.nowbot.mapper.*
 import com.now.nowbot.model.json.MaiFit
+import com.now.nowbot.model.json.MaiRanking
 import com.now.nowbot.model.json.MaiSong
 import jakarta.persistence.Transient
 import org.springframework.stereotype.Component
@@ -20,7 +15,24 @@ class MaiDao(
     val maiChartLiteRepository: MaiChartLiteRepository,
     val maiFitChartLiteRepository: MaiFitChartLiteRepository,
     val maiFitDiffLiteRepository: MaiFitDiffLiteRepository,
+    val maiRankLiteRepositpry: MaiRankLiteRepositpry,
 ) {
+    fun saveMaiRanking(ranking: List<MaiRanking>) {
+        val rankingLite = ranking.mapNotNull {
+            if (it.name.isBlank()) null
+            else MaiRankingLite.from(it)
+        }
+        maiRankLiteRepositpry.saveAll(rankingLite)
+    }
+
+    fun getMaiRanking(name: String): MaiRanking? {
+        val ranking = maiRankLiteRepositpry.findById(name)
+        return ranking.map { it.toModel() }.getOrNull()
+    }
+
+    fun getAllMaiRanking(): List<MaiRanking> {
+        return maiRankLiteRepositpry.findAll().map { it.toModel() }
+    }
 
     fun findMaiSongById(id: Int): MaiSong {
         val songOpt = maiSongLiteRepository.findById(id)
