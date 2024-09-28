@@ -1,6 +1,8 @@
 package com.now.nowbot.model.json
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.springframework.util.CollectionUtils
 
 class ChuScore {
     @JsonProperty("cid") var chartID: Int = 0
@@ -23,10 +25,54 @@ class ChuScore {
     // 实际所属的难度分类，Basic，Advanced，Expert，Master，Ultima, World's End
     @JsonProperty("level_label") var difficulty: String = ""
 
-    @JsonProperty("mid") var musicID: Int = 0
+    @JsonProperty("mid") var songID: Long = 0
 
     // CHUNITHM rating，也就是 PP，保留两位小数
     @JsonProperty("ra") var rating: Double = 0.0
 
     @JsonProperty("title") var title: String = ""
+
+    // BP 多少
+    @JsonIgnoreProperties var position: Int = 0
+
+    // 自己拿
+    @JsonIgnoreProperties var artist: String = ""
+
+    // 自己拿
+    @JsonIgnoreProperties var charter: String = ""
+
+    companion object {
+        fun insertSongData(scores: MutableList<ChuScore>, data: MutableMap<Int, ChuSong>) {
+            for (s in scores) {
+                if (s.songID == 0L) {
+                    continue
+                }
+
+                val d = data[s.songID.toInt()] ?: continue
+
+                insertSongData(s, d)
+            }
+        }
+
+        fun insertSongData(score: ChuScore, song: ChuSong) {
+            val chart = song.charts.get(score.index)
+
+            score.charter = chart.charter
+            score.artist = song.info.artist
+        }
+
+        fun insertPosition(scores: MutableList<ChuScore>, isBest30: Boolean) {
+            if (CollectionUtils.isEmpty(scores)) return
+
+            for (i in scores.indices) {
+                val s = scores[i]
+
+                if (isBest30) {
+                    s.position = (i + 1)
+                } else {
+                    s.position = (i + 36)
+                }
+            }
+        }
+    }
 }

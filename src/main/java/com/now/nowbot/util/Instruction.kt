@@ -552,7 +552,7 @@ enum class Instruction(val pattern: Pattern) {
         appendCommands("(?<k>k)")
     }),
 
-    // #11 maimai
+    // #11 maimai & CHUNITHM
     MAI_BP(CommandPatternBuilder.create {
         appendCommands("mai(mai)?\\s*best", "mb", "x")
         appendNameAnyButNoHash()
@@ -587,6 +587,14 @@ enum class Instruction(val pattern: Pattern) {
             appendCaptureGroup("version", REG_ANYTHING, MORE)
         }
     }),
+
+    CHU_BP(CommandPatternBuilder.create {
+        appendCommands("chu(nithm)?\\s*best", "cb", "y")
+        appendNameAnyButNoHash()
+        appendQQID()
+        appendRange()
+    }),
+
 
     ;
 

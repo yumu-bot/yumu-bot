@@ -23,6 +23,10 @@ import kotlin.text.Charsets.UTF_8
 
 @Service
 class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService {
+    // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
+    // /home/spring/work/img/ExportFileV3/Maimai
+    private val path: Path = Path.of("/home/spring/work/img/ExportFileV3/Maimai")
+
     @JvmRecord private data class MaimaiBestScoreQQBody(val qq: Long, val b50: Boolean)
 
     @JvmRecord private data class MaimaiBestScoreNameBody(val username: String, val b50: Boolean)
@@ -42,7 +46,7 @@ class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService 
     override fun getMaimaiBest50(qq: Long): MaiBestScore {
         val b = MaimaiBestScoreQQBody(qq, true)
 
-        return base.divingFishApiWebClient
+        return base.divingFishApiWebClient!!
                 .post()
                 .uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/player").build()
@@ -58,7 +62,7 @@ class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService 
     override fun getMaimaiBest50(username: String): MaiBestScore {
         val b = MaimaiBestScoreNameBody(username, true)
 
-        return base.divingFishApiWebClient
+        return base.divingFishApiWebClient!!
                 .post()
                 .uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/player").build()
@@ -76,7 +80,7 @@ class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService 
     ): MaiVersionScore {
         val b = MaimaiByVersionNameBody(username, getNameList(versions))
 
-        return base.divingFishApiWebClient
+        return base.divingFishApiWebClient!!
                 .post()
                 .uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/plate").build()
@@ -95,7 +99,7 @@ class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService 
     ): MaiVersionScore {
         val b = MaimaiByVersionQQBody(qq, getNameList(versions))
 
-        return base.divingFishApiWebClient
+        return base.divingFishApiWebClient!!
                 .post()
                 .uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/plate").build()
@@ -141,7 +145,7 @@ class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService 
         val song = getStandardisedSongID(songID)
         val cover =
                 try {
-                    base.divingFishApiWebClient
+                    base.divingFishApiWebClient!!
                             .get()
                             .uri { uriBuilder: UriBuilder ->
                                 uriBuilder.path("covers/$song.png").build()
@@ -150,7 +154,7 @@ class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService 
                             .bodyToMono(ByteArray::class.java)
                             .block()
                 } catch (e: WebClientResponseException.NotFound) {
-                    base.divingFishApiWebClient
+                    base.divingFishApiWebClient!!
                             .get()
                             .uri { uriBuilder: UriBuilder ->
                                 uriBuilder.path("covers/00000.png").build()
@@ -260,7 +264,7 @@ class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService 
             WebClientResponseException.Forbidden::class,
             WebClientResponseException.BadGateway::class)
     override fun getMaimaiFullScores(qq: Long): MaiBestScore {
-        return base.divingFishApiWebClient
+        return base.divingFishApiWebClient!!
                 .get()
                 .uri { uriBuilder: UriBuilder ->
                     uriBuilder
@@ -278,7 +282,7 @@ class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService 
             WebClientResponseException.Forbidden::class,
             WebClientResponseException.BadGateway::class)
     override fun getMaimaiFullScores(username: String): MaiBestScore {
-        return base.divingFishApiWebClient
+        return base.divingFishApiWebClient!!
                 .get()
                 .uri { uriBuilder: UriBuilder ->
                     uriBuilder
@@ -314,7 +318,7 @@ class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService 
 
     private val maimaiSongLibraryFromAPI: String
         get() =
-                base.divingFishApiWebClient
+                base.divingFishApiWebClient!!
                         .get()
                         .uri { uriBuilder: UriBuilder ->
                             uriBuilder.path("api/maimaidxprober/music_data").build()
@@ -325,7 +329,7 @@ class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService 
 
     private val maimaiRankLibraryFromAPI: String
         get() =
-                base.divingFishApiWebClient
+                base.divingFishApiWebClient!!
                         .get()
                         .uri { uriBuilder: UriBuilder ->
                             uriBuilder.path("api/maimaidxprober/rating_ranking").build()
@@ -336,7 +340,7 @@ class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService 
 
     private val maimaiFitLibraryFromAPI: String
         get() =
-                base.divingFishApiWebClient
+                base.divingFishApiWebClient!!
                         .get()
                         .uri { uriBuilder: UriBuilder ->
                             uriBuilder.path("api/maimaidxprober/chart_stats").build()
@@ -398,9 +402,5 @@ class MaimaiApiImpl(private val base: DivingFishBaseService) : MaimaiApiService 
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(MaimaiApiImpl::class.java)
-
-        // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
-        // /home/spring/work/img/ExportFileV3/Maimai
-        private val path: Path = Path.of("/home/spring/work/img/ExportFileV3/Maimai")
     }
 }

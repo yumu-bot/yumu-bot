@@ -1,14 +1,10 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.MaiBestScore
-import com.now.nowbot.model.json.MaiFit.ChartData
-import com.now.nowbot.model.json.MaiFit.DiffData
-import com.now.nowbot.model.json.MaiScore
-import com.now.nowbot.model.json.MaiSong
+import com.now.nowbot.model.json.*
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.CmdRange
@@ -23,21 +19,19 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import kotlin.math.max
 import kotlin.math.min
 
-@Service("MAI_BP")
-class MaiBestScoreService(
-    private val maimaiApiService: MaimaiApiService,
+@Service("CHU_BP")
+class ChuBestScoreService(
+    private val chunithmApiService: ChunithmApiService,
     private val imageService: ImageService,
-) : MessageService<MaiBestScoreService.MaiBestScoreParam> {
+) : MessageService<ChuBestScoreService.ChuBestScoreParam> {
 
-    data class MaiBestScoreParam(val name: String?, val qq: Long?, val range: CmdRange<Int>, val isMyself: Boolean = false)
+    data class ChuBestScoreParam(val name: String?, val qq: Long?, val range: CmdRange<Int>, val isMyself: Boolean = false)
 
     @JvmRecord
-    data class PanelMEParam(
-        val user: MaiBestScore.User,
-        val score: MaiScore,
-        val song: MaiSong,
-        val chart: ChartData,
-        val diff: DiffData,
+    data class PanelME2Param(
+        val user: ChuBestScore.User,
+        val score: ChuScore,
+        val song: ChuSong,
     ) {
         fun toMap(): Map<String, Any> {
             val out = mutableMapOf<String, Any>()
@@ -45,17 +39,15 @@ class MaiBestScoreService(
             out["user"] = user
             out["score"] = score
             out["song"] = song
-            out["chart"] = chart
-            out["diff"] = diff
             return out
         }
     }
 
     @JvmRecord
-    data class PanelMAParam(
-        val user: MaiBestScore.User,
-        val scores: List<MaiScore>,
-        val scoresLatest: List<MaiScore>,
+    data class PanelMA2Param(
+        val user: ChuBestScore.User,
+        val scores: List<ChuScore>,
+        val scoresLatest: List<ChuScore>,
     ) {
         fun toMap(): Map<String, Any> {
             val out = mutableMapOf<String, Any>()
@@ -63,7 +55,7 @@ class MaiBestScoreService(
             out["user"] = user
             out["scores"] = scores
             out["scores_latest"] = scoresLatest
-            out["panel"] = "MB"
+            out["panel"] = "CB"
 
             return out
         }
@@ -72,9 +64,9 @@ class MaiBestScoreService(
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: MessageService.DataValue<MaiBestScoreParam>,
+        data: MessageService.DataValue<ChuBestScoreParam>,
     ): Boolean {
-        val matcher = Instruction.MAI_BP.matcher(messageText)
+        val matcher = Instruction.CHU_BP.matcher(messageText)
 
         if (!matcher.find()) {
             return false
@@ -113,7 +105,7 @@ class MaiBestScoreService(
 
                 if (strs.size == 2 && Regex("\\d{1,3}").matches(strs.last())) {
                     data.value =
-                        MaiBestScoreParam(
+                        ChuBestScoreParam(
                             strs.first().trim(),
                             null,
                             CmdRange(null, strs.last().toInt(), null),
@@ -122,48 +114,47 @@ class MaiBestScoreService(
                 }
             } else if (Regex("\\d{1,3}").matches(name)) {
                 data.value =
-                    MaiBestScoreParam(null, event.sender.id, CmdRange(null, name.toInt(), null))
+                    ChuBestScoreParam(null, event.sender.id, CmdRange(null, name.toInt(), null))
                 return true
             }
 
-            data.value = MaiBestScoreParam(matcher.group("name").trim(), null, range)
+            data.value = ChuBestScoreParam(matcher.group("name").trim(), null, range)
         } else if (StringUtils.hasText(matcher.group("qq"))) {
-            data.value = MaiBestScoreParam(null, matcher.group("qq").toLong(), range)
+            data.value = ChuBestScoreParam(null, matcher.group("qq").toLong(), range)
         } else if (event.isAt) {
-            data.value = MaiBestScoreParam(null, event.target, range)
+            data.value = ChuBestScoreParam(null, event.target, range)
         } else {
-            data.value = MaiBestScoreParam(null, event.sender.id, range, true)
+            data.value = ChuBestScoreParam(null, event.sender.id, range, true)
         }
 
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: MaiBestScoreParam) {
-        val scores = getBestScores(param.qq, param.name, param.isMyself, maimaiApiService)
-        val songs = maimaiApiService.maimaiSongLibrary
+    override fun HandleMessage(event: MessageEvent, param: ChuBestScoreParam) {
+        event.reply("功能制作中...")
+        return
+
+        val scores = getBestScores(param.qq, param.name, param.isMyself, chunithmApiService)
+        val songs = chunithmApiService.chunithmSongLibrary
         val charts = implementScore(param.range, scores, songs.toMutableMap())
-        val isMultipleScore = charts.deluxe.size + charts.standard.size > 1
+        val isMultipleScore = charts.recent10.size + charts.best30.size > 1
 
         val user = scores.getUser()
-        val fit = maimaiApiService.maimaiFitLibrary
 
         val image =
             if (isMultipleScore) {
-                imageService.getPanel(PanelMAParam(user, charts.standard, charts.deluxe).toMap(), "MA")
+                imageService.getPanel(PanelMA2Param(user, charts.best30, charts.recent10).toMap(), "MA")
             } else {
                 val score =
-                    if (charts.deluxe.size > 0) {
-                        charts.deluxe.first()
+                    if (charts.recent10.size > 0) {
+                        charts.recent10.first()
                     } else {
-                        charts.standard.first()
+                        charts.best30.first()
                     }
 
-                val chart = fit.getChartData(score.songID.toString(), score.index)
-                val diff = fit.getDiffData(chart)
+                val song = songs[score.songID.toInt()] ?: ChuSong()
 
-                val song = songs[score.songID.toInt()] ?: MaiSong()
-
-                imageService.getPanel(PanelMEParam(user, score, song, chart, diff).toMap(), "ME")
+                imageService.getPanel(PanelME2Param(user, score, song).toMap(), "ME")
             }
         event.reply(image)
     }
@@ -176,11 +167,11 @@ class MaiBestScoreService(
             qq: Long?,
             name: String?,
             isMyself: Boolean,
-            maimaiApiService: MaimaiApiService,
-        ): MaiBestScore {
+            chunithmApiService: ChunithmApiService,
+        ): ChuBestScore {
             return if (qq.isNotNull()) {
                 try {
-                    maimaiApiService.getMaimaiBest50(qq!!)
+                    chunithmApiService.getChunithmBest30Recent10(qq!!)
                 } catch (e: WebClientResponseException.BadRequest) {
                     if (isMyself) {
                         throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouBadRequest)
@@ -196,7 +187,7 @@ class MaiBestScoreService(
                 }
             } else if (name.isNotNull()) {
                 try {
-                    maimaiApiService.getMaimaiBest50(name!!)
+                    chunithmApiService.getChunithmBest30Recent10(name!!)
                 } catch (e: WebClientResponseException.BadRequest) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_NameBadRequest)
                 } catch (e: WebClientResponseException.Forbidden) {
@@ -210,29 +201,29 @@ class MaiBestScoreService(
         @JvmStatic
         fun implementScore(
             range: CmdRange<Int>,
-            bp: MaiBestScore,
-            song: MutableMap<Int, MaiSong>,
-        ): MaiBestScore.Charts {
+            bp: ChuBestScore,
+            song: MutableMap<Int, ChuSong>,
+        ): ChuBestScore.Records {
             val offset = range.getOffset()
             val limit = range.getLimit()
 
-            val c = bp.charts
+            val c = bp.records
 
-            val isStandardEmpty = CollectionUtils.isEmpty(c.standard)
-            val isDeluxeEmpty = CollectionUtils.isEmpty(c.deluxe)
+            val isStandardEmpty = CollectionUtils.isEmpty(c.best30)
+            val isDeluxeEmpty = CollectionUtils.isEmpty(c.recent10)
 
             if (offset > 35) {
                 // dx
                 if (isDeluxeEmpty) {
                     throw TipsException("您的新版本成绩是空的！")
                 } else {
-                    MaiScore.insertSongData(c.deluxe, song)
-                    MaiScore.insertPosition(c.deluxe, false)
+                    ChuScore.insertSongData(c.best30, song)
+                    ChuScore.insertPosition(c.recent10, false)
 
-                    return MaiBestScore.Charts(
-                        c.deluxe.subList(
-                            min(max(offset - 35, 0), c.deluxe.size - 1),
-                            min(offset + limit - 35, c.deluxe.size),
+                    return ChuBestScore.Records(
+                        c.recent10.subList(
+                            min(max(offset - 35, 0), c.recent10.size - 1),
+                            min(offset + limit - 35, c.recent10.size),
                         ),
                         mutableListOf(),
                     )
@@ -242,14 +233,14 @@ class MaiBestScoreService(
                 if (isStandardEmpty) {
                     throw TipsException("您的旧版本成绩是空的！")
                 } else {
-                    MaiScore.insertSongData(c.standard, song)
-                    MaiScore.insertPosition(c.standard, true)
+                    ChuScore.insertSongData(c.best30, song)
+                    ChuScore.insertPosition(c.best30, true)
 
-                    return MaiBestScore.Charts(
+                    return ChuBestScore.Records(
                         mutableListOf(),
-                        c.standard.subList(
-                            min(max(offset, 0), c.standard.size - 1),
-                            min(offset + limit, c.standard.size),
+                        c.best30.subList(
+                            min(max(offset, 0), c.best30.size - 1),
+                            min(offset + limit, c.best30.size),
                         ),
                     )
                 }
@@ -259,41 +250,41 @@ class MaiBestScoreService(
                 if (isStandardEmpty && isDeluxeEmpty) {
                     throw TipsException("您的成绩是空的！")
                 } else if (isDeluxeEmpty) {
-                    MaiScore.insertSongData(c.standard, song)
-                    MaiScore.insertPosition(c.standard, true)
+                    ChuScore.insertSongData(c.best30, song)
+                    ChuScore.insertPosition(c.best30, true)
 
-                    return MaiBestScore.Charts(
+                    return ChuBestScore.Records(
                         mutableListOf(),
-                        c.standard.subList(
-                            min(max(offset, 0), c.standard.size - 1),
-                            min(offset + limit, c.standard.size),
+                        c.best30.subList(
+                            min(max(offset, 0), c.best30.size - 1),
+                            min(offset + limit, c.best30.size),
                         ),
                     )
                 } else if (isStandardEmpty) {
-                    MaiScore.insertSongData(c.deluxe, song)
-                    MaiScore.insertPosition(c.deluxe, false)
+                    ChuScore.insertSongData(c.recent10, song)
+                    ChuScore.insertPosition(c.recent10, false)
 
-                    return MaiBestScore.Charts(
-                        c.deluxe.subList(
-                            min(max(offset - 35, 0), c.deluxe.size - 1),
-                            min(offset + limit - 35, c.deluxe.size),
+                    return ChuBestScore.Records(
+                        c.recent10.subList(
+                            min(max(offset - 35, 0), c.recent10.size - 1),
+                            min(offset + limit - 35, c.recent10.size),
                         ),
                         mutableListOf(),
                     )
                 } else {
-                    MaiScore.insertSongData(c.standard, song)
-                    MaiScore.insertSongData(c.deluxe, song)
+                    ChuScore.insertSongData(c.best30, song)
+                    ChuScore.insertSongData(c.recent10, song)
 
-                    MaiScore.insertPosition(c.standard, true)
-                    MaiScore.insertPosition(c.deluxe, false)
-                    return MaiBestScore.Charts(
-                        c.deluxe.subList(
-                            min(max(offset - 35, 0), c.deluxe.size - 1),
-                            min(offset + limit - 35, c.deluxe.size),
+                    ChuScore.insertPosition(c.best30, true)
+                    ChuScore.insertPosition(c.recent10, false)
+                    return ChuBestScore.Records(
+                        c.recent10.subList(
+                            min(max(offset - 35, 0), c.recent10.size - 1),
+                            min(offset + limit - 35, c.recent10.size),
                         ),
-                        c.standard.subList(
-                            min(max(offset, 0), c.standard.size - 1),
-                            min(offset + limit, c.standard.size),
+                        c.best30.subList(
+                            min(max(offset, 0), c.best30.size - 1),
+                            min(offset + limit, c.best30.size),
                         ),
                     )
                 }

@@ -46,7 +46,7 @@ class MaiSong {
         }
 
         // 谱师
-        var charter: String = ""
+        @JsonProperty("charter") var charter: String = ""
 
         @JvmRecord
         data class MaiNote(

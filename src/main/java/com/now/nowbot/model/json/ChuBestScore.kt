@@ -1,6 +1,7 @@
 package com.now.nowbot.model.json
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.springframework.util.CollectionUtils
 import java.util.*
 
 class ChuBestScore {
@@ -48,5 +49,40 @@ class ChuBestScore {
                         .orElse(0.0)
 
         return User(this.name, this.probername, this.rating, best30, recent10)
+    }
+
+    companion object {
+        fun insertSongData(scores: MutableList<ChuScore>, data: MutableMap<Int, ChuSong>) {
+            for (s in scores) {
+                if (s.songID == 0L) {
+                    continue
+                }
+
+                val d = data[s.songID.toInt()] ?: continue
+
+                insertSongData(s, d)
+            }
+        }
+
+        fun insertSongData(score: ChuScore, song: ChuSong) {
+            val chart = song.charts.get(score.index)
+
+            score.charter = chart.charter
+            score.artist = song.info.artist
+        }
+
+        fun insertPosition(scores: MutableList<ChuScore>, isBest30: Boolean) {
+            if (CollectionUtils.isEmpty(scores)) return
+
+            for (i in scores.indices) {
+                val s = scores[i]
+
+                if (isBest30) {
+                    s.position = (i + 1)
+                } else {
+                    s.position = (i + 36)
+                }
+            }
+        }
     }
 }

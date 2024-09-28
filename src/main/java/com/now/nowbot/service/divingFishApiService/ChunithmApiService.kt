@@ -1,6 +1,7 @@
 package com.now.nowbot.service.divingFishApiService
 
 import com.now.nowbot.model.json.ChuBestScore
+import com.now.nowbot.model.json.ChuSong
 
 interface ChunithmApiService {
 
@@ -11,4 +12,6 @@ interface ChunithmApiService {
     fun getChunithmCover(songID: Long): ByteArray
 
     fun getChunithmCoverFromAPI(songID: Long): ByteArray
+
+    val chunithmSongLibrary: Map<Int, ChuSong>
 }

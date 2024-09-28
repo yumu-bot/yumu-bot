@@ -1,6 +1,6 @@
 package com.now.nowbot.service.divingFishApiService.impl
 
-import com.now.nowbot.config.DivingFishConfig
+import com.now.nowbot.config.LxnsConfig
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.Resource
 import org.springframework.http.HttpHeaders
@@ -9,13 +9,13 @@ import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClient
 
 @Service
-class DivingFishBaseService(fishConfig: DivingFishConfig) {
-    @Resource var divingFishApiWebClient: WebClient? = null
+class LxnsBaseService(lxnsConfig: LxnsConfig) {
+    @Resource var lxnsApiWebClient: WebClient? = null
 
     // 这里写 token 相关的
     init {
-        if (StringUtils.hasText(fishConfig.token)) {
-            accessToken = fishConfig.token
+        if (StringUtils.hasText(lxnsConfig.token)) {
+            accessToken = lxnsConfig.token
         }
     }
 
