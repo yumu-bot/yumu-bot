@@ -20,7 +20,7 @@ import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 
 @Service
-class ChunithmApiImpl(private val base: DivingFishBaseService, private val base2: LxnsBaseService) : ChunithmApiService {
+class ChunithmApiImpl(private val base: DivingFishBaseService) : ChunithmApiService {
     // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Chunithm
     // /home/spring/work/img/ExportFileV3/Chunithm
 
@@ -87,19 +87,23 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val base2
         val song: String = songID.toString()
         val cover =
                 try {
-                    base2.lxnsApiWebClient!!
+                    base.webClient!!
                             .get()
                             .uri { uriBuilder: UriBuilder ->
-                                uriBuilder.path("chunithm/jacket/${song}.png").build()
+                                uriBuilder
+                                    .host("https://assets2.lxns.net")
+                                    .path("chunithm/jacket/${song}.png").build()
                             }
                             .retrieve()
                             .bodyToMono(ByteArray::class.java)
                             .block()
                 } catch (e: WebClientResponseException.NotFound) {
-                    base2.lxnsApiWebClient!!
+                    base.webClient!!
                             .get()
                             .uri { uriBuilder: UriBuilder ->
-                                uriBuilder.path("chunithm/jacket/0.png").build()
+                                uriBuilder
+                                    .host("https://assets2.lxns.net")
+                                    .path("chunithm/jacket/0.png").build()
                             }
                             .retrieve()
                             .bodyToMono(ByteArray::class.java)

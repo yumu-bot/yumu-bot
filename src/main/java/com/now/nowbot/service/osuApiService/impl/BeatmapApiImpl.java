@@ -7,7 +7,7 @@ import com.now.nowbot.entity.BeatmapObjectCountLite;
 import com.now.nowbot.mapper.BeatmapObjectCountMapper;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.*;
-import com.now.nowbot.service.BsApiService;
+import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService;
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
 import com.now.nowbot.util.AsyncMethodExecutor;
 import com.now.nowbot.util.JacksonUtil;
@@ -34,15 +34,15 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
 
     private final OsuApiBaseService        base;
     private final BeatMapDao               beatMapDao;
-    private final Path                     osuDir;
-    private final BsApiService             bsApiService;
-    private final BeatmapObjectCountMapper beatmapObjectCountMapper;
+    private final Path                       osuDir;
+    private final OsuBeatmapMirrorApiService osuBeatmapMirrorApiService;
+    private final BeatmapObjectCountMapper   beatmapObjectCountMapper;
 
-    public BeatmapApiImpl(OsuApiBaseService baseService, FileConfig config, BeatMapDao mapDao, BsApiService bs, BeatmapObjectCountMapper beatmapObjectCountMapper) {
+    public BeatmapApiImpl(OsuApiBaseService baseService, FileConfig config, BeatMapDao mapDao, OsuBeatmapMirrorApiService bs, BeatmapObjectCountMapper beatmapObjectCountMapper) {
         base = baseService;
         osuDir = Path.of(config.getOsuFilePath());
         beatMapDao = mapDao;
-        bsApiService = bs;
+        osuBeatmapMirrorApiService = bs;
         this.beatmapObjectCountMapper = beatmapObjectCountMapper;
     }
 
@@ -71,7 +71,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     @Nullable
     private String getBeatMapFileFromLocalService(long bid) {
         try {
-            return bsApiService.getOsuFile(bid);
+            return osuBeatmapMirrorApiService.getOsuFile(bid);
         } catch (Exception e) {
             log.error("osu 谱面 API：获取本地服务谱面失败: ", e);
             return null;

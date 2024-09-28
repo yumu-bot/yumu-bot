@@ -60,13 +60,13 @@ import static com.now.nowbot.config.AsyncSetting.V_THREAD_FACORY;
 @Component
 @Configuration
 public class NowbotConfig {
-    public static final String BS_API_URL = "http://127.0.0.1:47150";
-    public static final  Optional<String> BS_TOKEN;
+    public static final  String           BEATMAP_MIRROR_URL = "http://127.0.0.1:47150";
+    public static final  Optional<String> BEATMAP_MIRROR_TOKEN;
     private static final Logger           log        = LoggerFactory.getLogger(NowbotConfig.class);
 
     static {
         var s = System.getenv("API_TOKEN");
-        BS_TOKEN = Optional.ofNullable(s);
+        BEATMAP_MIRROR_TOKEN = Optional.ofNullable(s);
     }
 
     /**

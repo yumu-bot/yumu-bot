@@ -1,4 +1,4 @@
-package com.now.nowbot.service;
+package com.now.nowbot.service.osuApiService;
 
 import com.now.nowbot.config.NowbotConfig;
 import jakarta.annotation.Resource;
@@ -7,12 +7,15 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Optional;
 
-@Service("BsApiService")
-public class BsApiService {
+// BsApiService
+@Service("OsuBeatmapMirrorApiService")
+public class OsuBeatmapMirrorApiService {
+
     @Resource
     WebClient webClient;
-    private static final String           URL   = NowbotConfig.BS_API_URL;
-    private static final Optional<String> TOKEN = NowbotConfig.BS_TOKEN;
+
+    private static final String           URL   = NowbotConfig.BEATMAP_MIRROR_URL;
+    private static final Optional<String> TOKEN = NowbotConfig.BEATMAP_MIRROR_TOKEN;
 
     public String getOsuFile(long bid) {
         if (TOKEN.isEmpty()) throw new RuntimeException("获取 osu 文件：无权限访问");

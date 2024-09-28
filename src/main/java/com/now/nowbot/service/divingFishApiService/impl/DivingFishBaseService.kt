@@ -10,7 +10,9 @@ import org.springframework.web.reactive.function.client.WebClient
 
 @Service
 class DivingFishBaseService(fishConfig: DivingFishConfig) {
-    @Resource var divingFishApiWebClient: WebClient? = null
+    @Resource val divingFishApiWebClient: WebClient? = null
+
+    @Resource val webClient: WebClient? = null
 
     // 这里写 token 相关的
     init {

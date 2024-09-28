@@ -31,8 +31,8 @@ import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_NAME;
 @Service("MAP_POOL")
 public class MapPoolService implements MessageService<MapPoolService.PoolParam> {
 
-    private static final String           api   = NowbotConfig.BS_API_URL;
-    private static final Optional<String> token = NowbotConfig.BS_TOKEN;
+    private static final String           api   = NowbotConfig.BEATMAP_MIRROR_URL;
+    private static final Optional<String> token = NowbotConfig.BEATMAP_MIRROR_TOKEN;
     @Resource
     ImageService         imageService;
     @Resource

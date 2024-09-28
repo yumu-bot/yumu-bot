@@ -17,14 +17,11 @@ import java.util.Optional;
 @RequestMapping(value = "/pub", method = RequestMethod.GET)
 @CrossOrigin({"http://localhost:5173", "https://siyuyuko.github.io"})
 public class FileController {
-    private static final String API_URL = NowbotConfig.BS_API_URL;
+    private static final String API_URL = NowbotConfig.BEATMAP_MIRROR_URL;
     @Resource
     WebClient webClient;
-    final Optional<String> token = NowbotConfig.BS_TOKEN;
+    final Optional<String> token = NowbotConfig.BEATMAP_MIRROR_TOKEN;
 
-    /**
-     * @throws IOException
-     */
     @GetMapping("/api/{type}/{bid}")
     public ResponseEntity<?> download(@PathVariable("type") String type, @PathVariable("bid") Long bid) {
         if ("info".equals(type)) {
