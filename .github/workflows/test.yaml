@@ -1,0 +1,20 @@
+name: test push
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: self-hosted
+    env:
+      MAVEN_OPTS: --enable-preview
+    steps:
+      - name: test
+        run: |
+          cd ~/nowbot
+          git fetch --all
+          git reset --hard origin/master
+          git pull
+          git lfs pull
+          mvn test
