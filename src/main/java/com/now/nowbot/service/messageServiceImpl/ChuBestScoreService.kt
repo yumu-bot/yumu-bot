@@ -131,9 +131,6 @@ class ChuBestScoreService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: ChuBestScoreParam) {
-        event.reply("功能制作中...")
-        return
-
         val scores = getBestScores(param.qq, param.name, param.isMyself, chunithmApiService)
         val songs = chunithmApiService.getChunithmSongLibrary()
         val charts = implementScore(param.range, scores, songs.toMutableMap())
@@ -143,7 +140,7 @@ class ChuBestScoreService(
 
         val image =
             if (isMultipleScore) {
-                imageService.getPanel(PanelMA2Param(user, charts.best30, charts.recent10).toMap(), "MA")
+                imageService.getPanel(PanelMA2Param(user, charts.best30, charts.recent10).toMap(), "MA2")
             } else {
                 val score =
                     if (charts.recent10.size > 0) {

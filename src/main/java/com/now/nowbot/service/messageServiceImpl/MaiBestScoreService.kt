@@ -140,7 +140,7 @@ class MaiBestScoreService(
 
     override fun HandleMessage(event: MessageEvent, param: MaiBestScoreParam) {
         val scores = getBestScores(param.qq, param.name, param.isMyself, maimaiApiService)
-        val songs = maimaiApiService.getMaimaiSongLibraryFromDatabase()
+        val songs = maimaiApiService.getMaimaiSongLibrary()
         val charts = implementScore(param.range, scores, songs)
         val isMultipleScore = charts.deluxe.size + charts.standard.size > 1
 
@@ -157,10 +157,10 @@ class MaiBestScoreService(
                         charts.standard.first()
                     }
 
-                val song = maimaiApiService.getMaimaiSong(score.songID)
+                val song = songs[score.songID.toInt()] ?: MaiSong()
 
-                val chart = maimaiApiService.getMaimaiFitChartDataFromDatabase(score.songID)[score.index]
-                val diff = maimaiApiService.getMaimaiFitDiffDataFromDatabase(score.difficulty)
+                val chart = maimaiApiService.getMaimaiChartData(score.songID)[score.index]
+                val diff = maimaiApiService.getMaimaiDiffData(score.difficulty)
 
                 imageService.getPanel(PanelMEParam(user, score, song, chart, diff).toMap(), "ME")
             }
@@ -210,7 +210,7 @@ class MaiBestScoreService(
         fun implementScore(
             range: CmdRange<Int>,
             bp: MaiBestScore,
-            song: Map<Int, MaiSong>,
+            songs: Map<Int, MaiSong>,
         ): MaiBestScore.Charts {
             val offset = range.getOffset()
             val limit = range.getLimit()
@@ -225,7 +225,7 @@ class MaiBestScoreService(
                 if (isDeluxeEmpty) {
                     throw TipsException("您的新版本成绩是空的！")
                 } else {
-                    MaiScore.insertSongData(c.deluxe, song)
+                    MaiScore.insertSongData(c.deluxe, songs)
                     MaiScore.insertPosition(c.deluxe, false)
 
                     return MaiBestScore.Charts(
@@ -241,7 +241,7 @@ class MaiBestScoreService(
                 if (isStandardEmpty) {
                     throw TipsException("您的旧版本成绩是空的！")
                 } else {
-                    MaiScore.insertSongData(c.standard, song)
+                    MaiScore.insertSongData(c.standard, songs)
                     MaiScore.insertPosition(c.standard, true)
 
                     return MaiBestScore.Charts(
@@ -258,7 +258,7 @@ class MaiBestScoreService(
                 if (isStandardEmpty && isDeluxeEmpty) {
                     throw TipsException("您的成绩是空的！")
                 } else if (isDeluxeEmpty) {
-                    MaiScore.insertSongData(c.standard, song)
+                    MaiScore.insertSongData(c.standard, songs)
                     MaiScore.insertPosition(c.standard, true)
 
                     return MaiBestScore.Charts(
@@ -269,7 +269,7 @@ class MaiBestScoreService(
                         ),
                     )
                 } else if (isStandardEmpty) {
-                    MaiScore.insertSongData(c.deluxe, song)
+                    MaiScore.insertSongData(c.deluxe, songs)
                     MaiScore.insertPosition(c.deluxe, false)
 
                     return MaiBestScore.Charts(
@@ -280,8 +280,8 @@ class MaiBestScoreService(
                         mutableListOf(),
                     )
                 } else {
-                    MaiScore.insertSongData(c.standard, song)
-                    MaiScore.insertSongData(c.deluxe, song)
+                    MaiScore.insertSongData(c.standard, songs)
+                    MaiScore.insertSongData(c.deluxe, songs)
 
                     MaiScore.insertPosition(c.standard, true)
                     MaiScore.insertPosition(c.deluxe, false)

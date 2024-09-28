@@ -9,15 +9,15 @@ class ChuBestScore {
     @JsonProperty("nickname") var name: String = ""
 
     // CHUNITHM rating，也就是 PP，保留三位小数
-    @JsonProperty("ra") var rating: Double = 0.0
+    @JsonProperty("rating") var rating: Double = 0.0
 
     // best30 + recent10
     // 这就是 BP
     @JsonProperty("records") var records: Records = Records()
 
     data class Records(
-            @JsonProperty("b30") val best30: MutableList<ChuScore> = mutableListOf(),
-            @JsonProperty("r10") val recent10: MutableList<ChuScore> = mutableListOf(),
+        @JsonProperty("r10") val recent10: MutableList<ChuScore> = mutableListOf(),
+        @JsonProperty("b30") val best30: MutableList<ChuScore> = mutableListOf(),
     )
 
     // 在查分器里的名字
@@ -48,7 +48,12 @@ class ChuBestScore {
                         .reduce { a, b -> a + b }
                         .orElse(0.0)
 
-        return User(this.name, this.probername, this.rating, best30, recent10)
+        val sum = best30 + recent10
+
+        val bestAverage = if (sum > 0) this.rating * best30 / sum else 0.0
+        val recentAverage = if (sum > 0) this.rating * recent10 / sum else 0.0
+
+        return User(this.name, this.probername, this.rating, bestAverage, recentAverage)
     }
 
     companion object {

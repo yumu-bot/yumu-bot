@@ -129,7 +129,7 @@ class MaiVersionScoreService(
                 throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Version_Default)
 
         val full = getFullScore(param.qq, param.name, param.isMyself, maimaiApiService)
-        val songs = maimaiApiService.getMaimaiSongLibraryFromDatabase()
+        val songs = maimaiApiService.getMaimaiSongLibrary()
 
         val user = full.getUser()
         val scores =

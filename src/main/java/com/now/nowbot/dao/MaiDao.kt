@@ -12,6 +12,7 @@ import com.now.nowbot.model.json.MaiFit
 import com.now.nowbot.model.json.MaiSong
 import jakarta.persistence.Transient
 import org.springframework.stereotype.Component
+import kotlin.jvm.optionals.getOrElse
 import kotlin.jvm.optionals.getOrNull
 
 @Component
@@ -83,7 +84,7 @@ class MaiDao(
 
         for (chart in allChart) {
             // 更新策略是 sid 与 level 一致是更新, 否则插入
-            if (maiFitChartLiteRepository.existsMaiFitChartLiteBySongIDAndSort(chart.songID, chart.sort)) {
+            if (false/*maiFitChartLiteRepository.existsMaiFitChartLiteBySongIDAndSort(chart.songID, chart.sort)*/) {
                 maiFitChartLiteRepository.updateMaiFitChartLiteBySongIDAndSort(chart.songID, chart.sort, chart)
             } else {
                 maiFitChartLiteRepository.save(chart)
@@ -96,8 +97,8 @@ class MaiDao(
         maiFitDiffLiteRepository.saveAll(allDiff)
     }
 
-    fun getMaiFitChartDataBySID(sid: Int): List<MaiFit.ChartData> {
-        val data = maiFitChartLiteRepository.findMaiFitChartLitesBySongIDOrderBySortAsc(sid)
+    fun getMaiFitChartDataBySongID(songID: Int): List<MaiFit.ChartData> {
+        val data = maiFitChartLiteRepository.findMaiFitChartLitesBySongIDOrderBySortAsc(songID)
         var nowIndex = 0
         val result = ArrayList<MaiFit.ChartData>(5)
         for (i in 0..4) {
@@ -111,8 +112,8 @@ class MaiDao(
         return data.map { it.toModel() }
     }
 
-    fun getMaiFitDiffDataByKey(ket: String): MaiFit.DiffData? {
-        val data = maiFitDiffLiteRepository.findById(ket)
-        return data.map { it.toModel() }.getOrNull()
+    fun getMaiFitDiffDataByDifficulty(difficulty: String): MaiFit.DiffData {
+        val data = maiFitDiffLiteRepository.findById(difficulty)
+        return data.map { it.toModel() }.getOrNull() ?: MaiFit.DiffData()
     }
 }

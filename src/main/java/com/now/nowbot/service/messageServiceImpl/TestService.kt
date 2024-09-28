@@ -19,13 +19,12 @@ class TestService(private val maimaiApiService: MaimaiApiService) : MessageServi
         data: MessageService.DataValue<String>
     ): Boolean {
         /*
-        if (false) {
+        if (true) {
             data.value = messageText
             return true
         } else {
             return false
         }
-
          */
 
         val matcher = Instruction.MAI_SCORE.matcher(messageText)
@@ -36,10 +35,11 @@ class TestService(private val maimaiApiService: MaimaiApiService) : MessageServi
 
         data.value = matcher.group("name")
         return true
+
     }
 
     override fun HandleMessage(event: MessageEvent, text: String) {
-        val songs = maimaiApiService.getMaimaiSongLibraryFromDatabase()
+        val songs = maimaiApiService.getMaimaiSongLibrary()
 
         val result = mutableMapOf<Double, MaiSong>()
 

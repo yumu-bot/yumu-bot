@@ -49,11 +49,11 @@ interface MaimaiApiService {
 
     fun getMaimaiSong(songID: Long): MaiSong
 
-    fun getMaimaiRankFromDatabase(): Map<String, Int>
+    fun getMaimaiRank(): Map<String, Int>
 
-    fun getMaimaiFitChartDataFromDatabase(songID: Long): List<MaiFit.ChartData>
+    fun getMaimaiChartData(songID: Long): List<MaiFit.ChartData>
 
-    fun getMaimaiFitDiffDataFromDatabase(difficulty: String): MaiFit.DiffData
+    fun getMaimaiDiffData(difficulty: String): MaiFit.DiffData
 
     // 以下需要从水鱼那里拿 DeveloperToken
     @Throws(
@@ -90,5 +90,5 @@ interface MaimaiApiService {
         val log: Logger = LoggerFactory.getLogger(MaimaiApiService::class.java)
     }
 
-    fun getMaimaiSongLibraryFromDatabase(): Map<Int, MaiSong>
+    fun getMaimaiSongLibrary(): Map<Int, MaiSong>
 }

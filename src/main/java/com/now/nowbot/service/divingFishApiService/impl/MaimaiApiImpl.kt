@@ -1,7 +1,6 @@
 package com.now.nowbot.service.divingFishApiService.impl
 
 import com.now.nowbot.dao.MaiDao
-import com.now.nowbot.entity.MaiFitChartLite
 import com.now.nowbot.entity.MaiSongLite
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.Companion.getNameList
@@ -174,28 +173,33 @@ class MaimaiApiImpl(
         return cover!!
     }
 
-    override fun getMaimaiSongLibraryFromDatabase(): Map<Int, MaiSong> {
-        return maiDao.maiSongLiteRepository.findAll().filter(Objects::nonNull).stream().map((MaiSongLite::toModel))
-            .collect(Collectors.toMap(MaiSong::songID) { it })
+    override fun getMaimaiSongLibrary(): Map<Int, MaiSong> {
+        return getMaimaiSongLibraryFromFile()
+        // TODO 这个有问题
+        // return maiDao.maiSongLiteRepository.findAll().filter(Objects::nonNull).stream().map((MaiSongLite::toModel))
+        //    .collect(Collectors.toMap(MaiSong::songID) { it })
     }
 
     override fun getMaimaiSong(songID: Long): MaiSong {
-        return maiDao.maiSongLiteRepository.findById(songID.toInt()).filter(Objects::nonNull).stream().map(MaiSongLite::toModel).toList().first()
+        return getMaimaiSongLibraryFromFile().get(songID.toInt()) ?: MaiSong()
+        //return maiDao.maiSongLiteRepository.findById(songID.toInt()).filter(Objects::nonNull).stream().map(MaiSongLite::toModel).toList().first()
     }
 
-    override fun getMaimaiRankFromDatabase(): Map<String, Int> {
+    override fun getMaimaiRank(): Map<String, Int> {
         return getMaimaiRankLibraryFromFile()
     }
 
-    override fun getMaimaiFitChartDataFromDatabase(songID: Long): List<MaiFit.ChartData> {
-        return maiDao.maiFitChartLiteRepository.findMaiFitChartLitesBySongIDOrderBySortAsc(songID.toInt()).stream().map(MaiFitChartLite::toModel).toList()
+    override fun getMaimaiChartData(songID: Long): List<MaiFit.ChartData> {
+        return getMaimaiFitLibraryFromFile().charts.get(songID.toString()) ?: listOf()
+        //return maiDao.getMaiFitChartDataBySongID(songID.toInt())
     }
 
-    override fun getMaimaiFitDiffDataFromDatabase(difficulty: String): MaiFit.DiffData {
-        return maiDao.maiFitDiffLiteRepository.findById(difficulty).get().toModel()
+    override fun getMaimaiDiffData(difficulty: String): MaiFit.DiffData {
+        return getMaimaiFitLibraryFromFile().diffData.get(difficulty) ?: MaiFit.DiffData()
+        //return maiDao.getMaiFitDiffDataByDifficulty(difficulty)
     }
 
-    @Deprecated("请使用 From Database")
+    // @Deprecated("请使用 From Database")
     private fun getMaimaiSongLibraryFromFile(): Map<Int, MaiSong> {
         val song: List<MaiSong>
 
@@ -223,7 +227,7 @@ class MaimaiApiImpl(
         return ranking.stream().collect(Collectors.toMap(MaiRanking::name, MaiRanking::rating))
     }
 
-    @Deprecated("请使用 From Database")
+    // @Deprecated("请使用 From Database")
     private fun getMaimaiFitLibraryFromFile(): MaiFit {
         if (isRegularFile("data-fit.json")) {
             return parseFile("data-fit.json", MaiFit::class.java)
@@ -247,15 +251,22 @@ class MaimaiApiImpl(
     }
 
     override fun updateMaimaiSongLibraryDatabase() {
-        saveFile(maimaiSongLibraryFromAPI, "data-songs.json", "歌曲")
+        val songs = JacksonUtil.parseObjectList(maimaiSongLibraryFromAPI, MaiSong::class.java)
+
+        for(s in songs) {
+            maiDao.saveMaiSong(s)
+        }
+        log.info("maimai: 歌曲数据库已更新")
     }
 
     override fun updateMaimaiRankLibraryDatabase() {
-        saveFile(maimaiRankLibraryFromAPI, "data-ranking.json", "排名")
+
     }
 
     override fun updateMaimaiFitLibraryDatabase() {
-        saveFile(maimaiFitLibraryFromAPI, "data-fit.json", "统计")
+        val fit = JacksonUtil.parseObject(maimaiFitLibraryFromAPI, MaiFit::class.java)
+        maiDao.saveMaiFit(fit)
+        log.info("maimai: 统计数据库已更新")
     }
 
     @Throws(
@@ -335,7 +346,7 @@ class MaimaiApiImpl(
     }
 
     override fun getMaimaiPossibleSongs(text: String): Map<Double, MaiSong>? {
-        val songs = getMaimaiSongLibraryFromDatabase()
+        val songs = getMaimaiSongLibrary()
 
         val result = mutableMapOf<Double, MaiSong>()
 
