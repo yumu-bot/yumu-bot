@@ -1,6 +1,8 @@
 package com.now.nowbot.service.divingFishApiService.impl
 
 import com.now.nowbot.dao.MaiDao
+import com.now.nowbot.entity.MaiFitChartLite
+import com.now.nowbot.entity.MaiSongLite
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.Companion.getNameList
 import com.now.nowbot.model.json.*
@@ -18,7 +20,7 @@ import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import java.io.IOException
 import java.nio.file.Files
-import java.nio.file.Path
+import java.util.*
 import java.util.stream.Collectors
 import kotlin.text.Charsets.UTF_8
 
@@ -27,9 +29,7 @@ class MaimaiApiImpl(
     private val base: DivingFishBaseService,
     private val maiDao: MaiDao,
 ) : MaimaiApiService {
-    // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
-    // /home/spring/work/img/ExportFileV3/Maimai
-    private val path: Path = Path.of("/home/spring/work/img/ExportFileV3/Maimai")
+    private val path = base.maimaiPath!!
 
     @JvmRecord
     private data class MaimaiBestScoreQQBody(val qq: Long, val b50: Boolean)
@@ -174,16 +174,29 @@ class MaimaiApiImpl(
         return cover!!
     }
 
-    override val maimaiSongLibrary: Map<Int, MaiSong>
-        get() = _getMaimaiSongLibrary()
+    override fun getMaimaiSongLibraryFromDatabase(): Map<Int, MaiSong> {
+        return maiDao.maiSongLiteRepository.findAll().filter(Objects::nonNull).stream().map((MaiSongLite::toModel))
+            .collect(Collectors.toMap(MaiSong::songID) { it })
+    }
 
-    override val maimaiRankLibrary: Map<String, Int>
-        get() = _getMaimaiRankLibrary()
+    override fun getMaimaiSong(songID: Long): MaiSong {
+        return maiDao.maiSongLiteRepository.findById(songID.toInt()).filter(Objects::nonNull).stream().map(MaiSongLite::toModel).toList().first()
+    }
 
-    override val maimaiFitLibrary: MaiFit
-        get() = _getMaimaiFitLibrary()
+    override fun getMaimaiRankFromDatabase(): Map<String, Int> {
+        return getMaimaiRankLibraryFromFile()
+    }
 
-    private fun _getMaimaiSongLibrary(): Map<Int, MaiSong> {
+    override fun getMaimaiFitChartDataFromDatabase(songID: Long): List<MaiFit.ChartData> {
+        return maiDao.maiFitChartLiteRepository.findMaiFitChartLitesBySongIDOrderBySortAsc(songID.toInt()).stream().map(MaiFitChartLite::toModel).toList()
+    }
+
+    override fun getMaimaiFitDiffDataFromDatabase(difficulty: String): MaiFit.DiffData {
+        return maiDao.maiFitDiffLiteRepository.findById(difficulty).get().toModel()
+    }
+
+    @Deprecated("请使用 From Database")
+    private fun getMaimaiSongLibraryFromFile(): Map<Int, MaiSong> {
         val song: List<MaiSong>
 
         if (isRegularFile("data-songs.json")) {
@@ -196,7 +209,8 @@ class MaimaiApiImpl(
         return song.stream().collect(Collectors.toMap(MaiSong::songID) { s: MaiSong -> s })
     }
 
-    private fun _getMaimaiRankLibrary(): Map<String, Int> {
+    // @Deprecated("请使用 From Database")
+    private fun getMaimaiRankLibraryFromFile(): Map<String, Int> {
         val ranking: List<MaiRanking>
 
         if (isRegularFile("data-songs.json")) {
@@ -209,7 +223,8 @@ class MaimaiApiImpl(
         return ranking.stream().collect(Collectors.toMap(MaiRanking::name, MaiRanking::rating))
     }
 
-    private fun _getMaimaiFitLibrary(): MaiFit {
+    @Deprecated("请使用 From Database")
+    private fun getMaimaiFitLibraryFromFile(): MaiFit {
         if (isRegularFile("data-fit.json")) {
             return parseFile("data-fit.json", MaiFit::class.java)
                 ?: return JacksonUtil.parseObject(maimaiFitLibraryFromAPI, MaiFit::class.java)
@@ -219,24 +234,28 @@ class MaimaiApiImpl(
         }
     }
 
-    override fun updateMaimaiSongLibrary() {
+    override fun updateMaimaiSongLibraryFile() {
         saveFile(maimaiSongLibraryFromAPI, "data-songs.json", "歌曲")
     }
 
-    override fun updateMaimaiRankLibrary() {
+    override fun updateMaimaiRankLibraryFile() {
         saveFile(maimaiRankLibraryFromAPI, "data-ranking.json", "排名")
     }
 
-    override fun updateMaimaiFitLibrary() {
+    override fun updateMaimaiFitLibraryFile() {
         saveFile(maimaiFitLibraryFromAPI, "data-fit.json", "统计")
     }
 
-    override fun getMaimaiSong(songID: Int): MaiSong {
-        return MaiSong()
+    override fun updateMaimaiSongLibraryDatabase() {
+        saveFile(maimaiSongLibraryFromAPI, "data-songs.json", "歌曲")
     }
 
-    override fun getMaimaiSong(title: String): MaiSong {
-        return MaiSong()
+    override fun updateMaimaiRankLibraryDatabase() {
+        saveFile(maimaiRankLibraryFromAPI, "data-ranking.json", "排名")
+    }
+
+    override fun updateMaimaiFitLibraryDatabase() {
+        saveFile(maimaiFitLibraryFromAPI, "data-fit.json", "统计")
     }
 
     @Throws(
@@ -309,8 +328,14 @@ class MaimaiApiImpl(
             .block() ?: MaiBestScore()
     }
 
-    override fun getMaimaiPossibleSong(text: String): Map<Double, MaiSong>? {
-        val songs = maimaiSongLibrary
+    override fun getMaimaiPossibleSong(text: String): MaiSong {
+        val s = getMaimaiPossibleSongs(text) ?: return MaiSong()
+
+        return s.entries.first().value
+    }
+
+    override fun getMaimaiPossibleSongs(text: String): Map<Double, MaiSong>? {
+        val songs = getMaimaiSongLibraryFromDatabase()
 
         val result = mutableMapOf<Double, MaiSong>()
 

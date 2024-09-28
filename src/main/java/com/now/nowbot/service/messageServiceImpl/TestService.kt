@@ -39,7 +39,7 @@ class TestService(private val maimaiApiService: MaimaiApiService) : MessageServi
     }
 
     override fun HandleMessage(event: MessageEvent, text: String) {
-        val songs = maimaiApiService.maimaiSongLibrary
+        val songs = maimaiApiService.getMaimaiSongLibraryFromDatabase()
 
         val result = mutableMapOf<Double, MaiSong>()
 

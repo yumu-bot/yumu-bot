@@ -135,7 +135,7 @@ class ChuBestScoreService(
         return
 
         val scores = getBestScores(param.qq, param.name, param.isMyself, chunithmApiService)
-        val songs = chunithmApiService.chunithmSongLibrary
+        val songs = chunithmApiService.getChunithmSongLibrary()
         val charts = implementScore(param.range, scores, songs.toMutableMap())
         val isMultipleScore = charts.recent10.size + charts.best30.size > 1
 

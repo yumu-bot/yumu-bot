@@ -4,11 +4,6 @@ import com.now.nowbot.model.json.ChuBestScore
 import com.now.nowbot.model.json.ChuSong
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.util.JacksonUtil
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.stream.Collectors
-import kotlin.text.Charsets.UTF_8
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
@@ -18,13 +13,14 @@ import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
+import java.io.IOException
+import java.nio.file.Files
+import java.util.stream.Collectors
+import kotlin.text.Charsets.UTF_8
 
 @Service
 class ChunithmApiImpl(private val base: DivingFishBaseService) : ChunithmApiService {
-    // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Chunithm
-    // /home/spring/work/img/ExportFileV3/Chunithm
-
-    private val path: Path = Path.of("/home/spring/work/img/ExportFileV3/Chunithm")
+    private val path = base.chunithmPath!!
 
     @JvmRecord private data class ChunithmBestScoreQQBody(val qq: Long, val b50: Boolean)
 
@@ -113,10 +109,11 @@ class ChunithmApiImpl(private val base: DivingFishBaseService) : ChunithmApiServ
         return cover ?: byteArrayOf()
     }
 
-    override val chunithmSongLibrary: Map<Int, ChuSong>
-        get() = _getChunithmSongLibrary()
+    override fun getChunithmSongLibrary(): Map<Int, ChuSong> {
+        return getChunithmSongLibraryFromFile()
+    }
 
-    private fun _getChunithmSongLibrary(): Map<Int, ChuSong> {
+    private fun getChunithmSongLibraryFromFile(): Map<Int, ChuSong> {
         val song: List<ChuSong>
 
         if (isRegularFile("data-songs.json")) {
@@ -139,6 +136,7 @@ class ChunithmApiImpl(private val base: DivingFishBaseService) : ChunithmApiServ
                         .retrieve()
                         .bodyToMono(String::class.java)
                         .block() ?: ""
+
 
     private fun <T> parseFile(fileName: String, clazz: Class<T>): T? {
         val file = path.resolve(fileName)
@@ -192,5 +190,6 @@ class ChunithmApiImpl(private val base: DivingFishBaseService) : ChunithmApiServ
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ChunithmApiImpl::class.java)
+
     }
 }

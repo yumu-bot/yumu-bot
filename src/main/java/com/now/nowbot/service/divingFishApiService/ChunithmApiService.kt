@@ -13,5 +13,5 @@ interface ChunithmApiService {
 
     fun getChunithmCoverFromAPI(songID: Long): ByteArray
 
-    val chunithmSongLibrary: Map<Int, ChuSong>
+    fun getChunithmSongLibrary(): Map<Int, ChuSong>
 }

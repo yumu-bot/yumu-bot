@@ -7,12 +7,21 @@ import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClient
+import java.nio.file.Path
 
 @Service
 class DivingFishBaseService(fishConfig: DivingFishConfig) {
     @Resource val divingFishApiWebClient: WebClient? = null
 
     @Resource val webClient: WebClient? = null
+
+    // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
+    // /home/spring/work/img/ExportFileV3/Maimai
+    final val maimaiPath: Path? = fishConfig.maimai
+
+    // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Chunithm
+    // /home/spring/work/img/ExportFileV3/Chunithm
+    final val chunithmPath: Path?  = fishConfig.chunithm
 
     // 这里写 token 相关的
     init {
@@ -38,5 +47,6 @@ class DivingFishBaseService(fishConfig: DivingFishConfig) {
     companion object {
         val log = KotlinLogging.logger { }
         private var accessToken: String? = null
+
     }
 }

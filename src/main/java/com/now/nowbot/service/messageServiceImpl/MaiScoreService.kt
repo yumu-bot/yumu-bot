@@ -13,7 +13,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
 import com.yumu.core.extensions.isNotNull
 import java.util.stream.Collectors
-import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.SortedMap
@@ -118,7 +117,7 @@ class MaiScoreService(private val maimaiApiService: MaimaiApiService) :
 
         if (param.title != null) {
             val sort =
-                    maimaiApiService.getMaimaiPossibleSong(param.title)
+                    maimaiApiService.getMaimaiPossibleSongs(param.title)
                             ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Result)
 
             if (sort.keys.max() < 0.4) {

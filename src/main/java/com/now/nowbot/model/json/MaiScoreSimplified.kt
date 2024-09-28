@@ -3,10 +3,10 @@ package com.now.nowbot.model.json
 import com.fasterxml.jackson.annotation.JsonProperty
 
 // 这个类有个几把用...真不知道他返回这么简单的数据怎么用
-class MaiScoreLite {
+class MaiScoreSimplified {
 
     // 也就是准确率
-    var achievements: Double = 0.0
+    @JsonProperty("achievements") var achievements: Double = 0.0
 
     // 连击状态，有 FC 和 AP，空字符串就是啥都没有
     @JsonProperty("fc") var combo: String = ""
@@ -48,7 +48,7 @@ class MaiScoreLite {
         @JvmStatic
         fun parseMaiScoreList(
                 full: MutableList<MaiScore>,
-                lite: MutableList<MaiScoreLite>
+                lite: MutableList<MaiScoreSimplified>
         ): MutableList<MaiScore> {
             val out = mutableListOf<MaiScore>()
 

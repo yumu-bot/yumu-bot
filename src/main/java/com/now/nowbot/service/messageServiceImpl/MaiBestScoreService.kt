@@ -140,12 +140,11 @@ class MaiBestScoreService(
 
     override fun HandleMessage(event: MessageEvent, param: MaiBestScoreParam) {
         val scores = getBestScores(param.qq, param.name, param.isMyself, maimaiApiService)
-        val songs = maimaiApiService.maimaiSongLibrary
-        val charts = implementScore(param.range, scores, songs.toMutableMap())
+        val songs = maimaiApiService.getMaimaiSongLibraryFromDatabase()
+        val charts = implementScore(param.range, scores, songs)
         val isMultipleScore = charts.deluxe.size + charts.standard.size > 1
 
         val user = scores.getUser()
-        val fit = maimaiApiService.maimaiFitLibrary
 
         val image =
             if (isMultipleScore) {
@@ -158,10 +157,10 @@ class MaiBestScoreService(
                         charts.standard.first()
                     }
 
-                val chart = fit.getChartData(score.songID.toString(), score.index)
-                val diff = fit.getDiffData(chart)
+                val song = maimaiApiService.getMaimaiSong(score.songID)
 
-                val song = songs[score.songID.toInt()] ?: MaiSong()
+                val chart = maimaiApiService.getMaimaiFitChartDataFromDatabase(score.songID)[score.index]
+                val diff = maimaiApiService.getMaimaiFitDiffDataFromDatabase(score.difficulty)
 
                 imageService.getPanel(PanelMEParam(user, score, song, chart, diff).toMap(), "ME")
             }
@@ -211,7 +210,7 @@ class MaiBestScoreService(
         fun implementScore(
             range: CmdRange<Int>,
             bp: MaiBestScore,
-            song: MutableMap<Int, MaiSong>,
+            song: Map<Int, MaiSong>,
         ): MaiBestScore.Charts {
             val offset = range.getOffset()
             val limit = range.getLimit()

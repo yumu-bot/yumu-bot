@@ -67,19 +67,19 @@ class RunTimeService : SchedulingConfigurer {
     @Scheduled(cron = "0 0 6 * * *")
     fun updateMaimaiSongLibrary() {
         log.info("开始执行更新 maimai 歌曲库任务")
-        maimaiApiService!!.updateMaimaiSongLibrary()
+        maimaiApiService!!.updateMaimaiSongLibraryFile()
     }
 
     @Scheduled(cron = "20 0 6 * * *")
     fun updateMaimaiRankLibrary() {
         log.info("开始执行更新 maimai 排名库任务")
-        maimaiApiService!!.updateMaimaiRankLibrary()
+        maimaiApiService!!.updateMaimaiRankLibraryFile()
     }
 
     @Scheduled(cron = "40 0 6 * * *")
     fun updateMaimaiFitLibrary() {
         log.info("开始执行更新 maimai 统计库任务")
-        maimaiApiService!!.updateMaimaiFitLibrary()
+        maimaiApiService!!.updateMaimaiFitLibraryFile()
     }
 
 

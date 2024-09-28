@@ -5,7 +5,7 @@ import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.Companion.listToString
 import com.now.nowbot.model.json.MaiBestScore
 import com.now.nowbot.model.json.MaiScore
-import com.now.nowbot.model.json.MaiScoreLite
+import com.now.nowbot.model.json.MaiScoreSimplified
 import com.now.nowbot.model.json.MaiVersionScore
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -129,15 +129,15 @@ class MaiVersionScoreService(
                 throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Version_Default)
 
         val full = getFullScore(param.qq, param.name, param.isMyself, maimaiApiService)
-        val songs = maimaiApiService.maimaiSongLibrary
+        val songs = maimaiApiService.getMaimaiSongLibraryFromDatabase()
 
         val user = full.getUser()
         val scores =
-                MaiScoreLite.parseMaiScoreList(full.records, vs.scores)
+                MaiScoreSimplified.parseMaiScoreList(full.records, vs.scores)
                         .stream()
                         .filter { MaiDifficulty.getIndex(it.index).equalDefault(param.difficulty) }
                         .toList()
-        MaiScore.insertSongData(scores, songs.toMutableMap())
+        MaiScore.insertSongData(scores, songs)
 
         val image =
                 imageService.getPanel(
