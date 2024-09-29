@@ -80,7 +80,6 @@ class MaiDao(
         }
     }
 
-    @Transient
     fun saveMaiFit(maiFit: MaiFit) {
         val allChart = maiFit
             .charts
