@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.MaiDifficulty
+import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.json.MaiBestScore
 import com.now.nowbot.model.json.MaiScore
 import com.now.nowbot.model.json.MaiSong
@@ -9,13 +10,14 @@ import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
 import com.yumu.core.extensions.isNotNull
-import java.util.stream.Collectors
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.util.SortedMap
+import java.util.stream.Collectors
 
 //@Service("MAI_SCORE")
 class MaiScoreService(private val maimaiApiService: MaimaiApiService) :
@@ -180,32 +182,48 @@ class MaiScoreService(private val maimaiApiService: MaimaiApiService) :
             }
         }
 
-        fun getSearchResult(sort: SortedMap<Double, MaiSong>): String {
-            val sb = StringBuilder("搜索结果：\n")
+        fun getSearchResult(text : String?, maimaiApiService: MaimaiApiService): MessageChain {
+            val songs = maimaiApiService.getMaimaiSongLibrary()
+            val result = mutableMapOf<Double, MaiSong>()
+
+            for (s in songs) {
+                val similarity = DataUtil.getStringSimilarity(text, s.value.title)
+
+                if (similarity >= 0.4) {
+                    result[similarity] = s.value
+                }
+            }
+
+            if (result.isEmpty()) {
+                throw TipsException("没有找到结果！")
+            }
+
+            val sort = result.toSortedMap().reversed()
+
+            val sb = StringBuilder("\n")
 
             var i = 1
-            for (e in sort) {
-                sb.append("#${i}:")
-                        .append(" ")
-                        .append(String.format("%.2f", e.key * 100))
-                        .append("%")
-                        .append(" ")
-                        .append("[${e.value.songID}]")
-                        .append(" ")
-                        .append(e.value.title)
-                        .append("\n")
+            for(e in sort) {
+                val code = MaiVersion.getCodeList(MaiVersion.getVersionList(e.value.info.version)).first()
+                val category = MaiVersion.getCategoryAbbreviation(e.value.info.genre)
+
+                sb.append("#${i}:").append(" ")
+                    .append(String.format("%.0f", e.key * 100)).append("%").append(" ")
+                    .append("[${e.value.songID}]").append(" ")
+                    .append(e.value.title).append(" ")
+                    .append("[${code}]").append(" / ")
+                    .append("[${category}]").append("\n")
 
                 i++
+
                 if (i >= 6) break
             }
 
-            //val img = maimaiApiService.getMaimaiCover((sort[sort.firstKey()]?.songID ?: 0).toLong())
+            val img = maimaiApiService.getMaimaiCover((sort[sort.firstKey()]?.songID ?: 0).toLong())
 
             sb.removeSuffix("\n")
 
-            return sb.toString()
-
-            //event.reply(MessageChain.MessageChainBuilder().addText("搜索结果：\n").addImage(img).addText(sb.toString()).build())
+            return MessageChain.MessageChainBuilder().addText("搜索结果：\n").addImage(img).addText(sb.toString()).build()
         }
 
         fun getScoreMessage(score: MaiScore, image: ByteArray): MessageChain {

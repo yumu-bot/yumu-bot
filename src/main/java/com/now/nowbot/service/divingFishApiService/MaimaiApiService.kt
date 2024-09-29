@@ -49,6 +49,8 @@ interface MaimaiApiService {
 
     fun getMaimaiSong(songID: Long): MaiSong
 
+    fun getMaimaiSongLibrary(): Map<Int, MaiSong>
+
     fun getMaimaiRank(): Map<String, Int>
 
     fun getMaimaiChartData(songID: Long): List<MaiFit.ChartData>
@@ -89,6 +91,4 @@ interface MaimaiApiService {
     companion object {
         val log: Logger = LoggerFactory.getLogger(MaimaiApiService::class.java)
     }
-
-    fun getMaimaiSongLibrary(): Map<Int, MaiSong>
 }

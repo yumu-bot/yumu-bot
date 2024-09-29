@@ -1,6 +1,8 @@
 package com.now.nowbot.service.divingFishApiService.impl
 
 import com.now.nowbot.dao.MaiDao
+import com.now.nowbot.entity.MaiRankingLite
+import com.now.nowbot.entity.MaiSongLite
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.Companion.getNameList
 import com.now.nowbot.model.json.*
@@ -18,6 +20,7 @@ import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import java.io.IOException
 import java.nio.file.Files
+import java.util.*
 import java.util.stream.Collectors
 import kotlin.text.Charsets.UTF_8
 
@@ -172,32 +175,38 @@ class MaimaiApiImpl(
     }
 
     override fun getMaimaiSongLibrary(): Map<Int, MaiSong> {
-        return getMaimaiSongLibraryFromFile()
-        // TODO 这个有问题
-        // return maiDao.maiSongLiteRepository.findAll().filter(Objects::nonNull).stream().map((MaiSongLite::toModel))
-        //    .collect(Collectors.toMap(MaiSong::songID) { it })
+        //return getMaimaiSongLibraryFromFile()
+
+         return maiDao.maiSongLiteRepository.findAll().filter(Objects::nonNull)
+             .stream().map(MaiSongLite::toModel)
+            .collect(Collectors.toMap(MaiSong::songID) { it })
     }
 
     override fun getMaimaiSong(songID: Long): MaiSong {
-        return getMaimaiSongLibraryFromFile().get(songID.toInt()) ?: MaiSong()
-        //return maiDao.maiSongLiteRepository.findById(songID.toInt()).filter(Objects::nonNull).stream().map(MaiSongLite::toModel).toList().first()
+        //return getMaimaiSongLibraryFromFile()[songID.toInt()] ?: MaiSong()
+        return maiDao.maiSongLiteRepository.findById(songID.toInt()).filter(Objects::nonNull)
+            .stream().map(MaiSongLite::toModel).toList().first()
     }
 
     override fun getMaimaiRank(): Map<String, Int> {
-        return getMaimaiRankLibraryFromFile()
+        //return getMaimaiRankLibraryFromFile()
+        return maiDao.maiRankLiteRepository.findAll()
+            .stream()
+            .map(MaiRankingLite::toModel)
+            .collect(Collectors.toMap(MaiRanking::name, MaiRanking::rating))
     }
 
     override fun getMaimaiChartData(songID: Long): List<MaiFit.ChartData> {
-        return getMaimaiFitLibraryFromFile().charts.get(songID.toString()) ?: listOf()
-        //return maiDao.getMaiFitChartDataBySongID(songID.toInt())
+        //return getMaimaiFitLibraryFromFile().charts[songID.toString()] ?: listOf()
+        return maiDao.getMaiFitChartDataBySongID(songID.toInt())
     }
 
     override fun getMaimaiDiffData(difficulty: String): MaiFit.DiffData {
-        return getMaimaiFitLibraryFromFile().diffData.get(difficulty) ?: MaiFit.DiffData()
-        //return maiDao.getMaiFitDiffDataByDifficulty(difficulty)
+        //return getMaimaiFitLibraryFromFile().diffData[difficulty] ?: MaiFit.DiffData()
+        return maiDao.getMaiFitDiffDataByDifficulty(difficulty)
     }
 
-    // @Deprecated("请使用 From Database")
+    @Deprecated("请使用 From Database")
     private fun getMaimaiSongLibraryFromFile(): Map<Int, MaiSong> {
         val song: List<MaiSong>
 
@@ -211,7 +220,7 @@ class MaimaiApiImpl(
         return song.stream().collect(Collectors.toMap(MaiSong::songID) { s: MaiSong -> s })
     }
 
-    // @Deprecated("请使用 From Database")
+    @Deprecated("请使用 From Database")
     private fun getMaimaiRankLibraryFromFile(): Map<String, Int> {
         val ranking: List<MaiRanking>
 
@@ -225,7 +234,7 @@ class MaimaiApiImpl(
         return ranking.stream().collect(Collectors.toMap(MaiRanking::name, MaiRanking::rating))
     }
 
-    // @Deprecated("请使用 From Database")
+    @Deprecated("请使用 From Database")
     private fun getMaimaiFitLibraryFromFile(): MaiFit {
         if (isRegularFile("data-fit.json")) {
             return parseFile("data-fit.json", MaiFit::class.java)
@@ -258,7 +267,9 @@ class MaimaiApiImpl(
     }
 
     override fun updateMaimaiRankLibraryDatabase() {
-
+        val rank = JacksonUtil.parseObjectList(maimaiRankLibraryFromAPI, MaiRanking::class.java)
+        maiDao.saveMaiRanking(rank)
+        log.info("maimai: 排名数据库已更新")
     }
 
     override fun updateMaimaiFitLibraryDatabase() {
