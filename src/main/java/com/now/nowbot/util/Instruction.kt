@@ -567,8 +567,8 @@ enum class Instruction(val pattern: Pattern) {
             appendSpace()
             appendCaptureGroup("diff", REG_DIFF)
         }
-        appendNameAny()
         appendQQID()
+        appendNameAny()
     }),
 
     MAI_VERSION(CommandPatternBuilder.create {
@@ -578,8 +578,8 @@ enum class Instruction(val pattern: Pattern) {
             appendSpace()
             appendCaptureGroup("diff", REG_DIFF)
         }
-        appendNameAnyButNoHash()
         appendQQID()
+        appendNameAnyButNoHash()
         appendGroup(MAYBE) {
             append(REG_HASH)
             appendMatchLevel(MAYBE)
@@ -590,8 +590,8 @@ enum class Instruction(val pattern: Pattern) {
 
     CHU_BP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("chu(nithm)?\\s*best", "cb", "y")
-        appendNameAnyButNoHash()
         appendQQID()
+        appendNameAnyButNoHash()
         appendRange()
     }),
 
