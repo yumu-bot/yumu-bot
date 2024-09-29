@@ -95,13 +95,13 @@ class MaiScore {
             score.artist = song.info.artist
         }
 
-        fun insertPosition(scores: MutableList<MaiScore>, isBest30: Boolean) {
+        fun insertPosition(scores: MutableList<MaiScore>, isBest35: Boolean) {
             if (CollectionUtils.isEmpty(scores)) return
 
             for (i in scores.indices) {
                 val s = scores[i]
 
-                if (isBest30) {
+                if (isBest35) {
                     s.position = (i + 1)
                 } else {
                     s.position = (i + 36)

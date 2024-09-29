@@ -1,7 +1,6 @@
 package com.now.nowbot.model.json
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.springframework.util.CollectionUtils
 import java.util.*
 import kotlin.math.floor
 import kotlin.math.max
@@ -62,38 +61,6 @@ class ChuBestScore {
     }
 
     companion object {
-        fun insertSongData(scores: MutableList<ChuScore>, data: MutableMap<Int, ChuSong>) {
-            for (s in scores) {
-                if (s.songID == 0L) {
-                    continue
-                }
-
-                val d = data[s.songID.toInt()] ?: continue
-
-                insertSongData(s, d)
-            }
-        }
-
-        fun insertSongData(score: ChuScore, song: ChuSong) {
-            val chart = song.charts.get(score.index)
-
-            score.charter = chart.charter
-            score.artist = song.info.artist
-        }
-
-        fun insertPosition(scores: MutableList<ChuScore>, isBest30: Boolean) {
-            if (CollectionUtils.isEmpty(scores)) return
-
-            for (i in scores.indices) {
-                val s = scores[i]
-
-                if (isBest30) {
-                    s.position = (i + 1)
-                } else {
-                    s.position = (i + 31)
-                }
-            }
-        }
 
         fun getAverage(scores: MutableList<ChuScore>): Double {
             if (scores.isEmpty()) return 0.0

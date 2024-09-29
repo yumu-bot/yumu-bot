@@ -70,7 +70,7 @@ class ChuScore {
                 if (isBest30) {
                     s.position = (i + 1)
                 } else {
-                    s.position = (i + 36)
+                    s.position = (i + 31)
                 }
             }
         }
