@@ -32,40 +32,52 @@ class MaiSongLite(
     @Column(columnDefinition = "integer[]")
     var chartIDs: IntArray,
 
-    @Column(columnDefinition = "text[]")
+    @Column(columnDefinition = "text")
     var songTitle: String,
-    @Column(columnDefinition = "text[]")
+
+    @Column(columnDefinition = "text")
     var songArtist: String,
-    @Column(columnDefinition = "text[]")
+
+    @Column(columnDefinition = "text")
     var songGenre: String,
+
     var songBPM: Int,
-    @Column(columnDefinition = "text[]")
+
+    @Column(columnDefinition = "text")
     var release: String,
-    @Column(columnDefinition = "text[]")
+
+    @Column(columnDefinition = "text")
     var version: String,
+
     var current: Boolean,
 ) {
     @Transient
     var charts: ArrayList<MaiChartLite>? = null
 
-    fun toModel(): MaiSong = with(MaiSong()) {
-        this.info = with(MaiSong.SongInfo()) {
-            title = songTitle
-            artist = songArtist
-            genre = songGenre
-            bpm = songBPM
-            release = this@MaiSongLite.release
-            version = this@MaiSongLite.version
-            current = this@MaiSongLite.current
-            this
+    fun toModel(): MaiSong = MaiSong().apply {
+        val lite = this@MaiSongLite
+        info = MaiSong.SongInfo().apply {
+            title = lite.songTitle
+            artist = lite.songArtist
+            genre = lite.songGenre
+            bpm = lite.songBPM
+            release = lite.release
+            version = lite.version
+            current = lite.current
         }
+        songID = lite.songID ?: 0
+        title = lite.title
+        type = lite.type
+        star = lite.star.toList()
+        chartIDs = lite.chartIDs.toList()
+
+
         val dbCharts = this@MaiSongLite.charts
         if (dbCharts != null) {
             this.charts = dbCharts.map {
                 it.toModel()
             }
         }
-        this
     }
 
     companion object {
@@ -135,8 +147,17 @@ class MaiChartLite(
         @JvmStatic
         fun from(id: Int, chart: MaiSong.MaiChart): MaiChartLite {
             val notes = if (chart.notes.touch == 0) with(IntArray(4)) {
+                this[0] = chart.notes.tap
+                this[1] = chart.notes.hold
+                this[2] = chart.notes.slide
+                this[3] = chart.notes.break_
                 this
             } else with(IntArray(5)) {
+                this[0] = chart.notes.tap
+                this[1] = chart.notes.hold
+                this[2] = chart.notes.slide
+                this[3] = chart.notes.touch
+                this[4] = chart.notes.break_
                 this
             }
 

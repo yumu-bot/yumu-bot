@@ -51,7 +51,7 @@ class MaiDao(
     @Transient
     fun saveMaiSong(song: MaiSong) {
         val charts = song.getChartLite()
-        val chartData = maiChartLiteRepository.saveAll(charts)
+        maiChartLiteRepository.saveAll(charts)
         val songLite = MaiSongLite.from(song)
         maiSongLiteRepository.save(songLite)
     }
@@ -92,15 +92,15 @@ class MaiDao(
             }
             .flatten()
 
+
         for (chart in allChart) {
             // 更新策略是 sid 与 level 一致是更新, 否则插入
-            if (false/*maiFitChartLiteRepository.existsMaiFitChartLiteBySongIDAndSort(chart.songID, chart.sort)*/) {
-                //TODO ???
-                //maiFitChartLiteRepository.updateMaiFitChartLiteBySongIDAndSort(chart.songID, chart.sort, chart)
-            } else {
-                maiFitChartLiteRepository.save(chart)
+            maiFitChartLiteRepository.findBySongIDAndSort(chart.songID, chart.sort)?.let {
+                chart.id = it
             }
         }
+
+        maiFitChartLiteRepository.saveAll(allChart)
 
         val allDiff = maiFit
             .diffData
