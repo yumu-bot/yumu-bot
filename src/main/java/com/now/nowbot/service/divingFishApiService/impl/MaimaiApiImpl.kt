@@ -1,7 +1,6 @@
 package com.now.nowbot.service.divingFishApiService.impl
 
 import com.now.nowbot.dao.MaiDao
-import com.now.nowbot.entity.MaiSongLite
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.Companion.getNameList
 import com.now.nowbot.model.json.*
@@ -19,7 +18,6 @@ import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import java.io.IOException
 import java.nio.file.Files
-import java.util.*
 import java.util.stream.Collectors
 import kotlin.text.Charsets.UTF_8
 

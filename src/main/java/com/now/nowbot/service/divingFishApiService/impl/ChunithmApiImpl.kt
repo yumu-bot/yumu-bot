@@ -16,7 +16,6 @@ import reactor.core.publisher.Mono
 import java.io.IOException
 import java.nio.file.Files
 import java.util.stream.Collectors
-import kotlin.text.Charsets.US_ASCII
 import kotlin.text.Charsets.UTF_8
 
 @Service
@@ -72,8 +71,12 @@ class ChunithmApiImpl(private val base: DivingFishBaseService) : ChunithmApiServ
         val path = path.resolve("Cover").resolve("${songID}.png")
 
         if (! Files.isRegularFile(path)) try {
-            Files.write(path, getChunithmCoverFromAPI(songID))
+            val cover = getChunithmCoverFromAPI(songID)
+
+            Files.write(path, cover)
         } catch (e : IOException) {
+            log.info("chunithm: 写入封面 $songID 失败")
+        } catch (e : Exception) {
             log.info("chunithm: 下载封面 $songID 失败")
         }
     }

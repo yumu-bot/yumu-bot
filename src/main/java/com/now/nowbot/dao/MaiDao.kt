@@ -7,7 +7,6 @@ import com.now.nowbot.model.json.MaiRanking
 import com.now.nowbot.model.json.MaiSong
 import jakarta.persistence.Transient
 import org.springframework.stereotype.Component
-import kotlin.jvm.optionals.getOrElse
 import kotlin.jvm.optionals.getOrNull
 
 @Component
@@ -16,23 +15,23 @@ class MaiDao(
     val maiChartLiteRepository: MaiChartLiteRepository,
     val maiFitChartLiteRepository: MaiFitChartLiteRepository,
     val maiFitDiffLiteRepository: MaiFitDiffLiteRepository,
-    val maiRankLiteRepositpry: MaiRankLiteRepositpry,
+    val maiRankLiteRepository: MaiRankLiteRepository,
 ) {
     fun saveMaiRanking(ranking: List<MaiRanking>) {
         val rankingLite = ranking.mapNotNull {
             if (it.name.isBlank()) null
             else MaiRankingLite.from(it)
         }
-        maiRankLiteRepositpry.saveAll(rankingLite)
+        maiRankLiteRepository.saveAll(rankingLite)
     }
 
     fun getMaiRanking(name: String): MaiRanking? {
-        val ranking = maiRankLiteRepositpry.findById(name)
+        val ranking = maiRankLiteRepository.findById(name)
         return ranking.map { it.toModel() }.getOrNull()
     }
 
     fun getAllMaiRanking(): List<MaiRanking> {
-        return maiRankLiteRepositpry.findAll().map { it.toModel() }
+        return maiRankLiteRepository.findAll().map { it.toModel() }
     }
 
     fun findMaiSongById(id: Int): MaiSong {
@@ -96,7 +95,8 @@ class MaiDao(
         for (chart in allChart) {
             // 更新策略是 sid 与 level 一致是更新, 否则插入
             if (false/*maiFitChartLiteRepository.existsMaiFitChartLiteBySongIDAndSort(chart.songID, chart.sort)*/) {
-                maiFitChartLiteRepository.updateMaiFitChartLiteBySongIDAndSort(chart.songID, chart.sort, chart)
+                //TODO ???
+                //maiFitChartLiteRepository.updateMaiFitChartLiteBySongIDAndSort(chart.songID, chart.sort, chart)
             } else {
                 maiFitChartLiteRepository.save(chart)
             }

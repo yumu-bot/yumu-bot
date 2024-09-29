@@ -3,6 +3,8 @@ package com.now.nowbot.model.json
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.springframework.util.CollectionUtils
 import java.util.*
+import kotlin.math.floor
+import kotlin.math.max
 
 class ChuBestScore {
     // 在游戏里的名字
@@ -30,6 +32,7 @@ class ChuBestScore {
             val rating: Double?,
             val base: Double?,
             val additional: Double?,
+            val average: Double?,
     )
 
     fun getUser(): User {
@@ -50,10 +53,12 @@ class ChuBestScore {
 
         val sum = best30 + recent10
 
-        val bestAverage = if (sum > 0) this.rating * best30 / sum else 0.0
-        val recentAverage = if (sum > 0) this.rating * recent10 / sum else 0.0
+        val best = if (sum > 0) this.rating * best30 / sum else 0.0
+        val recent = if (sum > 0) this.rating * recent10 / sum else 0.0
 
-        return User(this.name, this.probername, this.rating, bestAverage, recentAverage)
+        val bestAverage = getAverage(this.records.best30)
+
+        return User(this.name, this.probername, this.rating, best, recent, bestAverage)
     }
 
     companion object {
@@ -85,9 +90,28 @@ class ChuBestScore {
                 if (isBest30) {
                     s.position = (i + 1)
                 } else {
-                    s.position = (i + 36)
+                    s.position = (i + 31)
                 }
             }
+        }
+
+        fun getAverage(scores: MutableList<ChuScore>): Double {
+            if (scores.isEmpty()) return 0.0
+
+            return scores.stream().map{getCHUNITHMRating(it.score, it.star)}.reduce{a, b -> a + b}.orElse(0.0) / scores.size
+        }
+
+
+        private fun getCHUNITHMRating(score : Int = 0, difficulty : Double = 0.0): Double {
+            return if (score >= 1009000) difficulty + 2.15
+            else if (score >= 1007500) difficulty + 2 + floor((score - 1007500) / 100.0) * 0.01
+            else if (score >= 1005000) difficulty + 1.5 + floor((score - 1005000) / 50.0) * 0.01
+            else if (score >= 1000000) difficulty + 1 + floor((score - 1000000) / 100.0) * 0.01
+            else if (score >= 975000) difficulty + floor((score - 975000) / 250.0) * 0.01
+            else if (score >= 925000) max(difficulty - 3, 0.0)
+            else if (score >= 900000) max(difficulty - 5, 0.0)
+            else if (score >= 800000) max(difficulty - 5, 0.0) / 2
+            else 0.0
         }
     }
 }

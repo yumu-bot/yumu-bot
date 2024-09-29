@@ -14,4 +14,4 @@ interface MaiFitChartLiteRepository : JpaRepository<MaiFitChartLite, Int> {
 }
 
 interface MaiFitDiffLiteRepository : JpaRepository<MaiFitDiffLite, String>
-interface MaiRankLiteRepositpry : JpaRepository<MaiRankingLite, String>
+interface MaiRankLiteRepository : JpaRepository<MaiRankingLite, String>

@@ -1,12 +1,15 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.*
+import com.now.nowbot.model.json.ChuBestScore
+import com.now.nowbot.model.json.ChuScore
+import com.now.nowbot.model.json.ChuSong
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_HYPHEN
@@ -137,15 +140,11 @@ class ChuBestScoreService(
         val isMultipleScore = charts.recent10.size + charts.best30.size > 1
 
         if (charts.recent10.isNotEmpty()) {
-            for(s in charts.recent10) {
-                chunithmApiService.downloadChunithmCover(s.songID)
-            }
+            checkCover(charts.recent10, chunithmApiService)
         }
 
         if (charts.best30.isNotEmpty()) {
-            for(s in charts.best30) {
-                chunithmApiService.downloadChunithmCover(s.songID)
-            }
+            checkCover(charts.best30, chunithmApiService)
         }
 
         val user = scores.getUser()
@@ -205,6 +204,16 @@ class ChuBestScoreService(
             } else {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
             }
+        }
+
+        fun checkCover(scores: List<ChuScore>, chunithmApiService: ChunithmApiService) {
+            val actions = scores.map {
+                return@map AsyncMethodExecutor.Supplier<Unit> {
+                    chunithmApiService.downloadChunithmCover(it.songID)
+                }
+            }
+
+            AsyncMethodExecutor.AsyncSupplier(actions)
         }
 
         @JvmStatic
