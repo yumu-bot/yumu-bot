@@ -21,7 +21,6 @@ jobs:
       - name: Build project
         run: |
           cd ~/nowbot
-          export MAVEN_OPTS="--enable-preview"
           mvn clean
           mvn package
   update:

@@ -1,6 +1,7 @@
 package com.now.nowbot.entity
 
 import com.now.nowbot.model.json.MaiFit
+import com.now.nowbot.model.json.MaiRanking
 import com.now.nowbot.model.json.MaiSong
 import io.hypersistence.utils.hibernate.type.array.DoubleArrayType
 import io.hypersistence.utils.hibernate.type.array.IntArrayType
@@ -245,6 +246,28 @@ class MaiFitDiffLite(
                 distribution = diff.distribution.toDoubleArray(),
                 fullComboDistribution = diff.fullComboDistribution.toDoubleArray()
             )
+        }
+    }
+}
+
+@Entity(name = "maimai_user_rank")
+class MaiRankingLite(
+    @Id
+    @Column(columnDefinition = "text")
+    var name: String,
+
+    var rating: Int,
+) {
+    fun toModel(): MaiRanking {
+        return MaiRanking(
+            name, rating
+        )
+    }
+
+    companion object {
+        fun from(model: MaiRanking): MaiRankingLite {
+            if (model.name.isBlank()) throw IllegalArgumentException("name not be empty")
+            return MaiRankingLite(model.name, model.rating)
         }
     }
 }

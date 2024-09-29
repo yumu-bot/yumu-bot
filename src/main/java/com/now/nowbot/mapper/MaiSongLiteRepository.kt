@@ -1,9 +1,6 @@
 package com.now.nowbot.mapper
 
-import com.now.nowbot.entity.MaiChartLite
-import com.now.nowbot.entity.MaiFitChartLite
-import com.now.nowbot.entity.MaiFitDiffLite
-import com.now.nowbot.entity.MaiSongLite
+import com.now.nowbot.entity.*
 import jakarta.persistence.Transient
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
@@ -16,7 +13,8 @@ interface MaiFitChartLiteRepository : JpaRepository<MaiFitChartLite, Int> {
 
     @Transient
     @Modifying
-    @Query("""
+    @Query(
+        """
         update com.now.nowbot.entity.MaiFitChartLite m
         set m.count = :#{#maiFit.count},
             m.fit = :#{#maiFit.fit},
@@ -26,9 +24,12 @@ interface MaiFitChartLiteRepository : JpaRepository<MaiFitChartLite, Int> {
             m.distribution = :#{#maiFit.distribution},
             m.fullComboDistribution = :#{#maiFit.fullComboDistribution}
         where m.songID = :songID and m.sort = :sort
-    """)
+    """
+    )
     fun updateMaiFitChartLiteBySongIDAndSort(songID: Int, sort: Int, maiFit: MaiFitChartLite)
 
     fun findMaiFitChartLitesBySongIDOrderBySortAsc(songID: Int): List<MaiFitChartLite>
 }
+
 interface MaiFitDiffLiteRepository : JpaRepository<MaiFitDiffLite, String>
+interface MaiRankLiteRepositpry : JpaRepository<MaiRankingLite, String>

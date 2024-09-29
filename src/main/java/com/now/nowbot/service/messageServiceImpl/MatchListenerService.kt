@@ -12,10 +12,10 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.MatchMapService.PanelE7Param
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
-import com.now.nowbot.throwable.serviceException.MatchListenerException
-import com.now.nowbot.throwable.serviceException.MatchRoundException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.TipsRuntimeException
+import com.now.nowbot.throwable.serviceException.MatchListenerException
+import com.now.nowbot.throwable.serviceException.MatchRoundException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.DataUtil.getOriginal
@@ -74,7 +74,7 @@ class MatchListenerService(
 
         when (data.operate) {
             Status.INFO -> {
-                var list = senderSet
+                val list = senderSet
                     .filter { it.first == event.group.id }
                     .map { it.third.matchID }
                 val message = if (list.isEmpty()) {
