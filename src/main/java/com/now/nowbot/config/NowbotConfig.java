@@ -60,7 +60,7 @@ import static com.now.nowbot.config.AsyncSetting.V_THREAD_FACORY;
 @Component
 @Configuration
 public class NowbotConfig {
-    public static final  String           BEATMAP_MIRROR_URL = "http://127.0.0.1:47150";
+    public static final  String           BEATMAP_MIRROR_URL = "http://192.168.243.253:47150";
     public static final  Optional<String> BEATMAP_MIRROR_TOKEN;
     private static final Logger           log        = LoggerFactory.getLogger(NowbotConfig.class);
 
