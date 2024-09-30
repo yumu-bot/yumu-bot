@@ -146,6 +146,7 @@ public interface OsuBeatmapApiService {
     default JniResult getPP(Score s) {
         var b = getBeatMapFileByte(s.getBeatMap().getBeatMapID());
         var m = OsuMod.getModsValueFromAbbrList(s.getMods());
+        // TODO 这里的 PP 和 js 的不太一样，可能是因为他计算 fc pp 的时候，并未补足 300 的数量。
         var t = s.getStatistics();
 
         JniScore js = new JniScore();

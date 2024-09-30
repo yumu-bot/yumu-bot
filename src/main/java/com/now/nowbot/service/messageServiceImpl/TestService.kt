@@ -5,14 +5,14 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import org.springframework.stereotype.Service
 
-//@Service("TEST")
+@Service("TEST")
 class TestService(private val maimaiApiService: MaimaiApiService) : MessageService<String> {
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
         data: MessageService.DataValue<String>
     ): Boolean {
-        if (false) {
+        if (messageText.contains("!ug")) {
             data.value = messageText
             return true
         } else {
@@ -33,6 +33,7 @@ class TestService(private val maimaiApiService: MaimaiApiService) : MessageServi
     }
 
     override fun HandleMessage(event: MessageEvent, text: String) {
+        maimaiApiService.updateMaimaiSongLibraryDatabase()
         event.reply(text)
     }
 }

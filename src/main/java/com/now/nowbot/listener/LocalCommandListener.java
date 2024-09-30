@@ -5,6 +5,7 @@ import com.now.nowbot.qq.local.Bot;
 import com.now.nowbot.qq.local.Event;
 import com.now.nowbot.qq.local.contact.LocalGroup;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.throwable.TipsException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
@@ -44,12 +45,16 @@ public class LocalCommandListener {
         var event = new Event.GroupMessageEvent(bot, group, message);
         try {
             PermissionImplement.onMessage(event, ((ev, throwable) -> {
-                log.info("bot: (错误提示) {}", throwable.getMessage());
-                log.debug("详细信息: ", throwable);
+                if (throwable instanceof TipsException) {
+                    log.info("捕捉到提示：{}", throwable.getMessage());
+                    log.debug("异常详细信息: ", throwable);
+                } else {
+                    log.info("捕捉到异常：", throwable);
+                }
             }));
         } catch (Exception e) {
-            log.info("bot err: {}", e.getMessage());
-            log.debug("详细信息: ", e);
+            log.info("捕捉到未知异常：{}", e.getMessage());
+            log.debug("异常详细信息:", e);
         }
     }
 }

@@ -70,14 +70,23 @@ class MaiSongLite(
         type = lite.type
         star = lite.star.toList()
         chartIDs = lite.chartIDs.toList()
+        level = lite.level.toList()
 
+        val c = mutableListOf<MaiSong.MaiChart>()
 
-        val dbCharts = this@MaiSongLite.charts
-        if (dbCharts != null) {
-            this.charts = dbCharts.map {
-                it.toModel()
+        // TODO NULL
+        val chartLite = this@MaiSongLite.charts
+        if (chartLite != null) {
+            for (cl in chartLite) {
+                val l = MaiSong.MaiChart()
+
+                l.charter = cl.charter
+                l.notes = MaiSong.MaiChart.MaiNote(cl.notes.first(), cl.notes[1], cl.notes[2], cl.notes[3], cl.notes.last())
+                c.add(l)
             }
         }
+
+        charts = c
     }
 
     companion object {
