@@ -276,12 +276,6 @@ public interface OsuBeatmapApiService {
 
         var beatMap = score.getBeatMap();
 
-        if (isNotAvailable(beatMap)) {
-            applyStarFromAttributes(beatMap, score.getMode(), modsInt, true);
-            DataUtil.applyBeatMapChanges(beatMap, modsInt);
-            return;
-        }
-
         JniResult r;
         try {
             r = getPP(score);
@@ -300,7 +294,7 @@ public interface OsuBeatmapApiService {
             score.setPP((float) r.getPp());
             beatMap.setStarRating((float) r.getStar());
         } else {
-            applyStarFromAttributes(beatMap, score.getMode(), modsInt, false);
+            applyStarFromAttributes(beatMap, score.getMode(), modsInt);
         }
 
         DataUtil.applyBeatMapChanges(beatMap, modsInt);
@@ -319,12 +313,6 @@ public interface OsuBeatmapApiService {
     default void applySRAndPP(BeatMap beatMap, OsuMode mode, int modsInt) {
         if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
         if (beatMap == null) return; // 谱面没有 PP，所以必须查
-
-        if (isNotAvailable(beatMap)) {
-            applyStarFromAttributes(beatMap, mode, modsInt, true);
-            DataUtil.applyBeatMapChanges(beatMap, modsInt);
-            return;
-        }
 
         var id = beatMap.getBeatMapID();
 
@@ -345,7 +333,7 @@ public interface OsuBeatmapApiService {
         if (r.getPp() > 0) {
             beatMap.setStarRating((float) r.getStar());
         } else {
-            applyStarFromAttributes(beatMap, mode, modsInt, false);
+            applyStarFromAttributes(beatMap, mode, modsInt);
         }
 
         DataUtil.applyBeatMapChanges(beatMap, modsInt);
@@ -356,11 +344,6 @@ public interface OsuBeatmapApiService {
         if (beatMap == null) return;
         var m = OsuMod.getModsValueFromAbbrList(expected.mods);
 
-        if (isNotAvailable(beatMap)) {
-            applyStarFromAttributes(beatMap, expected.mode, m, false);
-            DataUtil.applyBeatMapChanges(beatMap, m);
-            return;
-        }
         JniResult r;
 
         try {
@@ -387,23 +370,16 @@ public interface OsuBeatmapApiService {
         if (r.getPp() > 0) {
             beatMap.setStarRating((float) r.getStar());
         } else {
-            applyStarFromAttributes(beatMap, expected.mode, m, false);
+            applyStarFromAttributes(beatMap, expected.mode, m);
         }
 
         DataUtil.applyBeatMapChanges(beatMap, m);
     }
 
-    private boolean isNotAvailable(BeatMap beatMap) {
-        return ! (beatMap.getBeatMapSet() != null && beatMap.getBeatMapSet().getAvailability() != null && ! beatMap.getBeatMapSet().getAvailability().downloadDisabled());
-    }
-
-    private void applyStarFromAttributes(BeatMap beatMap, OsuMode mode, Integer modsInt, Boolean isNotAvailable) {
+    private void applyStarFromAttributes(BeatMap beatMap, OsuMode mode, Integer modsInt) {
         var attr = getAttributes(beatMap.getId(), mode, modsInt);
+
+        NowbotApplication.log.info("无法获取谱面 {}，正在获取 API 提供的星数：{}", beatMap.getBeatMapID(), attr.getStarRating());
         beatMap.setStarRating(attr.getStarRating());
-        if (isNotAvailable) {
-            NowbotApplication.log.info("无法获取谱面 {}（谱面无法下载），正在获取 API 提供的星数：{}", beatMap.getBeatMapID(), attr.getStarRating());
-        } else {
-            NowbotApplication.log.info("无法获取谱面 {}（谱面已损坏），正在获取 API 提供的星数：{}", beatMap.getBeatMapID(), attr.getStarRating());
-        }
     }
 }
