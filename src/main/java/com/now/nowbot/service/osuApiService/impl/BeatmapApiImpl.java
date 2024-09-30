@@ -70,12 +70,8 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
 
     @Nullable
     private String getBeatMapFileFromLocalService(long bid) {
-        try {
-            return osuBeatmapMirrorApiService.getOsuFile(bid);
-        } catch (Exception e) {
-            log.error("osu 谱面 API：获取本地服务谱面失败: ", e);
-            return null;
-        }
+        return osuBeatmapMirrorApiService.getOsuFile(bid);
+        //log.error("osu 谱面 API：获取本地服务谱面失败: ", e);
     }
 
     @Nullable
@@ -286,6 +282,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         }).collect(Collectors.toCollection(ArrayList::new));
     }
 
+    @SuppressWarnings("all")
     private List<Integer> getGrouping(List<Integer> x, int groups) {
         if (groups < 1) throw new IllegalArgumentException();
         var steps = (x.getLast() - x.getFirst()) / (groups + 1);

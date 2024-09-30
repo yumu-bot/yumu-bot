@@ -2,6 +2,7 @@ package com.now.nowbot.service.osuApiService;
 
 import com.now.nowbot.config.NowbotConfig;
 import jakarta.annotation.Resource;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -17,13 +18,12 @@ public class OsuBeatmapMirrorApiService {
     private static final String           URL   = NowbotConfig.BEATMAP_MIRROR_URL;
     private static final Optional<String> TOKEN = NowbotConfig.BEATMAP_MIRROR_TOKEN;
 
+    @Nullable
     public String getOsuFile(long bid) {
-        if (TOKEN.isEmpty()) throw new RuntimeException("获取 osu 文件：无权限访问");
-        return webClient.get()
-                .uri(URL, b -> b.path("/api/file/map/osufile/{bid}").build(bid))
-                .header("AuthorizationX", TOKEN.get())
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
+        return TOKEN.map(s -> webClient
+                            .get()
+                            .uri(URL, b -> b.path("/api/file/map/osufile/{bid}").build(bid))
+                            .header("AuthorizationX", s).retrieve().bodyToMono(String.class).block())
+                    .orElse(null);
     }
 }

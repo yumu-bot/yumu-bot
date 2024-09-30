@@ -251,6 +251,15 @@ public class Match implements Cloneable {
         @JsonProperty("scores")
         List<MatchScore> scores;
 
+        @JsonIgnoreProperties
+        TeamScore teamScore;
+
+        @JsonIgnoreProperties
+        String winningTeam;
+
+        @JsonIgnoreProperties
+        Long winningTeamScore;
+
         public Long getBeatMapID() {
             return beatMapID;
         }
@@ -365,24 +374,39 @@ public class Match implements Cloneable {
             return new TeamScore(total, red, blue);
         }
 
+        public void setTeamScore(TeamScore teamScore) {
+            this.teamScore = teamScore;
+        }
+
         @Nullable
         public String getWinningTeam() {
-            if (! Objects.equals(this.getTeamType(), "team-vs")) return "none";
+            if (! Objects.equals(this.getTeamType(), "team-vs")) this.winningTeam = "none";
             var ts = getTeamScore();
 
-            if (ts.red() > ts.blue()) return "red";
-            else if (ts.red() < ts.blue()) return "blue";
-            else return null; //平局
+            if (ts.red() > ts.blue()) this.winningTeam = "red";
+            else if (ts.red() < ts.blue()) this.winningTeam = "blue";
+            else this.winningTeam = null; //平局
+
+            return this.winningTeam;
+        }
+
+        public void setWinningTeam(String winningTeam) {
+            this.winningTeam = winningTeam;
         }
 
         @NonNull
         public Long getWinningTeamScore() {
             if (Objects.equals(teamType, "team-vs")) {
                 var ts = getTeamScore();
-                return Math.max(ts.red(), ts.blue());
+                this.winningTeamScore = Math.max(ts.red(), ts.blue());
             } else {
-                return this.getScores().stream().mapToLong(MatchScore::getScore).reduce(Long::max).orElse(0L);
+                this.winningTeamScore = this.getScores().stream().mapToLong(MatchScore::getScore).reduce(Long::max).orElse(0L);
             }
+            return this.winningTeamScore;
+        }
+
+        public void setWinningTeamScore(Long winningTeamScore) {
+            this.winningTeamScore = winningTeamScore;
         }
 
         @Override

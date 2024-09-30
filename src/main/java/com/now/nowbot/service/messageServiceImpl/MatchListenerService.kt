@@ -22,9 +22,11 @@ import com.now.nowbot.util.DataUtil.getOriginal
 import com.now.nowbot.util.Instruction
 import com.yumu.core.extensions.isNotNull
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
+//@Service("MATCH_LISTENER")
 class MatchListenerService(
     private val matchApiService: OsuMatchApiService,
     private val beatmapApiService: OsuBeatmapApiService,
@@ -163,7 +165,8 @@ class MatchListenerService(
             if (!isTeamVS && !hasNext()) {
                 consoleListener(messageEvent.subject.id, false, matchID)
             }
-            val calculate = MatchCalculate()
+
+            val calculate = MatchCalculate(match.toMatch(), beatmapApiService)
             val objectGroup = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val e7 = PanelE7Param(
                 calculate,
