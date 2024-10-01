@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 
 interface MaiSongLiteRepository : JpaRepository<MaiSongLite, Int> {
-    fun findByQueryTitleLikeIgnoreCase(queryTitle: String): List<MaiSongLite>
+    fun findByQueryTitleLikeIgnoreCase(queryTitle: String): List<MaiSongLite>?
 }
 interface MaiChartLiteRepository : JpaRepository<MaiChartLite, Int>
 interface MaiFitChartLiteRepository : JpaRepository<MaiFitChartLite, Int> {

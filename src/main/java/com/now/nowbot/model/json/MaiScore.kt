@@ -58,21 +58,6 @@ class MaiScore {
     // 自己拿
     @JsonIgnoreProperties var charter: String = ""
 
-    fun toMaiScoreSimplified(): MaiScoreSimplified {
-        val s = MaiScoreSimplified()
-
-        s.achievements = this.achievements
-        s.combo = this.combo
-        s.sync = this.sync
-        s.songID = this.songID
-        s.level = this.level
-        s.index = this.index
-        s.title = this.title
-        s.type = this.type
-
-        return s
-    }
-
     companion object {
 
         fun insertSongData(scores: MutableList<MaiScore>, maimaiApiService: MaimaiApiService) {
@@ -81,7 +66,7 @@ class MaiScore {
                     continue
                 }
 
-                val o = maimaiApiService.getMaimaiSong(s.songID)
+                val o = maimaiApiService.getMaimaiSong(s.songID) ?: MaiSong()
 
                 insertSongData(s, o)
             }

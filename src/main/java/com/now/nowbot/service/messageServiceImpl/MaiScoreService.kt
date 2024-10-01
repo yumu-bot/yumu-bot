@@ -7,6 +7,7 @@ import com.now.nowbot.model.json.MaiScore
 import com.now.nowbot.model.json.MaiSong
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.GeneralTipsException
@@ -14,21 +15,36 @@ import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
 import com.yumu.core.extensions.isNotNull
+import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.util.stream.Collectors
 
-//@Service("MAI_SCORE")
-class MaiScoreService(private val maimaiApiService: MaimaiApiService) :
-        MessageService<MaiScoreService.MaiScoreParam> {
+@Service("MAI_SCORE")
+class MaiScoreService(
+        private val maimaiApiService: MaimaiApiService,
+        private val imageService: ImageService,
+) : MessageService<MaiScoreService.MaiScoreParam> {
 
     data class MaiScoreParam(
             val id: Int?,
             val title: String?,
             val name: String?,
             val qq: Long?,
-            val difficulty: MaiDifficulty
+            val difficulty: MaiDifficulty,
     )
+
+    data class MSPanelParam(val songs: List<MaiSong>, val scores: List<MaiScore>) {
+        fun toMap(): Map<String, Any> {
+            val out = mutableMapOf<String, Any>()
+
+            out["songs"] = songs
+            out["scores"] = scores
+
+            out["panel"] = "MS"
+
+            return out
+        }
+    }
 
     override fun isHandle(
             event: MessageEvent,
@@ -48,7 +64,7 @@ class MaiScoreService(private val maimaiApiService: MaimaiApiService) :
                     MaiDifficulty.DEFAULT
                 }
 
-        val nameStr = (matcher.group(REG_NAME) ?: "").trim()
+        val nameStr = (matcher.group(FLAG_NAME) ?: "").trim()
 
         val qq =
                 if (event.isAt) {
@@ -69,7 +85,8 @@ class MaiScoreService(private val maimaiApiService: MaimaiApiService) :
                                         null,
                                         s.last().replace(Regex(REG_QUOTATION), ""),
                                         null,
-                                        difficulty)
+                                        difficulty,
+                                )
                     } else {
                         data.value =
                                 MaiScoreParam(
@@ -77,7 +94,8 @@ class MaiScoreService(private val maimaiApiService: MaimaiApiService) :
                                         s.first(),
                                         s.last().replace(Regex(REG_QUOTATION), ""),
                                         null,
-                                        difficulty)
+                                        difficulty,
+                                )
                     }
                 } else if (s.size == 1) {
                     if (s.first().matches(Regex(REG_NUMBER_15))) {
@@ -109,79 +127,138 @@ class MaiScoreService(private val maimaiApiService: MaimaiApiService) :
     override fun HandleMessage(event: MessageEvent, param: MaiScoreParam) {
         val isMyself = (param.qq == event.sender.id)
 
-        val full = getFullScore(param.qq, param.name, isMyself = isMyself, maimaiApiService)
+        val full = getEmptyableFullScore(param.qq, param.name, maimaiApiService)
 
+        /*
         if (full.records.isEmpty())
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Play)
 
-        val score: MaiScore
+         */
+
+        val image: ByteArray
+        val result: MaiSong
 
         if (param.title != null) {
-            val sort =
-                    maimaiApiService.getMaimaiPossibleSongs(param.title)
-                            ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Result)
-
-            if (sort.keys.max() < 0.4) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_ResultNotAccurate)
-            }
-
-            val expect = sort.entries.first().value
-
-            score =
-                    full.records
-                            .stream()
-                            .collect(Collectors.toMap(MaiScore::songID) { it })[
-                                    expect.songID.toLong()]
-                            ?: throw GeneralTipsException(
-                                    GeneralTipsException.Type.G_Null_ResultNotAccurate)
+            // 成绩模式 我靠，怎么只传一个结果
+            result = maimaiApiService.getMaimaiPossibleSong(param.title)
+                    ?: throw GeneralTipsException(
+                GeneralTipsException.Type.G_Null_ResultNotAccurate
+            )
 
             /*
-            event.reply(getSearchResult(sort))
-            return
+            val possibles =
+                    maimaiApiService.getMaimaiPossibleSongs(param.title)
+                            ?: throw GeneralTipsException(
+                                    GeneralTipsException.Type.G_Null_ResultNotAccurate
+                            )
 
-             */
-        } else if (param.id != null) {}
+            val r = mutableMapOf<Double, MaiSong>()
+
+            for (p in possibles) {
+                val y = DataUtil.getStringSimilarity(param.title, p.title)
+
+                if (y >= 0.5) {
+                    r[y] = p
+                }
+            }
+
+            if (r.isEmpty())
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_ResultNotAccurate)
+
+            result =
+                    r.entries
+                            .stream()
+                            .sorted(
+                                    Comparator.comparingDouble<
+                                                    MutableMap.MutableEntry<Double, MaiSong>?
+                                            > {
+                                                it.key
+                                            }
+                                            .reversed()
+                            )
+                            .map { it.value }
+                            .toList()
+                            .first()
+            */
+        } else if (param.id != null) {
+            // 谱面模式
+            result =
+                    maimaiApiService.getMaimaiSong(param.id.toLong())
+                            ?: throw GeneralTipsException(
+                                    GeneralTipsException.Type.G_Null_Song,
+                                    param.id,
+                            )
+        } else {
+            throw GeneralTipsException(
+                    GeneralTipsException.Type.G_Malfunction_Classification,
+                    "舞萌成绩",
+            )
+        }
+
+        run {
+            val standard: MaiSong
+            val deluxe: MaiSong
+
+            // 获取符合的成绩
+            val scores: List<MaiScore> =
+                    full.records
+                            .stream()
+                            .filter {
+                                if (result.songID < 10000) {
+                                    return@filter it.songID == result.songID.toLong() ||
+                                            it.songID == (result.songID + 10000).toLong()
+                                } else {
+                                    return@filter it.songID == result.songID.toLong() ||
+                                            it.songID == (result.songID - 10000).toLong()
+                                }
+                            }
+                            .toList()
+
+            // 判断谱面种类
+            if (result.songID < 10000) {
+                standard = result
+                deluxe = maimaiApiService.getMaimaiSong(result.songID + 10000L) ?: MaiSong()
+            } else {
+                standard = maimaiApiService.getMaimaiSong(result.songID - 10000L) ?: MaiSong()
+                deluxe = result
+            }
+
+            image =
+                    imageService.getPanel(
+                            MSPanelParam(songs = mutableListOf(standard, deluxe), scores = scores)
+                                    .toMap(),
+                            "MS",
+                    )
+        }
+
+        event.reply(image)
     }
 
     companion object {
         @JvmStatic
-        fun getFullScore(
-                qq: Long?,
-                name: String?,
-                isMyself: Boolean,
-                maimaiApiService: MaimaiApiService,
+        fun getEmptyableFullScore(
+            qq: Long?,
+            name: String?,
+            maimaiApiService: MaimaiApiService,
         ): MaiBestScore {
             return if (qq.isNotNull()) {
                 try {
                     maimaiApiService.getMaimaiFullScores(qq!!)
-                } catch (e: WebClientResponseException.BadRequest) {
-                    if (isMyself) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouBadRequest)
-                    } else {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_QQBadRequest)
-                    }
-                } catch (e: WebClientResponseException.Forbidden) {
-                    if (isMyself) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouForbidden)
-                    } else {
-                        throw GeneralTipsException(
-                                GeneralTipsException.Type.G_Maimai_PlayerForbidden)
-                    }
+                } catch (e: WebClientResponseException) {
+                    return MaiBestScore()
                 }
             } else if (name.isNotNull()) {
                 try {
                     maimaiApiService.getMaimaiFullScores(name!!)
-                } catch (e: WebClientResponseException.BadRequest) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_NameBadRequest)
-                } catch (e: WebClientResponseException.Forbidden) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_PlayerForbidden)
+                } catch (e: WebClientResponseException) {
+                    return MaiBestScore()
                 }
             } else {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
             }
         }
 
-        fun getSearchResult(text : String?, maimaiApiService: MaimaiApiService): MessageChain {
+        fun getSearchResult(text: String?, maimaiApiService: MaimaiApiService): MessageChain {
             val songs = maimaiApiService.getMaimaiSongLibrary()
             val result = mutableMapOf<Double, MaiSong>()
 
@@ -202,16 +279,25 @@ class MaiScoreService(private val maimaiApiService: MaimaiApiService) :
             val sb = StringBuilder("\n")
 
             var i = 1
-            for(e in sort) {
-                val code = MaiVersion.getCodeList(MaiVersion.getVersionList(e.value.info.version)).first()
+            for (e in sort) {
+                val code =
+                        MaiVersion.getCodeList(MaiVersion.getVersionList(e.value.info.version))
+                                .first()
                 val category = MaiVersion.getCategoryAbbreviation(e.value.info.genre)
 
-                sb.append("#${i}:").append(" ")
-                    .append(String.format("%.0f", e.key * 100)).append("%").append(" ")
-                    .append("[${e.value.songID}]").append(" ")
-                    .append(e.value.title).append(" ")
-                    .append("[${code}]").append(" / ")
-                    .append("[${category}]").append("\n")
+                sb.append("#${i}:")
+                        .append(" ")
+                        .append(String.format("%.0f", e.key * 100))
+                        .append("%")
+                        .append(" ")
+                        .append("[${e.value.songID}]")
+                        .append(" ")
+                        .append(e.value.title)
+                        .append(" ")
+                        .append("[${code}]")
+                        .append(" / ")
+                        .append("[${category}]")
+                        .append("\n")
 
                 i++
 
@@ -222,28 +308,35 @@ class MaiScoreService(private val maimaiApiService: MaimaiApiService) :
 
             sb.removeSuffix("\n")
 
-            return MessageChain.MessageChainBuilder().addText("搜索结果：\n").addImage(img).addText(sb.toString()).build()
+            return MessageChain.MessageChainBuilder()
+                    .addText("搜索结果：\n")
+                    .addImage(img)
+                    .addText(sb.toString())
+                    .build()
         }
 
+        //uum
         fun getScoreMessage(score: MaiScore, image: ByteArray): MessageChain {
             val sb = MessageChain.MessageChainBuilder()
 
             sb.addImage(image)
             sb.addText("\n")
             sb.addText(
-                    "[${score.type}] ${score.title} [${score.difficulty} ${score.level}] (${score.star})\n")
+                    "[${score.type}] ${score.title} [${score.difficulty} ${score.level}] (${score.star})\n"
+            )
             sb.addText(
-                    "${String.format("%.4f", score.achievements)}% ${getRank(score.rank)} // ${score.rating} ra\n")
+                    "${String.format("%.4f", score.achievements)}% ${getRank(score.rank)} // ${score.rating} ra\n"
+            )
             sb.addText("[${getCombo(score.combo)}] [${getSync(score.sync)}] // id ${score.songID}")
 
             return sb.build()
         }
 
-        fun getRank(rate: String?): String {
+        private fun getRank(rate: String?): String {
             return (rate ?: "?").uppercase().replace('P', '+')
         }
 
-        fun getCombo(combo: String?): String {
+        private fun getCombo(combo: String?): String {
             return when (combo?.lowercase()) {
                 "" -> "C"
                 "fc" -> "FC"
@@ -254,7 +347,7 @@ class MaiScoreService(private val maimaiApiService: MaimaiApiService) :
             }
         }
 
-        fun getSync(sync: String?): String {
+        private fun getSync(sync: String?): String {
             return when (sync?.lowercase()) {
                 "" -> "1P"
                 "sync" -> "SY"

@@ -1,13 +1,10 @@
 package com.now.nowbot.service.divingFishApiService.impl
 
 import com.now.nowbot.dao.MaiDao
-import com.now.nowbot.entity.MaiRankingLite
-import com.now.nowbot.entity.MaiSongLite
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.Companion.getNameList
 import com.now.nowbot.model.json.*
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
-import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -20,7 +17,6 @@ import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import java.io.IOException
 import java.nio.file.Files
-import java.util.*
 import java.util.stream.Collectors
 import kotlin.text.Charsets.UTF_8
 
@@ -179,7 +175,7 @@ class MaimaiApiImpl(
         return maiDao.getAllMaiSong().stream().collect(Collectors.toMap(MaiSong::songID) {it} )
     }
 
-    override fun getMaimaiSong(songID: Long): MaiSong {
+    override fun getMaimaiSong(songID: Long): MaiSong? {
         //return getMaimaiSongLibraryFromFile()[songID.toInt()] ?: MaiSong()
         return maiDao.findMaiSongById(songID.toInt())
     }
@@ -341,13 +337,19 @@ class MaimaiApiImpl(
             .block() ?: MaiBestScore()
     }
 
-    override fun getMaimaiPossibleSong(text: String): MaiSong {
+    override fun getMaimaiPossibleSong(text: String): MaiSong? {
+        return maiDao.findMaiSongByTitle(text)?.first()
+        /*
         val s = getMaimaiPossibleSongs(text) ?: return MaiSong()
 
         return s.entries.first().value
+
+         */
     }
 
-    override fun getMaimaiPossibleSongs(text: String): Map<Double, MaiSong>? {
+    override fun getMaimaiPossibleSongs(text: String): List<MaiSong>? {
+        return maiDao.findMaiSongByTitle(text)
+        /*
         val songs = getMaimaiSongLibrary()
 
         val result = mutableMapOf<Double, MaiSong>()
@@ -365,6 +367,8 @@ class MaimaiApiImpl(
         }
 
         return result.toSortedMap().reversed()
+
+         */
     }
 
     private val maimaiSongLibraryFromAPI: String

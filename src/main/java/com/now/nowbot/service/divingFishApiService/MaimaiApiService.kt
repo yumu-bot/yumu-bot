@@ -43,11 +43,11 @@ interface MaimaiApiService {
 
     fun updateMaimaiFitLibraryDatabase()
 
-    fun getMaimaiPossibleSong(text: String): MaiSong
+    fun getMaimaiPossibleSong(text: String): MaiSong?
 
-    fun getMaimaiPossibleSongs(text : String): Map<Double, MaiSong>?
+    fun getMaimaiPossibleSongs(text : String): List<MaiSong>?
 
-    fun getMaimaiSong(songID: Long): MaiSong
+    fun getMaimaiSong(songID: Long): MaiSong?
 
     fun getMaimaiSongLibrary(): Map<Int, MaiSong>
 

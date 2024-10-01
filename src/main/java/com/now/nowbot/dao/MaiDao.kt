@@ -5,7 +5,6 @@ import com.now.nowbot.mapper.*
 import com.now.nowbot.model.json.MaiFit
 import com.now.nowbot.model.json.MaiRanking
 import com.now.nowbot.model.json.MaiSong
-import com.now.nowbot.throwable.GeneralTipsException
 import jakarta.persistence.Transient
 import org.springframework.stereotype.Component
 import kotlin.jvm.optionals.getOrNull
@@ -35,10 +34,10 @@ class MaiDao(
         return maiRankLiteRepository.findAll().map { it.toModel() }
     }
 
-    fun findMaiSongById(id: Int): MaiSong {
+    fun findMaiSongById(id: Int): MaiSong? {
         val songOpt = maiSongLiteRepository.findById(id)
         if (songOpt.isEmpty) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Song, id)
+            return null
         }
         val song = songOpt.get()
         val charts = maiChartLiteRepository
@@ -48,8 +47,11 @@ class MaiDao(
         return song.toModel()
     }
 
-    fun findMaiSongByTitle(title:String): List<MaiSong> {
+    fun findMaiSongByTitle(title:String): List<MaiSong>? {
         val songs = maiSongLiteRepository.findByQueryTitleLikeIgnoreCase("%$title%")
+
+        if (songs.isNullOrEmpty()) return emptyList()
+
         songs.forEach {
             val charts = maiChartLiteRepository
                 .findAllById(it.chartIDs.asList())
@@ -108,9 +110,8 @@ class MaiDao(
             .entries
             .map { (id, charts) ->
                 charts.mapIndexed { index, it ->
-                    if (it.count == null) return@mapIndexed null
                     MaiFitChartLite.from(id, index, it)
-                }.filterNotNull()
+                }
             }
             .flatten()
 
