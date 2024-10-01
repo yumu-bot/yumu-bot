@@ -20,7 +20,7 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
     ): Boolean {
         val matcher = Instruction.REFRESH_FILE.matcher(messageText)
         return if (matcher.find()) {
-            data.value = matcher.group("bid").toLong()
+            data.value = matcher.group("bid")?.toLong() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
             true
         } else {
             false
