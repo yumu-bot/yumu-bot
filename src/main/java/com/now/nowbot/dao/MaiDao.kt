@@ -5,6 +5,7 @@ import com.now.nowbot.mapper.*
 import com.now.nowbot.model.json.MaiFit
 import com.now.nowbot.model.json.MaiRanking
 import com.now.nowbot.model.json.MaiSong
+import com.now.nowbot.throwable.GeneralTipsException
 import jakarta.persistence.Transient
 import org.springframework.stereotype.Component
 import kotlin.jvm.optionals.getOrNull
@@ -37,7 +38,7 @@ class MaiDao(
     fun findMaiSongById(id: Int): MaiSong {
         val songOpt = maiSongLiteRepository.findById(id)
         if (songOpt.isEmpty) {
-            throw IllegalArgumentException("Song not found")
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Song, id)
         }
         val song = songOpt.get()
         val charts = maiChartLiteRepository

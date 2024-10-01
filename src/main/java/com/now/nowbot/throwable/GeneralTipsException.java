@@ -27,6 +27,7 @@ public class GeneralTipsException extends TipsException {
         G_Null_UserName("请输入正确的玩家名！"),
         G_Null_BID_Quotation("您在使用引号包括住玩家名时，也需要输入谱面的曲名或是编号！"),
         G_Null_BID("请输入正确的谱面编号！"),
+        G_Null_Song("找不到歌曲 %s，请检查。"),
         G_Null_Map("找不到这张谱面，请检查。"),
         G_Null_MapFile("没有找到这张谱面的缓存文件。"),
         G_Null_MatchRound("找不到这场对局，请检查。"),
