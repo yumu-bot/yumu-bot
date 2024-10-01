@@ -186,7 +186,7 @@ public interface OsuBeatmapApiService {
             js.setN100(t.getCount100());
             js.setKatu(t.getCountKatu());
             js.setN50(t.getCount50());
-            js.setAccuracy(t.getAccuracy());
+            js.setAccuracy(s.getAccuracy());
             return getJniResult(m, b, js);
         }
         return getJniResult(m, t, b, js);
