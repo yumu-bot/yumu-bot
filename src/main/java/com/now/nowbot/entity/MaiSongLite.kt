@@ -10,12 +10,16 @@ import jakarta.persistence.*
 import org.hibernate.annotations.Type
 
 @Entity(name = "maimai_song")
+@Table(indexes = [Index(name = "title_query", columnList = "query_text")])
 class MaiSongLite(
     @Id
     var songID: Int? = null,
 
     @Column(columnDefinition = "text")
     var title: String,
+
+    @Column(name = "query_text",columnDefinition = "text")
+    var queryTitle:String = title,
 
     @Column(columnDefinition = "text")
     var type: String,

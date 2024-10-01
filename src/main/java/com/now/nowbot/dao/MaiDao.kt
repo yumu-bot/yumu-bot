@@ -47,6 +47,17 @@ class MaiDao(
         return song.toModel()
     }
 
+    fun findMaiSongByTitle(title:String): List<MaiSong> {
+        val songs = maiSongLiteRepository.findByQueryTitleLikeIgnoreCase("%$title%")
+        songs.forEach {
+            val charts = maiChartLiteRepository
+                .findAllById(it.chartIDs.asList())
+                .toCollection(ArrayList())
+            it.charts = charts
+        }
+        return songs.map { it.toModel() }
+    }
+
     fun getAllMaiSong(): List<MaiSong> {
         val songs = maiSongLiteRepository.findAll()
         songs.forEach {
