@@ -146,12 +146,20 @@ public interface OsuBeatmapApiService {
     default JniResult getPP(Score s) {
         var b = getBeatMapFileByte(s.getBeatMap().getBeatMapID());
         var m = OsuMod.getModsValueFromAbbrList(s.getMods());
-        // TODO 这里的 PP 和 js 的不太一样，可能是因为他计算 fc pp 的时候，并未补足 300 的数量。
         var t = s.getStatistics();
 
         JniScore js = new JniScore();
         js.setCombo(s.getMaxCombo());
         js.setMode(s.getMode().toRosuMode());
+
+        if (!s.getPassed()) {
+            // 没 pass 不给 300, acc 跟 combo
+            js.setN100(t.getCount100());
+            js.setKatu(t.getCountKatu());
+            js.setN50(t.getCount50());
+            js.setMisses(t.getCountMiss());
+            return getJniResult(m, b, js);
+        }
         return getJniResult(m, t, b, js);
     }
 
@@ -173,6 +181,14 @@ public interface OsuBeatmapApiService {
 
         JniScore js = new JniScore();
         js.setMode(s.getMode().toRosuMode());
+        if (!s.getPassed()) {
+            // 没 pass 不给 300, misses 跟 combo
+            js.setN100(t.getCount100());
+            js.setKatu(t.getCountKatu());
+            js.setN50(t.getCount50());
+            js.setAccuracy(t.getAccuracy());
+            return getJniResult(m, b, js);
+        }
         return getJniResult(m, t, b, js);
     }
 
@@ -234,6 +250,12 @@ public interface OsuBeatmapApiService {
         } else {
             score.setAccuracy(s.getAccuracy());
         }
+        return Rosu.calculate(b, score);
+    }
+
+    @SuppressWarnings("all")
+    private JniResult getJniResult(int modInt, byte[] b, JniScore score) {
+        score.setMods(modInt);
         return Rosu.calculate(b, score);
     }
 
