@@ -140,7 +140,6 @@ class MaiBestScoreService(
 
     override fun HandleMessage(event: MessageEvent, param: MaiBestScoreParam) {
         val scores = getBestScores(param.qq, param.name, param.isMyself, maimaiApiService)
-        val songs = maimaiApiService.getMaimaiSongLibrary()
         val charts = implementScore(param.range, scores, maimaiApiService = maimaiApiService)
         val isMultipleScore = charts.deluxe.size + charts.standard.size > 1
 

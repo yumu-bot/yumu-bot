@@ -3,6 +3,7 @@ package com.now.nowbot.entity
 import com.now.nowbot.model.json.MaiFit
 import com.now.nowbot.model.json.MaiRanking
 import com.now.nowbot.model.json.MaiSong
+import com.now.nowbot.util.DataUtil
 import io.hypersistence.utils.hibernate.type.array.DoubleArrayType
 import io.hypersistence.utils.hibernate.type.array.IntArrayType
 import io.hypersistence.utils.hibernate.type.array.StringArrayType
@@ -19,7 +20,7 @@ class MaiSongLite(
     var title: String,
 
     @Column(name = "query_text",columnDefinition = "text")
-    var queryTitle:String = title,
+    var queryTitle: String = title,
 
     @Column(columnDefinition = "text")
     var type: String,
@@ -95,6 +96,8 @@ class MaiSongLite(
     companion object {
         @JvmStatic
         fun from(song: MaiSong): MaiSongLite {
+            val queryTitle = DataUtil.getStandardisedString(song.title)
+
             val result = MaiSongLite(
                 songID = song.songID,
                 title = song.title,
@@ -110,6 +113,8 @@ class MaiSongLite(
                 version = song.info.version,
                 current = song.info.current
             )
+
+            result.queryTitle = queryTitle
 
             result.charts = song.charts.mapIndexed { i, c ->
                 MaiChartLite.from(result.chartIDs[i], c)

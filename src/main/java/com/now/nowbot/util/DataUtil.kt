@@ -3,6 +3,7 @@ package com.now.nowbot.util
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.json.JsonMapper
 import com.now.nowbot.config.NowbotConfig
+import com.now.nowbot.model.enums.GreekChar
 import com.now.nowbot.model.enums.JaChar
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
@@ -1147,17 +1148,22 @@ object DataUtil {
     }
 
     @JvmStatic
-    private fun getStandardisedString(str: String): String {
-        return JaChar.getRomanized(str).lowercase()
-                .replace(Regex(REG_HYPHEN), "-")
-                .replace(Regex(REG_PLUS), "+")
-                .replace(Regex(REG_COLON), ":")
-                .replace(Regex(REG_HASH), "#")
-                .replace(Regex(REG_EXCLAMATION), "!")
-                .replace(Regex(REG_QUESTION), "?")
-                .replace(Regex(REG_QUOTATION), "\"")
-                .replace(Regex(REG_FULL_STOP), ".")
-                .replace(Regex("\\s+"), "")
+    fun getStandardisedString(str: String?): String {
+        if (str.isNullOrEmpty()) return ""
+
+        return str
+            .toRomanizedJaChar()
+            .toRomanizedGreekChar()
+            .lowercase()
+            .replace(Regex(REG_HYPHEN), "-")
+            .replace(Regex(REG_PLUS), "+")
+            .replace(Regex(REG_COLON), ":")
+            .replace(Regex(REG_HASH), "#")
+            .replace(Regex(REG_EXCLAMATION), "!")
+            .replace(Regex(REG_QUESTION), "?")
+            .replace(Regex(REG_QUOTATION), "\"")
+            .replace(Regex(REG_FULL_STOP), ".")
+            .replace(Regex("\\s+"), "")
     }
 
     @JvmRecord private data class Range(val offset: Int, val limit: Int)
@@ -1165,4 +1171,7 @@ object DataUtil {
     @JvmRecord data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
 
     fun Float.limit() = if ((0f..10f).contains(this)) this else if (this > 10) 10f else 0f
+
+    private fun String.toRomanizedJaChar() = JaChar.getRomanized(this)
+    private fun String.toRomanizedGreekChar() = GreekChar.getRomanized(this)
 }

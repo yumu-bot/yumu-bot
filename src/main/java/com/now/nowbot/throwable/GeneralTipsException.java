@@ -79,7 +79,10 @@ public class GeneralTipsException extends TipsException {
             this.message = message;
         }
     }
-    
+
+    public GeneralTipsException(String message) {
+        super(message);
+    }
 
     public GeneralTipsException(Type type) {
         super(type.message);

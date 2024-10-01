@@ -382,8 +382,8 @@ object CmdUtil {
         } catch (e: WebClientResponseException) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
         } catch (e: Exception) {
-            log.error("HandleUtil：获取玩家信息失败！", e)
-            throw TipsException("获取玩家信息失败！")
+            log.error("HandleUtil：玩家信息获取失败！", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_PlayerInfo)
         }
     }
 
@@ -478,11 +478,9 @@ data class CmdObject<T>(var data: T? = null)
 
 /** 包装类, 记录包括 range 结果 */
 data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int? = null) {
-    fun noRange() = start == null && end == null
+    private fun halfRange() = start != null && end == null
 
-    fun halfRange() = start != null && end == null
-
-    fun fullRange() = start != null && end != null
+    private fun fullRange() = start != null && end != null
 
     // 30: 30 - 1, 2-30: 2-1  // 30: 0, 2-30: 2-1
     fun getOffset(default: Int = 0, isMulti: Boolean = false): Int {

@@ -10,7 +10,6 @@ import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
@@ -195,7 +194,7 @@ class MaiScoreService(private val maimaiApiService: MaimaiApiService) :
             }
 
             if (result.isEmpty()) {
-                throw TipsException("没有找到结果！")
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Result)
             }
 
             val sort = result.toSortedMap().reversed()

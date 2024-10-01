@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -593,7 +594,7 @@ public class ImageService {
         return headers;
     }
 
-    private byte[] doPost(String path, HttpEntity<?> entity) {
+    private byte[] doPost(String path, HttpEntity<?> entity) throws RestClientException {
         ResponseEntity<byte[]> s = restTemplate.exchange(URI.create(IMAGE_PATH + path), HttpMethod.POST, entity, byte[].class);
         return s.getBody();
     }
