@@ -45,7 +45,17 @@ class MaiDao(
             .toCollection(ArrayList())
         song.charts = charts
         return song.toModel()
+    }
 
+    fun getAllMaiSong(): List<MaiSong> {
+        val songs = maiSongLiteRepository.findAll()
+        songs.forEach {
+            val charts = maiChartLiteRepository
+                .findAllById(it.chartIDs.asList())
+                .toCollection(ArrayList())
+            it.charts = charts
+        }
+        return songs.map { it.toModel() }
     }
 
     @Transient

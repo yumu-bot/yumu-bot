@@ -2,6 +2,7 @@ package com.now.nowbot.model.json
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import org.springframework.util.CollectionUtils
 
 class MaiScore {
@@ -73,6 +74,20 @@ class MaiScore {
     }
 
     companion object {
+
+        fun insertSongData(scores: MutableList<MaiScore>, maimaiApiService: MaimaiApiService) {
+            for (s in scores) {
+                if (s.songID == 0L) {
+                    continue
+                }
+
+                val o = maimaiApiService.getMaimaiSong(s.songID)
+
+                insertSongData(s, o)
+            }
+        }
+
+        @Deprecated("请使用 maimaiApiService 传参，避免大量无用查询")
         fun insertSongData(scores: MutableList<MaiScore>, data: Map<Int, MaiSong>) {
             for (s in scores) {
                 if (s.songID == 0L) {

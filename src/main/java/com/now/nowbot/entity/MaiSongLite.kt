@@ -74,7 +74,6 @@ class MaiSongLite(
 
         val c = mutableListOf<MaiSong.MaiChart>()
 
-        // TODO NULL
         val chartLite = this@MaiSongLite.charts
         if (chartLite != null) {
             for (cl in chartLite) {

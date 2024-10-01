@@ -129,7 +129,6 @@ class MaiVersionScoreService(
                 throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Version_Default)
 
         val full = getFullScore(param.qq, param.name, param.isMyself, maimaiApiService)
-        val songs = maimaiApiService.getMaimaiSongLibrary()
 
         val user = full.getUser()
         val scores =
@@ -137,7 +136,7 @@ class MaiVersionScoreService(
                         .stream()
                         .filter { MaiDifficulty.getIndex(it.index).equalDefault(param.difficulty) }
                         .toList()
-        MaiScore.insertSongData(scores, songs)
+        MaiScore.insertSongData(scores, maimaiApiService = maimaiApiService)
 
         val image =
                 imageService.getPanel(

@@ -176,24 +176,17 @@ class MaimaiApiImpl(
 
     override fun getMaimaiSongLibrary(): Map<Int, MaiSong> {
         //return getMaimaiSongLibraryFromFile()
-
-         return maiDao.maiSongLiteRepository.findAll().filter(Objects::nonNull)
-             .stream().map(MaiSongLite::toModel)
-            .collect(Collectors.toMap(MaiSong::songID) { it })
+        return maiDao.getAllMaiSong().stream().collect(Collectors.toMap(MaiSong::songID) {it} )
     }
 
     override fun getMaimaiSong(songID: Long): MaiSong {
         //return getMaimaiSongLibraryFromFile()[songID.toInt()] ?: MaiSong()
-        return maiDao.maiSongLiteRepository.findById(songID.toInt()).filter(Objects::nonNull)
-            .stream().map(MaiSongLite::toModel).toList().first()
+        return maiDao.findMaiSongById(songID.toInt())
     }
 
     override fun getMaimaiRank(): Map<String, Int> {
         //return getMaimaiRankLibraryFromFile()
-        return maiDao.maiRankLiteRepository.findAll()
-            .stream()
-            .map(MaiRankingLite::toModel)
-            .collect(Collectors.toMap(MaiRanking::name, MaiRanking::rating))
+        return maiDao.getAllMaiRanking().stream().collect(Collectors.toMap(MaiRanking::name, MaiRanking::rating))
     }
 
     override fun getMaimaiChartData(songID: Long): List<MaiFit.ChartData> {
