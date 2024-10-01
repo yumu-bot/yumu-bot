@@ -4,7 +4,6 @@ import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
-import com.yumu.core.extensions.toJson
 import org.springframework.stereotype.Service
 
 @Service("TEST")
@@ -36,14 +35,6 @@ class TestService(private val maimaiApiService: MaimaiApiService, private val ma
     }
 
     override fun HandleMessage(event: MessageEvent, text: String) {
-        saveFit()
-    }
-
-    fun saveFit() {
-        val data = maiDao.findMaiSongById(8);
-        for(c in data.charts) {
-
-            println(c.toJson());
-        }
+        maimaiApiService.updateMaimaiSongLibraryDatabase()
     }
 }
