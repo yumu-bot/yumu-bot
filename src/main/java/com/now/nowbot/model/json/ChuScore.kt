@@ -42,7 +42,7 @@ class ChuScore {
     @JsonIgnoreProperties var charter: String = ""
 
     companion object {
-        fun insertSongData(scores: MutableList<ChuScore>, data: MutableMap<Int, ChuSong>) {
+        fun insertSongData(scores: List<ChuScore>, data: MutableMap<Int, ChuSong>) {
             for (s in scores) {
                 if (s.songID == 0L) {
                     continue
@@ -61,7 +61,7 @@ class ChuScore {
             score.artist = song.info.artist
         }
 
-        fun insertPosition(scores: MutableList<ChuScore>, isBest30: Boolean) {
+        fun insertPosition(scores: List<ChuScore>, isBest30: Boolean) {
             if (CollectionUtils.isEmpty(scores)) return
 
             for (i in scores.indices) {

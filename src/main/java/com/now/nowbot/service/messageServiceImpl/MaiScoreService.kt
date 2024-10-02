@@ -66,9 +66,13 @@ class MaiScoreService(
 
         val nameStr = (matcher.group(FLAG_NAME) ?: "").trim()
 
+        val qqStr = (matcher.group(FLAG_QQ_ID) ?: "").trim()
+
         val qq =
                 if (event.isAt) {
                     event.target
+                } else if (StringUtils.hasText(qqStr)) {
+                    qqStr.toLong()
                 } else {
                     event.sender.id
                 }
@@ -125,9 +129,7 @@ class MaiScoreService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: MaiScoreParam) {
-        val isMyself = (param.qq == event.sender.id)
-
-        val full = getEmptyableFullScore(param.qq, param.name, maimaiApiService)
+        val full = getFullScoreOrEmpty(param.qq, param.name, maimaiApiService)
 
         /*
         if (full.records.isEmpty())
@@ -214,6 +216,8 @@ class MaiScoreService(
                             }
                             .toList()
 
+            MaiScore.insertSongData(scores, maimaiApiService)
+
             // 判断谱面种类
             if (result.songID < 10000) {
                 standard = result
@@ -236,7 +240,7 @@ class MaiScoreService(
 
     companion object {
         @JvmStatic
-        fun getEmptyableFullScore(
+        fun getFullScoreOrEmpty(
             qq: Long?,
             name: String?,
             maimaiApiService: MaimaiApiService,

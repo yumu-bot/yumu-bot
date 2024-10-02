@@ -41,7 +41,7 @@ class MaiSong {
             } else if (list.size == 4) {
                 notes = MaiNote(list.first(), list[1], list[2], 0, list[3])
             } else if (list.size == 5) {
-                notes = MaiNote(list.first(), list[1], list[2], list[4], list[3])
+                notes = MaiNote(list.first(), list[1], list[2], list[3], list.last())
             }
         }
 

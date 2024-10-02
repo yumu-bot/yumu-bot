@@ -85,7 +85,11 @@ class MaiSongLite(
                 val l = MaiSong.MaiChart()
 
                 l.charter = cl.charter
-                l.notes = MaiSong.MaiChart.MaiNote(cl.notes.first(), cl.notes[1], cl.notes[2], cl.notes[3], cl.notes.last())
+                l.notes = if (lite.type == "DX") {
+                    MaiSong.MaiChart.MaiNote(cl.notes.first(), cl.notes[1], cl.notes[2], cl.notes[3], cl.notes.last())
+                } else {
+                    MaiSong.MaiChart.MaiNote(cl.notes.first(), cl.notes[1], cl.notes[2], 0, cl.notes.last())
+                }
                 c.add(l)
             }
         }

@@ -60,7 +60,7 @@ class MaiScore {
 
     companion object {
 
-        fun insertSongData(scores: MutableList<MaiScore>, maimaiApiService: MaimaiApiService) {
+        fun insertSongData(scores: List<MaiScore>, maimaiApiService: MaimaiApiService) {
             for (s in scores) {
                 if (s.songID == 0L) {
                     continue
@@ -73,7 +73,7 @@ class MaiScore {
         }
 
         @Deprecated("请使用 maimaiApiService 传参，避免大量无用查询")
-        fun insertSongData(scores: MutableList<MaiScore>, data: Map<Int, MaiSong>) {
+        fun insertSongData(scores: List<MaiScore>, data: Map<Int, MaiSong>) {
             for (s in scores) {
                 if (s.songID == 0L) {
                     continue

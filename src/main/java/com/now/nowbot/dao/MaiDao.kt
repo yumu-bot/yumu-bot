@@ -50,7 +50,7 @@ class MaiDao(
     fun findMaiSongByTitle(title:String): List<MaiSong>? {
         val songs = maiSongLiteRepository.findByQueryTitleLikeIgnoreCase("%$title%")
 
-        if (songs.isNullOrEmpty()) return emptyList()
+        if (songs.isNullOrEmpty()) return null
 
         songs.forEach {
             val charts = maiChartLiteRepository
