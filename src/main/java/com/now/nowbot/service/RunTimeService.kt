@@ -65,7 +65,7 @@ class RunTimeService : SchedulingConfigurer {
     }
 
     //@Scheduled(cron = "0 0 6 * * *")
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 3 0 * * *")
     fun updateMaimaiSongLibrary() {
         log.info("开始执行更新 maimai 歌曲库任务")
         //maimaiApiService!!.updateMaimaiSongLibraryFile()
