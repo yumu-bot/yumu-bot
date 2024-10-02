@@ -43,7 +43,7 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
     ME("め", "メ", "me"),
     MO("も", "モ", "mo"),
     YA("や", "ヤ", "ya"),
-    YU("ゆ", "ユ", "yi"),
+    YU("ゆ", "ユ", "yu"),
     YO("よ", "ヨ", "yo"),
     RA("ら", "ラ", "ra"),
     RI("り", "リ", "ri"),
