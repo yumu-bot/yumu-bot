@@ -529,6 +529,10 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup("round", REG_NUMBER, MORE)
     }),
 
+    TEST_UPDATE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("update\\s*mai(mai)?", "um")
+    }),
+
     DEPRECATED_BPHT(CommandPatternBuilder.create {
         appendCommands("bpht")
         append("(-i)")

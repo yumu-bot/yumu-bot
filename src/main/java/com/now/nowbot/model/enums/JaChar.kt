@@ -34,7 +34,7 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
     NO("の", "ノ", "no"),
     HA("は", "ハ", "ha"),
     HI("ひ", "ヒ", "he"),
-    FU("ふ", "フ", "hu"),
+    FU("ふ", "フ", "fu"),
     HE("へ", "ヘ", "he"),
     HO("ほ", "ホ", "ho"),
     MA("ま", "マ", "ma"),
@@ -125,8 +125,9 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
     VYO("ゔょ", "ヴョ", "vyo"),
     YA2("ゃ", "ャ", "a"),
     YU2("ゅ", "ュ", "u"),
-    YO2("ょ", "ョ", "o");
+    YO2("ょ", "ョ", "o"),
 
+    ;
     companion object {
         @JvmStatic
         // 获取平假名片假名的罗马音，日文汉字就算了，那个要上 API
