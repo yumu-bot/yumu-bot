@@ -442,9 +442,12 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         if (modsValue != 0) {
             body.put("mods", modsValue);
         }
-        return base.osuApiWebClient.post().uri("beatmaps/{id}/attributes", id).headers(base::insertHeader)
-                                   .bodyValue(body).retrieve().bodyToMono(JsonNode.class).mapNotNull(
-                        j -> JacksonUtil.parseObject(j.get("attributes"), BeatmapDifficultyAttributes.class)).block();
+        return base.osuApiWebClient
+                .post().uri("beatmaps/{id}/attributes", id).headers(base::insertHeader)
+                .bodyValue(body).retrieve().bodyToMono(JsonNode.class)
+                .mapNotNull(j -> JacksonUtil.parseObject(j.get("attributes"), BeatmapDifficultyAttributes.class))
+                .onErrorReturn(new BeatmapDifficultyAttributes())
+                .block();
     }
 
     @Override

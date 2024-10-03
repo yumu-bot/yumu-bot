@@ -400,9 +400,17 @@ public interface OsuBeatmapApiService {
     }
 
     private void applyStarFromAttributes(BeatMap beatMap, OsuMode mode, Integer modsInt) {
-        var attr = getAttributes(beatMap.getId(), mode, modsInt);
+        try {
+            var attr = getAttributes(beatMap.getId(), mode, modsInt);
 
-        NowbotApplication.log.info("无法获取谱面 {}，正在获取 API 提供的星数：{}", beatMap.getBeatMapID(), attr.getStarRating());
-        beatMap.setStarRating(attr.getStarRating());
+            if (attr.getStarRating() != null) {
+                NowbotApplication.log.info("无法获取谱面 {}，正在应用 API 提供的星数：{}", beatMap.getBeatMapID(), attr.getStarRating());
+                beatMap.setStarRating(attr.getStarRating());
+            } else {
+                NowbotApplication.log.error("无法获取谱面 {}，无法应用 API 提供的星数！", beatMap.getBeatMapID());
+            }
+        } catch (Exception e) {
+            NowbotApplication.log.error("无法获取谱面 {}，无法获取 API 提供的星数！", beatMap.getBeatMapID(), e);
+        }
     }
 }

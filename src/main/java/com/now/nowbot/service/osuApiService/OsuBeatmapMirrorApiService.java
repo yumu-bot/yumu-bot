@@ -31,11 +31,11 @@ public class OsuBeatmapMirrorApiService {
                     .block();
         } catch (Exception e) {
             if (e instanceof WebClientResponseException re) {
-                log.error("osu file err: {}", re.getStatusText());
+                log.error("谱面镜像站：返回谱面 {} 失败：{}", bid, re.getStatusCode());
                 log.error(re.getResponseBodyAsString());
             }
             if (e instanceof WebClientRequestException re) {
-                log.error("osu file err: {}",re.getUri());
+                log.error("谱面镜像站：请求谱面 {} 失败!", bid);
                 log.error(re.getMessage());
             }
             throw e;
