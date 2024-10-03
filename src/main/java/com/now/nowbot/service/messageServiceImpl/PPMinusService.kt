@@ -15,39 +15,51 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.PPMinusService.PPMinusParam
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.serviceException.PPMinusException
 import com.now.nowbot.util.CmdUtil.checkOsuMode
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.QQMsgUtil
+import java.util.*
+import java.util.regex.Matcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.util.*
-import java.util.regex.Matcher
 
 @Service("PP_MINUS")
 class PPMinusService(
-    private val userApiService: OsuUserApiService,
-    private val scoreApiService: OsuScoreApiService,
-    private val bindDao: BindDao,
-    private val imageService: ImageService,
+        private val userApiService: OsuUserApiService,
+        private val scoreApiService: OsuScoreApiService,
+        private val bindDao: BindDao,
+        private val imageService: ImageService,
+) : MessageService<PPMinusParam>, TencentMessageService<PPMinusParam> {
 
-    ) : MessageService<PPMinusParam>, TencentMessageService<PPMinusParam> {
+    private val newbieGroup: Long = 695600319L
 
-    data class PPMinusParam(val isVs: Boolean, val me: OsuUser, val other: OsuUser?, val mode: OsuMode)
+    data class PPMinusParam(
+            val isVs: Boolean,
+            val me: OsuUser,
+            val other: OsuUser?,
+            val mode: OsuMode,
+    )
 
     enum class PPMinusStatus {
         USER,
         USER_VS,
     }
 
-    fun parseName(name1: String?, name2: String?, binMe: BinUser, binOther: BinUser, status: PPMinusStatus): Boolean {
+    fun parseName(
+            name1: String?,
+            name2: String?,
+            binMe: BinUser,
+            binOther: BinUser,
+            status: PPMinusStatus,
+    ): Boolean {
         if (StringUtils.hasText(name1) && StringUtils.hasText(name2)) {
-            //pv 1v2
+            // pv 1v2
             binMe.osuID = userApiService.getOsuId(name1)
             binOther.osuID = userApiService.getOsuId(name2)
 
@@ -57,14 +69,15 @@ class PPMinusService(
 
             return false
         }
-        val area = if (StringUtils.hasText(name1)) {
-            name1
-        } else {
-            name2
-        }
+        val area =
+                if (StringUtils.hasText(name1)) {
+                    name1
+                } else {
+                    name2
+                }
         when (status) {
             PPMinusStatus.USER -> {
-                //pm 1 or 2
+                // pm 1 or 2
                 binMe.osuID = userApiService.getOsuId(area)
                 if (Objects.isNull(binMe.osuID)) {
                     throw PPMinusException(PPMinusException.Type.PM_Me_FetchFailed)
@@ -72,7 +85,7 @@ class PPMinusService(
             }
 
             PPMinusStatus.USER_VS -> {
-                //pv 0v1 or 0v2
+                // pv 0v1 or 0v2
                 binOther.osuID = userApiService.getOsuId(area)
                 if (Objects.isNull(binOther.osuID)) {
                     throw PPMinusException(PPMinusException.Type.PM_Me_FetchFailed)
@@ -80,21 +93,39 @@ class PPMinusService(
             }
         }
 
-
         return status == PPMinusStatus.USER_VS
     }
 
-    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<PPMinusParam>): Boolean {
+    override fun isHandle(
+            event: MessageEvent,
+            messageText: String,
+            data: DataValue<PPMinusParam>,
+    ): Boolean {
         val matcher = Instruction.PP_MINUS.matcher(messageText)
         if (!matcher.find()) return false
 
-        val status = when (Optional.ofNullable(
-            matcher.group("function")
-        ).orElse("pm").trim { it <= ' ' }.lowercase(Locale.getDefault())) {
-            "pm", "ppm", "pp-", "p-", "ppminus", "minus" -> PPMinusStatus.USER
-            "pv", "ppmv", "pmv", "pmvs", "ppmvs", "ppminusvs", "minusvs" -> PPMinusStatus.USER_VS
-            else -> throw RuntimeException("PP-：未知的类型")
-        }
+        val status =
+                when (
+                        Optional.ofNullable(matcher.group("function"))
+                                .orElse("pm")
+                                .trim { it <= ' ' }
+                                .lowercase(Locale.getDefault())
+                ) {
+                    "pm",
+                    "ppm",
+                    "pp-",
+                    "p-",
+                    "ppminus",
+                    "minus" -> PPMinusStatus.USER
+                    "pv",
+                    "ppmv",
+                    "pmv",
+                    "pmvs",
+                    "ppmvs",
+                    "ppminusvs",
+                    "minusvs" -> PPMinusStatus.USER_VS
+                    else -> throw RuntimeException("PP-：未知的类型")
+                }
 
         val area1 = matcher.group("area1")
         val area2 = matcher.group("area2")
@@ -108,11 +139,11 @@ class PPMinusService(
         try {
             if (event.isAt) {
                 when (status) {
-                    PPMinusStatus.USER ->  //pm @
-                        binMe = bindDao.getUserFromQQ(event.target)
+                    PPMinusStatus.USER -> // pm @
+                    binMe = bindDao.getUserFromQQ(event.target)
 
                     PPMinusStatus.USER_VS -> {
-                        //pv 0v@
+                        // pv 0v@
                         binMe = bindDao.getUserFromQQ(event.sender.id, true)
                         binOther = bindDao.getUserFromQQ(event.target)
                     }
@@ -129,28 +160,29 @@ class PPMinusService(
             }
         } catch (e: WebClientResponseException) {
             throw when (e) {
-                is WebClientResponseException.Unauthorized -> if (isMyself) {
-                    PPMinusException(PPMinusException.Type.PM_Me_TokenExpired)
-                } else {
-                    PPMinusException(PPMinusException.Type.PM_Player_TokenExpired)
-                }
+                is WebClientResponseException.Unauthorized ->
+                        if (isMyself) {
+                            PPMinusException(PPMinusException.Type.PM_Me_TokenExpired)
+                        } else {
+                            PPMinusException(PPMinusException.Type.PM_Player_TokenExpired)
+                        }
 
                 is WebClientResponseException.NotFound ->
-                    PPMinusException(PPMinusException.Type.PM_Player_NotFound)
+                        PPMinusException(PPMinusException.Type.PM_Player_NotFound)
 
-                else ->
-                    PPMinusException(PPMinusException.Type.PM_BPList_FetchFailed)
+                else -> PPMinusException(PPMinusException.Type.PM_BPList_FetchFailed)
             }
         }
 
         val modeObj = getMode(matcher)
         var mode: OsuMode
         // 在新人群管理群里查询，则主动认为是 osu 模式
-        mode = if (event.subject.id == 695600319L && OsuMode.isDefaultOrNull(modeObj.data)) {
-            OsuMode.OSU
-        } else {
-            checkOsuMode(modeObj, binMe.osuMode)
-        }
+        mode =
+                if (event.subject.id == newbieGroup && OsuMode.isDefaultOrNull(modeObj.data)) {
+                    OsuMode.OSU
+                } else {
+                    checkOsuMode(modeObj, binMe.osuMode)
+                }
 
         val isVs = (binOther.osuID != null) && binMe.osuID != binOther.osuID
 
@@ -172,23 +204,26 @@ class PPMinusService(
      * @param user 玩家信息
      * @return PPM 实例
      */
+    @Throws(PPMinusException::class)
     private fun getPPMinus(user: OsuUser): PPMinus {
-        val BPList: List<Score>
+        val bests: List<Score>
 
         try {
-            BPList = scoreApiService.getBestPerformance(user)
+            bests = scoreApiService.getBestPerformance(user)
         } catch (e: WebClientResponseException) {
             log.error("PP-：最好成绩获取失败", e)
             throw PPMinusException(PPMinusException.Type.PM_BPList_FetchFailed)
         }
 
-
         if (user.statistics.playTime < 60 || user.statistics.playCount < 30) {
-            throw PPMinusException(PPMinusException.Type.PM_Player_PlayTimeTooShort, user.currentOsuMode.getName())
+            throw PPMinusException(
+                    PPMinusException.Type.PM_Player_PlayTimeTooShort,
+                    user.currentOsuMode.getName(),
+            )
         }
 
         try {
-            return PPMinus.getInstance(user.currentOsuMode, user, BPList)
+            return PPMinus.getInstance(user.currentOsuMode, user, bests)
         } catch (e: Exception) {
             log.error("PP-：数据计算失败", e)
             throw PPMinusException(PPMinusException.Type.PM_Calculate_Error)
@@ -197,23 +232,24 @@ class PPMinusService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: PPMinusParam) {
-        val from = event.subject
-
         val image: ByteArray
 
         try {
-            image = if (!param.isVs && event.subject.id == 695600319L) {
-                param.getPanelGamma()
-            } else {
-                param.getImage()
-            }
+            image =
+                    if (!param.isVs && event.subject.id == newbieGroup) {
+                        param.getPPMSpecialImage()
+                    } else {
+                        param.getPPMImage()
+                    }
+        } catch (e: TipsException) {
+            throw e
         } catch (e: Exception) {
             log.error("PP-：渲染失败：", e)
             throw PPMinusException(PPMinusException.Type.PM_Render_Error)
         }
 
         try {
-            from.sendImage(image)
+            event.reply(image)
         } catch (e: Exception) {
             log.error("PP-：发送失败：", e)
             throw PPMinusException(PPMinusException.Type.PM_Send_Error)
@@ -222,19 +258,22 @@ class PPMinusService(
 
     override fun accept(event: MessageEvent, messageText: String): PPMinusParam? {
         var matcher: Matcher
-        val status = when {
-            OfficialInstruction.PP_MINUS.matcher(messageText)
-                .apply { matcher = this }.find() -> {
-                PPMinusStatus.USER
-            }
+        val status =
+                when {
+                    OfficialInstruction.PP_MINUS.matcher(messageText)
+                            .apply { matcher = this }
+                            .find() -> {
+                        PPMinusStatus.USER
+                    }
 
-            OfficialInstruction.PP_MINUS_VS.matcher(messageText)
-                .apply { matcher = this }.find() -> {
-                PPMinusStatus.USER_VS
-            }
+                    OfficialInstruction.PP_MINUS_VS.matcher(messageText)
+                            .apply { matcher = this }
+                            .find() -> {
+                        PPMinusStatus.USER_VS
+                    }
 
-            else -> return null
-        }
+                    else -> return null
+                }
 
         val area1 = matcher.group("area1")
         val area2 = matcher.group("area2")
@@ -254,13 +293,12 @@ class PPMinusService(
         } catch (e: WebClientResponseException) {
             throw when (e) {
                 is WebClientResponseException.Unauthorized ->
-                    PPMinusException(PPMinusException.Type.PM_Me_TokenExpired)
+                        PPMinusException(PPMinusException.Type.PM_Me_TokenExpired)
 
                 is WebClientResponseException.NotFound ->
-                    PPMinusException(PPMinusException.Type.PM_Player_NotFound)
+                        PPMinusException(PPMinusException.Type.PM_Player_NotFound)
 
-                else ->
-                    PPMinusException(PPMinusException.Type.PM_BPList_FetchFailed)
+                else -> PPMinusException(PPMinusException.Type.PM_BPList_FetchFailed)
             }
         }
 
@@ -279,10 +317,12 @@ class PPMinusService(
         return PPMinusParam(isVs, me, other, mode)
     }
 
-    override fun reply(event: MessageEvent, param: PPMinusParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
+    override fun reply(event: MessageEvent, param: PPMinusParam): MessageChain? {
+        return MessageChain.MessageChainBuilder().addImage(param.getPPMImage()).build()
+    }
 
-
-    fun PPMinusParam.getImage(): ByteArray {
+    @Throws(PPMinusException::class)
+    fun PPMinusParam.getPPMImage(): ByteArray {
         val my = getPPMinus(me)
 
         var others: PPMinus? = null
@@ -293,18 +333,19 @@ class PPMinusService(
         return imageService.getVS(me, other, my, others, mode)
     }
 
-    fun PPMinusParam.getPanelGamma(): ByteArray {
+    @Throws(PPMinusException::class)
+    fun PPMinusParam.getPPMSpecialImage(): ByteArray {
         val my = getPPMinus(me)
 
         return imageService.getPanelGamma(me, mode, my)
     }
 
     fun ImageService.getVS(
-        me: OsuUser,
-        other: OsuUser?,
-        my: PPMinus,
-        others: PPMinus?,
-        mode: OsuMode
+            me: OsuUser,
+            other: OsuUser?,
+            my: PPMinus,
+            others: PPMinus?,
+            mode: OsuMode,
     ): ByteArray {
         if (other != null) {
             if (other.id == 17064371L) {
@@ -322,18 +363,19 @@ class PPMinusService(
         private fun customizePerformanceMinus(minus: PPMinus?, value: Float) {
             if (minus == null) return
 
-            val PPMClass = Class.forName("com.now.nowbot.model.ppminus.PPMinus")
-            val valieFields = arrayOf(
-                PPMClass.getDeclaredField("value1"),
-                PPMClass.getDeclaredField("value2"),
-                PPMClass.getDeclaredField("value3"),
-                PPMClass.getDeclaredField("value4"),
-                PPMClass.getDeclaredField("value5"),
-                PPMClass.getDeclaredField("value6"),
-                PPMClass.getDeclaredField("value7"),
-                PPMClass.getDeclaredField("value8"),
-            )
-            for (i in valieFields) {
+            val ppmClass = Class.forName("com.now.nowbot.model.ppminus.PPMinus")
+            val valueFields =
+                    arrayOf(
+                            ppmClass.getDeclaredField("value1"),
+                            ppmClass.getDeclaredField("value2"),
+                            ppmClass.getDeclaredField("value3"),
+                            ppmClass.getDeclaredField("value4"),
+                            ppmClass.getDeclaredField("value5"),
+                            ppmClass.getDeclaredField("value6"),
+                            ppmClass.getDeclaredField("value7"),
+                            ppmClass.getDeclaredField("value8"),
+                    )
+            for (i in valueFields) {
                 i.isAccessible = true
                 i[minus] = value
             }
