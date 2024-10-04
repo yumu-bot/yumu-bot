@@ -17,7 +17,7 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
     KE("け", "ケ", "ke"),
     KO("こ", "コ", "ko"),
     SA("さ", "サ", "sa"),
-    SI("し", "シ", "si"),
+    SHI("し", "シ", "shi"),
     SU("す", "ス", "su"),
     SE("せ", "セ", "se"),
     SO("そ", "ソ", "so"),
