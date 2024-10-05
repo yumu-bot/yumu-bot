@@ -14,6 +14,15 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.serviceException.BQQueryException
+import com.now.nowbot.throwable.serviceException.BQQueryException.ParsingBlockException
+import com.now.nowbot.throwable.serviceException.BQQueryException.ParsingQuoteException
+import com.now.nowbot.throwable.serviceException.BQQueryException.UnsupportedIndexValue
+import com.now.nowbot.throwable.serviceException.BQQueryException.UnsupportedKey
+import com.now.nowbot.throwable.serviceException.BQQueryException.UnsupportedModOperator
+import com.now.nowbot.throwable.serviceException.BQQueryException.UnsupportedOperator
+import com.now.nowbot.throwable.serviceException.BQQueryException.UnsupportedRankValue
+import com.now.nowbot.throwable.serviceException.BQQueryException.UnsupportedScoreValue
 import com.now.nowbot.util.ContextUtil
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
@@ -52,16 +61,9 @@ class BPQueryService(
         } else {
             param.mode
         }
-
-        val bpList: List<Score>
-        val result = try {
-            val filters = getAllFilter(param.filter)
-            bpList = scoreApiService.getBestPerformance(bindUser, mode, 0, 100)
-            getBP(filters, bpList)
-        } catch (e: IllegalArgumentException) {
-            event.reply("解析表达式出错了, ${e.message}")
-            return
-        }
+        val filters = getAllFilter(param.filter)
+        val bpList = scoreApiService.getBestPerformance(bindUser, mode, 0, 100)
+        val result = getBP(filters, bpList)
         val user = userApiService.getPlayerInfo(bindUser)
 
         if (result.isEmpty()) {
@@ -127,7 +129,8 @@ class BPQueryService(
         }, EQ, NE),
         Artist("artist", { (op, v, s) ->
             val artist = v.replace("$", " ")
-            val hasArtist = s.beatMapSet.artist.contains(artist, true) || s.beatMapSet.artistUnicode.contains(artist, true)
+            val hasArtist =
+                s.beatMapSet.artist.contains(artist, true) || s.beatMapSet.artistUnicode.contains(artist, true)
             if (op == EQ) {
                 hasArtist
             } else {
@@ -148,8 +151,8 @@ class BPQueryService(
         ScoreNumber("score", { (op, v, s) ->
             val score = try {
                 v.toInt()
-            } catch (e: Exception) {
-                throw IllegalArgumentException("'score' invalid value '$v'")
+            } catch (_: Exception) {
+                throw UnsupportedScoreValue(v)
             }
             when (op) {
                 EQ -> s.score == score
@@ -163,8 +166,8 @@ class BPQueryService(
         Index("index", { (op, v, s) ->
             val index = try {
                 v.toInt() - 1 //自然数是 1-100，不是计算机需要的0-99
-            } catch (e: Exception) {
-                throw IllegalArgumentException("'index' invalid value '$v'")
+            } catch (_: Exception) {
+                throw UnsupportedIndexValue(v)
             }
             when (op) {
                 EQ -> s.weight.index == index
@@ -295,7 +298,7 @@ class BPQueryService(
                 EQ -> mods == scoreMods
                 NE -> mods and scoreMods == 0
                 GT -> mods and scoreMods == mods
-                else -> throw IllegalArgumentException("'mod' invalid operator '${op.op}'")
+                else -> throw UnsupportedModOperator(op.op)
             }
         }, EQ, NE, GT),
         Rate("rate", { (op, v, s) ->
@@ -317,7 +320,7 @@ class BPQueryService(
         ;
 
         operator fun invoke(operator: Operator, value: String): (Score) -> Boolean {
-            if (operator !in enabledOperator) throw IllegalArgumentException("'$key' invalid operator '${operator.op}'")
+            if (operator !in enabledOperator) throw UnsupportedOperator(key, operator.op)
             return { score -> filter(Triple(operator, value, score)) }
         }
     }
@@ -357,7 +360,7 @@ class BPQueryService(
         val split: Regex = "(\\s+)|[|,，]".toRegex()
 
         private fun String.getOperator(): Triple<String, Operator, String> {
-            val m = pattern.matchEntire(this) ?: throw IllegalArgumentException("Invalid query")
+            val m = pattern.matchEntire(this) ?: throw ParsingBlockException()
             val operator = when (m.groupValues[2]) {
                 EQ.op -> EQ
                 NE.op -> NE
@@ -365,7 +368,7 @@ class BPQueryService(
                 GE.op -> GE
                 LT.op -> LT
                 LE.op -> LE
-                else -> throw IllegalArgumentException("Invalid operator '${m.groupValues[2]}'")
+                else -> throw UnsupportedOperator(m.groupValues[0], m.groupValues[2])
             }
             return Triple(m.groupValues[1], operator, m.groupValues[3])
         }
@@ -391,7 +394,7 @@ class BPQueryService(
                 Param.Miss.key -> Param.Miss(operator, value)
                 Param.Mods.key -> Param.Mods(operator, value)
                 Param.Rate.key -> Param.Rate(operator, value)
-                else -> throw IllegalArgumentException("Invalid key")
+                else -> throw UnsupportedKey(key)
             }
         }
 
@@ -404,8 +407,9 @@ class BPQueryService(
                 .forEach {
                     val f = try {
                         getFilter(it.trim().lowercase())
-                    } catch (e: Exception) {
-                        throw IllegalArgumentException("err: '$it' ${e.message}")
+                    } catch (e: BQQueryException) {
+                        e.message = it
+                        throw e
                     }
                     result.add(f)
                 }
@@ -423,7 +427,7 @@ class BPQueryService(
                 "SH" -> 6
                 "X" -> 7
                 "XH" -> 8
-                else -> throw IllegalArgumentException("Invalid rank")
+                else -> throw UnsupportedRankValue(rank)
             }
         }
 
@@ -436,7 +440,7 @@ class BPQueryService(
                 quoteCount == 0 -> return this
                 quoteCount % 2 != 0 -> {
                     val end = this.substring(min(4, this.length))
-                    throw IllegalArgumentException("Invalid quote '$end'")
+                    throw ParsingQuoteException(end)
                 }
             }
             val result = StringBuilder()

@@ -6,6 +6,7 @@ public class TipsException extends Exception implements BotException {
     String message;
     byte[] image = null;
 
+    public TipsException() {}
     public TipsException(String message) {
         setMessage(message);
     }
