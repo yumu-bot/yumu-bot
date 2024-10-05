@@ -408,7 +408,7 @@ class BPQueryService(
                     val f = try {
                         getFilter(it.trim().lowercase())
                     } catch (e: BQQueryException) {
-                        e.message = it
+                        e.expression = it
                         throw e
                     }
                     result.add(f)

@@ -5,7 +5,7 @@ import com.now.nowbot.throwable.TipsException
 open class BQQueryException(message: String) : TipsException(message) {
     var expression: String? = null
 
-    override var message: String = message
+    override val message: String = message
         get() {
             if (expression == null) return field
             return "Expression parsing exception: $expression $field"
