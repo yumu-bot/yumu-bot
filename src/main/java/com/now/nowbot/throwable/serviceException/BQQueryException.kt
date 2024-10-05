@@ -8,7 +8,7 @@ open class BQQueryException(message: String) : TipsException(message) {
     override val message: String = message
         get() {
             if (expression == null) return field
-            return "Expression parsing exception: $expression $field"
+            return "[$expression] $field"
         }
 
     class ParsingBlockException() : BQQueryException("parsing invalid: unsupported operator or value")
