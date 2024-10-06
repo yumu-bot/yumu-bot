@@ -396,7 +396,7 @@ enum class Instruction(val pattern: Pattern) {
         appendSpace()
         appendCaptureGroup("round", REG_NUMBER, MORE)
         appendSpace()
-        appendCaptureGroup("keyword", "[\\w\\s-_ %*()/|\\u4e00-\\u9fa5\\uf900-\\ufa2d]", MORE)
+        appendCaptureGroup("keyword", REG_ANYTHING, MORE) // "[\\w\\s-_ %*()/|\\u4e00-\\u9fa5\\uf900-\\ufa2d]"
     }),
 
     MATCH_NOW(CommandPatternBuilder.create {
@@ -409,7 +409,7 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("mappool", "po")
         appendMode()
         appendSpace()
-        appendCaptureGroup("name", REG_WORD, MORE)
+        appendCaptureGroup("name", REG_ANYTHING, MORE)
     }),
 
     GET_POOL(CommandPatternBuilder.create {
@@ -421,7 +421,7 @@ enum class Instruction(val pattern: Pattern) {
             appendCaptureGroup("name", REG_ANYTHING, MORE)
             append(REG_HASH)
         }
-        appendCaptureGroup(FLAG_DATA, REG_NUMBER_SEPERATOR, ANY)
+        appendCaptureGroup(FLAG_DATA, REG_ANYTHING, ANY)
     }),
 
     // #6 聊天指令
