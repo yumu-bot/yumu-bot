@@ -140,7 +140,7 @@ public class MatchCalculate {
         // easy multiplier
         if (param.easy != 1d) {
             rounds = rounds.stream().peek(r -> r.setScores(
-                    r.getScores().stream().peek(
+                    Objects.requireNonNullElse(r.getScores(), new ArrayList<Match.MatchScore>()).stream().peek(
                             s -> {
                                 if (OsuMod.hasEz(OsuMod.getModsValue(s.getMods()))) {
                                     s.setScore((int) (s.getScore() * param.easy));
@@ -153,7 +153,7 @@ public class MatchCalculate {
         for (var r : rounds) {
             AtomicInteger i = new AtomicInteger(1);
 
-            r.setScores(r.getScores().stream()
+            r.setScores(Objects.requireNonNullElse(r.getScores(), new ArrayList<Match.MatchScore>()).stream()
                     .filter(s -> s.getScore() > (param.delete ? 10000 : 0))
                     .sorted(Comparator.comparing(Match.MatchScore::getScore).reversed())
                     .peek(s -> s.setRanking(i.getAndIncrement()))
@@ -162,7 +162,7 @@ public class MatchCalculate {
 
         // add user
         for (var r : rounds) {
-            for (var s : r.getScores()) {
+            for (var s : Objects.requireNonNullElse(r.getScores(), new ArrayList<Match.MatchScore>())) {
                 for (var p : this.match.getPlayers()) {
                     if (Objects.equals(p.getUserID(), s.getUserID())) {
                         s.setUser(p);
@@ -195,7 +195,7 @@ public class MatchCalculate {
 
     private void getScores(CalculateParam param) {
         this.scores = this.rounds.stream()
-                .flatMap(r -> r.getScores().stream())
+                .flatMap(r -> Objects.requireNonNullElse(r.getScores(), new ArrayList<Match.MatchScore>()).stream())
                 .filter(s -> s.getScore() > (param.delete ? 10000 : 0))
                 .toList();
     }
@@ -241,7 +241,7 @@ public class MatchCalculate {
         MatchData(CalculateParam param) {
             this.playerCount = players.size();
             this.roundCount = rounds.size();
-            this.scoreCount = rounds.stream().flatMap(r -> r.getScores().stream())
+            this.scoreCount = rounds.stream().flatMap(r -> Objects.requireNonNullElse(r.getScores(), new ArrayList<Match.MatchScore>()).stream())
                     .filter(s -> s.getScore() > (param.delete ? 10000 : 0))
                     .toList().size();
 
@@ -274,15 +274,10 @@ public class MatchCalculate {
         }
 
         private void initFirstMapSID() {
-            if (!CollectionUtils.isEmpty(rounds)) {
-                for (var r : rounds) {
-                    var b = r.getBeatMap();
-
-                    if (Objects.nonNull(b)) {
-                        firstMapSID = b.getSetID();
-                        break;
-                    }
-                }
+            if (! CollectionUtils.isEmpty(rounds) && rounds.getFirst().getBeatMap() != null) {
+                firstMapSID = rounds.getFirst().getBeatMap().getSetID();
+            } else {
+                firstMapSID = 0L;
             }
         }
 
@@ -335,7 +330,7 @@ public class MatchCalculate {
 
             //每一局
             for (Match.MatchRound round : rounds) {
-                List<Match.MatchScore> scoreList = round.getScores();
+                List<Match.MatchScore> scoreList = Objects.requireNonNullElse(round.getScores(), new ArrayList<>(0));
 
                 long roundScore = scoreList.stream()
                         .mapToLong(Match.MatchScore::getScore)
@@ -373,34 +368,36 @@ public class MatchCalculate {
                 boolean isTeamVS = Objects.equals(round.getTeamType(), "team-vs");
 
                 //每一个分数
-                for (Match.MatchScore score : round.getScores()) {
-                    var player = playerDataMap.get(score.getUserID());
-                    if (Objects.isNull(player)) continue;
+                if (round.getScores() != null) {
+                    for (Match.MatchScore score : round.getScores()) {
+                        var player = playerDataMap.get(score.getUserID());
+                        if (player == null) continue;
 
-                    var team = player.getTeam();
-                    double RWS;
-                    if (isTeamVS) {
-                        if (Objects.equals(WinningTeam, team)) {
-                            RWS = 1d * score.getScore() / WinningTeamScore;
-                            player.setWin(player.getWin() + 1);
-                        } else if (WinningTeam == null) {
-                            //平局
-                            RWS = 1d * score.getScore() / WinningTeamScore;
+                        var team = player.getTeam();
+                        double RWS;
+                        if (isTeamVS) {
+                            if (Objects.equals(WinningTeam, team)) {
+                                RWS = 1d * score.getScore() / WinningTeamScore;
+                                player.setWin(player.getWin() + 1);
+                            } else if (WinningTeam == null) {
+                                //平局
+                                RWS = 1d * score.getScore() / WinningTeamScore;
+                            } else {
+                                RWS = 0d;
+                                player.setLose(player.getLose() + 1);
+                            }
                         } else {
-                            RWS = 0d;
-                            player.setLose(player.getLose() + 1);
+                            if (score.getScore() == WinningTeamScore) {
+                                RWS = 1d;
+                                player.setWin(player.getWin() + 1);
+                            } else {
+                                RWS = 0d;
+                                player.setLose(player.getLose() + 1);
+                            }
                         }
-                    } else {
-                        if (score.getScore() == WinningTeamScore) {
-                            RWS = 1d;
-                            player.setWin(player.getWin() + 1);
-                        } else {
-                            RWS = 0d;
-                            player.setLose(player.getLose() + 1);
-                        }
+
+                        player.getRWSs().add(RWS);
                     }
-
-                    player.getRWSs().add(RWS);
                 }
             }
             // 挨个计算放在外面在一个循环进行

@@ -98,7 +98,8 @@ data class MonitoredMatch(
     ) {
         val mode: OsuMode
             get() = OsuMode.getMode(modeInt)
-        val isTeamVS = teamType.contains("team-vs")
+        val isTeamVS: Boolean
+            get() = teamType == "team-vs" || teamType == "tag-team-vs"
     }
 
     data class MatchScore(
