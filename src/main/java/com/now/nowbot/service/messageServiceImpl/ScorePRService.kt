@@ -232,7 +232,7 @@ class ScorePRService(
                         GeneralTipsException(
                                 GeneralTipsException.Type.G_Null_RecentScore,
                                 user!!.username,
-                                param.mode?.name ?: "默认")
+                                user.currentOsuMode.getName())
 
                 else -> GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "成绩")
             }
@@ -243,9 +243,9 @@ class ScorePRService(
 
         if (CollectionUtils.isEmpty(scoreList)) {
             throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Null_RecentScore,
-                    user.username,
-                    param.mode?.name ?: "默认")
+                GeneralTipsException.Type.G_Null_RecentScore,
+                user.username,
+                user.currentOsuMode.getName())
         }
 
         // 成绩发送
@@ -269,7 +269,9 @@ class ScorePRService(
 
             try {
                 // 处理新人群 ps 超星问题
-                if (event?.subject?.id == 595985887L) ContextUtil.setContext("isNewbie", true)
+                if (event?.subject?.id == 595985887L) {
+                    ContextUtil.setContext("isNewbie", true)
+                }
                 image = imageService.getPanelA5(user, scores)
                 return QQMsgUtil.getImage(image)
             } catch (e: Exception) {
