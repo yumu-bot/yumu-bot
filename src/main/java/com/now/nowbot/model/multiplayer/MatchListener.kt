@@ -18,7 +18,7 @@ class MatchListener(
     val matchApiService: OsuMatchApiService,
     vararg adapter: MatchAdapter
 ) {
-    private val matchId = match.ID
+    private val matchId = match.id
     private var nowGameID: Long? = null
     private var nowEventID: Long = match.latestEventID
     private val eventListener = mutableSetOf<MatchAdapter>()
@@ -38,7 +38,7 @@ class MatchListener(
         if (match.currentGameID != null) {
             val gameEvent = match.events.last { it.game != null }
             nowGameID = match.currentGameID
-            nowEventID = gameEvent.ID - 1
+            nowEventID = gameEvent.eventID - 1
             try {
                 onEvent(gameEvent)
             } catch (e: Exception) {
@@ -60,10 +60,10 @@ class MatchListener(
                     nowGameID = newMatch.currentGameID
                     isAbort = true
                 }
-                if (nowEventID == gameEvent.ID - 1 && isAbort.not()) {
+                if (nowEventID == gameEvent.eventID - 1 && isAbort.not()) {
                     return
                 } else {
-                    nowEventID = gameEvent.ID - 1
+                    nowEventID = gameEvent.eventID - 1
                 }
             } else {
                 nowEventID = newMatch.latestEventID
@@ -165,7 +165,7 @@ class MatchListener(
             // 对局结束
             val listenerEvent = MatchAdapter.GameEndEvent(
                 game,
-                event.ID,
+                event.eventID,
                 userMap,
             )
             eventListener.forEach { l -> l.onGameEnd(listenerEvent) }
@@ -175,7 +175,7 @@ class MatchListener(
 
             val listenerEvent = with(game) {
                 MatchAdapter.GameStartEvent(
-                    event.ID,
+                    event.eventID,
                     match.name,
                     beatmapID,
                     beatmap!!,

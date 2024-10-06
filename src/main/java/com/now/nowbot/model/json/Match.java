@@ -248,6 +248,7 @@ public class Match implements Cloneable {
         @JsonProperty("beatmap")
         BeatMap beatMap;
 
+        @Nullable
         @JsonProperty("scores")
         List<MatchScore> scores;
 
@@ -341,11 +342,11 @@ public class Match implements Cloneable {
             this.beatMap = beatMap;
         }
 
-        public List<MatchScore> getScores() {
+        public @Nullable List<MatchScore> getScores() {
             return scores;
         }
 
-        public void setScores(List<MatchScore> scores) {
+        public void setScores(@Nullable List<MatchScore> scores) {
             this.scores = scores;
         }
 
@@ -354,21 +355,22 @@ public class Match implements Cloneable {
         public TeamScore getTeamScore() {
             long total = 0L, red = 0L, blue = 0L;
 
-            if (Objects.equals(teamType, "team-vs")) {
-                for (MatchScore s : scores) {
+            if (scores != null) {
+                if (Objects.equals(teamType, "team-vs")) {
+                    for (MatchScore s : scores) {
 
-                    switch (s.getPlayerStat().team()) {
-                        case "red" -> red += s.getScore();
-                        case "blue" -> blue += s.getScore();
+                        switch (s.getPlayerStat().team()) {
+                            case "red" -> red += s.getScore();
+                            case "blue" -> blue += s.getScore();
+                        }
                     }
-                }
 
-                total = red + blue;
+                    total = red + blue;
 
-            } else {
-                // fixme: 这里的 scores 可能为 null
-                for (MatchScore s : scores) {
-                    total += s.getScore();
+                } else {
+                    for (MatchScore s : scores) {
+                        total += s.getScore();
+                    }
                 }
             }
 
@@ -400,8 +402,8 @@ public class Match implements Cloneable {
             if (Objects.equals(teamType, "team-vs")) {
                 var ts = getTeamScore();
                 this.winningTeamScore = Math.max(ts.red(), ts.blue());
-            } else {
-                this.winningTeamScore = this.getScores().stream().mapToLong(MatchScore::getScore).reduce(Long::max).orElse(0L);
+            } else if (scores != null) {
+                this.winningTeamScore = scores.stream().mapToLong(MatchScore::getScore).reduce(Long::max).orElse(0L);
             }
             return this.winningTeamScore;
         }

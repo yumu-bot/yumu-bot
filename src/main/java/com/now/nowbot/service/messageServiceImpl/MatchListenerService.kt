@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
+import com.now.nowbot.model.json.MicroUser
 import com.now.nowbot.model.multiplayer.MatchAdapter
 import com.now.nowbot.model.multiplayer.MatchCalculate
 import com.now.nowbot.model.multiplayer.MatchListener
@@ -22,9 +23,11 @@ import com.now.nowbot.util.DataUtil.getOriginal
 import com.now.nowbot.util.Instruction
 import com.yumu.core.extensions.isNotNull
 import io.github.oshai.kotlinlogging.KotlinLogging
+import okhttp3.internal.toImmutableMap
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.stream.Collectors
 
 @Service("MATCH_LISTENER")
 class MatchListenerService(
@@ -115,7 +118,7 @@ class MatchListenerService(
             else -> {}
         }
 
-        regectListener(
+        regentListener(
             event.group.id,
             event.sender.id,
             MatchListenerImplement(
@@ -179,8 +182,6 @@ class MatchListenerService(
             )
 
             val image = try {
-                // fixme: 开始的时候score是null,
-                //  报错 `Could not write JSON: Cannot invoke "java.util.List.iterator()" because "this.scores" is null`
                 imageService.getPanelE7(e7)
             } catch (e: WebClientResponseException) {
                 log.error(e) { "获取图片失败" }
@@ -197,9 +198,21 @@ class MatchListenerService(
 
         override fun onGameEnd(event: MatchAdapter.GameEndEvent) = with(event) {
             game.scores = game.scores.filter { s-> s.score >= 1000 }
+
+            val userMap = match.users.stream().distinct()
+                .collect(Collectors.toMap(MicroUser::getUserID) { it }).toImmutableMap()
+
+            for(s in game.scores) {
+                val u = userMap[s.userID]
+
+                if (u != null && u.id != 0L) {
+                    s.user = u
+                }
+            }
+
             val index = 1
             val image = try {
-                val stat = match.state
+                val stat = match.statistics
                 imageService.getPanelF2(stat, game, index)
             } catch (e: java.lang.Exception) {
                 log.error(e) {"对局信息图片渲染失败："}
@@ -256,7 +269,7 @@ class MatchListenerService(
         // group user listener
         val senderSet = mutableSetOf<Triple<Long, Long, MatchListenerImplement>>()
 
-        fun regectListener(
+        fun regentListener(
             group: Long,
             user: Long,
             listener: MatchListenerImplement,

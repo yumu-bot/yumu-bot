@@ -12,7 +12,7 @@ import java.time.OffsetDateTime
 
 data class MonitoredMatch(
     @JsonProperty("match")
-    var state: MatchStat,
+    var statistics: MatchStat,
 
     val events: MutableList<MatchEvent>,
 
@@ -25,22 +25,22 @@ data class MonitoredMatch(
     var latestEventID: Long,
 ) {
     val isMatchEnd: Boolean
-        get() = state.endTime != null
+        get() = statistics.endTime != null
 
     val currentGameID: Long?
-        get() = events.lastOrNull { it.game != null }?.game?.id
+        get() = events.lastOrNull { it.game != null }?.game?.gameID
 
-    val name by state::name
+    val name by statistics::name
 
-    val ID by state::ID
+    val id by statistics::matchID
 
-    val startTime by state::startTime
+    val startTime by statistics::startTime
 
-    val endTime by state::endTime
+    val endTime by statistics::endTime
 
     data class MatchStat(
         @JsonProperty("id")
-        val ID: Long,
+        val matchID: Long,
 
         @JsonProperty("start_time")
         val startTime: OffsetDateTime,
@@ -53,7 +53,7 @@ data class MonitoredMatch(
 
     data class MatchEvent(
         @JsonProperty("id")
-        val ID: Long,
+        val eventID: Long,
 
         @JsonProperty("detail")
         private val detailObj: JsonNode?,
@@ -77,11 +77,18 @@ data class MonitoredMatch(
     }
 
     data class MatchGame(
-        val id: Long,
+        @JsonProperty("id")
+        val gameID: Long,
+
         var beatmap: BeatMap?,
 
+        @JsonProperty("beatmap_id")
         val beatmapID: Long,
+
+        @JsonProperty("start_time")
         val startTime: OffsetDateTime,
+
+        @JsonProperty("end_time")
         val endTime: OffsetDateTime?,
         val modeInt: Int,
         val mods: List<String>,
@@ -115,8 +122,11 @@ data class MonitoredMatch(
         val rank: String,
         val score: Int,
         val statistics: Statistics,
-        val type: String
-    )
+        val type: String,
+    ) {
+        // 自己设
+        var user: MicroUser = MicroUser()
+    }
 
     data class MatchScorePlayerStat(
         val slot: Int,
@@ -155,7 +165,7 @@ data class MonitoredMatch(
         match.latestEventID = this.latestEventID
 
         val t = Match.MatchStat()
-        t.matchID = this.ID
+        t.matchID = this.id
         t.name = this.name
         t.startTime = this.startTime
         t.endTime = this.endTime
@@ -212,7 +222,7 @@ data class MonitoredMatch(
                 r.modInt = OsuMod.getModsValueFromAbbrList(g.mods)
                 r.scoringType = g.scoringType
                 r.teamType = g.teamType
-                r.roundID = g.id.toInt()
+                r.roundID = g.gameID.toInt()
 
                 run {
                     val isVs = (g.teamType == "team-vs")
@@ -251,7 +261,7 @@ data class MonitoredMatch(
 
             }
             e.userID = me.userID
-            e.eventID = me.ID
+            e.eventID = me.eventID
             e.round = r
             e.timestamp = me.timestamp
 
@@ -273,24 +283,24 @@ data class MonitoredMatch(
             users.addAll(newUsers)
         }
         //更新状态
-        state = match.state
+        statistics = match.statistics
         latestEventID = match.latestEventID
         firstEventID = match.firstEventID
 
         if (match.events.isEmpty()) return
         when {
             // 插入新事件
-            events.last().ID < match.events.first().ID -> events.addAll(match.events)
+            events.last().eventID < match.events.first().eventID -> events.addAll(match.events)
             // 插入旧事件
-            events.first().ID > match.events.last().ID -> events.addAll(0, match.events)
+            events.first().eventID > match.events.last().eventID -> events.addAll(0, match.events)
             // 中间插入
-            events.last().ID < match.events.last().ID -> {
-                events.removeIf { it.ID >= match.events.first().ID }
+            events.last().eventID < match.events.last().eventID -> {
+                events.removeIf { it.eventID >= match.events.first().eventID }
                 events.addAll(match.events)
             }
             // 中间插入
-            events.first().ID > match.events.first().ID -> {
-                events.removeIf { it.ID <= match.events.last().ID }
+            events.first().eventID > match.events.first().eventID -> {
+                events.removeIf { it.eventID <= match.events.last().eventID }
                 events.addAll(0, match.events)
             }
         }
