@@ -6,31 +6,31 @@ import org.springframework.util.CollectionUtils
 enum class MaiVersion(val full: String, val abbreviation: String, val code: String) {
     DEFAULT("", "", ""),
     MAIMAI("maimai", "真", "mai"),
-    PLUS("maimai PLUS", "真", "mai+"),
+    PLUS("maimai PLUS", "真", "mai"),
     GREEN("maimai GreeN", "超", "grn"),
-    GREEN_PLUS("maimai GreeN PLUS", "檄", "grn+"),
+    GREEN_PLUS("maimai GreeN PLUS", "檄", "grp"),
     ORANGE("maimai ORANGE", "橙", "org"),
-    ORANGE_PLUS("maimai ORANGE PLUS", "暁", "org+"),
+    ORANGE_PLUS("maimai ORANGE PLUS", "暁", "orp"),
     PINK("maimai PiNK", "桃", "pnk"),
-    PINK_PLUS("maimai PiNK PLUS", "櫻", "pnk+"),
+    PINK_PLUS("maimai PiNK PLUS", "櫻", "pkp"),
     MURASAKI("maimai MURASAKi", "紫", "msk"),
-    MURASAKI_PLUS("maimai MURASAKi PLUS", "菫", "msk+"),
+    MURASAKI_PLUS("maimai MURASAKi PLUS", "菫", "msp"),
     MILK("maimai MiLK", "白", "mlk"),
-    MILK_PLUS("MiLK PLUS", "雪", "mlk+"),
+    MILK_PLUS("MiLK PLUS", "雪", "mkp"),
     FINALE("maimai FiNALE", "輝", "fnl"),
     ALL_FINALE("ALL FiNALE", "舞", "afn"),
     DX("maimai でらっくす", "熊", "dx"),
-    DX_PLUS("maimai でらっくす PLUS", "華", "dx+"),
+    DX_PLUS("maimai でらっくす PLUS", "華", "dxp"),
     SPLASH("maimai でらっくす Splash", "爽", "spl"),
-    SPLASH_PLUS("maimai でらっくす Splash PLUS", "煌", "spl+"),
+    SPLASH_PLUS("maimai でらっくす Splash PLUS", "煌", "spp"),
     UNIVERSE("maimai でらっくす UNiVERSE", "宙", "uni"),
-    UNIVERSE_PLUS("maimai でらっくす UNiVERSE PLUS", "星", "uni+"),
+    UNIVERSE_PLUS("maimai でらっくす UNiVERSE PLUS", "星", "unp"),
     FESTIVAL("maimai でらっくす FESTiVAL", "祭", "fes"),
-    FESTIVAL_PLUS("maimai でらっくす FESTiVAL PLUS", "祝", "fes+"),
-    BUDDIES("maimai でらっくす BUDDiES", "", "bud"),
-    BUDDIES_PLUS("maimai でらっくす BUDDiES PLUS", "", "bud+"),
+    FESTIVAL_PLUS("maimai でらっくす FESTiVAL PLUS", "祝", "fep"),
+    BUDDIES("maimai でらっくす BUDDiES", "双", "bud"),
+    BUDDIES_PLUS("maimai でらっくす BUDDiES PLUS", "宴", "bdp"),
     PRISM("maimai でらっくす PRiSM", "", "pri"),
-    PRISM_PLUS("maimai でらっくす PRiSM PLUS", "", "pri+"),
+    PRISM_PLUS("maimai でらっくす PRiSM PLUS", "", "prp"),
     ;
 
     companion object {
@@ -44,21 +44,20 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
         }
 
         @JvmStatic
-        fun getAbbreviationList(versions: MutableList<MaiVersion>): MutableList<String> {
-            if (CollectionUtils.isEmpty(versions)) {
-                return mutableListOf()
-            }
-
-            return versions.stream().map(MaiVersion::abbreviation).toList()
-        }
-
-        @JvmStatic
         fun getCodeList(versions: MutableList<MaiVersion>): MutableList<String> {
             if (CollectionUtils.isEmpty(versions)) {
                 return mutableListOf()
             }
 
             return versions.stream().map(MaiVersion::code).toList()
+        }
+
+        fun getVersionFromAbbr(abbreviation: String): MaiVersion {
+            for(v in MaiVersion.entries) {
+                if (v.abbreviation == abbreviation) return v
+            }
+
+            return DEFAULT
         }
 
         @JvmStatic

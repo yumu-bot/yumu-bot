@@ -1,6 +1,7 @@
 package com.now.nowbot.model.json
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.model.enums.MaiVersion
 import java.util.*
 
 class MaiBestScore {
@@ -45,6 +46,7 @@ class MaiBestScore {
             val rating: Int?,
             val base: Int?,
             val additional: Int?,
+            val platename: String?,
     )
 
     fun getUser(): User {
@@ -63,7 +65,30 @@ class MaiBestScore {
                         .reduce { a: Int, b: Int -> a + b }
                         .orElse(0)
 
-        return User(this.name, this.probername, this.dan, this.plate, this.rating, best35, best15)
+        val platename = getPlateName(this.plate)
+
+        return User(this.name, this.probername, this.dan, this.plate, this.rating, best35, best15, platename)
+    }
+
+    private fun getPlateName(plate: String?) : String {
+        if (plate == null) return ""
+
+        val code = MaiVersion.getVersionFromAbbr(plate.substring(0, 1)).let { if (it != MaiVersion.DEFAULT) {
+            it.code
+        } else {
+            return ""
+        }}
+
+        val rank = when (plate.substring(1)) {
+            "神" -> "ap"
+            "将" -> "sss"
+            "极", "極" -> "fc"
+            "舞", "舞舞" -> "fdx" // 舞舞
+
+            else -> return ""
+        }
+
+        return code + rank
     }
 
     /*

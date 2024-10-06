@@ -8,14 +8,14 @@ import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 
 @Service
-class UpdateMaimaiService(private val maimaiApiService: MaimaiApiService) : MessageService<Boolean> {
+class MaimaiUpdateService(private val maimaiApiService: MaimaiApiService) : MessageService<Boolean> {
 
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
         data: MessageService.DataValue<Boolean>
     ): Boolean {
-        val matcher = Instruction.TEST_UPDATE.matcher(messageText)
+        val matcher = Instruction.MAIMAI_UPDATE.matcher(messageText)
         if (!matcher.find()) {
             return false
         }

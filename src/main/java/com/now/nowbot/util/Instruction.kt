@@ -143,7 +143,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     BP_FIX(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("bpfix", "fixbp", "bestperformancefix", "bestfix", "bpf", "bf")
+        appendCommandsIgnoreAll("bpfix", "fixbp", "bestperformancefix", "bestfix", "bpf", "bf", "boy\\s*friends?")
         appendModeQQUIDName()
     }),
 
@@ -529,10 +529,6 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup("round", REG_NUMBER, MORE)
     }),
 
-    TEST_UPDATE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("update\\s*mai(mai)?", "um")
-    }),
-
     DEPRECATED_BPHT(CommandPatternBuilder.create {
         appendCommands("bpht")
         append("(-i)")
@@ -590,6 +586,15 @@ enum class Instruction(val pattern: Pattern) {
             appendSpace()
             appendCaptureGroup("version", REG_ANYTHING, MORE)
         }
+    }),
+
+    MAIMAI_UPDATE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("update\\s*mai(mai)?", "um")
+    }),
+
+    MAIMAI_FIND(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("mai(mai)?\\s*find", "mf", "mother\\s*fucker")
+        appendCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
     }),
 
     CHU_BP(CommandPatternBuilder.create {

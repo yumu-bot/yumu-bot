@@ -1114,33 +1114,49 @@ object DataUtil {
         val cs = getStandardisedString(compare)
         val ts = getStandardisedString(to)
 
-        return max(getSimilarity(cs, ts), 0.75 * getSimilarity(cs.reversed(), ts.reversed()))
+        return getSimilarity(cs, ts) * getSimilarity(cs.reversed(), ts.reversed()).pow(0.5)
+        // return max(getSimilarity(cs, ts), 0.75 * getSimilarity(cs.reversed(), ts.reversed()))
     }
 
-    private fun getSimilarity(compare: String, to: String): Double {
-        val c1 = compare
-        var t1 = to
-        val c1l = compare.length
-        val t1l = to.length
+    @JvmStatic
+    // 获取两个已经格式化后的字符串的相似度。
+    fun getStringSimilarityStandardised(compare: String?, to: String?): Double {
+        if (compare.isNullOrEmpty() || to.isNullOrEmpty()) return 0.0
+
+        return getSimilarity(compare, to) * getSimilarity(compare.reversed(), to.reversed()).pow(0.5)
+        // return max(getSimilarity(compare, to), 0.75 * getSimilarity(compare.reversed(), to.reversed()))
+    }
+
+    private fun getSimilarity(compare: String, too: String): Double {
+        var to = too
+        val cLength = compare.length
+        val tLength = to.length
 
         var count = 0.0
-        if (StringUtils.hasText(c1) && StringUtils.hasText(t1)) {
+        var sequentMax = 0.0
+        var sequent = 0.0
+        if (StringUtils.hasText(compare) && StringUtils.hasText(to)) {
 
-            outer@ for (v in c1) {
-                for (w in t1) {
+            outer@ for (v in compare) {
+                for (w in to) {
                     if (v == w) {
-                        t1 = t1.substring(t1.indexOf(w) + 1)
-                        count++
+                        to = to.substring(to.indexOf(w) + 1)
+                        count ++
+                        sequent ++
                         continue@outer
                     }
                 }
+                sequentMax = max(sequent, sequentMax)
+                sequent = 0.0
             }
 
-            // to 1 matched length
-            val m1 = max(t1l - t1.length, 1)
+            sequentMax = max(sequent, sequentMax)
 
-            if (c1l > 0 && t1l > 0) {
-                return count.pow(2) / (c1l * m1)
+            // to 1 matched length
+            val m1 = max(tLength - to.length, 1)
+
+            if (cLength > 0 && tLength > 0) {
+                return count * sequentMax / (cLength * m1)
             }
         }
 
