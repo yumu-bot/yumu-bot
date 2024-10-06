@@ -34,7 +34,7 @@ interface OsuMatchApiService {
         return result
     }
 
-    fun getNewMatchInfo(mid: Long, before: Long? = null, after: Long? = null, limit: Int = 100) : MonitoredMatch
+    fun getMonitoredMatchInfo(mid: Long, before: Long? = null, after: Long? = null, limit: Int = 100) : MonitoredMatch
 
     @Throws(WebClientResponseException::class)
     fun getMatchInfo(mid: Long, limit: Int): Match

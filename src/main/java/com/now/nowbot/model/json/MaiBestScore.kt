@@ -24,7 +24,6 @@ class MaiBestScore {
 
     // 牌子信息，比如“舞神”
     @JsonProperty("plate")
-    // TODO 这个不对？
     // @JsonDeserialize(using = PlateJsonDeserializer::class)
     var plate: String? = ""
 

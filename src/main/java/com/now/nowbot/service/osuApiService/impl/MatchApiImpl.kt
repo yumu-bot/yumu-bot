@@ -28,7 +28,7 @@ class MatchApiImpl(
             .block()!!
     }
 
-    override fun getNewMatchInfo(mid: Long, before: Long?, after: Long?, limit: Int) : MonitoredMatch{
+    override fun getMonitoredMatchInfo(mid: Long, before: Long?, after: Long?, limit: Int) : MonitoredMatch {
         return base.osuApiWebClient.get()
             .uri {
                 it.path("matches/{mid}")
@@ -71,14 +71,14 @@ class MatchApiImpl(
 
     @Throws(WebClientResponseException::class)
     override fun getMatchInfo(mid: Long, limit: Int): Match {
-        var limit = limit
+        var l = limit
         var eventId: Long
         val match: Match = getMatchInfo(mid)
         do {
             val newMatch = getMatchInfoBefore(mid, match.events.first().eventID)
             match.parseNextData(newMatch)
             eventId = match.events.first().eventID
-        } while (match.firstEventID != eventId && --limit >= 0)
+        } while (match.firstEventID != eventId && --l >= 0)
         return match
     }
 

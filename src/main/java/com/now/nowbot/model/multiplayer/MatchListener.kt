@@ -6,7 +6,6 @@ import com.now.nowbot.model.json.MicroUser
 import com.now.nowbot.model.multiplayer.MonitoredMatch.EventType
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
-import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -49,7 +48,7 @@ class MatchListener(
 
     private fun listen() {
         try {
-            val newMatch = matchApiService.getNewMatchInfo(matchId, after = nowEventID)
+            val newMatch = matchApiService.getMonitoredMatchInfo(matchId, after = nowEventID)
             // 对局没有任何新事件
             if (nowEventID == newMatch.latestEventID) return
             if (newMatch.currentGameID != null) {
@@ -117,7 +116,7 @@ class MatchListener(
     fun removeListener(listener: MatchAdapter): Boolean {
         eventListener.remove(listener)
         if (eventListener.isEmpty()) {
-            stop(StopType.SERVICE_STOP)
+            stop(StopType.SERVER_REBOOT)
             return true
         }
         return false
@@ -230,12 +229,12 @@ class MatchListener(
         MATCH_END("比赛正常结束"),
         USER_STOP("调用者关闭"),
         SUPER_STOP("超级管理员关闭"),
-        SERVICE_STOP("服务器重启"),
+        SERVER_REBOOT("服务器重启"),
         TIME_OUT("超时了"),
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(MatchListener::class.java)
+        // private val log = LoggerFactory.getLogger(MatchListener::class.java)
         val executorService: ScheduledExecutorService
 
         init {

@@ -84,7 +84,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
             check.doEnd();
             ((ThreadPoolTaskExecutor) executor).shutdown();
             MatchListenerServiceLegacy.stopAllListener();
-            MatchListenerService.Companion.stopAllListener();
+            MatchListenerService.Companion.stopAllListenerFromReboot();
         }, "endThread"));
 
         log.info("新人群配置: {}", env.getProperty("spring.datasource.newbie.enable", "false"));
