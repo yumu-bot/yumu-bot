@@ -366,6 +366,7 @@ public class Match implements Cloneable {
                 total = red + blue;
 
             } else {
+                // fixme: 这里的 scores 可能为 null
                 for (MatchScore s : scores) {
                     total += s.getScore();
                 }
