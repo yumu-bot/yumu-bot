@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.aop.CheckPermission
+import com.now.nowbot.config.Permission
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service
 @Service
 class UpdateMaimaiService(private val maimaiApiService: MaimaiApiService) : MessageService<Boolean> {
 
-    @CheckPermission(isSuperAdmin = true)
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
@@ -25,9 +24,9 @@ class UpdateMaimaiService(private val maimaiApiService: MaimaiApiService) : Mess
         return true
     }
 
-    @CheckPermission(isSuperAdmin = true)
     override fun HandleMessage(event: MessageEvent, update: Boolean) {
-        if (update) {
+        if (Permission.isSuperAdmin(event.sender.id)) {
+            event.reply("正在尝试更新！")
             maimaiApiService.updateMaimaiSongLibraryDatabase()
             maimaiApiService.updateMaimaiFitLibraryDatabase()
             maimaiApiService.updateMaimaiRankLibraryDatabase()

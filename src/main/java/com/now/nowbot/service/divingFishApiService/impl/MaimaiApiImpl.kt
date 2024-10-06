@@ -380,6 +380,7 @@ class MaimaiApiImpl(
                 }
                 .retrieve()
                 .bodyToMono(String::class.java)
+                .onErrorReturn("")
                 .block() ?: ""
 
     private val maimaiRankLibraryFromAPI: String
@@ -391,6 +392,7 @@ class MaimaiApiImpl(
                 }
                 .retrieve()
                 .bodyToMono(String::class.java)
+                .onErrorReturn("")
                 .block() ?: ""
 
     private val maimaiFitLibraryFromAPI: String
@@ -402,6 +404,7 @@ class MaimaiApiImpl(
                 }
                 .retrieve()
                 .bodyToMono(String::class.java)
+                .onErrorReturn("")
                 .block() ?: ""
 
     private fun <T> parseFile(fileName: String, clazz: Class<T>): T? {

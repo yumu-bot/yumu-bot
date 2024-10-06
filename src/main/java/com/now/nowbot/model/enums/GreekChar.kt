@@ -1,31 +1,31 @@
 package com.now.nowbot.model.enums
 
-enum class GreekChar(val capital: String, val small: String, val romanized: String) {
-    ALPHA("Α", "α", "a"),
-    BETA("Β", "β", "b"),
-    GAMMA("Γ", "γ", "g"),
-    DELTA("Δ", "δ", "d"),
-    EPSILON("Ε", "ε", "e"),
-    ZETA("Ζ", "ζ", "z"),
-    ETA("Η", "η", "h"),
-    THETA("Θ", "θ", "th"),
-    IOTA("Ι", "ι", "i"),
-    KAPPA("Κ", "κ", "k"),
-    LAMBDA("Λ", "λ", "l"),
-    MU("Μ", "μ", "m"),
-    NU("Ν", "ν", "n"),
-    XI("Ξ", "ξ", "x"),
-    OMICRON("Ο", "ο", "o"),
-    PI("Π", "π", "p"),
-    RHO("Ρ", "ρ", "r"),
-    SIGMA("Σ", "σ", "s"),
-    SIGMA2("Σ", "ς", "s"),
-    TAU("Τ", "τ", "t"),
-    UPSILON("Υ", "υ", "u"),
-    PHI("Φ", "φ", "f"),
-    CHI("Χ", "χ", "x"),
-    PSI("Ψ", "ψ", "ps"),
-    OMEGA("Ω", "ω", "o"),
+enum class GreekChar(val capital: String, val small: String, val transformation: String, val romanized: String) {
+    ALPHA("Α", "α", "a", "alpha"),
+    BETA("Β", "β", "b", "beta"),
+    GAMMA("Γ", "γ", "g", "gamma"),
+    DELTA("Δ", "δ", "d", "delta"),
+    EPSILON("Ε", "ε", "e", "epsilon"),
+    ZETA("Ζ", "ζ", "z", "zeta"),
+    ETA("Η", "η", "h", "eta"),
+    THETA("Θ", "θ", "th", "theta"),
+    IOTA("Ι", "ι", "i", "iota"),
+    KAPPA("Κ", "κ", "k", "kappa"),
+    LAMBDA("Λ", "λ", "l", "lambda"),
+    MU("Μ", "μ", "m", "mu"),
+    NU("Ν", "ν", "n", "nu"),
+    XI("Ξ", "ξ", "x", "xi"),
+    OMICRON("Ο", "ο", "o", "omicron"),
+    PI("Π", "π", "p", "pi"),
+    RHO("Ρ", "ρ", "r", "rho"),
+    SIGMA("Σ", "σ", "s", "sigma"),
+    SIGMA2("Σ", "ς", "s", "sigma"),
+    TAU("Τ", "τ", "t", "tau"),
+    UPSILON("Υ", "υ", "u", "upsilon"),
+    PHI("Φ", "φ", "f", "phi"),
+    CHI("Χ", "χ", "x", "chi"),
+    PSI("Ψ", "ψ", "ps", "psi"),
+    OMEGA("Ω", "ω", "o", "omega"),
     ;
 
     companion object {
@@ -41,13 +41,16 @@ enum class GreekChar(val capital: String, val small: String, val romanized: Stri
 
             val sb = StringBuilder()
 
+            outro@
             for(s in greek.toCharArray()) {
                 for(g in GreekChar.entries) {
                     if (isEqual(s, g)) {
                         sb.append(g.romanized)
-                        continue
+                        continue@outro
                     }
                 }
+
+                sb.append(s)
             }
 
             return sb.toString()
