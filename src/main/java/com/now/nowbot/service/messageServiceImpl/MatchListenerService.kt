@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
-//@Service("MATCH_LISTENER")
+@Service("MATCH_LISTENER")
 class MatchListenerService(
     private val matchApiService: OsuMatchApiService,
     private val beatmapApiService: OsuBeatmapApiService,
@@ -179,6 +179,8 @@ class MatchListenerService(
             )
 
             val image = try {
+                // fixme: 开始的时候score是null,
+                //  报错 `Could not write JSON: Cannot invoke "java.util.List.iterator()" because "this.scores" is null`
                 imageService.getPanelE7(e7)
             } catch (e: WebClientResponseException) {
                 log.error(e) { "获取图片失败" }
