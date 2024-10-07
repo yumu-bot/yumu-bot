@@ -143,8 +143,10 @@ class MaiScoreService(
         if (param.title != null) {
             // 成绩模式
 
+            val title = DataUtil.getStandardisedString(param.title)
+
             val possibles =
-                    maimaiApiService.getMaimaiPossibleSongs(DataUtil.getStandardisedString(param.title))
+                    maimaiApiService.getMaimaiPossibleSongs(title)
                             ?: throw GeneralTipsException(
                                     GeneralTipsException.Type.G_Null_ResultNotAccurate
                             )
@@ -152,7 +154,7 @@ class MaiScoreService(
             val r = mutableMapOf<Double, MaiSong>()
 
             for (p in possibles) {
-                val y = DataUtil.getStringSimilarity(param.title, p.title)
+                val y = DataUtil.getStringSimilarity(title, p.title)
 
                 if (y >= 0.4) {
                     r[y] = p
@@ -261,11 +263,11 @@ class MaiScoreService(
             val songs = maimaiApiService.getMaimaiSongLibrary()
             val result = mutableMapOf<Double, MaiSong>()
 
-            for (s in songs) {
-                val similarity = DataUtil.getStringSimilarity(text, s.value.title)
-
+            for (s in songs.values) {
+                val similarity = DataUtil.getStringSimilarity(text, s.title)
+                
                 if (similarity >= 0.4) {
-                    result[similarity] = s.value
+                    result[similarity] = s
                 }
             }
 

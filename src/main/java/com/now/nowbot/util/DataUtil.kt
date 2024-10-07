@@ -1115,16 +1115,16 @@ object DataUtil {
         val ts = getStandardisedString(to)
 
         return getSimilarity(cs, ts) * getSimilarity(cs.reversed(), ts.reversed()).pow(0.5)
-        // return max(getSimilarity(cs, ts), 0.75 * getSimilarity(cs.reversed(), ts.reversed()))
     }
 
     @JvmStatic
-    // 获取两个已经格式化后的字符串的相似度。
-    fun getStringSimilarityStandardised(compare: String?, to: String?): Double {
-        if (compare.isNullOrEmpty() || to.isNullOrEmpty()) return 0.0
+    // 获取字符串与已经格式化后的字符串的相似度。
+    fun getStringSimilarityStandardised(compare: String?, toStandard: String?): Double {
+        if (compare.isNullOrEmpty() || toStandard.isNullOrEmpty()) return 0.0
 
-        return getSimilarity(compare, to) * getSimilarity(compare.reversed(), to.reversed()).pow(0.5)
-        // return max(getSimilarity(compare, to), 0.75 * getSimilarity(compare.reversed(), to.reversed()))
+        val cs = getStandardisedString(compare)
+
+        return getSimilarity(cs, toStandard) * getSimilarity(cs.reversed(), toStandard.reversed()).pow(0.5)
     }
 
     private fun getSimilarity(compare: String, too: String): Double {

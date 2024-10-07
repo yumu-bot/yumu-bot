@@ -26,11 +26,9 @@ class MaimaiFindService(private val maimaiApiService: MaimaiApiService) : Messag
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, str: String?) {
-        if (str.isNullOrEmpty())
+    override fun HandleMessage(event: MessageEvent, input: String?) {
+        if (input.isNullOrEmpty())
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_UserName)
-
-        val input = DataUtil.getStandardisedString(str)
 
         val rankMap = maimaiApiService.getMaimaiRank()
         val nameMap =

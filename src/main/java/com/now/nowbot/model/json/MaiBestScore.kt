@@ -71,7 +71,7 @@ class MaiBestScore {
     }
 
     private fun getPlateName(plate: String?) : String {
-        if (plate == null) return ""
+        if (plate == null || plate.length < 2) return ""
 
         val code = MaiVersion.getVersionFromAbbr(plate.substring(0, 1)).let { if (it != MaiVersion.DEFAULT) {
             it.code
