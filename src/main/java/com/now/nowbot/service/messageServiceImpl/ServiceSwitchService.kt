@@ -9,15 +9,15 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.ServiceSwitchService.SwitchParam
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.serviceException.ServiceSwitchException
 import com.now.nowbot.throwable.TipsRuntimeException
+import com.now.nowbot.throwable.serviceException.ServiceSwitchException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
-import java.util.*
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.*
 
 @Service(ServiceSwitchService.SWITCH_SERVICE_NAME)
 class ServiceSwitchService(
@@ -141,8 +141,7 @@ class ServiceSwitchService(
                         //                        from.sendMessage(STR."已全面清除 \{service} 服务的禁止状态");
                         from.sendMessage("已全面禁止 ${service} 服务（并未修好）")
                     } else {
-                        controller.unblockGroup(service, group)
-                        //                        permission.addGroup(service, group, true, false);
+                        controller.blockGroup(service, group)
                         from.sendMessage("已禁止群聊 ${group} 的 ${service} 服务")
                     }
                 } catch (e: TipsRuntimeException) {
