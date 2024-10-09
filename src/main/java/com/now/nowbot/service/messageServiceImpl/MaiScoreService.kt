@@ -64,7 +64,7 @@ class MaiScoreService(
                     MaiDifficulty.DEFAULT
                 }
 
-        val nameStr = (matcher.group(FLAG_NAME) ?: "").trim()
+        val nameOrTitleStr = (matcher.group(FLAG_NAME) ?: "").trim()
 
         val qqStr = (matcher.group(FLAG_QQ_ID) ?: "").trim()
 
@@ -77,9 +77,9 @@ class MaiScoreService(
                     event.sender.id
                 }
 
-        if (StringUtils.hasText(nameStr)) {
-            if (nameStr.contains(Regex(REG_SPACE))) {
-                val s = nameStr.split(Regex(REG_SPACE))
+        if (StringUtils.hasText(nameOrTitleStr)) {
+            if (nameOrTitleStr.contains(Regex(REG_SPACE))) {
+                val s = nameOrTitleStr.split(Regex(REG_SPACE))
 
                 if (s.size == 2) {
                     if (s.first().matches(Regex(REG_NUMBER_15))) {
@@ -95,9 +95,9 @@ class MaiScoreService(
                         data.value =
                                 MaiScoreParam(
                                         null,
-                                        s.first(),
-                                        s.last().replace(Regex(REG_QUOTATION), ""),
+                                        nameOrTitleStr.replace(Regex(REG_QUOTATION), ""),
                                         null,
+                                        qq,
                                         difficulty,
                                 )
                     }
@@ -107,18 +107,18 @@ class MaiScoreService(
                     } else if (s.first().contains(Regex(REG_QUOTATION))) {
                         throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID_Quotation)
                     } else {
-                        data.value = MaiScoreParam(null, nameStr, null, qq, difficulty)
+                        data.value = MaiScoreParam(null, nameOrTitleStr, null, qq, difficulty)
                     }
                 } else {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
                 }
             } else {
-                if (nameStr.matches(Regex(REG_NUMBER_15))) {
-                    data.value = MaiScoreParam(nameStr.toInt(), null, null, qq, difficulty)
-                } else if (nameStr.contains(Regex(REG_QUOTATION))) {
+                if (nameOrTitleStr.matches(Regex(REG_NUMBER_15))) {
+                    data.value = MaiScoreParam(nameOrTitleStr.toInt(), null, null, qq, difficulty)
+                } else if (nameOrTitleStr.contains(Regex(REG_QUOTATION))) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID_Quotation)
                 } else {
-                    data.value = MaiScoreParam(null, nameStr, null, qq, difficulty)
+                    data.value = MaiScoreParam(null, nameOrTitleStr, null, qq, difficulty)
                 }
             }
         } else {
@@ -238,9 +238,9 @@ class MaiScoreService(
     companion object {
         @JvmStatic
         fun getFullScoreOrEmpty(
-            qq: Long?,
-            name: String?,
-            maimaiApiService: MaimaiApiService,
+                qq: Long?,
+                name: String?,
+                maimaiApiService: MaimaiApiService,
         ): MaiBestScore {
             return if (qq.isNotNull()) {
                 try {
@@ -265,7 +265,7 @@ class MaiScoreService(
 
             for (s in songs.values) {
                 val similarity = DataUtil.getStringSimilarity(text, s.title)
-                
+
                 if (similarity >= 0.4) {
                     result[similarity] = s
                 }
@@ -316,7 +316,7 @@ class MaiScoreService(
                     .build()
         }
 
-        //uum
+        // uum
         fun getScoreMessage(score: MaiScore, image: ByteArray): MessageChain {
             val sb = MessageChain.MessageChainBuilder()
 

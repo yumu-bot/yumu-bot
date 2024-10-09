@@ -10,14 +10,14 @@ import com.now.nowbot.util.command.FLAG_NAME
 import org.springframework.stereotype.Service
 import java.util.stream.Collectors
 
-@Service("MAIMAI_FIND")
-class MaimaiFindService(private val maimaiApiService: MaimaiApiService) : MessageService<String> {
+@Service("MAI_FIND")
+class MaiFindService(private val maimaiApiService: MaimaiApiService) : MessageService<String> {
     override fun isHandle(
             event: MessageEvent,
             messageText: String,
             data: MessageService.DataValue<String>,
     ): Boolean {
-        val matcher = Instruction.MAIMAI_FIND.matcher(messageText)
+        val matcher = Instruction.MAI_FIND.matcher(messageText)
         if (!matcher.find()) {
             return false
         }

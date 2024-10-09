@@ -588,11 +588,11 @@ enum class Instruction(val pattern: Pattern) {
         }
     }),
 
-    MAIMAI_UPDATE(CommandPatternBuilder.create {
+    MAI_UPDATE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("update\\s*mai(mai)?", "um")
     }),
 
-    MAIMAI_FIND(CommandPatternBuilder.create {
+    MAI_FIND(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mai(mai)?\\s*find", "mf", "mother\\s*fucker")
         appendCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
     }),

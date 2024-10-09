@@ -13,7 +13,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.serviceException.MapMinusException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MOD
-import java.util.regex.Matcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -23,72 +22,89 @@ import org.springframework.util.StringUtils
 class MapMinusService(
         private val beatmapApiService: OsuBeatmapApiService,
         private val imageService: ImageService,
-) : MessageService<Matcher> {
+) : MessageService<MapMinusService.MapMinusParam> {
+
+    data class MapMinusParam(val bid: Long, val rate: Double = 1.0, val modsList: List<OsuMod>)
 
     override fun isHandle(
             event: MessageEvent,
             messageText: String,
-            data: DataValue<Matcher>
+            data: DataValue<MapMinusParam>,
     ): Boolean {
         val m = Instruction.MAP_MINUS.matcher(messageText)
-        if (m.find()) {
-            data.value = m
-            return true
-        } else return false
-    }
-
-    @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
-        val bid: Long
-        var rate = 1.0
-        val mode: OsuMode
-        val fileStr: String
-        val beatMap: BeatMap
-
-        val modsList: List<OsuMod> = OsuMod.getModsList(matcher.group(FLAG_MOD))
-        val isChangedRating = OsuMod.hasChangeRating(modsList)
-
-        try {
-            bid = matcher.group("bid").toLong()
-        } catch (e: NumberFormatException) {
-            throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
+        if (!m.find()) {
+            return false
         }
 
-        if (StringUtils.hasText(matcher.group("rate"))) {
-            try {
-                rate = matcher.group("rate").toDouble()
-            } catch (e: NumberFormatException) {
-                throw MapMinusException(MapMinusException.Type.MM_Rate_Error)
-            }
-        }
+        val modsList: List<OsuMod> = OsuMod.getModsList(m.group(FLAG_MOD))
+
+        val bid =
+                try {
+                    m.group("bid").toLong()
+                } catch (e: NumberFormatException) {
+                    throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
+                }
+
+        val rate =
+                if (StringUtils.hasText(m.group("rate"))) {
+                    try {
+                        m.group("rate").toDouble()
+                    } catch (e: NumberFormatException) {
+                        throw MapMinusException(MapMinusException.Type.MM_Rate_Error)
+                    }
+                } else {
+                    1.0
+                }
 
         if (rate < 0.1) throw MapMinusException(MapMinusException.Type.MM_Rate_TooSmall)
         if (rate > 5.0) throw MapMinusException(MapMinusException.Type.MM_Rate_TooLarge)
 
+        data.value = MapMinusParam(bid, rate, modsList)
+        return true
+    }
+
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, param: MapMinusParam) {
+        val fileStr: String
+        val beatMap: BeatMap
+        val mode: OsuMode
+
+        val isChangedRating = OsuMod.hasChangeRating(param.modsList)
+        val mods = OsuMod.getModsValue(param.modsList)
+
         try {
-            beatMap = beatmapApiService.getBeatMapFromDataBase(bid)
+
+            beatMap = beatmapApiService.getBeatMapFromDataBase(param.bid)
             mode = OsuMode.getMode(beatMap.modeInt)
-            val mods = OsuMod.getModsValue(modsList)
 
             beatmapApiService.applySRAndPP(beatMap, beatMap.osuMode, mods)
-            fileStr = beatmapApiService.getBeatMapFileString(bid)
+            fileStr = beatmapApiService.getBeatMapFileString(param.bid)
         } catch (e: Exception) {
             throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
         }
 
-        val file: OsuFile
-        try {
-            when (mode) {
-                OsuMode.MANIA -> file = OsuFile.getInstance(fileStr)
-                else -> throw MapMinusException(MapMinusException.Type.MM_Function_NotSupported)
-            }
-        } catch (e: NullPointerException) {
-            throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
-        }
+        val file =
+                try {
+                    when (mode) {
+                        OsuMode.MANIA -> OsuFile.getInstance(fileStr)
+                        else ->
+                                throw MapMinusException(
+                                        MapMinusException.Type.MM_Function_NotSupported
+                                )
+                    }
+                } catch (e: NullPointerException) {
+                    throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
+                }
 
         val mapMinus =
                 PPMinus3.getInstance(
-                        file, if (isChangedRating) OsuMod.getModsClockRate(modsList) else rate)
+                        file,
+                        if (isChangedRating) {
+                            OsuMod.getModsClockRate(param.modsList)
+                        } else {
+                            param.rate
+                        },
+                )
 
         val image: ByteArray
 
