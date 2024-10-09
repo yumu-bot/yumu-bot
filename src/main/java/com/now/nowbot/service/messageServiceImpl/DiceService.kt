@@ -798,7 +798,8 @@ class DiceService : MessageService<DiceParam> {
                     Split.JUXTAPOSITION,
                     Split.PREFER,
                     Split.HESITATE,
-                    Split.QUESTION -> {
+                    Split.QUESTION,
+                    Split.MULTIPLE -> {
                         return String.format(leftFormat, left)
                     }
                     Split.ASSUME,
@@ -854,7 +855,8 @@ class DiceService : MessageService<DiceParam> {
                     Split.JUXTAPOSITION,
                     Split.PREFER,
                     Split.HESITATE,
-                    Split.EVEN -> {
+                    Split.EVEN,
+                    Split.MULTIPLE -> {
                         return String.format(rightFormat, right)
                     }
                     Split.OR -> {
@@ -938,7 +940,7 @@ class DiceService : MessageService<DiceParam> {
             }
 
             val r = Math.round(getRandom(stringList.size) - 1.0).toInt()
-            return String.format("当然%s啦！", changeCase(stringList[r])) // lr format一样的
+            return String.format("当然 %s 啦！", changeCase(stringList[r])) // lr format一样的
         }
 
         /**
