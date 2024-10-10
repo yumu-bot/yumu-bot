@@ -515,6 +515,11 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         return value * Math.exp(Math.max(od - 7d, 0d) / 2d);
     }
 
+    // kotlin 读不到下面的东西？
+    public List<Double> getValues() {
+        return getValueList();
+    }
+
     // 重写
     @Override
     public List<Double> getValueList() {

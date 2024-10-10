@@ -513,6 +513,21 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_DATA, "[xo\\s]", MORE)
     }),
 
+    TEST_TYPE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("testtype", "ty")
+        appendMode()
+        appendBID()
+        appendMod()
+        appendGroup(MAYBE) {
+            append("[×xX]")
+            appendMatchLevel(MAYBE)
+            appendSpace()
+            appendCaptureGroup("rate", REG_NUMBER_DECIMAL, MORE)
+            append("[×xX]")
+            appendMatchLevel(MAYBE)
+        }
+    }),
+
     MAP_4D_CALCULATE(CommandPatternBuilder.create {
         appendCommands("cal", "calculate", "cl")
         appendCaptureGroup("type", "ar|od|cs|hp", EXIST, EXIST)
