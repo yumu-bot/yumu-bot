@@ -4,6 +4,7 @@ import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.json.MicroUser
 import com.now.nowbot.model.multiplayer.MonitoredMatch.EventType
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
+import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -45,8 +46,13 @@ class MatchListener(
     }
 
     private fun listen() {
+        val newMatch = try {
+            matchApiService.getMonitoredMatchInfo(matchId, after = nowEventID)
+        } catch (e: Exception) {
+            log.error("ml: $matchId 查询失败: ", e)
+            return
+        }
         try {
-            val newMatch = matchApiService.getMonitoredMatchInfo(matchId, after = nowEventID)
             // 对局没有任何新事件
             if (nowEventID == newMatch.latestEventID) return
             if (newMatch.currentGameID != null) {
@@ -220,6 +226,7 @@ class MatchListener(
     companion object {
         // private val log = LoggerFactory.getLogger(MatchListener::class.java)
         val executorService: ScheduledExecutorService
+        val log = LoggerFactory.getLogger(MatchListener::class.java)
 
         init {
             val threadFactory = Thread.ofVirtual().name("v-MatchListener", 50).factory()
