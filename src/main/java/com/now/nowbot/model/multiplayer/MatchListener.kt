@@ -1,10 +1,8 @@
 package com.now.nowbot.model.multiplayer
 
 import com.now.nowbot.model.enums.OsuMod
-import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.MicroUser
 import com.now.nowbot.model.multiplayer.MonitoredMatch.EventType
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -13,16 +11,16 @@ import java.util.concurrent.TimeUnit
 
 class MatchListener(
     val match: MonitoredMatch,
-    val beatmapApiService: OsuBeatmapApiService,
     val matchApiService: OsuMatchApiService,
     vararg adapter: MatchAdapter
 ) {
+    val usersIDSet = mutableSetOf<Long>()
+    val userMap = mutableMapOf<Long, MicroUser>()
+    var beforeGame: (MonitoredMatch.MatchEvent, MatchListener) -> Unit = { _, _ -> }
     private val matchId = match.id
     private var nowGameID: Long? = null
     private var nowEventID: Long = match.latestEventID
     private val eventListener = mutableSetOf<MatchAdapter>()
-    private val usersIDSet = mutableSetOf<Long>()
-    private val userMap = mutableMapOf<Long, MicroUser>()
     private var future: ScheduledFuture<*>? = null
     private var kill: ScheduledFuture<*>? = null
 
@@ -84,15 +82,11 @@ class MatchListener(
             onStop(StopType.MATCH_END)
             return
         }
-
         nowEventID = match.latestEventID
-
         future = executorService.scheduleAtFixedRate(this::listen, 0, 8, TimeUnit.SECONDS)
-
         kill = executorService.schedule({
             if (isStart()) stop(StopType.TIME_OUT)
         }, 6, TimeUnit.HOURS)
-
         onStart()
     }
 
@@ -131,7 +125,7 @@ class MatchListener(
         // game 事件多于一个认为可能有 abort
         if (gameEvent.size > 1) {
             val abortGames = gameEvent.dropLast(1)
-            abortGames.filter { it.game != null }.forEach {
+            abortGames.forEach {
                 val game = it.game!!
                 if (game.endTime != null) { // 正常结束但是中间没有获取到 (因为请求延迟导致)
                     onEvent(it)
@@ -149,16 +143,7 @@ class MatchListener(
      */
     private fun onEvent(event: MonitoredMatch.MatchEvent) {
         val game = event.game ?: return
-
-        with(game) {
-            if (beatmap != null) {
-                beatmap = beatmapApiService.getBeatMap(beatmapID)
-                beatmapApiService.applySRAndPP(beatmap, mode, OsuMod.getModsValueFromAbbrList(mods))
-            } else {
-                beatmap = BeatMap(beatmapID)
-            }
-        }
-
+        beforeGame(event, this)
         val isEnd = game.endTime != null
         if (isEnd) {
             // 对局结束
@@ -170,8 +155,7 @@ class MatchListener(
             eventListener.forEach { l -> l.onGameEnd(listenerEvent) }
         } else {
             // 对局开始
-            val user = usersIDSet.map { id -> userMap[id] }.filterNotNull()
-
+            val user = usersIDSet.mapNotNull { id -> userMap[id] }
             val listenerEvent = with(game) {
                 MatchAdapter.GameStartEvent(
                     event.eventID,
@@ -202,7 +186,7 @@ class MatchListener(
         eventListener.forEach { it.onMatchEnd(type) }
     }
 
-    fun isStart() = future?.isDone?.not() ?: false
+    fun isStart() = future?.isDone?.not() == true
 
     private fun parseUsers(events: List<MonitoredMatch.MatchEvent>, users: List<MicroUser>) {
         users.forEach {
