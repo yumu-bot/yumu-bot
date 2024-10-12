@@ -183,6 +183,7 @@ class MatchListenerService(
                 }
 
                 val calculate = MatchCalculate(match.toMatch(), beatmapApiService)
+                calculate.setPlayers(users.toMutableList())
                 val objectGroup = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
                 val e7 =
                     PanelE7Param(
