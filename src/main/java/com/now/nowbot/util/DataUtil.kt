@@ -1,7 +1,5 @@
 package com.now.nowbot.util
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.json.JsonMapper
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.model.enums.GreekChar
 import com.now.nowbot.model.enums.JaChar
@@ -11,6 +9,12 @@ import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.json.*
 import com.now.nowbot.util.command.*
 import io.github.humbleui.skija.Typeface
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.lang.NonNull
+import org.springframework.lang.Nullable
+import org.springframework.util.CollectionUtils
+import org.springframework.util.StringUtils
 import java.io.IOException
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -18,17 +22,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import kotlin.math.*
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.lang.NonNull
-import org.springframework.lang.Nullable
-import org.springframework.util.CollectionUtils
-import org.springframework.util.StringUtils
 
 object DataUtil {
     private val log: Logger = LoggerFactory.getLogger(DataUtil::class.java)
-
-    private val mapper: ObjectMapper = JsonMapper.builder().build()
 
     var TORUS_REGULAR: Typeface? = null
         @JvmStatic
@@ -106,6 +102,7 @@ object DataUtil {
             return field
         }
 
+    val splitReg = "[,，|:：`、]+".toRegex()
     /**
      * 将按逗号或者 |、:：分隔的字符串分割 如果未含有分隔的字符，返回 null
      *
@@ -117,13 +114,36 @@ object DataUtil {
     fun splitString(@Nullable str: String): List<String>? {
         if (!StringUtils.hasText(str)) return null
         val strings =
-                str.trim { it <= ' ' }
-                        .split("[,，|:：`、]+".toRegex())
+                str.trim()
+                        .split(splitReg)
                         .dropLastWhile { it.isEmpty() }
-                        .toTypedArray() // 空格和-_不能匹配
+        // 空格和-_不能匹配
         if (strings.isEmpty()) return null
+        return strings.map { obj -> obj.trim() }.toList()
+    }
 
-        return Arrays.stream(strings).map { obj: String -> obj.trim { it <= ' ' } }.toList()
+    val nameSplitReg = "[,，、|:：]+".toRegex()
+    /**
+     * 根据分隔符，分割玩家名
+     *
+     * @param str 需要分割的，含分割符和玩家名的长文本
+     * @return 分割好的玩家名
+     */
+    @JvmStatic
+    @NonNull
+    fun parseUsername(@Nullable str: String): List<String> {
+        if (Objects.isNull(str)) return listOf("")
+        val split =
+            str.trim()
+                .split(nameSplitReg)
+                .dropLastWhile { it.isEmpty() }
+        if (split.isEmpty()) return listOf(str)
+
+        return split
+            .mapNotNull { obj ->
+                val s = obj.trim()
+                if (s.isEmpty()) null else s
+            }
     }
 
     /**
@@ -504,33 +524,9 @@ object DataUtil {
     @JvmStatic
     @NonNull
     fun isHelp(@Nullable str: String?): Boolean {
-        if (str == null) return false
-
-        return str.trim { it <= ' ' }.equals("help", ignoreCase = true) ||
-                str.trim { it <= ' ' }.equals("帮助", ignoreCase = true)
-    }
-
-    /**
-     * 根据分隔符，分割玩家名
-     *
-     * @param str 需要分割的，含分割符和玩家名的长文本
-     * @return 分割好的玩家名
-     */
-    @JvmStatic
-    @NonNull
-    fun parseUsername(@Nullable str: String): List<String> {
-        if (Objects.isNull(str)) return listOf("")
-        val split =
-                str.trim { it <= ' ' }
-                        .split("[,，、|:：]+".toRegex())
-                        .dropLastWhile { it.isEmpty() }
-                        .toTypedArray()
-        if (split.isEmpty()) return listOf(str)
-
-        return Arrays.stream(split)
-                .map { obj: String -> obj.trim { it <= ' ' } }
-                .filter { s: String? -> StringUtils.hasText(s) }
-                .toList()
+        val s = str?.trim() ?: return false
+        return s.equals("help", ignoreCase = true) ||
+                s.equals("帮助", ignoreCase = true)
     }
 
     fun string2Markdown(str: String): String {
@@ -751,9 +747,9 @@ object DataUtil {
     fun HP(hp: Float, mod: Int): Float {
         var hp = hp
         if (OsuMod.hasHr(mod)) {
-            hp *= 1.3f
+            hp *= 1.4f
         } else if (OsuMod.hasEz(mod)) {
-            hp /= 1.3f
+            hp /= 2f
         }
         return round2Digits2(hp.limit())
     }
@@ -913,7 +909,6 @@ object DataUtil {
         return String.format("%07d", round(v3)) // 补 7 位达到 v3 分数的要求
     }
 
-    // 这东西是啥?
     fun getV3ModsMultiplier(mod: List<String?>, mode: OsuMode?): Double {
         var index = 1.00
 
