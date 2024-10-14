@@ -206,6 +206,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun appendMode() {
         appendGroup(MAYBE) {
+            appendSpace()
             append(REG_COLON)
             appendSpace()
             appendCaptureGroup(FLAG_MODE, REG_MODE, EXIST)

@@ -940,7 +940,7 @@ class DiceService : MessageService<DiceParam> {
             }
 
             val r = Math.round(getRandom(stringList.size) - 1.0).toInt()
-            return String.format("当然 %s 啦！", changeCase(stringList[r])) // lr format一样的
+            return String.format("当然%s啦！", changeCase(stringList[r])) // lr format一样的
         }
 
         /**
