@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Aspect
@@ -86,6 +87,21 @@ public class CheckAspect {
             log.info("--*-**- 保存用户[{}] ({}), 调用者: {}", u.getOsuID(), u.getOsuName(), dobj.toString());
         }
         return args;
+    }
+
+    private static final Map<ServiceLimit, Long> SERVICE_LIMIT_MAP = new ConcurrentHashMap<>();
+
+    @Before("servicePoint() && @annotation(ServiceLimit)")
+    public Object serviceLimit(JoinPoint point, ServiceLimit ServiceLimit) {
+        var limit = ServiceLimit.limit();
+        if (limit == 0) return point.getArgs();
+        var now = System.currentTimeMillis();
+        var time = SERVICE_LIMIT_MAP.getOrDefault(ServiceLimit, 0L);
+        if (now - time > limit) {
+            SERVICE_LIMIT_MAP.put(ServiceLimit, now);
+            return point.getArgs();
+        }
+        throw new PermissionException("请求过于频繁");
     }
 
     /***
@@ -222,8 +238,8 @@ public class CheckAspect {
             name = ser.value();
         }
         if (pjp.getArgs()[0] instanceof MessageEvent e && Objects.nonNull(e)) {
-            if (e.getSubject().getId()<0) {
-                log.debug("官方bot [uid {}] 调用 -> {}", -e.getSender().getId(), name);
+            if (e.getSubject().getId() < 0) {
+                log.debug("官方bot [uid {}] 调用 -> {}", - e.getSender().getId(), name);
             } else {
                 log.debug("[{}] 调用 -> {}", e.getSender().getId(), name);
             }
@@ -259,6 +275,7 @@ public class CheckAspect {
 
         return null;
     }
+
     private OsuUser getUser(OsuUser user) {
         if (Objects.isNull(user.getUserID())) return user;
         var data = userProfileMapper.findTopByUserId(user.getUserID());

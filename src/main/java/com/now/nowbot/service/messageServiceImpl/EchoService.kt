@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
+import com.now.nowbot.aop.ServiceLimit
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.util.Instruction
@@ -18,6 +19,7 @@ class EchoService : MessageService<String?> {
         return true
     }
 
+    @ServiceLimit(limit = 15000)
     @CheckPermission(isSuperAdmin = true)
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, data: String?) {
