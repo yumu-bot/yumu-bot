@@ -189,35 +189,26 @@ data class MonitoredMatch(
                 run {
                     val isVs = (g.teamType == "team-vs")
 
-                    val scores = g.scores.map(MatchScore::score).filter { it > 10000 }
-                    val total =
-                            if (scores.isNotEmpty()) {
-                                scores.reduceOrNull { a, b -> a + b }?.toLong() ?: 0L
-                            } else {
-                                0L
-                            }
+                    val total = g.scores.map(MatchScore::score).filter { it > 10000 }.stream().reduce(0) { a, b -> a + b }.toLong()
 
-                    val redScores =
-                            g.scores
+                    val red =
+                            if (isVs) {
+                                g.scores.stream()
                                     .filter { it.playerStat.team == "red" }
                                     .map(MatchScore::score)
                                     .filter { it > 10000 }
-                    val red =
-                            if (isVs && redScores.isNotEmpty()) {
-                                redScores.reduceOrNull { a, b -> a + b }?.toLong() ?: 0L
+                                    .reduce(0) { a, b -> a + b }.toLong()
                             } else {
                                 0L
                             }
 
-                    val blueScores =
-                            g.scores
+                    val blue =
+                            if (isVs) {
+                                g.scores
                                     .filter { it.playerStat.team == "blue" }
                                     .map(MatchScore::score)
                                     .filter { it > 10000 }
-
-                    val blue =
-                            if (isVs && blueScores.isNotEmpty()) {
-                                blueScores.reduceOrNull { a, b -> a + b }?.toLong() ?: 0L
+                                    .stream().reduce(0) { a, b -> a + b }.toLong()
                             } else {
                                 0L
                             }

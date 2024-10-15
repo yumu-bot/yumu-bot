@@ -91,7 +91,7 @@ val REG_QUESTION: String = "[?？]"
 val REG_HASH: String = "[#＃]"
 
 @Language("RegExp")
-val REG_HYPHEN: String = "[\\-－—ー]"
+val REG_HYPHEN: String = "[\\-－—ー~～]"
 
 @Language("RegExp")
 val REG_EXCLAMATION: String = "[!！]"
