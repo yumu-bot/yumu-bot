@@ -11,18 +11,11 @@ import com.now.nowbot.model.json.Statistics
 import java.time.OffsetDateTime
 
 data class MonitoredMatch(
-    @JsonProperty("match")
-    var statistics: MatchStat,
-
-    val events: MutableList<MatchEvent>,
-
-    val users: MutableList<MicroUser>,
-
-    @JsonProperty("first_event_id")
-    var firstEventID: Long,
-
-    @JsonProperty("latest_event_id")
-    var latestEventID: Long,
+        @JsonProperty("match") var statistics: MatchStat,
+        val events: MutableList<MatchEvent>,
+        val users: MutableList<MicroUser>,
+        @JsonProperty("first_event_id") var firstEventID: Long,
+        @JsonProperty("latest_event_id") var latestEventID: Long,
 ) {
     val isMatchEnd: Boolean
         get() = statistics.endTime != null
@@ -39,101 +32,69 @@ data class MonitoredMatch(
     val endTime by statistics::endTime
 
     data class MatchStat(
-        @JsonProperty("id")
-        val matchID: Long,
-
-        @JsonProperty("start_time")
-        val startTime: OffsetDateTime,
-
-        @JsonProperty("end_time")
-        val endTime: OffsetDateTime?,
-
-        val name: String,
+            @JsonProperty("id") val matchID: Long,
+            @JsonProperty("start_time") val startTime: OffsetDateTime,
+            @JsonProperty("end_time") val endTime: OffsetDateTime?,
+            val name: String,
     )
 
     data class MatchEvent(
-        @JsonProperty("id")
-        val eventID: Long,
-
-        @JsonProperty("detail")
-        private val detailObj: JsonNode?,
-
-        @JsonProperty("timestamp")
-        val timestamp: OffsetDateTime,
-
-        @JsonProperty("user_id")
-        val userID: Long?,
-
-        @JsonProperty("game")
-        val game: MatchGame?,
+            @JsonProperty("id") val eventID: Long,
+            @JsonProperty("detail") private val detailObj: JsonNode?,
+            @JsonProperty("timestamp") val timestamp: OffsetDateTime,
+            @JsonProperty("user_id") val userID: Long?,
+            @JsonProperty("game") val game: MatchGame?,
     ) {
         val type: EventType
             get() = EventType.getType(detailObj?.get("type")?.asText() ?: "")
 
         val detail: String
             get() = detailObj?.get("text")?.asText() ?: ""
-
-
     }
 
     data class MatchGame(
-        @JsonProperty("id")
-        val gameID: Long,
-
-        var beatmap: BeatMap?,
-
-        @JsonProperty("beatmap_id")
-        val beatmapID: Long,
-
-        @JsonProperty("start_time")
-        val startTime: OffsetDateTime,
-
-        @JsonProperty("end_time")
-        val endTime: OffsetDateTime?,
-        val modeInt: Int,
-        val mods: List<String>,
-        var scores: List<MatchScore>,
-        val teamType: String,
-        val scoringType: String,
+            @JsonProperty("id") val gameID: Long,
+            var beatmap: BeatMap?,
+            @JsonProperty("beatmap_id") val beatmapID: Long,
+            @JsonProperty("start_time") val startTime: OffsetDateTime,
+            @JsonProperty("end_time") val endTime: OffsetDateTime?,
+            val modeInt: Int,
+            val mods: List<String>,
+            var scores: List<MatchScore>,
+            val teamType: String,
+            val scoringType: String,
     ) {
         val mode: OsuMode
             get() = OsuMode.getMode(modeInt)
+
         val isTeamVS: Boolean
             get() = teamType == "team-vs" || teamType == "tag-team-vs"
     }
 
     data class MatchScore(
-        @JsonProperty("match")
-        val playerStat: MatchScorePlayerStat,
-        @JsonProperty("best_id")
-        val bestID: Long,
-        @JsonProperty("user_id")
-        val userID: Long,
-        @JsonProperty("id")
-        val scoreID: Long,
-        val accuracy: Double?,
-        val maxCombo: Int,
-        val mode: String,
-        val modeInt: Int,
-        val mods: List<String>,
-        val passed: Boolean,
-        val perfect: Boolean,
-        val replay: Boolean,
-        val pp: Double,
-        val rank: String,
-        val score: Int,
-        val statistics: Statistics,
-        val type: String,
+            @JsonProperty("match") val playerStat: MatchScorePlayerStat,
+            @JsonProperty("best_id") val bestID: Long,
+            @JsonProperty("user_id") val userID: Long,
+            @JsonProperty("id") val scoreID: Long,
+            val accuracy: Double?,
+            val maxCombo: Int,
+            val mode: String,
+            val modeInt: Int,
+            val mods: List<String>,
+            val passed: Boolean,
+            val perfect: Boolean,
+            val replay: Boolean,
+            val pp: Double,
+            val rank: String,
+            val score: Int,
+            val statistics: Statistics,
+            val type: String,
     ) {
         // 自己设
         var user: MicroUser = MicroUser()
     }
 
-    data class MatchScorePlayerStat(
-        val slot: Int,
-        val team: String,
-        val pass: Boolean,
-    )
+    data class MatchScorePlayerStat(val slot: Int, val team: String, val pass: Boolean)
 
     enum class EventType(val value: String) {
         PlayerJoined("player-joined"),
@@ -142,23 +103,23 @@ data class MonitoredMatch(
         Other("other"),
         HostChanged("host-changed"),
         MatchDisbanded("match-disbanded"),
-        MatchCreated("match-created"),
-        ;
+        MatchCreated("match-created");
 
         companion object {
-            fun getType(value: String) = when (value) {
-                PlayerJoined.value -> PlayerJoined
-                PlayerKicked.value -> PlayerKicked
-                PlayerLeft.value -> PlayerLeft
-                HostChanged.value -> HostChanged
-                MatchDisbanded.value -> MatchDisbanded
-                MatchCreated.value -> MatchCreated
-                else -> Other
-            }
+            fun getType(value: String) =
+                    when (value) {
+                        PlayerJoined.value -> PlayerJoined
+                        PlayerKicked.value -> PlayerKicked
+                        PlayerLeft.value -> PlayerLeft
+                        HostChanged.value -> HostChanged
+                        MatchDisbanded.value -> MatchDisbanded
+                        MatchCreated.value -> MatchCreated
+                        else -> Other
+                    }
         }
     }
 
-    fun toMatch() : Match {
+    fun toMatch(): Match {
         val match = Match()
         match.players = this.users
         match.currentGameID = this.currentGameID
@@ -174,7 +135,7 @@ data class MonitoredMatch(
 
         val es = mutableListOf<Match.MatchEvent>()
 
-        for(me in this.events) {
+        for (me in this.events) {
             val e = Match.MatchEvent()
 
             val r = Match.MatchRound()
@@ -184,7 +145,7 @@ data class MonitoredMatch(
 
                 val ss = mutableListOf<Match.MatchScore>()
 
-                for(ms in g.scores) {
+                for (ms in g.scores) {
                     val s = Match.MatchScore()
 
                     val mt = ms.playerStat
@@ -208,7 +169,7 @@ data class MonitoredMatch(
                     s.rank = ms.rank
                     s.replay = ms.replay
                     s.statistics = ms.statistics
-                    //s.timestamp = ms.time
+                    // s.timestamp = ms.time
                     s.type = ms.type
 
                     ss.add(s)
@@ -227,39 +188,55 @@ data class MonitoredMatch(
 
                 run {
                     val isVs = (g.teamType == "team-vs")
-                    val total = if (g.scores.isNotEmpty()) {
-                        g.scores.map(MatchScore::score).filter { it > 10000 }
-                            .reduce { a, b -> a + b }.toLong()
-                    } else {
-                        0L
-                    }
 
-                    val red = if (isVs && g.scores.isNotEmpty()) {
-                        g.scores.filter { it.playerStat.team == "red" }
-                            .map(MatchScore::score).filter { it > 10000 }
-                            .reduce { a, b -> a + b }.toLong()
-                    } else {
-                        0L
-                    }
+                    val scores = g.scores.map(MatchScore::score).filter { it > 10000 }
+                    val total =
+                            if (scores.isNotEmpty()) {
+                                scores.reduceOrNull { a, b -> a + b }?.toLong() ?: 0L
+                            } else {
+                                0L
+                            }
 
-                    val blue = if (isVs && g.scores.isNotEmpty()) {
-                        g.scores.filter { it.playerStat.team == "blue" }
-                            .map(MatchScore::score).filter { it > 10000 }
-                            .reduce { a, b -> a + b }.toLong()
-                    } else {
-                        0L
-                    }
+                    val redScores =
+                            g.scores
+                                    .filter { it.playerStat.team == "red" }
+                                    .map(MatchScore::score)
+                                    .filter { it > 10000 }
+                    val red =
+                            if (isVs && redScores.isNotEmpty()) {
+                                redScores.reduceOrNull { a, b -> a + b }?.toLong() ?: 0L
+                            } else {
+                                0L
+                            }
+
+                    val blueScores =
+                            g.scores
+                                    .filter { it.playerStat.team == "blue" }
+                                    .map(MatchScore::score)
+                                    .filter { it > 10000 }
+
+                    val blue =
+                            if (isVs && blueScores.isNotEmpty()) {
+                                blueScores.reduceOrNull { a, b -> a + b }?.toLong() ?: 0L
+                            } else {
+                                0L
+                            }
 
                     val isRedWin = isVs && red > blue
                     val isBlueWin = isVs && red < blue
 
                     r.teamScore = Match.MatchRound.TeamScore(total, red, blue)
-                    r.winningTeam = if (isBlueWin) "blue" else if (isRedWin) "red" else if (isVs) null else "none"
-                    r.winningTeamScore = if (isBlueWin) blue else if (isRedWin) red else if (isVs) blue else {
-                        (g.scores.maxOfOrNull(MatchScore::score)?: 0).toLong()
-                    }
+                    r.winningTeam =
+                            if (isBlueWin) "blue"
+                            else if (isRedWin) "red" else if (isVs) null else "none"
+                    r.winningTeamScore =
+                            if (isBlueWin) blue
+                            else if (isRedWin) red
+                            else if (isVs) blue
+                            else {
+                                (g.scores.maxOfOrNull(MatchScore::score) ?: 0).toLong()
+                            }
                 }
-
             }
             e.userID = me.userID
             e.eventID = me.eventID
@@ -283,7 +260,7 @@ data class MonitoredMatch(
             val newUsers = match.users.filter { it.userID in userSet }
             users.addAll(newUsers)
         }
-        //更新状态
+        // 更新状态
         statistics = match.statistics
         latestEventID = match.latestEventID
         firstEventID = match.firstEventID

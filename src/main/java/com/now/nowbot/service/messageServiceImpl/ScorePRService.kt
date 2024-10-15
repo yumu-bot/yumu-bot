@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.ScoreLegacy
+import com.now.nowbot.model.UUScore
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.model.json.Score
@@ -193,7 +193,7 @@ class ScorePRService(
 
     @Throws(GeneralTipsException::class)
     private fun getTextOutput(score: Score): MessageChain {
-        val d = ScoreLegacy.getInstance(score, beatmapApiService)
+        val d = UUScore.getInstance(score, beatmapApiService)
 
         val httpEntity = HttpEntity.EMPTY as HttpEntity<ByteArray>
         val imgBytes =

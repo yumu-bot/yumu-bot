@@ -11,7 +11,7 @@ import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
-public class ScoreLegacy {
+public class UUScore {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter SIZE_FORMATTER = DateTimeFormatter.ofPattern("m:ss");
 
@@ -48,7 +48,7 @@ public class ScoreLegacy {
         return url;
     }
 
-    public ScoreLegacy(Score score, OsuBeatmapApiService osuBeatmapApiService) throws GeneralTipsException {
+    public UUScore(Score score, OsuBeatmapApiService osuBeatmapApiService) throws GeneralTipsException {
         var user = score.getUser();
         bid = Math.toIntExact(score.getBeatMap().getBeatMapID());
 
@@ -113,8 +113,8 @@ public class ScoreLegacy {
         if (!passed) rank = "F";
     }
 
-    public static ScoreLegacy getInstance(Score score, OsuBeatmapApiService beatmapApiService) throws GeneralTipsException {
-        return new ScoreLegacy(score, beatmapApiService);
+    public static UUScore getInstance(Score score, OsuBeatmapApiService beatmapApiService) throws GeneralTipsException {
+        return new UUScore(score, beatmapApiService);
     }
 
     public String getScoreLegacyOutput() {
