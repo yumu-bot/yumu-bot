@@ -159,7 +159,7 @@ class MaiBestScoreService(
                 val song = maimaiApiService.getMaimaiSong(score.songID)
                     ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Song, score.songID)
 
-                val chart = maimaiApiService.getMaimaiChartData(score.songID)[score.index]
+                val chart = maimaiApiService.getMaimaiChartData(score.songID).getOrNull(score.index) ?: ChartData()
                 val diff = maimaiApiService.getMaimaiDiffData(score.difficulty)
 
                 imageService.getPanel(PanelMEParam(user, score, song, chart, diff).toMap(), "ME")

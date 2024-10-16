@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 
-public class InfoLogStatistics extends Statistics{
+public class InfoLogStatistics extends Statistics {
     @JsonProperty("time")
     LocalDateTime logTime;
 

@@ -1,20 +1,20 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import org.springframework.stereotype.Service
 
 @Service("TEST")
-class TestService(private val maimaiApiService: MaimaiApiService, private val maiDao: MaiDao) : MessageService<String> {
+class TestService(private val maimaiApiService: MaimaiApiService) :
+        MessageService<String> {
     override fun isHandle(
-        event: MessageEvent,
-        messageText: String,
-        data: MessageService.DataValue<String>
+            event: MessageEvent,
+            messageText: String,
+            data: MessageService.DataValue<String>,
     ): Boolean {
-        //if (messageText.contains("!test")) {
-        if (false) {
+        // if (messageText.contains("!test")) {
+            if (false) {
             data.value = messageText
             return true
         } else {
@@ -35,6 +35,17 @@ class TestService(private val maimaiApiService: MaimaiApiService, private val ma
     }
 
     override fun HandleMessage(event: MessageEvent, text: String) {
-        maimaiApiService.updateMaimaiSongLibraryDatabase()
+        val l = maimaiApiService.getMaimaiSongLibrary()
+
+        for (e in l.values) {
+            if (e.type == "SD" || e.charts.size < 4) continue
+
+            if (e.star[3] !in 13.0..13.6) continue
+
+            val notes = e.charts[3].notes
+            val dx = 3 * (notes.tap + notes.touch + notes.hold + notes.slide + notes.break_)
+
+            if (dx in 2907..3004) println(e.title)
+        }
     }
 }

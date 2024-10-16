@@ -570,8 +570,8 @@ enum class Instruction(val pattern: Pattern) {
     // #11 maimai & CHUNITHM
     MAI_BP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mai(mai)?\\s*best", "mb", "x")
-        appendNameAnyButNoHash()
         appendQQID()
+        appendNameAnyButNoHash()
         appendRange()
     }),
 
