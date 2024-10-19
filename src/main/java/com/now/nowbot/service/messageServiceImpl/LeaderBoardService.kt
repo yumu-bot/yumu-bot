@@ -2,7 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.Score
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -67,7 +67,7 @@ class LeaderBoardService(
         }
 
         val mode: OsuMode
-        val scores: List<Score?>
+        val scores: List<LazerScore?>
         val beatMap: BeatMap
         val isRanked: Boolean
 
@@ -84,7 +84,7 @@ class LeaderBoardService(
 
         try {
             mode = OsuMode.getMode(matcher.group("mode"), beatMap.osuMode)
-            scores = scoreApiService.getBeatMapScores(bid, mode)
+            scores = scoreApiService.getLeaderBoardScore(bid, mode)
         } catch (e: Exception) {
             throw LeaderBoardException(LeaderBoardException.Type.LIST_Score_FetchFailed)
         }

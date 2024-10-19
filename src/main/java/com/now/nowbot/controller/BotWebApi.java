@@ -6,10 +6,7 @@ import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.dao.OsuUserInfoDao;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.json.BeatMap;
-import com.now.nowbot.model.json.BeatmapDifficultyAttributes;
-import com.now.nowbot.model.json.OsuUser;
-import com.now.nowbot.model.json.Score;
+import com.now.nowbot.model.json.*;
 import com.now.nowbot.model.mappool.old.MapPoolDto;
 import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
@@ -76,12 +73,12 @@ public class BotWebApi {
         var mode = OsuMode.getMode(playMode);
 
         OsuUser info;
-        List<Score> bplist;
+        List<LazerScore> bplist;
         PPMinus ppm;
 
         try {
             info = userApiService.getPlayerInfo(name.trim(), mode);
-            bplist = scoreApiService.getBestPerformance(info.getUserID(), mode, 0, 100);
+            bplist = scoreApiService.getBestScores(info.getUserID(), mode, 0, 100);
             ppm = PPMinus.getInstance(mode, info, bplist);
         } catch (Exception e) {
             info = null;
@@ -119,7 +116,7 @@ public class BotWebApi {
         var mode = OsuMode.getMode(playMode);
 
         var info = userApiService.getPlayerInfo(name.trim(), mode);
-        var bplist = scoreApiService.getBestPerformance(info.getUserID(), mode, 0, 100);
+        var bplist = scoreApiService.getBestScores(info.getUserID(), mode, 0, 100);
         var ppm = PPMinus.getInstance(mode, info, bplist);
         if (ppm == null) {
             throw new RuntimeException("PPM：API 异常");
@@ -151,8 +148,8 @@ public class BotWebApi {
 
         mode = OsuMode.getMode(playMode, user1.getCurrentOsuMode());
 
-        var bplist1 = scoreApiService.getBestPerformance(user1.getUserID(), mode, 0, 100);
-        var bplist2 = scoreApiService.getBestPerformance(user2.getUserID(), mode, 0, 100);
+        var bplist1 = scoreApiService.getBestScores(user1.getUserID(), mode, 0, 100);
+        var bplist2 = scoreApiService.getBestScores(user2.getUserID(), mode, 0, 100);
 
         var ppm1 = PPMinus.getInstance(mode, user1, bplist1);
         var ppm2 = PPMinus.getInstance(mode, user2, bplist2);
@@ -298,7 +295,7 @@ public class BotWebApi {
         name = name.trim();
 
         var osuUser = userApiService.getPlayerInfo(name, mode);
-        List<Score> scores;
+        List<LazerScore> scores;
 
         int offset = DataUtil.parseRange2Offset(start, end);
         int limit = DataUtil.parseRange2Limit(start, end);
@@ -312,7 +309,7 @@ public class BotWebApi {
         switch (type) {
             // bp
             case BP -> {
-                scores = scoreApiService.getBestPerformance(osuUser.getUserID(), mode, offset, limit);
+                scores = scoreApiService.getBestScores(osuUser.getUserID(), mode, offset, limit);
 
                 ArrayList<Integer> ranks = new ArrayList<>();
                 for (int i = offset; i <= (offset + limit); i++) ranks.add(i + 1);
@@ -333,7 +330,7 @@ public class BotWebApi {
             }
             // pass
             case Pass -> {
-                scores = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, limit);
+                scores = scoreApiService.getPassedScore(osuUser.getUserID(), mode, offset, limit);
 
                 beatmapApiService.applySRAndPP(scores);
 
@@ -353,7 +350,7 @@ public class BotWebApi {
 
             //recent
             case Recent -> {
-                scores = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, limit);
+                scores = scoreApiService.getPassedScore(osuUser.getUserID(), mode, offset, limit);
 
                 beatmapApiService.applySRAndPP(scores);
 
@@ -373,7 +370,7 @@ public class BotWebApi {
 
             //passCard
             case PassCard -> {
-                scores = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, 1, true);
+                scores = scoreApiService.getScore(osuUser.getUserID(), mode, offset, 1, true);
                 var score = scores.getFirst();
 
                 beatmapApiService.applySRAndPP(scores);
@@ -384,7 +381,7 @@ public class BotWebApi {
 
             //recentCard
             case RecentCard -> {
-                scores = scoreApiService.getRecent(osuUser.getUserID(), mode, offset, 1, false);
+                scores = scoreApiService.getScore(osuUser.getUserID(), mode, offset, 1, false);
                 var score = scores.getFirst();
 
                 beatmapApiService.applySRAndPP(scores);
@@ -397,7 +394,7 @@ public class BotWebApi {
             case null, default -> {
                 // 时间计算
                 var day = Math.max(Math.min(Optional.ofNullable(start).orElse(1), 999), 1);
-                var bps = scoreApiService.getBestPerformance(osuUser.getUserID(), mode, 0, 100);
+                var bps = scoreApiService.getBestScores(osuUser.getUserID(), mode, 0, 100);
                 ArrayList<Integer> ranks = new ArrayList<>();
 
                 LocalDateTime dayBefore = LocalDateTime.now().minusDays(day);
@@ -406,7 +403,7 @@ public class BotWebApi {
                 scores = new ArrayList<>();
                 for (int i = 0; i < bps.size(); i++) {
                     var s = bps.get(i);
-                    if (dayBefore.isBefore(s.getCreateTimePretty())) {
+                    if (dayBefore.isBefore(s.getEndedTimePretty())) {
                         scores.add(s);
                         ranks.add(i + 1);
                     }
@@ -569,8 +566,8 @@ public class BotWebApi {
         int modInt = 0;
         if (Objects.nonNull(mods)) modInt = OsuMod.getModsValue(mods);
 
-        List<Score> scoreList;
-        Score score = null;
+        List<LazerScore> scoreList;
+        LazerScore score = null;
 
         try {
             osuUser = userApiService.getPlayerInfo(name);
@@ -580,12 +577,12 @@ public class BotWebApi {
         }
 
         if (Objects.isNull(mods)) {
-            score = scoreApiService.getScore(bid, uid, mode).getScore();
+            score = Objects.requireNonNull(scoreApiService.getBeatMapScore(bid, uid, mode)).getScore();
         } else {
             try {
-                scoreList = scoreApiService.getScoreAll(bid, uid, mode);
+                scoreList = scoreApiService.getLeaderBoardScore(bid, uid, mode);
                 for (var s : scoreList) {
-                    if (OsuMod.getModsValueFromAbbrList(s.getMods()) == modInt) {
+                    if (OsuMod.getModsValue(s.getMods()) == modInt) {
                         score = s;
                         break;
                     }
@@ -623,7 +620,7 @@ public class BotWebApi {
             @OpenResource(name = "name", desp = "玩家名称", required = true) @NonNull @RequestParam("name") String name,
             @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode
     ) throws RuntimeException {
-        List<Score> scores;
+        List<LazerScore> scores;
         OsuUser osuUser;
 
         try {
@@ -632,7 +629,7 @@ public class BotWebApi {
             long uid = userApiService.getOsuId(name);
             osuUser = userApiService.getPlayerInfo(uid, mode);
             if (mode != OsuMode.DEFAULT) osuUser.setMode(mode.getName());
-            scores = scoreApiService.getBestPerformance(uid, mode, 0, 100);
+            scores = scoreApiService.getBestScores(uid, mode, 0, 100);
         } catch (Exception e) {
             throw new RuntimeException(BPAnalysisException.Type.BA_Fetch_Failed.message);
         }
@@ -776,7 +773,7 @@ public class BotWebApi {
         var mode = OsuMode.getMode(modeStr);
         if (OsuMode.isDefaultOrNull(mode)) mode = user.getCurrentOsuMode();
 
-        var BPs = scoreApiService.getBestPerformance(user);
+        var BPs = scoreApiService.getBestScores(user);
         //var recents = scoreApiService.getRecentIncludingFail(osuUser);
         var historyUser = infoDao.getLastFrom(user.getUserID(),
                         mode,
@@ -925,7 +922,7 @@ public class BotWebApi {
      * @return OsuUser JSON
      */
     @GetMapping(value = "bp/json")
-    public List<Score> getBPJson(
+    public List<LazerScore> getBPJson(
             @RequestParam("uid") @Nullable Long uid,
             @RequestParam("name") @Nullable String name,
             @RequestParam("mode") @Nullable String modeStr,
@@ -938,12 +935,12 @@ public class BotWebApi {
         int limit = DataUtil.parseRange2Limit(start, end);
 
         if (Objects.nonNull(uid)) {
-            return scoreApiService.getBestPerformance(uid, mode, offset, limit);
+            return scoreApiService.getBestScores(uid, mode, offset, limit);
         } else if (Objects.nonNull(name)) {
             var user = userApiService.getPlayerInfo(name, mode);
-            return scoreApiService.getBestPerformance(user, offset, limit);
+            return scoreApiService.getBestScores(user, offset, limit);
         } else {
-            return scoreApiService.getBestPerformance(7003013L, OsuMode.DEFAULT, offset, limit);
+            return scoreApiService.getBestScores(7003013L, OsuMode.DEFAULT, offset, limit);
         }
     }
 
@@ -959,7 +956,7 @@ public class BotWebApi {
      * @return List<Score> JSON
      */
     @GetMapping(value = "score/json")
-    public List<Score> getScoreJson(
+    public List<LazerScore> getScoreJson(
             @RequestParam("uid") @Nullable Long uid,
             @RequestParam("name") @Nullable String name,
             @RequestParam("mode") @Nullable String modeStr,
@@ -976,12 +973,12 @@ public class BotWebApi {
         int limit = DataUtil.parseRange2Limit(start, end);
 
         if (Objects.nonNull(uid)) {
-            return scoreApiService.getRecent(uid, mode, offset, limit, isPass);
+            return scoreApiService.getScore(uid, mode, offset, limit, isPass);
         } else if (Objects.nonNull(name)) {
             var user = userApiService.getPlayerInfo(name, mode);
-            return scoreApiService.getRecent(user.getUserID(), mode, offset, limit, isPass);
+            return scoreApiService.getScore(user.getUserID(), mode, offset, limit, isPass);
         } else {
-            return scoreApiService.getRecent(7003013L, OsuMode.DEFAULT, offset, limit, isPass);
+            return scoreApiService.getScore(7003013L, OsuMode.DEFAULT, offset, limit, isPass);
         }
     }
 

@@ -3,8 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.MicroUser
-import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -15,14 +15,7 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.serviceException.BQQueryException
-import com.now.nowbot.throwable.serviceException.BQQueryException.ParsingBlockException
-import com.now.nowbot.throwable.serviceException.BQQueryException.ParsingQuoteException
-import com.now.nowbot.throwable.serviceException.BQQueryException.UnsupportedIndexValue
-import com.now.nowbot.throwable.serviceException.BQQueryException.UnsupportedKey
-import com.now.nowbot.throwable.serviceException.BQQueryException.UnsupportedModOperator
-import com.now.nowbot.throwable.serviceException.BQQueryException.UnsupportedOperator
-import com.now.nowbot.throwable.serviceException.BQQueryException.UnsupportedRankValue
-import com.now.nowbot.throwable.serviceException.BQQueryException.UnsupportedScoreValue
+import com.now.nowbot.throwable.serviceException.BQQueryException.*
 import com.now.nowbot.util.ContextUtil
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
@@ -62,7 +55,7 @@ class BPQueryService(
             param.mode
         }
         val filters = getAllFilter(param.filter)
-        val bpList = scoreApiService.getBestPerformance(bindUser, mode, 0, 100)
+        val bpList = scoreApiService.getBestScores(bindUser, mode, 0, 100)
         val result = getBP(filters, bpList)
         val user = userApiService.getPlayerInfo(bindUser)
 
@@ -106,7 +99,7 @@ class BPQueryService(
 
     enum class Param(
         val key: String,
-        val filter: (Triple<Operator, String, Score>) -> Boolean,
+        val filter: (Triple<Operator, String, LazerScore>) -> Boolean,
         private vararg val enabledOperator: Operator
     ) {
         Mapper("mapper", { (op, v, s) ->
@@ -150,7 +143,7 @@ class BPQueryService(
         }, EQ, NE, GT, GE, LT, LE),
         ScoreNumber("score", { (op, v, s) ->
             val score = try {
-                v.toInt()
+                v.toLong()
             } catch (_: Exception) {
                 throw UnsupportedScoreValue(v)
             }
@@ -169,13 +162,14 @@ class BPQueryService(
             } catch (_: Exception) {
                 throw UnsupportedIndexValue(v)
             }
+
             when (op) {
-                EQ -> s.weight.index == index
-                NE -> s.weight.index != index
-                GT -> s.weight.index > index
-                GE -> s.weight.index >= index
-                LT -> s.weight.index < index
-                LE -> s.weight.index <= index
+                EQ -> s.weight!!.index == index
+                NE -> s.weight!!.index != index
+                GT -> s.weight!!.index > index
+                GE -> s.weight!!.index >= index
+                LT -> s.weight!!.index < index
+                LE -> s.weight!!.index <= index
             }
         }, EQ, NE, GT, GE, LT, LE),
         AR("ar", { (op, v, s) ->
@@ -281,19 +275,21 @@ class BPQueryService(
         }, EQ, NE, GT, GE, LT, LE),
         Miss("miss", { (op, v, s) ->
             val misses = v.toInt()
+            val tm = (s.statistics.miss ?: 0)
+
             when (op) {
-                EQ -> s.statistics.countMiss == misses
-                NE -> s.statistics.countMiss != misses
-                GT -> s.statistics.countMiss > misses
-                GE -> s.statistics.countMiss >= misses
-                LT -> s.statistics.countMiss < misses
-                LE -> s.statistics.countMiss <= misses
+                EQ -> tm == misses
+                NE -> tm != misses
+                GT -> tm > misses
+                GE -> tm >= misses
+                LT -> tm < misses
+                LE -> tm <= misses
             }
         }, EQ, NE, GT, GE, LT, LE),
         Mods("mod", { (op, v, s) ->
             // mod 处理是 = 为严格等于, > 为包含mod
             val mods = OsuMod.getModsValue(v)
-            val scoreMods = OsuMod.getModsValue(s.mods.toTypedArray())
+            val scoreMods = OsuMod.getModsValue(s.mods)
             when (op) {
                 EQ -> mods == scoreMods
                 NE -> mods and scoreMods == 0
@@ -303,10 +299,10 @@ class BPQueryService(
         }, EQ, NE, GT),
         Rate("rate", { (op, v, s) ->
             val value = v.toDouble()
-            val rate = if (s.statistics.count300 == 0) {
+            val rate = if (s.statistics.great == 0) {
                 Double.MAX_VALUE
             } else {
-                1.0 * s.statistics.countGeki / s.statistics.count300
+                1.0 * (s.statistics.perfect ?: 0) / (s.statistics.great ?: 0)
             }
             when (op) {
                 EQ -> rate.isEqual(value)
@@ -319,13 +315,13 @@ class BPQueryService(
         }, EQ, NE, GT, GE, LT, LE),
         ;
 
-        operator fun invoke(operator: Operator, value: String): (Score) -> Boolean {
+        operator fun invoke(operator: Operator, value: String): (LazerScore) -> Boolean {
             if (operator !in enabledOperator) throw UnsupportedOperator(key, operator.op)
             return { score -> filter(Triple(operator, value, score)) }
         }
     }
 
-    private fun getBP(filters: List<(Score) -> Boolean>, scores: List<Score>): List<Score> {
+    private fun getBP(filters: List<(LazerScore) -> Boolean>, scores: List<LazerScore>): List<LazerScore> {
         // 处理带 mod 的
         beatmapApiService.applySRAndPP(scores)
 
@@ -373,7 +369,7 @@ class BPQueryService(
             return Triple(m.groupValues[1], operator, m.groupValues[3])
         }
 
-        private fun getFilter(cmd: String): (Score) -> Boolean {
+        private fun getFilter(cmd: String): (LazerScore) -> Boolean {
             val (key, operator, value) = cmd.getOperator()
             return when (key) {
                 Param.Mapper.key -> Param.Mapper(operator, value)
@@ -398,8 +394,8 @@ class BPQueryService(
             }
         }
 
-        private fun getAllFilter(text: String): List<(Score) -> Boolean> {
-            val result = mutableListOf<(Score) -> Boolean>()
+        private fun getAllFilter(text: String): List<(LazerScore) -> Boolean> {
+            val result = mutableListOf<(LazerScore) -> Boolean>()
 
             text.process()
                 .split(split)

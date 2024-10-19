@@ -21,6 +21,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.util.Map;
 import java.util.function.Consumer;
 
 @Service
@@ -113,7 +114,13 @@ public class OsuApiBaseService {
     }
 
     void insertHeader(HttpHeaders headers) {
-        headers.set("Authorization", STR."Bearer \{getBotToken()}");
+        // headers.set("Authorization", "Bearer " + getBotToken());
+
+        headers.setAll(
+                Map.of("Authorization", "Bearer " + getBotToken(),
+                       "x-api-version", "20240529"
+                )
+        );
     }
 
     Consumer<HttpHeaders> insertHeader(BinUser user) {

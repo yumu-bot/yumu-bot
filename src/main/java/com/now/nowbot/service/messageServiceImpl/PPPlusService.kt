@@ -141,7 +141,7 @@ class PPPlusService(
     // 把数据合并一下 。这个才是真传过去的 PP+
     @Throws(TipsException::class)
     private fun getUserPerformancePlus(uid: Long): PPPlus {
-        val bps = scoreApiService.getBestPerformance(uid, OsuMode.OSU, 0, 100)
+        val bps = scoreApiService.getBestScores(uid, OsuMode.OSU, 0, 100)
         val performance = performancePlusService.calculateUserPerformance(bps)
 
         val plus = PPPlus()

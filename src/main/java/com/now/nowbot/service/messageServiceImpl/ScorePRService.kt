@@ -2,8 +2,8 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.UUScore
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -51,7 +51,7 @@ class ScorePRService(
     @JvmRecord
     data class PanelE5Param(
             @JvmField val user: OsuUser,
-            @JvmField val score: Score,
+            @JvmField val score: LazerScore,
             @JvmField val density: IntArray,
             @JvmField val progress: Double,
             @JvmField val original: Map<String, Any>,
@@ -192,7 +192,7 @@ class ScorePRService(
     }
 
     @Throws(GeneralTipsException::class)
-    private fun getTextOutput(score: Score): MessageChain {
+    private fun getTextOutput(score: LazerScore): MessageChain {
         val d = UUScore.getInstance(score, beatmapApiService)
 
         val httpEntity = HttpEntity.EMPTY as HttpEntity<ByteArray>
@@ -210,11 +210,11 @@ class ScorePRService(
 
         val user = param.user
 
-        val scoreList: List<Score?>
+        val scoreList: List<LazerScore?>
 
         try {
             scoreList =
-                    scoreApiService.getRecent(user!!.userID, param.mode, offset, limit, !isRecent)
+                    scoreApiService.getScore(user!!.userID, param.mode, offset, limit, !isRecent)
         } catch (e: WebClientResponseException) {
             // 退避 !recent
             if (event != null &&
@@ -234,7 +234,7 @@ class ScorePRService(
                                 user!!.username,
                                 user.currentOsuMode.getName())
 
-                else -> GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "成绩")
+                else -> e
             }
         } catch (e: Exception) {
             log.error("成绩：列表获取失败", e)
@@ -264,7 +264,7 @@ class ScorePRService(
                 }
             }
 
-            val scores: List<Score?> = scoreList.subList(offset, offset + limit)
+            val scores: List<LazerScore?> = scoreList.subList(offset, offset + limit)
             beatmapApiService.applySRAndPP(scoreList)
 
             try {
@@ -282,7 +282,7 @@ class ScorePRService(
             }
         } else {
             // 单成绩发送
-            val score: Score = scoreList.first()
+            val score: LazerScore = scoreList.first()
             val e5Param = getScore4PanelE5(user, score, beatmapApiService)
             try {
                 image = imageService.getPanel(e5Param.toMap(), "E5")
@@ -303,9 +303,9 @@ class ScorePRService(
         @JvmStatic
         @Throws(Exception::class)
         fun getScore4PanelE5(
-                user: OsuUser,
-                score: Score,
-                beatmapApiService: OsuBeatmapApiService
+            user: OsuUser,
+            score: LazerScore,
+            beatmapApiService: OsuBeatmapApiService
         ): PanelE5Param {
             val beatmap = score.beatMap
             val original = DataUtil.getOriginal(beatmap)

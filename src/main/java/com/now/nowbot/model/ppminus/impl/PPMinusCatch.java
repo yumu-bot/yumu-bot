@@ -1,21 +1,22 @@
 package com.now.nowbot.model.ppminus.impl;
 
+import com.now.nowbot.model.json.LazerScore;
 import com.now.nowbot.model.json.OsuUser;
-import com.now.nowbot.model.json.Score;
 import com.now.nowbot.model.ppminus.PPMinus;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static com.now.nowbot.util.DataUtil.getBonusPP;
 
 public class PPMinusCatch extends PPMinus {
-    public PPMinusCatch(OsuUser user, List<Score> bps){
+    public PPMinusCatch(OsuUser user, List<LazerScore> bps){
         double [] bpPPs = new double[bps.size()];
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
-            var bpiPP = Optional.ofNullable(bp.getWeightedPP()).orElse(0f);
-            var bprPP = Optional.ofNullable(bp.getPP()).orElse(0f);
+            var bpiPP = Objects.requireNonNull(bp.getWeight()).getPP();
+            var bprPP = Optional.ofNullable(bp.getPP()).orElse(0d);
             bpPP += bpiPP;
             bpPPs[i] = bprPP;
 
@@ -27,18 +28,18 @@ public class PPMinusCatch extends PPMinus {
                 case "C" -> xc++;
                 case "D" -> xd++;
             }
-            if (!bp.isPerfect()) notfc ++;
+            if (!bp.getFullCombo()) notfc ++;
             if(i < 10){
                 ppv0 += bp.getPP();
-                accv0 += bp.getAccuracy();
+                accv0 += (float) bp.getAccuracy();
                 lengv0 += bp.getBeatMap().getTotalLength();
             }else if(i>=45 && i<55){
                 ppv45 += bp.getPP();
-                accv45 += bp.getAccuracy();
+                accv45 += (float) bp.getAccuracy();
                 lengv45 += bp.getBeatMap().getTotalLength();
             }else if(i>=90){
                 ppv90 += bp.getPP();
-                accv90 += bp.getAccuracy();
+                accv90 += (float) bp.getAccuracy();
                 lengv90 += bp.getBeatMap().getTotalLength();
             }
         }

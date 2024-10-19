@@ -12,13 +12,13 @@ public class BeatmapUserScore {
     @JsonProperty("position")
     Integer position;
     @JsonProperty("score")
-    Score score;
+    LazerScore score;
 
     public Integer getPosition() {
         return position;
     }
 
-    public Score getScore() {
+    public LazerScore getScore() {
         return score;
     }
 

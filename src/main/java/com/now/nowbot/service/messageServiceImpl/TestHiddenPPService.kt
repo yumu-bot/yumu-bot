@@ -3,8 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.config.Permission
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -57,7 +57,7 @@ class TestHiddenPPService(
             }
 
             var user: OsuUser
-            var bps: List<Score?>
+            var bps: List<LazerScore?>
             var hiddenPP = 0.0
 
             try {
@@ -68,7 +68,7 @@ class TestHiddenPPService(
                     mode = user.currentOsuMode
                 }
 
-                bps = scoreApiService.getBestPerformance(id, mode, 0, 100)
+                bps = scoreApiService.getBestScores(id, mode, 0, 100)
             } catch (e: Exception) {
                 sb.append("name=").append(name).append(" not found").append('\n')
                 break
@@ -79,8 +79,8 @@ class TestHiddenPPService(
             }
 
             for (bp in bps) {
-                if (OsuMod.hasMod(bp!!.mods, OsuMod.Hidden)) {
-                    hiddenPP += bp.weightedPP.toDouble()
+                if (OsuMod.hasMod(bp.mods, OsuMod.Hidden)) {
+                    hiddenPP += (bp.weight?.PP ?: 0.0)
                 }
             }
 

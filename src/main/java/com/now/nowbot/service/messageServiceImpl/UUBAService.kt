@@ -2,8 +2,9 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.Score
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.service.UserParam
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -114,12 +115,12 @@ class UUBAService(
             }
         }
 
-        val bps: List<Score>?
+        val bps: List<LazerScore>?
 
         val mode = OsuMode.getMode(param.user.mode, bu.osuMode)
 
         try {
-            bps = scoreApiService.getBestPerformance(bu, mode, 0, 100)
+            bps = scoreApiService.getBestScores(bu, mode)
         } catch (e: HttpClientErrorException.BadRequest) {
             // 请求失败 超时/断网
             if (param.user.qq == event.sender.id) {
@@ -140,7 +141,7 @@ class UUBAService(
             throw BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired)
         }
 
-        if (bps == null || bps.size <= 10) {
+        if (bps.size <= 10) {
             if (!param.user.at && Objects.isNull(param.user.name)) {
                 throw BPAnalysisException(
                         BPAnalysisException.Type.BA_Me_NotEnoughBP, mode!!.getName())
@@ -189,7 +190,7 @@ class UUBAService(
             osuName = param.user.name
             osuMode = mode
         }
-        val bps = scoreApiService.getBestPerformance(bu, mode, 0, 100)
+        val bps = scoreApiService.getBestScores(bu, mode, 0, 100)
         beatmapApiService.applySRAndPP(bps)
         val modeStr = mode?.getName() ?: ""
         val lines = getTextPlus(bps, bu.osuName, modeStr)
@@ -197,7 +198,7 @@ class UUBAService(
     }
 
     @Deprecated("这个标准获取基本上没人喜欢用了，只有进阶版有人用")
-    fun getText(bps: List<Score>, name: String?, mode: String?): String {
+    fun getText(bps: List<LazerScore>, name: String?, mode: String?): String {
         val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
         var allPP = 0.0
         var sSum = 0
@@ -212,7 +213,7 @@ class UUBAService(
                 sb.append("#")
                         .append(i + 1)
                         .append(' ')
-                        .append(String.format("%.2f", bp.pp))
+                        .append(String.format("%.2f", bp.PP))
                         .append(' ')
                         .append(String.format("%.2f", 100 * bp.accuracy))
                         .append('%')
@@ -228,10 +229,10 @@ class UUBAService(
             } else if (i == 5) {
                 sb.append("...").append('\n')
             }
-            allPP += bp.pp.toDouble() // 统计总数
+            allPP += bp.PP!!  // 统计总数
             if (bp.mods.isNotEmpty()) {
                 for (j in bp.mods.indices) {
-                    val mod = bp.mods[j]
+                    val mod = bp.mods[j].abbreviation
                     if (!modTreeMap.containsKey(mod)) modTreeMap[mod] = AtomicInteger()
                     else modTreeMap[mod]!!.incrementAndGet()
                 }
@@ -241,7 +242,7 @@ class UUBAService(
                 sSum++
                 xSum++
             }
-            if (bp.isPerfect) fcSum++
+            if (bp.fullCombo) fcSum++
         }
         sb.append("——————————").append('\n')
         sb.append("模组数量: \n")
@@ -269,17 +270,17 @@ class UUBAService(
                 .append("PP")
                 .append('\n')
                 .append("差值: ")
-                .append(String.format("%.2f", bps.first().getPP() - bps.last().getPP()))
+                .append(String.format("%.2f", bps.first().PP!! - bps.last().PP!!))
                 .append("PP")
 
         return sb.toString()
     }
 
-    fun getTextPlus(bps: List<Score>, name: String?, mode: String?): String {
+    fun getTextPlus(bps: List<LazerScore>, name: String?, mode: String?): String {
         if (bps.isEmpty()) return ""
         val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
 
-        val BP1: Score = bps.first()
+        val BP1: LazerScore = bps.first()
         val BP1BPM = BP1.beatMap.bpm
         val BP1Length = BP1.beatMap.totalLength.toFloat()
 
@@ -300,13 +301,13 @@ class UUBAService(
         var maxStarBP = 0
         var minStarBP = 0
 
-        var avgLength = 0f
+        var avgLength = 0.0
         var avgCombo = 0
-        var avgStar = 0f
+        var avgStar = 0.0
 
         var maxTTHPPBP = 0
-        var maxTTHPP = 0f
-        var nowPP = 0f
+        var maxTTHPP = 0.0
+        var nowPP = 0.0
 
         val modSum = TreeMap<String, ModData>() // 各个mod的数量
 
@@ -319,11 +320,11 @@ class UUBAService(
             val length = b.totalLength.toFloat()
             val bpm = b.bpm
             bp.mods.forEach(
-                    Consumer { r: String ->
-                        if (modSum.containsKey(r)) {
-                            modSum[r]!!.add(Optional.ofNullable(bp.weightedPP).orElse(0f))
+                    Consumer { r: OsuMod ->
+                        if (modSum.containsKey(r.abbreviation)) {
+                            modSum[r.abbreviation]!!.add(bp.weight?.PP ?: 0.0)
                         } else {
-                            modSum[r] = ModData(Optional.ofNullable(bp.weightedPP).orElse(0f))
+                            modSum[r.abbreviation] = ModData(bp.weight?.PP ?: 0.0)
                         }
                     })
 
@@ -362,18 +363,18 @@ class UUBAService(
             }
             avgCombo += bp.maxCombo
 
-            val tthToPp = (bp.pp) / (b.sliders + b.spinners + b.circles)
+            val tthToPp = (bp.PP!!) / (b.sliders + b.spinners + b.circles)
             if (maxTTHPP < tthToPp) {
                 maxTTHPPBP = i
                 maxTTHPP = tthToPp
             }
 
             if (mapperSum.containsKey(b.mapperID)) {
-                mapperSum[b.mapperID]!!.add(bp.pp)
+                mapperSum[b.mapperID]!!.add(bp.PP!!)
             } else {
-                mapperSum[b.mapperID] = FavoriteMapperData(bp.pp, b.mapperID)
+                mapperSum[b.mapperID] = FavoriteMapperData(bp.PP!!, b.mapperID)
             }
-            nowPP += bp.weightedPP
+            nowPP += bp.weight!!.PP
         }
         avgCombo /= bps.size
         avgLength /= bps.size.toFloat()
@@ -425,14 +426,14 @@ class UUBAService(
         sb.append("PP/TTH 比例最大: BP")
                 .append(maxTTHPPBP + 1)
                 .append("，为")
-                .append(decimalFormat.format(maxTTHPP.toDouble()))
+                .append(decimalFormat.format(maxTTHPP))
                 .append('倍')
                 .append('\n')
 
         sb.append("BPM 区间: ")
-                .append(String.format("%.0f", minBPM))
+                .append(String.format("%.0.0", minBPM))
                 .append('-')
-                .append(String.format("%.0f", maxBPM))
+                .append(String.format("%.0.0", maxBPM))
                 .append('\n')
         sb.append("——————————").append('\n')
 
@@ -459,7 +460,7 @@ class UUBAService(
                                 .append(": ")
                                 .append(mapper.size)
                                 .append("x ")
-                                .append(decimalFormat.format(mapper.allPP.toDouble()))
+                                .append(decimalFormat.format(mapper.allPP))
                                 .append("PP")
                                 .append('\n')
                     } catch (e: Exception) {
@@ -468,7 +469,7 @@ class UUBAService(
                                 .append(": ")
                                 .append(mapper.size)
                                 .append("x ")
-                                .append(decimalFormat.format(mapper.allPP.toDouble()))
+                                .append(decimalFormat.format(mapper.allPP))
                                 .append("PP")
                                 .append('\n')
                     }
@@ -481,10 +482,10 @@ class UUBAService(
                     .append(": ")
                     .append(sum.size)
                     .append("x ")
-                    .append(decimalFormat.format(sum.allPP.toDouble()))
+                    .append(decimalFormat.format(sum.allPP))
                     .append("PP ")
                     .append('(')
-                    .append(decimalFormat.format((100 * sum.allPP / finalAllPP).toDouble()))
+                    .append(decimalFormat.format((100 * sum.allPP / finalAllPP)))
                     .append('%')
                     .append(')')
                     .append('\n')
@@ -492,19 +493,19 @@ class UUBAService(
         return sb.toString()
     }
 
-    internal class FavoriteMapperData(var allPP: Float, var uid: Long) {
+    internal class FavoriteMapperData(var allPP: Double, var uid: Long) {
         var size: Int = 1
 
-        fun add(pp: Float) {
+        fun add(pp: Double) {
             allPP += pp
             size++
         }
     }
 
-    internal class ModData(var allPP: Float) {
+    internal class ModData(var allPP: Double) {
         var size: Int = 1
 
-        fun add(pp: Float) {
+        fun add(pp: Double) {
             allPP += pp
             size++
         }

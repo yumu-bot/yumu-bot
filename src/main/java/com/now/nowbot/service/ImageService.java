@@ -103,7 +103,7 @@ public class ImageService {
         return doPost("panel_A2", httpEntity);
     }
 
-    public byte[] getPanelA3(BeatMap beatMap, List<Score> scores) {
+    public byte[] getPanelA3(BeatMap beatMap, List<LazerScore> scores) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
@@ -114,7 +114,7 @@ public class ImageService {
         return doPost("panel_A3", httpEntity);
     }
 
-    public byte[] getPanelA4(OsuUser osuUser, List<Score> todayBPs, List<Integer> BPRanks) {
+    public byte[] getPanelA4(OsuUser osuUser, List<LazerScore> todayBPs, List<Integer> BPRanks) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
@@ -126,7 +126,7 @@ public class ImageService {
         return doPost("panel_A4", httpEntity);
     }
 
-    public byte[] getPanelA4BQ(OsuUser osuUser, List<Score> todayBPs, List<Integer> BPRanks) {
+    public byte[] getPanelA4BQ(OsuUser osuUser, List<LazerScore> todayBPs, List<Integer> BPRanks) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
@@ -139,7 +139,7 @@ public class ImageService {
         return doPost("panel_A4", httpEntity);
     }
 
-    public byte[] getPanelA5(OsuUser user, List<Score> scores) {
+    public byte[] getPanelA5(OsuUser user, List<LazerScore> scores) {
         HttpHeaders headers = getDefaultHeader();
         if (ContextUtil.getContext("isNewbie", Boolean.FALSE, Boolean.class)) {
             scores = scores.stream().filter(s -> s.getBeatMap().getStarRating() <= 5.7f).toList();
@@ -359,16 +359,16 @@ public class ImageService {
     }
 
 
-    public byte[] getPanelD(OsuUser osuUser, Optional<OsuUser> historyUser, List<Score> BPs, OsuMode mode) {
+    public byte[] getPanelD(OsuUser osuUser, Optional<OsuUser> historyUser, List<LazerScore> BPs, OsuMode mode) {
 
         double bonus = 0f;
 
         if (! BPs.isEmpty()) {
-            var bpPPs = BPs.stream().mapToDouble(Score::getPP).toArray();
+            var bpPPs = BPs.stream().mapToDouble(LazerScore::getPP).toArray();
             bonus = DataUtil.getBonusPP(osuUser.getPP(), bpPPs);
         }
 
-        var times = BPs.stream().map(Score::getCreateTimePretty).toList();
+        var times = BPs.stream().map(LazerScore::getEndedTimePretty).toList();
         var now = LocalDate.now();
         var bpTimes = new int[90];
         times.forEach(time -> {
@@ -512,13 +512,13 @@ public class ImageService {
         return doPost("panel_Alpha", httpEntity);
     }
 
-    public byte[] getPanelBeta(Score s) {
+    public byte[] getPanelBeta(LazerScore s) {
         var headers = getDefaultHeader();
-        HttpEntity<Score> httpEntity = new HttpEntity<>(s, headers);
+        HttpEntity<LazerScore> httpEntity = new HttpEntity<>(s, headers);
         return doPost("panel_Beta", httpEntity);
     }
 
-    public byte[] getPanelGamma(Score score) {
+    public byte[] getPanelGamma(LazerScore score) {
         var headers = getDefaultHeader();
         Map<String, Object> body = new HashMap<>();
         body.put("score", score);

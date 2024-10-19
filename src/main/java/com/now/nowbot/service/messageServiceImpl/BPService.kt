@@ -1,8 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -33,7 +33,7 @@ class BPService(
     private var imageService: ImageService,
 ) : MessageService<BPParam>, TencentMessageService<BPParam> {
 
-    data class BPParam(val user: OsuUser?, val BPMap: Map<Int, Score>, val isMyself: Boolean)
+    data class BPParam(val user: OsuUser?, val BPMap: Map<Int, LazerScore>, val isMyself: Boolean)
 
     @Throws(Throwable::class)
     override fun isHandle(
@@ -103,7 +103,7 @@ class BPService(
     private fun CmdRange<OsuUser>.getBPMap(
         isMultiple: Boolean,
         mode: OsuMode,
-    ): TreeMap<Int, Score> {
+    ): TreeMap<Int, LazerScore> {
         val offset: Int
         val limit: Int
 
@@ -117,8 +117,8 @@ class BPService(
 
         val isDefault = offset == 0 && limit == 1
 
-        val bpList = scoreApiService.getBestPerformance(data!!.userID, mode, offset, limit)
-        val bpMap = TreeMap<Int, Score>()
+        val bpList = scoreApiService.getBestScores(data!!.userID, mode, offset, limit)
+        val bpMap = TreeMap<Int, LazerScore>()
 
         // 检查查到的数据是否为空
         if (bpList.isEmpty()) {
@@ -137,7 +137,7 @@ class BPService(
         }
 
         bpList.forEach(
-            ContextUtil.consumerWithIndex { s: Score, index: Int -> bpMap[index + offset] = s }
+            ContextUtil.consumerWithIndex { s: LazerScore, index: Int -> bpMap[index + offset] = s }
         )
         return bpMap
     }
@@ -146,7 +146,7 @@ class BPService(
         try {
             if (BPMap.size > 1) {
                 val ranks = ArrayList<Int>()
-                val scores = ArrayList<Score?>()
+                val scores = ArrayList<LazerScore?>()
                 for ((key, value) in BPMap) {
                     ranks.add(key + 1)
                     scores.add(value)
@@ -156,7 +156,7 @@ class BPService(
 
                 imageService.getPanelA4(user, scores, ranks)
             } else {
-                var score: Score? = null
+                var score: LazerScore? = null
 
                 for ((_, value) in BPMap) {
                     score = value

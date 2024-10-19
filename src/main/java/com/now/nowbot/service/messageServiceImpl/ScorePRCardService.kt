@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.Score
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -31,23 +31,23 @@ class ScorePRCardService(
 
     ) : MessageService<PRCardParam>, TencentMessageService<PRCardParam> {
     @JvmRecord
-    data class PRCardParam(val score: Score)
+    data class PRCardParam(val score: LazerScore)
 
 
     @Throws(Throwable::class)
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<PRCardParam?>): Boolean {
         val matcher = Instruction.PR_CARD.matcher(messageText)
         if (!matcher.find()) return false
-        val score: Score?
+        val score: LazerScore?
 
         val mode = getMode(matcher)
         val range = getUserWithRange(event, matcher, mode, AtomicBoolean())
 
         val offset = range.getOffset(0, false)
         val scores = if (StringUtils.hasText(matcher.group("recent"))) {
-            scoreApiService.getRecent(range.data!!.userID, mode.data, offset, 1)
+            scoreApiService.getPassedScore(range.data!!.userID, mode.data, offset, 1)
         } else if (StringUtils.hasText(matcher.group("pass"))) {
-            scoreApiService.getRecentIncludingFail(range.data!!.userID, mode.data, offset, 1)
+            scoreApiService.getRecentScore(range.data!!.userID, mode.data, offset, 1)
         } else {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Classification, "迷你")
         }
@@ -98,7 +98,7 @@ class ScorePRCardService(
             else -> return null
         }
 
-        val score: Score
+        val score: LazerScore
 
         val mode = getMode(matcher)
         val range = getUserWithRange(event, matcher, mode, AtomicBoolean())
@@ -106,9 +106,9 @@ class ScorePRCardService(
         val offset = range.getOffset(0, false)
 
         val scores = if (isRecentAll) {
-            scoreApiService.getRecentIncludingFail(range.data!!.userID, mode.data, offset, 1)
+            scoreApiService.getRecentScore(range.data!!.userID, mode.data, offset, 1)
         } else {
-            scoreApiService.getRecent(range.data!!.userID, mode.data, offset, 1)
+            scoreApiService.getPassedScore(range.data!!.userID, mode.data, offset, 1)
         }
 
         if (range.data == null) throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
@@ -126,7 +126,7 @@ class ScorePRCardService(
         return getMessageChain(param.score)
     }
 
-    private fun getMessageChain(score: Score): MessageChain {
+    private fun getMessageChain(score: LazerScore): MessageChain {
         try {
             beatmapApiService.applyBeatMapExtend(score)
         } catch (e: Exception) {

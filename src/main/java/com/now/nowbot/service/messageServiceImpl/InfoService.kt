@@ -3,8 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.OsuUserInfoArchiveLite
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -79,8 +79,8 @@ class InfoService(
     override fun reply(event: MessageEvent, param: InfoParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
 
     private fun InfoParam.getImage(): ByteArray {
-        val BPs: List<Score> = try {
-            scoreApiService.getBestPerformance(user.userID, mode, 0, 100)
+        val BPs: List<LazerScore> = try {
+            scoreApiService.getBestScores(user.userID, mode, 0, 100)
         } catch (e: WebClientResponseException.NotFound) {
             throw InfoException(InfoException.Type.I_Player_NoBP, mode)
         } catch (e: Exception) {

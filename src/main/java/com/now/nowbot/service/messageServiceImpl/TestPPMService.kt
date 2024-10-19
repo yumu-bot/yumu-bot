@@ -1,224 +1,255 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.json.OsuUser;
-import com.now.nowbot.model.json.Score;
-import com.now.nowbot.qq.contact.Group;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.osuApiService.OsuScoreApiService;
-import com.now.nowbot.service.osuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.serviceException.PPMinusException;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Matcher;
-
-import static com.now.nowbot.util.DataUtil.getBonusPP;
+import com.now.nowbot.aop.CheckPermission
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.LazerScore
+import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.qq.contact.Group
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.osuApiService.OsuScoreApiService
+import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.serviceException.PPMinusException
+import com.now.nowbot.util.DataUtil.getBonusPP
+import com.now.nowbot.util.DataUtil.splitString
+import com.now.nowbot.util.Instruction
+import java.nio.charset.StandardCharsets
+import java.util.*
+import java.util.regex.Matcher
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import org.springframework.util.CollectionUtils
+import org.springframework.util.StringUtils
 
 @Service("TEST_PPM")
-public class TestPPMService implements MessageService<Matcher> {
-    private static final Logger log = LoggerFactory.getLogger(TestPPMService.class);
-    @Resource
-    OsuUserApiService userApiService;
-    @Resource
-    OsuScoreApiService scoreApiService;
+class TestPPMService(
+        private val userApiService: OsuUserApiService,
+        private val scoreApiService: OsuScoreApiService,
+) : MessageService<Matcher> {
 
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instruction.TEST_PPM.matcher(messageText);
+    override fun isHandle(
+            event: MessageEvent,
+            messageText: String,
+            data: DataValue<Matcher>,
+    ): Boolean {
+        val m = Instruction.TEST_PPM.matcher(messageText)
         if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
+            data.value = m
+            return true
+        } else return false
     }
 
-    @Override
     @CheckPermission(test = true)
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
+        val from = event.subject
 
-        var names = DataUtil.splitString(matcher.group("data"));
-        var mode = OsuMode.getMode(matcher.group("mode"));
+        val names: List<String?>? = splitString(matcher.group("data"))
+        var mode = OsuMode.getMode(matcher.group("mode"))
 
-        if (CollectionUtils.isEmpty(names)) throw new PPMinusException(PPMinusException.Type.PM_Test_Empty);
+        if (CollectionUtils.isEmpty(names))
+                throw PPMinusException(PPMinusException.Type.PM_Test_Empty)
 
-        StringBuilder sb = new StringBuilder();
+        val sb = StringBuilder()
 
-        for (var name : names) {
-            if (! StringUtils.hasText(name)) {
-                break;
+        for (name in names!!) {
+            if (!StringUtils.hasText(name)) {
+                break
             }
 
-            OsuUser user;
-            List<Score> bpList;
+            var user: OsuUser
+            var bpList: List<LazerScore>?
 
             try {
-                var id = userApiService.getOsuId(name);
-                user = userApiService.getPlayerOsuInfo(id);
+                val id = userApiService.getOsuId(name)
+                user = userApiService.getPlayerOsuInfo(id)
 
                 if (mode == OsuMode.DEFAULT) {
-                    mode = user.getCurrentOsuMode();
+                    mode = user.currentOsuMode
                 }
-                
-                bpList = scoreApiService.getBestPerformance(id, mode, 0, 100);
-            } catch (Exception e) {
-                sb.append("name=").append(name).append(" not found").append('\n');
-                break;
+
+                bpList = scoreApiService.getBestScores(id, mode, 0, 100)
+            } catch (e: Exception) {
+                sb.append("name=").append(name).append(" not found").append('\n')
+                break
             }
 
-            var ppmData = new TestPPMData();
-            ppmData.init(user, bpList);
+            val ppmData = TestPPMData()
+            ppmData.init(user, bpList)
 
-            sb.append(user.getUsername()).append(',')
-                    .append(user.getGlobalRank()).append(',')
-                    .append(user.getPP()).append(',')
-                    .append(user.getAccuracy()).append(',')
-                    .append(user.getLevelCurrent()).append(',')
-                    .append(user.getStatistics().getMaxCombo()).append(',')
-                    .append(user.getTotalHits()).append(',')
-                    .append(user.getPlayCount()).append(',')
-                    .append(user.getPlayTime()).append(',')
-                    .append(ppmData.notfc).append(',')
-                    .append(ppmData.rawpp).append(',')
-                    .append(ppmData.xx).append(',')
-                    .append(ppmData.xs).append(',')
-                    .append(ppmData.xa).append(',')
-                    .append(ppmData.xb).append(',')
-                    .append(ppmData.xc).append(',')
-                    .append(ppmData.xd).append(',')
-                    .append(ppmData.ppv0).append(',')
-                    .append(ppmData.accv0).append(',')
-                    .append(ppmData.lengv0).append(',')
-                    .append(ppmData.pgr0).append(',')
-                    .append(ppmData.ppv45).append(',')
-                    .append(ppmData.accv45).append(',')
-                    .append(ppmData.lengv45).append(',')
-                    .append(ppmData.pgr45).append(',')
-                    .append(ppmData.ppv90).append(',')
-                    .append(ppmData.accv45).append(',')
-                    .append(ppmData.lengv90).append(',')
-                    .append(ppmData.pgr90).append('\n');
+            sb.append(user.username)
+                    .append(',')
+                    .append(user.globalRank)
+                    .append(',')
+                    .append(user.pp)
+                    .append(',')
+                    .append(user.accuracy)
+                    .append(',')
+                    .append(user.levelCurrent)
+                    .append(',')
+                    .append(user.statistics.maxCombo)
+                    .append(',')
+                    .append(user.totalHits)
+                    .append(',')
+                    .append(user.playCount)
+                    .append(',')
+                    .append(user.playTime)
+                    .append(',')
+                    .append(ppmData.notfc)
+                    .append(',')
+                    .append(ppmData.rawpp)
+                    .append(',')
+                    .append(ppmData.xx)
+                    .append(',')
+                    .append(ppmData.xs)
+                    .append(',')
+                    .append(ppmData.xa)
+                    .append(',')
+                    .append(ppmData.xb)
+                    .append(',')
+                    .append(ppmData.xc)
+                    .append(',')
+                    .append(ppmData.xd)
+                    .append(',')
+                    .append(ppmData.ppv0)
+                    .append(',')
+                    .append(ppmData.accv0)
+                    .append(',')
+                    .append(ppmData.lengv0)
+                    .append(',')
+                    .append(ppmData.pgr0)
+                    .append(',')
+                    .append(ppmData.ppv45)
+                    .append(',')
+                    .append(ppmData.accv45)
+                    .append(',')
+                    .append(ppmData.lengv45)
+                    .append(',')
+                    .append(ppmData.pgr45)
+                    .append(',')
+                    .append(ppmData.ppv90)
+                    .append(',')
+                    .append(ppmData.accv45)
+                    .append(',')
+                    .append(ppmData.lengv90)
+                    .append(',')
+                    .append(ppmData.pgr90)
+                    .append('\n')
         }
 
-        var result = sb.toString();
+        val result = sb.toString()
 
-        //必须群聊
-        if (from instanceof Group group) {
+        // 必须群聊
+        if (from is Group) {
             try {
-                group.sendFile(result.getBytes(StandardCharsets.UTF_8), STR."\{names.getFirst()}...-testppm.csv");
-            } catch (Exception e) {
-                log.error("TESTPPM:", e);
-                throw new PPMinusException(PPMinusException.Type.PM_Test_SendError);
+                from.sendFile(
+                        result.toByteArray(StandardCharsets.UTF_8),
+                        names.first() + "...-testppm.csv",
+                )
+            } catch (e: Exception) {
+                log.error("TESTPPM:", e)
+                throw PPMinusException(PPMinusException.Type.PM_Test_SendError)
             }
         } else {
-            throw new PPMinusException(PPMinusException.Type.PM_Test_NotGroup);
+            throw PPMinusException(PPMinusException.Type.PM_Test_NotGroup)
         }
 
-        //event.getSubject().sendMessage(sb.toString());
+        // event.getSubject().sendMessage(sb.toString());
     }
-    static class TestPPMData {
-        protected float ppv0 = 0;
-        protected float ppv45 = 0;
-        protected float ppv90 = 0;
-        protected float accv0 = 0;
-        protected float pgr0 = 0;
-        protected float pgr45 = 0;
-        protected float pgr90 = 0;
-        protected float accv45 = 0;
-        protected float accv90 = 0;
-        protected long lengv0 = 0;
-        protected long lengv45 = 0;
-        protected long lengv90 = 0;
-        protected double bpPP = 0;
-        protected double rawpp = 0;
-        protected double bonus = 0;
-        protected int xd = 0;
-        protected int xc = 0;
-        protected int xb = 0;
-        protected int xa = 0;
-        protected int xs = 0;
-        protected int xx = 0;
-        protected int notfc = 0;
 
-        private void init(OsuUser user, List<Score> bps){
-            double[] bpPPs = new double[bps.size()];
-            for (int i = 0; i < bps.size(); i++) {
-                var bp = bps.get(i);
-                var bpiPP = Optional.ofNullable(bp.getWeightedPP()).orElse(0f);
-                var bprPP = Optional.ofNullable(bp.getPP()).orElse(0f);
-                bpPP += bpiPP;
-                bpPPs[i] = bprPP;
+    internal class TestPPMData {
+        var ppv0: Float = 0f
+        var ppv45: Float = 0f
+        var ppv90: Float = 0f
+        var accv0: Float = 0f
+        var pgr0: Float = 0f
+        var pgr45: Float = 0f
+        var pgr90: Float = 0f
+        var accv45: Float = 0f
+        protected var accv90: Float = 0f
+        var lengv0: Long = 0
+        var lengv45: Long = 0
+        var lengv90: Long = 0
+        protected var bpPP: Double = 0.0
+        var rawpp: Double = 0.0
+        protected var bonus: Double = 0.0
+        var xd: Int = 0
+        var xc: Int = 0
+        var xb: Int = 0
+        var xa: Int = 0
+        var xs: Int = 0
+        var xx: Int = 0
+        var notfc: Int = 0
 
-                switch (bp.getRank()) {
-                    case "XH", "X" -> xx++;
-                    case "SH", "S" -> xs++;
-                    case "A" -> xa++;
-                    case "B" -> xb++;
-                    case "C" -> xc++;
-                    case "D" -> xd++;
+        fun init(user: OsuUser, bps: List<LazerScore>) {
+            val bpPPs = DoubleArray(bps.size)
+            for (i in bps.indices) {
+                val bp = bps[i]
+                val bpiPP = bp.weight?.PP ?: 0.0
+                val bprPP = bp.PP ?: 0.0
+
+                bpPP += bpiPP
+                bpPPs[i] = bprPP
+
+                when (bp.rank) {
+                    "XH",
+                    "X" -> xx++
+                    "SH",
+                    "S" -> xs++
+                    "A" -> xa++
+                    "B" -> xb++
+                    "C" -> xc++
+                    "D" -> xd++
                 }
-                if (!bp.isPerfect()) notfc++;
+                if (!bp.fullCombo) notfc++
                 if (i < 10) {
-                    ppv0 += bp.getPP();
-                    accv0 += bp.getAccuracy();
-                    lengv0 += bp.getBeatMap().getTotalLength();
+                    ppv0 += bp.PP!!.toFloat()
+                    accv0 += bp.accuracy.toFloat()
+                    lengv0 += bp.beatMap.totalLength.toLong()
                 } else if (i >= 45 && i < 55) {
-                    ppv45 += bp.getPP();
-                    accv45 += bp.getAccuracy();
-                    lengv45 += bp.getBeatMap().getTotalLength();
+                    ppv45 += bp.PP!!.toFloat()
+                    accv45 += bp.accuracy.toFloat()
+                    lengv45 += bp.beatMap.totalLength.toLong()
                 } else if (i >= 90) {
-                    ppv90 += bp.getPP();
-                    accv90 += bp.getAccuracy();
-                    lengv90 += bp.getBeatMap().getTotalLength();
+                    ppv90 += bp.PP!!.toFloat()
+                    accv90 += bp.accuracy.toFloat()
+                    lengv90 += bp.beatMap.totalLength.toLong()
                 }
             }
-            //bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
-            bonus = getBonusPP(user.getPP(), bpPPs);
-            rawpp = user.getPP() - bonus;
+            // bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
+            bonus = getBonusPP(user.pp, bpPPs).toDouble()
+            rawpp = user.pp - bonus
 
-            ppv0 /= 10;
-            ppv45 /= 10;
-            ppv90 /= 10;
-            accv0 /= 10;
-            accv45 /= 10;
-            accv90 /= 10;
-            lengv0 /= 10;
-            lengv45 /= 10;
-            lengv90 /= 10;
-            if (bps.size() < 90) {
-                ppv90 = 0;
-                accv90 = 0;
-                lengv90 = 0;
+            ppv0 /= 10f
+            ppv45 /= 10f
+            ppv90 /= 10f
+            accv0 /= 10f
+            accv45 /= 10f
+            accv90 /= 10f
+            lengv0 /= 10
+            lengv45 /= 10
+            lengv90 /= 10
+            if (bps.size < 90) {
+                ppv90 = 0f
+                accv90 = 0f
+                lengv90 = 0
             }
-            if (bps.size() < 45) {
-                ppv45 = 0;
-                accv45 = 0;
-                lengv45 = 0;
+            if (bps.size < 45) {
+                ppv45 = 0f
+                accv45 = 0f
+                lengv45 = 0
             }
-            if (bps.size() < 10) {
-                ppv0 = 0;
-                accv0 = 0;
-                lengv0 = 0;
+            if (bps.size < 10) {
+                ppv0 = 0f
+                accv0 = 0f
+                lengv0 = 0
             }
-            /*
-            double pp = user.getStatistics().getPP();
-            double acc = user.getStatistics().getAccuracy();
-            double pc = user.getStatistics().getPlayCount();
-            double pt = user.getStatistics().getPlayTime();
-            double tth = user.getStatistics().getTotalHits();
-
-             */
         }
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(TestPPMService::class.java)
     }
 }

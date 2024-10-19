@@ -2,9 +2,8 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatmapUserScore
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -124,25 +123,23 @@ class ScoreService(
         // 处理 mods
         val modsStr = param.modsStr
 
-        val score: Score?
+        val score: LazerScore?
         if (StringUtils.hasText(modsStr)) {
-            val scoreall: BeatmapUserScore
             val osuMods = OsuMod.getModsList(modsStr)
-            try {
-                scoreall = scoreApiService.getScore(bid, user.userID, mode, osuMods)
-                score = scoreall.score
+            score = try {
+                scoreApiService.getBeatMapScore(bid, user.userID, mode, osuMods)?.score
             } catch (e: WebClientResponseException) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, bid.toString())
             }
             beatmapApiService.applyBeatMapExtend(score)
         } else {
             score = try {
-                scoreApiService.getScore(bid, user.userID, mode).score
+                scoreApiService.getBeatMapScore(bid, user.userID, mode)?.score
             } catch (e: WebClientResponseException.NotFound) {
                 //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
                 if (isDefault) {
                     try {
-                        scoreApiService.getScore(bid, user.userID, OsuMode.DEFAULT).score
+                        scoreApiService.getBeatMapScore(bid, user.userID, OsuMode.DEFAULT)?.score
                     } catch (e1: WebClientResponseException) {
                         throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, bid.toString())
                     }

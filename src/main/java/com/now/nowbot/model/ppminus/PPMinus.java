@@ -1,8 +1,8 @@
 package com.now.nowbot.model.ppminus;
 
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.json.LazerScore;
 import com.now.nowbot.model.json.OsuUser;
-import com.now.nowbot.model.json.Score;
 import com.now.nowbot.model.ppminus.impl.PPMinusCatch;
 import com.now.nowbot.model.ppminus.impl.PPMinusMania;
 import com.now.nowbot.model.ppminus.impl.PPMinusOsu;
@@ -44,7 +44,7 @@ public abstract class PPMinus {
     protected double value7;
     protected double value8;
 
-    public static PPMinus getInstance(OsuMode mode, OsuUser user, List<Score> bps){
+    public static PPMinus getInstance(OsuMode mode, OsuUser user, List<LazerScore> bps){
         PPMinus PPMinus = null;
         if (OsuMode.isDefaultOrNull(mode)) mode = user.getCurrentOsuMode();
         switch (mode) {

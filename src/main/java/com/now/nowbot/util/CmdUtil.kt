@@ -3,8 +3,8 @@ package com.now.nowbot.util
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
@@ -436,10 +436,10 @@ object CmdUtil {
         return matcher.group(FLAG_MOD) ?: ""
     }
 
-    /** 将 [Score]列表转换为 indexMap 注意, 这里 index 从 1 开始 */
+    /** 将 [LazerScore]列表转换为 indexMap 注意, 这里 index 从 1 开始 */
     @JvmStatic
-    fun processBP(bp: Iterable<Score>): Map<Int, Score> {
-        val result = TreeMap<Int, Score>()
+    fun processBP(bp: List<LazerScore>): Map<Int, LazerScore> {
+        val result = TreeMap<Int, LazerScore>()
         bp.forEachIndexed { index, score -> result[index + 1] = score }
         return result
     }

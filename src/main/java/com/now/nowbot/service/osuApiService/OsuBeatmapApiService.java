@@ -63,7 +63,7 @@ public interface OsuBeatmapApiService {
 
     int getFailTime(long bid, int passObj);
 
-    double getPlayPercentage(Score score);
+    double getPlayPercentage(LazerScore score);
 
     BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode);
 
@@ -97,8 +97,8 @@ public interface OsuBeatmapApiService {
         return Rosu.calculate(b, js);
     }
 
-    default JniResult getMaxPP(Score s) {
-        return getMaxPP(s.getBeatMap().getBeatMapID(), s.getMode(), OsuMod.getModsValueFromAbbrList(s.getMods()));
+    default JniResult getMaxPP(LazerScore s) {
+        return getMaxPP(s.getBeatMap().getBeatMapID(), s.getMode(), OsuMod.getModsValue(s.getMods()));
     }
 
     default JniResult getMaxPP(long bid, OsuMode mode, int modInt) {
@@ -114,14 +114,14 @@ public interface OsuBeatmapApiService {
         return Rosu.calculate(b, js);
     }
 
-    default JniResult getPP(long bid, int modInt, Statistics s, int combo) throws Exception {
+    default JniResult getPP(long bid, int modInt, LazerScore.StatisticsV2 s, int combo) throws Exception {
         var b = getBeatMapFileByte(bid);
         JniScore js = new JniScore();
         js.setCombo(combo);
         return getJniResult(modInt, s, b, js);
     }
 
-    default JniResult getPP(long bid, OsuMode mode, int modInt, Statistics s, int combo) {
+    default JniResult getPP(long bid, OsuMode mode, int modInt, LazerScore.StatisticsV2 s, int combo) {
         var b = getBeatMapFileByte(bid);
         JniScore js = new JniScore();
         js.setCombo(combo);
@@ -143,9 +143,9 @@ public interface OsuBeatmapApiService {
         return Rosu.calculate(b, score);
     }
 
-    default JniResult getPP(Score s) {
+    default JniResult getPP(LazerScore s) {
         var b = getBeatMapFileByte(s.getBeatMap().getBeatMapID());
-        var m = OsuMod.getModsValueFromAbbrList(s.getMods());
+        var m = OsuMod.getModsValue(s.getMods());
         var t = s.getStatistics();
 
         JniScore js = new JniScore();
@@ -154,26 +154,26 @@ public interface OsuBeatmapApiService {
 
         if (!s.getPassed()) {
             // 没 pass 不给 300, acc 跟 combo
-            js.setN100(t.getCount100());
-            js.setKatu(t.getCountKatu());
-            js.setN50(t.getCount50());
-            js.setMisses(t.getCountMiss());
+            js.setN100(Objects.requireNonNullElse(t.getOk(), 0));
+            js.setKatu(Objects.requireNonNullElse(t.getGood(), 0));
+            js.setN50(Objects.requireNonNullElse(t.getMeh(), 0));
+            js.setMisses(Objects.requireNonNullElse(t.getMiss(), 0));
             return getJniResult(m, b, js);
         }
         return getJniResult(m, t, b, js);
     }
 
-    default JniResult getFcPP(Score s) {
+    default JniResult getFcPP(LazerScore s) {
         var b = getBeatMapFileByte(s.getBeatMap().getBeatMapID());
-        var m = OsuMod.getModsValueFromAbbrList(s.getMods());
+        var m = OsuMod.getModsValue(s.getMods());
         var t = s.getStatistics().clone();
 
-        if (t.getCountAll(s.getMode()) > 0 && t.getCountMiss() > 0) {
-            t.setCountMiss(0);
-            t.setCount300(t.getCount300() + t.getCountMiss());
+        if (s.getScoreHit() > 0 && t.getMiss() != null && t.getMiss() > 0) {
+            t.setMiss(0);
+            t.setGreat(Objects.requireNonNullElse(t.getGreat(), 0) + t.getMiss());
         }
 
-        if (s.getBeatMap() == null || s.getBeatMap().getMaxCombo() == null) {
+        if (s.getBeatMap().getMaxCombo() == null) {
             applyBeatMapExtend(s);
         }
 
@@ -183,22 +183,22 @@ public interface OsuBeatmapApiService {
         js.setMode(s.getMode().toRosuMode());
         if (!s.getPassed()) {
             // 没 pass 不给 300, misses 跟 combo
-            js.setN100(t.getCount100());
-            js.setKatu(t.getCountKatu());
-            js.setN50(t.getCount50());
+            js.setN100(t.getOk());
+            js.setKatu(t.getGood());
+            js.setN50(t.getMeh());
             js.setAccuracy(s.getAccuracy());
             return getJniResult(m, b, js);
         }
         return getJniResult(m, t, b, js);
     }
 
-    default Map<String, Object> getFullStatistics(Score s) {
+    default Map<String, Object> getFullStatistics(LazerScore s) {
         var jniResult = getMaxPP(s);
 
         return getStats(jniResult);
     }
 
-    default Map<String, Object> getStatistics(Score s) {
+    default Map<String, Object> getStatistics(LazerScore s) {
         var jniResult = getPP(s);
 
         return getStats(jniResult);
@@ -229,10 +229,19 @@ public interface OsuBeatmapApiService {
 
     @NonNull
     @SuppressWarnings("all")
-    private JniResult getJniResult(int modInt, Statistics s, byte[] b, JniScore score) {
+    private JniResult getJniResult(int modInt, LazerScore.StatisticsV2 s, byte[] b, JniScore score) {
         score.setMods(modInt);
+
+        if (s.getPerfect() != null) score.setGeki(s.getPerfect());
+        if (s.getGreat() != null) score.setN300(s.getGreat());
+        if (s.getGood() != null) score.setKatu(s.getGood());
+        if (s.getOk() != null) score.setN100(s.getOk());
+        if (s.getMeh() != null) score.setN50(s.getMeh());
+        if (s.getMiss() != null) score.setMisses(s.getMiss());
+
         // 这个要留着, 因为是调用了 native 方法
         // 那边如果有 null 会直接导致虚拟机炸掉退出, 注解不会在运行时检查是不是 null
+        /*
         if (
                 Objects.nonNull(s.getCountGeki()) &&
                         Objects.nonNull(s.getCountKatu()) &&
@@ -248,8 +257,11 @@ public interface OsuBeatmapApiService {
             score.setN50(s.getCount50());
             score.setMisses(s.getCountMiss());
         } else {
-            score.setAccuracy(s.getAccuracy());
+            score.setAccuracy(s.get());
         }
+
+         */
+
         return Rosu.calculate(b, score);
     }
 
@@ -260,7 +272,7 @@ public interface OsuBeatmapApiService {
     }
 
     // 给成绩添加完整的谱面
-    default void applyBeatMapExtend(List<Score> scoreList) {
+    default void applyBeatMapExtend(List<LazerScore> scoreList) {
         for (var score : scoreList) {
             applyBeatMapExtend(score);
         }
@@ -273,26 +285,30 @@ public interface OsuBeatmapApiService {
     }
 
     // 给成绩添加完整的谱面
-    default void applyBeatMapExtend(Score score) {
+    default void applyBeatMapExtend(LazerScore score) {
         var extended = getBeatMap(score.getBeatMap().getBeatMapID());
         var lite = score.getBeatMap();
 
         score.setBeatMap(BeatMap.extend(lite, extended));
-        score.setBeatMapSet(extended.getBeatMapSet());
+        if (extended.getBeatMapSet() != null) {
+            score.setBeatMapSet(extended.getBeatMapSet());
+        }
     }
 
     // 给成绩添加完整的谱面
-    default void applyBeatMapExtendFromDataBase(Score score) {
+    default void applyBeatMapExtendFromDataBase(LazerScore score) {
         var extended = getBeatMapFromDataBase(score.getBeatMap().getBeatMapID());
         var lite = score.getBeatMap();
 
         score.setBeatMap(BeatMap.extend(lite, extended));
-        score.setBeatMapSet(extended.getBeatMapSet());
+        if (extended.getBeatMapSet() != null) {
+            score.setBeatMapSet(extended.getBeatMapSet());
+        }
     }
 
-    default void applySRAndPP(Score score) {
+    default void applySRAndPP(LazerScore score) {
         if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
-        var modsInt = OsuMod.getModsValueFromAbbrList(score.getMods());
+        var modsInt = OsuMod.getModsValue(score.getMods());
 
         // 没有变星数，并且有 PP，略过
         if (!OsuMod.hasChangeRating(modsInt) && score.getPP() > 0f) return;
@@ -314,7 +330,7 @@ public interface OsuBeatmapApiService {
         }
 
         if (r.getPp() > 0) {
-            score.setPP((float) r.getPp());
+            score.setPP(r.getPp());
             beatMap.setStarRating((float) r.getStar());
         } else {
             applyStarFromAttributes(beatMap, score.getMode(), modsInt);
@@ -323,7 +339,7 @@ public interface OsuBeatmapApiService {
         DataUtil.applyBeatMapChanges(beatMap, modsInt);
     }
 
-    default void applySRAndPP(List<Score> scoreList) {
+    default void applySRAndPP(List<LazerScore> scoreList) {
         if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
         if (CollectionUtils.isEmpty(scoreList)) return;
 

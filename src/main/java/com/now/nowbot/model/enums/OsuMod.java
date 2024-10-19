@@ -275,13 +275,17 @@ public enum OsuMod {
         };
     }
 
-    public static boolean hasMod(List<String> abbrList, OsuMod mod) {
-        return hasMod(getModsValueFromAbbrList(abbrList), mod);
+    public static boolean hasMod(List<OsuMod> modList, OsuMod mod) {
+        return hasMod(getModsValue(modList), mod);
     }
 
     public static boolean hasMod(Integer modInt, OsuMod mod) {
         if (modInt == null || mod == null) return false;
         return (mod.value & modInt) != 0;
+    }
+
+    public static boolean hasModFromAbbrList(List<String> abbrList, OsuMod mod) {
+        return hasMod(getModsValueFromAbbrList(abbrList), mod);
     }
 
     public static boolean hasDt(int i) {

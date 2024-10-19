@@ -1,7 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
@@ -39,7 +40,7 @@ class BPAnalysisService(
     private val beatmapApiService: OsuBeatmapApiService,
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
-    data class BAParam(val user: OsuUser, val bpList: List<Score>, val isMyself: Boolean)
+    data class BAParam(val user: OsuUser, val bpList: List<LazerScore>, val isMyself: Boolean)
 
 
     @Throws(Throwable::class)
@@ -54,7 +55,7 @@ class BPAnalysisService(
 
         val user = getUserWithOutRange(event, matcher, mode, isMyself)
 
-        val bpList = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
+        val bpList = scoreApiService.getBestScores(user.userID, mode.data, 0, 100)
 
         data.value = BAParam(user, bpList, isMyself.get())
 
@@ -84,7 +85,7 @@ class BPAnalysisService(
 
         val user = getUserWithOutRange(event, matcher, mode, isMyself)
 
-        val bpList = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
+        val bpList = scoreApiService.getBestScores(user.userID, mode.data, 0, 100)
 
         return BAParam(user, bpList, isMyself.get())
     }
@@ -138,16 +139,16 @@ class BPAnalysisService(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BPAnalysisService::class.java)
         private val RANK_ARRAY = arrayOf("XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F")
-        fun parseData(user: OsuUser, bpList: List<Score>?, userApiService: OsuUserApiService): Map<String, Any> {
+        fun parseData(user: OsuUser, bpList: List<LazerScore>?, userApiService: OsuUserApiService): Map<String, Any> {
             if (bpList == null || bpList.size <= 5) return HashMap.newHashMap(1)
 
-            val bps: List<Score> = ArrayList(bpList)
+            val bps: List<LazerScore> = ArrayList(bpList)
 
             val bpSize = bps.size
 
             // top
-            val t5: List<Score?> = bps.subList(0, 5)
-            val b5: List<Score?> = bps.subList(max((bpSize - 5).toDouble(), 0.0).toInt(), bpSize)
+            val t5: List<LazerScore?> = bps.subList(0, 5)
+            val b5: List<LazerScore?> = bps.subList(max((bpSize - 5).toDouble(), 0.0).toInt(), bpSize)
 
             data class BeatMap4BA(
                 val ranking: Int,
@@ -157,19 +158,19 @@ class BPAnalysisService(
                 val star: Float,
                 val rank: String,
                 val cover: String,
-                val mods: Array<String>
+                val mods: List<OsuMod>
             )
 
             data class Attr(
                 val index: String,
                 val map_count: Int,
-                val pp_count: Float,
-                val percent: Float
+                val pp_count: Double,
+                val percent: Double
             )
 
             val beatMapList: MutableList<BeatMap4BA> = ArrayList(bpSize)
-            val modsPPMap: MultiValueMap<String, Float> = LinkedMultiValueMap()
-            val rankMap: MultiValueMap<String, Float> = LinkedMultiValueMap()
+            val modsPPMap: MultiValueMap<String, Double> = LinkedMultiValueMap()
+            val rankMap: MultiValueMap<String, Double> = LinkedMultiValueMap()
 
             var modsSum = 0
 
@@ -186,7 +187,7 @@ class BPAnalysisService(
                         b.starRating,
                         s.rank,
                         s.beatMapSet.covers.list,
-                        s.mods.toTypedArray<String>()
+                        s.mods
                     )
                     beatMapList.add(m)
                 }
@@ -195,16 +196,16 @@ class BPAnalysisService(
                     // 统计 mods / rank
                     if (!CollectionUtils.isEmpty(s.mods)) {
                         s.mods.forEach {
-                            modsPPMap.add(it, s.weightedPP)
+                            modsPPMap.add(it.abbreviation, s.weight!!.PP)
                         }
                         modsSum += s.mods.size
                     } else {
                         modsSum += 1
                     }
-                    if (s.isPerfect) {
-                        rankMap.add("FC", s.weightedPP)
+                    if (s.fullCombo) {
+                        rankMap.add("FC", s.weight!!.PP)
                     }
-                    rankMap.add(s.rank, s.weightedPP)
+                    rankMap.add(s.rank, s.weight!!.PP)
                 }
             }
 
@@ -225,9 +226,8 @@ class BPAnalysisService(
             sortCount("star") { it.star }
             sortCount("bpm") { it.bpm }
 
-            val ppRawList = bps.map { it.pp!! }
+            val ppRawList = bps.map { it.PP!! }
             val rankCount = bps.map { it.rank!! }
-
 
             val rankSort = rankCount
                 .groupingBy { it }
@@ -254,11 +254,11 @@ class BPAnalysisService(
             val mapperList = bps
                 .filter { mapperCount.containsKey(it.beatMap.mapperID) }
                 .groupingBy { it.beatMap.mapperID }
-                .aggregate<Score, Long, Double>({ _, accumulator, element, _ ->
+                .aggregate<LazerScore, Long, Double>({ _, accumulator, element, _ ->
                     if (accumulator == null) {
-                        element.pp.toDouble()
+                        element.PP ?: 0.0
                     } else {
-                        accumulator + element.pp.toDouble()
+                        accumulator + (element.PP ?: 0.0)
                     }
                 })
                 .entries.sortedWith(
@@ -279,25 +279,25 @@ class BPAnalysisService(
                 }
                 .toList()
 
-            val bpPPs = bps.map { obj: Score -> obj.pp.toDouble() }.toDoubleArray()
+            val bpPPs = bps.map { obj: LazerScore -> obj.PP ?: 0.0 }.toDoubleArray()
 
             val userPP = user.pp
             val bonusPP = getBonusPP(userPP, bpPPs)
 
             //bpPP + remainPP (bp100之后的) = rawPP
-            val bpPP = bps.map { it.weightedPP?.toDouble() ?: 0.0 }.sum().toFloat()
+            val bpPP = bps.map { it.weight!!.PP }.sum().toFloat()
             val rawPP = (userPP - bonusPP).toFloat()
 
             var modsAttr: List<Attr>
             run {
                 val m = modsSum
                 val modsAttrTmp: MutableList<Attr> = ArrayList(modsPPMap.size)
-                modsPPMap.forEach { (mod: String, value: MutableList<Float?>) ->
+                modsPPMap.forEach { (mod: String, value: MutableList<Double?>) ->
                     val attr = Attr(
                         mod,
                         value.count { it != null },
                         value.filterNotNull().sum(),
-                        (value.size / m.toFloat())
+                        (value.size * 1.0 / m)
                     )
                     modsAttrTmp.add(attr)
                 }
@@ -309,9 +309,9 @@ class BPAnalysisService(
                 val fcList = rankMap.remove("FC")
                 val fc: Attr
                 if (fcList.isNullOrEmpty()) {
-                    fc = Attr("FC", 0, 0f, 0f)
+                    fc = Attr("FC", 0, 0.0, 0.0)
                 } else {
-                    val ppSum = fcList.reduceOrNull { acc, fl -> acc + fl } ?: 0f
+                    val ppSum = fcList.reduceOrNull { acc, fl -> acc + fl } ?: 0.0
 
                     fc = Attr("FC", fcList.size, ppSum, (ppSum / bpPP))
                 }
@@ -319,10 +319,10 @@ class BPAnalysisService(
                 for (rank in RANK_ARRAY) {
                     if (rankMap.containsKey(rank)) {
                         val value = rankMap[rank]
-                        var ppSum: Float
+                        var ppSum: Double
                         var attr: Attr? = null
                         if (Objects.nonNull(value) && value!!.isNotEmpty()) {
-                            ppSum = value.filterNotNull().reduceOrNull { acc, fl -> acc + fl } ?: 0f
+                            ppSum = value.filterNotNull().reduceOrNull { acc, fl -> acc + fl } ?: 0.0
                             attr = Attr(
                                 rank,
                                 value.count { it != null },

@@ -1,9 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.Score
-import com.now.nowbot.model.json.ScoreWithFcPP
+import com.now.nowbot.model.json.LazerScoreWithFcPP
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -35,7 +35,7 @@ class BPFixService(
     private val beatmapApiService: OsuBeatmapApiService,
 ) : MessageService<BPFixParam>, TencentMessageService<BPFixParam> {
 
-    data class BPFixParam(val user: OsuUser, val bpMap: Map<Int, Score>, val mode: OsuMode)
+    data class BPFixParam(val user: OsuUser, val bpMap: Map<Int, LazerScore>, val mode: OsuMode)
 
     companion object {
         val log: Logger = LoggerFactory.getLogger(BPFixService::class.java)
@@ -49,7 +49,7 @@ class BPFixService(
 
         val user = getUserWithOutRange(event, matcher, mode)
 
-        val bpMap = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
+        val bpMap = scoreApiService.getBestScores(user.userID, mode.data, 0, 100)
 
         data.value = BPFixParam(user, processBP(bpMap), mode.data!!)
 
@@ -75,32 +75,30 @@ class BPFixService(
 
         val user = getUserWithOutRange(event, matcher, mode)
 
-        val bpMap = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
+        val bpMap = scoreApiService.getBestScores(user.userID, mode.data, 0, 100)
 
         return BPFixParam(user, processBP(bpMap), mode.data!!)
     }
 
     override fun reply(event: MessageEvent, param: BPFixParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
 
-    fun fix(playerPP: Double, bpMap: Map<Int, Score>): Map<String, Any>? {
-        val bpList = ArrayList<Score>(bpMap.size)
-        val beforeBpSumAtomic = AtomicReference(0f)
+    fun fix(playerPP: Double, bpMap: Map<Int, LazerScore>): Map<String, Any>? {
+        val bpList = mutableListOf<LazerScore>()
+        val beforeBpSumAtomic = AtomicReference(0.0)
 
-        bpMap.forEach { (index: Int, score: Score) ->
-            beforeBpSumAtomic.updateAndGet { v: Float -> v + score.weightedPP }
+        bpMap.forEach { (index: Int, score: LazerScore) ->
+            beforeBpSumAtomic.updateAndGet { v: Double -> v + (score.weight?.PP ?: 0.0) }
             beatmapApiService.applyBeatMapExtendFromDataBase(score)
 
-            val max = score.beatMap.maxCombo
+            val max = score.beatMapCombo
             val combo = score.maxCombo
-
-            val miss = score.statistics.countMiss
-            val all = Objects.requireNonNullElse(score.statistics.getCountAll(score.mode), 1)
+            val miss = score.statistics.miss ?: 0
 
             // 断连击，mania 模式不参与此项筛选
-            val isChoke = (miss == 0) && (combo < Math.round(max * 0.98f)) && (score.mode != OsuMode.MANIA)
+            val isChoke = (miss == 0) && (combo < Math.round(max * 0.98)) && (score.mode != OsuMode.MANIA)
 
             // 含有 <1% 的失误
-            val has1pMiss = (miss > 0) && ((1f * miss / all) <= 0.01f)
+            val has1pMiss = (miss > 0) && ((1.0 * miss / max) <= 0.01)
 
             // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
             if (isChoke || has1pMiss) {
@@ -113,20 +111,25 @@ class BPFixService(
         }
 
         bpList.sortByDescending {
-            val pp = if (it is ScoreWithFcPP) it.fcPP else it.pp
-            pp * 100
+            val pp = if (it is LazerScoreWithFcPP && it.fcPP > 0) {
+                it.fcPP
+            } else {
+                it.PP ?: 0.0
+            }
+
+            pp * 100.0
         }
 
         val afterBpSumAtomic = AtomicReference(0f)
 
         bpList.forEachIndexed { index, score ->
             val weight: Double = 0.95.pow(index.toDouble())
-            val pp: Float
-            if (score is ScoreWithFcPP) {
+            val pp: Double
+            if (score is LazerScoreWithFcPP) {
                 pp = score.fcPP
                 score.indexAfter = index + 1
             } else {
-                pp = score.pp
+                pp = score.PP ?: 0.0
             }
             afterBpSumAtomic.updateAndGet { v: Float -> v + (weight * pp).toFloat() }
         }
@@ -136,7 +139,7 @@ class BPFixService(
         val newPlayerPP = (playerPP + afterBpSum - beforeBpSum).toFloat()
 
         val scoreList =
-            bpList.stream().filter { s: Score? -> s is ScoreWithFcPP }.map { s: Score -> s as ScoreWithFcPP }.toList()
+            bpList.stream().filter { s: LazerScore? -> s is LazerScoreWithFcPP }.map { s: LazerScore -> s as LazerScoreWithFcPP }.toList()
 
         if (CollectionUtils.isEmpty(scoreList)) return null
 
@@ -147,12 +150,12 @@ class BPFixService(
         return result
     }
 
-    private fun initFixScore(score: Score, index: Int): ScoreWithFcPP {
-        val result = ScoreWithFcPP.copyOf(score)
+    private fun initFixScore(score: LazerScore, index: Int): LazerScoreWithFcPP {
+        val result = LazerScoreWithFcPP.copyOf(score)
         result.index = index + 1
         try {
             val pp = beatmapApiService.getFcPP(score)
-            result.fcPP = pp.pp.toFloat()
+            result.fcPP = pp.pp
         } catch (e: Exception) {
             log.error("bp 计算 pp 出错:", e)
         }

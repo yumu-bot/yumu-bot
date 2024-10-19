@@ -41,7 +41,7 @@ class WebConfig : WebMvcConfigurer {
             ex: Exception?
         ) {
             interceptor.entries.removeIf {
-                it.value.first < System.currentTimeMillis() - 60000
+                it.value.first() < System.currentTimeMillis() - 60000
             }
         }
 

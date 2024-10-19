@@ -1,8 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -36,7 +36,7 @@ class TodayBPService(
     data class TodayBPParam(
         val user: OsuUser,
         val mode: OsuMode,
-        val scores: Map<Int, Score>,
+        val scores: Map<Int, LazerScore>,
         val isMyself: Boolean,
         val isToday: Boolean
     )
@@ -87,9 +87,9 @@ class TodayBPService(
         val dayEnd = range.getDayEnd()
         val isToday = (dayStart == 0 && dayEnd == 1)
 
-        val bpList: List<Score>
+        val bpList: List<LazerScore>
         try {
-            bpList = scoreApiService.getBestPerformance(user.userID, mode.data, 0, 100)
+            bpList = scoreApiService.getBestScores(user.userID, mode.data, 0, 100)
         } catch (e: WebClientResponseException.Forbidden) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.username)
         } catch (e: WebClientResponseException.NotFound) {
@@ -102,11 +102,11 @@ class TodayBPService(
         }
         val laterDay = LocalDateTime.now().minusDays(dayStart.toLong())
         val earlierDay = LocalDateTime.now().minusDays(dayEnd.toLong())
-        val dataMap = TreeMap<Int, Score>()
+        val dataMap = TreeMap<Int, LazerScore>()
 
         bpList.forEach(
-            ContextUtil.consumerWithIndex { s: Score, index: Int ->
-                if (s.createTimePretty.isBefore(laterDay) && s.createTimePretty.isAfter(earlierDay)) {
+            ContextUtil.consumerWithIndex { s: LazerScore, index: Int ->
+                if (s.endedTimePretty.isBefore(laterDay) && s.endedTimePretty.isAfter(earlierDay)) {
                     dataMap[index] = s
                 }
             }
@@ -127,8 +127,8 @@ class TodayBPService(
             }
         }
 
-        val ranks = ArrayList<Int>()
-        val scores = ArrayList<Score?>()
+        val ranks = mutableListOf<Int>()
+        val scores = mutableListOf<LazerScore>()
         for ((key, value) in todayMap) {
             ranks.add(key + 1)
             scores.add(value)

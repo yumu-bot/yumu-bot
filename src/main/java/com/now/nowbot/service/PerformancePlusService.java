@@ -6,8 +6,8 @@ import com.now.nowbot.config.FileConfig;
 import com.now.nowbot.entity.PerformancePlusLite;
 import com.now.nowbot.mapper.PerformancePlusLiteRepository;
 import com.now.nowbot.model.enums.OsuMod;
+import com.now.nowbot.model.json.LazerScore;
 import com.now.nowbot.model.json.PPPlus;
-import com.now.nowbot.model.json.Score;
 import com.now.nowbot.service.osuApiService.impl.BeatmapApiImpl;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.TipsException;
@@ -79,7 +79,7 @@ public class PerformancePlusService {
                 .block();
     }
 
-    public PPPlus.Stats calculateUserPerformance(List<Score> bps) throws TipsException {
+    public PPPlus.Stats calculateUserPerformance(List<LazerScore> bps) throws TipsException {
         List<PPPlus> ppPlus;
         ppPlus = getScorePerformancePlus(bps);
 
@@ -139,8 +139,8 @@ public class PerformancePlusService {
     ) {
     }
 
-    public List<PPPlus> getScorePerformancePlus(Iterable<Score> scores) throws TipsException {
-        var scoreIds = StreamSupport.stream(scores.spliterator(), true).map(Score::getScoreID).toList();
+    public List<PPPlus> getScorePerformancePlus(Iterable<LazerScore> scores) throws TipsException {
+        var scoreIds = StreamSupport.stream(scores.spliterator(), true).map(LazerScore::getScoreID).toList();
         var ppPlusList = performancePlusLiteRepository.findScorePPP(scoreIds);
         var ppPlusMap = ppPlusList.stream().collect(Collectors.toMap(PerformancePlusLite::getId, p -> p));
 
@@ -155,12 +155,12 @@ public class PerformancePlusService {
             }
             postDataId.add(score.getScoreID());
             checkFile(score.getBeatMap().getBeatMapID());
-            var mods = OsuMod.getModsValueFromAbbrList(score.getMods());
+            var mods = OsuMod.getModsValue(score.getMods());
             var combo = score.getMaxCombo();
-            var misses = score.getStatistics().getCountMiss();
+            var misses = Objects.requireNonNullElse(score.getStatistics().getMiss(), 0);
             // 这俩我猜测是 50 和 100 的数量
-            var mehs = score.getStatistics().getCount50();
-            var oks = score.getStatistics().getCount100();
+            var mehs = Objects.requireNonNullElse(score.getStatistics().getMeh(), 0);
+            var oks = Objects.requireNonNullElse(score.getStatistics().getOk(), 0);
             body.add(new ScorePerformancePlus(score.getBeatMap().getBeatMapID().toString(), mods, combo, misses, mehs, oks));
         }
 

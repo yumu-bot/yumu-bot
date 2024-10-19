@@ -1,7 +1,7 @@
 package com.now.nowbot.model;
 
 import com.now.nowbot.model.json.BeatMap;
-import com.now.nowbot.model.json.Score;
+import com.now.nowbot.model.json.LazerScore;
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import org.springframework.web.client.HttpClientErrorException;
@@ -27,8 +27,8 @@ public class UUScore {
     String rank;
     String[] mods;
     int score;
-    float acc;
-    float pp;
+    double acc;
+    double pp;
     int max_combo;
     int combo;
     int bid;
@@ -48,7 +48,7 @@ public class UUScore {
         return url;
     }
 
-    public UUScore(Score score, OsuBeatmapApiService osuBeatmapApiService) throws GeneralTipsException {
+    public UUScore(LazerScore score, OsuBeatmapApiService osuBeatmapApiService) throws GeneralTipsException {
         var user = score.getUser();
         bid = Math.toIntExact(score.getBeatMap().getBeatMapID());
 
@@ -68,7 +68,7 @@ public class UUScore {
         country = user.getCountryCode();
         mods = new String[modsList.size()];
         for (int i = 0; i < mods.length; i++) {
-            mods[i] = modsList.get(i);
+            mods[i] = modsList.get(i).abbreviation;
         }
         if (s != null) {
             map_name = s.getTitleUnicode();
@@ -92,28 +92,28 @@ public class UUScore {
         star_str = sr_str.toString();
 
         rank = score.getRank();
-        this.score = score.getScore();
+        this.score = (int) score.getScore();
         acc = (float) ((Math.round(score.getAccuracy() * 10000)) / 100D);
 
-        pp = Objects.nonNull(score.getPP()) ? score.getPP() : 0;
+        pp = Objects.nonNull(score.getPP()) ? score.getPP() : 0f;
 
         combo = score.getMaxCombo();
         passed = score.getPassed();
         key = score.getBeatMap().getCS().intValue();
-        play_time = score.getCreateTimePretty().toString();
+        play_time = score.getEndedTime();
 
         var stat = score.getStatistics();
-        n_300 = stat.getCount300();
-        n_100 = stat.getCount100();
-        n_50 = stat.getCount50();
-        n_geki = stat.getCountGeki();
-        n_katu = stat.getCountKatu();
-        n_0 = stat.getCountMiss();
+        n_300 = Objects.requireNonNullElse(stat.getGreat(), 0);
+        n_100 = Objects.requireNonNullElse(stat.getOk(), 0);
+        n_50 = Objects.requireNonNullElse(stat.getMeh(), 0);
+        n_geki = Objects.requireNonNullElse(stat.getPerfect(), 0);
+        n_katu = Objects.requireNonNullElse(stat.getGood(), 0);
+        n_0 = Objects.requireNonNullElse(stat.getMiss(), 0);
 
         if (!passed) rank = "F";
     }
 
-    public static UUScore getInstance(Score score, OsuBeatmapApiService beatmapApiService) throws GeneralTipsException {
+    public static UUScore getInstance(LazerScore score, OsuBeatmapApiService beatmapApiService) throws GeneralTipsException {
         return new UUScore(score, beatmapApiService);
     }
 
@@ -125,7 +125,7 @@ public class UUScore {
         sb.append(name).append(' ').append('(').append(country).append(')').append(':').append(' ').append(mode);
 
         if (mode.equals("mania")) {
-            difficulty_name = difficulty_name.replaceAll("^\\[\\d{1,2}K\\]\\s*", "");
+            difficulty_name = difficulty_name.replaceAll("^\\[\\d{1,2}K]\\s*", "");
             sb.append(' ').append('(').append(key).append("K").append(')').append('\n');
         } else {
             sb.append('\n');

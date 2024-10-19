@@ -2,8 +2,8 @@ package com.now.nowbot.service.messageServiceImpl;
 
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.model.json.LazerScore;
 import com.now.nowbot.model.json.OsuUser;
-import com.now.nowbot.model.json.Score;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
@@ -62,7 +62,7 @@ public class TestFixPPService implements MessageService<Matcher> {
             }
 
             OsuUser user;
-            List<Score> bps;
+            List<LazerScore> bps;
             double playerPP;
 
             try {
@@ -74,7 +74,7 @@ public class TestFixPPService implements MessageService<Matcher> {
                     mode = user.getCurrentOsuMode();
                 }
                 
-                bps = scoreApiService.getBestPerformance(id, mode, 0, 100);
+                bps = scoreApiService.getBestScores(id, mode);
             } catch (Exception e) {
                 sb.append("name=").append(name).append(" not found").append('\n');
                 break;
@@ -84,48 +84,48 @@ public class TestFixPPService implements MessageService<Matcher> {
                 sb.append("name=").append(name).append(" bp is empty").append('\n');
             }
 
-            List<Score> fixed = new ArrayList<>(bps.size());
+            List<LazerScore> fixed = new ArrayList<>(bps.size());
 
             float bpPP = 0f;
 
             for (var bp : bps) {
                 beatmapApiService.applyBeatMapExtendFromDataBase(bp);
 
-                int max = bp.getBeatMap().getMaxCombo();
+                int max = bp.getBeatMapCombo();
                 int combo = bp.getMaxCombo();
 
-                int miss = bp.getStatistics().getCountMiss();
-                int all = Objects.requireNonNullElse(bp.getStatistics().getCountAll(bp.getMode()), 1);
+                int miss = Objects.requireNonNullElse(bp.getStatistics().getMiss(), 0);
 
                 // 断连击，mania 模式不参与此项筛选
                 boolean isChoke = (miss == 0) && (combo < Math.round(max * 0.98f)) && (bp.getMode() != OsuMode.MANIA);
 
                 // 含有 <1% 的失误
-                boolean has1pMiss = (miss > 0) && ((1f * miss / all) <= 0.01f);
+                boolean has1pMiss = (miss > 0) && ((1f * miss / max) <= 0.01f);
 
                 // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
                 if (isChoke || has1pMiss) {
-                    var pp = (float) beatmapApiService.getFcPP(bp).getPp();
+                    var pp = beatmapApiService.getFcPP(bp).getPp();
 
                     bp.setPP(pp);
                 }
 
                 fixed.add(bp);
-                bpPP += bp.getWeightedPP();
+                bpPP += (float) Objects.requireNonNull(bp.getWeight()).getPP();
             }
 
-            fixed = fixed.stream().sorted(Comparator.comparing(Score::getPP).reversed()).toList();
+            // TODO 这个地方转 kt 后需要改一下比较器
+            fixed = fixed.stream().sorted(Comparator.comparing(LazerScore::getPP).reversed()).toList();
 
             float weight = 1f / 0.95f;
 
             for (var f : fixed) {
                 weight *= 0.95f;
-                var pp = (float) f.getPP();
+                double pp = Objects.requireNonNullElse(f.getPP(), 0d);
 
-                f.setWeight(new Score.Weight(weight, pp * weight));
+                f.setWeight(new LazerScore.Weight(weight, pp * weight));
             }
 
-            var fixedPP = fixed.stream().mapToDouble(Score::getWeightedPP).reduce(Double::sum).orElse(0d);
+            var fixedPP = fixed.stream().mapToDouble( s -> Objects.requireNonNull(s.getWeight()).getPP()).reduce(Double::sum).orElse(0d);
 
             var resultPP = playerPP - bpPP + fixedPP;
             sb.append(Math.round(resultPP)).append(',').append(' ');

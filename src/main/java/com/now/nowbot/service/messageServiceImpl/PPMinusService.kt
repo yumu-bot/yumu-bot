@@ -3,8 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.Score
 import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -21,13 +21,13 @@ import com.now.nowbot.util.CmdUtil.checkOsuMode
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
-import java.util.*
-import java.util.regex.Matcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.*
+import java.util.regex.Matcher
 
 @Service("PP_MINUS")
 class PPMinusService(
@@ -206,10 +206,10 @@ class PPMinusService(
      */
     @Throws(PPMinusException::class)
     private fun getPPMinus(user: OsuUser): PPMinus {
-        val bests: List<Score>
+        val bests: List<LazerScore>
 
         try {
-            bests = scoreApiService.getBestPerformance(user)
+            bests = scoreApiService.getBestScores(user)
         } catch (e: WebClientResponseException) {
             log.error("PP-：最好成绩获取失败", e)
             throw PPMinusException(PPMinusException.Type.PM_BPList_FetchFailed)

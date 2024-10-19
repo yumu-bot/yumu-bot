@@ -2,8 +2,8 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.UUScore
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.Score
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -31,7 +31,7 @@ class UUPRService(
     private val beatmapApiService: OsuBeatmapApiService
 ) : MessageService<UUPRParam> {
 
-    @JvmRecord data class UUPRParam(val user: OsuUser?, val score: Score, val mode: OsuMode?)
+    @JvmRecord data class UUPRParam(val user: OsuUser?, val score: LazerScore, val mode: OsuMode?)
 
     @Throws(Throwable::class)
     override fun isHandle(
@@ -52,7 +52,7 @@ class UUPRService(
         val includeFail = StringUtils.hasText(matcher.group("recent"))
         val offset = range.getOffset(0, false)
 
-        val list = scoreApiService.getRecent(uid, mode.data, offset, 1, includeFail)
+        val list = scoreApiService.getScore(uid, mode.data, offset, 1, includeFail)
         if (list.isEmpty())
                 throw GeneralTipsException(
                         GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.name ?: "默认")
@@ -76,7 +76,7 @@ class UUPRService(
     }
 
     @Throws(GeneralTipsException::class)
-    private fun getTextOutput(score: Score, event: MessageEvent) {
+    private fun getTextOutput(score: LazerScore, event: MessageEvent) {
         val d = UUScore.getInstance(score, beatmapApiService)
 
         val httpEntity = HttpEntity.EMPTY as HttpEntity<Array<Byte>>

@@ -1,256 +1,359 @@
-package com.now.nowbot.service.osuApiService.impl;
+package com.now.nowbot.service.osuApiService.impl
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.model.BinUser;
-import com.now.nowbot.model.enums.OsuMod;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.json.BeatmapUserScore;
-import com.now.nowbot.model.json.Score;
-import com.now.nowbot.service.osuApiService.OsuScoreApiService;
-import com.now.nowbot.util.JacksonUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.util.UriBuilder;
-import reactor.core.publisher.Mono;
-
-import java.net.URI;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.BeatmapUserScore
+import com.now.nowbot.model.json.LazerScore
+import com.now.nowbot.service.osuApiService.OsuScoreApiService
+import com.now.nowbot.util.JacksonUtil
+import java.net.URI
+import java.util.*
+import java.util.function.Consumer
+import java.util.function.Function
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.http.HttpHeaders
+import org.springframework.lang.NonNull
+import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.util.UriBuilder
+import reactor.core.publisher.Mono
 
 @Service
-public class ScoreApiImpl implements OsuScoreApiService {
-    private static final Logger log = LoggerFactory.getLogger(ScoreApiImpl.class);
-    OsuApiBaseService base;
+class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
 
-    public ScoreApiImpl(OsuApiBaseService baseService) {
-        base = baseService;
-    }
-
-    @Override
-    public List<Score> getBestPerformance(BinUser user, OsuMode mode, int offset, int limit) {
-        if (!user.isAuthorized()) return getBestPerformance(user.getOsuID(), mode, offset, limit);
-        return base.osuApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("users/{uid}/scores/best")
-                        .queryParam("legacy_only", 0)
-                        .queryParam("offset", offset)
-                        .queryParam("limit", limit)
-                        .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(user.getOsuID()))
+    override fun getBestScores(
+            user: BinUser,
+            mode: OsuMode?,
+            offset: Int,
+            limit: Int,
+    ): List<LazerScore> {
+        if (!user.isAuthorized) return getBestScores(user.osuID, mode, offset, limit)
+        return base.osuApiWebClient
+                .get()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                            .path("users/{uid}/scores/best")
+                            .queryParam("legacy_only", 0)
+                            .queryParam("offset", offset)
+                            .queryParam("limit", limit)
+                            .queryParamIfPresent("mode", OsuMode.getName(mode))
+                            .build(user.osuID)
+                }
                 .headers(base.insertHeader(user))
                 .retrieve()
-                .bodyToFlux(Score.class)
+                .bodyToFlux(LazerScore::class.java)
                 .collectList()
-                .block();
+                .block()!!
     }
 
-    @Override
-    public List<Score> getBestPerformance(Long id, OsuMode mode, int offset, int limit) {
-        return base.osuApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("users/{uid}/scores/best")
-                        .queryParam("legacy_only", 0)
-                        .queryParam("offset", offset)
-                        .queryParam("limit", limit)
-                        .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(id))
-                .headers(base::insertHeader)
+    override fun getBestScores(
+            id: Long,
+            mode: OsuMode?,
+            offset: Int,
+            limit: Int,
+    ): List<LazerScore> {
+        return base.osuApiWebClient
+                .get()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                            .path("users/{uid}/scores/best")
+                            .queryParam("legacy_only", 0)
+                            .queryParam("offset", offset)
+                            .queryParam("limit", limit)
+                            .queryParamIfPresent("mode", OsuMode.getName(mode))
+                            .build(id)
+                }
+                .headers { headers: HttpHeaders? -> base.insertHeader(headers) }
                 .retrieve()
-                .bodyToFlux(Score.class)
+                .bodyToFlux(LazerScore::class.java)
                 .collectList()
-                .block();
+                .block()!!
     }
 
-    @Override
-    public List<Score> getRecent(BinUser user, OsuMode mode, int offset, int limit) {
-        return getRecent(user, mode, false, offset, limit);
+    override fun getPassedScore(
+            user: BinUser,
+            mode: OsuMode?,
+            offset: Int,
+            limit: Int,
+    ): List<LazerScore> {
+        return getRecent(user, mode, false, offset, limit)
     }
 
-    @Override
-    public List<Score> getRecentIncludingFail(BinUser user, OsuMode mode, int offset, int limit) {
-        return getRecent(user, mode, true, offset, limit);
+    override fun getPassedScore(
+            uid: Long,
+            mode: OsuMode?,
+            offset: Int,
+            limit: Int,
+    ): List<LazerScore> {
+        return getRecent(uid, mode, false, offset, limit)!!
     }
 
-    @Override
-    public List<Score> getRecent(long uid, OsuMode mode, int offset, int limit) {
-        return getRecent(uid, mode, false, offset, limit);
+    override fun getRecentScore(
+            user: BinUser,
+            mode: OsuMode?,
+            offset: Int,
+            limit: Int,
+    ): List<LazerScore> {
+        return getRecent(user, mode, true, offset, limit)
     }
 
-    @Override
-    public List<Score> getRecentIncludingFail(long uid, OsuMode mode, int offset, int limit) {
-        return getRecent(uid, mode, true, offset, limit);
+    override fun getRecentScore(
+            uid: Long,
+            mode: OsuMode?,
+            offset: Int,
+            limit: Int,
+    ): List<LazerScore> {
+        return getRecent(uid, mode, true, offset, limit)!!
     }
 
-    @Override
-    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode) {
-        return do404Retry(uriBuilder -> uriBuilder
+    override fun getBeatMapScore(bid: Long, uid: Long, mode: OsuMode?): BeatmapUserScore? {
+        return retryOn404(
+                        { uriBuilder: UriBuilder ->
+                            uriBuilder
+                                    .path("beatmaps/{bid}/scores/users/{uid}")
+                                    .queryParam("legacy_only", 0)
+                                    .queryParamIfPresent("mode", OsuMode.getName(mode))
+                                    .build(bid, uid)
+                        },
+                        { headers: HttpHeaders? -> base.insertHeader(headers) },
+                        BeatmapUserScore::class.java,
+                        { uriBuilder: UriBuilder ->
+                            uriBuilder
+                                    .path("beatmaps/{bid}/scores/users/{uid}")
+                                    .queryParam("legacy_only", 1)
+                                    .queryParamIfPresent("mode", OsuMode.getName(mode))
+                                    .build(bid, uid)
+                        },
+                )
+                .block()
+    }
+
+    override fun getBeatMapScore(
+            bid: Long,
+            user: BinUser,
+            @NonNull mode: OsuMode?,
+    ): BeatmapUserScore? {
+        if (!user.isAuthorized) return getBeatMapScore(bid, user.osuID, mode)
+        return retryOn404(
+                        { uriBuilder: UriBuilder ->
+                            uriBuilder
+                                    .path("beatmaps/{bid}/scores/users/{uid}")
+                                    .queryParam("legacy_only", 0)
+                                    .queryParamIfPresent("mode", OsuMode.getName(mode))
+                                    .build(bid, user.osuID)
+                        },
+                        base.insertHeader(user),
+                        BeatmapUserScore::class.java,
+                        { uriBuilder: UriBuilder ->
+                            uriBuilder
+                                    .path("beatmaps/{bid}/scores/users/{uid}")
+                                    .queryParam("legacy_only", 1)
+                                    .queryParamIfPresent("mode", OsuMode.getName(mode))
+                                    .build(bid, user.osuID)
+                        },
+                )
+                .block()
+    }
+
+    override fun getBeatMapScore(
+            bid: Long,
+            uid: Long,
+            mode: OsuMode?,
+            mods: Iterable<OsuMod?>,
+    ): BeatmapUserScore? {
+        val uri = Function { n: Int? ->
+            Function { uriBuilder: UriBuilder ->
+                uriBuilder
                         .path("beatmaps/{bid}/scores/users/{uid}")
-                        .queryParam("legacy_only", 0)
+                        .queryParam("legacy_only", n)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(bid, uid), base::insertHeader, BeatmapUserScore.class,
-                uriBuilder -> uriBuilder
-                        .path("beatmaps/{bid}/scores/users/{uid}")
-                        .queryParam("legacy_only", 1)
-                        .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(bid, uid)
-        ).block();
-    }
-
-    @Override
-    public BeatmapUserScore getScore(long bid, BinUser user, @NonNull OsuMode mode) {
-        if (!user.isAuthorized()) return getScore(bid, user.getOsuID(), mode);
-        return do404Retry(uriBuilder -> uriBuilder
-                        .path("beatmaps/{bid}/scores/users/{uid}")
-                        .queryParam("legacy_only", 0)
-                        .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(bid, user.getOsuID()), base.insertHeader(user), BeatmapUserScore.class,
-                uriBuilder -> uriBuilder
-                        .path("beatmaps/{bid}/scores/users/{uid}")
-                        .queryParam("legacy_only", 1)
-                        .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(bid, user.getOsuID())
-        ).block();
-    }
-
-    @Override
-    public BeatmapUserScore getScore(long bid, long uid, OsuMode mode, Iterable<OsuMod> mods) {
-        Function<Integer,Function<UriBuilder, URI>> uri = (n) -> uriBuilder -> {
-            uriBuilder.path("beatmaps/{bid}/scores/users/{uid}")
-                    .queryParam("legacy_only", n)
-                    .queryParamIfPresent("mode", OsuMode.getName(mode));
-            setMods(uriBuilder, mods);
-            return uriBuilder.build(bid, uid);
-        };
-        return do404Retry(uri.apply(0), base::insertHeader, BeatmapUserScore.class, uri.apply(1)).block();
-    }
-
-    @Override
-    public BeatmapUserScore getScore(long bid, BinUser user, OsuMode mode, Iterable<OsuMod> mods) {
-        if (!user.isAuthorized()) {
-            return getScore(bid, user.getOsuID(), mode, mods);
-        }
-        Function<Integer,Function<UriBuilder, URI>> uri = (n) -> uriBuilder -> {
-            uriBuilder.path("beatmaps/{bid}/scores/users/{uid}")
-                    .queryParam("legacy_only", n)
-                    .queryParamIfPresent("mode", OsuMode.getName(mode));
-            setMods(uriBuilder, mods);
-            return uriBuilder.build(bid, user.getOsuID());
-        };
-        return do404Retry(uri.apply(0), base.insertHeader(user), BeatmapUserScore.class, uri.apply(1)).block();
-    }
-
-    private void setMods(UriBuilder builder, Iterable<OsuMod> mods) {
-        for (var mod : mods) {
-            if (mod == OsuMod.None) {
-                builder.queryParam("mods[]", "NM");
-                return;
+                setMods(uriBuilder, mods)
+                uriBuilder.build(bid, uid)
             }
         }
-        mods.forEach(mod -> builder.queryParam("mods[]", mod.abbreviation));
+        return retryOn404(
+                        uri.apply(0),
+                        { headers: HttpHeaders? -> base.insertHeader(headers) },
+                        BeatmapUserScore::class.java,
+                        uri.apply(1),
+                )
+                .block()
     }
 
-    @Override
-    public List<Score> getScoreAll(long bid, BinUser user, OsuMode mode) {
-        if (!user.isAuthorized()) getScoreAll(bid, user.getOsuID(), mode);
-        return base.osuApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("beatmaps/{bid}/scores/users/{uid}/all")
-                        .queryParam("legacy_only", 0)
+    override fun getBeatMapScore(
+            bid: Long,
+            user: BinUser,
+            mode: OsuMode,
+            mods: Iterable<OsuMod?>,
+    ): BeatmapUserScore? {
+        if (!user.isAuthorized) {
+            return getBeatMapScore(bid, user.osuID, mode, mods)
+        }
+        val uri = Function { n: Int? ->
+            Function { uriBuilder: UriBuilder ->
+                uriBuilder
+                        .path("beatmaps/{bid}/scores/users/{uid}")
+                        .queryParam("legacy_only", n)
                         .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(bid, user.getOsuID()))
+                setMods(uriBuilder, mods)
+                uriBuilder.build(bid, user.osuID)
+            }
+        }
+        return retryOn404(
+                        uri.apply(0),
+                        base.insertHeader(user),
+                        BeatmapUserScore::class.java,
+                        uri.apply(1),
+                )
+                .block()
+    }
+
+    private fun setMods(builder: UriBuilder, mods: Iterable<OsuMod?>) {
+        for (mod in mods) {
+            if (mod == OsuMod.None) {
+                builder.queryParam("mods[]", "NM")
+                return
+            }
+        }
+        mods.forEach(Consumer { mod: OsuMod? -> builder.queryParam("mods[]", mod!!.abbreviation) })
+    }
+
+    override fun getLeaderBoardScore(bid: Long, user: BinUser, mode: OsuMode?): List<LazerScore> {
+        if (!user.isAuthorized) getLeaderBoardScore(bid, user.osuID, mode)
+        return base.osuApiWebClient
+                .get()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                            .path("beatmaps/{bid}/scores/users/{uid}/all")
+                            .queryParam("legacy_only", 0)
+                            .queryParamIfPresent("mode", OsuMode.getName(mode))
+                            .build(bid, user.osuID)
+                }
                 .headers(base.insertHeader(user))
                 .retrieve()
-                .bodyToMono(JsonNode.class)
-                .map(json -> JacksonUtil.parseObjectList(json.get("scores"), Score.class))
-                .block();
+                .bodyToMono(JsonNode::class.java)
+                .map { json: JsonNode ->
+                    JacksonUtil.parseObjectList(json["scores"], LazerScore::class.java)
+                }
+                .block()!!
     }
 
-    @Override
-    public List<Score> getScoreAll(long bid, long uid, OsuMode mode) {
-        return base.osuApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("beatmaps/{bid}/scores/users/{uid}/all")
-                        .queryParam("legacy_only", 0)
-                        .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(bid, uid))
-                .headers(base::insertHeader)
+    override fun getLeaderBoardScore(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore> {
+        return base.osuApiWebClient
+                .get()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                            .path("beatmaps/{bid}/scores/users/{uid}/all")
+                            .queryParam("legacy_only", 0)
+                            .queryParamIfPresent("mode", OsuMode.getName(mode))
+                            .build(bid, uid)
+                }
+                .headers { headers: HttpHeaders? -> base.insertHeader(headers) }
                 .retrieve()
-                .bodyToMono(JsonNode.class)
-                .map(json -> JacksonUtil.parseObjectList(json.get("scores"), Score.class))
-                .block();
+                .bodyToMono(JsonNode::class.java)
+                .map { json: JsonNode ->
+                    JacksonUtil.parseObjectList(json["scores"], LazerScore::class.java)
+                }
+                .block()!!
     }
 
-    @Override
-    public List<Score> getBeatMapScores(long bid, OsuMode mode) {
-        return base.osuApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("beatmaps/{bid}/scores")
-                        .queryParam("legacy_only", 0)
-                        .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(bid))
-                .headers(base::insertHeader)
+    override fun getLeaderBoardScore(bid: Long, mode: OsuMode?): List<LazerScore> {
+        return base.osuApiWebClient
+                .get()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                            .path("beatmaps/{bid}/scores")
+                            .queryParam("legacy_only", 0)
+                            .queryParamIfPresent("mode", OsuMode.getName(mode))
+                            .build(bid)
+                }
+                .headers { headers: HttpHeaders? -> base.insertHeader(headers) }
                 .retrieve()
-                .bodyToMono(JsonNode.class)
-                .map(json -> JacksonUtil.parseObjectList(json.get("scores"), Score.class))
-                .block();
+                .bodyToMono(JsonNode::class.java)
+                .map { json: JsonNode ->
+                    JacksonUtil.parseObjectList(json["scores"], LazerScore::class.java)
+                }
+                .block()!!
     }
 
-    private List<Score> getRecent(BinUser user, OsuMode mode, boolean includeFails, int offset, int limit) {
-        return base.osuApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("users/{uid}/scores/recent")
-                        .queryParam("legacy_only", 0)
-                        .queryParam("include_fails", includeFails ? 1 : 0)
-                        .queryParam("offset", offset)
-                        .queryParam("limit", limit)
-                        .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(user.getOsuID()))
+    private fun getRecent(
+            user: BinUser,
+            mode: OsuMode?,
+            includeFails: Boolean,
+            offset: Int,
+            limit: Int,
+    ): List<LazerScore> {
+        return base.osuApiWebClient
+                .get()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                            .path("users/{uid}/scores/recent")
+                            .queryParam("legacy_only", 0)
+                            .queryParam("include_fails", if (includeFails) 1 else 0)
+                            .queryParam("offset", offset)
+                            .queryParam("limit", limit)
+                            .queryParamIfPresent("mode", OsuMode.getName(mode))
+                            .build(user.osuID)
+                }
                 .headers(base.insertHeader(user))
                 .retrieve()
-                .bodyToMono(JsonNode.class)
-                .mapNotNull(json -> JacksonUtil.parseObjectList(json, Score.class))
-                .block();
+                .bodyToFlux(LazerScore::class.java)
+                .collectList()
+                .block()!!
     }
 
-    public List<Score> getRecent(long uid, OsuMode mode, boolean includeFails, int offset, int limit) {
-        return base.osuApiWebClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("users/{uid}/scores/recent")
-                        .queryParam("legacy_only", 0)
-                        .queryParam("include_fails", includeFails ? 1 : 0)
-                        .queryParam("offset", offset)
-                        .queryParam("limit", limit)
-                        .queryParamIfPresent("mode", OsuMode.getName(mode))
-                        .build(uid))
-                .headers(base::insertHeader)
-                .retrieve().bodyToMono(JsonNode.class)
-                .mapNotNull(json -> {
-                    var list = JacksonUtil.parseObjectList(json, Score.class);
-                    for (int i = 0; i < list.size(); i++) {
-                        var timeStr = json.get(i).get("created_at").asText();
-                        list.get(i).setCreateTime(timeStr);
-                    }
-                    return list;
-                })
-                .block();
+    fun getRecent(
+            uid: Long,
+            mode: OsuMode?,
+            includeFails: Boolean,
+            offset: Int,
+            limit: Int,
+    ): List<LazerScore>? {
+        return base.osuApiWebClient
+                .get()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                            .path("users/{uid}/scores/recent")
+                            .queryParam("legacy_only", 0)
+                            .queryParam("include_fails", if (includeFails) 1 else 0)
+                            .queryParam("offset", offset)
+                            .queryParam("limit", limit)
+                            .queryParamIfPresent("mode", OsuMode.getName(mode))
+                            .build(uid)
+                }
+                .headers { headers: HttpHeaders? -> base.insertHeader(headers) }
+                .retrieve()
+            .bodyToMono(JsonNode::class.java)
+            .mapNotNull { json ->
+                JacksonUtil.parseObjectList(json, LazerScore::class.java) }
+            .block()
+
+        /*
+            .bodyToFlux(LazerScore::class.java)
+            .collectList()
+            .block()
+
+         */
     }
 
-    private <T> Mono<T> do404Retry(Function<UriBuilder, URI> uri, Consumer<HttpHeaders> headers, Class<T> clazz, Function<UriBuilder, URI> retry) {
-        var mono = base.osuApiWebClient.get().uri(uri).headers(headers).retrieve().bodyToMono(clazz);
-        if (Objects.nonNull(retry)) {
-            return mono.onErrorResume(WebClientResponseException.NotFound.class, e ->
-                    base.osuApiWebClient.get().uri(retry).headers(headers).retrieve().bodyToMono(clazz));
-        } else return mono;
+    private fun <T> retryOn404(
+            uri: Function<UriBuilder, URI>,
+            headers: Consumer<HttpHeaders>,
+            clazz: Class<T>,
+            retry: Function<UriBuilder, URI>,
+    ): Mono<T> {
+        val mono = base.osuApiWebClient.get().uri(uri).headers(headers).retrieve().bodyToMono(clazz)
+        return if (Objects.nonNull(retry)) {
+            mono.onErrorResume(WebClientResponseException.NotFound::class.java) {
+                base.osuApiWebClient.get().uri(retry).headers(headers).retrieve().bodyToMono(clazz)
+            }
+        } else mono
     }
 
-    @Override
-    public byte[] getReplay(long id, OsuMode mode) {
-        return new byte[0];
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(ScoreApiImpl::class.java)
     }
 }
