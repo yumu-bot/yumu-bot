@@ -1,7 +1,6 @@
 package com.now.nowbot.model.json
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
@@ -13,15 +12,6 @@ import kotlin.math.roundToInt
 
 // 这是 API v2 version header is 20220705 or higher 会返回的成绩数据。这并不支持老版本的比赛数据（stable 比赛依旧是原来那个 score
 open class LazerScore {
-    private val formatter: DateTimeFormatter =
-            DateTimeFormatterBuilder()
-                    .appendPattern("yyyy-MM-dd")
-                    .appendLiteral("T")
-                    .appendPattern("HH:mm:ss")
-                    .appendZoneId()
-                    .toFormatter()
-
-
     @JsonProperty("classic_total_score") var classicScore: Long = 0L
 
     @JsonProperty("preserve") var preserve: Boolean = false
@@ -48,7 +38,7 @@ open class LazerScore {
 
     @JsonProperty("mods") private val modList: List<ScoreMod> = listOf()
 
-    @JsonIgnoreProperties
+    @JsonIgnore
     var mods: List<OsuMod> = listOf()
         get() {
             return if (this.modList.isNotEmpty()) {
@@ -214,7 +204,7 @@ open class LazerScore {
 
     @JsonProperty("ruleset_id") var ruleset: Byte = 0
 
-    @JsonIgnoreProperties
+    @JsonIgnore
     var mode: OsuMode = OsuMode.DEFAULT
         get() {
             return when (this.ruleset) {
@@ -274,5 +264,15 @@ open class LazerScore {
                 val i = ln((percentage / 100)) / ln(0.95)
                 return i.roundToInt()
             }
+    }
+
+    companion object {
+        private val formatter: DateTimeFormatter =
+            DateTimeFormatterBuilder()
+                .appendPattern("yyyy-MM-dd")
+                .appendLiteral("T")
+                .appendPattern("HH:mm:ss")
+                .appendZoneId()
+                .toFormatter()
     }
 }
