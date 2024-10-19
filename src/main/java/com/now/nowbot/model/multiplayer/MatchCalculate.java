@@ -282,7 +282,7 @@ public class MatchCalculate {
         }
 
         private void initPlayerDataMap() {
-            playerDataMap = players.stream().collect(
+            playerDataMap = players.stream().filter(Objects::nonNull).collect(
                     Collectors.toMap(MicroUser::getUserID, PlayerData::new, (a, b) -> b, LinkedHashMap::new)
             );
         }
