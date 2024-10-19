@@ -147,6 +147,13 @@ public class OsuApiBaseService {
         } else {
             token = user.getAccessToken();
         }
-        return (headers) -> headers.set("Authorization", STR."Bearer \{token}");
+
+        return (headers) -> headers.setAll(
+                Map.of("Authorization", "Bearer " + token,
+                       "x-api-version", "20240529"
+                )
+        );
+
+        //return (headers) -> headers.set("Authorization", STR."Bearer \{token}");
     }
 }

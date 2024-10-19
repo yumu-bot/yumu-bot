@@ -316,11 +316,11 @@ public class BotWebApi {
 
                 if (isMultipleScore) {
                     beatmapApiService.applySRAndPP(scores);
-                    data = imageService.getPanelA4(osuUser, scores, ranks);
+                    data = imageService.getPanelA4(osuUser, scores, ranks, "BS");
                     suffix = "-bps.jpg";
                 } else {
                     try {
-                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), beatmapApiService);
+                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), "B", beatmapApiService);
                         data = imageService.getPanel(e5Param.toMap(), "E5");
                     } catch (Exception e) {
                         throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩"));
@@ -335,11 +335,11 @@ public class BotWebApi {
                 beatmapApiService.applySRAndPP(scores);
 
                 if (isMultipleScore) {
-                    data = imageService.getPanelA5(osuUser, scores);
+                    data = imageService.getPanelA5(osuUser, scores, "PS");
                     suffix = "-passes.jpg";
                 } else {
                     try {
-                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), beatmapApiService);
+                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), "P", beatmapApiService);
                         data = imageService.getPanel(e5Param.toMap(), "E5");
                     } catch (Exception e) {
                         throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "通过成绩"));
@@ -355,11 +355,11 @@ public class BotWebApi {
                 beatmapApiService.applySRAndPP(scores);
 
                 if (isMultipleScore) {
-                    data = imageService.getPanelA5(osuUser, scores);
+                    data = imageService.getPanelA5(osuUser, scores, "RS");
                     suffix = "-recents.jpg";
                 } else {
                     try {
-                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), beatmapApiService);
+                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), "R", beatmapApiService);
                         data = imageService.getPanel(e5Param.toMap(), "E5");
                     } catch (Exception e) {
                         throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最近成绩"));
@@ -411,7 +411,7 @@ public class BotWebApi {
 
                 beatmapApiService.applySRAndPP(scores);
 
-                data = imageService.getPanelA4(osuUser, scores, ranks);
+                data = imageService.getPanelA4(osuUser, scores, ranks, "T");
                 suffix = "-todaybp.jpg";
             }
         }
@@ -599,7 +599,7 @@ public class BotWebApi {
         byte[] image;
 
         try {
-            var e5Param = ScorePRService.getScore4PanelE5(osuUser, score, beatmapApiService);
+            var e5Param = ScorePRService.getScore4PanelE5(osuUser, score, "S", beatmapApiService);
             image = imageService.getPanel(e5Param.toMap(), "E5");
         } catch (Exception e) {
             throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "成绩列表"));

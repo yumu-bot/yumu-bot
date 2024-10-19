@@ -114,39 +114,28 @@ public class ImageService {
         return doPost("panel_A3", httpEntity);
     }
 
-    public byte[] getPanelA4(OsuUser osuUser, List<LazerScore> todayBPs, List<Integer> BPRanks) {
+    public byte[] getPanelA4(OsuUser osuUser, List<LazerScore> todayBPs, List<Integer> BPRanks, String panel) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
-                "me", osuUser,
-                "bps", todayBPs,
-                "rank", BPRanks
+                "user", osuUser,
+                "scores", todayBPs,
+                "rank", BPRanks,
+                "panel", panel
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_A4", httpEntity);
     }
 
-    public byte[] getPanelA4BQ(OsuUser osuUser, List<LazerScore> todayBPs, List<Integer> BPRanks) {
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = Map.of(
-                "panel", "BQ:"+ todayBPs.size(),
-                "me", osuUser,
-                "bps", todayBPs,
-                "rank", BPRanks
-        );
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_A4", httpEntity);
-    }
-
-    public byte[] getPanelA5(OsuUser user, List<LazerScore> scores) {
+    public byte[] getPanelA5(OsuUser user, List<LazerScore> scores, String panel) {
         HttpHeaders headers = getDefaultHeader();
         if (ContextUtil.getContext("isNewbie", Boolean.FALSE, Boolean.class)) {
             scores = scores.stream().filter(s -> s.getBeatMap().getStarRating() <= 5.7f).toList();
         }
         var body = Map.of(
                 "user", user,
-                "score", scores
+                "score", scores,
+                "panel", panel
         );
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);

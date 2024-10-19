@@ -152,7 +152,7 @@ object DataUtil {
      * @param score 成绩，需要先算好 pp，并使用完全体
      * @return 是否为优秀成绩
      */
-    @NonNull
+    @Deprecated("弃用")
     fun isExcellentScore(@NonNull score: Score, user: OsuUser): Boolean {
         // 指标分别是：星数 >= 8，星数 >= 6.5，准确率 > 90%，连击 > 98%，PP > 300，PP > 玩家总 PP 减去 400 之后的 1/25 （上 BP，并且计
         // 2 点），失误数 < 1%。

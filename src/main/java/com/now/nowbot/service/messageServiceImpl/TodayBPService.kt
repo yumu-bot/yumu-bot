@@ -137,7 +137,7 @@ class TodayBPService(
         beatmapApiService.applySRAndPP(scores)
 
         return try {
-            imageService.getPanelA4(user, scores, ranks)
+            imageService.getPanelA4(user, scores, ranks, "T")
         } catch (e: Exception) {
             log.error("今日最好成绩：图片渲染失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "今日最好成绩")

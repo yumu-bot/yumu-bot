@@ -154,7 +154,7 @@ class BPService(
 
                 beatmapApiService.applySRAndPP(scores)
 
-                imageService.getPanelA4(user, scores, ranks)
+                imageService.getPanelA4(user, scores, ranks, "BS")
             } else {
                 var score: LazerScore? = null
 
@@ -162,7 +162,7 @@ class BPService(
                     score = value
                 }
 
-                val e5Param = getScore4PanelE5(user!!, score!!, beatmapApiService)
+                val e5Param = getScore4PanelE5(user!!, score!!, "B", beatmapApiService)
                 imageService.getPanel(e5Param.toMap(), "E5")
             }
         } catch (e: Exception) {

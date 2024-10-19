@@ -67,12 +67,12 @@ class BPQueryService(
         ContextUtil.setContext("breakApplySR", true)
         val image = if (result.size == 1) {
             val score = result.first()
-            val e5Param = getScore4PanelE5(user, score, beatmapApiService)
+            val e5Param = getScore4PanelE5(user, score, "BQ", beatmapApiService)
             imageService.getPanel(e5Param.toMap(), "E5")
         } else {
             val indexMap = bpList.mapIndexed { i, s -> s.scoreID to i }.toMap()
             val ranks = result.map { indexMap[it.scoreID]!! + 1 }
-            imageService.getPanelA4BQ(user, result, ranks)
+            imageService.getPanelA4(user, result, ranks, "BQ")
         }
         event.reply(image)
     }
@@ -351,13 +351,18 @@ class BPQueryService(
     }
 
     companion object {
-        val pattern: Regex = "(\\S+?)([><]=?|=|[!！]=)(\\S+(\\.\\d+)?)".toRegex()
+        val pattern: Regex = "(\\S+?)([<>＜＞][=＝]?|[=＝]|[!！][=＝])(\\S+(\\.\\d+)?)".toRegex()
 
         val split: Regex = "(\\s+)|[|,，]".toRegex()
 
+        // 最好还是支持一下全角符号，总是有用户输入
+        private fun String.standardised(): String {
+            return this.replace('＜', '<').replace('＞', '>').replace('＝', '=').replace('！', '!')
+        }
+
         private fun String.getOperator(): Triple<String, Operator, String> {
             val m = pattern.matchEntire(this) ?: throw ParsingBlockException()
-            val operator = when (m.groupValues[2]) {
+            val operator = when (m.groupValues[2].standardised()) {
                 EQ.op -> EQ
                 NE.op -> NE
                 GT.op -> GT

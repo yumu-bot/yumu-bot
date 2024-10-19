@@ -55,7 +55,7 @@ open class LazerScore {
             field = value.ifEmpty { listOf() }
         }
 
-    data class ScoreMod(@JsonProperty("acronym") var acronym: String)
+    data class ScoreMod(@JsonProperty("acronym") var acronym: String = "")
 
     @JsonProperty("statistics") var statistics: StatisticsV2 = StatisticsV2()
 
@@ -118,8 +118,11 @@ open class LazerScore {
             // O SliderTail
             @JsonProperty("slider_tail_hit") var sliderTailHit: Int? = 0,
 
-            // T Spinner Drumroll、C Banana
+            // O Spinner Bonus、T Spinner Drumroll、C Banana
             @JsonProperty("large_bonus") var largeBonus: Int? = 0,
+
+            // O Spinner Base
+            @JsonProperty("small_bonus") var smallBonus: Int? = 0,
     ) : Cloneable {
         public override fun clone(): StatisticsV2 {
             try {
@@ -168,7 +171,7 @@ open class LazerScore {
     val endedTimePretty: LocalDateTime
         get() {
             return if (endedTime.isNotBlank())
-                    LocalDateTime.parse(endedTime).plusHours(8L)
+                    LocalDateTime.parse(endedTime, formatter).plusHours(8L)
             else LocalDateTime.now()
         }
 
@@ -204,20 +207,16 @@ open class LazerScore {
 
     @JsonProperty("ruleset_id") var ruleset: Byte = 0
 
-    @JsonIgnore
-    var mode: OsuMode = OsuMode.DEFAULT
+    @get:JsonIgnore
+    val mode: OsuMode
         get() {
-            return when (this.ruleset) {
-                0.toByte() -> OsuMode.OSU
-                1.toByte() -> OsuMode.TAIKO
-                2.toByte() -> OsuMode.CATCH
-                3.toByte() -> OsuMode.MANIA
+            return when (this.ruleset.toInt()) {
+                0 -> OsuMode.OSU
+                1 -> OsuMode.TAIKO
+                2 -> OsuMode.CATCH
+                3 -> OsuMode.MANIA
                 else -> OsuMode.DEFAULT
             }
-        }
-        set(value) {
-            field = value
-            ruleset = value.modeValue.toByte()
         }
 
     @JsonProperty("started_at") var startedTime: String? = ""
@@ -226,7 +225,7 @@ open class LazerScore {
     val startedTimePretty: LocalDateTime
         get() {
             return if (startedTime != null && startedTime!!.isNotBlank()) {
-                LocalDateTime.parse(startedTime!!).plusHours(8L)
+                LocalDateTime.parse(startedTime!!, formatter).plusHours(8L)
             } else {
                 LocalDateTime.MIN
             }
@@ -236,9 +235,9 @@ open class LazerScore {
 
     @JsonProperty("replay") var replay: Boolean = false
 
-    @JsonProperty("current_user_attributes") var userAttributes: UserAttributes = UserAttributes()
-
-    data class UserAttributes(@JsonProperty("replay") var pin: String? = null)
+    // @JsonProperty("current_user_attributes") var userAttributes: UserAttributes = UserAttributes()
+    // TODO 这个有问题
+    // data class UserAttributes(@JsonProperty("pin") var pin: String? = null)
 
     @JsonProperty("beatmap") var beatMap: BeatMap = BeatMap()
 

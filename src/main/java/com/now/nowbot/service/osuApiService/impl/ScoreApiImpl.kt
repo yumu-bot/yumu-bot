@@ -44,9 +44,16 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
                 }
                 .headers(base.insertHeader(user))
                 .retrieve()
+            .bodyToMono(JsonNode::class.java)
+            .mapNotNull { json ->
+                JacksonUtil.parseObjectList(json, LazerScore::class.java) }
+            .block()!!
+                /*
                 .bodyToFlux(LazerScore::class.java)
                 .collectList()
                 .block()!!
+
+                 */
     }
 
     override fun getBestScores(
@@ -326,17 +333,17 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
                 }
                 .headers { headers: HttpHeaders? -> base.insertHeader(headers) }
                 .retrieve()
+        /*
             .bodyToMono(JsonNode::class.java)
             .mapNotNull { json ->
                 JacksonUtil.parseObjectList(json, LazerScore::class.java) }
             .block()
+         */
 
-        /*
             .bodyToFlux(LazerScore::class.java)
             .collectList()
             .block()
 
-         */
     }
 
     private fun <T> retryOn404(

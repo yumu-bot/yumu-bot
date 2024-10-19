@@ -195,7 +195,7 @@ class BPAnalysisService(
                 run {
                     // 统计 mods / rank
                     if (!CollectionUtils.isEmpty(s.mods)) {
-                        s.mods.forEach {
+                        s.mods.filter { it.value > 0 } .forEach {
                             modsPPMap.add(it.abbreviation, s.weight!!.PP)
                         }
                         modsSum += s.mods.size

@@ -114,6 +114,7 @@ public interface OsuBeatmapApiService {
         return Rosu.calculate(b, js);
     }
 
+    /*
     default JniResult getPP(long bid, int modInt, LazerScore.StatisticsV2 s, int combo) throws Exception {
         var b = getBeatMapFileByte(bid);
         JniScore js = new JniScore();
@@ -128,6 +129,8 @@ public interface OsuBeatmapApiService {
         js.setMode(mode.toRosuMode());
         return getJniResult(modInt, s, b, js);
     }
+
+     */
 
     default JniResult getPP(BeatMap beatMap, MapStatisticsService.Expected e) throws Exception {
         var b = getBeatMapFileString(beatMap.getBeatMapID()).getBytes(StandardCharsets.UTF_8);
@@ -145,14 +148,17 @@ public interface OsuBeatmapApiService {
 
     default JniResult getPP(LazerScore s) {
         var b = getBeatMapFileByte(s.getBeatMap().getBeatMapID());
-        var m = OsuMod.getModsValue(s.getMods());
+
         var t = s.getStatistics();
 
         JniScore js = new JniScore();
         js.setCombo(s.getMaxCombo());
         js.setMode(s.getMode().toRosuMode());
 
-        if (!s.getPassed()) {
+        if (s.getPassed()) {
+            return getJniResult(s, b, js);
+        } else {
+            var m = OsuMod.getModsValue(s.getMods());
             // 没 pass 不给 300, acc 跟 combo
             js.setN100(Objects.requireNonNullElse(t.getOk(), 0));
             js.setKatu(Objects.requireNonNullElse(t.getGood(), 0));
@@ -160,13 +166,13 @@ public interface OsuBeatmapApiService {
             js.setMisses(Objects.requireNonNullElse(t.getMiss(), 0));
             return getJniResult(m, b, js);
         }
-        return getJniResult(m, t, b, js);
     }
 
     default JniResult getFcPP(LazerScore s) {
         var b = getBeatMapFileByte(s.getBeatMap().getBeatMapID());
         var m = OsuMod.getModsValue(s.getMods());
         var t = s.getStatistics().clone();
+        var a = s.getAccuracy();
 
         if (s.getScoreHit() > 0 && t.getMiss() != null && t.getMiss() > 0) {
             t.setMiss(0);
@@ -180,16 +186,17 @@ public interface OsuBeatmapApiService {
         //s.setMaxCombo(s.getBeatMap().getMaxCombo());
 
         JniScore js = new JniScore();
+
         js.setMode(s.getMode().toRosuMode());
         if (!s.getPassed()) {
             // 没 pass 不给 300, misses 跟 combo
-            js.setN100(t.getOk());
-            js.setKatu(t.getGood());
-            js.setN50(t.getMeh());
+            js.setN100(Objects.requireNonNullElse(t.getOk(), 0));
+            js.setN50(Objects.requireNonNullElse(t.getMeh(), 0));
             js.setAccuracy(s.getAccuracy());
             return getJniResult(m, b, js);
         }
-        return getJniResult(m, t, b, js);
+
+        return getJniResult(t, m, a, s.getMode(), b, js);
     }
 
     default Map<String, Object> getFullStatistics(LazerScore s) {
@@ -228,16 +235,35 @@ public interface OsuBeatmapApiService {
     }
 
     @NonNull
-    @SuppressWarnings("all")
-    private JniResult getJniResult(int modInt, LazerScore.StatisticsV2 s, byte[] b, JniScore score) {
-        score.setMods(modInt);
+    private JniResult getJniResult(LazerScore score, byte[] beatMap, JniScore jni) {
+        return getJniResult(score.getStatistics(), OsuMod.getModsValue(score.getMods()), score.getAccuracy(), score.getMode(), beatMap, jni);
+    }
 
-        if (s.getPerfect() != null) score.setGeki(s.getPerfect());
-        if (s.getGreat() != null) score.setN300(s.getGreat());
-        if (s.getGood() != null) score.setKatu(s.getGood());
-        if (s.getOk() != null) score.setN100(s.getOk());
-        if (s.getMeh() != null) score.setN50(s.getMeh());
-        if (s.getMiss() != null) score.setMisses(s.getMiss());
+    @NonNull
+    private JniResult getJniResult(LazerScore.StatisticsV2 t, int modInt, double accuracy, OsuMode mode, byte[] beatMap, JniScore jni) {
+        jni.setMods(modInt);
+        jni.setAccuracy(accuracy);
+
+        switch (mode) {
+            case TAIKO -> jni.setN100(Objects.requireNonNullElse(t.getOk(), 0));
+            case CATCH -> {
+                jni.setN100(Objects.requireNonNullElse(t.getLargeTickHit(), 0));
+                jni.setN50(Objects.requireNonNullElse(t.getSmallTickHit(), 0));
+            }
+            case MANIA -> {
+                jni.setGeki(Objects.requireNonNullElse(t.getPerfect(), 0));
+                jni.setKatu(Objects.requireNonNullElse(t.getGood(), 0));
+                jni.setN100(Objects.requireNonNullElse(t.getOk(), 0));
+                jni.setN50(Objects.requireNonNullElse(t.getMeh(), 0));
+            }
+            case DEFAULT -> {
+                jni.setN100(Objects.requireNonNullElse(t.getOk(), 0));
+                jni.setN50(Objects.requireNonNullElse(t.getMeh(), 0));
+            }
+        }
+
+        jni.setN300(Objects.requireNonNullElse(t.getGreat(), 0));
+        jni.setMisses(Objects.requireNonNullElse(t.getMiss(), 0));
 
         // 这个要留着, 因为是调用了 native 方法
         // 那边如果有 null 会直接导致虚拟机炸掉退出, 注解不会在运行时检查是不是 null
@@ -262,7 +288,7 @@ public interface OsuBeatmapApiService {
 
          */
 
-        return Rosu.calculate(b, score);
+        return Rosu.calculate(beatMap, jni);
     }
 
     @SuppressWarnings("all")
@@ -311,7 +337,7 @@ public interface OsuBeatmapApiService {
         var modsInt = OsuMod.getModsValue(score.getMods());
 
         // 没有变星数，并且有 PP，略过
-        if (!OsuMod.hasChangeRating(modsInt) && score.getPP() > 0f) return;
+        if (!OsuMod.hasChangeRating(modsInt) && Objects.requireNonNullElse(score.getPP(), 0d) > 0d) return;
 
         var beatMap = score.getBeatMap();
 

@@ -48,12 +48,13 @@ public enum OsuMod {
     ScoreV2(1 << 29, "V2"),
     Mirror(1 << 30, "MR"),
     //    keyMod(Key1.value | Key2.value | Key3.value | Key4.value | Key5.value | Key6.value | Key7.value | Key8.value | Key9.value | KeyCoop.value),
-    keyMod(521109504, "KEY"),
+    keyMod(521109504, "NK"),
     //    FreeModAllowed(NoFail.value | Easy.value | Hidden.value | HardRock.value | SuddenDeath.value | Flashlight.value | FadeIn.value | Relax.value | Autopilot.value | SpunOut.value | keyMod.value),
     FreeMod(522171579, "FM"),
     //    ScoreIncreaseMods(Hidden.value | HardRock.value | Flashlight.value | DoubleTime.value | FadeIn.value)
     ScoreIncreaseMods(1049688, "IM"),
-    Other(-1,"OTHER");
+
+    Other(-1,"??");
 
 
     public final int value;
@@ -133,7 +134,15 @@ public enum OsuMod {
         if (CollectionUtils.isEmpty(osuModList)) return 0;
 
         checkModList(osuModList);
-        return osuModList.stream().map(m -> m.value).reduce(0, (i, s) -> s | i);
+
+        return osuModList.stream().map(m -> m.value).reduce(0, (result, element) -> {
+            if (element > 0) {
+                // TODO 这里如果是 -1，会导致 JNI 无法计算准确的星数和 pp
+                return element | result;
+            } else {
+                return result;
+            }
+        });
     }
 
     @NonNull

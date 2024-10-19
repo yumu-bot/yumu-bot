@@ -55,7 +55,8 @@ class ScorePRService(
             @JvmField val density: IntArray,
             @JvmField val progress: Double,
             @JvmField val original: Map<String, Any>,
-            @JvmField val attributes: Map<String, Any>
+            @JvmField val attributes: Map<String, Any>,
+            @JvmField val panel: String
     ) {
         fun toMap(): Map<String, Any> {
 
@@ -67,6 +68,7 @@ class ScorePRService(
             out["progress"] = progress
             out["original"] = original
             out["attributes"] = attributes
+            out["panel"] = panel
 
             return out
         }
@@ -272,7 +274,7 @@ class ScorePRService(
                 if (event?.subject?.id == 595985887L) {
                     ContextUtil.setContext("isNewbie", true)
                 }
-                image = imageService.getPanelA5(user, scores)
+                image = imageService.getPanelA5(user, scores, if (isRecent) "RS" else "PS")
                 return QQMsgUtil.getImage(image)
             } catch (e: Exception) {
                 log.error("成绩发送失败：", e)
@@ -283,7 +285,7 @@ class ScorePRService(
         } else {
             // 单成绩发送
             val score: LazerScore = scoreList.first()
-            val e5Param = getScore4PanelE5(user, score, beatmapApiService)
+            val e5Param = getScore4PanelE5(user, score, (if (isRecent) "R" else "P"), beatmapApiService)
             try {
                 image = imageService.getPanel(e5Param.toMap(), "E5")
                 return QQMsgUtil.getImage(image)
@@ -305,6 +307,7 @@ class ScorePRService(
         fun getScore4PanelE5(
             user: OsuUser,
             score: LazerScore,
+            panel: String,
             beatmapApiService: OsuBeatmapApiService
         ): PanelE5Param {
             val beatmap = score.beatMap
@@ -320,7 +323,7 @@ class ScorePRService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            return PanelE5Param(user, score, density, progress, original, attributes)
+            return PanelE5Param(user, score, density, progress, original, attributes, panel)
         }
     }
 }

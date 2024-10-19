@@ -156,7 +156,7 @@ class ScoreService(
         }
 
         val image: ByteArray
-        val e5Param = getScore4PanelE5(user, score!!, beatmapApiService)
+        val e5Param = getScore4PanelE5(user, score!!, "S", beatmapApiService)
 
         try {
             image = imageService.getPanel(e5Param.toMap(), "E5")

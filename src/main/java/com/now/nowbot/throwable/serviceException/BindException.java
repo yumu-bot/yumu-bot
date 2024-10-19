@@ -22,7 +22,7 @@ public class BindException extends TipsRuntimeException{
         BIND_Question_Wrong("回答错误。"),
         BIND_Question_Overtime("回答超时，撤回绑定请求。"),
 
-        BIND_Progress_Binding("已经将 %s 绑定到了 (%s) %s 上"),
+        BIND_Progress_Binding("已经将 %s 与 (%s) %s 相绑定"),
         BIND_Progress_BindingRecoverInfo("""
                 您已绑定 (%s) %s，但是令牌可能还没有失效。
                 如果要改绑，请回复 OK。"""),
