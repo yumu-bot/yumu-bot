@@ -232,7 +232,7 @@ class UUBAService(
             allPP += bp.PP!!  // 统计总数
             if (bp.mods.isNotEmpty()) {
                 for (j in bp.mods.indices) {
-                    val mod = bp.mods[j].abbreviation
+                    val mod = bp.mods[j].acronym
                     if (!modTreeMap.containsKey(mod)) modTreeMap[mod] = AtomicInteger()
                     else modTreeMap[mod]!!.incrementAndGet()
                 }
@@ -321,10 +321,10 @@ class UUBAService(
             val bpm = b.bpm
             bp.mods.forEach(
                     Consumer { r: OsuMod ->
-                        if (modSum.containsKey(r.abbreviation)) {
-                            modSum[r.abbreviation]!!.add(bp.weight?.PP ?: 0.0)
+                        if (modSum.containsKey(r.acronym)) {
+                            modSum[r.acronym]!!.add(bp.weight?.PP ?: 0.0)
                         } else {
-                            modSum[r.abbreviation] = ModData(bp.weight?.PP ?: 0.0)
+                            modSum[r.acronym] = ModData(bp.weight?.PP ?: 0.0)
                         }
                     })
 

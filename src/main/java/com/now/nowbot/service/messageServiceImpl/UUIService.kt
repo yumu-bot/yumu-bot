@@ -44,6 +44,7 @@ class UUIService(private val template: RestTemplate) : MessageService<UUIParam> 
         val user = data.user
         val mode = data.mode
 
+        @Suppress("UNCHECKED_CAST")
         val httpEntity = HttpEntity.EMPTY as HttpEntity<Array<Byte>>
 
         val avatar: ByteArray? =

@@ -68,7 +68,7 @@ public class UUScore {
         country = user.getCountryCode();
         mods = new String[modsList.size()];
         for (int i = 0; i < mods.length; i++) {
-            mods[i] = modsList.get(i).abbreviation;
+            mods[i] = modsList.get(i).acronym;
         }
         if (s != null) {
             map_name = s.getTitleUnicode();

@@ -225,7 +225,7 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
                 return
             }
         }
-        mods.forEach(Consumer { mod: OsuMod? -> builder.queryParam("mods[]", mod!!.abbreviation) })
+        mods.forEach(Consumer { mod: OsuMod? -> builder.queryParam("mods[]", mod!!.acronym) })
     }
 
     override fun getLeaderBoardScore(bid: Long, user: BinUser, mode: OsuMode?): List<LazerScore> {

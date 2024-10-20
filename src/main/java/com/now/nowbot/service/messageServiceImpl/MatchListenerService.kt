@@ -129,7 +129,7 @@ class MatchListenerService(
         with(game) {
             if (beatmap != null) {
                 beatmap = beatmapApiService.getBeatMap(beatmapID)
-                beatmapApiService.applySRAndPP(beatmap, mode, OsuMod.getModsValueFromAbbrList(mods))
+                beatmapApiService.applySRAndPP(beatmap, mode, OsuMod.getModsList(mods))
             } else {
                 beatmap = BeatMap(beatmapID)
             }
@@ -189,7 +189,7 @@ class MatchListenerService(
                     PanelE7Param(
                         calculate,
                         mode,
-                        mods.map { it.abbreviation },
+                        mods.map { it.acronym },
                         users,
                         beatmap,
                         objectGroup,

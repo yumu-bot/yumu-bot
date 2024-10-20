@@ -1,5 +1,6 @@
 package com.now.nowbot.model.enums;
 
+import org.springframework.lang.Nullable;
 import rosu.osu.Mode;
 
 import java.util.Optional;
@@ -34,7 +35,7 @@ public enum OsuMode {
         return m;
     }
 
-    public static OsuMode getMode(String desc){
+    public static OsuMode getMode(@Nullable String desc){
         if (desc == null) return DEFAULT;
         return switch (desc.toLowerCase()) {
             case "osu", "o", "0" -> OSU;

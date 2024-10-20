@@ -197,6 +197,7 @@ class ScorePRService(
     private fun getTextOutput(score: LazerScore): MessageChain {
         val d = UUScore.getInstance(score, beatmapApiService)
 
+        @Suppress("UNCHECKED_CAST")
         val httpEntity = HttpEntity.EMPTY as HttpEntity<ByteArray>
         val imgBytes =
                 template.exchange(d.url, HttpMethod.GET, httpEntity, ByteArray::class.java).body

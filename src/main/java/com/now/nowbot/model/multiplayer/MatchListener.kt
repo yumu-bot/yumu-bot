@@ -170,7 +170,7 @@ class MatchListener(
                     beatmap!!,
                     startTime,
                     mode,
-                    mods.map { OsuMod.getModFromAbbreviation(it) },
+                    mods.map { OsuMod.getModFromAcronym(it) },
                     isTeamVS,
                     teamType,
                     user

@@ -132,7 +132,7 @@ class MatchMapService(
 
             val round = calculate.rounds[param.position - 1]
 
-            var eventID: Long = 0L
+            var eventID = 0L
             for (e in param.match.events) {
                 if (e.round.isNotNull() && e.round.roundID == round.roundID) {
                     eventID = e.eventID
@@ -160,7 +160,7 @@ class MatchMapService(
             beatmapApiService.applySRAndPP(
                 beatmap,
                 mode,
-                OsuMod.getModsValueFromAbbrList(round.mods),
+                OsuMod.getModsList(round.mods)
             )
 
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)

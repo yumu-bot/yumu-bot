@@ -196,7 +196,7 @@ class MapStatisticsService(
 
         val mods =
                 try {
-                    OsuMod.getModsAbbrList(matcher.group("mod")).distinct()
+                    OsuMod.splitModAcronyms(matcher.group("mod")).distinct()
                 } catch (e: RuntimeException) {
                     emptyList()
                 }
@@ -289,7 +289,7 @@ class MapStatisticsService(
 
             val scoreFC = JniScore()
             scoreFC.mode = expected.mode.toRosuMode()
-            scoreFC.mods = OsuMod.getModsValueFromAbbrList(expected.mods)
+            scoreFC.mods = OsuMod.getModsValueFromAcronyms(expected.mods)
             scoreFC.accuracy = expected.accuracy
             scoreFC.combo = beatmap.maxCombo
             scoreFC.misses = 0
@@ -303,7 +303,7 @@ class MapStatisticsService(
 
             val scoreNC = JniScore()
             scoreNC.mode = expected.mode.toRosuMode()
-            scoreNC.mods = OsuMod.getModsValueFromAbbrList(expected.mods)
+            scoreNC.mods = OsuMod.getModsValueFromAcronyms(expected.mods)
             scoreNC.accuracy = expected.accuracy
             scoreNC.combo = expected.combo
             scoreNC.misses = expected.misses

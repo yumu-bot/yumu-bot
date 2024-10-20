@@ -683,22 +683,27 @@ object DataUtil {
             }
 
     @JvmStatic
-    fun AR(ar: Float, mod: Int): Float {
-        var ar = ar
-        //      1800  -  1200  -  450  -  300
-        if (OsuMod.hasHr(mod)) {
-            ar *= 1.4f
-        } else if (OsuMod.hasEz(mod)) {
-            ar /= 2f
+    fun applyAR(ar: Float, mods: List<OsuMod>): Float {
+        var a = ar
+
+        val d = mods.stream().filter{it.acronym == "DA"}.toList().firstOrNull()?.ar
+        if (d != null) return d.toFloat().roundToDigits2()
+
+        if (mods.contains(OsuMod.HardRock)) {
+            a *= 1.4f
+        } else if (mods.contains(OsuMod.Easy)) {
+            a /= 2f
         }
-        var ms = AR2MS(ar.limit())
-        if (OsuMod.hasDt(mod)) {
-            ms /= (3f / 2f)
-        } else if (OsuMod.hasHt(mod)) {
-            ms /= (3f / 4f)
+
+        val speed = OsuMod.getModSpeed(mods)
+
+        if (speed != 1.0) {
+            var ms = OD2MS(a.clamp())
+            ms = (ms / speed).toFloat()
+            a = MS2AR(ms)
         }
-        ar = MS2AR(ms)
-        return round2Digits2(ar)
+
+        return a.roundToDigits2()
     }
 
     @JvmStatic
@@ -715,82 +720,81 @@ object DataUtil {
             }
 
     @JvmStatic
-    fun OD(od: Float, mod: Int): Float {
-        var od = od
-        if (OsuMod.hasHr(mod)) {
-            od *= 1.4f
-        } else if (OsuMod.hasEz(mod)) {
-            od /= 2f
+    fun applyOD(od: Float, mods: List<OsuMod>): Float {
+        var o = od
+        if (mods.contains(OsuMod.HardRock)) {
+            o *= 1.4f
+        } else if (mods.contains(OsuMod.Easy)) {
+            o /= 2f
         }
-        var ms = OD2MS(od.limit())
-        if (OsuMod.hasDt(mod)) {
-            ms /= (3f / 2)
-        } else if (OsuMod.hasHt(mod)) {
-            ms /= (3f / 4)
+
+        val d = mods.stream().filter{it.acronym == "DA"}.toList().firstOrNull()?.od
+        if (d != null) return d.toFloat().roundToDigits2()
+
+        val speed = OsuMod.getModSpeed(mods)
+
+        if (speed != 1.0) {
+            var ms = OD2MS(od.clamp())
+            ms = (ms / speed).toFloat()
+            o = MS2OD(ms)
         }
-        od = MS2OD(ms)
-        return round2Digits2(od)
+
+        return o.roundToDigits2()
     }
 
     @JvmStatic
-    fun CS(cs: Float, mod: Int): Float {
-        var cs = cs
-        if (OsuMod.hasHr(mod)) {
-            cs *= 1.3f
-        } else if (OsuMod.hasEz(mod)) {
-            cs /= 2f
+    fun applyCS(cs: Float, mods: List<OsuMod>): Float {
+        var c = cs
+
+        val d = mods.stream().filter{it.acronym == "DA"}.toList().firstOrNull()?.cs
+        if (d != null) return d.toFloat().roundToDigits2()
+
+        if (mods.contains(OsuMod.HardRock)) {
+            c *= 1.3f
+        } else if (mods.contains(OsuMod.Easy)) {
+            c /= 2f
         }
-        return round2Digits2(cs.limit())
+        return c.clamp().roundToDigits2()
     }
 
     @JvmStatic
-    fun HP(hp: Float, mod: Int): Float {
-        var hp = hp
-        if (OsuMod.hasHr(mod)) {
-            hp *= 1.4f
-        } else if (OsuMod.hasEz(mod)) {
-            hp /= 2f
+    fun applyHP(hp: Float, mods: List<OsuMod>): Float {
+        var h = hp
+
+        val d = mods.stream().filter{it.acronym == "DA"}.toList().firstOrNull()?.hp
+        if (d != null) return d.toFloat().roundToDigits2()
+
+        if (mods.contains(OsuMod.HardRock)) {
+            h *= 1.4f
+        } else if (mods.contains(OsuMod.Easy)) {
+            h /= 2f
         }
-        return round2Digits2(hp.limit())
+        return h.clamp().roundToDigits2()
     }
 
     @JvmStatic
-    fun BPM(bpm: Float, mod: Int): Float {
-        var bpm = bpm
-        if (OsuMod.hasDt(mod)) {
-            bpm *= 1.5f
-        } else if (OsuMod.hasHt(mod)) {
-            bpm *= 0.75f
-        }
-        return round2Digits2(bpm)
+    fun applyBPM(bpm: Float?, mods: List<OsuMod>): Float {
+        return ((bpm ?: 0f) * OsuMod.getModSpeed(mods)).toFloat().roundToDigits2()
     }
 
     @JvmStatic
-    fun Length(length: Float, mod: Int): Int {
-        var length = length
-        if (OsuMod.hasDt(mod)) {
-            length /= 1.5f
-        } else if (OsuMod.hasHt(mod)) {
-            length /= 0.75f
-        }
-        return Math.round(length)
-    }
-
-    private fun round2Digits2(value: Float): Float {
-        return BigDecimal(value.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toFloat()
+    fun applyLength(length: Int?, mods: List<OsuMod>): Int {
+        return Math.round((length ?: 0) / OsuMod.getModSpeed(mods).toFloat())
     }
 
     // 应用四维的变化 4 dimensions
     @JvmStatic
-    fun applyBeatMapChanges(beatMap: BeatMap, mods: Int) {
+    fun applyBeatMapChanges(beatMap: BeatMap, mods: List<OsuMod>) {
         if (OsuMod.hasChangeRating(mods)) {
-            beatMap.bpm = BPM(Optional.ofNullable(beatMap.bpm).orElse(0f), mods)
-            beatMap.ar = AR(Optional.ofNullable(beatMap.ar).orElse(0f), mods)
-            beatMap.cs = CS(Optional.ofNullable(beatMap.cs).orElse(0f), mods)
-            beatMap.od = OD(Optional.ofNullable(beatMap.od).orElse(0f), mods)
-            beatMap.hp = HP(Optional.ofNullable(beatMap.hp).orElse(0f), mods)
-            beatMap.totalLength = Length(beatMap.totalLength.toFloat(), mods)
-            beatMap.hitLength = Length(beatMap.hitLength.toFloat(), mods)
+            val m = mods
+
+            beatMap.bpm = applyBPM(Optional.ofNullable(beatMap.bpm).orElse(0f), m)
+            beatMap.ar = applyAR(Optional.ofNullable(beatMap.ar).orElse(0f), m)
+            beatMap.cs = applyCS(Optional.ofNullable(beatMap.cs).orElse(0f), m)
+            beatMap.od = applyOD(Optional.ofNullable(beatMap.od).orElse(0f), m)
+            beatMap.hp = applyHP(Optional.ofNullable(beatMap.hp).orElse(0f), m)
+            beatMap.totalLength = applyLength(beatMap.totalLength, m)
+            beatMap.hitLength = applyLength(beatMap.hitLength, m)
         }
     }
 
@@ -1181,7 +1185,8 @@ object DataUtil {
 
     @JvmRecord data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
 
-    fun Float.limit() = if ((0f..10f).contains(this)) this else if (this > 10) 10f else 0f
+    private fun Float.clamp() = if ((0f..10f).contains(this)) this else if (this > 10) 10f else 0f
+    private fun Float.roundToDigits2() = BigDecimal(this.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toFloat()
 
     private fun String.toRomanizedJaChar() = JaChar.getRomanized(this)
     private fun String.toRomanizedGreekChar() = GreekChar.getRomanized(this)

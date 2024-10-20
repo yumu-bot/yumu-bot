@@ -40,7 +40,7 @@ class BPAnalysisService(
     private val beatmapApiService: OsuBeatmapApiService,
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
-    data class BAParam(val user: OsuUser, val bpList: List<LazerScore>, val isMyself: Boolean)
+    data class BAParam(val user: OsuUser, val scores: List<LazerScore>, val isMyself: Boolean)
 
 
     @Throws(Throwable::class)
@@ -93,10 +93,10 @@ class BPAnalysisService(
     override fun reply(event: MessageEvent, param: BAParam) = QQMsgUtil.getImage(param.getImage())
 
     private fun BAParam.getImage(): ByteArray {
-        val bpList = bpList
+        val scores = scores
         val user = user
 
-        if (CollectionUtils.isEmpty(bpList) || bpList.size <= 5) {
+        if (CollectionUtils.isEmpty(scores) || scores.size <= 5) {
             if (isMyself) {
                 throw BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, user.mode)
             } else {
@@ -105,10 +105,10 @@ class BPAnalysisService(
         }
 
         // 提取星级变化的谱面 DT/HT 等
-        beatmapApiService.applySRAndPP(bpList)
+        beatmapApiService.applySRAndPP(scores)
 
         val data = parseData(
-            user, bpList,
+            user, scores,
             userApiService
         )
 
@@ -117,7 +117,7 @@ class BPAnalysisService(
         } catch (e: HttpServerErrorException.InternalServerError) {
             log.error("最好成绩分析：复杂面板生成失败", e)
             try {
-                val msg = uubaService.getTextPlus(bpList, user.username, user.mode)
+                val msg = uubaService.getTextPlus(scores, user.username, user.mode)
                     .split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                 imageService.getPanelAlpha(*msg)
             } catch (e1: ResourceAccessException) {
@@ -196,7 +196,7 @@ class BPAnalysisService(
                     // 统计 mods / rank
                     if (!CollectionUtils.isEmpty(s.mods)) {
                         s.mods.filter { it.value > 0 } .forEach {
-                            modsPPMap.add(it.abbreviation, s.weight!!.PP)
+                            modsPPMap.add(it.acronym, s.weight!!.PP)
                         }
                         modsSum += s.mods.size
                     } else {
@@ -227,7 +227,7 @@ class BPAnalysisService(
             sortCount("bpm") { it.bpm }
 
             val ppRawList = bps.map { it.PP!! }
-            val rankCount = bps.map { it.rank!! }
+            val rankCount = bps.map { it.rank }
 
             val rankSort = rankCount
                 .groupingBy { it }

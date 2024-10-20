@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl;
 
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.Match;
 import com.now.nowbot.model.json.MicroUser;
@@ -37,6 +38,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 //@Service("MATCH_LISTENER")
+@Deprecated
 public class MatchListenerServiceLegacy implements MessageService<MatchListenerServiceLegacy.ListenerParam> {
     static final Logger log = LoggerFactory.getLogger(MatchListenerServiceLegacy.class);
     static final int    BREAK_ROUND = 15;
@@ -284,7 +286,7 @@ public class MatchListenerServiceLegacy implements MessageService<MatchListenerS
 
             // apply changes
             beatmapApiService.applyBeatMapExtend(round);
-            beatmapApiService.applySRAndPP(round.getBeatMap(), OsuMode.getMode(round.getMode()), round.getModInt());
+            beatmapApiService.applySRAndPP(round.getBeatMap(), OsuMode.getMode(round.getMode()), OsuMod.getModsList( round.getMods()));
 
             return getDataImage(round, match.getMatchStat(), index, imageService);
         } catch (Exception e) {
@@ -302,7 +304,7 @@ public class MatchListenerServiceLegacy implements MessageService<MatchListenerS
 
         // apply changes
         beatmapApiService.applyBeatMapExtend(r);
-        beatmapApiService.applySRAndPP(r.getBeatMap(), OsuMode.getMode(r.getMode()), r.getModInt());
+        beatmapApiService.applySRAndPP(r.getBeatMap(), OsuMode.getMode(r.getMode()), OsuMod.getModsList(r.getMods()));
 
         var b = r.getBeatMap();
 

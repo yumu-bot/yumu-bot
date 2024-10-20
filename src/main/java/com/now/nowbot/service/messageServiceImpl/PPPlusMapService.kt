@@ -23,14 +23,14 @@ class PPPlusMapService(
     private val performancePlusService: PerformancePlusService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService,
-) : MessageService<PPPlusMapService.Param> {
+) : MessageService<PPPlusMapService.PPPlusParam> {
 
-    data class Param(
+    data class PPPlusParam(
         val bid: Long,
-        val mods: Int,
+        val mods: List<OsuMod>,
     )
 
-    override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<Param?>): Boolean {
+    override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<PPPlusParam?>): Boolean {
         val matcher = Instruction.PP_PLUS_MAP.matcher(messageText)
         if (!matcher.find()) return false
 
@@ -40,14 +40,14 @@ class PPPlusMapService(
         }
         val bid = bidStr.toLong()
 
-        val modsInt = matcher.group(FLAG_MOD).let {
-            if (it.isNullOrBlank()) 0 else OsuMod.getModsValue(it)
+        val mods = matcher.group(FLAG_MOD).let {
+            if (it.isNullOrBlank()) mutableListOf() else OsuMod.getModsList(it)
         }
-        data.value = Param(bid, modsInt)
+        data.value = PPPlusParam(bid, mods)
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, data: Param) {
+    override fun HandleMessage(event: MessageEvent, data: PPPlusParam) {
         val map = try {
             beatmapApiService.getBeatMapFromDataBase(data.bid)
         } catch (e: Exception) {
@@ -58,7 +58,7 @@ class PPPlusMapService(
             throw PPPlusException(PPPlusException.Type.PL_Function_NotSupported)
         }
         val pp = try {
-            performancePlusService.getMapPerformancePlus(data.bid, data.mods)
+            performancePlusService.getMapPerformancePlus(data.bid, OsuMod.getModsValue(data.mods))
         } catch (e: Exception) {
             if (e is WebClientResponseException) {
                 log.error { e.responseBodyAsString }
@@ -78,12 +78,12 @@ class PPPlusMapService(
     }
 
 
-    private fun BeatMap.addPPPlus(pp: PPPlus, mods: Int) {
+    private fun BeatMap.addPPPlus(pp: PPPlus, mods: List<OsuMod>) {
         starRating = pp.difficulty.total?.toFloat() ?: 0f
-        if (mods != 0) {
-            cs = DataUtil.CS(cs, mods)
-            ar = DataUtil.AR(ar, mods)
-            od = DataUtil.OD(od, mods)
+        if (mods.isNotEmpty()) {
+            cs = DataUtil.applyCS(cs, mods)
+            ar = DataUtil.applyAR(ar, mods)
+            od = DataUtil.applyOD(od, mods)
         }
     }
 }

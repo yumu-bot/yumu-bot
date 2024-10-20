@@ -179,13 +179,12 @@ public class MatchCalculate {
             if (b == null) continue;
 
             var m = OsuMode.getMode(r.getMode());
-            var i = r.getModInt();
 
             // extend beatmap
             b = beatmapApiService.getBeatMapFromDataBase(b.getBeatMapID());
 
             // apply changes
-            beatmapApiService.applySRAndPP(b, m, i);
+            beatmapApiService.applySRAndPP(b, m, OsuMod.getModsList(r.getModInt()));
 
             r.setBeatMap(b);
         }

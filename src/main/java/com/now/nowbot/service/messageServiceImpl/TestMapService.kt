@@ -1,81 +1,79 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.enums.OsuMod;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.springframework.stereotype.Service;
+import com.now.nowbot.model.enums.OsuMod.Companion.getModsList
+import com.now.nowbot.model.enums.OsuMod.Companion.getModsValue
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.Instruction
+import org.springframework.stereotype.Service
+import java.util.*
+import java.util.regex.Matcher
+import java.util.stream.Stream
+import kotlin.math.floor
 
-import java.util.regex.Matcher;
-import java.util.stream.Stream;
-
-@Service("TEST_MAP")
-public class TestMapService implements MessageService<Matcher> {
-    @Resource
-    OsuBeatmapApiService beatmapApiService;
-
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
-        var m = Instruction.TEST_MAP.matcher(messageText);
+@Service("TEST_MAP") 
+class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : MessageService<Matcher> {
+    
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Matcher>): Boolean {
+        val m = Instruction.TEST_MAP.matcher(messageText)
         if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
+            data.value = m
+            return true
+        } else return false
     }
-
-    @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        int bid = Integer.parseInt(matcher.group("id"));
-        String mod = matcher.group("mod");
-
-        var b = beatmapApiService.getBeatMap(bid);
-        var sb = new StringBuilder();
-
-        sb.append(bid).append(',');
-        if (b.getBeatMapSet() != null) {
-            sb.append(b.getBeatMapSet().getArtistUnicode()).append(' ').append('-').append(' ');
-            sb.append(b.getBeatMapSet().getTitleUnicode()).append(' ');
-            sb.append('(').append(b.getBeatMapSet().getCreator()).append(')').append(' ');
+    
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
+        val bid = matcher.group("id").toInt()
+        val mod = matcher.group("mod")
+        
+        val b = beatmapApiService.getBeatMap(bid)
+        val sb = StringBuilder()
+        
+        sb.append(bid).append(',')
+        if (b.beatMapSet != null) {
+            sb.append(b.beatMapSet!!.artistUnicode).append(' ').append('-').append(' ')
+            sb.append(b.beatMapSet!!.titleUnicode).append(' ')
+            sb.append('(').append(b.beatMapSet!!.creator).append(')').append(' ')
         }
-        sb.append('[').append(b.getDifficultyName()).append(']').append(',');
-
-
-        if (mod == null || mod.trim().isEmpty()){
-
-            sb.append(String.format("%.2f", b.getStarRating())).append(',')
-                    .append(String.format("%d", Math.round(b.getBPM()))).append(',')
-                    .append(String.format("%d", Math.round(Math.floor(b.getTotalLength() / 60f))))
-                    .append(':')
-                    .append(String.format("%02d", Math.round(b.getTotalLength() % 60f)))
-                    .append(',');
-            sb.append(b.getMaxCombo()).append(',')
-                    .append(b.getCS()).append(',')
-                    .append(b.getAR()).append(',')
-                    .append(b.getOD());
-
-            event.getSubject().sendMessage(sb.toString());
-            return;
+        sb.append('[').append(b.difficultyName).append(']').append(',')
+        
+        
+        if (mod == null || mod.trim {it <= ' '} .isEmpty()) {
+            sb.append(String.format("%.2f", b.starRating)).append(',')
+            .append(String.format("%d", Math.round(b.bpm))).append(',')
+            .append(String.format("%d", Math.round(floor((b.totalLength / 60f).toDouble()))))
+            .append(':')
+            .append(String.format("%02d", Math.round(b.totalLength % 60f)))
+            .append(',')
+            sb.append(b.maxCombo).append(',')
+            .append(b.cs).append(',')
+            .append(b.ar).append(',')
+            .append(b.od)
+            
+            event.subject.sendMessage(sb.toString())
+            return 
         }
+        
+        val mods = getModsList(Stream.of(*mod.split("[\"\\s,，\\-|:]+".toRegex()).dropLastWhile {it.isEmpty()} .toTypedArray()).map { obj: String -> obj.uppercase(Locale.getDefault())} .toList())
 
-        var mods = mod.split("[\"\\s,，\\-|:]+");
-        int modInt = Stream.of(mods).map(OsuMod::getModFromAbbreviation).map(e -> e.value).reduce(0, (v, a)-> v|a);
-        var a = beatmapApiService.getAttributes((long) bid, modInt);
-        float newTotalLength = DataUtil.Length(b.getTotalLength(), modInt);
-
-        sb.append(String.format("%.2f", a.getStarRating())).append(',')
-                .append(String.format("%d", Math.round(DataUtil.BPM(b.getBPM(), modInt)))).append(',')
-                .append(String.format("%d", Math.round(Math.floor(newTotalLength / 60f))))
-                .append(':')
-                .append(String.format("%02d", Math.round(newTotalLength % 60f)))
-                .append(',');
-        sb.append(a.getMaxCombo()).append(',')
-                .append(String.format("%.2f", Math.round(DataUtil.CS(b.getCS(), modInt) * 100f) / 100f)).append(',')
-                .append(String.format("%.2f", Math.round(DataUtil.AR(b.getAR(), modInt) * 100f) / 100f)).append(',')
-                .append(String.format("%.2f", Math.round(DataUtil.OD(b.getOD(), modInt) * 100f) / 100f));
-
-        event.getSubject().sendMessage(sb.toString());
+        
+        val a = beatmapApiService.getAttributes(bid.toLong(), getModsValue(mods))
+        val newTotalLength = DataUtil.applyLength(b.totalLength, mods).toFloat()
+        
+        sb.append(String.format("%.2f", a.starRating)).append(',')
+        .append(String.format("%d", Math.round(DataUtil.applyBPM(b.bpm, mods)))).append(',')
+        .append(String.format("%d", Math.round(floor((newTotalLength / 60f).toDouble()))))
+        .append(':')
+        .append(String.format("%02d", Math.round(newTotalLength % 60f)))
+        .append(',')
+        sb.append(a.maxCombo).append(',')
+        .append(String.format("%.2f", DataUtil.applyCS(b.cs, mods))).append(',')
+        .append(String.format("%.2f", DataUtil.applyAR(b.ar, mods))).append(',')
+        .append(String.format("%.2f", DataUtil.applyOD(b.od, mods)))
+        
+        event.subject.sendMessage(sb.toString())
     }
 }

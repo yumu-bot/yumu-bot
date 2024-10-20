@@ -70,14 +70,13 @@ class MapMinusService(
         val mode: OsuMode
 
         val isChangedRating = OsuMod.hasChangeRating(param.modsList)
-        val mods = OsuMod.getModsValue(param.modsList)
 
         try {
 
             beatMap = beatmapApiService.getBeatMapFromDataBase(param.bid)
             mode = OsuMode.getMode(beatMap.modeInt)
 
-            beatmapApiService.applySRAndPP(beatMap, beatMap.osuMode, mods)
+            beatmapApiService.applySRAndPP(beatMap, beatMap.osuMode, param.modsList)
             fileStr = beatmapApiService.getBeatMapFileString(param.bid)
         } catch (e: Exception) {
             throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
@@ -100,7 +99,7 @@ class MapMinusService(
                 PPMinus3.getInstance(
                         file,
                         if (isChangedRating) {
-                            OsuMod.getModsClockRate(param.modsList)
+                            OsuMod.getModSpeed(param.modsList)
                         } else {
                             param.rate
                         },

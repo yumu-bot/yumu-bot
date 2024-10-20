@@ -1,64 +1,71 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.enums.OsuMod;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instruction;
-import org.springframework.stereotype.Service;
-
-import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_MOD;
+import com.now.nowbot.model.enums.OsuMod.Companion.getModsList
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.messageServiceImpl.Map4DCalculate.Map4DParam
+import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.FLAG_MOD
+import org.springframework.stereotype.Service
 
 @Service("MAP_4D_CALCULATE")
-public class Map4DCalculate implements MessageService<Map4DCalculate.Map4DParam> {
-    public record Map4DParam(String type, float value, String mods){}
-    @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Map4DParam> data) throws Throwable {
-        String message = event.getRawMessage();
-        var matcher = Instruction.MAP_4D_CALCULATE.matcher(message);
+class Map4DCalculate : MessageService<Map4DParam> {
+    @JvmRecord data class Map4DParam(val type: String, val value: Float, val mods: String?)
+
+    @Throws(Throwable::class)
+    override fun isHandle(
+            event: MessageEvent,
+            messageText: String,
+            data: DataValue<Map4DParam>,
+    ): Boolean {
+        val message = event.rawMessage
+        val matcher = Instruction.MAP_4D_CALCULATE.matcher(message)
         if (matcher.find()) {
-            var d = new Map4DParam(
-                    matcher.group("type"),
-                    Float.parseFloat(matcher.group("value")),
-                    matcher.group(FLAG_MOD)
-            );
-            data.setValue(d);
-            return true;
+            data.value =
+                    Map4DParam(
+                            matcher.group("type"),
+                            matcher.group("value").toFloat(),
+                            matcher.group(FLAG_MOD),
+                    )
+            return true
         }
-        return false;
+        return false
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, Map4DParam param) throws Throwable {
-        int mod;
-        if (param.mods() == null) {
-            mod = 0;
-        } else {
-            mod = OsuMod.getModsValue(param.mods());
-        }
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, param: Map4DParam) {
+        val mod =
+                if (param.mods == null) {
+                    mutableListOf()
+                } else {
+                    getModsList(param.mods)
+                }
         // 只针对 std 模式
-        String message = switch (param.type()) {
-            case "ar" -> {
-                float newAr = DataUtil.AR(param.value(), mod);
-                float ms = DataUtil.AR2MS(newAr);
-                yield String.format("AR: %.2f, 缩圈时间: %.2fms", newAr, ms);
-            }
-            case "od" -> {
-                float newOd = DataUtil.AR(param.value(), mod);
-                float ms = DataUtil.OD2MS(newOd);
-                yield String.format("OD: %.2f, 300判定区间: %.2fms", newOd, ms);
-            }
-            case "cs" -> {
-                float newCs = DataUtil.CS(param.value(), mod);
-                yield String.format("CS: %.2f", newCs);
-            }
-            case "hp" -> {
-                float newHp = DataUtil.HP(param.value(), mod);
-                yield String.format("HP: %.2f", newHp);
-            }
-            default -> "Unexpected value: " + param.type();
-        };
+        val message =
+                when (param.type) {
+                    "ar" -> {
+                        val ar = DataUtil.applyAR(param.value, mod)
+                        val ms = DataUtil.AR2MS(ar)
+                        String.format("AR: %.2f, 缩圈时间: %.2fms", ar, ms)
+                    }
+                    "od" -> {
+                        val od = DataUtil.applyOD(param.value, mod)
+                        val ms = DataUtil.OD2MS(od)
+                        String.format("OD: %.2f, 300 判定区间: %.2fms", od, ms)
+                    }
+                    "cs" -> {
+                        val cs = DataUtil.applyCS(param.value, mod)
+                        String.format("CS: %.2f", cs)
+                    }
+                    "hp" -> {
+                        val hp = DataUtil.applyHP(param.value, mod)
+                        String.format("HP: %.2f", hp)
+                    }
+                    else -> "Unexpected value: " + param.type
+                }
 
-        event.getSubject().sendMessage(message);
+        event.reply(message)
     }
 }

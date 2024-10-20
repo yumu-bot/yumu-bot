@@ -302,7 +302,7 @@ public class Match implements Cloneable {
         }
 
         public Integer getModInt() {
-            return Optional.ofNullable(modInt).orElse(OsuMod.getModsValueFromAbbrList(this.mods));
+            return Optional.ofNullable(modInt).orElse(OsuMod.getModsValueFromAcronyms(this.mods));
         }
 
         public void setModInt(@Nullable Integer modInt) {

@@ -30,23 +30,19 @@ open class LazerScore {
             return when (this.mode) {
                 OsuMode.OSU -> (s.great ?: 0)
                 OsuMode.TAIKO -> (s.great ?: 0)
-                OsuMode.CATCH -> (s.great ?: 0)
+                OsuMode.CATCH -> (s.great ?: 0) + (s.largeTickHit ?: 0)
                 OsuMode.MANIA -> (s.perfect ?: 0)
                 else -> 0
             }
         }
 
-    @JsonProperty("mods") private val modList: List<ScoreMod> = listOf()
+    @JsonProperty("mods") private val modList: List<LazerMod> = listOf()
 
     @JsonIgnore
     var mods: List<OsuMod> = listOf()
         get() {
             return if (this.modList.isNotEmpty()) {
-                this.modList
-                        .stream()
-                        .map(ScoreMod::acronym)
-                        .map(OsuMod::getModFromAbbreviation)
-                        .toList()
+                this.modList.stream().map(OsuMod::getModFromLazerMod).toList()
             } else {
                 listOf()
             }
@@ -55,7 +51,35 @@ open class LazerScore {
             field = value.ifEmpty { listOf() }
         }
 
-    data class ScoreMod(@JsonProperty("acronym") var acronym: String = "")
+    data class LazerMod(
+            @JsonProperty("acronym") var acronym: String = "",
+            @JsonProperty("settings") var settings: LazerModSettings? = LazerModSettings(),
+    )
+
+    // 天杀的自定义设置
+    data class LazerModSettings(
+            // DT HT DC NC
+            @JsonProperty("speed_change") var speed: Double? = 1.0,
+
+            // EZ
+            @JsonProperty("extra_lives") var extraLives: Int? = 0,
+
+            // DT HT AS
+            @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = false,
+
+            // SD PF
+            @JsonProperty("restart_on_fail") var restartOnFail: Boolean? = false,
+
+            // AS
+            @JsonProperty("initial_rate") var initialSpeed: Double? = 1.0,
+
+            // DA
+            @JsonProperty("circle_size") var cs: Double? = 1.0,
+            @JsonProperty("approach_rate") var ar: Double? = 1.0,
+            @JsonProperty("overall_difficulty") var od: Double? = 1.0,
+            @JsonProperty("drain_rate") var hp: Double? = 1.0,
+            @JsonProperty("extended_limits") var extendedLimits: Boolean? = false,
+    )
 
     @JsonProperty("statistics") var statistics: StatisticsV2 = StatisticsV2()
 
@@ -66,8 +90,8 @@ open class LazerScore {
             val s = this.statistics
 
             return when (this.mode) {
-                OsuMode.OSU -> (s.great ?: 0) + (s.miss ?: 0)
-                OsuMode.TAIKO -> (s.great ?: 0) + (s.miss ?: 0) + (s.ok ?: 0)
+                OsuMode.OSU -> (s.great ?: 0) + (s.ok ?: 0) + (s.meh ?: 0) + (s.miss ?: 0)
+                OsuMode.TAIKO -> (s.great ?: 0) + (s.ok ?: 0) + (s.miss ?: 0)
                 OsuMode.CATCH ->
                         (s.great ?: 0) +
                                 (s.miss ?: 0) +
@@ -235,7 +259,8 @@ open class LazerScore {
 
     @JsonProperty("replay") var replay: Boolean = false
 
-    // @JsonProperty("current_user_attributes") var userAttributes: UserAttributes = UserAttributes()
+    // @JsonProperty("current_user_attributes") var userAttributes: UserAttributes =
+    // UserAttributes()
     // TODO 这个有问题
     // data class UserAttributes(@JsonProperty("pin") var pin: String? = null)
 
@@ -267,11 +292,11 @@ open class LazerScore {
 
     companion object {
         private val formatter: DateTimeFormatter =
-            DateTimeFormatterBuilder()
-                .appendPattern("yyyy-MM-dd")
-                .appendLiteral("T")
-                .appendPattern("HH:mm:ss")
-                .appendZoneId()
-                .toFormatter()
+                DateTimeFormatterBuilder()
+                        .appendPattern("yyyy-MM-dd")
+                        .appendLiteral("T")
+                        .appendPattern("HH:mm:ss")
+                        .appendZoneId()
+                        .toFormatter()
     }
 }

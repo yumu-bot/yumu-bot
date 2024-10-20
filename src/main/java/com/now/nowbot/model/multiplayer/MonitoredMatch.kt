@@ -181,7 +181,7 @@ data class MonitoredMatch(
                 r.endTime = g.endTime
                 r.beatMap = g.beatmap
                 r.beatMapID = g.beatmapID
-                r.modInt = OsuMod.getModsValueFromAbbrList(g.mods)
+                r.modInt = OsuMod.getModsValueFromAcronyms(g.mods)
                 r.scoringType = g.scoringType
                 r.teamType = g.teamType
                 r.roundID = g.gameID.toInt()

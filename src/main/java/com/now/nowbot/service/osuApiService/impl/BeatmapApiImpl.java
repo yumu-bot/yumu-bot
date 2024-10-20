@@ -416,7 +416,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     @Override
     public double getPlayPercentage(LazerScore score) {
         if (score.getPassed()) return 1d;
-        var n = score.getBeatMapCombo();
+        var n = score.getScoreHit();
         var playPercentage =
                 beatmapObjectCountMapper.getTimeStampPercentageByBidAndIndex(score.getBeatMap().getBeatMapID(), n);
         if (playPercentage == null) {
