@@ -28,7 +28,7 @@ open class LazerScore {
             val s = this.maximumStatistics
 
             return when (this.mode) {
-                OsuMode.OSU -> (s.great ?: 0)
+                OsuMode.OSU -> (s.great ?: 0) + (s.legacyComboIncrease ?: 0)
                 OsuMode.TAIKO -> (s.great ?: 0)
                 OsuMode.CATCH -> (s.great ?: 0) + (s.largeTickHit ?: 0)
                 OsuMode.MANIA -> (s.perfect ?: 0)
@@ -150,6 +150,9 @@ open class LazerScore {
 
             // O Spinner Base
             @JsonProperty("small_bonus") var smallBonus: Int? = 0,
+
+            // 仅 MAX 有
+            @JsonProperty("legacy_combo_increase") var legacyComboIncrease: Int? = 0,
     ) : Cloneable {
         public override fun clone(): StatisticsV2 {
             try {
