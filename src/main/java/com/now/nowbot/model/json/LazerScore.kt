@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.*
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
@@ -25,14 +26,27 @@ open class LazerScore {
     @get:JsonProperty("total_hit")
     val totalHit: Int
         get() {
-            val s = this.maximumStatistics
+            val m = this.maximumStatistics
 
-            return when (this.mode) {
-                OsuMode.OSU -> (s.great ?: 0) + (s.legacyComboIncrease ?: 0)
-                OsuMode.TAIKO -> (s.great ?: 0)
-                OsuMode.CATCH -> (s.great ?: 0) + (s.largeTickHit ?: 0)
-                OsuMode.MANIA -> (s.perfect ?: 0)
-                else -> 0
+            if (this.isLazer) {
+                return when (this.mode) {
+                    OSU -> (m.great ?: 0) + (m.legacyComboIncrease ?: 0)
+                    TAIKO -> (m.great ?: 0)
+                    CATCH -> (m.great ?: 0) + (m.largeTickHit ?: 0)
+                    MANIA -> (m.perfect ?: 0)
+                    else -> 0
+                }
+            } else {
+                // 稳定版内，maximumStatistics 拿到的数据只是当前成绩的完美值（特别是中途退出的成绩），并不是总数
+                val b = this.beatMap
+
+                return when (this.mode) {
+                    OSU -> b.circles + b.sliders
+                    TAIKO -> b.circles
+                    CATCH -> (m.great ?: 0) + (m.largeTickHit ?: 0) + (m.legacyComboIncrease ?: 0)
+                    MANIA -> b.circles + b.sliders
+                    else -> 0
+                }
             }
         }
 
@@ -93,14 +107,14 @@ open class LazerScore {
             val s = this.statistics
 
             return when (this.mode) {
-                OsuMode.OSU -> (s.great ?: 0) + (s.ok ?: 0) + (s.meh ?: 0) + (s.miss ?: 0)
-                OsuMode.TAIKO -> (s.great ?: 0) + (s.ok ?: 0) + (s.miss ?: 0)
-                OsuMode.CATCH ->
+                OSU -> (s.great ?: 0) + (s.ok ?: 0) + (s.meh ?: 0) + (s.miss ?: 0)
+                TAIKO -> (s.great ?: 0) + (s.ok ?: 0) + (s.miss ?: 0)
+                CATCH ->
                         (s.great ?: 0) +
                                 (s.miss ?: 0) +
                                 (s.largeTickHit ?: 0) +
                                 (s.largeTickMiss ?: 0)
-                OsuMode.MANIA ->
+                MANIA ->
                         (s.perfect ?: 0) +
                                 (s.great ?: 0) +
                                 (s.good ?: 0) +
@@ -178,21 +192,43 @@ open class LazerScore {
 
     @JsonProperty("id") var scoreID: Long = 0L
 
-    @JsonProperty("rank") var rank: String = "F"
+    /** 注意，这个 rank 是 lazer 计分方式计算出来的，stable 成绩放在这里会有问题 */
+    @JsonProperty("rank") var lazerRank: String = "F"
+
+    // 傻逼 Lazer
+    @get:JsonProperty("legacy_rank")
+    val rank: String
+        get() {
+            return getStableRank(this)
+        }
 
     @JsonProperty("type") var type: String = "solo_score" // solo_score 不区分是否是新老客户端
 
     @JsonProperty("user_id") var userID: Long = 0L
 
-    @JsonProperty("accuracy") var accuracy: Double = 0.0
+    /** 注意，这个 accuracy 是 lazer 计分方式计算出来的，stable 成绩放在这里会有问题 */
+    @JsonProperty("accuracy") var lazerAccuracy: Double = 0.0
+
+    // 傻逼 Lazer
+    @get:JsonProperty("legacy_accuracy")
+    val accuracy: Double
+        get() {
+            return getStableAccuracy(this)
+        }
 
     @JsonProperty("build_id")
-    var buildID: Long? = 0L
+    var buildID: Long? = null
         get() {
             return field ?: 0L
         }
         set(value) {
             field = value ?: 0L
+        }
+
+    @get:JsonProperty("is_lazer")
+    val isLazer: Boolean
+        get() {
+            return (buildID != null) && buildID!! > 0
         }
 
     @JsonProperty("ended_at") var endedTime: String = ""
@@ -237,15 +273,15 @@ open class LazerScore {
 
     @JsonProperty("ruleset_id") var ruleset: Byte = 0
 
-    @get:JsonIgnore
+    @get:JsonProperty("mode")
     val mode: OsuMode
         get() {
             return when (this.ruleset.toInt()) {
-                0 -> OsuMode.OSU
-                1 -> OsuMode.TAIKO
-                2 -> OsuMode.CATCH
-                3 -> OsuMode.MANIA
-                else -> OsuMode.DEFAULT
+                0 -> OSU
+                1 -> TAIKO
+                2 -> CATCH
+                3 -> MANIA
+                else -> DEFAULT
             }
         }
 
@@ -304,5 +340,121 @@ open class LazerScore {
                         .appendPattern("HH:mm:ss")
                         .appendZoneId()
                         .toFormatter()
+
+        @JvmStatic
+        private fun getStableRank(score: LazerScore): String {
+            if (!score.passed) return "F"
+            if (score.isLazer) return score.lazerRank
+
+            val m = score.maximumStatistics
+            val s = score.statistics
+
+            val accuracy = score.accuracy
+            val p300 = 1.0 * (s.great ?: 0) / (m.great ?: m.perfect ?: 0)
+            val hasMiss = (s.miss ?: 0) > 0
+
+            return when (score.mode) {
+                OSU -> {
+                    val is50Over1P = (s.meh ?: 0) / (m.great ?: m.perfect ?: 0) > 0.01
+
+                    return if (p300 == 1.0) {
+                        "X"
+                    } else if (p300 >= 0.9) {
+                        if (hasMiss) "A" else if (is50Over1P) "A" else "S"
+                    } else if (p300 >= 0.8) {
+                        if (hasMiss) "B" else "A"
+                    } else if (p300 >= 0.7) {
+                        if (hasMiss) "C" else "B"
+                    } else if (p300 >= 0.6) {
+                        "C"
+                    } else {
+                        "D"
+                    }
+                }
+                TAIKO ->
+                        return if (p300 == 1.0) {
+                            "X"
+                        } else if (p300 >= 0.9) {
+                            if (hasMiss) "A" else "S"
+                        } else if (p300 >= 0.8) {
+                            if (hasMiss) "B" else "A"
+                        } else if (p300 >= 0.7) {
+                            if (hasMiss) "C" else "B"
+                        } else if (p300 >= 0.6) {
+                            "C"
+                        } else {
+                            "D"
+                        }
+                CATCH ->
+                        return if (accuracy == 1.0) {
+                            "X"
+                        } else if (accuracy > 0.98) {
+                            if (hasMiss) "A" else "S"
+                        } else if (accuracy > 0.94) {
+                            if (hasMiss) "B" else "A"
+                        } else if (accuracy > 0.90) {
+                            if (hasMiss) "C" else "B"
+                        } else if (accuracy > 0.85) {
+                            "C"
+                        } else {
+                            "D"
+                        }
+                MANIA ->
+                        return if (accuracy == 1.0) {
+                            "X"
+                        } else if (accuracy >= 0.95) {
+                            "S"
+                        } else if (accuracy >= 0.90) {
+                            "A"
+                        } else if (accuracy >= 0.80) {
+                            "B"
+                        } else if (accuracy >= 0.70) {
+                            "C"
+                        } else {
+                            "D"
+                        }
+                DEFAULT -> "F"
+            }
+        }
+
+        @JvmStatic
+        private fun getStableAccuracy(score: LazerScore): Double {
+            if (score.isLazer) return score.lazerAccuracy
+
+            val m = score.maximumStatistics
+            val s = score.statistics
+
+            var total = m.great ?: 0
+
+            when (score.mode) {
+                OSU -> {
+                    val hit = (s.great ?: 0) + 1.0 / 3 * (s.ok ?: 0) + 1.0 / 6 * (s.meh ?: 0)
+                    return hit / total
+                }
+                TAIKO -> {
+                    return ((s.great ?: 0) + 1.0 / 2 * (s.ok ?: 0)) / total
+                }
+
+                CATCH -> {
+                    val hit = (s.great ?: 0) + (s.largeTickHit ?: 0) + (s.smallTickHit ?: 0)
+                    total = (m.great ?: 0) + (m.largeTickHit ?: 0) + (m.smallTickHit ?: 0)
+
+                    return 1.0 * hit / total
+                }
+
+                MANIA -> {
+                    val hit =
+                            (s.perfect ?: 0) +
+                                    (s.great ?: 0) +
+                                    2.0 / 3 * (s.good ?: 0) +
+                                    1.0 / 3 * (s.ok ?: 0) +
+                                    1.0 / 6 * (s.meh ?: 0)
+                    total = (m.perfect ?: 0)
+                    return hit / total
+                }
+
+                DEFAULT -> return 0.0
+            }
+        }
     }
 }

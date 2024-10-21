@@ -85,7 +85,7 @@ class FriendService(
 
     fun checkMultiFriend(binUser: BinUser, param: FriendParam): MessageChain {
         if (param.uid == binUser.osuID) {
-            return MessageChain("你自己与你自己就是最好的朋友")
+            return MessageChain("你自己与你自己就是最好的朋友。")
         }
 
         val friendList = userApiService.getFriendList(binUser)
@@ -129,19 +129,19 @@ class FriendService(
 
         return if (isFollowing) {
             if (isFollowed) {
-                "你已经与 $name 互相成为好友了。"
+                "恭喜！你已经与 $name 互相成为好友了。"
             } else if (isBind) {
                 "你已经添加了 $name 作为你的好友，但对方似乎还没有添加你。"
             } else {
-                "你已经添加了 $name 作为你的好友，但不知道对方有没有添加你。"
+                "你已经添加了 $name 作为你的好友，但对方没有使用链接绑定，还不知道有没有添加你。"
             }
         } else {
             if (isFollowed) {
                 "你还没有将 $name 添加为你的好友，但对方似乎已经悄悄添加了你。"
             } else if (isBind) {
-                "你们暂未互相成为好友。"
+                "你们暂未互相成为好友。或许可以考虑一下？"
             } else {
-                "你还没有将 $name 添加为你的好友，也不知道对方有没有添加你。"
+                "你还没有将 $name 添加为你的好友，并且对方没有使用链接绑定，还不知道有没有添加你。"
             }
         }
     }
