@@ -210,13 +210,13 @@ enum class OsuMod(
             checkMods(mods)
 
             return mods.stream()
-                    .map { m: OsuMod? -> m!!.value }
+                    .map(OsuMod::value)
                     .reduce(0) { result: Int, element: Int ->
                         if (element > 0) {
                             // 这里如果是 -1，会导致 JNI 无法计算准确的星数和 pp
-                            return@reduce element or result
+                            element + result
                         } else {
-                            return@reduce result
+                            result
                         }
                     }
         }

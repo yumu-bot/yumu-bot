@@ -134,6 +134,8 @@ public interface OsuBeatmapApiService {
         var t = s.getStatistics();
 
         JniScore js = new JniScore();
+        js.setMods(OsuMod.getModsValue(s.getMods()));
+
         js.setCombo(s.getMaxCombo());
         js.setSpeed(OsuMod.getModSpeedForStarCalculate(s.getMods()));
         js.setMode(s.getMode().toRosuMode());
@@ -147,7 +149,7 @@ public interface OsuBeatmapApiService {
             js.setN50(Objects.requireNonNullElse(t.getMeh(), 0));
             js.setMisses(Objects.requireNonNullElse(t.getMiss(), 0));
 
-            return getJniResult(s.getMods(), b, js);
+            return getJniResult(b, js);
         }
     }
 
@@ -170,12 +172,14 @@ public interface OsuBeatmapApiService {
         JniScore js = new JniScore();
 
         js.setMode(s.getMode().toRosuMode());
+        js.setMods(OsuMod.getModsValue(s.getMods()));
+
         if (!s.getPassed()) {
             // 没 pass 不给 300, misses 跟 combo
             js.setN100(Objects.requireNonNullElse(t.getOk(), 0));
             js.setN50(Objects.requireNonNullElse(t.getMeh(), 0));
             js.setAccuracy(s.getAccuracy());
-            return getJniResult(m, b, js);
+            return getJniResult(b, js);
         }
 
         return getJniResult(t, m, a, r, b, js);
@@ -274,8 +278,7 @@ public interface OsuBeatmapApiService {
     }
 
     @SuppressWarnings("all")
-    private JniResult getJniResult(List<OsuMod> mods, byte[] map, JniScore score) {
-        score.setMods(OsuMod.getModsValue(mods));
+    private JniResult getJniResult(byte[] map, JniScore score) {
         return Rosu.calculate(map, score);
     }
 
