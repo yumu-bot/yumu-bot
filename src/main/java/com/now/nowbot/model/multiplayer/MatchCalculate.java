@@ -184,7 +184,7 @@ public class MatchCalculate {
             b = beatmapApiService.getBeatMapFromDataBase(b.getBeatMapID());
 
             // apply changes
-            beatmapApiService.applySRAndPP(b, m, OsuMod.getModsList(r.getModInt()));
+            beatmapApiService.applySRAndPP(b, m, OsuMod.getModsList(r.getMods()));
 
             r.setBeatMap(b);
         }

@@ -301,6 +301,7 @@ public class Match implements Cloneable {
             this.mode = mode;
         }
 
+        // 这个有可能有重复！
         public Integer getModInt() {
             return Optional.ofNullable(modInt).orElse(OsuMod.getModsValueFromAcronyms(this.mods));
         }
