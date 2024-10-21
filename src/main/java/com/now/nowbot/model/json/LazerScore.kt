@@ -389,11 +389,11 @@ open class LazerScore {
                         return if (accuracy == 1.0) {
                             "X"
                         } else if (accuracy > 0.98) {
-                            if (hasMiss) "A" else "S"
+                            "S"
                         } else if (accuracy > 0.94) {
-                            if (hasMiss) "B" else "A"
+                            "A"
                         } else if (accuracy > 0.90) {
-                            if (hasMiss) "C" else "B"
+                            "B"
                         } else if (accuracy > 0.85) {
                             "C"
                         } else {
