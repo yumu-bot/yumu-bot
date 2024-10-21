@@ -430,7 +430,7 @@ enum class Instruction(val pattern: Pattern) {
 
     DICE(CommandPatternBuilder.create {
         append("($REG_EXCLAMATION|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d${REG_IGNORE})")
-        appendCaptureGroup("number", "-?\\d", ANY)
+        appendCaptureGroup("number", "${REG_HYPHEN}?\\d", ANY)
         appendSpace()
         appendCaptureGroup("text", REG_ANYTHING, MORE)
     }),
@@ -555,16 +555,19 @@ enum class Instruction(val pattern: Pattern) {
         append("(-?i)")
     }),
 
-    DEPRECATED_SET(CommandPatternBuilder.create {
-        appendCommands("(?<set>set)")
+    EASTER_AYACHI_NENE(CommandPatternBuilder.create {
+        append("(?<nene>0d0(0)?)")
     }),
 
-    DEPRECATED_AYACHI_NENE(CommandPatternBuilder.create {
-        append("(?<nene>0d0(0)?)") // 无需 commands
-    }),
-
-    DEPRECATED_YMK(CommandPatternBuilder.create {
-        appendCommands("(?<k>k)")
+    EASTER_WHAT(CommandPatternBuilder.create {
+        append(REG_EXCLAMATION)
+        appendMatchLevel(MORE)
+        appendSpace()
+        append("(gsm|干什么)")
+        appendSpace()
+        append(REG_EXCLAMATION)
+        appendMatchLevel(ANY)
+        appendIgnore()
     }),
 
     // #11 maimai & CHUNITHM

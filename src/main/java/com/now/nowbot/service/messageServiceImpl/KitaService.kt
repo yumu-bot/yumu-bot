@@ -29,9 +29,6 @@ class KitaService(
         messageText: String,
         data: DataValue<Matcher>,
     ): Boolean {
-        val matcher2 = Instruction.DEPRECATED_YMK.matcher(messageText)
-        if (matcher2.find()) throw KitaException(KitaException.Type.KITA_Deprecated_K)
-
         val m = Instruction.KITA.matcher(messageText)
         if (m.find()) {
             data.value = m

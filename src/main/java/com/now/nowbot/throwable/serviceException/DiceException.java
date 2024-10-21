@@ -20,6 +20,7 @@ public class DiceException extends TipsException {
         DICE_Compare_Tie("硬币立在墙角了。再投一次？"),
         DICE_Compare_Wtf("你不可能看到这条消息。"),
         DICE_EasterEgg_0d00("打个角先..."),
+        DICE_EasterEgg_What("干什么！"),
         DICE_Send_Error("我真笨，连个骰子都扔不好..."),
 
         ;//逗号分隔

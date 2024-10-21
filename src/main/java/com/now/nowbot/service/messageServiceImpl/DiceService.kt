@@ -29,7 +29,10 @@ class DiceService : MessageService<DiceParam> {
         messageText: String,
         data: DataValue<DiceParam>,
     ): Boolean {
-        val m2 = Instruction.DEPRECATED_AYACHI_NENE.matcher(messageText)
+        val m3 = Instruction.EASTER_WHAT.matcher(messageText)
+        if (m3.find()) throw DiceException(DiceException.Type.DICE_EasterEgg_What)
+
+        val m2 = Instruction.EASTER_AYACHI_NENE.matcher(messageText)
         if (m2.find()) throw DiceException(DiceException.Type.DICE_EasterEgg_0d00)
 
         val m = Instruction.DICE.matcher(messageText)
@@ -745,7 +748,7 @@ class DiceService : MessageService<DiceParam> {
                         (StringUtils.hasText(rm.group("m1")) || StringUtils.hasText(rm.group("m2")))
 
                 // 临时修改，还没有更好的解决方法
-                if (split != Split.TIME && (leftHas || rightHas)) {
+                if (split != Split.TIME && split != Split.COULD && (leftHas || rightHas)) {
                     return chooseMultiple(s) // LR一样的
                 }
             }

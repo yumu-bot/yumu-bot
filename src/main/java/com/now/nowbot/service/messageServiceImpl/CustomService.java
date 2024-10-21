@@ -16,7 +16,6 @@ import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
-import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,11 +56,6 @@ public class CustomService implements MessageService<CustomService.CustomParam> 
     @SuppressWarnings("all")
     public boolean isHandle(MessageEvent event, String messageText, DataValue<CustomParam> data) throws Throwable {
         var from = event.getSubject();
-
-        var matcher2 = Instruction.DEPRECATED_SET.matcher(messageText);
-        if (matcher2.find() && Strings.isNotBlank(matcher2.group("set"))) {
-            throw new CustomException(CustomException.Type.CUSTOM_Instruction_Deprecated);
-        }
 
         var matcher = Instruction.CUSTOM.matcher(messageText);
         if (! matcher.find()) {
@@ -167,7 +161,7 @@ public class CustomService implements MessageService<CustomService.CustomParam> 
 
     @Override
     public void HandleMessage(MessageEvent event, CustomParam param) throws Throwable {
-        var fileName = STR."\{param.uid}-\{param.type}.png";
+        var fileName = param.uid + "-" + param.type + ".png";
         Path path = FILE_DIV_PATH.resolve(fileName);
 
         byte[] data = new byte[0];
