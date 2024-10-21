@@ -23,8 +23,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_MODE
 import org.apache.logging.log4j.util.Strings
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -431,9 +429,9 @@ class UUBAService(
                 .append('\n')
 
         sb.append("BPM 区间: ")
-                .append(String.format("%.0.0", minBPM))
+                .append(String.format("%.0f", minBPM))
                 .append('-')
-                .append(String.format("%.0.0", maxBPM))
+                .append(String.format("%.0f", maxBPM))
                 .append('\n')
         sb.append("——————————").append('\n')
 
@@ -517,9 +515,5 @@ class UUBAService(
         } else {
             "${l / 60}分${l % 60}秒"
         }
-    }
-
-    companion object {
-        private val log: Logger = LoggerFactory.getLogger(UUBAService::class.java)
     }
 }
