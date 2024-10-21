@@ -516,7 +516,8 @@ enum class OsuMod(
                     mods.contains(WindDown) ||
                     mods.contains(Flashlight) ||
                     mods.contains(TouchDevice) ||
-                    mods.contains(DifficultyAdjust)
+                    mods.contains(DifficultyAdjust) ||
+                    mods.contains(AdaptiveSpeed)
         }
 
         @JvmStatic
