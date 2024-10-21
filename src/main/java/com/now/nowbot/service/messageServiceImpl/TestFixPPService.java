@@ -91,7 +91,7 @@ public class TestFixPPService implements MessageService<Matcher> {
             for (var bp : bps) {
                 beatmapApiService.applyBeatMapExtendFromDataBase(bp);
 
-                int max = bp.getBeatMapCombo();
+                int max = bp.getTotalHit();
                 int combo = bp.getMaxCombo();
 
                 int miss = Objects.requireNonNullElse(bp.getStatistics().getMiss(), 0);

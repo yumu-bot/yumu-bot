@@ -90,7 +90,7 @@ class BPFixService(
             beforeBpSumAtomic.updateAndGet { v: Double -> v + (score.weight?.PP ?: 0.0) }
             beatmapApiService.applyBeatMapExtendFromDataBase(score)
 
-            val max = score.beatMapCombo
+            val max = score.totalHit
             val combo = score.maxCombo
             val miss = score.statistics.miss ?: 0
 

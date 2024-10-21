@@ -22,8 +22,8 @@ open class LazerScore {
 
     @JsonProperty("maximum_statistics") var maximumStatistics: StatisticsV2 = StatisticsV2()
 
-    @get:JsonProperty("beatmap_max_combo")
-    val beatMapCombo: Int
+    @get:JsonProperty("total_hit")
+    val totalHit: Int
         get() {
             val s = this.maximumStatistics
 
