@@ -90,51 +90,29 @@ public interface OsuBeatmapApiService {
     BeatMapSetSearch searchBeatMapSet(Map<String, Object> query);
 
     default JniResult getMaxPP(long bid, List<OsuMod> mods) {
-        var b = getBeatMapFileByte(bid);
-        JniScore js = new JniScore();
-        js.setAccuracy(100);
-        js.setMods(OsuMod.getModsValue(mods));
-        js.setSpeed(OsuMod.getModSpeed(mods));
-        return Rosu.calculate(b, js);
+        return getMaxPP(bid, OsuMode.DEFAULT, mods);
     }
 
     default JniResult getMaxPP(LazerScore s) {
-        return getMaxPP(s.getBeatMap().getBeatMapID(), s.getMode(), s.getMods());
+        return getMaxPP(s.getBeatMapID(), s.getMode(), s.getMods());
     }
 
     default JniResult getMaxPP(long bid, OsuMode ruleset, List<OsuMod> mods) {
-        var b = getBeatMapFileByte(bid);
+        var b = parseBeatMap(bid, mods);
         JniScore js = new JniScore();
 
         js.setMode(ruleset.toRosuMode());
         js.setAccuracy(100D);
         js.setMisses(0);
         js.setMods(OsuMod.getModsValue(mods));
-        js.setSpeed(OsuMod.getModSpeed(mods));
+        js.setSpeed(OsuMod.getModSpeedForStarCalculate(mods));
 
         return Rosu.calculate(b, js);
     }
 
-    /*
-    default JniResult getPP(long bid, int modInt, LazerScore.StatisticsV2 s, int combo) throws Exception {
-        var b = getBeatMapFileByte(bid);
-        JniScore js = new JniScore();
-        js.setCombo(combo);
-        return getJniResult(modInt, s, b, js);
-    }
-
-    default JniResult getPP(long bid, OsuMode mode, int modInt, LazerScore.StatisticsV2 s, int combo) {
-        var b = getBeatMapFileByte(bid);
-        JniScore js = new JniScore();
-        js.setCombo(combo);
-        js.setMode(mode.toRosuMode());
-        return getJniResult(modInt, s, b, js);
-    }
-
-     */
-
     default JniResult getPP(BeatMap beatMap, MapStatisticsService.Expected e) throws Exception {
-        var b = getBeatMapFileString(beatMap.getBeatMapID()).getBytes(StandardCharsets.UTF_8);
+        // TODO 以后应用 parseBeatMap
+        var b = getBeatMapFileByte(beatMap.getBeatMapID());
         var m = OsuMod.getModsValueFromAcronyms(e.mods);
 
         JniScore score = new JniScore();
@@ -149,13 +127,15 @@ public interface OsuBeatmapApiService {
     }
 
     default JniResult getPP(LazerScore s) {
-        var b = getBeatMapFileByte(s.getBeatMap().getBeatMapID());
+        // 提前处理谱面四维
+        var b = parseBeatMap(s.getBeatMapID(), s.getMods());
 
+        // 主获取
         var t = s.getStatistics();
 
         JniScore js = new JniScore();
         js.setCombo(s.getMaxCombo());
-        js.setSpeed(OsuMod.getModSpeed(s.getMods()));
+        js.setSpeed(OsuMod.getModSpeedForStarCalculate(s.getMods()));
         js.setMode(s.getMode().toRosuMode());
 
         if (s.getPassed()) {
@@ -455,5 +435,31 @@ public interface OsuBeatmapApiService {
         } catch (Exception e) {
             NowbotApplication.log.error("无法获取谱面 {}，无法获取 API 提供的星数！", beatMap.getBeatMapID(), e);
         }
+    }
+
+    // 应用 DA 模组会修改的四维
+    private byte[] parseBeatMap(long bid, List<OsuMod> mods) {
+        for (var m : mods) {
+            if (m == OsuMod.DifficultyAdjust) {
+                var s = getBeatMapFileString(bid);
+
+                if (m.ar != null) {
+                    s = s.replaceAll("ApproachRate:\\d+\\.?\\d*", "ApproachRate:" + m.ar);
+                }
+                if (m.cs != null) {
+                    s = s.replaceAll("CircleSize:\\d+\\.?\\d*", "CircleSize:" + m.cs);
+                }
+                if (m.od != null) {
+                    s = s.replaceAll("OverallDifficulty:\\d+\\.?\\d*", "OverallDifficulty:" + m.od);
+                }
+                if (m.hp != null) {
+                    s = s.replaceAll("HPDrainRate:\\d+\\.?\\d*", "HPDrainRate:" + m.hp);
+                }
+
+                return s.getBytes(StandardCharsets.UTF_8);
+            }
+        }
+
+        return getBeatMapFileByte(bid);
     }
 }

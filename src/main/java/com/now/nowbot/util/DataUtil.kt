@@ -786,15 +786,13 @@ object DataUtil {
     @JvmStatic
     fun applyBeatMapChanges(beatMap: BeatMap, mods: List<OsuMod>) {
         if (OsuMod.hasChangeRating(mods)) {
-            val m = mods
-
-            beatMap.bpm = applyBPM(Optional.ofNullable(beatMap.bpm).orElse(0f), m)
-            beatMap.ar = applyAR(Optional.ofNullable(beatMap.ar).orElse(0f), m)
-            beatMap.cs = applyCS(Optional.ofNullable(beatMap.cs).orElse(0f), m)
-            beatMap.od = applyOD(Optional.ofNullable(beatMap.od).orElse(0f), m)
-            beatMap.hp = applyHP(Optional.ofNullable(beatMap.hp).orElse(0f), m)
-            beatMap.totalLength = applyLength(beatMap.totalLength, m)
-            beatMap.hitLength = applyLength(beatMap.hitLength, m)
+            beatMap.bpm = applyBPM(Optional.ofNullable(beatMap.bpm).orElse(0f), mods)
+            beatMap.ar = applyAR(Optional.ofNullable(beatMap.ar).orElse(0f), mods)
+            beatMap.cs = applyCS(Optional.ofNullable(beatMap.cs).orElse(0f), mods)
+            beatMap.od = applyOD(Optional.ofNullable(beatMap.od).orElse(0f), mods)
+            beatMap.hp = applyHP(Optional.ofNullable(beatMap.hp).orElse(0f), mods)
+            beatMap.totalLength = applyLength(beatMap.totalLength, mods)
+            beatMap.hitLength = applyLength(beatMap.hitLength, mods)
         }
     }
 

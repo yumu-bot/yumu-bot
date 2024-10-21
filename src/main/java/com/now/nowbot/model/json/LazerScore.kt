@@ -64,14 +64,17 @@ open class LazerScore {
             // EZ
             @JsonProperty("extra_lives") var extraLives: Int? = 0,
 
-            // DT HT AS
+            // DT HT AS WU WD
             @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = false,
 
             // SD PF
             @JsonProperty("restart_on_fail") var restartOnFail: Boolean? = false,
 
-            // AS
+            // AS WU WD
             @JsonProperty("initial_rate") var initialSpeed: Double? = 1.0,
+
+            // WU WD
+            @JsonProperty("final_rate") var finalSpeed: Double? = 1.0,
 
             // DA
             @JsonProperty("circle_size") var cs: Double? = 1.0,

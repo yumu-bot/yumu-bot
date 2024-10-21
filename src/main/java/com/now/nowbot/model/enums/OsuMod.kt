@@ -8,6 +8,7 @@ enum class OsuMod(
         @JvmField val value: Int,
         @JvmField val acronym: String,
         @JvmField var speed: Double = 1.0,
+        @JvmField var finalSpeed: Double = 1.0,
         @JvmField var cs: Double? = null,
         @JvmField var ar: Double? = null,
         @JvmField var od: Double? = null,
@@ -57,8 +58,10 @@ enum class OsuMod(
     StrictTracking(-1, "ST"),
     AccuracyChallenge(-1, "AC"),
     DifficultyAdjust(-1, "DA"),
-
     Traceable(-1, "TC"),
+    WindUp(-1, "WU", 1.0, 1.5),
+    WindDown(-1, "WD", 1.0, 0.75),
+    AdaptiveSpeed(-1, "AS"),
     Muted(-1, "MU"),
     NoScope(-1, "NS");
 
@@ -71,38 +74,30 @@ enum class OsuMod(
     }
 
     companion object {
-        private val changeRatingValue =
-                Easy.value or
-                        HalfTime.value or
-                        TouchDevice.value or
-                        HardRock.value or
-                        DoubleTime.value or
-                        Nightcore.value or
-                        Flashlight.value
 
         @JvmStatic
         fun getModFromLazerMod(mod: LazerScore.LazerMod?): OsuMod {
             if (mod == null) return None
 
-            for (e in OsuMod.entries) {
-                if (mod.acronym == e.acronym) {
-                    if (mod.settings != null) {
+            val e = getModFromAcronym(mod.acronym)
 
-                        // DT HT
-                        if (mod.settings?.speed != null) e.speed = mod.settings!!.speed!!
+            if (mod.settings != null) {
 
-                        // DA
-                        if (mod.settings?.cs != null) e.cs = mod.settings!!.cs!!
-                        if (mod.settings?.ar != null) e.ar = mod.settings!!.ar!!
-                        if (mod.settings?.od != null) e.od = mod.settings!!.od!!
-                        if (mod.settings?.hp != null) e.hp = mod.settings!!.hp!!
-                    }
+                // DT HT
+                if (mod.settings?.speed != null) e.speed = mod.settings!!.speed!!
 
-                    return e
-                }
+                // DA
+                if (mod.settings?.cs != null) e.cs = mod.settings!!.cs!!
+                if (mod.settings?.ar != null) e.ar = mod.settings!!.ar!!
+                if (mod.settings?.od != null) e.od = mod.settings!!.od!!
+                if (mod.settings?.hp != null) e.hp = mod.settings!!.hp!!
+
+                // AS WU WD，四维受 speed 影响，星数受 finalSpeed 影响
+                if (mod.settings?.initialSpeed != null) e.speed = mod.settings!!.initialSpeed!!
+                if (mod.settings?.finalSpeed != null) e.finalSpeed = mod.settings!!.finalSpeed!!
             }
 
-            return None
+            return e
         }
 
         @JvmStatic
@@ -143,7 +138,7 @@ enum class OsuMod(
          * @return 模组类列表
          */
         @JvmStatic
-        fun getModsList(value: Int): List<OsuMod?> {
+        fun getModsList(value: Int): List<OsuMod> {
             val modList =
                     Arrays.stream(entries.toTypedArray())
                             .filter { e: OsuMod? -> 0 != (e!!.value and value) }
@@ -173,13 +168,17 @@ enum class OsuMod(
          */
         @JvmStatic
         fun getModsAcronym(value: Int): String {
-            return getModsList(value).stream().map { obj: OsuMod? -> obj!!.acronym }.toList().joinToString { "" }
+            return getModsList(value)
+                    .stream()
+                    .map { obj: OsuMod? -> obj!!.acronym }
+                    .toList()
+                    .joinToString { "" }
         }
 
         @JvmStatic
         fun getModsValue(acronym: String?): Int {
             if (acronym.isNullOrEmpty()) return 0
-            checkAcronym(acronym)
+            checkMultiAcronym(acronym)
             val acronyms = splitModAcronyms(acronym.uppercase(Locale.getDefault()))
             return getModsValueFromAcronyms(acronyms)
         }
@@ -257,7 +256,7 @@ enum class OsuMod(
             return list
         }
 
-        private fun checkAcronym(acronym: String?) {
+        private fun checkMultiAcronym(acronym: String?) {
             if (acronym.isNullOrEmpty()) return
 
             val acronyms = splitModAcronyms(acronym.uppercase(Locale.getDefault()))
@@ -307,8 +306,8 @@ enum class OsuMod(
             }
         }
 
-        private fun checkMods(osuModList: List<OsuMod>?) {
-            if (osuModList.isNullOrEmpty()) return
+        private fun checkMods(mods: List<OsuMod>?) {
+            if (mods.isNullOrEmpty()) return
 
             // TODO 暂时弃用这个检查，因为那些 Lazer 的模组是没有 value 的，会直接触发这个
             /*
@@ -317,28 +316,25 @@ enum class OsuMod(
             }
 
              */
-            if (osuModList.contains(DoubleTime) && osuModList.contains(HalfTime)) {
+            if (mods.contains(DoubleTime) && mods.contains(HalfTime)) {
                 throw ModsException(
                         ModsException.Type.MOD_Receive_Conflict,
                         "${DoubleTime.acronym} ${HalfTime.acronym}",
                 )
             }
-            if (osuModList.contains(HardRock) && osuModList.contains(Easy)) {
+            if (mods.contains(HardRock) && mods.contains(Easy)) {
                 throw ModsException(
                         ModsException.Type.MOD_Receive_Conflict,
                         "${HardRock.acronym} ${Easy.acronym}",
                 )
             }
-            if (
-                    osuModList.contains(NoFail) &&
-                            (osuModList.contains(SuddenDeath) || osuModList.contains(Perfect))
-            ) {
+            if (mods.contains(NoFail) && (mods.contains(SuddenDeath) || mods.contains(Perfect))) {
                 throw ModsException(
                         ModsException.Type.MOD_Receive_Conflict,
                         "${NoFail.acronym} ${SuddenDeath.acronym} ${Perfect.acronym}",
                 )
             }
-            if (osuModList.contains(DoubleTime) && osuModList.contains(Nightcore)) {
+            if (mods.contains(DoubleTime) && mods.contains(Nightcore)) {
                 throw ModsException(
                         ModsException.Type.MOD_Receive_Conflict,
                         "${DoubleTime.acronym} ${Nightcore.acronym}",
@@ -369,14 +365,46 @@ enum class OsuMod(
         }
 
         @JvmStatic
+        /** 如果要计算星数，请使用 getModSpeedForStarCalculate */
         fun getModSpeed(mods: List<OsuMod>?): Double {
             if (mods.isNullOrEmpty()) return 1.0
 
             for (m in mods) {
-                val a = m.acronym
+                if (
+                        m == HalfTime ||
+                                m == Daycore ||
+                                m == DoubleTime ||
+                                m == Nightcore ||
+                                m == AdaptiveSpeed ||
+                                m == WindUp ||
+                                m == WindDown
+                ) {
+                    return m.speed
+                }
+            }
 
-                if (a == HalfTime.acronym || a == Daycore.acronym || a == DoubleTime.acronym || a == Nightcore.acronym)
-                        return m.speed
+            return 1.0
+        }
+
+        @JvmStatic
+        /** WU 和 WD 会改变速率，但是不会作用在谱面上。 */
+        fun getModSpeedForStarCalculate(mods: List<OsuMod>?): Double {
+            if (mods.isNullOrEmpty()) return 1.0
+
+            for (m in mods) {
+                if (
+                        m == HalfTime ||
+                                m == Daycore ||
+                                m == DoubleTime ||
+                                m == Nightcore ||
+                                m == AdaptiveSpeed
+                ) {
+                    return m.speed
+                }
+
+                if (m == WindUp || m == WindDown) {
+                    return m.finalSpeed
+                }
             }
 
             return 1.0
@@ -407,8 +435,21 @@ enum class OsuMod(
                 "CP" -> KeyCoop
                 "MR" -> Mirror
                 "RD" -> Random
-                "SV2" -> ScoreV2
-                else -> Other
+                // 以下是 Lazer 独占的可以上传成绩的模组
+                "DC" -> Daycore
+                "BL" -> Blinds
+                "CO" -> Cover
+                "ST" -> StrictTracking
+                "AC" -> AccuracyChallenge
+                "DA" -> DifficultyAdjust
+                "TC" -> Traceable
+                "WU" -> WindUp
+                "WD" -> WindDown
+                "AS" -> AdaptiveSpeed
+                "MU" -> Muted
+                "NS" -> NoScope
+
+                else -> None
             }
         }
 
@@ -449,21 +490,30 @@ enum class OsuMod(
         }
 
         @JvmStatic
-        @Deprecated("尽量用重载方法 List<OsuMod>，因为部分 lazer mod 是没有 value 的")
+        @Deprecated(
+                "尽量用重载方法 List<OsuMod>，因为部分 lazer mod 是没有 value 的",
+                ReplaceWith(
+                        "hasChangeRating(getModsList(value))",
+                        "com.now.nowbot.model.enums.OsuMod.Companion.hasChangeRating",
+                        "com.now.nowbot.model.enums.OsuMod.Companion.getModsList",
+                ),
+        )
         fun hasChangeRating(value: Int): Boolean {
-            return (changeRatingValue and value) != 0
+            return hasChangeRating(getModsList(value))
         }
 
         @JvmStatic
-        fun hasChangeRating(mods: List<OsuMod>?): Boolean {
+        fun hasChangeRating(mods: List<OsuMod?>?): Boolean {
             if (mods.isNullOrEmpty()) return false
 
             return mods.contains(Easy) ||
+                    mods.contains(HardRock) ||
                     mods.contains(HalfTime) ||
                     mods.contains(Daycore) ||
                     mods.contains(DoubleTime) ||
                     mods.contains(Nightcore) ||
-                    mods.contains(Hidden) ||
+                    mods.contains(WindUp) ||
+                    mods.contains(WindDown) ||
                     mods.contains(Flashlight) ||
                     mods.contains(TouchDevice) ||
                     mods.contains(DifficultyAdjust)

@@ -100,7 +100,7 @@ class TestTypeService(
                 PPMinus3.getInstance(
                         file,
                         if (isChangedRating) {
-                            OsuMod.getModSpeed(param.modsList)
+                            OsuMod.getModSpeedForStarCalculate(param.modsList)
                         } else {
                             param.rate
                         },
