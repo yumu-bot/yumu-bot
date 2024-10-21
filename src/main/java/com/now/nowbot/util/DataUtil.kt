@@ -698,7 +698,7 @@ object DataUtil {
         val speed = OsuMod.getModSpeed(mods)
 
         if (speed != 1.0) {
-            var ms = OD2MS(a.clamp())
+            var ms = AR2MS(a.clamp())
             ms = (ms / speed).toFloat()
             a = MS2AR(ms)
         }
