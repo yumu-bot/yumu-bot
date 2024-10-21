@@ -59,29 +59,29 @@ open class LazerScore {
     // 天杀的自定义设置
     data class LazerModSettings(
             // DT HT DC NC
-            @JsonProperty("speed_change") var speed: Double? = 1.0,
+            @JsonProperty("speed_change") var speed: Double? = null,
 
             // EZ
-            @JsonProperty("extra_lives") var extraLives: Int? = 0,
+            @JsonProperty("extra_lives") var extraLives: Int? = null,
 
             // DT HT AS WU WD
-            @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = false,
+            @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
 
             // SD PF
-            @JsonProperty("restart_on_fail") var restartOnFail: Boolean? = false,
+            @JsonProperty("restart_on_fail") var restartOnFail: Boolean? = null,
 
             // AS WU WD
-            @JsonProperty("initial_rate") var initialSpeed: Double? = 1.0,
+            @JsonProperty("initial_rate") var initialSpeed: Double? = null,
 
             // WU WD
-            @JsonProperty("final_rate") var finalSpeed: Double? = 1.0,
+            @JsonProperty("final_rate") var finalSpeed: Double? = null,
 
             // DA
-            @JsonProperty("circle_size") var cs: Double? = 1.0,
-            @JsonProperty("approach_rate") var ar: Double? = 1.0,
-            @JsonProperty("overall_difficulty") var od: Double? = 1.0,
-            @JsonProperty("drain_rate") var hp: Double? = 1.0,
-            @JsonProperty("extended_limits") var extendedLimits: Boolean? = false,
+            @JsonProperty("circle_size") var cs: Double? = null,
+            @JsonProperty("approach_rate") var ar: Double? = null,
+            @JsonProperty("overall_difficulty") var od: Double? = null,
+            @JsonProperty("drain_rate") var hp: Double? = null,
+            @JsonProperty("extended_limits") var extendedLimits: Boolean? = null,
     )
 
     @JsonProperty("statistics") var statistics: StatisticsV2 = StatisticsV2()
