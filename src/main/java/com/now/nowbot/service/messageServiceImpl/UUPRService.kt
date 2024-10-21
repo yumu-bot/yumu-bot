@@ -82,7 +82,7 @@ class UUPRService(
         @Suppress("UNCHECKED_CAST")
         val httpEntity = HttpEntity.EMPTY as HttpEntity<Array<Byte>>
         val imgBytes =
-                template.exchange(d.url, HttpMethod.GET, httpEntity, ByteArray::class.java).body
+                template.exchange(d.url ?: "", HttpMethod.GET, httpEntity, ByteArray::class.java).body
         event.reply(imgBytes, d.scoreLegacyOutput)
     }
 

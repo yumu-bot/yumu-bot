@@ -200,7 +200,7 @@ class ScorePRService(
         @Suppress("UNCHECKED_CAST")
         val httpEntity = HttpEntity.EMPTY as HttpEntity<ByteArray>
         val imgBytes =
-                template.exchange(d.url, HttpMethod.GET, httpEntity, ByteArray::class.java).body
+                template.exchange(d.url ?: "", HttpMethod.GET, httpEntity, ByteArray::class.java).body
 
         return QQMsgUtil.getTextAndImage(d.scoreLegacyOutput, imgBytes)
     }

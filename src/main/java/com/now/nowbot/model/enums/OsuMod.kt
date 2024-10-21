@@ -89,13 +89,13 @@ enum class OsuMod(
                     if (mod.settings != null) {
 
                         // DT HT
-                        e.speed = mod.settings!!.speed ?: 1.0
+                        if (mod.settings?.speed != null) e.speed = mod.settings!!.speed!!
 
                         // DA
-                        e.cs = mod.settings!!.cs ?: -1.0
-                        e.ar = mod.settings!!.ar ?: -1.0
-                        e.od = mod.settings!!.od ?: -1.0
-                        e.hp = mod.settings!!.hp ?: -1.0
+                        if (mod.settings?.cs != null) e.cs = mod.settings!!.cs!!
+                        if (mod.settings?.ar != null) e.ar = mod.settings!!.ar!!
+                        if (mod.settings?.od != null) e.od = mod.settings!!.od!!
+                        if (mod.settings?.hp != null) e.hp = mod.settings!!.hp!!
                     }
 
                     return e
