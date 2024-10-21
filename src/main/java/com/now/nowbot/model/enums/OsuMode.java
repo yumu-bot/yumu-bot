@@ -45,13 +45,14 @@ public enum OsuMode {
             default -> DEFAULT;
         };
     }
-    public static OsuMode getMode(int desc){
+
+    public static OsuMode getMode(@Nullable Integer desc){
         return switch (desc) {
             case 0 -> OSU;
             case 1 -> TAIKO;
             case 2 -> CATCH;
             case 3 -> MANIA;
-            default -> DEFAULT;
+            case null, default -> DEFAULT;
         };
     }
 
