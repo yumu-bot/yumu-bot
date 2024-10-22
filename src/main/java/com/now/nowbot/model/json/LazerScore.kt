@@ -28,7 +28,6 @@ open class LazerScore {
     @JsonProperty("maximum_statistics")
     var maximumStatistics: StatisticsV2 = StatisticsV2()
 
-    // val 类型没有set方法, api 给了也不会有效, 你这东西是给 js 用的?
     @get:JsonProperty("total_hit")
     val totalHit: Int
         get() {
@@ -198,14 +197,9 @@ open class LazerScore {
     @JsonProperty("beatmap_id")
     var beatMapID: Long = 0L
 
+    @JvmField
     @JsonProperty("best_id")
     var bestID: Long? = 0L
-        get() {
-            return field ?: 0L
-        }
-        set(value) {
-            field = value ?: 0L
-        }
 
     @JsonProperty("id")
     var scoreID: Long = 0L
@@ -238,14 +232,9 @@ open class LazerScore {
             return getStableAccuracy(this)
         }
 
+    @JvmField
     @JsonProperty("build_id")
     var buildID: Long? = 0L
-        get() {
-            return field ?: 0L
-        }
-        set(value) {
-            field = value ?: 0L
-        }
 
     @get:JsonProperty("is_lazer")
     val isLazer: Boolean
@@ -275,14 +264,9 @@ open class LazerScore {
     @JsonProperty("legacy_score_id")
     var legacyScoreID: Long = 0L
 
+    @JvmField
     @JsonProperty("legacy_total_score")
     var legacyScore: Long? = 0L
-        get() {
-            return field ?: 0L
-        }
-        set(value) {
-            field = value ?: 0L
-        }
 
     @JsonProperty("max_combo")
     var maxCombo: Int = 0
@@ -290,14 +274,9 @@ open class LazerScore {
     @JsonProperty("passed")
     var passed: Boolean = false
 
+    @JvmField
     @JsonProperty("pp")
     var PP: Double? = 0.0
-        get() {
-            return field ?: 0.0
-        }
-        set(value) {
-            field = value ?: 0.0
-        }
 
     @JsonProperty("ruleset_id")
     var ruleset: Byte = 0
@@ -324,13 +303,10 @@ open class LazerScore {
 //            }
 //        }
 
+    @JvmField
     @set:JsonProperty("started_at")
     @get:JsonIgnore
-    var startedTime: OffsetDateTime? =  OffsetDateTime.MIN
-        get() = field!!
-        set(value) {
-            field = value ?: OffsetDateTime.MIN
-        }
+    var startedTime: OffsetDateTime? = OffsetDateTime.MIN
 
     @get:JsonProperty("started_at")
     val startedTimeString: String
@@ -376,6 +352,14 @@ open class LazerScore {
                 val i = ln((percentage / 100)) / ln(0.95)
                 return i.roundToInt()
             }
+    }
+
+    fun getPP(): Double {
+        return PP!!
+    }
+
+    fun setPP(pp: Double?) {
+        PP = pp ?: PP
     }
 
     companion object {
