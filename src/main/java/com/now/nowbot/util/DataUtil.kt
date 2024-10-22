@@ -690,9 +690,9 @@ object DataUtil {
         if (d != null) return d.toFloat().roundToDigits2()
 
         if (mods.contains(OsuMod.HardRock)) {
-            a *= 1.4f
+            a = (a * 1.4f).clamp()
         } else if (mods.contains(OsuMod.Easy)) {
-            a /= 2f
+            a = (a / 2f).clamp()
         }
 
         val speed = OsuMod.getModSpeed(mods)
@@ -703,7 +703,7 @@ object DataUtil {
             a = MS2AR(ms)
         }
 
-        return a.roundToDigits2()
+        return a.clamp().roundToDigits2()
     }
 
     @JvmStatic
@@ -723,9 +723,9 @@ object DataUtil {
     fun applyOD(od: Float, mods: List<OsuMod>): Float {
         var o = od
         if (mods.contains(OsuMod.HardRock)) {
-            o *= 1.4f
+            o = (o * 1.4f).clamp()
         } else if (mods.contains(OsuMod.Easy)) {
-            o /= 2f
+            o = (o / 2f).clamp()
         }
 
         val d = mods.stream().filter{it.acronym == "DA"}.toList().firstOrNull()?.od
@@ -1183,7 +1183,7 @@ object DataUtil {
 
     @JvmRecord data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
 
-    private fun Float.clamp() = if ((0f..10f).contains(this)) this else if (this > 10) 10f else 0f
+    private fun Float.clamp() = if ((0f..10f).contains(this)) this else if (this > 10f) 10f else 0f
     private fun Float.roundToDigits2() = BigDecimal(this.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toFloat()
 
     private fun String.toRomanizedJaChar() = JaChar.getRomanized(this)

@@ -30,7 +30,7 @@ open class LazerScore {
 
             if (this.isLazer) {
                 return when (this.mode) {
-                    OSU -> (m.great ?: 0) + (m.legacyComboIncrease ?: 0)
+                    OSU -> (m.great ?: 0)
                     TAIKO -> (m.great ?: 0)
                     CATCH -> (m.great ?: 0) + (m.largeTickHit ?: 0)
                     MANIA -> (m.perfect ?: 0)
@@ -47,6 +47,20 @@ open class LazerScore {
                     MANIA -> b.circles + b.sliders
                     else -> 0
                 }
+            }
+        }
+
+    @get:JsonProperty("total_combo")
+    val totalCombo: Int
+        get() {
+            val m = this.maximumStatistics
+
+            return when (this.mode) {
+                OSU -> (m.great ?: 0) + (m.legacyComboIncrease ?: 0)
+                TAIKO -> (m.great ?: 0) + (m.legacyComboIncrease ?: 0)
+                CATCH -> (m.great ?: 0) + (m.largeTickHit ?: 0) + (m.legacyComboIncrease ?: 0)
+                MANIA -> (m.perfect ?: 0) + (m.ignoreHit ?: 0) + (m.legacyComboIncrease ?: 0)
+                else -> 0
             }
         }
 
