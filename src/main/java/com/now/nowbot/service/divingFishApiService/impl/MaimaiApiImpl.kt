@@ -204,7 +204,7 @@ class MaimaiApiImpl(
     }
 
     override fun getMaimaiAlias(songID: Long): MaiAlias? {
-        return maiDao.getMaiAliasById(songID.toInt())
+        return maiDao.getMaiAliasById((songID % 10000L).toInt())
     }
 
     override fun getMaimaiAliasLibrary(): Map<Int, List<String>> {
