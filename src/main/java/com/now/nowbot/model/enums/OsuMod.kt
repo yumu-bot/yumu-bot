@@ -190,13 +190,12 @@ enum class OsuMod(
          * @return 值
          */
         @JvmStatic
-        fun getModsValue(acronymArray: Array<String>?): Int {
+        fun getModsValue(acronymArray: Array<String?>?): Int {
             if (acronymArray == null) return 0
 
             val mList =
                     Arrays.stream(acronymArray)
-                            .map { obj: String -> obj.uppercase(Locale.getDefault()) }
-                            .map { acronym: String -> getModFromAcronym(acronym) }
+                            .map { acronym: String? -> getModFromAcronym(acronym?.uppercase(Locale.getDefault())) }
                             .filter { e: OsuMod? -> e != Other }
                             .distinct()
                             .toList()
@@ -211,26 +210,19 @@ enum class OsuMod(
 
             return mods.stream()
                     .map(OsuMod::value)
-                    .reduce(0) { result: Int, element: Int ->
-                        if (element > 0) {
-                            // 这里如果是 -1，会导致 JNI 无法计算准确的星数和 pp
-                            element + result
-                        } else {
-                            result
-                        }
-                    }
+                    .filter{it >= 0}
+                    .reduce(0) {a, b -> a + b}
         }
 
         @JvmStatic
-        fun getModsValueFromAcronyms(acronyms: List<String>?): Int {
+        fun getModsValueFromAcronyms(acronyms: List<String?>?): Int {
             if (acronyms.isNullOrEmpty()) return 0
             checkAcronyms(acronyms)
 
             return getModsValue(
                     acronyms
                             .stream()
-                            .map { obj: String -> obj.uppercase(Locale.getDefault()) }
-                            .map { acronym: String -> getModFromAcronym(acronym) }
+                            .map { acronym: String? -> getModFromAcronym(acronym?.uppercase(Locale.getDefault())) }
                             .distinct()
                             .toList()
             )
@@ -270,7 +262,7 @@ enum class OsuMod(
             checkMods(modList)
         }
 
-        private fun checkAcronyms(acronyms: List<String>?) {
+        private fun checkAcronyms(acronyms: List<String?>?) {
             if (acronyms.isNullOrEmpty()) return
 
             if (acronyms.contains(None.acronym) && acronyms.size > 1) {
