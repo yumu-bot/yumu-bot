@@ -228,9 +228,11 @@ class MaiScoreService(
             if (result.songID < 10000) {
                 standard = result
                 deluxe = maimaiApiService.getMaimaiSong(result.songID + 10000L) ?: MaiSong()
+                deluxe.alias = result.alias
             } else {
                 standard = maimaiApiService.getMaimaiSong(result.songID - 10000L) ?: MaiSong()
                 deluxe = result
+                standard.alias = result.alias
             }
 
             image =
