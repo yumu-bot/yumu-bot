@@ -239,7 +239,7 @@ open class LazerScore {
     @get:JsonProperty("is_lazer")
     val isLazer: Boolean
         get() {
-            return buildID!! > 0
+            return buildID != null && buildID!! > 0
         }
 
     @set:JsonProperty("ended_at")
