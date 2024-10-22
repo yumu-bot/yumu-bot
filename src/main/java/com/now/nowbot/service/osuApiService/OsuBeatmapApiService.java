@@ -244,7 +244,7 @@ public interface OsuBeatmapApiService {
                 if (t.getOk() != null) jni.setN100(t.getOk());
                 if (t.getMeh() != null) jni.setN50(t.getMeh());
             }
-            case DEFAULT -> {
+            default -> {
                 if (t.getOk() != null) jni.setN100(t.getOk());
                 if (t.getMeh() != null) jni.setN50(t.getMeh());
             }
