@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.dao.OsuUserInfoDao;
+import com.now.nowbot.model.LazerMod;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.BeatMap;
@@ -584,7 +585,7 @@ public class BotWebApi {
             try {
                 scoreList = scoreApiService.getLeaderBoardScore(bid, uid, mode);
                 for (var s : scoreList) {
-                    if (OsuMod.getModsValue(s.getMods()) == modInt) {
+                    if (LazerMod.getModsValue(s.getMods()) == modInt) {
                         score = s;
                         break;
                     }

@@ -2,7 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
-import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.service.UserParam
@@ -230,7 +230,7 @@ class UUBAService(
             allPP += bp.PP!!  // 统计总数
             if (bp.mods.isNotEmpty()) {
                 for (j in bp.mods.indices) {
-                    val mod = bp.mods[j].acronym
+                    val mod = bp.mods[j].type.acronym
                     if (!modTreeMap.containsKey(mod)) modTreeMap[mod] = AtomicInteger()
                     else modTreeMap[mod]!!.incrementAndGet()
                 }
@@ -318,11 +318,11 @@ class UUBAService(
             val length = b.totalLength.toFloat()
             val bpm = b.bpm
             bp.mods.forEach(
-                    Consumer { r: OsuMod ->
-                        if (modSum.containsKey(r.acronym)) {
-                            modSum[r.acronym]!!.add(bp.weight?.PP ?: 0.0)
+                    Consumer { r: LazerMod ->
+                        if (modSum.containsKey(r.type.acronym)) {
+                            modSum[r.type.acronym]!!.add(bp.weight?.PP ?: 0.0)
                         } else {
-                            modSum[r.acronym] = ModData(bp.weight?.PP ?: 0.0)
+                            modSum[r.type.acronym] = ModData(bp.weight?.PP ?: 0.0)
                         }
                     })
 

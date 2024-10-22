@@ -1,5 +1,6 @@
 package com.now.nowbot.model.multiplayer;
 
+import com.now.nowbot.model.LazerMod;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.Match;
@@ -184,7 +185,7 @@ public class MatchCalculate {
             b = beatmapApiService.getBeatMapFromDataBase(b.getBeatMapID());
 
             // apply changes
-            beatmapApiService.applySRAndPP(b, m, OsuMod.getModsList(r.getMods()));
+            beatmapApiService.applySRAndPP(b, m, LazerMod.getModsList(r.getMods()));
 
             r.setBeatMap(b);
         }

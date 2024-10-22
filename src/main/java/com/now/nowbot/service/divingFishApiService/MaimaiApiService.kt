@@ -43,6 +43,8 @@ interface MaimaiApiService {
 
     fun updateMaimaiFitLibraryDatabase()
 
+    fun updateMaimaiAliasLibraryDatabase()
+
     fun getMaimaiPossibleSong(text: String): MaiSong?
 
     fun getMaimaiPossibleSongs(text : String): List<MaiSong>?

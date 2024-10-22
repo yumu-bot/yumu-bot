@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
-import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.mapminus.PPMinus3
@@ -24,7 +24,7 @@ class MapMinusService(
         private val imageService: ImageService,
 ) : MessageService<MapMinusService.MapMinusParam> {
 
-    data class MapMinusParam(val bid: Long, val rate: Double = 1.0, val modsList: List<OsuMod>)
+    data class MapMinusParam(val bid: Long, val rate: Double = 1.0, val modsList: List<LazerMod>)
 
     override fun isHandle(
             event: MessageEvent,
@@ -36,7 +36,7 @@ class MapMinusService(
             return false
         }
 
-        val modsList: List<OsuMod> = OsuMod.getModsList(m.group(FLAG_MOD))
+        val modsList: List<LazerMod> = LazerMod.getModsList(m.group(FLAG_MOD))
 
         val bid =
                 try {
@@ -69,7 +69,7 @@ class MapMinusService(
         val beatMap: BeatMap
         val mode: OsuMode
 
-        val isChangedRating = OsuMod.hasChangeRating(param.modsList)
+        val isChangedRating = LazerMod.hasChangeRating(param.modsList)
 
         try {
 
@@ -99,7 +99,7 @@ class MapMinusService(
                 PPMinus3.getInstance(
                         file,
                         if (isChangedRating) {
-                            OsuMod.getModSpeedForStarCalculate(param.modsList)
+                            LazerMod.getModSpeedForStarCalculate(param.modsList)
                         } else {
                             param.rate
                         },

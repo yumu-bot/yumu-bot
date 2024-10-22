@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
-import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.Match
@@ -160,7 +160,7 @@ class MatchMapService(
             beatmapApiService.applySRAndPP(
                 beatmap,
                 mode,
-                OsuMod.getModsList(round.mods)
+                LazerMod.getModsList(round.mods)
             )
 
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)

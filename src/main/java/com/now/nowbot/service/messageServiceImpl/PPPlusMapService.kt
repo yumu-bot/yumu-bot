@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.PPPlus
@@ -27,7 +27,7 @@ class PPPlusMapService(
 
     data class PPPlusParam(
         val bid: Long,
-        val mods: List<OsuMod>,
+        val mods: List<LazerMod>,
     )
 
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<PPPlusParam?>): Boolean {
@@ -40,9 +40,7 @@ class PPPlusMapService(
         }
         val bid = bidStr.toLong()
 
-        val mods = matcher.group(FLAG_MOD).let {
-            if (it.isNullOrBlank()) mutableListOf() else OsuMod.getModsList(it)
-        }
+        val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))
         data.value = PPPlusParam(bid, mods)
         return true
     }
@@ -58,7 +56,7 @@ class PPPlusMapService(
             throw PPPlusException(PPPlusException.Type.PL_Function_NotSupported)
         }
         val pp = try {
-            performancePlusService.getMapPerformancePlus(data.bid, OsuMod.getModsValue(data.mods))
+            performancePlusService.getMapPerformancePlus(data.bid, LazerMod.getModsValue(data.mods))
         } catch (e: Exception) {
             if (e is WebClientResponseException) {
                 log.error { e.responseBodyAsString }
@@ -78,7 +76,7 @@ class PPPlusMapService(
     }
 
 
-    private fun BeatMap.addPPPlus(pp: PPPlus, mods: List<OsuMod>) {
+    private fun BeatMap.addPPPlus(pp: PPPlus, mods: List<LazerMod>) {
         starRating = pp.difficulty.total?.toFloat() ?: 0f
         if (mods.isNotEmpty()) {
             cs = DataUtil.applyCS(cs, mods)

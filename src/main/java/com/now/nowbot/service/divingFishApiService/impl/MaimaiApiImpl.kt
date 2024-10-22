@@ -267,6 +267,12 @@ class MaimaiApiImpl(
         log.info("maimai: 统计数据库已更新")
     }
 
+    override fun updateMaimaiAliasLibraryDatabase() {
+        val alias = JacksonUtil.parseObject(maimaiAliasLibraryFromAPI, MaiFit::class.java)
+        // TODO 外号库
+        log.info("maimai: 外号数据库已更新")
+    }
+
     @Throws(
         WebClientResponseException.Forbidden::class,
         WebClientResponseException.BadGateway::class
@@ -401,6 +407,21 @@ class MaimaiApiImpl(
                 .get()
                 .uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/chart_stats").build()
+                }
+                .retrieve()
+                .bodyToMono(String::class.java)
+                .onErrorReturn("")
+                .block() ?: ""
+
+    private val maimaiAliasLibraryFromAPI: String
+        get() =
+            base.webClient!!
+                .get()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                        .scheme("https")
+                        .host("maimai.lxns.net")
+                        .path("api/v0/maimai/alias/list").build()
                 }
                 .retrieve()
                 .bodyToMono(String::class.java)

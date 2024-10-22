@@ -76,7 +76,7 @@ enum class OsuMod(
     companion object {
 
         @JvmStatic
-        fun getModFromLazerMod(mod: LazerScore.LazerMod?): OsuMod {
+        fun getModFromLazerMod(mod: LazerScore.ScoreMod?): OsuMod {
             if (mod == null) return None
 
             val e = getModFromAcronym(mod.acronym)

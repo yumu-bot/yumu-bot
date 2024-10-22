@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl;
 
 import com.now.nowbot.config.Permission;
-import com.now.nowbot.model.enums.OsuMod;
+import com.now.nowbot.model.LazerMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.Match;
 import com.now.nowbot.model.json.MicroUser;
@@ -277,8 +277,10 @@ public class MatchListenerServiceLegacy implements MessageService<MatchListenerS
             var round = insertUser(matchEvent, match);
 
             //剔除 5k 分以下
-            round.setScores(round.getScores().stream()
-                    .filter(s -> s.getScore() >= 5000).toList());
+            if (round.getScores() != null) {
+                round.setScores(round.getScores().stream()
+                        .filter(s -> s.getScore() >= 5000).toList());
+            }
 
             int index = Math.toIntExact(
                     match.getEvents().stream().filter(s -> s.getRound() != null).filter(s -> s.getRound().getScores() != null).count()
@@ -286,7 +288,7 @@ public class MatchListenerServiceLegacy implements MessageService<MatchListenerS
 
             // apply changes
             beatmapApiService.applyBeatMapExtend(round);
-            beatmapApiService.applySRAndPP(round.getBeatMap(), OsuMode.getMode(round.getMode()), OsuMod.getModsList( round.getMods()));
+            beatmapApiService.applySRAndPP(round.getBeatMap(), OsuMode.getMode(round.getMode()), LazerMod.getModsList(round.getMods()));
 
             return getDataImage(round, match.getMatchStat(), index, imageService);
         } catch (Exception e) {
@@ -304,7 +306,7 @@ public class MatchListenerServiceLegacy implements MessageService<MatchListenerS
 
         // apply changes
         beatmapApiService.applyBeatMapExtend(r);
-        beatmapApiService.applySRAndPP(r.getBeatMap(), OsuMode.getMode(r.getMode()), OsuMod.getModsList(r.getMods()));
+        beatmapApiService.applySRAndPP(r.getBeatMap(), OsuMode.getMode(r.getMode()), LazerMod.getModsList(r.getMods()));
 
         var b = r.getBeatMap();
 

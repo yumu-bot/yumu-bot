@@ -7,7 +7,7 @@ import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 
-@Service
+@Service("MAI_UPDATE")
 class MaiUpdateService(private val maimaiApiService: MaimaiApiService) : MessageService<Boolean> {
 
     override fun isHandle(

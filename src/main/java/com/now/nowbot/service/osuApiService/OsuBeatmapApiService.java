@@ -2,7 +2,7 @@ package com.now.nowbot.service.osuApiService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.NowbotApplication;
-import com.now.nowbot.model.enums.OsuMod;
+import com.now.nowbot.model.LazerMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.*;
 import com.now.nowbot.service.messageServiceImpl.MapStatisticsService;
@@ -73,12 +73,12 @@ public interface OsuBeatmapApiService {
         return getAttributes(id, OsuMode.DEFAULT);
     }
 
-    default BeatmapDifficultyAttributes getAttributes(Long id, int modsValue) {
-        return getAttributes(id, OsuMode.DEFAULT, modsValue);
+    default BeatmapDifficultyAttributes getAttributes(Long id, int value) {
+        return getAttributes(id, OsuMode.DEFAULT, value);
     }
 
-    default BeatmapDifficultyAttributes getAttributes(Long id, OsuMod... osuMods) {
-        int value = Arrays.stream(osuMods).mapToInt(m -> m.value).reduce(0, Integer::sum);
+    default BeatmapDifficultyAttributes getAttributes(Long id, LazerMod... mods) {
+        int value = Arrays.stream(mods).mapToInt(m -> m.type.value).reduce(0, Integer::sum);
         return getAttributes(id, value);
     }
 
@@ -89,7 +89,7 @@ public interface OsuBeatmapApiService {
 
     BeatMapSetSearch searchBeatMapSet(Map<String, Object> query);
 
-    default JniResult getMaxPP(long bid, List<OsuMod> mods) {
+    default JniResult getMaxPP(long bid, List<LazerMod> mods) {
         return getMaxPP(bid, OsuMode.DEFAULT, mods);
     }
 
@@ -97,7 +97,7 @@ public interface OsuBeatmapApiService {
         return getMaxPP(s.getBeatMapID(), s.getMode(), s.getMods());
     }
 
-    default JniResult getMaxPP(long bid, OsuMode ruleset, List<OsuMod> mods) {
+    default JniResult getMaxPP(long bid, OsuMode ruleset, List<LazerMod> mods) {
         var b = getBeatMapFileByte(bid);
         JniScore js = new JniScore();
 
@@ -106,8 +106,8 @@ public interface OsuBeatmapApiService {
         js.setMode(ruleset.toRosuMode());
         js.setAccuracy(100D);
         js.setMisses(0);
-        js.setMods(OsuMod.getModsValue(mods));
-        js.setSpeed(OsuMod.getModSpeedForStarCalculate(mods));
+        js.setMods(LazerMod.getModsValue(mods));
+        js.setSpeed(LazerMod.getModSpeedForStarCalculate(mods));
 
         return Rosu.calculate(b, js);
     }
@@ -116,13 +116,13 @@ public interface OsuBeatmapApiService {
         var b = getBeatMapFileByte(beatMap.getBeatMapID());
         JniScore js = new JniScore();
 
-        applyDifficultyAdjust(js, OsuMod.getModsList(e.mods));
+        applyDifficultyAdjust(js, LazerMod.getModsList(e.mods));
 
         js.setCombo(e.combo);
         js.setMode(e.mode.toRosuMode());
         js.setMisses(e.misses);
         js.setAccuracy(e.accuracy);
-        js.setMods(OsuMod.getModsValueFromAcronyms(e.mods));
+        js.setMods(LazerMod.getModsValueFromAcronyms(e.mods));
 
         return Rosu.calculate(b, js);
     }
@@ -135,9 +135,9 @@ public interface OsuBeatmapApiService {
 
         applyDifficultyAdjust(js, s.getMods());
 
-        js.setMods(OsuMod.getModsValue(s.getMods()));
+        js.setMods(LazerMod.getModsValue(s.getMods()));
         js.setCombo(s.getMaxCombo());
-        js.setSpeed(OsuMod.getModSpeedForStarCalculate(s.getMods()));
+        js.setSpeed(LazerMod.getModSpeedForStarCalculate(s.getMods()));
         js.setMode(s.getMode().toRosuMode());
 
         if (s.getPassed()) {
@@ -174,7 +174,7 @@ public interface OsuBeatmapApiService {
         applyDifficultyAdjust(js, m);
 
         js.setMode(s.getMode().toRosuMode());
-        js.setMods(OsuMod.getModsValue(s.getMods()));
+        js.setMods(LazerMod.getModsValue(s.getMods()));
 
         if (!s.getPassed()) {
             // 没 pass 不给 300, misses 跟 combo
@@ -228,8 +228,8 @@ public interface OsuBeatmapApiService {
     }
 
     @NonNull
-    private JniResult getJniResult(LazerScore.StatisticsV2 t, List<OsuMod> mods, double accuracy, OsuMode ruleset, byte[] map, JniScore jni) {
-        jni.setMods(OsuMod.getModsValue(mods));
+    private JniResult getJniResult(LazerScore.StatisticsV2 t, List<LazerMod> mods, double accuracy, OsuMode ruleset, byte[] map, JniScore jni) {
+        jni.setMods(LazerMod.getModsValue(mods));
         jni.setAccuracy(accuracy);
 
         switch (ruleset) {
@@ -324,7 +324,7 @@ public interface OsuBeatmapApiService {
         if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
 
         // 没有变星数，并且有 PP，略过
-        if (!OsuMod.hasChangeRating(score.getMods()) && score.getPP() > 0d) return;
+        if (!LazerMod.hasChangeRating(score.getMods()) && score.getPP() > 0d) return;
 
         var beatMap = score.getBeatMap();
 
@@ -362,7 +362,7 @@ public interface OsuBeatmapApiService {
     }
 
     // 谱面理论sr和pp
-    default void applySRAndPP(BeatMap beatMap, OsuMode ruleset, List<OsuMod> mods) {
+    default void applySRAndPP(BeatMap beatMap, OsuMode ruleset, List<LazerMod> mods) {
         if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
         if (beatMap == null) return; // 谱面没有 PP，所以必须查
 
@@ -394,7 +394,7 @@ public interface OsuBeatmapApiService {
     default void applySRAndPP(BeatMap beatMap, MapStatisticsService.Expected expected) {
         if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
         if (beatMap == null) return;
-        var mods = OsuMod.getModsList(expected.mods);
+        var mods = LazerMod.getModsList(expected.mods);
 
         JniResult r;
 
@@ -405,7 +405,7 @@ public interface OsuBeatmapApiService {
             js.setCombo(expected.combo);
             js.setMode(expected.mode.toRosuMode());
             js.setMisses(expected.misses);
-            js.setMods(OsuMod.getModsValue(mods));
+            js.setMods(LazerMod.getModsValue(mods));
 
             r = Rosu.calculate(b, js);
 
@@ -428,9 +428,9 @@ public interface OsuBeatmapApiService {
         DataUtil.applyBeatMapChanges(beatMap, mods);
     }
 
-    private void applyStarFromAttributes(BeatMap beatMap, OsuMode ruleset, List<OsuMod> mods) {
+    private void applyStarFromAttributes(BeatMap beatMap, OsuMode ruleset, List<LazerMod> mods) {
         try {
-            var attr = getAttributes(beatMap.getId(), ruleset, OsuMod.getModsValue(mods));
+            var attr = getAttributes(beatMap.getId(), ruleset, LazerMod.getModsValue(mods));
 
             if (attr.getStarRating() != null) {
                 NowbotApplication.log.info("无法获取谱面 {}，正在应用 API 提供的星数：{}", beatMap.getBeatMapID(), attr.getStarRating());
@@ -444,49 +444,22 @@ public interface OsuBeatmapApiService {
     }
 
     // 应用 DA 模组会修改的四维
-    private void applyDifficultyAdjust(JniScore jni, List<OsuMod> mods) {
+    private void applyDifficultyAdjust(JniScore jni, List<LazerMod> mods) {
         for (var m : mods) {
-            if (m == OsuMod.DifficultyAdjust) {
-                if (m.ar != null) {
-                    jni.setAr(m.ar);
+            if (Objects.equals(m.type.acronym, "DA")) {
+                if (m.getCs() != null) {
+                    jni.setCs(m.getCs());
                 }
-                if (m.cs != null) {
-                    jni.setCs(m.cs);
+                if (m.getAr() != null) {
+                    jni.setAr(m.getAr());
                 }
-                if (m.od != null) {
-                    jni.setOd(m.od);
+                if (m.getOd() != null) {
+                    jni.setOd(m.getOd());
                 }
-                if (m.hp != null) {
-                    jni.setHp(m.hp);
+                if (m.getHp() != null) {
+                    jni.setHp(m.getHp());
                 }
             }
         }
-    }
-
-    // 应用 DA 模组会修改的四维
-    @Deprecated
-    private byte[] parseBeatMap(long bid, List<OsuMod> mods) {
-        for (var m : mods) {
-            if (m == OsuMod.DifficultyAdjust) {
-                var s = getBeatMapFileString(bid);
-
-                if (m.ar != null) {
-                    s = s.replaceAll("ApproachRate:\\d+\\.?\\d*", "ApproachRate:" + m.ar);
-                }
-                if (m.cs != null) {
-                    s = s.replaceAll("CircleSize:\\d+\\.?\\d*", "CircleSize:" + m.cs);
-                }
-                if (m.od != null) {
-                    s = s.replaceAll("OverallDifficulty:\\d+\\.?\\d*", "OverallDifficulty:" + m.od);
-                }
-                if (m.hp != null) {
-                    s = s.replaceAll("HPDrainRate:\\d+\\.?\\d*", "HPDrainRate:" + m.hp);
-                }
-
-                return s.getBytes(StandardCharsets.UTF_8);
-            }
-        }
-
-        return getBeatMapFileByte(bid);
     }
 }

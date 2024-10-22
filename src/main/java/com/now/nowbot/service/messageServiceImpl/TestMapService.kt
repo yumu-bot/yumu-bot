@@ -1,7 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.enums.OsuMod.Companion.getModsList
-import com.now.nowbot.model.enums.OsuMod.Companion.getModsValue
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -57,10 +56,10 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
             return 
         }
         
-        val mods = getModsList(Stream.of(*mod.split("[\"\\s,，\\-|:]+".toRegex()).dropLastWhile {it.isEmpty()} .toTypedArray()).map { obj: String -> obj.uppercase(Locale.getDefault())} .toList())
+        val mods = LazerMod.getModsList(Stream.of(*mod.split("[\"\\s,，\\-|:]+".toRegex()).dropLastWhile {it.isEmpty()} .toTypedArray()).map { obj: String -> obj.uppercase(Locale.getDefault())} .toList())
 
         
-        val a = beatmapApiService.getAttributes(bid.toLong(), getModsValue(mods))
+        val a = beatmapApiService.getAttributes(bid.toLong(), LazerMod.getModsValue(mods))
         val newTotalLength = DataUtil.applyLength(b.totalLength, mods).toFloat()
         
         sb.append(String.format("%.2f", a.starRating)).append(',')

@@ -1,10 +1,8 @@
 package com.now.nowbot.util
 
 import com.now.nowbot.config.NowbotConfig
-import com.now.nowbot.model.enums.GreekChar
-import com.now.nowbot.model.enums.JaChar
-import com.now.nowbot.model.enums.OsuMod
-import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.enums.*
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.json.*
 import com.now.nowbot.util.command.*
@@ -683,19 +681,19 @@ object DataUtil {
             }
 
     @JvmStatic
-    fun applyAR(ar: Float, mods: List<OsuMod>): Float {
+    fun applyAR(ar: Float, mods: List<LazerMod>): Float {
         var a = ar
 
-        val d = mods.stream().filter{it.acronym == "DA"}.toList().firstOrNull()?.ar
+        val d = mods.stream().filter{it.type == LazerModType.DifficultyAdjust}.toList().firstOrNull()?.ar
         if (d != null) return d.toFloat().roundToDigits2()
 
-        if (mods.contains(OsuMod.HardRock)) {
+        if (mods.contains(LazerModType.HardRock)) {
             a = (a * 1.4f).clamp()
-        } else if (mods.contains(OsuMod.Easy)) {
+        } else if (mods.contains(LazerModType.Easy)) {
             a = (a / 2f).clamp()
         }
 
-        val speed = OsuMod.getModSpeed(mods)
+        val speed = LazerMod.getModSpeed(mods)
 
         if (speed != 1.0) {
             var ms = AR2MS(a.clamp())
@@ -720,18 +718,18 @@ object DataUtil {
             }
 
     @JvmStatic
-    fun applyOD(od: Float, mods: List<OsuMod>): Float {
+    fun applyOD(od: Float, mods: List<LazerMod>): Float {
         var o = od
-        if (mods.contains(OsuMod.HardRock)) {
+        if (mods.contains(LazerModType.HardRock)) {
             o = (o * 1.4f).clamp()
-        } else if (mods.contains(OsuMod.Easy)) {
+        } else if (mods.contains(LazerModType.Easy)) {
             o = (o / 2f).clamp()
         }
 
-        val d = mods.stream().filter{it.acronym == "DA"}.toList().firstOrNull()?.od
+        val d = mods.stream().filter{it.type == LazerModType.DifficultyAdjust}.toList().firstOrNull()?.od
         if (d != null) return d.toFloat().roundToDigits2()
 
-        val speed = OsuMod.getModSpeed(mods)
+        val speed = LazerMod.getModSpeed(mods)
 
         if (speed != 1.0) {
             var ms = OD2MS(od.clamp())
@@ -743,49 +741,49 @@ object DataUtil {
     }
 
     @JvmStatic
-    fun applyCS(cs: Float, mods: List<OsuMod>): Float {
+    fun applyCS(cs: Float, mods: List<LazerMod>): Float {
         var c = cs
 
-        val d = mods.stream().filter{it.acronym == "DA"}.toList().firstOrNull()?.cs
+        val d = mods.stream().filter{it.type == LazerModType.DifficultyAdjust}.toList().firstOrNull()?.cs
         if (d != null) return d.toFloat().roundToDigits2()
 
-        if (mods.contains(OsuMod.HardRock)) {
+        if (mods.contains(LazerModType.HardRock)) {
             c *= 1.3f
-        } else if (mods.contains(OsuMod.Easy)) {
+        } else if (mods.contains(LazerModType.Easy)) {
             c /= 2f
         }
         return c.clamp().roundToDigits2()
     }
 
     @JvmStatic
-    fun applyHP(hp: Float, mods: List<OsuMod>): Float {
+    fun applyHP(hp: Float, mods: List<LazerMod>): Float {
         var h = hp
 
-        val d = mods.stream().filter{it.acronym == "DA"}.toList().firstOrNull()?.hp
+        val d = mods.stream().filter{it.type == LazerModType.DifficultyAdjust}.toList().firstOrNull()?.hp
         if (d != null) return d.toFloat().roundToDigits2()
 
-        if (mods.contains(OsuMod.HardRock)) {
+        if (mods.contains(LazerModType.HardRock)) {
             h *= 1.4f
-        } else if (mods.contains(OsuMod.Easy)) {
+        } else if (mods.contains(LazerModType.Easy)) {
             h /= 2f
         }
         return h.clamp().roundToDigits2()
     }
 
     @JvmStatic
-    fun applyBPM(bpm: Float?, mods: List<OsuMod>): Float {
-        return ((bpm ?: 0f) * OsuMod.getModSpeed(mods)).toFloat().roundToDigits2()
+    fun applyBPM(bpm: Float?, mods: List<LazerMod>): Float {
+        return ((bpm ?: 0f) * LazerMod.getModSpeed(mods)).toFloat().roundToDigits2()
     }
 
     @JvmStatic
-    fun applyLength(length: Int?, mods: List<OsuMod>): Int {
-        return Math.round((length ?: 0) / OsuMod.getModSpeed(mods).toFloat())
+    fun applyLength(length: Int?, mods: List<LazerMod>): Int {
+        return Math.round((length ?: 0) / LazerMod.getModSpeed(mods).toFloat())
     }
 
     // 应用四维的变化 4 dimensions
     @JvmStatic
-    fun applyBeatMapChanges(beatMap: BeatMap, mods: List<OsuMod>) {
-        if (OsuMod.hasChangeRating(mods)) {
+    fun applyBeatMapChanges(beatMap: BeatMap, mods: List<LazerMod>) {
+        if (LazerMod.hasChangeRating(mods)) {
             beatMap.bpm = applyBPM(Optional.ofNullable(beatMap.bpm).orElse(0f), mods)
             beatMap.ar = applyAR(Optional.ofNullable(beatMap.ar).orElse(0f), mods)
             beatMap.cs = applyCS(Optional.ofNullable(beatMap.cs).orElse(0f), mods)
@@ -1188,4 +1186,6 @@ object DataUtil {
 
     private fun String.toRomanizedJaChar() = JaChar.getRomanized(this)
     private fun String.toRomanizedGreekChar() = GreekChar.getRomanized(this)
+
+    private fun List<LazerMod>.contains(type: LazerModType) = LazerMod.hasMod(this, type)
 }

@@ -607,7 +607,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     MAI_UPDATE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("update\\s*mai(mai)?", "um")
+        appendCommandsIgnoreAll("[!！]update\\s*mai(mai)?", "[!！]um")
     }),
 
     MAI_FIND(CommandPatternBuilder.create {

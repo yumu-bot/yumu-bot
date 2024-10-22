@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -158,7 +158,7 @@ class BPAnalysisService(
                 val star: Float,
                 val rank: String,
                 val cover: String,
-                val mods: List<OsuMod>
+                val mods: List<LazerMod>
             )
 
             data class Attr(
@@ -195,8 +195,8 @@ class BPAnalysisService(
                 run {
                     // 统计 mods / rank
                     if (!CollectionUtils.isEmpty(s.mods)) {
-                        s.mods.filter { it.value > 0 } .forEach {
-                            modsPPMap.add(it.acronym, s.weight!!.PP)
+                        s.mods.filter { it.type.value > 0 } .forEach {
+                            modsPPMap.add(it.type.acronym, s.weight!!.PP)
                         }
                         modsSum += s.mods.size
                     } else {

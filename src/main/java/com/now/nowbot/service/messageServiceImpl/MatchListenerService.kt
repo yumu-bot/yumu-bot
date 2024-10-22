@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
-import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.MicroUser
 import com.now.nowbot.model.multiplayer.MatchAdapter
@@ -129,7 +129,7 @@ class MatchListenerService(
         with(game) {
             if (beatmap != null) {
                 beatmap = beatmapApiService.getBeatMap(beatmapID)
-                beatmapApiService.applySRAndPP(beatmap, mode, OsuMod.getModsList(mods))
+                beatmapApiService.applySRAndPP(beatmap, mode, LazerMod.getModsList(mods))
             } else {
                 beatmap = BeatMap(beatmapID)
             }

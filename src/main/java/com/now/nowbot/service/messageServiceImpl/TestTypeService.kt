@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
-import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.mapminus.PPMinus3
@@ -16,8 +16,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.serviceException.MapMinusException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MOD
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 
@@ -25,7 +23,7 @@ import org.springframework.util.StringUtils
 class TestTypeService(
     private val beatmapApiService: OsuBeatmapApiService, private val imageService: ImageService
 ) : MessageService<MapTypeParam> {
-    data class MapTypeParam(val bid: Long, val rate: Double = 1.0, val modsList: List<OsuMod>)
+    data class MapTypeParam(val bid: Long, val rate: Double = 1.0, val modsList: List<LazerMod>)
 
     override fun isHandle(
             event: MessageEvent,
@@ -37,7 +35,7 @@ class TestTypeService(
             return false
         }
 
-        val modsList: List<OsuMod> = OsuMod.getModsList(m.group(FLAG_MOD))
+        val modsList: List<LazerMod> = LazerMod.getModsList(m.group(FLAG_MOD))
 
         val bid =
                 try {
@@ -70,7 +68,7 @@ class TestTypeService(
         val beatMap: BeatMap
         val mode: OsuMode
 
-        val isChangedRating = OsuMod.hasChangeRating(param.modsList)
+        val isChangedRating = LazerMod.hasChangeRating(param.modsList)
 
         try {
 
@@ -100,7 +98,7 @@ class TestTypeService(
                 PPMinus3.getInstance(
                         file,
                         if (isChangedRating) {
-                            OsuMod.getModSpeedForStarCalculate(param.modsList)
+                            LazerMod.getModSpeedForStarCalculate(param.modsList)
                         } else {
                             param.rate
                         },
@@ -131,10 +129,5 @@ class TestTypeService(
             .addText("这张图可能是？？：\n")
             .addText(sb.toString())
             .build())
-    }
-
-    companion object {
-        private val log: Logger = LoggerFactory.getLogger(TestTypeService::class.java)
-
     }
 }

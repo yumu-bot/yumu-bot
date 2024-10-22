@@ -2,7 +2,7 @@ package com.now.nowbot.model.json
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import java.time.OffsetDateTime
@@ -70,19 +70,19 @@ open class LazerScore {
         }
 
     @JsonProperty("mods")
-    private val modList: List<LazerMod> = listOf()
+    private val modList: List<ScoreMod> = listOf()
 
     @get:JsonIgnore
-    val mods: List<OsuMod>
-        get() = if (modList.isNotEmpty()) modList.map(OsuMod::getModFromLazerMod) else listOf()
+    val mods: List<LazerMod>
+        get() = if (modList.isNotEmpty()) modList.map(LazerMod::getModFromScoreMod) else listOf()
 
-    data class LazerMod(
+    data class ScoreMod(
         @JsonProperty("acronym") var acronym: String = "",
-        @JsonProperty("settings") var settings: LazerModSettings? = LazerModSettings(),
+        @JsonProperty("settings") var settings: ScoreModSettings? = ScoreModSettings(),
     )
 
     // ppy 真尼玛离谱
-    data class LazerModSettings(
+    data class ScoreModSettings(
         // DT HT DC NC
         @JsonProperty("speed_change") var speed: Double? = null,
 
