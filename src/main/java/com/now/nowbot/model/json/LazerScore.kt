@@ -199,7 +199,13 @@ open class LazerScore {
     var beatMapID: Long = 0L
 
     @JsonProperty("best_id")
-    var bestID: Long = 0L
+    var bestID: Long? = 0L
+        get() {
+            return field ?: 0L
+        }
+        set(value) {
+            field = value ?: 0L
+        }
 
     @JsonProperty("id")
     var scoreID: Long = 0L
@@ -233,12 +239,18 @@ open class LazerScore {
         }
 
     @JsonProperty("build_id")
-    var buildID: Long = 0
+    var buildID: Long? = 0L
+        get() {
+            return field ?: 0L
+        }
+        set(value) {
+            field = value ?: 0L
+        }
 
     @get:JsonProperty("is_lazer")
     val isLazer: Boolean
         get() {
-            return buildID > 0
+            return buildID!! > 0
         }
 
     @set:JsonProperty("ended_at")
@@ -264,7 +276,13 @@ open class LazerScore {
     var legacyScoreID: Long = 0L
 
     @JsonProperty("legacy_total_score")
-    var legacyScore: Long = 0L
+    var legacyScore: Long? = 0L
+        get() {
+            return field ?: 0L
+        }
+        set(value) {
+            field = value ?: 0L
+        }
 
     @JsonProperty("max_combo")
     var maxCombo: Int = 0
@@ -273,7 +291,13 @@ open class LazerScore {
     var passed: Boolean = false
 
     @JsonProperty("pp")
-    var PP: Double = 0.0
+    var PP: Double? = 0.0
+        get() {
+            return field ?: 0.0
+        }
+        set(value) {
+            field = value ?: 0.0
+        }
 
     @JsonProperty("ruleset_id")
     var ruleset: Byte = 0
@@ -302,7 +326,11 @@ open class LazerScore {
 
     @set:JsonProperty("started_at")
     @get:JsonIgnore
-    var startedTime: OffsetDateTime = OffsetDateTime.MIN
+    var startedTime: OffsetDateTime? =  OffsetDateTime.MIN
+        get() = field!!
+        set(value) {
+            field = value ?: OffsetDateTime.MIN
+        }
 
     @get:JsonProperty("started_at")
     val startedTimeString: String
