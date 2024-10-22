@@ -2,6 +2,7 @@ package com.now.nowbot.dao
 
 import com.now.nowbot.entity.*
 import com.now.nowbot.mapper.*
+import com.now.nowbot.model.json.MaiAlias
 import com.now.nowbot.model.json.MaiFit
 import com.now.nowbot.model.json.MaiRanking
 import com.now.nowbot.model.json.MaiSong
@@ -16,6 +17,7 @@ class MaiDao(
     val maiFitChartLiteRepository: MaiFitChartLiteRepository,
     val maiFitDiffLiteRepository: MaiFitDiffLiteRepository,
     val maiRankLiteRepository: MaiRankLiteRepository,
+    val maiAliasLiteRepository: MaiAliasLiteRepository,
 ) {
     fun saveMaiRanking(ranking: List<MaiRanking>) {
         val rankingLite = ranking.mapNotNull {
@@ -149,5 +151,32 @@ class MaiDao(
     fun getMaiFitDiffDataByDifficulty(difficulty: String): MaiFit.DiffData {
         val data = maiFitDiffLiteRepository.findById(difficulty)
         return data.map { it.toModel() }.getOrNull() ?: MaiFit.DiffData()
+    }
+
+    fun saveMaiAliases(maiAliases: List<MaiAlias>) {
+        val lites = maiAliases.stream().map { MaiAliasLite.from(it) }.toList()
+
+        maiAliasLiteRepository.saveAll(lites)
+    }
+
+    fun getAllMaiAliases(): List<MaiAlias> {
+        val aliases = maiAliasLiteRepository.findAll()
+        return aliases.map { it.toModel() }
+    }
+
+    fun getMaiAliasById(id: Int): MaiAlias? {
+        // 他只存 10000 以下的 id，除了两个协作宴谱
+        val i = if (id >= 10000) {
+            id % 10000
+        } else {
+            id
+        }
+
+        val aliasOpt = maiAliasLiteRepository.findById(i)
+        if (aliasOpt.isEmpty) {
+            return null
+        }
+        val alias = aliasOpt.get()
+        return alias.toModel()
     }
 }

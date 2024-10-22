@@ -138,61 +138,70 @@ class MaiScoreService(
          */
 
         val image: ByteArray
-        val result: MaiSong
 
-        if (param.title != null) {
-            // 成绩模式
+        val result: MaiSong =
+                if (param.title != null) {
+                    // 标题搜歌模式
+                    val title = DataUtil.getStandardisedString(param.title)
 
-            val title = DataUtil.getStandardisedString(param.title)
+                    // 外号模式
+                    val s = maimaiApiService.getMaimaiAliasSong(title)
 
-            val possibles =
-                    maimaiApiService.getMaimaiPossibleSongs(title)
-                            ?: throw GeneralTipsException(
-                                    GeneralTipsException.Type.G_Null_ResultNotAccurate
-                            )
+                    if (s != null) {
+                        s
+                    } else {
 
-            val r = mutableMapOf<Double, MaiSong>()
+                        // 实在走不通的保底模式
 
-            for (p in possibles) {
-                val y = DataUtil.getStringSimilarity(title, p.title)
+                        val possibles =
+                                maimaiApiService.getMaimaiPossibleSongs(title)
+                                        ?: throw GeneralTipsException(
+                                                GeneralTipsException.Type.G_Null_ResultNotAccurate
+                                        )
 
-                if (y >= 0.4) {
-                    r[y] = p
-                }
-            }
+                        val r = mutableMapOf<Double, MaiSong>()
 
-            if (r.isEmpty())
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_ResultNotAccurate)
+                        for (p in possibles) {
+                            val y = DataUtil.getStringSimilarity(title, p.title)
 
-            result =
-                    r.entries
-                            .stream()
-                            .sorted(
-                                    Comparator.comparingDouble<
-                                                    MutableMap.MutableEntry<Double, MaiSong>?
-                                            > {
-                                                it.key
-                                            }
-                                            .reversed()
-                            )
-                            .map { it.value }
-                            .toList()
-                            .first()
-        } else if (param.id != null) {
-            // 谱面模式
+                            if (y >= 0.4) {
+                                r[y] = p
+                            }
+                        }
 
-            result =
+                        if (r.isEmpty())
+                                throw GeneralTipsException(
+                                        GeneralTipsException.Type.G_Null_ResultNotAccurate
+                                )
+
+                        r.entries
+                                .stream()
+                                .sorted(
+                                        Comparator.comparingDouble<
+                                                        MutableMap.MutableEntry<Double, MaiSong>?
+                                                > {
+                                                    it.key
+                                                }
+                                                .reversed()
+                                )
+                                .map { it.value }
+                                .toList()
+                                .first()
+                    }
+                } else if (param.id != null) {
+                    // 搜歌模式
                     maimaiApiService.getMaimaiSong(param.id.toLong())
+                            ?: maimaiApiService.getMaimaiAliasSong(param.id.toString()) // 有的歌曲外号叫 3333
                             ?: throw GeneralTipsException(
                                     GeneralTipsException.Type.G_Null_Song,
                                     param.id,
                             )
-        } else {
-            throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Malfunction_Classification,
-                    "舞萌成绩",
-            )
-        }
+                } else {
+                    throw GeneralTipsException(
+                            GeneralTipsException.Type.G_Malfunction_Classification,
+                            "舞萌成绩",
+                    )
+                }
 
         run {
             val standard: MaiSong

@@ -64,7 +64,6 @@ class RunTimeService : SchedulingConfigurer {
         bindDao!!.refreshOldUserToken(userApiService)
     }
 
-    //@Scheduled(cron = "0 0 6 * * *")
     @Scheduled(cron = "0 0 6 * * *")
     fun updateMaimaiSongLibrary() {
         log.info("开始执行更新 maimai 歌曲库任务")
@@ -73,7 +72,6 @@ class RunTimeService : SchedulingConfigurer {
     }
 
     @Scheduled(cron = "20 0 6 * * *")
-    //@Scheduled(cron = "0 1 * * * *")
     fun updateMaimaiRankLibrary() {
         log.info("开始执行更新 maimai 排名库任务")
         //maimaiApiService!!.updateMaimaiRankLibraryFile()
@@ -81,11 +79,17 @@ class RunTimeService : SchedulingConfigurer {
     }
 
     @Scheduled(cron = "40 0 6 * * *")
-    //@Scheduled(cron = "0 1 * * * *")
     fun updateMaimaiFitLibrary() {
         log.info("开始执行更新 maimai 统计库任务")
         //maimaiApiService!!.updateMaimaiFitLibraryFile()
         maimaiApiService!!.updateMaimaiFitLibraryDatabase()
+    }
+
+    @Scheduled(cron = "0 1 6 * * *")
+    fun updateMaimaiAliasLibrary() {
+        log.info("开始执行更新 maimai 外号库任务")
+        //maimaiApiService!!.updateMaimaiAliasLibraryFile()
+        maimaiApiService!!.updateMaimaiAliasLibraryDatabase()
     }
 
 

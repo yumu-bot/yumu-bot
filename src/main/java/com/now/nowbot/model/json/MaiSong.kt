@@ -15,6 +15,9 @@ class MaiSong {
     // 曲名
     @JsonProperty("title") var title: String = ""
 
+    // 曲名外号，需要自己设置
+    @get:JsonProperty("alias") var alias: String? = null
+
     // 种类，有 DX 和 SD
     @JsonProperty("type") var type: String = ""
 

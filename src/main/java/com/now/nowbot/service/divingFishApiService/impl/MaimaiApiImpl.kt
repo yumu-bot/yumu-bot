@@ -1,10 +1,12 @@
 package com.now.nowbot.service.divingFishApiService.impl
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.Companion.getNameList
 import com.now.nowbot.model.json.*
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -43,6 +45,12 @@ class MaimaiApiImpl(
     private data class MaimaiByVersionNameBody(
         val username: String,
         @field:NonNull @param:NonNull val version: List<String>
+    )
+
+    @JvmRecord
+    //傻逼吧外面怎么还有一层
+    private data class MaimaiAliasResponseBody(
+        @JsonProperty("aliases") val aliases: List<MaiAlias>
     )
 
     override fun getMaimaiBest50(qq: Long): MaiBestScore {
@@ -195,6 +203,14 @@ class MaimaiApiImpl(
         return maiDao.getMaiFitDiffDataByDifficulty(difficulty)
     }
 
+    override fun getMaimaiAlias(songID: Long): MaiAlias? {
+        return maiDao.getMaiAliasById(songID.toInt())
+    }
+
+    override fun getMaimaiAliasLibrary(): Map<Int, List<String>> {
+        return maiDao.getAllMaiAliases().stream().collect(Collectors.toMap(MaiAlias::songID, MaiAlias::alias))
+    }
+
     @Deprecated("请使用 From Database")
     private fun getMaimaiSongLibraryFromFile(): Map<Int, MaiSong> {
         val song: List<MaiSong>
@@ -234,6 +250,17 @@ class MaimaiApiImpl(
         }
     }
 
+    @Deprecated("请使用 From Database")
+    private fun getMaimaiAliasLibraryFromFile(): List<MaiAlias> {
+        if (isRegularFile("data-aliases.json")) {
+            return parseFile("data-aliases.json", MaimaiAliasResponseBody::class.java)?.aliases
+                ?: return JacksonUtil.parseObject(maimaiAliasLibraryFromAPI, MaimaiAliasResponseBody::class.java).aliases
+        } else {
+            log.info("maimai: 本地外号库不存在，获取 API 版本")
+            return JacksonUtil.parseObject(maimaiAliasLibraryFromAPI, MaimaiAliasResponseBody::class.java).aliases
+        }
+    }
+
     override fun updateMaimaiSongLibraryFile() {
         saveFile(maimaiSongLibraryFromAPI, "data-songs.json", "歌曲")
     }
@@ -268,8 +295,8 @@ class MaimaiApiImpl(
     }
 
     override fun updateMaimaiAliasLibraryDatabase() {
-        val alias = JacksonUtil.parseObject(maimaiAliasLibraryFromAPI, MaiFit::class.java)
-        // TODO 外号库
+        val alias = JacksonUtil.parseObject(maimaiAliasLibraryFromAPI, MaimaiAliasResponseBody::class.java).aliases
+        maiDao.saveMaiAliases(alias)
         log.info("maimai: 外号数据库已更新")
     }
 
@@ -375,6 +402,35 @@ class MaimaiApiImpl(
         return result.toSortedMap().reversed()
 
          */
+    }
+
+    override fun getMaimaiAliasSong(text: String): MaiSong? {
+        return getMaimaiAliasSongs(text)?.firstOrNull()
+    }
+
+    override fun getMaimaiAliasSongs(text: String): List<MaiSong>? {
+        val aliases = getMaimaiAliasLibrary()
+        val result = mutableMapOf<Double, MaiSong>()
+
+        search@
+        for(e in aliases.entries) {
+            for(alias in e.value) {
+
+                val p = DataUtil.getStringSimilarity(text, alias)
+
+                if (p >= 0.5) {
+                    val s = getMaimaiSong(e.key.toLong()) ?: getMaimaiSong(e.key + 10000L)
+
+                    if (s != null) {
+                        s.alias = e.value.firstOrNull()
+                        result[p] = s
+                        continue@search
+                    }
+                }
+            }
+        }
+
+        return if (result.isEmpty()) null else result.toSortedMap().reversed().values.stream().toList()
     }
 
     private val maimaiSongLibraryFromAPI: String

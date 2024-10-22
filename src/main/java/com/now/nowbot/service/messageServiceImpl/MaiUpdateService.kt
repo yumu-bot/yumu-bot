@@ -30,6 +30,7 @@ class MaiUpdateService(private val maimaiApiService: MaimaiApiService) : Message
             maimaiApiService.updateMaimaiSongLibraryDatabase()
             maimaiApiService.updateMaimaiFitLibraryDatabase()
             maimaiApiService.updateMaimaiRankLibraryDatabase()
+            maimaiApiService.updateMaimaiAliasLibraryDatabase()
             event.reply("已尝试更新！")
         }
     }

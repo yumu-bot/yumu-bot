@@ -1,5 +1,6 @@
 package com.now.nowbot.entity
 
+import com.now.nowbot.model.json.MaiAlias
 import com.now.nowbot.model.json.MaiFit
 import com.now.nowbot.model.json.MaiRanking
 import com.now.nowbot.model.json.MaiSong
@@ -310,6 +311,29 @@ class MaiRankingLite(
         fun from(model: MaiRanking): MaiRankingLite {
             if (model.name.isBlank()) throw IllegalArgumentException("name not be empty")
             return MaiRankingLite(model.name, model.rating)
+        }
+    }
+}
+
+@Entity(name = "maimai_alias")
+class MaiAliasLite(
+    @Id
+    @Column(columnDefinition = "integer")
+    var id: Int,
+
+    @Column(columnDefinition = "text[]")
+    var alias: List<String>,
+) {
+    fun toModel(): MaiAlias {
+        return MaiAlias(
+            id, alias
+        )
+    }
+
+    companion object {
+        fun from(model: MaiAlias): MaiAliasLite {
+            if (model.alias.isEmpty()) throw IllegalArgumentException("alias not be empty")
+            return MaiAliasLite(model.songID, model.alias)
         }
     }
 }

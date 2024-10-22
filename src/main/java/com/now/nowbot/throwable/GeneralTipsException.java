@@ -22,7 +22,7 @@ public class GeneralTipsException extends TipsException {
         G_Exceed_Version_Default("符合筛选版本的成绩太多了！请指定难度（\":\" + \"b、a、e、m、r\"），缩小查询范围。"),
 
         G_Null_Result("没有找到结果！"),
-        G_Null_ResultNotAccurate("结果不够精确！请输入更多的字段来帮助机器人识别歌曲！"),
+        G_Null_ResultNotAccurate("找不到可能的结果...试试输入更常见的外号或准确的歌曲编号吧。"),
         G_Null_Param("请输入正确的参数！"),
         G_Null_UserName("请输入正确的玩家名！"),
         G_Null_BID_Quotation("您在使用引号包括住玩家名时，也需要输入谱面的曲名或是编号！"),

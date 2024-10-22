@@ -49,6 +49,10 @@ interface MaimaiApiService {
 
     fun getMaimaiPossibleSongs(text : String): List<MaiSong>?
 
+    fun getMaimaiAliasSong(text : String): MaiSong?
+
+    fun getMaimaiAliasSongs(text : String): List<MaiSong>?
+
     fun getMaimaiSong(songID: Long): MaiSong?
 
     fun getMaimaiSongLibrary(): Map<Int, MaiSong>
@@ -58,6 +62,10 @@ interface MaimaiApiService {
     fun getMaimaiChartData(songID: Long): List<MaiFit.ChartData>
 
     fun getMaimaiDiffData(difficulty: String): MaiFit.DiffData
+
+    fun getMaimaiAlias(songID: Long): MaiAlias?
+
+    fun getMaimaiAliasLibrary(): Map<Int, List<String>>?
 
     // 以下需要从水鱼那里拿 DeveloperToken
     @Throws(
