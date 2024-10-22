@@ -411,8 +411,8 @@ enum class OsuMod(
         }
 
         @JvmStatic
-        fun getModFromAcronym(acronym: String): OsuMod {
-            return when (acronym.uppercase(Locale.getDefault())) {
+        fun getModFromAcronym(acronym: String?): OsuMod {
+            return when (acronym?.uppercase(Locale.getDefault())) {
                 "",
                 "NM" -> None
                 "NF" -> NoFail

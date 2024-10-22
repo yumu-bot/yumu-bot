@@ -231,25 +231,26 @@ public interface OsuBeatmapApiService {
         jni.setAccuracy(accuracy);
 
         switch (ruleset) {
-            case TAIKO -> jni.setN100(Objects.requireNonNullElse(t.getOk(), 0));
+            case TAIKO -> {
+                if (t.getOk() != null) jni.setN100(t.getOk());
+            }
             case CATCH -> {
-                jni.setN100(Objects.requireNonNullElse(t.getLargeTickHit(), 0));
-                jni.setN50(Objects.requireNonNullElse(t.getSmallTickHit(), 0));
+                if (t.getLargeTickHit() != null) jni.setN100(t.getLargeTickHit());
+                if (t.getSmallTickHit() != null) jni.setN50(t.getSmallTickHit());
             }
             case MANIA -> {
-                jni.setGeki(Objects.requireNonNullElse(t.getPerfect(), 0));
-                jni.setKatu(Objects.requireNonNullElse(t.getGood(), 0));
-                jni.setN100(Objects.requireNonNullElse(t.getOk(), 0));
-                jni.setN50(Objects.requireNonNullElse(t.getMeh(), 0));
+                if (t.getPerfect() != null) jni.setGeki(t.getPerfect());
+                if (t.getGood() != null) jni.setKatu(t.getGood());
+                if (t.getOk() != null) jni.setN100(t.getOk());
+                if (t.getMeh() != null) jni.setN50(t.getMeh());
             }
             case DEFAULT -> {
-                jni.setN100(Objects.requireNonNullElse(t.getOk(), 0));
-                jni.setN50(Objects.requireNonNullElse(t.getMeh(), 0));
+                if (t.getOk() != null) jni.setN100(t.getOk());
+                if (t.getMeh() != null) jni.setN50(t.getMeh());
             }
         }
-
-        jni.setN300(Objects.requireNonNullElse(t.getGreat(), 0));
-        jni.setMisses(Objects.requireNonNullElse(t.getMiss(), 0));
+        if (t.getGreat() != null) jni.setN300(t.getGreat());
+        if (t.getMiss() != null) jni.setMisses(t.getMiss());
 
         // 这个要留着, 因为是调用了 native 方法
         // 那边如果有 null 会直接导致虚拟机炸掉退出, 注解不会在运行时检查是不是 null
@@ -321,7 +322,7 @@ public interface OsuBeatmapApiService {
         if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
 
         // 没有变星数，并且有 PP，略过
-        if (!OsuMod.hasChangeRating(score.getMods()) && Objects.requireNonNullElse(score.getPP(), 0d) > 0d) return;
+        if (!OsuMod.hasChangeRating(score.getMods()) && score.getPP() > 0d) return;
 
         var beatMap = score.getBeatMap();
 
