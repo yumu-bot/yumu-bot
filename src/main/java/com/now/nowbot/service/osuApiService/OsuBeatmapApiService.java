@@ -98,8 +98,10 @@ public interface OsuBeatmapApiService {
     }
 
     default JniResult getMaxPP(long bid, OsuMode ruleset, List<OsuMod> mods) {
-        var b = parseBeatMap(bid, mods);
+        var b = getBeatMapFileByte(bid);
         JniScore js = new JniScore();
+
+        applyDifficultyAdjust(js, mods);
 
         js.setMode(ruleset.toRosuMode());
         js.setAccuracy(100D);
@@ -111,31 +113,29 @@ public interface OsuBeatmapApiService {
     }
 
     default JniResult getPP(BeatMap beatMap, MapStatisticsService.Expected e) throws Exception {
-        // TODO 以后应用 parseBeatMap
         var b = getBeatMapFileByte(beatMap.getBeatMapID());
-        var m = OsuMod.getModsValueFromAcronyms(e.mods);
+        JniScore js = new JniScore();
 
-        JniScore score = new JniScore();
+        applyDifficultyAdjust(js, OsuMod.getModsList(e.mods));
 
-        score.setCombo(e.combo);
-        score.setMode(e.mode.toRosuMode());
-        score.setMisses(e.misses);
-        score.setAccuracy(e.accuracy);
-        score.setMods(m);
+        js.setCombo(e.combo);
+        js.setMode(e.mode.toRosuMode());
+        js.setMisses(e.misses);
+        js.setAccuracy(e.accuracy);
+        js.setMods(OsuMod.getModsValueFromAcronyms(e.mods));
 
-        return Rosu.calculate(b, score);
+        return Rosu.calculate(b, js);
     }
 
     default JniResult getPP(LazerScore s) {
-        // 提前处理谱面四维
-        var b = parseBeatMap(s.getBeatMapID(), s.getMods());
-
-        // 主获取
+        var b = getBeatMapFileByte(s.getBeatMapID());
         var t = s.getStatistics();
 
         JniScore js = new JniScore();
-        js.setMods(OsuMod.getModsValue(s.getMods()));
 
+        applyDifficultyAdjust(js, s.getMods());
+
+        js.setMods(OsuMod.getModsValue(s.getMods()));
         js.setCombo(s.getMaxCombo());
         js.setSpeed(OsuMod.getModSpeedForStarCalculate(s.getMods()));
         js.setMode(s.getMode().toRosuMode());
@@ -154,7 +154,7 @@ public interface OsuBeatmapApiService {
     }
 
     default JniResult getFcPP(LazerScore s) {
-        var b = getBeatMapFileByte(s.getBeatMap().getBeatMapID());
+        var b = getBeatMapFileByte(s.getBeatMapID());
         var m = s.getMods();
         var r = s.getMode();
         var t = s.getStatistics().clone();
@@ -170,6 +170,8 @@ public interface OsuBeatmapApiService {
         }
 
         JniScore js = new JniScore();
+
+        applyDifficultyAdjust(js, m);
 
         js.setMode(s.getMode().toRosuMode());
         js.setMods(OsuMod.getModsValue(s.getMods()));
@@ -442,6 +444,27 @@ public interface OsuBeatmapApiService {
     }
 
     // 应用 DA 模组会修改的四维
+    private void applyDifficultyAdjust(JniScore jni, List<OsuMod> mods) {
+        for (var m : mods) {
+            if (m == OsuMod.DifficultyAdjust) {
+                if (m.ar != null) {
+                    jni.setAr(m.ar);
+                }
+                if (m.cs != null) {
+                    jni.setCs(m.cs);
+                }
+                if (m.od != null) {
+                    jni.setOd(m.od);
+                }
+                if (m.hp != null) {
+                    jni.setHp(m.hp);
+                }
+            }
+        }
+    }
+
+    // 应用 DA 模组会修改的四维
+    @Deprecated
     private byte[] parseBeatMap(long bid, List<OsuMod> mods) {
         for (var m : mods) {
             if (m == OsuMod.DifficultyAdjust) {
