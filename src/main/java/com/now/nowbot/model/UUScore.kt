@@ -95,7 +95,7 @@ class UUScore (score: LazerScore, osuBeatmapApiService: OsuBeatmapApiService) {
         combo = score.maxCombo
         passed = score.passed
         key = score.beatMap.cs.toInt()
-        play_time = score.endedTime
+        play_time = score.endedTimeString
         
         val stat = score.statistics
         n_300 = stat.great ?: 0

@@ -6,7 +6,10 @@ import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.dao.OsuUserInfoDao;
 import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.json.*;
+import com.now.nowbot.model.json.BeatMap;
+import com.now.nowbot.model.json.BeatmapDifficultyAttributes;
+import com.now.nowbot.model.json.LazerScore;
+import com.now.nowbot.model.json.OsuUser;
 import com.now.nowbot.model.mappool.old.MapPoolDto;
 import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
@@ -29,7 +32,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -397,13 +399,13 @@ public class BotWebApi {
                 var bps = scoreApiService.getBestScores(osuUser.getUserID(), mode, 0, 100);
                 ArrayList<Integer> ranks = new ArrayList<>();
 
-                LocalDateTime dayBefore = LocalDateTime.now().minusDays(day);
+                java.time.OffsetDateTime dayBefore = java.time.OffsetDateTime.now().minusDays(day);
 
                 //scoreList = BPList.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
                 scores = new ArrayList<>();
                 for (int i = 0; i < bps.size(); i++) {
                     var s = bps.get(i);
-                    if (dayBefore.isBefore(s.getEndedTimePretty())) {
+                    if (dayBefore.isBefore(s.getEndedTime())) {
                         scores.add(s);
                         ranks.add(i + 1);
                     }

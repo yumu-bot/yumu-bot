@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.CollectionUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.time.LocalDateTime
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
@@ -100,13 +99,13 @@ class TodayBPService(
             log.error("今日最好成绩：获取失败！", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "今日最好成绩")
         }
-        val laterDay = LocalDateTime.now().minusDays(dayStart.toLong())
-        val earlierDay = LocalDateTime.now().minusDays(dayEnd.toLong())
+        val laterDay = java.time.OffsetDateTime.now().minusDays(dayStart.toLong())
+        val earlierDay = java.time.OffsetDateTime.now().minusDays(dayEnd.toLong())
         val dataMap = TreeMap<Int, LazerScore>()
 
         bpList.forEach(
             ContextUtil.consumerWithIndex { s: LazerScore, index: Int ->
-                if (s.endedTimePretty.isBefore(laterDay) && s.endedTimePretty.isAfter(earlierDay)) {
+                if (s.endedTime.isBefore(laterDay) && s.endedTime.isAfter(earlierDay)) {
                     dataMap[index] = s
                 }
             }

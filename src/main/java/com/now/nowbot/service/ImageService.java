@@ -8,7 +8,8 @@ import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.model.multiplayer.MonitoredMatch;
 import com.now.nowbot.model.multiplayer.SeriesCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
-import com.now.nowbot.service.messageServiceImpl.*;
+import com.now.nowbot.service.messageServiceImpl.MapStatisticsService;
+import com.now.nowbot.service.messageServiceImpl.MatchMapService;
 import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.DataUtil;
 import jakarta.annotation.Resource;
@@ -357,7 +358,7 @@ public class ImageService {
             bonus = DataUtil.getBonusPP(osuUser.getPP(), bpPPs);
         }
 
-        var times = BPs.stream().map(LazerScore::getEndedTimePretty).toList();
+        var times = BPs.stream().map(LazerScore::getEndedTime).toList();
         var now = LocalDate.now();
         var bpTimes = new int[90];
         times.forEach(time -> {
