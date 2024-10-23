@@ -3,6 +3,7 @@ package com.now.nowbot.model.json
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import java.time.OffsetDateTime
@@ -71,13 +72,13 @@ open class LazerScore {
 
     @get:JsonProperty("mods")
     val modStringList: List<String> by lazy {
-        modList.map { it.type.acronym }
+        modList.filter { it.type == OsuMod.Classic }.map { it.type.acronym }
     }
     private val modList: List<LazerMod> = listOf()
 
+    @set:JsonProperty("mods")
     @get:JsonIgnore
-    val mods: List<LazerMod>
-        get() = modList
+    var mods: List<LazerMod> = ArrayList(0)
 
     data class ScoreMod(
         @JsonProperty("acronym") var acronym: String = "",
