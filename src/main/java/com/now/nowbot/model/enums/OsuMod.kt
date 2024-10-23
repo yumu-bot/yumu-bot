@@ -52,7 +52,11 @@ enum class OsuMod(
     ScoreIncreaseMods(1049688, "IM"),
     Other(-1, "??"),
     // 以下是 Lazer 独占的可以上传成绩的模组
-    Classic(-1, "CL"),
+
+    // 以下是会改变星数的 Lazer 部分模组，我只做了会改变星数、四维、以及玩家提及的需要传参的模组，其他的有空可以看看参数并且实现了
+    // Classic 在每个 Stable 成绩上都有，统计起来意义基本等于没有
+    // 请将它归类于 Other，直接过滤掉！
+    // Classic(-1, "CL"),
     Daycore(-1, "DC"),
     Blinds(-1, "BL"),
     Cover(-1, "CO"),
@@ -100,8 +104,8 @@ enum class OsuMod(
             val modList =
                     acronyms
                             .stream()
-                            .map { a: String -> getModFromAcronym(acronym) }
-                            .filter { e: OsuMod? -> e != Other }
+                            .map { getModFromAcronym(it) }
+                            .filter { it != Other }
                             .distinct()
                             .toList()
             checkMods(modList)
@@ -420,7 +424,7 @@ enum class OsuMod(
                 "MR" -> Mirror
                 "RD" -> Random
                 // 以下是 Lazer 独占的可以上传成绩的模组
-                "CL" -> Classic
+                // "CL" -> Classic
                 "DC" -> Daycore
                 "BL" -> Blinds
                 "CO" -> Cover

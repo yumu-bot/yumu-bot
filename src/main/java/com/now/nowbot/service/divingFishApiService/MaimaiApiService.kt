@@ -65,6 +65,14 @@ interface MaimaiApiService {
 
     fun getMaimaiAlias(songID: Long): MaiAlias?
 
+    fun getMaimaiAlias(songID: Int): MaiAlias? {
+        return getMaimaiAlias(songID.toLong())
+    }
+
+    fun applyMaimaiAlias(song: MaiSong?)
+
+    fun applyMaimaiAlias(songs: List<MaiSong>?)
+
     fun getMaimaiAliasLibrary(): Map<Int, List<String>>?
 
     // 以下需要从水鱼那里拿 DeveloperToken

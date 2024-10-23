@@ -65,20 +65,9 @@ class MaiScore {
                 if (s.songID == 0L) {
                     continue
                 }
-
-                val a = maimaiApiService.getMaimaiAlias(s.songID)
                 val o = maimaiApiService.getMaimaiSong(s.songID) ?: MaiSong()
-
-                insertAlias(o, a)
-
                 insertSongData(s, o)
             }
-        }
-
-        // ？这个东西不应该放在 maisong 里吗
-        fun insertAlias(song: MaiSong, maiAlias: MaiAlias?) {
-            if (maiAlias == null) return
-            song.alias = maiAlias.alias.firstOrNull()
         }
 
         @Deprecated("请使用 maimaiApiService 传参，避免大量无用查询")

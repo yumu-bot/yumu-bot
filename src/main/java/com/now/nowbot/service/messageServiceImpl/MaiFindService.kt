@@ -42,30 +42,30 @@ class MaiFindService(private val maimaiApiService: MaimaiApiService) : MessageSe
                                 )
                         )
 
-        val similarityMap = mutableMapOf<Double, String>()
+        val similarities = mutableListOf<Pair<String, Double>>()
 
         for (std in nameMap.keys) {
             val y = DataUtil.getStringSimilarityStandardised(input, std)
 
             if (y >= 0.4) {
-                similarityMap[y] = std
+                similarities.add(Pair(std, y))
             }
         }
 
-        if (similarityMap.isEmpty()) {
+        if (similarities.isEmpty()) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Result)
         }
-        val sort = similarityMap.toSortedMap().reversed()
+        val sort = similarities.stream().sorted(Comparator.comparingDouble<Pair<String, Double>?> { it.second }.reversed()).toList()
 
         val sb = StringBuilder("搜索结果：\n")
 
         var i = 1
         for (e in sort) {
-            val name = nameMap[e.value]
-            val achievement = rankMap[nameMap[e.value]]
+            val name = nameMap[e.first]
+            val achievement = rankMap[nameMap[e.first]]
 
             sb.append("#${i}: ")
-                    .append("${String.format("%.0f", e.key * 100)}%")
+                    .append("${String.format("%.0f", e.second * 100)}%")
                     .append(" ")
                     .append("$name")
                     .append(" ")

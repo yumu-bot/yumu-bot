@@ -19,6 +19,7 @@ import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import java.io.IOException
 import java.nio.file.Files
+import java.util.Comparator
 import java.util.stream.Collectors
 import kotlin.text.Charsets.UTF_8
 
@@ -180,12 +181,17 @@ class MaimaiApiImpl(
 
     override fun getMaimaiSongLibrary(): Map<Int, MaiSong> {
         //return getMaimaiSongLibraryFromFile()
-        return maiDao.getAllMaiSong().stream().collect(Collectors.toMap(MaiSong::songID) {it} )
+        return maiDao.getAllMaiSong().stream().map{
+            applyMaimaiAlias(it)
+            return@map it
+        }.collect(Collectors.toMap(MaiSong::songID) {it} )
     }
 
     override fun getMaimaiSong(songID: Long): MaiSong? {
         //return getMaimaiSongLibraryFromFile()[songID.toInt()] ?: MaiSong()
-        return maiDao.findMaiSongById(songID.toInt())
+        val o = maiDao.findMaiSongById(songID.toInt())
+        applyMaimaiAlias(o)
+        return o
     }
 
     override fun getMaimaiRank(): Map<String, Int> {
@@ -201,6 +207,20 @@ class MaimaiApiImpl(
     override fun getMaimaiDiffData(difficulty: String): MaiFit.DiffData {
         //return getMaimaiFitLibraryFromFile().diffData[difficulty] ?: MaiFit.DiffData()
         return maiDao.getMaiFitDiffDataByDifficulty(difficulty)
+    }
+
+    override fun applyMaimaiAlias(songs: List<MaiSong>?) {
+        if (songs.isNullOrEmpty()) return
+
+        for(s in songs) {
+            applyMaimaiAlias(s)
+        }
+    }
+
+    override fun applyMaimaiAlias(song: MaiSong?) {
+        if (song != null) {
+            song.alias = getMaimaiAlias(song.songID)?.alias?.firstOrNull()
+        }
     }
 
     override fun getMaimaiAlias(songID: Long): MaiAlias? {
@@ -381,7 +401,9 @@ class MaimaiApiImpl(
     }
 
     override fun getMaimaiPossibleSongs(text: String): List<MaiSong>? {
-        return maiDao.findMaiSongByTitle(text)
+        val o = maiDao.findMaiSongByTitle(text)
+        applyMaimaiAlias(o)
+        return o
         /*
         val songs = getMaimaiSongLibrary()
 
@@ -410,27 +432,38 @@ class MaimaiApiImpl(
 
     override fun getMaimaiAliasSongs(text: String): List<MaiSong>? {
         val aliases = getMaimaiAliasLibrary()
-        val result = mutableMapOf<Double, MaiSong>()
+        val result = mutableListOf<Triple<MaiSong, Int, Double>>()
 
         search@
         for(e in aliases.entries) {
             for(alias in e.value) {
 
-                val p = DataUtil.getStringSimilarity(text, alias)
+                val y = DataUtil.getStringSimilarity(text, alias)
 
-                if (p >= 0.5) {
-                    val s = getMaimaiSong(e.key.toLong()) ?: getMaimaiSong(e.key + 10000L)
+                if (y >= 0.5) {
+                    val s = maiDao.findMaiSongById(e.key) ?: maiDao.findMaiSongById(e.key + 10000)
+                        //getMaimaiSong(e.key.toLong()) ?: getMaimaiSong(e.key + 10000L) 避免循环引用
 
                     if (s != null) {
                         s.alias = e.value.firstOrNull()
-                        result[p] = s
+
+                        result.add(Triple(s, s.songID, y))
                         continue@search
                     }
                 }
             }
         }
 
-        return if (result.isEmpty()) null else result.toSortedMap().reversed().values.stream().toList()
+        return if (result.isEmpty()) {
+            null
+        } else {
+            result.stream()
+                .sorted(Comparator.comparingInt { it.second })
+                .sorted(Comparator.comparingDouble<Triple<MaiSong, Int, Double>> { it.third }.reversed())
+                .map { it.first }.toList()
+
+            // result.toSortedMap().reversed().values.stream().toList()
+        }
     }
 
     private val maimaiSongLibraryFromAPI: String

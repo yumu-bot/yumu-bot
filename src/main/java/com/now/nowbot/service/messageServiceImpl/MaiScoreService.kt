@@ -159,13 +159,13 @@ class MaiScoreService(
                                                 GeneralTipsException.Type.G_Null_ResultNotAccurate
                                         )
 
-                        val r = mutableMapOf<Double, MaiSong>()
+                        val r = mutableListOf<Pair<MaiSong, Double>>()
 
                         for (p in possibles) {
                             val y = DataUtil.getStringSimilarity(title, p.title)
 
                             if (y >= 0.4) {
-                                r[y] = p
+                                r.add(Pair(p, y))
                             }
                         }
 
@@ -174,19 +174,8 @@ class MaiScoreService(
                                         GeneralTipsException.Type.G_Null_ResultNotAccurate
                                 )
 
-                        r.entries
-                                .stream()
-                                .sorted(
-                                        Comparator.comparingDouble<
-                                                        MutableMap.MutableEntry<Double, MaiSong>?
-                                                > {
-                                                    it.key
-                                                }
-                                                .reversed()
-                                )
-                                .map { it.value }
-                                .toList()
-                                .first()
+                        r.stream().sorted(Comparator.comparingDouble<Pair<MaiSong, Double>?> { it.second }.reversed())
+                            .map { it.first }.toList().first()
                     }
                 } else if (param.id != null) {
                     // 搜歌模式
@@ -228,11 +217,9 @@ class MaiScoreService(
             if (result.songID < 10000) {
                 standard = result
                 deluxe = maimaiApiService.getMaimaiSong(result.songID + 10000L) ?: MaiSong()
-                deluxe.alias = result.alias
             } else {
                 standard = maimaiApiService.getMaimaiSong(result.songID - 10000L) ?: MaiSong()
                 deluxe = result
-                standard.alias = result.alias
             }
 
             image =
@@ -278,6 +265,7 @@ class MaiScoreService(
                 val similarity = DataUtil.getStringSimilarity(text, s.title)
 
                 if (similarity >= 0.4) {
+                    maimaiApiService.applyMaimaiAlias(s)
                     result[similarity] = s
                 }
             }
