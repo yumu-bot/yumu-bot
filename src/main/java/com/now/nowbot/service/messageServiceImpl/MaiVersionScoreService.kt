@@ -136,7 +136,8 @@ class MaiVersionScoreService(
                         .stream()
                         .filter { MaiDifficulty.getIndex(it.index).equalDefault(param.difficulty) }
                         .toList()
-        MaiScore.insertSongData(scores, maimaiApiService = maimaiApiService)
+        maimaiApiService.insertSongData(scores)
+        maimaiApiService.insertMaimaiAliasForScore(scores)
 
         val image =
                 imageService.getPanel(

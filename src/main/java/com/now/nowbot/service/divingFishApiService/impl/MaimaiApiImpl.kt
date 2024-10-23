@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.lang.NonNull
 import org.springframework.stereotype.Service
+import org.springframework.util.CollectionUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
@@ -182,7 +183,7 @@ class MaimaiApiImpl(
     override fun getMaimaiSongLibrary(): Map<Int, MaiSong> {
         //return getMaimaiSongLibraryFromFile()
         return maiDao.getAllMaiSong().stream().map{
-            applyMaimaiAlias(it)
+            insertMaimaiAlias(it)
             return@map it
         }.collect(Collectors.toMap(MaiSong::songID) {it} )
     }
@@ -190,7 +191,7 @@ class MaimaiApiImpl(
     override fun getMaimaiSong(songID: Long): MaiSong? {
         //return getMaimaiSongLibraryFromFile()[songID.toInt()] ?: MaiSong()
         val o = maiDao.findMaiSongById(songID.toInt())
-        applyMaimaiAlias(o)
+        insertMaimaiAlias(o)
         return o
     }
 
@@ -209,26 +210,80 @@ class MaimaiApiImpl(
         return maiDao.getMaiFitDiffDataByDifficulty(difficulty)
     }
 
-    override fun applyMaimaiAlias(songs: List<MaiSong>?) {
+    override fun getMaimaiAlias(songID: Long): MaiAlias? {
+        return getMaimaiAlias(songID.toInt())
+    }
+
+    override fun getMaimaiAlias(songID: Int): MaiAlias? {
+        return maiDao.getMaiAliasById((songID % 10000))
+    }
+
+    override fun getMaimaiAliasLibrary(): Map<Int, List<String>> {
+        return maiDao.getAllMaiAliases().stream().collect(Collectors.toMap(MaiAlias::songID, MaiAlias::alias))
+    }
+
+    override fun insertMaimaiAlias(songs: List<MaiSong>?) {
         if (songs.isNullOrEmpty()) return
 
         for(s in songs) {
-            applyMaimaiAlias(s)
+            insertMaimaiAlias(s)
         }
     }
 
-    override fun applyMaimaiAlias(song: MaiSong?) {
+    override fun insertMaimaiAlias(song: MaiSong?) {
         if (song != null) {
             song.alias = getMaimaiAlias(song.songID)?.alias?.firstOrNull()
         }
     }
 
-    override fun getMaimaiAlias(songID: Long): MaiAlias? {
-        return maiDao.getMaiAliasById((songID % 10000L).toInt())
+    override fun insertMaimaiAliasForScore(scores: List<MaiScore>?) {
+        if (scores.isNullOrEmpty()) return
+
+        for(s in scores) {
+            insertMaimaiAliasForScore(s)
+        }
     }
 
-    override fun getMaimaiAliasLibrary(): Map<Int, List<String>> {
-        return maiDao.getAllMaiAliases().stream().collect(Collectors.toMap(MaiAlias::songID, MaiAlias::alias))
+    override fun insertMaimaiAliasForScore(score: MaiScore?) {
+        if (score != null) {
+            score.alias = getMaimaiAlias(score.songID)?.alias?.firstOrNull()
+        }
+    }
+
+    override fun insertSongData(scores: List<MaiScore>) {
+        for (s in scores) {
+            if (s.songID == 0L) {
+                continue
+            }
+            val o = getMaimaiSong(s.songID) ?: MaiSong()
+            insertSongData(s, o)
+        }
+    }
+
+    override fun insertSongData(score: MaiScore, song: MaiSong) {
+        score.artist = song.info.artist
+
+        if (song.charts.isEmpty() || score.index >= song.charts.size) return
+
+        val chart = song.charts[score.index]
+        val notes = chart.notes
+
+        score.charter = chart.charter
+        score.max = 3 * (notes.tap + notes.touch + notes.hold + notes.slide + notes.break_)
+    }
+
+    override fun insertPosition(scores: List<MaiScore>, isBest35: Boolean) {
+        if (CollectionUtils.isEmpty(scores)) return
+
+        for (i in scores.indices) {
+            val s = scores[i]
+
+            if (isBest35) {
+                s.position = (i + 1)
+            } else {
+                s.position = (i + 36)
+            }
+        }
     }
 
     @Deprecated("请使用 From Database")
@@ -402,7 +457,7 @@ class MaimaiApiImpl(
 
     override fun getMaimaiPossibleSongs(text: String): List<MaiSong>? {
         val o = maiDao.findMaiSongByTitle(text)
-        applyMaimaiAlias(o)
+        insertMaimaiAlias(o)
         return o
         /*
         val songs = getMaimaiSongLibrary()

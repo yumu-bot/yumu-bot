@@ -28,9 +28,9 @@ class MaiUpdateService(private val maimaiApiService: MaimaiApiService) : Message
         if (Permission.isSuperAdmin(event.sender.id)) {
             event.reply("正在尝试更新！")
             maimaiApiService.updateMaimaiSongLibraryDatabase()
-            maimaiApiService.updateMaimaiFitLibraryDatabase()
-            maimaiApiService.updateMaimaiRankLibraryDatabase()
             maimaiApiService.updateMaimaiAliasLibraryDatabase()
+            maimaiApiService.updateMaimaiRankLibraryDatabase()
+            maimaiApiService.updateMaimaiFitLibraryDatabase()
             event.reply("已尝试更新！")
         }
     }

@@ -211,7 +211,7 @@ class MaiScoreService(
                             }
                             .toList()
 
-            MaiScore.insertSongData(scores, maimaiApiService)
+            maimaiApiService.insertSongData(scores)
 
             // 判断谱面种类
             if (result.songID < 10000) {
@@ -257,6 +257,7 @@ class MaiScoreService(
             }
         }
 
+        // UUMS
         fun getSearchResult(text: String?, maimaiApiService: MaimaiApiService): MessageChain {
             val songs = maimaiApiService.getMaimaiSongLibrary()
             val result = mutableMapOf<Double, MaiSong>()
@@ -265,7 +266,7 @@ class MaiScoreService(
                 val similarity = DataUtil.getStringSimilarity(text, s.title)
 
                 if (similarity >= 0.4) {
-                    maimaiApiService.applyMaimaiAlias(s)
+                    maimaiApiService.insertMaimaiAlias(s)
                     result[similarity] = s
                 }
             }

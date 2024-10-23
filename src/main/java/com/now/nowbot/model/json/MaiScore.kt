@@ -2,8 +2,6 @@ package com.now.nowbot.model.json
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.now.nowbot.service.divingFishApiService.MaimaiApiService
-import org.springframework.util.CollectionUtils
 
 class MaiScore {
     // 也就是准确率
@@ -43,6 +41,9 @@ class MaiScore {
     // 歌名
     @JsonProperty("title") var title: String = ""
 
+    // 外号，自己填
+    @get:JsonProperty("alias") var alias: String? = null
+
     // 谱面种类，有DX和SD之分
     @JsonProperty("type") var type: String = ""
 
@@ -57,56 +58,4 @@ class MaiScore {
 
     // 自己拿
     @JsonIgnoreProperties var charter: String = ""
-
-    companion object {
-
-        fun insertSongData(scores: List<MaiScore>, maimaiApiService: MaimaiApiService) {
-            for (s in scores) {
-                if (s.songID == 0L) {
-                    continue
-                }
-                val o = maimaiApiService.getMaimaiSong(s.songID) ?: MaiSong()
-                insertSongData(s, o)
-            }
-        }
-
-        @Deprecated("请使用 maimaiApiService 传参，避免大量无用查询")
-        fun insertSongData(scores: List<MaiScore>, data: Map<Int, MaiSong>) {
-            for (s in scores) {
-                if (s.songID == 0L) {
-                    continue
-                }
-
-                val d = data[s.songID.toInt()] ?: continue
-
-                insertSongData(s, d)
-            }
-        }
-
-        fun insertSongData(score: MaiScore, song: MaiSong) {
-            score.artist = song.info.artist
-
-            if (song.charts.isEmpty() || score.index >= song.charts.size) return
-
-            val chart = song.charts[score.index]
-            val notes = chart.notes
-
-            score.charter = chart.charter
-            score.max = 3 * (notes.tap + notes.touch + notes.hold + notes.slide + notes.break_)
-        }
-
-        fun insertPosition(scores: MutableList<MaiScore>, isBest35: Boolean) {
-            if (CollectionUtils.isEmpty(scores)) return
-
-            for (i in scores.indices) {
-                val s = scores[i]
-
-                if (isBest35) {
-                    s.position = (i + 1)
-                } else {
-                    s.position = (i + 36)
-                }
-            }
-        }
-    }
 }
