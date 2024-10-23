@@ -69,7 +69,10 @@ open class LazerScore {
             }
         }
 
-    @JsonProperty("mods")
+    @get:JsonProperty("mods")
+    val modStringList: List<String> by lazy {
+        modList.map { it.type.acronym }
+    }
     private val modList: List<LazerMod> = listOf()
 
     @get:JsonIgnore
