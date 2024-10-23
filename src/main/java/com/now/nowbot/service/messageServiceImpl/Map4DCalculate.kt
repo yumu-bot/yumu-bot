@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -37,10 +37,10 @@ class Map4DCalculate : MessageService<Map4DParam> {
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: Map4DParam) {
         val mod =
-                if (param.mods == null) {
-                    mutableListOf()
+                if (param.mods != null) {
+                    OsuMod.getModsList(param.mods)
                 } else {
-                    LazerMod.getModsList(param.mods)
+                    mutableListOf()
                 }
         // 只针对 std 模式
         val message =

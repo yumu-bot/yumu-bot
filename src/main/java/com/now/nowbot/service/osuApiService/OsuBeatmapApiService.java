@@ -3,6 +3,7 @@ package com.now.nowbot.service.osuApiService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.NowbotApplication;
 import com.now.nowbot.model.LazerMod;
+import com.now.nowbot.model.enums.OsuMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.*;
 import com.now.nowbot.service.messageServiceImpl.MapStatisticsService;
@@ -78,7 +79,7 @@ public interface OsuBeatmapApiService {
     }
 
     default BeatmapDifficultyAttributes getAttributes(Long id, LazerMod... mods) {
-        int value = Arrays.stream(mods).mapToInt(m -> m.type.value).reduce(0, Integer::sum);
+        int value = Arrays.stream(mods).mapToInt(m -> m.getType().value).reduce(0, Integer::sum);
         return getAttributes(id, value);
     }
 
@@ -122,7 +123,7 @@ public interface OsuBeatmapApiService {
         js.setMode(e.mode.toRosuMode());
         js.setMisses(e.misses);
         js.setAccuracy(e.accuracy);
-        js.setMods(LazerMod.getModsValueFromAcronyms(e.mods));
+        js.setMods(OsuMod.getModsValueFromAcronyms(e.mods));
 
         return Rosu.calculate(b, js);
     }
@@ -253,29 +254,6 @@ public interface OsuBeatmapApiService {
         }
         if (t.getGreat() != null) jni.setN300(t.getGreat());
         if (t.getMiss() != null) jni.setMisses(t.getMiss());
-
-        // 这个要留着, 因为是调用了 native 方法
-        // 那边如果有 null 会直接导致虚拟机炸掉退出, 注解不会在运行时检查是不是 null
-        /*
-        if (
-                Objects.nonNull(s.getCountGeki()) &&
-                        Objects.nonNull(s.getCountKatu()) &&
-                        Objects.nonNull(s.getCount300()) &&
-                        Objects.nonNull(s.getCount100()) &&
-                        Objects.nonNull(s.getCount50()) &&
-                        Objects.nonNull(s.getCountMiss())
-        ) {
-            score.setGeki(s.getCountGeki());
-            score.setKatu(s.getCountKatu());
-            score.setN300(s.getCount300());
-            score.setN100(s.getCount100());
-            score.setN50(s.getCount50());
-            score.setMisses(s.getCountMiss());
-        } else {
-            score.setAccuracy(s.get());
-        }
-
-         */
 
         return Rosu.calculate(map, jni);
     }
@@ -446,7 +424,7 @@ public interface OsuBeatmapApiService {
     // 应用 DA 模组会修改的四维
     private void applyDifficultyAdjust(JniScore jni, List<LazerMod> mods) {
         for (var m : mods) {
-            if (Objects.equals(m.type.acronym, "DA")) {
+            if (Objects.equals(m.getType().acronym, "DA")) {
                 if (m.getCs() != null) {
                     jni.setCs(m.getCs());
                 }

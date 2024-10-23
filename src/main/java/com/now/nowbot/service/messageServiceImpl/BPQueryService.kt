@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.MicroUser
@@ -290,8 +291,8 @@ class BPQueryService(
         }, EQ, NE, GT, GE, LT, LE),
         Mods("mod", { (op, v, s) ->
             // mod 处理是 = 为严格等于, > 为包含mod
-            val mods = LazerMod.getModsValue(v)
-            val scoreMods = LazerMod.getModsValue(s.mods)
+            val mods = OsuMod.getModsValue(v)
+            val scoreMods = OsuMod.getModsValue(s.mods.map(LazerMod::type))
             when (op) {
                 EQ -> mods == scoreMods
                 NE -> mods and scoreMods == 0
