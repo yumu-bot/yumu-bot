@@ -52,8 +52,7 @@ enum class OsuMod(
     ScoreIncreaseMods(1049688, "IM"),
     Other(-1, "??"),
     // 以下是 Lazer 独占的可以上传成绩的模组
-    Classic(-1, "CL"),
-    Daycore(-1, "DC"),
+    Daycore(-1, "DC",),
     Blinds(-1, "BL"),
     Cover(-1, "CO"),
     StrictTracking(-1, "ST"),
@@ -420,7 +419,6 @@ enum class OsuMod(
                 "MR" -> Mirror
                 "RD" -> Random
                 // 以下是 Lazer 独占的可以上传成绩的模组
-                "CL" -> Classic
                 "DC" -> Daycore
                 "BL" -> Blinds
                 "CO" -> Cover
