@@ -585,8 +585,7 @@ public class BotWebApi {
             try {
                 scoreList = scoreApiService.getLeaderBoardScore(bid, uid, mode);
                 for (var s : scoreList) {
-                    var scoreMods = s.getMods().stream().map(LazerMod::getType).toList();
-                    if (OsuMod.getModsValue(scoreMods) == modInt) {
+                    if (LazerMod.getModsValue(s.getMods()) == modInt) {
                         score = s;
                         break;
                     }

@@ -70,11 +70,11 @@ open class LazerScore {
         }
 
     @JsonProperty("mods")
-    private val modList: List<LazerMod> = listOf()
+    private val modList: List<ScoreMod> = listOf()
 
     @get:JsonIgnore
     val mods: List<LazerMod>
-        get() = modList
+        get() = if (modList.isNotEmpty()) modList.map(LazerMod::getModFromScoreMod) else listOf()
 
     data class ScoreMod(
         @JsonProperty("acronym") var acronym: String = "",

@@ -76,9 +76,8 @@ object DataUtil {
             if (field == null || field!!.isClosed) {
                 try {
                     field =
-                        Typeface.makeFromFile(
-                            "${NowbotConfig.FONT_PATH}Alibaba-PuHuiTi-Medium.ttf"
-                        )
+                            Typeface.makeFromFile(
+                                    "${NowbotConfig.FONT_PATH}Alibaba-PuHuiTi-Medium.ttf")
                 } catch (e: Exception) {
                     log.error("Alibaba-PuHuiTi-Medium.ttf", e)
                     field = Typeface.makeDefault()
@@ -102,7 +101,6 @@ object DataUtil {
         }
 
     val splitReg = "[,，|:：`、]+".toRegex()
-
     /**
      * 将按逗号或者 |、:：分隔的字符串分割 如果未含有分隔的字符，返回 null
      *
@@ -114,16 +112,15 @@ object DataUtil {
     fun splitString(@Nullable str: String): List<String>? {
         if (!StringUtils.hasText(str)) return null
         val strings =
-            str.trim()
-                .split(splitReg)
-                .dropLastWhile { it.isEmpty() }
+                str.trim()
+                        .split(splitReg)
+                        .dropLastWhile { it.isEmpty() }
         // 空格和-_不能匹配
         if (strings.isEmpty()) return null
         return strings.map { obj -> obj.trim() }.toList()
     }
 
     val nameSplitReg = "[,，、|:：]+".toRegex()
-
     /**
      * 根据分隔符，分割玩家名
      *
@@ -164,14 +161,14 @@ object DataUtil {
         val extreme = score.beatMap.starRating >= 6.5f
         val acc = score.accuracy >= 0.9f
         val combo =
-            1f * score.maxCombo /
-                    Objects.requireNonNullElse(score.beatMap.maxCombo, Int.MAX_VALUE) >= 0.98f
+                1f * score.maxCombo /
+                        Objects.requireNonNullElse(score.beatMap.maxCombo, Int.MAX_VALUE) >= 0.98f
         val pp = score.pp >= 300f
         val bp = p >= 400f && score.pp >= (p - 400f) / 25f
         val miss =
-            score.statistics.getCountAll(score.mode) > 0 &&
-                    score.statistics.countMiss <=
-                    score.statistics.getCountAll(score.mode) * 0.01f
+                score.statistics.getCountAll(score.mode) > 0 &&
+                        score.statistics.countMiss <=
+                                score.statistics.getCountAll(score.mode) * 0.01f
 
         val fail = score.rank == null || score.rank == "F"
 
@@ -240,13 +237,13 @@ object DataUtil {
     @NonNull
     private fun parseRange(start: Int?, end: Int?): Range {
         val start =
-            start.let {
-                if (it == null || it < 1 || it > 100) {
-                    1
-                } else {
-                    it
+                start.let {
+                    if (it == null || it < 1 || it > 100) {
+                        1
+                    } else {
+                        it
+                    }
                 }
-            }
 
         val offset: Int
         val limit: Int
@@ -303,15 +300,12 @@ object DataUtil {
                     "player-joined" -> {
                         try {
                             playerSet.add(e.userID)
-                        } catch (ignored: java.lang.Exception) {
-                        }
+                        } catch (ignored: java.lang.Exception) {}
                     }
-
                     "player-left" -> {
                         try {
                             playerSet.remove(e.userID)
-                        } catch (ignored: java.lang.Exception) {
-                        }
+                        } catch (ignored: java.lang.Exception) {}
                     }
                 }
             }
@@ -431,14 +425,13 @@ object DataUtil {
 
         // geki, 300, katu, 100, 50, 0
         val list =
-            mutableListOf(
-                stat.countGeki,
-                stat.count300,
-                stat.countKatu,
-                stat.count100,
-                stat.count50,
-                stat.countMiss
-            )
+                mutableListOf(
+                        stat.countGeki,
+                        stat.count300,
+                        stat.countKatu,
+                        stat.count100,
+                        stat.count50,
+                        stat.countMiss)
 
         // 一个物件所占的 Acc 权重
         if (total <= 0) return stat
@@ -446,9 +439,9 @@ object DataUtil {
 
         // 彩黄比
         val ratio =
-            if ((stat.count300 + stat.countGeki > 0))
-                stat.countGeki * 1.0 / (stat.count300 + stat.countGeki)
-            else 0.0
+                if ((stat.count300 + stat.countGeki > 0))
+                        stat.countGeki * 1.0 / (stat.count300 + stat.countGeki)
+                else 0.0
 
         var current = stat.getAccuracy(MANIA)
 
@@ -501,13 +494,13 @@ object DataUtil {
     // 交换评级
     @NonNull
     fun exchangeJudge(
-        nGreat: Int,
-        nBad: Int,
-        wGreat: Double,
-        wBad: Double,
-        currentAcc: Double,
-        aimingAcc: Double,
-        weight: Double
+            nGreat: Int,
+            nBad: Int,
+            wGreat: Double,
+            wBad: Double,
+            currentAcc: Double,
+            aimingAcc: Double,
+            weight: Double
     ): Exchange {
         var g = nGreat
         var b = nBad
@@ -553,36 +546,32 @@ object DataUtil {
         if (number < 10.0.pow(m)) { // level==1->100 level==2->1000
             unit = 0.toChar()
         } else if (number <
-            10.0.pow(
-                3.let {
-                    m += it
-                    m
-                })
-        ) {
+                10.0.pow(
+                        3.let {
+                            m += it
+                            m
+                        })) {
             unit = 'K'
         } else if (number <
-            10.0.pow(
-                3.let {
-                    m += it
-                    m
-                })
-        ) {
+                10.0.pow(
+                        3.let {
+                            m += it
+                            m
+                        })) {
             unit = 'M'
         } else if (number <
-            10.0.pow(
-                3.let {
-                    m += it
-                    m
-                })
-        ) {
+                10.0.pow(
+                        3.let {
+                            m += it
+                            m
+                        })) {
             unit = 'G'
         } else if (number <
-            10.0.pow(
-                3.let {
-                    m += it
-                    m
-                })
-        ) {
+                10.0.pow(
+                        3.let {
+                            m += it
+                            m
+                        })) {
             unit = 'T'
         } else if (number < 10.0.pow((m + 3))) {
             unit = 'P'
@@ -626,11 +615,11 @@ object DataUtil {
         if (c.code == 0) {
             intValue = number.toInt()
             isInt =
-                if (level == 1) {
-                    number - intValue <= 0.1
-                } else {
-                    number - intValue <= 0.001
-                }
+                    if (level == 1) {
+                        number - intValue <= 0.1
+                    } else {
+                        number - intValue <= 0.001
+                    }
             if (isInt) return intValue.toString()
             return number.toString()
         }
@@ -649,11 +638,11 @@ object DataUtil {
         }
         intValue = number.toInt()
         isInt =
-            if (level == 1) {
-                number - intValue <= 0.1
-            } else {
-                number - intValue <= 0.001
-            }
+                if (level == 1) {
+                    number - intValue <= 0.1
+                } else {
+                    number - intValue <= 0.001
+                }
 
         if (isInt) {
             return String.format("%d%c", intValue, c)
@@ -676,31 +665,31 @@ object DataUtil {
 
     @JvmStatic
     fun AR2MS(ar: Float): Float =
-        when {
-            ar > 11f -> 300f
-            ar > 5f -> 1200 - (150 * (ar - 5))
-            ar > 0f -> 1800 - (120 * ar)
-            else -> 1800f
-        }
+            when {
+                ar > 11f -> 300f
+                ar > 5f -> 1200 - (150 * (ar - 5))
+                ar > 0f -> 1800 - (120 * ar)
+                else -> 1800f
+            }
 
     fun MS2AR(ms: Float): Float =
-        when {
-            ms < 300 -> 11f
-            ms < 1200 -> 5 + (1200 - ms) / 150f
-            ms < 2400 -> (1800 - ms) / 120f
-            else -> -5f
-        }
+            when {
+                ms < 300 -> 11f
+                ms < 1200 -> 5 + (1200 - ms) / 150f
+                ms < 2400 -> (1800 - ms) / 120f
+                else -> -5f
+            }
 
     @JvmStatic
-    fun applyLazerAR(ar: Float, mods: List<LazerMod>): Float {
+    fun applyAR(ar: Float, mods: List<LazerMod>): Float {
         var a = ar
 
-        val d = mods.stream().filter { it.type == OsuMod.DifficultyAdjust }.toList().firstOrNull()?.ar
+        val d = mods.stream().filter{it.type == LazerModType.DifficultyAdjust}.toList().firstOrNull()?.ar
         if (d != null) return d.toFloat().roundToDigits2()
 
-        if (mods.contains(OsuMod.HardRock)) {
+        if (mods.contains(LazerModType.HardRock)) {
             a = (a * 1.4f).clamp()
-        } else if (mods.contains(OsuMod.Easy)) {
+        } else if (mods.contains(LazerModType.Easy)) {
             a = (a / 2f).clamp()
         }
 
@@ -716,40 +705,28 @@ object DataUtil {
     }
 
     @JvmStatic
-    fun applyAR(ar: Float, mods: List<OsuMod>): Float {
-        var a = ar
-
-        if (mods.contains(OsuMod.HardRock)) {
-            a = (a * 1.4f).clamp()
-        } else if (mods.contains(OsuMod.Easy)) {
-            a = (a / 2f).clamp()
-        }
-        return a.clamp().roundToDigits2()
-    }
-
-    @JvmStatic
     fun OD2MS(od: Float): Float =
-        when {
-            od > 11 -> 14f
-            else -> 80 - 6 * od
-        }
+            when {
+                od > 11 -> 14f
+                else -> 80 - 6 * od
+            }
 
     fun MS2OD(ms: Float): Float =
-        when {
-            ms < 14 -> 11f
-            else -> (80 - ms) / 6f
-        }
+            when {
+                ms < 14 -> 11f
+                else -> (80 - ms) / 6f
+            }
 
     @JvmStatic
-    fun applyLazerOD(od: Float, mods: List<LazerMod>): Float {
+    fun applyOD(od: Float, mods: List<LazerMod>): Float {
         var o = od
-        if (mods.contains(OsuMod.HardRock)) {
+        if (mods.contains(LazerModType.HardRock)) {
             o = (o * 1.4f).clamp()
-        } else if (mods.contains(OsuMod.Easy)) {
+        } else if (mods.contains(LazerModType.Easy)) {
             o = (o / 2f).clamp()
         }
 
-        val d = mods.stream().filter { it.type == OsuMod.DifficultyAdjust }.toList().firstOrNull()?.od
+        val d = mods.stream().filter{it.type == LazerModType.DifficultyAdjust}.toList().firstOrNull()?.od
         if (d != null) return d.toFloat().roundToDigits2()
 
         val speed = LazerMod.getModSpeed(mods)
@@ -764,64 +741,30 @@ object DataUtil {
     }
 
     @JvmStatic
-    fun applyOD(od: Float, mods: List<OsuMod>): Float {
-        var o = od
-        if (mods.contains(OsuMod.HardRock)) {
-            o = (o * 1.4f).clamp()
-        } else if (mods.contains(OsuMod.Easy)) {
-            o = (o / 2f).clamp()
-        }
-        return o.roundToDigits2()
-    }
-
-    @JvmStatic
-    fun applyCS(cs: Float, mods: List<OsuMod>): Float {
+    fun applyCS(cs: Float, mods: List<LazerMod>): Float {
         var c = cs
 
-        if (mods.contains(OsuMod.HardRock)) {
+        val d = mods.stream().filter{it.type == LazerModType.DifficultyAdjust}.toList().firstOrNull()?.cs
+        if (d != null) return d.toFloat().roundToDigits2()
+
+        if (mods.contains(LazerModType.HardRock)) {
             c *= 1.3f
-        } else if (mods.contains(OsuMod.Easy)) {
+        } else if (mods.contains(LazerModType.Easy)) {
             c /= 2f
         }
         return c.clamp().roundToDigits2()
     }
 
     @JvmStatic
-    fun applyLazerCS(cs: Float, mods: List<LazerMod>): Float {
-        var c = cs
-
-        val d = mods.stream().filter { it.type == OsuMod.DifficultyAdjust }.toList().firstOrNull()?.cs
-        if (d != null) return d.toFloat().roundToDigits2()
-        if (mods.contains(OsuMod.HardRock)) {
-            c *= 1.3f
-        } else if (mods.contains(OsuMod.Easy)) {
-            c /= 2f
-        }
-        return c.clamp().roundToDigits2()
-    }
-
-    @JvmStatic
-    fun applyLazerHP(hp: Float, mods: List<LazerMod>): Float {
+    fun applyHP(hp: Float, mods: List<LazerMod>): Float {
         var h = hp
 
-        val d = mods.stream().filter { it.type == OsuMod.DifficultyAdjust }.toList().firstOrNull()?.hp
+        val d = mods.stream().filter{it.type == LazerModType.DifficultyAdjust}.toList().firstOrNull()?.hp
         if (d != null) return d.toFloat().roundToDigits2()
 
-        if (mods.contains(OsuMod.HardRock)) {
+        if (mods.contains(LazerModType.HardRock)) {
             h *= 1.4f
-        } else if (mods.contains(OsuMod.Easy)) {
-            h /= 2f
-        }
-        return h.clamp().roundToDigits2()
-    }
-
-    @JvmStatic
-    fun applyHP(hp: Float, mods: List<OsuMod>): Float {
-        var h = hp
-
-        if (mods.contains(OsuMod.HardRock)) {
-            h *= 1.4f
-        } else if (mods.contains(OsuMod.Easy)) {
+        } else if (mods.contains(LazerModType.Easy)) {
             h /= 2f
         }
         return h.clamp().roundToDigits2()
@@ -834,7 +777,7 @@ object DataUtil {
 
     @JvmStatic
     fun applyLength(length: Int?, mods: List<LazerMod>): Int {
-        return ((length ?: 0) / LazerMod.getModSpeed(mods).toFloat()).roundToInt()
+        return Math.round((length ?: 0) / LazerMod.getModSpeed(mods).toFloat())
     }
 
     // 应用四维的变化 4 dimensions
@@ -842,10 +785,10 @@ object DataUtil {
     fun applyBeatMapChanges(beatMap: BeatMap, mods: List<LazerMod>) {
         if (LazerMod.hasChangeRating(mods)) {
             beatMap.bpm = applyBPM(Optional.ofNullable(beatMap.bpm).orElse(0f), mods)
-            beatMap.ar = applyLazerAR(Optional.ofNullable(beatMap.ar).orElse(0f), mods)
-            beatMap.cs = applyLazerCS(Optional.ofNullable(beatMap.cs).orElse(0f), mods)
-            beatMap.od = applyLazerOD(Optional.ofNullable(beatMap.od).orElse(0f), mods)
-            beatMap.hp = applyLazerHP(Optional.ofNullable(beatMap.hp).orElse(0f), mods)
+            beatMap.ar = applyAR(Optional.ofNullable(beatMap.ar).orElse(0f), mods)
+            beatMap.cs = applyCS(Optional.ofNullable(beatMap.cs).orElse(0f), mods)
+            beatMap.od = applyOD(Optional.ofNullable(beatMap.od).orElse(0f), mods)
+            beatMap.hp = applyHP(Optional.ofNullable(beatMap.hp).orElse(0f), mods)
             beatMap.totalLength = applyLength(beatMap.totalLength, mods)
             beatMap.hitLength = applyLength(beatMap.hitLength, mods)
         }
@@ -932,11 +875,11 @@ object DataUtil {
         val mode = score.mode
 
         val progress =
-            if (!score.passed) {
-                1.0 * score.statistics.getCountAll(mode) / score.beatMap.maxCombo
-            } else {
-                1.0
-            }
+                if (!score.passed) {
+                    1.0 * score.statistics.getCountAll(mode) / score.beatMap.maxCombo
+                } else {
+                    1.0
+                }
         return progress
     }
 
@@ -954,15 +897,14 @@ object DataUtil {
         val m = score.beatMap.maxCombo
         val ap8: Double = score.accuracy.pow(8.0)
         val v3 =
-            when (score.mode) {
-                OSU,
-                CATCH,
-                DEFAULT,
-                null -> fc * i * (0.7f * c / m + 0.3f * ap8) * p
-
-                TAIKO -> fc * i * (0.75f * c / m + 0.25f * ap8) * p
-                MANIA -> fc * i * (0.01f * c / m + 0.99f * ap8) * p
-            }
+                when (score.mode) {
+                    OSU,
+                    CATCH,
+                    DEFAULT,
+                    null -> fc * i * (0.7f * c / m + 0.3f * ap8) * p
+                    TAIKO -> fc * i * (0.75f * c / m + 0.25f * ap8) * p
+                    MANIA -> fc * i * (0.01f * c / m + 0.99f * ap8) * p
+                }
 
         return String.format("%07d", round(v3)) // 补 7 位达到 v3 分数的要求
     }
@@ -1006,8 +948,7 @@ object DataUtil {
             }
 
             null,
-            DEFAULT -> {
-            }
+            DEFAULT -> {}
         }
         return index
     }
@@ -1125,9 +1066,8 @@ object DataUtil {
 
         try {
             val bufferedReader =
-                Files.newBufferedReader(
-                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path ?: return "")
-                )
+                    Files.newBufferedReader(
+                            Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path ?: return ""))
 
             // 逐行读取文本内容
             var line: String?
@@ -1196,8 +1136,8 @@ object DataUtil {
                 for (w in to) {
                     if (v == w) {
                         to = to.substring(to.indexOf(w) + 1)
-                        count++
-                        sequent++
+                        count ++
+                        sequent ++
                         continue@outer
                     }
                 }
@@ -1237,11 +1177,9 @@ object DataUtil {
             .replace(Regex("\\s+"), "")
     }
 
-    @JvmRecord
-    private data class Range(val offset: Int, val limit: Int)
+    @JvmRecord private data class Range(val offset: Int, val limit: Int)
 
-    @JvmRecord
-    data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
+    @JvmRecord data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
 
     private fun Float.clamp() = if ((0f..10f).contains(this)) this else if (this > 10f) 10f else 0f
     private fun Float.roundToDigits2() = BigDecimal(this.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toFloat()
@@ -1249,5 +1187,5 @@ object DataUtil {
     private fun String.toRomanizedJaChar() = JaChar.getRomanized(this)
     private fun String.toRomanizedGreekChar() = GreekChar.getRomanized(this)
 
-    private fun List<LazerMod>.contains(type: OsuMod) = any { it.type == type }
+    private fun List<LazerMod>.contains(type: LazerModType) = LazerMod.hasMod(this, type)
 }

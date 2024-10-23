@@ -1,18 +1,18 @@
 package com.now.nowbot.model.enums
 
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.SerializerProvider
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer
-import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.throwable.ModsException
-import com.now.nowbot.util.JacksonUtil
 import java.util.*
 
 enum class OsuMod(
         @JvmField val value: Int,
         @JvmField val acronym: String,
+        @JvmField var speed: Double = 1.0,
+        @JvmField var finalSpeed: Double = 1.0,
+        @JvmField var cs: Double? = null,
+        @JvmField var ar: Double? = null,
+        @JvmField var od: Double? = null,
+        @JvmField var hp: Double? = null,
 ) {
     None(0, ""),
     NoMod(0, "NM"),
@@ -22,10 +22,10 @@ enum class OsuMod(
     Hidden(1 shl 3, "HD"),
     HardRock(1 shl 4, "HR"),
     SuddenDeath(1 shl 5, "SD"),
-    DoubleTime(1 shl 6, "DT"),
+    DoubleTime(1 shl 6, "DT", 1.5),
     Relax(1 shl 7, "RX"),
-    HalfTime(1 shl 8, "HT"),
-    Nightcore((1 shl 9) + (DoubleTime.value), "NC"), // 总是和 DT 一起使用 : 512 + 64 = 576
+    HalfTime(1 shl 8, "HT", 0.75),
+    Nightcore((1 shl 9) + (DoubleTime.value), "NC", 1.5), // 总是和 DT 一起使用 : 512 + 64 = 576
     Flashlight(1 shl 10, "FL"),
     Autoplay(1 shl 11, "AT"),
     SpunOut(1 shl 12, "SO"),
@@ -52,20 +52,15 @@ enum class OsuMod(
     ScoreIncreaseMods(1049688, "IM"),
     Other(-1, "??"),
     // 以下是 Lazer 独占的可以上传成绩的模组
-
-    // 以下是会改变星数的 Lazer 部分模组，我只做了会改变星数、四维、以及玩家提及的需要传参的模组，其他的有空可以看看参数并且实现了
-    // Classic 在每个 Stable 成绩上都有，统计起来意义基本等于没有
-    // 请将它归类于 Other，直接过滤掉！
-    // Classic(-1, "CL"),
-    Daycore(-1, "DC"),
+    Daycore(-1, "DC", 0.75),
     Blinds(-1, "BL"),
     Cover(-1, "CO"),
     StrictTracking(-1, "ST"),
     AccuracyChallenge(-1, "AC"),
     DifficultyAdjust(-1, "DA"),
     Traceable(-1, "TC"),
-    WindUp(-1, "WU"),
-    WindDown(-1, "WD"),
+    WindUp(-1, "WU", 1.0, 1.5),
+    WindDown(-1, "WD", 1.0, 0.75),
     AdaptiveSpeed(-1, "AS"),
     Muted(-1, "MU"),
     NoScope(-1, "NS");
@@ -78,23 +73,32 @@ enum class OsuMod(
         return this.acronym
     }
 
-    internal class OsuModSerializer :
-        StdSerializer<OsuMod>(ModListType) {
-        override fun serialize(value: OsuMod?, gen: JsonGenerator, provider: SerializerProvider) {
-            gen.writeString(value?.acronym)
-        }
-    }
-
-    internal class OsuModDeserializer :
-        StdDeserializer<OsuMod>(ModListType) {
-        override fun deserialize(p: JsonParser, ctxt: DeserializationContext): OsuMod {
-            val mods = p.readValueAs(String::class.java)
-            return getModFromAcronym(mods)
-        }
-    }
-
     companion object {
-        private val ModListType = JacksonUtil.mapper.typeFactory.constructCollectionType(List::class.java, OsuMod::class.java)
+
+        @JvmStatic
+        fun getModFromLazerMod(mod: LazerScore.ScoreMod?): OsuMod {
+            if (mod == null) return None
+
+            val e = getModFromAcronym(mod.acronym)
+
+            if (mod.settings != null) {
+
+                // DT HT
+                if (mod.settings?.speed != null) e.speed = mod.settings!!.speed!!
+
+                // DA
+                if (mod.settings?.cs != null) e.cs = mod.settings!!.cs!!
+                if (mod.settings?.ar != null) e.ar = mod.settings!!.ar!!
+                if (mod.settings?.od != null) e.od = mod.settings!!.od!!
+                if (mod.settings?.hp != null) e.hp = mod.settings!!.hp!!
+
+                // AS WU WD，四维受 speed 影响，星数受 finalSpeed 影响
+                if (mod.settings?.initialSpeed != null) e.speed = mod.settings!!.initialSpeed!!
+                if (mod.settings?.finalSpeed != null) e.finalSpeed = mod.settings!!.finalSpeed!!
+            }
+
+            return e
+        }
 
         @JvmStatic
         fun getModsList(acronym: String?): List<OsuMod> {
@@ -104,8 +108,8 @@ enum class OsuMod(
             val modList =
                     acronyms
                             .stream()
-                            .map { getModFromAcronym(it) }
-                            .filter { it != Other }
+                            .map { a: String -> getModFromAcronym(acronym) }
+                            .filter { e: OsuMod? -> e != Other }
                             .distinct()
                             .toList()
             checkMods(modList)
@@ -329,7 +333,7 @@ enum class OsuMod(
                 )
             }
         }
-/*
+
         /**
          * 这里不能用 getModsValue，会误报重复
          *
@@ -353,7 +357,7 @@ enum class OsuMod(
         }
 
         @JvmStatic
-        // 如果要计算星数，请使用 getModSpeedForStarCalculate
+        /** 如果要计算星数，请使用 getModSpeedForStarCalculate */
         fun getModSpeed(mods: List<OsuMod>?): Double {
             if (mods.isNullOrEmpty()) return 1.0
 
@@ -375,7 +379,7 @@ enum class OsuMod(
         }
 
         @JvmStatic
-        // WU 和 WD 会改变速率，但是不会作用在谱面上。
+        /** WU 和 WD 会改变速率，但是不会作用在谱面上。 */
         fun getModSpeedForStarCalculate(mods: List<OsuMod>?): Double {
             if (mods.isNullOrEmpty()) return 1.0
 
@@ -397,7 +401,7 @@ enum class OsuMod(
 
             return 1.0
         }
-*/
+
         @JvmStatic
         fun getModFromAcronym(acronym: String?): OsuMod {
             return when (acronym?.uppercase(Locale.getDefault())) {
@@ -424,7 +428,6 @@ enum class OsuMod(
                 "MR" -> Mirror
                 "RD" -> Random
                 // 以下是 Lazer 独占的可以上传成绩的模组
-                // "CL" -> Classic
                 "DC" -> Daycore
                 "BL" -> Blinds
                 "CO" -> Cover

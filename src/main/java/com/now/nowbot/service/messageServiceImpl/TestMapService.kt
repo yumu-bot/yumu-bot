@@ -1,7 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -60,7 +59,7 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
         val mods = LazerMod.getModsList(Stream.of(*mod.split("[\"\\s,，\\-|:]+".toRegex()).dropLastWhile {it.isEmpty()} .toTypedArray()).map { obj: String -> obj.uppercase(Locale.getDefault())} .toList())
 
         
-        val a = beatmapApiService.getAttributes(bid.toLong(), OsuMod.getModsValue(mods.map(LazerMod::type)))
+        val a = beatmapApiService.getAttributes(bid.toLong(), LazerMod.getModsValue(mods))
         val newTotalLength = DataUtil.applyLength(b.totalLength, mods).toFloat()
         
         sb.append(String.format("%.2f", a.starRating)).append(',')
@@ -70,9 +69,9 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
         .append(String.format("%02d", Math.round(newTotalLength % 60f)))
         .append(',')
         sb.append(a.maxCombo).append(',')
-        .append(String.format("%.2f", DataUtil.applyLazerCS(b.cs, mods))).append(',')
-        .append(String.format("%.2f", DataUtil.applyLazerAR(b.ar, mods))).append(',')
-        .append(String.format("%.2f", DataUtil.applyLazerOD(b.od, mods)))
+        .append(String.format("%.2f", DataUtil.applyCS(b.cs, mods))).append(',')
+        .append(String.format("%.2f", DataUtil.applyAR(b.ar, mods))).append(',')
+        .append(String.format("%.2f", DataUtil.applyOD(b.od, mods)))
         
         event.subject.sendMessage(sb.toString())
     }

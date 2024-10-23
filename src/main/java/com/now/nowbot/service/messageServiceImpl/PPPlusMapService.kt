@@ -1,7 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.PPPlus
@@ -57,7 +56,7 @@ class PPPlusMapService(
             throw PPPlusException(PPPlusException.Type.PL_Function_NotSupported)
         }
         val pp = try {
-            performancePlusService.getMapPerformancePlus(data.bid, OsuMod.getModsValue(data.mods.map(LazerMod::type)))
+            performancePlusService.getMapPerformancePlus(data.bid, LazerMod.getModsValue(data.mods))
         } catch (e: Exception) {
             if (e is WebClientResponseException) {
                 log.error { e.responseBodyAsString }
@@ -80,9 +79,9 @@ class PPPlusMapService(
     private fun BeatMap.addPPPlus(pp: PPPlus, mods: List<LazerMod>) {
         starRating = pp.difficulty.total?.toFloat() ?: 0f
         if (mods.isNotEmpty()) {
-            cs = DataUtil.applyLazerCS(cs, mods)
-            ar = DataUtil.applyLazerAR(ar, mods)
-            od = DataUtil.applyLazerOD(od, mods)
+            cs = DataUtil.applyCS(cs, mods)
+            ar = DataUtil.applyAR(ar, mods)
+            od = DataUtil.applyOD(od, mods)
         }
     }
 }
