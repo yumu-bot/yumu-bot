@@ -381,7 +381,7 @@ class BPQueryService(
             return when (key) {
                 Param.Mapper.key -> Param.Mapper(operator, value)
                 Param.ScoreNumber.key -> Param.ScoreNumber(operator, value)
-                Param.Name.key -> Param.Name(operator, value)
+                Param.Name.key, "title" -> Param.Name(operator, value)
                 Param.Artist.key -> Param.Artist(operator, value)
                 Param.Star.key -> Param.Star(operator, value)
                 Param.Index.key -> Param.Index(operator, value)
