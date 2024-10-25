@@ -139,8 +139,10 @@ public class BeatMap implements Cloneable {
     public String getPreviewName() {
         if (beatMapSet != null) {
             return beatMapSet.artist + " - " + beatMapSet.title + " (" + beatMapSet.creator + ") [" + difficultyName + "]";
-        } else {
+        } else if (id != null){
             return id.toString();
+        } else {
+            return "";
         }
     }
 

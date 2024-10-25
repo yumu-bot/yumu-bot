@@ -324,7 +324,7 @@ public interface OsuBeatmapApiService {
         if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
 
         // 没有变星数，并且有 PP，略过
-        if (!LazerMod.hasChangeRating(score.getMods()) && score.getPP() > 0d) return;
+        if ((!LazerMod.hasChangeRating(score.getMods())) && score.getPP() > 0d) return;
 
         var beatMap = score.getBeatMap();
 
@@ -333,8 +333,8 @@ public interface OsuBeatmapApiService {
             r = getPP(score);
 
             if (r.getPp() == 0) {
-                NowbotApplication.log.info("无法获取谱面 {} 的 PP，正在刷新谱面文件！", beatMap.getBeatMapID());
-                refreshBeatMapFileFromDirectory(beatMap.getBeatMapID());
+                NowbotApplication.log.info("无法获取谱面 {} 的 PP，正在刷新谱面文件！", score.getBeatMapID());
+                refreshBeatMapFileFromDirectory(score.getBeatMapID());
                 r = getPP(score);
             }
         } catch (Exception e) {
@@ -426,6 +426,36 @@ public interface OsuBeatmapApiService {
         }
 
         DataUtil.applyBeatMapChanges(beatMap, mods);
+    }
+
+    // 只算 PP，可以加快比如 leader 功能的查询速度
+    default void applyPP(List<LazerScore> scoreList) {
+        if (CollectionUtils.isEmpty(scoreList)) return;
+
+        for (var score : scoreList) {
+            applyPP(score);
+        }
+    }
+
+    // 只算 PP，可以加快比如 leader 功能的查询速度
+    default void applyPP(LazerScore score) {
+        if (score.getPP() > 0d) return;
+
+        JniResult r;
+        try {
+            r = getPP(score);
+
+            if (r.getPp() == 0) {
+                NowbotApplication.log.info("无法获取谱面 {} 的 PP，正在刷新谱面文件！", score.getBeatMapID());
+                refreshBeatMapFileFromDirectory(score.getBeatMapID());
+                r = getPP(score);
+            }
+        } catch (Exception e) {
+            NowbotApplication.log.error("计算时出现异常", e);
+            return;
+        }
+
+        score.setPP(r.getPp());
     }
 
     private void applyStarFromAttributes(BeatMap beatMap, OsuMode ruleset, List<LazerMod> mods) {

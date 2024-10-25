@@ -15,8 +15,6 @@ import com.now.nowbot.util.command.FLAG_BID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
-import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.regex.Matcher
 
@@ -74,8 +72,6 @@ class LeaderBoardService(
         try {
             beatMap = beatmapApiService.getBeatMapFromDataBase(bid)
             isRanked = beatMap.hasLeaderBoard()
-        } catch (e: HttpClientErrorException.NotFound) {
-            throw LeaderBoardException(LeaderBoardException.Type.LIST_Map_NotFound)
         } catch (e: WebClientResponseException.NotFound) {
             throw LeaderBoardException(LeaderBoardException.Type.LIST_Map_NotFound)
         } catch (e: Exception) {
@@ -93,14 +89,16 @@ class LeaderBoardService(
             throw LeaderBoardException(LeaderBoardException.Type.LIST_Map_NotRanked)
         }
 
-        // 对 可能 null 以及 empty 的用这玩意判断
-        if (CollectionUtils.isEmpty(scores))
+        if (scores.isEmpty())
             throw LeaderBoardException(LeaderBoardException.Type.LIST_Score_NotFound)
         if (range > scores.size) range = scores.size
         val subScores = scores.subList(0, range)
 
+        beatmapApiService.applyPP(subScores)
+
         try {
-            val image = imageService.getPanelA3(beatMap, subScores)
+            val image = imageService.getPanelA3(beatMap,
+                subScores.stream().map { it.beatMap = beatMap; it }.toList())
             event.reply(image)
         } catch (e: Exception) {
             log.error("排行榜", e)

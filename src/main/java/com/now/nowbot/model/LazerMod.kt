@@ -57,11 +57,10 @@ data class LazerMod(@JvmField val type: LazerModType) {
 
     companion object {
         @JvmStatic
-        fun contains(mods: List<LazerMod?>?, type: LazerModType?): Boolean {
-            if (mods == null || type == null) return false
+        fun isHidden(mods: List<LazerMod?>?): Boolean {
+            if (mods.isNullOrEmpty()) return false
 
-            val t = mods.stream().map { it?.type }.toList()
-            return t.contains(type)
+            return hasMod(mods, LazerModType.Hidden) || hasMod(mods, LazerModType.Flashlight) || hasMod(mods, LazerModType.Blinds) || hasMod(mods, LazerModType.FadeIn)
         }
 
         @JvmStatic
@@ -461,7 +460,7 @@ data class LazerMod(@JvmField val type: LazerModType) {
 
         @JvmStatic
         fun hasMod(mods: List<LazerMod?>?, type: LazerModType?): Boolean {
-            if (mods == null || type == null) return false
+            if (mods.isNullOrEmpty() || type == null) return false
 
             return mods.stream().map { it?.type }.filter { it != null }.toList().contains(type)
         }

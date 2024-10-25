@@ -33,7 +33,7 @@ open class LazerScore {
         get() {
             val m = this.maximumStatistics
 
-            if (this.isLazer) {
+            if (this.isLazer || this.beatMap.circles == null) {
                 return when (this.mode) {
                     OSU -> (m.great ?: 0)
                     TAIKO -> (m.great ?: 0)
@@ -46,10 +46,10 @@ open class LazerScore {
                 val b = this.beatMap
 
                 return when (this.mode) {
-                    OSU -> b.circles + b.sliders
-                    TAIKO -> b.circles
+                    OSU -> (b.circles ?: 0) + (b.sliders ?: 0)
+                    TAIKO -> (b.circles ?: 0)
                     CATCH -> (m.great ?: 0) + (m.largeTickHit ?: 0) + (m.legacyComboIncrease ?: 0)
-                    MANIA -> b.circles + b.sliders
+                    MANIA -> (b.circles ?: 0) + (b.sliders ?: 0)
                     else -> 0
                 }
             }
@@ -387,7 +387,7 @@ open class LazerScore {
             val hasMiss = (s.miss ?: 0) > 0
 
             // 浮点数比较使用 `==` 容易出bug, 一般5-7位小数就够了
-            return when (score.mode) {
+            var rank = when (score.mode) {
                 OSU -> {
                     val is50Over1P = (s.meh ?: 0) / (m.great ?: m.perfect ?: 0) > 0.01
                     when {
@@ -429,6 +429,10 @@ open class LazerScore {
 
                 DEFAULT -> "F"
             }
+
+            if (LazerMod.isHidden(score.mods) && (rank == "S" || rank == "X")) rank += "H"
+
+            return rank
         }
 
         @JvmStatic
