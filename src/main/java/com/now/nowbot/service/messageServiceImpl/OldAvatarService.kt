@@ -111,7 +111,7 @@ class OldAvatarService(
 
             try {
                 for (u in users) {
-                    images.add(imageService.getPanelEpsilon(u))
+                    images.add(imageService.getPanel(mapOf("user" to u), "Epsilon"))
                 }
 
                 QQMsgUtil.sendImages(event, images)
@@ -123,7 +123,7 @@ class OldAvatarService(
         }
 
         try {
-            val image = imageService.getPanelEpsilon(user)
+            val image = imageService.getPanel(mapOf("user" to user), "Epsilon")
             event.reply(image)
         } catch (e: Exception) {
             log.error("旧头像：发送失败", e)
