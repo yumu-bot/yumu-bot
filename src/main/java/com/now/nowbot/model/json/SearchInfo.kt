@@ -1,105 +1,32 @@
-package com.now.nowbot.model.json;
+package com.now.nowbot.model.json
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty
 
-public class SearchInfo {
-    @JsonProperty("c")
-    String general;
+class SearchInfo {
+    @JsonProperty("c") 
+    var general: String? = null
 
-    @JsonProperty("sort")
-    String sort;
+    @JsonProperty("sort") 
+    var sort: String? = null
 
-    @JsonProperty("s")
-    String status;
+    @JsonProperty("s") 
+    var status: String? = null
 
-    @JsonProperty("nsfw")
-    Boolean nsfw;
+    @JsonProperty("nsfw") 
+    var nsfw: Boolean? = null
 
-    @JsonProperty("g")
-    byte genre;
+    @JsonProperty("g") 
+    var genre: Byte = 0
 
-    @JsonProperty("l")
-    byte language;
+    @JsonProperty("l") 
+    var language: Byte = 0
 
-    @JsonProperty("e")
-    String others;
+    @JsonProperty("e") 
+    var others: String? = null
 
-    @JsonProperty("r")
-    String rank;
+    @JsonProperty("r") 
+    var rank: String? = null
 
-    @JsonProperty("played")
-    String played;
-
-    public String getGeneral() {
-        return general;
-    }
-
-    public void setGeneral(String general) {
-        this.general = general;
-    }
-
-    public String getSort() {
-        return sort;
-    }
-
-    public void setSort(String sort) {
-        this.sort = sort;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Boolean getNsfw() {
-        return nsfw;
-    }
-
-    public void setNsfw(Boolean nsfw) {
-        this.nsfw = nsfw;
-    }
-
-    public byte getGenre() {
-        return genre;
-    }
-
-    public void setGenre(byte genre) {
-        this.genre = genre;
-    }
-
-    public byte getLanguage() {
-        return language;
-    }
-
-    public void setLanguage(byte language) {
-        this.language = language;
-    }
-
-    public String getOthers() {
-        return others;
-    }
-
-    public void setOthers(String others) {
-        this.others = others;
-    }
-
-    public String getRank() {
-        return rank;
-    }
-
-    public void setRank(String rank) {
-        this.rank = rank;
-    }
-
-    public String getPlayed() {
-        return played;
-    }
-
-    public void setPlayed(String played) {
-        this.played = played;
-    }
-
+    @JsonProperty("played") 
+    var played: String? = null
 }

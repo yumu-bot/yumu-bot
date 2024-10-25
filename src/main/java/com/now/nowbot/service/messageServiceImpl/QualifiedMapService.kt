@@ -32,7 +32,7 @@ class QualifiedMapService(
     ): Boolean {
         val m = Instruction.QUALIFIED_MAP.matcher(messageText)
         if (m.find()) {
-            data.setValue(m)
+            data.value = m
             return true
         } else return false
     }
@@ -40,73 +40,81 @@ class QualifiedMapService(
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
         // 获取参数
-        val modeStr: String? = matcher.group(FLAG_MODE)
-        var status = matcher.group("status")
-        var sort = matcher.group("sort")
-        val rangeStr = matcher.group("range")
-        var range: Short
-        var mode = OsuMode.DEFAULT.getModeValue()
+        val statusStr = matcher.group("status") ?: "q"
+        val sort = matcher.group("sort") ?: "ranked_asc"
+        val rangeStr = matcher.group("range") ?: "12"
+        val mode = OsuMode.getMode(matcher.group(FLAG_MODE)).modeValue
 
-        if (modeStr != null) mode = OsuMode.getMode(modeStr).getModeValue()
-        if (status == null) status = "q"
-        if (sort == null) sort = "ranked_asc"
-
-        if (rangeStr == null) {
-            range = 12 // 从0开始
-        } else {
-            try {
-                range = rangeStr.toShort()
-            } catch (e: Exception) {
-                throw QualifiedMapException(QualifiedMapException.Type.Q_Parameter_Error)
-            }
+        val range = try {
+            rangeStr.toInt()
+        } catch (e: Exception) {
+            throw QualifiedMapException(QualifiedMapException.Type.Q_Parameter_Error)
         }
 
-        if (range < 1 || range > 999)
+        if (range < 1 || range > 999) {
             throw QualifiedMapException(QualifiedMapException.Type.Q_Parameter_OutOfRange)
+        }
 
         var page = 1
-        val page_aim =
-            max(floor((range / 50f).toDouble()) + 1, 10.0)
+        val pageAim =
+            max(floor((range / 50.0)) + 1.0, 10.0)
                 .toInt() // 这里需要重复获取，page最多取10页（500个），总之我不知道怎么实现
 
-        val query = HashMap<String?, Any?>()
-        status = getStatus(status)
-        query.put("m", mode)
-        query.put("s", status)
-        query.put("sort", getSort(sort))
-        query.put("page", page)
+        val query = hashMapOf<String, Any>()
+        val status = getStatus(statusStr)
+
+        query["m"] = mode
+        query["s"] = status
+        query["sort"] = getSort(sort)
+        query["page"] = page
 
         try {
-            var data: BeatMapSetSearch? = null
+            var search: BeatMapSetSearch? = null
             var resultCount = 0
             do {
-                if (data == null) {
-                    data = beatmapApiService.searchBeatMapSet(query)
-                    resultCount += data.beatmapSets.size
+                if (search == null) {
+                    search = beatmapApiService.searchBeatMapSet(query)
+                    resultCount += search.beatmapSets.size
                     continue
                 }
                 page++
-                query.put("page", page)
+                query["page"] = page
+
                 val result = beatmapApiService.searchBeatMapSet(query)
+
                 resultCount += result.beatmapSets.size
-                data.beatmapSets.addAll(result.beatmapSets)
-            } while (resultCount < data.getTotal() && page < page_aim)
 
-            if (resultCount == 0)
+                search.beatmapSets.addAll(result.beatmapSets)
+
+                if (result.cursor != null) {
+                    search.cursor = result.cursor
+                }
+
+                if (result.cursorString != null) {
+                    search.cursorString = result.cursorString
+                }
+
+            } while (resultCount < (search?.total ?: 0) && page < pageAim)
+
+            if (resultCount == 0 || search == null) {
                 throw QualifiedMapException(QualifiedMapException.Type.Q_Result_NotFound)
+            }
 
-            data.resultCount = min(data.getTotal().toDouble(), range.toDouble()).toInt()
-            data.setRule(status)
-            data.sortBeatmapDiff()
-            val img = imageService.getPanelA2(data)
+            search.resultCount = min(search.total, range)
+            search.rule = status
+            search.sortBeatmapDiff()
+
+            val img = imageService.getPanelA2(search)
             event.getSubject().sendImage(img)
         } catch (e: Exception) {
-            log.error("QuaMap: ", e)
+            log.error("过审谱面：", e)
             throw QualifiedMapException(QualifiedMapException.Type.Q_Send_Error)
         }
     }
 
     companion object {
+        private fun BeatMapSetSearch.sortBeatmapDiff() = BeatMapSetSearch.sortBeatmapDiff(this)
+
         private val log: Logger = LoggerFactory.getLogger(QualifiedMapService::class.java)
 
         private fun getStatus(status: String): String {

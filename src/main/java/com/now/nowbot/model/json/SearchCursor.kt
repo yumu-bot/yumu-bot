@@ -1,18 +1,17 @@
-package com.now.nowbot.model.json;
+package com.now.nowbot.model.json
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class SearchCursor {
-    @JsonProperty("queued_at")
-    String queued;
-    @JsonProperty("approved_data")
-    String approved;
-    @JsonProperty("id")
-    Long id;
+class SearchCursor {
+    // @JsonProperty("queued_at") var queued: String? = null
+
+    @JsonProperty("approved_date") var approvedDate: String? = null
+
+    @JsonProperty("id") var id: Long? = null
 }

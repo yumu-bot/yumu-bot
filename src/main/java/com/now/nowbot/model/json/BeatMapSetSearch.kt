@@ -1,92 +1,45 @@
-package com.now.nowbot.model.json;
+package com.now.nowbot.model.json
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.lang.Nullable;
-
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class BeatMapSetSearch {
-    @JsonProperty("rule")
-    String rule;
-    @JsonProperty("result_count")
-    int result_count;
-    @JsonProperty("beatmapsets")
-    List<BeatMapSet> beatmapsets;
-    @JsonProperty("total")
-    Integer total;
-    @JsonProperty("cursor_string")
-    String cursorString;
-    @JsonProperty("cursor")
-    SearchCursor cursor;
-    @JsonProperty("search")
-    SearchInfo searchInfo;
+class BeatMapSetSearch {
+    @JsonProperty("rule") var rule: String? = null
 
-    public List<BeatMapSet> getBeatmapSets() {
-        return beatmapsets;
-    }
+    @JsonProperty("recommended_difficulty") var recommendedDifficulty: Double? = 0.0
 
-    public void sortBeatmapDiff() {
-        beatmapsets.forEach(set -> Objects.requireNonNull(set.getBeatMaps()).sort(Comparator.comparing(BeatMap::getStarRating)));
-    }
+    @JsonProperty("result_count") var resultCount: Int = 0
 
-    public void setBeatmapsets(List<BeatMapSet> beatmapsets) {
-        this.beatmapsets = beatmapsets;
-    }
+    @JsonProperty("beatmapsets") var beatmapSets: MutableList<BeatMapSet> = mutableListOf()
 
-    public Integer getTotal() {
-        return total;
-    }
+    @JsonProperty("total") var total: Int = 0
 
-    public void setTotal(Integer total) {
-        this.total = total;
-    }
+    @JsonProperty("cursor_string") var cursorString: String? = null
 
-    public String getCursorString() {
-        return cursorString;
-    }
+    @JsonProperty("cursor") var cursor: SearchCursor? = null
 
-    public void setCursorString(String cursorString) {
-        this.cursorString = cursorString;
-    }
+    @JsonProperty("search") var info: SearchInfo? = null
 
-    public String getRule() {
-        return rule;
-    }
+    companion object {
+        fun sortBeatmapDiff(search: BeatMapSetSearch) {
+            if (search.beatmapSets.isEmpty()) return
 
-    public void setRule(String rule) {
-        this.rule = rule;
-    }
+            for (s in search.beatmapSets) {
+                if (s.beatMaps.isNullOrEmpty()) return
 
-    public int getResultCount() {
-        return result_count;
-    }
-
-    public void setResultCount(int result_count) {
-        this.result_count = result_count;
-    }
-
-    public SearchCursor getCursor() {
-        return cursor;
-    }
-
-    public void setCursor(SearchCursor cursor) {
-        this.cursor = cursor;
-    }
-
-    @Nullable
-    public SearchInfo getSearchInfo() {
-        return searchInfo;
-    }
-
-    public void setSearchInfo(SearchInfo searchInfo) {
-        this.searchInfo = searchInfo;
+                s.beatMaps = s.beatMaps!!
+                    .stream()
+                    .sorted(
+                        Comparator.comparing { obj: BeatMap -> obj.getStarRating() }
+                    )
+                    .sorted(Comparator.comparing { obj: BeatMap -> obj.getModeInt() })
+                    .toList()
+            }
+        }
     }
 }
