@@ -38,12 +38,13 @@ enum class LazerModType(@JvmField val value: Int, @JvmField val acronym: String)
     FreeMod(522171579, "FM"),
     ScoreIncreaseMods(1049688, "IM"),
     Other(-1, "??"),
-    // 以下是 Lazer 独占的可以上传成绩的模组
+    // 以下是 Lazer 独占的可以获取实际 PP 的模组
     Daycore(-1, "DC"),
     Blinds(-1, "BL"),
     Cover(-1, "CO"),
     StrictTracking(-1, "ST"),
     AccuracyChallenge(-1, "AC"),
+    Classic(-2, "CL"),
     DifficultyAdjust(-1, "DA"),
     Traceable(-1, "TC"),
     WindUp(-1, "WU"),

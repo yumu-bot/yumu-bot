@@ -178,8 +178,10 @@ class BPAnalysisService(
                 val s = bps[i]
                 val b = s.beatMap
 
+                val m = s.mods.filter { it.type.value != -2 && it.type.value != 0 }
+
                 run {
-                    val m = BeatMap4BA(
+                    val ba = BeatMap4BA(
                         i + 1,
                         b.totalLength,
                         s.maxCombo,
@@ -187,24 +189,26 @@ class BPAnalysisService(
                         b.starRating,
                         s.rank,
                         s.beatMapSet.covers.list,
-                        s.mods
+                        m
                     )
-                    beatMapList.add(m)
+                    beatMapList.add(ba)
                 }
 
                 run {
                     // 统计 mods / rank
-                    if (!CollectionUtils.isEmpty(s.mods)) {
-                        s.mods.filter { it.type.value > 0 } .forEach {
+                    if (m.isNotEmpty()) {
+                        m.forEach {
                             modsPPMap.add(it.type.acronym, s.weight!!.PP)
                         }
-                        modsSum += s.mods.size
+                        modsSum += m.size
                     } else {
                         modsSum += 1
                     }
+
                     if (s.fullCombo) {
                         rankMap.add("FC", s.weight!!.PP)
                     }
+
                     rankMap.add(s.rank, s.weight!!.PP)
                 }
             }
