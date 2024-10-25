@@ -143,7 +143,7 @@ class BPQueryService(
                 LE -> s.beatMap.starRating.isLessOrEqual(star)
             }
         }, EQ, NE, GT, GE, LT, LE),
-        ScoreNumber("score", { (op, v, s) ->
+        ScoreID("score", { (op, v, s) ->
             val score = try {
                 v.toLong()
             } catch (_: Exception) {
@@ -379,11 +379,11 @@ class BPQueryService(
         private fun getFilter(cmd: String): (LazerScore) -> Boolean {
             val (key, operator, value) = cmd.getOperator()
             return when (key) {
-                Param.Mapper.key -> Param.Mapper(operator, value)
-                Param.ScoreNumber.key -> Param.ScoreNumber(operator, value)
+                Param.Mapper.key, "creator" -> Param.Mapper(operator, value)
+                Param.ScoreID.key -> Param.ScoreID(operator, value)
                 Param.Name.key, "title" -> Param.Name(operator, value)
                 Param.Artist.key -> Param.Artist(operator, value)
-                Param.Star.key -> Param.Star(operator, value)
+                Param.Star.key, "sr" -> Param.Star(operator, value)
                 Param.Index.key -> Param.Index(operator, value)
                 Param.AR.key -> Param.AR(operator, value)
                 Param.OD.key -> Param.OD(operator, value)
@@ -392,11 +392,11 @@ class BPQueryService(
                 Param.Rank.key -> Param.Rank(operator, value)
                 Param.Length.key -> Param.Length(operator, value)
                 Param.Bpm.key -> Param.Bpm(operator, value)
-                Param.Accuracy.key -> Param.Accuracy(operator, value)
-                Param.Combo.key -> Param.Combo(operator, value)
-                Param.Miss.key -> Param.Miss(operator, value)
-                Param.Mods.key -> Param.Mods(operator, value)
-                Param.Rate.key -> Param.Rate(operator, value)
+                Param.Accuracy.key, "acc", "a" -> Param.Accuracy(operator, value)
+                Param.Combo.key, "c" -> Param.Combo(operator, value)
+                Param.Miss.key, "x" -> Param.Miss(operator, value)
+                Param.Mods.key, "m" -> Param.Mods(operator, value)
+                Param.Rate.key, "p" -> Param.Rate(operator, value)
                 else -> throw UnsupportedKey(key)
             }
         }

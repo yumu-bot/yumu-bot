@@ -92,7 +92,7 @@ open class LazerScore {
         // DT HT AS WU WD
         @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
 
-        // SD PF
+        // SD PF AC
         @JsonProperty("restart_on_fail") var restartOnFail: Boolean? = null,
 
         // AS WU WD
@@ -107,6 +107,10 @@ open class LazerScore {
         @JsonProperty("overall_difficulty") var od: Double? = null,
         @JsonProperty("drain_rate") var hp: Double? = null,
         @JsonProperty("extended_limits") var extendedLimits: Boolean? = null,
+
+        // AC
+        @JsonProperty("accuracy_judge_mode") var accuracyJudgeMode: String? = null,
+        @JsonProperty("minimum_accuracy") var minimumAccuracy: Double? = null,
     )
 
     @JsonProperty("statistics")
