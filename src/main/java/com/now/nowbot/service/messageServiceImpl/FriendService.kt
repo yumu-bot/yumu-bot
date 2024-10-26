@@ -8,6 +8,8 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.messageServiceImpl.FriendService.Companion.SortDirection.*
+import com.now.nowbot.service.messageServiceImpl.FriendService.Companion.SortType.*
 import com.now.nowbot.service.messageServiceImpl.FriendService.FriendParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.serviceException.FriendException
@@ -36,7 +38,8 @@ class FriendService(
         val offset: Int,
         val limit: Int,
         val uid: Long = 0,
-        val user: OsuUser? = null
+        val user: OsuUser? = null,
+        val sort: Pair<SortType, SortDirection> = NULL to RANDOM
     )
 
     override fun isHandle(
@@ -49,16 +52,18 @@ class FriendService(
             return false
         }
 
+        val sort: Pair<SortType, SortDirection> = getSort(m.group("sort"))
+
         val isMyself = AtomicBoolean(true)
         val range = CmdUtil.getUserWithRange(event, m, CmdObject(), isMyself)
         if (range.data != null && !isMyself.get()) {
             // 如果不是自己代表是 !f xxx / @
             val u = range.data
-            data.value = FriendParam(0, 0, u?.userID ?: 0, u)
+            data.value = FriendParam(0, 0, u?.userID ?: 0, u, sort)
         } else {
             val offset = range.getOffset(0, false)
             val limit = range.getLimit(12, false)
-            data.value = FriendParam(offset, limit, 0, range.data)
+            data.value = FriendParam(offset, limit, 0, range.data, sort)
         }
         return true
     }
@@ -147,12 +152,13 @@ class FriendService(
     }
 
     fun sendFriendList(binUser: BinUser, param: FriendParam): MessageChain {
-        val friends: MutableList<MicroUser?> = ArrayList()
+        val friends = mutableListOf<MicroUser>()
+        val sortType = param.sort.first
+        val sortDirection = param.sort.second
 
         // 拿到参数,默认1-24个
         val offset = param.offset
         val limit = param.limit
-        val doRandom = (offset == 0 && limit == 12)
 
         if (limit == 0 || 100 < limit - offset) {
             throw FriendException(FriendException.Type.FRIEND_Client_ParameterOutOfBounds)
@@ -168,21 +174,54 @@ class FriendService(
             throw FriendException(FriendException.Type.FRIEND_Me_NotFound)
         }
 
-        val friendList: List<MicroUser>
-        try {
-            friendList = userApiService.getFriendList(binUser)
+        val rawList = try {
+            userApiService.getFriendList(binUser)
         } catch (e: Exception) {
             throw FriendException(FriendException.Type.FRIEND_Me_FetchFailed)
         }
 
-        if (doRandom) {
-            // 随机打乱好友
-            friendList.shuffle()
+        val stream = if (sortDirection == DESCEND) {
+            // 先翻一次，因为等会要翻回来，这样可以保证都是默认按名字升序排序的
+            rawList.stream().sorted(Comparator.comparing<MicroUser?, String?> { it.userName }.reversed())
+        } else {
+            rawList.stream().sorted(Comparator.comparing { it.userName })
+        }
+
+        val sorted =
+            when(sortType) {
+                PERFORMANCE -> stream.filter { it.statistics.pp > 0 }
+                    .sorted(Comparator.comparing { it.statistics.pp }).toList()
+                ACCURACY -> stream.filter { it.statistics.accuracy > 0 }
+                    .sorted(Comparator.comparing { it.statistics.accuracy }).toList()
+                TIME -> stream.sorted(Comparator.comparing { it.lastTime }).toList()
+                PLAY_COUNT -> stream.sorted(Comparator.comparing { it.statistics.playCount }).toList()
+                PLAY_TIME -> stream.sorted(Comparator.comparing { it.statistics.playTime }).toList()
+                TOTAL_HITS -> stream.sorted(Comparator.comparing { it.statistics.totalHits }).toList()
+                ONLINE -> stream
+                    .filter { it.statistics.pp > 0 }
+                    .sorted(Comparator.comparing<MicroUser?, Double?> { it.statistics.pp }.reversed())
+                    .filter{ it.isOnline }.toList()
+
+                UID -> stream.sorted(Comparator.comparing { it.userID }).toList()
+                COUNTRY -> stream.sorted(Comparator.comparing { it.country.code }).toList()
+                else -> rawList
+            }
+
+        val result = when(sortDirection) {
+            ASCEND, TRUE -> sorted
+            DESCEND -> sorted.reversed()
+            RANDOM -> {
+                // 随机打乱好友
+                sorted.shuffle()
+                sorted
+            }
+            // 取差集
+            FALSE -> stream.filter { ! sorted.contains(it) }.toList()
         }
 
         var i = offset
-        while (i < offset + limit && i < friendList.size) {
-            friends.add(friendList[i])
+        while (i < offset + limit && i < result.size) {
+            friends.add(result[i])
             i++
         }
 
@@ -190,7 +229,15 @@ class FriendService(
             throw FriendException(FriendException.Type.FRIEND_Client_NoFriend)
 
         try {
-            val image = imageService.getPanelA1(osuUser, friends)
+            val type = param.sort.first.name.lowercase()
+
+            val body = mapOf(
+                "me_card_A1" to osuUser,
+                "friend_card_A1" to friends,
+                "type" to type,
+            )
+
+            val image = imageService.getPanel(body, "A1")
             return QQMsgUtil.getImage(image)
         } catch (e: Exception) {
             log.error("Friend: ", e)
@@ -200,5 +247,45 @@ class FriendService(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(FriendService::class.java)
+
+
+        enum class SortType {
+            NULL, PERFORMANCE, ACCURACY, PLAY_COUNT, PLAY_TIME, TOTAL_HITS, TIME, UID, COUNTRY, NAME, ONLINE
+        }
+
+        enum class SortDirection {
+            RANDOM, ASCEND, DESCEND, TRUE, FALSE
+        }
+
+        private fun getSort(type: String?) : Pair<SortType, SortDirection> {
+            if (type.isNullOrBlank()) return NULL to RANDOM
+
+            return when(type.replace("\\s*".toRegex(), "").lowercase()) {
+                "p", "pp", "performance", "p-", "pp-", "performance-" -> PERFORMANCE to DESCEND
+                "p2", "pp2", "performance2", "p+", "pp+", "performance+" -> PERFORMANCE to ASCEND
+                "a", "acc", "accuracy", "a-", "acc-", "accuracy-" -> ACCURACY to DESCEND
+                "a2", "acc2", "accuracy2", "a+", "acc+", "accuracy+" -> ACCURACY to ASCEND
+                "pc", "playcount", "pc-", "playcount-" -> PLAY_COUNT to DESCEND
+                "pc2", "playcount2", "pc+", "playcount+" -> PLAY_COUNT to ASCEND
+                "pt", "playtime", "pt-", "playtime-" -> PLAY_TIME to DESCEND
+                "pt2", "playtime2", "pt+", "playtime+" -> PLAY_TIME to ASCEND
+                "h", "tth", "hit", "totalhit", "totalhits", "h-", "tth-", "hit-", "totalhit-", "totalhits-" -> TOTAL_HITS to DESCEND
+                "h2", "tth2", "hit2", "totalhit2", "totalhits2", "h+", "tth+", "hit+", "totalhit+", "totalhits+" -> TOTAL_HITS to ASCEND
+
+                "t", "time", "seen", "t+", "time+", "seen+" -> TIME to ASCEND
+                "t2", "time2", "seen2", "t-", "time-", "seen-" -> TIME to DESCEND
+                "u", "uid", "u+", "uid+" -> UID to ASCEND
+                "u2", "uid2", "u-", "uid-" -> UID to DESCEND
+                "c", "country", "c+", "country+" -> COUNTRY to ASCEND
+                "c2", "country2", "c-", "country-" -> COUNTRY to DESCEND
+                "n", "name", "n+", "name+" -> NAME to ASCEND
+                "n2", "name2", "n-", "name-" -> NAME to DESCEND
+
+                "o", "on", "online", "o+", "online+" -> ONLINE to TRUE
+                "o2", "online2", "o-", "online-", "f", "off", "offline" -> ONLINE to FALSE
+
+                else -> NULL to RANDOM
+            }
+        }
     }
 }

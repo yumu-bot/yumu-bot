@@ -202,8 +202,25 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     FRIEND(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("friends", "friend", "f")
+        appendCommandsIgnoreAll("friends?", "f")
+        appendGroup(MAYBE) {
+            append(REG_COLON)
+            appendSpace()
+            appendCaptureGroup("sort", "[\\-_+1247a-zA-Z]", MORE)
+        }
         appendNameAndRange()
+
+        /*
+        appendGroup(MAYBE) {
+            append(REG_STAR)
+            appendSpace()
+            appendCaptureGroup("country",
+                REG_WORD,
+                MORE
+            )
+        }
+
+         */
     }),
 
     MUTUAL(CommandPatternBuilder.create {

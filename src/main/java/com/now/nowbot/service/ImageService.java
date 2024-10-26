@@ -41,6 +41,12 @@ public class ImageService {
         return doPost("panel_" + name, httpEntity);
     }
 
+    public byte[] getPanel(Object any, String name) {
+        HttpHeaders headers = getDefaultHeader();
+        HttpEntity<Object> httpEntity = new HttpEntity<>(any, headers);
+        return doPost("panel_" + name, httpEntity);
+    }
+
     /**
      * 获取 md 图片，现已经弃用，被 panel A6 代替
      * @param markdown md 字符串
@@ -87,15 +93,6 @@ public class ImageService {
             if (body != null)
                 throw new RuntimeException(body.get("status").asText());
         }
-    }
-
-    public byte[] getPanelA1(OsuUser userMe, List<MicroUser> friendList) {
-        var headers = getDefaultHeader();
-        Map<String, Object> body = new HashMap<>();
-        body.put("me_card_A1", userMe);
-        body.put("friend_card_A1", friendList);
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_A1", httpEntity);
     }
 
     public byte[] getPanelA2(BeatMapSetSearch search) {
@@ -377,8 +374,8 @@ public class ImageService {
         ));
 
         historyUser.ifPresent(user -> {
-            if (user.getStatistics() instanceof InfoLogStatistics log) {
-                body.put("day", ChronoUnit.DAYS.between(log.getLogTime().toLocalDate(), LocalDate.now()));
+            if (user.getStatistics() instanceof InfoLogStatistics historyStat) {
+                body.put("day", ChronoUnit.DAYS.between(historyStat.getLogTime().toLocalDate(), LocalDate.now()));
             }
             body.put("historyUser", user);
         });
@@ -565,12 +562,6 @@ public class ImageService {
         body.put("hasBG", hasBG);
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_Delta", httpEntity);
-    }
-
-    public byte[] getPanelEpsilon(OsuUser user) {
-        var headers = getDefaultHeader();
-        HttpEntity<OsuUser> httpEntity = new HttpEntity<>(user, headers);
-        return doPost("panel_Epsilon", httpEntity);
     }
 
     public byte[] getPanelAlpha(StringBuilder sb) {
