@@ -225,8 +225,13 @@ class FriendService(
             i++
         }
 
-        if (CollectionUtils.isEmpty(friends))
-            throw FriendException(FriendException.Type.FRIEND_Client_NoFriend)
+        if (CollectionUtils.isEmpty(friends)) {
+            if (sortType == NULL) {
+                throw FriendException(FriendException.Type.FRIEND_Client_NoFriend)
+            } else {
+                throw FriendException(FriendException.Type.FRIEND_Client_NoMatch)
+            }
+        }
 
         try {
             val type = param.sort.first.name.lowercase()
