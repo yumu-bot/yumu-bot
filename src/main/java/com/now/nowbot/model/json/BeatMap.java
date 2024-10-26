@@ -483,7 +483,7 @@ public class BeatMap implements Cloneable {
 
     // 如果当前实例是 beatMapLite，返回以这个实例为主，以 b 为辅的新 beatMap
     @NonNull
-    public static BeatMap extend(BeatMap lite, BeatMap extended) {
+    public static BeatMap extend(@Nullable BeatMap lite, BeatMap extended) {
         if (extended == null) {
             return Objects.requireNonNullElseGet(lite, BeatMap::new);
         } else if (lite == null || lite.getCS() == null){

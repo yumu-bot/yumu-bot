@@ -311,10 +311,12 @@ class ScorePRService(
             panel: String,
             beatmapApiService: OsuBeatmapApiService
         ): PanelE5Param {
+            beatmapApiService.applyBeatMapExtend(score)
+
             val beatmap = score.beatMap
+
             val original = DataUtil.getOriginal(beatmap)
 
-            beatmapApiService.applyBeatMapExtend(score)
             beatmapApiService.applySRAndPP(score)
 
             val attributes = beatmapApiService.getStatistics(score)

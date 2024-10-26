@@ -2,16 +2,13 @@ package com.now.nowbot.service.osuApiService.impl
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.BinUser
-import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.enums.LazerModType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatmapUserScore
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.util.JacksonUtil
-import java.net.URI
-import java.util.*
-import java.util.function.Consumer
-import java.util.function.Function
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
@@ -20,6 +17,10 @@ import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
+import java.net.URI
+import java.util.*
+import java.util.function.Consumer
+import java.util.function.Function
 
 @Service
 class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
@@ -169,7 +170,7 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
             bid: Long,
             uid: Long,
             mode: OsuMode?,
-            mods: Iterable<OsuMod?>,
+            mods: Iterable<LazerMod?>,
     ): BeatmapUserScore? {
         val uri = Function { n: Int? ->
             Function { uriBuilder: UriBuilder ->
@@ -194,7 +195,7 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
             bid: Long,
             user: BinUser,
             mode: OsuMode,
-            mods: Iterable<OsuMod?>,
+            mods: Iterable<LazerMod?>,
     ): BeatmapUserScore? {
         if (!user.isAuthorized) {
             return getBeatMapScore(bid, user.osuID, mode, mods)
@@ -218,18 +219,18 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
                 .block()
     }
 
-    private fun setMods(builder: UriBuilder, mods: Iterable<OsuMod?>) {
+    private fun setMods(builder: UriBuilder, mods: Iterable<LazerMod?>) {
         for (mod in mods) {
-            if (mod == OsuMod.None) {
+            if (mod?.type == LazerModType.None) {
                 builder.queryParam("mods[]", "NM")
                 return
             }
         }
-        mods.forEach(Consumer { mod: OsuMod? -> builder.queryParam("mods[]", mod!!.acronym) })
+        mods.forEach(Consumer { mod: LazerMod? -> builder.queryParam("mods[]", mod!!.type.acronym) })
     }
 
-    override fun getLeaderBoardScore(bid: Long, user: BinUser, mode: OsuMode?): List<LazerScore> {
-        if (!user.isAuthorized) getLeaderBoardScore(bid, user.osuID, mode)
+    override fun getBeatMapScores(bid: Long, user: BinUser, mode: OsuMode?): List<LazerScore> {
+        if (!user.isAuthorized) getBeatMapScores(bid, user.osuID, mode)
         return base.osuApiWebClient
                 .get()
                 .uri { uriBuilder: UriBuilder ->
@@ -248,7 +249,7 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
                 .block()!!
     }
 
-    override fun getLeaderBoardScore(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore> {
+    override fun getBeatMapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore> {
         return base.osuApiWebClient
                 .get()
                 .uri { uriBuilder: UriBuilder ->

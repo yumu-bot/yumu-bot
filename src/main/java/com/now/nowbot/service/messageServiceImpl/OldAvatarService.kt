@@ -139,10 +139,10 @@ class OldAvatarService(
                 .split("[,，|:：]+".toRegex())
                 .dropLastWhile { it.isEmpty() }
                 .toTypedArray()
-        if (dataStr.isBlank() || dataStrArray.size == 0) return null
+        if (dataStr.isBlank() || dataStrArray.isEmpty()) return null
 
-        val ids = ArrayList<Long>()
-        val users = ArrayList<OsuUser?>()
+        val ids = mutableListOf<Long>()
+        val users = mutableListOf<OsuUser>()
 
         for (s in dataStrArray) {
             if (!StringUtils.hasText(s)) continue

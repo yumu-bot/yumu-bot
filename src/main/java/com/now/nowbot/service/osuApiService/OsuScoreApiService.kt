@@ -1,7 +1,7 @@
 package com.now.nowbot.service.osuApiService
 
 import com.now.nowbot.model.BinUser
-import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatmapUserScore
 import com.now.nowbot.model.json.LazerScore
@@ -97,18 +97,18 @@ interface OsuScoreApiService {
 
     fun getBeatMapScore(bid: Long, user: BinUser, mode: OsuMode?): BeatmapUserScore?
 
-    fun getBeatMapScore(bid: Long, uid: Long, mode: OsuMode?, mods: Iterable<OsuMod?>): BeatmapUserScore?
+    fun getBeatMapScore(bid: Long, uid: Long, mode: OsuMode?, mods: Iterable<LazerMod?>): BeatmapUserScore?
 
     fun getBeatMapScore(
             bid: Long,
             user: BinUser,
             mode: OsuMode,
-            mods: Iterable<OsuMod?>,
+            mods: Iterable<LazerMod?>,
     ): BeatmapUserScore?
 
-    fun getLeaderBoardScore(bid: Long, user: BinUser, mode: OsuMode?): List<LazerScore>
+    fun getBeatMapScores(bid: Long, user: BinUser, mode: OsuMode?): List<LazerScore>
 
-    fun getLeaderBoardScore(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore>
+    fun getBeatMapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore>
 
     fun getLeaderBoardScore(bid: Long, mode: OsuMode?): List<LazerScore>
 }

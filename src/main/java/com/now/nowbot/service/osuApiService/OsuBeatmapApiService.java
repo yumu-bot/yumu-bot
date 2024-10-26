@@ -300,7 +300,7 @@ public interface OsuBeatmapApiService {
 
     // 给成绩添加完整的谱面
     default void applyBeatMapExtend(LazerScore score) {
-        var extended = getBeatMap(score.getBeatMap().getBeatMapID());
+        var extended = getBeatMap(score.getBeatMapID());
         var lite = score.getBeatMap();
 
         score.setBeatMap(BeatMap.extend(lite, extended));

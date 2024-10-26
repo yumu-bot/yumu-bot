@@ -58,6 +58,11 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendModeBIDQQUIDNameMod()
     }),
 
+    SCORES(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("ss")
+        appendModeBIDQQUIDNameMod()
+    }),
+
     BP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("b")
         appendModeQQUIDNameRange()
@@ -84,7 +89,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     UU_BA(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("uuba", "ua")
+        appendOfficialCommandsIgnoreAll("ua")
         appendModeQQUIDName()
     }),
 

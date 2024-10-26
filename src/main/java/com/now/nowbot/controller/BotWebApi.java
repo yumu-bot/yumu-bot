@@ -583,7 +583,7 @@ public class BotWebApi {
             score = Objects.requireNonNull(scoreApiService.getBeatMapScore(bid, uid, mode)).getScore();
         } else {
             try {
-                scoreList = scoreApiService.getLeaderBoardScore(bid, uid, mode);
+                scoreList = scoreApiService.getBeatMapScores(bid, uid, mode);
                 for (var s : scoreList) {
                     if (LazerMod.getModsValue(s.getMods()) == modInt) {
                         score = s;

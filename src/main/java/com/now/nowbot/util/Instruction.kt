@@ -127,6 +127,11 @@ enum class Instruction(val pattern: Pattern) {
         appendModeBIDQQUIDNameMod()
     }),
 
+    SCORES(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("scores", "ss")
+        appendModeBIDQQUIDNameMod()
+    }),
+
     BP(CommandPatternBuilder.create {
         appendGroup {
             append(REG_EXCLAMATION)

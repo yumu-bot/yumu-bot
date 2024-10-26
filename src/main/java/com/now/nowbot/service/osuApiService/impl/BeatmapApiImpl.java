@@ -366,7 +366,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
 
     @Override
     @NonNull
-    public int[] getBeatmapObjectGrouping26(BeatMap b) {
+    public int[] getBeatmapObjectGrouping26(@NonNull BeatMap b) {
         int[] result = null;
         if (StringUtils.hasText(b.getMd5())) {
             var r = beatmapObjectCountMapper.getDensityByBidAndCheck(b.getBeatMapID(), b.getMd5());

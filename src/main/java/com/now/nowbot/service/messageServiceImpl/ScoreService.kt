@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
@@ -22,70 +22,95 @@ import com.now.nowbot.util.CmdUtil.getMod
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithOutRange
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
+import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.regex.Matcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
 
 @Service("SCORE")
 class ScoreService(
-    private val scoreApiService: OsuScoreApiService,
-    private val beatmapApiService: OsuBeatmapApiService,
-    private val imageService: ImageService,
+        private val scoreApiService: OsuScoreApiService,
+        private val beatmapApiService: OsuBeatmapApiService,
+        private val imageService: ImageService,
 ) : MessageService<ScoreParam>, TencentMessageService<ScoreParam> {
 
     data class ScoreParam(
-        val user: OsuUser?,
-        val mode: OsuMode?,
-        val bid: Long,
-        val modsStr: String,
-        val isDefault: Boolean,
-        val isMyself: Boolean
+            val user: OsuUser,
+            val mode: OsuMode?,
+            val bid: Long,
+            val mods: List<LazerMod>,
+            val isDefault: Boolean,
+            val isMyself: Boolean,
+            val isMultipleScore: Boolean,
     )
 
     @Throws(TipsException::class)
-    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<ScoreParam>): Boolean {
-        val matcher = Instruction.SCORE.matcher(messageText)
-        if (!matcher.find()) {
+    override fun isHandle(
+            event: MessageEvent,
+            messageText: String,
+            data: DataValue<ScoreParam>,
+    ): Boolean {
+        val m2 = Instruction.SCORES.matcher(messageText)
+        val m = Instruction.SCORE.matcher(messageText)
+
+        val isMultipleScore: Boolean
+
+        val matcher: Matcher
+
+        if (m2.find()) {
+            matcher = m2
+            isMultipleScore = true
+        } else if (m.find()) {
+            matcher = m
+            isMultipleScore = false
+        } else {
             return false
         }
 
         val mode = getMode(matcher)
         val isMyself = AtomicBoolean(false)
         val isDefault = OsuMode.isDefaultOrNull(mode.data)
-        val user: OsuUser?
-        try {
-            user = getUserWithOutRange(event, matcher, mode, isMyself)
-        } catch (e: BindException) {
-            if (isMyself.get() && messageText.lowercase(Locale.getDefault()).contains("score")) {
-                log.info("score 退避")
-                return false
-            }
-            throw if (isMyself.get()) {
-                GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-            } else {
-                GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
-            }
-        }
 
-        if (Objects.isNull(user)) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-        }
+        val user: OsuUser =
+                try {
+                    getUserWithOutRange(event, matcher, mode, isMyself)
+                } catch (e: BindException) {
+                    if (
+                            isMyself.get() &&
+                                    messageText.lowercase(Locale.getDefault()).contains("score")
+                    ) {
+                        log.info("score 退避")
+                        return false
+                    }
+                    throw if (isMyself.get()) {
+                        GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
+                    } else {
+                        GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
+                    }
+                }
 
         val bid = getBid(matcher)
-        data.value = ScoreParam(user, mode.data, bid, getMod(matcher), isDefault, isMyself.get())
+        val mods = LazerMod.getModsList(getMod(matcher))
+
+        data.value =
+                ScoreParam(user, mode.data, bid, mods, isDefault, isMyself.get(), isMultipleScore)
 
         return true
     }
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: ScoreParam) {
-        val message = getMessageChain(param)
+        val message =
+                if (param.isMultipleScore) {
+                    getMultipleScore(param)
+                } else {
+                    getSingleScore(param)
+                }
+
         try {
             event.reply(message)
         } catch (e: Exception) {
@@ -95,8 +120,21 @@ class ScoreService(
     }
 
     override fun accept(event: MessageEvent, messageText: String): ScoreParam? {
-        val matcher = OfficialInstruction.SCORE.matcher(messageText)
-        if (!matcher.find()) return null
+        val m2 = Instruction.SCORES.matcher(messageText)
+        val m = Instruction.SCORE.matcher(messageText)
+
+        val isMultipleScore: Boolean
+        val matcher: Matcher
+
+        if (m2.find()) {
+            matcher = m2
+            isMultipleScore = true
+        } else if (m.find()) {
+            matcher = m
+            isMultipleScore = false
+        } else {
+            return null
+        }
 
         val mode = getMode(matcher)
         val isMyself = AtomicBoolean(false)
@@ -104,55 +142,145 @@ class ScoreService(
         val user = getUserWithOutRange(event, matcher, mode, isMyself)
 
         val bid = getBid(matcher)
-        return ScoreParam(user, mode.data, bid, getMod(matcher), isDefault, isMyself.get())
+        val mods = LazerMod.getModsList(getMod(matcher))
+
+        return ScoreParam(user, mode.data, bid, mods, isDefault, isMyself.get(), isMultipleScore)
     }
 
     override fun reply(event: MessageEvent, param: ScoreParam): MessageChain? {
-        return getMessageChain(param)
+        return if (param.isMultipleScore) {
+            getMultipleScore(param)
+        } else {
+            getSingleScore(param)
+        }
     }
 
-    private fun getMessageChain(param: ScoreParam): MessageChain {
+    private fun getMultipleScore(param: ScoreParam): MessageChain {
         val mode = param.mode
-        val user = param.user!!
-        val isDefault = param.isDefault
-
+        val user = param.user
         val bid = param.bid
 
         if (bid == 0L) throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
+        val isDefault = param.isDefault
 
-        // 处理 mods
-        val modsStr = param.modsStr
+        var scores: List<LazerScore> =
+                try {
+                    scoreApiService
+                            .getBeatMapScores(bid, user.userID, mode)
+                            .stream()
+                            .sorted(
+                                    Comparator.comparing<LazerScore, Double> { it.PP ?: 0.0 }
+                                            .reversed()
+                            )
+                            .toList()
+                } catch (e: WebClientResponseException.NotFound) {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
+                } catch (e: WebClientResponseException.Unauthorized) {
+                    if (param.isMyself) {
+                        throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
+                    } else {
+                        throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
+                    }
+                }
+
+        if (scores.isEmpty()) {
+            // 当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
+            if (isDefault) {
+                scores =
+                        scoreApiService
+                                .getBeatMapScores(bid, user.userID, OsuMode.DEFAULT)
+                                .stream()
+                                .sorted(
+                                        Comparator.comparing<LazerScore, Double> { it.PP ?: 0.0 }
+                                                .reversed()
+                                )
+                                .toList()
+            } else {
+                throw GeneralTipsException(
+                        GeneralTipsException.Type.G_Null_SpecifiedMode,
+                        mode!!.getName(),
+                )
+            }
+        }
+
+        if (scores.isEmpty()) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, bid.toString())
+        }
+
+        val image: ByteArray
+
+        try {
+            if (scores.size > 1) {
+                beatmapApiService.applySRAndPP(scores)
+                beatmapApiService.applyBeatMapExtend(scores)
+                image = imageService.getPanelA5(user, scores, "SS")
+            } else {
+                val score = scores.first()
+                val e5Param = getScore4PanelE5(user, score, "S", beatmapApiService)
+
+                image = imageService.getPanel(e5Param.toMap(), "E5")
+            }
+
+            return QQMsgUtil.getImage(image)
+        } catch (e: Exception) {
+            log.error("成绩：渲染失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "成绩")
+        }
+    }
+
+    private fun getSingleScore(param: ScoreParam): MessageChain {
+        val mode = param.mode
+        val user = param.user
+        val bid = param.bid
+
+        if (bid == 0L) throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
+        val isDefault = param.isDefault
 
         val score: LazerScore?
-        if (StringUtils.hasText(modsStr)) {
-            val osuMods = OsuMod.getModsList(modsStr)
-            score = try {
-                scoreApiService.getBeatMapScore(bid, user.userID, mode, osuMods)?.score
-            } catch (e: WebClientResponseException) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, bid.toString())
-            }
+
+        if (param.mods.isNotEmpty()) {
+            score =
+                    try {
+                        scoreApiService.getBeatMapScore(bid, user.userID, mode, param.mods)?.score
+                    } catch (e: WebClientResponseException) {
+                        throw GeneralTipsException(
+                                GeneralTipsException.Type.G_Null_Score,
+                                bid.toString(),
+                        )
+                    }
             beatmapApiService.applyBeatMapExtend(score)
         } else {
-            score = try {
-                scoreApiService.getBeatMapScore(bid, user.userID, mode)?.score
-            } catch (e: WebClientResponseException.NotFound) {
-                //当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
-                if (isDefault) {
+            score =
                     try {
-                        scoreApiService.getBeatMapScore(bid, user.userID, OsuMode.DEFAULT)?.score
-                    } catch (e1: WebClientResponseException) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, bid.toString())
+                        scoreApiService.getBeatMapScore(bid, user.userID, mode)?.score
+                    } catch (e: WebClientResponseException.NotFound) {
+                        // 当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
+                        if (isDefault) {
+                            try {
+                                scoreApiService
+                                        .getBeatMapScore(bid, user.userID, OsuMode.DEFAULT)
+                                        ?.score
+                            } catch (e1: WebClientResponseException) {
+                                throw GeneralTipsException(
+                                        GeneralTipsException.Type.G_Null_Score,
+                                        bid.toString(),
+                                )
+                            }
+                        } else {
+                            throw GeneralTipsException(
+                                    GeneralTipsException.Type.G_Null_SpecifiedMode,
+                                    mode!!.getName(),
+                            )
+                        }
+                    } catch (e: WebClientResponseException.Unauthorized) {
+                        if (param.isMyself) {
+                            throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
+                        } else {
+                            throw GeneralTipsException(
+                                    GeneralTipsException.Type.G_TokenExpired_Player
+                            )
+                        }
                     }
-                } else {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_SpecifiedMode, mode!!.getName())
-                }
-            } catch (e: WebClientResponseException.Unauthorized) {
-                if (param.isMyself) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-                } else {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
-                }
-            }
         }
 
         val image: ByteArray
