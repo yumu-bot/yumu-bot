@@ -61,8 +61,8 @@ class FriendService(
             val u = range.data
             data.value = FriendParam(0, 0, u?.userID ?: 0, u, sort)
         } else {
-            val offset = range.getOffset(0, false)
-            val limit = range.getLimit(12, false)
+            val offset = range.getOffset(0, true)
+            val limit = range.getLimit(12, true)
             data.value = FriendParam(offset, limit, 0, range.data, sort)
         }
         return true
@@ -193,7 +193,9 @@ class FriendService(
                     .sorted(Comparator.comparing { it.statistics.pp }).toList()
                 ACCURACY -> stream.filter { it.statistics.accuracy > 0 }
                     .sorted(Comparator.comparing { it.statistics.accuracy }).toList()
-                TIME -> stream.sorted(Comparator.comparing { it.lastTime }).toList()
+                TIME -> stream
+                    .filter {  it.lastTime != null }
+                    .sorted(Comparator.comparing { it.lastTime }).toList()
                 PLAY_COUNT -> stream.sorted(Comparator.comparing { it.statistics.playCount }).toList()
                 PLAY_TIME -> stream.sorted(Comparator.comparing { it.statistics.playTime }).toList()
                 TOTAL_HITS -> stream.sorted(Comparator.comparing { it.statistics.totalHits }).toList()
