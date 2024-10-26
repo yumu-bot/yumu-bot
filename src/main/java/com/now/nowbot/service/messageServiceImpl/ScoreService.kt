@@ -212,7 +212,7 @@ class ScoreService(
         try {
             if (scores.size > 1) {
                 beatmapApiService.applySRAndPP(scores)
-                beatmapApiService.applyBeatMapExtend(scores)
+                beatmapApiService.applyBeatMapExtendForSameScore(scores)
                 image = imageService.getPanelA5(user, scores, "SS")
             } else {
                 val score = scores.first()

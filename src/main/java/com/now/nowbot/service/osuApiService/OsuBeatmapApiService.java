@@ -285,6 +285,22 @@ public interface OsuBeatmapApiService {
         return Rosu.calculate(map, score);
     }
 
+    // 给同一张图的成绩添加完整的谱面
+    default void applyBeatMapExtendForSameScore(List<LazerScore> scoreList) {
+        if (scoreList.isEmpty()) return;
+
+        var extended = getBeatMap(scoreList.getFirst().getBeatMapID());
+
+        for (var score : scoreList) {
+            var lite = score.getBeatMap();
+
+            score.setBeatMap(BeatMap.extend(lite, extended));
+            if (extended.getBeatMapSet() != null) {
+                score.setBeatMapSet(extended.getBeatMapSet());
+            }
+        }
+    }
+
     // 给成绩添加完整的谱面
     default void applyBeatMapExtend(List<LazerScore> scoreList) {
         for (var score : scoreList) {
