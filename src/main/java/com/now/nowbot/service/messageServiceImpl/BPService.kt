@@ -49,6 +49,7 @@ class BPService(
         // 处理 range
         val mode = getMode(matcher)
         val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
+        range.setZeroToRange100()
 
         val user = range.data ?: return false
 

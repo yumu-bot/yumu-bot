@@ -81,6 +81,7 @@ class TodayBPService(
         val mode = getMode(matcher)
         val isMyself = AtomicBoolean()
         val range = getUserWithRange(event, matcher, mode, isMyself)
+        range.setZeroDay()
         val user = range.data ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
         val dayStart = range.getDayStart()
         val dayEnd = range.getDayEnd()

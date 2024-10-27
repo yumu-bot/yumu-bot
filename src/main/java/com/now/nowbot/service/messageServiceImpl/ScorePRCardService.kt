@@ -42,6 +42,7 @@ class ScorePRCardService(
 
         val mode = getMode(matcher)
         val range = getUserWithRange(event, matcher, mode, AtomicBoolean())
+        range.setZeroToRange100()
 
         val offset = range.getOffset(0, false)
         val scores = if (StringUtils.hasText(matcher.group("recent"))) {

@@ -166,8 +166,8 @@ object CmdUtil {
         // 使其顺序
         if (
             Objects.nonNull(result.end) &&
-                Objects.nonNull(result.start) &&
-                result.start!! > result.end!!
+            Objects.nonNull(result.start) &&
+            result.start!! > result.end!!
         ) {
             val temp = result.start
             result.start = result.end
@@ -310,7 +310,8 @@ object CmdUtil {
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
             try {
                 qq = matcher.group(FLAG_QQ_ID)?.toLong() ?: 0L
-            } catch (ignore: RuntimeException) {}
+            } catch (ignore: RuntimeException) {
+            }
         }
 
         if (qq != 0L) {
@@ -324,7 +325,8 @@ object CmdUtil {
                 if (uid != 0L) {
                     return getOsuUser(uid, mode.data)
                 }
-            } catch (ignore: RuntimeException) {}
+            } catch (ignore: RuntimeException) {
+            }
         }
 
         if (matcher.namedGroups().containsKey(FLAG_NAME)) {
@@ -478,12 +480,26 @@ data class CmdObject<T>(var data: T? = null)
 
 /** 包装类, 记录包括 range 结果 */
 data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int? = null) {
+    // 设置 ZeroToRange 时生效
+    private var rangeZero = false
+
     private fun halfRange() = start != null && end == null
 
     private fun fullRange() = start != null && end != null
 
+    fun setZeroToRange100(n: Int = 100) {
+        rangeZero = (start == 0 && end == null)
+    }
+
+    fun setZeroDay() {
+        if (start == 0 && end == null) {
+            end = 999
+        }
+    }
+
     // 30: 30 - 1, 2-30: 2-1  // 30: 0, 2-30: 2-1
     fun getOffset(default: Int = 0, isMulti: Boolean = false): Int {
+        if (rangeZero) return 0
         return if (fullRange()) {
             max(0, start!! - 1)
         } else if (halfRange()) {
@@ -499,6 +515,9 @@ data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int
 
     // 30: 1, 2-30: 30-1  // 30: 30, 2-30: 30-1
     fun getLimit(default: Int = 1, isMulti: Boolean = false): Int {
+        if (rangeZero) {
+            return 100
+        }
         return if (fullRange()) {
             max(end!! - max(start!!, 1) + 1, 1)
         } else if (halfRange()) {

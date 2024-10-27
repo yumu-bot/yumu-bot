@@ -105,6 +105,7 @@ class ScorePRService(
         val mode = getMode(matcher)
         val range =
                 getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent")
+        range.setZeroToRange100()
 
         if (Objects.isNull(range.data)) {
             throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
