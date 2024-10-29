@@ -212,12 +212,26 @@ open class LazerScore {
     @JsonProperty("rank")
     var lazerRank: String = "F"
 
-    // 傻逼 Lazer
-    @get:JsonProperty("legacy_rank")
+    @get:JsonIgnore
+    @get:JvmName("getRankString")
     val rank: String
         get() {
-            return getStableRank(this)
+            return getRank()
         }
+
+    // 傻逼 Lazer
+    @JsonIgnore
+    private var _rank: String? = null
+
+    @JsonIgnore
+    fun setRank(String: String) {
+        _rank = String
+    }
+
+    @JsonProperty("legacy_rank")
+    fun getRank(): String {
+        return _rank ?: getStableRank(this)
+    }
 
     @JsonProperty("type")
     var type: String = "solo_score" // solo_score 不区分是否是新老客户端

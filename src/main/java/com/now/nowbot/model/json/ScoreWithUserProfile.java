@@ -9,10 +9,10 @@ import org.springframework.beans.BeanUtils;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class ScoreWithUserProfile extends Score {
+public class ScoreWithUserProfile extends LazerScore {
     UserProfile profile;
 
-    public static ScoreWithUserProfile copyOf(Score score) {
+    public static ScoreWithUserProfile copyOf(LazerScore score) {
         var result = new ScoreWithUserProfile();
         BeanUtils.copyProperties(score, result);
         return result;

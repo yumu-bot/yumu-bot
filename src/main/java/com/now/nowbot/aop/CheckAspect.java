@@ -4,10 +4,7 @@ import com.now.nowbot.config.Permission;
 import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.mapper.ServiceCallRepository;
 import com.now.nowbot.mapper.UserProfileMapper;
-import com.now.nowbot.model.json.OsuUser;
-import com.now.nowbot.model.json.OsuUserPlus;
-import com.now.nowbot.model.json.Score;
-import com.now.nowbot.model.json.ScoreWithUserProfile;
+import com.now.nowbot.model.json.*;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.enums.Role;
 import com.now.nowbot.qq.event.GroupMessageEvent;
@@ -18,10 +15,7 @@ import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ContextUtil;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -253,27 +247,10 @@ public class CheckAspect {
         }
     }
 
-    private Object parse(Object param) {
-        if (param instanceof OsuUser user) {
-            return getUser(user);
-        } else if (
-                param instanceof Optional<?> opt
-                        && opt.isPresent()
-                        && opt.get() instanceof OsuUser user
-        ) {
-            return Optional.ofNullable(getUser(user));
-        }
-        if (param instanceof Score score) {
-            return getScore(score);
-        } else if (
-                param instanceof Optional<?> opt
-                        && opt.isPresent()
-                        && opt.get() instanceof Score score
-        ) {
-            return Optional.ofNullable(getScore(score));
-        }
+    static final long MY_ID = 17064371L;
 
-        return null;
+    private static boolean isMyScore(LazerScore score) {
+        return score.getUserID() == MY_ID;
     }
 
     private OsuUser getUser(OsuUser user) {
@@ -287,14 +264,55 @@ public class CheckAspect {
         }).orElse(user);
     }
 
-    private Score getScore(Score score) {
-        if (score == null || score.getUser() == null || score.getUser().getUserID() == null) return score;
+    private Object parse(Object param) {
+        if (param instanceof OsuUser user) {
+            return getUser(user);
+        } else if (
+                param instanceof Optional<?> opt
+                        && opt.isPresent()
+                        && opt.get() instanceof OsuUser user
+        ) {
+            return Optional.ofNullable(getUser(user));
+        }
+        if (param instanceof LazerScore score) {
+            return getScore(score);
+        } else if (
+                param instanceof Optional<?> opt
+                        && opt.isPresent()
+                        && opt.get() instanceof LazerScore score
+        ) {
+            return Optional.ofNullable(getScore(score));
+        }
+
+        return null;
+    }
+
+    private LazerScore getScore(LazerScore score) {
+        if (score == null || score.getUser().getUserID() == null) return score;
         var data = userProfileMapper.findTopByUserId(score.getUser().getUserID());
 
         return data.map(profile -> {
             var result = ScoreWithUserProfile.copyOf(score);
             result.setProfile(profile);
-            return (Score) result;
+            return (LazerScore) result;
         }).orElse(score);
+    }
+
+    @Pointcut("execution(* com.now.nowbot.service.osuApiService.OsuScoreApiService.*(..))")
+    public void scoreApi() {
+    }
+
+    @AfterReturning(value = "scoreApi()", returning = "result")
+    public void afterApiService(Object result) {
+        if (result instanceof BeatmapUserScore s && isMyScore(s.getScore())) {
+            s.getScore().setRank("X");
+        } else if (result instanceof List<?> l) {
+            if (l.isEmpty()) return;
+            if (l.getFirst() instanceof LazerScore s && isMyScore(s)) {
+                for (var i : l) {
+                    ((LazerScore)i).setRank("X");
+                }
+            }
+        }
     }
 }
