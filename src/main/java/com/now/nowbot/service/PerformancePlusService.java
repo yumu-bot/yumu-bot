@@ -32,10 +32,10 @@ import java.util.stream.StreamSupport;
 
 @Service("PP_PLUS_SEV")
 public class PerformancePlusService {
-    private static final Logger log = LoggerFactory.getLogger(PerformancePlusService.class);
-    private static String API_SCHEME = "http";// 不用改了
-    private static String API_HOST = "localhost";
-    private static String API_PORT = "46880";
+    private static final Logger log        = LoggerFactory.getLogger(PerformancePlusService.class);
+    private static       String API_SCHEME = "http";// 不用改了
+    private static       String API_HOST   = "localhost";
+    private static       String API_PORT   = "46880";
 
     public static void runDevelopment() {
         API_SCHEME = "https";
@@ -43,14 +43,14 @@ public class PerformancePlusService {
         API_PORT = "443";
     }
 
-    private final Path   OSU_FILE_DIR;
+    private final Path OSU_FILE_DIR;
 
     @Resource
     PerformancePlusLiteRepository performancePlusLiteRepository;
     @Resource
-    WebClient      webClient;
+    WebClient                     webClient;
     @Resource
-    BeatmapApiImpl beatmapApi;
+    BeatmapApiImpl                beatmapApi;
 
     public PerformancePlusService(FileConfig config) {
         OSU_FILE_DIR = Path.of(config.getOsuFilePath());
@@ -174,17 +174,10 @@ public class PerformancePlusService {
         List<PPPlus> result;
 
         try {
-            result = webClient.post()
-                    .uri(u -> u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/batch/calculation").build())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(JacksonUtil.toJson(body))
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .map(node -> JacksonUtil.parseObjectList(node, PPPlus.class))
-                    .block();
+            result = getScorePerformancePlus(body);
         } catch (WebClientResponseException e) {
-            log.error("PP+ 获取失败", e);
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PP+");
+            var n = findErrorBid(body);
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "谱面 bid: " + n);
         }
 
         int i = 0;
@@ -210,9 +203,20 @@ public class PerformancePlusService {
         return allScorePPP;
     }
 
+    private List<PPPlus> getScorePerformancePlus(List<ScorePerformancePlus> body) {
+        return webClient.post()
+                .uri(u -> u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/batch/calculation").build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(JacksonUtil.toJson(body))
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .map(node -> JacksonUtil.parseObjectList(node, PPPlus.class))
+                .block();
+    }
+
     private void checkFile(Long beatmapId) {
         var beatmapFiles = OSU_FILE_DIR.resolve(beatmapId + ".osu");
-        if (! Files.isRegularFile(beatmapFiles)) {
+        if (!Files.isRegularFile(beatmapFiles)) {
             try {
                 var fileStr = beatmapApi.getBeatMapFileString(beatmapId);
                 Files.writeString(beatmapFiles, fileStr);
@@ -221,6 +225,43 @@ public class PerformancePlusService {
                 throw new RuntimeException("下载谱面文件失败");
             }
         }
+    }
+
+    private String findErrorBid(List<ScorePerformancePlus> x) {
+        if (x.size() > 2) {
+            var mid = x.size() / 2;
+            var left = x.subList(0, mid);
+            var right = x.subList(mid, x.size());
+            if (testScorePerformancePlus(left)) {
+                return findErrorBid(left);
+            } else {
+                return findErrorBid(right);
+            }
+        } else if (x.size() == 2) {
+            if (testScorePerformancePlus(x.subList(0,1))) {
+                return x.getFirst().beatmapId;
+            } else {
+                return x.getLast().beatmapId;
+            }
+        } else {
+            return x.getFirst().beatmapId;
+        }
+    }
+
+    private boolean testScorePerformancePlus(List<ScorePerformancePlus> x) {
+        try {
+            webClient.post()
+                    .uri(u -> u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/batch/calculation").build())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(JacksonUtil.toJson(x))
+                    .retrieve()
+                    .bodyToMono(JsonNode.class)
+                    .map(node -> JacksonUtil.parseObjectList(node, PPPlus.class))
+                    .block();
+        }  catch (Exception e) {
+            return true;
+        }
+        return false;
     }
 
     private AsyncMethodExecutor.Supplier<String> createSupplier(String key, Map<String, List<Double>> ppPlusMap, Stream<PPPlus> stream, Function<PPPlus.Stats, Double> function) {

@@ -135,8 +135,17 @@ object CmdUtil {
         if (text.isBlank()) {
             return CmdRange()
         }
+
         if (JUST_RANGE.matcher(text).matches()) {
             val range = parseRange(text)
+            if (range[0] != null && range[1] == null && checkRangeFirst(range[0]!!)) {
+                try {
+                    val id = userApiService!!.getOsuId(range[0].toString())
+                    val user = getOsuUser(id, mode.data)
+                    return CmdRange(user)
+                } catch (_: Exception) {
+                }
+            }
             return CmdRange(null, range[0], range[1])
         }
         // -1 才是没找到
@@ -472,6 +481,15 @@ object CmdUtil {
         userApiService = applicationContext.getBean(OsuUserApiService::class.java)
         scoreApiService = applicationContext.getBean(OsuScoreApiService::class.java)
         beatmapApiService = applicationContext.getBean(OsuBeatmapApiService::class.java)
+    }
+
+    private fun checkRangeFirst(i:Int): Boolean {
+        return when {
+            i < 101 -> true
+            i == 666 -> true
+            i < 999 -> true
+            else -> false
+        }.not()
     }
 }
 
