@@ -489,7 +489,7 @@ object CmdUtil {
             i == 666 -> true
             i < 999 -> true
             else -> false
-        }.not()
+        }
     }
 }
 

@@ -248,16 +248,9 @@ public class PerformancePlusService {
         }
     }
 
-    private boolean testScorePerformancePlus(List<ScorePerformancePlus> x) {
+    private boolean testScorePerformancePlus(List<ScorePerformancePlus> allPPP) {
         try {
-            webClient.post()
-                    .uri(u -> u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/batch/calculation").build())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(JacksonUtil.toJson(x))
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .map(node -> JacksonUtil.parseObjectList(node, PPPlus.class))
-                    .block();
+            getScorePerformancePlus(allPPP);
         }  catch (Exception e) {
             return true;
         }
