@@ -133,13 +133,17 @@ class OldAvatarService(
 
     @Throws(GeneralTipsException::class)
     private fun parseDataString(dataStr: String?): List<OsuUser?>? {
+        if (dataStr.isNullOrBlank()) return null
+
         val dataStrArray =
-            dataStr!!
+            dataStr
                 .trim { it <= ' ' }
                 .split("[,，|:：]+".toRegex())
                 .dropLastWhile { it.isEmpty() }
-                .toTypedArray()
-        if (dataStr.isBlank() || dataStrArray.isEmpty()) return null
+                .stream()
+                .map(String::trim)
+                .distinct()
+                .toList()
 
         val ids = mutableListOf<Long>()
         val users = mutableListOf<OsuUser>()
@@ -148,10 +152,10 @@ class OldAvatarService(
             if (!StringUtils.hasText(s)) continue
 
             try {
-                ids.add(userApiService.getOsuId(s.trim { it <= ' ' }))
+                ids.add(userApiService.getOsuId(s))
             } catch (e: WebClientResponseException) {
                 try {
-                    ids.add(s.trim { it <= ' ' }.toLong())
+                    ids.add(s.toLong())
                 } catch (e1: NumberFormatException) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Null_UserName)
                 }
