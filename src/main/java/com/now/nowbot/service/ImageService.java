@@ -345,7 +345,7 @@ public class ImageService {
         return doPost("panel_C2", httpEntity);
     }
 
-
+    @Deprecated
     public byte[] getPanelD(OsuUser osuUser, Optional<OsuUser> historyUser, List<LazerScore> BPs, OsuMode mode) {
 
         double bonus = 0f;

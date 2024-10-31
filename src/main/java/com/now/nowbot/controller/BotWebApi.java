@@ -781,9 +781,16 @@ public class BotWebApi {
         var historyUser = infoDao.getLastFrom(user.getUserID(),
                         mode,
                         LocalDate.now().minusDays(day))
-                .map(OsuUserInfoDao::fromArchive);
+                .map(OsuUserInfoDao::fromArchive).orElse(null);
 
+        var param = new InfoService.PanelDParam(user, historyUser, BPs, user.getCurrentOsuMode());
+
+        var image = imageService.getPanel(param.toMap(), "D");
+
+                /*
         var image = imageService.getPanelD(user, historyUser, BPs, user.getCurrentOsuMode());
+
+                 */
 
         return new ResponseEntity<>(image, getImageHeader(STR."\{user.getUserID()}-info.jpg", image.length), HttpStatus.OK);
     }

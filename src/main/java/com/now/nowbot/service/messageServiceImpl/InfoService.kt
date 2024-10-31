@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.OsuUserInfoArchiveLite
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.InfoLogStatistics
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -15,9 +16,9 @@ import com.now.nowbot.service.messageServiceImpl.InfoService.InfoParam
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
-import com.now.nowbot.throwable.serviceException.InfoException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithOutRange
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
@@ -28,8 +29,11 @@ import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
+import kotlin.jvm.optionals.getOrNull
 
 @Service("INFO")
 class InfoService(
@@ -42,26 +46,90 @@ class InfoService(
         val user: OsuUser,
         val mode: OsuMode,
         val day: Int,
-        val isMyself: Boolean
+        val isMyself: Boolean,
+        val version: Int = 1
     )
+
+    data class PanelDParam(
+        val user: OsuUser,
+        val historyUser: OsuUser?,
+        val bests: List<LazerScore>,
+        val mode: OsuMode,
+    ) {
+        // 老面板 (v3.6) 的数据
+        fun toMap(): Map<String, Any> {
+            val out = mutableMapOf<String, Any>()
+
+            out["user"] = user
+            out["mode"] = mode
+            out["bp-times"] = getBestTimes(bests)
+            out["bonus_pp"] = getBonus(bests, user)
+
+            if (historyUser != null) {
+                val stat = historyUser.statistics
+
+                if (stat is InfoLogStatistics) {
+                    out["day"] = ChronoUnit.DAYS.between(stat.logTime.toLocalDate(), LocalDate.now())
+                }
+
+                out["historyUser"] = historyUser
+            }
+
+            out["panel"] = "D"
+
+            return out
+        }
+
+        // 新面板 (v5.0) 的数据
+        fun toD2Map(): Map<String, Any> {
+            val out = mutableMapOf<String, Any>()
+
+            out["user"] = user
+            out["mode"] = mode
+            out["scores"] = if (bests.size >= 6) {
+                bests.subList(0, 6)
+            } else {
+                bests
+            }
+            out["best_time"] = getBestTimes(bests)
+
+            if (historyUser != null) {
+                val stat = historyUser.statistics
+
+                if (stat is InfoLogStatistics) {
+                    out["history_day"] = ChronoUnit.DAYS.between(stat.logTime.toLocalDate(), LocalDate.now())
+                }
+
+                out["history_user"] = historyUser
+            }
+
+            out["panel"] = "D2"
+
+            return out
+        }
+    }
 
     @Throws(TipsException::class)
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<InfoParam>): Boolean {
         val matcher = Instruction.INFO.matcher(messageText)
+        val matcher2 = Instruction.INFO2.matcher(messageText)
 
-        if (!matcher.find()) return false
+        if (matcher.find()) {
+            data.value = getParam(event, matcher, 1)
+            return true
+        } else if (matcher2.find()) {
+            data.value = getParam(event, matcher2, 2)
+            return true
+        }
 
-        data.value = getParam(event, matcher)
-
-        return true
+        return false
     }
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: InfoParam) {
-        val from = event.subject
         val image = param.getImage()
         try {
-            from.sendImage(image)
+            event.reply(image)
         } catch (e: Exception) {
             log.error("玩家信息：发送失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "玩家信息")
@@ -72,22 +140,20 @@ class InfoService(
         val matcher = OfficialInstruction.INFO.matcher(messageText)
 
         if (!matcher.find()) return null
-
         return getParam(event, matcher)
     }
 
     override fun reply(event: MessageEvent, param: InfoParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
 
     private fun InfoParam.getImage(): ByteArray {
-        val BPs: List<LazerScore> = try {
+        val bests: List<LazerScore> = try {
             scoreApiService.getBestScores(user.userID, mode, 0, 100)
         } catch (e: WebClientResponseException.NotFound) {
-            throw InfoException(InfoException.Type.I_Player_NoBP, mode)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, mode)
         } catch (e: Exception) {
-            log.error("玩家信息：无法获取玩家 BP", e)
-            throw InfoException(InfoException.Type.I_BP_FetchFailed)
+            log.error("玩家信息：无法获取玩家的最好成绩", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "最好成绩")
         }
-
 
         val historyUser =
             infoDao.getLastFrom(
@@ -97,7 +163,14 @@ class InfoService(
             ).map { archive: OsuUserInfoArchiveLite? -> OsuUserInfoDao.fromArchive(archive) }
 
         return try {
-            imageService.getPanelD(user, historyUser, BPs, mode)
+            val panelDParam = PanelDParam(user, historyUser.getOrNull(), bests, mode)
+
+            when(this.version) {
+                2 -> imageService.getPanel(panelDParam.toD2Map(), "D2")
+                else -> imageService.getPanel(panelDParam.toMap(), "D")
+            }
+
+
         } catch (e: Exception) {
             log.error("玩家信息：图片渲染失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "玩家信息")
@@ -107,7 +180,7 @@ class InfoService(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(InfoService::class.java)
 
-        private fun getParam(event: MessageEvent, matcher: Matcher): InfoParam {
+        private fun getParam(event: MessageEvent, matcher: Matcher, version: Int = 1): InfoParam {
             val mode = getMode(matcher)
             val isMyself = AtomicBoolean(false)
 
@@ -121,7 +194,36 @@ class InfoService(
                 1
             }
 
-            return InfoParam(user, mode.data!!, day, isMyself.get())
+            return InfoParam(user, mode.data!!, day, isMyself.get(), version)
+        }
+
+        private fun getBestTimes(bests: List<LazerScore>): IntArray {
+            val times : List<OffsetDateTime> = bests.stream().map(LazerScore::endedTime).toList()
+
+            val now = LocalDate.now()
+
+            val bpt = IntArray(90)
+
+            times.forEach { time ->
+                run {
+                    val day = (now.toEpochDay() - time.toLocalDate().toEpochDay()).toInt()
+                    if (day in 0..90) {
+                        bpt[90 - day]++
+                    }
+                }
+            }
+
+            return bpt
+        }
+
+        private fun getBonus(bests: List<LazerScore>, user: OsuUser): Double {
+            return if (bests.isNotEmpty()) {
+                val bestPPs = bests.stream().mapToDouble(LazerScore::getPP).toArray()
+
+                DataUtil.getBonusPP(user.pp, bestPPs).toDouble()
+            } else {
+                0.0
+            }
         }
     }
 }

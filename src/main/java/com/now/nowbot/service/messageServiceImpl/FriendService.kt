@@ -276,8 +276,8 @@ class FriendService(
                 "pc2", "playcount2", "pc+", "playcount+" -> PLAY_COUNT to ASCEND
                 "pt", "playtime", "pt-", "playtime-" -> PLAY_TIME to DESCEND
                 "pt2", "playtime2", "pt+", "playtime+" -> PLAY_TIME to ASCEND
-                "h", "tth", "hit", "totalhit", "totalhits", "h-", "tth-", "hit-", "totalhit-", "totalhits-" -> TOTAL_HITS to DESCEND
-                "h2", "tth2", "hit2", "totalhit2", "totalhits2", "h+", "tth+", "hit+", "totalhit+", "totalhits+" -> TOTAL_HITS to ASCEND
+                "h", "th", "tth", "hit", "totalhit", "totalhits", "h-", "th-", "tth-", "hit-", "totalhit-", "totalhits-" -> TOTAL_HITS to DESCEND
+                "h2", "th2", "tth2", "hit2", "totalhit2", "totalhits2", "h+", "th+", "tth+", "hit+", "totalhit+", "totalhits+" -> TOTAL_HITS to ASCEND
 
                 "t", "time", "seen", "t+", "time+", "seen+" -> TIME to ASCEND
                 "t2", "time2", "seen2", "t-", "time-", "seen-" -> TIME to DESCEND

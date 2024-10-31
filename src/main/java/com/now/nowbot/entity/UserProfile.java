@@ -26,6 +26,10 @@ public class UserProfile {
     @Column(columnDefinition = "TEXT")
     String banner;
 
+    @JsonProperty("mascot")
+    @Column(columnDefinition = "TEXT")
+    String mascot;
+
     /**
      * 头像框
      */
@@ -68,6 +72,14 @@ public class UserProfile {
 
     public void setBanner(String banner) {
         this.banner = banner;
+    }
+
+    public String getMascot() {
+        return mascot;
+    }
+
+    public void setMascot(String mascot) {
+        this.mascot = mascot;
     }
 
     public String getInfoPanel() {

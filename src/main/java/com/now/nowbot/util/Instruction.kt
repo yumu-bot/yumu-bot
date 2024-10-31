@@ -179,6 +179,16 @@ enum class Instruction(val pattern: Pattern) {
         }
     }),
 
+    INFO2(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("testinformation", "testinfo", "ti", "ji", "j", "juice")
+        appendModeQQUIDName()
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendSpace()
+            appendCaptureGroup(FLAG_DAY, REG_NUMBER, MORE)
+        }
+    }),
+
     INFO_CARD(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("informationcard", "infocard", "ic")
         appendModeQQUIDName()

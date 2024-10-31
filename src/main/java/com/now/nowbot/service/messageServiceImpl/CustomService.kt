@@ -1,225 +1,258 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.FileConfig;
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.mapper.UserProfileMapper;
-import com.now.nowbot.model.BinUser;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.ImageMessage;
-import com.now.nowbot.qq.message.ReplyMessage;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.throwable.serviceException.BindException;
-import com.now.nowbot.throwable.serviceException.CustomException;
-import com.now.nowbot.util.ASyncMessageUtil;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.QQMsgUtil;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
-
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.util.Objects;
+import com.now.nowbot.config.FileConfig
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.mapper.UserProfileMapper
+import com.now.nowbot.model.BinUser
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.ReplyMessage
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.messageServiceImpl.CustomService.CustomParam
+import com.now.nowbot.service.messageServiceImpl.CustomService.Operate.*
+import com.now.nowbot.service.messageServiceImpl.CustomService.Type.*
+import com.now.nowbot.throwable.serviceException.BindException
+import com.now.nowbot.throwable.serviceException.CustomException
+import com.now.nowbot.util.ASyncMessageUtil
+import com.now.nowbot.util.DataUtil.getMarkdownFile
+import com.now.nowbot.util.Instruction
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.util.*
+import kotlin.io.path.Path
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import org.springframework.util.StringUtils
+import org.springframework.web.client.RestTemplate
 
 @Service("CUSTOM")
-public class CustomService implements MessageService<CustomService.CustomParam> {
-    private static final Logger log = LoggerFactory.getLogger(CustomService.class);
-    private static Path FILE_DIV_PATH;
-    @Resource
-    RestTemplate restTemplate;
-    @Resource
-    BindDao bindDao;
-    @Resource
-    ImageService imageService;
-    @Resource
-    UserProfileMapper userProfileMapper;
+class CustomService(
+        private val restTemplate: RestTemplate,
+        private val bindDao: BindDao,
+        private val imageService: ImageService,
+        private val userProfileMapper: UserProfileMapper,
+        fileConfig: FileConfig,
+) : MessageService<CustomParam> {
 
-    @Autowired
-    public CustomService(FileConfig fileConfig) {
-        FILE_DIV_PATH = Path.of(fileConfig.getBgdir(), "user-profile");
+    init {
+        FILE_DIV_PATH = Path.of(fileConfig.bgdir, "user-profile")
     }
 
-    public record CustomParam(@NonNull long uid, @NonNull Type type, @Nullable String url) {
-        //url == null 是删除图片
-    }
+    // url == null 是删除图片
+    @JvmRecord
+    data class CustomParam(
+            val uid: Long,
+            val type: Type,
+            val url: String?,
+    )
 
-    @Override
-    @SuppressWarnings("all")
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<CustomParam> data) throws Throwable {
-        var from = event.getSubject();
+    @Throws(Throwable::class)
+    override fun isHandle(
+            ev: MessageEvent,
+            messageText: String,
+            data: DataValue<CustomParam>,
+    ): Boolean {
+        var event: MessageEvent? = ev
+        val from = event!!.subject
 
-        var matcher = Instruction.CUSTOM.matcher(messageText);
-        if (! matcher.find()) {
-            return false;
+        val matcher = Instruction.CUSTOM.matcher(messageText)
+        if (!matcher.find()) {
+            return false
         }
 
-        BinUser u;
+        val u: BinUser
         try {
-            u = bindDao.getUserFromQQ(event.getSender().getId(), true);
-        } catch (BindException e) {
-            throw new CustomException(CustomException.Type.CUSTOM_Me_TokenExpired);
+            u = bindDao.getUserFromQQ(event.sender.id, true)
+        } catch (e: BindException) {
+            throw CustomException(CustomException.Type.CUSTOM_Me_TokenExpired)
         }
 
-        var firstMessage = event.getMessage().getMessageList().getFirst();
+        val firstMessage = event.message.messageList.first
 
-        String imgPath = null;
+        var imgPath: String? = null
 
-        var operateStr = matcher.group("operate");
-        var typeStr = matcher.group("type");
+        val operateStr = matcher.group("operate")
+        val typeStr = matcher.group("type")
 
-        Operate operate;
-        Type type;
+        var operate: Operate
+        val type: Type
 
         if (StringUtils.hasText(typeStr)) {
-            operate = switch (operateStr) {
-                case "s", "save", "a", "add" -> Operate.ADD;
-                case "c", "clear", "d", "delete", "r", "remove" -> Operate.DELETE;
-                case null, default -> Operate.UNKNOWN;
-            };
+            operate =
+                    when (operateStr) {
+                        "s",
+                        "save",
+                        "a",
+                        "add" -> ADD
+                        "c",
+                        "clear",
+                        "d",
+                        "delete",
+                        "r",
+                        "remove" -> DELETE
+                        else -> UNKNOWN
+                    }
 
-            type = switch (typeStr) {
-                case "c", "card" -> Type.CARD;
-                default -> Type.BANNER;
-            };
-
+            type =
+                    when (typeStr) {
+                        "c",
+                        "card",
+                        "cards" -> CARD
+                        "m",
+                        "mascot",
+                        "mascots" -> MASCOT
+                        else -> BANNER
+                    }
         } else {
             // 只有一个字段，默认添加，直接跳出
-            operate = Operate.ADD;
+            operate = ADD
 
-            type = switch (operateStr) {
-                case "c", "card" -> Type.CARD;
-                case null, default -> Type.BANNER;
-            };
+            type =
+                    when (operateStr) {
+                        "c",
+                        "card" -> CARD
+                        "m",
+                        "mascot",
+                        "mascots" -> MASCOT
+                        else -> BANNER
+                    }
         }
 
-        ReplyMessage reply = null;
+        var reply: ReplyMessage? = null
 
-        if (operate == Operate.ADD) {
-            if (firstMessage instanceof ReplyMessage r) {
-                reply = r;
+        if (operate == ADD) {
+            if (firstMessage is ReplyMessage) {
+                reply = firstMessage
             } else {
-                operate = Operate.UNKNOWN;
+                operate = UNKNOWN
             }
         }
 
-        switch (operate) {
-            case ADD -> {
+        when (operate) {
+            ADD -> {
                 // 正常
-                if (Objects.isNull(event.getBot())) {
-                    throw new CustomException(CustomException.Type.CUSTOM_Receive_NoBot);
+                if (event.bot == null) {
+                    throw CustomException(CustomException.Type.CUSTOM_Receive_NoBot)
                 }
 
-                var msg = event.getBot().getMessage(reply.getId());
-                ImageMessage img;
+                val msg = event.bot.getMessage(reply!!.id)
 
-                if (Objects.isNull(msg) || Objects.isNull(img = QQMsgUtil.getType(msg, ImageMessage.class))) {
-                    //消息为空，并且不是回复的图片。询问是否删除
-                    var receipt = from.sendMessage(CustomException.Type.CUSTOM_Question_Clear.message);
+                if (msg == null || !event.isImage) {
+                    // 消息为空，并且不是回复的图片。询问是否删除
+                    val receipt =
+                            from.sendMessage(CustomException.Type.CUSTOM_Question_Clear.message)
 
-                    var lock = ASyncMessageUtil.getLock(event, 30 * 1000);
-                    event = lock.get();
+                    val lock = ASyncMessageUtil.getLock(event, (30 * 1000).toLong())
+                    event = lock.get()
 
-                    if (Objects.isNull(event) || ! event.getRawMessage().toUpperCase().contains("OK")) {
-                        //不删除。失败撤回
-                        from.recall(receipt);
-                        return false;
+                    if (
+                            event == null ||
+                                    !event.rawMessage.uppercase(Locale.getDefault()).contains("OK")
+                    ) {
+                        // 不删除。失败撤回
+                        from.recall(receipt)
+                        return false
                     } else {
-                        //确定删除
-                        from.recall(receipt);
+                        // 确定删除
+                        from.recall(receipt)
                     }
                 } else {
-                    //成功
-                    imgPath = img.getPath();
+                    // 成功
+                    imgPath = event.image!!.path // img = QQMsgUtil.getType(msg, ImageMessage.class)
                 }
             }
-            case UNKNOWN -> {
+            UNKNOWN -> {
                 // 不是回复。发送引导
                 try {
-                    var md = DataUtil.getMarkdownFile("Help/custom.md");
-                    var image = imageService.getPanelA6(md, "help");
-                    from.sendImage(image);
-                    return false;
-                } catch (Exception e) {
-                    throw new CustomException(CustomException.Type.CUSTOM_Instructions);
+                    val md = getMarkdownFile("Help/custom.md")
+                    val image = imageService.getPanelA6(md, "help")
+                    from.sendImage(image)
+                    return false
+                } catch (e: Exception) {
+                    throw CustomException(CustomException.Type.CUSTOM_Instructions)
                 }
             }
+
+            DELETE -> {
+                imgPath = null
+            }
         }
 
-        data.setValue(new CustomParam(u.getOsuID(), type, imgPath));
+        data.value = CustomParam(u.osuID, type, imgPath)
 
-        return true;
+        return true
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, CustomParam param) throws Throwable {
-        var fileName = param.uid + "-" + param.type + ".png";
-        Path path = FILE_DIV_PATH.resolve(fileName);
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, param: CustomParam) {
+        val fileName = "${param.uid}-${param.type}.png"
+        val path = FILE_DIV_PATH.resolve(fileName)
 
-        byte[] data = new byte[0];
+        var imgBytes: ByteArray? = byteArrayOf()
 
-        if (Objects.nonNull(param.url)) {
-            data = restTemplate.getForObject(param.url, byte[].class);
-            if (Objects.isNull(data)) {
-                throw new CustomException(CustomException.Type.CUSTOM_Receive_PictureFetchFailed);
+        if (param.url != null) {
+            imgBytes = restTemplate.getForObject(param.url, ByteArray::class.java)
+            if (imgBytes == null) {
+                throw CustomException(CustomException.Type.CUSTOM_Receive_PictureFetchFailed)
             }
         }
 
-        var profile = userProfileMapper.getProfileById(param.uid());
+        val profile = userProfileMapper.getProfileById(param.uid)
 
-        if (Objects.nonNull(param.url)) {
+        if (param.url != null) {
             // 保存
             try {
-                Files.write(path, data);
-            } catch (Exception e) {
-                log.error("自定义：文件添加失败", e);
-                throw new CustomException(CustomException.Type.CUSTOM_Set_Failed, param.type);
+                Files.write(path, imgBytes!!)
+            } catch (e: Exception) {
+                log.error("自定义：文件添加失败", e)
+                throw CustomException(CustomException.Type.CUSTOM_Set_Failed, param.type)
             }
-            switch (param.type) {
-                case CARD -> profile.setCard(path.toAbsolutePath().toString());
-                case BANNER -> profile.setBanner(path.toAbsolutePath().toString());
+
+            val pathStr = path.toAbsolutePath().toString()
+            when (param.type) {
+                CARD -> profile.card = pathStr
+                BANNER -> profile.banner = pathStr
+                MASCOT -> profile.mascot = pathStr
             }
-            userProfileMapper.saveAndFlush(profile);
-            throw new CustomException(CustomException.Type.CUSTOM_Set_Success, param.type);
+            userProfileMapper.saveAndFlush(profile)
+            throw CustomException(CustomException.Type.CUSTOM_Set_Success, param.type)
         } else {
             // 删除
             try {
-                Files.delete(path);
-            } catch (NoSuchFileException e) {
-                throw new CustomException(CustomException.Type.CUSTOM_Clear_NoSuchFile, param.type);
-            } catch (Exception e) {
-                log.error("自定义：文件删除失败", e);
-                throw new CustomException(CustomException.Type.CUSTOM_Clear_Failed, param.type);
+                Files.delete(path)
+            } catch (e: NoSuchFileException) {
+                throw CustomException(CustomException.Type.CUSTOM_Clear_NoSuchFile, param.type)
+            } catch (e: Exception) {
+                log.error("自定义：文件删除失败", e)
+                throw CustomException(CustomException.Type.CUSTOM_Clear_Failed, param.type)
             }
-            switch (param.type) {
-                case CARD -> profile.setCard(null);
-                case BANNER -> profile.setBanner(null);
+            when (param.type) {
+                CARD -> profile.card = null
+                BANNER -> profile.banner = null
+                MASCOT -> profile.mascot = null
             }
-            userProfileMapper.saveAndFlush(profile);
-            throw new CustomException(CustomException.Type.CUSTOM_Clear_Success, param.type);
+            userProfileMapper.saveAndFlush(profile)
+            throw CustomException(CustomException.Type.CUSTOM_Clear_Success, param.type)
         }
     }
 
-    enum Operate {
+    internal enum class Operate {
         ADD,
         DELETE,
-        UNKNOWN
+        UNKNOWN,
     }
 
-    enum Type {
+    enum class Type {
         BANNER,
         CARD,
-        AVATAR_FRAME,
-        PANEL_INFO,
-        PANEL_SCORE,
-        PANEL_PPM,
+        MASCOT,
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(CustomService::class.java)
+        private var FILE_DIV_PATH: Path = Path("")
     }
 }
