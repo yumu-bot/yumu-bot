@@ -207,7 +207,7 @@ class InfoService(
             times.forEach { time ->
                 run {
                     val day = (now.toEpochDay() - time.toLocalDate().toEpochDay()).toInt()
-                    if (day in 0..90) {
+                    if (day in 0..89) {
                         bpt[89 - day]++
                     }
                 }

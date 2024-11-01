@@ -46,6 +46,7 @@ public class LazerFriend {
     }
 
     public MicroUser getTarget() {
+        target.isMutual = isMutual;
         return target;
     }
 

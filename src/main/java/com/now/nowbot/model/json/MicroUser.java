@@ -39,6 +39,10 @@ public class MicroUser implements Comparable<MicroUser> {
     @JsonIgnore
     OsuUser.Country country;
 
+    // 通过 LazerFriend 设置
+    @JsonProperty("mutual")
+    Boolean isMutual;
+
     @JsonProperty("country_code")
     void setCountryCode(String countryCode) {
         this.countryCode = countryCode;
@@ -184,6 +188,14 @@ public class MicroUser implements Comparable<MicroUser> {
 
     public String getCountryCode() {
         return countryCode;
+    }
+
+    public Boolean getMutual() {
+        return isMutual;
+    }
+
+    public void setMutual(Boolean mutual) {
+        isMutual = mutual;
     }
 
     public UserStatisticsRulesets getRulesets() {
