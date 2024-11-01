@@ -97,6 +97,12 @@ public class OsuUser {
     @JsonProperty("post_count")
     Integer postCount;
 
+    @JsonProperty("profile_hue")
+    @Nullable
+    // 这个很重要，是新增的撒泼特自设功能。只要面板知道你的色相，即可生成对应的面板类型。
+    // 区域 0-255，可以为 null
+    Integer profileHue;
+
     @JsonProperty("profile_order")
     List<String> profileOrder;
 
@@ -135,12 +141,18 @@ public class OsuUser {
                                      OffsetDateTime timestamp, String type) {
     }
 
+    /*
+
     @JsonProperty("active_tournament_banner")
     @Nullable
+    @Deprecated
     ProfileBanner profileBanner;
 
-    public record ProfileBanner(Long id, Long tournament_id, @Nullable String image,
+     */
 
+    public record ProfileBanner(Long id,
+                                Long tournament_id,
+                                @Nullable String image,
                                 @JsonProperty("image@2x") @Nullable String image2x) {
     }
 
@@ -159,11 +171,27 @@ public class OsuUser {
     Integer beatmapPlaycount;
 
     @JsonProperty("comments_count")
-    Integer CommentsCount;
+    Integer commentsCount;
+
+    @JsonProperty("daily_challenge_user_stats")
+    @Nullable
+    DailyChallenge dailyChallenge;
+
+    public record DailyChallenge(
+            @JsonProperty("daily_streak_best") Integer bestDayStreak,
+            @JsonProperty("daily_streak_current") Integer currentDayStreak,
+            @JsonProperty("last_update") OffsetDateTime lastUpdate,
+            @JsonProperty("last_weekly_streak") OffsetDateTime lastWeeklyStreak,
+            @JsonProperty("playcount") Integer playCount,
+            @JsonProperty("top_10p_placements") Integer top10PercentCount,
+            @JsonProperty("top_50p_placements") Integer top50PercentCount,
+            @JsonProperty("user_id") Integer userID,
+            @JsonProperty("weekly_streak_best") Integer bestWeekStreak,
+            @JsonProperty("weekly_streak_current") Integer currentWeekStreak
+    ) {}
 
     @JsonProperty("favourite_beatmapset_count")
     Integer favoriteCount;
-
 
     @JsonProperty("follower_count")
     Integer followerCount;
@@ -531,6 +559,15 @@ public class OsuUser {
         this.postCount = postCount;
     }
 
+    @Nullable
+    public Integer getProfileHue() {
+        return profileHue;
+    }
+
+    public void setProfileHue(@Nullable Integer profileHue) {
+        this.profileHue = profileHue;
+    }
+
     public List<String> getProfileOrder() {
         return profileOrder;
     }
@@ -605,15 +642,6 @@ public class OsuUser {
         this.accountHistory = accountHistory;
     }
 
-    @Nullable
-    public ProfileBanner getProfileBanner() {
-        return profileBanner;
-    }
-
-    public void setProfileBanner(@Nullable ProfileBanner profileBanner) {
-        this.profileBanner = profileBanner;
-    }
-
     public List<ProfileBanner> getProfileBanners() {
         return profileBanners;
     }
@@ -639,11 +667,11 @@ public class OsuUser {
     }
 
     public Integer getCommentsCount() {
-        return CommentsCount;
+        return commentsCount;
     }
 
     public void setCommentsCount(Integer commentsCount) {
-        CommentsCount = commentsCount;
+        this.commentsCount = commentsCount;
     }
 
     public Integer getFavoriteCount() {
@@ -935,11 +963,11 @@ public class OsuUser {
 
     @Override
     public String toString() {
-        return STR."OsuUser{avatarUrl='\{avatarUrl}\{'\''}, countryCode='\{countryCode}\{'\''}, defaultGroup='\{defaultGroup}\{'\''}, id=\{id}, isActive=\{isActive}, isBot=\{isBot}, isDeleted=\{isDeleted}, isOnline=\{isOnline}, isSupporter=\{isSupporter}, lastVisit=\{lastVisit}, PMFriendsOnly=\{pmFriendsOnly}, profileColor='\{profileColor}\{'\''}, username='\{username}\{'\''}, coverUrl='\{coverUrl}\{'\''}, discord='\{discord}\{'\''}, hasSupported=\{hasSupported}, interests='\{interests}\{'\''}, joinDate=\{joinDate}, location='\{location}\{'\''}, maxBlocks=\{maxBlocks}, maxFriends=\{maxFriends}, occupation='\{occupation}\{'\''}, playMode='\{mode}\{'\''}, playStyle=\{playStyle}, postCount=\{postCount}, profileOrder=\{profileOrder}, title='\{title}\{'\''}, titleUrl='\{titleUrl}\{'\''}, twitter='\{twitter}\{'\''}, website='\{website}\{'\''}, country=\{country}, cover=\{cover}, kudosu=\{kudosu}, accountHistory=\{accountHistory}, profileBanner=\{profileBanner}, profileBanners=\{profileBanners}, badges=\{badges}, beatmapPlaycount=\{beatmapPlaycount}, CommentsCount=\{CommentsCount}, favoriteCount=\{favoriteCount}, followerCount=\{followerCount}, graveyardCount=\{graveyardCount}, groups=\{groups}, guestCount=\{guestCount}, lovedCount=\{lovedCount}, mappingFollowerCount=\{mappingFollowerCount}, monthlyPlaycounts=\{monthlyPlaycounts}, nominatedCount=\{nominatedCount}, page=\{page}, pendingCount=\{pendingCount}, previousNames=\{previousNames}, highestRank=\{highestRank}, rankedCount=\{rankedCount}, replaysWatchedCounts=\{replaysWatchedCounts}, scoreBestCount=\{scoreBestCount}, scoreFirstCount=\{scoreFirstCount}, scorePinnedCount=\{scorePinnedCount}, scoreRecentCount=\{scoreRecentCount}, statistics=\{statistics}, supportLevel=\{supportLevel}, userAchievements=\{userAchievements}, rankHistory=\{rankHistory}, PP=\{PP}\{'}'}";
+        return STR."OsuUser{avatarUrl='\{avatarUrl}\{'\''}, countryCode='\{countryCode}\{'\''}, defaultGroup='\{defaultGroup}\{'\''}, id=\{id}, isActive=\{isActive}, isBot=\{isBot}, isDeleted=\{isDeleted}, isOnline=\{isOnline}, isSupporter=\{isSupporter}, lastVisit=\{lastVisit}, PMFriendsOnly=\{pmFriendsOnly}, profileColor='\{profileColor}\{'\''}, username='\{username}\{'\''}, coverUrl='\{coverUrl}\{'\''}, discord='\{discord}\{'\''}, hasSupported=\{hasSupported}, interests='\{interests}\{'\''}, joinDate=\{joinDate}, location='\{location}\{'\''}, maxBlocks=\{maxBlocks}, maxFriends=\{maxFriends}, occupation='\{occupation}\{'\''}, playMode='\{mode}\{'\''}, playStyle=\{playStyle}, postCount=\{postCount}, profileOrder=\{profileOrder}, title='\{title}\{'\''}, titleUrl='\{titleUrl}\{'\''}, twitter='\{twitter}\{'\''}, website='\{website}\{'\''}, country=\{country}, cover=\{cover}, kudosu=\{kudosu}, accountHistory=\{accountHistory}, profileBanners=\{profileBanners}, badges=\{badges}, beatmapPlaycount=\{beatmapPlaycount}, CommentsCount=\{commentsCount}, favoriteCount=\{favoriteCount}, followerCount=\{followerCount}, graveyardCount=\{graveyardCount}, groups=\{groups}, guestCount=\{guestCount}, lovedCount=\{lovedCount}, mappingFollowerCount=\{mappingFollowerCount}, monthlyPlaycounts=\{monthlyPlaycounts}, nominatedCount=\{nominatedCount}, page=\{page}, pendingCount=\{pendingCount}, previousNames=\{previousNames}, highestRank=\{highestRank}, rankedCount=\{rankedCount}, replaysWatchedCounts=\{replaysWatchedCounts}, scoreBestCount=\{scoreBestCount}, scoreFirstCount=\{scoreFirstCount}, scorePinnedCount=\{scorePinnedCount}, scoreRecentCount=\{scoreRecentCount}, statistics=\{statistics}, supportLevel=\{supportLevel}, userAchievements=\{userAchievements}, rankHistory=\{rankHistory}, PP=\{PP}\{'}'}";
     }
 
     public String toCSV() {
-        return STR."\{getUserName(username)},\{id},\{statistics.getPP()},\{statistics.getPP4K()},\{statistics.getPP7K()},\{statistics.getAccuracy()},\{statistics.getRankedScore()},\{statistics.getTotalScore()},\{statistics.getPlayCount()},\{statistics.getPlayTime()},\{statistics.getTotalHits()},\{avatarUrl},\{countryCode},\{defaultGroup},\{isActive},\{isBot},\{isDeleted},\{isOnline},\{isSupporter},\{isRestricted},\{lastVisit},\{pmFriendsOnly},\{profileColor},\{coverUrl},\{replaceCommas(discord)},\{hasSupported},\{replaceCommas(interests)},\{joinDate},\{replaceCommas(location)},\{maxBlocks},\{maxFriends},\{replaceCommas(occupation)},\{mode},\{getFirst(playStyle)},\{postCount},\{getFirst(profileOrder)},\{title},\{titleUrl},\{twitter},\{website},\{country.name},\{cover.custom},\{kudosu.total},\{beatmapPlaycount},\{CommentsCount},\{favoriteCount},\{followerCount},\{graveyardCount},\{guestCount},\{lovedCount},\{mappingFollowerCount},\{nominatedCount},\{pendingCount},\{getFirst(previousNames)},\{getHighestRank(highestRank)},\{rankedCount},\{replaysWatchedCounts.size()},\{scoreBestCount},\{scoreFirstCount},\{scorePinnedCount},\{scoreRecentCount},\{supportLevel},\{userAchievements.size()}";
+        return STR."\{getUserName(username)},\{id},\{statistics.getPP()},\{statistics.getPP4K()},\{statistics.getPP7K()},\{statistics.getAccuracy()},\{statistics.getRankedScore()},\{statistics.getTotalScore()},\{statistics.getPlayCount()},\{statistics.getPlayTime()},\{statistics.getTotalHits()},\{avatarUrl},\{countryCode},\{defaultGroup},\{isActive},\{isBot},\{isDeleted},\{isOnline},\{isSupporter},\{isRestricted},\{lastVisit},\{pmFriendsOnly},\{profileColor},\{coverUrl},\{replaceCommas(discord)},\{hasSupported},\{replaceCommas(interests)},\{joinDate},\{replaceCommas(location)},\{maxBlocks},\{maxFriends},\{replaceCommas(occupation)},\{mode},\{getFirst(playStyle)},\{postCount},\{getFirst(profileOrder)},\{title},\{titleUrl},\{twitter},\{website},\{country.name},\{cover.custom},\{kudosu.total},\{beatmapPlaycount},\{commentsCount},\{favoriteCount},\{followerCount},\{graveyardCount},\{guestCount},\{lovedCount},\{mappingFollowerCount},\{nominatedCount},\{pendingCount},\{getFirst(previousNames)},\{getHighestRank(highestRank)},\{rankedCount},\{replaysWatchedCounts.size()},\{scoreBestCount},\{scoreFirstCount},\{scorePinnedCount},\{scoreRecentCount},\{supportLevel},\{userAchievements.size()}";
 
     }
 
