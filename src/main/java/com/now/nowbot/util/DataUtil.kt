@@ -76,9 +76,8 @@ object DataUtil {
             if (field == null || field!!.isClosed) {
                 try {
                     field =
-                        Typeface.makeFromFile(
-                            "${NowbotConfig.FONT_PATH}Alibaba-PuHuiTi-Medium.ttf"
-                        )
+                            Typeface.makeFromFile(
+                                    "${NowbotConfig.FONT_PATH}Alibaba-PuHuiTi-Medium.ttf")
                 } catch (e: Exception) {
                     log.error("Alibaba-PuHuiTi-Medium.ttf", e)
                     field = Typeface.makeDefault()
@@ -1070,6 +1069,37 @@ object DataUtil {
         }
 
         return 0.0
+    }
+
+    fun numberTo62(n: Long): String {
+        val sb = StringBuilder()
+        var number = n
+        var mod: Int
+        var c: Char
+        while (number > 0) {
+            mod = (number % 62).toInt()
+            c = when {
+                mod < 10 -> '0' + mod
+                mod < 36 -> 'a' + mod - 10
+                else -> 'A' + mod - 36
+            }
+            sb.append(c)
+            number /= 62
+        }
+        return sb.reverse().toString()
+    }
+
+    fun stringTo62(s: String): Long {
+        var result = 0L
+        for (c in s) {
+            result = result * 62 + when(c){
+                in '0'..'9' -> c - '0'
+                in 'a'..'z' -> c - 'a' + 10
+                in 'A'..'Z' -> c - 'A' + 36
+                else -> 0
+            }
+        }
+        return result
     }
 
     @JvmStatic
