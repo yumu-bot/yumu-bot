@@ -170,18 +170,7 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public List<MicroUser> getFriendList(BinUser user) {
-        if (! user.isAuthorized()) throw new TipsRuntimeException("无权限");
-        return base.osuApiWebClient.get()
-                .uri("friends")
-                .headers(base.insertHeader(user))
-                .retrieve().bodyToFlux(MicroUser.class)
-                .collectList()
-                .block();
-    }
-
-    @Override
-    public List<LazerFriend> getNewFriendList(BinUser user) {
+    public List<LazerFriend> getFriendList(BinUser user) {
         if (! user.isAuthorized()) throw new TipsRuntimeException("无权限");
         return base.osuApiWebClient.get()
                 .uri("friends")

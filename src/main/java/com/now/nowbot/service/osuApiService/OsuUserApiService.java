@@ -86,9 +86,7 @@ public interface OsuUserApiService {
      */
     <T extends Number> List<MicroUser> getUsers(Collection<T> users) throws WebClientResponseException;
 
-    List<MicroUser> getFriendList(BinUser user) throws WebClientResponseException;
-
-    List<LazerFriend> getNewFriendList(BinUser user) throws WebClientResponseException;
+    List<LazerFriend> getFriendList(BinUser user) throws WebClientResponseException;
 
     List<ActivityEvent> getUserRecentActivity(long UID, int s, int e);
 

@@ -94,7 +94,7 @@ class FriendService(
             return MessageChain("你自己与你自己就是最好的朋友。")
         }
 
-        val friendList = userApiService.getNewFriendList(binUser)
+        val friendList = userApiService.getFriendList(binUser)
 
         val message = getMutualInfo(binUser, param, friendList)
 
@@ -133,7 +133,7 @@ class FriendService(
         val isFollowed = try {
             userApiService
                 .getFriendList(other)
-                .find { it?.userID == binUser.osuID }
+                .find { it.target.userID == binUser.osuID }
                 .isNotNull()
         } catch (ignored: Exception) {
             false
@@ -171,7 +171,9 @@ class FriendService(
         }
 
         val rawList = try {
-            userApiService.getFriendList(binUser)
+            userApiService.getFriendList(binUser).map {
+                it.target
+            }.toMutableList()
         } catch (e: Exception) {
             throw FriendException(FriendException.Type.FRIEND_Me_FetchFailed)
         }
