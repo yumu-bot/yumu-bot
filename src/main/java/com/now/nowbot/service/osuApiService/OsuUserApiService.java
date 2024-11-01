@@ -3,10 +3,7 @@ package com.now.nowbot.service.osuApiService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.json.ActivityEvent;
-import com.now.nowbot.model.json.KudosuHistory;
-import com.now.nowbot.model.json.MicroUser;
-import com.now.nowbot.model.json.OsuUser;
+import com.now.nowbot.model.json.*;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Collection;
@@ -90,6 +87,8 @@ public interface OsuUserApiService {
     <T extends Number> List<MicroUser> getUsers(Collection<T> users) throws WebClientResponseException;
 
     List<MicroUser> getFriendList(BinUser user) throws WebClientResponseException;
+
+    List<LazerFriend> getNewFriendList(BinUser user) throws WebClientResponseException;
 
     List<ActivityEvent> getUserRecentActivity(long UID, int s, int e);
 

@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.json.LazerFriend
 import com.now.nowbot.model.json.MicroUser
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -93,7 +94,7 @@ class FriendService(
             return MessageChain("你自己与你自己就是最好的朋友。")
         }
 
-        val friendList = userApiService.getFriendList(binUser)
+        val friendList = userApiService.getNewFriendList(binUser)
 
         val message = getMutualInfo(binUser, param, friendList)
 
@@ -103,11 +104,20 @@ class FriendService(
     fun getMutualInfo(
         binUser: BinUser,
         param: FriendParam,
-        friendList: MutableList<MicroUser?>
+        friendList: MutableList<LazerFriend>
     ): String {
         val uid = param.uid
         val name = param.user?.username ?: binUser.username
-        val friend = friendList.find { it?.userID == uid }
+        val friend = friendList.find { it.target.userID == uid }
+
+        // 加了对方 直接判断是否互 mu
+        if (friend != null) {
+            return if (friend.mutual) {
+                "恭喜！你已经与 $name 互相成为好友了。"
+            } else {
+                "你已经添加了 $name 作为你的好友，但对方似乎还没有添加你。"
+            }
+        }
 
         val other = try {
             bindDao.getBindUser(uid) ?: null
@@ -115,39 +125,25 @@ class FriendService(
             null
         }
 
-        val isBind = other?.isAuthorized ?: false
+        // 没加对方, 对方没绑定
+        if (other?.isAuthorized == null) {
+            return "你还没有将 $name 添加为你的好友，并且对方没有使用链接绑定，还不知道有没有添加你。"
+        }
 
         val isFollowed = try {
-            if (isBind) {
-                userApiService
-                    .getFriendList(other)
-                    .find { it?.userID == binUser.osuID }
-                    .isNotNull()
-            } else {
-                false
-            }
+            userApiService
+                .getFriendList(other)
+                .find { it?.userID == binUser.osuID }
+                .isNotNull()
         } catch (ignored: Exception) {
             false
         }
 
-        val isFollowing = friend.isNotNull()
-
-        return if (isFollowing) {
-            if (isFollowed) {
-                "恭喜！你已经与 $name 互相成为好友了。"
-            } else if (isBind) {
-                "你已经添加了 $name 作为你的好友，但对方似乎还没有添加你。"
-            } else {
-                "你已经添加了 $name 作为你的好友，但对方没有使用链接绑定，还不知道有没有添加你。"
-            }
+        // 对方是否加你
+        return if (isFollowed) {
+            "你还没有将 $name 添加为你的好友，但对方似乎已经悄悄添加了你。"
         } else {
-            if (isFollowed) {
-                "你还没有将 $name 添加为你的好友，但对方似乎已经悄悄添加了你。"
-            } else if (isBind) {
-                "你们暂未互相成为好友。或许可以考虑一下？"
-            } else {
-                "你还没有将 $name 添加为你的好友，并且对方没有使用链接绑定，还不知道有没有添加你。"
-            }
+            "你们暂未互相成为好友。或许可以考虑一下？"
         }
     }
 
@@ -188,28 +184,31 @@ class FriendService(
         }
 
         val sorted =
-            when(sortType) {
+            when (sortType) {
                 PERFORMANCE -> stream.filter { it.statistics.pp > 0 }
                     .sorted(Comparator.comparing { it.statistics.pp }).toList()
+
                 ACCURACY -> stream.filter { it.statistics.accuracy > 0 }
                     .sorted(Comparator.comparing { it.statistics.accuracy }).toList()
+
                 TIME -> stream
-                    .filter {  it.lastTime != null }
+                    .filter { it.lastTime != null }
                     .sorted(Comparator.comparing { it.lastTime }).toList()
+
                 PLAY_COUNT -> stream.sorted(Comparator.comparing { it.statistics.playCount }).toList()
                 PLAY_TIME -> stream.sorted(Comparator.comparing { it.statistics.playTime }).toList()
                 TOTAL_HITS -> stream.sorted(Comparator.comparing { it.statistics.totalHits }).toList()
                 ONLINE -> stream
                     .filter { it.statistics.pp > 0 }
                     .sorted(Comparator.comparing<MicroUser?, Double?> { it.statistics.pp }.reversed())
-                    .filter{ it.isOnline }.toList()
+                    .filter { it.isOnline }.toList()
 
                 UID -> stream.sorted(Comparator.comparing { it.userID }).toList()
                 COUNTRY -> stream.sorted(Comparator.comparing { it.country.code }).toList()
                 else -> rawList
             }
 
-        val result = when(sortDirection) {
+        val result = when (sortDirection) {
             ASCEND, TRUE -> sorted
             DESCEND -> sorted.reversed()
             RANDOM -> {
@@ -218,7 +217,7 @@ class FriendService(
                 sorted
             }
             // 取差集
-            FALSE -> stream.filter { ! sorted.contains(it) }.toList()
+            FALSE -> stream.filter { !sorted.contains(it) }.toList()
         }
 
         var i = offset
@@ -264,10 +263,10 @@ class FriendService(
             RANDOM, ASCEND, DESCEND, TRUE, FALSE
         }
 
-        private fun getSort(type: String?) : Pair<SortType, SortDirection> {
+        private fun getSort(type: String?): Pair<SortType, SortDirection> {
             if (type.isNullOrBlank()) return NULL to RANDOM
 
-            return when(type.replace("\\s*".toRegex(), "").lowercase()) {
+            return when (type.replace("\\s*".toRegex(), "").lowercase()) {
                 "p", "pp", "performance", "p-", "pp-", "performance-" -> PERFORMANCE to DESCEND
                 "p2", "pp2", "performance2", "p+", "pp+", "performance+" -> PERFORMANCE to ASCEND
                 "a", "acc", "accuracy", "a-", "acc-", "accuracy-" -> ACCURACY to DESCEND

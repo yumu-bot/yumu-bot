@@ -5,10 +5,7 @@ import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.dao.OsuUserInfoDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.json.ActivityEvent;
-import com.now.nowbot.model.json.KudosuHistory;
-import com.now.nowbot.model.json.MicroUser;
-import com.now.nowbot.model.json.OsuUser;
+import com.now.nowbot.model.json.*;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
@@ -18,7 +15,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class UserApiImpl implements OsuUserApiService {
@@ -176,6 +176,17 @@ public class UserApiImpl implements OsuUserApiService {
                 .uri("friends")
                 .headers(base.insertHeader(user))
                 .retrieve().bodyToFlux(MicroUser.class)
+                .collectList()
+                .block();
+    }
+
+    @Override
+    public List<LazerFriend> getNewFriendList(BinUser user) {
+        if (! user.isAuthorized()) throw new TipsRuntimeException("无权限");
+        return base.osuApiWebClient.get()
+                .uri("friends")
+                .headers(base.insertHeader(user))
+                .retrieve().bodyToFlux(LazerFriend.class)
                 .collectList()
                 .block();
     }

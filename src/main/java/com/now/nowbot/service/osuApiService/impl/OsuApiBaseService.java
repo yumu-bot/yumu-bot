@@ -150,10 +150,8 @@ public class OsuApiBaseService {
 
         return (headers) -> headers.setAll(
                 Map.of("Authorization", "Bearer " + token,
-                       "x-api-version", "20240529"
+                       "x-api-version", "20241101"
                 )
         );
-
-        //return (headers) -> headers.set("Authorization", STR."Bearer \{token}");
     }
 }
