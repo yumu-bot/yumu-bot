@@ -22,6 +22,7 @@ import com.now.nowbot.util.CmdUtil.getMod
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithOutRange
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -120,8 +121,8 @@ class ScoreService(
     }
 
     override fun accept(event: MessageEvent, messageText: String): ScoreParam? {
-        val m2 = Instruction.SCORES.matcher(messageText)
-        val m = Instruction.SCORE.matcher(messageText)
+        val m2 = OfficialInstruction.SCORES.matcher(messageText)
+        val m = OfficialInstruction.SCORE.matcher(messageText)
 
         val isMultipleScore: Boolean
         val matcher: Matcher
