@@ -783,7 +783,7 @@ object DataUtil {
     // 应用四维的变化 4 dimensions
     @JvmStatic
     fun applyBeatMapChanges(beatMap: BeatMap, mods: List<LazerMod>) {
-        if (LazerMod.hasChangeRating(mods)) {
+        if (LazerMod.hasStarRatingChange(mods)) {
             beatMap.bpm = applyBPM(Optional.ofNullable(beatMap.bpm).orElse(0f), mods)
             beatMap.ar = applyAR(Optional.ofNullable(beatMap.ar).orElse(0f), mods)
             beatMap.cs = applyCS(Optional.ofNullable(beatMap.cs).orElse(0f), mods)

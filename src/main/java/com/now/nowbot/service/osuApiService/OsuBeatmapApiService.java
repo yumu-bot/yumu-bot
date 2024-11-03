@@ -9,6 +9,7 @@ import com.now.nowbot.service.messageServiceImpl.MapStatisticsService;
 import com.now.nowbot.util.ContextUtil;
 import com.now.nowbot.util.DataUtil;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
 import rosu.Rosu;
 import rosu.parameter.JniScore;
@@ -67,7 +68,7 @@ public interface OsuBeatmapApiService {
 
     BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode);
 
-    BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode, int modsValue);
+    BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode, int value);
 
     default BeatmapDifficultyAttributes getAttributes(Long id) {
         return getAttributes(id, OsuMode.DEFAULT);
@@ -77,8 +78,10 @@ public interface OsuBeatmapApiService {
         return getAttributes(id, OsuMode.DEFAULT, value);
     }
 
-    default BeatmapDifficultyAttributes getAttributes(Long id, LazerMod... mods) {
-        int value = Arrays.stream(mods).mapToInt(m -> m.type.value).reduce(0, Integer::sum);
+    default BeatmapDifficultyAttributes getAttributes(Long id, @Nullable List<LazerMod> mods) {
+        if (mods == null || mods.isEmpty()) return getAttributes(id, OsuMode.DEFAULT);
+
+        int value = mods.stream().mapToInt(m -> m.type.value).reduce(0, Integer::sum);
         return getAttributes(id, value);
     }
 
@@ -340,7 +343,7 @@ public interface OsuBeatmapApiService {
         if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
 
         // 没有变星数，并且有 PP，略过
-        if ((!LazerMod.hasChangeRating(score.getMods())) && score.getPP() > 0d) return;
+        if (LazerMod.noStarRatingChange(score.getMods()) && score.getPP() > 0d) return;
 
         var beatMap = score.getBeatMap();
 

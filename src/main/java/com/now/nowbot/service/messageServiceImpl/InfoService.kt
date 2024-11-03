@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.OsuUserInfoArchiveLite
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.InfoLogStatistics
 import com.now.nowbot.model.json.LazerScore
@@ -13,6 +14,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.InfoService.InfoParam
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
@@ -34,10 +36,12 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import kotlin.jvm.optionals.getOrNull
+import kotlin.math.min
 
 @Service("INFO")
 class InfoService(
     private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
     private val infoDao: OsuUserInfoDao,
     private val imageService: ImageService,
 ) : MessageService<InfoParam>, TencentMessageService<InfoParam> {
@@ -84,13 +88,15 @@ class InfoService(
         fun toD2Map(): Map<String, Any> {
             val out = mutableMapOf<String, Any>()
 
-            out["user"] = user
-            out["mode"] = mode
-            out["scores"] = if (bests.size >= 6) {
+            val bests = if (bests.size >= 6) {
                 bests.subList(0, 6)
             } else {
                 bests
             }
+
+            out["user"] = user
+            out["mode"] = mode
+            out["scores"] = bests
             out["best_time"] = getBestTimes(bests)
 
             if (historyUser != null) {
@@ -147,7 +153,26 @@ class InfoService(
 
     private fun InfoParam.getImage(): ByteArray {
         val bests: List<LazerScore> = try {
-            scoreApiService.getBestScores(user.userID, mode, 0, 100)
+            val bests = scoreApiService.getBestScores(user.userID, mode, 0, 100)
+
+            if (this.version == 2) {
+                for(i in 0..min(bests.size - 1, 5)) {
+                    val b = bests[i]
+
+                    if (LazerMod.noStarRatingChange(b.mods)) continue
+
+                    try {
+                        b.beatMap.starRating = beatmapApiService.getAttributes(b.beatMapID, b.mods).starRating
+                    } catch (e: Exception) {
+                        log.info("玩家信息：获取新谱面星数失败")
+                        continue
+                    }
+                }
+            }
+
+
+
+            bests
         } catch (e: WebClientResponseException.NotFound) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, mode)
         } catch (e: Exception) {
@@ -181,10 +206,11 @@ class InfoService(
         private val log: Logger = LoggerFactory.getLogger(InfoService::class.java)
 
         private fun getParam(event: MessageEvent, matcher: Matcher, version: Int = 1): InfoParam {
-            val mode = getMode(matcher)
             val isMyself = AtomicBoolean(false)
 
-            val user = getUserWithOutRange(event, matcher, mode, isMyself)
+            val user = getUserWithOutRange(event, matcher, getMode(matcher), isMyself)
+            val mode = user.currentOsuMode
+
             val dayStr = matcher.group(FLAG_DAY)
             val day = if (StringUtils.hasText(dayStr)) try {
                 dayStr.toInt()
@@ -194,7 +220,7 @@ class InfoService(
                 1
             }
 
-            return InfoParam(user, mode.data!!, day, isMyself.get(), version)
+            return InfoParam(user, mode, day, isMyself.get(), version)
         }
 
         private fun getBestTimes(bests: List<LazerScore>): IntArray {

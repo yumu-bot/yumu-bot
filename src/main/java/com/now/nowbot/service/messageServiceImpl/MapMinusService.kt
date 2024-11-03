@@ -69,7 +69,7 @@ class MapMinusService(
         val beatMap: BeatMap
         val mode: OsuMode
 
-        val isChangedRating = LazerMod.hasChangeRating(param.modsList)
+        val isChangedRating = LazerMod.hasStarRatingChange(param.modsList)
 
         try {
 

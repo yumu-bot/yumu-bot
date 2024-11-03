@@ -435,13 +435,13 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     }
 
     @Override
-    public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode, int modsValue) {
+    public BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode, int value) {
         Map<String, Object> body = new HashMap<>();
         if (!OsuMode.isDefaultOrNull(mode)) {
             body.put("ruleset_id", mode.getModeValue());
         }
-        if (modsValue != 0) {
-            body.put("mods", modsValue);
+        if (value != 0) {
+            body.put("mods", value);
         }
         return base.osuApiWebClient
                 .post().uri("beatmaps/{id}/attributes", id).headers(base::insertHeader)

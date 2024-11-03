@@ -501,17 +501,22 @@ data class LazerMod(@JvmField val type: LazerModType) {
         @Deprecated(
                 "尽量用重载方法 List<OsuMod>，因为部分 lazer mod 是没有 value 的",
                 ReplaceWith(
-                        "hasChangeRating(getModsList(value))",
-                        "com.now.nowbot.model.enums.OsuMod.Companion.hasChangeRating",
+                        "hasStarRatingChange(getModsList(value))",
+                        "com.now.nowbot.model.enums.OsuMod.Companion.hasStarRatingChange",
                         "com.now.nowbot.model.enums.OsuMod.Companion.getModsList",
                 ),
         )
-        fun hasChangeRating(value: Int): Boolean {
-            return hasChangeRating(getModsList(value))
+        fun hasStarRatingChange(value: Int): Boolean {
+            return hasStarRatingChange(getModsList(value))
         }
 
         @JvmStatic
-        fun hasChangeRating(mods: List<LazerMod?>?): Boolean {
+        fun noStarRatingChange(mods: List<LazerMod?>?): Boolean {
+            return ! hasStarRatingChange(mods)
+        }
+
+        @JvmStatic
+        fun hasStarRatingChange(mods: List<LazerMod?>?): Boolean {
             if (mods.isNullOrEmpty()) return false
 
             val type = mods.stream().map { it?.type }.filter { it != LazerModType.Other }.toList()
@@ -531,9 +536,9 @@ data class LazerMod(@JvmField val type: LazerModType) {
         }
 
         @JvmStatic
-        fun hasChangeRatingFromAcronyms(acronyms: List<String>): Boolean {
+        fun hasStarRatingChangeFromAcronyms(acronyms: List<String>): Boolean {
             val v = getModsList(acronyms)
-            return hasChangeRating(v)
+            return hasStarRatingChange(v)
         }
 
         fun add(old: Int, type: LazerModType): Int {
