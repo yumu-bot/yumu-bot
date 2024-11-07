@@ -47,12 +47,12 @@ class Map4DCalculate : MessageService<Map4DParam> {
                 when (param.type) {
                     "ar" -> {
                         val ar = DataUtil.applyAR(param.value, mod)
-                        val ms = DataUtil.AR2MS(ar)
+                        val ms = DataUtil.getMillisFromAR(ar)
                         String.format("AR: %.2f, 缩圈时间: %.2fms", ar, ms)
                     }
                     "od" -> {
                         val od = DataUtil.applyOD(param.value, mod)
-                        val ms = DataUtil.OD2MS(od)
+                        val ms = DataUtil.getMillisFromOD(od)
                         String.format("OD: %.2f, 300 判定区间: %.2fms", od, ms)
                     }
                     "cs" -> {

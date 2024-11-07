@@ -664,7 +664,7 @@ object DataUtil {
     }
 
     @JvmStatic
-    fun AR2MS(ar: Float): Float =
+    fun getMillisFromAR(ar: Float): Float =
             when {
                 ar > 11f -> 300f
                 ar > 5f -> 1200 - (150 * (ar - 5))
@@ -672,7 +672,7 @@ object DataUtil {
                 else -> 1800f
             }
 
-    fun MS2AR(ms: Float): Float =
+    fun getARFromMillis(ms: Float): Float =
             when {
                 ms < 300 -> 11f
                 ms < 1200 -> 5 + (1200 - ms) / 150f
@@ -696,22 +696,23 @@ object DataUtil {
         val speed = LazerMod.getModSpeed(mods)
 
         if (speed != 1.0) {
-            var ms = AR2MS(a.clamp())
+            var ms = getMillisFromAR(a.clamp())
             ms = (ms / speed).toFloat()
-            a = MS2AR(ms)
+            a = getARFromMillis(ms)
         }
 
-        return a.clamp().roundToDigits2()
+        return a.roundToDigits2()
     }
 
     @JvmStatic
-    fun OD2MS(od: Float): Float =
+    fun getMillisFromOD(od: Float): Float =
             when {
                 od > 11 -> 14f
                 else -> 80 - 6 * od
             }
 
-    fun MS2OD(ms: Float): Float =
+    @JvmStatic
+    fun getODFromMillis(ms: Float): Float =
             when {
                 ms < 14 -> 11f
                 else -> (80 - ms) / 6f
@@ -732,9 +733,9 @@ object DataUtil {
         val speed = LazerMod.getModSpeed(mods)
 
         if (speed != 1.0) {
-            var ms = OD2MS(od.clamp())
+            var ms = getMillisFromOD(od.clamp())
             ms = (ms / speed).toFloat()
-            o = MS2OD(ms)
+            o = getODFromMillis(ms)
         }
 
         return o.roundToDigits2()
