@@ -1,9 +1,7 @@
 package com.now.nowbot.util
 
-import com.now.nowbot.util.command.CommandPatternBuilder
 import com.now.nowbot.util.command.*
 import com.now.nowbot.util.command.MatchLevel.*
-
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -478,6 +476,9 @@ enum class Instruction(val pattern: Pattern) {
         appendQQID()
         appendUID()
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
+    }),
+    OSU_AVATAR_CARD(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("(old|osu)?\\s*card", "oc")
     }),
 
     OVER_SR(CommandPatternBuilder.create {

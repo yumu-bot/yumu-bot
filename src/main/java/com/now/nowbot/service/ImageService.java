@@ -8,6 +8,7 @@ import com.now.nowbot.model.multiplayer.MatchCalculate;
 import com.now.nowbot.model.multiplayer.MonitoredMatch;
 import com.now.nowbot.model.multiplayer.SeriesCalculate;
 import com.now.nowbot.model.ppminus.PPMinus;
+import com.now.nowbot.model.service.UserAvatarCardParam;
 import com.now.nowbot.service.messageServiceImpl.MapStatisticsService;
 import com.now.nowbot.service.messageServiceImpl.MatchMapService;
 import com.now.nowbot.util.ContextUtil;
@@ -138,6 +139,11 @@ public class ImageService {
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_A5", httpEntity);
+    }
+
+    public byte[] getUserAvatarCard(UserAvatarCardParam param) {
+
+        return doPost("panel_avatar", new HttpEntity<>(param, getDefaultHeader()));
     }
     /**
      * Markdown 页面，用于帮助和维基 MD/H/W，user 默认 Optional.empty，width 默认 1840， data 默认 ""
@@ -571,7 +577,6 @@ public class ImageService {
     private HttpHeaders getDefaultHeader() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         return headers;
     }
 
