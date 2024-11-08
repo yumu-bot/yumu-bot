@@ -12,7 +12,7 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 
-@Service("OLD_AVATAR")
+@Service("OSU_AVATAR_CARD")
 class OsuAvatarCardService(
     private val userApiService: OsuUserApiService,
     private val bindDao: BindDao,
