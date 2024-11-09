@@ -105,7 +105,7 @@ class BPAnalysisService(
         }
 
         // 提取星级变化的谱面 DT/HT 等
-        beatmapApiService.applySRAndPP(scores)
+        beatmapApiService.applyStarRating(scores)
 
         val data = parseData(
             user, scores,

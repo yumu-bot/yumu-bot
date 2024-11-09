@@ -477,6 +477,39 @@ public interface OsuBeatmapApiService {
         score.setPP(r.getPp());
     }
 
+    // 只算 SR，可以加快比如 bp Analysis 功能的查询速度
+    default void applyStarRating(List<LazerScore> scoreList) {
+        if (CollectionUtils.isEmpty(scoreList)) return;
+
+        for (var score : scoreList) {
+            applyStarRating(score);
+        }
+    }
+
+    // 只算 SR，可以加快比如 bp Analysis 功能的查询速度
+    default void applyStarRating(LazerScore score) {
+        if (score.getBeatMap().getStarRating() <= 0) return;
+
+        var id = score.getBeatMap().getBeatMapID();
+
+        JniResult r;
+        try {
+            r = getMaxPP(score);
+
+            if (r.getStar() <= 0) {
+                NowbotApplication.log.info("无法获取谱面 {} 的 SR，正在刷新谱面文件！", score.getBeatMap().getBeatMapID());
+                refreshBeatMapFileFromDirectory(id);
+                r = getMaxPP(score);
+            }
+        } catch (Exception e) {
+            NowbotApplication.log.error("计算时出现异常", e);
+            return;
+        }
+
+        score.getBeatMap().setStarRating(r.getStar());
+        DataUtil.applyBeatMapChanges(score.getBeatMap(), score.getMods());
+    }
+
     private void applyStarFromAttributes(BeatMap beatMap, OsuMode ruleset, List<LazerMod> mods) {
         try {
             var attr = getAttributes(beatMap.getBeatMapID(), ruleset, LazerMod.getModsValue(mods));
