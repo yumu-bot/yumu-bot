@@ -10,6 +10,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.OfficialInstruction
 import org.springframework.stereotype.Service
 
 @Service("OSU_AVATAR_CARD")
@@ -33,16 +34,19 @@ class OsuAvatarCardService(
     }
 
     override fun HandleMessage(event: MessageEvent, data: UserAvatarCardParam) {
+        data.color = "#B6E3E9"
         val image = imageService.getUserAvatarCard(data)
         event.subject.sendImage(image)
     }
 
     override fun accept(event: MessageEvent, messageText: String): UserAvatarCardParam? {
+        if (!OfficialInstruction.OSU_AVATAR_CARD.matcher(messageText).find()) return null
         val u = bindDao.getUserFromQQ(event.sender.id) ?: throw TipsException("请先绑定账号")
         return UserAvatarCardParam(userApiService.getPlayerInfo(u))
     }
 
     override fun reply(event: MessageEvent, param: UserAvatarCardParam): MessageChain? {
+        param.color = "#FDAFAB"
         return MessageChain.MessageChainBuilder().addImage(imageService.getUserAvatarCard(param)).build()
     }
 }

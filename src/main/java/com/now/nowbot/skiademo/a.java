@@ -3,7 +3,9 @@ package com.now.nowbot.skiademo;
 import com.now.nowbot.util.SkiaCanvasUtil;
 import com.now.nowbot.util.SkiaImageUtil;
 import io.github.humbleui.skija.*;
-import io.github.humbleui.types.*;
+import io.github.humbleui.types.Point;
+import io.github.humbleui.types.RRect;
+import io.github.humbleui.types.Rect;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,8 +18,9 @@ public class a {
 
         int width = 1200;
         int height = 900;
+        var info = ImageInfo.makeN32Premul(width, height);
         //创建画布
-        Surface surface = Surface.makeRasterN32Premul(width, height);
+        Surface surface = Surface.makeRaster(info);
         //得到画纸,也可以叫画笔 canvas
         Canvas canvas = surface.getCanvas();
 

@@ -277,6 +277,10 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),
 
+    OSU_AVATAR_CARD(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("oc")
+    }),
+
     OVER_SR(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("or")
         appendCaptureGroup("SR", REG_NUMBER_DECIMAL)
