@@ -176,7 +176,7 @@ class BeatMapSet {
         val downloadDisabled: Boolean,
 
         @JsonProperty("more_information")
-        val moreInformation: String
+        val moreInformation: String?
     )
 
     @JsonProperty("beatmaps")
