@@ -2,7 +2,10 @@ package com.now.nowbot.util
 
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.enums.*
+import com.now.nowbot.model.enums.GreekChar
+import com.now.nowbot.model.enums.JaChar
+import com.now.nowbot.model.enums.LazerModType
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.json.*
 import com.now.nowbot.util.command.*
@@ -76,8 +79,9 @@ object DataUtil {
             if (field == null || field!!.isClosed) {
                 try {
                     field =
-                            Typeface.makeFromFile(
-                                    "${NowbotConfig.FONT_PATH}Alibaba-PuHuiTi-Medium.ttf")
+                        Typeface.makeFromFile(
+                            "${NowbotConfig.FONT_PATH}Alibaba-PuHuiTi-Medium.ttf"
+                        )
                 } catch (e: Exception) {
                     log.error("Alibaba-PuHuiTi-Medium.ttf", e)
                     field = Typeface.makeDefault()
@@ -100,7 +104,40 @@ object DataUtil {
             return field
         }
 
+    /**
+     * @param h 0..360
+     * @param s 0..100
+     * @param l 0..100
+     */
+    fun hsl2hex(h: Int, s: Int, l: Int): String {
+        fun hue2rgb(p:Double, q:Double, h:Double) :Double{
+            var t = h
+            if (t < 0) t += 1.0
+            if (t > 1) t -= 1.0
+            if (t < 1.0 / 6) return p + (q - p) * 6.0 * t
+            if (t < 1.0 / 2) return q
+            if (t < 2.0 / 3) return p + (q - p) * (2.0 / 3 - t) * 6.0
+            return p
+        }
+        val sf = s / 100.0
+        val lf = l / 100.0
+        val hf = h / 360.0
+        if (s == 0) return "#0"
+        val q = if (l < 0.5) {
+            lf * (1 + sf)
+        } else {
+            lf + sf - lf * sf
+        }
+        val p = 2 * lf - q
+        val r = (hue2rgb(p, q, hf + 1.0 / 3) * 255).toInt()
+        val g = (hue2rgb(p, q, hf) * 255).toInt()
+        val b = (hue2rgb(p, q, hf - 1.0 / 3) * 255).toInt()
+
+        return String.format("#%02x%02x%02x", r, g, b)
+    }
+
     val splitReg = "[,，|:：`、]+".toRegex()
+
     /**
      * 将按逗号或者 |、:：分隔的字符串分割 如果未含有分隔的字符，返回 null
      *
@@ -112,15 +149,16 @@ object DataUtil {
     fun splitString(@Nullable str: String): List<String>? {
         if (!StringUtils.hasText(str)) return null
         val strings =
-                str.trim()
-                        .split(splitReg)
-                        .dropLastWhile { it.isEmpty() }
+            str.trim()
+                .split(splitReg)
+                .dropLastWhile { it.isEmpty() }
         // 空格和-_不能匹配
         if (strings.isEmpty()) return null
         return strings.map { obj -> obj.trim() }.toList()
     }
 
     val nameSplitReg = "[,，、|:：]+".toRegex()
+
     /**
      * 根据分隔符，分割玩家名
      *
@@ -161,14 +199,14 @@ object DataUtil {
         val extreme = score.beatMap.starRating >= 6.5f
         val acc = score.accuracy >= 0.9f
         val combo =
-                1f * score.maxCombo /
-                        Objects.requireNonNullElse(score.beatMap.maxCombo, Int.MAX_VALUE) >= 0.98f
+            1f * score.maxCombo /
+                    Objects.requireNonNullElse(score.beatMap.maxCombo, Int.MAX_VALUE) >= 0.98f
         val pp = score.pp >= 300f
         val bp = p >= 400f && score.pp >= (p - 400f) / 25f
         val miss =
-                score.statistics.getCountAll(score.mode) > 0 &&
-                        score.statistics.countMiss <=
-                                score.statistics.getCountAll(score.mode) * 0.01f
+            score.statistics.getCountAll(score.mode) > 0 &&
+                    score.statistics.countMiss <=
+                    score.statistics.getCountAll(score.mode) * 0.01f
 
         val fail = score.rank == null || score.rank == "F"
 
@@ -237,13 +275,13 @@ object DataUtil {
     @NonNull
     private fun parseRange(start: Int?, end: Int?): Range {
         val start =
-                start.let {
-                    if (it == null || it < 1 || it > 100) {
-                        1
-                    } else {
-                        it
-                    }
+            start.let {
+                if (it == null || it < 1 || it > 100) {
+                    1
+                } else {
+                    it
                 }
+            }
 
         val offset: Int
         val limit: Int
@@ -300,12 +338,15 @@ object DataUtil {
                     "player-joined" -> {
                         try {
                             playerSet.add(e.userID)
-                        } catch (ignored: java.lang.Exception) {}
+                        } catch (ignored: java.lang.Exception) {
+                        }
                     }
+
                     "player-left" -> {
                         try {
                             playerSet.remove(e.userID)
-                        } catch (ignored: java.lang.Exception) {}
+                        } catch (ignored: java.lang.Exception) {
+                        }
                     }
                 }
             }
@@ -425,13 +466,14 @@ object DataUtil {
 
         // geki, 300, katu, 100, 50, 0
         val list =
-                mutableListOf(
-                        stat.countGeki,
-                        stat.count300,
-                        stat.countKatu,
-                        stat.count100,
-                        stat.count50,
-                        stat.countMiss)
+            mutableListOf(
+                stat.countGeki,
+                stat.count300,
+                stat.countKatu,
+                stat.count100,
+                stat.count50,
+                stat.countMiss
+            )
 
         // 一个物件所占的 Acc 权重
         if (total <= 0) return stat
@@ -439,9 +481,9 @@ object DataUtil {
 
         // 彩黄比
         val ratio =
-                if ((stat.count300 + stat.countGeki > 0))
-                        stat.countGeki * 1.0 / (stat.count300 + stat.countGeki)
-                else 0.0
+            if ((stat.count300 + stat.countGeki > 0))
+                stat.countGeki * 1.0 / (stat.count300 + stat.countGeki)
+            else 0.0
 
         var current = stat.getAccuracy(MANIA)
 
@@ -494,13 +536,13 @@ object DataUtil {
     // 交换评级
     @NonNull
     fun exchangeJudge(
-            nGreat: Int,
-            nBad: Int,
-            wGreat: Double,
-            wBad: Double,
-            currentAcc: Double,
-            aimingAcc: Double,
-            weight: Double
+        nGreat: Int,
+        nBad: Int,
+        wGreat: Double,
+        wBad: Double,
+        currentAcc: Double,
+        aimingAcc: Double,
+        weight: Double
     ): Exchange {
         var g = nGreat
         var b = nBad
@@ -546,32 +588,36 @@ object DataUtil {
         if (number < 10.0.pow(m)) { // level==1->100 level==2->1000
             unit = 0.toChar()
         } else if (number <
-                10.0.pow(
-                        3.let {
-                            m += it
-                            m
-                        })) {
+            10.0.pow(
+                3.let {
+                    m += it
+                    m
+                })
+        ) {
             unit = 'K'
         } else if (number <
-                10.0.pow(
-                        3.let {
-                            m += it
-                            m
-                        })) {
+            10.0.pow(
+                3.let {
+                    m += it
+                    m
+                })
+        ) {
             unit = 'M'
         } else if (number <
-                10.0.pow(
-                        3.let {
-                            m += it
-                            m
-                        })) {
+            10.0.pow(
+                3.let {
+                    m += it
+                    m
+                })
+        ) {
             unit = 'G'
         } else if (number <
-                10.0.pow(
-                        3.let {
-                            m += it
-                            m
-                        })) {
+            10.0.pow(
+                3.let {
+                    m += it
+                    m
+                })
+        ) {
             unit = 'T'
         } else if (number < 10.0.pow((m + 3))) {
             unit = 'P'
@@ -615,11 +661,11 @@ object DataUtil {
         if (c.code == 0) {
             intValue = number.toInt()
             isInt =
-                    if (level == 1) {
-                        number - intValue <= 0.1
-                    } else {
-                        number - intValue <= 0.001
-                    }
+                if (level == 1) {
+                    number - intValue <= 0.1
+                } else {
+                    number - intValue <= 0.001
+                }
             if (isInt) return intValue.toString()
             return number.toString()
         }
@@ -638,11 +684,11 @@ object DataUtil {
         }
         intValue = number.toInt()
         isInt =
-                if (level == 1) {
-                    number - intValue <= 0.1
-                } else {
-                    number - intValue <= 0.001
-                }
+            if (level == 1) {
+                number - intValue <= 0.1
+            } else {
+                number - intValue <= 0.001
+            }
 
         if (isInt) {
             return String.format("%d%c", intValue, c)
@@ -665,26 +711,26 @@ object DataUtil {
 
     @JvmStatic
     fun getMillisFromAR(ar: Float): Float =
-            when {
-                ar > 11f -> 300f
-                ar > 5f -> 1200 - (150 * (ar - 5))
-                ar > 0f -> 1800 - (120 * ar)
-                else -> 1800f
-            }
+        when {
+            ar > 11f -> 300f
+            ar > 5f -> 1200 - (150 * (ar - 5))
+            ar > 0f -> 1800 - (120 * ar)
+            else -> 1800f
+        }
 
     fun getARFromMillis(ms: Float): Float =
-            when {
-                ms < 300 -> 11f
-                ms < 1200 -> 5 + (1200 - ms) / 150f
-                ms < 2400 -> (1800 - ms) / 120f
-                else -> -5f
-            }
+        when {
+            ms < 300 -> 11f
+            ms < 1200 -> 5 + (1200 - ms) / 150f
+            ms < 2400 -> (1800 - ms) / 120f
+            else -> -5f
+        }
 
     @JvmStatic
     fun applyAR(ar: Float, mods: List<LazerMod>): Float {
         var a = ar
 
-        val d = mods.stream().filter{it.type == LazerModType.DifficultyAdjust}.toList().firstOrNull()?.ar
+        val d = mods.stream().filter { it.type == LazerModType.DifficultyAdjust }.toList().firstOrNull()?.ar
         if (d != null) return d.toFloat().roundToDigits2()
 
         if (mods.contains(LazerModType.HardRock)) {
@@ -706,17 +752,17 @@ object DataUtil {
 
     @JvmStatic
     fun getMillisFromOD(od: Float): Float =
-            when {
-                od > 11 -> 14f
-                else -> 80 - 6 * od
-            }
+        when {
+            od > 11 -> 14f
+            else -> 80 - 6 * od
+        }
 
     @JvmStatic
     fun getODFromMillis(ms: Float): Float =
-            when {
-                ms < 14 -> 11f
-                else -> (80 - ms) / 6f
-            }
+        when {
+            ms < 14 -> 11f
+            else -> (80 - ms) / 6f
+        }
 
     @JvmStatic
     fun applyOD(od: Float, mods: List<LazerMod>): Float {
@@ -727,7 +773,7 @@ object DataUtil {
             o = (o / 2f).clamp()
         }
 
-        val d = mods.stream().filter{it.type == LazerModType.DifficultyAdjust}.toList().firstOrNull()?.od
+        val d = mods.stream().filter { it.type == LazerModType.DifficultyAdjust }.toList().firstOrNull()?.od
         if (d != null) return d.toFloat().roundToDigits2()
 
         val speed = LazerMod.getModSpeed(mods)
@@ -745,7 +791,7 @@ object DataUtil {
     fun applyCS(cs: Float, mods: List<LazerMod>): Float {
         var c = cs
 
-        val d = mods.stream().filter{it.type == LazerModType.DifficultyAdjust}.toList().firstOrNull()?.cs
+        val d = mods.stream().filter { it.type == LazerModType.DifficultyAdjust }.toList().firstOrNull()?.cs
         if (d != null) return d.toFloat().roundToDigits2()
 
         if (mods.contains(LazerModType.HardRock)) {
@@ -760,7 +806,7 @@ object DataUtil {
     fun applyHP(hp: Float, mods: List<LazerMod>): Float {
         var h = hp
 
-        val d = mods.stream().filter{it.type == LazerModType.DifficultyAdjust}.toList().firstOrNull()?.hp
+        val d = mods.stream().filter { it.type == LazerModType.DifficultyAdjust }.toList().firstOrNull()?.hp
         if (d != null) return d.toFloat().roundToDigits2()
 
         if (mods.contains(LazerModType.HardRock)) {
@@ -876,11 +922,11 @@ object DataUtil {
         val mode = score.mode
 
         val progress =
-                if (!score.passed) {
-                    1.0 * score.statistics.getCountAll(mode) / score.beatMap.maxCombo
-                } else {
-                    1.0
-                }
+            if (!score.passed) {
+                1.0 * score.statistics.getCountAll(mode) / score.beatMap.maxCombo
+            } else {
+                1.0
+            }
         return progress
     }
 
@@ -898,14 +944,15 @@ object DataUtil {
         val m = score.beatMap.maxCombo
         val ap8: Double = score.accuracy.pow(8.0)
         val v3 =
-                when (score.mode) {
-                    OSU,
-                    CATCH,
-                    DEFAULT,
-                    null -> fc * i * (0.7f * c / m + 0.3f * ap8) * p
-                    TAIKO -> fc * i * (0.75f * c / m + 0.25f * ap8) * p
-                    MANIA -> fc * i * (0.01f * c / m + 0.99f * ap8) * p
-                }
+            when (score.mode) {
+                OSU,
+                CATCH,
+                DEFAULT,
+                null -> fc * i * (0.7f * c / m + 0.3f * ap8) * p
+
+                TAIKO -> fc * i * (0.75f * c / m + 0.25f * ap8) * p
+                MANIA -> fc * i * (0.01f * c / m + 0.99f * ap8) * p
+            }
 
         return String.format("%07d", round(v3)) // 补 7 位达到 v3 分数的要求
     }
@@ -949,7 +996,8 @@ object DataUtil {
             }
 
             null,
-            DEFAULT -> {}
+            DEFAULT -> {
+            }
         }
         return index
     }
@@ -1067,8 +1115,9 @@ object DataUtil {
 
         try {
             val bufferedReader =
-                    Files.newBufferedReader(
-                            Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path ?: return ""))
+                Files.newBufferedReader(
+                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path ?: return "")
+                )
 
             // 逐行读取文本内容
             var line: String?
@@ -1137,8 +1186,8 @@ object DataUtil {
                 for (w in to) {
                     if (v == w) {
                         to = to.substring(to.indexOf(w) + 1)
-                        count ++
-                        sequent ++
+                        count++
+                        sequent++
                         continue@outer
                     }
                 }
@@ -1178,9 +1227,11 @@ object DataUtil {
             .replace(Regex("\\s+"), "")
     }
 
-    @JvmRecord private data class Range(val offset: Int, val limit: Int)
+    @JvmRecord
+    private data class Range(val offset: Int, val limit: Int)
 
-    @JvmRecord data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
+    @JvmRecord
+    data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
 
     private fun Float.clamp() = if ((0f..10f).contains(this)) this else if (this > 10f) 10f else 0f
     private fun Float.roundToDigits2() = BigDecimal(this.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toFloat()

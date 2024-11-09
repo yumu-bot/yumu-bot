@@ -12,7 +12,7 @@ data class UserAvatarCardParam(
     constructor(user: OsuUser): this(
         user.coverUrl,
         user.avatarUrl,
-        user.profileColor,
+        "hsl(${user.profileHue},60%,50%)",
         user.username,
     )
 }
