@@ -161,7 +161,7 @@ public class PerformancePlusService {
             // 这俩我猜测是 50 和 100 的数量
             var mehs = Objects.requireNonNullElse(score.getStatistics().getMeh(), 0);
             var oks = Objects.requireNonNullElse(score.getStatistics().getOk(), 0);
-            body.add(new ScorePerformancePlus(score.getBeatMap().getBeatMapID().toString(), mods, combo, misses, mehs, oks));
+            body.add(new ScorePerformancePlus(score.getBeatMap().getBeatMapID() + "", mods, combo, misses, mehs, oks));
         }
 
         if (body.isEmpty()) {
@@ -219,8 +219,11 @@ public class PerformancePlusService {
         if (!Files.isRegularFile(beatmapFiles)) {
             try {
                 var fileStr = beatmapApi.getBeatMapFileString(beatmapId);
+
+                if (fileStr == null) throw new RuntimeException();
+
                 Files.writeString(beatmapFiles, fileStr);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 log.error("下载谱面文件失败", e);
                 throw new RuntimeException("下载谱面文件失败");
             }

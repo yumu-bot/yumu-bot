@@ -21,22 +21,22 @@ import com.now.nowbot.util.CmdUtil.isAvoidance
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
+import java.util.regex.Matcher
+import kotlin.math.min
+import kotlin.math.round
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import rosu.Rosu
 import rosu.parameter.JniScore
 import rosu.result.JniResult
-import java.util.regex.Matcher
-import kotlin.math.min
-import kotlin.math.round
 
 @Service("MAP")
 class MapStatisticsService(
         private val imageService: ImageService,
         private val beatmapApiService: OsuBeatmapApiService,
         private val userApiService: OsuUserApiService,
-        private val bindDao: BindDao
+        private val bindDao: BindDao,
 ) : MessageService<MapParam>, TencentMessageService<MapParam> {
 
     data class MapParam(val user: OsuUser?, val beatmap: BeatMap, val expected: Expected)
@@ -46,7 +46,7 @@ class MapStatisticsService(
             @JvmField val accuracy: Double,
             @JvmField val combo: Int,
             @JvmField val misses: Int,
-            @JvmField val mods: List<String>
+            @JvmField val mods: List<String>,
     )
 
     data class PanelE6Param(
@@ -56,7 +56,7 @@ class MapStatisticsService(
             val original: Map<String, Any>,
             val attributes: JniResult,
             val pp: List<Double>,
-            val expected: Expected
+            val expected: Expected,
     ) {
         fun toMap(): Map<String, Any> {
             val map = mutableMapOf<String, Any>()
@@ -74,15 +74,14 @@ class MapStatisticsService(
     override fun isHandle(
             event: MessageEvent,
             messageText: String,
-            data: DataValue<MapParam>
+            data: DataValue<MapParam>,
     ): Boolean {
         val matcher = Instruction.MAP.matcher(messageText)
         if (!matcher.find()) {
             return false
         }
 
-        data.value =
-                getParam(matcher, event.sender.id, messageText) ?: return false
+        data.value = getParam(matcher, event.sender.id, messageText) ?: return false
         return true
     }
 
@@ -95,7 +94,9 @@ class MapStatisticsService(
                 } catch (e: Exception) {
                     log.error("谱面信息：渲染失败", e)
                     throw GeneralTipsException(
-                            GeneralTipsException.Type.G_Malfunction_Render, "谱面信息")
+                            GeneralTipsException.Type.G_Malfunction_Render,
+                            "谱面信息",
+                    )
                 }
 
         try {
@@ -122,7 +123,9 @@ class MapStatisticsService(
                 } catch (e: Exception) {
                     log.error("谱面信息：渲染失败", e)
                     throw GeneralTipsException(
-                            GeneralTipsException.Type.G_Malfunction_Render, "谱面信息")
+                            GeneralTipsException.Type.G_Malfunction_Render,
+                            "谱面信息",
+                    )
                 }
 
         try {
@@ -133,11 +136,7 @@ class MapStatisticsService(
         }
     }
 
-    private fun getParam(
-            matcher: Matcher,
-            userID: Long,
-            messageText: String,
-    ): MapParam? {
+    private fun getParam(matcher: Matcher, userID: Long, messageText: String): MapParam? {
         val bid = getBid(matcher)
         var beatMap: BeatMap? = null
 
@@ -178,7 +177,7 @@ class MapStatisticsService(
                     try {
                         val rate = matcher.group("combo").toDouble()
                         if (rate in 0.0..1.0) {
-                            round(beatMap.maxCombo * rate).toInt()
+                            round(beatMap.maxCombo!! * rate).toInt()
                         } else {
                             0
                         }
@@ -227,7 +226,7 @@ class MapStatisticsService(
                 }
 
         // 只有转谱才能赋予游戏模式
-        val beatMapMode = beatMap.osuMode
+        val beatMapMode = beatMap.mode
 
         if (beatMapMode != OsuMode.OSU || OsuMode.isDefaultOrNull(mode)) {
             mode = beatMapMode
@@ -256,12 +255,12 @@ class MapStatisticsService(
             val original = mutableMapOf<String, Any>()
 
             with(beatmap) {
-                original["cs"] = cs
-                original["ar"] = ar
-                original["od"] = od
-                original["hp"] = hp
-                original["bpm"] = bpm
-                original["drain"] = hitLength
+                original["cs"] = CS!!
+                original["ar"] = AR!!
+                original["od"] = OD!!
+                original["hp"] = HP!!
+                original["bpm"] = BPM!!
+                original["drain"] = hitLength!!
                 original["total"] = totalLength
             }
 
@@ -272,7 +271,10 @@ class MapStatisticsService(
             val attributes = beatmapApiService.getPP(beatmap, expected)
 
             return imageService.getPanel(
-                    PanelE6Param(user, beatmap, density, original, attributes, pp, expected).toMap(), "E6")
+                    PanelE6Param(user, beatmap, density, original, attributes, pp, expected)
+                            .toMap(),
+                    "E6",
+            )
         }
 
         // 等于绘图模块的 calcMap
@@ -280,18 +282,20 @@ class MapStatisticsService(
         private fun getPPList(
                 beatmap: BeatMap,
                 expected: Expected,
-                beatmapApiService: OsuBeatmapApiService
+                beatmapApiService: OsuBeatmapApiService,
         ): List<Double> {
             val result = mutableListOf<Double>()
             val accArray: DoubleArray = doubleArrayOf(1.0, 0.99, 0.98, 0.96, 0.94, 0.92)
             val file =
-                    beatmapApiService.getBeatMapFileString(beatmap.beatMapID).toByteArray(Charsets.UTF_8)
+                    beatmapApiService
+                            .getBeatMapFileString(beatmap.beatMapID)
+                            .toByteArray(Charsets.UTF_8)
 
             val scoreFC = JniScore()
             scoreFC.mode = expected.mode.toRosuMode()
             scoreFC.mods = OsuMod.getModsValueFromAcronyms(expected.mods)
             scoreFC.accuracy = expected.accuracy
-            scoreFC.combo = beatmap.maxCombo
+            scoreFC.combo = beatmap.maxCombo!!
             scoreFC.misses = 0
 
             result.add(Rosu.calculate(file, scoreFC).pp)

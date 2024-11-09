@@ -142,7 +142,7 @@ class IMapperService(
                 .take(6)
 
             var mostRecentRankedBeatmap = result
-                .find { it.hasLeaderBoard() && user.userID == it.creatorID }
+                .find { it.hasLeaderBoard && user.userID == it.creatorID }
 
             if (Objects.isNull(mostRecentRankedBeatmap) && user.rankedCount > 0) {
                 try {
@@ -153,13 +153,13 @@ class IMapperService(
                     newQuery["page"] = 1
 
                     val newSearch = beatmapApiService.searchBeatMapSet(newQuery)
-                    mostRecentRankedBeatmap = newSearch.beatmapSets.find { it.hasLeaderBoard() }
+                    mostRecentRankedBeatmap = newSearch.beatmapSets.find { it.hasLeaderBoard }
                 } catch (ignored: Exception) {
                 }
             }
 
             val mostRecentRankedGuestDiff = result
-                .find { it.hasLeaderBoard() && user.userID != it.creatorID }
+                .find { it.hasLeaderBoard && user.userID != it.creatorID }
 
             val beatMapSum =
                 search!!.beatmapSets.flatMap { it.beatMaps ?: emptyList() }
@@ -169,7 +169,7 @@ class IMapperService(
                 val diffStar =
                     beatMapSum.filter { it.mapperID == user.userID }
                         .map { it.starRating }
-                        .toFloatArray()
+                        .toDoubleArray()
                 val starMaxBoundary = doubleArrayOf(2.0, 2.8, 4.0, 5.3, 6.5, 8.0, 10.0, Double.MAX_VALUE)
                 for (d in diffStar) {
                     for (i in 0..7) {
@@ -207,7 +207,7 @@ class IMapperService(
                         for (i in 1 until keywords.size) {
                             val keyword = keywords[i]
 
-                            if (it.tags.lowercase(Locale.getDefault()).contains(keyword)) {
+                            if ((it.tags?: "").lowercase(Locale.getDefault()).contains(keyword)) {
                                 genre[i]++
                                 hasAnyGenre.set(true)
                             }

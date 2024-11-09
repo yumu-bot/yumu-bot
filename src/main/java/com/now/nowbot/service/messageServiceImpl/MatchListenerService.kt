@@ -131,7 +131,10 @@ class MatchListenerService(
                 beatmap = beatmapApiService.getBeatMap(beatmapID)
                 beatmapApiService.applySRAndPP(beatmap, mode, LazerMod.getModsList(mods))
             } else {
-                beatmap = BeatMap(beatmapID)
+                val b = BeatMap()
+                b.beatMapID = beatmapID
+
+                beatmap = b
             }
         }
 
@@ -205,7 +208,7 @@ class MatchListenerService(
                             String.format(
                                 MatchListenerException.Type.ML_Match_Start.message,
                                 matchID,
-                                beatmap.id,
+                                beatmap.beatMapID,
                             )
                         )
                     }

@@ -313,7 +313,7 @@ public interface OsuBeatmapApiService {
 
     // 给标准谱面添加完整的谱面
     default void applyBeatMapExtend(Match.MatchRound round) {
-        var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap(round.getBeatMapID()));
+        var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap());
         round.setBeatMap(getBeatMap(b.getBeatMapID()));
     }
 
@@ -363,7 +363,7 @@ public interface OsuBeatmapApiService {
 
         if (r.getPp() > 0) {
             score.setPP(r.getPp());
-            beatMap.setStarRating((float) r.getStar());
+            beatMap.setStarRating(r.getStar());
         } else {
             applyStarFromAttributes(beatMap, score.getMode(), score.getMods());
         }
@@ -402,7 +402,7 @@ public interface OsuBeatmapApiService {
         }
 
         if (r.getPp() > 0) {
-            beatMap.setStarRating((float) r.getStar());
+            beatMap.setStarRating(r.getStar());
         } else {
             applyStarFromAttributes(beatMap, ruleset, mods);
         }
@@ -439,7 +439,7 @@ public interface OsuBeatmapApiService {
         }
 
         if (r.getPp() > 0) {
-            beatMap.setStarRating((float) r.getStar());
+            beatMap.setStarRating(r.getStar());
         } else {
             applyStarFromAttributes(beatMap, expected.mode, mods);
         }
@@ -479,7 +479,7 @@ public interface OsuBeatmapApiService {
 
     private void applyStarFromAttributes(BeatMap beatMap, OsuMode ruleset, List<LazerMod> mods) {
         try {
-            var attr = getAttributes(beatMap.getId(), ruleset, LazerMod.getModsValue(mods));
+            var attr = getAttributes(beatMap.getBeatMapID(), ruleset, LazerMod.getModsValue(mods));
 
             if (attr.getStarRating() != null) {
                 NowbotApplication.log.info("无法获取谱面 {}，正在应用 API 提供的星数：{}", beatMap.getBeatMapID(), attr.getStarRating());

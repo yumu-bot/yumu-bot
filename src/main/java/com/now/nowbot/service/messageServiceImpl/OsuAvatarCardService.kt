@@ -34,7 +34,6 @@ class OsuAvatarCardService(
     }
 
     override fun HandleMessage(event: MessageEvent, data: UserAvatarCardParam) {
-        data.color = "#B6E3E9"
         val image = imageService.getUserAvatarCard(data)
         event.subject.sendImage(image)
     }
@@ -46,7 +45,6 @@ class OsuAvatarCardService(
     }
 
     override fun reply(event: MessageEvent, param: UserAvatarCardParam): MessageChain? {
-        param.color = "#FDAFAB"
         return MessageChain.MessageChainBuilder().addImage(imageService.getUserAvatarCard(param)).build()
     }
 }

@@ -59,13 +59,13 @@ class AudioService(
     override fun HandleMessage(event: MessageEvent, param: AudioParam) {
         val from = event.subject
 
-        var sid = 0
+        var sid = 0L
 
         var voice: ByteArray
 
         if (param.isBid) {
             try {
-                sid = beatmapApiService.getBeatMapFromDataBase(param.id).setID
+                sid = beatmapApiService.getBeatMapFromDataBase(param.id).beatMapSetID
             } catch (e: Exception) {
                 throw AudioException(AudioException.Type.SONG_Map_NotFound)
             }
@@ -83,7 +83,7 @@ class AudioService(
             } catch (e: Exception) {
                 // 输入的不是 SID
                 try {
-                    sid = beatmapApiService.getBeatMapFromDataBase(param.id).setID
+                    sid = beatmapApiService.getBeatMapFromDataBase(param.id).beatMapSetID
                 } catch (e1: Exception) {
                     throw AudioException(AudioException.Type.SONG_Map_NotFound)
                 }
@@ -106,7 +106,7 @@ class AudioService(
     }
 
     @Throws(WebClientResponseException::class)
-    private fun getVoice(sid: Int): ByteArray {
+    private fun getVoice(sid: Number): ByteArray {
         val url = "https://b.ppy.sh/preview/${sid}.mp3"
 
         return osuApiWebClient.get().uri(url).retrieve().bodyToMono(ByteArray::class.java).block()!!

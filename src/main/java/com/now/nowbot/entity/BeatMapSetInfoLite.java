@@ -171,7 +171,7 @@ public class BeatMapSetInfoLite {
 
     public static BeatMapSetInfoLite from(BeatMapSet s) {
         var t = new BeatMapSetInfoLite();
-        t.sid = Math.toIntExact(s.getSID());
+        t.sid = Math.toIntExact(s.getBeatMapSetID());
 
         t.artistUnicode = s.getArtistUnicode();
         t.artist = s.getArtist();

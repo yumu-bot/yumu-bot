@@ -42,15 +42,15 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
         
         if (mod == null || mod.trim {it <= ' '} .isEmpty()) {
             sb.append(String.format("%.2f", b.starRating)).append(',')
-            .append(String.format("%d", Math.round(b.bpm))).append(',')
+            .append(String.format("%d", Math.round(b.BPM!!))).append(',')
             .append(String.format("%d", Math.round(floor((b.totalLength / 60f).toDouble()))))
             .append(':')
             .append(String.format("%02d", Math.round(b.totalLength % 60f)))
             .append(',')
             sb.append(b.maxCombo).append(',')
-            .append(b.cs).append(',')
-            .append(b.ar).append(',')
-            .append(b.od)
+            .append(b.CS).append(',')
+            .append(b.AR).append(',')
+            .append(b.OD)
             
             event.subject.sendMessage(sb.toString())
             return 
@@ -63,15 +63,15 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
         val newTotalLength = DataUtil.applyLength(b.totalLength, mods).toFloat()
         
         sb.append(String.format("%.2f", a.starRating)).append(',')
-        .append(String.format("%d", Math.round(DataUtil.applyBPM(b.bpm, mods)))).append(',')
+        .append(String.format("%d", Math.round(DataUtil.applyBPM(b.BPM, mods)))).append(',')
         .append(String.format("%d", Math.round(floor((newTotalLength / 60f).toDouble()))))
         .append(':')
         .append(String.format("%02d", Math.round(newTotalLength % 60f)))
         .append(',')
         sb.append(a.maxCombo).append(',')
-        .append(String.format("%.2f", DataUtil.applyCS(b.cs, mods))).append(',')
-        .append(String.format("%.2f", DataUtil.applyAR(b.ar, mods))).append(',')
-        .append(String.format("%.2f", DataUtil.applyOD(b.od, mods)))
+        .append(String.format("%.2f", DataUtil.applyCS(b.CS!!, mods))).append(',')
+        .append(String.format("%.2f", DataUtil.applyAR(b.AR!!, mods))).append(',')
+        .append(String.format("%.2f", DataUtil.applyOD(b.OD!!, mods)))
         
         event.subject.sendMessage(sb.toString())
     }

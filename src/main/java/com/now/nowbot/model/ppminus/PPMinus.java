@@ -12,15 +12,15 @@ import java.util.List;
 import java.util.function.Function;
 
 public abstract class PPMinus {
-    protected float ppv0 = 0;
-    protected float ppv45 = 0;
-    protected float ppv90 = 0;
-    protected float accv0 = 0;
-    protected float pgr0 = 0;
-    protected float pgr45 = 0;
-    protected float pgr90 = 0;
-    protected float accv45 = 0;
-    protected float accv90 = 0;
+    protected double ppv0 = 0;
+    protected double ppv45 = 0;
+    protected double ppv90 = 0;
+    protected double accv0 = 0;
+    protected double pgr0 = 0;
+    protected double pgr45 = 0;
+    protected double pgr90 = 0;
+    protected double accv45 = 0;
+    protected double accv90 = 0;
     protected long lengv0 = 0;
     protected long lengv45 = 0;
     protected long lengv90 = 0;

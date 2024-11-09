@@ -109,7 +109,7 @@ class NewbieService(
         val passTime = pass.sumOf {
             with(it) {
                 val b = osuMapService.getBeatMapFromDataBase(beatmapId.toLong())
-                b.hitLength
+                b.hitLength!!
             }
         }
 

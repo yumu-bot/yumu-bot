@@ -199,8 +199,7 @@ object DataUtil {
         val extreme = score.beatMap.starRating >= 6.5f
         val acc = score.accuracy >= 0.9f
         val combo =
-            1f * score.maxCombo /
-                    Objects.requireNonNullElse(score.beatMap.maxCombo, Int.MAX_VALUE) >= 0.98f
+            1f * score.maxCombo / (score.beatMap.maxCombo ?: Int.MAX_VALUE) >= 0.98f
         val pp = score.pp >= 300f
         val bp = p >= 400f && score.pp >= (p - 400f) / 25f
         val miss =
@@ -225,8 +224,8 @@ object DataUtil {
     private fun getPP(score: Score, user: OsuUser): Double {
         var pp = Objects.requireNonNullElse(user.pp, 0.0)
 
-        val is4K = score.beatMap.osuMode == MANIA && score.beatMap.cs == 4f
-        val is7K = score.beatMap.osuMode == MANIA && score.beatMap.cs == 7f
+        val is4K = score.beatMap.mode == MANIA && score.beatMap.CS == 4f
+        val is7K = score.beatMap.mode == MANIA && score.beatMap.CS == 7f
 
         if (is4K) {
             pp = Objects.requireNonNullElse(user.statistics.pP4K, pp)
@@ -360,12 +359,12 @@ object DataUtil {
     @JvmStatic
     fun getOriginal(beatmap: BeatMap): HashMap<String, Any> {
         val original = HashMap<String, Any>(6)
-        original["cs"] = beatmap.cs
-        original["ar"] = beatmap.ar
-        original["od"] = beatmap.od
-        original["hp"] = beatmap.hp
-        original["bpm"] = beatmap.bpm
-        original["drain"] = beatmap.hitLength
+        original["cs"] = beatmap.CS!!
+        original["ar"] = beatmap.AR!!
+        original["od"] = beatmap.OD!!
+        original["hp"] = beatmap.HP!!
+        original["bpm"] = beatmap.BPM!!
+        original["drain"] = beatmap.hitLength!!
         original["total"] = beatmap.totalLength
 
         return original
@@ -831,11 +830,11 @@ object DataUtil {
     @JvmStatic
     fun applyBeatMapChanges(beatMap: BeatMap, mods: List<LazerMod>) {
         if (LazerMod.hasStarRatingChange(mods)) {
-            beatMap.bpm = applyBPM(Optional.ofNullable(beatMap.bpm).orElse(0f), mods)
-            beatMap.ar = applyAR(Optional.ofNullable(beatMap.ar).orElse(0f), mods)
-            beatMap.cs = applyCS(Optional.ofNullable(beatMap.cs).orElse(0f), mods)
-            beatMap.od = applyOD(Optional.ofNullable(beatMap.od).orElse(0f), mods)
-            beatMap.hp = applyHP(Optional.ofNullable(beatMap.hp).orElse(0f), mods)
+            beatMap.BPM = applyBPM(Optional.ofNullable(beatMap.BPM).orElse(0f), mods)
+            beatMap.AR = applyAR(Optional.ofNullable(beatMap.AR).orElse(0f), mods)
+            beatMap.CS = applyCS(Optional.ofNullable(beatMap.CS).orElse(0f), mods)
+            beatMap.OD = applyOD(Optional.ofNullable(beatMap.OD).orElse(0f), mods)
+            beatMap.HP = applyHP(Optional.ofNullable(beatMap.HP).orElse(0f), mods)
             beatMap.totalLength = applyLength(beatMap.totalLength, mods)
             beatMap.hitLength = applyLength(beatMap.hitLength, mods)
         }
@@ -923,7 +922,7 @@ object DataUtil {
 
         val progress =
             if (!score.passed) {
-                1.0 * score.statistics.getCountAll(mode) / score.beatMap.maxCombo
+                1.0 * score.statistics.getCountAll(mode) / (score.beatMap.maxCombo ?: Int.MAX_VALUE)
             } else {
                 1.0
             }
@@ -941,7 +940,7 @@ object DataUtil {
         val i = getV3ModsMultiplier(mods, mode)
         val p = getV3ScoreProgress(score) // 下下策
         val c = score.maxCombo
-        val m = score.beatMap.maxCombo
+        val m = score.beatMap.maxCombo!!
         val ap8: Double = score.accuracy.pow(8.0)
         val v3 =
             when (score.mode) {

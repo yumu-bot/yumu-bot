@@ -70,7 +70,7 @@ class CustomService(
             throw CustomException(CustomException.Type.CUSTOM_Me_TokenExpired)
         }
 
-        val firstMessage = event.message.messageList.first
+        val firstMessage = event.message.messageList.first()
 
         var imgPath: String? = null
 

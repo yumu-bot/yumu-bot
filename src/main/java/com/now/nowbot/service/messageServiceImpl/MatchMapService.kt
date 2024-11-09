@@ -143,7 +143,7 @@ class MatchMapService(
 
             // 只有转谱才能赋予游戏模式
             val mode: OsuMode
-            val beatMapMode = OsuMode.getMode(beatmap.mode)
+            val beatMapMode = beatmap.mode
 
             mode =
                 if (

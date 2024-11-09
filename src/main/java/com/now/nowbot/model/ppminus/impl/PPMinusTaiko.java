@@ -6,7 +6,6 @@ import com.now.nowbot.model.ppminus.PPMinus;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import static com.now.nowbot.util.DataUtil.getBonusPP;
 
@@ -16,7 +15,7 @@ public class PPMinusTaiko extends PPMinus {
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
             var bpiPP = Objects.requireNonNull(bp.getWeight()).getPP();
-            var bprPP = Optional.ofNullable(bp.getPP()).orElse(0d);
+            var bprPP = bp.getPP();
             bpPP += bpiPP;
             bpPPs[i] = bprPP;
 
@@ -31,15 +30,15 @@ public class PPMinusTaiko extends PPMinus {
             if (!bp.getFullCombo()) notfc++;
             if (i < 10) {
                 ppv0 += bp.getPP();
-                accv0 += (float) bp.getAccuracy();
+                accv0 += bp.getAccuracy();
                 lengv0 += bp.getBeatMap().getTotalLength();
             } else if (i >= 45 && i < 55) {
                 ppv45 += bp.getPP();
-                accv45 += (float) bp.getAccuracy();
+                accv45 += bp.getAccuracy();
                 lengv45 += bp.getBeatMap().getTotalLength();
             } else if (i >= 90) {
                 ppv90 += bp.getPP();
-                accv90 += (float) bp.getAccuracy();
+                accv90 += bp.getAccuracy();
                 lengv90 += bp.getBeatMap().getTotalLength();
             }
         }
@@ -98,7 +97,7 @@ public class PPMinusTaiko extends PPMinus {
         {
             double rBPV = ppv0 / (ppv90 + 5);
             double rBPD = ppv0 == 0 ? 0 : (rawpp / ppv0);
-            double LPI = pp > 1000 ? 1 : Math.pow(pp / 1000D, 0.5D); // low PP index 低pp指数 过低PP会导致ptt异常偏高，故需补正。
+            double LPI = (pp > 1000) ? 1 : Math.pow(pp / 1000D, 0.5D); // low PP index 低pp指数 过低PP会导致ptt异常偏高，故需补正。
 
             double BPD; // BP density BP密度
             if (rBPD == 0) {

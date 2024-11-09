@@ -52,7 +52,7 @@ class PPPlusMapService(
             throw PPPlusException(PPPlusException.Type.PL_Map_NotFound)
         }
         // 不支持其他模式
-        if (OsuMode.getMode(map.getMode()) != OsuMode.OSU) {
+        if (map.mode != OsuMode.OSU) {
             throw PPPlusException(PPPlusException.Type.PL_Function_NotSupported)
         }
         val pp = try {
@@ -77,11 +77,12 @@ class PPPlusMapService(
 
 
     private fun BeatMap.addPPPlus(pp: PPPlus, mods: List<LazerMod>) {
-        starRating = pp.difficulty.total?.toFloat() ?: 0f
+        starRating = pp.difficulty.total ?: 0.0
         if (mods.isNotEmpty()) {
-            cs = DataUtil.applyCS(cs, mods)
-            ar = DataUtil.applyAR(ar, mods)
-            od = DataUtil.applyOD(od, mods)
+            CS = DataUtil.applyCS(CS!!, mods)
+            AR = DataUtil.applyAR(AR!!, mods)
+            OD = DataUtil.applyOD(OD!!, mods)
+            HP = DataUtil.applyOD(HP!!, mods)
         }
     }
 }

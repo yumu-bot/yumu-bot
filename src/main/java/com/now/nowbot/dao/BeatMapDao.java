@@ -10,6 +10,7 @@ import com.now.nowbot.model.json.Covers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -73,7 +74,7 @@ public class BeatMapDao {
 
     public static BeatMapSet fromMapsetLite(MapSetLite mapSet){
         var s = new BeatMapSet();
-        s.setSID(Long.valueOf(mapSet.getId()));
+        s.setBeatMapSetID(Long.valueOf(mapSet.getId()));
         s.setCreatorID(Long.valueOf(mapSet.getMapperId()));
         s.setCreator(mapSet.getCreator());
         var cover = new Covers();
@@ -105,13 +106,13 @@ public class BeatMapDao {
 
     public static MapSetLite fromMapSetModel(BeatMapSet mapSet){
         var s = new MapSetLite();
-        s.setId(Math.toIntExact(mapSet.getSID()));
+        s.setId(Math.toIntExact(mapSet.getBeatMapSetID()));
         s.setCard(mapSet.getCovers().getCard2x());
         s.setCover(mapSet.getCovers().getCover2x());
         s.setList(mapSet.getCovers().getList2x());
         s.setSlimcover(mapSet.getCovers().getSlimcover2x());
 
-        s.setAvailabilityDownloadDisable(mapSet.getAvailability().downloadDisabled());
+        s.setAvailabilityDownloadDisable(Objects.requireNonNull(mapSet.getAvailability()).downloadDisabled());
         s.setNsfw(mapSet.getNsfw());
         s.setStoryboard(mapSet.getStoryboard());
         s.setLegacyUrl(mapSet.getLegacyThreadUrl());

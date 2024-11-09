@@ -71,7 +71,7 @@ class LeaderBoardService(
 
         try {
             beatMap = beatmapApiService.getBeatMapFromDataBase(bid)
-            isRanked = beatMap.hasLeaderBoard()
+            isRanked = beatMap.hasLeaderBoard
         } catch (e: WebClientResponseException.NotFound) {
             throw LeaderBoardException(LeaderBoardException.Type.LIST_Map_NotFound)
         } catch (e: Exception) {
@@ -79,7 +79,7 @@ class LeaderBoardService(
         }
 
         try {
-            mode = OsuMode.getMode(matcher.group("mode"), beatMap.osuMode)
+            mode = OsuMode.getMode(matcher.group("mode"), beatMap.mode)
             scores = scoreApiService.getLeaderBoardScore(bid, mode)
         } catch (e: Exception) {
             throw LeaderBoardException(LeaderBoardException.Type.LIST_Score_FetchFailed)

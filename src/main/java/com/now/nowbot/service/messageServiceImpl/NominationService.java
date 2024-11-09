@@ -101,7 +101,7 @@ public class NominationService implements MessageService<Matcher> {
             } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
                 try {
                     var b = beatmapApiService.getBeatMapFromDataBase(sid);
-                    sid = b.getSetID();
+                    sid = b.getBeatMapSetID();
                     s = beatmapApiService.getBeatMapSet(sid);
                 } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e1) {
                     throw new NominationException(NominationException.Type.N_Map_NotFound);
@@ -118,7 +118,7 @@ public class NominationService implements MessageService<Matcher> {
         } else {
             try {
                 var b = beatmapApiService.getBeatMapFromDataBase(sid);
-                sid = b.getSetID();
+                sid = b.getBeatMapSetID();
                 s = beatmapApiService.getBeatMapSet(sid);
             } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
                 throw new NominationException(NominationException.Type.N_Map_NotFound);
@@ -185,7 +185,7 @@ public class NominationService implements MessageService<Matcher> {
             String maxSR = "";
             String minSR = "";
             int totalLength = 0;
-            List<Float> SRList = new ArrayList<>();
+            List<Double> SRList = new ArrayList<>();
 
             for (var i : details) {
                 switch (i.getMessageType()) {
@@ -203,8 +203,8 @@ public class NominationService implements MessageService<Matcher> {
             var bs = s.getBeatMaps();
 
             //初始化星数
-            float maxStarRating = 0;
-            float minStarRating = 0;
+            double maxStarRating = 0d;
+            double minStarRating = 0d;
 
             if (Objects.nonNull(bs) && !bs.isEmpty()) {
                 var f = bs.getFirst();
@@ -241,7 +241,7 @@ public class NominationService implements MessageService<Matcher> {
             }
 
             //其他
-            String[] tags = s.getTags().split(" ");
+            String[] tags = Objects.requireNonNullElse(s.getTags(), "").split(" ");
 
             more.put("hostCount", hostCount);
             more.put("guestCount", guestCount);
@@ -249,7 +249,7 @@ public class NominationService implements MessageService<Matcher> {
             more.put("maxSR", maxSR);
             more.put("minSR", minSR);
             more.put("SRList", SRList.stream().sorted(
-                    Comparator.comparingDouble(Float::doubleValue).reversed()
+                    Comparator.comparingDouble(Double::doubleValue).reversed()
             ).toList());
             more.put("totalLength", totalLength);
             more.put("tags", tags);

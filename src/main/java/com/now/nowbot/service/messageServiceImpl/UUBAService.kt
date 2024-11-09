@@ -31,6 +31,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 import java.util.regex.Matcher
+import kotlin.math.max
 
 @Service("UU_BA")
 class UUBAService(
@@ -279,10 +280,10 @@ class UUBAService(
         val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
 
         val BP1: LazerScore = bps.first()
-        val BP1BPM = BP1.beatMap.bpm
+        val BP1BPM = BP1.beatMap.BPM!!
         val BP1Length = BP1.beatMap.totalLength.toFloat()
 
-        var star: Float
+        var star: Double
         var maxStar = BP1.beatMap.starRating
         var minStar = maxStar
         var maxBPM = BP1BPM
@@ -316,7 +317,7 @@ class UUBAService(
             val bp = bps[i]
             val b = bp.beatMap
             val length = b.totalLength.toFloat()
-            val bpm = b.bpm
+            val bpm = b.BPM!!
             bp.mods.forEach(
                     Consumer { r: LazerMod ->
                         if (modSum.containsKey(r.type.acronym)) {
@@ -361,7 +362,7 @@ class UUBAService(
             }
             avgCombo += bp.maxCombo
 
-            val tthToPp = (bp.PP!!) / (b.sliders + b.spinners + b.circles)
+            val tthToPp = (bp.PP!!) / max((b.sliders!! + b.spinners!! + b.circles!!), 1)
             if (maxTTHPP < tthToPp) {
                 maxTTHPPBP = i
                 maxTTHPP = tthToPp

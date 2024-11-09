@@ -67,7 +67,7 @@ public class BeatmapLite {
 
     public BeatmapLite(BeatMap beatMap) {
         setId(beatMap.getBeatMapID());
-        setBeatmapsetId(beatMap.getSetID());
+        setBeatmapsetId((int) beatMap.getBeatMapSetID());
         setConvert(beatMap.getConvert());
         setVersion(beatMap.getDifficultyName());
         setPlaycount(beatMap.getPlayCount());
@@ -76,7 +76,7 @@ public class BeatmapLite {
         setCS(beatMap.getCS());
         setAR(beatMap.getAR());
         setHP(beatMap.getHP());
-        setDifficultyRating(beatMap.getStarRating());
+        setDifficultyRating((float) beatMap.getStarRating());
         setBpm(beatMap.getBPM());
         setMaxCombo(beatMap.getMaxCombo());
         setStatus(beatMap.getStatus());
@@ -296,7 +296,7 @@ public class BeatmapLite {
     public BeatMap toBeatMap(){
         var b = new BeatMap();
         b.setBeatMapID(getId());
-        b.setSetID(getBeatmapsetId());
+        b.setBeatMapSetID(getBeatmapsetId());
         b.setConvert(getConvert());
         b.setDifficultyName(getVersion());
         b.setPlayCount(getPlaycount());

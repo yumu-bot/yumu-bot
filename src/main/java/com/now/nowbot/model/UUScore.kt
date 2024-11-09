@@ -18,7 +18,7 @@ class UUScore (score: LazerScore, osuBeatmapApiService: OsuBeatmapApiService) {
     var map_name: String? = ""
     var difficulty_name: String
     var artist: String? = ""
-    var star_rating: Float
+    var star_rating: Double
     var star_str: String
     var rank: String
     var mods: Array<String?>
@@ -69,21 +69,24 @@ class UUScore (score: LazerScore, osuBeatmapApiService: OsuBeatmapApiService) {
             artist = s.artistUnicode
             url = s.covers.card
         }
-        max_combo = b.maxCombo
+        max_combo = b.maxCombo!!
         difficulty_name = b.difficultyName
         
         star_rating = b.starRating
         map_length = b.totalLength
         
-        val sr_floor = floor(star_rating.toDouble()).toInt()
+        val sr_floor = floor(star_rating).toInt()
         val sr_str = StringBuilder()
         var i = 0
         while (i < sr_floor && i < 10) {
             sr_str.append('★')
-            i++}
+            i++
+        }
+
         if (0.5 < (star_rating - sr_floor) && sr_floor < 10) {
             sr_str.append('☆')
         }
+
         star_str = sr_str.toString()
         
         rank = score.rank
@@ -94,7 +97,7 @@ class UUScore (score: LazerScore, osuBeatmapApiService: OsuBeatmapApiService) {
         
         combo = score.maxCombo
         passed = score.passed
-        key = score.beatMap.cs.toInt()
+        key = score.beatMap.CS!!.toInt()
         play_time = score.endedTimeString
         
         val stat = score.statistics
@@ -127,7 +130,7 @@ class UUScore (score: LazerScore, osuBeatmapApiService: OsuBeatmapApiService) {
                 .append('\n')
 
             //  ★★★★★ "difficulty_rating"* mm:ss
-            sb.append(star_str).append(' ').append(format(star_rating.toDouble())).append('*')
+            sb.append(star_str).append(' ').append(format(star_rating)).append('*')
                 .append(' ')
                 .append(map_length / 60).append(':').append(String.format("%02d", map_length % 60)).append('\n')
 

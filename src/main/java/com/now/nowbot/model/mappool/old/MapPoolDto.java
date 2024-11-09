@@ -30,9 +30,9 @@ public class MapPoolDto {
         });
 
         if (! modPools.isEmpty() && ! modPools.getFirst().getBeatMaps().isEmpty()) {
-            firstMapSID = Long.valueOf(
+            firstMapSID = Objects.requireNonNull(
                     modPools.getFirst().getBeatMaps()
-                            .getFirst().getBeatMapSet().getSID());
+                            .getFirst().getBeatMapSet()).getBeatMapSetID();
         }
     }
 
@@ -45,9 +45,7 @@ public class MapPoolDto {
         Map<String, List<Long>> modBidMap = new LinkedHashMap<>();
         pool.getCategoryList().forEach(group -> {
             var mList = new ArrayList<Long>();
-            group.getCategory().forEach(category -> {
-                mList.add(category.bid());
-            });
+            group.getCategory().forEach(category -> mList.add(category.bid()));
             modBidMap.put(group.getName(), mList);
         });
         return modBidMap;

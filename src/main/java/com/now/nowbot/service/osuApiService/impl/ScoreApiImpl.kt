@@ -45,14 +45,14 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
                 }
                 .headers(base.insertHeader(user))
                 .retrieve()
+            .bodyToFlux(LazerScore::class.java)
+            .collectList()
+            .block()!!
+                /*
             .bodyToMono(JsonNode::class.java)
             .mapNotNull { json ->
                 JacksonUtil.parseObjectList(json, LazerScore::class.java) }
             .block()!!
-                /*
-                .bodyToFlux(LazerScore::class.java)
-                .collectList()
-                .block()!!
 
                  */
     }
@@ -79,6 +79,13 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
                 .bodyToFlux(LazerScore::class.java)
                 .collectList()
                 .block()!!
+                /*
+
+            .bodyToMono(JsonNode::class.java)
+            .mapNotNull { json ->
+                JacksonUtil.parseObjectList(json, LazerScore::class.java) }
+            .block()!!
+                 */
     }
 
     override fun getPassedScore(

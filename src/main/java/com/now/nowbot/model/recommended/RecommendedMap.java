@@ -5,7 +5,7 @@ import com.now.nowbot.model.json.BeatMap;
 public class RecommendedMap {
     Long bid;
     String bgUrl;
-    Float Star;
+    Double Star;
     Float OD;
     Float AR;
     Float HP;
@@ -81,7 +81,7 @@ public class RecommendedMap {
         return bgUrl;
     }
 
-    public Float getStar() {
+    public Double getStar() {
         return Star;
     }
 

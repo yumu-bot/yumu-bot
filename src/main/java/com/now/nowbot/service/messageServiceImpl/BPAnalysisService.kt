@@ -185,8 +185,8 @@ class BPAnalysisService(
                         i + 1,
                         b.totalLength,
                         s.maxCombo,
-                        b.bpm,
-                        b.starRating,
+                        (b.BPM ?: 0.0).toFloat(),
+                        b.starRating.toFloat(),
                         s.rank,
                         s.beatMapSet.covers.list,
                         m

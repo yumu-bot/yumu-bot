@@ -162,7 +162,7 @@ class InfoService(
                     if (LazerMod.noStarRatingChange(b.mods)) continue
 
                     try {
-                        b.beatMap.starRating = beatmapApiService.getAttributes(b.beatMapID, b.mods).starRating
+                        b.beatMap.starRating = beatmapApiService.getAttributes(b.beatMapID, b.mods).starRating.toDouble()
                     } catch (e: Exception) {
                         log.info("玩家信息：获取新谱面星数失败")
                         continue

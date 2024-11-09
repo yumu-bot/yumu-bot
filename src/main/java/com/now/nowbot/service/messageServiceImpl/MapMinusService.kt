@@ -76,7 +76,7 @@ class MapMinusService(
             beatMap = beatmapApiService.getBeatMapFromDataBase(param.bid)
             mode = OsuMode.getMode(beatMap.modeInt)
 
-            beatmapApiService.applySRAndPP(beatMap, beatMap.osuMode, param.modsList)
+            beatmapApiService.applySRAndPP(beatMap, beatMap.mode, param.modsList)
             fileStr = beatmapApiService.getBeatMapFileString(param.bid)
         } catch (e: Exception) {
             throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)

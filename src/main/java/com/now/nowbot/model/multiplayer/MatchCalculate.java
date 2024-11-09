@@ -269,13 +269,13 @@ public class MatchCalculate {
             else {
                 averageStar = rounds.stream()
                         .filter(r -> r.getBeatMap() != null).map(s -> s.getBeatMap().getStarRating())
-                        .reduce(Float::sum).orElse(0f) / roundCount;
+                        .reduce(Double::sum).orElse(0d) / roundCount;
             }
         }
 
         private void initFirstMapSID() {
             if (! CollectionUtils.isEmpty(rounds) && rounds.getFirst().getBeatMap() != null) {
-                firstMapSID = rounds.getFirst().getBeatMap().getSetID();
+                firstMapSID = rounds.getFirst().getBeatMap().getBeatMapSetID();
             } else {
                 firstMapSID = 0L;
             }

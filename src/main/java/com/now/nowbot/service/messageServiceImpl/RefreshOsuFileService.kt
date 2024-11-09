@@ -30,7 +30,7 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
     override fun HandleMessage(event: MessageEvent, param: Long) {
         val sid =
             try {
-                osuBeatmapApiService.getBeatMapFromDataBase(param).setID
+                osuBeatmapApiService.getBeatMapFromDataBase(param).beatMapSetID
             } catch (e: Exception) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
             }

@@ -111,8 +111,11 @@ public class CsvMatchService implements MessageService<Matcher> {
         for (var r : rounds) {
             var scores = r.getScores();
             appendRoundStrings(sb, r);
-            for (var s : scores) {
-                getScoreStrings(sb, s);
+
+            if (scores != null) {
+                for (var s : scores) {
+                    getScoreStrings(sb, s);
+                }
             }
         }
     }
@@ -168,23 +171,23 @@ public class CsvMatchService implements MessageService<Matcher> {
                 b = round.getBeatMap();
             } else {
                 b = new BeatMap();
-                b.setStarRating(0f);
+                b.setStarRating(0);
                 b.setTotalLength(0);
                 b.setBeatMapID(-1L);
                 b.setMaxCombo(0);
             }
 
             sb.append(round.getStartTime().format(Date1)).append(',')
-                    .append(round.getStartTime().format(Date2)).append(',')
-                    .append(round.getMode()).append(',')
-                    .append(round.getScoringType()).append(',')
-                    .append(round.getTeamType()).append(',')
-                    .append(b.getStarRating()).append(',')
-                    .append(b.getTotalLength()).append(',')
-                    .append(round.getMods().toString().replaceAll(", ", "|")).append(',')
-                    .append(b.getBeatMapID()).append(',')
-                    .append(b.getMaxCombo())
-                    .append('\n');
+              .append(round.getStartTime().format(Date2)).append(',')
+              .append(round.getMode()).append(',')
+              .append(round.getScoringType()).append(',')
+              .append(round.getTeamType()).append(',')
+              .append(b.getStarRating()).append(',')
+              .append(b.getTotalLength()).append(',')
+              .append(round.getMods().toString().replaceAll(", ", "|")).append(',')
+              .append(b.getBeatMapID()).append(',')
+              .append(b.getMaxCombo())
+              .append('\n');
         } catch (Exception e) {
             sb.append(e.getMessage()).append('\n');//.append("  error---->")
         }

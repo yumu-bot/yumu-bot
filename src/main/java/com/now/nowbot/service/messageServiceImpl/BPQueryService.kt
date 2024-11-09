@@ -133,15 +133,7 @@ class BPQueryService(
             }
         }, EQ, NE),
         Star("star", { (op, v, s) ->
-            val star = v.toFloat()
-            when (op) {
-                EQ -> s.beatMap.starRating.isEqual(star)
-                NE -> !s.beatMap.starRating.isEqual(star)
-                GT -> s.beatMap.starRating > star
-                GE -> s.beatMap.starRating.isGreaterOrEqual(star)
-                LT -> s.beatMap.starRating < star
-                LE -> s.beatMap.starRating.isLessOrEqual(star)
-            }
+            compare(s.beatMap.starRating, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         ScoreID("score", { (op, v, s) ->
             val score = try {
@@ -149,14 +141,8 @@ class BPQueryService(
             } catch (_: Exception) {
                 throw UnsupportedScoreValue(v)
             }
-            when (op) {
-                EQ -> s.score == score
-                NE -> s.score != score
-                GT -> s.score > score
-                GE -> s.score >= score
-                LT -> s.score < score
-                LE -> s.score <= score
-            }
+
+            compare(s.score, score, op)
         }, EQ, NE, GT, GE, LT, LE),
         Index("index", { (op, v, s) ->
             val index = try {
@@ -165,128 +151,44 @@ class BPQueryService(
                 throw UnsupportedIndexValue(v)
             }
 
-            when (op) {
-                EQ -> s.weight!!.index == index
-                NE -> s.weight!!.index != index
-                GT -> s.weight!!.index > index
-                GE -> s.weight!!.index >= index
-                LT -> s.weight!!.index < index
-                LE -> s.weight!!.index <= index
-            }
+            compare(s.weight!!.index, index, op)
         }, EQ, NE, GT, GE, LT, LE),
         AR("ar", { (op, v, s) ->
-            val ar = v.toFloat()
-            when (op) {
-                EQ -> s.beatMap.ar.isEqual(ar)
-                NE -> !s.beatMap.ar.isEqual(ar)
-                GT -> s.beatMap.ar > ar
-                GE -> s.beatMap.ar.isGreaterOrEqual(ar)
-                LT -> s.beatMap.ar < ar
-                LE -> s.beatMap.ar.isLessOrEqual(ar)
-            }
+            compare(s.beatMap.AR!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         OD("od", { (op, v, s) ->
-            val od = v.toFloat()
-            when (op) {
-                EQ -> s.beatMap.od.isEqual(od)
-                NE -> !s.beatMap.od.isEqual(od)
-                GT -> s.beatMap.od > od
-                GE -> s.beatMap.od.isGreaterOrEqual(od)
-                LT -> s.beatMap.od < od
-                LE -> s.beatMap.od.isLessOrEqual(od)
-            }
+            compare(s.beatMap.OD!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         CS("cs", { (op, v, s) ->
-            val cs = v.toFloat()
-            when (op) {
-                EQ -> s.beatMap.cs.isEqual(cs)
-                NE -> !s.beatMap.cs.isEqual(cs)
-                GT -> s.beatMap.cs > cs
-                GE -> s.beatMap.cs.isGreaterOrEqual(cs)
-                LT -> s.beatMap.cs < cs
-                LE -> s.beatMap.cs.isLessOrEqual(cs)
-            }
+            compare(s.beatMap.CS!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         HP("hp", { (op, v, s) ->
-            val hp = v.toFloat()
-            when (op) {
-                EQ -> s.beatMap.hp.isEqual(hp)
-                NE -> !s.beatMap.hp.isEqual(hp)
-                GT -> s.beatMap.hp > hp
-                GE -> s.beatMap.hp.isGreaterOrEqual(hp)
-                LT -> s.beatMap.hp < hp
-                LE -> s.beatMap.hp.isLessOrEqual(hp)
-            }
+            compare(s.beatMap.HP!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Rank("rank", { (op, v, s) ->
             val scoreRank = getRankNumber(s.rank)
             val rank = getRankNumber(v)
-            when (op) {
-                EQ -> scoreRank == rank
-                NE -> scoreRank != rank
-                GT -> scoreRank > rank
-                GE -> scoreRank >= rank
-                LT -> scoreRank < rank
-                LE -> scoreRank <= rank
-            }
+
+            compare(scoreRank, rank, op)
         }, EQ, NE, GT, GE, LT, LE),
         Accuracy("acc", { (op, v, s) ->
             var acc = v.toDouble()
             if (acc > 1.0) acc /= 100
-            when (op) {
-                EQ -> s.accuracy.isEqual(acc)
-                NE -> !s.accuracy.isEqual(acc)
-                GT -> s.accuracy > acc
-                GE -> s.accuracy.isGreaterOrEqual(acc)
-                LT -> s.accuracy < acc
-                LE -> s.accuracy.isLessOrEqual(acc)
-            }
+
+            compare(s.accuracy, acc, op)
         }, EQ, NE, GT, GE, LT, LE),
         Bpm("bpm", { (op, v, s) ->
-            val bpm = v.toFloat()
-            when (op) {
-                EQ -> s.beatMap.bpm.isEqual(bpm)
-                NE -> !s.beatMap.bpm.isEqual(bpm)
-                GT -> s.beatMap.bpm > bpm
-                GE -> s.beatMap.bpm.isGreaterOrEqual(bpm)
-                LT -> s.beatMap.bpm < bpm
-                LE -> s.beatMap.bpm.isLessOrEqual(bpm)
-            }
+            compare(s.beatMap.BPM!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Combo("combo", { (op, v, s) ->
-            val combo = v.toInt()
-            when (op) {
-                EQ -> s.maxCombo == combo
-                NE -> s.maxCombo != combo
-                GT -> s.maxCombo > combo
-                GE -> s.maxCombo >= combo
-                LT -> s.maxCombo < combo
-                LE -> s.maxCombo <= combo
-            }
+            compare(s.beatMap.maxCombo!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Length("length", { (op, v, s) ->
-            val length = v.toInt()
-            when (op) {
-                EQ -> s.beatMap.hitLength == length
-                NE -> s.beatMap.hitLength != length
-                GT -> s.beatMap.hitLength > length
-                GE -> s.beatMap.hitLength >= length
-                LT -> s.beatMap.hitLength < length
-                LE -> s.beatMap.hitLength <= length
-            }
+            compare(s.beatMap.hitLength!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Miss("miss", { (op, v, s) ->
-            val misses = v.toInt()
-            val tm = (s.statistics.miss ?: 0)
-
-            when (op) {
-                EQ -> tm == misses
-                NE -> tm != misses
-                GT -> tm > misses
-                GE -> tm >= misses
-                LT -> tm < misses
-                LE -> tm <= misses
-            }
+            val misses = (s.statistics.miss ?: 0)
+            compare(misses, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Mods("mod", { (op, v, s) ->
             // mod 处理是 = 为严格等于, > 为包含mod
@@ -306,14 +208,8 @@ class BPQueryService(
             } else {
                 1.0 * (s.statistics.perfect ?: 0) / (s.statistics.great ?: 0)
             }
-            when (op) {
-                EQ -> rate.isEqual(value)
-                NE -> !rate.isEqual(value)
-                GT -> rate > value
-                GE -> rate.isGreaterOrEqual(value)
-                LT -> rate < value
-                LE -> rate.isLessOrEqual(value)
-            }
+
+            compare(rate, value, op)
         }, EQ, NE, GT, GE, LT, LE),
         ;
 
@@ -491,6 +387,41 @@ class BPQueryService(
 
         fun Float.isLessOrEqual(other: Float): Boolean {
             return this - other < 1E-7
+        }
+
+        fun compare(it: Number, that: String, operator: Operator): Boolean {
+            return compare(it, that.toDouble(), operator)
+        }
+
+        fun compare(it: Number, that: Number, operator: Operator): Boolean {
+            val it = it.toDouble()
+            val that = that.toDouble()
+
+            return when (operator) {
+                EQ -> it.isEqual(that)
+                NE -> ! it.isEqual(that)
+                GT -> it > that
+                GE -> it.isGreaterOrEqual(that)
+                LT -> it < that
+                LE -> it.isLessOrEqual(that)
+            }
+        }
+
+        fun compare(it: Int, that: String, operator: Operator): Boolean {
+            return compare(it.toLong(), that, operator)
+        }
+
+        fun compare(it: Long, that: String, operator: Operator): Boolean {
+            val that = that.toLong()
+
+            return when (operator) {
+                EQ -> it == that
+                NE -> it != that
+                GT -> it > that
+                GE -> it >= that
+                LT -> it < that
+                LE -> it <= that
+            }
         }
     }
 }

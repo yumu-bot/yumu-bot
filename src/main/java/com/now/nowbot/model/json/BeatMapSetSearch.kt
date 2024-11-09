@@ -35,9 +35,9 @@ class BeatMapSetSearch {
                 s.beatMaps = s.beatMaps!!
                     .stream()
                     .sorted(
-                        Comparator.comparing { obj: BeatMap -> obj.getStarRating() }
+                        Comparator.comparing { obj: BeatMap -> obj.starRating}
                     )
-                    .sorted(Comparator.comparing { obj: BeatMap -> obj.getModeInt() })
+                    .sorted(Comparator.comparing { obj: BeatMap -> obj.modeInt ?: 0 })
                     .toList()
             }
         }
