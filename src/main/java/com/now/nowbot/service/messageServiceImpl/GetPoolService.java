@@ -11,6 +11,7 @@ import com.now.nowbot.util.CmdUtil;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -31,7 +32,7 @@ public class GetPoolService implements MessageService<GetPoolService.GetPoolPara
     public record GetPoolParam(Map<String, List<Long>> map, String name, OsuMode mode) {}
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<GetPoolParam> data) throws Throwable {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<GetPoolParam> data) throws Throwable {
         var matcher = Instruction.GET_POOL.matcher(messageText);
         if (!matcher.find()) return false;
 

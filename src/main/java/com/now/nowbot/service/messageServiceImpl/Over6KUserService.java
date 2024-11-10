@@ -8,6 +8,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.JacksonUtil;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -41,7 +42,7 @@ public class Over6KUserService implements MessageService<Over6KUserService.OverU
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<OverUser> data) throws Throwable {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<OverUser> data) throws Throwable {
         if (INITED && ! messageText.startsWith("高阶出群")) {
             return false;
         }

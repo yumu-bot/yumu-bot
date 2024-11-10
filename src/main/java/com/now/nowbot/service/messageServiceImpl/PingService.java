@@ -24,7 +24,7 @@ import java.util.regex.Matcher;
 public class PingService implements MessageService<Matcher>, TencentMessageService<Matcher> {
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) {
         var m = Instruction.PING.matcher(messageText);
         if (m.find()) {
             data.setValue(m);

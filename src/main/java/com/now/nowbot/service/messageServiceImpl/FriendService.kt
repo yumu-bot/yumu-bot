@@ -205,6 +205,7 @@ class FriendService(
                     .sorted(Comparator.comparing<MicroUser?, Double?> { it.statistics.pp }.reversed())
                     .filter { it.isOnline }.toList()
 
+                MUTUAL -> stream.filter { it.mutual }.toList()
                 UID -> stream.sorted(Comparator.comparing { it.userID }).toList()
                 COUNTRY -> stream.sorted(Comparator.comparing { it.country.code }).toList()
                 else -> rawList
@@ -219,7 +220,12 @@ class FriendService(
                 sorted
             }
             // 取差集
-            FALSE -> stream.filter { !sorted.contains(it) }.toList()
+            FALSE -> {
+                // 原来的流已经被修改了
+                rawList.stream()
+                    .sorted(Comparator.comparing { it.userName })
+                    .filter { !sorted.contains(it) }.toList()
+            }
         }
 
         var i = offset
@@ -258,7 +264,7 @@ class FriendService(
 
 
         enum class SortType {
-            NULL, PERFORMANCE, ACCURACY, PLAY_COUNT, PLAY_TIME, TOTAL_HITS, TIME, UID, COUNTRY, NAME, ONLINE
+            NULL, PERFORMANCE, ACCURACY, PLAY_COUNT, PLAY_TIME, TOTAL_HITS, TIME, UID, COUNTRY, NAME, ONLINE, MUTUAL
         }
 
         enum class SortDirection {
@@ -291,6 +297,9 @@ class FriendService(
 
                 "o", "on", "online", "o+", "online+" -> ONLINE to TRUE
                 "o2", "online2", "o-", "online-", "f", "off", "offline" -> ONLINE to FALSE
+
+                "m", "mu", "mutual", "unidirectional", "single", "follow", "m-", "mu-", "mutual-" -> MUTUAL to FALSE
+                "m2", "mu2", "mutual2", "m+", "mu+", "mutual+" -> MUTUAL to TRUE
 
                 else -> NULL to RANDOM
             }

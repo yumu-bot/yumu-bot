@@ -11,6 +11,7 @@ import com.now.nowbot.throwable.serviceException.MRAException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -34,7 +35,7 @@ public class MuRatingService implements MessageService<Matcher> {
     ImageService imageService;
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) {
         var m = Instruction.MU_RATING.matcher(messageText);
 
         if (m.find()) {

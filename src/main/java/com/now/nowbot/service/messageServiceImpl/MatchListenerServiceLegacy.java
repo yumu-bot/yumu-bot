@@ -21,6 +21,7 @@ import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -65,7 +66,7 @@ public class MatchListenerServiceLegacy implements MessageService<MatchListenerS
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<ListenerParam> data) throws Throwable {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<ListenerParam> data) throws Throwable {
         var matcher = Instruction.MATCH_LISTENER.matcher(messageText);
         if (true) return false;
 

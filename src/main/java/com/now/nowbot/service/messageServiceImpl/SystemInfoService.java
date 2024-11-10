@@ -4,6 +4,7 @@ import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.Instruction;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.lang.management.ManagementFactory;
@@ -15,7 +16,7 @@ public class SystemInfoService implements MessageService<Boolean> {
     public static final Map<String, String> INFO_MAP = new HashMap<>(2);
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Boolean> data) throws Throwable {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Boolean> data) throws Throwable {
         var matcher = Instruction.SYSTEM_INFO.matcher(messageText);
 
         return matcher.find();

@@ -10,6 +10,7 @@ import com.now.nowbot.service.osuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.serviceException.MatchNowException;
 import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class MatchNowService implements MessageService<Matcher> {
     MuRatingService muRatingService;
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) {
         var m = Instruction.MATCH_NOW.matcher(messageText);
         if (m.find()) {
             data.setValue(m);
@@ -88,6 +89,8 @@ public class MatchNowService implements MessageService<Matcher> {
 
             for (Match.MatchRound r : c.getRounds()) {
                 var scoreList = r.getScores();
+
+                if (scoreList == null) continue;
 
                 if (isSize2p) {
                     r.setScores(scoreList.stream().sorted(

@@ -8,7 +8,7 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import org.springframework.stereotype.Service
@@ -27,24 +27,23 @@ class OsuAvatarCardService(
     ): Boolean {
         val matcher = Instruction.OSU_AVATAR_CARD.matcher(messageText)
         if (!matcher.find()) return false
-        val u = bindDao.getUserFromQQ(event.sender.id) ?: throw TipsException("请先绑定账号")
-        val param = UserAvatarCardParam(userApiService.getPlayerInfo(u))
-        data.value = param
+
+        val u = bindDao.getUserFromQQ(event.sender.id) ?: throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
+        data.value = UserAvatarCardParam(userApiService.getPlayerInfo(u))
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, data: UserAvatarCardParam) {
-        val image = imageService.getUserAvatarCard(data)
-        event.subject.sendImage(image)
+    override fun HandleMessage(event: MessageEvent, param: UserAvatarCardParam) {
+        event.reply(imageService.getPanel(param, "Zeta"))
     }
 
     override fun accept(event: MessageEvent, messageText: String): UserAvatarCardParam? {
         if (!OfficialInstruction.OSU_AVATAR_CARD.matcher(messageText).find()) return null
-        val u = bindDao.getUserFromQQ(event.sender.id) ?: throw TipsException("请先绑定账号")
+        val u = bindDao.getUserFromQQ(event.sender.id) ?: throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
         return UserAvatarCardParam(userApiService.getPlayerInfo(u))
     }
 
     override fun reply(event: MessageEvent, param: UserAvatarCardParam): MessageChain? {
-        return MessageChain.MessageChainBuilder().addImage(imageService.getUserAvatarCard(param)).build()
+        return MessageChain.MessageChainBuilder().addImage(imageService.getPanel(param, "Zeta")).build()
     }
 }

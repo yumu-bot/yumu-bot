@@ -4,6 +4,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.serviceException.OverSRException;
 import com.now.nowbot.util.Instruction;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.util.regex.Matcher;
@@ -12,7 +13,7 @@ import java.util.regex.Matcher;
 public class OverSRService implements MessageService<Matcher> {
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) {
         var m = Instruction.OVER_SR.matcher(messageText);
         if (m.find()) {
             data.setValue(m);

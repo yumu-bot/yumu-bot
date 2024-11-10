@@ -11,6 +11,7 @@ import com.now.nowbot.service.MessageService;
 import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.JacksonUtil;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public class DrawService implements MessageService<Matcher> {
     private DrawLogLiteRepository drawLogLiteRepository;
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) {
         var m = Instruction.DRAW.matcher(messageText);
         if (m.find()) {
             data.setValue(m);

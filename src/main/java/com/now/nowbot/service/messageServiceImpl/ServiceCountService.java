@@ -9,6 +9,7 @@ import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.util.Instruction;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -30,7 +31,7 @@ public class ServiceCountService implements MessageService<Integer> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Integer> data) throws Throwable {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Integer> data) throws Throwable {
         var matcher = Instruction.SERVICE_COUNT.matcher(messageText);
         if (! matcher.find()) return false;
 

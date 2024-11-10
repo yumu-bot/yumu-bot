@@ -13,6 +13,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.JacksonUtil;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -108,7 +109,7 @@ public class GroupStatisticsService implements MessageService<Long> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Long> data) throws Throwable {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Long> data) throws Throwable {
         if (!(event.getSubject() instanceof Group) || lock != 0) {
             return false;
         }

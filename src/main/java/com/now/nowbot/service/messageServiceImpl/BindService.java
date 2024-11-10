@@ -17,6 +17,7 @@ import com.now.nowbot.throwable.serviceException.BindException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.task.TaskExecutor;
@@ -61,7 +62,7 @@ public class BindService implements MessageService<BindService.BindParam> {
     }
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<BindParam> data) throws Throwable {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<BindParam> data) throws Throwable {
         var m = Instruction.BIND.matcher(messageText);
         if (!m.find()) return false;
 

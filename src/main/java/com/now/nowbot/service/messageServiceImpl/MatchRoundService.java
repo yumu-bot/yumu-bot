@@ -12,6 +12,7 @@ import com.now.nowbot.throwable.serviceException.MatchRoundException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,7 @@ public class MatchRoundService implements MessageService<Matcher> {
     ImageService imageService;
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) {
         var m = Instruction.MATCH_ROUND.matcher(messageText);
         if (m.find()) {
             data.setValue(m);

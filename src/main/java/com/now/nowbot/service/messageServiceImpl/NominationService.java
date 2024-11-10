@@ -13,6 +13,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.serviceException.NominationException;
 import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,7 @@ public class NominationService implements MessageService<Matcher> {
     ImageService imageService;
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) throws Throwable {
 
         var matcher = Instruction.NOMINATION.matcher(messageText);
         if (! matcher.find()) return false;

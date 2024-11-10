@@ -11,6 +11,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.JacksonUtil;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
@@ -29,7 +30,7 @@ public class PrivateMessageService implements MessageService<PrivateMessageServi
             .compile("^!testmsg (?<type>send|get|act)\\s*(?<id>\\d+)?\\s*(?<msg>.*)?$");
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<PMParam> data) throws Throwable {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<PMParam> data) throws Throwable {
         if (!messageText.startsWith("!testmsg")) return false;
         var m = pattern.matcher(messageText);
         if (!m.matches()) return false;

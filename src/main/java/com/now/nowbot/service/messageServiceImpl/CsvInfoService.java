@@ -10,6 +10,7 @@ import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
 import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class CsvInfoService implements MessageService<CsvInfoService.CIParam> {
     public record CIParam(OsuMode mode, List<String> users, String name) {}
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<CIParam> param) throws Throwable {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<CIParam> param) throws Throwable {
         var matcher = Instruction.CSV_INFO.matcher(messageText);
         if (! matcher.find()) return false;
 

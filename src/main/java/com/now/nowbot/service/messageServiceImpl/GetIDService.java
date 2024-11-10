@@ -8,6 +8,7 @@ import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -20,7 +21,7 @@ public class GetIDService implements MessageService<Matcher> {
     OsuUserApiService userApiService;
 
     @Override
-    public boolean isHandle(MessageEvent event, String messageText, DataValue<Matcher> data) throws Throwable {
+    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) throws Throwable {
         var m = Instruction.GET_ID.matcher(messageText);
         if (m.find()) {
             data.setValue(m);

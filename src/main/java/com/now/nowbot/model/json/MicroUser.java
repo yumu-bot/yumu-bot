@@ -40,7 +40,7 @@ public class MicroUser implements Comparable<MicroUser> {
     OsuUser.Country country;
 
     // 通过 LazerFriend 设置
-    @JsonProperty("mutual")
+    @JsonProperty("is_mutual")
     Boolean isMutual;
 
     @JsonProperty("country_code")
@@ -54,7 +54,6 @@ public class MicroUser implements Comparable<MicroUser> {
             this.country = new OsuUser.Country(country.get("code"), country.get("name"));
     }
 
-
     @JsonProperty("statistics")
     Statistics statistics;
 
@@ -65,6 +64,7 @@ public class MicroUser implements Comparable<MicroUser> {
     public String getAvatarUrl() {
         return avatarUrl;
     }
+
     public void setAvatarUrl(String avatar) {
         this.avatarUrl = avatar;
     }
@@ -149,13 +149,44 @@ public class MicroUser implements Comparable<MicroUser> {
     public void setLastTime(String lastTime) {
         this.lastTime = lastTime;
     }
-
-    public Boolean getPmOnly() {
+    public Boolean getPmFriendsOnly() {
         return pmFriendsOnly;
     }
 
-    public void setPmOnly(Boolean pmFriendsOnly) {
+    public void setPmFriendsOnly(Boolean pmFriendsOnly) {
         this.pmFriendsOnly = pmFriendsOnly;
+    }
+
+    public Boolean getBot() {
+        return isBot;
+    }
+
+    public void setBot(Boolean bot) {
+        isBot = bot;
+    }
+
+    public Boolean getDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        isDeleted = deleted;
+    }
+
+    public Boolean getOnline() {
+        return isOnline;
+    }
+
+    public void setOnline(Boolean online) {
+        isOnline = online;
+    }
+
+    public Boolean getSupporter() {
+        return isSupporter;
+    }
+
+    public void setSupporter(Boolean supporter) {
+        isSupporter = supporter;
     }
 
     public OsuUser.Country getCountry() {
@@ -170,7 +201,7 @@ public class MicroUser implements Comparable<MicroUser> {
         return statistics;
     }
 
-    public void setStatustucs(Statistics statistics) {
+    public void setStatistics(Statistics statistics) {
         this.statistics = statistics;
     }
 
@@ -186,9 +217,14 @@ public class MicroUser implements Comparable<MicroUser> {
         return cover;
     }
 
+    public void setCover(Cover cover) {
+        this.cover = cover;
+    }
+
     public String getCountryCode() {
         return countryCode;
     }
+
 
     public Boolean getMutual() {
         return isMutual;
@@ -221,7 +257,25 @@ public class MicroUser implements Comparable<MicroUser> {
 
     @Override
     public String toString() {
-        return STR."MicroUser{avatar='\{avatarUrl}\{'\''}, group='\{group}\{'\''}, id=\{id}, active=\{active}, bot=\{isBot}, deleted=\{isDeleted}, online=\{isOnline}, supporter=\{isSupporter}, lastTime='\{lastTime}\{'\''}, pmOnly=\{pmFriendsOnly}, name='\{userName}\{'\''}, countryCode='\{countryCode}\{'\''}, country=\{country}, cover=\{cover}, statistics=\{statistics}\{'}'}";
+        return "MicroUser{" + "avatarUrl='" + avatarUrl + '\'' +
+               ", coverUrl='" + coverUrl + '\'' +
+               ", group='" + group + '\'' +
+               ", id=" + id +
+               ", active=" + active +
+               ", isBot=" + isBot +
+               ", isDeleted=" + isDeleted +
+               ", isOnline=" + isOnline +
+               ", isSupporter=" + isSupporter +
+               ", lastTime='" + lastTime + '\'' +
+               ", pmFriendsOnly=" + pmFriendsOnly +
+               ", userName='" + userName + '\'' +
+               ", cover=" + cover +
+               ", countryCode='" + countryCode + '\'' +
+               ", country=" + country +
+               ", isMutual=" + isMutual +
+               ", statistics=" + statistics +
+               ", rulesets=" + rulesets +
+               '}';
     }
 
     @Override
