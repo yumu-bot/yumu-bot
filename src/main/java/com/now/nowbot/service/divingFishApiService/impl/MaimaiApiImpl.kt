@@ -426,18 +426,26 @@ class MaimaiApiImpl(
         WebClientResponseException.BadGateway::class
     )
     override fun getMaimaiFullScores(qq: Long): MaiBestScore {
-        return base.divingFishApiWebClient!!
-            .get()
-            .uri { uriBuilder: UriBuilder ->
-                uriBuilder
-                    .path("api/maimaidxprober/dev/player/records")
-                    .queryParam("qq", qq)
-                    .build()
-            }
-            .headers { headers: HttpHeaders? -> base.insertDeveloperHeader(headers) }
-            .retrieve()
-            .bodyToMono(MaiBestScore::class.java)
-            .block() ?: MaiBestScore()
+        return try {
+            base.divingFishApiWebClient!!
+                .get()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                        .path("api/maimaidxprober/dev/player/records")
+                        .queryParam("qq", qq)
+                        .build()
+                }
+                .headers { headers: HttpHeaders? -> base.insertDeveloperHeader(headers) }
+                .retrieve()
+                .bodyToMono(MaiBestScore::class.java)
+                .block()!!
+        } catch (e: WebClientResponseException.Forbidden) {
+            throw e
+        } catch (e: WebClientResponseException.BadRequest) {
+            throw e
+        } catch (e: WebClientResponseException) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
+        }
     }
 
     @Throws(
@@ -445,18 +453,26 @@ class MaimaiApiImpl(
         WebClientResponseException.BadGateway::class
     )
     override fun getMaimaiFullScores(username: String): MaiBestScore {
-        return base.divingFishApiWebClient!!
-            .get()
-            .uri { uriBuilder: UriBuilder ->
-                uriBuilder
-                    .path("api/maimaidxprober/dev/player/records")
-                    .queryParam("username", username)
-                    .build()
-            }
-            .headers { headers: HttpHeaders? -> base.insertDeveloperHeader(headers) }
-            .retrieve()
-            .bodyToMono(MaiBestScore::class.java)
-            .block() ?: MaiBestScore()
+        return try{
+            base.divingFishApiWebClient!!
+                .get()
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                        .path("api/maimaidxprober/dev/player/records")
+                        .queryParam("username", username)
+                        .build()
+                }
+                .headers { headers: HttpHeaders? -> base.insertDeveloperHeader(headers) }
+                .retrieve()
+                .bodyToMono(MaiBestScore::class.java)
+                .block()!!
+        } catch (e: WebClientResponseException.Forbidden) {
+            throw e
+        } catch (e: WebClientResponseException.BadRequest) {
+            throw e
+        } catch (e: WebClientResponseException) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
+        }
     }
 
     override fun getMaimaiPossibleSong(text: String): MaiSong? {
@@ -544,8 +560,7 @@ class MaimaiApiImpl(
                 }
                 .retrieve()
                 .bodyToMono(String::class.java)
-                .onErrorReturn("")
-                .block() ?: ""
+                .block()!!
 
     private val maimaiRankLibraryFromAPI: String
         get() =
@@ -556,8 +571,7 @@ class MaimaiApiImpl(
                 }
                 .retrieve()
                 .bodyToMono(String::class.java)
-                .onErrorReturn("")
-                .block() ?: ""
+                .block()!!
 
     private val maimaiFitLibraryFromAPI: String
         get() =
@@ -568,8 +582,7 @@ class MaimaiApiImpl(
                 }
                 .retrieve()
                 .bodyToMono(String::class.java)
-                .onErrorReturn("")
-                .block() ?: ""
+                .block()!!
 
     private val maimaiAliasLibraryFromAPI: String
         get() =
@@ -583,8 +596,8 @@ class MaimaiApiImpl(
                 }
                 .retrieve()
                 .bodyToMono(String::class.java)
-                .onErrorReturn("")
-                .block() ?: ""
+                .block()!!
+
 
     private fun <T> parseFile(fileName: String, clazz: Class<T>): T? {
         val file = path.resolve(fileName)
