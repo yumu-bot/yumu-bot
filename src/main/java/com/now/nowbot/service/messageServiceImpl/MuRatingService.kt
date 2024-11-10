@@ -1,208 +1,285 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.Match;
-import com.now.nowbot.model.multiplayer.MatchCalculate;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.osuApiService.OsuMatchApiService;
-import com.now.nowbot.throwable.serviceException.MRAException;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.regex.Matcher;
+import com.now.nowbot.model.json.Match
+import com.now.nowbot.model.multiplayer.MatchCalculate
+import com.now.nowbot.model.multiplayer.MatchCalculate.CalculateParam
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
+import com.now.nowbot.qq.tencent.TencentMessageService
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuMatchApiService
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.serviceException.MRAException
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.OfficialInstruction
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.lang.NonNull
+import org.springframework.stereotype.Service
+import org.springframework.util.StringUtils
+import java.util.*
+import java.util.regex.Matcher
 
 @Service("MU_RATING")
-public class MuRatingService implements MessageService<Matcher> {
-    private static final Logger log = LoggerFactory.getLogger(MuRatingService.class);
+class MuRatingService(
+        private val matchApiService: OsuMatchApiService,
+        private val beatmapApiService: OsuBeatmapApiService,
+        private val imageService: ImageService,
+) : MessageService<MuRatingService.MuRatingParam>, TencentMessageService<MuRatingService.MuRatingParam> {
 
-    @Resource
-    OsuMatchApiService matchApiService;
-    @Resource
-    OsuBeatmapApiService beatmapApiService;
-    @Resource
-    ImageService imageService;
+    @JvmRecord
+    data class MuRatingParam(@JvmField val matchID: Int,
+                             @JvmField val calParam: CalculateParam,
+                             @JvmField val isUU: Boolean = false
+    )
 
-    @Override
-    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) {
-        var m = Instruction.MU_RATING.matcher(messageText);
+    override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<MuRatingParam>,
+    ): Boolean {
+        val matcher = Instruction.MU_RATING.matcher(messageText)
 
-        if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
+        if (!matcher.find()) {
+            return false
+        }
+
+        data.value = getMuRatingParam(matcher)
+        return true
     }
 
-    public record MRAParam(Integer matchID, MatchCalculate.CalculateParam calParam) {}
-
-    @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-
-        var matchIDStr = matcher.group("matchid");
-        if (Objects.isNull(matchIDStr) || matchIDStr.isBlank()) {
-            try {
-                var md = DataUtil.getMarkdownFile("Help/rating.md");
-                var image = imageService.getPanelA6(md, "help");
-                event.reply(image);
-                return;
-            } catch (Exception e) {
-                throw new MRAException(MRAException.Type.RATING_Instructions);
-            }
-        }
-
-        var param = parseParam(matcher);
-        MatchCalculate mc;
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, param: MuRatingParam) {
+        val c: MatchCalculate
 
         try {
-            mc = calculate(param, matchApiService, beatmapApiService);
-        } catch (MRAException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("MRA 数据计算失败", e);
-            throw new MRAException(MRAException.Type.RATING_Rating_CalculatingFailed);
+            c = calculate(param, matchApiService, beatmapApiService)
+        } catch (e: MRAException) {
+            throw e
+        } catch (e: Exception) {
+            log.error("木斗力：数据计算失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Calculate, "木斗力")
         }
 
-        if (matcher.group("main") != null) {
-            byte[] image;
+        if (param.isUU) {
+            val str = parseCSA(c)
+
             try {
-                image = imageService.getPanelC(mc);
-                event.reply(image);
-            } catch (Exception e) {
-                log.error("MRA 数据请求失败", e);
-                throw new MRAException(MRAException.Type.RATING_Send_MRAFailed);
+                event.reply(str).recallIn(60000)
+            } catch (e: Exception) {
+                log.error("木斗力文字版：发送失败", e)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "木斗力")
             }
-        } else if (matcher.group("uu") != null) {
-            String str = parseCSA(mc);
+        } else {
+            val image: ByteArray
             try {
-                event.reply(str).recallIn(60000);
-            } catch (Exception e) {
-                log.error("URA 数据请求失败", e);
-                throw new MRAException(MRAException.Type.RATING_Send_URAFailed);
+                image = imageService.getPanel(c, "C")
+            } catch (e: Exception) {
+                log.error("木斗力：渲染失败", e)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "木斗力")
+            }
+
+            try {
+                event.reply(image)
+            } catch (e: Exception) {
+                log.error("木斗力：发送失败", e)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "木斗力")
             }
         }
+    }
+
+    override fun accept(event: MessageEvent, messageText: String): MuRatingParam? {
+        val matcher = OfficialInstruction.MU_RATING.matcher(messageText)
+
+        if (!matcher.find()) {
+            return null
+        }
+
+        return getMuRatingParam(matcher)
+    }
+
+    override fun reply(event: MessageEvent, param: MuRatingParam): MessageChain? {
+        val c: MatchCalculate = calculate(param, matchApiService, beatmapApiService)
+        return MessageChainBuilder().addImage(imageService.getPanel(c, "C")).build()
     }
 
     /**
      * 提取通用方法：将消息匹配变成 MRA 参数
+     *
      * @param matcher 消息匹配
      * @return MRA 参数
      * @throws MRAException 错误
      */
-    public MRAParam parseParam(Matcher matcher) throws MRAException {
-        int matchID;
+    @Throws(MRAException::class)
+    fun getMuRatingParam(matcher: Matcher): MuRatingParam {
+        val matchID: Int
+        val matchIDStr = matcher.group("matchid")
+
+        if (matchIDStr.isNullOrBlank()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_MatchID)
+
         try {
-            var matchIDStr = matcher.group("matchid");
-            matchID = Integer.parseInt(matchIDStr);
-        } catch (NumberFormatException e) {
-            throw new MRAException(MRAException.Type.RATING_Parameter_MatchIDError);
+            matchID = matchIDStr.toInt()
+        } catch (e: NumberFormatException) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param)
         }
 
-        int skip = matcher.group("skip") == null ? 0 : Integer.parseInt(matcher.group("skip"));
-        int ignore = matcher.group("ignore") == null ? 0 : Integer.parseInt(matcher.group("ignore"));
-        boolean failed = matcher.group("failed") == null || !matcher.group("failed").equalsIgnoreCase("f");
-        boolean rematch = matcher.group("rematch") == null || !matcher.group("rematch").equalsIgnoreCase("r");
+        val skipStr = matcher.group("skip")
+        val ignoreStr = matcher.group("ignore")
 
-        List<Integer> remove = getIntegers(matcher);
-        double easy = getEasyMultiplier(matcher);
+        val skip = skipStr?.toInt() ?: 0
+        val ignore = ignoreStr?.toInt() ?: 0
+        val failed =
+                matcher.group("failed") == null ||
+                        !matcher.group("failed").equals("f", ignoreCase = true)
+        val rematch =
+                matcher.group("rematch") == null ||
+                        !matcher.group("rematch").equals("r", ignoreCase = true)
 
-        return new MRAParam(matchID, new MatchCalculate.CalculateParam(skip, ignore, remove, easy, failed, rematch));
+        val remove = getIntegers(matcher)
+        val easy = getEasyMultiplier(matcher)
+        val isUU = matcher.namedGroups().containsKey("uu") && matcher.group("uu") != null
+
+        return MuRatingParam(matchID, CalculateParam(skip, ignore, remove, easy, failed, rematch), isUU)
     }
 
-    @NonNull
-    private static double getEasyMultiplier(Matcher matcher) throws MRAException {
-        var easyStr = matcher.group("easy");
-        double easy = 1d;
+    private fun parseCSA(c: MatchCalculate): String {
+        val data = c.matchData
 
-        if (StringUtils.hasText(easyStr)) {
-            try {
-                easy = Double.parseDouble(easyStr);
-            } catch (NullPointerException | NumberFormatException e) {
-                throw new MRAException(MRAException.Type.RATING_Parameter_EasyError);
-            }
+        // 结果数据
+        val sb = StringBuilder()
+        sb.append(c.match.matchStat.name)
+                .append("\n")
+                .append(data.getTeamPointMap()["red"])
+                .append(" : ")
+                .append(data.getTeamPointMap()["blue"])
+                .append("\n")
+                .append("mp")
+                .append(c.match.matchStat.matchID)
+                .append(" ")
+                .append(data.isTeamVs)
+                .append("\n")
+
+        for (p in data.getPlayerDataMap().values.stream().toList()) {
+            sb.append(
+                            String.format(
+                                    "#%d [%.2f] %s (%s)",
+                                    p.ranking,
+                                    p.mra,
+                                    p.player.userName,
+                                    p.team.uppercase(Locale.getDefault()),
+                            )
+                    )
+                    .append(" ")
+                    .append(
+                            String.format(
+                                    "%dW-%dL %d%% (%.2fM) [%.2f] [%s | %s]",
+                                    p.win,
+                                    p.lose,
+                                    Math.round(p.win.toDouble() * 100 / (p.win + p.lose)),
+                                    p.total / 1000000.0,
+                                    p.rws * 100.0,
+                                    p.playerClass.name,
+                                    p.playerClass.nameCN,
+                            )
+                    )
+                    .append("\n\n")
         }
-
-        if (easy > 10d) throw new MRAException(MRAException.Type.RATING_Parameter_EasyTooLarge);
-        if (easy < 0d) throw new MRAException(MRAException.Type.RATING_Parameter_EasyTooSmall);
-        return easy;
+        return sb.toString()
     }
 
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(MuRatingService::class.java)
 
-    @NonNull
-    private static List<Integer> getIntegers(Matcher matcher) {
-        var removeStrArr = matcher.group("remove");
-        List<Integer> remove = new ArrayList<>();
+        @NonNull
+        @Throws(MRAException::class)
+        private fun getEasyMultiplier(matcher: Matcher): Double {
+            val easyStr = matcher.group("easy")
+            var easy = 1.0
 
-        if (Objects.nonNull(removeStrArr) && ! removeStrArr.isBlank()) {
-            var split = removeStrArr.split("[\\s,，\\-|:]+");
-            for (var s : split) {
-                int r;
+            if (StringUtils.hasText(easyStr)) {
                 try {
-                    r = Integer.parseInt(s);
-                    remove.add(r);
-                } catch (NumberFormatException ignored) {
-
+                    easy = easyStr.toDouble()
+                } catch (e: NullPointerException) {
+                    throw MRAException(MRAException.Type.RATING_Parameter_EasyError)
+                } catch (e: NumberFormatException) {
+                    throw MRAException(MRAException.Type.RATING_Parameter_EasyError)
                 }
             }
-        }
-        return remove;
-    }
 
-    private String parseCSA(MatchCalculate c) {
-        var data = c.getMatchData();
-
-        //结果数据
-        StringBuilder sb = new StringBuilder();
-        sb.append(c.getMatch().getMatchStat().getName()).append("\n")
-                .append(data.getTeamPointMap().get("red")).append(" : ")
-                .append(data.getTeamPointMap().get("blue")).append("\n")
-                .append("mp").append(c.getMatch().getMatchStat().getMatchID()).append(" ")
-                .append(data.isTeamVs()).append("\n");
-
-        for (MatchCalculate.PlayerData p : data.getPlayerDataMap().values().stream().toList()) {
-            sb.append(String.format("#%d [%.2f] %s (%s)", p.getRanking(), p.getMRA(), p.getPlayer().getUserName(), p.getTeam().toUpperCase()))
-                    .append(" ")
-                    .append(String.format("%dW-%dL %d%% (%.2fM) [%.2f] [%s | %s]", p.getWin(), p.getLose(),
-                            Math.round((double) p.getWin() * 100 / (p.getWin() + p.getLose())), p.getTotal() / 1000000d, p.getRWS() * 100d, p.getPlayerClass().getName(), p.getPlayerClass().getNameCN()))
-                    .append("\n\n");
-        }
-        return sb.toString();
-    }
-
-    public static MatchCalculate calculate(int matchID, int skip, int ignore, List<Integer> remove, double easy, boolean failed, boolean rematch, OsuMatchApiService matchApiService, OsuBeatmapApiService beatmapApiService) throws MRAException {
-        var param = new MRAParam(matchID, new MatchCalculate.CalculateParam(skip, ignore, remove, easy, failed, rematch));
-
-        return calculate(param, matchApiService, beatmapApiService);
-    }
-
-    public static MatchCalculate calculate(MRAParam param, OsuMatchApiService matchApiService, OsuBeatmapApiService beatmapApiService) throws MRAException {
-        if (param.calParam().skip() < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipError);
-        if (param.calParam().ignore() < 0) throw new MRAException(MRAException.Type.RATING_Parameter_SkipEndError);
-
-        Match match;
-        try {
-            match = matchApiService.getMatchInfo(param.matchID(), 10);
-        } catch (Exception e) {
-            throw new MRAException(MRAException.Type.RATING_Match_NotFound);
+            if (easy > 10.0) throw MRAException(MRAException.Type.RATING_Parameter_EasyTooLarge)
+            if (easy < 0.0) throw MRAException(MRAException.Type.RATING_Parameter_EasyTooSmall)
+            return easy
         }
 
-        while (! match.getFirstEventID().equals(match.getEvents().getFirst().getEventID())) {
-            var events = matchApiService.getMatchInfo(param.matchID(), 10).getEvents();
-            if (events.isEmpty()) throw new MRAException(MRAException.Type.RATING_Round_Empty);
-            match.getEvents().addAll(0, events);
+        @NonNull
+        private fun getIntegers(matcher: Matcher): List<Int> {
+            val removeStrArr = matcher.group("remove")
+            val remove: MutableList<Int> = mutableListOf()
+
+            if (! removeStrArr.isNullOrBlank()) {
+                val split =
+                        removeStrArr
+                                .split("[\\s,，\\-|:]+".toRegex())
+                                .dropLastWhile { it.isEmpty() }
+                                .toTypedArray()
+                for (s in split) {
+                    var r: Int
+                    try {
+                        r = s.toInt()
+                        remove.add(r)
+                    } catch (ignored: NumberFormatException) {}
+                }
+            }
+            return remove
         }
 
-        return new MatchCalculate(match, param.calParam(), beatmapApiService);
+        @Throws(MRAException::class)
+        fun calculate(
+                matchID: Int,
+                skip: Int,
+                ignore: Int,
+                remove: List<Int>?,
+                easy: Double,
+                failed: Boolean,
+                rematch: Boolean,
+                matchApiService: OsuMatchApiService,
+                beatmapApiService: OsuBeatmapApiService?,
+        ): MatchCalculate {
+            val param = MuRatingParam(matchID, CalculateParam(skip, ignore, remove, easy, failed, rematch))
+
+            return calculate(param, matchApiService, beatmapApiService)
+        }
+
+        @JvmStatic
+        @Throws(MRAException::class)
+        fun calculate(
+            param: MuRatingParam,
+            matchApiService: OsuMatchApiService,
+            beatmapApiService: OsuBeatmapApiService?,
+        ): MatchCalculate {
+            if (param.calParam.skip < 0)
+                    throw MRAException(MRAException.Type.RATING_Parameter_SkipError)
+            if (param.calParam.ignore < 0)
+                    throw MRAException(MRAException.Type.RATING_Parameter_SkipEndError)
+
+            val match: Match
+            try {
+                match = matchApiService.getMatchInfo(param.matchID.toLong(), 10)
+            } catch (e: Exception) {
+                throw MRAException(MRAException.Type.RATING_Match_NotFound)
+            }
+
+            while (match.firstEventID != match.events.first().eventID) {
+                val events = matchApiService.getMatchInfo(param.matchID.toLong(), 10).events
+                if (events.isEmpty()) throw MRAException(MRAException.Type.RATING_Round_Empty)
+                match.events.addAll(0, events)
+            }
+
+            return MatchCalculate(match, param.calParam, beatmapApiService)
+        }
     }
 }
-

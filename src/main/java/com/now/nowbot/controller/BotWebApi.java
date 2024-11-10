@@ -195,9 +195,9 @@ public class BotWebApi {
 
         try {
             var data = MatchNowService.calculate(
-                    new MuRatingService.MRAParam(matchID, new MatchCalculate.CalculateParam(k, d, null, e, f, r)),
+                    new MuRatingService.MuRatingParam(matchID, new MatchCalculate.CalculateParam(k, d, null, e, f, r), false),
                     matchApiService, beatmapApiService);
-            image = imageService.getPanelF(data);
+            image = imageService.getPanel(data, "F");
         } catch (Exception err) {
             log.error("比赛结果：API 异常", err);
             throw new RuntimeException(MatchNowException.Type.MN_Render_Error.message);
@@ -234,10 +234,10 @@ public class BotWebApi {
         byte[] image;
 
         try {
-            var data = MuRatingService.calculate(
-                    new MuRatingService.MRAParam(matchID, new MatchCalculate.CalculateParam(k, d, null, e, f, r)),
+            var c = MuRatingService.calculate(
+                    new MuRatingService.MuRatingParam(matchID, new MatchCalculate.CalculateParam(k, d, null, e, f, r), false),
                     matchApiService, beatmapApiService);
-            image = imageService.getPanelC(data);
+            image = imageService.getPanel(c, "C");
         } catch (Exception err) {
             log.error("比赛评分：API 异常", err);
             throw new RuntimeException(MRAException.Type.RATING_Send_MRAFailed.message);

@@ -1,110 +1,151 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.Match;
-import com.now.nowbot.model.multiplayer.MatchCalculate;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.osuApiService.OsuMatchApiService;
-import com.now.nowbot.throwable.serviceException.MatchNowException;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-import java.util.Comparator;
-import java.util.regex.Matcher;
+import com.now.nowbot.model.json.Match
+import com.now.nowbot.model.json.Match.MatchRound
+import com.now.nowbot.model.multiplayer.MatchCalculate
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
+import com.now.nowbot.qq.tencent.TencentMessageService
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.messageServiceImpl.MuRatingService.MuRatingParam
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuMatchApiService
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.serviceException.MatchNowException
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.OfficialInstruction
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 
 @Service("MATCH_NOW")
-public class MatchNowService implements MessageService<Matcher> {
-    private static final Logger log = LoggerFactory.getLogger(MatchNowService.class);
-    @Resource
-    OsuBeatmapApiService beatmapApiService;
-    @Resource
-    OsuMatchApiService matchApiService;
-    @Resource
-    ImageService imageService;
-    @Resource
-    MuRatingService muRatingService;
+class MatchNowService(
+        private val beatmapApiService: OsuBeatmapApiService,
+        private val matchApiService: OsuMatchApiService,
+        private val imageService: ImageService,
+        private val muRatingService: MuRatingService,
+) : MessageService<MuRatingParam>, TencentMessageService<MuRatingParam> {
 
-    @Override
-    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) {
-        var m = Instruction.MATCH_NOW.matcher(messageText);
-        if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
+    override fun isHandle(
+            event: MessageEvent,
+            messageText: String,
+            data: DataValue<MuRatingParam>,
+    ): Boolean {
+        val m = Instruction.MATCH_NOW.matcher(messageText)
+        if (!m.find()) {
+            return false
+        }
+
+        data.value = muRatingService.getMuRatingParam(m)
+        return true
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
-        var param = muRatingService.parseParam(matcher);
-        var data = calculate(param, matchApiService, beatmapApiService);
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, param: MuRatingParam) {
+        val data = calculate(param, matchApiService, beatmapApiService)
 
-        byte[] image;
+        val image: ByteArray
         try {
-            image = imageService.getPanelF(data);
-        } catch (Exception e) {
-            log.error("比赛结果：渲染图片失败");
-            throw new MatchNowException(MatchNowException.Type.MN_Render_Error);
+            image = imageService.getPanel(data, "F")
+        } catch (e: Exception) {
+            log.error("比赛结果：渲染失败")
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "比赛结果")
         }
 
         try {
-            from.sendImage(image);
-        } catch (Exception e) {
-            log.error("比赛结果：发送失败", e);
-            throw new MatchNowException(MatchNowException.Type.MN_Send_Error);
+            event.reply(image)
+        } catch (e: Exception) {
+            log.error("比赛结果：发送失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "比赛结果")
         }
     }
 
-    public static MatchCalculate calculate(MuRatingService.MRAParam param, OsuMatchApiService matchApiService, OsuBeatmapApiService beatmapApiService) throws MatchNowException {
-
-        Match match;
-        try {
-            match = matchApiService.getMatchInfo(param.matchID(), 10);
-        } catch (Exception e) {
-            throw new MatchNowException(MatchNowException.Type.MN_Match_NotFound);
+    override fun accept(event: MessageEvent, messageText: String): MuRatingParam? {
+        val m = OfficialInstruction.MATCH_NOW.matcher(messageText)
+        if (!m.find()) {
+            return null
         }
 
-        while (!match.getFirstEventID().equals(match.getEvents().getFirst().getEventID())) {
-            var events = matchApiService.getMatchInfo(param.matchID(), 10).getEvents();
-            if (events.isEmpty()) throw new MatchNowException(MatchNowException.Type.MN_Match_Empty);
-            match.getEvents().addAll(0, events);
-        }
+        return muRatingService.getMuRatingParam(m)
+    }
 
-        if (match.getEvents().size() - param.calParam().ignore() - param.calParam().skip() <= 0) {
-            throw new MatchNowException(MatchNowException.Type.MN_Match_OutOfBoundsError);
-        }
+    override fun reply(event: MessageEvent, param: MuRatingParam): MessageChain? {
+        val data = calculate(param, matchApiService, beatmapApiService)
 
-        MatchCalculate c;
-        try {
-            c = new MatchCalculate(match, param.calParam(), beatmapApiService);
+        return MessageChainBuilder().addImage(imageService.getPanel(data, "F")).build()
+    }
 
-            //如果只有一两个人，则不排序（slot 从小到大）
-            boolean isSize2p = ! c.getRounds().stream().filter(s -> s.getScores().size() > 2).toList().isEmpty();
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(MatchNowService::class.java)
 
-            for (Match.MatchRound r : c.getRounds()) {
-                var scoreList = r.getScores();
-
-                if (scoreList == null) continue;
-
-                if (isSize2p) {
-                    r.setScores(scoreList.stream().sorted(
-                                    Comparator.comparingInt(Match.MatchScore::getScore).reversed()).toList());
-                } else {
-                    r.setScores(scoreList.stream().sorted(
-                            Comparator.comparingInt(s -> s.getPlayerStat().slot())).toList());
-                }
+        @JvmStatic
+        @Throws(MatchNowException::class)
+        fun calculate(
+                param: MuRatingParam,
+                matchApiService: OsuMatchApiService,
+                beatmapApiService: OsuBeatmapApiService?,
+        ): MatchCalculate {
+            val match: Match
+            try {
+                match = matchApiService.getMatchInfo(param.matchID.toLong(), 10)
+            } catch (e: Exception) {
+                throw MatchNowException(MatchNowException.Type.MN_Match_NotFound)
             }
 
-        } catch (Exception e) {
-            log.error("比赛结果：获取失败", e);
-            throw new MatchNowException(MatchNowException.Type.MN_Match_ParseError);
+            while (match.firstEventID != match.events.first().eventID) {
+                val events = matchApiService.getMatchInfo(param.matchID.toLong(), 10).events
+                if (events.isEmpty()) throw MatchNowException(MatchNowException.Type.MN_Match_Empty)
+                match.events.addAll(0, events)
+            }
+
+            if (match.events.size - param.calParam.ignore - param.calParam.skip <= 0) {
+                throw MatchNowException(MatchNowException.Type.MN_Match_OutOfBoundsError)
+            }
+
+            val c: MatchCalculate
+            try {
+                c = MatchCalculate(match, param.calParam, beatmapApiService)
+
+                // 如果只有一两个人，则不排序（slot 从小到大）
+                val isSize2p =
+                        c.rounds
+                                .stream()
+                                .filter { s: MatchRound -> s.scores!!.size > 2 }
+                                .toList()
+                                .isNotEmpty()
+
+                for (r in c.rounds) {
+                    val scoreList = r.scores ?: continue
+
+                    if (isSize2p) {
+                        r.scores =
+                                scoreList
+                                        .stream()
+                                        .sorted(
+                                                Comparator.comparingInt(Match.MatchScore::getScore)
+                                                        .reversed()
+                                        )
+                                        .toList()
+                    } else {
+                        r.scores =
+                                scoreList
+                                        .stream()
+                                        .sorted(
+                                                Comparator.comparingInt { s: Match.MatchScore ->
+                                                    s.playerStat.slot
+                                                }
+                                        )
+                                        .toList()
+                    }
+                }
+            } catch (e: Exception) {
+                log.error("比赛结果：获取失败", e)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "比赛结果")
+            }
+            return c
         }
-        return c;
     }
 }

@@ -30,6 +30,7 @@ public class GeneralTipsException extends TipsException {
         G_Null_Song("找不到歌曲 %s，请检查。"),
         G_Null_Map("找不到这张谱面，请检查。"),
         G_Null_MapFile("没有找到这张谱面的缓存文件。"),
+        G_Null_MatchID("请输入正确的比赛编号！"),
         G_Null_MatchRound("找不到这场对局，请检查。"),
         G_Null_QQ("找不到 %s 所绑定的玩家！"),
         G_Null_Play("该玩家基本没玩过。"),
@@ -63,6 +64,7 @@ public class GeneralTipsException extends TipsException {
 
         G_Malfunction_ppyAPI("ppy API 状态异常！"),
         G_Malfunction_RenderDisconnected("%s：无法连接到渲染模块！"),
+        G_Malfunction_Calculate("%s：数据计算失败。"),
         G_Malfunction_Fetch("%s：数据获取失败。"),
         G_Malfunction_Render("%s：渲染模块连接失败。"),
         G_Malfunction_Send("%s：图片发送失败。\n请耐心等待问题修复。"),

@@ -337,13 +337,6 @@ public class ImageService {
         return doPost("panel_B3", httpEntity);
     }
 
-    public byte[] getPanelC(MatchCalculate mc) {
-        HttpHeaders headers = getDefaultHeader();
-
-        HttpEntity<MatchCalculate> httpEntity = new HttpEntity<>(mc, headers);
-        return doPost("panel_C", httpEntity);
-    }
-
     public byte[] getPanelC2(SeriesCalculate sc) {
         HttpHeaders headers = getDefaultHeader();
 
@@ -448,13 +441,6 @@ public class ImageService {
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_E7", httpEntity);
-    }
-
-    public byte[] getPanelF(MatchCalculate matchData) {
-        HttpHeaders headers = getDefaultHeader();
-
-        HttpEntity<MatchCalculate> httpEntity = new HttpEntity<>(matchData, headers);
-        return doPost("panel_F", httpEntity);
     }
 
     public byte[] getPanelF2(Match.MatchStat matchStat, Match.MatchRound matchRound, int index) {
