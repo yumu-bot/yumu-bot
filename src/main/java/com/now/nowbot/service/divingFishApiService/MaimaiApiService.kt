@@ -82,7 +82,7 @@ interface MaimaiApiService {
 
     fun insertMaimaiAliasForScore(score: MaiScore?)
 
-    fun insertMaimaiAliasForScore(score: List<MaiScore>?)
+    fun insertMaimaiAliasForScore(scores: List<MaiScore>?)
 
     fun insertSongData(scores: List<MaiScore>)
 

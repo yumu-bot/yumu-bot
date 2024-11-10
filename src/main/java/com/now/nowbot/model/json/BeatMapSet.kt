@@ -277,7 +277,7 @@ class BeatMapSet {
             if (ratings.isNullOrEmpty()) return 0.0
 
             var r = 0.0
-            val sum = ratings!!.stream().reduce { a: Int, b: Int -> Integer.sum(a, b) }.orElse(0).toDouble()
+            val sum = ratings!!.sumOf { it }.toDouble()
 
             if (sum == 0.0) {
                 return 0.0
@@ -290,7 +290,8 @@ class BeatMapSet {
             return r
         }
 
-     //自己算
+    //自己算
+    @get:JsonProperty("has_leader_board")
     val hasLeaderBoard: Boolean
          get() {
              if (Objects.nonNull(status)) {
