@@ -477,6 +477,7 @@ enum class Instruction(val pattern: Pattern) {
         appendUID()
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),
+
     OSU_AVATAR_CARD(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(old|osu)?\\s*card", "oc")
     }),

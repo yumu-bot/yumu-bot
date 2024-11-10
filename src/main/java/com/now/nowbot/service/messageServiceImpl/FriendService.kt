@@ -63,7 +63,7 @@ class FriendService(
             data.value = FriendParam(0, 0, u?.userID ?: 0, u, sort)
         } else {
             val offset = range.getOffset(0, true)
-            val limit = range.getLimit(12, true)
+            val limit = range.getLimit(20, true)
             data.value = FriendParam(offset, limit, 0, range.data, sort)
         }
         return true
@@ -180,9 +180,9 @@ class FriendService(
 
         val stream = if (sortDirection == DESCEND) {
             // 先翻一次，因为等会要翻回来，这样可以保证都是默认按名字升序排序的
-            rawList.stream().sorted(Comparator.comparing<MicroUser?, String?> { it.userName }.reversed())
+            rawList.stream().filter { it.isBot != true }.sorted(Comparator.comparing<MicroUser?, String?> { it.userName }.reversed())
         } else {
-            rawList.stream().sorted(Comparator.comparing { it.userName })
+            rawList.stream().filter { it.isBot != true }.sorted(Comparator.comparing { it.userName })
         }
 
         val sorted =
@@ -208,7 +208,7 @@ class FriendService(
                 MUTUAL -> stream.filter { it.mutual }.toList()
                 UID -> stream.sorted(Comparator.comparing { it.userID }).toList()
                 COUNTRY -> stream.sorted(Comparator.comparing { it.country.code }).toList()
-                else -> rawList
+                else -> stream.toList()
             }
 
         val result = when (sortDirection) {
@@ -223,6 +223,7 @@ class FriendService(
             FALSE -> {
                 // 原来的流已经被修改了
                 rawList.stream()
+                    .filter { it.isBot != true }
                     .sorted(Comparator.comparing { it.userName })
                     .filter { !sorted.contains(it) }.toList()
             }

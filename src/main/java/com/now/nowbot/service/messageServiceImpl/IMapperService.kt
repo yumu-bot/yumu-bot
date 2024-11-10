@@ -4,6 +4,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.*
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -15,7 +16,6 @@ import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil.getUserWithOutRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -78,7 +78,7 @@ class IMapperService(
             beatmapApiService
         )
 
-        return QQMsgUtil.getImage(imageService.getPanel(map, "M"))
+        return MessageChainBuilder().addImage(imageService.getPanel(map, "M")).build()
     }
 
     companion object {

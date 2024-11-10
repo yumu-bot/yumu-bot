@@ -1,273 +1,362 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.BeatMap;
-import com.now.nowbot.model.json.BeatMapSet;
-import com.now.nowbot.model.json.Discussion;
-import com.now.nowbot.model.json.DiscussionDetails;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.osuApiService.OsuDiscussionApiService;
-import com.now.nowbot.service.osuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.serviceException.NominationException;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static com.now.nowbot.util.command.CommandPatternStaticKt.FLAG_SID;
+import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.json.BeatMapSet
+import com.now.nowbot.model.json.Discussion
+import com.now.nowbot.model.json.DiscussionDetails
+import com.now.nowbot.model.json.DiscussionDetails.MessageType.*
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
+import com.now.nowbot.qq.tencent.TencentMessageService
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuDiscussionApiService
+import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.serviceException.NominationException
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.command.FLAG_SID
+import java.util.*
+import java.util.regex.Matcher
+import java.util.stream.Collectors
+import java.util.stream.Stream
+import kotlin.math.floor
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.reactive.function.client.WebClientResponseException
 
 @Service("NOMINATION")
-public class NominationService implements MessageService<Matcher> {
-    private static final Logger log = LoggerFactory.getLogger(NominationService.class);
+class NominationService(
+        private val osuBeatmapApiService: OsuBeatmapApiService,
+        private val osuUserApiService: OsuUserApiService,
+        private val osuDiscussionApiService: OsuDiscussionApiService,
+        private val imageService: ImageService,
+) : MessageService<Matcher>, TencentMessageService<Matcher> {
 
-    @Resource
-    OsuBeatmapApiService osuBeatmapApiService;
-    @Resource
-    OsuUserApiService osuUserApiService;
-    @Resource
-    OsuDiscussionApiService osuDiscussionApiService;
-    @Resource
-    ImageService imageService;
+    @Throws(Throwable::class)
+    override fun isHandle(
+            event: MessageEvent,
+            messageText: String,
+            data: DataValue<Matcher>,
+    ): Boolean {
+        val matcher = Instruction.NOMINATION.matcher(messageText)
+        if (!matcher.find()) return false
 
-    @Override
-    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) throws Throwable {
-
-        var matcher = Instruction.NOMINATION.matcher(messageText);
-        if (! matcher.find()) return false;
-
-        data.setValue(matcher);
-        return true;
+        data.value = matcher
+        return true
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
-        long sid;
-        boolean isSID = true;
-
-        String mode = matcher.group("mode");
-
-        if (Objects.nonNull(mode) && (Objects.equals(mode, "b") || Objects.equals(mode, "bid"))) {
-            isSID = false;
-        }
-
-        try {
-            sid = Long.parseLong(matcher.group(FLAG_SID));
-        } catch (NumberFormatException e) {
-            throw new NominationException(NominationException.Type.N_Instructions);
-        }
-
-        var data = parseData(sid, isSID, osuBeatmapApiService, osuDiscussionApiService, osuUserApiService);
-
-        byte[] image;
+    @Throws(Throwable::class)
+    override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
+        val image: ByteArray =
+                getNominationImage(
+                        matcher,
+                        osuBeatmapApiService,
+                        osuDiscussionApiService,
+                        osuUserApiService,
+                        imageService,
+                )
 
         try {
-            image = imageService.getPanel(data, "N");
-        } catch (Exception e) {
-            log.error("提名信息：渲染失败", e);
-            throw new NominationException(NominationException.Type.N_Render_Failed);
-        }
-
-        try {
-            from.sendImage(image);
-        } catch (Exception e) {
-            log.error("提名信息：发送失败", e);
-            throw new NominationException(NominationException.Type.N_Send_Error);
+            event.reply(image)
+        } catch (e: Exception) {
+            log.error("提名信息：发送失败", e)
+            throw NominationException(NominationException.Type.N_Send_Error)
         }
     }
 
-    public static Map<String, Object> parseData(long sid, boolean isSID, OsuBeatmapApiService beatmapApiService, OsuDiscussionApiService discussionApiService, OsuUserApiService userApiService
-    ) throws NominationException {
-        BeatMapSet s;
-        Discussion d;
-        final List<DiscussionDetails> details;
-        final List<DiscussionDetails> discussions;
-        final List<DiscussionDetails> hypes;
-        Map<String, Object> more = new HashMap<>();
+    override fun accept(event: MessageEvent, messageText: String): Matcher? {
+        val matcher = OfficialInstruction.NOMINATION.matcher(messageText)
+        if (!matcher.find()) return null
 
-        if (isSID) {
+        return matcher
+    }
+
+    override fun reply(event: MessageEvent, param: Matcher): MessageChain? {
+        val image: ByteArray =
+                getNominationImage(
+                        param,
+                        osuBeatmapApiService,
+                        osuDiscussionApiService,
+                        osuUserApiService,
+                        imageService,
+                )
+
+        return MessageChainBuilder().addImage(image).build()
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(NominationService::class.java)
+
+        private fun getNominationImage(
+                matcher: Matcher,
+                osuBeatmapApiService: OsuBeatmapApiService,
+                osuDiscussionApiService: OsuDiscussionApiService,
+                osuUserApiService: OsuUserApiService,
+                imageService: ImageService,
+        ): ByteArray {
+            val sid: Long
+            val mode = matcher.group("mode")
+            val isSID = !(mode != null && (mode == "b" || mode == "bid"))
+
             try {
-                s = beatmapApiService.getBeatMapSet(sid);
-            } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
+                sid = matcher.group(FLAG_SID).toLong()
+            } catch (e: NumberFormatException) {
+                throw NominationException(NominationException.Type.N_Instructions)
+            }
+
+            val data =
+                    parseData(
+                            sid,
+                            isSID,
+                            osuBeatmapApiService,
+                            osuDiscussionApiService,
+                            osuUserApiService,
+                    )
+
+            return try {
+                imageService.getPanel(data, "N")
+            } catch (e: Exception) {
+                log.error("提名信息：渲染失败", e)
+                throw NominationException(NominationException.Type.N_Render_Failed)
+            }
+        }
+
+        @JvmStatic
+        @Throws(NominationException::class)
+        fun parseData(
+                sid: Long,
+                isSID: Boolean,
+                beatmapApiService: OsuBeatmapApiService,
+                discussionApiService: OsuDiscussionApiService,
+                userApiService: OsuUserApiService?,
+        ): Map<String, Any> {
+            var id = sid
+            var s: BeatMapSet
+            val d: Discussion
+            val details: List<DiscussionDetails>
+            val discussions: List<DiscussionDetails>
+            val hypes: List<DiscussionDetails>
+            val more: MutableMap<String, Any> = HashMap()
+
+            if (isSID) {
                 try {
-                    var b = beatmapApiService.getBeatMapFromDataBase(sid);
-                    sid = b.getBeatMapSetID();
-                    s = beatmapApiService.getBeatMapSet(sid);
-                } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e1) {
-                    throw new NominationException(NominationException.Type.N_Map_NotFound);
-                } catch (Exception e1) {
-                    log.error("提名信息：谱面获取失败", e1);
-                    throw new NominationException(NominationException.Type.N_Map_FetchFailed);
+                    s = beatmapApiService.getBeatMapSet(id)
+                } catch (e: WebClientResponseException.NotFound) {
+                    try {
+                        val b = beatmapApiService.getBeatMapFromDataBase(id)
+                        id = b.beatMapSetID
+                        s = beatmapApiService.getBeatMapSet(id)
+                    } catch (e1: WebClientResponseException.NotFound) {
+                        throw NominationException(NominationException.Type.N_Map_NotFound)
+                    } catch (e1: HttpClientErrorException.NotFound) {
+                        throw NominationException(NominationException.Type.N_Map_NotFound)
+                    } catch (e1: Exception) {
+                        log.error("提名信息：谱面获取失败", e1)
+                        throw NominationException(NominationException.Type.N_Map_FetchFailed)
+                    }
+                } catch (e: HttpClientErrorException.NotFound) {
+                    try {
+                        val b = beatmapApiService.getBeatMapFromDataBase(id)
+                        id = b.beatMapSetID
+                        s = beatmapApiService.getBeatMapSet(id)
+                    } catch (e1: WebClientResponseException.NotFound) {
+                        throw NominationException(NominationException.Type.N_Map_NotFound)
+                    } catch (e1: HttpClientErrorException.NotFound) {
+                        throw NominationException(NominationException.Type.N_Map_NotFound)
+                    } catch (e1: Exception) {
+                        log.error("提名信息：谱面获取失败", e1)
+                        throw NominationException(NominationException.Type.N_Map_FetchFailed)
+                    }
+                } catch (e: WebClientResponseException.BadGateway) {
+                    throw NominationException(NominationException.Type.N_API_Unavailable)
+                } catch (e: WebClientResponseException.ServiceUnavailable) {
+                    throw NominationException(NominationException.Type.N_API_Unavailable)
+                } catch (e: Exception) {
+                    log.error("提名信息：谱面获取失败", e)
+                    throw NominationException(NominationException.Type.N_Map_FetchFailed)
                 }
-            } catch (WebClientResponseException.BadGateway | WebClientResponseException.ServiceUnavailable e) {
-                throw new NominationException(NominationException.Type.N_API_Unavailable);
-            } catch (Exception e) {
-                log.error("提名信息：谱面获取失败", e);
-                throw new NominationException(NominationException.Type.N_Map_FetchFailed);
+            } else {
+                try {
+                    val b = beatmapApiService.getBeatMapFromDataBase(id)
+                    id = b.beatMapSetID
+                    s = beatmapApiService.getBeatMapSet(id)
+                } catch (e: WebClientResponseException.NotFound) {
+                    throw NominationException(NominationException.Type.N_Map_NotFound)
+                } catch (e: HttpClientErrorException.NotFound) {
+                    throw NominationException(NominationException.Type.N_Map_NotFound)
+                } catch (e: WebClientResponseException.BadGateway) {
+                    throw NominationException(NominationException.Type.N_API_Unavailable)
+                } catch (e: WebClientResponseException.ServiceUnavailable) {
+                    throw NominationException(NominationException.Type.N_API_Unavailable)
+                } catch (e: Exception) {
+                    log.error("提名信息：谱面获取失败", e)
+                    throw NominationException(NominationException.Type.N_Map_FetchFailed)
+                }
             }
-        } else {
+
+            if (s.creatorData != null) {
+                s.creatorData!!.parseFull(userApiService)
+            }
+
             try {
-                var b = beatmapApiService.getBeatMapFromDataBase(sid);
-                sid = b.getBeatMapSetID();
-                s = beatmapApiService.getBeatMapSet(sid);
-            } catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e) {
-                throw new NominationException(NominationException.Type.N_Map_NotFound);
-            } catch (WebClientResponseException.BadGateway | WebClientResponseException.ServiceUnavailable e) {
-                throw new NominationException(NominationException.Type.N_API_Unavailable);
-            } catch (Exception e) {
-                log.error("提名信息：谱面获取失败", e);
-                throw new NominationException(NominationException.Type.N_Map_FetchFailed);
-            }
-        }
-
-        if (Objects.nonNull(s.getCreatorData())) {
-            s.getCreatorData().parseFull(userApiService);
-        }
-
-
-
-        try {
-            d = discussionApiService.getBeatMapSetDiscussion(sid);
-        } catch (Exception e) {
-            log.error("提名信息：讨论区获取失败", e);
-            throw new NominationException(NominationException.Type.N_Discussion_FetchFailed);
-        }
-
-        //插入难度名
-        if (Objects.nonNull(s.getBeatMaps())) {
-            Map<Long, String> diffs = s.getBeatMaps().stream().collect(
-                    Collectors.toMap(BeatMap::getBeatMapID, BeatMap::getDifficultyName)
-            );
-
-            d.addDifficulty4DiscussionDetails(diffs);
-        }
-
-        //获取 hypes 和 discussions 列表
-        {
-            //这两个list需要合并起来
-            details = Stream.of(d.getDiscussions(), d.getIncludedDiscussions())
-                    .filter(Objects::nonNull)
-                    .flatMap(Collection::stream)
-                    .distinct()
-                    .toList();
-
-            hypes = details.stream().filter(i -> {
-                var t = i.getMessageType();
-                return t.equals(DiscussionDetails.MessageType.hype) || t.equals(DiscussionDetails.MessageType.praise);
-            }).toList();
-
-            var dis = details.stream().filter(i -> {
-                var t = i.getMessageType();
-                return t.equals(DiscussionDetails.MessageType.problem) || t.equals(DiscussionDetails.MessageType.suggestion);
-            }).toList();
-
-            discussions = Discussion.toppingUnsolvedDiscussionDetails(dis);
-        }
-        //这一部分提供额外信息
-        {
-            int hostCount = 0;
-            int guestCount = 0;
-            int problemCount = 0;
-            int suggestCount = 0;
-            int notSolvedCount = 0;
-            int hypeCount = 0;
-            int praiseCount = 0;
-            String maxSR = "";
-            String minSR = "";
-            int totalLength = 0;
-            List<Double> SRList = new ArrayList<>();
-
-            for (var i : details) {
-                switch (i.getMessageType()) {
-                    case problem -> problemCount ++;
-                    case suggestion -> suggestCount ++;
-                    case hype -> hypeCount ++;
-                    case praise -> praiseCount ++;
-                }
-
-                if (i.getCanBeResolved() && !i.getResolved()) {
-                    notSolvedCount ++;
-                }
+                d = discussionApiService.getBeatMapSetDiscussion(id)
+            } catch (e: Exception) {
+                log.error("提名信息：讨论区获取失败", e)
+                throw NominationException(NominationException.Type.N_Discussion_FetchFailed)
             }
 
-            var bs = s.getBeatMaps();
+            // 插入难度名
+            if (! s.beatMaps.isNullOrEmpty()) {
+                val diffs =
+                        s.beatMaps!!
+                                .stream()
+                                .collect(
+                                        Collectors.toMap(
+                                                BeatMap::beatMapID,
+                                                BeatMap::difficultyName,
+                                        )
+                                )
 
-            //初始化星数
-            double maxStarRating = 0d;
-            double minStarRating = 0d;
-
-            if (Objects.nonNull(bs) && !bs.isEmpty()) {
-                var f = bs.getFirst();
-                totalLength = f.getTotalLength();
-                maxStarRating = f.getStarRating();
-                minStarRating = maxStarRating;
+                d.addDifficulty4DiscussionDetails(diffs)
             }
 
-            if (Objects.nonNull(bs)) {
-                for (var b : bs) {
-                    if (Objects.equals(s.getCreatorID(), b.getMapperID())) {
-                        hostCount ++;
-                    } else {
-                        guestCount ++;
+            // 获取 hypes 和 discussions 列表
+            run {
+                // 这两个list需要合并起来
+                details =
+                        Stream.of(d.discussions, d.includedDiscussions)
+                                .filter { obj: List<DiscussionDetails>? -> Objects.nonNull(obj) }
+                                .flatMap { obj: List<DiscussionDetails>? -> obj!!.stream() }
+                                .distinct()
+                                .toList()
+
+                hypes =
+                        details.stream()
+                                .filter { i: DiscussionDetails ->
+                                    val t = i.messageType
+                                    t == hype || t == praise
+                                }
+                                .toList()
+
+                val dis =
+                        details.stream()
+                                .filter { i: DiscussionDetails ->
+                                    val t = i.messageType
+                                    t == problem || t == suggestion
+                                }
+                                .toList()
+                discussions = Discussion.toppingUnsolvedDiscussionDetails(dis)
+            }
+            // 这一部分提供额外信息
+            run {
+                var hostCount = 0
+                var guestCount = 0
+                var problemCount = 0
+                var suggestCount = 0
+                var notSolvedCount = 0
+                var hypeCount = 0
+                var praiseCount = 0
+                var maxSR = ""
+                var minSR = ""
+                var totalLength = 0
+                val SRList: MutableList<Double> = mutableListOf()
+
+                for (i in details) {
+                    when (i.messageType) {
+                        problem -> problemCount++
+                        suggestion -> suggestCount++
+                        hype -> hypeCount++
+                        praise -> praiseCount++
+                        else -> {}
                     }
 
-                    if (b.getStarRating() > maxStarRating) maxStarRating = b.getStarRating();
-                    if (b.getStarRating() < minStarRating) minStarRating = b.getStarRating();
-
-                    SRList.add(b.getStarRating());
+                    if (i.canBeResolved && !i.resolved) {
+                        notSolvedCount++
+                    }
                 }
 
-                var maxStarRatingInt = (int) Math.floor(maxStarRating);
-                var minStarRatingInt = (int) Math.floor(minStarRating);
+                val bs = s.beatMaps
 
-                maxSR = String.valueOf(maxStarRatingInt);
-                minSR = String.valueOf(minStarRatingInt);
+                // 初始化星数
+                var maxStarRating = 0.0
+                var minStarRating = 0.0
 
-                if (maxStarRating - maxStarRatingInt >= 0.5) maxSR += '+';
-                //if (minStarRating - minStarRatingInt >= 0.5) minSR += '+';
+                if (! bs.isNullOrEmpty()) {
+                    val f: BeatMap = bs.first()
+                    totalLength = f.totalLength
+                    maxStarRating = f.starRating
+                    minStarRating = maxStarRating
+                }
 
-                //单难度
-                if (bs.size() <= 1) minSR = "";
+                if (! bs.isNullOrEmpty()) {
+                    for (b in bs) {
+                        if (s.creatorID == b.mapperID) {
+                            hostCount++
+                        } else {
+                            guestCount++
+                        }
+
+                        if (b.starRating > maxStarRating) maxStarRating = b.starRating
+                        if (b.starRating < minStarRating) minStarRating = b.starRating
+
+                        SRList.add(b.starRating)
+                    }
+
+                    val maxStarRatingInt = floor(maxStarRating).toInt()
+                    val minStarRatingInt = floor(minStarRating).toInt()
+
+                    maxSR = maxStarRatingInt.toString()
+                    minSR = minStarRatingInt.toString()
+
+                    if (maxStarRating - maxStarRatingInt >= 0.5) maxSR += '+'
+
+                    // if (minStarRating - minStarRatingInt >= 0.5) minSR += '+';
+
+                    // 单难度
+                    if (bs.size <= 1) minSR = ""
+                }
+
+                // 其他
+                val tags =
+                        (s.tags ?: "")
+                                .split(" ".toRegex())
+                                .dropLastWhile { it.isEmpty() }
+                                .toTypedArray()
+
+                more["hostCount"] = hostCount
+                more["guestCount"] = guestCount
+                more["totalCount"] = hostCount + guestCount
+                more["maxSR"] = maxSR
+                more["minSR"] = minSR
+                more["SRList"] =
+                        SRList.stream()
+                                .sorted(
+                                        Comparator.comparingDouble { obj: Double -> obj }.reversed()
+                                )
+                                .toList()
+                more["totalLength"] = totalLength
+                more["tags"] = tags
+                more["problemCount"] = problemCount
+                more["suggestCount"] = suggestCount
+                more["notSolvedCount"] = notSolvedCount
+                more["hypeCount"] = hypeCount
+                more.put("praiseCount", praiseCount)
             }
 
-            //其他
-            String[] tags = Objects.requireNonNullElse(s.getTags(), "").split(" ");
+            val n = HashMap<String, Any>()
+            n["beatmapset"] = s
+            n["discussion"] = discussions
+            n["hype"] = hypes
+            n["more"] = more
+            n["users"] = d.users
 
-            more.put("hostCount", hostCount);
-            more.put("guestCount", guestCount);
-            more.put("totalCount", hostCount + guestCount);
-            more.put("maxSR", maxSR);
-            more.put("minSR", minSR);
-            more.put("SRList", SRList.stream().sorted(
-                    Comparator.comparingDouble(Double::doubleValue).reversed()
-            ).toList());
-            more.put("totalLength", totalLength);
-            more.put("tags", tags);
-            more.put("problemCount", problemCount);
-            more.put("suggestCount", suggestCount);
-            more.put("notSolvedCount", notSolvedCount);
-            more.put("hypeCount", hypeCount);
-            more.put("praiseCount", praiseCount);
+            return n
         }
-
-        var n = new HashMap<String, Object>();
-        n.put("beatmapset", s);
-        n.put("discussion", discussions);
-        n.put("hype", hypes);
-        n.put("more", more);
-        n.put("users", d.getUsers());
-
-        return n;
     }
 }
