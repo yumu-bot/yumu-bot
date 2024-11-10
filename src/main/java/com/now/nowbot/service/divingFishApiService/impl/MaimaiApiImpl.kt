@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.util.CollectionUtils
+import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
@@ -69,7 +70,7 @@ class MaimaiApiImpl(
                 .retrieve()
                 .bodyToMono(MaiBestScore::class.java)
                 .block()!!
-        } catch (e: WebClientResponseException) {
+        } catch (e: WebClientException) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
         }
     }
@@ -88,7 +89,7 @@ class MaimaiApiImpl(
                 .retrieve()
                 .bodyToMono(MaiBestScore::class.java)
                 .block()!!
-        } catch (e: WebClientResponseException) {
+        } catch (e: WebClientException) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
         }
     }
@@ -111,7 +112,7 @@ class MaimaiApiImpl(
                 .retrieve()
                 .bodyToMono(MaiVersionScore::class.java)
                 .block()!!
-        } catch (e: WebClientResponseException) {
+        } catch (e: WebClientException) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
         }
     }
@@ -133,7 +134,7 @@ class MaimaiApiImpl(
             .retrieve()
             .bodyToMono(MaiVersionScore::class.java)
             .block()!!
-        } catch (e: WebClientResponseException) {
+        } catch (e: WebClientException) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
         }
     }
@@ -443,7 +444,7 @@ class MaimaiApiImpl(
             throw e
         } catch (e: WebClientResponseException.BadRequest) {
             throw e
-        } catch (e: WebClientResponseException) {
+        } catch (e: WebClientException) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
         }
     }
@@ -470,7 +471,7 @@ class MaimaiApiImpl(
             throw e
         } catch (e: WebClientResponseException.BadRequest) {
             throw e
-        } catch (e: WebClientResponseException) {
+        } catch (e: WebClientException) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
         }
     }
