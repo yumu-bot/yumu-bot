@@ -138,7 +138,7 @@ class BeatMapSet {
          val current: Int,  // 只有一个元素的列表，存储模式信息
 
          @JsonProperty("eligible_main_rulesets")
-         val mode: List<String>,
+         val mode: List<String>?,
 
          @JsonProperty("required_meta")
          val required: RequiredMeta
