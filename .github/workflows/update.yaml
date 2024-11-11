@@ -31,4 +31,6 @@ jobs:
         run: |
           cd ~/nowbot
           mv ~/nowbot/target/nowbot-linux.jar ~/work
-          sudo systemctl restart nowbot
+          sudo systemctl stop nowbot
+          sleep 5
+          sudo systemctl start nowbot

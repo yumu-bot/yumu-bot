@@ -250,7 +250,7 @@ data class LazerMod(@JvmField val type: LazerModType) {
             return mods.stream()
                     .map { m -> m?.type?.value ?: -1 }
                     .filter { it >= 0 }
-                    .reduce(0) { a, b -> a + b }
+                    .reduce(0) { a, b -> a or b }
         }
 
         @JvmStatic
