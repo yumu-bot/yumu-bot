@@ -224,6 +224,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendOfficialCommandsIgnore(REG_IGNORE_BS, "n")
 
         appendColonCaptureGroup(MAYBE, "mode", "b", "s")
+        appendSpace()
         appendSID()
     }),
 

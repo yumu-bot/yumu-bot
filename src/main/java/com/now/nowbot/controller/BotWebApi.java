@@ -743,7 +743,8 @@ public class BotWebApi {
                     accuracy,
                     combo,
                     miss,
-                    OsuMod.splitModAcronyms(modStr)
+                    OsuMod.splitModAcronyms(modStr),
+                    false
             );
 
             var image = MapStatisticsService.getPanelE6Image(null, beatMap, expected, beatmapApiService, imageService);
@@ -834,15 +835,15 @@ public class BotWebApi {
         try {
             if (Objects.isNull(sid)) {
                 if (Objects.isNull(bid)) {
-                    throw new NominationException(NominationException.Type.N_Map_NotFound);
+                    throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Map);
                 } else {
                     data = NominationService.parseData(bid, false, beatmapApiService, discussionApiService, userApiService);
                 }
             } else {
                 data = NominationService.parseData(sid, true, beatmapApiService, discussionApiService, userApiService);
             }
-        } catch (NominationException e) {
-            throw new RuntimeException(NominationException.Type.N_Map_NotFound.message);
+        } catch (GeneralTipsException e) {
+            throw new RuntimeException(e.getMessage());
         }
 
         try {

@@ -15,20 +15,19 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuDiscussionApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.serviceException.NominationException
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_SID
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.regex.Matcher
 import java.util.stream.Collectors
 import java.util.stream.Stream
 import kotlin.math.floor
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.reactive.function.client.WebClientResponseException
 
 @Service("NOMINATION")
 class NominationService(
@@ -66,7 +65,7 @@ class NominationService(
             event.reply(image)
         } catch (e: Exception) {
             log.error("提名信息：发送失败", e)
-            throw NominationException(NominationException.Type.N_Send_Error)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "提名信息")
         }
     }
 
@@ -100,14 +99,16 @@ class NominationService(
                 osuUserApiService: OsuUserApiService,
                 imageService: ImageService,
         ): ByteArray {
-            val sid: Long
+            val sidStr: String? = matcher.group(FLAG_SID)
             val mode = matcher.group("mode")
             val isSID = !(mode != null && (mode == "b" || mode == "bid"))
 
-            try {
-                sid = matcher.group(FLAG_SID).toLong()
+            if (sidStr.isNullOrBlank()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_SID)
+
+            val sid = try {
+                sidStr.toLong()
             } catch (e: NumberFormatException) {
-                throw NominationException(NominationException.Type.N_Instructions)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_SID)
             }
 
             val data =
@@ -123,12 +124,12 @@ class NominationService(
                 imageService.getPanel(data, "N")
             } catch (e: Exception) {
                 log.error("提名信息：渲染失败", e)
-                throw NominationException(NominationException.Type.N_Render_Failed)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "提名信息")
             }
         }
 
         @JvmStatic
-        @Throws(NominationException::class)
+        @Throws(GeneralTipsException::class)
         fun parseData(
                 sid: Long,
                 isSID: Boolean,
@@ -153,33 +154,18 @@ class NominationService(
                         id = b.beatMapSetID
                         s = beatmapApiService.getBeatMapSet(id)
                     } catch (e1: WebClientResponseException.NotFound) {
-                        throw NominationException(NominationException.Type.N_Map_NotFound)
-                    } catch (e1: HttpClientErrorException.NotFound) {
-                        throw NominationException(NominationException.Type.N_Map_NotFound)
+                        throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
                     } catch (e1: Exception) {
                         log.error("提名信息：谱面获取失败", e1)
-                        throw NominationException(NominationException.Type.N_Map_FetchFailed)
-                    }
-                } catch (e: HttpClientErrorException.NotFound) {
-                    try {
-                        val b = beatmapApiService.getBeatMapFromDataBase(id)
-                        id = b.beatMapSetID
-                        s = beatmapApiService.getBeatMapSet(id)
-                    } catch (e1: WebClientResponseException.NotFound) {
-                        throw NominationException(NominationException.Type.N_Map_NotFound)
-                    } catch (e1: HttpClientErrorException.NotFound) {
-                        throw NominationException(NominationException.Type.N_Map_NotFound)
-                    } catch (e1: Exception) {
-                        log.error("提名信息：谱面获取失败", e1)
-                        throw NominationException(NominationException.Type.N_Map_FetchFailed)
+                        throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_BeatMap)
                     }
                 } catch (e: WebClientResponseException.BadGateway) {
-                    throw NominationException(NominationException.Type.N_API_Unavailable)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
                 } catch (e: WebClientResponseException.ServiceUnavailable) {
-                    throw NominationException(NominationException.Type.N_API_Unavailable)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
                 } catch (e: Exception) {
                     log.error("提名信息：谱面获取失败", e)
-                    throw NominationException(NominationException.Type.N_Map_FetchFailed)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_BeatMap)
                 }
             } else {
                 try {
@@ -187,16 +173,14 @@ class NominationService(
                     id = b.beatMapSetID
                     s = beatmapApiService.getBeatMapSet(id)
                 } catch (e: WebClientResponseException.NotFound) {
-                    throw NominationException(NominationException.Type.N_Map_NotFound)
-                } catch (e: HttpClientErrorException.NotFound) {
-                    throw NominationException(NominationException.Type.N_Map_NotFound)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
                 } catch (e: WebClientResponseException.BadGateway) {
-                    throw NominationException(NominationException.Type.N_API_Unavailable)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
                 } catch (e: WebClientResponseException.ServiceUnavailable) {
-                    throw NominationException(NominationException.Type.N_API_Unavailable)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
                 } catch (e: Exception) {
                     log.error("提名信息：谱面获取失败", e)
-                    throw NominationException(NominationException.Type.N_Map_FetchFailed)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_BeatMap)
                 }
             }
 
@@ -208,7 +192,7 @@ class NominationService(
                 d = discussionApiService.getBeatMapSetDiscussion(id)
             } catch (e: Exception) {
                 log.error("提名信息：讨论区获取失败", e)
-                throw NominationException(NominationException.Type.N_Discussion_FetchFailed)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_Discussion)
             }
 
             // 插入难度名
