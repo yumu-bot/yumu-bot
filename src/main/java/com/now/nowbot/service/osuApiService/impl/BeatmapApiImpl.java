@@ -106,9 +106,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
 
             String str = getBeatMapFileString(bid);
 
-            if (StringUtils.hasText(str)) {
-                return writeBeatMapFileToDirectory(str, bid);
-            }
+            return StringUtils.hasText(str);
         }
 
         return false;
@@ -135,24 +133,15 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
         return Objects.requireNonNullElse(getBeatMapFileString(bid), "").getBytes(StandardCharsets.UTF_8);
     }
 
-    @Override
     @Nullable
-    public String getBeatMapFileString(long bid) {
-        String str = null;
+    private String downloadBeatMapFileString(long bid) {
+        String str;
 
-        if (hasBeatMapFileFromDirectory(bid)) {
-            str = getBeatMapFileFromDirectory(bid);
-        }
-
-        if (StringUtils.hasText(str)) {
-            return str;
-        } else {
-            try {
-                str = AsyncMethodExecutor.execute(() -> getBeatMapFileFromLocalService(bid),
-                                                  "_getBeatMapFileFromLocalService" + bid, (String) null);
-            } catch (Exception e) {
-                str = null;
-            }
+        try {
+            str = AsyncMethodExecutor.execute(() -> getBeatMapFileFromLocalService(bid),
+                                              "_getBeatMapFileFromLocalService" + bid, (String) null);
+        } catch (Exception e) {
+            str = null;
         }
 
         if (StringUtils.hasText(str)) {
@@ -164,6 +153,29 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
             } catch (Exception e) {
                 str = null;
             }
+        }
+
+        return str;
+    }
+
+    @Override
+    @Nullable
+    // 最常用的获取谱面文件的方式。如果没有，则尝试从网站获取
+    public String getBeatMapFileString(long bid) {
+        String str = null;
+
+        if (hasBeatMapFileFromDirectory(bid)) {
+            str = getBeatMapFileFromDirectory(bid);
+        }
+
+        if (StringUtils.hasText(str)) {
+            return str;
+        } else {
+            str = downloadBeatMapFileString(bid);
+        }
+
+        if (StringUtils.hasText(str)) {
+            writeBeatMapFileToDirectory(str, bid);
         }
 
         return str;
