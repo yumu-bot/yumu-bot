@@ -304,8 +304,8 @@ public class CheckAspect {
 
     @AfterReturning(value = "scoreApi()", returning = "result")
     public void afterApiService(Object result) {
-        if (result instanceof BeatmapUserScore s && isMyScore(s.getScore())) {
-            s.getScore().setRank("X");
+        if (result instanceof BeatmapUserScore s && isMyScore(s.score)) {
+            s.score.setRank("X");
         } else if (result instanceof List<?> l) {
             if (l.isEmpty()) return;
             if (l.getFirst() instanceof LazerScore s && isMyScore(s)) {

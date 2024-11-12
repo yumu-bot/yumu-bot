@@ -1,6 +1,7 @@
 package com.now.nowbot.model.json
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
@@ -12,6 +13,7 @@ import kotlin.math.ln
 import kotlin.math.roundToInt
 
 // 这是 API v2 version header is 20220705 or higher 会返回的成绩数据。这并不支持老版本的比赛数据（stable 比赛依旧是原来那个 score
+@JsonIgnoreProperties(ignoreUnknown = true)
 open class LazerScore {
     @JsonProperty("classic_total_score")
     var classicScore: Long = 0L

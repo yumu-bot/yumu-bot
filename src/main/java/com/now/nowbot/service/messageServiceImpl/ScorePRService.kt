@@ -52,6 +52,7 @@ class ScorePRService(
     data class PanelE5Param(
             @JvmField val user: OsuUser,
             @JvmField val score: LazerScore,
+            @JvmField val position: Int?,
             @JvmField val density: IntArray,
             @JvmField val progress: Double,
             @JvmField val original: Map<String, Any>,
@@ -69,6 +70,10 @@ class ScorePRService(
             out["original"] = original
             out["attributes"] = attributes
             out["panel"] = panel
+
+            if (position != null) {
+                out["position"] = position
+            }
 
             return out
         }
@@ -312,6 +317,18 @@ class ScorePRService(
             panel: String,
             beatmapApiService: OsuBeatmapApiService
         ): PanelE5Param {
+            return getScore4PanelE5(user, score, null, panel, beatmapApiService)
+        }
+
+        @JvmStatic
+        @Throws(Exception::class)
+        fun getScore4PanelE5(
+            user: OsuUser,
+            score: LazerScore,
+            position: Int? = null,
+            panel: String,
+            beatmapApiService: OsuBeatmapApiService
+        ): PanelE5Param {
             beatmapApiService.applyBeatMapExtend(score)
 
             val beatmap = score.beatMap
@@ -327,7 +344,7 @@ class ScorePRService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            return PanelE5Param(user, score, density, progress, original, attributes, panel)
+            return PanelE5Param(user, score, position, density, progress, original, attributes, panel)
         }
     }
 }

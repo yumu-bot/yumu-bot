@@ -13,8 +13,8 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.serviceException.BQQueryException
-import com.now.nowbot.throwable.serviceException.BQQueryException.*
+import com.now.nowbot.throwable.serviceException.BPQueryException
+import com.now.nowbot.throwable.serviceException.BPQueryException.*
 import com.now.nowbot.util.ContextUtil
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
@@ -272,7 +272,11 @@ class BPQueryService(
 
         // 最好还是支持一下全角符号，总是有用户输入
         private fun String.standardised(): String {
-            return this.replace('＜', '<').replace('＞', '>').replace('＝', '=').replace('！', '!')
+            return this
+                .replace('＜', '<')
+                .replace('＞', '>')
+                .replace('＝', '=')
+                .replace('！', '!')
         }
 
         private fun String.getOperator(): Triple<String, Operator, String> {
@@ -324,7 +328,7 @@ class BPQueryService(
                 .forEach {
                     val f = try {
                         getFilter(it.trim().lowercase())
-                    } catch (e: BQQueryException) {
+                    } catch (e: BPQueryException) {
                         e.expression = it
                         throw e
                     }
@@ -333,13 +337,16 @@ class BPQueryService(
             return result
         }
 
+        @Throws(BPQueryException::class)
         private fun getRankNumber(rank: String): Int {
             val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
+            val rank = rank.uppercase().replace("SS", "X", ignoreCase = true)
 
             for (i in rankArray.indices) {
-                if (rankArray[i] == rank.uppercase()) return i
+                if (rankArray[i] == rank) return i
             }
 
+            // 真的需要这个？
             throw UnsupportedRankValue(rank)
         }
 

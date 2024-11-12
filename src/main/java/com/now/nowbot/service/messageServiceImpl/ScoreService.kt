@@ -238,6 +238,7 @@ class ScoreService(
         val isDefault = param.isDefault
 
         val score: LazerScore?
+        val position: Int?
 
         if (param.mods.isNotEmpty()) {
             score =
@@ -250,17 +251,16 @@ class ScoreService(
                         )
                     }
             beatmapApiService.applyBeatMapExtend(score)
+            position = null
         } else {
-            score =
+            val beatMapScore =
                     try {
-                        scoreApiService.getBeatMapScore(bid, user.userID, mode)?.score
+                        scoreApiService.getBeatMapScore(bid, user.userID, mode)
                     } catch (e: WebClientResponseException.NotFound) {
                         // 当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
                         if (isDefault) {
                             try {
-                                scoreApiService
-                                        .getBeatMapScore(bid, user.userID, OsuMode.DEFAULT)
-                                        ?.score
+                                scoreApiService.getBeatMapScore(bid, user.userID, OsuMode.DEFAULT)
                             } catch (e1: WebClientResponseException) {
                                 throw GeneralTipsException(
                                         GeneralTipsException.Type.G_Null_Score,
@@ -282,10 +282,12 @@ class ScoreService(
                             )
                         }
                     }
+            score = beatMapScore?.score
+            position = beatMapScore?.position
         }
 
         val image: ByteArray
-        val e5Param = getScore4PanelE5(user, score!!, "S", beatmapApiService)
+        val e5Param = getScore4PanelE5(user, score!!, position, "S", beatmapApiService)
 
         try {
             image = imageService.getPanel(e5Param.toMap(), "E5")

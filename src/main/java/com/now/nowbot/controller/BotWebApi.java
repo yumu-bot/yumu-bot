@@ -580,7 +580,7 @@ public class BotWebApi {
         }
 
         if (Objects.isNull(mods)) {
-            score = Objects.requireNonNull(scoreApiService.getBeatMapScore(bid, uid, mode)).getScore();
+            score = Objects.requireNonNull(scoreApiService.getBeatMapScore(bid, uid, mode)).score;
         } else {
             try {
                 scoreList = scoreApiService.getBeatMapScores(bid, uid, mode);
