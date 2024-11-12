@@ -743,8 +743,7 @@ public class BotWebApi {
                     accuracy,
                     combo,
                     miss,
-                    OsuMod.splitModAcronyms(modStr),
-                    false
+                    OsuMod.splitModAcronyms(modStr)
             );
 
             var image = MapStatisticsService.getPanelE6Image(null, beatMap, expected, beatmapApiService, imageService);
