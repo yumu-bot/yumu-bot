@@ -150,9 +150,7 @@ public class OsuUser {
 
      */
 
-    public record ProfileBanner(Long id,
-                                Long tournament_id,
-                                @Nullable String image,
+    public record ProfileBanner(Long id, Long tournament_id, @Nullable String image,
                                 @JsonProperty("image@2x") @Nullable String image2x) {
     }
 
@@ -177,18 +175,17 @@ public class OsuUser {
     @Nullable
     DailyChallenge dailyChallenge;
 
-    public record DailyChallenge(
-            @JsonProperty("daily_streak_best") Integer bestDayStreak,
-            @JsonProperty("daily_streak_current") Integer currentDayStreak,
-            @JsonProperty("last_update") OffsetDateTime lastUpdate,
-            @JsonProperty("last_weekly_streak") OffsetDateTime lastWeeklyStreak,
-            @JsonProperty("playcount") Integer playCount,
-            @JsonProperty("top_10p_placements") Integer top10PercentCount,
-            @JsonProperty("top_50p_placements") Integer top50PercentCount,
-            @JsonProperty("user_id") Integer userID,
-            @JsonProperty("weekly_streak_best") Integer bestWeekStreak,
-            @JsonProperty("weekly_streak_current") Integer currentWeekStreak
-    ) {}
+    public record DailyChallenge(@JsonProperty("daily_streak_best") Integer bestDayStreak,
+                                 @JsonProperty("daily_streak_current") Integer currentDayStreak,
+                                 @JsonProperty("last_update") OffsetDateTime lastUpdate,
+                                 @JsonProperty("last_weekly_streak") OffsetDateTime lastWeeklyStreak,
+                                 @JsonProperty("playcount") Integer playCount,
+                                 @JsonProperty("top_10p_placements") Integer top10PercentCount,
+                                 @JsonProperty("top_50p_placements") Integer top50PercentCount,
+                                 @JsonProperty("user_id") Integer userID,
+                                 @JsonProperty("weekly_streak_best") Integer bestWeekStreak,
+                                 @JsonProperty("weekly_streak_current") Integer currentWeekStreak) {
+    }
 
     @JsonProperty("favourite_beatmapset_count")
     Integer favoriteCount;
@@ -967,7 +964,14 @@ public class OsuUser {
     }
 
     public String toCSV() {
-        return STR."\{getUserName(username)},\{id},\{statistics.getPP()},\{statistics.getPP4K()},\{statistics.getPP7K()},\{statistics.getAccuracy()},\{statistics.getRankedScore()},\{statistics.getTotalScore()},\{statistics.getPlayCount()},\{statistics.getPlayTime()},\{statistics.getTotalHits()},\{avatarUrl},\{countryCode},\{defaultGroup},\{isActive},\{isBot},\{isDeleted},\{isOnline},\{isSupporter},\{isRestricted},\{lastVisit},\{pmFriendsOnly},\{profileColor},\{coverUrl},\{replaceCommas(discord)},\{hasSupported},\{replaceCommas(interests)},\{joinDate},\{replaceCommas(location)},\{maxBlocks},\{maxFriends},\{replaceCommas(occupation)},\{mode},\{getFirst(playStyle)},\{postCount},\{getFirst(profileOrder)},\{title},\{titleUrl},\{twitter},\{website},\{country.name},\{cover.custom},\{kudosu.total},\{beatmapPlaycount},\{commentsCount},\{favoriteCount},\{followerCount},\{graveyardCount},\{guestCount},\{lovedCount},\{mappingFollowerCount},\{nominatedCount},\{pendingCount},\{getFirst(previousNames)},\{getHighestRank(highestRank)},\{rankedCount},\{replaysWatchedCounts.size()},\{scoreBestCount},\{scoreFirstCount},\{scorePinnedCount},\{scoreRecentCount},\{supportLevel},\{userAchievements.size()}";
+        return STR."\{getUserName(
+                username)},\{id},\{statistics.getPP()},\{statistics.getPP4K()},\{statistics.getPP7K()},\{statistics.getAccuracy()},\{statistics.getRankedScore()},\{statistics.getTotalScore()},\{statistics.getPlayCount()},\{statistics.getPlayTime()},\{statistics.getTotalHits()},\{avatarUrl},\{countryCode},\{defaultGroup},\{isActive},\{isBot},\{isDeleted},\{isOnline},\{isSupporter},\{isRestricted},\{lastVisit},\{pmFriendsOnly},\{profileColor},\{coverUrl},\{replaceCommas(
+                discord)},\{hasSupported},\{replaceCommas(interests)},\{joinDate},\{replaceCommas(
+                location)},\{maxBlocks},\{maxFriends},\{replaceCommas(occupation)},\{mode},\{getFirst(
+                playStyle)},\{postCount},\{getFirst(
+                profileOrder)},\{title},\{titleUrl},\{twitter},\{website},\{country.name},\{cover.custom},\{kudosu.total},\{beatmapPlaycount},\{commentsCount},\{favoriteCount},\{followerCount},\{graveyardCount},\{guestCount},\{lovedCount},\{mappingFollowerCount},\{nominatedCount},\{pendingCount},\{getFirst(
+                previousNames)},\{getHighestRank(
+                highestRank)},\{rankedCount},\{replaysWatchedCounts.size()},\{scoreBestCount},\{scoreFirstCount},\{scorePinnedCount},\{scoreRecentCount},\{supportLevel},\{userAchievements.size()}";
 
     }
 

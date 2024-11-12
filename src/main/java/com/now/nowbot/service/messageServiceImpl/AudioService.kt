@@ -5,103 +5,76 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.AudioService.AudioParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.throwable.serviceException.AudioException
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.Instruction
-import java.util.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.*
 
 @Service("AUDIO")
 class AudioService(
-        private val beatmapApiService: OsuBeatmapApiService,
-        private val osuApiWebClient: WebClient,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val osuApiWebClient: WebClient,
 ) : MessageService<AudioParam> {
 
-    class AudioParam {
-        var isBid: Boolean = false
-        var id: Int = 0
-    }
+    data class AudioParam(var id: Long = 0, var isBid: Boolean = false)
 
     @Throws(Exception::class)
     override fun isHandle(
-            event: MessageEvent,
-            messageText: String,
-            data: DataValue<AudioParam>,
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<AudioParam>,
     ): Boolean {
         val matcher = Instruction.AUDIO.matcher(messageText)
         if (!matcher.find()) {
             return false
         }
-        val param = AudioParam()
         val idStr: String? = matcher.group("id")
         val type: String? = matcher.group("type")
 
         if (idStr == null) {
-            throw AudioException(AudioException.Type.SONG_Parameter_NoBid)
+            throw GeneralTipsException("请输入想要试听的 bid 或者 sid！\n(!a <bid> / !a:s <sid>)")
         }
 
-        try {
-            param.id = idStr.toInt()
-        } catch (e: NumberFormatException) {
-            throw AudioException(AudioException.Type.SONG_Parameter_BidError)
-        }
+        val id =
+            try {
+                idStr.toLong()
+            } catch (e: NumberFormatException) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
+            }
 
-        param.isBid = type == "b" || type == "bid"
+        val isBID = type != null && (type == "b" || type == "bid")
 
-        data.value = param
+        data.value = AudioParam(id, isBID)
         return true
     }
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: AudioParam) {
-        val from = event.subject
-
-        var sid = 0L
-
-        var voice: ByteArray
-
-        if (param.isBid) {
-            try {
-                sid = beatmapApiService.getBeatMapFromDataBase(param.id).beatMapSetID
-            } catch (e: Exception) {
-                throw AudioException(AudioException.Type.SONG_Map_NotFound)
+        val voice =
+            if (param.isBid) {
+                // 先 b 再 s
+                getVoiceFromBID(param.id) ?: getVoiceFromSID(param.id)
+            } else {
+                // 先 s 再 b
+                getVoiceFromSID(param.id) ?: getVoiceFromBID(param.id)
             }
 
-            try {
-                voice = getVoice(sid)
-            } catch (e: Exception) {
-                log.error("音频下载失败：", e)
-                throw AudioException(AudioException.Type.SONG_Download_Error)
-            }
-        } else {
-            // isSid
-            try {
-                voice = getVoice(sid)
-            } catch (e: Exception) {
-                // 输入的不是 SID
-                try {
-                    sid = beatmapApiService.getBeatMapFromDataBase(param.id).beatMapSetID
-                } catch (e1: Exception) {
-                    throw AudioException(AudioException.Type.SONG_Map_NotFound)
-                }
-
-                try {
-                    voice = getVoice(sid)
-                } catch (e2: Exception) {
-                    log.error("音频下载失败、附加转换失败：", e2)
-                    throw AudioException(AudioException.Type.SONG_Download_Error)
-                }
-            }
+        if (voice == null) {
+            val type = if (param.isBid) 'B' else 'S'
+            log.info("谱面试听：无法获取 ${type}${param.id} 的音频")
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Audio)
         }
 
         try {
-            from.sendVoice(voice)
+            event.replyVoice(voice)
         } catch (e: Exception) {
-            log.error("音频发送失败：", e)
-            throw AudioException(AudioException.Type.SONG_Send_Error)
+            log.error("谱面试听：发送失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "谱面试听")
         }
     }
 
@@ -110,6 +83,29 @@ class AudioService(
         val url = "https://b.ppy.sh/preview/${sid}.mp3"
 
         return osuApiWebClient.get().uri(url).retrieve().bodyToMono(ByteArray::class.java).block()!!
+    }
+
+    private fun getVoiceFromSID(sid: Long): ByteArray? {
+        return try {
+            getVoice(sid)
+        } catch (e: WebClientException) {
+            null
+        }
+    }
+
+    private fun getVoiceFromBID(bid: Long): ByteArray? {
+        val sid =
+            try {
+                beatmapApiService.getBeatMapFromDataBase(bid).beatMapSetID
+            } catch (e: Exception) {
+                return null
+            }
+
+        return try {
+            getVoice(sid)
+        } catch (e: WebClientException) {
+            null
+        }
     }
 
     companion object {

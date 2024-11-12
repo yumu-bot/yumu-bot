@@ -37,7 +37,7 @@ public interface MessageEvent extends Event{
         return getSubject().sendImage(url);
     }
 
-    default MessageReceipt sendVoice(byte[] voice) {
+    default MessageReceipt replyVoice(byte[] voice) {
         return getSubject().sendVoice(voice);
     }
 
