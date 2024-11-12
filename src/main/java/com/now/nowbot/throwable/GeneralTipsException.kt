@@ -26,7 +26,8 @@ class GeneralTipsException : TipsException {
         G_Null_Param("请输入正确的参数！"), 
         G_Null_UserName("请输入正确的玩家名！"), 
         G_Null_BID_Quotation("您在使用引号包括住玩家名时，也需要输入谱面的曲名或是编号！"), 
-        G_Null_BID("请输入正确的谱面编号！"),
+        G_Null_BID("请输入正确的谱面编号 (BID)！"),
+        G_Null_SID("请输入正确的谱面编号 (SID)！"),
         G_Null_Audio("试听音频下载失败。\n也许是谱面输入错误，或者谱面被版权限制了。\n自己去官网听算了。"),
         G_Null_Song("找不到歌曲 %s，请检查。"), 
         G_Null_Map("找不到这张谱面，请检查。"), 
@@ -59,8 +60,9 @@ class GeneralTipsException : TipsException {
         
         G_Fetch_PlayerInfo("玩家信息获取失败，请重试。"), 
         G_Fetch_List("列表获取失败，请重试。"), 
-        G_Fetch_BeatMap("谱面获取失败，请重试。"), 
-        
+        G_Fetch_BeatMap("谱面获取失败，请重试。"),
+        G_Fetch_Discussion("讨论区获取失败，请重试。"),
+
         G_Suggest_AnotherFunction("推荐您使用另一个功能来获取数据：%s"), 
         
         G_Malfunction_ppyAPI("ppy API 状态异常！"),
