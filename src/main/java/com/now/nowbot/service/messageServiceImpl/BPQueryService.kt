@@ -9,7 +9,6 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.BPQueryService.Operator.*
-import com.now.nowbot.service.messageServiceImpl.ScorePRService.Companion.getScore4PanelE5
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -69,7 +68,7 @@ class BPQueryService(
         ContextUtil.setContext("breakApplySR", true)
         val image = if (result.size == 1) {
             val score = result.first()
-            val e5Param = getScore4PanelE5(user, score, "BQ", beatmapApiService)
+            val e5Param = ScorePRService.getScore4PanelE5(user, score, "BQ", beatmapApiService)
             imageService.getPanel(e5Param.toMap(), "E5")
         } else {
             val indexMap = bpList.mapIndexed { i, s -> s.scoreID to i }.toMap()
@@ -77,6 +76,9 @@ class BPQueryService(
             imageService.getPanelA4(user, result, ranks, "BQ")
         }
         event.reply(image)
+    }
+    enum class ClientVersion {
+        STABLE, LAZER
     }
 
     enum class Operator(val op: String) {
@@ -137,7 +139,7 @@ class BPQueryService(
         }, EQ, NE, GT, GE, LT, LE),
         ScoreID("score", { (op, v, s) ->
             val score = try {
-                v.toLong()
+                v.filter { it.isDigitOrDot() }.toLong()
             } catch (_: Exception) {
                 throw UnsupportedScoreValue(v)
             }
@@ -146,7 +148,7 @@ class BPQueryService(
         }, EQ, NE, GT, GE, LT, LE),
         Index("index", { (op, v, s) ->
             val index = try {
-                v.toInt() - 1 //自然数是 1-100，不是计算机需要的0-99
+                v.filter { it.isDigitOrDot() }.toInt() - 1 //自然数是 1-100，不是计算机需要的0-99
             } catch (_: Exception) {
                 throw UnsupportedIndexValue(v)
             }
@@ -172,7 +174,7 @@ class BPQueryService(
             compare(scoreRank, rank, op)
         }, EQ, NE, GT, GE, LT, LE),
         Accuracy("acc", { (op, v, s) ->
-            var acc = v.toDouble()
+            var acc = v.filter { it.isDigitOrDot() }.toDouble()
             if (acc > 1.0) acc /= 100
 
             compare(s.accuracy, acc, op)
@@ -202,7 +204,7 @@ class BPQueryService(
             }
         }, EQ, NE, GT),
         Rate("rate", { (op, v, s) ->
-            val value = v.toDouble()
+            val value = v.filter { it.isDigitOrDot() }.toDouble()
             val rate = if (s.statistics.great == 0) {
                 Double.MAX_VALUE
             } else {
@@ -211,6 +213,21 @@ class BPQueryService(
 
             compare(rate, value, op)
         }, EQ, NE, GT, GE, LT, LE),
+        Client("client", { (op, v, s) ->
+            val it = when(v) {
+                "stable", "s" -> ClientVersion.STABLE
+                else -> ClientVersion.LAZER
+            }
+            val that = when(s.isLazer) {
+                true -> ClientVersion.LAZER
+                else -> ClientVersion.STABLE
+            }
+
+            when (op) {
+                EQ -> it == that
+                else -> it !== that
+            }
+        }, EQ, NE),
         ;
 
         operator fun invoke(operator: Operator, value: String): (LazerScore) -> Boolean {
@@ -275,24 +292,25 @@ class BPQueryService(
         private fun getFilter(cmd: String): (LazerScore) -> Boolean {
             val (key, operator, value) = cmd.getOperator()
             return when (key) {
-                Param.Mapper.key, "creator" -> Param.Mapper(operator, value)
-                Param.ScoreID.key -> Param.ScoreID(operator, value)
-                Param.Name.key, "title" -> Param.Name(operator, value)
-                Param.Artist.key -> Param.Artist(operator, value)
+                Param.Mapper.key, "u", "creator" -> Param.Mapper(operator, value)
+                Param.ScoreID.key, "s" -> Param.ScoreID(operator, value)
+                Param.Name.key, "t", "title", "song" -> Param.Name(operator, value)
+                Param.Artist.key, "f" -> Param.Artist(operator, value)
                 Param.Star.key, "sr" -> Param.Star(operator, value)
-                Param.Index.key -> Param.Index(operator, value)
+                Param.Index.key, "i" -> Param.Index(operator, value)
                 Param.AR.key -> Param.AR(operator, value)
                 Param.OD.key -> Param.OD(operator, value)
                 Param.CS.key -> Param.CS(operator, value)
                 Param.HP.key -> Param.HP(operator, value)
-                Param.Rank.key -> Param.Rank(operator, value)
-                Param.Length.key -> Param.Length(operator, value)
-                Param.Bpm.key -> Param.Bpm(operator, value)
+                Param.Rank.key, "r" -> Param.Rank(operator, value)
+                Param.Length.key, "l" -> Param.Length(operator, value)
+                Param.Bpm.key, "b" -> Param.Bpm(operator, value)
                 Param.Accuracy.key, "acc", "a" -> Param.Accuracy(operator, value)
                 Param.Combo.key, "c" -> Param.Combo(operator, value)
-                Param.Miss.key, "x" -> Param.Miss(operator, value)
-                Param.Mods.key, "m" -> Param.Mods(operator, value)
+                Param.Miss.key, "x", "misses" -> Param.Miss(operator, value)
+                Param.Mods.key, "m", "mod" -> Param.Mods(operator, value)
                 Param.Rate.key, "p" -> Param.Rate(operator, value)
+                Param.Client.key, "z", "v", "version" -> Param.Client(operator, value)
                 else -> throw UnsupportedKey(key)
             }
         }
@@ -316,18 +334,13 @@ class BPQueryService(
         }
 
         private fun getRankNumber(rank: String): Int {
-            return when (rank.uppercase()) {
-                "F" -> 0
-                "D" -> 1
-                "C" -> 2
-                "B" -> 3
-                "A" -> 4
-                "S" -> 5
-                "SH" -> 6
-                "X" -> 7
-                "XH" -> 8
-                else -> throw UnsupportedRankValue(rank)
+            val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
+
+            for (i in rankArray.indices) {
+                if (rankArray[i] == rank.uppercase()) return i
             }
+
+            throw UnsupportedRankValue(rank)
         }
 
         /**
@@ -365,63 +378,55 @@ class BPQueryService(
             return result.toString()
         }
 
-        fun Double.isEqual(other: Double): Boolean {
+        private fun Double.isEqual(other: Double): Boolean {
             return this - other in -1E-7..1E-7
         }
 
-        fun Double.isGreaterOrEqual(other: Double): Boolean {
+        private fun Double.isGreaterOrEqual(other: Double): Boolean {
             return this - other > -1E-7
         }
 
-        fun Double.isLessOrEqual(other: Double): Boolean {
+        private fun Double.isLessOrEqual(other: Double): Boolean {
             return this - other < 1E-7
         }
 
-        fun Float.isEqual(other: Float): Boolean {
-            return this - other in -1E-7..1E-7
-        }
-
-        fun Float.isGreaterOrEqual(other: Float): Boolean {
-            return this - other > -1E-7
-        }
-
-        fun Float.isLessOrEqual(other: Float): Boolean {
-            return this - other < 1E-7
-        }
-
-        fun compare(it: Number, that: String, operator: Operator): Boolean {
+        private fun compare(it: Number, that: String, operator: Operator): Boolean {
             return compare(it, that.toDouble(), operator)
         }
 
-        fun compare(it: Number, that: Number, operator: Operator): Boolean {
-            val it = it.toDouble()
-            val that = that.toDouble()
+        private fun compare(it: Number, that: Number, operator: Operator): Boolean {
+            val i = it.toDouble()
+            val t = that.toDouble()
 
             return when (operator) {
-                EQ -> it.isEqual(that)
-                NE -> ! it.isEqual(that)
-                GT -> it > that
-                GE -> it.isGreaterOrEqual(that)
-                LT -> it < that
-                LE -> it.isLessOrEqual(that)
+                EQ -> i.isEqual(t)
+                NE -> ! i.isEqual(t)
+                GT -> i > t
+                GE -> i.isGreaterOrEqual(t)
+                LT -> i < t
+                LE -> i.isLessOrEqual(t)
             }
         }
 
-        fun compare(it: Int, that: String, operator: Operator): Boolean {
+        private fun compare(it: Int, that: String, operator: Operator): Boolean {
             return compare(it.toLong(), that, operator)
         }
 
-        fun compare(it: Long, that: String, operator: Operator): Boolean {
-            val that = that.toLong()
+        private fun compare(it: Long, that: String, operator: Operator): Boolean {
+            val t = that.filter { it.isDigitOrDot() }.toLong()
 
             return when (operator) {
-                EQ -> it == that
-                NE -> it != that
-                GT -> it > that
-                GE -> it >= that
-                LT -> it < that
-                LE -> it <= that
+                EQ -> it == t
+                NE -> it != t
+                GT -> it > t
+                GE -> it >= t
+                LT -> it < t
+                LE -> it <= t
             }
+        }
+
+        private fun Char.isDigitOrDot(): Boolean {
+            return this.isDigit() || this == '.'
         }
     }
 }
