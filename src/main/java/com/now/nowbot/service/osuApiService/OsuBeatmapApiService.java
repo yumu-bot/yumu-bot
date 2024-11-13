@@ -92,21 +92,22 @@ public interface OsuBeatmapApiService {
 
     BeatMapSetSearch searchBeatMapSet(Map<String, Object> query);
 
-    default JniResult getMaxPP(long bid, List<LazerMod> mods) {
-        return getMaxPP(bid, OsuMode.DEFAULT, mods);
+    default JniResult getMaxPP(long bid, List<LazerMod> mods, boolean isLazer) {
+        return getMaxPP(bid, OsuMode.DEFAULT, mods, isLazer);
     }
 
     default JniResult getMaxPP(LazerScore s) {
-        return getMaxPP(s.getBeatMapID(), s.getMode(), s.getMods());
+        return getMaxPP(s.getBeatMapID(), s.getMode(), s.getMods(), s.isLazer());
     }
 
-    default JniResult getMaxPP(long bid, OsuMode ruleset, List<LazerMod> mods) {
+    default JniResult getMaxPP(long bid, OsuMode mode, List<LazerMod> mods, boolean isLazer) {
         var b = getBeatMapFileByte(bid);
         JniScore js = new JniScore();
 
         applyDifficultyAdjust(js, mods);
 
-        js.setMode(ruleset.toRosuMode());
+        js.setLazer(isLazer);
+        js.setMode(mode.toRosuMode());
         js.setAccuracy(100D);
         js.setMisses(0);
         js.setMods(LazerMod.getModsValue(mods));
@@ -121,6 +122,7 @@ public interface OsuBeatmapApiService {
 
         applyDifficultyAdjust(js, LazerMod.getModsList(e.mods));
 
+        js.setLazer(e.isLazer);
         js.setCombo(e.combo);
         js.setMode(e.mode.toRosuMode());
         js.setMisses(e.misses);
@@ -138,6 +140,7 @@ public interface OsuBeatmapApiService {
 
         applyDifficultyAdjust(js, s.getMods());
 
+        js.setLazer(s.isLazer());
         js.setMods(LazerMod.getModsValue(s.getMods()));
         js.setCombo(s.getMaxCombo());
         js.setSpeed(LazerMod.getModSpeedForStarCalculate(s.getMods()));
@@ -162,6 +165,7 @@ public interface OsuBeatmapApiService {
         var r = s.getMode();
         var t = s.getStatistics().clone();
         var a = s.getAccuracy();
+        var c = s.getBeatMap().getMaxCombo();
 
         if (s.getScoreHit() > 0 && t.getMiss() != null && t.getMiss() > 0) {
             t.setMiss(0);
@@ -176,6 +180,7 @@ public interface OsuBeatmapApiService {
 
         applyDifficultyAdjust(js, m);
 
+        js.setLazer(s.isLazer());
         js.setMode(s.getMode().toRosuMode());
         js.setMods(LazerMod.getModsValue(s.getMods()));
 
@@ -187,7 +192,7 @@ public interface OsuBeatmapApiService {
             return getJniResult(b, js);
         }
 
-        return getJniResult(t, m, a, r, b, js);
+        return getJniResult(t, m, a, r, c, b, js);
     }
 
     default Map<String, Object> getFullStatistics(LazerScore s) {
@@ -227,15 +232,17 @@ public interface OsuBeatmapApiService {
 
     @NonNull
     private JniResult getJniResult(LazerScore score, byte[] map, JniScore jni) {
-        return getJniResult(score.getStatistics(), score.getMods(), score.getAccuracy(), score.getMode(), map, jni);
+        return getJniResult(score.getStatistics(), score.getMods(), score.getAccuracy(), score.getMode(), score.getMaxCombo(), map, jni);
     }
 
     @NonNull
-    private JniResult getJniResult(LazerScore.StatisticsV2 t, List<LazerMod> mods, double accuracy, OsuMode ruleset, byte[] map, JniScore jni) {
+    private JniResult getJniResult(LazerScore.StatisticsV2 t, List<LazerMod> mods, double accuracy, OsuMode mode, Integer combo, byte[] map, JniScore jni) {
         jni.setMods(LazerMod.getModsValue(mods));
         jni.setAccuracy(accuracy);
 
-        switch (ruleset) {
+        if (combo != null) jni.setCombo(combo);
+
+        switch (mode) {
             case TAIKO -> {
                 if (t.getOk() != null) jni.setN100(t.getOk());
             }
@@ -252,6 +259,8 @@ public interface OsuBeatmapApiService {
             default -> {
                 if (t.getOk() != null) jni.setN100(t.getOk());
                 if (t.getMeh() != null) jni.setN50(t.getMeh());
+                if (t.getLargeTickHit() != null) jni.setSliderTicks(t.getLargeTickHit());
+                if (t.getSliderTailHit() != null) jni.setSliderTicks(t.getSliderTailHit());
             }
         }
         if (t.getGreat() != null) jni.setN300(t.getGreat());
@@ -381,7 +390,7 @@ public interface OsuBeatmapApiService {
     }
 
     // 谱面理论sr和pp
-    default void applySRAndPP(BeatMap beatMap, OsuMode ruleset, List<LazerMod> mods) {
+    default void applySRAndPP(BeatMap beatMap, OsuMode mode, List<LazerMod> mods) {
         if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
         if (beatMap == null) return; // 谱面没有 PP，所以必须查
 
@@ -389,12 +398,12 @@ public interface OsuBeatmapApiService {
 
         JniResult r;
         try {
-            r = getMaxPP(id, ruleset, mods);
+            r = getMaxPP(id, mode, mods, false);
 
             if (r.getPp() == 0) {
-                NowbotApplication.log.info("无法获取谱面 {} 的 PP，正在刷新谱面文件！", beatMap.getBeatMapID());
+                NowbotApplication.log.info("无法获取谱面 {} 的 PP，正在刷新谱面文件！", id);
                 refreshBeatMapFileFromDirectory(id);
-                r = getMaxPP(id, ruleset, mods);
+                r = getMaxPP(id, mode, mods, false);
             }
         } catch (Exception e) {
             NowbotApplication.log.error("计算时出现异常", e);
@@ -404,7 +413,7 @@ public interface OsuBeatmapApiService {
         if (r.getPp() > 0) {
             beatMap.setStarRating(r.getStar());
         } else {
-            applyStarFromAttributes(beatMap, ruleset, mods);
+            applyStarFromAttributes(beatMap, mode, mods);
         }
 
         DataUtil.applyBeatMapChanges(beatMap, mods);
@@ -477,6 +486,29 @@ public interface OsuBeatmapApiService {
         score.setPP(r.getPp());
     }
 
+    // 只算 SR，可以加快比如 mm 功能的查询速度
+    default void applyStarRating(BeatMap beatMap, OsuMode mode, List<LazerMod> mods) {
+        if (beatMap == null) return; // 谱面没有 PP，所以必须查
+
+        var id = beatMap.getBeatMapID();
+
+        JniResult r;
+        try {
+            r = getMaxPP(id, mode, mods, true);
+        } catch (Exception e) {
+            NowbotApplication.log.error("计算时出现异常", e);
+            return;
+        }
+
+        if (r.getPp() > 0) {
+            beatMap.setStarRating(r.getStar());
+        } else {
+            applyStarFromAttributes(beatMap, mode, mods);
+        }
+
+        DataUtil.applyBeatMapChanges(beatMap, mods);
+    }
+
     // 只算 SR，可以加快比如 bp Analysis 功能的查询速度
     default void applyStarRating(List<LazerScore> scoreList) {
         if (CollectionUtils.isEmpty(scoreList)) return;
@@ -510,9 +542,9 @@ public interface OsuBeatmapApiService {
         DataUtil.applyBeatMapChanges(score.getBeatMap(), score.getMods());
     }
 
-    private void applyStarFromAttributes(BeatMap beatMap, OsuMode ruleset, List<LazerMod> mods) {
+    private void applyStarFromAttributes(BeatMap beatMap, OsuMode mode, List<LazerMod> mods) {
         try {
-            var attr = getAttributes(beatMap.getBeatMapID(), ruleset, LazerMod.getModsValue(mods));
+            var attr = getAttributes(beatMap.getBeatMapID(), mode, LazerMod.getModsValue(mods));
 
             if (attr.getStarRating() != null) {
                 NowbotApplication.log.info("无法获取谱面 {}，正在应用 API 提供的星数：{}", beatMap.getBeatMapID(), attr.getStarRating());

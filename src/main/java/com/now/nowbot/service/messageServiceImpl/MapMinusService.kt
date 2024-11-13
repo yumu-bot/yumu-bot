@@ -118,8 +118,7 @@ class MapMinusService(
                 beatMap = beatmapApiService.getBeatMap(param.bid) // 从数据库拿的谱面没有游戏模式，你问我为什么，我怎么知道
                 mode = OsuMode.getMode(beatMap.modeInt)
 
-                // TODO 明天换成 applySR
-                beatmapApiService.applySRAndPP(beatMap, beatMap.mode, param.modsList)
+                beatmapApiService.applyStarRating(beatMap, beatMap.mode, param.modsList)
                 fileStr = beatmapApiService.getBeatMapFileString(param.bid)
             } catch (e: Exception) {
                 throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)

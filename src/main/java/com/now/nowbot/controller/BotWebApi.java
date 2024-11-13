@@ -639,7 +639,7 @@ public class BotWebApi {
 
         Map<String, Object> data;
         try {
-            data = BPAnalysisService.Companion.parseData(osuUser, scores, userApiService);
+            data = BPAnalysisService.parseData(osuUser, scores, userApiService, 1);
         } catch (Exception e) {
             throw new RuntimeException(BPAnalysisException.Type.BA_Attr_FetchFailed.message);
         }
@@ -743,7 +743,8 @@ public class BotWebApi {
                     accuracy,
                     combo,
                     miss,
-                    OsuMod.splitModAcronyms(modStr)
+                    OsuMod.splitModAcronyms(modStr),
+                    false
             );
 
             var image = MapStatisticsService.getPanelE6Image(null, beatMap, expected, beatmapApiService, imageService);

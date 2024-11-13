@@ -47,6 +47,7 @@ class MapStatisticsService(
             @JvmField val combo: Int,
             @JvmField val misses: Int,
             @JvmField val mods: List<String>,
+            @JvmField val isLazer: Boolean = false,
     )
 
     data class PanelE6Param(

@@ -155,6 +155,11 @@ enum class Instruction(val pattern: Pattern) {
         appendModeQQUIDName()
     }),
 
+    BP_ANALYSIS_V3(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("ta")
+        appendModeQQUIDName()
+    }),
+
     BP_QUERY(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("bp\\s*query", "bq")
         appendMode()

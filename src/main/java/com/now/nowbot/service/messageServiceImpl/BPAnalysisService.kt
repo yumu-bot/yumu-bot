@@ -4,6 +4,7 @@ import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -12,6 +13,7 @@ import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.serviceException.BPAnalysisException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithOutRange
@@ -25,10 +27,11 @@ import org.springframework.stereotype.Service
 import org.springframework.util.CollectionUtils
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
-import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.client.ResourceAccessException
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.regex.Matcher
 import kotlin.math.max
 
 @Service("BP_ANALYSIS")
@@ -40,14 +43,26 @@ class BPAnalysisService(
     private val beatmapApiService: OsuBeatmapApiService,
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
-    data class BAParam(val user: OsuUser, val scores: List<LazerScore>, val isMyself: Boolean)
+    data class BAParam(val user: OsuUser, val scores: List<LazerScore>, val isMyself: Boolean, val version: Int)
 
 
     @Throws(Throwable::class)
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<BAParam>): Boolean {
-        val matcher = Instruction.BP_ANALYSIS.matcher(messageText)
+        val m = Instruction.BP_ANALYSIS.matcher(messageText)
+        val m2 = Instruction.BP_ANALYSIS_V3.matcher(messageText)
+        val matcher: Matcher
 
-        if (!matcher.find()) return false
+        val version: Int
+
+        if (m.find()) {
+            version = 1
+            matcher = m
+        } else if (m2.find()) {
+            version = 2
+            matcher = m2
+        } else {
+            return false
+        }
 
         val isMyself = AtomicBoolean(false)
 
@@ -55,16 +70,16 @@ class BPAnalysisService(
 
         val user = getUserWithOutRange(event, matcher, mode, isMyself)
 
-        val bpList = scoreApiService.getBestScores(user.userID, mode.data, 0, 100)
+        val bpList = scoreApiService.getBestScores(user.userID, mode.data)
 
-        data.value = BAParam(user, bpList, isMyself.get())
+        data.value = BAParam(user, bpList, isMyself.get(), version)
 
         return true
     }
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: BAParam) {
-        val image = param.getImage()
+        val image = param.getImage(param.version)
 
         try {
             event.reply(image)
@@ -80,19 +95,16 @@ class BPAnalysisService(
         if (!matcher.find()) return null
 
         val isMyself = AtomicBoolean(false)
-
         val mode = getMode(matcher)
-
         val user = getUserWithOutRange(event, matcher, mode, isMyself)
+        val bpList = scoreApiService.getBestScores(user.userID, mode.data)
 
-        val bpList = scoreApiService.getBestScores(user.userID, mode.data, 0, 100)
-
-        return BAParam(user, bpList, isMyself.get())
+        return BAParam(user, bpList, isMyself.get(), 1)
     }
 
-    override fun reply(event: MessageEvent, param: BAParam) = QQMsgUtil.getImage(param.getImage())
+    override fun reply(event: MessageEvent, param: BAParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
 
-    private fun BAParam.getImage(): ByteArray {
+    private fun BAParam.getImage(version: Int = 1): ByteArray {
         val scores = scores
         val user = user
 
@@ -108,27 +120,29 @@ class BPAnalysisService(
         beatmapApiService.applyStarRating(scores)
 
         val data = parseData(
-            user, scores,
-            userApiService
+            user, scores, userApiService, version
         )
 
         return try {
-            imageService.getPanel(data, "J")
-        } catch (e: HttpServerErrorException.InternalServerError) {
+            when(version) {
+                1 -> imageService.getPanel(data, "J")
+                else -> imageService.getPanel(data, "J2")
+            }
+        } catch (e: WebClientResponseException.InternalServerError) {
             log.error("最好成绩分析：复杂面板生成失败", e)
             try {
                 val msg = uubaService.getTextPlus(scores, user.username, user.mode)
                     .split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                 imageService.getPanelAlpha(*msg)
             } catch (e1: ResourceAccessException) {
-                log.error("最好成绩分析：渲染失败", e1)
-                throw BPAnalysisException(BPAnalysisException.Type.BA_Render_Error)
-            } catch (e1: HttpServerErrorException.InternalServerError) {
-                log.error("最好成绩分析：渲染失败", e1)
-                throw BPAnalysisException(BPAnalysisException.Type.BA_Render_Error)
+                log.error("分析最好成绩：渲染失败", e1)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "分析最好成绩")
+            } catch (e1: WebClientResponseException.InternalServerError) {
+                log.error("分析最好成绩：渲染失败", e1)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "分析最好成绩")
             } catch (e1: Exception) {
-                log.error("最好成绩分析：UUBA 转换失败", e1)
-                throw BPAnalysisException(BPAnalysisException.Type.BA_Send_UUError)
+                log.error("分析最好成绩：UUBA 转换失败", e1)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "分析最好成绩（文字版）")
             }
         } catch (e: Exception) {
             log.error("最好成绩分析：渲染失败", e)
@@ -139,7 +153,9 @@ class BPAnalysisService(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BPAnalysisService::class.java)
         private val RANK_ARRAY = arrayOf("XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F")
-        fun parseData(user: OsuUser, bpList: List<LazerScore>?, userApiService: OsuUserApiService): Map<String, Any> {
+
+        @JvmStatic
+        fun parseData(user: OsuUser, bpList: List<LazerScore>?, userApiService: OsuUserApiService, version: Int = 1): Map<String, Any> {
             if (bpList == null || bpList.size <= 5) return HashMap.newHashMap(1)
 
             val bps: List<LazerScore> = ArrayList(bpList)
@@ -147,8 +163,8 @@ class BPAnalysisService(
             val bpSize = bps.size
 
             // top
-            val t5: List<LazerScore?> = bps.subList(0, 5)
-            val b5: List<LazerScore?> = bps.subList(max((bpSize - 5).toDouble(), 0.0).toInt(), bpSize)
+            val t6: List<LazerScore> = bps.subList(0, 6)
+            val b5: List<LazerScore> = bps.subList(max((bpSize - 5).toDouble(), 0.0).toInt(), bpSize)
 
             data class BeatMap4BA(
                 val ranking: Int,
@@ -231,16 +247,22 @@ class BPAnalysisService(
             sortCount("bpm") { it.bpm }
 
             val ppRawList = bps.map { it.PP!! }
-            val rankCount = bps.map { it.rank }
+            val rankList = bps.map { it.rank }
+            val lengthList = beatMapList.map { it.length }
 
-            val rankSort = rankCount
+            val rankSort = rankList
                 .groupingBy { it }
                 .eachCount()
                 .entries
                 .sortedByDescending { it.value }
                 .map { it.key }
 
-            data class Mapper(val avatar_url: String, val username: String, val map_count: Int, val pp_count: Float)
+            data class Mapper(
+                val avatar_url: String,
+                val username: String,
+                val map_count: Int,
+                val pp_count: Float
+            )
 
             val mapperMap = bps
                 .groupingBy { it.beatMap.mapperID }
@@ -292,7 +314,7 @@ class BPAnalysisService(
             val bpPP = bps.map { it.weight!!.PP }.sum().toFloat()
             val rawPP = (userPP - bonusPP).toFloat()
 
-            var modsAttr: List<Attr>
+            val modsAttr: List<Attr>
             run {
                 val m = modsSum
                 val modsAttrTmp: MutableList<Attr> = ArrayList(modsPPMap.size)
@@ -338,26 +360,49 @@ class BPAnalysisService(
                 }
             }
 
+            val clientCount = listOf(
+                bps.stream().filter { ! it.isLazer }.count(),
+                bps.stream().filter { it.isLazer }.count()
+            )
+
             val data = HashMap<String, Any>(18)
 
-            data["card_A1"] = user
-            data["bpTop5"] = t5
-            data["bpLast5"] = b5
-            data["bpLength"] = summary["length"]!!
-            data["bpCombo"] = summary["combo"]!!
-            data["bpSR"] = summary["star"]!!
-            data["bpBpm"] = summary["bpm"]!!
-            data["favorite_mappers_count"] = mapperSize
-            data["favorite_mappers"] = mapperList
-            data["pp_raw_arr"] = ppRawList
-            data["rank_arr"] = rankCount
-            data["rank_elect_arr"] = rankSort
-            data["bp_length_arr"] = beatMapList.map { it.length }
-            data["mods_attr"] = modsAttr
-            data["rank_attr"] = rankAttr
-            data["pp_raw"] = rawPP
-            data["pp"] = userPP
-            data["game_mode"] = bps.first().mode
+            if (version == 1) {
+                data["card_A1"] = user
+                data["bpTop5"] = t6.slice(0..4)
+                data["bpLast5"] = b5
+                data["bpLength"] = summary["length"]!!
+                data["bpCombo"] = summary["combo"]!!
+                data["bpSR"] = summary["star"]!!
+                data["bpBpm"] = summary["bpm"]!!
+                data["favorite_mappers_count"] = mapperSize
+                data["favorite_mappers"] = mapperList
+                data["pp_raw_arr"] = ppRawList
+                data["rank_arr"] = rankList
+                data["rank_elect_arr"] = rankSort
+                data["bp_length_arr"] = lengthList
+                data["mods_attr"] = modsAttr
+                data["rank_attr"] = rankAttr
+                data["pp_raw"] = rawPP
+                data["pp"] = userPP
+                data["game_mode"] = bps.first().mode
+            } else {
+                data["user"] = user
+                data["bests"] = t6
+                data["length_attr"] = summary["length"]!!
+                data["combo_attr"] = summary["combo"]!!
+                data["star_attr"] = summary["star"]!!
+                data["bpm_attr"] = summary["bpm"]!!
+                data["favorite_mappers"] = mapperList
+                data["pp_raw_arr"] = ppRawList
+                data["rank_arr"] = rankList
+                data["rank_elect_arr"] = rankSort
+                data["bp_length_arr"] = lengthList
+                data["mods_attr"] = modsAttr
+                data["rank_attr"] = rankAttr
+
+                data["client_count"] = clientCount
+            }
 
             return data
         }
