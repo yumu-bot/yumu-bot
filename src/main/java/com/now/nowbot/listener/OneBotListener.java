@@ -26,7 +26,7 @@ import java.util.Map;
 
 
 @Shiro
-@Order(5)
+@Order(0)
 @Component("OneBotListener")
 @SuppressWarnings("unused")
 public class OneBotListener {
