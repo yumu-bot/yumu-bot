@@ -258,6 +258,7 @@ class PPPlusService(
         val speed = calculateLevel(performance.speed, speedArray)
         val stamina = calculateLevel(performance.stamina, staminaArray)
         val accuracy = calculateLevel(performance.accuracy, accuracyArray)
+        val aim = calculateLevel(performance.aim, jumpArray)
 
         // 常规指数和进阶指数，进阶指数是以上情况的第二大的值，达标情况的目标是以上第二大值 * 6 - 4，
         val generalIndex: Double = (sqrt(getPiCent(performance.jumpAim, 1300, 1700) + 8.0) *
@@ -292,7 +293,7 @@ class PPPlusService(
             .sorted()
             .toList()[4] // 第二大
 
-        val index = mutableListOf(jumpAim, flowAim, accuracy, stamina, speed, precision)
+        val index = listOf(jumpAim, flowAim, accuracy, stamina, speed, precision, aim)
         val sum: Double = index.stream().reduce { a: Double, b: Double -> a + b }.orElse(0.0)
 
         return AdvancedStats(index, generalIndex, advancedIndex, sum, advancedIndex * 6 - 4)
