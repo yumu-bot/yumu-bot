@@ -27,7 +27,7 @@ class BPAnalysisLegacyService (
 ) : MessageService<BAParam> {
 
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<BAParam>): Boolean {
-        val matcher = Instruction.BP_ANALYSIS.matcher(messageText)
+        val matcher = Instruction.BP_ANALYSIS_LEGACY.matcher(messageText)
 
         if (!matcher.find()) {
             return false
