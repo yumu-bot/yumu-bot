@@ -35,8 +35,11 @@ _连接osu!并处理数据的bot后端_
 - PostgreSQL 15
 
 ## 配置文件
+
 项目使用 spring boot 开发, 默认文件配置在 [application.yaml](src/main/resources/application.yaml), 根据注释进行修改.
+
 可选: 在项目目录中创建 `logback.xml` 文件, 用于配置日志输出.
+
 运行 `java --enable-preview -jar yumu.jar` 启动项目.
 
 # Thanks
