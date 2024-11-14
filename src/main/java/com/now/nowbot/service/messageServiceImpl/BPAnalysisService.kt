@@ -249,6 +249,11 @@ class BPAnalysisService(
             val ppRawList = bps.map { it.PP!! }
             val rankList = bps.map { it.rank }
             val lengthList = beatMapList.map { it.length }
+            val starList = beatMapList.map { it.star }
+            val modsList: List<List<String>> = beatMapList
+                .map { it -> return@map it.mods.stream()
+                    .map { mod -> mod.type.acronym }.toList()
+                }
 
             val rankSort = rankList
                 .groupingBy { it }
@@ -311,8 +316,8 @@ class BPAnalysisService(
             val bonusPP = getBonusPP(userPP, bpPPs)
 
             //bpPP + remainPP (bp100之后的) = rawPP
-            val bpPP = bps.map { it.weight!!.PP }.sum().toFloat()
-            val rawPP = (userPP - bonusPP).toFloat()
+            val bpPP = bps.sumOf { it.weight!!.PP }
+            val rawPP = (userPP - bonusPP)
 
             val modsAttr: List<Attr>
             run {
@@ -396,8 +401,10 @@ class BPAnalysisService(
                 data["favorite_mappers"] = mapperList
                 data["pp_raw_arr"] = ppRawList
                 data["rank_arr"] = rankList
-                data["rank_elect_arr"] = rankSort
-                data["bp_length_arr"] = lengthList
+                data["length_arr"] = lengthList
+                data["mods_arr"] = modsList
+                data["star_arr"] = starList
+
                 data["mods_attr"] = modsAttr
                 data["rank_attr"] = rankAttr
 
