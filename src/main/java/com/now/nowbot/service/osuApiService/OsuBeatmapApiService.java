@@ -106,7 +106,7 @@ public interface OsuBeatmapApiService {
 
         applyDifficultyAdjust(js, mods);
 
-        js.setLazer(isLazer);
+        //js.setLazer(isLazer);
         js.setMode(mode.toRosuMode());
         js.setAccuracy(100D);
         js.setMisses(0);
@@ -122,7 +122,7 @@ public interface OsuBeatmapApiService {
 
         applyDifficultyAdjust(js, LazerMod.getModsList(e.mods));
 
-        js.setLazer(e.isLazer);
+        //js.setLazer(e.isLazer);
         js.setCombo(e.combo);
         js.setMode(e.mode.toRosuMode());
         js.setMisses(e.misses);
@@ -140,7 +140,7 @@ public interface OsuBeatmapApiService {
 
         applyDifficultyAdjust(js, s.getMods());
 
-        js.setLazer(s.isLazer());
+        //js.setLazer(s.isLazer());
         js.setMods(LazerMod.getModsValue(s.getMods()));
         js.setCombo(s.getMaxCombo());
         js.setSpeed(LazerMod.getModSpeedForStarCalculate(s.getMods()));
@@ -180,7 +180,7 @@ public interface OsuBeatmapApiService {
 
         applyDifficultyAdjust(js, m);
 
-        js.setLazer(s.isLazer());
+        //js.setLazer(s.isLazer());
         js.setMode(s.getMode().toRosuMode());
         js.setMods(LazerMod.getModsValue(s.getMods()));
 
@@ -259,8 +259,8 @@ public interface OsuBeatmapApiService {
             default -> {
                 if (t.getOk() != null) jni.setN100(t.getOk());
                 if (t.getMeh() != null) jni.setN50(t.getMeh());
-                if (t.getLargeTickHit() != null) jni.setSliderTicks(t.getLargeTickHit());
-                if (t.getSliderTailHit() != null) jni.setSliderTicks(t.getSliderTailHit());
+                //if (t.getLargeTickHit() != null) jni.setSliderTicks(t.getLargeTickHit());
+                //if (t.getSliderTailHit() != null) jni.setSliderTails(t.getSliderTailHit());
             }
         }
         if (t.getGreat() != null) jni.setN300(t.getGreat());
