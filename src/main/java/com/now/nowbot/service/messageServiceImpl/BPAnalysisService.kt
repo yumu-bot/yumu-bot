@@ -47,7 +47,7 @@ class BPAnalysisService(
 
     @Throws(Throwable::class)
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<BAParam>): Boolean {
-        val matcher = Instruction.BP_ANALYSIS.matcher(messageText)
+        val matcher = Instruction.BP_ANALYSIS_LEGACY.matcher(messageText)
 
         if (!matcher.find()) {
             return false
