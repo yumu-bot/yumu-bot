@@ -151,12 +151,12 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     BP_ANALYSIS(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("bpanalysis", "blue\\s*archive", "bpa", "ba")
+        appendCommandsIgnoreAll("bp\\s*analysis", "blue\\s*archive", "bpa", "ba")
         appendModeQQUIDName()
     }),
 
-    BP_ANALYSIS_V3(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("ta")
+    BP_ANALYSIS_LEGACY(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("bp\\s*analysis\\s*legacy", "bpal", "bal", "al")
         appendModeQQUIDName()
     }),
 

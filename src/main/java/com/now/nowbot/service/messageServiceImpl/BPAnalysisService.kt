@@ -14,7 +14,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.serviceException.BPAnalysisException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithOutRange
 import com.now.nowbot.util.DataUtil.getBonusPP
@@ -31,8 +30,9 @@ import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.regex.Matcher
+import kotlin.math.floor
 import kotlin.math.max
+import kotlin.math.min
 
 @Service("BP_ANALYSIS")
 class BPAnalysisService(
@@ -43,112 +43,55 @@ class BPAnalysisService(
     private val beatmapApiService: OsuBeatmapApiService,
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
-    data class BAParam(val user: OsuUser, val scores: List<LazerScore>, val isMyself: Boolean, val version: Int)
-
+    data class BAParam(val user: OsuUser, val scores: List<LazerScore>, val isMyself: Boolean)
 
     @Throws(Throwable::class)
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<BAParam>): Boolean {
-        val m = Instruction.BP_ANALYSIS.matcher(messageText)
-        val m2 = Instruction.BP_ANALYSIS_V3.matcher(messageText)
-        val matcher: Matcher
+        val matcher = Instruction.BP_ANALYSIS.matcher(messageText)
 
-        val version: Int
-
-        if (m.find()) {
-            version = 1
-            matcher = m
-        } else if (m2.find()) {
-            version = 2
-            matcher = m2
-        } else {
+        if (!matcher.find()) {
             return false
         }
 
         val isMyself = AtomicBoolean(false)
-
         val mode = getMode(matcher)
-
         val user = getUserWithOutRange(event, matcher, mode, isMyself)
-
         val bpList = scoreApiService.getBestScores(user.userID, mode.data)
-
-        data.value = BAParam(user, bpList, isMyself.get(), version)
+        data.value = BAParam(user, bpList, isMyself.get())
 
         return true
     }
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: BAParam) {
-        val image = param.getImage(param.version)
+        val image = param.getImage(2, beatmapApiService, userApiService, imageService, uubaService)
 
         try {
             event.reply(image)
         } catch (e: Exception) {
             log.error("最好成绩分析：发送失败", e)
-            throw BPAnalysisException(BPAnalysisException.Type.BA_Send_Error)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "最好成绩分析")
         }
     }
 
     override fun accept(event: MessageEvent, messageText: String): BAParam? {
         val matcher = OfficialInstruction.BP_ANALYSIS.matcher(messageText)
 
-        if (!matcher.find()) return null
+        if (!matcher.find()) {
+            return null
+        }
 
         val isMyself = AtomicBoolean(false)
         val mode = getMode(matcher)
         val user = getUserWithOutRange(event, matcher, mode, isMyself)
         val bpList = scoreApiService.getBestScores(user.userID, mode.data)
 
-        return BAParam(user, bpList, isMyself.get(), 1)
+        return BAParam(user, bpList, isMyself.get())
     }
 
-    override fun reply(event: MessageEvent, param: BAParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
-
-    private fun BAParam.getImage(version: Int = 1): ByteArray {
-        val scores = scores
-        val user = user
-
-        if (CollectionUtils.isEmpty(scores) || scores.size <= 5) {
-            if (isMyself) {
-                throw BPAnalysisException(BPAnalysisException.Type.BA_Me_NotEnoughBP, user.mode)
-            } else {
-                throw BPAnalysisException(BPAnalysisException.Type.BA_Player_NotEnoughBP, user.mode)
-            }
-        }
-
-        // 提取星级变化的谱面 DT/HT 等
-        beatmapApiService.applyStarRating(scores)
-
-        val data = parseData(
-            user, scores, userApiService, version
-        )
-
-        return try {
-            when(version) {
-                1 -> imageService.getPanel(data, "J")
-                else -> imageService.getPanel(data, "J2")
-            }
-        } catch (e: WebClientResponseException.InternalServerError) {
-            log.error("最好成绩分析：复杂面板生成失败", e)
-            try {
-                val msg = uubaService.getTextPlus(scores, user.username, user.mode)
-                    .split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                imageService.getPanelAlpha(*msg)
-            } catch (e1: ResourceAccessException) {
-                log.error("分析最好成绩：渲染失败", e1)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "分析最好成绩")
-            } catch (e1: WebClientResponseException.InternalServerError) {
-                log.error("分析最好成绩：渲染失败", e1)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "分析最好成绩")
-            } catch (e1: Exception) {
-                log.error("分析最好成绩：UUBA 转换失败", e1)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "分析最好成绩（文字版）")
-            }
-        } catch (e: Exception) {
-            log.error("最好成绩分析：渲染失败", e)
-            throw BPAnalysisException(BPAnalysisException.Type.BA_Render_Error)
-        }
-    }
+    override fun reply(event: MessageEvent, param: BAParam): MessageChain? = QQMsgUtil.getImage(
+        param.getImage(2, beatmapApiService, userApiService, imageService, uubaService)
+    )
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BPAnalysisService::class.java)
@@ -251,9 +194,17 @@ class BPAnalysisService(
             val lengthList = beatMapList.map { it.length }
             val starList = beatMapList.map { it.star }
             val modsList: List<List<String>> = beatMapList
-                .map { it -> return@map it.mods.stream()
+                .map {
+                    return@map it.mods.stream()
                     .map { mod -> mod.type.acronym }.toList()
                 }
+            val timeList = bps.map { 1.0 * it.endedTime.plusHours(8).hour + (it.endedTime.plusHours(8).minute / 60.0) }
+            val timeDist = mutableListOf(0, 0, 0, 0, 0, 0, 0, 0)
+
+            for(time in timeList) {
+                val position: Int = min(floor(time / 3.0).toInt(), 7)
+                timeDist[position] ++
+            }
 
             val rankSort = rankList
                 .groupingBy { it }
@@ -404,6 +355,8 @@ class BPAnalysisService(
                 data["length_arr"] = lengthList
                 data["mods_arr"] = modsList
                 data["star_arr"] = starList
+                data["time_arr"] = timeList
+                data["time_dist_arr"] = timeDist
 
                 data["mods_attr"] = modsAttr
                 data["rank_attr"] = rankAttr
@@ -412,6 +365,53 @@ class BPAnalysisService(
             }
 
             return data
+        }
+
+        @JvmStatic
+        fun BAParam.getImage(version: Int = 1, beatmapApiService: OsuBeatmapApiService, userApiService: OsuUserApiService, imageService: ImageService, uubaService: UUBAService): ByteArray {
+            val scores = scores
+            val user = user
+
+            if (CollectionUtils.isEmpty(scores) || scores.size <= 5) {
+                if (isMyself) {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Me, user.mode)
+                } else {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Player, user.mode)
+                }
+            }
+
+            // 提取星级变化的谱面 DT/HT 等
+            beatmapApiService.applyStarRating(scores)
+
+            val data = parseData(
+                user, scores, userApiService, version
+            )
+
+            return try {
+                when(version) {
+                    1 -> imageService.getPanel(data, "J")
+                    else -> imageService.getPanel(data, "J2")
+                }
+            } catch (e: WebClientResponseException) {
+                log.error("最好成绩分析：复杂面板生成失败", e)
+                try {
+                    val msg = uubaService.getTextPlus(scores, user.username, user.mode)
+                        .split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                    imageService.getPanelAlpha(*msg)
+                } catch (e1: ResourceAccessException) {
+                    log.error("最好成绩分析：渲染失败", e1)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩分析")
+                } catch (e1: WebClientResponseException) {
+                    log.error("最好成绩分析：渲染失败", e1)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩分析")
+                } catch (e1: Exception) {
+                    log.error("最好成绩分析：UUBA 转换失败", e1)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩分析（文字版）")
+                }
+            } catch (e: Exception) {
+                log.error("最好成绩分析：渲染失败", e)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩分析")
+            }
         }
     }
 }

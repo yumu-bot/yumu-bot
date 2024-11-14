@@ -16,7 +16,7 @@ import com.now.nowbot.service.messageServiceImpl.UUBAService.BPHeadTailParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.serviceException.BPAnalysisException
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
@@ -24,7 +24,6 @@ import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_MODE
 import org.apache.logging.log4j.util.Strings
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.text.DecimalFormat
 import java.util.*
@@ -45,7 +44,7 @@ class UUBAService(
     // bpht 的全称大概是 BP Head / Tail
     data class BPHeadTailParam(val user: UserParam, val info: Boolean)
 
-    @Throws(BPAnalysisException::class)
+    @Throws(Throwable::class)
     override fun isHandle(
             event: MessageEvent,
             messageText: String,
@@ -54,12 +53,13 @@ class UUBAService(
         // 旧功能指引
         val matcher2 = Instruction.DEPRECATED_BPHT.matcher(messageText)
         if (matcher2.find()) {
-            throw BPAnalysisException(BPAnalysisException.Type.BA_Instruction_Deprecated)
+            throw GeneralTipsException("bpht 已移至 ua。\n您也可以使用 !ba 来体验丰富版本。\n猫猫 Bot 的 bpht 需要输入 !get bpht。"
+            )
         }
 
         val matcher3 = Instruction.DEPRECATED_UUBA_I.matcher(messageText)
         if (matcher3.find()) {
-            throw BPAnalysisException(BPAnalysisException.Type.BA_I_Deprecated)
+            throw GeneralTipsException("uuba-i 已移至 ua。\n您也可以使用 !ba 来体验丰富版本。")
         }
 
         val matcher = Instruction.UU_BA.matcher(messageText)
@@ -92,9 +92,9 @@ class UUBAService(
                 bu = bindDao.getUserFromQQ(param.user.qq)
             } catch (e: BindException) {
                 if (!param.user.at) {
-                    throw BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
                 } else {
-                    throw BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
                 }
             }
         } else {
@@ -110,7 +110,7 @@ class UUBAService(
                 bu.osuID = id
                 bu.osuName = name
             } catch (e: Exception) {
-                throw BPAnalysisException(BPAnalysisException.Type.BA_Player_NotFound)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name)
             }
         }
 
@@ -120,33 +120,23 @@ class UUBAService(
 
         try {
             bps = scoreApiService.getBestScores(bu, mode)
-        } catch (e: HttpClientErrorException.BadRequest) {
+        } catch (e: WebClientResponseException.BadRequest) {
             // 请求失败 超时/断网
             if (param.user.qq == event.sender.id) {
-                throw BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired)
+                throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
             } else {
-                throw BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired)
+                throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
             }
-        } catch (e: WebClientResponseException.BadRequest) {
-            if (param.user.qq == event.sender.id) {
-                throw BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired)
-            } else {
-                throw BPAnalysisException(BPAnalysisException.Type.BA_Player_TokenExpired)
-            }
-        } catch (e: HttpClientErrorException.Unauthorized) {
-            // 未绑定
-            throw BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired)
         } catch (e: WebClientResponseException.Unauthorized) {
-            throw BPAnalysisException(BPAnalysisException.Type.BA_Me_TokenExpired)
+            // 未绑定
+            throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
         }
 
         if (bps.size <= 10) {
             if (!param.user.at && Objects.isNull(param.user.name)) {
-                throw BPAnalysisException(
-                        BPAnalysisException.Type.BA_Me_NotEnoughBP, mode!!.getName())
+                throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Me, mode!!.getName())
             } else {
-                throw BPAnalysisException(
-                        BPAnalysisException.Type.BA_Player_NotEnoughBP, mode!!.getName())
+                throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Player, mode!!.getName())
             }
         }
 
@@ -164,7 +154,7 @@ class UUBAService(
             val image = imageService.getPanelAlpha(*panelParam)
             from.sendImage(image)
         } catch (e: Exception) {
-            throw BPAnalysisException(BPAnalysisException.Type.BA_Send_UUError)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "最好成绩分析（文字版）")
         }
     }
 

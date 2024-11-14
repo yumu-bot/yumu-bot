@@ -47,7 +47,10 @@ class GeneralTipsException : TipsException {
         G_Null_Score("找不到您在谱面 %s 内的成绩，请检查。"), 
         G_Null_Version("找不到您在版本 %s 内的成绩，请检查。"), 
         G_Null_RecentScore("找不到玩家 %s 在 %s 模式内的最近成绩，请检查。"), 
-        G_Null_SpecifiedMode("找不到这张谱面在指定 %s 模式内的成绩，请检查。\n或者，不要设定游戏模式，让机器人自行处理。"), 
+        G_Null_SpecifiedMode("找不到这张谱面在指定 %s 模式内的成绩，请检查。\n或者，不要设定游戏模式，让机器人自行处理。"),
+
+        G_NotEnoughBP_Me("您在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
+        G_NotEnoughBP_Player("对方在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
         
         G_Overtime_ExchangeTooMany("%s：连接渲染模块超时（请求数据太多了）。\n如果你是第一次见到这条消息，第二次通常就会恢复了。\n如果你多次见到这条消息，可以尝试缩小范围。"), 
         
@@ -62,6 +65,7 @@ class GeneralTipsException : TipsException {
         G_Fetch_List("列表获取失败，请重试。"), 
         G_Fetch_BeatMap("谱面获取失败，请重试。"),
         G_Fetch_Discussion("讨论区获取失败，请重试。"),
+        G_Fetch_BeatMapAttr("获取变化的谱面数据超时（太多了），如果你是第一次见到这条消息，第二次通常就会恢复了。"),
 
         G_Suggest_AnotherFunction("推荐您使用另一个功能来获取数据：%s"), 
         

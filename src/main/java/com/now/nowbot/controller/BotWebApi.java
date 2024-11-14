@@ -611,14 +611,14 @@ public class BotWebApi {
     }
 
     /**
-     * 分析最好成绩接口 (BA)
+     * 最好成绩分析接口 (BA)
      *
      * @param name     玩家名称
      * @param playMode 模式，可为空
-     * @return image 分析最好成绩图片
+     * @return image 最好成绩分析图片
      */
     @GetMapping(value = "bp/analysis")
-    @OpenResource(name = "ba", desp = "分析最好成绩")
+    @OpenResource(name = "ba", desp = "最好成绩分析")
     public ResponseEntity<byte[]> getBPAnalysis(
             @OpenResource(name = "name", desp = "玩家名称", required = true) @NonNull @RequestParam("name") String name,
             @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode
@@ -634,17 +634,17 @@ public class BotWebApi {
             if (mode != OsuMode.DEFAULT) osuUser.setMode(mode.getName());
             scores = scoreApiService.getBestScores(uid, mode, 0, 100);
         } catch (Exception e) {
-            throw new RuntimeException(BPAnalysisException.Type.BA_Fetch_Failed.message);
+            throw new RuntimeException(GeneralTipsException.Type.G_Fetch_List.getMessage());
         }
 
         Map<String, Object> data;
         try {
-            data = BPAnalysisService.parseData(osuUser, scores, userApiService, 1);
+            data = BPAnalysisService.parseData(osuUser, scores, userApiService, 2);
         } catch (Exception e) {
-            throw new RuntimeException(BPAnalysisException.Type.BA_Attr_FetchFailed.message);
+            throw new RuntimeException(GeneralTipsException.Type.G_Fetch_BeatMapAttr.getMessage());
         }
 
-        var image = imageService.getPanel(data, "J");
+        var image = imageService.getPanel(data, "J2");
         return new ResponseEntity<>(image, getImageHeader(STR."\{name}-ba.jpg", image.length), HttpStatus.OK);
     }
 
