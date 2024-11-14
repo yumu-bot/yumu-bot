@@ -16,6 +16,7 @@ open class BPQueryException(message: String) : TipsException(message) {
 
     class UnsupportedKey(key: String) : BPQueryException("不支持的参数 '$key'")
     class UnsupportedOperator(key: String, value: String) : BPQueryException("参数 '$key' 不支持使用运算符：$value")
+    class UnsupportedOrderKey(key: String) : BPQueryException("参数 '$key' 不支持排序")
     class UnsupportedRankValue(value: String) : BPQueryException("参数 'rank' 不支持使用 $value 匹配 (ss->x / ssh->xh)")
     class UnsupportedScoreValue(value: String) : BPQueryException("参数 'score' 不支持使用 $value 匹配")
     class UnsupportedIndexValue(value: String) : BPQueryException("参数 'index' 不支持使用 $value 匹配")

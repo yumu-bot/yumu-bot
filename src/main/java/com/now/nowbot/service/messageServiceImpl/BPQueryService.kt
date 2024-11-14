@@ -55,15 +55,18 @@ class BPQueryService(
         } else {
             param.mode
         }
-        val filters = getAllFilter(param.filter)
+        val (order, text) = getOrder(param.filter)
+        val filters = getAllFilter(text)
         val bpList = scoreApiService.getBestScores(bindUser, mode, 0, 100)
-        val result = getBP(filters, bpList)
+        var result = getBP(filters, bpList)
         val user = userApiService.getPlayerInfo(bindUser)
 
         if (result.isEmpty()) {
             event.reply(GeneralTipsException(GeneralTipsException.Type.G_Null_FilterBP, user.username))
             return
         }
+
+        order?.let { result = result.sortedWith(compareBy(order::sort)) }
 
         ContextUtil.setContext("breakApplySR", true)
         val image = if (result.size == 1) {
@@ -77,6 +80,41 @@ class BPQueryService(
         }
         event.reply(image)
     }
+
+    data class Order(val key: String, val asc: Boolean) {
+        val p: Param = support.firstOrNull { it.key == key } ?: throw UnsupportedOrderKey(key)
+        fun sort(score: LazerScore): Comparable<*> {
+            return when (p) {
+                Param.Star -> score.beatMap.starRating
+                Param.Bpm -> score.beatMap.BPM ?: 0f
+                Param.Length -> score.beatMap.hitLength ?: 0
+                Param.AR -> score.beatMap.AR ?: 0f
+                Param.OD -> score.beatMap.OD ?: 0f
+                Param.CS -> score.beatMap.CS ?: 0f
+                Param.HP -> score.beatMap.HP ?: 0f
+                Param.Combo -> score.totalCombo
+                Param.Accuracy -> score.accuracy
+                Param.Miss -> score.statistics.miss ?: 0
+                else -> 0
+            }
+        }
+
+        companion object {
+            val support = listOf(
+                Param.Star,
+                Param.Bpm,
+                Param.Length,
+                Param.AR,
+                Param.OD,
+                Param.CS,
+                Param.HP,
+                Param.Combo,
+                Param.Accuracy,
+                Param.Miss,
+            )
+        }
+    }
+
     enum class ClientVersion {
         STABLE, LAZER
     }
@@ -183,7 +221,7 @@ class BPQueryService(
             compare(s.beatMap.BPM!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Combo("combo", { (op, v, s) ->
-            compare(s.beatMap.maxCombo!!, v, op)
+            compare(s.maxCombo, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Length("length", { (op, v, s) ->
             compare(s.beatMap.hitLength!!, v, op)
@@ -214,11 +252,11 @@ class BPQueryService(
             compare(rate, value, op)
         }, EQ, NE, GT, GE, LT, LE),
         Client("client", { (op, v, s) ->
-            val it = when(v) {
+            val it = when (v) {
                 "stable", "s" -> ClientVersion.STABLE
                 else -> ClientVersion.LAZER
             }
-            val that = when(s.isLazer) {
+            val that = when (s.isLazer) {
                 true -> ClientVersion.LAZER
                 else -> ClientVersion.STABLE
             }
@@ -266,9 +304,11 @@ class BPQueryService(
     }
 
     companion object {
-        val pattern: Regex = "(\\S+?)([<>＜＞][=＝]?|[=＝]|[!！][=＝])(\\S+(\\.\\d+)?)".toRegex()
+        private val operate: Regex = "(\\S+?)([<>＜＞][=＝]?|[=＝]|[!！][=＝])(\\S+(\\.\\d+)?)".toRegex()
 
-        val split: Regex = "(\\s+)|[|,，]".toRegex()
+        private val order: Regex = "\\s*(?i)order by (?<key>\\w+) (asc|(?<desc>desc))?\\s*$".toRegex()
+
+        private val split: Regex = "(\\s+)|[|,，]".toRegex()
 
         // 最好还是支持一下全角符号，总是有用户输入
         private fun String.standardised(): String {
@@ -280,7 +320,7 @@ class BPQueryService(
         }
 
         private fun String.getOperator(): Triple<String, Operator, String> {
-            val m = pattern.matchEntire(this) ?: throw ParsingBlockException()
+            val m = operate.matchEntire(this) ?: throw ParsingBlockException()
             val operator = when (m.groupValues[2].standardised()) {
                 EQ.op -> EQ
                 NE.op -> NE
@@ -337,16 +377,23 @@ class BPQueryService(
             return result
         }
 
+        fun getOrder(text: String): Pair<Order?, String> {
+            val matcher = order.find(text) ?: return null to text
+            val key = matcher.groups["key"]!!.value
+            val asc = matcher.groups["desc"] == null
+
+            return Order(key, asc) to text.substring(0, matcher.range.first)
+        }
+
         @Throws(BPQueryException::class)
-        private fun getRankNumber(rank: String): Int {
+        private fun getRankNumber(text: String): Int {
             val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
-            val rank = rank.uppercase().replace("SS", "X", ignoreCase = true)
+            val rank = text.uppercase().replace("SS", "X", ignoreCase = true)
 
             for (i in rankArray.indices) {
                 if (rankArray[i] == rank) return i
             }
 
-            // 真的需要这个？
             throw UnsupportedRankValue(rank)
         }
 
@@ -407,7 +454,7 @@ class BPQueryService(
 
             return when (operator) {
                 EQ -> i.isEqual(t)
-                NE -> ! i.isEqual(t)
+                NE -> !i.isEqual(t)
                 GT -> i > t
                 GE -> i.isGreaterOrEqual(t)
                 LT -> i < t
