@@ -34,8 +34,7 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
-@Service("BP_ANALYSIS")
-class BPAnalysisService(
+@Service("BP_ANALYSIS") class BPAnalysisService(
     private val scoreApiService: OsuScoreApiService,
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
@@ -45,8 +44,11 @@ class BPAnalysisService(
 
     data class BAParam(val user: OsuUser, val scores: List<LazerScore>, val isMyself: Boolean)
 
-    @Throws(Throwable::class)
-    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<BAParam>): Boolean {
+    @Throws(Throwable::class) override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<BAParam>
+    ): Boolean {
         val matcher = Instruction.BP_ANALYSIS.matcher(messageText)
 
         if (!matcher.find()) {
@@ -62,8 +64,7 @@ class BPAnalysisService(
         return true
     }
 
-    @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: BAParam) {
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: BAParam) {
         val image = param.getImage(2, beatmapApiService, userApiService, imageService, uubaService)
 
         try {
@@ -97,8 +98,12 @@ class BPAnalysisService(
         private val log: Logger = LoggerFactory.getLogger(BPAnalysisService::class.java)
         private val RANK_ARRAY = arrayOf("XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F")
 
-        @JvmStatic
-        fun parseData(user: OsuUser, bpList: List<LazerScore>?, userApiService: OsuUserApiService, version: Int = 1): Map<String, Any> {
+        @JvmStatic fun parseData(
+            user: OsuUser,
+            bpList: List<LazerScore>?,
+            userApiService: OsuUserApiService,
+            version: Int = 1
+        ): Map<String, Any> {
             if (bpList == null || bpList.size <= 5) return HashMap.newHashMap(1)
 
             val bps: List<LazerScore> = ArrayList(bpList)
@@ -121,10 +126,7 @@ class BPAnalysisService(
             )
 
             data class Attr(
-                val index: String,
-                val map_count: Int,
-                val pp_count: Double,
-                val percent: Double
+                val index: String, val map_count: Int, val pp_count: Double, val percent: Double
             )
 
             val beatMapList: MutableList<BeatMap4BA> = ArrayList(bpSize)
@@ -153,8 +155,7 @@ class BPAnalysisService(
                     beatMapList.add(ba)
                 }
 
-                run {
-                    // 统计 mods / rank
+                run { // 统计 mods / rank
                     if (m.isNotEmpty()) {
                         m.forEach {
                             modsPPMap.add(it.type.acronym, s.weight!!.PP)
@@ -193,73 +194,52 @@ class BPAnalysisService(
             val rankList = bps.map { it.rank }
             val lengthList = beatMapList.map { it.length }
             val starList = beatMapList.map { it.star }
-            val modsList: List<List<String>> = beatMapList
-                .map {
-                    return@map it.mods.stream()
-                    .map { mod -> mod.type.acronym }.toList()
+            val modsList: List<List<String>> = beatMapList.map {
+                    return@map it.mods.stream().map { mod -> mod.type.acronym }.toList()
                 }
             val timeList = bps.map { 1.0 * it.endedTime.plusHours(8).hour + (it.endedTime.plusHours(8).minute / 60.0) }
             val timeDist = mutableListOf(0, 0, 0, 0, 0, 0, 0, 0)
 
-            for(time in timeList) {
+            for (time in timeList) {
                 val position: Int = min(floor(time / 3.0).toInt(), 7)
-                timeDist[position] ++
+                timeDist[position]++
             }
 
-            val rankSort = rankList
-                .groupingBy { it }
-                .eachCount()
-                .entries
-                .sortedByDescending { it.value }
-                .map { it.key }
+            val rankSort = rankList.groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.map { it.key }
 
             data class Mapper(
-                val avatar_url: String,
-                val username: String,
-                val map_count: Int,
-                val pp_count: Float
+                val avatar_url: String, val username: String, val map_count: Int, val pp_count: Float
             )
 
-            val mapperMap = bps
-                .groupingBy { it.beatMap.mapperID }
-                .eachCount()
+            val mapperMap = bps.groupingBy { it.beatMap.mapperID }.eachCount()
 
             val mapperSize = mapperMap.size
-            val mapperCount = mapperMap
-                .entries
-                .sortedByDescending { it.value }
-                .take(8)
-                .associateBy({ it.key }, { it.value })
-                .toMap(LinkedHashMap())
+            val mapperCount =
+                mapperMap.entries.sortedByDescending { it.value }.take(8).associateBy({ it.key }, { it.value })
+                    .toMap(LinkedHashMap())
 
             val mapperInfo = userApiService.getUsers(mapperCount.keys)
-            val mapperList = bps
-                .filter { mapperCount.containsKey(it.beatMap.mapperID) }
-                .groupingBy { it.beatMap.mapperID }
-                .aggregate<LazerScore, Long, Double>({ _, accumulator, element, _ ->
-                    if (accumulator == null) {
-                        element.PP ?: 0.0
-                    } else {
-                        accumulator + (element.PP ?: 0.0)
-                    }
-                })
-                .entries.sortedWith(
-                    compareByDescending<Map.Entry<Long, Double>> { mapperCount[it.key] }
-                        .thenByDescending { it.value }
-                )
-                .map {
-                    var name = ""
-                    var avatar = ""
-                    for (node in mapperInfo) {
-                        if (it.key == node.userID) {
-                            name = node.userName
-                            avatar = node.avatarUrl
-                            break
+            val mapperList =
+                bps.filter { mapperCount.containsKey(it.beatMap.mapperID) }.groupingBy { it.beatMap.mapperID }
+                    .aggregate<LazerScore, Long, Double>({ _, accumulator, element, _ ->
+                        if (accumulator == null) {
+                            element.PP ?: 0.0
+                        } else {
+                            accumulator + (element.PP ?: 0.0)
                         }
-                    }
-                    Mapper(avatar, name, mapperCount[it.key] ?: 0, it.value.toFloat())
-                }
-                .toList()
+                    }).entries.sortedWith(compareByDescending<Map.Entry<Long, Double>> { mapperCount[it.key] }.thenByDescending { it.value })
+                    .map {
+                        var name = ""
+                        var avatar = ""
+                        for (node in mapperInfo) {
+                            if (it.key == node.userID) {
+                                name = node.userName
+                                avatar = node.avatarUrl
+                                break
+                            }
+                        }
+                        Mapper(avatar, name, mapperCount[it.key] ?: 0, it.value.toFloat())
+                    }.toList()
 
             val bpPPs = bps.map { obj: LazerScore -> obj.PP ?: 0.0 }.toDoubleArray()
 
@@ -276,10 +256,7 @@ class BPAnalysisService(
                 val modsAttrTmp: MutableList<Attr> = ArrayList(modsPPMap.size)
                 modsPPMap.forEach { (mod: String, value: MutableList<Double?>) ->
                     val attr = Attr(
-                        mod,
-                        value.count { it != null },
-                        value.filterNotNull().sum(),
-                        (value.size * 1.0 / m)
+                        mod, value.count { it != null }, value.filterNotNull().sum(), (value.size * 1.0 / m)
                     )
                     modsAttrTmp.add(attr)
                 }
@@ -306,9 +283,7 @@ class BPAnalysisService(
                         if (Objects.nonNull(value) && value!!.isNotEmpty()) {
                             ppSum = value.filterNotNull().reduceOrNull { acc, fl -> acc + fl } ?: 0.0
                             attr = Attr(
-                                rank,
-                                value.count { it != null },
-                                ppSum, (ppSum / bpPP)
+                                rank, value.count { it != null }, ppSum, (ppSum / bpPP)
                             )
                         }
                         rankAttr.add(attr)
@@ -316,10 +291,10 @@ class BPAnalysisService(
                 }
             }
 
-            val clientCount = listOf(
-                bps.stream().filter { ! it.isLazer }.count(),
-                bps.stream().filter { it.isLazer }.count()
-            )
+            val clientCount =
+                listOf(
+                    bps.stream().filter { !it.isLazer }.count(), bps.stream().filter { it.isLazer }.count()
+                )
 
             val data = HashMap<String, Any>(18)
 
@@ -367,8 +342,13 @@ class BPAnalysisService(
             return data
         }
 
-        @JvmStatic
-        fun BAParam.getImage(version: Int = 1, beatmapApiService: OsuBeatmapApiService, userApiService: OsuUserApiService, imageService: ImageService, uubaService: UUBAService): ByteArray {
+        @JvmStatic fun BAParam.getImage(
+            version: Int = 1,
+            beatmapApiService: OsuBeatmapApiService,
+            userApiService: OsuUserApiService,
+            imageService: ImageService,
+            uubaService: UUBAService
+        ): ByteArray {
             val scores = scores
             val user = user
 
@@ -388,15 +368,15 @@ class BPAnalysisService(
             )
 
             return try {
-                when(version) {
+                when (version) {
                     1 -> imageService.getPanel(data, "J")
                     else -> imageService.getPanel(data, "J2")
                 }
             } catch (e: WebClientResponseException) {
                 log.error("最好成绩分析：复杂面板生成失败", e)
                 try {
-                    val msg = uubaService.getTextPlus(scores, user.username, user.mode)
-                        .split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                    val msg = uubaService.getTextPlus(scores, user.username, user.mode).split("\n".toRegex())
+                        .dropLastWhile { it.isEmpty() }.toTypedArray()
                     imageService.getPanelAlpha(*msg)
                 } catch (e1: ResourceAccessException) {
                     log.error("最好成绩分析：渲染失败", e1)

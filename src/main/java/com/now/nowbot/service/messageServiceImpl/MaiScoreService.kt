@@ -17,20 +17,18 @@ import com.now.nowbot.util.command.*
 import com.yumu.core.extensions.isNotNull
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
-import org.springframework.web.reactive.function.client.WebClientResponseException
 
-@Service("MAI_SCORE")
-class MaiScoreService(
-        private val maimaiApiService: MaimaiApiService,
-        private val imageService: ImageService,
+@Service("MAI_SCORE") class MaiScoreService(
+    private val maimaiApiService: MaimaiApiService,
+    private val imageService: ImageService,
 ) : MessageService<MaiScoreService.MaiScoreParam> {
 
     data class MaiScoreParam(
-            val id: Int?,
-            val title: String?,
-            val name: String?,
-            val qq: Long?,
-            val difficulty: MaiDifficulty,
+        val id: Int?,
+        val title: String?,
+        val name: String?,
+        val qq: Long?,
+        val difficulty: MaiDifficulty,
     )
 
     data class MSPanelParam(val songs: List<MaiSong>, val scores: List<MaiScore>) {
@@ -47,9 +45,9 @@ class MaiScoreService(
     }
 
     override fun isHandle(
-            event: MessageEvent,
-            messageText: String,
-            data: MessageService.DataValue<MaiScoreParam>,
+        event: MessageEvent,
+        messageText: String,
+        data: MessageService.DataValue<MaiScoreParam>,
     ): Boolean {
         val matcher = Instruction.MAI_SCORE.matcher(messageText)
 
@@ -57,25 +55,23 @@ class MaiScoreService(
             return false
         }
 
-        val difficulty =
-                if (matcher.group(FLAG_DIFF).isNotNull()) {
-                    MaiDifficulty.getDifficulty(matcher.group(FLAG_DIFF))
-                } else {
-                    MaiDifficulty.DEFAULT
-                }
+        val difficulty = if (matcher.group(FLAG_DIFF).isNotNull()) {
+            MaiDifficulty.getDifficulty(matcher.group(FLAG_DIFF))
+        } else {
+            MaiDifficulty.DEFAULT
+        }
 
         val nameOrTitleStr = (matcher.group(FLAG_NAME) ?: "").trim()
 
         val qqStr = (matcher.group(FLAG_QQ_ID) ?: "").trim()
 
-        val qq =
-                if (event.isAt) {
-                    event.target
-                } else if (StringUtils.hasText(qqStr)) {
-                    qqStr.toLong()
-                } else {
-                    event.sender.id
-                }
+        val qq = if (event.isAt) {
+            event.target
+        } else if (StringUtils.hasText(qqStr)) {
+            qqStr.toLong()
+        } else {
+            event.sender.id
+        }
 
         if (StringUtils.hasText(nameOrTitleStr)) {
             if (nameOrTitleStr.contains(Regex(REG_SPACE))) {
@@ -83,23 +79,21 @@ class MaiScoreService(
 
                 if (s.size == 2) {
                     if (s.first().matches(Regex(REG_NUMBER_15))) {
-                        data.value =
-                                MaiScoreParam(
-                                        s.first().toInt(),
-                                        null,
-                                        s.last().replace(Regex(REG_QUOTATION), ""),
-                                        null,
-                                        difficulty,
-                                )
+                        data.value = MaiScoreParam(
+                            s.first().toInt(),
+                            null,
+                            s.last().replace(Regex(REG_QUOTATION), ""),
+                            null,
+                            difficulty,
+                        )
                     } else {
-                        data.value =
-                                MaiScoreParam(
-                                        null,
-                                        nameOrTitleStr.replace(Regex(REG_QUOTATION), ""),
-                                        null,
-                                        qq,
-                                        difficulty,
-                                )
+                        data.value = MaiScoreParam(
+                            null,
+                            nameOrTitleStr.replace(Regex(REG_QUOTATION), ""),
+                            null,
+                            qq,
+                            difficulty,
+                        )
                     }
                 } else if (s.size == 1) {
                     if (s.first().matches(Regex(REG_NUMBER_15))) {
@@ -129,7 +123,7 @@ class MaiScoreService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: MaiScoreParam) {
-        val full = getFullScoreOrEmpty(param.qq, param.name, maimaiApiService)
+        val full = getFullScoreOrNull(param.qq, param.name, maimaiApiService)
 
         /*
         if (full.records.isEmpty())
@@ -139,77 +133,69 @@ class MaiScoreService(
 
         val image: ByteArray
 
-        val result: MaiSong =
-                if (param.title != null) {
-                    // 标题搜歌模式
-                    val title = DataUtil.getStandardisedString(param.title)
+        val result: MaiSong = if (param.title != null) { // 标题搜歌模式
+            val title = DataUtil.getStandardisedString(param.title)
 
-                    // 外号模式
-                    val s = maimaiApiService.getMaimaiAliasSong(title)
+            // 外号模式
+            val s = maimaiApiService.getMaimaiAliasSong(title)
 
-                    if (s != null) {
-                        s
-                    } else {
+            if (s != null) {
+                s
+            } else {
 
-                        // 实在走不通的保底模式
+                // 实在走不通的保底模式
 
-                        val possibles =
-                                maimaiApiService.getMaimaiPossibleSongs(title)
-                                        ?: throw GeneralTipsException(
-                                                GeneralTipsException.Type.G_Null_ResultNotAccurate
-                                        )
+                val possibles = maimaiApiService.getMaimaiPossibleSongs(title) ?: throw GeneralTipsException(
+                    GeneralTipsException.Type.G_Null_ResultNotAccurate
+                )
 
-                        val r = mutableListOf<Pair<MaiSong, Double>>()
+                val r = mutableListOf<Pair<MaiSong, Double>>()
 
-                        for (p in possibles) {
-                            val y = DataUtil.getStringSimilarity(title, p.title)
+                for (p in possibles) {
+                    val y = DataUtil.getStringSimilarity(title, p.title)
 
-                            if (y >= 0.4) {
-                                r.add(Pair(p, y))
-                            }
-                        }
-
-                        if (r.isEmpty())
-                                throw GeneralTipsException(
-                                        GeneralTipsException.Type.G_Null_ResultNotAccurate
-                                )
-
-                        r.stream().sorted(Comparator.comparingDouble<Pair<MaiSong, Double>?> { it.second }.reversed())
-                            .map { it.first }.toList().first()
+                    if (y >= 0.4) {
+                        r.add(Pair(p, y))
                     }
-                } else if (param.id != null) {
-                    // 搜歌模式
-                    maimaiApiService.getMaimaiSong(param.id.toLong())
-                            ?: maimaiApiService.getMaimaiAliasSong(param.id.toString()) // 有的歌曲外号叫 3333
-                            ?: throw GeneralTipsException(
-                                    GeneralTipsException.Type.G_Null_Song,
-                                    param.id,
-                            )
-                } else {
-                    throw GeneralTipsException(
-                            GeneralTipsException.Type.G_Malfunction_Classification,
-                            "舞萌成绩",
-                    )
                 }
+
+                if (r.isEmpty()) throw GeneralTipsException(
+                    GeneralTipsException.Type.G_Null_ResultNotAccurate
+                )
+
+                r.stream().sorted(Comparator.comparingDouble<Pair<MaiSong, Double>?> { it.second }.reversed())
+                    .map { it.first }.toList().first()
+            }
+        } else if (param.id != null) { // 搜歌模式
+            maimaiApiService.getMaimaiSong(param.id.toLong())
+                ?: maimaiApiService.getMaimaiAliasSong(param.id.toString()) // 有的歌曲外号叫 3333
+                ?: throw GeneralTipsException(
+                    GeneralTipsException.Type.G_Null_Song,
+                    param.id,
+                )
+        } else {
+            throw GeneralTipsException(
+                GeneralTipsException.Type.G_Malfunction_Classification,
+                "舞萌成绩",
+            )
+        }
 
         run {
             val standard: MaiSong
             val deluxe: MaiSong
 
             // 获取符合的成绩
-            val scores: List<MaiScore> =
-                    full.records
-                            .stream()
-                            .filter {
-                                if (result.songID < 10000) {
-                                    return@filter it.songID == result.songID.toLong() ||
-                                            it.songID == (result.songID + 10000).toLong()
-                                } else {
-                                    return@filter it.songID == result.songID.toLong() ||
-                                            it.songID == (result.songID - 10000).toLong()
-                                }
-                            }
-                            .toList()
+            val scores: List<MaiScore> = if (full != null) {
+                full.records.stream().filter {
+                        if (result.songID < 10000) {
+                            return@filter it.songID == result.songID.toLong() || it.songID == (result.songID + 10000).toLong()
+                        } else {
+                            return@filter it.songID == result.songID.toLong() || it.songID == (result.songID - 10000).toLong()
+                        }
+                    }.toList()
+            } else {
+                listOf()
+            }
 
             maimaiApiService.insertSongData(scores)
 
@@ -222,35 +208,32 @@ class MaiScoreService(
                 deluxe = result
             }
 
-            image =
-                    imageService.getPanel(
-                            MSPanelParam(songs = mutableListOf(standard, deluxe), scores = scores)
-                                    .toMap(),
-                            "MS",
-                    )
+            image = imageService.getPanel(
+                MSPanelParam(songs = listOf(standard, deluxe), scores = scores).toMap(),
+                "MS",
+            )
         }
 
         event.reply(image)
     }
 
     companion object {
-        @JvmStatic
-        fun getFullScoreOrEmpty(
-                qq: Long?,
-                name: String?,
-                maimaiApiService: MaimaiApiService,
-        ): MaiBestScore {
+        @JvmStatic fun getFullScoreOrNull(
+            qq: Long?,
+            name: String?,
+            maimaiApiService: MaimaiApiService,
+        ): MaiBestScore? {
             return if (qq.isNotNull()) {
                 try {
                     maimaiApiService.getMaimaiFullScores(qq!!)
-                } catch (e: WebClientResponseException) {
-                    return MaiBestScore()
+                } catch (e: Exception) {
+                    return null
                 }
             } else if (name.isNotNull()) {
                 try {
                     maimaiApiService.getMaimaiFullScores(name!!)
-                } catch (e: WebClientResponseException) {
-                    return MaiBestScore()
+                } catch (e: Exception) {
+                    return null
                 }
             } else {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
@@ -281,24 +264,12 @@ class MaiScoreService(
 
             var i = 1
             for (e in sort) {
-                val code =
-                        MaiVersion.getCodeList(MaiVersion.getVersionList(e.value.info.version))
-                                .first()
+                val code = MaiVersion.getCodeList(MaiVersion.getVersionList(e.value.info.version)).first()
                 val category = MaiVersion.getCategoryAbbreviation(e.value.info.genre)
 
-                sb.append("#${i}:")
-                        .append(" ")
-                        .append(String.format("%.0f", e.key * 100))
-                        .append("%")
-                        .append(" ")
-                        .append("[${e.value.songID}]")
-                        .append(" ")
-                        .append(e.value.title)
-                        .append(" ")
-                        .append("[${code}]")
-                        .append(" / ")
-                        .append("[${category}]")
-                        .append("\n")
+                sb.append("#${i}:").append(" ").append(String.format("%.0f", e.key * 100)).append("%").append(" ")
+                    .append("[${e.value.songID}]").append(" ").append(e.value.title).append(" ").append("[${code}]")
+                    .append(" / ").append("[${category}]").append("\n")
 
                 i++
 
@@ -309,11 +280,8 @@ class MaiScoreService(
 
             sb.removeSuffix("\n")
 
-            return MessageChain.MessageChainBuilder()
-                    .addText("搜索结果：\n")
-                    .addImage(img)
-                    .addText(sb.toString())
-                    .build()
+            return MessageChain.MessageChainBuilder().addText("搜索结果：\n").addImage(img).addText(sb.toString())
+                .build()
         }
 
         // uum
@@ -323,10 +291,10 @@ class MaiScoreService(
             sb.addImage(image)
             sb.addText("\n")
             sb.addText(
-                    "[${score.type}] ${score.title} [${score.difficulty} ${score.level}] (${score.star})\n"
+                "[${score.type}] ${score.title} [${score.difficulty} ${score.level}] (${score.star})\n"
             )
             sb.addText(
-                    "${String.format("%.4f", score.achievements)}% ${getRank(score.rank)} // ${score.rating} ra\n"
+                "${String.format("%.4f", score.achievements)}% ${getRank(score.rank)} // ${score.rating} ra\n"
             )
             sb.addText("[${getCombo(score.combo)}] [${getSync(score.sync)}] // id ${score.songID}")
 
