@@ -9,8 +9,8 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.PerformancePlusService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
 import com.now.nowbot.throwable.serviceException.PPPlusException
-import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD
@@ -79,10 +79,10 @@ class PPPlusMapService(
     private fun BeatMap.addPPPlus(pp: PPPlus, mods: List<LazerMod>) {
         starRating = pp.difficulty.total ?: 0.0
         if (mods.isNotEmpty()) {
-            CS = DataUtil.applyCS(CS!!, mods)
-            AR = DataUtil.applyAR(AR!!, mods)
-            OD = DataUtil.applyOD(OD!!, mods)
-            HP = DataUtil.applyOD(HP!!, mods)
+            CS = CalculateApiImpl.applyCS(CS!!, mods)
+            AR = CalculateApiImpl.applyAR(AR!!, mods)
+            OD = CalculateApiImpl.applyOD(OD!!, mods)
+            HP = CalculateApiImpl.applyOD(HP!!, mods)
         }
     }
 }

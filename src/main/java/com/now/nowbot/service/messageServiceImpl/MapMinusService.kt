@@ -13,6 +13,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.throwable.serviceException.MapMinusException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
@@ -26,6 +27,7 @@ import org.springframework.util.StringUtils
 @Service("MAP_MINUS")
 class MapMinusService(
     private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
 ) :
     MessageService<MapMinusService.MapMinusParam>,
@@ -49,7 +51,7 @@ class MapMinusService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: MapMinusParam) {
-        val image = getMapMinusImage(param, beatmapApiService, imageService)
+        val image = getMapMinusImage(param, beatmapApiService, calculateApiService, imageService)
 
         try {
             event.reply(image)
@@ -69,7 +71,7 @@ class MapMinusService(
     }
 
     override fun reply(event: MessageEvent, param: MapMinusParam): MessageChain? {
-        val image = getMapMinusImage(param, beatmapApiService, imageService)
+        val image = getMapMinusImage(param, beatmapApiService, calculateApiService, imageService)
         return MessageChainBuilder().addImage(image).build()
     }
 
@@ -106,6 +108,7 @@ class MapMinusService(
         private fun getMapMinusImage(
             param: MapMinusParam,
             beatmapApiService: OsuBeatmapApiService,
+            calculateApiService: OsuCalculateApiService,
             imageService: ImageService,
         ): ByteArray {
             val fileStr: String
@@ -118,7 +121,7 @@ class MapMinusService(
                 beatMap = beatmapApiService.getBeatMap(param.bid) // 从数据库拿的谱面没有游戏模式，你问我为什么，我怎么知道
                 mode = OsuMode.getMode(beatMap.modeInt)
 
-                beatmapApiService.applyStarRating(beatMap, beatMap.mode, param.modsList)
+                calculateApiService.applyStarToBeatMap(beatMap, beatMap.mode, param.modsList)
                 fileStr = beatmapApiService.getBeatMapFileString(param.bid)
             } catch (e: Exception) {
                 throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)

@@ -8,6 +8,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.serviceException.LeaderBoardException
 import com.now.nowbot.util.Instruction
@@ -21,6 +22,7 @@ import java.util.regex.Matcher
 @Service("LEADER_BOARD")
 class LeaderBoardService(
     private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService,
     private val scoreApiService: OsuScoreApiService,
     private val imageService: ImageService,
 ) : MessageService<Matcher> {
@@ -94,7 +96,7 @@ class LeaderBoardService(
         if (range > scores.size) range = scores.size
         val subScores = scores.subList(0, range)
 
-        beatmapApiService.applyPP(subScores)
+        calculateApiService.applyPPToScores(subScores)
 
         try {
             val image = imageService.getPanelA3(beatMap,

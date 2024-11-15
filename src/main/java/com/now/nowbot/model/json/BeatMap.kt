@@ -160,10 +160,8 @@ open class BeatMap {
         get() {
             return if (beatMapSet != null) {
                 beatMapSet!!.artist + " - " + beatMapSet!!.title + " (" + beatMapSet!!.creator + ") [" + difficultyName + "]"
-            } else if (beatMapID > 0L) {
-                beatMapID.toString()
             } else {
-                ""
+                difficultyName
             }
         }
 

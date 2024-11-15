@@ -11,6 +11,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
@@ -40,6 +41,7 @@ import kotlin.math.min
     private val imageService: ImageService,
     private val uubaService: UUBAService,
     private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
     data class BAParam(val user: OsuUser, val scores: List<LazerScore>, val isMyself: Boolean)
@@ -65,7 +67,7 @@ import kotlin.math.min
     }
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: BAParam) {
-        val image = param.getImage(2, beatmapApiService, userApiService, imageService, uubaService)
+        val image = param.getImage(2, calculateApiService, userApiService, imageService, uubaService)
 
         try {
             event.reply(image)
@@ -91,7 +93,7 @@ import kotlin.math.min
     }
 
     override fun reply(event: MessageEvent, param: BAParam): MessageChain? = QQMsgUtil.getImage(
-        param.getImage(2, beatmapApiService, userApiService, imageService, uubaService)
+        param.getImage(2, calculateApiService, userApiService, imageService, uubaService)
     )
 
     companion object {
@@ -346,7 +348,7 @@ import kotlin.math.min
 
         @JvmStatic fun BAParam.getImage(
             version: Int = 1,
-            beatmapApiService: OsuBeatmapApiService,
+            calculateApiService: OsuCalculateApiService,
             userApiService: OsuUserApiService,
             imageService: ImageService,
             uubaService: UUBAService
@@ -363,7 +365,7 @@ import kotlin.math.min
             }
 
             // 提取星级变化的谱面 DT/HT 等
-            beatmapApiService.applyStarRating(scores)
+            calculateApiService.applyStarToScores(scores)
 
             val data = parseData(
                 user, scores, userApiService, version

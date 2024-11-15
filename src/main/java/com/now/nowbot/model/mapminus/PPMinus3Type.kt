@@ -32,7 +32,7 @@ class PPMinus3Type {
         SPEED_STREAM("速切图", 5.37, 4.39, 2.94, 2.54, 4.73, 5.77, 5.27, 0.0),
 
         // 1938170 Cyber Inductance (Speed Up Ver.)
-        STAMINA_RICE("耐力米图", 5.98, 5.11, 2.33, 2.3, 3.84, 6.73, 6.25, 0.0),
+        STAMINA_RICE("耐力/技巧图", 5.98, 5.11, 2.33, 2.3, 3.84, 6.73, 6.25, 0.0),
 
         // 4376016 your new home
         EASY_RELEASE("简单放手图", 3.45, 1.09, 3.81, 5.88, 1.67, 1.55, 1.12, 0.0),
@@ -68,7 +68,7 @@ class PPMinus3Type {
         MODERN("现代图", 5.18, 2.39, 5.68, 4.86, 3.56, 3.17, 4.75, 0.0),
 
         // 4487439 重霄
-        AWMRONE("狙", 12.08, 7.71, 11.12, 10.82, 9.1, 9.49, 10.96, 0.0);
+        AWMRONE("狙\uD83D\uDC4C", 12.08, 7.71, 11.12, 10.82, 9.1, 9.49, 10.96, 0.0);
     }
 
     companion object {
@@ -85,12 +85,14 @@ class PPMinus3Type {
                 for(e in ManiaType.entries) {
                     var similarity = 1.0
 
+                    similarity *= getDifference(m.sr, e.star)
+
                     val typeList = getStandardizedList(
                         listOf(e.rice, e.ln, e.coordination, e.precision, e.speed, e.stamina)
                     )
 
                     for(i in 0..5) {
-                        similarity *= getStandardDeviation(mapList[i], typeList[i])
+                        similarity *= getStandardDeviation(mapList[i] - typeList[i])
                     }
 
                     typeMap[e.chinese] = similarity.pow(1.0 / 6.0)
@@ -116,14 +118,23 @@ class PPMinus3Type {
             return list.stream().map {(it - average) / deviation}.toList()
         }
 
-        // 获取正态分布密度，均值 0，标准差 1
-        private fun getStandardDeviation(input: Double, base: Double) : Double {
-            return exp(- (input - base).pow(2) / 2) / sqrt(2 * PI)
+        // 获取正态分布密度，均值 0，标准差 sqrt(2 * PI)
+        private fun getStandardDeviation(x: Double) : Double {
+            return exp(- (x.pow(2.0) / 2.0))
         }
 
-        // 0.01-1 限制值
+        //
+        private fun getDifference(input: Double, base: Double) : Double {
+            return if (base != 0.0) {
+                1.0 - clamp(double = (input - base) / base)
+            } else {
+                1.0
+            }
+        }
+
+        // 0-0.99 限制值
         private fun clamp(double: Double) : Double {
-            return min(max(abs(double), 1.0), 0.01)
+            return max(min(abs(double), 0.99), 0.0)
         }
     }
 }

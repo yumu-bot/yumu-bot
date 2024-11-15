@@ -13,6 +13,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.MapStatisticsService.MapParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.serviceException.BindException
@@ -33,9 +34,10 @@ import rosu.result.JniResult
 
 @Service("MAP")
 class MapStatisticsService(
-        private val imageService: ImageService,
         private val beatmapApiService: OsuBeatmapApiService,
         private val userApiService: OsuUserApiService,
+        private val calculateApiService: OsuCalculateApiService,
+        private val imageService: ImageService,
         private val bindDao: BindDao,
 ) : MessageService<MapParam>, TencentMessageService<MapParam> {
 
@@ -238,7 +240,7 @@ class MapStatisticsService(
     }
 
     private fun MapParam.getImage(): ByteArray {
-        return getPanelE6Image(user, beatmap, expected, beatmapApiService, imageService)
+        return getPanelE6Image(user, beatmap, expected, beatmapApiService, calculateApiService, imageService)
     }
 
     companion object {
@@ -250,6 +252,7 @@ class MapStatisticsService(
                 beatmap: BeatMap,
                 expected: Expected,
                 beatmapApiService: OsuBeatmapApiService,
+                calculateApiService: OsuCalculateApiService,
                 imageService: ImageService,
         ): ByteArray {
 
@@ -265,11 +268,11 @@ class MapStatisticsService(
                 original["total"] = totalLength
             }
 
-            beatmapApiService.applySRAndPP(beatmap, expected)
+            calculateApiService.applyStarToBeatMap(beatmap, expected)
 
             val pp = getPPList(beatmap, expected, beatmapApiService)
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
-            val attributes = beatmapApiService.getPP(beatmap, expected)
+            val attributes = calculateApiService.getExpectedPP(beatmap, expected)
 
             return imageService.getPanel(
                     PanelE6Param(user, beatmap, density, original, attributes, pp, expected)

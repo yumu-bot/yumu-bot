@@ -5,7 +5,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.util.DataUtil
+import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import java.util.*
@@ -60,18 +60,18 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
 
         
         val a = beatmapApiService.getAttributes(bid.toLong(), LazerMod.getModsValue(mods))
-        val newTotalLength = DataUtil.applyLength(b.totalLength, mods).toFloat()
+        val newTotalLength = CalculateApiImpl.applyLength(b.totalLength, mods).toFloat()
         
         sb.append(String.format("%.2f", a.starRating)).append(',')
-        .append(String.format("%d", Math.round(DataUtil.applyBPM(b.BPM, mods)))).append(',')
+        .append(String.format("%d", Math.round(CalculateApiImpl.applyBPM(b.BPM, mods)))).append(',')
         .append(String.format("%d", Math.round(floor((newTotalLength / 60f).toDouble()))))
         .append(':')
         .append(String.format("%02d", Math.round(newTotalLength % 60f)))
         .append(',')
         sb.append(a.maxCombo).append(',')
-        .append(String.format("%.2f", DataUtil.applyCS(b.CS!!, mods))).append(',')
-        .append(String.format("%.2f", DataUtil.applyAR(b.AR!!, mods))).append(',')
-        .append(String.format("%.2f", DataUtil.applyOD(b.OD!!, mods)))
+        .append(String.format("%.2f", CalculateApiImpl.applyCS(b.CS!!, mods))).append(',')
+        .append(String.format("%.2f", CalculateApiImpl.applyAR(b.AR!!, mods))).append(',')
+        .append(String.format("%.2f", CalculateApiImpl.applyOD(b.OD!!, mods)))
         
         event.subject.sendMessage(sb.toString())
     }

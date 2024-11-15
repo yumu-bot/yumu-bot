@@ -10,8 +10,8 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPService.BPParam
-import com.now.nowbot.service.messageServiceImpl.ScorePRService.Companion.getScore4PanelE5
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.*
@@ -28,9 +28,10 @@ import java.util.regex.Matcher
 
 @Service("BP")
 class BPService(
-    private var beatmapApiService: OsuBeatmapApiService,
-    private var scoreApiService: OsuScoreApiService,
-    private var imageService: ImageService,
+    private val calculateApiService: OsuCalculateApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val scoreApiService: OsuScoreApiService,
+    private val imageService: ImageService,
 ) : MessageService<BPParam>, TencentMessageService<BPParam> {
 
     data class BPParam(val user: OsuUser?, val BPMap: Map<Int, LazerScore>, val isMyself: Boolean)
@@ -147,13 +148,13 @@ class BPService(
         try {
             if (BPMap.size > 1) {
                 val ranks = ArrayList<Int>()
-                val scores = ArrayList<LazerScore?>()
+                val scores = ArrayList<LazerScore>()
                 for ((key, value) in BPMap) {
                     ranks.add(key + 1)
                     scores.add(value)
                 }
 
-                beatmapApiService.applySRAndPP(scores)
+                calculateApiService.applyStarToScores(scores)
 
                 imageService.getPanelA4(user, scores, ranks, "BS")
             } else {
@@ -163,7 +164,7 @@ class BPService(
                     score = value
                 }
 
-                val e5Param = getScore4PanelE5(user!!, score!!, "B", beatmapApiService)
+                val e5Param = ScorePRService.getScore4PanelE5(user!!, score!!, "B", beatmapApiService, calculateApiService)
                 imageService.getPanel(e5Param.toMap(), "E5")
             }
         } catch (e: Exception) {

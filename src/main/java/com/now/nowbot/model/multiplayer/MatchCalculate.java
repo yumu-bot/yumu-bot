@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.Match;
 import com.now.nowbot.model.json.MicroUser;
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService;
 import jakarta.annotation.Resource;
 import org.springframework.lang.NonNull;
 import org.springframework.util.CollectionUtils;
@@ -26,7 +27,9 @@ public class MatchCalculate {
     private List<Match.MatchScore> scores;
 
     @Resource
-    OsuBeatmapApiService beatmapApiService;
+    OsuBeatmapApiService   beatmapApiService;
+    @Resource
+    OsuCalculateApiService calculateApiService;
 
     /**
      * @param delete 是否保留低于 1w 的成绩，true 为删除，false 为保留
@@ -185,7 +188,7 @@ public class MatchCalculate {
             b = beatmapApiService.getBeatMapFromDataBase(b.getBeatMapID());
 
             // apply changes
-            beatmapApiService.applySRAndPP(b, m, LazerMod.getModsList(r.getMods()));
+            calculateApiService.applyStarToBeatMap(b, m, LazerMod.getModsList(r.getMods()));
 
             r.setBeatMap(b);
         }

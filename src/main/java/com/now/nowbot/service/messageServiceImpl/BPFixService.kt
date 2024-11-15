@@ -2,8 +2,8 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.model.json.LazerScoreWithFcPP
+import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -12,6 +12,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPFixService.BPFixParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.CmdUtil.getMode
@@ -23,16 +24,17 @@ import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.pow
+import kotlin.math.roundToInt
 
 @Service("BP_FIX")
 class BPFixService(
     private val imageService: ImageService,
     private val scoreApiService: OsuScoreApiService,
     private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService,
 ) : MessageService<BPFixParam>, TencentMessageService<BPFixParam> {
 
     data class BPFixParam(val user: OsuUser, val bpMap: Map<Int, LazerScore>, val mode: OsuMode)
@@ -72,12 +74,10 @@ class BPFixService(
         if (!matcher.find()) return null
 
         val mode = getMode(matcher)
-
         val user = getUserWithOutRange(event, matcher, mode)
+        val bests = scoreApiService.getBestScores(user.userID, mode.data)
 
-        val bpMap = scoreApiService.getBestScores(user.userID, mode.data, 0, 100)
-
-        return BPFixParam(user, processBP(bpMap), mode.data!!)
+        return BPFixParam(user, processBP(bests), mode.data!!)
     }
 
     override fun reply(event: MessageEvent, param: BPFixParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
@@ -92,10 +92,17 @@ class BPFixService(
 
             val max = score.totalHit
             val combo = score.maxCombo
-            val miss = score.statistics.miss ?: 0
+            val stat = score.statistics
+            val ok = stat.ok ?: 0
+            val meh = stat.meh ?: 0
+            val miss = stat.miss ?: 0
 
-            // 断连击，mania 模式不参与此项筛选
-            val isChoke = (miss == 0) && (combo < Math.round(max * 0.98)) && (score.mode != OsuMode.MANIA)
+            // 断连击，mania 模式现在也可以参与此项筛选
+            val isChoke = if (score.mode == OsuMode.MANIA) {
+                (ok + meh + miss) / max <= 0.03
+            } else {
+                (miss == 0) && (combo < (max * 0.98).roundToInt())
+            }
 
             // 含有 <1% 的失误
             val has1pMiss = (miss > 0) && ((1.0 * miss / max) <= 0.01)
@@ -141,7 +148,7 @@ class BPFixService(
         val scoreList =
             bpList.stream().filter { s: LazerScore? -> s is LazerScoreWithFcPP }.map { s: LazerScore -> s as LazerScoreWithFcPP }.toList()
 
-        if (CollectionUtils.isEmpty(scoreList)) return null
+        if (scoreList.isEmpty()) return null
 
         val result = HashMap<String, Any>(2)
         result["scores"] = scoreList
@@ -154,7 +161,7 @@ class BPFixService(
         val result = LazerScoreWithFcPP.copyOf(score)
         result.index = index + 1
         try {
-            val pp = beatmapApiService.getFcPP(score)
+            val pp = calculateApiService.getScoreFullComboPP(score)
             result.fcPP = pp.pp
         } catch (e: Exception) {
             log.error("bp 计算 pp 出错:", e)
@@ -163,14 +170,12 @@ class BPFixService(
     }
 
     private fun BPFixParam.getImage(): ByteArray {
-        if (CollectionUtils.isEmpty(bpMap)) throw GeneralTipsException(
+        if (bpMap.isEmpty()) throw GeneralTipsException(
             GeneralTipsException.Type.G_Null_PlayerRecord,
             mode.getName()
         )
 
-        val pp = Objects.requireNonNullElse(user.pp, 0.0)
-
-        val fixData = fix(pp, bpMap) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP)
+        val fixData = fix(user.pp, bpMap) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP)
 
         return try {
             imageService.getPanelA7(user, fixData)

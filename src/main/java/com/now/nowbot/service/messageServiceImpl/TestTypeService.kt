@@ -13,6 +13,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.TestTypeService.MapTypeParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.throwable.serviceException.MapMinusException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MOD
@@ -21,7 +22,7 @@ import org.springframework.util.StringUtils
 
 @Service("TEST_TYPE")
 class TestTypeService(
-    private val beatmapApiService: OsuBeatmapApiService, private val imageService: ImageService
+    private val beatmapApiService: OsuBeatmapApiService, private val imageService: ImageService, private val calculateApiService: OsuCalculateApiService
 ) : MessageService<MapTypeParam> {
     data class MapTypeParam(val bid: Long, val rate: Double = 1.0, val modsList: List<LazerMod>)
 
@@ -75,7 +76,7 @@ class TestTypeService(
             beatMap = beatmapApiService.getBeatMapFromDataBase(param.bid)
             mode = OsuMode.getMode(beatMap.modeInt)
 
-            beatmapApiService.applySRAndPP(beatMap, beatMap.mode, param.modsList)
+            calculateApiService.applyStarToBeatMap(beatMap, beatMap.mode, param.modsList)
             fileStr = beatmapApiService.getBeatMapFileString(param.bid)
         } catch (e: Exception) {
             throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
@@ -114,6 +115,7 @@ class TestTypeService(
             sb.append("#${i}:")
                 .append(" ")
                 .append(String.format("%.2f", e.value * 100))
+                .append("%")
                 .append(" ")
                 .append("[${e.key}]")
                 .append("\n")

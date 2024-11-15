@@ -29,7 +29,7 @@ open class LazerScore {
     var ranked: Boolean = false
 
     @JsonProperty("maximum_statistics")
-    var maximumStatistics: StatisticsV2 = StatisticsV2()
+    var maximumStatistics: LazerStatistics = LazerStatistics()
 
     @get:JsonProperty("total_hit")
     val totalHit: Int
@@ -117,7 +117,7 @@ open class LazerScore {
     )
 
     @JsonProperty("statistics")
-    var statistics: StatisticsV2 = StatisticsV2()
+    var statistics: LazerStatistics = LazerStatistics()
 
     @get:JsonProperty("score_hit")
     // 获取目前成绩进度（部分未通过成绩，这里并不是总和）
@@ -146,7 +146,7 @@ open class LazerScore {
             }
         }
 
-    data class StatisticsV2(
+    data class LazerStatistics(
         // M 320
         @JsonProperty("perfect") var perfect: Int? = 0,
 
@@ -189,9 +189,9 @@ open class LazerScore {
         // 仅 MAX 有
         @JsonProperty("legacy_combo_increase") var legacyComboIncrease: Int? = 0,
     ) : Cloneable {
-        public override fun clone(): StatisticsV2 {
+        public override fun clone(): LazerStatistics {
             try {
-                return super.clone() as StatisticsV2
+                return super.clone() as LazerStatistics
             } catch (e: CloneNotSupportedException) {
                 throw AssertionError()
             }

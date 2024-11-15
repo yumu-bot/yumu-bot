@@ -13,7 +13,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.UUBAService.BPHeadTailParam
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
@@ -34,11 +34,11 @@ import kotlin.math.max
 
 @Service("UU_BA")
 class UUBAService(
-        private val userApiService: OsuUserApiService,
-        private val scoreApiService: OsuScoreApiService,
-        private val beatmapApiService: OsuBeatmapApiService,
-        private val bindDao: BindDao,
-        private val imageService: ImageService,
+    private val userApiService: OsuUserApiService,
+    private val scoreApiService: OsuScoreApiService,
+    private val calculateApiService: OsuCalculateApiService,
+    private val bindDao: BindDao,
+    private val imageService: ImageService,
 ) : MessageService<BPHeadTailParam>, TencentMessageService<BPHeadTailParam> {
 
     // bpht 的全称大概是 BP Head / Tail
@@ -140,7 +140,7 @@ class UUBAService(
             }
         }
 
-        beatmapApiService.applySRAndPP(bps)
+        calculateApiService.applyStarToScores(bps)
         val lines =
                 if (OsuMode.isDefaultOrNull(mode)) {
                     getTextPlus(bps, bu.osuName, "")
@@ -180,7 +180,7 @@ class UUBAService(
             osuMode = mode
         }
         val bps = scoreApiService.getBestScores(bu, mode, 0, 100)
-        beatmapApiService.applySRAndPP(bps)
+        calculateApiService.applyStarToScores(bps)
         val modeStr = mode?.getName() ?: ""
         val lines = getTextPlus(bps, bu.osuName, modeStr)
         return MessageChain(lines)

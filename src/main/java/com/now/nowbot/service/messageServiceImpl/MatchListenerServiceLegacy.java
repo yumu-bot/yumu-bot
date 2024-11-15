@@ -12,6 +12,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService;
 import com.now.nowbot.service.osuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.throwable.TipsRuntimeException;
@@ -47,9 +48,11 @@ public class MatchListenerServiceLegacy implements MessageService<MatchListenerS
     @Resource
     OsuMatchApiService   matchApiService;
     @Resource
-    OsuBeatmapApiService beatmapApiService;
+    OsuBeatmapApiService   beatmapApiService;
     @Resource
-    ImageService         imageService;
+    OsuCalculateApiService calculateApiService;
+    @Resource
+    ImageService           imageService;
 
     public static void stopAllListener() {
         ListenerCheck.listenerMap.values().forEach(l -> l.stopListener(MatchListenerLegacy.StopType.SERVICE_STOP));
@@ -289,7 +292,7 @@ public class MatchListenerServiceLegacy implements MessageService<MatchListenerS
 
             // apply changes
             beatmapApiService.applyBeatMapExtend(round);
-            beatmapApiService.applySRAndPP(round.getBeatMap(), OsuMode.getMode(round.getMode()), LazerMod.getModsList(round.getMods()));
+            calculateApiService.applyStarToBeatMap(round.getBeatMap(), OsuMode.getMode(round.getMode()), LazerMod.getModsList(round.getMods()));
 
             return getDataImage(round, match.getMatchStat(), index, imageService);
         } catch (Exception e) {
@@ -307,7 +310,7 @@ public class MatchListenerServiceLegacy implements MessageService<MatchListenerS
 
         // apply changes
         beatmapApiService.applyBeatMapExtend(r);
-        beatmapApiService.applySRAndPP(r.getBeatMap(), OsuMode.getMode(r.getMode()), LazerMod.getModsList(r.getMods()));
+        calculateApiService.applyStarToBeatMap(r.getBeatMap(), OsuMode.getMode(r.getMode()), LazerMod.getModsList(r.getMods()));
 
         var b = r.getBeatMap();
 

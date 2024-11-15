@@ -520,6 +520,11 @@ public class PPMinus3ManiaImpl extends PPMinus3 {
         return getValueList();
     }
 
+    // kotlin 读不到下面的东西？
+    public Double getSR() {
+        return getStar();
+    }
+
     // 重写
     @Override
     public List<Double> getValueList() {

@@ -13,6 +13,7 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.ScorePRService.Companion.getScore4PanelE5
 import com.now.nowbot.service.messageServiceImpl.ScoreService.ScoreParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
@@ -36,6 +37,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 class ScoreService(
         private val scoreApiService: OsuScoreApiService,
         private val beatmapApiService: OsuBeatmapApiService,
+        private val calculateApiService: OsuCalculateApiService,
         private val imageService: ImageService,
 ) : MessageService<ScoreParam>, TencentMessageService<ScoreParam> {
 
@@ -212,12 +214,12 @@ class ScoreService(
 
         try {
             if (scores.size > 1) {
-                beatmapApiService.applySRAndPP(scores)
+                calculateApiService.applyStarToScores(scores)
                 beatmapApiService.applyBeatMapExtendForSameScore(scores)
                 image = imageService.getPanelA5(user, scores, "SS")
             } else {
                 val score = scores.first()
-                val e5Param = getScore4PanelE5(user, score, "S", beatmapApiService)
+                val e5Param = getScore4PanelE5(user, score, "S", beatmapApiService, calculateApiService)
 
                 image = imageService.getPanel(e5Param.toMap(), "E5")
             }
@@ -287,7 +289,7 @@ class ScoreService(
         }
 
         val image: ByteArray
-        val e5Param = getScore4PanelE5(user, score!!, position, "S", beatmapApiService)
+        val e5Param = getScore4PanelE5(user, score!!, position, "S", beatmapApiService, calculateApiService)
 
         try {
             image = imageService.getPanel(e5Param.toMap(), "E5")

@@ -53,6 +53,8 @@ public class BotWebApi {
     @Resource
     OsuBeatmapApiService    beatmapApiService;
     @Resource
+    OsuCalculateApiService  calculateApiService;
+    @Resource
     ImageService            imageService;
     @Resource
     OsuDiscussionApiService discussionApiService;
@@ -318,12 +320,12 @@ public class BotWebApi {
                 for (int i = offset; i <= (offset + limit); i++) ranks.add(i + 1);
 
                 if (isMultipleScore) {
-                    beatmapApiService.applySRAndPP(scores);
+                    calculateApiService.applyStarToScores(scores);
                     data = imageService.getPanelA4(osuUser, scores, ranks, "BS");
                     suffix = "-bps.jpg";
                 } else {
                     try {
-                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), "B", beatmapApiService);
+                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), "B", beatmapApiService, calculateApiService);
                         data = imageService.getPanel(e5Param.toMap(), "E5");
                     } catch (Exception e) {
                         throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩"));
@@ -335,14 +337,14 @@ public class BotWebApi {
             case Pass -> {
                 scores = scoreApiService.getPassedScore(osuUser.getUserID(), mode, offset, limit);
 
-                beatmapApiService.applySRAndPP(scores);
+                calculateApiService.applyStarToScores(scores);
 
                 if (isMultipleScore) {
                     data = imageService.getPanelA5(osuUser, scores, "PS");
                     suffix = "-passes.jpg";
                 } else {
                     try {
-                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), "P", beatmapApiService);
+                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), "P", beatmapApiService, calculateApiService);
                         data = imageService.getPanel(e5Param.toMap(), "E5");
                     } catch (Exception e) {
                         throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "通过成绩"));
@@ -355,14 +357,14 @@ public class BotWebApi {
             case Recent -> {
                 scores = scoreApiService.getPassedScore(osuUser.getUserID(), mode, offset, limit);
 
-                beatmapApiService.applySRAndPP(scores);
+                calculateApiService.applyStarToScores(scores);
 
                 if (isMultipleScore) {
                     data = imageService.getPanelA5(osuUser, scores, "RS");
                     suffix = "-recents.jpg";
                 } else {
                     try {
-                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), "R", beatmapApiService);
+                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), "R", beatmapApiService, calculateApiService);
                         data = imageService.getPanel(e5Param.toMap(), "E5");
                     } catch (Exception e) {
                         throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最近成绩"));
@@ -376,7 +378,7 @@ public class BotWebApi {
                 scores = scoreApiService.getScore(osuUser.getUserID(), mode, offset, 1, true);
                 var score = scores.getFirst();
 
-                beatmapApiService.applySRAndPP(scores);
+                calculateApiService.applyStarToScores(scores);
 
                 data = imageService.getPanelGamma(score);
                 suffix = "-pass_card.jpg";
@@ -387,7 +389,7 @@ public class BotWebApi {
                 scores = scoreApiService.getScore(osuUser.getUserID(), mode, offset, 1, false);
                 var score = scores.getFirst();
 
-                beatmapApiService.applySRAndPP(scores);
+                calculateApiService.applyStarToScores(scores);
 
                 data = imageService.getPanelGamma(score);
                 suffix = "-recent_card.jpg";
@@ -412,7 +414,7 @@ public class BotWebApi {
                     }
                 }
 
-                beatmapApiService.applySRAndPP(scores);
+                calculateApiService.applyStarToScores(scores);
 
                 data = imageService.getPanelA4(osuUser, scores, ranks, "T");
                 suffix = "-todaybp.jpg";
@@ -602,7 +604,7 @@ public class BotWebApi {
         byte[] image;
 
         try {
-            var e5Param = ScorePRService.getScore4PanelE5(osuUser, score, "S", beatmapApiService);
+            var e5Param = ScorePRService.getScore4PanelE5(osuUser, score, "S", beatmapApiService, calculateApiService);
             image = imageService.getPanel(e5Param.toMap(), "E5");
         } catch (Exception e) {
             throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "成绩列表"));
@@ -747,7 +749,7 @@ public class BotWebApi {
                     false
             );
 
-            var image = MapStatisticsService.getPanelE6Image(null, beatMap, expected, beatmapApiService, imageService);
+            var image = MapStatisticsService.getPanelE6Image(null, beatMap, expected, beatmapApiService, calculateApiService, imageService);
 
             return new ResponseEntity<>(image, getImageHeader(STR."\{bid}-mapinfo.jpg", image.length), HttpStatus.OK);
         } catch (Exception e) {

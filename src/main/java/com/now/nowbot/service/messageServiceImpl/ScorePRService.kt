@@ -12,6 +12,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.ScorePRService.ScorePRParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.*
@@ -36,6 +37,7 @@ class ScorePRService(
         private val imageService: ImageService,
         private val scoreApiService: OsuScoreApiService,
         private val beatmapApiService: OsuBeatmapApiService,
+        private val calculateApiService: OsuCalculateApiService,
 ) : MessageService<ScorePRParam>, TencentMessageService<ScorePRParam> {
 
     @JvmRecord
@@ -274,7 +276,7 @@ class ScorePRService(
             }
 
             val scores: List<LazerScore?> = scoreList.subList(offset, offset + limit)
-            beatmapApiService.applySRAndPP(scoreList)
+            calculateApiService.applyStarToScores(scoreList)
 
             try {
                 // 处理新人群 ps 超星问题
@@ -292,7 +294,7 @@ class ScorePRService(
         } else {
             // 单成绩发送
             val score: LazerScore = scoreList.first()
-            val e5Param = getScore4PanelE5(user, score, (if (isRecent) "R" else "P"), beatmapApiService)
+            val e5Param = getScore4PanelE5(user, score, (if (isRecent) "R" else "P"), beatmapApiService, calculateApiService)
             try {
                 image = imageService.getPanel(e5Param.toMap(), "E5")
                 return QQMsgUtil.getImage(image)
@@ -315,9 +317,10 @@ class ScorePRService(
             user: OsuUser,
             score: LazerScore,
             panel: String,
-            beatmapApiService: OsuBeatmapApiService
+            beatmapApiService: OsuBeatmapApiService,
+            calculateApiService: OsuCalculateApiService
         ): PanelE5Param {
-            return getScore4PanelE5(user, score, null, panel, beatmapApiService)
+            return getScore4PanelE5(user, score, null, panel, beatmapApiService, calculateApiService)
         }
 
         @JvmStatic
@@ -327,19 +330,19 @@ class ScorePRService(
             score: LazerScore,
             position: Int? = null,
             panel: String,
-            beatmapApiService: OsuBeatmapApiService
+            beatmapApiService: OsuBeatmapApiService,
+            calculateApiService: OsuCalculateApiService,
         ): PanelE5Param {
             beatmapApiService.applyBeatMapExtend(score)
 
             val beatmap = score.beatMap
-
             val original = DataUtil.getOriginal(beatmap)
 
-            beatmapApiService.applySRAndPP(score)
+            calculateApiService.applyStarToScore(score)
 
-            val attributes = beatmapApiService.getStatistics(score)
-            attributes["full_pp"] = beatmapApiService.getFcPP(score).pp
-            attributes["perfect_pp"] = beatmapApiService.getMaxPP(score).pp
+            val attributes = calculateApiService.getScoreStatistics(score).toMutableMap()
+            attributes["full_pp"] = calculateApiService.getScoreFullComboPP(score).pp
+            attributes["perfect_pp"] = calculateApiService.getScorePerfectPP(score).pp
 
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)

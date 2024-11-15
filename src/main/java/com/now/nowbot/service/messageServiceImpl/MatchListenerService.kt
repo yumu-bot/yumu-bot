@@ -14,6 +14,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.MatchMapService.PanelE7Param
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
@@ -35,6 +36,7 @@ import java.util.stream.Collectors
 class MatchListenerService(
     private val matchApiService: OsuMatchApiService,
     private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService,
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
 ) : MessageService<MatchListenerService.ListenerParam> {
@@ -129,7 +131,7 @@ class MatchListenerService(
         with(game) {
             if (beatmap != null) {
                 beatmap = beatmapApiService.getBeatMap(beatmapID)
-                beatmapApiService.applySRAndPP(beatmap, mode, LazerMod.getModsList(mods))
+                calculateApiService.applyStarToBeatMap(beatmap!!, mode, LazerMod.getModsList(mods))
             } else {
                 val b = BeatMap()
                 b.beatMapID = beatmapID

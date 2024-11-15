@@ -15,6 +15,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.MatchMapService.MatchMapParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.DataUtil
@@ -26,9 +27,10 @@ import org.springframework.stereotype.Service
 
 @Service("MATCH_MAP")
 class MatchMapService(
-    private var imageService: ImageService? = null,
-    private var beatmapApiService: OsuBeatmapApiService? = null,
-    private var matchApiService: OsuMatchApiService? = null,
+    private val imageService: ImageService,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val matchApiService: OsuMatchApiService,
+    private val calculateApiService: OsuCalculateApiService
 ) : MessageService<MatchMapParam>, TencentMessageService<MatchMapParam> {
 
     @JvmRecord data class MatchMapParam(val match: Match, val position: Int)
@@ -68,7 +70,7 @@ class MatchMapService(
                     it.toLong()
                 }
             }
-        val match = matchApiService!!.getMatchInfo(matchID, 10)
+        val match = matchApiService.getMatchInfo(matchID, 10)
         val position =
             matcher.group("round").let {
                 if (it.isNullOrEmpty()) {
@@ -85,11 +87,11 @@ class MatchMapService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: MatchMapParam) {
-        val e7Param = getPanelE7Param(param, beatmapApiService)
+        val e7Param = getPanelE7Param(param, beatmapApiService, calculateApiService)
         var image = byteArrayOf()
 
         try {
-            image = imageService!!.getPanelE7(e7Param)
+            image = imageService.getPanelE7(e7Param)
         } catch (e: Exception) {
             log.error("比赛谱面信息：渲染失败: ", e)
             event.reply(
@@ -123,7 +125,8 @@ class MatchMapService(
         @JvmStatic
         fun getPanelE7Param(
             param: MatchMapParam,
-            beatmapApiService: OsuBeatmapApiService?,
+            beatmapApiService: OsuBeatmapApiService,
+            calculateApiService: OsuCalculateApiService,
         ): PanelE7Param {
             val calculate = MatchCalculate(param.match, beatmapApiService)
 
@@ -139,7 +142,7 @@ class MatchMapService(
                 }
             }
 
-            val beatmap = beatmapApiService!!.getBeatMap(round.beatMapID)
+            val beatmap = beatmapApiService.getBeatMap(round.beatMapID)
 
             // 只有转谱才能赋予游戏模式
             val mode: OsuMode
@@ -157,7 +160,7 @@ class MatchMapService(
 
             val original = DataUtil.getOriginal(beatmap)
 
-            beatmapApiService.applySRAndPP(
+            calculateApiService.applyStarToBeatMap(
                 beatmap,
                 mode,
                 LazerMod.getModsList(round.mods)

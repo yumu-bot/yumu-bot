@@ -5,7 +5,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.Map4DCalculate.Map4DParam
-import com.now.nowbot.util.DataUtil
+import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MOD
 import org.springframework.stereotype.Service
@@ -46,21 +46,21 @@ class Map4DCalculate : MessageService<Map4DParam> {
         val message =
                 when (param.type) {
                     "ar" -> {
-                        val ar = DataUtil.applyAR(param.value, mod)
-                        val ms = DataUtil.getMillisFromAR(ar)
+                        val ar = CalculateApiImpl.applyAR(param.value, mod)
+                        val ms = CalculateApiImpl.getMillisFromAR(ar)
                         String.format("AR: %.2f, 缩圈时间: %.2fms", ar, ms)
                     }
                     "od" -> {
-                        val od = DataUtil.applyOD(param.value, mod)
-                        val ms = DataUtil.getMillisFromOD(od)
+                        val od = CalculateApiImpl.applyOD(param.value, mod)
+                        val ms = CalculateApiImpl.getMillisFromOD(od)
                         String.format("OD: %.2f, 300 判定区间: %.2fms", od, ms)
                     }
                     "cs" -> {
-                        val cs = DataUtil.applyCS(param.value, mod)
+                        val cs = CalculateApiImpl.applyCS(param.value, mod)
                         String.format("CS: %.2f", cs)
                     }
                     "hp" -> {
-                        val hp = DataUtil.applyHP(param.value, mod)
+                        val hp = CalculateApiImpl.applyHP(param.value, mod)
                         String.format("HP: %.2f", hp)
                     }
                     else -> "Unexpected value: " + param.type

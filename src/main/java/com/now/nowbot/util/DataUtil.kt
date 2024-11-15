@@ -1,10 +1,8 @@
 package com.now.nowbot.util
 
 import com.now.nowbot.config.NowbotConfig
-import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.GreekChar
 import com.now.nowbot.model.enums.JaChar
-import com.now.nowbot.model.enums.LazerModType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.json.*
@@ -17,8 +15,6 @@ import org.springframework.lang.Nullable
 import org.springframework.util.CollectionUtils
 import org.springframework.util.StringUtils
 import java.io.IOException
-import java.math.BigDecimal
-import java.math.RoundingMode
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -708,138 +704,6 @@ object DataUtil {
         return String.format("%dH%dM", h, m)
     }
 
-    @JvmStatic
-    fun getMillisFromAR(ar: Float): Float =
-        when {
-            ar > 11f -> 300f
-            ar > 5f -> 1200 - (150 * (ar - 5))
-            ar > 0f -> 1800 - (120 * ar)
-            else -> 1800f
-        }
-
-    fun getARFromMillis(ms: Float): Float =
-        when {
-            ms < 300 -> 11f
-            ms < 1200 -> 5 + (1200 - ms) / 150f
-            ms < 2400 -> (1800 - ms) / 120f
-            else -> -5f
-        }
-
-    @JvmStatic
-    fun applyAR(ar: Float, mods: List<LazerMod>): Float {
-        var a = ar
-
-        val d = mods.stream().filter { it.type == LazerModType.DifficultyAdjust }.toList().firstOrNull()?.ar
-        if (d != null) return d.toFloat().roundToDigits2()
-
-        if (mods.contains(LazerModType.HardRock)) {
-            a = (a * 1.4f).clamp()
-        } else if (mods.contains(LazerModType.Easy)) {
-            a = (a / 2f).clamp()
-        }
-
-        val speed = LazerMod.getModSpeed(mods)
-
-        if (speed != 1.0) {
-            var ms = getMillisFromAR(a.clamp())
-            ms = (ms / speed).toFloat()
-            a = getARFromMillis(ms)
-        }
-
-        return a.roundToDigits2()
-    }
-
-    @JvmStatic
-    fun getMillisFromOD(od: Float): Float =
-        when {
-            od > 11 -> 14f
-            else -> 80 - 6 * od
-        }
-
-    @JvmStatic
-    fun getODFromMillis(ms: Float): Float =
-        when {
-            ms < 14 -> 11f
-            else -> (80 - ms) / 6f
-        }
-
-    @JvmStatic
-    fun applyOD(od: Float, mods: List<LazerMod>): Float {
-        var o = od
-        if (mods.contains(LazerModType.HardRock)) {
-            o = (o * 1.4f).clamp()
-        } else if (mods.contains(LazerModType.Easy)) {
-            o = (o / 2f).clamp()
-        }
-
-        val d = mods.stream().filter { it.type == LazerModType.DifficultyAdjust }.toList().firstOrNull()?.od
-        if (d != null) return d.toFloat().roundToDigits2()
-
-        val speed = LazerMod.getModSpeed(mods)
-
-        if (speed != 1.0) {
-            var ms = getMillisFromOD(od.clamp())
-            ms = (ms / speed).toFloat()
-            o = getODFromMillis(ms)
-        }
-
-        return o.roundToDigits2()
-    }
-
-    @JvmStatic
-    fun applyCS(cs: Float, mods: List<LazerMod>): Float {
-        var c = cs
-
-        val d = mods.stream().filter { it.type == LazerModType.DifficultyAdjust }.toList().firstOrNull()?.cs
-        if (d != null) return d.toFloat().roundToDigits2()
-
-        if (mods.contains(LazerModType.HardRock)) {
-            c *= 1.3f
-        } else if (mods.contains(LazerModType.Easy)) {
-            c /= 2f
-        }
-        return c.clamp().roundToDigits2()
-    }
-
-    @JvmStatic
-    fun applyHP(hp: Float, mods: List<LazerMod>): Float {
-        var h = hp
-
-        val d = mods.stream().filter { it.type == LazerModType.DifficultyAdjust }.toList().firstOrNull()?.hp
-        if (d != null) return d.toFloat().roundToDigits2()
-
-        if (mods.contains(LazerModType.HardRock)) {
-            h *= 1.4f
-        } else if (mods.contains(LazerModType.Easy)) {
-            h /= 2f
-        }
-        return h.clamp().roundToDigits2()
-    }
-
-    @JvmStatic
-    fun applyBPM(bpm: Float?, mods: List<LazerMod>): Float {
-        return ((bpm ?: 0f) * LazerMod.getModSpeed(mods)).toFloat().roundToDigits2()
-    }
-
-    @JvmStatic
-    fun applyLength(length: Int?, mods: List<LazerMod>): Int {
-        return Math.round((length ?: 0) / LazerMod.getModSpeed(mods).toFloat())
-    }
-
-    // 应用四维的变化 4 dimensions
-    @JvmStatic
-    fun applyBeatMapChanges(beatMap: BeatMap, mods: List<LazerMod>) {
-        if (LazerMod.hasStarRatingChange(mods)) {
-            beatMap.BPM = applyBPM(Optional.ofNullable(beatMap.BPM).orElse(0f), mods)
-            beatMap.AR = applyAR(Optional.ofNullable(beatMap.AR).orElse(0f), mods)
-            beatMap.CS = applyCS(Optional.ofNullable(beatMap.CS).orElse(0f), mods)
-            beatMap.OD = applyOD(Optional.ofNullable(beatMap.OD).orElse(0f), mods)
-            beatMap.HP = applyHP(Optional.ofNullable(beatMap.HP).orElse(0f), mods)
-            beatMap.totalLength = applyLength(beatMap.totalLength, mods)
-            beatMap.hitLength = applyLength(beatMap.hitLength, mods)
-        }
-    }
-
     fun getPlayedRankedMapCount(bonusPP: Double): Int {
         val v = -(bonusPP / (1000f / 2.4f)) + 1
         return if (v < 0) {
@@ -1232,11 +1096,6 @@ object DataUtil {
     @JvmRecord
     data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
 
-    private fun Float.clamp() = if ((0f..10f).contains(this)) this else if (this > 10f) 10f else 0f
-    private fun Float.roundToDigits2() = BigDecimal(this.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toFloat()
-
     private fun String.toRomanizedJaChar() = JaChar.getRomanized(this)
     private fun String.toRomanizedGreekChar() = GreekChar.getRomanized(this)
-
-    private fun List<LazerMod>.contains(type: LazerModType) = LazerMod.hasMod(this, type)
 }

@@ -10,12 +10,12 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.BPQueryService.Operator.*
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.serviceException.BPQueryException
 import com.now.nowbot.throwable.serviceException.BPQueryException.*
-import com.now.nowbot.util.ContextUtil
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import kotlin.math.min
@@ -24,9 +24,10 @@ import kotlin.math.roundToLong
 
 @Service("BP_QUERY")
 class BPQueryService(
-    private var beatmapApiService: OsuBeatmapApiService,
-    private var userApiService: OsuUserApiService,
     private var bindDao: BindDao,
+    private var beatmapApiService: OsuBeatmapApiService,
+    private var calculateApiService: OsuCalculateApiService,
+    private var userApiService: OsuUserApiService,
     private var scoreApiService: OsuScoreApiService,
     private var imageService: ImageService,
 ) : MessageService<BPQueryService.BPQueryParam> {
@@ -76,10 +77,10 @@ class BPQueryService(
             }
         }
 
-        ContextUtil.setContext("breakApplySR", true)
+        // ContextUtil.setContext("breakApplySR", true)
         val image = if (result.size == 1) {
             val score = result.first()
-            val e5Param = ScorePRService.getScore4PanelE5(user, score, "BQ", beatmapApiService)
+            val e5Param = ScorePRService.getScore4PanelE5(user, score, "BQ", beatmapApiService, calculateApiService)
             imageService.getPanel(e5Param.toMap(), "E5")
         } else {
             val indexMap = bpList.mapIndexed { i, s -> s.scoreID to i }.toMap()
@@ -317,7 +318,7 @@ class BPQueryService(
 
     private fun getBP(filters: List<(LazerScore) -> Boolean>, scores: List<LazerScore>): List<LazerScore> {
         // bp 有 pp，所以只需要查星数
-        beatmapApiService.applyStarRating(scores)
+        calculateApiService.applyStarToScores(scores)
 
         // 处理麻婆, 与 set 主不一致
         val mapperMap = mutableMapOf<Int, Long>()

@@ -10,7 +10,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.TodayBPService.TodayBPParam
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.*
@@ -29,7 +29,7 @@ import java.util.regex.Matcher
 class TodayBPService(
     private val imageService: ImageService,
     private val scoreApiService: OsuScoreApiService,
-    private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService,
 ) : MessageService<TodayBPParam>, TencentMessageService<TodayBPParam> {
 
     data class TodayBPParam(
@@ -53,11 +53,9 @@ class TodayBPService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: TodayBPParam) {
-        val from = event.subject
-
         val image = param.getImage()
         try {
-            from.sendImage(image)
+            event.reply(image)
         } catch (e: Exception) {
             log.error("今日最好成绩：发送失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "今日最好成绩")
@@ -134,7 +132,7 @@ class TodayBPService(
             scores.add(value)
         }
 
-        beatmapApiService.applySRAndPP(scores)
+        calculateApiService.applyStarToScores(scores)
 
         return try {
             imageService.getPanelA4(user, scores, ranks, "T")
