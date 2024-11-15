@@ -85,17 +85,19 @@ class BPQueryService(
         val p: Param = support.firstOrNull { it.key == key } ?: throw UnsupportedOrderKey(key)
         fun sort(score: LazerScore): Comparable<*> {
             return when (p) {
-                Param.Star -> score.beatMap.starRating
-                Param.Bpm -> score.beatMap.BPM ?: 0f
+                Param.Star -> score.beatMap.starRating * 100
+                Param.Bpm -> 100 * (score.beatMap.BPM ?: 0f)
                 Param.Length -> score.beatMap.hitLength ?: 0
-                Param.AR -> score.beatMap.AR ?: 0f
-                Param.OD -> score.beatMap.OD ?: 0f
-                Param.CS -> score.beatMap.CS ?: 0f
-                Param.HP -> score.beatMap.HP ?: 0f
+                Param.AR -> 100 * (score.beatMap.AR ?: 0f)
+                Param.OD -> 100 * (score.beatMap.OD ?: 0f)
+                Param.CS -> 100 * (score.beatMap.CS ?: 0f)
+                Param.HP -> 100 * (score.beatMap.HP ?: 0f)
                 Param.Combo -> score.totalCombo
-                Param.Accuracy -> score.accuracy
+                Param.Accuracy -> 100 * score.accuracy
                 Param.Miss -> score.statistics.miss ?: 0
                 else -> 0
+            }.toInt().let {
+                if (asc) it else -it
             }
         }
 
