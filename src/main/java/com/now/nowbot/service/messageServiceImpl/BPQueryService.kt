@@ -356,8 +356,15 @@ class BPQueryService(
             return this
                 .replace('＜', '<')
                 .replace('＞', '>')
+                .replace("≤", "<=")
+                .replace("≥", ">=")
+                .replace("≯", "<=")
+                .replace("≮", ">=")
+                .replace("≱", "<")
+                .replace("≰", ">")
                 .replace('＝', '=')
                 .replace('！', '!')
+                .replace("≠", "!=")
         }
 
         private fun String.getOperator(): Triple<String, Operator, String> {
