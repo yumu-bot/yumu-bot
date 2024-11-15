@@ -191,6 +191,7 @@ import kotlin.math.min
             sortCount("bpm") { it.bpm }
 
             val ppRawList = bps.map { it.PP!! }
+            val ppSum = bps.map(LazerScore::getWeightPP).sum()
             val rankList = bps.map { it.rank }
             val lengthList = beatMapList.map { it.length }
             val starList = beatMapList.map { it.star }
@@ -270,20 +271,20 @@ import kotlin.math.min
                 if (fcList.isNullOrEmpty()) {
                     fc = Attr("FC", 0, 0.0, 0.0)
                 } else {
-                    val ppSum = fcList.reduceOrNull { acc, fl -> acc + fl } ?: 0.0
+                    val fcPPSum = fcList.reduceOrNull { acc, fl -> acc + fl } ?: 0.0
 
-                    fc = Attr("FC", fcList.size, ppSum, (ppSum / bpPP))
+                    fc = Attr("FC", fcList.size, fcPPSum, (fcPPSum / bpPP))
                 }
                 rankAttr.add(fc)
                 for (rank in RANK_ARRAY) {
                     if (rankMap.containsKey(rank)) {
                         val value = rankMap[rank]
-                        var ppSum: Double
+                        var rankPPSum: Double
                         var attr: Attr? = null
                         if (Objects.nonNull(value) && value!!.isNotEmpty()) {
-                            ppSum = value.filterNotNull().reduceOrNull { acc, fl -> acc + fl } ?: 0.0
+                            rankPPSum = value.filterNotNull().reduceOrNull { acc, fl -> acc + fl } ?: 0.0
                             attr = Attr(
-                                rank, value.count { it != null }, ppSum, (ppSum / bpPP)
+                                rank, value.count { it != null }, rankPPSum, (rankPPSum / bpPP)
                             )
                         }
                         rankAttr.add(attr)
@@ -336,6 +337,7 @@ import kotlin.math.min
                 data["mods_attr"] = modsAttr
                 data["rank_attr"] = rankAttr
 
+                data["pp_sum"] = ppSum
                 data["client_count"] = clientCount
             }
 

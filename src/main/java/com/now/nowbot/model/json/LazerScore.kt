@@ -10,6 +10,7 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import kotlin.math.ln
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 // 这是 API v2 version header is 20220705 or higher 会返回的成绩数据。这并不支持老版本的比赛数据（stable 比赛依旧是原来那个 score
@@ -389,6 +390,10 @@ open class LazerScore {
                 .appendLiteral("T")
                 .appendPattern("HH:mm:ss")
                 .toFormatter()
+
+        fun getWeightPP(score: LazerScore, position: Int = 0): Double {
+            return score.weight?.PP ?: ((score.PP ?: 0.0) * (0.95).pow(position.toDouble()))
+        }
 
         @JvmStatic
         private fun getStableRank(score: LazerScore): String {
