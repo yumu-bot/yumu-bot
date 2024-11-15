@@ -68,7 +68,13 @@ class BPQueryService(
             return
         }
 
-        order?.let { result = result.sortedWith(compareBy(order::sort)) }
+        order?.let {
+            result = if (it.asc) {
+                result.sortedBy(order::sort)
+            } else {
+                result.sortedByDescending(order::sort)
+            }
+        }
 
         ContextUtil.setContext("breakApplySR", true)
         val image = if (result.size == 1) {
@@ -85,7 +91,7 @@ class BPQueryService(
 
     data class Order(val key: String, val asc: Boolean) {
         val p: Param = support.firstOrNull { it.key == key } ?: throw UnsupportedOrderKey(key)
-        fun sort(score: LazerScore): Comparable<*> {
+        fun sort(score: LazerScore): Int {
             return when (p) {
                 Param.Star -> score.beatMap.starRating * 100
                 Param.Bpm -> 100 * (score.beatMap.BPM ?: 0f)
@@ -95,17 +101,16 @@ class BPQueryService(
                 Param.CS -> 100 * (score.beatMap.CS ?: 0f)
                 Param.HP -> 100 * (score.beatMap.HP ?: 0f)
                 Param.Combo -> score.totalCombo
-                Param.Accuracy -> 100 * score.accuracy
+                Param.Accuracy -> 10000 * score.accuracy
                 Param.Perfect -> score.statistics.perfect ?: 0
                 Param.Great -> score.statistics.great ?: 0
                 Param.Good -> score.statistics.good ?: 0
                 Param.Ok -> score.statistics.ok ?: 0
                 Param.Meh -> score.statistics.meh ?: 0
                 Param.Miss -> score.statistics.miss ?: 0
+                Param.Index -> score.weight!!.index
                 else -> 0
-            }.toInt().let {
-                if (asc) it else -it
-            }
+            }.toInt()
         }
 
         companion object {
@@ -125,6 +130,7 @@ class BPQueryService(
                 Param.Ok,
                 Param.Meh,
                 Param.Miss,
+                Param.Index,
             )
         }
     }
