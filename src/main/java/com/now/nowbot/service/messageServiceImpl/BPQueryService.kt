@@ -19,6 +19,8 @@ import com.now.nowbot.util.ContextUtil
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 @Service("BP_QUERY")
 class BPQueryService(
@@ -94,6 +96,11 @@ class BPQueryService(
                 Param.HP -> 100 * (score.beatMap.HP ?: 0f)
                 Param.Combo -> score.totalCombo
                 Param.Accuracy -> 100 * score.accuracy
+                Param.Perfect -> score.statistics.perfect ?: 0
+                Param.Great -> score.statistics.great ?: 0
+                Param.Good -> score.statistics.good ?: 0
+                Param.Ok -> score.statistics.ok ?: 0
+                Param.Meh -> score.statistics.meh ?: 0
                 Param.Miss -> score.statistics.miss ?: 0
                 else -> 0
             }.toInt().let {
@@ -112,6 +119,11 @@ class BPQueryService(
                 Param.HP,
                 Param.Combo,
                 Param.Accuracy,
+                Param.Perfect,
+                Param.Great,
+                Param.Good,
+                Param.Ok,
+                Param.Meh,
                 Param.Miss,
             )
         }
@@ -179,7 +191,7 @@ class BPQueryService(
         }, EQ, NE, GT, GE, LT, LE),
         ScoreID("score", { (op, v, s) ->
             val score = try {
-                v.filter { it.isDigitOrDot() }.toLong()
+                v.filter { it.isDigitOrDot() }.toDouble().roundToLong()
             } catch (_: Exception) {
                 throw UnsupportedScoreValue(v)
             }
@@ -188,7 +200,7 @@ class BPQueryService(
         }, EQ, NE, GT, GE, LT, LE),
         Index("index", { (op, v, s) ->
             val index = try {
-                v.filter { it.isDigitOrDot() }.toInt() - 1 //自然数是 1-100，不是计算机需要的0-99
+                v.filter { it.isDigitOrDot() }.toDouble().roundToInt() - 1 //自然数是 1-100，不是计算机需要的0-99
             } catch (_: Exception) {
                 throw UnsupportedIndexValue(v)
             }
@@ -227,6 +239,26 @@ class BPQueryService(
         }, EQ, NE, GT, GE, LT, LE),
         Length("length", { (op, v, s) ->
             compare(s.beatMap.hitLength!!, v, op)
+        }, EQ, NE, GT, GE, LT, LE),
+        Perfect("perfect", { (op, v, s) ->
+            val perfect = (s.statistics.perfect ?: 0)
+            compare(perfect, v, op)
+        }, EQ, NE, GT, GE, LT, LE),
+        Great("great", { (op, v, s) ->
+            val great = (s.statistics.great ?: 0)
+            compare(great, v, op)
+        }, EQ, NE, GT, GE, LT, LE),
+        Good("good", { (op, v, s) ->
+            val good = (s.statistics.good ?: 0)
+            compare(good, v, op)
+        }, EQ, NE, GT, GE, LT, LE),
+        Ok("ok", { (op, v, s) ->
+            val ok = (s.statistics.ok ?: 0)
+            compare(ok, v, op)
+        }, EQ, NE, GT, GE, LT, LE),
+        Meh("meh", { (op, v, s) ->
+            val meh = (s.statistics.meh ?: 0)
+            compare(meh, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Miss("miss", { (op, v, s) ->
             val misses = (s.statistics.miss ?: 0)
@@ -277,8 +309,8 @@ class BPQueryService(
     }
 
     private fun getBP(filters: List<(LazerScore) -> Boolean>, scores: List<LazerScore>): List<LazerScore> {
-        // 处理带 mod 的
-        beatmapApiService.applySRAndPP(scores)
+        // bp 有 pp，所以只需要查星数
+        beatmapApiService.applyStarRating(scores)
 
         // 处理麻婆, 与 set 主不一致
         val mapperMap = mutableMapOf<Int, Long>()
@@ -353,7 +385,12 @@ class BPQueryService(
                 Param.Bpm.key, "b" -> Param.Bpm(operator, value)
                 Param.Accuracy.key, "acc", "a" -> Param.Accuracy(operator, value)
                 Param.Combo.key, "c" -> Param.Combo(operator, value)
-                Param.Miss.key, "x", "misses" -> Param.Miss(operator, value)
+                Param.Perfect.key, "320", "305", "pf" -> Param.Perfect(operator, value)
+                Param.Great.key, "300", "良", "gr" -> Param.Great(operator, value)
+                Param.Good.key, "200", "gd" -> Param.Good(operator, value)
+                Param.Ok.key, "100", "150", "可", "ok", "bd", "bad" -> Param.Ok(operator, value)
+                Param.Meh.key, "50", "pr", "poor" -> Param.Meh(operator, value)
+                Param.Miss.key, "0", "ms", "x" -> Param.Miss(operator, value)
                 Param.Mods.key, "m", "mod" -> Param.Mods(operator, value)
                 Param.Rate.key, "p" -> Param.Rate(operator, value)
                 Param.Client.key, "z", "v", "version" -> Param.Client(operator, value)
@@ -469,7 +506,7 @@ class BPQueryService(
         }
 
         private fun compare(it: Long, that: String, operator: Operator): Boolean {
-            val t = that.filter { it.isDigitOrDot() }.toLong()
+            val t = that.filter { it.isDigitOrDot() }.toDouble().roundToLong()
 
             return when (operator) {
                 EQ -> it == t

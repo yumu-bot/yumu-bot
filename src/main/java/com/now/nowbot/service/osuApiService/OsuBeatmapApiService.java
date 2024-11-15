@@ -352,7 +352,12 @@ public interface OsuBeatmapApiService {
         if (ContextUtil.getContext("breakApplySR", false, Boolean.class)) return;
 
         // 没有变星数，并且有 PP，略过
-        if (LazerMod.noStarRatingChange(score.getMods()) && score.getPP() > 0d) return;
+        if (LazerMod.noStarRatingChange(score.getMods())) {
+            return;
+        } else if (score.getPP() > 0d) {
+            applyStarRating(score);
+            return;
+        }
 
         var beatMap = score.getBeatMap();
 
@@ -372,7 +377,8 @@ public interface OsuBeatmapApiService {
 
         if (r.getPp() > 0) {
             score.setPP(r.getPp());
-            beatMap.setStarRating(r.getStar());
+            applyStarFromAttributes(beatMap, score.getMode(), score.getMods());
+            //beatMap.setStarRating(r.getStar());
         } else {
             applyStarFromAttributes(beatMap, score.getMode(), score.getMods());
         }
@@ -410,7 +416,7 @@ public interface OsuBeatmapApiService {
             return;
         }
 
-        if (r.getPp() > 0) {
+        if (r.getPp() > 0 && false) {
             beatMap.setStarRating(r.getStar());
         } else {
             applyStarFromAttributes(beatMap, mode, mods);
@@ -447,7 +453,7 @@ public interface OsuBeatmapApiService {
             return;
         }
 
-        if (r.getPp() > 0) {
+        if (r.getPp() > 0 && false) {
             beatMap.setStarRating(r.getStar());
         } else {
             applyStarFromAttributes(beatMap, expected.mode, mods);
@@ -490,6 +496,11 @@ public interface OsuBeatmapApiService {
     default void applyStarRating(BeatMap beatMap, OsuMode mode, List<LazerMod> mods) {
         if (beatMap == null) return; // 谱面没有 PP，所以必须查
 
+        // 由于 rosu 给的星数不准，现在只走 attr 的方法
+
+        applyStarFromAttributes(beatMap, mode, mods);
+        /*
+
         var id = beatMap.getBeatMapID();
 
         JniResult r;
@@ -507,6 +518,8 @@ public interface OsuBeatmapApiService {
         }
 
         DataUtil.applyBeatMapChanges(beatMap, mods);
+
+         */
     }
 
     // 只算 SR，可以加快比如 bp Analysis 功能的查询速度
@@ -522,6 +535,9 @@ public interface OsuBeatmapApiService {
     default void applyStarRating(LazerScore score) {
         if (LazerMod.noStarRatingChange(score.getMods()) && score.getBeatMap().getStarRating() > 0) return;
 
+        // 由于 rosu 给的星数不准，现在只走 attr 的方法
+        applyStarFromAttributes(score);
+        /*
         var id = score.getBeatMap().getBeatMapID();
 
         JniResult r;
@@ -544,6 +560,8 @@ public interface OsuBeatmapApiService {
             score.getBeatMap().setStarRating(r.getStar());
         }
 
+         */
+
         DataUtil.applyBeatMapChanges(score.getBeatMap(), score.getMods());
     }
 
@@ -556,7 +574,7 @@ public interface OsuBeatmapApiService {
             var attr = getAttributes(beatMap.getBeatMapID(), mode, LazerMod.getModsValue(mods));
 
             if (attr.getStarRating() != null) {
-                NowbotApplication.log.info("无法获取谱面 {}，正在应用 API 提供的星数：{}", beatMap.getBeatMapID(), attr.getStarRating());
+                // NowbotApplication.log.info("无法获取谱面 {}，正在应用 API 提供的星数：{}", beatMap.getBeatMapID(), attr.getStarRating());
                 beatMap.setStarRating(attr.getStarRating());
             } else {
                 NowbotApplication.log.error("无法获取谱面 {}，无法应用 API 提供的星数！", beatMap.getBeatMapID());
