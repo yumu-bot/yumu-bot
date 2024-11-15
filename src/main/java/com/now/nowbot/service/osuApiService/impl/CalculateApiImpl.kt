@@ -185,8 +185,8 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             expected.mode,
             LazerMod.getModsList(expected.mods),
             expected.accuracy,
-            expected.combo,
             expected.misses,
+            expected.combo,
             b.maxCombo,
             type
         )
@@ -198,8 +198,8 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         mode: OsuMode,
         mods: List<LazerMod>,
         accuracy: Double?,
-        combo: Int?,
         misses: Int?,
+        combo: Int?,
         maxCombo: Int?,
         type: CalculateType,
         passed: Boolean = false,
@@ -285,7 +285,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                     }
                 }
 
-                js.combo = max ?: 0
+                if (max != null) js.combo = max
                 js.misses = 0
 
                 getJniResult(b, js)
