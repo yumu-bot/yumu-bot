@@ -233,7 +233,8 @@ class BPQueryService(
         }, EQ, NE, GT, GE, LT, LE),
         Accuracy("acc", { (op, v, s) ->
             var acc = v.filter { it.isDigitOrDot() }.toDouble()
-            if (acc > 1.0) acc /= 100
+            if (acc > 100.0) acc /= 10000
+            else if (acc > 1.0) acc /= 100
 
             compare(s.accuracy, acc, op)
         }, EQ, NE, GT, GE, LT, LE),
