@@ -15,6 +15,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.serviceException.BPQueryException
 import com.now.nowbot.throwable.serviceException.BPQueryException.*
+import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.ContextUtil
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
@@ -51,7 +52,11 @@ class BPQueryService(
 
 
     override fun HandleMessage(event: MessageEvent, param: BPQueryParam) {
-        val bindUser = bindDao.getUserFromQQ(event.sender.id)
+        val bindUser = try {
+            bindDao.getUserFromQQ(event.sender.id)
+        } catch (e: BindException) {
+            throw BindException(BindException.Type.BIND_Me_NotBind)
+        }
         val mode = if (OsuMode.isDefaultOrNull(param.mode)) {
             bindUser.osuMode
         } else {
@@ -358,10 +363,6 @@ class BPQueryService(
                 .replace('＞', '>')
                 .replace("≤", "<=")
                 .replace("≥", ">=")
-                .replace("≯", "<=")
-                .replace("≮", ">=")
-                .replace("≱", "<")
-                .replace("≰", ">")
                 .replace('＝', '=')
                 .replace('！', '!')
                 .replace("≠", "!=")
