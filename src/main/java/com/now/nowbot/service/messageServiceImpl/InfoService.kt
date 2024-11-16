@@ -88,7 +88,7 @@ class InfoService(
         fun toD2Map(): Map<String, Any> {
             val out = mutableMapOf<String, Any>()
 
-            val bests = if (bests.size >= 6) {
+            val scores = if (bests.size >= 6) {
                 bests.subList(0, 6)
             } else {
                 bests
@@ -96,7 +96,7 @@ class InfoService(
 
             out["user"] = user
             out["mode"] = mode
-            out["scores"] = bests
+            out["scores"] = scores
             out["best_time"] = getBestTimes(bests)
 
             if (historyUser != null) {
