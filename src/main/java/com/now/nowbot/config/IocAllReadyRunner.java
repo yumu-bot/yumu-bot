@@ -6,11 +6,13 @@ import com.now.nowbot.listener.LocalCommandListener;
 import com.now.nowbot.permission.PermissionImplement;
 import com.now.nowbot.qq.tencent.YumuServer;
 import com.now.nowbot.service.MessageService;
+import com.now.nowbot.service.PerformancePlusService;
 import com.now.nowbot.service.messageServiceImpl.MatchListenerService;
 import com.now.nowbot.service.messageServiceImpl.SystemInfoService;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
-import com.now.nowbot.service.PerformancePlusService;
-import com.now.nowbot.util.*;
+import com.now.nowbot.util.CmdUtil;
+import com.now.nowbot.util.JacksonUtil;
+import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +26,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -66,7 +67,6 @@ public class IocAllReadyRunner implements CommandLineRunner {
      */
     public void run(String... args) {
         QQMsgUtil.init(applicationContext.getBean(YumuConfig.class));
-        MoliUtil.init(applicationContext.getBean("template", RestTemplate.class));
         var services = applicationContext.getBeansOfType(MessageService.class);
         permissionImplement.init(services);
         permission.init(applicationContext);

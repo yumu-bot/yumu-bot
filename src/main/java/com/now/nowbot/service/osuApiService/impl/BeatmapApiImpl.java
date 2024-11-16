@@ -7,8 +7,8 @@ import com.now.nowbot.entity.BeatmapObjectCountLite;
 import com.now.nowbot.mapper.BeatmapObjectCountMapper;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.*;
-import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService;
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService;
 import com.now.nowbot.util.AsyncMethodExecutor;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
@@ -75,7 +75,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     }
 
     @Nullable
-    private String getBeatMapFileFromOfficialWebsite(long bid) {
+    public String getBeatMapFileFromOfficialWebsite(long bid) {
         try {
             String osuStr = base.osuApiWebClient.get().uri("https://osu.ppy.sh/osu/{bid}", bid).retrieve()
                                                 .bodyToMono(String.class).onErrorReturn("").block();

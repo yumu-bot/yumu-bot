@@ -10,9 +10,8 @@ public class BeatMap4Pool {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "order_number")
-    Integer order;
+    Integer order = 0;
 
     @Column(name = "beatmap_id")
     Integer beatmapID;

@@ -17,7 +17,6 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.scheduling.annotation.SchedulingConfigurer
 import org.springframework.scheduling.config.ScheduledTaskRegistrar
 import org.springframework.stereotype.Service
-import org.springframework.web.client.RestTemplate
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.time.LocalDate
@@ -34,9 +33,6 @@ class RunTimeService : SchedulingConfigurer {
 
     @Resource
     var bindDao: BindDao? = null
-
-    @Resource
-    var restTemplate: RestTemplate? = null
 
     @Resource
     var maimaiApiService: MaimaiApiService? = null

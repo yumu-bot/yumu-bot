@@ -12,14 +12,12 @@ import com.now.nowbot.util.CmdUtil.getUserWithOutRange
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Service
-import org.springframework.web.client.RestTemplate
+import org.springframework.web.reactive.function.client.WebClient
 import java.util.*
 
 @Service("UU_INFO")
-class UUIService(private val template: RestTemplate) : MessageService<UUIParam> {
+class UUIService(private val client: WebClient) : MessageService<UUIParam> {
 
     @JvmRecord data class UUIParam(val user: OsuUser, val mode: OsuMode?)
 
@@ -44,18 +42,11 @@ class UUIService(private val template: RestTemplate) : MessageService<UUIParam> 
         val user = data.user
         val mode = data.mode
 
-        @Suppress("UNCHECKED_CAST")
-        val httpEntity = HttpEntity.EMPTY as HttpEntity<Array<Byte>>
-
-        val avatar: ByteArray? =
-            template
-                .exchange<ByteArray>(
-                    "https://a.ppy.sh/${user.userID}",
-                    HttpMethod.GET,
-                    httpEntity,
-                    ByteArray::class.java,
-                )
-                .body
+        val avatar: ByteArray? = client.get()
+                .uri("https://a.ppy.sh/${user.userID}")
+                .retrieve()
+                .bodyToMono(ByteArray::class.java)
+                .block()
 
         val message = getText(user, mode)
         try {

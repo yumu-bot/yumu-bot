@@ -9,11 +9,9 @@ import com.now.nowbot.util.SkiaImageUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
 import java.util.*;
@@ -26,7 +24,7 @@ public class BiliApiService {
     private static final String USER_ALLINFO_API = "https://api.bilibili.com/x/space/acc/info?mid=";
     private static final String ALL_ROOM_API     = "http://api.live.bilibili.com/room/v1/Room/get_status_info_by_uids";
     @Resource
-    RestTemplate restTemplate;
+    WebClient webClient;
     Bot bot;
 
     private static final HashMap<Long, Long> sendGroupMap = new HashMap<>();
@@ -34,10 +32,13 @@ public class BiliApiService {
 
     public List<LiveRoom> getLiveRooms(Long[] roomid) {
         //live_status 0：未开播 1：直播中 2：轮播中   live_time 秒时间戳
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity httpEntity = new HttpEntity(Map.of("uids", roomid), headers);
-        var data = restTemplate.postForObject(ALL_ROOM_API, httpEntity, JsonNode.class).get("data");
+        var data = webClient.post().uri(ALL_ROOM_API)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of("uids", roomid))
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block()
+                .get("data");
         List<LiveRoom> rooms = new ArrayList<>();
         for (JsonNode room : data) {
             var r = new LiveRoom(room);
