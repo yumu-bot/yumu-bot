@@ -1,6 +1,5 @@
 package com.now.nowbot.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.*;
 import com.now.nowbot.model.mapminus.PPMinus3;
@@ -16,14 +15,15 @@ import com.now.nowbot.util.DataUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.net.URI;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -32,7 +32,7 @@ import java.util.*;
 public class ImageService {
     private static final Logger log = LoggerFactory.getLogger(ImageService.class);
     @Resource
-    RestTemplate restTemplate;
+    WebClient    webClient;
     public static final String IMAGE_PATH = "http://127.0.0.1:1611/";
 
     // 2024+ 统一获取方法
@@ -50,6 +50,7 @@ public class ImageService {
 
     /**
      * 获取 md 图片，现已经弃用，被 panel A6 代替
+     *
      * @param markdown md 字符串
      * @return 图片流
      */
@@ -76,24 +77,6 @@ public class ImageService {
         var body = Map.of("md", markdown, "width", width);
         HttpEntity<Map<String, ?>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("md", httpEntity);
-    }
-
-
-    public void deleteLocalFile(long bid) {
-        HttpHeaders headers = getDefaultHeader();
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(Map.of("bid", bid), headers);
-        var result = restTemplate.exchange(
-                URI.create(STR."\{IMAGE_PATH}del"),
-                HttpMethod.POST,
-                httpEntity,
-                JsonNode.class
-        );
-
-        if (! result.getStatusCode().is2xxSuccessful()) {
-            var body = result.getBody();
-            if (body != null)
-                throw new RuntimeException(body.get("status").asText());
-        }
     }
 
     public byte[] getPanelA2(BeatMapSetSearch search) {
@@ -145,6 +128,7 @@ public class ImageService {
 
         return doPost("panel_avatar", new HttpEntity<>(param, getDefaultHeader()));
     }
+
     /**
      * Markdown 页面，用于帮助和维基 MD/H/W，user 默认 Optional.empty，width 默认 1840， data 默认 ""
      */
@@ -172,12 +156,14 @@ public class ImageService {
     public byte[] getPanelA6(Optional<OsuUser> user, String markdown, String name) {
         return getPanelA6(user, markdown, name, 1840);
     }
+
     /**
      * Markdown 页面，用于帮助和维基 MD/H/W
-     * @param user 左上角的玩家，可以为 Optional.empty
+     *
+     * @param user     左上角的玩家，可以为 Optional.empty
      * @param markdown md 字符串
-     * @param name 名字，仅支持 null、wiki、help
-     * @param width 默认 1840
+     * @param name     名字，仅支持 null、wiki、help
+     * @param width    默认 1840
      * @return 图片流
      */
 
@@ -246,6 +232,7 @@ public class ImageService {
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_B1", httpEntity);
     }
+
     public byte[] getPanelB1(OsuUser me, @Nullable OsuUser other, PPMinus my, @Nullable PPMinus others, OsuMode mode) {
         boolean isVs = other != null && others != null;
 
@@ -349,7 +336,7 @@ public class ImageService {
 
         double bonus = 0f;
 
-        if (! BPs.isEmpty()) {
+        if (!BPs.isEmpty()) {
             var bpPPs = BPs.stream().mapToDouble(LazerScore::getPP).toArray();
             bonus = DataUtil.getBonusPP(osuUser.getPP(), bpPPs);
         }
@@ -522,7 +509,7 @@ public class ImageService {
                 "ACC", my.getValue1(),
                 "PTT", my.getValue2(),
                 "STA", my.getValue3(),
-                (mode == OsuMode.MANIA) ? "PRE": "STB", my.getValue4(),
+                (mode == OsuMode.MANIA) ? "PRE" : "STB", my.getValue4(),
                 "EFT", my.getValue5(),
                 "STH", my.getValue6(),
                 "OVA", my.getValue7(),
@@ -567,7 +554,17 @@ public class ImageService {
     }
 
     private byte[] doPost(String path, HttpEntity<?> entity) throws RestClientException {
-        ResponseEntity<byte[]> s = restTemplate.exchange(URI.create(IMAGE_PATH + path), HttpMethod.POST, entity, byte[].class);
-        return s.getBody();
+        var request = webClient.post()
+                .uri(IMAGE_PATH + path)
+                .headers(h -> h.addAll(entity.getHeaders()));
+        if (entity.hasBody()) {
+            // noinspection all
+            request.bodyValue(entity.getBody());
+        }
+        return request
+                .retrieve()
+                .bodyToMono(byte[].class)
+                .doOnError(e -> log.error("post image error", e))
+                .block();
     }
 }

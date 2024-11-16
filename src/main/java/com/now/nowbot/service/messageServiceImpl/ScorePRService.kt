@@ -20,11 +20,9 @@ import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Service
 import org.springframework.util.CollectionUtils
-import org.springframework.web.client.RestTemplate
+import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -33,7 +31,7 @@ import java.util.regex.Matcher
 // Multiple Score也合并进来了
 @Service("SCORE_PR")
 class ScorePRService(
-        private val template: RestTemplate,
+        private val client: WebClient,
         private val imageService: ImageService,
         private val scoreApiService: OsuScoreApiService,
         private val beatmapApiService: OsuBeatmapApiService,
@@ -205,10 +203,12 @@ class ScorePRService(
     private fun getTextOutput(score: LazerScore): MessageChain {
         val d = UUScore.getInstance(score, beatmapApiService)
 
-        @Suppress("UNCHECKED_CAST")
-        val httpEntity = HttpEntity.EMPTY as HttpEntity<ByteArray>
-        val imgBytes =
-                template.exchange(d.url ?: "", HttpMethod.GET, httpEntity, ByteArray::class.java).body
+        val imgBytes = client.get()
+            .uri(d.url ?: "")
+            .retrieve()
+            .bodyToMono(ByteArray::class.java)
+            .block()
+
 
         return QQMsgUtil.getTextAndImage(d.scoreLegacyOutput, imgBytes)
     }

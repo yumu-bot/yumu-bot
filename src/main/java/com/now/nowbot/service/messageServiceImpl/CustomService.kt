@@ -17,20 +17,20 @@ import com.now.nowbot.throwable.serviceException.CustomException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.Instruction
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import org.springframework.util.StringUtils
+import org.springframework.web.reactive.function.client.WebClient
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.Path
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
-import org.springframework.web.client.RestTemplate
 
 @Service("CUSTOM")
 class CustomService(
-        private val restTemplate: RestTemplate,
+        private val webClient: WebClient,
         private val bindDao: BindDao,
         private val imageService: ImageService,
         private val userProfileMapper: UserProfileMapper,
@@ -194,7 +194,7 @@ class CustomService(
         var imgBytes: ByteArray? = byteArrayOf()
 
         if (param.url != null) {
-            imgBytes = restTemplate.getForObject(param.url, ByteArray::class.java)
+            imgBytes = webClient.get().uri(param.url).retrieve().bodyToMono(ByteArray::class.java).block()
             if (imgBytes == null) {
                 throw CustomException(CustomException.Type.CUSTOM_Receive_PictureFetchFailed)
             }

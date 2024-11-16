@@ -8,7 +8,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.neovisionaries.ws.client.WebSocketFactory;
 import com.now.nowbot.aop.OpenResource;
 import com.now.nowbot.controller.BotWebApi;
-import com.now.nowbot.throwable.RequestException;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -32,21 +31,14 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.DefaultResponseErrorHandler;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -106,16 +98,6 @@ public class NowbotConfig {
         IMGBUFFER_PATH = createDir(fileConfig.imgbuffer);
     }
 
-
-    @Bean
-    public OkHttpClient httpClient() {
-        var builder = new OkHttpClient.Builder();
-
-        if (proxyPort != 0)
-            builder.proxy(new Proxy(Proxy.Type.valueOf(proxyType), new InetSocketAddress(proxyHost, proxyPort)));
-        return builder.build();
-    }
-
     @Bean
     @Primary
     public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
@@ -127,45 +109,6 @@ public class NowbotConfig {
                 .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         return mapper;
     }
-
-
-    @Bean
-    public NoProxyRestTemplate noProxyRestTemplate() {
-        var tempFactory = new OkHttp3ClientHttpRequestFactory();
-        tempFactory.setConnectTimeout(120 * 1000);
-        tempFactory.setReadTimeout(120 * 1000);
-        var template = new NoProxyRestTemplate(tempFactory);
-        template.setErrorHandler(new DefaultResponseErrorHandler() {
-            public void handleError(ClientHttpResponse response, HttpStatus statusCode) throws RequestException {
-                throw new RequestException(response, statusCode);
-            }
-        });
-        return template;
-    }
-
-    @Bean(name = {"restTemplate", "template"})
-    public RestTemplate restTemplate() {
-        var client = httpClient();
-
-        var tempFactory = new OkHttp3ClientHttpRequestFactory(client);
-        tempFactory.setConnectTimeout(60 * 1000);
-        tempFactory.setReadTimeout(60 * 1000);
-        var template = new RestTemplate(tempFactory);
-        template.setErrorHandler(new DefaultResponseErrorHandler() {
-            public void handleError(ClientHttpResponse response, HttpStatus statusCode) throws RequestException {
-                throw new RequestException(response, statusCode);
-            }
-        });
-
-//        List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
-//        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
-//        converter.setSupportedMediaTypes(Collections.singletonList(MediaType.ALL));
-//        messageConverters.add(converter);
-//
-//        template.setMessageConverters(messageConverters);
-        return template;
-    }
-
 
     public static ApplicationContext applicationContext;
 

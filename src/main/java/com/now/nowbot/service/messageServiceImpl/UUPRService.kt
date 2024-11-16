@@ -16,17 +16,15 @@ import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithRange
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpMethod
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
-import org.springframework.web.client.RestTemplate
+import org.springframework.web.reactive.function.client.WebClient
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Service("UU_PR")
 class UUPRService(
-    private val template: RestTemplate,
+    private val client: WebClient,
     private val scoreApiService: OsuScoreApiService,
     private val beatmapApiService: OsuBeatmapApiService
 ) : MessageService<UUPRParam> {
@@ -79,10 +77,12 @@ class UUPRService(
     private fun getTextOutput(score: LazerScore, event: MessageEvent) {
         val d = UUScore.getInstance(score, beatmapApiService)
 
-        @Suppress("UNCHECKED_CAST")
-        val httpEntity = HttpEntity.EMPTY as HttpEntity<Array<Byte>>
         val imgBytes =
-                template.exchange(d.url ?: "", HttpMethod.GET, httpEntity, ByteArray::class.java).body
+            client.get()
+                .uri(d.url ?: "")
+                .retrieve()
+                .bodyToMono(ByteArray::class.java)
+                .block()
         event.reply(imgBytes, d.scoreLegacyOutput)
     }
 
