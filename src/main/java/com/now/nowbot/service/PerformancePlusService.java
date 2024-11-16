@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -177,6 +178,7 @@ public class PerformancePlusService {
             result = getScorePerformancePlus(body);
         } catch (WebClientResponseException e) {
             var n = findErrorBid(body);
+            reloadFileFromOsu(Long.parseLong(n));
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "谱面 bid: " + n);
         }
 
@@ -201,6 +203,22 @@ public class PerformancePlusService {
             }
         }
         return allScorePPP;
+    }
+
+    private void reloadFileFromOsu(long bid) {
+        Thread.startVirtualThread(() -> {
+            var beatmapFiles = OSU_FILE_DIR.resolve(bid + ".osu");
+            try {
+                Files.deleteIfExists(beatmapFiles);
+                var osuText = beatmapApi.getBeatMapFileFromOfficialWebsite(bid);
+                if (osuText == null) {
+                    return;
+                }
+                Files.writeString(beatmapFiles, osuText);
+            } catch (IOException e) {
+                log.error("下载谱面失败: ", e);
+            }
+        });
     }
 
     private List<PPPlus> getScorePerformancePlus(List<ScorePerformancePlus> body) {
