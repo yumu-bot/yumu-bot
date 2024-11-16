@@ -63,6 +63,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
     override fun applyStarToBeatMap(beatMap: BeatMap?, mode: OsuMode, mods: List<LazerMod>) {
         if (beatMap == null) return
 
+        applyBeatMapChanges(beatMap, mods)
         try {
             val attr: BeatmapDifficultyAttributes =
                 beatmapApiService.getAttributes(beatMap.beatMapID, mode, LazerMod.getModsValue(mods))
