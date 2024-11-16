@@ -61,7 +61,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
     }
 
     override fun applyStarToBeatMap(beatMap: BeatMap?, mode: OsuMode, mods: List<LazerMod>) {
-        if (beatMap == null) return
+        if (beatMap == null || beatMap.beatMapID == 0L) return
 
         try {
             val attr: BeatmapDifficultyAttributes =
@@ -70,10 +70,10 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             if (attr.starRating != null) {
                 beatMap.starRating = attr.starRating!!.toDouble()
             } else {
-                log.error("无法获取谱面 {}，无法应用 API 提供的星数！", beatMap.beatMapID)
+                log.error("给谱面应用星级：无法获取谱面 {}，无法应用 API 提供的星数！", beatMap.beatMapID)
             }
         } catch (e: Exception) {
-            log.error("无法获取谱面 {}，无法获取 API 提供的星数！", beatMap.beatMapID, e)
+            log.error("给谱面应用星级：无法获取谱面 {}，无法获取 API 提供的星数！", beatMap.beatMapID, e)
         }
     }
 
@@ -82,7 +82,20 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
     }
 
     override fun applyStarToScore(score: LazerScore) {
-        applyStarToBeatMap(score.beatMap, score.mode, score.mods)
+        if (score.beatMapID == 0L) return
+
+        try {
+            val attr: BeatmapDifficultyAttributes =
+                beatmapApiService.getAttributes(score.beatMapID, score.mode, LazerMod.getModsValue(score.mods))
+
+            if (attr.starRating != null) {
+                score.beatMap.starRating = attr.starRating!!.toDouble()
+            } else {
+                log.error("给成绩应用星级：无法获取谱面 {}，无法应用 API 提供的星数！", score.beatMapID)
+            }
+        } catch (e: Exception) {
+            log.error("给成绩应用星级：无法获取谱面 {}，无法获取 API 提供的星数！", score.beatMapID, e)
+        }
     }
 
     override fun applyStarToScores(scores: List<LazerScore>) {
