@@ -64,6 +64,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         if (beatMap == null || beatMap.beatMapID == 0L) return
 
         applyBeatMapChanges(beatMap, mods)
+
         try {
             val attr: BeatmapDifficultyAttributes =
                 beatmapApiService.getAttributes(beatMap.beatMapID, mode, LazerMod.getModsValue(mods))
@@ -84,6 +85,8 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
 
     override fun applyStarToScore(score: LazerScore) {
         if (score.beatMapID == 0L) return
+
+        applyBeatMapChanges(score)
 
         try {
             val attr: BeatmapDifficultyAttributes =
@@ -354,7 +357,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
 
         // 应用四维的变化 4 dimensions
         @JvmStatic fun applyBeatMapChanges(beatMap: BeatMap?, mods: List<LazerMod>) {
-            if (beatMap == null) return
+            if (beatMap == null || beatMap.beatMapID == 0L) return
 
             if (LazerMod.hasStarRatingChange(mods)) {
                 beatMap.BPM = applyBPM(beatMap.BPM ?: 0f, mods)
@@ -365,6 +368,9 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                 beatMap.totalLength = applyLength(beatMap.totalLength, mods)
                 beatMap.hitLength = applyLength(beatMap.hitLength, mods)
             }
+        }
+        @JvmStatic fun applyBeatMapChanges(score: LazerScore) {
+            applyBeatMapChanges(score.beatMap, score.mods)
         }
 
         @JvmStatic fun getMillisFromAR(ar: Float): Float = when {
