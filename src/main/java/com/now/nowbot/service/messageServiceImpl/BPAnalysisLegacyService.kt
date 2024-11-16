@@ -5,7 +5,6 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.Companion.getImage
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -24,7 +23,6 @@ class BPAnalysisLegacyService (
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
     private val uubaService: UUBAService,
-    private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
 ) : MessageService<BAParam> {
 

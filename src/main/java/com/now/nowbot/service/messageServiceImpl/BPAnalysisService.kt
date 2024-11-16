@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
@@ -10,7 +11,6 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -40,7 +40,6 @@ import kotlin.math.min
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
     private val uubaService: UUBAService,
-    private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
@@ -128,7 +127,12 @@ import kotlin.math.min
             )
 
             data class Attr(
-                val index: String, val map_count: Int, val pp_count: Double, val percent: Double
+                val index: String,
+                @JsonProperty("map_count")
+                val mapCount: Int,
+                @JsonProperty("pp_count")
+                val ppCount: Double,
+                val percent: Double
             )
 
             val beatMapList: MutableList<BeatMap4BA> = ArrayList(bpSize)
@@ -211,7 +215,13 @@ import kotlin.math.min
             val rankSort = rankList.groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.map { it.key }
 
             data class Mapper(
-                val avatar_url: String, val username: String, val map_count: Int, val pp_count: Float
+                @JsonProperty("avatar_url")
+                val avatarUrl: String,
+                val username: String,
+                @JsonProperty("map_count")
+                val mapCount: Int,
+                @JsonProperty("pp_count")
+                val ppCount: Float
             )
 
             val mapperMap = bps.groupingBy { it.beatMap.mapperID }.eachCount()
@@ -263,7 +273,7 @@ import kotlin.math.min
                     )
                     modsAttrTmp.add(attr)
                 }
-                modsAttr = modsAttrTmp.sortedByDescending { it.pp_count }
+                modsAttr = modsAttrTmp.sortedByDescending { it.ppCount }
             }
 
             val rankAttr: MutableList<Attr?> = ArrayList(rankMap.size)
