@@ -338,6 +338,7 @@ class ScorePRService(
             val beatmap = score.beatMap
             val original = DataUtil.getOriginal(beatmap)
 
+            calculateApiService.applyPPToScore(score)
             calculateApiService.applyStarToScore(score)
 
             val attributes = calculateApiService.getScoreStatistics(score).toMutableMap()
