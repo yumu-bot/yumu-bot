@@ -275,8 +275,10 @@ class ScorePRService(
                 }
             }
 
-            val scores: List<LazerScore?> = scoreList.subList(offset, offset + limit)
-            calculateApiService.applyStarToScores(scoreList)
+            val scores: List<LazerScore> = scoreList.subList(offset, offset + limit)
+
+            calculateApiService.applyPPToScores(scores)
+            calculateApiService.applyStarToScores(scores)
 
             try {
                 // 处理新人群 ps 超星问题
