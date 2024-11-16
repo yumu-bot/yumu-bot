@@ -40,11 +40,12 @@ public class MatchCalculate {
     public MatchCalculate() {}
 
     // 默认设置 param，适合比赛监听使用
-    public MatchCalculate(@NonNull Match match, OsuBeatmapApiService beatmapApiService) {
+    public MatchCalculate(@NonNull Match match, OsuBeatmapApiService beatmapApiService, OsuCalculateApiService calculateApiService) {
         var param = new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true);
 
         this.match = match;
         this.beatmapApiService = beatmapApiService;
+        this.calculateApiService = calculateApiService;
 
         getRounds(param);
         getScores(param);
@@ -53,11 +54,12 @@ public class MatchCalculate {
         this.matchData = new MatchData(param);
     }
 
-    public MatchCalculate(@NonNull Match match, int skip, OsuBeatmapApiService beatmapApiService) {
+    public MatchCalculate(@NonNull Match match, int skip, OsuBeatmapApiService beatmapApiService, OsuCalculateApiService calculateApiService) {
         var param = new MatchCalculate.CalculateParam(skip, 0, null, 1d, true, true);
 
         this.match = match;
         this.beatmapApiService = beatmapApiService;
+        this.calculateApiService = calculateApiService;
 
         getRounds(param);
         getScores(param);
@@ -66,9 +68,10 @@ public class MatchCalculate {
         this.matchData = new MatchData(param);
     }
 
-    public MatchCalculate(@NonNull Match match, CalculateParam param, OsuBeatmapApiService beatmapApiService) {
+    public MatchCalculate(@NonNull Match match, CalculateParam param, OsuBeatmapApiService beatmapApiService, OsuCalculateApiService calculateApiService) {
         this.match = match;
         this.beatmapApiService = beatmapApiService;
+        this.calculateApiService = calculateApiService;
 
         getRounds(param);
         getScores(param);

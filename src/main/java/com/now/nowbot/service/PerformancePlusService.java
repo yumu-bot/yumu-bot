@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -178,8 +177,8 @@ public class PerformancePlusService {
             result = getScorePerformancePlus(body);
         } catch (WebClientResponseException e) {
             var n = findErrorBid(body);
-            reloadFileFromOsu(Long.parseLong(n));
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "谱面 bid: " + n);
+            beatmapApi.refreshBeatMapFileFromDirectory(Long.parseLong(n));
+            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PP+：谱面编号 " + n);
         }
 
         int i = 0;
@@ -205,6 +204,8 @@ public class PerformancePlusService {
         return allScorePPP;
     }
 
+    // 怎么重复造轮子
+    /*
     private void reloadFileFromOsu(long bid) {
         Thread.startVirtualThread(() -> {
             var beatmapFiles = OSU_FILE_DIR.resolve(bid + ".osu");
@@ -220,6 +221,7 @@ public class PerformancePlusService {
             }
         });
     }
+     */
 
     private List<PPPlus> getScorePerformancePlus(List<ScorePerformancePlus> body) {
         return webClient.post()

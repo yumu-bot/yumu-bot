@@ -61,7 +61,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
     }
 
     override fun applyStarToBeatMap(beatMap: BeatMap?, mode: OsuMode, mods: List<LazerMod>) {
-        if (beatMap == null || beatMap.beatMapID == 0L) return
+        if (beatMap == null || beatMap.beatMapID == 0L || LazerMod.noStarRatingChange(mods)) return
 
         applyBeatMapChanges(beatMap, mods)
 
@@ -84,7 +84,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
     }
 
     override fun applyStarToScore(score: LazerScore) {
-        if (score.beatMapID == 0L) return
+        if (score.beatMapID == 0L || LazerMod.noStarRatingChange(score.mods)) return
 
         applyBeatMapChanges(score)
 

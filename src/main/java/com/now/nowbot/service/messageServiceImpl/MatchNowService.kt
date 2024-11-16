@@ -12,6 +12,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.MuRatingService.MuRatingParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.serviceException.MatchNowException
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service
 @Service("MATCH_NOW")
 class MatchNowService(
         private val beatmapApiService: OsuBeatmapApiService,
+        private val calculateApiService: OsuCalculateApiService,
         private val matchApiService: OsuMatchApiService,
         private val imageService: ImageService,
         private val muRatingService: MuRatingService,
@@ -45,7 +47,7 @@ class MatchNowService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: MuRatingParam) {
-        val data = calculate(param, matchApiService, beatmapApiService)
+        val data = calculate(param, matchApiService, beatmapApiService, calculateApiService)
 
         val image: ByteArray
         try {
@@ -73,7 +75,7 @@ class MatchNowService(
     }
 
     override fun reply(event: MessageEvent, param: MuRatingParam): MessageChain? {
-        val data = calculate(param, matchApiService, beatmapApiService)
+        val data = calculate(param, matchApiService, beatmapApiService, calculateApiService)
 
         return MessageChainBuilder().addImage(imageService.getPanel(data, "F")).build()
     }
@@ -86,7 +88,8 @@ class MatchNowService(
         fun calculate(
                 param: MuRatingParam,
                 matchApiService: OsuMatchApiService,
-                beatmapApiService: OsuBeatmapApiService?,
+                beatmapApiService: OsuBeatmapApiService,
+                calculateApiService: OsuCalculateApiService,
         ): MatchCalculate {
             val match: Match
             try {
@@ -107,7 +110,7 @@ class MatchNowService(
 
             val c: MatchCalculate
             try {
-                c = MatchCalculate(match, param.calParam, beatmapApiService)
+                c = MatchCalculate(match, param.calParam, beatmapApiService, calculateApiService)
 
                 // 如果只有一两个人，则不排序（slot 从小到大）
                 val isSize2p =

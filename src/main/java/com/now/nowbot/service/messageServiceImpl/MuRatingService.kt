@@ -11,6 +11,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.serviceException.MRAException
@@ -28,6 +29,7 @@ import java.util.regex.Matcher
 class MuRatingService(
         private val matchApiService: OsuMatchApiService,
         private val beatmapApiService: OsuBeatmapApiService,
+        private val calculateApiService: OsuCalculateApiService,
         private val imageService: ImageService,
 ) : MessageService<MuRatingService.MuRatingParam>, TencentMessageService<MuRatingService.MuRatingParam> {
 
@@ -57,7 +59,7 @@ class MuRatingService(
         val c: MatchCalculate
 
         try {
-            c = calculate(param, matchApiService, beatmapApiService)
+            c = calculate(param, matchApiService, beatmapApiService, calculateApiService)
         } catch (e: MRAException) {
             throw e
         } catch (e: Exception) {
@@ -103,7 +105,7 @@ class MuRatingService(
     }
 
     override fun reply(event: MessageEvent, param: MuRatingParam): MessageChain? {
-        val c: MatchCalculate = calculate(param, matchApiService, beatmapApiService)
+        val c: MatchCalculate = calculate(param, matchApiService, beatmapApiService, calculateApiService)
         return MessageChainBuilder().addImage(imageService.getPanel(c, "C")).build()
     }
 
@@ -247,11 +249,12 @@ class MuRatingService(
                 failed: Boolean,
                 rematch: Boolean,
                 matchApiService: OsuMatchApiService,
-                beatmapApiService: OsuBeatmapApiService?,
+                beatmapApiService: OsuBeatmapApiService,
+                calculateApiService: OsuCalculateApiService,
         ): MatchCalculate {
             val param = MuRatingParam(matchID, CalculateParam(skip, ignore, remove, easy, failed, rematch))
 
-            return calculate(param, matchApiService, beatmapApiService)
+            return calculate(param, matchApiService, beatmapApiService, calculateApiService)
         }
 
         @JvmStatic
@@ -259,7 +262,8 @@ class MuRatingService(
         fun calculate(
             param: MuRatingParam,
             matchApiService: OsuMatchApiService,
-            beatmapApiService: OsuBeatmapApiService?,
+            beatmapApiService: OsuBeatmapApiService,
+            calculateApiService: OsuCalculateApiService,
         ): MatchCalculate {
             if (param.calParam.skip < 0)
                     throw MRAException(MRAException.Type.RATING_Parameter_SkipError)
@@ -279,7 +283,7 @@ class MuRatingService(
                 match.events.addAll(0, events)
             }
 
-            return MatchCalculate(match, param.calParam, beatmapApiService)
+            return MatchCalculate(match, param.calParam, beatmapApiService, calculateApiService)
         }
     }
 }

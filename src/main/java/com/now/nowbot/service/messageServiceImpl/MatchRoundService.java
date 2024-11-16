@@ -7,6 +7,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService;
 import com.now.nowbot.service.osuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.serviceException.MatchRoundException;
 import com.now.nowbot.util.DataUtil;
@@ -33,6 +34,8 @@ public class MatchRoundService implements MessageService<Matcher> {
     OsuBeatmapApiService beatmapApiService;
     @Resource
     ImageService imageService;
+    @Resource
+    OsuCalculateApiService calculateApiService;
 
     @Override
     public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) {
@@ -68,11 +71,11 @@ public class MatchRoundService implements MessageService<Matcher> {
         }
 
         var keyword = matcher.group("keyword");
-        boolean hasKeyword = (keyword != null && !keyword.isEmpty() && !keyword.isBlank());
+        boolean hasKeyword = (keyword != null && !keyword.isBlank());
 
         int round;
         var roundStr = matcher.group("round");
-        boolean hasRound = (roundStr != null && !roundStr.isEmpty() && !roundStr.isBlank());
+        boolean hasRound = (roundStr != null && !roundStr.isBlank());
 
         if (hasRound) {
             if (hasKeyword) {
@@ -116,7 +119,7 @@ public class MatchRoundService implements MessageService<Matcher> {
     }
 
     public byte[] getDataImage(int matchID, int index, @Nullable String keyword) throws MatchRoundException {
-        boolean hasKeyword = (keyword != null && !keyword.isEmpty() && !keyword.isBlank());
+        boolean hasKeyword = (keyword != null && !keyword.isBlank());
 
         Match match;
         try {
@@ -132,7 +135,7 @@ public class MatchRoundService implements MessageService<Matcher> {
         }
 
         //获取所有轮的游戏
-        var result = new MatchCalculate(match, new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true), beatmapApiService);
+        var result = new MatchCalculate(match, new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
 
         List<Match.MatchRound> rounds = result.getRounds();
 
@@ -167,7 +170,7 @@ public class MatchRoundService implements MessageService<Matcher> {
         int size = infoList.size();
         String word;
 
-        if (keyword != null && !keyword.isEmpty() && !keyword.isBlank()) {
+        if (keyword != null && !keyword.isBlank()) {
             word = keyword.trim().toLowerCase();
         } else {
             return -1;

@@ -24,7 +24,7 @@ class SetModeService (
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<String>): Boolean {
         val m = Instruction.SET_MODE.matcher(messageText)
         if (m.find()) {
-            data.setValue(m.group(FLAG_MODE))
+            data.value = m.group(FLAG_MODE)
             return true
         } else return false
     }

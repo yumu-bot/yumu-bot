@@ -128,7 +128,7 @@ class MatchMapService(
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService,
         ): PanelE7Param {
-            val calculate = MatchCalculate(param.match, beatmapApiService)
+            val calculate = MatchCalculate(param.match, beatmapApiService, calculateApiService)
 
             if (calculate.rounds.isNullOrEmpty() || param.position > calculate.rounds.size)
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_MatchRound)

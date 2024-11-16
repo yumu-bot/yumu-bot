@@ -11,6 +11,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.serviceException.MRAException
 import com.now.nowbot.util.DataUtil.getMarkdownFile
@@ -30,6 +31,7 @@ import java.util.regex.Matcher
 @Service("SERIES_RATING")
 class SeriesRatingService(
     private val matchApiService: OsuMatchApiService,
+    private val calculateApiService: OsuCalculateApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService,
 ) : MessageService<Matcher> {
@@ -85,7 +87,7 @@ class SeriesRatingService(
         val sc: SeriesCalculate
         try {
             val matches = fetchMatchFromMatchID(matchIDs, event)
-            sc = SeriesCalculate(matches, params.params, beatmapApiService)
+            sc = SeriesCalculate(matches, params.params, beatmapApiService, calculateApiService)
         } catch (e: MRAException) {
             throw e
         } catch (e: Exception) {

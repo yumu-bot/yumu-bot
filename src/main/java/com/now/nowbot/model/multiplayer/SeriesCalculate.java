@@ -4,6 +4,7 @@ import com.now.nowbot.model.json.Match;
 import com.now.nowbot.model.json.MicroUser;
 import com.now.nowbot.model.json.Series;
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
@@ -21,9 +22,10 @@ public class SeriesCalculate extends MatchCalculate {
 
     private final List<Match.MatchScore> scores = new ArrayList<>();
 
-    public SeriesCalculate(List<Match> matches, List<CalculateParam> params, OsuBeatmapApiService beatmapApiService) {
+    public SeriesCalculate(List<Match> matches, List<CalculateParam> params, OsuBeatmapApiService beatmapApiService, OsuCalculateApiService calculateApiService) {
         this.series = new Series(matches);
         this.beatmapApiService = beatmapApiService;
+        this.calculateApiService = calculateApiService;
 
         if (params.size() < matches.size()) return;
 
@@ -32,7 +34,7 @@ public class SeriesCalculate extends MatchCalculate {
             var m = matches.get(i);
             var p = params.get(i);
 
-            var c = new MatchCalculate(m, p, beatmapApiService);
+            var c = new MatchCalculate(m, p, beatmapApiService, calculateApiService);
 
             dataList.add(c.getMatchData());
             players.addAll(c.getMatch().getPlayers());

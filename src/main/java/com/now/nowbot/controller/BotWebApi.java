@@ -198,7 +198,7 @@ public class BotWebApi {
         try {
             var data = MatchNowService.calculate(
                     new MuRatingService.MuRatingParam(matchID, new MatchCalculate.CalculateParam(k, d, null, e, f, r), false),
-                    matchApiService, beatmapApiService);
+                    matchApiService, beatmapApiService, calculateApiService);
             image = imageService.getPanel(data, "F");
         } catch (Exception err) {
             log.error("比赛结果：API 异常", err);
@@ -238,7 +238,7 @@ public class BotWebApi {
         try {
             var c = MuRatingService.calculate(
                     new MuRatingService.MuRatingParam(matchID, new MatchCalculate.CalculateParam(k, d, null, e, f, r), false),
-                    matchApiService, beatmapApiService);
+                    matchApiService, beatmapApiService, calculateApiService);
             image = imageService.getPanel(c, "C");
         } catch (Exception err) {
             log.error("比赛评分：API 异常", err);

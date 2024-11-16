@@ -120,7 +120,7 @@ class MatchListenerService(
         regentListener(
             event.group.id,
             event.sender.id,
-            MatchListenerImplement(beatmapApiService, imageService, event, data.id),
+            MatchListenerImplement(beatmapApiService, calculateApiService, imageService, event, data.id),
             matchApiService,
             this,
         )
@@ -150,6 +150,7 @@ class MatchListenerService(
 
     class MatchListenerImplement(
         val beatmapApiService: OsuBeatmapApiService,
+        val calculateApiService: OsuCalculateApiService,
         val imageService: ImageService,
         val messageEvent: MessageEvent,
         val matchID: Long,
@@ -187,7 +188,7 @@ class MatchListenerService(
                     consoleListener(messageEvent.subject.id, false, matchID)
                 }
 
-                val calculate = MatchCalculate(match.toMatch(), beatmapApiService)
+                val calculate = MatchCalculate(match.toMatch(), beatmapApiService, calculateApiService)
 
                 val objectGroup = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
                 val e7 =

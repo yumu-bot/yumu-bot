@@ -316,7 +316,7 @@ public class MatchListenerServiceLegacy implements MessageService<MatchListenerS
 
         var o = DataUtil.getOriginal(b);
 
-        var c = new MatchCalculate(match, beatmapApiService);
+        var c = new MatchCalculate(match, beatmapApiService, calculateApiService);
 
         var d = beatmapApiService.getBeatmapObjectGrouping26(b);
 

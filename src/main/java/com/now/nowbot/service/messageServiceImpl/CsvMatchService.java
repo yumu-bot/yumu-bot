@@ -8,6 +8,7 @@ import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService;
 import com.now.nowbot.service.osuApiService.OsuMatchApiService;
 import com.now.nowbot.throwable.serviceException.MRAException;
 import com.now.nowbot.util.Instruction;
@@ -33,7 +34,9 @@ public class CsvMatchService implements MessageService<Matcher> {
     @Resource
     OsuMatchApiService matchApiService;
     @Resource
-    OsuBeatmapApiService beatmapApiService;
+    OsuBeatmapApiService   beatmapApiService;
+    @Resource
+    OsuCalculateApiService calculateApiService;
 
     @Override
     public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) throws Throwable {
@@ -106,7 +109,7 @@ public class CsvMatchService implements MessageService<Matcher> {
             throw new MRAException(MRAException.Type.RATING_Match_NotFound);
         }
 
-        var cal = new MatchCalculate(match, new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true), beatmapApiService);
+        var cal = new MatchCalculate(match, new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
         var rounds = cal.getRounds();
 
         for (var r : rounds) {
@@ -133,7 +136,7 @@ public class CsvMatchService implements MessageService<Matcher> {
                 throw new MRAException(MRAException.Type.RATING_Series_NotFound, matchID.toString());
             }
 
-            var cal = new MatchCalculate(match, new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true), beatmapApiService);
+            var cal = new MatchCalculate(match, new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
             var rounds = cal.getRounds();
 
             //多比赛
