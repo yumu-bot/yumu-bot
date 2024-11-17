@@ -96,7 +96,7 @@ import kotlin.math.sqrt
             val u2 = param.other as OsuUser
             val pp2 = getUserPerformancePlus(u2.userID)
 
-            beforePost(u2, pp2)
+            // beforePost(u2, pp2)
 
             dataMap["other"] = u2
             dataMap["others"] = pp2
@@ -271,8 +271,7 @@ import kotlin.math.sqrt
         }
     }
 
-    // 、、、、、、、、、、、、、、、、、、
-    // 不要多看, 反正不影响用
+    
     private fun beforePost(user: OsuUser, plus: PPPlus) {
         if (user.id == 17064371L) {
             plus.performance = PPPlus.getMaxStats()

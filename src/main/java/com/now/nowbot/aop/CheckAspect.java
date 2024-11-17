@@ -301,7 +301,7 @@ public class CheckAspect {
     @Pointcut("execution(* com.now.nowbot.service.osuApiService.OsuScoreApiService.*(..))")
     public void scoreApi() {
     }
-
+/*
     @AfterReturning(value = "scoreApi()", returning = "result")
     public void afterApiService(Object result) {
         if (result instanceof BeatmapUserScore s && isMyScore(s.score)) {
@@ -315,4 +315,5 @@ public class CheckAspect {
             }
         }
     }
+*/
 }
