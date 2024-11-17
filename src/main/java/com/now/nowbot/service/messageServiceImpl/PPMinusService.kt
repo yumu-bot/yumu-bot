@@ -348,11 +348,9 @@ class PPMinusService(
             mode: OsuMode,
     ): ByteArray {
         if (other != null) {
-            /*
             if (other.id == 17064371L) {
                 customizePerformanceMinus(others, 999.99f)
-            } else */
-            if (other.id == 19673275L) {
+            } else if (other.id == 19673275L) {
                 customizePerformanceMinus(others, 0f)
             }
         }
