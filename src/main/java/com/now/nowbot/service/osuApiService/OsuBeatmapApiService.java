@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.LazerMod;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.*;
+import com.now.nowbot.model.multiplayer.Match;
 import org.springframework.lang.Nullable;
 
 import java.io.IOException;

@@ -2,7 +2,7 @@ package com.now.nowbot.model.multiplayer
 
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.json.MicroUser
-import com.now.nowbot.model.multiplayer.MonitoredMatch.EventType
+import com.now.nowbot.model.multiplayer.Match.EventType
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
@@ -11,13 +11,13 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 class MatchListener(
-    val match: MonitoredMatch,
+    val match: Match,
     val matchApiService: OsuMatchApiService,
     vararg adapter: MatchAdapter
 ) {
     val usersIDSet = mutableSetOf<Long>()
     val userMap = mutableMapOf<Long, MicroUser>()
-    var beforeGame: (MonitoredMatch.MatchEvent, MatchListener) -> Unit = { _, _ -> }
+    var beforeGame: (Match.MatchEvent, MatchListener) -> Unit = { _, _ -> }
     private val matchId = match.id
     private var nowGameID: Long? = null
     private var nowEventID: Long = match.latestEventID
@@ -32,9 +32,9 @@ class MatchListener(
         }
 
         eventListener.addAll(adapter)
-        parseUsers(match.events, match.users)
+        parseUsers(match.events, match.players)
         if (match.currentGameID != null) {
-            val gameEvent = match.events.last { it.game != null }
+            val gameEvent = match.events.last { it.round != null }
             nowGameID = match.currentGameID
             nowEventID = gameEvent.eventID - 1
             try {
@@ -57,7 +57,7 @@ class MatchListener(
             if (nowEventID == newMatch.latestEventID) return
             if (newMatch.currentGameID != null) {
                 // 现在有对局正在进行中
-                val gameEvent = newMatch.events.last { it.game != null }
+                val gameEvent = newMatch.events.last { it.round != null }
                 var isAbort = false
                 if (newMatch.currentGameID != nowGameID) {
                     nowGameID = newMatch.currentGameID
@@ -72,7 +72,7 @@ class MatchListener(
                 nowEventID = newMatch.latestEventID
             }
             match += newMatch
-            parseUsers(newMatch.events, newMatch.users)
+            parseUsers(newMatch.events, newMatch.players)
             onEvent(newMatch.events)
             if (newMatch.isMatchEnd) stop(StopType.MATCH_END)
         } catch (e: Exception) {
@@ -125,18 +125,18 @@ class MatchListener(
     /**
      * 处理批量对局
      */
-    private fun onEvent(events: List<MonitoredMatch.MatchEvent>) {
-        val gameEvent = events.filter { it.game != null }
+    private fun onEvent(events: List<Match.MatchEvent>) {
+        val gameEvent = events.filter { it.round != null }
         if (gameEvent.isEmpty()) return
         // game 事件多于一个认为可能有 abort
         if (gameEvent.size > 1) {
             val abortGames = gameEvent.dropLast(1)
             abortGames.forEach {
-                val game = it.game!!
+                val game = it.round!!
                 if (game.endTime != null) { // 正常结束但是中间没有获取到 (因为请求延迟导致)
                     onEvent(it)
                 } else { // abort
-                    eventListener.forEach { l -> l.onGameAbort(game.beatmapID) }
+                    eventListener.forEach { l -> l.onGameAbort(game.beatMapID) }
                 }
             }
         }
@@ -147,8 +147,8 @@ class MatchListener(
     /**
      * 针对单个对局处理
      */
-    private fun onEvent(event: MonitoredMatch.MatchEvent) {
-        val game = event.game ?: return
+    private fun onEvent(event: Match.MatchEvent) {
+        val game = event.round ?: return
         beforeGame(event, this)
         val isEnd = game.endTime != null
         if (isEnd) {
@@ -166,8 +166,8 @@ class MatchListener(
                 MatchAdapter.GameStartEvent(
                     event.eventID,
                     match.name,
-                    beatmapID,
-                    beatmap!!,
+                    beatMapID,
+                    beatMap!!,
                     startTime,
                     mode,
                     mods.map { OsuMod.getModFromAcronym(it) },
@@ -194,7 +194,7 @@ class MatchListener(
 
     fun isStart() = future?.isDone?.not() == true
 
-    private fun parseUsers(events: List<MonitoredMatch.MatchEvent>, users: List<MicroUser>) {
+    private fun parseUsers(events: List<Match.MatchEvent>, users: List<MicroUser>) {
         users.forEach {
             userMap[it.id] = it
         }
@@ -205,8 +205,8 @@ class MatchListener(
                 EventType.PlayerKicked -> usersIDSet.remove(it.userID!!)
                 EventType.PlayerLeft -> usersIDSet.remove(it.userID!!)
                 EventType.Other -> {
-                    if (it.game?.endTime == null) return@forEach
-                    val game = it.game
+                    if (it.round?.endTime == null) return@forEach
+                    val game = it.round
                     game.scores.forEach { s -> usersIDSet.add(s.userID) }
                 }
 

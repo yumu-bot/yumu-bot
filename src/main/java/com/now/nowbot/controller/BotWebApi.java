@@ -12,7 +12,8 @@ import com.now.nowbot.model.json.BeatmapDifficultyAttributes;
 import com.now.nowbot.model.json.LazerScore;
 import com.now.nowbot.model.json.OsuUser;
 import com.now.nowbot.model.mappool.old.MapPoolDto;
-import com.now.nowbot.model.multiplayer.MatchCalculate;
+import com.now.nowbot.model.multiplayer.Match;
+import com.now.nowbot.model.multiplayer.MatchRating;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.messageServiceImpl.*;
@@ -195,10 +196,18 @@ public class BotWebApi {
         if (r == null) r = true;
         byte[] image;
 
+        Match match;
+
+        try {
+            match = matchApiService.getMatchInfo(matchID, 10);
+        } catch (WebClientResponseException ex) {
+            throw new RuntimeException(GeneralTipsException.Type.G_Null_MatchID.getMessage());
+        }
+
         try {
             var data = MatchNowService.calculate(
-                    new MuRatingService.MuRatingParam(matchID, new MatchCalculate.CalculateParam(k, d, null, e, f, r), false),
-                    matchApiService, beatmapApiService, calculateApiService);
+                    new MuRatingService.MuRatingPanelParam(match, new MatchRating.RatingParam(k, d, null, e, f, r), false),
+                    beatmapApiService, calculateApiService);
             image = imageService.getPanel(data, "F");
         } catch (Exception err) {
             log.error("比赛结果：API 异常", err);
@@ -235,10 +244,18 @@ public class BotWebApi {
         if (r == null) r = true;
         byte[] image;
 
+        Match match;
+
+        try {
+            match = matchApiService.getMatchInfo(matchID, 10);
+        } catch (WebClientResponseException ex) {
+            throw new RuntimeException(GeneralTipsException.Type.G_Null_MatchID.getMessage());
+        }
+
         try {
             var c = MuRatingService.calculate(
-                    new MuRatingService.MuRatingParam(matchID, new MatchCalculate.CalculateParam(k, d, null, e, f, r), false),
-                    matchApiService, beatmapApiService, calculateApiService);
+                    new MuRatingService.MuRatingPanelParam(match, new MatchRating.RatingParam(k, d, null, e, f, r), false),
+                    beatmapApiService, calculateApiService);
             image = imageService.getPanel(c, "C");
         } catch (Exception err) {
             log.error("比赛评分：API 异常", err);
@@ -852,6 +869,27 @@ public class BotWebApi {
             byte[] image = imageService.getPanel(data, "N");
 
             return new ResponseEntity<>(image, getImageHeader(STR."\{Optional.ofNullable(sid).orElse(bid)}-nomination.jpg", image.length), HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("提名信息：API 异常", e);
+            throw new RuntimeException("提名信息：API 异常");
+        }
+
+    }
+
+    /**
+     * 获取比赛结果文件 (CA)
+     *
+     * @return 提名信息图片
+     */
+
+    @GetMapping(value = "match/rating/csv")
+    @OpenResource(name = "ca", desp = "获取提名信息")
+    public ResponseEntity<byte[]> getCsvRating(
+            @OpenResource(name = "mid", desp = "比赛编号") @RequestBody() @Nullable List<Integer> mid
+    ) throws RuntimeException {
+
+        try {
+            return new ResponseEntity<>(new byte[0], getImageHeader(STR."\{0}-nomination.jpg", new byte[0].length), HttpStatus.OK);
         } catch (Exception e) {
             log.error("提名信息：API 异常", e);
             throw new RuntimeException("提名信息：API 异常");

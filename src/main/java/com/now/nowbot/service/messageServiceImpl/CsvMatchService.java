@@ -2,8 +2,9 @@ package com.now.nowbot.service.messageServiceImpl;
 
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.model.json.BeatMap;
-import com.now.nowbot.model.json.Match;
-import com.now.nowbot.model.multiplayer.MatchCalculate;
+import com.now.nowbot.model.json.MicroUser;
+import com.now.nowbot.model.multiplayer.Match;
+import com.now.nowbot.model.multiplayer.MatchRating;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
@@ -69,7 +70,7 @@ public class CsvMatchService implements MessageService<Matcher> {
         } else {
             try {
                 id = Integer.parseInt(matcher.group("data"));
-                event.reply(STR."正在处理\{id}");
+                event.reply("正在处理" + id);
                 parseCRA(sb, id);
             } catch (NullPointerException e) {
                 throw new MRAException(MRAException.Type.RATING_Match_NotFound);
@@ -86,10 +87,10 @@ public class CsvMatchService implements MessageService<Matcher> {
             try {
                 if (isMultiple) {
                     if (Objects.nonNull(ids)) {
-                        group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), STR."\{ids.getFirst()}s.csv");
+                        group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), ids.getFirst() + "s.csv");
                     }
                 } else {
-                    group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), STR."\{id}.csv");
+                    group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), id + ".csv");
                 }
             } catch (Exception e) {
                 log.error("比赛评分表：发送失败", e);
@@ -109,17 +110,16 @@ public class CsvMatchService implements MessageService<Matcher> {
             throw new MRAException(MRAException.Type.RATING_Match_NotFound);
         }
 
-        var cal = new MatchCalculate(match, new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
-        var rounds = cal.getRounds();
+        var mr = new MatchRating(match, new MatchRating.RatingParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
+        mr.calculate();
+        var rounds = mr.getRounds();
 
         for (var r : rounds) {
             var scores = r.getScores();
             appendRoundStrings(sb, r);
 
-            if (scores != null) {
-                for (var s : scores) {
-                    getScoreStrings(sb, s);
-                }
+            for (var s : scores) {
+                getScoreStrings(sb, s);
             }
         }
     }
@@ -136,8 +136,9 @@ public class CsvMatchService implements MessageService<Matcher> {
                 throw new MRAException(MRAException.Type.RATING_Series_NotFound, matchID.toString());
             }
 
-            var cal = new MatchCalculate(match, new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
-            var rounds = cal.getRounds();
+            var mr = new MatchRating(match, new MatchRating.RatingParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
+            mr.calculate();
+            var rounds = mr.getRounds();
 
             //多比赛
             appendMatchStrings(sb, match);
@@ -156,10 +157,10 @@ public class CsvMatchService implements MessageService<Matcher> {
 
     private void appendMatchStrings(StringBuilder sb, Match match){
         try {
-            sb.append(match.getMatchStat().getStartTime().format(Date1)).append(',')
-                    .append(match.getMatchStat().getStartTime().format(Date2)).append(',')
-                    .append(match.getMatchStat().getMatchID()).append(',')
-                    .append(match.getMatchStat().getName()).append(',')
+            sb.append(match.getStatistics().getStartTime().format(Date1)).append(',')
+                    .append(match.getStatistics().getStartTime().format(Date2)).append(',')
+                    .append(match.getStatistics().getMatchID()).append(',')
+                    .append(match.getStatistics().getName()).append(',')
                     .append('\n');
         } catch (Exception e) {
             sb.append(e.getMessage()).append('\n');//.append("  error---->")
@@ -206,9 +207,9 @@ public class CsvMatchService implements MessageService<Matcher> {
                     .append(score.getMaxCombo()).append(',')
                     .append(score.getPassed()).append(',')
                     .append(score.getPerfect()).append(',')
-                    .append(score.getPlayerStat().slot()).append(',')
-                    .append(score.getPlayerStat().team()).append(',')
-                    .append(score.getPlayerStat().pass())
+                    .append(score.getPlayerStat().getSlot()).append(',')
+                    .append(score.getPlayerStat().getTeam()).append(',')
+                    .append(score.getPlayerStat().getPass())
                     .append("\n");
         } catch (Exception e) {
             sb.append("<----MP ABORTED---->").append(e.getMessage()).append('\n');
@@ -218,14 +219,14 @@ public class CsvMatchService implements MessageService<Matcher> {
     private void appendScoreStringsLite(StringBuilder sb, Match.MatchScore score){
 
         try {
-            sb.append(score.getPlayerStat().team()).append(',')
-                    .append(score.getUserID()).append(',')
-                    .append(score.getUser().getUserName()).append(',')
-                    .append(score.getScore()).append(',')
-                    .append('[').append(String.join("|", score.getMods())).append("],")
-                    .append(score.getMaxCombo()).append(',')
-                    .append(String.format("%4.4f", score.getAccuracy())).append(',')
-                    .append("\n");
+            sb.append(score.getPlayerStat().getTeam()).append(',')
+              .append(score.getUserID()).append(',')
+              .append(Objects.requireNonNullElse(score.getUser(), new MicroUser()).getUserName()).append(',')
+              .append(score.getScore()).append(',')
+              .append('[').append(String.join("|", score.getMods())).append("],")
+              .append(score.getMaxCombo()).append(',')
+              .append(String.format("%4.4f", score.getAccuracy())).append(',')
+              .append("\n");
         } catch (Exception e) {
             sb.append("<----MP ABORTED---->").append(e.getMessage()).append('\n');
         }

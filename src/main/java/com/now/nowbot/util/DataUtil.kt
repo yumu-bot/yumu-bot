@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.JaChar
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.json.*
+import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.util.command.*
 import io.github.humbleui.skija.Typeface
 import org.slf4j.Logger
@@ -332,7 +333,7 @@ object DataUtil {
                 when (e.detail.type) {
                     "player-joined" -> {
                         try {
-                            playerSet.add(e.userID)
+                            playerSet.add(e.userID!!)
                         } catch (ignored: java.lang.Exception) {
                         }
                     }

@@ -4,9 +4,9 @@ import com.now.nowbot.config.Permission
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.Match
 import com.now.nowbot.model.json.MicroUser
-import com.now.nowbot.model.multiplayer.MatchCalculate
+import com.now.nowbot.model.multiplayer.Match
+import com.now.nowbot.model.multiplayer.MatchRating
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -20,7 +20,6 @@ import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
-import com.yumu.core.extensions.isNotNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -37,7 +36,7 @@ class MatchMapService(
 
     @JvmRecord
     data class PanelE7Param(
-        @JvmField val match: MatchCalculate,
+        @JvmField val match: MatchRating,
         @JvmField val mode: OsuMode,
         @JvmField val mods: List<String>,
         @JvmField val players: List<MicroUser>,
@@ -128,16 +127,21 @@ class MatchMapService(
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService,
         ): PanelE7Param {
-            val calculate = MatchCalculate(param.match, beatmapApiService, calculateApiService)
+            val mr = MatchRating(
+                param.match,
+                beatmapApiService,
+                calculateApiService
+            )
+            mr.calculate()
 
-            if (calculate.rounds.isNullOrEmpty() || param.position > calculate.rounds.size)
+            if (mr.rounds.isEmpty() || param.position > mr.rounds.size)
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_MatchRound)
 
-            val round = calculate.rounds[param.position - 1]
+            val round = mr.rounds[param.position - 1]
 
             var eventID = 0L
             for (e in param.match.events) {
-                if (e.round.isNotNull() && e.round.roundID == round.roundID) {
+                if (e.round != null && e.round.roundID == round.roundID) {
                     eventID = e.eventID
                 }
             }
@@ -150,12 +154,11 @@ class MatchMapService(
 
             mode =
                 if (
-                    beatMapMode != OsuMode.OSU ||
-                        OsuMode.isDefaultOrNull(OsuMode.getMode(round.mode))
+                    beatMapMode != OsuMode.OSU || OsuMode.isDefaultOrNull(round.mode)
                 ) {
                     beatMapMode
                 } else {
-                    OsuMode.getMode(round.mode)
+                    round.mode
                 }
 
             val original = DataUtil.getOriginal(beatmap)
@@ -170,7 +173,7 @@ class MatchMapService(
 
             val players = DataUtil.getPlayersBeforeRoundStart(param.match, eventID)
 
-            return PanelE7Param(calculate, mode, round.mods, players, beatmap, density, original)
+            return PanelE7Param(mr, mode, round.mods, players, beatmap, density, original)
         }
     }
 }

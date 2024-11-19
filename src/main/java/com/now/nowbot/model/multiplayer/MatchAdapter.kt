@@ -7,7 +7,7 @@ import com.now.nowbot.model.json.MicroUser
 import java.time.OffsetDateTime
 
 interface MatchAdapter {
-    var match : MonitoredMatch
+    var match : Match
 
     fun onStart()
 
@@ -36,7 +36,7 @@ interface MatchAdapter {
     )
 
     data class GameEndEvent(
-        val game: MonitoredMatch.MatchGame,
+        val game: Match.MatchRound,
         val id: Long,
         val users: Map<Long, MicroUser>,
     )

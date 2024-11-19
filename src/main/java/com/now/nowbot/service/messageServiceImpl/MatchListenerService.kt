@@ -4,10 +4,7 @@ import com.now.nowbot.config.Permission
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.MicroUser
-import com.now.nowbot.model.multiplayer.MatchAdapter
-import com.now.nowbot.model.multiplayer.MatchCalculate
-import com.now.nowbot.model.multiplayer.MatchListener
-import com.now.nowbot.model.multiplayer.MonitoredMatch
+import com.now.nowbot.model.multiplayer.*
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -70,7 +67,7 @@ class MatchListenerService(
     }
 
     override fun HandleMessage(event: MessageEvent, data: ListenerParam) {
-        val match: MonitoredMatch
+        val match: Match
 
         if (event !is GroupMessageEvent) {
             throw TipsException(MatchListenerException.Type.ML_Send_NotGroup.message)
@@ -126,17 +123,17 @@ class MatchListenerService(
         )
     }
 
-    private fun initBeatmapAndUser(event: MonitoredMatch.MatchEvent, listener: MatchListener) {
-        val game = event.game ?: return
+    private fun initBeatmapAndUser(event: Match.MatchEvent, listener: MatchListener) {
+        val game = event.round ?: return
         with(game) {
-            if (beatmap != null) {
-                beatmap = beatmapApiService.getBeatMap(beatmapID)
-                calculateApiService.applyStarToBeatMap(beatmap!!, mode, LazerMod.getModsList(mods))
+            if (beatMap != null) {
+                beatMap = beatmapApiService.getBeatMap(beatMapID)
+                calculateApiService.applyStarToBeatMap(beatMap!!, mode, LazerMod.getModsList(mods))
             } else {
                 val b = BeatMap()
-                b.beatMapID = beatmapID
+                b.beatMapID = beatMapID
 
-                beatmap = b
+                beatMap = b
             }
         }
 
@@ -156,7 +153,7 @@ class MatchListenerService(
         val matchID: Long,
     ) : MatchAdapter {
         var round = 0
-        override lateinit var match: MonitoredMatch
+        override lateinit var match: Match
 
         /** 判断是否继续 */
         fun hasNext(): Boolean {
@@ -188,12 +185,17 @@ class MatchListenerService(
                     consoleListener(messageEvent.subject.id, false, matchID)
                 }
 
-                val calculate = MatchCalculate(match.toMatch(), beatmapApiService, calculateApiService)
+                val mr = MatchRating(
+                    match,
+                    beatmapApiService,
+                    calculateApiService
+                )
+                mr.calculate()
 
                 val objectGroup = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
                 val e7 =
                     PanelE7Param(
-                        calculate,
+                        mr,
                         mode,
                         mods.map { it.acronym },
                         users,
@@ -224,7 +226,7 @@ class MatchListenerService(
                 game.scores = game.scores.filter { s -> s.score >= 1000 }
 
                 val userMap =
-                    match.users
+                    match.players
                         .stream()
                         .distinct()
                         .collect(Collectors.toMap(MicroUser::getUserID) { it })

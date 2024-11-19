@@ -3,9 +3,7 @@ package com.now.nowbot.service;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.*;
 import com.now.nowbot.model.mapminus.PPMinus3;
-import com.now.nowbot.model.multiplayer.MatchCalculate;
-import com.now.nowbot.model.multiplayer.MonitoredMatch;
-import com.now.nowbot.model.multiplayer.SeriesCalculate;
+import com.now.nowbot.model.multiplayer.Match;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.service.UserAvatarCardParam;
 import com.now.nowbot.service.messageServiceImpl.MapStatisticsService;
@@ -324,13 +322,6 @@ public class ImageService {
         return doPost("panel_B3", httpEntity);
     }
 
-    public byte[] getPanelC2(SeriesCalculate sc) {
-        HttpHeaders headers = getDefaultHeader();
-
-        HttpEntity<SeriesCalculate> httpEntity = new HttpEntity<>(sc, headers);
-        return doPost("panel_C2", httpEntity);
-    }
-
     @Deprecated
     public byte[] getPanelD(OsuUser osuUser, Optional<OsuUser> historyUser, List<LazerScore> BPs, OsuMode mode) {
 
@@ -399,20 +390,6 @@ public class ImageService {
         return doPost("panel_E2", httpEntity);
     }
 
-    @Deprecated
-    // 请使用 E7
-    public byte[] getPanelE3(MatchCalculate matchCalculate, BeatMap beatMap, MapStatisticsService.Expected expected) {
-        HttpHeaders headers = getDefaultHeader();
-        var body = Map.of(
-                "beatmap", beatMap,
-                "match", matchCalculate,
-                "expected", expected
-        );
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_E3", httpEntity);
-    }
-
     public byte[] getPanelE7(MatchMapService.PanelE7Param param) {
         HttpHeaders headers = getDefaultHeader();
 
@@ -430,20 +407,7 @@ public class ImageService {
         return doPost("panel_E7", httpEntity);
     }
 
-    public byte[] getPanelF2(Match.MatchStat matchStat, Match.MatchRound matchRound, int index) {
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = Map.of(
-                "MatchStat", matchStat,
-                "MatchRound", matchRound,
-                "index", index
-        );
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_F2", httpEntity);
-    }
-
-    public byte[] getPanelF2(MonitoredMatch.MatchStat stat, MonitoredMatch.MatchGame game, int index) {
+    public byte[] getPanelF2(Match.MatchStat stat, Match.MatchRound game, int index) {
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(

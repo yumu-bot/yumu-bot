@@ -1,8 +1,7 @@
 package com.now.nowbot.service.osuApiService
 
-import com.now.nowbot.model.json.Match
 import com.now.nowbot.model.multiplayer.MatchQuery
-import com.now.nowbot.model.multiplayer.MonitoredMatch
+import com.now.nowbot.model.multiplayer.Match
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 interface OsuMatchApiService {
@@ -19,10 +18,10 @@ interface OsuMatchApiService {
      * @param name 比赛名包含 `name` 忽略大小写
      * @param limit 查找最近第 `limit` 范围内的比赛, 以创建房间的时间开始排, 如果过于久远查不到
      */
-    fun queryMatch(name: String, limit: Int = 300): List<MonitoredMatch.MatchStat> {
+    fun queryMatch(name: String, limit: Int = 300): List<Match.MatchStat> {
         var query: MatchQuery
         var cursor: String? = null
-        val result = mutableListOf<MonitoredMatch.MatchStat>()
+        val result = mutableListOf<Match.MatchStat>()
         var count = 0
         do {
             query = queryMatch(50, "id_desc", cursor)
@@ -34,7 +33,7 @@ interface OsuMatchApiService {
         return result
     }
 
-    fun getMonitoredMatchInfo(mid: Long, before: Long? = null, after: Long? = null, limit: Int = 100) : MonitoredMatch
+    fun getMonitoredMatchInfo(mid: Long, before: Long? = null, after: Long? = null, limit: Int = 100) : Match
 
     @Throws(WebClientResponseException::class)
     fun getMatchInfo(mid: Long, limit: Int): Match

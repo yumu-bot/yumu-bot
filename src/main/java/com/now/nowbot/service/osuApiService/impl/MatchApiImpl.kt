@@ -1,8 +1,8 @@
 package com.now.nowbot.service.osuApiService.impl
 
-import com.now.nowbot.model.json.Match
 import com.now.nowbot.model.multiplayer.MatchQuery
-import com.now.nowbot.model.multiplayer.MonitoredMatch
+import com.now.nowbot.model.multiplayer.Match
+import com.now.nowbot.model.multiplayer.Match.Companion.append
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -28,7 +28,7 @@ class MatchApiImpl(
             .block()!!
     }
 
-    override fun getMonitoredMatchInfo(mid: Long, before: Long?, after: Long?, limit: Int) : MonitoredMatch {
+    override fun getMonitoredMatchInfo(mid: Long, before: Long?, after: Long?, limit: Int) : Match {
         return base.osuApiWebClient.get()
             .uri {
                 it.path("matches/{mid}")
@@ -39,7 +39,7 @@ class MatchApiImpl(
             }
             .headers(base::insertHeader)
             .retrieve()
-            .bodyToMono(MonitoredMatch::class.java)
+            .bodyToMono(Match::class.java)
             .timeout(Duration.ofSeconds(5))
             .block()!!
     }
@@ -76,7 +76,7 @@ class MatchApiImpl(
         val match: Match = getMatchInfo(mid)
         do {
             val newMatch = getMatchInfoBefore(mid, match.events.first().eventID)
-            match.parseNextData(newMatch)
+            match.append(newMatch)
             eventId = match.events.first().eventID
         } while (match.firstEventID != eventId && --l >= 0)
         return match

@@ -1,10 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.Match
-import com.now.nowbot.model.multiplayer.MatchCalculate.CalculateParam
-import com.now.nowbot.model.multiplayer.MatchCalculate.PlayerData
-import com.now.nowbot.model.multiplayer.SeriesCalculate
-import com.now.nowbot.model.multiplayer.SeriesCalculate.SeriesData
+import com.now.nowbot.model.multiplayer.Match
+import com.now.nowbot.model.multiplayer.MatchRating
+import com.now.nowbot.model.multiplayer.SeriesRating
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -54,7 +52,7 @@ class SeriesRatingService(
         val dataStr = matcher.group("data")
         val nameStr = matcher.group("name")
 
-        if (Objects.isNull(dataStr) || dataStr.isBlank()) {
+        if (dataStr.isNullOrBlank()) {
             try {
                 val md = getMarkdownFile("Help/series.md")
                 val image = imageService.getPanelA6(md, "help")
@@ -84,10 +82,21 @@ class SeriesRatingService(
             event.reply(MRAException.Type.RATING_Series_TooManyMatch.message)
         }
 
-        val sc: SeriesCalculate
+        val sr: SeriesRating
         try {
             val matches = fetchMatchFromMatchID(matchIDs, event)
-            sc = SeriesCalculate(matches, params.params, beatmapApiService, calculateApiService)
+            sr = SeriesRating(
+                matches,
+                params.params,
+                beatmapApiService,
+                calculateApiService
+            )
+
+            if (nameStr != null) {
+                sr.statistics.name = nameStr
+            }
+
+            sr.calculate()
         } catch (e: MRAException) {
             throw e
         } catch (e: Exception) {
@@ -98,14 +107,14 @@ class SeriesRatingService(
         if (matcher.group("main") != null) {
             val image: ByteArray
             try {
-                image = imageService.getPanelC2(sc)
+                image = imageService.getPanel(sr, "C2")
                 event.reply(image)
             } catch (e: Exception) {
                 log.error("系列比赛评分：数据请求失败", e)
                 throw MRAException(MRAException.Type.RATING_Send_SRAFailed)
             }
         } else if (matcher.group("uu") != null) {
-            val str = parseUSA(sc)
+            val str = parseUSA(sr)
             try {
                 event.reply(str).recallIn(60000)
             } catch (e: Exception) {
@@ -117,10 +126,10 @@ class SeriesRatingService(
             val group = event.subject
             if (group is Group) {
                 try {
-                    val str = parseCSA(sc.seriesData)
+                    val str = parseCSA(sr)
                     group.sendFile(
                         str.toByteArray(StandardCharsets.UTF_8),
-                        "${sc.series.matches.first().firstEventID}-results.csv",
+                        "${sr.statistics.matchID}-results.csv",
                     )
                 } catch (e: Exception) {
                     log.error("CSA:", e)
@@ -132,7 +141,7 @@ class SeriesRatingService(
         }
     }
 
-    private fun parseCSA(data: SeriesData): String {
+    private fun parseCSA(sr: SeriesRating): String {
         val sb = StringBuilder()
 
         sb.append("#")
@@ -162,18 +171,18 @@ class SeriesRatingService(
             .append("Class Color")
             .append('\n')
 
-        for (p in data.playerDataMap.values.stream().toList()) {
+        for (p in sr.playerDataList) {
             sb.append(parsePlayer2CSA(p))
         }
 
         return sb.toString()
     }
 
-    private fun parsePlayer2CSA(data: PlayerData): String {
+    private fun parsePlayer2CSA(data: MatchRating.PlayerData): String {
         val sb = StringBuilder()
 
         val winRate = 1.0 * data.win / (data.win + data.lose)
-        val playRate = 1.0 * data.rrAs.size / data.arc
+        val playRate = 1.0 * data.rawRatings.size / data.associatedRoundCount
 
         try {
             sb.append(data.ranking)
@@ -198,11 +207,11 @@ class SeriesRatingService(
                 .append(',')
                 .append(data.win + data.lose)
                 .append(',')
-                .append(data.playerClass.nameCN)
+                .append(data.playerClass!!.nameCN)
                 .append(',')
-                .append(data.playerClass.name)
+                .append(data.playerClass!!.name)
                 .append(',')
-                .append(data.playerClass.color)
+                .append(data.playerClass!!.color)
                 .append("\n")
         } catch (e: Exception) {
             sb.append("<----User Nullified---->").append(e.message).append('\n')
@@ -210,25 +219,23 @@ class SeriesRatingService(
         return sb.toString()
     }
 
-    private fun parseUSA(sc: SeriesCalculate): String {
-        val data = sc.seriesData
-
+    private fun parseUSA(sr: SeriesRating): String {
         // 结果数据
         val sb = StringBuilder()
 
-        sb.append(sc.series.seriesStat.name)
-            .append("\n")
+        sb.append(sr.statistics.name)
+            .append("...\n")
             .append("M")
-            .append(data.getMatchCount())
+            .append(sr.matches.size)
             .append(" R")
-            .append(data.getRoundCount())
+            .append(sr.rounds.size)
             .append(" P")
-            .append(data.getPlayerCount())
+            .append(sr.players.size)
             .append(" S")
-            .append(data.getScoreCount())
+            .append(sr.scores.size)
             .append("\n")
 
-        for (p in data.getPlayerDataMap().values.stream().toList()) {
+        for (p in sr.playerDataList) {
             sb.append(String.format("#%d [%.2f] %s", p.ranking, p.mra, p.player.userName))
                 .append(" ")
                 .append(
@@ -239,8 +246,8 @@ class SeriesRatingService(
                         Math.round(p.win.toDouble() * 100 / (p.win + p.lose)),
                         p.total / 1000000.0,
                         p.rws * 100.0,
-                        p.playerClass.name,
-                        p.playerClass.nameCN,
+                        p.playerClass!!.name,
+                        p.playerClass!!.nameCN,
                     )
                 )
                 .append("\n\n")
@@ -258,7 +265,7 @@ class SeriesRatingService(
         OK,
     }
 
-    @JvmRecord data class SRAParam(val matchIDs: List<Int>, val params: List<CalculateParam>)
+    @JvmRecord data class SRAPanelParam(val matchIDs: List<Long>, val params: List<MatchRating.RatingParam>)
 
     @Throws(MRAException::class)
     fun parseDataString(
@@ -266,14 +273,14 @@ class SeriesRatingService(
         easy: Double,
         failed: Boolean,
         rematch: Boolean,
-    ): SRAParam? {
+    ): SRAPanelParam? {
         val dataStrArray =
             dataStr
                 .trim { it <= ' ' }
                 .split("[\\s,，\\-|:]+".toRegex())
                 .dropLastWhile { it.isEmpty() }
                 .toTypedArray()
-        if (dataStr.isBlank() || dataStrArray.size == 0) return null
+        if (dataStr.isBlank() || dataStrArray.isEmpty()) return null
 
         val matchIDs: MutableList<Int> = ArrayList()
         val skips: MutableList<Int> = ArrayList()
@@ -431,17 +438,17 @@ class SeriesRatingService(
             }
         }
 
-        val params: MutableList<CalculateParam> = ArrayList(matchIDs.size)
+        val params: MutableList<MatchRating.RatingParam> = ArrayList(matchIDs.size)
 
         for (i in matchIDs.indices) {
-            params.add(CalculateParam(skips[i], ignores[i], removes[i], easy, failed, rematch))
+            params.add(MatchRating.RatingParam(skips[i], ignores[i], removes[i], easy, failed, rematch))
         }
 
-        return SRAParam(matchIDs, params)
+        return SRAPanelParam(matchIDs.map { it.toLong() }, params)
     }
 
     @Throws(MRAException::class)
-    private fun fetchMatchFromMatchID(matchIDs: List<Int>, event: MessageEvent): List<Match> {
+    private fun fetchMatchFromMatchID(matchIDs: List<Long>, event: MessageEvent): List<Match> {
         if (CollectionUtils.isEmpty(matchIDs)) return ArrayList()
 
         val matches: MutableList<Match> = ArrayList(matchIDs.size)
@@ -449,7 +456,7 @@ class SeriesRatingService(
         var fetchMapFail = 0
         for (m in matchIDs) {
             try {
-                matches.add(matchApiService.getMatchInfo(m.toLong(), 10))
+                matches.add(matchApiService.getMatchInfo(m, 10))
             } catch (e: HttpClientErrorException.TooManyRequests) {
                 fetchMapFail++
                 if (fetchMapFail > 3) {

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode
 data class MatchQuery(
     @JsonProperty("cursor_string")
     val cursor: String?,
-    val matches: List<MonitoredMatch.MatchStat>,
+    val matches: List<Match.MatchStat>,
     private val params: JsonNode,
 ) {
     val limit: Int

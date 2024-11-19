@@ -1,8 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl;
 
 import com.now.nowbot.model.json.BeatMap;
-import com.now.nowbot.model.json.Match;
-import com.now.nowbot.model.multiplayer.MatchCalculate;
+import com.now.nowbot.model.multiplayer.Match;
+import com.now.nowbot.model.multiplayer.MatchRating;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -128,16 +128,17 @@ public class MatchRoundService implements MessageService<Matcher> {
             throw new MatchRoundException(MatchRoundException.Type.MR_MatchID_NotFound);
         }
 
-        while (!match.getFirstEventID().equals(match.getEvents().getFirst().getEventID())) {
+        while (match.getFirstEventID() != match.getEvents().getFirst().getEventID()) {
             List<Match.MatchEvent> events = matchApiService.getMatchInfo(matchID, 10).getEvents();
             if (events.isEmpty()) throw new MatchRoundException(MatchRoundException.Type.MR_Round_Empty);
             match.getEvents().addAll(0, events);
         }
 
         //获取所有轮的游戏
-        var result = new MatchCalculate(match, new MatchCalculate.CalculateParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
+        var mr = new MatchRating(match, new MatchRating.RatingParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
+        mr.calculate();
 
-        List<Match.MatchRound> rounds = result.getRounds();
+        List<Match.MatchRound> rounds = mr.getRounds();
 
         if (index < 0 || index > match.getEvents().size()) {
             if (hasKeyword) {
@@ -157,7 +158,7 @@ public class MatchRoundService implements MessageService<Matcher> {
 
         byte[] img;
         try {
-            img = imageService.getPanelF2(match.getMatchStat(), result.getRounds().get(index), index);
+            img = imageService.getPanelF2(match.getStatistics(), mr.getRounds().get(index), index);
         } catch (Exception e) {
             log.error("对局信息图片渲染失败：", e);
             throw new MatchRoundException(MatchRoundException.Type.MR_Fetch_Error);

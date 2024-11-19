@@ -6,7 +6,7 @@ import com.now.nowbot.game.entity.Player;
 import java.util.List;
 import java.util.Random;
 
-public class Match {
+public class Matching {
     public static Random random = new Random(System.currentTimeMillis()%163);
     Float act = null;
     Player player1;
@@ -14,7 +14,7 @@ public class Match {
     List<State> player1State;
     List<State> player2State;
 
-    public Match(User u1, User u2){
+    public Matching(User u1, User u2){
         player1 = new Player();
         player1.setHp(u1.getHp());
         player1.setAct(u1.getPower()*0.8f);

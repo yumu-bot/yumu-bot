@@ -1,8 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.Match
-import com.now.nowbot.model.json.Match.MatchRound
-import com.now.nowbot.model.multiplayer.MatchCalculate
+import com.now.nowbot.model.multiplayer.Match
+import com.now.nowbot.model.multiplayer.MatchRating
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
@@ -10,7 +9,7 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.service.messageServiceImpl.MuRatingService.MuRatingParam
+import com.now.nowbot.service.messageServiceImpl.MuRatingService.MuRatingPanelParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
@@ -22,32 +21,29 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
-@Service("MATCH_NOW")
-class MatchNowService(
-        private val beatmapApiService: OsuBeatmapApiService,
-        private val calculateApiService: OsuCalculateApiService,
-        private val matchApiService: OsuMatchApiService,
-        private val imageService: ImageService,
-        private val muRatingService: MuRatingService,
-) : MessageService<MuRatingParam>, TencentMessageService<MuRatingParam> {
+@Service("MATCH_NOW") class MatchNowService(
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService,
+    private val matchApiService: OsuMatchApiService,
+    private val imageService: ImageService,
+) : MessageService<MuRatingPanelParam>, TencentMessageService<MuRatingPanelParam> {
 
     override fun isHandle(
-            event: MessageEvent,
-            messageText: String,
-            data: DataValue<MuRatingParam>,
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<MuRatingPanelParam>,
     ): Boolean {
         val m = Instruction.MATCH_NOW.matcher(messageText)
         if (!m.find()) {
             return false
         }
 
-        data.value = muRatingService.getMuRatingParam(m)
+        data.value = MuRatingService.getMuRatingParam(m, matchApiService)
         return true
     }
 
-    @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: MuRatingParam) {
-        val data = calculate(param, matchApiService, beatmapApiService, calculateApiService)
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: MuRatingPanelParam) {
+        val data = calculate(param, beatmapApiService, calculateApiService)
 
         val image: ByteArray
         try {
@@ -65,17 +61,17 @@ class MatchNowService(
         }
     }
 
-    override fun accept(event: MessageEvent, messageText: String): MuRatingParam? {
+    override fun accept(event: MessageEvent, messageText: String): MuRatingPanelParam? {
         val m = OfficialInstruction.MATCH_NOW.matcher(messageText)
         if (!m.find()) {
             return null
         }
 
-        return muRatingService.getMuRatingParam(m)
+        return MuRatingService.getMuRatingParam(m, matchApiService)
     }
 
-    override fun reply(event: MessageEvent, param: MuRatingParam): MessageChain? {
-        val data = calculate(param, matchApiService, beatmapApiService, calculateApiService)
+    override fun reply(event: MessageEvent, param: MuRatingPanelParam): MessageChain? {
+        val data = calculate(param, beatmapApiService, calculateApiService)
 
         return MessageChainBuilder().addImage(imageService.getPanel(data, "F")).build()
     }
@@ -83,72 +79,46 @@ class MatchNowService(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(MatchNowService::class.java)
 
-        @JvmStatic
-        @Throws(MatchNowException::class)
-        fun calculate(
-                param: MuRatingParam,
-                matchApiService: OsuMatchApiService,
-                beatmapApiService: OsuBeatmapApiService,
-                calculateApiService: OsuCalculateApiService,
-        ): MatchCalculate {
-            val match: Match
-            try {
-                match = matchApiService.getMatchInfo(param.matchID.toLong(), 10)
-            } catch (e: Exception) {
-                throw MatchNowException(MatchNowException.Type.MN_Match_NotFound)
-            }
+        @JvmStatic @Throws(MatchNowException::class) fun calculate(
+            panel: MuRatingPanelParam,
+            beatmapApiService: OsuBeatmapApiService,
+            calculateApiService: OsuCalculateApiService,
+        ): MatchRating {
 
-            while (match.firstEventID != match.events.first().eventID) {
-                val events = matchApiService.getMatchInfo(param.matchID.toLong(), 10).events
-                if (events.isEmpty()) throw MatchNowException(MatchNowException.Type.MN_Match_Empty)
-                match.events.addAll(0, events)
-            }
-
-            if (match.events.size - param.calParam.ignore - param.calParam.skip <= 0) {
+            if (panel.match.events.size - panel.param.ignore - panel.param.skip <= 0) {
                 throw MatchNowException(MatchNowException.Type.MN_Match_OutOfBoundsError)
             }
 
-            val c: MatchCalculate
+            val mr: MatchRating
             try {
-                c = MatchCalculate(match, param.calParam, beatmapApiService, calculateApiService)
+                mr = MatchRating(
+                    panel.match, panel.param, beatmapApiService, calculateApiService
+                )
+                mr.calculate()
 
                 // 如果只有一两个人，则不排序（slot 从小到大）
                 val isSize2p =
-                        c.rounds
-                                .stream()
-                                .filter { s: MatchRound -> s.scores!!.size > 2 }
-                                .toList()
-                                .isNotEmpty()
+                    mr.rounds.stream().filter { s: Match.MatchRound -> s.scores.size > 2 }.toList().isNotEmpty()
 
-                for (r in c.rounds) {
-                    val scoreList = r.scores ?: continue
+                for (ro in mr.rounds) {
+                    if (ro.scores.isEmpty()) continue
 
                     if (isSize2p) {
-                        r.scores =
-                                scoreList
-                                        .stream()
-                                        .sorted(
-                                                Comparator.comparingInt(Match.MatchScore::getScore)
-                                                        .reversed()
-                                        )
-                                        .toList()
+                        ro.scores = ro.scores.stream().sorted(
+                                Comparator.comparingInt(Match.MatchScore::score).reversed()
+                            ).toList()
                     } else {
-                        r.scores =
-                                scoreList
-                                        .stream()
-                                        .sorted(
-                                                Comparator.comparingInt { s: Match.MatchScore ->
-                                                    s.playerStat.slot
-                                                }
-                                        )
-                                        .toList()
+                        ro.scores = ro.scores.stream().sorted(
+                                Comparator.comparingInt { s: Match.MatchScore ->
+                                    s.playerStat.slot
+                                }).toList()
                     }
                 }
             } catch (e: Exception) {
                 log.error("比赛结果：获取失败", e)
                 throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "比赛结果")
             }
-            return c
+            return mr
         }
     }
 }
