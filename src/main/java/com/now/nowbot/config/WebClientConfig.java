@@ -125,9 +125,15 @@ public class WebClientConfig implements WebFluxConfigurer {
         HttpClient httpClient = HttpClient.create()
                 .responseTimeout(Duration.ofSeconds(30));
         ReactorClientHttpConnector connector = new ReactorClientHttpConnector(httpClient);
-
+        ExchangeStrategies strategies = ExchangeStrategies
+                .builder()
+                .codecs(clientDefaultCodecsConfigurer -> {
+                    clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(new Jackson2JsonEncoder(JacksonUtil.mapper, MediaType.APPLICATION_JSON));
+                    clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonDecoder(new Jackson2JsonDecoder(JacksonUtil.mapper, MediaType.APPLICATION_JSON));
+                }).build();
         return builder
                 .clientConnector(connector)
+                .exchangeStrategies(strategies)
                 .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(Integer.MAX_VALUE))
                 .build();
     }
