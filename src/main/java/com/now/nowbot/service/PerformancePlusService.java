@@ -18,9 +18,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -56,8 +59,15 @@ public class PerformancePlusService {
         OSU_FILE_DIR = Path.of(config.getOsuFilePath());
     }
 
-    public PPPlus getMapPerformancePlus(Long beatmapId, int modInt) {
+    public PPPlus getMapPerformancePlus(Long beatmapId, List<LazerMod> modList) {
         checkFile(beatmapId);
+        Optional<String> mods;
+        if (CollectionUtils.isEmpty(modList)) {
+            mods = Optional.empty();
+        } else {
+            var s = JacksonUtil.toJson(modList);
+            mods = Optional.of(URLEncoder.encode(s, StandardCharsets.UTF_8));
+        }
         var p = performancePlusLiteRepository.findBeatMapPPPById(beatmapId);
         if (p.isPresent()) {
             var result = new PPPlus();
@@ -71,7 +81,23 @@ public class PerformancePlusService {
                                 .port(API_PORT)
                                 .path("/api/calculation")
                                 .queryParam("BeatmapId", beatmapId)
-                                .queryParam("Mods", modInt)
+                                .queryParamIfPresent("Mods", mods)
+                                .build()
+                )
+                .retrieve()
+                .bodyToMono(PPPlus.class)
+                .block();
+    }
+
+    public void clearCache(String beatmapId) {
+        webClient.get()
+                .uri(
+                        u -> u.scheme(API_SCHEME)
+                                .host(API_HOST)
+                                .port(API_PORT)
+                                .path("/api/calculation")
+                                .queryParam("BeatmapId", beatmapId)
+                                .queryParam("ignoreCache", "true")
                                 .build()
                 )
                 .retrieve()
@@ -127,18 +153,6 @@ public class PerformancePlusService {
         return new PPPlus.Stats(aim, jumpAim, flowAim, precision, speed, stamina, accuracy, total);
     }
 
-    // beatmapId 居然要 String ??? [https://difficalcy.syrin.me/api-reference/difficalcy-osu/#post-apibatchcalculation](啥玩意)
-    record ScorePerformancePlus(
-            @JsonProperty("beatmapId")
-            String beatmapId,
-            int mods,
-            int combo,
-            int misses,
-            int mehs,
-            int oks
-    ) {
-    }
-
     public List<PPPlus> getScorePerformancePlus(Iterable<LazerScore> scores) throws TipsException {
         var scoreIds = StreamSupport.stream(scores.spliterator(), true).map(LazerScore::getScoreID).toList();
         var ppPlusList = performancePlusLiteRepository.findScorePPP(scoreIds);
@@ -155,13 +169,12 @@ public class PerformancePlusService {
             }
             postDataId.add(score.getScoreID());
             checkFile(score.getBeatMap().getBeatMapID());
-            var mods = LazerMod.getModsValue(score.getMods());
             var combo = score.getMaxCombo();
             var misses = Objects.requireNonNullElse(score.getStatistics().getMiss(), 0);
             // 这俩我猜测是 50 和 100 的数量
             var mehs = Objects.requireNonNullElse(score.getStatistics().getMeh(), 0);
             var oks = Objects.requireNonNullElse(score.getStatistics().getOk(), 0);
-            body.add(new ScorePerformancePlus(score.getBeatMap().getBeatMapID() + "", mods, combo, misses, mehs, oks));
+            body.add(new ScorePerformancePlus(score.getBeatMap().getBeatMapID() + "", score.getMods(), combo, misses, mehs, oks));
         }
 
         if (body.isEmpty()) {
@@ -177,7 +190,9 @@ public class PerformancePlusService {
             result = getScorePerformancePlus(body);
         } catch (WebClientResponseException e) {
             var n = findErrorBid(body);
+            getMapPerformancePlus(Long.parseLong(n), List.of());
             beatmapApi.refreshBeatMapFileFromDirectory(Long.parseLong(n));
+            Thread.startVirtualThread(() -> this.clearCache(n));
             throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PP+：谱面编号 " + n);
         }
 
@@ -204,24 +219,17 @@ public class PerformancePlusService {
         return allScorePPP;
     }
 
-    // 怎么重复造轮子
-    /*
-    private void reloadFileFromOsu(long bid) {
-        Thread.startVirtualThread(() -> {
-            var beatmapFiles = OSU_FILE_DIR.resolve(bid + ".osu");
-            try {
-                Files.deleteIfExists(beatmapFiles);
-                var osuText = beatmapApi.getBeatMapFileFromOfficialWebsite(bid);
-                if (osuText == null) {
-                    return;
-                }
-                Files.writeString(beatmapFiles, osuText);
-            } catch (IOException e) {
-                log.error("下载谱面失败: ", e);
-            }
-        });
+    // beatmapId 居然要 String ??? [https://difficalcy.syrin.me/api-reference/difficalcy-osu/#post-apibatchcalculation](啥玩意)
+    record ScorePerformancePlus(
+            @JsonProperty("beatmapId")
+            String beatmapId,
+            List<LazerMod> mods,
+            int combo,
+            int misses,
+            int mehs,
+            int oks
+    ) {
     }
-     */
 
     private List<PPPlus> getScorePerformancePlus(List<ScorePerformancePlus> body) {
         return webClient.post()
