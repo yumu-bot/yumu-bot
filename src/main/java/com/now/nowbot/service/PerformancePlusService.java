@@ -22,6 +22,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -90,19 +91,14 @@ public class PerformancePlusService {
     }
 
     public void clearCache(String beatmapId) {
-        webClient.get()
-                .uri(
-                        u -> u.scheme(API_SCHEME)
-                                .host(API_HOST)
-                                .port(API_PORT)
-                                .path("/api/calculation")
-                                .queryParam("BeatmapId", beatmapId)
-                                .queryParam("ignoreCache", "true")
-                                .build()
-                )
-                .retrieve()
-                .bodyToMono(PPPlus.class)
-                .block();
+        var p = new ProcessBuilder("pkill", "-9", "-f", "Difficalcy.PerformancePlus");
+        Thread.startVirtualThread(() -> {
+            try {
+                p.start();
+            } catch (IOException e) {
+                log.error("", e);
+            }
+        });
     }
 
     public PPPlus.Stats calculateUserPerformance(List<LazerScore> bps) throws TipsException {
