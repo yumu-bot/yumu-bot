@@ -84,13 +84,9 @@ class SeriesRating(
 
             val startTime = firstMatch.startTime
             val endTime = matches.map { it.endTime }.maxBy { it?.toEpochSecond() ?: 0L }
-            val name = firstMatch.name
+            val name = firstMatch.name + "..."
             return Match.MatchStat(firstMatch.id, startTime, endTime, name)
         }
-
-    constructor(
-        match2: List<Match>, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService
-    ) : this(match2, listOf(RatingParam()), beatmapApiService, calculateApiService)
 
     @get:JsonProperty("is_team_vs")
     val isTeamVs: Boolean
