@@ -3,7 +3,6 @@ package com.now.nowbot.service.osuApiService.impl
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.BinUser
 import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.enums.LazerModType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatmapUserScore
 import com.now.nowbot.model.json.LazerScore
@@ -174,10 +173,10 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
     }
 
     override fun getBeatMapScore(
-            bid: Long,
-            uid: Long,
-            mode: OsuMode?,
-            mods: Iterable<LazerMod?>,
+        bid: Long,
+        uid: Long,
+        mode: OsuMode?,
+        mods: Iterable<LazerMod?>,
     ): BeatmapUserScore? {
         val uri = Function { n: Int? ->
             Function { uriBuilder: UriBuilder ->
@@ -199,10 +198,10 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
     }
 
     override fun getBeatMapScore(
-            bid: Long,
-            user: BinUser,
-            mode: OsuMode,
-            mods: Iterable<LazerMod?>,
+        bid: Long,
+        user: BinUser,
+        mode: OsuMode,
+        mods: Iterable<LazerMod?>,
     ): BeatmapUserScore? {
         if (!user.isAuthorized) {
             return getBeatMapScore(bid, user.osuID, mode, mods)
@@ -228,12 +227,12 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
 
     private fun setMods(builder: UriBuilder, mods: Iterable<LazerMod?>) {
         for (mod in mods) {
-            if (mod?.type == LazerModType.None) {
+            if (mod is LazerMod.None) {
                 builder.queryParam("mods[]", "NM")
                 return
             }
         }
-        mods.forEach(Consumer { mod: LazerMod? -> builder.queryParam("mods[]", mod!!.type.acronym) })
+        mods.forEach(Consumer { mod: LazerMod? -> builder.queryParam("mods[]", mod!!.type) })
     }
 
     override fun getBeatMapScores(bid: Long, user: BinUser, mode: OsuMode?): List<LazerScore> {

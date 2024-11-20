@@ -62,7 +62,7 @@ class UUScore (score: LazerScore, osuBeatmapApiService: OsuBeatmapApiService) {
         country = user.countryCode
         mods = arrayOfNulls(modsList.size)
         for (i in mods.indices) {
-            mods[i] = modsList[i].type.acronym
+            mods[i] = modsList[i].type
         }
         if (s != null) {
             map_name = s.titleUnicode

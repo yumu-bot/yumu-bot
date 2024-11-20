@@ -25,13 +25,13 @@ import com.now.nowbot.util.CmdUtil.getUserWithOutRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
-import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.regex.Matcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.regex.Matcher
 
 @Service("SCORE")
 class ScoreService(
@@ -42,13 +42,13 @@ class ScoreService(
 ) : MessageService<ScoreParam>, TencentMessageService<ScoreParam> {
 
     data class ScoreParam(
-            val user: OsuUser,
-            val mode: OsuMode?,
-            val bid: Long,
-            val mods: List<LazerMod>,
-            val isDefault: Boolean,
-            val isMyself: Boolean,
-            val isMultipleScore: Boolean,
+        val user: OsuUser,
+        val mode: OsuMode?,
+        val bid: Long,
+        val mods: List<LazerMod>,
+        val isDefault: Boolean,
+        val isMyself: Boolean,
+        val isMultipleScore: Boolean,
     )
 
     @Throws(TipsException::class)

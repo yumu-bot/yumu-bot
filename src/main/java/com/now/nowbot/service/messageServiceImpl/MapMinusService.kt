@@ -18,11 +18,11 @@ import com.now.nowbot.throwable.serviceException.MapMinusException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_MOD
-import java.util.regex.Matcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
+import java.util.regex.Matcher
 
 @Service("MAP_MINUS")
 class MapMinusService(
@@ -142,7 +142,7 @@ class MapMinusService(
                 PPMinus3.getInstance(
                     file,
                     if (isChangedRating) {
-                        LazerMod.getModSpeedForStarCalculate(param.modsList)
+                        LazerMod.getModSpeedForStarCalculate(param.modsList).toDouble()
                     } else {
                         param.rate
                     },

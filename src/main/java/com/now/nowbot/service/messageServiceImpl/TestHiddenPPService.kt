@@ -2,7 +2,6 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.enums.LazerModType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
@@ -80,7 +79,7 @@ class TestHiddenPPService(
             }
 
             for (bp in bps) {
-                if (LazerMod.hasMod(bp.mods, LazerModType.Hidden)) {
+                if (LazerMod.hasMod(bp.mods, LazerMod.Hidden)) {
                     hiddenPP += (bp.weight?.PP ?: 0.0)
                 }
             }

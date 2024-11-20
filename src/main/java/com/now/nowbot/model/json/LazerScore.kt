@@ -73,48 +73,10 @@ open class LazerScore {
         }
 
     @JsonProperty("mods")
-    private val modList: List<ScoreMod> = listOf()
+    var modList: List<LazerMod> = listOf()
 
-    @get:JsonIgnore
-    val mods: List<LazerMod>
-        get() = if (modList.isNotEmpty()) modList.map(LazerMod::getModFromScoreMod) else listOf()
-
-    data class ScoreMod(
-        @JsonProperty("acronym") var acronym: String = "",
-        @JsonProperty("settings") var settings: ScoreModSettings? = ScoreModSettings(),
-    )
-
-    // ppy 真尼玛离谱
-    data class ScoreModSettings(
-        // DT HT DC NC
-        @JsonProperty("speed_change") var speed: Double? = null,
-
-        // EZ
-        @JsonProperty("extra_lives") var extraLives: Int? = null,
-
-        // DT HT AS WU WD
-        @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
-
-        // SD PF AC
-        @JsonProperty("restart_on_fail") var restartOnFail: Boolean? = null,
-
-        // AS WU WD
-        @JsonProperty("initial_rate") var initialSpeed: Double? = null,
-
-        // WU WD
-        @JsonProperty("final_rate") var finalSpeed: Double? = null,
-
-        // DA
-        @JsonProperty("circle_size") var cs: Double? = null,
-        @JsonProperty("approach_rate") var ar: Double? = null,
-        @JsonProperty("overall_difficulty") var od: Double? = null,
-        @JsonProperty("drain_rate") var hp: Double? = null,
-        @JsonProperty("extended_limits") var extendedLimits: Boolean? = null,
-
-        // AC
-        @JsonProperty("accuracy_judge_mode") var accuracyJudgeMode: String? = null,
-        @JsonProperty("minimum_accuracy") var minimumAccuracy: Double? = null,
-    )
+    @JsonIgnore
+    var mods = modList
 
     @JsonProperty("statistics")
     var statistics: LazerStatistics = LazerStatistics()
@@ -451,7 +413,7 @@ open class LazerScore {
                 DEFAULT -> "F"
             }
 
-            if (LazerMod.isHidden(score.mods) && (rank == "S" || rank == "X")) rank += "H"
+            if (LazerMod.isHidden(score.modList) && (rank == "S" || rank == "X")) rank += "H"
 
             return rank
         }
