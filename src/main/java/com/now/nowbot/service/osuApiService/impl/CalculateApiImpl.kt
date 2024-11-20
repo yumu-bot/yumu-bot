@@ -1,7 +1,7 @@
 package com.now.nowbot.service.osuApiService.impl
 
 import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.Mod
+import com.now.nowbot.model.enums.LazerModType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.BeatmapDifficultyAttributes
@@ -126,7 +126,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
 
     private fun getJniResult(
         stat: LazerStatistics,
-        mods: List<LazerMod>,
+        mods: List<LazerMod?>,
         mode: OsuMode,
         accuracy: Double?,
         combo: Int?,
@@ -231,7 +231,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         js.applyDifficultyAdjustMod(mods)
         js.mods = LazerMod.getModsValue(mods)
         if (combo != null) js.combo = combo
-        js.speed = LazerMod.getModSpeedForStarCalculate(mods).toDouble()
+        js.speed = LazerMod.getModSpeedForStarCalculate(mods)
         js.mode = mode.toRosuMode()
 
         return when (type) {
@@ -390,24 +390,20 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         @JvmStatic fun applyAR(ar: Float, mods: List<LazerMod>): Float {
             var a = ar
 
-            for (mod in mods) {
-                if (mod is LazerMod.DifficultyAdjust) {
-                    if (mod.approachRate != null) return mod.approachRate!!.roundToDigits2()
-                    break
-                }
-            }
+            val d = mods.stream().filter { it.type == LazerModType.DifficultyAdjust }.toList().firstOrNull()?.ar
+            if (d != null) return d.toFloat().roundToDigits2()
 
-            if (mods.contains(LazerMod.HardRock)) {
+            if (mods.contains(LazerModType.HardRock)) {
                 a = (a * 1.4f).clamp()
-            } else if (mods.contains(LazerMod.Easy)) {
+            } else if (mods.contains(LazerModType.Easy)) {
                 a = (a / 2f).clamp()
             }
 
             val speed = LazerMod.getModSpeed(mods)
 
-            if (speed != 1f) {
+            if (speed != 1.0) {
                 var ms = getMillisFromAR(a.clamp())
-                ms = (ms / speed)
+                ms = (ms / speed).toFloat()
                 a = getARFromMillis(ms)
             }
 
@@ -426,23 +422,20 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
 
         @JvmStatic fun applyOD(od: Float, mods: List<LazerMod>): Float {
             var o = od
-            if (mods.contains(LazerMod.HardRock)) {
+            if (mods.contains(LazerModType.HardRock)) {
                 o = (o * 1.4f).clamp()
-            } else if (mods.contains(LazerMod.Easy)) {
+            } else if (mods.contains(LazerModType.Easy)) {
                 o = (o / 2f).clamp()
             }
 
-            for (mod in mods) {
-                if (mod is LazerMod.DifficultyAdjust) {
-                    if (mod.overallDifficulty != null) return mod.overallDifficulty!!.roundToDigits2()
-                    break
-                }
-            }
+            val d = mods.stream().filter { it.type == LazerModType.DifficultyAdjust }.toList().firstOrNull()?.od
+            if (d != null) return d.toFloat().roundToDigits2()
+
             val speed = LazerMod.getModSpeed(mods)
 
-            if (speed != 1f) {
+            if (speed != 1.0) {
                 var ms = getMillisFromOD(od.clamp())
-                ms = (ms / speed)
+                ms = (ms / speed).toFloat()
                 o = getODFromMillis(ms)
             }
 
@@ -452,16 +445,12 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         @JvmStatic fun applyCS(cs: Float, mods: List<LazerMod>): Float {
             var c = cs
 
-            for (mod in mods) {
-                if (mod is LazerMod.DifficultyAdjust) {
-                    if (mod.circleSize != null) return mod.circleSize!!.roundToDigits2()
-                    break
-                }
-            }
+            val d = mods.stream().filter { it.type == LazerModType.DifficultyAdjust }.toList().firstOrNull()?.cs
+            if (d != null) return d.toFloat().roundToDigits2()
 
-            if (mods.contains(LazerMod.HardRock)) {
+            if (mods.contains(LazerModType.HardRock)) {
                 c *= 1.3f
-            } else if (mods.contains(LazerMod.Easy)) {
+            } else if (mods.contains(LazerModType.Easy)) {
                 c /= 2f
             }
             return c.clamp().roundToDigits2()
@@ -470,16 +459,12 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         @JvmStatic fun applyHP(hp: Float, mods: List<LazerMod>): Float {
             var h = hp
 
-            for (mod in mods) {
-                if (mod is LazerMod.DifficultyAdjust) {
-                    if (mod.drainRate != null) return mod.drainRate!!.roundToDigits2()
-                    break
-                }
-            }
+            val d = mods.stream().filter { it.type == LazerModType.DifficultyAdjust }.toList().firstOrNull()?.hp
+            if (d != null) return d.toFloat().roundToDigits2()
 
-            if (mods.contains(LazerMod.HardRock)) {
+            if (mods.contains(LazerModType.HardRock)) {
                 h *= 1.4f
-            } else if (mods.contains(LazerMod.Easy)) {
+            } else if (mods.contains(LazerModType.Easy)) {
                 h /= 2f
             }
             return h.clamp().roundToDigits2()
@@ -527,15 +512,23 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
 
         private fun Float.roundToDigits2() = BigDecimal(this.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toFloat()
 
-        private inline fun<reified T : Mod> List<LazerMod>.contains(type: T) = LazerMod.hasMod(this, type)
+        private fun List<LazerMod>.contains(type: LazerModType) = LazerMod.hasMod(this, type)
 
         private fun JniScore.applyDifficultyAdjustMod(mods: List<LazerMod>) {
             for (m in mods) {
-                if (m is LazerMod.DifficultyAdjust) {
-                    m.circleSize?.let { this.cs = it.toDouble() }
-                    m.approachRate?.let { this.ar = it.toDouble() }
-                    m.overallDifficulty?.let { this.od = it.toDouble() }
-                    m.drainRate?.let { this.hp = it.toDouble() }
+                if (m.type.acronym == "DA") {
+                    if (m.cs != null) {
+                        this.cs = m.cs!!
+                    }
+                    if (m.ar != null) {
+                        this.ar = m.ar!!
+                    }
+                    if (m.od != null) {
+                        this.od = m.od!!
+                    }
+                    if (m.hp != null) {
+                        this.hp = m.hp!!
+                    }
                 }
             }
         }

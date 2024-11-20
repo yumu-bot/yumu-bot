@@ -3,6 +3,7 @@ package com.now.nowbot.model.multiplayer
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.enums.LazerModType
 import com.now.nowbot.model.json.MicroUser
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
@@ -110,7 +111,7 @@ class MatchRating(
         if (param.easy != 1.0) {
             rs.forEach {
                 for (s in it.scores) {
-                    if (LazerMod.hasModByString(it.mods, LazerMod.Easy)) {
+                    if (LazerMod.hasModFromAcronyms(it.mods, LazerModType.Easy)) {
                         s.score = (s.score * param.easy).roundToInt()
                     }
                 }

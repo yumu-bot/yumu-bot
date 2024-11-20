@@ -99,7 +99,7 @@ class TestTypeService(
                 PPMinus3.getInstance(
                         file,
                         if (isChangedRating) {
-                            LazerMod.getModSpeedForStarCalculate(param.modsList).toDouble()
+                            LazerMod.getModSpeedForStarCalculate(param.modsList)
                         } else {
                             param.rate
                         },
