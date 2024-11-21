@@ -65,8 +65,8 @@ class BPQueryService(
         }
         val (order, text) = getOrder(param.filter)
         val filters = getAllFilter(text)
-        val bpList = scoreApiService.getBestScores(bindUser, mode, 0, 100)
-        var result = getBP(filters, bpList)
+        val bests = scoreApiService.getBestScores(bindUser, mode)
+        var result = getBP(filters, bests)
         val user = userApiService.getPlayerInfo(bindUser)
 
         if (result.isEmpty()) {
@@ -84,11 +84,15 @@ class BPQueryService(
 
         // ContextUtil.setContext("breakApplySR", true)
         val image = if (result.size == 1) {
-            val score = result.first()
+            val appliedScore = result.first() // 这里的成绩已经被处理过了，所以不能传递这个
+            val score = bests.find { it.scoreID == appliedScore.scoreID }
+
+            if (score == null) throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, appliedScore.beatMapID)
+
             val e5Param = ScorePRService.getScore4PanelE5(user, score, "BQ", beatmapApiService, calculateApiService)
             imageService.getPanel(e5Param.toMap(), "E5")
         } else {
-            val indexMap = bpList.mapIndexed { i, s -> s.scoreID to i }.toMap()
+            val indexMap = bests.mapIndexed { i, s -> s.scoreID to i }.toMap()
             val ranks = result.map { indexMap[it.scoreID]!! + 1 }
             imageService.getPanelA4(user, result, ranks, "BQ")
         }
