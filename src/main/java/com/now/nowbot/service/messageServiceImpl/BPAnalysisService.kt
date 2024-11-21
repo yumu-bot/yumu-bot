@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.ValueMod
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -145,7 +146,13 @@ import kotlin.math.min
                 val s = bps[i]
                 val b = s.beatMap
 
-                val m = s.mods.filter { it.type.value != -2 && it.type.value != 0 }
+                val m = s.mods.filter {
+                    if (it is ValueMod) {
+                        it.value != 0
+                    } else {
+                        true
+                    }
+                }
 
                 run {
                     val ba = BeatMap4BA(
@@ -164,7 +171,7 @@ import kotlin.math.min
                 run { // 统计 mods / rank
                     if (m.isNotEmpty()) {
                         m.forEach {
-                            modsPPMap.add(it.type.acronym, s.weight!!.PP)
+                            modsPPMap.add(it.type, s.weight!!.PP)
                         }
                         modsSum += m.size
                     } else {
@@ -202,7 +209,7 @@ import kotlin.math.min
             val lengthList = beatMapList.map { it.length }
             val starList = beatMapList.map { it.star }
             val modsList: List<List<String>> = beatMapList.map {
-                    return@map it.mods.stream().map { mod -> mod.type.acronym }.toList()
+                    return@map it.mods.stream().map { mod -> mod.type }.toList()
                 }
             val timeList = bps.map { 1.0 * it.endedTime.plusHours(8).hour + (it.endedTime.plusHours(8).minute / 60.0) }
             val timeDist = mutableListOf(0, 0, 0, 0, 0, 0, 0, 0)
