@@ -1952,7 +1952,7 @@ sealed class LazerMod {
             }
         }
 
-        val hiddenSet = setOf(
+        private val hiddenSet = setOf(
             Hidden,
             Flashlight,
             Blinds,
@@ -1960,7 +1960,7 @@ sealed class LazerMod {
         )
 
         @JvmStatic
-        fun isHidden(mods: List<LazerMod>): Boolean {
+        fun containsHidden(mods: List<LazerMod>): Boolean {
             return mods.any { hiddenSet.contains(it::class.companionObjectInstance) }
         }
 

@@ -51,7 +51,6 @@ class BPQueryService(
         }
     }
 
-
     override fun HandleMessage(event: MessageEvent, param: BPQueryParam) {
         val bindUser = try {
             bindDao.getUserFromQQ(event.sender.id)
@@ -94,7 +93,9 @@ class BPQueryService(
         } else {
             val indexMap = bests.mapIndexed { i, s -> s.scoreID to i }.toMap()
             val ranks = result.map { indexMap[it.scoreID]!! + 1 }
-            imageService.getPanelA4(user, result, ranks, "BQ")
+
+            val body = mapOf("user" to user, "scores" to result, "rank" to ranks, "panel" to "BQ")
+            imageService.getPanel(body, "A4")
         }
         event.reply(image)
     }

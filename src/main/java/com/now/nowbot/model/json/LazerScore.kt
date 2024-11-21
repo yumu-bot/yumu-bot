@@ -73,10 +73,11 @@ open class LazerScore {
         }
 
     @JsonProperty("mods")
-    var modList: List<LazerMod> = listOf()
-
-    @JsonIgnore
-    var mods = modList
+    var mods: List<LazerMod> = listOf()
+        get() {
+            // 如果是 stable 成绩，则这里的 Classic 模组应该去掉
+            return field.filterNot { it is LazerMod.Classic && ! this.isLazer }
+        }
 
     @JsonProperty("statistics")
     var statistics: LazerStatistics = LazerStatistics()
@@ -189,8 +190,8 @@ open class LazerScore {
     private var _rank: String? = null
 
     @JsonIgnore
-    fun setRank(String: String) {
-        _rank = String
+    fun setRank(rankStr: String) {
+        _rank = rankStr
     }
 
     @JsonProperty("legacy_rank")
@@ -413,7 +414,7 @@ open class LazerScore {
                 DEFAULT -> "F"
             }
 
-            if (LazerMod.isHidden(score.modList) && (rank == "S" || rank == "X")) rank += "H"
+            if (LazerMod.containsHidden(score.mods) && (rank == "S" || rank == "X")) rank += "H"
 
             return rank
         }
