@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 
 interface UserProfileItemRepository : JpaRepository<UserProfileItem, UserProfileKey> {
+    @Query("select p from UserProfileItem p where p.verify = false")
+    fun getAllUnaudited(): List<UserProfileItem>
+
     @Query("select p from UserProfileItem p where p.userId = :userId and p.verify = true")
     fun getAllByUserId(userId: Long): List<UserProfileItem>
 
@@ -23,6 +26,12 @@ interface UserProfileItemRepository : JpaRepository<UserProfileItem, UserProfile
 
     @Modifying
     @Transactional
-    @Query("update UserProfileItem set verify = true where userId = :#{#key.userId} and type = :#{#key.type}")
+    @Query("update UserProfileItem set verify = true, audit = '' where userId = :#{#key.userId} and type = :#{#key.type}")
     fun verified(key: UserProfileKey)
+
+
+    @Modifying
+    @Transactional
+    @Query("update UserProfileItem set verify = false, audit = :audit where userId = :#{#key.userId} and type = :#{#key.type}")
+    fun unverified(key: UserProfileKey, audit: String)
 }

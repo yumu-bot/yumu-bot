@@ -5,6 +5,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.IdClass
 import java.io.Serializable
+import java.time.OffsetDateTime
 
 @Entity
 @IdClass(UserProfileKey::class)
@@ -20,6 +21,11 @@ class UserProfileItem(
     var path: String? = null,
 
     var verify:Boolean = false,
+
+    @Column(name = "audit", columnDefinition = "TEXT")
+    var audit:String? = null,
+
+    var lastUpdate: OffsetDateTime = OffsetDateTime.now(),
 )
 
 
