@@ -111,6 +111,7 @@ class BPQueryService(
                 Param.OD -> 100 * (score.beatMap.OD ?: 0f)
                 Param.CS -> 100 * (score.beatMap.CS ?: 0f)
                 Param.HP -> 100 * (score.beatMap.HP ?: 0f)
+                Param.PerformancePoint -> score.getPP()
                 Param.Combo -> score.totalCombo
                 Param.Accuracy -> 10000 * score.accuracy
                 Param.Perfect -> score.statistics.perfect ?: 0
@@ -133,6 +134,7 @@ class BPQueryService(
                 Param.OD,
                 Param.CS,
                 Param.HP,
+                Param.PerformancePoint,
                 Param.Combo,
                 Param.Accuracy,
                 Param.Perfect,
@@ -235,6 +237,9 @@ class BPQueryService(
         }, EQ, NE, GT, GE, LT, LE),
         HP("hp", { (op, v, s) ->
             compare(s.beatMap.HP!!, v, op)
+        }, EQ, NE, GT, GE, LT, LE),
+        PerformancePoint("pp", { (op, v, s) ->
+            compare(s.getPP(), v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Rank("rank", { (op, v, s) ->
             val scoreRank = getRankNumber(s.rank)
@@ -402,6 +407,7 @@ class BPQueryService(
                 Param.OD.key -> Param.OD(operator, value)
                 Param.CS.key -> Param.CS(operator, value)
                 Param.HP.key -> Param.HP(operator, value)
+                Param.PerformancePoint.key, "p" -> Param.PerformancePoint(operator, value)
                 Param.Rank.key, "r" -> Param.Rank(operator, value)
                 Param.Length.key, "l" -> Param.Length(operator, value)
                 Param.Bpm.key, "b" -> Param.Bpm(operator, value)
@@ -414,7 +420,7 @@ class BPQueryService(
                 Param.Meh.key, "50", "pr", "poor" -> Param.Meh(operator, value)
                 Param.Miss.key, "0", "ms", "x" -> Param.Miss(operator, value)
                 Param.Mods.key, "m", "mod" -> Param.Mods(operator, value)
-                Param.Rate.key, "p" -> Param.Rate(operator, value)
+                Param.Rate.key, "e", "pm" -> Param.Rate(operator, value)
                 Param.Client.key, "z", "v", "version" -> Param.Client(operator, value)
                 else -> throw UnsupportedKey(key)
             }
