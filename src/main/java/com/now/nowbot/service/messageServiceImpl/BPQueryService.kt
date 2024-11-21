@@ -280,6 +280,7 @@ class BPQueryService(
         Mods("mod", { (op, v, s) ->
             // mod 处理是 = 为严格等于, > 为包含mod
             val mods = LazerMod.getModsValue(v)
+
             val scoreMods = LazerMod.getModsValue(s.mods)
             when (op) {
                 EQ -> mods == scoreMods

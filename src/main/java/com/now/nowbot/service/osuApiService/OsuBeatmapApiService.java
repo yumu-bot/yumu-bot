@@ -8,7 +8,9 @@ import com.now.nowbot.model.multiplayer.Match;
 import org.springframework.lang.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public interface OsuBeatmapApiService {
     // 获取谱面：先获取本地，再获取 bs api，最后获取网页
@@ -69,7 +71,7 @@ public interface OsuBeatmapApiService {
     default BeatmapDifficultyAttributes getAttributes(Long id, @Nullable List<LazerMod> mods) {
         if (mods == null || mods.isEmpty()) return getAttributes(id, OsuMode.DEFAULT);
 
-        int value = mods.stream().mapToInt(m -> m.type.value).reduce(0, Integer::sum);
+        int value = LazerMod.getModsValue(mods);
         return getAttributes(id, value);
     }
 
