@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.ModsException
@@ -111,7 +112,6 @@ sealed class LazerMod {
 
     @get:JsonProperty("settings")
     abstract val settings: Any?
-
 
     class Easy: LazerMod() {
         @get:JsonProperty("acronym")
@@ -1967,14 +1967,18 @@ sealed class LazerMod {
 
         @JvmStatic
         fun getModFromAcronym(acronym: String?): LazerMod {
+            val mod = "{\"acronym\":\"" + acronym!! + "\"}"
+
             return try {
-                JacksonUtil.parseObject(acronym!!, LazerMod::class.java)
+                JacksonUtil.parseObject(mod, LazerMod::class.java)
+            } catch (e: JacksonException) {
+                return None()
             } catch (e: Exception) {
                 return None()
             }
         }
 
-        val spaceRegex = "\\s+".toRegex()
+        private val spaceRegex = "\\s+".toRegex()
 
         @JvmStatic
         fun splitModAcronyms(acronyms: String): List<String> {
