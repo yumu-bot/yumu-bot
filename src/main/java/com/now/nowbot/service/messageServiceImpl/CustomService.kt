@@ -16,7 +16,6 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.CustomService.CustomParam
 import com.now.nowbot.service.messageServiceImpl.CustomService.Operate.*
-import com.now.nowbot.service.messageServiceImpl.CustomService.Type.*
 import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.throwable.serviceException.CustomException
 import com.now.nowbot.util.ASyncMessageUtil
