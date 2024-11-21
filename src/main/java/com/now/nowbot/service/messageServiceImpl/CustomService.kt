@@ -2,8 +2,13 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.FileConfig
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.UserProfileItem
+import com.now.nowbot.entity.UserProfileKey
+import com.now.nowbot.mapper.UserProfileItemRepository
 import com.now.nowbot.mapper.UserProfileMapper
 import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.UserProfile
+import com.now.nowbot.model.UserProfile.Type.*
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.ReplyMessage
 import com.now.nowbot.service.ImageService
@@ -11,7 +16,6 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.CustomService.CustomParam
 import com.now.nowbot.service.messageServiceImpl.CustomService.Operate.*
-import com.now.nowbot.service.messageServiceImpl.CustomService.Type.*
 import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.throwable.serviceException.CustomException
 import com.now.nowbot.util.ASyncMessageUtil
@@ -26,7 +30,6 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.Path
 
 @Service("CUSTOM")
 class CustomService(
@@ -34,6 +37,8 @@ class CustomService(
         private val bindDao: BindDao,
         private val imageService: ImageService,
         private val userProfileMapper: UserProfileMapper,
+        // todo: 等待数据迁移后使用
+        private val userProfileItemRepository: UserProfileItemRepository,
         fileConfig: FileConfig,
 ) : MessageService<CustomParam> {
 
@@ -44,16 +49,16 @@ class CustomService(
     // url == null 是删除图片
     @JvmRecord
     data class CustomParam(
-            val uid: Long,
-            val type: Type,
-            val url: String?,
+        val uid: Long,
+        val type: UserProfile.Type,
+        val url: String?,
     )
 
     @Throws(Throwable::class)
     override fun isHandle(
-            ev: MessageEvent,
-            messageText: String,
-            data: DataValue<CustomParam>,
+        ev: MessageEvent,
+        messageText: String,
+        data: DataValue<CustomParam>,
     ): Boolean {
         var event: MessageEvent? = ev
         val from = event!!.subject
@@ -78,47 +83,50 @@ class CustomService(
         val typeStr = matcher.group("type")
 
         var operate: Operate
-        val type: Type
+        val type: UserProfile.Type
 
         if (StringUtils.hasText(typeStr)) {
-            operate =
-                    when (operateStr) {
-                        "s",
-                        "save",
-                        "a",
-                        "add" -> ADD
-                        "c",
-                        "clear",
-                        "d",
-                        "delete",
-                        "r",
-                        "remove" -> DELETE
-                        else -> UNKNOWN
-                    }
+            operate = when (operateStr) {
+                "s",
+                "save",
+                "a",
+                "add" -> ADD
 
-            type =
-                    when (typeStr) {
-                        "c",
-                        "card",
-                        "cards" -> CARD
-                        "m",
-                        "mascot",
-                        "mascots" -> MASCOT
-                        else -> BANNER
-                    }
+                "c",
+                "clear",
+                "d",
+                "delete",
+                "r",
+                "remove" -> DELETE
+
+                else -> UNKNOWN
+            }
+
+            type = when (typeStr) {
+                "c",
+                "card",
+                "cards" -> CARD
+
+                "m",
+                "mascot",
+                "mascots" -> MASCOT
+
+                else -> BANNER
+            }
         } else {
             // 只有一个字段，默认添加，直接跳出
             operate = ADD
 
-            type =
-                    when (operateStr) {
-                        "c",
-                        "card" -> CARD
-                        "m",
-                        "mascot",
-                        "mascots" -> MASCOT
-                        else -> BANNER
-                    }
+            type = when (operateStr) {
+                "c",
+                "card" -> CARD
+
+                "m",
+                "mascot",
+                "mascots" -> MASCOT
+
+                else -> BANNER
+            }
         }
 
         var reply: ReplyMessage? = null
@@ -143,14 +151,14 @@ class CustomService(
                 if (msg == null || !event.isImage) {
                     // 消息为空，并且不是回复的图片。询问是否删除
                     val receipt =
-                            from.sendMessage(CustomException.Type.CUSTOM_Question_Clear.message)
+                        from.sendMessage(CustomException.Type.CUSTOM_Question_Clear.message)
 
                     val lock = ASyncMessageUtil.getLock(event, (30 * 1000).toLong())
                     event = lock.get()
 
                     if (
-                            event == null ||
-                                    !event.rawMessage.uppercase(Locale.getDefault()).contains("OK")
+                        event == null ||
+                        !event.rawMessage.uppercase(Locale.getDefault()).contains("OK")
                     ) {
                         // 不删除。失败撤回
                         from.recall(receipt)
@@ -164,6 +172,7 @@ class CustomService(
                     imgPath = event.image!!.path // img = QQMsgUtil.getType(msg, ImageMessage.class)
                 }
             }
+
             UNKNOWN -> {
                 // 不是回复。发送引导
                 try {
@@ -214,8 +223,8 @@ class CustomService(
             val pathStr = path.toAbsolutePath().toString()
             when (param.type) {
                 CARD -> profile.card = pathStr
-                BANNER -> profile.banner = pathStr
                 MASCOT -> profile.mascot = pathStr
+                else -> profile.banner = pathStr
             }
             userProfileMapper.saveAndFlush(profile)
             throw CustomException(CustomException.Type.CUSTOM_Set_Success, param.type)
@@ -231,12 +240,35 @@ class CustomService(
             }
             when (param.type) {
                 CARD -> profile.card = null
-                BANNER -> profile.banner = null
                 MASCOT -> profile.mascot = null
+                else -> profile.banner = null
             }
             userProfileMapper.saveAndFlush(profile)
             throw CustomException(CustomException.Type.CUSTOM_Clear_Success, param.type)
         }
+    }
+
+    /**
+     * 设置新的自定义配置, 并等待审核
+     */
+    fun pendingVerificationQueue(userId:Long, type: UserProfile.Type, path:Path) {
+        val pathStr = path.toAbsolutePath().toString()
+        val item = UserProfileItem(userId, type.column, pathStr)
+        userProfileItemRepository.saveAndFlush(item)
+    }
+
+    /**
+     * 删除某类型的自定义配置
+     */
+    fun removeProfileItem(userId: Long, type: UserProfile.Type) {
+        userProfileItemRepository.deleteByUserIdAndType(UserProfileKey(userId, type.column))
+    }
+
+    /**
+     * 删除所有的自定义配置
+     */
+    fun removeAllProfileItem(userId: Long) {
+        userProfileItemRepository.deleteAllByUserId(userId)
     }
 
     internal enum class Operate {
@@ -245,14 +277,8 @@ class CustomService(
         UNKNOWN,
     }
 
-    enum class Type {
-        BANNER,
-        CARD,
-        MASCOT,
-    }
-
     companion object {
         private val log: Logger = LoggerFactory.getLogger(CustomService::class.java)
-        private var FILE_DIV_PATH: Path = Path("")
+        lateinit var FILE_DIV_PATH: Path
     }
 }
