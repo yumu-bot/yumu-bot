@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.ModsException
@@ -113,7 +112,7 @@ sealed class LazerMod {
     @get:JsonProperty("settings")
     abstract val settings: Any?
 
-    class Easy: LazerMod() {
+    class Easy : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -202,7 +201,7 @@ sealed class LazerMod {
         }
     }
 
-    class Daycore: LazerMod() {
+    class Daycore : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -250,7 +249,7 @@ sealed class LazerMod {
         }
     }
 
-    class SuddenDeath: LazerMod() {
+    class SuddenDeath : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -282,7 +281,7 @@ sealed class LazerMod {
         }
     }
 
-    class Perfect: LazerMod() {
+    class Perfect : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -314,7 +313,7 @@ sealed class LazerMod {
         }
     }
 
-    class DoubleTime: LazerMod() {
+    class DoubleTime : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -356,7 +355,7 @@ sealed class LazerMod {
         }
     }
 
-    class Nightcore: LazerMod() {
+    class Nightcore : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -389,7 +388,7 @@ sealed class LazerMod {
         }
     }
 
-    class Hidden: LazerMod() {
+    class Hidden : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -422,7 +421,7 @@ sealed class LazerMod {
         }
     }
 
-    class Flashlight: LazerMod() {
+    class Flashlight : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -502,7 +501,7 @@ sealed class LazerMod {
         }
     }
 
-    class AccuracyChallenge: LazerMod() {
+    class AccuracyChallenge : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -552,7 +551,7 @@ sealed class LazerMod {
         }
     }
 
-    class TargetPractice: LazerMod() {
+    class TargetPractice : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -594,7 +593,7 @@ sealed class LazerMod {
         }
     }
 
-    class DifficultyAdjust: LazerMod() {
+    class DifficultyAdjust : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -681,7 +680,7 @@ sealed class LazerMod {
         }
     }
 
-    class Classic: LazerMod() {
+    class Classic : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -750,7 +749,7 @@ sealed class LazerMod {
         }
     }
 
-    class Random: LazerMod() {
+    class Random : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -791,7 +790,7 @@ sealed class LazerMod {
         }
     }
 
-    class Mirror: LazerMod() {
+    class Mirror : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -962,7 +961,7 @@ sealed class LazerMod {
         }
     }
 
-    class Wiggle: LazerMod() {
+    class Wiggle : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1009,7 +1008,7 @@ sealed class LazerMod {
         }
     }
 
-    class Grow: LazerMod() {
+    class Grow : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1041,7 +1040,7 @@ sealed class LazerMod {
         }
     }
 
-    class Deflate: LazerMod() {
+    class Deflate : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1073,7 +1072,7 @@ sealed class LazerMod {
         }
     }
 
-    class WindUp: LazerMod() {
+    class WindUp : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1124,7 +1123,7 @@ sealed class LazerMod {
         }
     }
 
-    class WindDown: LazerMod() {
+    class WindDown : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1189,7 +1188,7 @@ sealed class LazerMod {
         }
     }
 
-    class BarrelRoll: LazerMod() {
+    class BarrelRoll : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1230,7 +1229,7 @@ sealed class LazerMod {
         }
     }
 
-    class ApproachDifferent: LazerMod() {
+    class ApproachDifferent : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1271,7 +1270,7 @@ sealed class LazerMod {
         }
     }
 
-    class Muted: LazerMod() {
+    class Muted : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1330,7 +1329,7 @@ sealed class LazerMod {
         }
     }
 
-    class NoScope: LazerMod() {
+    class NoScope : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1362,7 +1361,7 @@ sealed class LazerMod {
         }
     }
 
-    class Magnetised: LazerMod() {
+    class Magnetised : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1395,7 +1394,7 @@ sealed class LazerMod {
         }
     }
 
-    class Repel: LazerMod() {
+    class Repel : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1428,7 +1427,7 @@ sealed class LazerMod {
         }
     }
 
-    class AdaptiveSpeed: LazerMod() {
+    class AdaptiveSpeed : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1515,7 +1514,7 @@ sealed class LazerMod {
         }
     }
 
-    class Depth: LazerMod() {
+    class Depth : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1674,7 +1673,7 @@ sealed class LazerMod {
         }
     }
 
-    class Cover: LazerMod() {
+    class Cover : LazerMod() {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
@@ -1967,14 +1966,74 @@ sealed class LazerMod {
 
         @JvmStatic
         fun getModFromAcronym(acronym: String?): LazerMod {
-            val mod = "{\"acronym\":\"" + acronym!! + "\"}"
-
-            return try {
-                JacksonUtil.parseObject(mod, LazerMod::class.java)
-            } catch (e: JacksonException) {
-                return None()
-            } catch (e: Exception) {
-                return None()
+            return when (acronym?.uppercase()) {
+                "EZ" -> Easy()
+                "NF" -> NoFail()
+                "HT" -> HalfTime()
+                "DC" -> Daycore()
+                "HR" -> HardRock()
+                "SD" -> SuddenDeath()
+                "PF" -> Perfect()
+                "DT" -> DoubleTime()
+                "NC" -> Nightcore()
+                "HD" -> Hidden()
+                "FL" -> Flashlight()
+                "BL" -> Blinds()
+                "ST" -> StrictTracking()
+                "AC" -> AccuracyChallenge()
+                "TP" -> TargetPractice()
+                "DA" -> DifficultyAdjust()
+                "CL" -> Classic()
+                "RD" -> Random()
+                "MR" -> Mirror()
+                "AL" -> Alternate()
+                "SG" -> SingleTap()
+                "AT" -> Autoplay()
+                "CN" -> Cinema()
+                "RX" -> Relax()
+                "AP" -> Autopilot()
+                "SO" -> SpunOut()
+                "TR" -> Transform()
+                "WG" -> Wiggle()
+                "SI" -> SpinIn()
+                "GR" -> Grow()
+                "DF" -> Deflate()
+                "WU" -> WindUp()
+                "WD" -> WindDown()
+                "TC" -> Traceable()
+                "BR" -> BarrelRoll()
+                "AD" -> ApproachDifferent()
+                "MU" -> Muted()
+                "NS" -> NoScope()
+                "MG" -> Magnetised()
+                "RP" -> Repel()
+                "AS" -> AdaptiveSpeed()
+                "FR" -> FreezeFrame()
+                "BU" -> Bubbles()
+                "SY" -> Synesthesia()
+                "DP" -> Depth()
+                "TD" -> TouchDevice()
+                "SV2" -> ScoreV2()
+                "SW" -> Swap()
+                "CS" -> ConstantSpeed()
+                "FF" -> FloatingFruits()
+                "NR" -> NoRelease()
+                "FI" -> FadeIn()
+                "CO" -> Cover()
+                "DS" -> DualStages()
+                "IN" -> Invert()
+                "HO" -> HoldOff()
+                "1K" -> Key1()
+                "2K" -> Key2()
+                "3K" -> Key3()
+                "4K" -> Key4()
+                "5K" -> Key5()
+                "6K" -> Key6()
+                "7K" -> Key7()
+                "8K" -> Key8()
+                "9K" -> Key9()
+                "10K" -> Key10()
+                else -> None()
             }
         }
 
@@ -2036,7 +2095,7 @@ sealed class LazerMod {
          * 原 speed 方法
          */
         @JvmStatic
-        fun getSpeedChange(mod: LazerMod):Float? {
+        fun getSpeedChange(mod: LazerMod): Float? {
             return when (mod) {
                 is HalfTime -> mod.speedChange ?: 0.75f
                 is Daycore -> mod.speedChange ?: 0.7f
@@ -2053,7 +2112,7 @@ sealed class LazerMod {
          * 原 speed final 方法
          */
         @JvmStatic
-        fun getFinalSpeed(mod: LazerMod):Float? {
+        fun getFinalSpeed(mod: LazerMod): Float? {
             return when (mod) {
                 is HalfTime -> mod.speedChange ?: 0.75f
                 is Daycore -> mod.speedChange ?: 0.7f
@@ -2112,7 +2171,7 @@ sealed class LazerMod {
         }
 
         @JvmStatic
-        fun noStarRatingChange(mods: List<LazerMod>?)= hasStarRatingChange(mods).not()
+        fun noStarRatingChange(mods: List<LazerMod>?) = hasStarRatingChange(mods).not()
     }
 }
 
