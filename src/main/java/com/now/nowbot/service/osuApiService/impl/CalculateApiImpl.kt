@@ -359,11 +359,13 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         @JvmStatic fun applyBeatMapChanges(beatMap: BeatMap?, mods: List<LazerMod>) {
             if (beatMap == null || beatMap.beatMapID == 0L) return
 
+            val mode = beatMap.mode
+
             if (LazerMod.hasStarRatingChange(mods)) {
                 beatMap.BPM = applyBPM(beatMap.BPM ?: 0f, mods)
                 beatMap.AR = applyAR(beatMap.AR ?: 0f, mods)
                 beatMap.CS = applyCS(beatMap.CS ?: 0f, mods)
-                beatMap.OD = applyOD(beatMap.OD ?: 0f, mods)
+                beatMap.OD = applyOD(beatMap.OD ?: 0f, mods, mode)
                 beatMap.HP = applyHP(beatMap.HP ?: 0f, mods)
                 beatMap.totalLength = applyLength(beatMap.totalLength, mods)
                 beatMap.hitLength = applyLength(beatMap.hitLength, mods)
@@ -406,7 +408,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             val speed = LazerMod.getModSpeed(mods)
 
             if (speed != 1f) {
-                var ms = getMillisFromAR(a.clamp())
+                var ms = getMillisFromAR(a)
                 ms = (ms / speed)
                 a = getARFromMillis(ms)
             }
@@ -414,9 +416,19 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             return a.roundToDigits2()
         }
 
-        @JvmStatic fun getMillisFromOD(od: Float): Float = when {
-            od > 11 -> 14f
-            else -> 80 - 6 * od
+        @JvmStatic fun getMillisFromOD(od: Float, mode: OsuMode): Float = when(mode) {
+            OsuMode.TAIKO -> when {
+                od > 11 -> 17f
+                else -> 50 - 3 * od
+            }
+            OsuMode.MANIA -> when {
+                od > 11 -> 31f
+                else -> 64 - 3 * od
+            }
+            else -> when {
+                od > 11 -> 14f
+                else -> 80 - 6 * od
+            }
         }
 
         @JvmStatic fun getODFromMillis(ms: Float): Float = when {
@@ -424,7 +436,12 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             else -> (80 - ms) / 6f
         }
 
+        // 只有在仅计算主模式的时候才能使用这个方法
         @JvmStatic fun applyOD(od: Float, mods: List<LazerMod>): Float {
+            return applyOD(od, mods, OsuMode.OSU)
+        }
+
+        @JvmStatic fun applyOD(od: Float, mods: List<LazerMod>, mode: OsuMode): Float {
             var o = od
             if (mods.contains(LazerMod.HardRock)) {
                 o = (o * 1.4f).clamp()
@@ -441,7 +458,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             val speed = LazerMod.getModSpeed(mods)
 
             if (speed != 1f) {
-                var ms = getMillisFromOD(od.clamp())
+                var ms = getMillisFromOD(od, mode)
                 ms = (ms / speed)
                 o = getODFromMillis(ms)
             }
@@ -486,7 +503,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         }
 
         @JvmStatic fun applyBPM(bpm: Float?, mods: List<LazerMod>): Float {
-            return ((bpm ?: 0f) * LazerMod.getModSpeed(mods)).toFloat().roundToDigits2()
+            return ((bpm ?: 0f) * LazerMod.getModSpeed(mods)).roundToDigits2()
         }
 
         @JvmStatic fun applyLength(length: Int?, mods: List<LazerMod>): Int {

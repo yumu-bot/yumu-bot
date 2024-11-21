@@ -82,7 +82,7 @@ class PPPlusMapService(
             CS = CalculateApiImpl.applyCS(CS!!, mods)
             AR = CalculateApiImpl.applyAR(AR!!, mods)
             OD = CalculateApiImpl.applyOD(OD!!, mods)
-            HP = CalculateApiImpl.applyOD(HP!!, mods)
+            HP = CalculateApiImpl.applyHP(HP!!, mods)
         }
     }
 }

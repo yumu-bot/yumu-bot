@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -51,8 +52,9 @@ class Map4DCalculate : MessageService<Map4DParam> {
                         String.format("AR: %.2f, 缩圈时间: %.2fms", ar, ms)
                     }
                     "od" -> {
+                        // TODO 这里要赋予游戏模式，太鼓和下落式的 OD 不一样
                         val od = CalculateApiImpl.applyOD(param.value, mod)
-                        val ms = CalculateApiImpl.getMillisFromOD(od)
+                        val ms = CalculateApiImpl.getMillisFromOD(od, OsuMode.OSU)
                         String.format("OD: %.2f, 300 判定区间: %.2fms", od, ms)
                     }
                     "cs" -> {

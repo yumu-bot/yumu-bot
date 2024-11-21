@@ -71,7 +71,7 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
         sb.append(a.maxCombo).append(',')
         .append(String.format("%.2f", CalculateApiImpl.applyCS(b.CS!!, mods))).append(',')
         .append(String.format("%.2f", CalculateApiImpl.applyAR(b.AR!!, mods))).append(',')
-        .append(String.format("%.2f", CalculateApiImpl.applyOD(b.OD!!, mods)))
+        .append(String.format("%.2f", CalculateApiImpl.applyOD(b.OD!!, mods, b.mode)))
         
         event.subject.sendMessage(sb.toString())
     }
