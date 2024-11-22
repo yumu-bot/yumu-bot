@@ -104,9 +104,9 @@ import kotlin.math.min
         val count =
             standard
                 .filter { it.chart.fit > 0.0 }
-                .count { it.score.star > it.chart.fit } + deluxe
+                .count { it.score.star < it.chart.fit } + deluxe
                 .filter { it.chart.fit > 0.0 }
-                .count { it.score.star > it.chart.fit }
+                .count { it.score.star < it.chart.fit }
 
         val size = standard.count {
             it.chart.fit > 0.0
