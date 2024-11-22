@@ -138,6 +138,11 @@ class ChunithmApiImpl(private val base: DivingFishBaseService) : ChunithmApiServ
         return song.stream().collect(Collectors.toMap(ChuSong::songID) { s: ChuSong -> s })
     }
 
+    override fun updateChunithmSongLibraryFile() {
+        saveFile(chunithmSongLibraryFromAPI, "data-fit.json", "统计")
+        log.info("chunithm: 歌曲数据库已更新")
+    }
+
     private val chunithmSongLibraryFromAPI: String
         get() =
                 base.divingFishApiWebClient!!

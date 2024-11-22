@@ -7,6 +7,7 @@ import com.now.nowbot.model.enums.MaiVersion.Companion.getNameList
 import com.now.nowbot.model.json.*
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
@@ -154,10 +155,10 @@ import kotlin.text.Charsets.UTF_8
     }
 
     override fun getMaimaiSongLibrary(): Map<Int, MaiSong> { //return getMaimaiSongLibraryFromFile()
-        return maiDao.getAllMaiSong().stream().map {
+        return maiDao.getAllMaiSong().map {
             insertMaimaiAlias(it)
-            return@map it
-        }.collect(Collectors.toMap(MaiSong::songID) { it })
+            it
+        }.associateBy { it.songID }
     }
 
     override fun getMaimaiSong(songID: Long): MaiSong? { //return getMaimaiSongLibraryFromFile()[songID.toInt()] ?: MaiSong()
@@ -167,7 +168,7 @@ import kotlin.text.Charsets.UTF_8
     }
 
     override fun getMaimaiRank(): Map<String, Int> { //return getMaimaiRankLibraryFromFile()
-        return maiDao.getAllMaiRanking().stream().collect(Collectors.toMap(MaiRanking::name, MaiRanking::rating))
+        return maiDao.getAllMaiRanking().associate { it.name to it.rating }
     }
 
     override fun getMaimaiChartData(songID: Long): List<MaiFit.ChartData> { //return getMaimaiFitLibraryFromFile().charts[songID.toString()] ?: listOf()
@@ -193,9 +194,13 @@ import kotlin.text.Charsets.UTF_8
     override fun insertMaimaiAlias(songs: List<MaiSong>?) {
         if (songs.isNullOrEmpty()) return
 
-        for (s in songs) {
-            insertMaimaiAlias(s)
+        val actions = songs.map {
+            return@map AsyncMethodExecutor.Supplier<Unit> {
+                it.alias = getMaimaiAlias(it.songID)?.alias?.firstOrNull()
+            }
         }
+
+        AsyncMethodExecutor.AsyncSupplier(actions)
     }
 
     override fun insertMaimaiAlias(song: MaiSong?) {
@@ -207,9 +212,13 @@ import kotlin.text.Charsets.UTF_8
     override fun insertMaimaiAliasForScore(scores: List<MaiScore>?) {
         if (scores.isNullOrEmpty()) return
 
-        for (s in scores) {
-            insertMaimaiAliasForScore(s)
+        val actions = scores.map {
+            return@map AsyncMethodExecutor.Supplier<Unit> {
+                it.alias = getMaimaiAlias(it.songID)?.alias?.firstOrNull()
+            }
         }
+
+        AsyncMethodExecutor.AsyncSupplier(actions)
     }
 
     override fun insertMaimaiAliasForScore(score: MaiScore?) {
@@ -219,13 +228,16 @@ import kotlin.text.Charsets.UTF_8
     }
 
     override fun insertSongData(scores: List<MaiScore>) {
-        for (s in scores) {
-            if (s.songID == 0L) {
-                continue
+        val actions = scores.map {
+            return@map AsyncMethodExecutor.Supplier<Unit> {
+                if (it.songID != 0L) {
+                    val o = getMaimaiSong(it.songID) ?: MaiSong()
+                    insertSongData(it, o)
+                }
             }
-            val o = getMaimaiSong(s.songID) ?: MaiSong()
-            insertSongData(s, o)
         }
+
+        AsyncMethodExecutor.AsyncSupplier(actions)
     }
 
     override fun insertSongData(score: MaiScore, song: MaiSong) {

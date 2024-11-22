@@ -654,6 +654,12 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
     }),
 
+    MAI_DIST(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("mai(mai)?\\s*dist(ribution)?", "md", "markdown")
+        appendQQID()
+        appendNameAnyButNoHash()
+    }),
+
     CHU_BP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("chu(nithm)?\\s*best", "cb", "y")
         appendQQID()

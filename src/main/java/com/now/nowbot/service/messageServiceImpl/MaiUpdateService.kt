@@ -3,12 +3,13 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.config.Permission
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 
 @Service("MAI_UPDATE")
-class MaiUpdateService(private val maimaiApiService: MaimaiApiService) : MessageService<Boolean> {
+class MaiUpdateService(private val maimaiApiService: MaimaiApiService, private val chunithmApiService: ChunithmApiService) : MessageService<Boolean> {
 
     override fun isHandle(
         event: MessageEvent,
@@ -31,6 +32,7 @@ class MaiUpdateService(private val maimaiApiService: MaimaiApiService) : Message
             maimaiApiService.updateMaimaiAliasLibraryDatabase()
             maimaiApiService.updateMaimaiRankLibraryDatabase()
             maimaiApiService.updateMaimaiFitLibraryDatabase()
+            chunithmApiService.updateChunithmSongLibraryFile()
             event.reply("已尝试更新！")
         }
     }

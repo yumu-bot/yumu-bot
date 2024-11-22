@@ -88,6 +88,13 @@ class RunTimeService : SchedulingConfigurer {
         maimaiApiService!!.updateMaimaiAliasLibraryDatabase()
     }
 
+    @Scheduled(cron = "20 1 6 * * *")
+    fun updateChunithmSongsLibrary() {
+        log.info("开始执行更新 chunithm 歌曲库任务")
+        //maimaiApiService!!.updateMaimaiAliasLibraryFile()
+        chunithmApiService!!.updateChunithmSongLibraryFile()
+    }
+
 
     @Scheduled(cron = "0 5 10 1 9 *")
     fun count() {
