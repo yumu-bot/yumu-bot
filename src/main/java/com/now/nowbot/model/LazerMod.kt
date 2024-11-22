@@ -2075,7 +2075,7 @@ sealed class LazerMod {
                         null
                     }
                 }
-                .reduce { sum, i -> sum or i }
+                .reduceOrNull { sum, i -> sum or i } ?: 0
         }
 
         @JvmStatic
@@ -2088,7 +2088,7 @@ sealed class LazerMod {
                 } else {
                     null
                 }
-            }.reduce { sum, i -> sum or i }
+            }.reduceOrNull { sum, i -> sum or i } ?: 0
         }
 
         /**

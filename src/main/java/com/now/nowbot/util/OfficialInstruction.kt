@@ -19,7 +19,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     // #2 osu! 成绩指令
     SET_MODE(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("mo")
+        appendOfficialCommandsIgnoreAll("mode", "mo")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
     }),
 
