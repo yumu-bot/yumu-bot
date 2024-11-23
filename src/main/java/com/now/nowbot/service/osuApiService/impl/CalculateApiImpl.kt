@@ -136,7 +136,6 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         AsyncMethodExecutor.AsyncSupplier(actions)
     }
 
-    // 主计算
     private fun getScorePP(s: LazerScore, type: CalculateType): RosuPerformance {
         return getPP(
             s.beatMapID,
@@ -349,48 +348,6 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             PF, FC, DEFAULT
         }
 
-        @Deprecated("没有用", ReplaceWith("calculate"))
-        private fun getRosuPerformance(
-            map: ByteArray,
-            lazer: Boolean = false,
-            stat: LazerStatistics,
-            mods: List<LazerMod>,
-            mode: OsuMode,
-            combo: Int?,
-            accuracy: Double?,
-        ): JniPerformanceAttributes {
-            val score = JniScoreStat()
-
-            if (combo != null) score.maxCombo = combo
-
-            when (mode) {
-                OsuMode.TAIKO -> {
-                    score.n100 = stat.ok ?: 0
-                }
-
-                OsuMode.CATCH -> {
-                    score.n100 = stat.largeTickHit ?: 0
-                    score.n50 = stat.smallTickHit ?: 0
-                }
-
-                OsuMode.MANIA -> {
-                    score.geki = stat.perfect ?: 0
-                    score.katu = stat.good ?: 0
-                    score.n100 = stat.ok ?: 0
-                    score.n50 = stat.meh ?: 0
-                }
-
-                else -> {
-                    score.n100 = stat.ok ?: 0
-                    score.n50 = stat.meh ?: 0
-                }
-            }
-            score.n300 = stat.great ?: 0
-            score.misses = stat.miss ?: 0
-
-            return calculate(map, lazer, score, mods, mode, combo, accuracy)
-        }
-
         // 真正的主计算
         private fun calculate(
             map: ByteArray,
@@ -420,7 +377,11 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
 
             if (! mods.isNullOrEmpty()) {
                 rosuDifficulty.applyDifficultyAdjustMod(mods)
-                rosuPerformance.setMods(JacksonUtil.toJson(mods))
+
+                val modsJson = JacksonUtil.toJson(mods)
+                rosuDifficulty.setMods(modsJson)
+                rosuPerformance.setMods(modsJson)
+
                 // rosuPerformance.setClockRate(LazerMod.getModSpeed(mods).toDouble())
                 rosuPerformance.setDifficulty(rosuDifficulty)
             }
