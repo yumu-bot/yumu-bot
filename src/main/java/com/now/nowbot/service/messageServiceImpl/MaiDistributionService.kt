@@ -9,11 +9,13 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.floor
 import kotlin.math.min
 
@@ -140,20 +142,25 @@ import kotlin.math.min
                 val rating = getDistsRating(it, chart)
 
                 return@map MaiDistScore(it, chart, rating)
-            }.toList()
-        }
-
-        // 获取歌曲的的 ChartData （多线程有问题）
-        private fun getChartData(scores: List<MaiScore>, maimaiApiService: MaimaiApiService): Map<Long, ChartData> {
-            val charts = mutableMapOf<Long, ChartData>()
-
-            for (score in scores) {
-                charts[score.songID * 10 + score.index] =
-                    maimaiApiService.getMaimaiChartData(score.songID).getOrNull(score.index) ?: ChartData()
             }
-
-            return charts
         }
+
+        // 多线程获取歌曲的的 ChartData
+        private fun getChartData(scores: List<MaiScore>, maimaiApiService: MaimaiApiService): Map<Long, ChartData> {
+            val charts = ConcurrentHashMap<Long, ChartData>()
+
+            val actions = scores.map {
+                return@map AsyncMethodExecutor.Supplier<Unit> {
+                    charts[it.songID * 10 + it.index] =
+                        maimaiApiService.getMaimaiChartData(it.songID).getOrNull(it.index) ?: ChartData()
+                    }
+                }
+
+            AsyncMethodExecutor.AsyncSupplier(actions)
+
+            return charts.toMap()
+        }
+
         // 计算对应成绩的对应 DX 评分
         private fun getDistsRating(score: MaiScore , chart: ChartData): Int {
             val star = if (chart.fit > 0.0) {
