@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.MatchRating
+import com.now.nowbot.model.multiplayer.MatchRating.Companion.insertMicroUserToScores
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
@@ -95,6 +96,7 @@ import org.springframework.stereotype.Service
                     panel.match, panel.param, beatmapApiService, calculateApiService
                 )
                 mr.calculate()
+                mr.insertMicroUserToScores()
 
                 // 如果只有一两个人，则不排序（slot 从小到大）
                 val isSize2p =

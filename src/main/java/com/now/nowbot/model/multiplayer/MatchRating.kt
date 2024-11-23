@@ -497,4 +497,16 @@ class MatchRating(
             playerClass = PlayerClass(eraIndex, draIndex, rwsIndex)
         }
     }
+
+    companion object {
+        fun MatchRating.insertMicroUserToScores() {
+            this.match.events.forEach { e ->
+                if (e.round != null) {
+                    e.round.scores.forEach {
+                        s -> s.user = this.players[s.userID]
+                    }
+                }
+            }
+        }
+    }
 }
