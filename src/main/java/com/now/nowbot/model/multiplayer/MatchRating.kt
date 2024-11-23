@@ -21,17 +21,17 @@ class MatchRating(
 ) {
     @JsonIgnore
     val rounds: List<Match.MatchRound>
-        = run {
-            val r: MutableList<Match.MatchRound> = match.events
-                .stream()
-                .filter { it.round != null}
-                .map { it.round!! }
-                .filter { ! it?.scores.isNullOrEmpty() }
-                .filter { it?.endTime != null }
-                .toList()
+            = run {
+        val r: MutableList<Match.MatchRound> = match.events
+            .asSequence()
+            .filter { it.round != null}
+            .map { it.round!! }
+            .filter { it.scores.isNotEmpty() }
+            .filter { it.endTime != null }
+            .toMutableList()
 
         return@run r.applyParams(ratingParam)
-        }
+    }
 
     @get:JsonProperty("round_count")
     val roundCount: Int
@@ -131,7 +131,7 @@ class MatchRating(
         // add user
         rs.forEach {
             it.scores.stream().peek {
-                s -> s.user = players[s.userID]
+                    s -> s.user = players[s.userID]
             }
         }
 
@@ -326,7 +326,7 @@ class MatchRating(
                 it.calculateAverageScore()
                 it.associatedRoundCount = rounds.size
                 roundAMG += it.averageMuPoint
-        }
+            }
     }
 
     // MQ
@@ -495,6 +495,18 @@ class MatchRating(
 
         fun calculateClass() {
             playerClass = PlayerClass(eraIndex, draIndex, rwsIndex)
+        }
+    }
+
+    companion object {
+        fun MatchRating.insertMicroUserToScores() {
+            this.match.events.forEach { e ->
+                if (e.round != null) {
+                    e.round.scores.forEach {
+                            s -> s.user = this.players[s.userID]
+                    }
+                }
+            }
         }
     }
 }

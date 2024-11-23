@@ -78,6 +78,19 @@ data class Match(
         val isTeamVS: Boolean
             get() = teamType == "team-vs" || teamType == "tag-team-vs"
 
+        @get:JsonProperty("red_team_score")
+        val redTeamScore: Long
+            get() = getTeamScore("red")
+
+        @get:JsonProperty("blue_team_score")
+        val blueTeamScore: Long
+            get() = getTeamScore("blue")
+
+        @get:JsonProperty("total_team_score")
+        val totalTeamScore: Long
+            get() = getTeamScore(null)
+
+        @get:JsonProperty("winning_team")
         val winningTeam: String?
             get() =
                 if (isTeamVS) {
@@ -91,14 +104,14 @@ data class Match(
                     "none"
                 }
 
+        @get:JsonProperty("winning_team_score")
         val winningTeamScore: Long
             get() =
                 if (isTeamVS) {
-                    max(getTeamScore("red"), getTeamScore("blue"))
+                    max(redTeamScore, blueTeamScore)
                 } else {
-                    getTeamScore()
+                    totalTeamScore
                 }
-
 
         private fun getTeamScore(teamType: String? = null): Long {
             return when(teamType) {

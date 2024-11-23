@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.MatchRating
+import com.now.nowbot.model.multiplayer.MatchRating.Companion.insertMicroUserToScores
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
@@ -95,23 +95,18 @@ import org.springframework.stereotype.Service
                     panel.match, panel.param, beatmapApiService, calculateApiService
                 )
                 mr.calculate()
+                mr.insertMicroUserToScores()
 
                 // 如果只有一两个人，则不排序（slot 从小到大）
-                val isSize2p =
-                    mr.rounds.stream().filter { s: Match.MatchRound -> s.scores.size > 2 }.toList().isNotEmpty()
+                val isSize2p = mr.rounds.any { it.scores.size > 2 }
 
                 for (ro in mr.rounds) {
                     if (ro.scores.isEmpty()) continue
 
                     if (isSize2p) {
-                        ro.scores = ro.scores.stream().sorted(
-                                Comparator.comparingInt(Match.MatchScore::score).reversed()
-                            ).toList()
+                        ro.scores = ro.scores.sortedByDescending { it.score }
                     } else {
-                        ro.scores = ro.scores.stream().sorted(
-                                Comparator.comparingInt { s: Match.MatchScore ->
-                                    s.playerStat.slot
-                                }).toList()
+                        ro.scores = ro.scores.sortedBy { it.playerStat.slot }
                     }
                 }
             } catch (e: Exception) {
