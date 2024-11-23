@@ -23,12 +23,12 @@ class MatchRating(
     val rounds: List<Match.MatchRound>
         = run {
             val r: MutableList<Match.MatchRound> = match.events
-                .stream()
+                .asSequence()
                 .filter { it.round != null}
                 .map { it.round!! }
-                .filter { ! it?.scores.isNullOrEmpty() }
-                .filter { it?.endTime != null }
-                .toList()
+                .filter { it.scores.isNotEmpty() }
+                .filter { it.endTime != null }
+                .toMutableList()
 
         return@run r.applyParams(ratingParam)
         }
