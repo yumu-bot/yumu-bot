@@ -480,11 +480,12 @@ import kotlin.text.Charsets.UTF_8
         return if (result.isEmpty()) {
             null
         } else {
-            result.stream().sorted(Comparator.comparingInt { it.second })
-                .sorted(Comparator.comparingDouble<Triple<MaiSong, Int, Double>> { it.third }.reversed())
-                .map { it.first }.toList()
+            result
+                .sortedBy { it.second }
+                .sortedByDescending { it.third }
+                .map { it.first }
 
-            // result.toSortedMap().reversed().values.stream().toList()
+            // result.stream().sorted(Comparator.comparingInt { it.second }).sorted(Comparator.comparingDouble<Triple<MaiSong, Int, Double>> { it.third }.reversed()).map { it.first }.toList()
         }
     }
 

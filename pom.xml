@@ -174,9 +174,9 @@
         </dependency>
 
         <dependency>
-            <groupId>rosu.pp.jni</groupId>
-            <artifactId>rosu-pp-jni</artifactId>
-            <version>0.2.1</version>
+        <groupId>org.spring</groupId>
+        <artifactId>osu-extended</artifactId>
+        <version>0.0.1</version>
         </dependency>
 
         <dependency>

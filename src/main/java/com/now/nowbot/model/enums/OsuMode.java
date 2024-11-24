@@ -1,7 +1,6 @@
 package com.now.nowbot.model.enums;
 
 import org.springframework.lang.Nullable;
-import rosu.osu.Mode;
 
 import java.util.Optional;
 
@@ -69,13 +68,13 @@ public enum OsuMode {
         return modeValue;
     }
 
-    public Mode toRosuMode() {
+    public org.spring.osu.OsuMode toRosuMode() {
         return switch (this) {
-            case OSU -> Mode.Osu;
-            case TAIKO -> Mode.Taiko;
-            case CATCH -> Mode.Catch;
-            case MANIA -> Mode.Mania;
-            default -> Mode.Default;
+            case OSU -> org.spring.osu.OsuMode.Osu;
+            case TAIKO -> org.spring.osu.OsuMode.Taiko;
+            case CATCH -> org.spring.osu.OsuMode.Catch;
+            case MANIA -> org.spring.osu.OsuMode.Mania;
+            default -> org.spring.osu.OsuMode.Default;
         };
     }
 

@@ -15,7 +15,6 @@ import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import java.io.IOException
 import java.nio.file.Files
-import java.util.stream.Collectors
 import kotlin.text.Charsets.UTF_8
 
 @Service
@@ -135,7 +134,7 @@ class ChunithmApiImpl(private val base: DivingFishBaseService) : ChunithmApiServ
             song = JacksonUtil.parseObjectList(chunithmSongLibraryFromAPI, ChuSong::class.java)
         }
 
-        return song.stream().collect(Collectors.toMap(ChuSong::songID) { s: ChuSong -> s })
+        return song.associateBy { it.songID }
     }
 
     override fun updateChunithmSongLibraryFile() {

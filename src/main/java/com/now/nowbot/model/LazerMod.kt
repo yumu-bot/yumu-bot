@@ -106,7 +106,7 @@ sealed interface ValueMod {
     JsonSubTypes.Type(value = LazerMod.None::class, name = ""),
 )
 sealed class LazerMod {
-    @get:JsonIgnore
+
     abstract val type: String
 
     @get:JsonProperty("settings")
@@ -1953,15 +1953,15 @@ sealed class LazerMod {
         }
 
         private val hiddenSet = setOf(
-            Hidden,
-            Flashlight,
-            Blinds,
-            FadeIn,
+            Hidden::class,
+            Flashlight::class,
+            Blinds::class,
+            FadeIn::class,
         )
 
         @JvmStatic
         fun containsHidden(mods: List<LazerMod>): Boolean {
-            return mods.any { hiddenSet.contains(it::class.companionObjectInstance) }
+            return mods.any { hiddenSet.contains(it::class) }
         }
 
         @JvmStatic

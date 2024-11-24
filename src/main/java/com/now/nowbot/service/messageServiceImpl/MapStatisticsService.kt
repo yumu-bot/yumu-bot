@@ -5,6 +5,7 @@ import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.json.RosuPerformance
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -22,15 +23,12 @@ import com.now.nowbot.util.CmdUtil.isAvoidance
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
-import java.util.regex.Matcher
-import kotlin.math.min
-import kotlin.math.round
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import rosu.Rosu
-import rosu.parameter.JniScore
-import rosu.result.JniResult
+import java.util.regex.Matcher
+import kotlin.math.min
+import kotlin.math.round
 
 @Service("MAP")
 class MapStatisticsService(
@@ -44,12 +42,12 @@ class MapStatisticsService(
     data class MapParam(val user: OsuUser?, val beatmap: BeatMap, val expected: Expected)
 
     data class Expected(
-            @JvmField val mode: OsuMode,
-            @JvmField val accuracy: Double,
-            @JvmField val combo: Int,
-            @JvmField val misses: Int,
-            @JvmField val mods: List<String>,
-            @JvmField val isLazer: Boolean = false,
+        @JvmField val mode: OsuMode,
+        @JvmField val accuracy: Double,
+        @JvmField val combo: Int,
+        @JvmField val misses: Int,
+        @JvmField val mods: List<String>,
+        @JvmField val isLazer: Boolean = true,
     )
 
     data class PanelE6Param(
@@ -57,7 +55,7 @@ class MapStatisticsService(
             val beatmap: BeatMap,
             val density: IntArray,
             val original: Map<String, Any>,
-            val attributes: JniResult,
+            val attributes: RosuPerformance,
             val pp: List<Double>,
             val expected: Expected,
     ) {
@@ -270,7 +268,7 @@ class MapStatisticsService(
 
             calculateApiService.applyStarToBeatMap(beatmap, expected)
 
-            val pp = getPPList(beatmap, expected, beatmapApiService)
+            val pp = getPPList(beatmap, expected, calculateApiService)
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val attributes = calculateApiService.getExpectedPP(beatmap, expected)
 
@@ -284,41 +282,28 @@ class MapStatisticsService(
         // 等于绘图模块的 calcMap
         // 注意，0 是 iffc，1-6是fc，7-12是nc，acc分别是100 99 98 96 94 92
         private fun getPPList(
-                beatmap: BeatMap,
-                expected: Expected,
-                beatmapApiService: OsuBeatmapApiService,
+            beatmap: BeatMap,
+            expected: Expected,
+            calculateApiService: OsuCalculateApiService,
         ): List<Double> {
             val result = mutableListOf<Double>()
             val accArray: DoubleArray = doubleArrayOf(1.0, 0.99, 0.98, 0.96, 0.94, 0.92)
-            val file =
-                    beatmapApiService
-                            .getBeatMapFileString(beatmap.beatMapID)
-                            .toByteArray(Charsets.UTF_8)
 
-            val scoreFC = JniScore()
-            scoreFC.mode = expected.mode.toRosuMode()
-            scoreFC.mods = OsuMod.getModsValueFromAcronyms(expected.mods)
-            scoreFC.accuracy = expected.accuracy
-            scoreFC.combo = beatmap.maxCombo!!
-            scoreFC.misses = 0
+            val maxCombo = beatmap.maxCombo ?: expected.combo
 
-            result.add(Rosu.calculate(file, scoreFC).pp)
+            val expectIfFC = Expected(expected.mode, expected.accuracy, maxCombo, 0, expected.mods, expected.isLazer)
+            result.add(calculateApiService.getExpectedPP(beatmap, expectIfFC).pp)
 
             for (i in 0..5) {
-                scoreFC.accuracy = accArray[i]
-                result.add(Rosu.calculate(file, scoreFC).pp)
+                val expectFC = Expected(expected.mode, accArray[i], maxCombo, 0, expected.mods, expected.isLazer)
+
+                result.add(calculateApiService.getExpectedPP(beatmap, expectFC).pp)
             }
 
-            val scoreNC = JniScore()
-            scoreNC.mode = expected.mode.toRosuMode()
-            scoreNC.mods = OsuMod.getModsValueFromAcronyms(expected.mods)
-            scoreNC.accuracy = expected.accuracy
-            scoreNC.combo = expected.combo
-            scoreNC.misses = expected.misses
-
             for (i in 0..5) {
-                scoreNC.accuracy = accArray[i]
-                result.add(Rosu.calculate(file, scoreNC).pp)
+                val expectNC = Expected(expected.mode, accArray[i], expected.combo, expected.misses, expected.mods, expected.isLazer)
+
+                result.add(calculateApiService.getExpectedPP(beatmap, expectNC).pp)
             }
 
             return result

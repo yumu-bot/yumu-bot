@@ -503,7 +503,7 @@ class MatchRating(
             this.match.events.forEach { e ->
                 if (e.round != null) {
                     e.round.scores.forEach {
-                            s -> s.user = this.players[s.userID]
+                        s -> s.user = this.players[s.userID]
                     }
                 }
             }
