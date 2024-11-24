@@ -14,7 +14,7 @@ jobs:
         run: |
           cd ~/nowbot
           git fetch --all
-          git reset --hard origin/master
+          git reset --hard origin/main
           git pull
           git lfs pull
           mvn test
