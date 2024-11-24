@@ -17,7 +17,10 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.spring.osu.extended.rosu.*
+import org.spring.osu.extended.rosu.JniBeatmap
+import org.spring.osu.extended.rosu.JniDifficulty
+import org.spring.osu.extended.rosu.JniPerformanceAttributes
+import org.spring.osu.extended.rosu.JniScoreState
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -348,7 +351,6 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             PF, FC, DEFAULT
         }
 
-        // 真正的主计算
         private fun calculate(
             map: ByteArray,
             lazer: Boolean = false,
@@ -358,7 +360,29 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             combo: Int? = null,
             accuracy: Double? = null,
         ): JniPerformanceAttributes {
+            val closeable = mutableListOf<AutoCloseable>()
+            try {
+                return calculateBox(map, lazer, score, mods, mode, combo, accuracy, closeable)
+            } finally {
+                closeable.forEach {
+                    tryRun { it.close() }
+                }
+            }
+        }
+
+        // 真正的主计算
+        private fun calculateBox(
+            map: ByteArray,
+            lazer: Boolean = false,
+            score: JniScoreStat? = null,
+            mods: List<LazerMod>? = null,
+            mode: OsuMode? = null,
+            combo: Int? = null,
+            accuracy: Double? = null,
+            closeable: MutableList<AutoCloseable>
+        ): JniPerformanceAttributes {
             val rosuBeatmap = JniBeatmap(map)
+            closeable.add(rosuBeatmap)
             val rosuMode = mode?.toRosuMode()
 
             // 转谱
@@ -367,6 +391,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             }
 
             val rosuDifficulty = rosuBeatmap.createDifficulty()
+            closeable.add(rosuDifficulty)
             rosuDifficulty.isLazer(lazer)
 
             val rosuPerformance = if (score == null) {
@@ -374,6 +399,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             } else {
                 rosuBeatmap.createPerformance(score.toState())
             }
+            closeable.add(rosuPerformance)
 
             if (! mods.isNullOrEmpty()) {
                 rosuDifficulty.applyDifficultyAdjustMod(mods)
@@ -601,6 +627,14 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
 
         private fun JniPerformanceAttributes.toRosuPerformance(): RosuPerformance {
             return RosuPerformance(this)
+        }
+
+        fun tryRun(fn: () ->Unit) {
+            try {
+                fn()
+            } catch (e: Exception) {
+                log.error("运行时出现异常", e)
+            }
         }
     }
 }
