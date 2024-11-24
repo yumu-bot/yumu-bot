@@ -403,8 +403,8 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
 
             if (! mods.isNullOrEmpty()) {
                 rosuDifficulty.applyDifficultyAdjustMod(mods)
-
                 val modsJson = JacksonUtil.toJson(mods)
+                    .replace(",\"settings\":{}", "")
                 rosuDifficulty.setMods(modsJson)
                 rosuPerformance.setMods(modsJson)
 

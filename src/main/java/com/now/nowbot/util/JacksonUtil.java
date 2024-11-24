@@ -1,6 +1,7 @@
 package com.now.nowbot.util;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -39,6 +40,7 @@ public class JacksonUtil {
         mapper
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(DeserializationFeature.READ_ENUMS_USING_TO_STRING, true)
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
                 // 设置可见性
                 .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY)
                 // 默认使用驼峰转下划线命名
