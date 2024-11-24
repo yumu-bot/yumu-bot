@@ -794,7 +794,7 @@ sealed class LazerMod {
         @get:JsonProperty("acronym")
         override val type: String = acronym
 
-        @get:JsonProperty("settings")
+        @get:JsonIgnore
         override var settings: Any = Value()
 
         @JsonProperty("settings")
