@@ -282,7 +282,7 @@ import kotlin.math.min
                 val modsAttrTmp: MutableList<Attr> = ArrayList(modsPPMap.size)
                 modsPPMap.forEach { (mod: String, value: MutableList<Double?>) ->
                     val attr = Attr(
-                        mod, value.count { it != null }, value.filterNotNull().sum(), (value.size * 1.0 / m)
+                        mod, value.count{ it != null }, value.filterNotNull().sum(), (value.size * 1.0 / m)
                     )
                     modsAttrTmp.add(attr)
                 }
@@ -298,7 +298,7 @@ import kotlin.math.min
                 } else {
                     val fcPPSum = fcList.sum()
 
-                    fc = Attr("FC", fcList.size, fcPPSum, (fcPPSum / bpPP) * (bps.size / 100))
+                    fc = Attr("FC", fcList.size, fcPPSum, (fcPPSum / bpPP) * (bpSize / 100.0))
                 }
                 rankAttr.add(fc)
                 for (rank in RANK_ARRAY) {
@@ -307,9 +307,9 @@ import kotlin.math.min
                         var rankPPSum: Double
                         var attr: Attr? = null
                         if (! value.isNullOrEmpty()) {
-                            rankPPSum = value.filterNotNull().sum()
+                            rankPPSum = value.sum()
                             attr = Attr(
-                                rank, value.count { it != null }, rankPPSum, (rankPPSum / bpPP) * (bps.size / 100)
+                                rank, value.count(), rankPPSum, (rankPPSum / bpPP) * (bpSize / 100.0)
                             )
                         }
                         rankAttr.add(attr)
