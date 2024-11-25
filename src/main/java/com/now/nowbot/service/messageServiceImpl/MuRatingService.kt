@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.MatchRating
+import com.now.nowbot.model.multiplayer.MatchRating.Companion.insertMicroUserToScores
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
@@ -66,6 +67,7 @@ import java.util.regex.Matcher
         }
 
         if (param.isUU) {
+            mr.insertMicroUserToScores()
             val str = parseCSA(mr)
 
             try {

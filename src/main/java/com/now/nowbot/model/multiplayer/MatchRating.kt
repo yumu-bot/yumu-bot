@@ -499,6 +499,7 @@ class MatchRating(
     }
 
     companion object {
+        @JvmStatic
         fun MatchRating.insertMicroUserToScores() {
             this.match.events.forEach { e ->
                 if (e.round != null) {

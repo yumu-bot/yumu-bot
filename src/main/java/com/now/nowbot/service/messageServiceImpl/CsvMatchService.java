@@ -112,6 +112,7 @@ public class CsvMatchService implements MessageService<Matcher> {
 
         var mr = new MatchRating(match, new MatchRating.RatingParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
         mr.calculate();
+        MatchRating.insertMicroUserToScores(mr);
         var rounds = mr.getRounds();
 
         for (var r : rounds) {
@@ -138,6 +139,8 @@ public class CsvMatchService implements MessageService<Matcher> {
 
             var mr = new MatchRating(match, new MatchRating.RatingParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
             mr.calculate();
+            MatchRating.insertMicroUserToScores(mr);
+
             var rounds = mr.getRounds();
 
             //多比赛
