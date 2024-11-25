@@ -178,54 +178,59 @@ class FriendService(
             throw FriendException(FriendException.Type.FRIEND_Me_FetchFailed)
         }
 
-        val stream = if (sortDirection == DESCEND) {
+        val sequence = if (sortDirection == DESCEND) {
             // 先翻一次，因为等会要翻回来，这样可以保证都是默认按名字升序排序的
-            rawList.stream().filter { it.isBot != true }.sorted(Comparator.comparing<MicroUser?, String?> { it.userName }.reversed())
+            rawList.asSequence().filter { it.isBot != true }.sortedByDescending { it.userName }
         } else {
-            rawList.stream().filter { it.isBot != true }.sorted(Comparator.comparing { it.userName })
+            rawList.asSequence().filter { it.isBot != true }.sortedBy { it.userName }
         }
 
         val sorted =
             when (sortType) {
-                PERFORMANCE -> stream.filter { it.statistics.pp > 0 }
-                    .sorted(Comparator.comparing { it.statistics.pp }).toList()
-
-                ACCURACY -> stream.filter { it.statistics.accuracy > 0 }
-                    .sorted(Comparator.comparing { it.statistics.accuracy }).toList()
-
-                TIME -> stream
-                    .filter { it.lastTime != null }
-                    .sorted(Comparator.comparing { it.lastTime }).toList()
-
-                PLAY_COUNT -> stream.sorted(Comparator.comparing { it.statistics.playCount }).toList()
-                PLAY_TIME -> stream.sorted(Comparator.comparing { it.statistics.playTime }).toList()
-                TOTAL_HITS -> stream.sorted(Comparator.comparing { it.statistics.totalHits }).toList()
-                ONLINE -> stream
+                PERFORMANCE -> sequence
                     .filter { it.statistics.pp > 0 }
-                    .sorted(Comparator.comparing<MicroUser?, Double?> { it.statistics.pp }.reversed())
-                    .filter { it.isOnline }.toList()
+                    .sortedBy { it.statistics.pp }
 
-                MUTUAL -> stream.filter { it.mutual }.toList()
-                UID -> stream.sorted(Comparator.comparing { it.userID }).toList()
-                COUNTRY -> stream.sorted(Comparator.comparing { it.country.code }).toList()
-                else -> stream.toList()
+                ACCURACY -> sequence
+                    .filter { it.statistics.accuracy > 0 }
+                    .sortedBy { it.statistics.accuracy }
+
+                TIME -> sequence
+                    .filter { it.lastTime != null }
+                    .sortedBy { it.lastTime }
+
+                PLAY_COUNT -> sequence
+                    .sortedBy { it.statistics.playCount }
+                PLAY_TIME -> sequence
+                    .sortedBy { it.statistics.playTime }
+                TOTAL_HITS -> sequence
+                    .sortedBy { it.statistics.totalHits }
+                ONLINE -> sequence
+                    .filter { it.statistics.pp > 0 }
+                    .sortedByDescending { it.statistics.pp }
+                    .filter { it.isOnline }
+
+                MUTUAL -> sequence
+                    .filter { it.mutual }
+                UID -> sequence
+                    .sortedBy { it.userID }
+                COUNTRY -> sequence
+                    .sortedBy { it.countryCode }
+                else -> sequence
             }
 
         val result = when (sortDirection) {
-            ASCEND, TRUE -> sorted
-            DESCEND -> sorted.reversed()
-            RANDOM -> {
-                // 随机打乱好友
-                sorted.shuffle()
-                sorted
-            }
+            ASCEND, TRUE -> sorted.toList()
+            DESCEND -> sorted.toList().reversed()
+            RANDOM -> sorted.shuffled().toList()
             // 取差集
             FALSE -> {
-                // 原来的流已经被修改了
-                rawList.stream()
+                rawList
+                    .asSequence()
                     .filter { it.isBot != true }
-                    .sorted(Comparator.comparing { it.userName })
-                    .filter { !sorted.contains(it) }.toList()
+                    .sortedBy { it.userName }
+                    .filter { ! sorted.contains(it) }
+                    .toList()
             }
         }
 

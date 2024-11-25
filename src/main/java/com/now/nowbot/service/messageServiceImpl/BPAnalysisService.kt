@@ -209,8 +209,8 @@ import kotlin.math.min
             val lengthList = beatMapList.map { it.length }
             val starList = beatMapList.map { it.star }
             val modsList: List<List<String>> = beatMapList.map {
-                    return@map it.mods.stream().map { mod -> mod.acronym }.toList()
-                }
+                it.mods.map { mod -> mod.acronym }
+            }
             val timeList = bps.map { 1.0 * it.endedTime.plusHours(8).hour + (it.endedTime.plusHours(8).minute / 60.0) }
             val timeDist = mutableListOf(0, 0, 0, 0, 0, 0, 0, 0)
 
