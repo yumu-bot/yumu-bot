@@ -140,6 +140,7 @@ sealed class LazerMod {
         init {
             retries?.let { this.retries = it }
         }
+
         companion object : Mod, ValueMod {
             override val type: String = "EZ"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
@@ -400,9 +401,7 @@ sealed class LazerMod {
         }
     }
 
-    class Nightcore(
-        speedChange: Float? = null,
-    ) : LazerMod() {
+    class Nightcore : LazerMod() {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -426,10 +425,6 @@ sealed class LazerMod {
         private data class Value(
             @JsonProperty("speed_change") var speedChange: Float? = null,
         )
-
-        init {
-            speedChange?.let { this.speedChange = it }
-        }
 
         companion object : Mod, ValueMod {
             override val type: String = "NC"
