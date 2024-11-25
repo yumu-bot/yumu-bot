@@ -401,7 +401,9 @@ sealed class LazerMod {
         }
     }
 
-    class Nightcore : LazerMod() {
+    class Nightcore(
+        speedChange: Float? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -425,6 +427,10 @@ sealed class LazerMod {
         private data class Value(
             @JsonProperty("speed_change") var speedChange: Float? = null,
         )
+
+        init {
+            speedChange?.let { this.speedChange = it }
+        }
 
         companion object : Mod, ValueMod {
             override val type: String = "NC"
