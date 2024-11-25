@@ -231,23 +231,29 @@ import kotlin.math.min
                 val ppCount: Float
             )
 
-            val mapperMap = bps.groupingBy { it.beatMap.mapperID }.eachCount()
+            val mapperMap = bps
+                .groupingBy { it.beatMap.mapperID }
+                .eachCount()
 
             val mapperSize = mapperMap.size
             val mapperCount =
-                mapperMap.entries.sortedByDescending { it.value }.take(8).associateBy({ it.key }, { it.value })
+                mapperMap.entries.sortedByDescending { it.value }.take(8)
+                    .associateBy({ it.key }, { it.value })
                     .toMap(LinkedHashMap())
 
             val mapperInfo = userApiService.getUsers(mapperCount.keys)
             val mapperList =
-                bps.filter { mapperCount.containsKey(it.beatMap.mapperID) }.groupingBy { it.beatMap.mapperID }
+                bps.filter { mapperCount.containsKey(it.beatMap.mapperID) }
+                    .groupingBy { it.beatMap.mapperID }
                     .aggregate<LazerScore, Long, Double>({ _, accumulator, element, _ ->
                         if (accumulator == null) {
                             element.PP ?: 0.0
                         } else {
                             accumulator + (element.PP ?: 0.0)
                         }
-                    }).entries.sortedWith(compareByDescending<Map.Entry<Long, Double>> { mapperCount[it.key] }.thenByDescending { it.value })
+                    }).entries
+                    .sortedWith(compareByDescending<Map.Entry<Long, Double>> { mapperCount[it.key] }
+                        .thenByDescending { it.value })
                     .map {
                         var name = ""
                         var avatar = ""
@@ -290,9 +296,9 @@ import kotlin.math.min
                 if (fcList.isNullOrEmpty()) {
                     fc = Attr("FC", 0, 0.0, 0.0)
                 } else {
-                    val fcPPSum = fcList.reduceOrNull { acc, fl -> acc + fl } ?: 0.0
+                    val fcPPSum = fcList.sum()
 
-                    fc = Attr("FC", fcList.size, fcPPSum, (fcPPSum / bpPP))
+                    fc = Attr("FC", fcList.size, fcPPSum, (fcPPSum / bpPP) * (bps.size / 100))
                 }
                 rankAttr.add(fc)
                 for (rank in RANK_ARRAY) {
@@ -300,10 +306,10 @@ import kotlin.math.min
                         val value = rankMap[rank]
                         var rankPPSum: Double
                         var attr: Attr? = null
-                        if (Objects.nonNull(value) && value!!.isNotEmpty()) {
-                            rankPPSum = value.filterNotNull().reduceOrNull { acc, fl -> acc + fl } ?: 0.0
+                        if (! value.isNullOrEmpty()) {
+                            rankPPSum = value.filterNotNull().sum()
                             attr = Attr(
-                                rank, value.count { it != null }, rankPPSum, (rankPPSum / bpPP)
+                                rank, value.count { it != null }, rankPPSum, (rankPPSum / bpPP) * (bps.size / 100)
                             )
                         }
                         rankAttr.add(attr)
