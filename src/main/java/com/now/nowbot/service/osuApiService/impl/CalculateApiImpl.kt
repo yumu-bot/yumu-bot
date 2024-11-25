@@ -390,7 +390,6 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                 rosuBeatmap.convertInPlace(rosuMode)
             }
 
-            val rosuDifficulty = rosuBeatmap.createDifficulty()
 
             val rosuPerformance = if (score == null) {
                 rosuBeatmap.createPerformance()
@@ -398,18 +397,12 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                 rosuBeatmap.createPerformance(score.toState())
             }
 
-            rosuDifficulty.isLazer(lazer)
             rosuPerformance.setLazer(lazer)
 
             if (! mods.isNullOrEmpty()) {
-                rosuDifficulty.applyDifficultyAdjustMod(mods)
                 val modsJson = JacksonUtil.toJson(mods)
-                    .replace(",\"settings\":{}", "")
-                rosuDifficulty.setMods(modsJson)
                 rosuPerformance.setMods(modsJson)
 
-                // rosuPerformance.setClockRate(LazerMod.getModSpeed(mods).toDouble())
-                rosuPerformance.setDifficulty(rosuDifficulty)
             }
             if (combo != null) rosuPerformance.setCombo(combo)
             if (accuracy != null) {
@@ -420,7 +413,6 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                 }
             }
 
-            closeable.add(rosuDifficulty)
             closeable.add(rosuPerformance)
 
             return rosuPerformance.calculate()

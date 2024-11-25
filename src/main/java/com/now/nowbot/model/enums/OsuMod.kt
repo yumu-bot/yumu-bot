@@ -80,7 +80,7 @@ enum class OsuMod(
         fun getModFromLazerMod(mod: LazerMod?): OsuMod {
             if (mod == null) return None
 
-            val e = getModFromAcronym(mod.type)
+            val e = getModFromAcronym(mod.acronym)
 
             if (mod.settings != null) {
 

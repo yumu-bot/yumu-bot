@@ -171,7 +171,7 @@ import kotlin.math.min
                 run { // 统计 mods / rank
                     if (m.isNotEmpty()) {
                         m.forEach {
-                            modsPPMap.add(it.type, s.weight!!.PP)
+                            modsPPMap.add(it.acronym, s.weight!!.PP)
                         }
                         modsSum += m.size
                     } else {
@@ -209,7 +209,7 @@ import kotlin.math.min
             val lengthList = beatMapList.map { it.length }
             val starList = beatMapList.map { it.star }
             val modsList: List<List<String>> = beatMapList.map {
-                    return@map it.mods.stream().map { mod -> mod.type }.toList()
+                    return@map it.mods.stream().map { mod -> mod.acronym }.toList()
                 }
             val timeList = bps.map { 1.0 * it.endedTime.plusHours(8).hour + (it.endedTime.plusHours(8).minute / 60.0) }
             val timeDist = mutableListOf(0, 0, 0, 0, 0, 0, 0, 0)

@@ -1,9 +1,6 @@
 package com.now.nowbot.model
 
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.ModsException
@@ -12,7 +9,7 @@ import kotlin.reflect.full.companionObjectInstance
 
 
 sealed interface Mod {
-    val acronym: String
+    val type: String
 
     /**
      * mode 跟 incompatible 不知道用不用得到, 用不到就删了
@@ -35,7 +32,7 @@ sealed interface ValueMod {
     }
 }
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "acronym")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "acronym")
 @JsonSubTypes(
     JsonSubTypes.Type(value = LazerMod.Easy::class, name = "EZ"),
     JsonSubTypes.Type(value = LazerMod.NoFail::class, name = "NF"),
@@ -105,16 +102,19 @@ sealed interface ValueMod {
     JsonSubTypes.Type(value = LazerMod.Key10::class, name = "10K"),
     JsonSubTypes.Type(value = LazerMod.None::class, name = ""),
 )
+@JsonInclude(JsonInclude.Include.NON_NULL)
 sealed class LazerMod {
-
-    abstract val type: String
+    @get:JsonProperty("acronym")
+    abstract val acronym: String
 
     @get:JsonProperty("settings")
     abstract val settings: Any?
 
-    class Easy : LazerMod() {
+    class Easy(
+        retries: Float? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
@@ -127,17 +127,21 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var retries: Float?
-            get() = (settings as Value).retries
+            get() = settings?.let { (it as Value).retries }
             set(v) {
-                (settings as Value).retries = v
+                if (settings == null) settings = Value(retries = v)
+                else (settings as Value).retries = v
             }
 
-        data class Value(
+        private data class Value(
             @JsonProperty("retries") var retries: Float? = null,
         )
 
+        init {
+            retries?.let { this.retries = it }
+        }
         companion object : Mod, ValueMod {
-            override val acronym: String = "EZ"
+            override val type: String = "EZ"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(HardRock, AccuracyChallenge, DifficultyAdjust)
             override val value: Int = 2
@@ -146,25 +150,28 @@ sealed class LazerMod {
 
     class NoFail : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "NF"
+            override val type: String = "NF"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(SuddenDeath, Perfect, AccuracyChallenge, Cinema)
             override val value: Int = 1
         }
     }
 
-    class HalfTime : LazerMod() {
+    class HalfTime(
+        speedChange: Float? = null,
+        adjustPitch: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -174,17 +181,19 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var speedChange: Float?
-            get() = (settings as Value).speedChange
+            get() = settings?.let { (it as Value).speedChange }
             set(v) {
-                (settings as Value).speedChange = v
+                if (settings == null) settings = Value(speedChange = v)
+                else (settings as Value).speedChange = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var adjustPitch: Boolean?
-            get() = (settings as Value).adjustPitch
+            get() = settings?.let { (it as Value).adjustPitch }
             set(v) {
-                (settings as Value).adjustPitch = v
+                if (settings == null) settings = Value(adjustPitch = v)
+                else (settings as Value).adjustPitch = v
             }
 
         private data class Value(
@@ -192,8 +201,13 @@ sealed class LazerMod {
             @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
         )
 
+        init {
+            speedChange?.let { this.speedChange = it }
+            adjustPitch?.let { this.adjustPitch = it }
+        }
+
         companion object : Mod, ValueMod {
-            override val acronym: String = "HT"
+            override val type: String = "HT"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> =
                 setOf(HalfTime, Daycore, DoubleTime, Nightcore, WindUp, WindDown, AdaptiveSpeed)
@@ -201,12 +215,14 @@ sealed class LazerMod {
         }
     }
 
-    class Daycore : LazerMod() {
+    class Daycore(
+        speedChange: Float? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -216,17 +232,22 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var speedChange: Float?
-            get() = (settings as Value).speedChange
+            get() = settings?.let { (it as Value).speedChange }
             set(v) {
-                (settings as Value).speedChange = v
+                if (settings == null) settings = Value(speedChange = v)
+                else (settings as Value).speedChange = v
             }
 
         private data class Value(
             @JsonProperty("speed_change") var speedChange: Float? = null,
         )
 
+        init {
+            speedChange?.let { this.speedChange = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "DC"
+            override val type: String = "DC"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> =
                 setOf(HalfTime, Daycore, DoubleTime, Nightcore, WindUp, WindDown, AdaptiveSpeed)
@@ -236,25 +257,27 @@ sealed class LazerMod {
 
     class HardRock : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "HR"
+            override val type: String = "HR"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Easy, DifficultyAdjust, Mirror)
             override val value: Int = 16
         }
     }
 
-    class SuddenDeath : LazerMod() {
+    class SuddenDeath(
+        restart: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -264,29 +287,36 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var restart: Boolean?
-            get() = (settings as Value).restart
+            get() = settings?.let { (it as Value).restart }
             set(v) {
-                (settings as Value).restart = v
+                if (settings == null) settings = Value(restart = v)
+                else (settings as Value).restart = v
             }
 
         private data class Value(
             @JsonProperty("restart") var restart: Boolean? = null,
         )
 
+        init {
+            restart?.let { this.restart = it }
+        }
+
         companion object : Mod, ValueMod {
-            override val acronym: String = "SD"
+            override val type: String = "SD"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(NoFail, Perfect, TargetPractice, Cinema)
             override val value: Int = 32
         }
     }
 
-    class Perfect : LazerMod() {
+    class Perfect(
+        restart: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -296,29 +326,37 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var restart: Boolean?
-            get() = (settings as Value).restart
+            get() = settings?.let { (it as Value).restart }
             set(v) {
-                (settings as Value).restart = v
+                if (settings == null) settings = Value(restart = v)
+                else (settings as Value).restart = v
             }
 
         private data class Value(
             @JsonProperty("restart") var restart: Boolean? = null,
         )
 
+        init {
+            restart?.let { this.restart = it }
+        }
+
         companion object : Mod, ValueMod {
-            override val acronym: String = "PF"
+            override val type: String = "PF"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(NoFail, SuddenDeath, AccuracyChallenge, Cinema)
             override val value: Int = 16384
         }
     }
 
-    class DoubleTime : LazerMod() {
+    class DoubleTime(
+        speedChange: Float? = null,
+        adjustPitch: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -328,17 +366,19 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var speedChange: Float?
-            get() = (settings as Value).speedChange
+            get() = settings?.let { (it as Value).speedChange }
             set(v) {
-                (settings as Value).speedChange = v
+                if (settings == null) settings = Value(speedChange = v)
+                else (settings as Value).speedChange = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var adjustPitch: Boolean?
-            get() = (settings as Value).adjustPitch
+            get() = settings?.let { (it as Value).adjustPitch }
             set(v) {
-                (settings as Value).adjustPitch = v
+                if (settings == null) settings = Value(adjustPitch = v)
+                else (settings as Value).adjustPitch = v
             }
 
         private data class Value(
@@ -346,8 +386,13 @@ sealed class LazerMod {
             @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
         )
 
+        init {
+            speedChange?.let { this.speedChange = it }
+            adjustPitch?.let { this.adjustPitch = it }
+        }
+
         companion object : Mod, ValueMod {
-            override val acronym: String = "DT"
+            override val type: String = "DT"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> =
                 setOf(HalfTime, Daycore, DoubleTime, Nightcore, WindUp, WindDown, AdaptiveSpeed)
@@ -355,12 +400,14 @@ sealed class LazerMod {
         }
     }
 
-    class Nightcore : LazerMod() {
+    class Nightcore(
+        speedChange: Float? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -370,17 +417,22 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var speedChange: Float?
-            get() = (settings as Value).speedChange
+            get() = settings?.let { (it as Value).speedChange }
             set(v) {
-                (settings as Value).speedChange = v
+                if (settings == null) settings = Value(speedChange = v)
+                else (settings as Value).speedChange = v
             }
 
         private data class Value(
             @JsonProperty("speed_change") var speedChange: Float? = null,
         )
 
+        init {
+            speedChange?.let { this.speedChange = it }
+        }
+
         companion object : Mod, ValueMod {
-            override val acronym: String = "NC"
+            override val type: String = "NC"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> =
                 setOf(HalfTime, Daycore, DoubleTime, Nightcore, WindUp, WindDown, AdaptiveSpeed)
@@ -388,12 +440,14 @@ sealed class LazerMod {
         }
     }
 
-    class Hidden : LazerMod() {
+    class Hidden(
+        onlyFadeApproachCircles: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -403,17 +457,22 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var onlyFadeApproachCircles: Boolean?
-            get() = (settings as Value).onlyFadeApproachCircles
+            get() = settings?.let { (it as Value).onlyFadeApproachCircles }
             set(v) {
-                (settings as Value).onlyFadeApproachCircles = v
+                if (settings == null) settings = Value(onlyFadeApproachCircles = v)
+                else (settings as Value).onlyFadeApproachCircles = v
             }
 
         private data class Value(
             @JsonProperty("only_fade_approach_circles") var onlyFadeApproachCircles: Boolean? = null,
         )
 
+        init {
+            onlyFadeApproachCircles?.let { this.onlyFadeApproachCircles = it }
+        }
+
         companion object : Mod, ValueMod {
-            override val acronym: String = "HD"
+            override val type: String = "HD"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> =
                 setOf(SpinIn, Traceable, ApproachDifferent, Depth, FadeIn, Cover, Flashlight)
@@ -421,12 +480,16 @@ sealed class LazerMod {
         }
     }
 
-    class Flashlight : LazerMod() {
+    class Flashlight(
+        followDelay: Float? = null,
+        sizeMultiplier: Float? = null,
+        comboBasedSize: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -436,25 +499,28 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var followDelay: Float?
-            get() = (settings as Value).followDelay
+            get() = settings?.let { (it as Value).followDelay }
             set(v) {
-                (settings as Value).followDelay = v
+                if (settings == null) settings = Value(followDelay = v)
+                else (settings as Value).followDelay = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var sizeMultiplier: Float?
-            get() = (settings as Value).sizeMultiplier
+            get() = settings?.let { (it as Value).sizeMultiplier }
             set(v) {
-                (settings as Value).sizeMultiplier = v
+                if (settings == null) settings = Value(sizeMultiplier = v)
+                else (settings as Value).sizeMultiplier = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var comboBasedSize: Boolean?
-            get() = (settings as Value).comboBasedSize
+            get() = settings?.let { (it as Value).comboBasedSize }
             set(v) {
-                (settings as Value).comboBasedSize = v
+                if (settings == null) settings = Value(comboBasedSize = v)
+                else (settings as Value).comboBasedSize = v
             }
 
         private data class Value(
@@ -463,8 +529,14 @@ sealed class LazerMod {
             @JsonProperty("combo_based_size") var comboBasedSize: Boolean? = null,
         )
 
+        init {
+            followDelay?.let { this.followDelay = it }
+            sizeMultiplier?.let { this.sizeMultiplier = it }
+            comboBasedSize?.let { this.comboBasedSize = it }
+        }
+
         companion object : Mod, ValueMod {
-            override val acronym: String = "FL"
+            override val type: String = "FL"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Blinds, FadeIn, Hidden, Cover)
             override val value: Int = 1024
@@ -473,13 +545,13 @@ sealed class LazerMod {
 
     class Blinds : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "BL"
+            override val type: String = "BL"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(Flashlight)
 
@@ -488,25 +560,29 @@ sealed class LazerMod {
 
     class StrictTracking : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "ST"
+            override val type: String = "ST"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(TargetPractice, Classic)
 
         }
     }
 
-    class AccuracyChallenge : LazerMod() {
+    class AccuracyChallenge(
+        minimumAccuracy: Float? = null,
+        accuracyJudgeMode: String? = null,
+        restart: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -516,25 +592,28 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var minimumAccuracy: Float?
-            get() = (settings as Value).minimumAccuracy
+            get() = settings?.let { (it as Value).minimumAccuracy }
             set(v) {
-                (settings as Value).minimumAccuracy = v
+                if (settings == null) settings = Value(minimumAccuracy = v)
+                else (settings as Value).minimumAccuracy = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var accuracyJudgeMode: String?
-            get() = (settings as Value).accuracyJudgeMode
+            get() = settings?.let { (it as Value).accuracyJudgeMode }
             set(v) {
-                (settings as Value).accuracyJudgeMode = v
+                if (settings == null) settings = Value(accuracyJudgeMode = v)
+                else (settings as Value).accuracyJudgeMode = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var restart: Boolean?
-            get() = (settings as Value).restart
+            get() = settings?.let { (it as Value).restart }
             set(v) {
-                (settings as Value).restart = v
+                if (settings == null) settings = Value(restart = v)
+                else (settings as Value).restart = v
             }
 
         private data class Value(
@@ -543,20 +622,29 @@ sealed class LazerMod {
             @JsonProperty("restart") var restart: Boolean? = null,
         )
 
+        init {
+            minimumAccuracy?.let { this.minimumAccuracy = it }
+            accuracyJudgeMode?.let { this.accuracyJudgeMode = it }
+            restart?.let { this.restart = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "AC"
+            override val type: String = "AC"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Easy, NoFail, Perfect, Cinema)
 
         }
     }
 
-    class TargetPractice : LazerMod() {
+    class TargetPractice(
+        seed: Float? = null,
+        metronome: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -566,17 +654,19 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var seed: Float?
-            get() = (settings as Value).seed
+            get() = settings?.let { (it as Value).seed }
             set(v) {
-                (settings as Value).seed = v
+                if (settings == null) settings = Value(seed = v)
+                else (settings as Value).seed = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var metronome: Boolean?
-            get() = (settings as Value).metronome
+            get() = settings?.let { (it as Value).metronome }
             set(v) {
-                (settings as Value).metronome = v
+                if (settings == null) settings = Value(metronome = v)
+                else (settings as Value).metronome = v
             }
 
         private data class Value(
@@ -584,8 +674,13 @@ sealed class LazerMod {
             @JsonProperty("metronome") var metronome: Boolean? = null,
         )
 
+        init {
+            seed?.let { this.seed = it }
+            metronome?.let { this.metronome = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "TP"
+            override val type: String = "TP"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> =
                 setOf(SuddenDeath, StrictTracking, Random, SpunOut, Traceable, ApproachDifferent, Depth)
@@ -593,13 +688,20 @@ sealed class LazerMod {
         }
     }
 
-    class DifficultyAdjust : LazerMod() {
+    class DifficultyAdjust(
+        circleSize: Float? = null,
+        approachRate: Float? = null,
+        drainRate: Float? = null,
+        overallDifficulty: Float? = null,
+        extendedLimits: Boolean? = null,
+        scrollSpeed: Float? = null,
+        hardRockOffsets: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any =
-            Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -609,57 +711,64 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var circleSize: Float?
-            get() = (settings as Value).circleSize
+            get() = settings?.let { (it as Value).circleSize }
             set(v) {
-                (settings as Value).circleSize = v
+                if (settings == null) settings = Value(circleSize = v)
+                else (settings as Value).circleSize = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var approachRate: Float?
-            get() = (settings as Value).approachRate
+            get() = settings?.let { (it as Value).approachRate }
             set(v) {
-                (settings as Value).approachRate = v
+                if (settings == null) settings = Value(approachRate = v)
+                else (settings as Value).approachRate = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var drainRate: Float?
-            get() = (settings as Value).drainRate
+            get() = settings?.let { (it as Value).drainRate }
             set(v) {
-                (settings as Value).drainRate = v
+                if (settings == null) settings = Value(drainRate = v)
+                else (settings as Value).drainRate = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var overallDifficulty: Float?
-            get() = (settings as Value).overallDifficulty
+            get() = settings?.let { (it as Value).overallDifficulty }
             set(v) {
-                (settings as Value).overallDifficulty = v
+                if (settings == null) settings = Value(overallDifficulty = v)
+                else (settings as Value).overallDifficulty = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var extendedLimits: Boolean?
-            get() = (settings as Value).extendedLimits
+            get() = settings?.let { (it as Value).extendedLimits }
             set(v) {
-                (settings as Value).extendedLimits = v
+                if (settings == null) settings = Value(extendedLimits = v)
+                else (settings as Value).extendedLimits = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var scrollSpeed: Float?
-            get() = (settings as Value).scrollSpeed
+            get() = settings?.let { (it as Value).scrollSpeed }
             set(v) {
-                (settings as Value).scrollSpeed = v
+                if (settings == null) settings = Value(scrollSpeed = v)
+                else (settings as Value).scrollSpeed = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var hardRockOffsets: Boolean?
-            get() = (settings as Value).hardRockOffsets
+            get() = settings?.let { (it as Value).hardRockOffsets }
             set(v) {
-                (settings as Value).hardRockOffsets = v
+                if (settings == null) settings = Value(hardRockOffsets = v)
+                else (settings as Value).hardRockOffsets = v
             }
 
         private data class Value(
@@ -672,21 +781,36 @@ sealed class LazerMod {
             @JsonProperty("hard_rock_offsets") var hardRockOffsets: Boolean? = null,
         )
 
+        init {
+            circleSize?.let { this.circleSize = it }
+            approachRate?.let { this.approachRate = it }
+            drainRate?.let { this.drainRate = it }
+            overallDifficulty?.let { this.overallDifficulty = it }
+            extendedLimits?.let { this.extendedLimits = it }
+            scrollSpeed?.let { this.scrollSpeed = it }
+            hardRockOffsets?.let { this.hardRockOffsets = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "DA"
+            override val type: String = "DA"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Easy, HardRock)
 
         }
     }
 
-    class Classic : LazerMod() {
+    class Classic(
+        noSliderHeadAccuracy: Boolean? = null,
+        classicNoteLock: Boolean? = null,
+        alwaysPlayTailSample: Boolean? = null,
+        fadeHitCircleEarly: Boolean? = null,
+        classicHealth: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any =
-            Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -696,41 +820,46 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var noSliderHeadAccuracy: Boolean?
-            get() = (settings as Value).noSliderHeadAccuracy
+            get() = settings?.let { (it as Value).noSliderHeadAccuracy }
             set(v) {
-                (settings as Value).noSliderHeadAccuracy = v
+                if (settings == null) settings = Value(noSliderHeadAccuracy = v)
+                else (settings as Value).noSliderHeadAccuracy = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var classicNoteLock: Boolean?
-            get() = (settings as Value).classicNoteLock
+            get() = settings?.let { (it as Value).classicNoteLock }
             set(v) {
-                (settings as Value).classicNoteLock = v
+                if (settings == null) settings = Value(classicNoteLock = v)
+                else (settings as Value).classicNoteLock = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var alwaysPlayTailSample: Boolean?
-            get() = (settings as Value).alwaysPlayTailSample
+            get() = settings?.let { (it as Value).alwaysPlayTailSample }
             set(v) {
-                (settings as Value).alwaysPlayTailSample = v
+                if (settings == null) settings = Value(alwaysPlayTailSample = v)
+                else (settings as Value).alwaysPlayTailSample = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var fadeHitCircleEarly: Boolean?
-            get() = (settings as Value).fadeHitCircleEarly
+            get() = settings?.let { (it as Value).fadeHitCircleEarly }
             set(v) {
-                (settings as Value).fadeHitCircleEarly = v
+                if (settings == null) settings = Value(fadeHitCircleEarly = v)
+                else (settings as Value).fadeHitCircleEarly = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var classicHealth: Boolean?
-            get() = (settings as Value).classicHealth
+            get() = settings?.let { (it as Value).classicHealth }
             set(v) {
-                (settings as Value).classicHealth = v
+                if (settings == null) settings = Value(classicHealth = v)
+                else (settings as Value).classicHealth = v
             }
 
         private data class Value(
@@ -741,20 +870,31 @@ sealed class LazerMod {
             @JsonProperty("classic_health") var classicHealth: Boolean? = null,
         )
 
+        init {
+            noSliderHeadAccuracy?.let { this.noSliderHeadAccuracy = it }
+            classicNoteLock?.let { this.classicNoteLock = it }
+            alwaysPlayTailSample?.let { this.alwaysPlayTailSample = it }
+            fadeHitCircleEarly?.let { this.fadeHitCircleEarly = it }
+            classicHealth?.let { this.classicHealth = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "CL"
+            override val type: String = "CL"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(StrictTracking)
 
         }
     }
 
-    class Random : LazerMod() {
+    class Random(
+        angleSharpness: Float? = null,
+        seed: Float? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -764,17 +904,19 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var angleSharpness: Float?
-            get() = (settings as Value).angleSharpness
+            get() = settings?.let { (it as Value).angleSharpness }
             set(v) {
-                (settings as Value).angleSharpness = v
+                if (settings == null) settings = Value(angleSharpness = v)
+                else (settings as Value).angleSharpness = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var seed: Float?
-            get() = (settings as Value).seed
+            get() = settings?.let { (it as Value).seed }
             set(v) {
-                (settings as Value).seed = v
+                if (settings == null) settings = Value(seed = v)
+                else (settings as Value).seed = v
             }
 
         private data class Value(
@@ -782,20 +924,27 @@ sealed class LazerMod {
             @JsonProperty("seed") var seed: Float? = null,
         )
 
+        init {
+            angleSharpness?.let { this.angleSharpness = it }
+            seed?.let { this.seed = it }
+        }
+
         companion object : Mod, ValueMod {
-            override val acronym: String = "RD"
+            override val type: String = "RD"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(TargetPractice, Swap)
             override val value: Int = 2097152
         }
     }
 
-    class Mirror : LazerMod() {
+    class Mirror(
+        reflection: String? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
-        @get:JsonIgnore
-        override var settings: Any = Value()
+        @get:JsonProperty("settings")
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -805,17 +954,22 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var reflection: String?
-            get() = (settings as Value).reflection
+            get() = settings?.let { (it as Value).reflection }
             set(v) {
-                (settings as Value).reflection = v
+                if (settings == null) settings = Value(reflection = v)
+                else (settings as Value).reflection = v
             }
 
         private data class Value(
             @JsonProperty("reflection") var reflection: String? = null,
         )
 
+        init {
+            reflection?.let { this.reflection = it }
+        }
+
         companion object : Mod, ValueMod {
-            override val acronym: String = "MR"
+            override val type: String = "MR"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(HardRock)
             override val value: Int = 1073741824
@@ -824,13 +978,13 @@ sealed class LazerMod {
 
     class Alternate : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "AL"
+            override val type: String = "AL"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(SingleTap, Autoplay, Cinema, Relax)
 
@@ -839,13 +993,13 @@ sealed class LazerMod {
 
     class SingleTap : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "SG"
+            override val type: String = "SG"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO)
             override val incompatible: Set<Mod> = setOf(Alternate, Autoplay, Cinema, Relax)
 
@@ -854,13 +1008,13 @@ sealed class LazerMod {
 
     class Autoplay : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "AT"
+            override val type: String = "AT"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(
                 Alternate, SingleTap, Cinema, Relax, Autopilot, SpunOut, Magnetised, Repel, AdaptiveSpeed, TouchDevice
@@ -871,13 +1025,13 @@ sealed class LazerMod {
 
     class Cinema : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "CN"
+            override val type: String = "CN"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(
                 NoFail,
@@ -902,13 +1056,13 @@ sealed class LazerMod {
 
     class Relax : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "RX"
+            override val type: String = "RX"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH)
             override val incompatible: Set<Mod> = setOf(Alternate, SingleTap, Autoplay, Cinema, Autopilot, Magnetised)
             override val value: Int = 128
@@ -917,13 +1071,13 @@ sealed class LazerMod {
 
     class Autopilot : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "AP"
+            override val type: String = "AP"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> =
                 setOf(Autoplay, Cinema, Relax, SpunOut, Magnetised, Repel, TouchDevice)
@@ -933,13 +1087,13 @@ sealed class LazerMod {
 
     class SpunOut : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "SO"
+            override val type: String = "SO"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(TargetPractice, Autoplay, Cinema, Autopilot)
             override val value: Int = 4096
@@ -948,25 +1102,27 @@ sealed class LazerMod {
 
     class Transform : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "TR"
+            override val type: String = "TR"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(Wiggle, Magnetised, Repel, FreezeFrame, Depth)
 
         }
     }
 
-    class Wiggle : LazerMod() {
+    class Wiggle(
+        strength: Float? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -976,17 +1132,22 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var strength: Float?
-            get() = (settings as Value).strength
+            get() = settings?.let { (it as Value).strength }
             set(v) {
-                (settings as Value).strength = v
+                if (settings == null) settings = Value(strength = v)
+                else (settings as Value).strength = v
             }
 
         private data class Value(
             @JsonProperty("strength") var strength: Float? = null,
         )
 
+        init {
+            strength?.let { this.strength = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "WG"
+            override val type: String = "WG"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(Transform, Magnetised, Repel, Depth)
 
@@ -995,25 +1156,27 @@ sealed class LazerMod {
 
     class SpinIn : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "SI"
+            override val type: String = "SI"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(Hidden, Grow, Deflate, Traceable, ApproachDifferent, Depth)
 
         }
     }
 
-    class Grow : LazerMod() {
+    class Grow(
+        startScale: Float? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1023,29 +1186,36 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var startScale: Float?
-            get() = (settings as Value).startScale
+            get() = settings?.let { (it as Value).startScale }
             set(v) {
-                (settings as Value).startScale = v
+                if (settings == null) settings = Value(startScale = v)
+                else (settings as Value).startScale = v
             }
 
         private data class Value(
             @JsonProperty("start_scale") var startScale: Float? = null,
         )
 
+        init {
+            startScale?.let { this.startScale = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "GR"
+            override val type: String = "GR"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(SpinIn, Grow, Deflate, Traceable, ApproachDifferent, Depth)
 
         }
     }
 
-    class Deflate : LazerMod() {
+    class Deflate(
+        startScale: Float? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1055,29 +1225,38 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var startScale: Float?
-            get() = (settings as Value).startScale
+            get() = settings?.let { (it as Value).startScale }
             set(v) {
-                (settings as Value).startScale = v
+                if (settings == null) settings = Value(startScale = v)
+                else (settings as Value).startScale = v
             }
 
         private data class Value(
             @JsonProperty("start_scale") var startScale: Float? = null,
         )
 
+        init {
+            startScale?.let { this.startScale = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "DF"
+            override val type: String = "DF"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(SpinIn, Grow, Deflate, Traceable, ApproachDifferent, Depth)
 
         }
     }
 
-    class WindUp : LazerMod() {
+    class WindUp(
+        initialRate: Float? = null,
+        finalRate: Float? = null,
+        adjustPitch: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1087,25 +1266,28 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var initialRate: Float?
-            get() = (settings as Value).initialRate
+            get() = settings?.let { (it as Value).initialRate }
             set(v) {
-                (settings as Value).initialRate = v
+                if (settings == null) settings = Value(initialRate = v)
+                else (settings as Value).initialRate = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var finalRate: Float?
-            get() = (settings as Value).finalRate
+            get() = settings?.let { (it as Value).finalRate }
             set(v) {
-                (settings as Value).finalRate = v
+                if (settings == null) settings = Value(finalRate = v)
+                else (settings as Value).finalRate = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var adjustPitch: Boolean?
-            get() = (settings as Value).adjustPitch
+            get() = settings?.let { (it as Value).adjustPitch }
             set(v) {
-                (settings as Value).adjustPitch = v
+                if (settings == null) settings = Value(adjustPitch = v)
+                else (settings as Value).adjustPitch = v
             }
 
         private data class Value(
@@ -1114,8 +1296,14 @@ sealed class LazerMod {
             @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
         )
 
+        init {
+            initialRate?.let { this.initialRate = it }
+            finalRate?.let { this.finalRate = it }
+            adjustPitch?.let { this.adjustPitch = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "WU"
+            override val type: String = "WU"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> =
                 setOf(HalfTime, Daycore, DoubleTime, Nightcore, WindDown, AdaptiveSpeed)
@@ -1123,12 +1311,16 @@ sealed class LazerMod {
         }
     }
 
-    class WindDown : LazerMod() {
+    class WindDown(
+        initialRate: Float? = null,
+        finalRate: Float? = null,
+        adjustPitch: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1138,25 +1330,28 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var initialRate: Float?
-            get() = (settings as Value).initialRate
+            get() = settings?.let { (it as Value).initialRate }
             set(v) {
-                (settings as Value).initialRate = v
+                if (settings == null) settings = Value(initialRate = v)
+                else (settings as Value).initialRate = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var finalRate: Float?
-            get() = (settings as Value).finalRate
+            get() = settings?.let { (it as Value).finalRate }
             set(v) {
-                (settings as Value).finalRate = v
+                if (settings == null) settings = Value(finalRate = v)
+                else (settings as Value).finalRate = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var adjustPitch: Boolean?
-            get() = (settings as Value).adjustPitch
+            get() = settings?.let { (it as Value).adjustPitch }
             set(v) {
-                (settings as Value).adjustPitch = v
+                if (settings == null) settings = Value(adjustPitch = v)
+                else (settings as Value).adjustPitch = v
             }
 
         private data class Value(
@@ -1165,8 +1360,14 @@ sealed class LazerMod {
             @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
         )
 
+        init {
+            initialRate?.let { this.initialRate = it }
+            finalRate?.let { this.finalRate = it }
+            adjustPitch?.let { this.adjustPitch = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "WD"
+            override val type: String = "WD"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(HalfTime, Daycore, DoubleTime, Nightcore, WindUp, AdaptiveSpeed)
 
@@ -1175,25 +1376,28 @@ sealed class LazerMod {
 
     class Traceable : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "TC"
+            override val type: String = "TC"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(Hidden, TargetPractice, SpinIn, Grow, Deflate, Depth)
 
         }
     }
 
-    class BarrelRoll : LazerMod() {
+    class BarrelRoll(
+        spinSpeed: Float? = null,
+        direction: String? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1203,17 +1407,19 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var spinSpeed: Float?
-            get() = (settings as Value).spinSpeed
+            get() = settings?.let { (it as Value).spinSpeed }
             set(v) {
-                (settings as Value).spinSpeed = v
+                if (settings == null) settings = Value(spinSpeed = v)
+                else (settings as Value).spinSpeed = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var direction: String?
-            get() = (settings as Value).direction
+            get() = settings?.let { (it as Value).direction }
             set(v) {
-                (settings as Value).direction = v
+                if (settings == null) settings = Value(direction = v)
+                else (settings as Value).direction = v
             }
 
         private data class Value(
@@ -1221,20 +1427,28 @@ sealed class LazerMod {
             @JsonProperty("direction") var direction: String? = null,
         )
 
+        init {
+            spinSpeed?.let { this.spinSpeed = it }
+            direction?.let { this.direction = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "BR"
+            override val type: String = "BR"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(Bubbles)
 
         }
     }
 
-    class ApproachDifferent : LazerMod() {
+    class ApproachDifferent(
+        scale: Float? = null,
+        style: String? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1244,17 +1458,19 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var scale: Float?
-            get() = (settings as Value).scale
+            get() = settings?.let { (it as Value).scale }
             set(v) {
-                (settings as Value).scale = v
+                if (settings == null) settings = Value(scale = v)
+                else (settings as Value).scale = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var style: String?
-            get() = (settings as Value).style
+            get() = settings?.let { (it as Value).style }
             set(v) {
-                (settings as Value).style = v
+                if (settings == null) settings = Value(style = v)
+                else (settings as Value).style = v
             }
 
         private data class Value(
@@ -1262,20 +1478,30 @@ sealed class LazerMod {
             @JsonProperty("style") var style: String? = null,
         )
 
+        init {
+            scale?.let { this.scale = it }
+            style?.let { this.style = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "AD"
+            override val type: String = "AD"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(Hidden, TargetPractice, SpinIn, Grow, Deflate, FreezeFrame)
 
         }
     }
 
-    class Muted : LazerMod() {
+    class Muted(
+        inverseMuting: Boolean? = null,
+        enableMetronome: Boolean? = null,
+        muteComboCount: Float? = null,
+        affectsHitSounds: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1285,33 +1511,37 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var inverseMuting: Boolean?
-            get() = (settings as Value).inverseMuting
+            get() = settings?.let { (it as Value).inverseMuting }
             set(v) {
-                (settings as Value).inverseMuting = v
+                if (settings == null) settings = Value(inverseMuting = v)
+                else (settings as Value).inverseMuting = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var enableMetronome: Boolean?
-            get() = (settings as Value).enableMetronome
+            get() = settings?.let { (it as Value).enableMetronome }
             set(v) {
-                (settings as Value).enableMetronome = v
+                if (settings == null) settings = Value(enableMetronome = v)
+                else (settings as Value).enableMetronome = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var muteComboCount: Float?
-            get() = (settings as Value).muteComboCount
+            get() = settings?.let { (it as Value).muteComboCount }
             set(v) {
-                (settings as Value).muteComboCount = v
+                if (settings == null) settings = Value(muteComboCount = v)
+                else (settings as Value).muteComboCount = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var affectsHitSounds: Boolean?
-            get() = (settings as Value).affectsHitSounds
+            get() = settings?.let { (it as Value).affectsHitSounds }
             set(v) {
-                (settings as Value).affectsHitSounds = v
+                if (settings == null) settings = Value(affectsHitSounds = v)
+                else (settings as Value).affectsHitSounds = v
             }
 
         private data class Value(
@@ -1321,20 +1551,29 @@ sealed class LazerMod {
             @JsonProperty("affects_hit_sounds") var affectsHitSounds: Boolean? = null,
         )
 
+        init {
+            inverseMuting?.let { this.inverseMuting = it }
+            enableMetronome?.let { this.enableMetronome = it }
+            muteComboCount?.let { this.muteComboCount = it }
+            affectsHitSounds?.let { this.affectsHitSounds = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "MU"
+            override val type: String = "MU"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf()
 
         }
     }
 
-    class NoScope : LazerMod() {
+    class NoScope(
+        hiddenComboCount: Float? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1344,29 +1583,36 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var hiddenComboCount: Float?
-            get() = (settings as Value).hiddenComboCount
+            get() = settings?.let { (it as Value).hiddenComboCount }
             set(v) {
-                (settings as Value).hiddenComboCount = v
+                if (settings == null) settings = Value(hiddenComboCount = v)
+                else (settings as Value).hiddenComboCount = v
             }
 
         private data class Value(
             @JsonProperty("hidden_combo_count") var hiddenComboCount: Float? = null,
         )
 
+        init {
+            hiddenComboCount?.let { this.hiddenComboCount = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "NS"
+            override val type: String = "NS"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.CATCH)
             override val incompatible: Set<Mod> = setOf()
 
         }
     }
 
-    class Magnetised : LazerMod() {
+    class Magnetised(
+        attractionStrength: Float? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1376,17 +1622,22 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var attractionStrength: Float?
-            get() = (settings as Value).attractionStrength
+            get() = settings?.let { (it as Value).attractionStrength }
             set(v) {
-                (settings as Value).attractionStrength = v
+                if (settings == null) settings = Value(attractionStrength = v)
+                else (settings as Value).attractionStrength = v
             }
 
         private data class Value(
             @JsonProperty("attraction_strength") var attractionStrength: Float? = null,
         )
 
+        init {
+            attractionStrength?.let { this.attractionStrength = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "MG"
+            override val type: String = "MG"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> =
                 setOf(Autoplay, Cinema, Relax, Autopilot, Transform, Wiggle, Repel, Bubbles, Depth)
@@ -1394,12 +1645,14 @@ sealed class LazerMod {
         }
     }
 
-    class Repel : LazerMod() {
+    class Repel(
+        repulsionStrength: Float? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1409,17 +1662,22 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var repulsionStrength: Float?
-            get() = (settings as Value).repulsionStrength
+            get() = settings?.let { (it as Value).repulsionStrength }
             set(v) {
-                (settings as Value).repulsionStrength = v
+                if (settings == null) settings = Value(repulsionStrength = v)
+                else (settings as Value).repulsionStrength = v
             }
 
         private data class Value(
             @JsonProperty("repulsion_strength") var repulsionStrength: Float? = null,
         )
 
+        init {
+            repulsionStrength?.let { this.repulsionStrength = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "RP"
+            override val type: String = "RP"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> =
                 setOf(Autoplay, Cinema, Autopilot, Transform, Wiggle, Magnetised, Bubbles, Depth)
@@ -1427,12 +1685,15 @@ sealed class LazerMod {
         }
     }
 
-    class AdaptiveSpeed : LazerMod() {
+    class AdaptiveSpeed(
+        initialRate: Float? = null,
+        adjustPitch: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1442,17 +1703,19 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var initialRate: Float?
-            get() = (settings as Value).initialRate
+            get() = settings?.let { (it as Value).initialRate }
             set(v) {
-                (settings as Value).initialRate = v
+                if (settings == null) settings = Value(initialRate = v)
+                else (settings as Value).initialRate = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var adjustPitch: Boolean?
-            get() = (settings as Value).adjustPitch
+            get() = settings?.let { (it as Value).adjustPitch }
             set(v) {
-                (settings as Value).adjustPitch = v
+                if (settings == null) settings = Value(adjustPitch = v)
+                else (settings as Value).adjustPitch = v
             }
 
         private data class Value(
@@ -1460,8 +1723,13 @@ sealed class LazerMod {
             @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
         )
 
+        init {
+            initialRate?.let { this.initialRate = it }
+            adjustPitch?.let { this.adjustPitch = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "AS"
+            override val type: String = "AS"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.MANIA)
             override val incompatible: Set<Mod> =
                 setOf(HalfTime, Daycore, DoubleTime, Nightcore, Autoplay, Cinema, WindUp, WindDown)
@@ -1471,13 +1739,13 @@ sealed class LazerMod {
 
     class FreezeFrame : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "FR"
+            override val type: String = "FR"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(Transform, ApproachDifferent, Depth)
 
@@ -1486,13 +1754,13 @@ sealed class LazerMod {
 
     class Bubbles : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "BU"
+            override val type: String = "BU"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(BarrelRoll, Magnetised, Repel)
 
@@ -1501,25 +1769,28 @@ sealed class LazerMod {
 
     class Synesthesia : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "SY"
+            override val type: String = "SY"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf()
 
         }
     }
 
-    class Depth : LazerMod() {
+    class Depth(
+        maxDepth: Float? = null,
+        showApproachCircles: Boolean? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1529,17 +1800,19 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var maxDepth: Float?
-            get() = (settings as Value).maxDepth
+            get() = settings?.let { (it as Value).maxDepth }
             set(v) {
-                (settings as Value).maxDepth = v
+                if (settings == null) settings = Value(maxDepth = v)
+                else (settings as Value).maxDepth = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var showApproachCircles: Boolean?
-            get() = (settings as Value).showApproachCircles
+            get() = settings?.let { (it as Value).showApproachCircles }
             set(v) {
-                (settings as Value).showApproachCircles = v
+                if (settings == null) settings = Value(showApproachCircles = v)
+                else (settings as Value).showApproachCircles = v
             }
 
         private data class Value(
@@ -1547,8 +1820,13 @@ sealed class LazerMod {
             @JsonProperty("show_approach_circles") var showApproachCircles: Boolean? = null,
         )
 
+        init {
+            maxDepth?.let { this.maxDepth = it }
+            showApproachCircles?.let { this.showApproachCircles = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "DP"
+            override val type: String = "DP"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(
                 Hidden,
@@ -1570,13 +1848,13 @@ sealed class LazerMod {
 
     class TouchDevice : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "TD"
+            override val type: String = "TD"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(Autoplay, Cinema, Autopilot)
             override val value: Int = 4
@@ -1585,13 +1863,13 @@ sealed class LazerMod {
 
     class ScoreV2 : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "SV2"
+            override val type: String = "SV2"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf()
             override val value: Int = 536870912
@@ -1600,13 +1878,13 @@ sealed class LazerMod {
 
     class Swap : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "SW"
+            override val type: String = "SW"
             override val mode: Set<OsuMode> = setOf(OsuMode.TAIKO)
             override val incompatible: Set<Mod> = setOf(Random)
 
@@ -1615,13 +1893,13 @@ sealed class LazerMod {
 
     class ConstantSpeed : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "CS"
+            override val type: String = "CS"
             override val mode: Set<OsuMode> = setOf(OsuMode.TAIKO, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf()
 
@@ -1630,13 +1908,13 @@ sealed class LazerMod {
 
     class FloatingFruits : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "FF"
+            override val type: String = "FF"
             override val mode: Set<OsuMode> = setOf(OsuMode.CATCH)
             override val incompatible: Set<Mod> = setOf()
 
@@ -1645,13 +1923,13 @@ sealed class LazerMod {
 
     class NoRelease : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "NR"
+            override val type: String = "NR"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(HoldOff)
 
@@ -1660,25 +1938,28 @@ sealed class LazerMod {
 
     class FadeIn : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "FI"
+            override val type: String = "FI"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(FadeIn, Hidden, Cover, Flashlight)
             override val value: Int = 1048576
         }
     }
 
-    class Cover : LazerMod() {
+    class Cover(
+        coverage: Float? = null,
+        direction: String? = null,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
-        override var settings: Any = Value()
+        override var settings: Any? = null
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1688,17 +1969,19 @@ sealed class LazerMod {
         @get:JsonIgnore
         @set:JsonIgnore
         var coverage: Float?
-            get() = (settings as Value).coverage
+            get() = settings?.let { (it as Value).coverage }
             set(v) {
-                (settings as Value).coverage = v
+                if (settings == null) settings = Value(coverage = v)
+                else (settings as Value).coverage = v
             }
 
         @get:JsonIgnore
         @set:JsonIgnore
         var direction: String?
-            get() = (settings as Value).direction
+            get() = settings?.let { (it as Value).direction }
             set(v) {
-                (settings as Value).direction = v
+                if (settings == null) settings = Value(direction = v)
+                else (settings as Value).direction = v
             }
 
         private data class Value(
@@ -1706,8 +1989,13 @@ sealed class LazerMod {
             @JsonProperty("direction") var direction: String? = null,
         )
 
+        init {
+            coverage?.let { this.coverage = it }
+            direction?.let { this.direction = it }
+        }
+
         companion object : Mod {
-            override val acronym: String = "CO"
+            override val type: String = "CO"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(FadeIn, Hidden, Flashlight)
 
@@ -1716,13 +2004,13 @@ sealed class LazerMod {
 
     class DualStages : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "DS"
+            override val type: String = "DS"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf()
 
@@ -1731,13 +2019,13 @@ sealed class LazerMod {
 
     class Invert : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "IN"
+            override val type: String = "IN"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(HoldOff)
 
@@ -1746,13 +2034,13 @@ sealed class LazerMod {
 
     class HoldOff : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "HO"
+            override val type: String = "HO"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(NoRelease, Invert)
 
@@ -1761,13 +2049,13 @@ sealed class LazerMod {
 
     class Key1 : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "1K"
+            override val type: String = "1K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Key2, Key3, Key4, Key5, Key6, Key7, Key8, Key9, Key10)
             override val value: Int = 67108864
@@ -1776,13 +2064,13 @@ sealed class LazerMod {
 
     class Key2 : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "2K"
+            override val type: String = "2K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Key1, Key3, Key4, Key5, Key6, Key7, Key8, Key9, Key10)
             override val value: Int = 268435456
@@ -1791,13 +2079,13 @@ sealed class LazerMod {
 
     class Key3 : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "3K"
+            override val type: String = "3K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Key1, Key2, Key4, Key5, Key6, Key7, Key8, Key9, Key10)
             override val value: Int = 134217728
@@ -1806,13 +2094,13 @@ sealed class LazerMod {
 
     class Key4 : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "4K"
+            override val type: String = "4K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Key1, Key2, Key3, Key5, Key6, Key7, Key8, Key9, Key10)
             override val value: Int = 32768
@@ -1821,13 +2109,13 @@ sealed class LazerMod {
 
     class Key5 : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "5K"
+            override val type: String = "5K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Key1, Key2, Key3, Key4, Key6, Key7, Key8, Key9, Key10)
             override val value: Int = 65536
@@ -1836,13 +2124,13 @@ sealed class LazerMod {
 
     class Key6 : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "6K"
+            override val type: String = "6K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Key1, Key2, Key3, Key4, Key5, Key7, Key8, Key9, Key10)
             override val value: Int = 131072
@@ -1851,13 +2139,13 @@ sealed class LazerMod {
 
     class Key7 : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "7K"
+            override val type: String = "7K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Key1, Key2, Key3, Key4, Key5, Key6, Key8, Key9, Key10)
             override val value: Int = 262144
@@ -1866,13 +2154,13 @@ sealed class LazerMod {
 
     class Key8 : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "8K"
+            override val type: String = "8K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Key1, Key2, Key3, Key4, Key5, Key6, Key7, Key9, Key10)
             override val value: Int = 524288
@@ -1881,13 +2169,13 @@ sealed class LazerMod {
 
     class Key9 : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod, ValueMod {
-            override val acronym: String = "9K"
+            override val type: String = "9K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Key1, Key2, Key3, Key4, Key5, Key6, Key7, Key8, Key10)
             override val value: Int = 16777216
@@ -1896,53 +2184,52 @@ sealed class LazerMod {
 
     class Key10 : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = "10K"
+            override val type: String = "10K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf(Key1, Key2, Key3, Key4, Key5, Key6, Key7, Key8, Key9)
-
         }
     }
 
     class None : LazerMod() {
         @get:JsonProperty("acronym")
-        override val type: String = acronym
+        override val acronym: String = type
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
         companion object : Mod {
-            override val acronym: String = ""
+            override val type: String = ""
             override val mode: Set<OsuMode> = setOf()
             override val incompatible: Set<Mod> = setOf()
 
         }
     }
 
-    override fun toString() = type
+    override fun toString() = acronym
 
     companion object {
         inline fun <reified T : Mod> hasMod(mods: List<LazerMod>, type: Collection<T>): Boolean {
-            val set = type.map { it.acronym }.toSet()
+            val set = type.map { it.type }.toSet()
             return mods.any {
-                set.contains(it.type)
+                set.contains(it.acronym)
             }
         }
 
         inline fun <reified T : Mod> hasMod(mods: List<LazerMod>, type: T): Boolean {
             return mods.any {
-                it.type == type.acronym
+                it.acronym == type.type
             }
         }
 
         inline fun <reified T : Mod> hasModByString(mods: List<String>, type: T): Boolean {
             return mods.any {
-                it.uppercase() == type.acronym
+                it.uppercase() == type.type
             }
         }
 
@@ -2178,4 +2465,3 @@ sealed class LazerMod {
 private inline fun <reified T> JsonNode.json(): T {
     return JacksonUtil.mapper.treeToValue(this, JacksonUtil.typeFactory.constructType(T::class.java))
 }
-
