@@ -25,6 +25,7 @@ open class BeatMap {
     var modeStr = "osu"
 
     @set:JsonIgnore
+    @get:JsonProperty("mode")
     var mode: OsuMode
         get() {
             return OsuMode.getMode(modeStr)

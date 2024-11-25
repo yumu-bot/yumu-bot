@@ -70,9 +70,15 @@ class RosuPerformance(result: JniPerformanceAttributes? = null) {
         inline fun <reified T : Any> T.asMap() : Map<String, Double> {
             val props = T::class.memberProperties.associateBy { it.name }
 
-            return props.keys.associateWith { props[it]?.get(this) }
+            return props.keys
+                .associateWith { props[it]?.get(this) }
                 .filterNot { it.value == null }
+                .mapKeys { it.key.toUnderline() }
                 .mapValues { it.value.toString().toDouble() }
+        }
+
+        fun String.toUnderline(): String {
+            return this.replace("([a-z])([A-Z])".toRegex(), "$1_$2").lowercase()
         }
     }
 }
