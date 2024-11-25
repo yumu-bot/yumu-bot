@@ -391,15 +391,15 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             }
 
             val rosuDifficulty = rosuBeatmap.createDifficulty()
-            closeable.add(rosuDifficulty)
-            rosuDifficulty.isLazer(lazer)
 
             val rosuPerformance = if (score == null) {
                 rosuBeatmap.createPerformance()
             } else {
                 rosuBeatmap.createPerformance(score.toState())
             }
-            closeable.add(rosuPerformance)
+
+            rosuDifficulty.isLazer(lazer)
+            rosuPerformance.setLazer(lazer)
 
             if (! mods.isNullOrEmpty()) {
                 rosuDifficulty.applyDifficultyAdjustMod(mods)
@@ -419,6 +419,9 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                     rosuPerformance.setAcc(accuracy)
                 }
             }
+
+            closeable.add(rosuDifficulty)
+            closeable.add(rosuPerformance)
 
             return rosuPerformance.calculate()
         }
