@@ -1,257 +1,259 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.model.json.BeatMap;
-import com.now.nowbot.model.json.MicroUser;
-import com.now.nowbot.model.multiplayer.Match;
-import com.now.nowbot.model.multiplayer.MatchRating;
-import com.now.nowbot.qq.contact.Group;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.osuApiService.OsuCalculateApiService;
-import com.now.nowbot.service.osuApiService.OsuMatchApiService;
-import com.now.nowbot.throwable.serviceException.MRAException;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
+import com.now.nowbot.aop.CheckPermission
+import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.multiplayer.Match
+import com.now.nowbot.model.multiplayer.Match.MatchRound
+import com.now.nowbot.model.multiplayer.Match.MatchScore
+import com.now.nowbot.model.multiplayer.MatchRating
+import com.now.nowbot.model.multiplayer.MatchRating.Companion.insertMicroUserToScores
+import com.now.nowbot.model.multiplayer.MatchRating.RatingParam
+import com.now.nowbot.qq.contact.Group
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
+import com.now.nowbot.service.osuApiService.OsuMatchApiService
+import com.now.nowbot.throwable.serviceException.MRAException
+import com.now.nowbot.util.Instruction
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import java.nio.charset.StandardCharsets
+import java.time.format.DateTimeFormatter
+import java.util.*
+import java.util.regex.Matcher
 
-import java.nio.charset.StandardCharsets;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.regex.Matcher;
+@Service("CSV") class CsvMatchService(
+    private val matchApiService: OsuMatchApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService
+) : MessageService<Matcher> {
 
-@Service("CSV")
-public class CsvMatchService implements MessageService<Matcher> {
-    Logger log = LoggerFactory.getLogger(CsvMatchService.class);
-    static DateTimeFormatter Date1 = DateTimeFormatter.ofPattern("yy-MM-dd");
-    static DateTimeFormatter Date2 = DateTimeFormatter.ofPattern("HH:mm:ss");
+    @Throws(Throwable::class) override fun isHandle(
+        event: MessageEvent, messageText: String, data: DataValue<Matcher>
+    ): Boolean {
+        val m = Instruction.CSV_MATCH.matcher(messageText)
+        if (!m.find()) {
+            return false
+        }
 
-    @Resource
-    OsuMatchApiService matchApiService;
-    @Resource
-    OsuBeatmapApiService   beatmapApiService;
-    @Resource
-    OsuCalculateApiService calculateApiService;
-
-    @Override
-    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) throws Throwable {
-        var m = Instruction.CSV_MATCH.matcher(messageText);
-        if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
+        data.value = m
+        return true
     }
 
-    @Override
-    @CheckPermission(isGroupAdmin = true)
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var isMultiple = matcher.group("x") != null;
-        int id = 0;
-        List<Integer> ids = null;
-        StringBuilder sb = new StringBuilder();
+    @CheckPermission(isGroupAdmin = true) @Throws(Throwable::class) override fun HandleMessage(
+        event: MessageEvent, matcher: Matcher
+    ) {
+        val subject = event.subject
+
+        val isMultiple = matcher.group("x") != null
+        var id = 0L
+        var ids: List<Long>? = null
+        val sb = StringBuilder()
 
         if (isMultiple) {
             try {
-                ids = parseDataString(matcher.group("data"));
-                event.reply("正在处理系列赛");
-                parseCRAs(sb, ids);
-            } catch (MRAException e) {
-                throw e;
-            } catch (Exception e) {
-                log.error("CSV-Series 获取失败");
-                throw new MRAException(MRAException.Type.RATING_Parameter_MatchIDError);
+                ids = parseDataString(matcher.group("data"))
+                event.reply("正在处理系列赛")
+                parseCRAs(sb, ids, matchApiService, beatmapApiService, calculateApiService)
+            } catch (e: MRAException) {
+                throw e
+            } catch (e: Exception) {
+                log.error("CSV-Series 获取失败")
+                throw MRAException(MRAException.Type.RATING_Parameter_MatchIDError)
             }
         } else {
             try {
-                id = Integer.parseInt(matcher.group("data"));
-                event.reply("正在处理" + id);
-                parseCRA(sb, id);
-            } catch (NullPointerException e) {
-                throw new MRAException(MRAException.Type.RATING_Match_NotFound);
-            } catch (MRAException e) {
-                throw e;
-            } catch (Exception e) {
-                log.error("CSV-Round (Rating) 获取失败", e);
-                throw new MRAException(MRAException.Type.RATING_Parameter_MatchIDError);
+                id = matcher.group("data").toLong()
+                event.reply("正在处理$id")
+                parseCRA(sb, id, matchApiService, beatmapApiService, calculateApiService)
+            } catch (e: NullPointerException) {
+                throw MRAException(MRAException.Type.RATING_Match_NotFound)
+            } catch (e: MRAException) {
+                throw e
+            } catch (e: Exception) {
+                log.error("CSV-Round (Rating) 获取失败", e)
+                throw MRAException(MRAException.Type.RATING_Parameter_MatchIDError)
             }
         }
 
         //必须群聊
-        if (event.getSubject() instanceof Group group) {
+        if (subject is Group) {
             try {
                 if (isMultiple) {
                     if (Objects.nonNull(ids)) {
-                        group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), ids.getFirst() + "s.csv");
+                        subject.sendFile(
+                            sb.toString().toByteArray(StandardCharsets.UTF_8), "${ids!!.first()}s.csv"
+                        )
                     }
                 } else {
-                    group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), id + ".csv");
+                    subject.sendFile(sb.toString().toByteArray(StandardCharsets.UTF_8), "$id.csv")
                 }
-            } catch (Exception e) {
-                log.error("比赛评分表：发送失败", e);
-                throw new MRAException(MRAException.Type.RATING_Send_CRAFailed);
+            } catch (e: Exception) {
+                log.error("比赛评分表：发送失败", e)
+                throw MRAException(MRAException.Type.RATING_Send_CRAFailed)
             }
         } else {
-            throw new MRAException(MRAException.Type.RATING_Send_NotGroup);
+            throw MRAException(MRAException.Type.RATING_Send_NotGroup)
         }
     }
 
-    public void parseCRA(StringBuilder sb, int matchID) throws MRAException {
-        Match match;
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(CsvMatchService::class.java)
 
-        try {
-            match = matchApiService.getMatchInfo(matchID, 10);
-        } catch (Exception e) {
-            throw new MRAException(MRAException.Type.RATING_Match_NotFound);
-        }
+        @Throws(MRAException::class) fun parseCRAs(sb: StringBuilder, matchIDs: List<Long>?, matchApiService: OsuMatchApiService, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService) {
+            if (matchIDs.isNullOrEmpty()) throw MRAException(MRAException.Type.RATING_Series_FetchFailed)
 
-        var mr = new MatchRating(match, new MatchRating.RatingParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
-        mr.calculate();
-        MatchRating.insertMicroUserToScores(mr);
-        var rounds = mr.getRounds();
+            for (matchID in matchIDs) {
+                val match: Match
 
-        for (var r : rounds) {
-            var scores = r.getScores();
-            appendRoundStrings(sb, r);
+                try {
+                    match = matchApiService.getMatchInfo(matchID, 10)
+                } catch (e: Exception) {
+                    throw MRAException(MRAException.Type.RATING_Series_NotFound, matchID.toString())
+                }
 
-            for (var s : scores) {
-                getScoreStrings(sb, s);
+                val mr = MatchRating(
+                    match, RatingParam(0, 0, null, 1.0, delete = true, rematch = true), beatmapApiService, calculateApiService
+                )
+                mr.calculate()
+                mr.insertMicroUserToScores()
+
+                val rounds = mr.rounds
+
+                //多比赛
+                appendMatchStrings(sb, match)
+                for (r in rounds) {
+                    val scores = r.scores
+                    appendRoundStrings(sb, r)
+                    for (s in scores) {
+                        appendScoreStringsLite(sb, s)
+                    }
+                }
+
+                //多比赛分隔符
+                sb.append('\n')
             }
         }
-    }
 
-    public void parseCRAs(StringBuilder sb, List<Integer> matchIDs) throws MRAException {
-        if (Objects.isNull(matchIDs) || matchIDs.isEmpty()) throw new MRAException(MRAException.Type.RATING_Series_FetchFailed);
-
-        for (Integer matchID: matchIDs) {
-            Match match;
+        @Throws(MRAException::class) fun parseCRA(sb: StringBuilder, matchID: Long, matchApiService: OsuMatchApiService, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService) {
+            val match: Match
 
             try {
-                match = matchApiService.getMatchInfo(matchID, 10);
-            } catch (Exception e) {
-                throw new MRAException(MRAException.Type.RATING_Series_NotFound, matchID.toString());
+                match = matchApiService.getMatchInfo(matchID, 10)
+            } catch (e: Exception) {
+                throw MRAException(MRAException.Type.RATING_Match_NotFound)
             }
 
-            var mr = new MatchRating(match, new MatchRating.RatingParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
-            mr.calculate();
-            MatchRating.insertMicroUserToScores(mr);
+            val mr = MatchRating(
+                match, RatingParam(0, 0, null, 1.0, delete = true, rematch = true), beatmapApiService, calculateApiService
+            )
+            mr.calculate()
+            mr.insertMicroUserToScores()
+            val rounds = mr.rounds
 
-            var rounds = mr.getRounds();
+            for (r in rounds) {
+                val scores = r.scores
+                appendRoundStrings(sb, r)
 
-            //多比赛
-            appendMatchStrings(sb, match);
-            for (var r : rounds) {
-                var scores = r.getScores();
-                appendRoundStrings(sb, r);
-                for (var s : scores) {
-                    appendScoreStringsLite(sb, s);
+                for (s in scores) {
+                    appendScoreStrings(sb, s)
+                }
+            }
+        }
+
+        @Throws(MRAException::class) fun parseDataString(dataStr: String?): List<Long>? {
+            if (dataStr == null) return null
+
+            val dataStrArray =
+                dataStr.trim { it <= ' ' }
+                    .split("[\\s,，\\-|:]+".toRegex())
+                    .dropLastWhile { it.isEmpty() }
+                    .toTypedArray()
+
+            if (dataStr.isBlank() || dataStrArray.isEmpty()) return null
+
+            val matches = mutableListOf<Long>()
+
+            for (s in dataStrArray) {
+                val id: Long
+
+                try {
+                    id = s.toLong()
+                    matches.add(id)
+                } catch (e: NumberFormatException) {
+                    throw MRAException(MRAException.Type.RATING_Series_NotFound, s)
                 }
             }
 
-            //多比赛分隔符
-            sb.append('\n');
+            return matches
         }
-    }
-
-    private void appendMatchStrings(StringBuilder sb, Match match){
-        try {
-            sb.append(match.getStatistics().getStartTime().format(Date1)).append(',')
-                    .append(match.getStatistics().getStartTime().format(Date2)).append(',')
-                    .append(match.getStatistics().getMatchID()).append(',')
-                    .append(match.getStatistics().getName()).append(',')
-                    .append('\n');
-        } catch (Exception e) {
-            sb.append(e.getMessage()).append('\n');//.append("  error---->")
-        }
-    }
 
 
-    private void appendRoundStrings(StringBuilder sb, Match.MatchRound round){
-        try {
-            BeatMap b;
-
-            if (Objects.nonNull(round.getBeatMap())) {
-                b = round.getBeatMap();
-            } else {
-                b = new BeatMap();
-                b.setStarRating(0);
-                b.setTotalLength(0);
-                b.setBeatMapID(-1L);
-                b.setMaxCombo(0);
-            }
-
-            sb.append(round.getStartTime().format(Date1)).append(',')
-              .append(round.getStartTime().format(Date2)).append(',')
-              .append(round.getMode()).append(',')
-              .append(round.getScoringType()).append(',')
-              .append(round.getTeamType()).append(',')
-              .append(b.getStarRating()).append(',')
-              .append(b.getTotalLength()).append(',')
-              .append(round.getMods().toString().replaceAll(", ", "|")).append(',')
-              .append(b.getBeatMapID()).append(',')
-              .append(b.getMaxCombo())
-              .append('\n');
-        } catch (Exception e) {
-            sb.append(e.getMessage()).append('\n');//.append("  error---->")
-        }
-    }
-
-    private void getScoreStrings(StringBuilder sb, Match.MatchScore score){
-        try {
-            sb.append(score.getUserID()).append(',')
-                    .append(String.format("%4.4f", score.getAccuracy())).append(',')
-                    .append('[').append(String.join("|", score.getMods())).append("],")
-                    .append(score.getScore()).append(',')
-                    .append(score.getMaxCombo()).append(',')
-                    .append(score.getPassed()).append(',')
-                    .append(score.getPerfect()).append(',')
-                    .append(score.getPlayerStat().getSlot()).append(',')
-                    .append(score.getPlayerStat().getTeam()).append(',')
-                    .append(score.getPlayerStat().getPass())
-                    .append("\n");
-        } catch (Exception e) {
-            sb.append("<----MP ABORTED---->").append(e.getMessage()).append('\n');
-        }
-    }
-
-    private void appendScoreStringsLite(StringBuilder sb, Match.MatchScore score){
-
-        try {
-            sb.append(score.getPlayerStat().getTeam()).append(',')
-              .append(score.getUserID()).append(',')
-              .append(Objects.requireNonNullElse(score.getUser(), new MicroUser()).getUserName()).append(',')
-              .append(score.getScore()).append(',')
-              .append('[').append(String.join("|", score.getMods())).append("],")
-              .append(score.getMaxCombo()).append(',')
-              .append(String.format("%4.4f", score.getAccuracy())).append(',')
-              .append("\n");
-        } catch (Exception e) {
-            sb.append("<----MP ABORTED---->").append(e.getMessage()).append('\n');
-        }
-    }
-
-    private List<Integer> parseDataString(String dataStr) throws MRAException {
-        String[] dataStrArray = dataStr.trim().split("[\\s,，\\-|:]+");
-        if (dataStr.isBlank() || dataStrArray.length == 0) return null;
-
-        var matches = new ArrayList<Integer>();
-
-        for (String s: dataStrArray) {
-            int id;
-
+        private fun appendMatchStrings(sb: StringBuilder, match: Match) {
             try {
-                id = Integer.parseInt(s);
-                matches.add(id);
-            } catch (NumberFormatException e) {
-                throw new MRAException(MRAException.Type.RATING_Series_NotFound, s);
+                sb.append(match.statistics.startTime.format(Date1)).append(',')
+                    .append(match.statistics.startTime.format(Date2)).append(',').append(match.statistics.matchID)
+                    .append(',').append(match.statistics.name).append(',').append('\n')
+            } catch (e: Exception) {
+                sb.append(e.message).append('\n') //.append("  error---->")
             }
         }
 
-        return matches;
+        private fun appendRoundStrings(sb: StringBuilder, round: MatchRound) {
+            try {
+                val b: BeatMap?
+
+                if (round.beatMap != null) {
+                    b = round.beatMap
+                } else {
+                    b = BeatMap()
+                    b.starRating = 0.0
+                    b.totalLength = 0
+                    b.beatMapID = -1L
+                    b.maxCombo = 0
+                }
+
+                sb.append(round.startTime.format(Date1)).append(',').append(round.startTime.format(Date2)).append(',')
+                    .append(round.mode).append(',').append(round.scoringType).append(',').append(round.teamType).append(',')
+                    .append(b!!.starRating).append(',').append(b.totalLength).append(',')
+                    .append(round.mods.join()).append(',').append(b.beatMapID).append(',')
+                    .append(b.maxCombo).append('\n')
+            } catch (e: Exception) {
+                sb.append(e.message).append('\n') //.append("  error---->")
+            }
+        }
+
+        private fun appendScoreStrings(sb: StringBuilder, score: MatchScore) {
+            try {
+                sb.append(score.userID).append(',').append(String.format("%4.4f", score.accuracy)).append(',')
+                    .append(score.mods.join()).append(',').append(score.score).append(',')
+                    .append(score.maxCombo).append(',').append(score.passed).append(',').append(score.perfect).append(',')
+                    .append(score.playerStat.slot).append(',').append(score.playerStat.team).append(',')
+                    .append(score.playerStat.pass).append("\n")
+            } catch (e: Exception) {
+                sb.append("<----MP ABORTED---->").append(e.message).append('\n')
+            }
+        }
+
+        private fun appendScoreStringsLite(sb: StringBuilder, score: MatchScore) {
+            try {
+                sb.append(score.playerStat.team).append(',').append(score.userID).append(',').append(score.user?.userName)
+                    .append(',').append(score.score).append(',').append(score.mods.join())
+                    .append(',').append(score.maxCombo).append(',').append(String.format("%4.4f", score.accuracy))
+                    .append(',').append("\n")
+            } catch (e: Exception) {
+                sb.append("<----MP ABORTED---->").append(e.message).append('\n')
+            }
+        }
+
+        private val Date1: DateTimeFormatter = DateTimeFormatter.ofPattern("yy-MM-dd")
+        private val Date2: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+
+        private fun Iterable<String>.join(): String {
+            return this.joinToString(separator = "|", prefix = "[", postfix = "]")
+        }
     }
 }

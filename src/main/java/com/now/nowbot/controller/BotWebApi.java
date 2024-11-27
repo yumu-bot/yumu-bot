@@ -879,20 +879,32 @@ public class BotWebApi {
     /**
      * 获取比赛结果文件 (CA)
      *
-     * @return 提名信息图片
+     * @return 比赛结果文件
      */
 
     @GetMapping(value = "match/rating/csv")
-    @OpenResource(name = "ca", desp = "获取提名信息")
+    @OpenResource(name = "ca", desp = "获取比赛结果")
     public ResponseEntity<byte[]> getCsvRating(
-            @OpenResource(name = "mid", desp = "比赛编号") @RequestBody() @Nullable List<Integer> mid
+            @OpenResource(name = "match", desp = "比赛编号（逗号分隔）") @RequestParam("match") @Nullable String matchIDs
     ) throws RuntimeException {
-
         try {
-            return new ResponseEntity<>(new byte[0], getImageHeader(STR."\{0}-nomination.jpg", new byte[0].length), HttpStatus.OK);
+            var sb = new StringBuilder();
+            var ids = CsvMatchService.Companion.parseDataString(matchIDs);
+
+            if (ids == null) {
+                throw new RuntimeException("请输入对局！");
+            } else if (ids.size() == 1) {
+                CsvMatchService.Companion.parseCRA(sb, ids.getFirst(), matchApiService, beatmapApiService, calculateApiService);
+            } else {
+                CsvMatchService.Companion.parseCRAs(sb, ids, matchApiService, beatmapApiService, calculateApiService);
+            }
+
+            var data = sb.toString().getBytes();
+
+            return new ResponseEntity<>(data, getByteHeader(ids.getFirst() + "-csvrating.csv", data.length), HttpStatus.OK);
         } catch (Exception e) {
-            log.error("提名信息：API 异常", e);
-            throw new RuntimeException("提名信息：API 异常");
+            log.error("比赛结果：API 异常", e);
+            throw new RuntimeException("比赛结果：API 异常");
         }
 
     }
@@ -1088,6 +1100,14 @@ public class BotWebApi {
         headers.setContentDisposition(ContentDisposition.inline().filename(name).build());
         headers.setContentLength(length);
         headers.setContentType(MediaType.IMAGE_JPEG);
+        return headers;
+    }
+
+    private static HttpHeaders getByteHeader(String name, long length) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.inline().filename(name).build());
+        headers.setContentLength(length);
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         return headers;
     }
 

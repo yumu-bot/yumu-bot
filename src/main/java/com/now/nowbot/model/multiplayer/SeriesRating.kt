@@ -204,14 +204,24 @@ class SeriesRating(
 
                 val rws: Double
 
-                if (data.team == r.winningTeam) {
-                    rws = 1.0 * s.score / r.winningTeamScore
-                    data.win += 1
-                } else if (r.isTeamVS && null == r.winningTeam) {
-                    rws = 1.0 * s.score / r.winningTeamScore
+                if (r.isTeamVS) {
+                    if (data.team == r.winningTeam) {
+                        rws = 1.0 * s.score / r.winningTeamScore
+                        data.win += 1
+                    } else if (null == r.winningTeam) {
+                        rws = 1.0 * s.score / r.winningTeamScore
+                    } else {
+                        rws = 0.0
+                        data.lose += 1
+                    }
                 } else {
-                    rws = 0.0
-                    data.lose += 1
+                    if (s.score >= r.maxScore) {
+                        rws = 1.0 * s.score / r.winningTeamScore
+                        data.win += 1
+                    } else {
+                        rws = 0.0
+                        data.lose += 1
+                    }
                 }
 
                 data.roundWinShares.add(rws)

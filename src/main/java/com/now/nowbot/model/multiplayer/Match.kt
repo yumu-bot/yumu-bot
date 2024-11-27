@@ -1,5 +1,6 @@
 package com.now.nowbot.model.multiplayer
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
@@ -90,6 +91,10 @@ data class Match(
         val totalTeamScore: Long
             get() = getTeamScore(null)
 
+        @get:JsonIgnore
+        val maxScore: Long
+            get() = scores.maxOf { it.score }.toLong()
+
         @get:JsonProperty("winning_team")
         val winningTeam: String?
             get() =
@@ -117,11 +122,11 @@ data class Match(
             return when(teamType) {
                 "red" -> scores
                     .filter { it.playerStat.team == "red" }
-                    .sumOf { it.score.toLong() }
+                    .sumOf { it.score }.toLong()
                 "blue" -> scores
                     .filter { it.playerStat.team == "blue" }
-                    .sumOf { it.score.toLong() }
-                else -> scores.sumOf { it.score.toLong() }
+                    .sumOf { it.score }.toLong()
+                else -> scores.sumOf { it.score }.toLong()
             }
         }
     }
