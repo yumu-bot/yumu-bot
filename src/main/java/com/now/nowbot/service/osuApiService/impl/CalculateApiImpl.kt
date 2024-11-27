@@ -301,6 +301,8 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                         else -> {
                             score.n100 = stat.ok ?: 0
                             score.n50 = stat.meh ?: 0
+                            score.largeTickHits = stat.largeTickHit ?: 0
+                            score.sliderEndHits = stat.sliderTailHit ?: 0
                         }
                     }
 
@@ -329,6 +331,8 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                         else -> {
                             score.n100 = stat.ok ?: 0
                             score.n50 = stat.meh ?: 0
+                            score.largeTickHits = stat.largeTickHit ?: 0
+                            score.sliderEndHits = stat.sliderTailHit ?: 0
                         }
                     }
 
@@ -386,7 +390,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             val rosuMode = mode?.toRosuMode()
 
             // 转谱
-            if (rosuMode != null && rosuBeatmap.mode == org.spring.osu.OsuMode.Osu) {
+            if (rosuMode != null && rosuBeatmap.mode != rosuMode && rosuBeatmap.mode == org.spring.osu.OsuMode.Osu) {
                 rosuBeatmap.convertInPlace(rosuMode)
             }
 
