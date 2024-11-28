@@ -15,10 +15,9 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD
 import com.yumu.core.constants.log
-import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
-@Service("PP_PLUS_MAP")
+//@Service("PP_PLUS_MAP")
 class PPPlusMapService(
     private val performancePlusService: PerformancePlusService,
     private val beatmapApiService: OsuBeatmapApiService,
