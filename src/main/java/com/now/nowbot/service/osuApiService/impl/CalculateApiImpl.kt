@@ -229,23 +229,48 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                 }
                 if (totalHit != null) {
                     when (mode) {
-                        OsuMode.MANIA -> score?.apply { geki = totalHit }
-                        else -> score?.apply { n300 = totalHit }
+                        OsuMode.MANIA -> score?.apply {
+                            geki = totalHit
+                            katu = 0
+                            n300 = 0
+                            n100 = 0
+                            n50 = 0
+                            misses = 0
+                            sliderEndHits = 0
+                            largeTickHits = 0
+                        }
+                        else -> score?.apply {
+                            n300 = totalHit
+                            sliderEndHits = Int.MAX_VALUE
+                            largeTickHits = Int.MAX_VALUE
+                        }
                     }
 
                 } else {
                     when (mode) {
                         OsuMode.MANIA -> score?.apply {
                             geki += n300
+                            n300 = 0
                             geki += katu
+                            katu = 0
                             geki += n100
+                            n100 = 0
                             geki += n50
+                            n50 = 0
                             geki += misses
+                            misses = 0
+                            geki += sliderEndHits
+                            sliderEndHits = 0
+                            geki += largeTickHits
+                            largeTickHits = 0
                         }
                         else -> score?.apply {
+                            n300 += n300
                             n300 += n100
                             n300 += n50
                             n300 += misses
+                            sliderEndHits = Int.MAX_VALUE
+                            largeTickHits = Int.MAX_VALUE
                         }
                     }
                 }
@@ -255,8 +280,6 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                     n100 = 0
                     n50 = 0
                     this.misses = 0
-                    sliderEndHits = Int.MAX_VALUE
-                    largeTickHits = Int.MAX_VALUE
                 }
 
                 calculate(map, lazer, score, mods, mode, combo, 1.0)
