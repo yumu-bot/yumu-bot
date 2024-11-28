@@ -147,7 +147,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             s.mode,
             s.mods,
             s.accuracy,
-            s.statistics.miss,
+//            s.statistics.miss,
             s.maxCombo,
             s.beatMap.maxCombo,
             type,
@@ -162,7 +162,11 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         return pp.toRosuPerformance()
     }
 
-    private fun getExpectedPP(b: BeatMap, expected: MapStatisticsService.Expected, type: CalculateType): RosuPerformance {
+    private fun getExpectedPP(
+        b: BeatMap,
+        expected: MapStatisticsService.Expected,
+        type: CalculateType
+    ): RosuPerformance {
         return getPP(
             b.beatMapID,
             null,
@@ -170,7 +174,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             expected.mode,
             LazerMod.getModsList(expected.mods),
             expected.accuracy,
-            expected.misses,
+//            expected.misses,
             expected.combo,
             b.maxCombo,
             type
@@ -191,7 +195,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         mode: OsuMode,
         mods: List<LazerMod>,
         accuracy: Double? = null,
-        misses: Int? = null,
+//        misses: Int? = null, // misses 传递过来仅在 stat不为 null 且 stat.miss 为 null 才被使用, 现在不可能为 null 了
         combo: Int? = null,
         maxCombo: Int? = null,
         type: CalculateType,
@@ -200,154 +204,119 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
     ): JniPerformanceAttributes {
         val map: ByteArray = beatmapApiService.getBeatMapFileByte(id)
 
-        val score = JniScoreStat()
+        val score = if (stat == null) {
+            null
+        } else {
+            if (mode == OsuMode.DEFAULT) {
+                createJniState(stat, combo ?: maxCombo ?: 0, OsuMode.OSU)
+            } else {
+                createJniState(stat, combo ?: maxCombo ?: 0, mode)
+            }
+        }
+
         var max = maxCombo
         var combo = combo
 
         return when (type) {
             PF -> {
                 if (max == null) try {
-                    max = beatmapApiService.getBeatMap(id).maxCombo
+                    combo = beatmapApiService.getBeatMap(id).maxCombo
+                    score?.let {
+                        it.maxCombo = combo!!
+                    }
                 } catch (ignored: Exception) {
 
                 }
-
-                combo = max ?: 0
-
                 if (totalHit != null) {
                     when (mode) {
-                        OsuMode.MANIA -> score.geki = totalHit
-                        else -> score.n300 = totalHit
+                        OsuMode.MANIA -> score?.apply { geki = totalHit }
+                        else -> score?.apply { n300 = totalHit }
+                    }
+
+                } else {
+                    when (mode) {
+                        OsuMode.MANIA -> score?.apply {
+                            geki += n300
+                            geki += katu
+                            geki += n100
+                            geki += n50
+                            geki += misses
+                        }
+                        else -> score?.apply {
+                            n300 += n100
+                            n300 += n50
+                            n300 += misses
+                        }
                     }
                 }
-                score.largeTickHits = Int.MAX_VALUE
-                score.sliderEndHits = Int.MAX_VALUE
+
+                score?.apply {
+                    katu = 0
+                    n100 = 0
+                    n50 = 0
+                    this.misses = 0
+                    sliderEndHits = Int.MAX_VALUE
+                    largeTickHits = Int.MAX_VALUE
+                }
+
                 calculate(map, lazer, score, mods, mode, combo, 1.0)
             }
 
             FC -> {
                 if (max == null) try {
-                    max = beatmapApiService.getBeatMap(id).maxCombo
+                    combo = beatmapApiService.getBeatMap(id).maxCombo
+                    score?.let {
+                        it.maxCombo = combo!!
+                    }
                 } catch (ignored: Exception) {
-
                 }
 
-                if (stat != null && totalHit != null) {
-                    when (mode) {
-                        OsuMode.TAIKO -> {
-                            if (stat.ok != null) score.n100 = stat.ok!!
-                            if (stat.meh != null) score.n50 = stat.meh!!
-                            score.n300 = (stat.great ?: 0) + (stat.miss ?: 0)
-                        }
-
-                        OsuMode.CATCH -> {
-                            if (stat.largeTickHit != null) score.n100 = stat.largeTickHit!!
-                            if (stat.smallTickHit != null) score.n50 = stat.smallTickHit!!
-                            score.n300 = (stat.great ?: 0) + (stat.miss ?: 0) + (stat.largeTickMiss ?: 0)
-                        }
-
-                        OsuMode.MANIA -> { // mania 的无 miss fc pp 没有意义，故使用当前彩率下，不含 100 及以下判定（bad）的 fc
-                            val p = (stat.perfect ?: 0)
-                            val g = (stat.great ?: 0)
-                            val bad = (stat.ok ?: 0) + (stat.meh ?: 0) + (stat.miss ?: 0)
-
-                            val rate = stat.getPerfectRate()
-                            val pb = min(max((bad * rate).roundToInt(), 0), bad)
-                            val gb = min(max((bad - pb), 0), bad)
-
-                            if (p + pb > 0) score.geki = p + pb
-                            if (g + gb > 0) score.n300 = g + gb
-
-                            if (stat.good != null) score.katu = stat.good!!
-                            score.n100 = 0
-                            score.n50 = 0
-                        }
-
-                        else -> {
-                            if (stat.ok != null) score.n100 = stat.ok!!
-                            if (stat.meh != null) score.n50 = stat.meh!!
-
-                            score.n300 = (stat.great ?: 0) + (stat.miss ?: 0)
+                if (stat != null && totalHit != null) when (mode) {
+                    OsuMode.TAIKO -> {
+                        score?.let {
+                            it.n300 += it.misses
+                            it.misses = 0
                         }
                     }
+
+                    OsuMode.CATCH -> {
+                        score?.let {
+                            it.n300 += it.misses + stat.great + stat.largeTickMiss
+                            it.misses = 0
+                        }
+                    }
+
+                    OsuMode.MANIA -> { // mania 的无 miss fc pp 没有意义，故使用当前彩率下，不含 100 及以下判定（bad）的 fc
+                        score?.let {
+                            val p = it.geki
+                            val g = it.n300
+                            val bad = it.n100 + it.n50 + it.misses
+
+                            val rate = 1.0 * p / g
+                            val pb = min(max((bad * rate).roundToInt(), 0), bad)
+                            val gb = min(max((bad - pb), 0), bad)
+                            if (p + pb > 0) it.geki = p + pb
+                            if (g + gb > 0) it.n300 = g + gb
+
+                            it.n100 = 0
+                            it.n50 = 0
+                        }
+                    }
+
+                    else -> {}
                 }
-
-                if (max != null) combo = max
-                score.misses = 0
-
-                score.largeTickHits = Int.MAX_VALUE
-                score.sliderEndHits = Int.MAX_VALUE
 
                 calculate(map, lazer, score, mods, mode, combo, accuracy)
             }
 
             DEFAULT -> {
                 if (stat == null) return calculate(map, lazer, null, mods, mode, combo, accuracy)
-
-                if (passed) {
-                    when (mode) {
-                        OsuMode.TAIKO -> {
-                            score.n100 = stat.ok ?: 0
-                        }
-
-                        OsuMode.CATCH -> {
-                            score.n100 = stat.largeTickHit ?: 0
-                            score.n50 = stat.smallTickHit ?: 0
-                        }
-
-                        OsuMode.MANIA -> {
-                            score.geki = stat.perfect ?: 0
-                            score.katu = stat.good ?: 0
-                            score.n100 = stat.ok ?: 0
-                            score.n50 = stat.meh ?: 0
-                        }
-
-                        else -> {
-                            score.n100 = stat.ok ?: 0
-                            score.n50 = stat.meh ?: 0
-                            score.largeTickHits = stat.largeTickHit ?: 0
-                            score.sliderEndHits = stat.sliderTailHit ?: 0
-                        }
-                    }
-
-                    score.maxCombo = combo ?: 0
-                    score.n300 = stat.great ?: 0
-                    score.misses = stat.miss ?: 0
-
-                    calculate(map, lazer, score, mods, mode, combo, accuracy)
-                } else { // 没 pass 不给 300, acc 跟 combo
-                    when (mode) {
-                        OsuMode.TAIKO -> {
-                            score.n100 = stat.ok ?: 0
-                        }
-
-                        OsuMode.CATCH -> {
-                            score.n100 = stat.largeTickHit ?: 0
-                            score.n50 = stat.smallTickHit ?: 0
-                        }
-
-                        OsuMode.MANIA -> {
-                            score.katu = stat.good ?: 0
-                            score.n100 = stat.ok ?: 0
-                            score.n50 = stat.meh ?: 0
-                        }
-
-                        else -> {
-                            score.n100 = stat.ok ?: 0
-                            score.n50 = stat.meh ?: 0
-                            score.largeTickHits = stat.largeTickHit ?: 0
-                            score.sliderEndHits = stat.sliderTailHit ?: 0
-                        }
-                    }
-
-                    score.misses = if (stat.miss != null)  {
-                        stat.miss!!
-                    } else {
-                        misses ?: 0
-                    }
-
-                    calculate(map, lazer, score, mods, mode, combo, accuracy)
+                calculate(map, lazer, score, mods, mode, combo, accuracy)
+                if (!passed) {
+                    score?.let { it.n300 = 0 }
+                    combo = null
                 }
+                calculate(map, lazer, score, mods, mode, combo, accuracy)
             }
         }
     }
@@ -362,7 +331,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         private fun calculate(
             map: ByteArray,
             lazer: Boolean = false,
-            score: JniScoreStat? = null,
+            score: JniScoreState? = null,
             mods: List<LazerMod>? = null,
             mode: OsuMode? = null,
             combo: Int? = null,
@@ -382,7 +351,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         private fun calculateBox(
             map: ByteArray,
             lazer: Boolean = false,
-            score: JniScoreStat? = null,
+            score: JniScoreState? = null,
             mods: List<LazerMod>? = null,
             mode: OsuMode? = null,
             combo: Int? = null,
@@ -402,12 +371,12 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             val rosuPerformance = if (score == null) {
                 rosuBeatmap.createPerformance()
             } else {
-                rosuBeatmap.createPerformance(score.toState())
+                rosuBeatmap.createPerformance(score)
             }
 
             rosuPerformance.setLazer(lazer)
 
-            if (! mods.isNullOrEmpty()) {
+            if (!mods.isNullOrEmpty()) {
                 val modsJson = JacksonUtil.toJson(mods)
                 rosuPerformance.setMods(modsJson)
 
@@ -427,7 +396,8 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         }
 
         // 应用四维的变化 4 dimensions
-        @JvmStatic fun applyBeatMapChanges(beatMap: BeatMap?, mods: List<LazerMod>) {
+        @JvmStatic
+        fun applyBeatMapChanges(beatMap: BeatMap?, mods: List<LazerMod>) {
             if (beatMap == null || beatMap.beatMapID == 0L) return
 
             val mode = beatMap.mode
@@ -442,25 +412,30 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                 beatMap.hitLength = applyLength(beatMap.hitLength, mods)
             }
         }
-        @JvmStatic fun applyBeatMapChanges(score: LazerScore) {
+
+        @JvmStatic
+        fun applyBeatMapChanges(score: LazerScore) {
             applyBeatMapChanges(score.beatMap, score.mods)
         }
 
-        @JvmStatic fun getMillisFromAR(ar: Float): Float = when {
+        @JvmStatic
+        fun getMillisFromAR(ar: Float): Float = when {
             ar > 11f -> 300f
             ar > 5f -> 1200 - (150 * (ar - 5))
             ar > 0f -> 1800 - (120 * ar)
             else -> 1800f
         }
 
-        @JvmStatic fun getARFromMillis(ms: Float): Float = when {
+        @JvmStatic
+        fun getARFromMillis(ms: Float): Float = when {
             ms < 300 -> 11f
             ms < 1200 -> 5 + (1200 - ms) / 150f
             ms < 2400 -> (1800 - ms) / 120f
             else -> -5f
         }
 
-        @JvmStatic fun applyAR(ar: Float, mods: List<LazerMod>): Float {
+        @JvmStatic
+        fun applyAR(ar: Float, mods: List<LazerMod>): Float {
             var a = ar
 
             for (mod in mods) {
@@ -487,32 +462,38 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             return a.roundToDigits2()
         }
 
-        @JvmStatic fun getMillisFromOD(od: Float, mode: OsuMode): Float = when(mode) {
+        @JvmStatic
+        fun getMillisFromOD(od: Float, mode: OsuMode): Float = when (mode) {
             OsuMode.TAIKO -> when {
                 od > 11 -> 17f
                 else -> 50 - 3 * od
             }
+
             OsuMode.MANIA -> when {
                 od > 11 -> 31f
                 else -> 64 - 3 * od
             }
+
             else -> when {
                 od > 11 -> 14f
                 else -> 80 - 6 * od
             }
         }
 
-        @JvmStatic fun getODFromMillis(ms: Float): Float = when {
+        @JvmStatic
+        fun getODFromMillis(ms: Float): Float = when {
             ms < 14 -> 11f
             else -> (80 - ms) / 6f
         }
 
         // 只有在仅计算主模式的时候才能使用这个方法
-        @JvmStatic fun applyOD(od: Float, mods: List<LazerMod>): Float {
+        @JvmStatic
+        fun applyOD(od: Float, mods: List<LazerMod>): Float {
             return applyOD(od, mods, OsuMode.OSU)
         }
 
-        @JvmStatic fun applyOD(od: Float, mods: List<LazerMod>, mode: OsuMode): Float {
+        @JvmStatic
+        fun applyOD(od: Float, mods: List<LazerMod>, mode: OsuMode): Float {
             var o = od
             if (mods.contains(LazerMod.HardRock)) {
                 o = (o * 1.4f).clamp()
@@ -537,7 +518,8 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             return o.roundToDigits2()
         }
 
-        @JvmStatic fun applyCS(cs: Float, mods: List<LazerMod>): Float {
+        @JvmStatic
+        fun applyCS(cs: Float, mods: List<LazerMod>): Float {
             var c = cs
 
             for (mod in mods) {
@@ -555,7 +537,8 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             return c.clamp().roundToDigits2()
         }
 
-        @JvmStatic fun applyHP(hp: Float, mods: List<LazerMod>): Float {
+        @JvmStatic
+        fun applyHP(hp: Float, mods: List<LazerMod>): Float {
             var h = hp
 
             for (mod in mods) {
@@ -573,11 +556,13 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             return h.clamp().roundToDigits2()
         }
 
-        @JvmStatic fun applyBPM(bpm: Float?, mods: List<LazerMod>): Float {
+        @JvmStatic
+        fun applyBPM(bpm: Float?, mods: List<LazerMod>): Float {
             return ((bpm ?: 0f) * LazerMod.getModSpeed(mods)).roundToDigits2()
         }
 
-        @JvmStatic fun applyLength(length: Int?, mods: List<LazerMod>): Int {
+        @JvmStatic
+        fun applyLength(length: Int?, mods: List<LazerMod>): Int {
             return ((length ?: 0).toDouble() / LazerMod.getModSpeed(mods)).roundToInt()
         }
 
@@ -591,7 +576,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
 
         private fun Float.roundToDigits2() = BigDecimal(this.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toFloat()
 
-        private inline fun<reified T : Mod> List<LazerMod>.contains(type: T) = LazerMod.hasMod(this, type)
+        private inline fun <reified T : Mod> List<LazerMod>.contains(type: T) = LazerMod.hasMod(this, type)
 
         private fun JniDifficulty.applyDifficultyAdjustMod(mods: List<LazerMod>) {
             for (m in mods) {
@@ -605,9 +590,9 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         }
 
         private fun LazerStatistics.getPerfectRate(): Double {
-            return if (this.perfect == null || this.perfect == 0) 0.0
-            else if (this.great == null || this.great == 0) Double.MAX_VALUE
-            else 1.0 * this.perfect!! / this.great!!
+            return if (this.perfect == 0) 0.0
+            else if (this.great == 0) Double.MAX_VALUE
+            else 1.0 * this.perfect / this.great
         }
 
         // JniScoreState 只能一次性设定，所以写了个中转类方便赋值
@@ -624,7 +609,17 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         )
 
         private fun JniScoreStat.toState(): JniScoreState {
-            val score = JniScoreState(this.maxCombo, this.largeTickHits, this.sliderEndHits, this.geki, this.katu, this.n300, this.n100, this.n50, this.misses)
+            val score = JniScoreState(
+                this.maxCombo,
+                this.largeTickHits,
+                this.sliderEndHits,
+                this.geki,
+                this.katu,
+                this.n300,
+                this.n100,
+                this.n50,
+                this.misses
+            )
             return score
         }
 
@@ -632,7 +627,22 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             return RosuPerformance(this)
         }
 
-        fun tryRun(fn: () ->Unit) {
+        private fun createJniState(state: LazerStatistics, maxCombo: Int, mode: OsuMode): JniScoreState {
+            val old = state.toScoreStatistics(mode)
+            return JniScoreState(
+                maxCombo,
+                state.largeTickHit,
+                state.sliderTailHit,
+                old.countGeki,
+                old.countKatu,
+                old.count300,
+                old.count100,
+                old.count50,
+                old.countMiss,
+            )
+        }
+
+        fun tryRun(fn: () -> Unit) {
             try {
                 fn()
             } catch (e: Exception) {

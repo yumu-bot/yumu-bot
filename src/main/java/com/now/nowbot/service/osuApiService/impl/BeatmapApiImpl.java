@@ -13,6 +13,7 @@ import com.now.nowbot.util.AsyncMethodExecutor;
 import com.now.nowbot.util.JacksonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
@@ -129,6 +130,7 @@ public class BeatmapApiImpl implements OsuBeatmapApiService {
     }
 
     @Override
+    @Cacheable(value = "beatmap file", key = "#bid")
     public byte[] getBeatMapFileByte(long bid) {
         return Objects.requireNonNullElse(getBeatMapFileString(bid), "").getBytes(StandardCharsets.UTF_8);
     }

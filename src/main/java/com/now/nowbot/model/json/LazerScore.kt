@@ -6,10 +6,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
+import org.spring.osu.extended.rosu.JniScoreState
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import kotlin.math.ln
+import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -76,7 +78,7 @@ open class LazerScore {
     var mods: List<LazerMod> = listOf()
         get() {
             // 如果是 stable 成绩，则这里的 Classic 模组应该去掉
-            return field.filterNot { it is LazerMod.Classic && ! this.isLazer }
+            return field.filterNot { it is LazerMod.Classic && !this.isLazer }
         }
 
     @JsonProperty("statistics")
@@ -111,53 +113,140 @@ open class LazerScore {
 
     data class LazerStatistics(
         // M 320
-        @JsonProperty("perfect") var perfect: Int? = 0,
+        @JsonProperty("perfect") var perfect: Int = 0,
 
         // O、T、C、M 300
-        @JsonProperty("great") var great: Int? = 0,
+        @JsonProperty("great") var great: Int = 0,
 
         // M 200
-        @JsonProperty("good") var good: Int? = 0,
+        @JsonProperty("good") var good: Int = 0,
 
         // T、M 100
-        @JsonProperty("ok") var ok: Int? = 0,
+        @JsonProperty("ok") var ok: Int = 0,
 
         // O、M 50
-        @JsonProperty("meh") var meh: Int? = 0,
+        @JsonProperty("meh") var meh: Int = 0,
 
         // O、T、C、M 0
-        @JsonProperty("miss") var miss: Int? = 0,
+        @JsonProperty("miss") var miss: Int = 0,
 
         // ?
-        @JsonProperty("ignore_hit") var ignoreHit: Int? = 0,
-        @JsonProperty("ignore_miss") var ignoreMiss: Int? = 0,
+        @JsonProperty("ignore_hit") var ignoreHit: Int = 0,
+        @JsonProperty("ignore_miss") var ignoreMiss: Int = 0,
 
         // O SliderTick、C Large Droplet (medium)
-        @JsonProperty("large_tick_hit") var largeTickHit: Int? = 0,
-        @JsonProperty("large_tick_miss") var largeTickMiss: Int? = 0,
+        @JsonProperty("large_tick_hit") var largeTickHit: Int = 0,
+        @JsonProperty("large_tick_miss") var largeTickMiss: Int = 0,
 
         // C Small Droplet (small)
-        @JsonProperty("small_tick_hit") var smallTickHit: Int? = 0,
-        @JsonProperty("small_tick_miss") var smallTickMiss: Int? = 0,
+        @JsonProperty("small_tick_hit") var smallTickHit: Int = 0,
+        @JsonProperty("small_tick_miss") var smallTickMiss: Int = 0,
 
         // O SliderTail
-        @JsonProperty("slider_tail_hit") var sliderTailHit: Int? = 0,
+        @JsonProperty("slider_tail_hit") var sliderTailHit: Int = 0,
 
         // O Spinner Bonus、T Spinner Drumroll、C Banana
-        @JsonProperty("large_bonus") var largeBonus: Int? = 0,
+        @JsonProperty("large_bonus") var largeBonus: Int = 0,
 
         // O Spinner Base
-        @JsonProperty("small_bonus") var smallBonus: Int? = 0,
+        @JsonProperty("small_bonus") var smallBonus: Int = 0,
 
         // 仅 MAX 有
-        @JsonProperty("legacy_combo_increase") var legacyComboIncrease: Int? = 0,
-    ) : Cloneable {
-        public override fun clone(): LazerStatistics {
-            try {
-                return super.clone() as LazerStatistics
-            } catch (e: CloneNotSupportedException) {
-                throw AssertionError()
+        @JsonProperty("legacy_combo_increase") var legacyComboIncrease: Int = 0,
+    ) {
+        fun totalHits(mode: OsuMode) = when (mode) {
+            OSU -> great + ok + meh + miss
+            TAIKO -> great + ok + miss
+            CATCH -> great + largeTickHit + smallTickHit + miss
+            MANIA -> perfect + great + good + ok + meh + miss
+            else -> 0
+        }
+
+        fun accuracy(mode: OsuMode): Float {
+            val numerator: Int
+            val denominator: Int
+            when (mode) {
+                OSU -> {
+                    numerator = great * 300 + ok * 100 + meh * 50
+                    denominator = totalHits(mode) * 300
+                }
+
+                TAIKO -> {
+                    numerator = great * 2 + ok * 1
+                    denominator = totalHits(mode) * 2
+                }
+
+                CATCH -> {
+                    numerator = great + largeTickHit + smallTickHit
+                    denominator = totalHits(mode)
+                }
+
+                MANIA -> {
+                    numerator = (perfect + great) * 300 + good * 200 + ok * 100 + meh * 50
+                    denominator = totalHits(mode) * 300
+                }
+
+                else -> return 0f
             }
+
+            return (10000f * numerator / denominator).roundToInt() / 100f
+        }
+
+        fun toScoreStatistics(mode: OsuMode): Statistics {
+            var geki = 0
+            var katu = 0
+            val n300 = great
+            val n100: Int
+            var n50 = 0
+            val misses = miss
+            when (mode) {
+                OSU -> {
+                    n100 = ok
+                    n50 = meh
+                }
+
+                TAIKO -> {
+                    n100 = ok
+                }
+
+                CATCH -> {
+                    n100 = max(largeTickHit, ok)
+                    n50 = max(smallTickHit, meh)
+                    katu = max(smallTickHit, good)
+                }
+
+                MANIA -> {
+                    geki = perfect
+                    katu = good
+                    n100 = ok
+                    n50 = meh
+                }
+
+                else -> return Statistics()
+            }
+            return Statistics().apply {
+                count300 = n300
+                count100 = n100
+                count50 = n50
+                countMiss = misses
+                countGeki = geki
+                countKatu = katu
+            }
+        }
+
+        fun toJniScoreState(combo: Int, mode: OsuMode): JniScoreState {
+            val oldState = toScoreStatistics(mode)
+            return JniScoreState(
+                maxCombo = combo,
+                largeTickHits = largeTickHit,
+                sliderEndHits = sliderTailHit,
+                geki = oldState.countGeki!!,
+                katu = oldState.countKatu!!,
+                n300 = oldState.count300!!,
+                n100 = oldState.count100!!,
+                n50 = oldState.count50!!,
+                misses = oldState.countMiss!!,
+            )
         }
     }
 
