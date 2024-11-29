@@ -17,4 +17,4 @@ jobs:
           git reset --hard origin/main
           git pull
           git lfs pull
-          mvn test
+          mvnd test
