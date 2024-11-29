@@ -134,6 +134,8 @@ class PPMinus3Type {
 
             val deviation = sqrt(list.sumOf { (it - average).pow(2) } / count)
 
+            if (deviation == 0.0) return list
+
             return list.map { (it - average) / deviation }
         }
 
