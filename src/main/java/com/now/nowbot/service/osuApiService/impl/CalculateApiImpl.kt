@@ -164,7 +164,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
     private fun getExpectedPP(
         b: BeatMap,
         expected: MapStatisticsService.Expected,
-        type: CalculateType
+        type: CalculateType,
     ): RosuPerformance {
         return getPP(
             b.beatMapID,
@@ -199,7 +199,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         maxCombo: Int? = null,
         type: CalculateType,
         passed: Boolean = false,
-        totalHit: Int? = null
+        totalHit: Int? = null,
     ): JniPerformanceAttributes {
         val map: ByteArray = beatmapApiService.getBeatMapFileByte(id)
 
@@ -238,6 +238,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                             sliderEndHits = 0
                             largeTickHits = 0
                         }
+
                         else -> score?.apply {
                             n300 = totalHit
                             sliderEndHits = Int.MAX_VALUE
@@ -263,6 +264,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                             geki += largeTickHits
                             largeTickHits = 0
                         }
+
                         else -> score?.apply {
                             n300 += n300
                             n300 += n100
@@ -390,7 +392,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             mode: OsuMode? = null,
             combo: Int? = null,
             accuracy: Double? = null,
-            closeable: MutableList<AutoCloseable>
+            closeable: MutableList<AutoCloseable>,
         ): JniPerformanceAttributes {
             val rosuBeatmap = JniBeatmap(map)
             closeable.add(rosuBeatmap)
@@ -402,10 +404,19 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             }
 
 
-            val rosuPerformance = if (score == null) {
-                rosuBeatmap.createPerformance()
-            } else {
-                rosuBeatmap.createPerformance(score)
+            val rosuPerformance = rosuBeatmap.createPerformance()
+            if (score != null) {
+                with(score) {
+                    if (maxCombo != 0) rosuPerformance.setCombo(maxCombo)
+                    if (largeTickHits != 0) rosuPerformance.setLargeTick(largeTickHits)
+                    if (sliderEndHits != 0) rosuPerformance.setSliderEnds(sliderEndHits)
+                    if (geki != 0) rosuPerformance.setGeki(geki)
+                    if (katu != 0) rosuPerformance.setKatu(katu)
+                    if (n300 != 0) rosuPerformance.setN300(n300)
+                    if (n100 != 0) rosuPerformance.setN100(n100)
+                    if (n50 != 0) rosuPerformance.setN50(n50)
+                    if (misses != 0) rosuPerformance.setMisses(misses)
+                }
             }
 
             rosuPerformance.setLazer(lazer)
