@@ -114,12 +114,12 @@ class BPQueryService(
                 Param.PerformancePoint -> score.getPP()
                 Param.Combo -> score.totalCombo
                 Param.Accuracy -> 10000 * score.accuracy
-                Param.Perfect -> score.statistics.perfect ?: 0
-                Param.Great -> score.statistics.great ?: 0
-                Param.Good -> score.statistics.good ?: 0
-                Param.Ok -> score.statistics.ok ?: 0
-                Param.Meh -> score.statistics.meh ?: 0
-                Param.Miss -> score.statistics.miss ?: 0
+                Param.Perfect -> score.statistics.perfect
+                Param.Great -> score.statistics.great
+                Param.Good -> score.statistics.good
+                Param.Ok -> score.statistics.ok
+                Param.Meh -> score.statistics.meh
+                Param.Miss -> score.statistics.miss
                 Param.Index -> score.weight!!.index
                 else -> 0
             }.toInt()
@@ -264,27 +264,27 @@ class BPQueryService(
             compare(s.beatMap.hitLength!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Perfect("perfect", { (op, v, s) ->
-            val perfect = (s.statistics.perfect ?: 0)
+            val perfect = s.statistics.perfect
             compare(perfect, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Great("great", { (op, v, s) ->
-            val great = (s.statistics.great ?: 0)
+            val great = s.statistics.great
             compare(great, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Good("good", { (op, v, s) ->
-            val good = (s.statistics.good ?: 0)
+            val good = s.statistics.good
             compare(good, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Ok("ok", { (op, v, s) ->
-            val ok = (s.statistics.ok ?: 0)
+            val ok = s.statistics.ok
             compare(ok, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Meh("meh", { (op, v, s) ->
-            val meh = (s.statistics.meh ?: 0)
+            val meh = s.statistics.meh
             compare(meh, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Miss("miss", { (op, v, s) ->
-            val misses = (s.statistics.miss ?: 0)
+            val misses = s.statistics.miss
             compare(misses, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Mods("mod", { (op, v, s) ->
@@ -304,7 +304,7 @@ class BPQueryService(
             val rate = if (s.statistics.great == 0) {
                 Double.MAX_VALUE
             } else {
-                1.0 * (s.statistics.perfect ?: 0) / (s.statistics.great ?: 0)
+                1.0 * s.statistics.perfect / s.statistics.great
             }
 
             compare(rate, value, op)
@@ -405,7 +405,7 @@ class BPQueryService(
                 Param.Index.key, "i" -> Param.Index(operator, value)
                 Param.AR.key -> Param.AR(operator, value)
                 Param.OD.key -> Param.OD(operator, value)
-                Param.CS.key -> Param.CS(operator, value)
+                Param.CS.key, "key", "keys", "k" -> Param.CS(operator, value)
                 Param.HP.key -> Param.HP(operator, value)
                 Param.PerformancePoint.key, "p" -> Param.PerformancePoint(operator, value)
                 Param.Rank.key, "r" -> Param.Rank(operator, value)
