@@ -2,7 +2,6 @@ package com.now.nowbot.service;
 
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.*;
-import com.now.nowbot.model.mapminus.PPMinus3;
 import com.now.nowbot.model.multiplayer.Match;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.service.UserAvatarCardParam;
@@ -274,18 +273,6 @@ public class ImageService {
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_B1", httpEntity);
-    }
-
-    public byte[] getPanelB2(BeatMap beatMap, PPMinus3 mapMinus) {
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = Map.of(
-                "beatMap", beatMap,
-                "mapMinus", mapMinus
-        );
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_B2", httpEntity);
     }
 
     public byte[] getPanelB3(OsuUser user, PPPlus plus) {

@@ -5,6 +5,7 @@ import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.mapminus.PPMinus3
+import com.now.nowbot.model.mapminus.PPMinus3Type
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
@@ -24,14 +25,11 @@ import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import java.util.regex.Matcher
 
-@Service("MAP_MINUS")
-class MapMinusService(
+@Service("MAP_MINUS") class MapMinusService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
-) :
-    MessageService<MapMinusService.MapMinusParam>,
-    TencentMessageService<MapMinusService.MapMinusParam> {
+) : MessageService<MapMinusService.MapMinusParam>, TencentMessageService<MapMinusService.MapMinusParam> {
 
     data class MapMinusParam(val bid: Long, val rate: Double = 1.0, val modsList: List<LazerMod>)
 
@@ -49,8 +47,7 @@ class MapMinusService(
         return true
     }
 
-    @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: MapMinusParam) {
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: MapMinusParam) {
         val image = getMapMinusImage(param, beatmapApiService, calculateApiService, imageService)
 
         try {
@@ -81,23 +78,21 @@ class MapMinusService(
         private fun getMapMinusParam(matcher: Matcher): MapMinusParam {
             val modsList: List<LazerMod> = LazerMod.getModsList(matcher.group(FLAG_MOD))
 
-            val bid =
-                try {
-                    matcher.group("bid").toLong()
-                } catch (e: NumberFormatException) {
-                    throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
-                }
+            val bid = try {
+                matcher.group("bid").toLong()
+            } catch (e: NumberFormatException) {
+                throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
+            }
 
-            val rate =
-                if (StringUtils.hasText(matcher.group("rate"))) {
-                    try {
-                        matcher.group("rate").toDouble()
-                    } catch (e: NumberFormatException) {
-                        throw MapMinusException(MapMinusException.Type.MM_Rate_Error)
-                    }
-                } else {
-                    1.0
+            val rate = if (StringUtils.hasText(matcher.group("rate"))) {
+                try {
+                    matcher.group("rate").toDouble()
+                } catch (e: NumberFormatException) {
+                    throw MapMinusException(MapMinusException.Type.MM_Rate_Error)
                 }
+            } else {
+                1.0
+            }
 
             if (rate < 0.1) throw MapMinusException(MapMinusException.Type.MM_Rate_TooSmall)
             if (rate > 5.0) throw MapMinusException(MapMinusException.Type.MM_Rate_TooLarge)
@@ -127,30 +122,37 @@ class MapMinusService(
                 throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
             }
 
-            val file =
-                try {
-                    when (mode) {
-                        OsuMode.MANIA -> OsuFile.getInstance(fileStr)
-                        else ->
-                            throw MapMinusException(MapMinusException.Type.MM_Function_NotSupported)
-                    }
-                } catch (e: NullPointerException) {
-                    throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
+            val file = try {
+                when (mode) {
+                    OsuMode.MANIA -> OsuFile.getInstance(fileStr)
+                    else -> throw MapMinusException(MapMinusException.Type.MM_Function_NotSupported)
                 }
+            } catch (e: NullPointerException) {
+                throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
+            }
 
-            val mapMinus =
-                PPMinus3.getInstance(
-                    file,
-                    if (isChangedRating) {
-                        LazerMod.getModSpeedForStarCalculate(param.modsList).toDouble()
-                    } else {
-                        param.rate
-                    },
-                )
+            val mapMinus = PPMinus3.getInstance(
+                file,
+                if (isChangedRating) {
+                    LazerMod.getModSpeedForStarCalculate(param.modsList).toDouble()
+                } else {
+                    param.rate
+                },
+            )
+
+            val type = PPMinus3Type.getType(mapMinus)
+
             val image: ByteArray
 
             try {
-                image = imageService.getPanelB2(beatMap, mapMinus)
+                val body = mapOf(
+                    "beatmap" to beatMap,
+                    "map_minus" to mapMinus,
+                    "type" to type.keys.first().name,
+                    "type_percent" to type.values.first()
+                )
+
+                image = imageService.getPanel(body, "B2")
             } catch (e: Exception) {
                 log.error("谱面 Minus：渲染失败", e)
                 throw MapMinusException(MapMinusException.Type.MM_Render_Error)

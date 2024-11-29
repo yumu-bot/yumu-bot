@@ -18,7 +18,6 @@ import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.spring.osu.extended.rosu.JniBeatmap
-import org.spring.osu.extended.rosu.JniDifficulty
 import org.spring.osu.extended.rosu.JniPerformanceAttributes
 import org.spring.osu.extended.rosu.JniScoreState
 import org.springframework.stereotype.Service
@@ -147,7 +146,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             s.mode,
             s.mods,
             s.accuracy,
-//            s.statistics.miss,
+            s.statistics.miss,
             s.maxCombo,
             s.beatMap.maxCombo,
             type,
@@ -174,7 +173,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             expected.mode,
             LazerMod.getModsList(expected.mods),
             expected.accuracy,
-//            expected.misses,
+            expected.misses,
             expected.combo,
             b.maxCombo,
             type
@@ -195,7 +194,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         mode: OsuMode,
         mods: List<LazerMod>,
         accuracy: Double? = null,
-//        misses: Int? = null, // misses 传递过来仅在 stat不为 null 且 stat.miss 为 null 才被使用, 现在不可能为 null 了
+        miss: Int? = null,
         combo: Int? = null,
         maxCombo: Int? = null,
         type: CalculateType,
@@ -214,7 +213,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             }
         }
 
-        var max = maxCombo
+        val max = maxCombo
         var combo = combo
 
         return when (type) {
@@ -235,7 +234,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                             n300 = 0
                             n100 = 0
                             n50 = 0
-                            misses = 0
+                            this.misses = 0
                             sliderEndHits = 0
                             largeTickHits = 0
                         }
@@ -279,7 +278,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                     katu = 0
                     n100 = 0
                     n50 = 0
-                    this.misses = 0
+                    misses = 0
                 }
 
                 calculate(map, lazer, score, mods, mode, combo, 1.0)
@@ -326,19 +325,31 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
                         }
                     }
 
-                    else -> {}
+                    else -> {
+                        score?.let {
+                            it.n300 += it.misses
+                            it.misses = 0
+                        }
+                    }
                 }
 
                 calculate(map, lazer, score, mods, mode, combo, accuracy)
             }
 
             DEFAULT -> {
-                if (stat == null) return calculate(map, lazer, null, mods, mode, combo, accuracy)
-                calculate(map, lazer, score, mods, mode, combo, accuracy)
+                if (stat == null) {
+                    if (miss != null) {
+                        return calculate(map, lazer, JniScoreState(misses = miss), mods, mode, combo, accuracy)
+                    } else {
+                        return calculate(map, lazer, null, mods, mode, combo, accuracy)
+                    }
+                }
+
                 if (!passed) {
                     score?.let { it.n300 = 0 }
                     combo = null
                 }
+
                 calculate(map, lazer, score, mods, mode, combo, accuracy)
             }
         }
@@ -601,51 +612,6 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
 
         private inline fun <reified T : Mod> List<LazerMod>.contains(type: T) = LazerMod.hasMod(this, type)
 
-        private fun JniDifficulty.applyDifficultyAdjustMod(mods: List<LazerMod>) {
-            for (m in mods) {
-                if (m is LazerMod.DifficultyAdjust) {
-                    m.circleSize?.let { this.setCs(it, false) }
-                    m.approachRate?.let { this.setAr(it, false) }
-                    m.overallDifficulty?.let { this.setOd(it, false) }
-                    m.drainRate?.let { this.setHp(it, false) }
-                }
-            }
-        }
-
-        private fun LazerStatistics.getPerfectRate(): Double {
-            return if (this.perfect == 0) 0.0
-            else if (this.great == 0) Double.MAX_VALUE
-            else 1.0 * this.perfect / this.great
-        }
-
-        // JniScoreState 只能一次性设定，所以写了个中转类方便赋值
-        private data class JniScoreStat(
-            var maxCombo: Int = 0,
-            var largeTickHits: Int = 0,
-            var sliderEndHits: Int = 0,
-            var geki: Int = 0,
-            var katu: Int = 0,
-            var n300: Int = 0,
-            var n100: Int = 0,
-            var n50: Int = 0,
-            var misses: Int = 0,
-        )
-
-        private fun JniScoreStat.toState(): JniScoreState {
-            val score = JniScoreState(
-                this.maxCombo,
-                this.largeTickHits,
-                this.sliderEndHits,
-                this.geki,
-                this.katu,
-                this.n300,
-                this.n100,
-                this.n50,
-                this.misses
-            )
-            return score
-        }
-
         private fun JniPerformanceAttributes.toRosuPerformance(): RosuPerformance {
             return RosuPerformance(this)
         }
@@ -665,7 +631,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             )
         }
 
-        fun tryRun(fn: () -> Unit) {
+        private fun tryRun(fn: () -> Unit) {
             try {
                 fn()
             } catch (e: Exception) {

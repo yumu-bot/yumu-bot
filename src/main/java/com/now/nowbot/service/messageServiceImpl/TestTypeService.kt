@@ -20,16 +20,17 @@ import com.now.nowbot.util.command.FLAG_MOD
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 
-@Service("TEST_TYPE")
-class TestTypeService(
-    private val beatmapApiService: OsuBeatmapApiService, private val imageService: ImageService, private val calculateApiService: OsuCalculateApiService
+@Service("TEST_TYPE") class TestTypeService(
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val imageService: ImageService,
+    private val calculateApiService: OsuCalculateApiService
 ) : MessageService<MapTypeParam> {
     data class MapTypeParam(val bid: Long, val rate: Double = 1.0, val modsList: List<LazerMod>)
 
     override fun isHandle(
-            event: MessageEvent,
-            messageText: String,
-            data: DataValue<MapTypeParam>,
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<MapTypeParam>,
     ): Boolean {
         val m = Instruction.TEST_TYPE.matcher(messageText)
         if (!m.find()) {
@@ -38,23 +39,21 @@ class TestTypeService(
 
         val modsList: List<LazerMod> = LazerMod.getModsList(m.group(FLAG_MOD))
 
-        val bid =
-                try {
-                    m.group("bid").toLong()
-                } catch (e: NumberFormatException) {
-                    throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
-                }
+        val bid = try {
+            m.group("bid").toLong()
+        } catch (e: NumberFormatException) {
+            throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
+        }
 
-        val rate =
-                if (StringUtils.hasText(m.group("rate"))) {
-                    try {
-                        m.group("rate").toDouble()
-                    } catch (e: NumberFormatException) {
-                        throw MapMinusException(MapMinusException.Type.MM_Rate_Error)
-                    }
-                } else {
-                    1.0
-                }
+        val rate = if (StringUtils.hasText(m.group("rate"))) {
+            try {
+                m.group("rate").toDouble()
+            } catch (e: NumberFormatException) {
+                throw MapMinusException(MapMinusException.Type.MM_Rate_Error)
+            }
+        } else {
+            1.0
+        }
 
         if (rate < 0.1) throw MapMinusException(MapMinusException.Type.MM_Rate_TooSmall)
         if (rate > 5.0) throw MapMinusException(MapMinusException.Type.MM_Rate_TooLarge)
@@ -63,8 +62,7 @@ class TestTypeService(
         return true
     }
 
-    @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: MapTypeParam) {
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: MapTypeParam) {
         val fileStr: String
         val beatMap: BeatMap
         val mode: OsuMode
@@ -82,28 +80,25 @@ class TestTypeService(
             throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
         }
 
-        val file =
-                try {
-                    when (mode) {
-                        OsuMode.MANIA -> OsuFile.getInstance(fileStr)
-                        else ->
-                                throw MapMinusException(
-                                        MapMinusException.Type.MM_Function_NotSupported
-                                )
-                    }
-                } catch (e: NullPointerException) {
-                    throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
-                }
-
-        val mapMinus =
-                PPMinus3.getInstance(
-                        file,
-                        if (isChangedRating) {
-                            LazerMod.getModSpeedForStarCalculate(param.modsList).toDouble()
-                        } else {
-                            param.rate
-                        },
+        val file = try {
+            when (mode) {
+                OsuMode.MANIA -> OsuFile.getInstance(fileStr)
+                else -> throw MapMinusException(
+                    MapMinusException.Type.MM_Function_NotSupported
                 )
+            }
+        } catch (e: NullPointerException) {
+            throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
+        }
+
+        val mapMinus = PPMinus3.getInstance(
+            file,
+            if (isChangedRating) {
+                LazerMod.getModSpeedForStarCalculate(param.modsList).toDouble()
+            } else {
+                param.rate
+            },
+        )
 
         // =======================
 
@@ -112,13 +107,8 @@ class TestTypeService(
 
         var i = 1
         for (e in result) {
-            sb.append("#${i}:")
-                .append(" ")
-                .append(String.format("%.2f", e.value * 100))
-                .append("%")
-                .append(" ")
-                .append("[${e.key}]")
-                .append("\n")
+            sb.append("#${i}:").append(" ").append(String.format("%.2f", e.value * 100)).append("%").append(" ")
+                .append("[${e.key.chinese}]").append("\n")
 
             i++
 
@@ -127,9 +117,8 @@ class TestTypeService(
 
         sb.removeSuffix("\n")
 
-        event.reply(MessageChain.MessageChainBuilder()
-            .addText("这张图可能是？？：\n")
-            .addText(sb.toString())
-            .build())
+        event.reply(
+            MessageChain.MessageChainBuilder().addText("这张图可能是？？：\n").addText(sb.toString()).build()
+        )
     }
 }
