@@ -55,7 +55,7 @@ object YumuServer : YumuService {
         var isUrl = false
         if (imageList.isNotEmpty()) {
             val imageData = imageList.first() as ImageMessage
-            if (imageData.isUrl) {
+            if (imageData.isUrl || imageData.isUri) {
                 isUrl = true
                 image = imageData.path
             } else {

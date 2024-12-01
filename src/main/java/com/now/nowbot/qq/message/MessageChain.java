@@ -8,8 +8,8 @@ public class MessageChain {
     public static class MessageChainBuilder {
         private final MessageChain msgChain = new MessageChain();
 
-        public MessageChainBuilder addImage(URL path) {
-            msgChain.addMessage(new ImageMessage(path));
+        public MessageChainBuilder addImage(URL url) {
+            msgChain.addMessage(new ImageMessage(url));
             return this;
         }
 

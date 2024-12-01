@@ -7,7 +7,7 @@ import java.util.Map;
 
 public class ImageMessage extends Message {
     private enum Type {
-        FILE, URL, BYTE_ARRAY
+        FILE, URL, BYTE_ARRAY, URI
     }
 
     private final Type   type;
@@ -38,6 +38,10 @@ public class ImageMessage extends Message {
 
     public boolean isUrl() {
         return type == Type.URL;
+    }
+
+    public boolean isUri() {
+        return type == Type.URI;
     }
 
     public byte[] getData() {

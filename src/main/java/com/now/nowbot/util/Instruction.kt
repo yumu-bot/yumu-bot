@@ -362,12 +362,18 @@ enum class Instruction(val pattern: Pattern) {
         }
     }),
 
+    GET_BG(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("getbackground", "getbg", "gb")
+        appendSpace()
+        appendCaptureGroup(FLAG_DATA, REG_NUMBER_SEPERATOR, MORE)
+    }),
+
     GET_COVER(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("getcover", "gc")
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
-            appendCaptureGroup("type", REG_COVER)
+            appendCaptureGroup("type", REG_COVER, MORE)
         }
         appendSpace()
         appendCaptureGroup(FLAG_DATA, REG_NUMBER_SEPERATOR, MORE)
