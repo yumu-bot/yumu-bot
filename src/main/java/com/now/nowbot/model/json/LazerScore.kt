@@ -293,18 +293,11 @@ import kotlin.math.roundToInt
                 3 -> MANIA
                 else -> DEFAULT
             }
-        } //    怎么这里 default 是 min
-    //    @get:JsonIgnore
-    //    val startedTimePretty: LocalDateTime
-    //        get() {
-    //            return if (startedTime != null && startedTime!!.isNotBlank()) {
-    //                LocalDateTime.parse(startedTime!!, formatter).plusHours(8L)
-    //            } else {
-    //                LocalDateTime.MIN
-    //            }
-    //        }
+        }
 
-    @set:JsonProperty("started_at") @get:JsonIgnore var startedTime: OffsetDateTime? = OffsetDateTime.MIN
+    @JvmField
+    //@set:JsonProperty("started_at") @get:JsonIgnore
+    var startedTime: OffsetDateTime? = null
 
     @get:JsonProperty("started_at") val startedTimeString: String
         get() {
