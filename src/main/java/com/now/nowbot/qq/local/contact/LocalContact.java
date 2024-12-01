@@ -36,7 +36,7 @@ public class LocalContact implements com.now.nowbot.qq.contact.Contact {
                 String localPath;
                 if (image.isByteArray()) {
                     localPath = saveFile(STR."\{System.currentTimeMillis()}.jpg", image.getData());
-                } else if (image.isUrl() || image.isUri()) {
+                } else if (image.isUrl()) {
                     localPath = downloadFile(image.getPath());
                 } else {
                     localPath = copyFile(Path.of(URI.create(image.getPath().replaceAll("\\\\", "/"))));
