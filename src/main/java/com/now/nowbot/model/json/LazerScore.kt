@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
-import org.spring.osu.extended.rosu.JniScoreState
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
@@ -16,96 +15,73 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 // 这是 API v2 version header is 20220705 or higher 会返回的成绩数据。这并不支持老版本的比赛数据（stable 比赛依旧是原来那个 score
-@JsonIgnoreProperties(ignoreUnknown = true)
-open class LazerScore {
-    @JsonProperty("classic_total_score")
-    var classicScore: Long = 0L
+@JsonIgnoreProperties(ignoreUnknown = true) open class LazerScore {
+    @JsonProperty("classic_total_score") var classicScore: Long = 0L
 
-    @JsonProperty("preserve")
-    var preserve: Boolean = false
+    @JsonProperty("preserve") var preserve: Boolean = false
 
-    @JsonProperty("processed")
-    var processed: Boolean = false
+    @JsonProperty("processed") var processed: Boolean = false
 
-    @JsonProperty("ranked")
-    var ranked: Boolean = false
+    @JsonProperty("ranked") var ranked: Boolean = false
 
-    @JsonProperty("maximum_statistics")
-    var maximumStatistics: LazerStatistics = LazerStatistics()
+    @JsonProperty("maximum_statistics") var maximumStatistics: LazerStatistics = LazerStatistics()
 
-    @get:JsonProperty("total_hit")
-    val totalHit: Int
+    @get:JsonProperty("total_hit") val totalHit: Int
         get() {
             val m = this.maximumStatistics
 
             if (this.isLazer || this.beatMap.circles == null) {
                 return when (this.mode) {
-                    OSU -> (m.great ?: 0)
-                    TAIKO -> (m.great ?: 0)
-                    CATCH -> (m.great ?: 0) + (m.largeTickHit ?: 0)
-                    MANIA -> (m.perfect ?: 0)
+                    OSU -> m.great
+                    TAIKO -> m.great
+                    CATCH -> m.great + m.largeTickHit
+                    MANIA -> m.perfect
                     else -> 0
                 }
-            } else {
-                // 稳定版内，maximumStatistics 拿到的数据只是当前成绩的完美值（特别是中途退出的成绩），并不是总数
+            } else { // 稳定版内，maximumStatistics 拿到的数据只是当前成绩的完美值（特别是中途退出的成绩），并不是总数
                 val b = this.beatMap
 
                 return when (this.mode) {
                     OSU -> (b.circles ?: 0) + (b.sliders ?: 0)
                     TAIKO -> (b.circles ?: 0)
-                    CATCH -> (m.great ?: 0) + (m.largeTickHit ?: 0) + (m.legacyComboIncrease ?: 0)
+                    CATCH -> m.great + m.largeTickHit + m.legacyComboIncrease
                     MANIA -> (b.circles ?: 0) + (b.sliders ?: 0)
                     else -> 0
                 }
             }
         }
 
-    @get:JsonProperty("total_combo")
-    val totalCombo: Int
+    @get:JsonProperty("total_combo") val totalCombo: Int
         get() {
             val m = this.maximumStatistics
 
             return when (this.mode) {
-                OSU -> (m.great ?: 0) + (m.legacyComboIncrease ?: 0)
-                TAIKO -> (m.great ?: 0) + (m.legacyComboIncrease ?: 0)
-                CATCH -> (m.great ?: 0) + (m.largeTickHit ?: 0) + (m.legacyComboIncrease ?: 0)
-                MANIA -> (m.perfect ?: 0) + (m.ignoreHit ?: 0) + (m.legacyComboIncrease ?: 0)
+                OSU -> m.great + m.legacyComboIncrease
+                TAIKO -> m.great + m.legacyComboIncrease
+                CATCH -> m.great + m.largeTickHit + m.legacyComboIncrease
+                MANIA -> m.perfect + m.ignoreHit + m.legacyComboIncrease
                 else -> 0
             }
         }
 
-    @JsonProperty("mods")
-    var mods: List<LazerMod> = listOf()
-        get() {
-            // 如果是 stable 成绩，则这里的 Classic 模组应该去掉
+    @JsonProperty("mods") var mods: List<LazerMod> = listOf()
+        get() { // 如果是 stable 成绩，则这里的 Classic 模组应该去掉
             return field.filterNot { it is LazerMod.Classic && !this.isLazer }
         }
 
-    @JsonProperty("statistics")
-    var statistics: LazerStatistics = LazerStatistics()
+    @JsonProperty("statistics") var statistics: LazerStatistics = LazerStatistics()
 
-    @get:JsonProperty("score_hit")
-    // 获取目前成绩进度（部分未通过成绩，这里并不是总和）
+    @get:JsonProperty("score_hit") // 获取目前成绩进度（部分未通过成绩，这里并不是总和）
     val scoreHit: Int
         get() {
             val s = this.statistics
 
             return when (this.mode) {
-                OSU -> (s.great ?: 0) + (s.ok ?: 0) + (s.meh ?: 0) + (s.miss ?: 0)
-                TAIKO -> (s.great ?: 0) + (s.ok ?: 0) + (s.miss ?: 0)
-                CATCH ->
-                    (s.great ?: 0) +
-                            (s.miss ?: 0) +
-                            (s.largeTickHit ?: 0) +
-                            (s.largeTickMiss ?: 0)
+                OSU -> s.great + s.ok + s.meh + s.miss
+                TAIKO -> s.great + s.ok + s.miss
+                CATCH -> s.great + s.miss + s.largeTickHit + s.largeTickMiss
 
-                MANIA ->
-                    (s.perfect ?: 0) +
-                            (s.great ?: 0) +
-                            (s.good ?: 0) +
-                            (s.ok ?: 0) +
-                            (s.meh ?: 0) +
-                            (s.miss ?: 0)
+                MANIA -> s.perfect + s.great + s.good + s.ok + s.meh + s.miss
 
                 else -> 0
             }
@@ -154,7 +130,7 @@ open class LazerScore {
         // 仅 MAX 有
         @JsonProperty("legacy_combo_increase") var legacyComboIncrease: Int = 0,
     ) {
-        fun totalHits(mode: OsuMode) = when (mode) {
+        private fun getTotalHits(mode: OsuMode) = when (mode) {
             OSU -> great + ok + meh + miss
             TAIKO -> great + ok + miss
             CATCH -> great + largeTickHit + smallTickHit + miss
@@ -168,22 +144,22 @@ open class LazerScore {
             when (mode) {
                 OSU -> {
                     numerator = great * 300 + ok * 100 + meh * 50
-                    denominator = totalHits(mode) * 300
+                    denominator = getTotalHits(mode) * 300
                 }
 
                 TAIKO -> {
                     numerator = great * 2 + ok * 1
-                    denominator = totalHits(mode) * 2
+                    denominator = getTotalHits(mode) * 2
                 }
 
                 CATCH -> {
                     numerator = great + largeTickHit + smallTickHit
-                    denominator = totalHits(mode)
+                    denominator = getTotalHits(mode)
                 }
 
                 MANIA -> {
                     numerator = (perfect + great) * 300 + good * 200 + ok * 100 + meh * 50
-                    denominator = totalHits(mode) * 300
+                    denominator = getTotalHits(mode) * 300
                 }
 
                 else -> return 0f
@@ -233,129 +209,82 @@ open class LazerScore {
                 countKatu = katu
             }
         }
-
-        fun toJniScoreState(combo: Int, mode: OsuMode): JniScoreState {
-            val oldState = toScoreStatistics(mode)
-            return JniScoreState(
-                maxCombo = combo,
-                largeTickHits = largeTickHit,
-                sliderEndHits = sliderTailHit,
-                geki = oldState.countGeki!!,
-                katu = oldState.countKatu!!,
-                n300 = oldState.count300!!,
-                n100 = oldState.count100!!,
-                n50 = oldState.count50!!,
-                misses = oldState.countMiss!!,
-            )
-        }
     }
 
-    @JsonProperty("total_score_without_mods")
-    var rawScore: Long = 0L
+    @JsonProperty("total_score_without_mods") var rawScore: Long = 0L
 
-    @JsonProperty("beatmap_id")
-    var beatMapID: Long = 0L
+    @JsonProperty("beatmap_id") var beatMapID: Long = 0L
 
-    @JvmField
-    @JsonProperty("best_id")
-    var bestID: Long? = 0L
+    @JvmField @JsonProperty("best_id") var bestID: Long? = 0L
 
-    @JsonProperty("id")
-    var scoreID: Long = 0L
+    @JsonProperty("id") var scoreID: Long = 0L
 
     /** 注意，这个 rank 是 lazer 计分方式计算出来的，stable 成绩放在这里会有问题 */
-    @JsonProperty("rank")
-    var lazerRank: String = "F"
+    @JsonProperty("rank") var lazerRank: String = "F"
 
-    @get:JsonIgnore
-    @get:JvmName("getRankString")
-    val rank: String
+    @get:JsonIgnore @get:JvmName("getRankString") val rank: String
         get() {
             return getRank()
         }
 
     // 傻逼 Lazer
-    @JsonIgnore
-    private var _rank: String? = null
+    @JsonIgnore private var _rank: String? = null
 
-    @JsonIgnore
-    fun setRank(rankStr: String) {
+    @JsonIgnore fun setRank(rankStr: String) {
         _rank = rankStr
     }
 
-    @JsonProperty("legacy_rank")
-    fun getRank(): String {
+    @JsonProperty("legacy_rank") fun getRank(): String {
         return _rank ?: getStableRank(this)
     }
 
-    @JsonProperty("type")
-    var type: String = "solo_score" // solo_score 不区分是否是新老客户端
+    @JsonProperty("type") var type: String = "solo_score" // solo_score 不区分是否是新老客户端
 
-    @JsonProperty("user_id")
-    var userID: Long = 0L
+    @JsonProperty("user_id") var userID: Long = 0L
 
     /** 注意，这个 accuracy 是 lazer 计分方式计算出来的，stable 成绩放在这里会有问题 */
-    @JsonProperty("accuracy")
-    var lazerAccuracy: Double = 0.0
+    @JsonProperty("accuracy") var lazerAccuracy: Double = 0.0
 
     // 傻逼 Lazer
-    @get:JsonProperty("legacy_accuracy")
-    val accuracy: Double
+    @get:JsonProperty("legacy_accuracy") val accuracy: Double
         get() {
             return getStableAccuracy(this)
         }
 
-    @JvmField
-    @JsonProperty("build_id")
-    var buildID: Long? = 0L
+    @JsonProperty("build_id") var buildID: Long? = 0L
 
-    @get:JsonProperty("is_lazer")
-    val isLazer: Boolean
+    @get:JsonProperty("is_lazer") val isLazer: Boolean
         get() {
             return buildID != null && buildID!! > 0
         }
 
-    @set:JsonProperty("ended_at")
-    @get:JsonIgnore
-    var endedTime: OffsetDateTime = OffsetDateTime.now()
+    @set:JsonProperty("ended_at") @get:JsonIgnore var endedTime: OffsetDateTime = OffsetDateTime.now()
 
     // 给 js 用
-    @get:JsonProperty("ended_at")
-    val endedTimeString: String
+    @get:JsonProperty("ended_at") val endedTimeString: String
         get() {
             return formatter.format(endedTime)
         }
 
     // @JsonProperty("has_replay") var replay: Boolean = false
 
-    @JsonProperty("is_perfect_combo")
-    var perfectCombo: Boolean = false
+    @JsonProperty("is_perfect_combo") var perfectCombo: Boolean = false
 
-    @JsonProperty("legacy_perfect")
-    var fullCombo: Boolean = false
+    @JsonProperty("legacy_perfect") var fullCombo: Boolean = false
 
-    @JsonProperty("legacy_score_id")
-    var legacyScoreID: Long = 0L
+    @JsonProperty("legacy_score_id") var legacyScoreID: Long = 0L
 
-    @JvmField
-    @JsonProperty("legacy_total_score")
-    var legacyScore: Long? = 0L
+    @JvmField @JsonProperty("legacy_total_score") var legacyScore: Long? = 0L
 
-    @JsonProperty("max_combo")
-    var maxCombo: Int = 0
+    @JsonProperty("max_combo") var maxCombo: Int = 0
 
-    @JsonProperty("passed")
-    var passed: Boolean = false
+    @JsonProperty("passed") var passed: Boolean = false
 
-    @JvmField
-    @JsonProperty("pp")
-    var PP: Double? = 0.0
+    @JvmField @JsonProperty("pp") var PP: Double? = 0.0
 
-    @JsonProperty("ruleset_id")
-    var ruleset: Byte = 0
+    @JsonProperty("ruleset_id") var ruleset: Byte = 0
 
-    @get:JsonProperty("mode")
-    val mode: OsuMode
+    @get:JsonProperty("mode") val mode: OsuMode
         get() {
             return when (this.ruleset.toInt()) {
                 0 -> OSU
@@ -364,51 +293,40 @@ open class LazerScore {
                 3 -> MANIA
                 else -> DEFAULT
             }
-        }
-//    怎么这里 default 是 min
-//    @get:JsonIgnore
-//    val startedTimePretty: LocalDateTime
-//        get() {
-//            return if (startedTime != null && startedTime!!.isNotBlank()) {
-//                LocalDateTime.parse(startedTime!!, formatter).plusHours(8L)
-//            } else {
-//                LocalDateTime.MIN
-//            }
-//        }
+        } //    怎么这里 default 是 min
+    //    @get:JsonIgnore
+    //    val startedTimePretty: LocalDateTime
+    //        get() {
+    //            return if (startedTime != null && startedTime!!.isNotBlank()) {
+    //                LocalDateTime.parse(startedTime!!, formatter).plusHours(8L)
+    //            } else {
+    //                LocalDateTime.MIN
+    //            }
+    //        }
 
-    @JvmField
-    @set:JsonProperty("started_at")
-    @get:JsonIgnore
-    var startedTime: OffsetDateTime? = OffsetDateTime.MIN
+    @set:JsonProperty("started_at") @get:JsonIgnore var startedTime: OffsetDateTime? = OffsetDateTime.MIN
 
-    @get:JsonProperty("started_at")
-    val startedTimeString: String
+    @get:JsonProperty("started_at") val startedTimeString: String
         get() {
             return formatter.format(startedTime)
         }
 
-    @JsonProperty("total_score")
-    var score: Long = 0L
+    @JsonProperty("total_score") var score: Long = 0L
 
-    @JsonProperty("replay")
-    var replay: Boolean = false
+    @JsonProperty("replay") var replay: Boolean = false
 
     // @JsonProperty("current_user_attributes") var userAttributes: UserAttributes =
     // UserAttributes()
     // TODO 这个有问题
     // data class UserAttributes(@JsonProperty("pin") var pin: String? = null)
 
-    @JsonProperty("beatmap")
-    var beatMap: BeatMap = BeatMap()
+    @JsonProperty("beatmap") var beatMap: BeatMap = BeatMap()
 
-    @JsonProperty("beatmapset")
-    var beatMapSet: BeatMapSet = BeatMapSet()
+    @JsonProperty("beatmapset") var beatMapSet: BeatMapSet = BeatMapSet()
 
-    @JsonProperty("user")
-    var user: MicroUser = MicroUser()
+    @JsonProperty("user") var user: MicroUser = MicroUser()
 
-    @JsonProperty("weight")
-    var weight: Weight? = Weight() // 只在 BP 里有
+    @JsonProperty("weight") var weight: Weight? = Weight() // 只在 BP 里有
         get() {
             return field ?: Weight()
         }
@@ -437,18 +355,14 @@ open class LazerScore {
 
     companion object {
         private val formatter: DateTimeFormatter =
-            DateTimeFormatterBuilder()
-                .appendPattern("yyyy-MM-dd")
-                .appendLiteral("T")
-                .appendPattern("HH:mm:ss")
+            DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd").appendLiteral("T").appendPattern("HH:mm:ss")
                 .toFormatter()
 
         fun getWeightPP(score: LazerScore, position: Int = 0): Double {
             return score.weight?.PP ?: ((score.PP ?: 0.0) * (0.95).pow(position.toDouble()))
         }
 
-        @JvmStatic
-        private fun getStableRank(score: LazerScore): String {
+        @JvmStatic private fun getStableRank(score: LazerScore): String {
             if (!score.passed) return "F"
             if (score.isLazer) return score.lazerRank
 
@@ -456,13 +370,13 @@ open class LazerScore {
             val s = score.statistics
 
             val accuracy = score.accuracy
-            val p300 = 1.0 * (s.great ?: 0) / (m.great ?: m.perfect ?: 0)
-            val hasMiss = (s.miss ?: 0) > 0
+            val p300 = 1.0 * s.great / m.great
+            val hasMiss = s.miss > 0
 
             // 浮点数比较使用 `==` 容易出bug, 一般5-7位小数就够了
             var rank = when (score.mode) {
                 OSU -> {
-                    val is50Over1P = (s.meh ?: 0) / (m.great ?: m.perfect ?: 0) > 0.01
+                    val is50Over1P = s.meh / m.great > 0.01
                     when {
                         p300 > 0.99999 -> "X"
                         p300 >= 0.9 -> if (hasMiss) "A" else if (is50Over1P) "A" else "S"
@@ -508,40 +422,34 @@ open class LazerScore {
             return rank
         }
 
-        @JvmStatic
-        private fun getStableAccuracy(score: LazerScore): Double {
+        @JvmStatic private fun getStableAccuracy(score: LazerScore): Double {
             if (score.isLazer) return score.lazerAccuracy
 
             val m = score.maximumStatistics
             val s = score.statistics
 
-            var total = m.great ?: 0
+            var total = m.great
 
             return when (score.mode) {
                 OSU -> {
-                    val hit = (s.great ?: 0) + 1.0 / 3 * (s.ok ?: 0) + 1.0 / 6 * (s.meh ?: 0)
+                    val hit = s.great + 1.0 / 3 * s.ok + 1.0 / 6 * s.meh
                     hit / total
                 }
 
                 TAIKO -> {
-                    ((s.great ?: 0) + 1.0 / 2 * (s.ok ?: 0)) / total
+                    (s.great + 1.0 / 2 * s.ok) / total
                 }
 
                 CATCH -> {
-                    val hit = (s.great ?: 0) + (s.largeTickHit ?: 0) + (s.smallTickHit ?: 0)
-                    total = (m.great ?: 0) + (m.largeTickHit ?: 0) + (m.smallTickHit ?: 0)
+                    val hit = s.great + s.largeTickHit + s.smallTickHit
+                    total = m.great + m.largeTickHit + m.smallTickHit
 
                     1.0 * hit / total
                 }
 
                 MANIA -> {
-                    val hit =
-                        (s.perfect ?: 0) +
-                                (s.great ?: 0) +
-                                2.0 / 3 * (s.good ?: 0) +
-                                1.0 / 3 * (s.ok ?: 0) +
-                                1.0 / 6 * (s.meh ?: 0)
-                    total = (m.perfect ?: 0)
+                    val hit = s.perfect + s.great + 2.0 / 3 * s.good + 1.0 / 3 * s.ok + 1.0 / 6 * s.meh
+                    total = m.perfect
                     hit / total
                 }
 

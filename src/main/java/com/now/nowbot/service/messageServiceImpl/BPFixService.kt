@@ -51,7 +51,7 @@ class BPFixService(
 
         val user = getUserWithOutRange(event, matcher, mode)
 
-        val bpMap = scoreApiService.getBestScores(user.userID, mode.data, 0, 100)
+        val bpMap = scoreApiService.getBestScores(user.userID, mode.data)
 
         data.value = BPFixParam(user, processBP(bpMap), mode.data!!)
 
@@ -87,15 +87,15 @@ class BPFixService(
         val beforeBpSumAtomic = AtomicReference(0.0)
 
         bpMap.forEach { (index: Int, score: LazerScore) ->
-            beforeBpSumAtomic.updateAndGet { v: Double -> v + (score.weight?.PP ?: 0.0) }
+            beforeBpSumAtomic.updateAndGet { it + (score.weight?.PP ?: 0.0) }
             beatmapApiService.applyBeatMapExtendFromDataBase(score)
 
             val max = score.totalHit
             val combo = score.maxCombo
             val stat = score.statistics
-            val ok = stat.ok ?: 0
-            val meh = stat.meh ?: 0
-            val miss = stat.miss ?: 0
+            val ok = stat.ok
+            val meh = stat.meh
+            val miss = stat.miss
 
             // 断连击，mania 模式现在也可以参与此项筛选
             val isChoke = if (score.mode == OsuMode.MANIA) {
@@ -127,10 +127,10 @@ class BPFixService(
             pp * 100.0
         }
 
-        val afterBpSumAtomic = AtomicReference(0f)
+        val afterBpSumAtomic = AtomicReference(0.0)
 
         bpList.forEachIndexed { index, score ->
-            val weight: Double = 0.95.pow(index.toDouble())
+            val weight: Double = 0.95.pow(index)
             val pp: Double
             if (score is LazerScoreWithFcPP) {
                 pp = score.fcPP
@@ -138,15 +138,14 @@ class BPFixService(
             } else {
                 pp = score.PP ?: 0.0
             }
-            afterBpSumAtomic.updateAndGet { v: Float -> v + (weight * pp).toFloat() }
+            afterBpSumAtomic.updateAndGet { it + (weight * pp) }
         }
 
         val beforeBpSum = beforeBpSumAtomic.get()
         val afterBpSum = afterBpSumAtomic.get()
-        val newPlayerPP = (playerPP + afterBpSum - beforeBpSum).toFloat()
+        val newPlayerPP = (playerPP + afterBpSum - beforeBpSum)
 
-        val scoreList =
-            bpList.stream().filter { s: LazerScore? -> s is LazerScoreWithFcPP }.map { s: LazerScore -> s as LazerScoreWithFcPP }.toList()
+        val scoreList = bpList.filterIsInstance<LazerScoreWithFcPP>()
 
         if (scoreList.isEmpty()) return null
 
