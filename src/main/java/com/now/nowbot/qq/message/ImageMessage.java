@@ -22,7 +22,7 @@ public class ImageMessage extends Message {
 
     public ImageMessage(String path) {
         data = null;
-        this.path = STR."file:///\{path}";
+        this.path = "file:///" + path;
         type = Type.FILE;
     }
 
@@ -57,7 +57,7 @@ public class ImageMessage extends Message {
     public JsonMessage toJson() {
         Object img;
         if (isByteArray()) {
-            img = STR."base64://\{QQMsgUtil.byte2str(getData())}";
+            img = "base64://" + QQMsgUtil.byte2str(getData());
         } else {
             img = getPath();
         }

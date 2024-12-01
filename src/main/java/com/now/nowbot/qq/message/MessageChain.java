@@ -18,6 +18,11 @@ public class MessageChain {
             return this;
         }
 
+        public MessageChainBuilder addImage(String pathStr) {
+            msgChain.addMessage(new ImageMessage(pathStr));
+            return this;
+        }
+
         public MessageChainBuilder addVoice(byte[] data) {
             msgChain.addMessage(new VoiceMessage(data));
             return this;

@@ -125,11 +125,7 @@ import kotlin.io.path.Path
                     throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "完整背景")
                 }
 
-                val imageUri = if (path != null) {
-                    path.toUri()
-                } else {
-                    Path(NowbotConfig.EXPORT_FILE_PATH).resolve("help-ping.png").toUri()
-                }
+                val imageStr = path.toString()
 
                 // qq 一次性只能发 20 张图
                 if ((i >= 20) && (i % 20 == 0)) {
@@ -137,7 +133,11 @@ import kotlin.io.path.Path
                     builder = MessageChainBuilder()
                 }
 
-                builder.addImage(imageUri.toURL())
+                if (path != null) {
+                    builder.addImage(imageStr)
+                } else {
+                    builder.addImage(Path(NowbotConfig.EXPORT_FILE_PATH).resolve("help-ping.png").toUri().toURL())
+                }
             }
 
             if (builder.isNotEmpty) {
