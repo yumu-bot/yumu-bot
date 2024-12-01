@@ -301,7 +301,11 @@ import kotlin.math.roundToInt
 
     @get:JsonProperty("started_at") val startedTimeString: String
         get() {
-            return formatter.format(startedTime)
+            return if (startedTime != null) {
+                formatter.format(startedTime)
+            } else {
+                ""
+            }
         }
 
     @JsonProperty("total_score") var score: Long = 0L
