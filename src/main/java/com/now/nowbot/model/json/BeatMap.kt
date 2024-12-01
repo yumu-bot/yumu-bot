@@ -50,7 +50,10 @@ open class BeatMap {
     var beatMapSet: BeatMapSet? = null
 
     @JsonProperty("checksum")
-    var md5: String = ""
+    var md5: String? = ""
+        get() {
+            return field ?: ""
+        }
 
     @get:JsonProperty("retryList")
     val retryList: List<Int>

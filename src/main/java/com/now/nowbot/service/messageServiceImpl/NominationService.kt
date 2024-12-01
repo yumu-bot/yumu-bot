@@ -25,23 +25,19 @@ import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.regex.Matcher
-import java.util.stream.Collectors
-import java.util.stream.Stream
 import kotlin.math.floor
 
-@Service("NOMINATION")
-class NominationService(
-        private val osuBeatmapApiService: OsuBeatmapApiService,
-        private val osuUserApiService: OsuUserApiService,
-        private val osuDiscussionApiService: OsuDiscussionApiService,
-        private val imageService: ImageService,
+@Service("NOMINATION") class NominationService(
+    private val osuBeatmapApiService: OsuBeatmapApiService,
+    private val osuUserApiService: OsuUserApiService,
+    private val osuDiscussionApiService: OsuDiscussionApiService,
+    private val imageService: ImageService,
 ) : MessageService<Matcher>, TencentMessageService<Matcher> {
 
-    @Throws(Throwable::class)
-    override fun isHandle(
-            event: MessageEvent,
-            messageText: String,
-            data: DataValue<Matcher>,
+    @Throws(Throwable::class) override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<Matcher>,
     ): Boolean {
         val matcher = Instruction.NOMINATION.matcher(messageText)
         if (!matcher.find()) return false
@@ -50,16 +46,14 @@ class NominationService(
         return true
     }
 
-    @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
-        val image: ByteArray =
-                getNominationImage(
-                        matcher,
-                        osuBeatmapApiService,
-                        osuDiscussionApiService,
-                        osuUserApiService,
-                        imageService,
-                )
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
+        val image: ByteArray = getNominationImage(
+            matcher,
+            osuBeatmapApiService,
+            osuDiscussionApiService,
+            osuUserApiService,
+            imageService,
+        )
 
         try {
             event.reply(image)
@@ -77,14 +71,13 @@ class NominationService(
     }
 
     override fun reply(event: MessageEvent, param: Matcher): MessageChain? {
-        val image: ByteArray =
-                getNominationImage(
-                        param,
-                        osuBeatmapApiService,
-                        osuDiscussionApiService,
-                        osuUserApiService,
-                        imageService,
-                )
+        val image: ByteArray = getNominationImage(
+            param,
+            osuBeatmapApiService,
+            osuDiscussionApiService,
+            osuUserApiService,
+            imageService,
+        )
 
         return MessageChainBuilder().addImage(image).build()
     }
@@ -93,11 +86,11 @@ class NominationService(
         private val log: Logger = LoggerFactory.getLogger(NominationService::class.java)
 
         private fun getNominationImage(
-                matcher: Matcher,
-                osuBeatmapApiService: OsuBeatmapApiService,
-                osuDiscussionApiService: OsuDiscussionApiService,
-                osuUserApiService: OsuUserApiService,
-                imageService: ImageService,
+            matcher: Matcher,
+            osuBeatmapApiService: OsuBeatmapApiService,
+            osuDiscussionApiService: OsuDiscussionApiService,
+            osuUserApiService: OsuUserApiService,
+            imageService: ImageService,
         ): ByteArray {
             val sidStr: String? = matcher.group(FLAG_SID)
             val mode = matcher.group("mode")
@@ -111,14 +104,13 @@ class NominationService(
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_SID)
             }
 
-            val data =
-                    parseData(
-                            sid,
-                            isSID,
-                            osuBeatmapApiService,
-                            osuDiscussionApiService,
-                            osuUserApiService,
-                    )
+            val data = parseData(
+                sid,
+                isSID,
+                osuBeatmapApiService,
+                osuDiscussionApiService,
+                osuUserApiService,
+            )
 
             return try {
                 imageService.getPanel(data, "N")
@@ -128,14 +120,12 @@ class NominationService(
             }
         }
 
-        @JvmStatic
-        @Throws(GeneralTipsException::class)
-        fun parseData(
-                sid: Long,
-                isSID: Boolean,
-                beatmapApiService: OsuBeatmapApiService,
-                discussionApiService: OsuDiscussionApiService,
-                userApiService: OsuUserApiService?,
+        @JvmStatic @Throws(GeneralTipsException::class) fun parseData(
+            sid: Long,
+            isSID: Boolean,
+            beatmapApiService: OsuBeatmapApiService,
+            discussionApiService: OsuDiscussionApiService,
+            userApiService: OsuUserApiService?,
         ): Map<String, Any> {
             var id = sid
             var s: BeatMapSet
@@ -143,7 +133,7 @@ class NominationService(
             val details: List<DiscussionDetails>
             val discussions: List<DiscussionDetails>
             val hypes: List<DiscussionDetails>
-            val more: MutableMap<String, Any> = HashMap()
+            val more: Map<String, Any>
 
             if (isSID) {
                 try {
@@ -196,47 +186,28 @@ class NominationService(
             }
 
             // 插入难度名
-            if (! s.beatMaps.isNullOrEmpty()) {
-                val diffs =
-                        s.beatMaps!!
-                                .stream()
-                                .collect(
-                                        Collectors.toMap(
-                                                BeatMap::beatMapID,
-                                                BeatMap::difficultyName,
-                                        )
-                                )
+            if (!s.beatMaps.isNullOrEmpty()) {
+                val diffs = s.beatMaps!!.associate { it.beatMapID to it.difficultyName }
 
                 d.addDifficulty4DiscussionDetails(diffs)
             }
 
             // 获取 hypes 和 discussions 列表
+            // 这两个list需要合并起来
             run {
-                // 这两个list需要合并起来
-                details =
-                        Stream.of(d.discussions, d.includedDiscussions)
-                                .filter { obj: List<DiscussionDetails>? -> Objects.nonNull(obj) }
-                                .flatMap { obj: List<DiscussionDetails>? -> obj!!.stream() }
-                                .distinct()
-                                .toList()
+                details = (d.discussions + (d.includedDiscussions ?: emptyList())).distinct()
+                hypes = details.filter { i: DiscussionDetails ->
+                    val t = i.messageType
+                    t == hype || t == praise
+                }
 
-                hypes =
-                        details.stream()
-                                .filter { i: DiscussionDetails ->
-                                    val t = i.messageType
-                                    t == hype || t == praise
-                                }
-                                .toList()
-
-                val dis =
-                        details.stream()
-                                .filter { i: DiscussionDetails ->
-                                    val t = i.messageType
-                                    t == problem || t == suggestion
-                                }
-                                .toList()
+                val dis = details.filter { i: DiscussionDetails ->
+                    val t = i.messageType
+                    t == problem || t == suggestion
+                }
                 discussions = Discussion.toppingUnsolvedDiscussionDetails(dis)
             }
+
             // 这一部分提供额外信息
             run {
                 var hostCount = 0
@@ -271,14 +242,14 @@ class NominationService(
                 var maxStarRating = 0.0
                 var minStarRating = 0.0
 
-                if (! bs.isNullOrEmpty()) {
+                if (!bs.isNullOrEmpty()) {
                     val f: BeatMap = bs.first()
                     totalLength = f.totalLength
                     maxStarRating = f.starRating
                     minStarRating = maxStarRating
                 }
 
-                if (! bs.isNullOrEmpty()) {
+                if (!bs.isNullOrEmpty()) {
                     for (b in bs) {
                         if (s.creatorID == b.mapperID) {
                             hostCount++
@@ -307,38 +278,32 @@ class NominationService(
                 }
 
                 // 其他
-                val tags =
-                        (s.tags ?: "")
-                                .split(" ".toRegex())
-                                .dropLastWhile { it.isEmpty() }
-                                .toTypedArray()
+                val tags = (s.tags ?: "").split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
-                more["hostCount"] = hostCount
-                more["guestCount"] = guestCount
-                more["totalCount"] = hostCount + guestCount
-                more["maxSR"] = maxSR
-                more["minSR"] = minSR
-                more["SRList"] =
-                        SRList.stream()
-                                .sorted(
-                                        Comparator.comparingDouble { obj: Double -> obj }.reversed()
-                                )
-                                .toList()
-                more["totalLength"] = totalLength
-                more["tags"] = tags
-                more["problemCount"] = problemCount
-                more["suggestCount"] = suggestCount
-                more["notSolvedCount"] = notSolvedCount
-                more["hypeCount"] = hypeCount
-                more.put("praiseCount", praiseCount)
+                more = mapOf(
+                    "host_count" to hostCount,
+                    "guest_count" to guestCount,
+                    "total_count" to (hostCount + guestCount),
+                    "max_star" to maxSR,
+                    "min_star" to minSR,
+                    "stars" to SRList.sortedDescending(),
+                    "total_length" to totalLength,
+                    "tags" to tags,
+                    "problem_count" to problemCount,
+                    "suggest_count" to suggestCount,
+                    "not_solved_count" to notSolvedCount,
+                    "hype_count" to hypeCount,
+                    "praise_count" to praiseCount,
+                )
             }
 
-            val n = HashMap<String, Any>()
-            n["beatmapset"] = s
-            n["discussion"] = discussions
-            n["hype"] = hypes
-            n["more"] = more
-            n["users"] = d.users
+            val n = mapOf(
+                "beatmapset" to s,
+                "discussion" to discussions,
+                "hype" to hypes,
+                "more" to more,
+                "users" to d.users,
+            )
 
             return n
         }
