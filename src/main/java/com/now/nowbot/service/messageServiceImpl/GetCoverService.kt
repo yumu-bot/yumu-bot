@@ -136,7 +136,7 @@ import kotlin.io.path.Path
                 if (path != null) {
                     builder.addImage(imageStr)
                 } else {
-                    builder.addImage(Path(NowbotConfig.EXPORT_FILE_PATH).resolve("help-ping.png").toUri().toURL())
+                    builder.addImage(Path(NowbotConfig.EXPORT_FILE_PATH).resolve("help-ping.png").toString())
                 }
             }
 

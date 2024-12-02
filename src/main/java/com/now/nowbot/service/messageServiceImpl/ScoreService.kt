@@ -244,16 +244,16 @@ class ScoreService(
         val position: Int?
 
         if (param.mods.isNotEmpty()) {
-            score =
-                    try {
-                        scoreApiService.getBeatMapScore(bid, user.userID, mode, param.mods)?.score
-                    } catch (e: WebClientResponseException) {
-                        throw GeneralTipsException(
-                                GeneralTipsException.Type.G_Null_Score,
-                                bid.toString(),
-                        )
-                    }
-            beatmapApiService.applyBeatMapExtend(score)
+            score = try {
+                scoreApiService.getBeatMapScore(bid, user.userID, mode, param.mods)?.score
+            } catch (e: WebClientResponseException) {
+                throw GeneralTipsException(
+                    GeneralTipsException.Type.G_Null_Score,
+                    bid.toString(),
+                )
+            }
+
+            beatmapApiService.applyBeatMapExtend(score!!)
             position = null
         } else {
             val beatMapScore =

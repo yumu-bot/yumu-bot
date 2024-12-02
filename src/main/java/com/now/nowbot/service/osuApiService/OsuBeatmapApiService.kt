@@ -1,125 +1,84 @@
-package com.now.nowbot.service.osuApiService;
+package com.now.nowbot.service.osuApiService
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.model.LazerMod;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.json.*;
-import com.now.nowbot.model.multiplayer.Match;
-import org.springframework.lang.Nullable;
+import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.LazerMod.Companion.getModsValue
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.*
+import java.io.IOException
+import java.util.*
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+interface OsuBeatmapApiService {
+    fun getBeatMapFileString(bid: Long): String?
 
-public interface OsuBeatmapApiService {
-    // 获取谱面：先获取本地，再获取 bs api，最后获取网页
-    String getBeatMapFileString(long bid);
+    fun getBeatMapFileByte(bid: Long): ByteArray?
 
-    byte[] getBeatMapFileByte(long bid);
+    fun hasBeatMapFileFromDirectory(bid: Long): Boolean
 
-    boolean hasBeatMapFileFromDirectory(long bid);
-
-    boolean refreshBeatMapFileFromDirectory(long bid);
+    fun refreshBeatMapFileFromDirectory(bid: Long): Boolean
 
     // 查一下文件是否跟 checksum 是否对得上
-    boolean checkBeatMap(BeatMap beatMap) throws IOException;
+    @Throws(IOException::class) fun checkBeatMap(beatMap: BeatMap?): Boolean
 
-    boolean checkBeatMap(long bid, String checkStr) throws IOException;
+    @Throws(IOException::class) fun checkBeatMap(bid: Long, checkStr: String?): Boolean
 
-    boolean checkBeatMap(BeatMap beatMap, String fileStr) throws IOException;
+    @Throws(IOException::class) fun checkBeatMap(beatMap: BeatMap, fileStr: String): Boolean
 
     // 尽量用 FromDataBase，这样可以节省 API 开支
-    BeatMap getBeatMap(long bid);
+    fun getBeatMap(bid: Long): BeatMap
 
-    default BeatMap getBeatMap(int bid) {
-        return getBeatMap((long) bid);
+    fun getBeatMap(bid: Int): BeatMap {
+        return getBeatMap(bid.toLong())
     }
 
-    BeatMapSet getBeatMapSet(long sid);
+    fun getBeatMapSet(sid: Long): BeatMapSet
 
-    default BeatMapSet getBeatMapSet(int sid) {
-        return getBeatMapSet((long) sid);
+    fun getBeatMapSet(sid: Int): BeatMapSet {
+        return getBeatMapSet(sid.toLong())
     }
 
-    default BeatMap getBeatMapFromDataBase(int bid) {
-        return getBeatMapFromDataBase((long) bid);
+    fun getBeatMapFromDataBase(bid: Int): BeatMap {
+        return getBeatMapFromDataBase(bid.toLong())
     }
 
-    BeatMap getBeatMapFromDataBase(long bid);
+    fun getBeatMapFromDataBase(bid: Long): BeatMap
 
-    boolean isNewbieMap(long bid);
+    fun isNotOverRating(bid: Long): Boolean
 
-    int[] getBeatmapObjectGrouping26(BeatMap map) throws Exception;
+    @Throws(Exception::class) fun getBeatmapObjectGrouping26(beatMap: BeatMap): IntArray
 
-    int getFailTime(long bid, int passObj);
+    fun getFailTime(bid: Long, passObj: Int): Int
 
-    double getPlayPercentage(LazerScore score);
+    fun getPlayPercentage(score: LazerScore): Double
 
-    BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode);
+    fun getAttributes(id: Long, mode: OsuMode?): BeatmapDifficultyAttributes
 
-    BeatmapDifficultyAttributes getAttributes(Long id, OsuMode mode, int value);
+    fun getAttributes(id: Long, mode: OsuMode?, value: Int): BeatmapDifficultyAttributes
 
-    default BeatmapDifficultyAttributes getAttributes(Long id) {
-        return getAttributes(id, OsuMode.DEFAULT);
+    fun getAttributes(id: Long): BeatmapDifficultyAttributes {
+        return getAttributes(id, OsuMode.DEFAULT)
     }
 
-    default BeatmapDifficultyAttributes getAttributes(Long id, int value) {
-        return getAttributes(id, OsuMode.DEFAULT, value);
+    fun getAttributes(id: Long, value: Int): BeatmapDifficultyAttributes {
+        return getAttributes(id, OsuMode.DEFAULT, value)
     }
 
-    default BeatmapDifficultyAttributes getAttributes(Long id, @Nullable List<LazerMod> mods) {
-        if (mods == null || mods.isEmpty()) return getAttributes(id, OsuMode.DEFAULT);
+    fun getAttributes(id: Long, mods: List<LazerMod>?): BeatmapDifficultyAttributes {
+        if (mods.isNullOrEmpty()) return getAttributes(id, OsuMode.DEFAULT)
 
-        int value = LazerMod.getModsValue(mods);
-        return getAttributes(id, value);
+        return getAttributes(id, getModsValue(mods))
     }
 
-    JsonNode lookupBeatmap(String checksum, String filename, Long id);
+    fun lookupBeatmap(checksum: String?, filename: String?, id: Long?): JsonNode?
 
-    BeatMapSetSearch searchBeatMapSet(Map<String, Object> query);
+    fun searchBeatMapSet(query: Map<String, Any?>): BeatMapSetSearch
 
     // 给同一张图的成绩添加完整的谱面
-    default void applyBeatMapExtendForSameScore(List<LazerScore> scoreList) {
-        if (scoreList.isEmpty()) return;
-
-        var extended = getBeatMap(scoreList.getFirst().getBeatMapID());
-
-        for (var score : scoreList) {
-            var lite = score.getBeatMap();
-
-            score.setBeatMap(BeatMap.extend(lite, extended));
-            if (extended.getBeatMapSet() != null) {
-                score.setBeatMapSet(extended.getBeatMapSet());
-            }
-        }
-    }
-
-    // 给标准谱面添加完整的谱面
-    default void applyBeatMapExtend(Match.MatchRound round) {
-        var b = Objects.requireNonNullElse(round.getBeatMap(), new BeatMap());
-        round.setBeatMap(getBeatMap(b.getBeatMapID()));
-    }
+    fun applyBeatMapExtendForSameScore(scoreList: List<LazerScore>)
 
     // 给成绩添加完整的谱面
-    default void applyBeatMapExtend(LazerScore score) {
-        var extended = getBeatMap(score.getBeatMapID());
-        var lite = score.getBeatMap();
-
-        score.setBeatMap(BeatMap.extend(lite, extended));
-        if (extended.getBeatMapSet() != null) {
-            score.setBeatMapSet(extended.getBeatMapSet());
-        }
-    }
+    fun applyBeatMapExtend(score: LazerScore)
 
     // 给成绩添加完整的谱面
-    default void applyBeatMapExtendFromDataBase(LazerScore score) {
-        var extended = getBeatMapFromDataBase(score.getBeatMap().getBeatMapID());
-        var lite = score.getBeatMap();
-
-        score.setBeatMap(BeatMap.extend(lite, extended));
-        if (extended.getBeatMapSet() != null) {
-            score.setBeatMapSet(extended.getBeatMapSet());
-        }
-    }
+    fun applyBeatMapExtendFromDataBase(score: LazerScore)
 }

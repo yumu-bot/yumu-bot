@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
 import jakarta.persistence.Column
-import org.springframework.lang.NonNull
 import java.time.OffsetDateTime
 import java.util.stream.StreamSupport
 
@@ -182,31 +181,6 @@ open class BeatMap {
                     .toList()
             }
             return list
-        }
-
-        @JvmStatic
-        @NonNull
-        fun extend(lite: BeatMap?, extended: BeatMap?): BeatMap? {
-            var liteMap = lite
-
-            if (extended == null) {
-                return liteMap
-            } else if (liteMap?.CS == null) {
-                liteMap = extended
-                return liteMap
-            }
-
-            extended.starRating = liteMap.starRating
-            extended.CS = liteMap.CS
-            extended.AR = liteMap.AR
-            extended.OD = liteMap.OD
-            extended.HP = liteMap.HP
-            extended.totalLength = liteMap.totalLength
-            extended.hitLength = liteMap.hitLength
-            extended.BPM = liteMap.BPM
-
-            liteMap = extended
-            return liteMap
         }
     }
 }

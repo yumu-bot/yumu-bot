@@ -181,7 +181,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
     }
 
     private fun getStar(beatMapID: Long, mode: OsuMode, mods: List<LazerMod>): Double {
-        val map: ByteArray = beatmapApiService.getBeatMapFileByte(beatMapID)
+        val map: ByteArray = beatmapApiService.getBeatMapFileByte(beatMapID)!!
 
         val performance = calculate(map, mods = mods, mode = mode)
         return performance.getStarRating()
@@ -201,7 +201,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         passed: Boolean = false,
         totalHit: Int? = null,
     ): JniPerformanceAttributes {
-        val map: ByteArray = beatmapApiService.getBeatMapFileByte(id)
+        val map: ByteArray = beatmapApiService.getBeatMapFileByte(id)!!
 
         val score = if (stat == null) {
             null

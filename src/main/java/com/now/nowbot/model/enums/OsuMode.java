@@ -82,6 +82,10 @@ public enum OsuMode {
         return mode == null || mode == DEFAULT;
     }
 
+    public static boolean isNotDefaultOrNull(OsuMode mode) {
+        return ! isDefaultOrNull(mode);
+    }
+
 
     public static Optional<String> getName(OsuMode mode) {
         if (DEFAULT.equals(mode)) {
