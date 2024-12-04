@@ -8,7 +8,6 @@ import com.now.nowbot.model.multiplayer.Match.MatchScore
 import com.now.nowbot.model.multiplayer.MatchRating
 import com.now.nowbot.model.multiplayer.MatchRating.Companion.insertMicroUserToScores
 import com.now.nowbot.model.multiplayer.MatchRating.RatingParam
-import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -46,7 +45,6 @@ import java.util.regex.Matcher
     @CheckPermission(isGroupAdmin = true) @Throws(Throwable::class) override fun HandleMessage(
         event: MessageEvent, matcher: Matcher
     ) {
-        val subject = event.subject
 
         val isMultiple = matcher.group("x") != null
         var id = 0L
@@ -80,23 +78,12 @@ import java.util.regex.Matcher
         }
 
         //必须群聊
-        if (subject is Group) {
-            try {
-                if (isMultiple) {
-                    if (Objects.nonNull(ids)) {
-                        subject.sendFile(
-                            sb.toString().toByteArray(StandardCharsets.UTF_8), "${ids!!.first()}s.csv"
-                        )
-                    }
-                } else {
-                    subject.sendFile(sb.toString().toByteArray(StandardCharsets.UTF_8), "$id.csv")
-                }
-            } catch (e: Exception) {
-                log.error("比赛评分表：发送失败", e)
-                throw MRAException(MRAException.Type.RATING_Send_CRAFailed)
-            }
+        val file = sb.toString().toByteArray(StandardCharsets.UTF_8)
+
+        if (isMultiple && ids != null) {
+            event.replyFileInGroup(file, "${ids.first()}s.csv")
         } else {
-            throw MRAException(MRAException.Type.RATING_Send_NotGroup)
+            event.replyFileInGroup(file, "$id.csv")
         }
     }
 

@@ -1,10 +1,12 @@
 package com.now.nowbot.qq.event;
 
 import com.now.nowbot.qq.contact.Contact;
+import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.message.*;
 import org.springframework.lang.Nullable;
 
 import java.net.URL;
+import java.util.Optional;
 
 public interface MessageEvent extends Event{
     Contact getSubject();
@@ -39,6 +41,54 @@ public interface MessageEvent extends Event{
 
     default MessageReceipt replyVoice(byte[] voice) {
         return getSubject().sendVoice(voice);
+    }
+
+    default MessageReceipt replyInGroup(MessageChain message) {
+        if (getSubject() instanceof Group group) {
+            return group.sendMessage(message);
+        } else {
+            throw new RuntimeException("请在群聊中使用这个功能！");
+        }
+    }
+
+    default MessageReceipt replyInGroup(String message) {
+        if (getSubject() instanceof Group group) {
+            return group.sendMessage(message);
+        } else {
+            throw new RuntimeException("请在群聊中使用这个功能！");
+        }
+    }
+
+    default MessageReceipt replyInGroup(Exception e) {
+        if (getSubject() instanceof Group group) {
+            return group.sendMessage(e.getMessage());
+        } else {
+            throw new RuntimeException("请在群聊中使用这个功能！");
+        }
+    }
+
+    default MessageReceipt replyInGroup(byte[] image) {
+        if (getSubject() instanceof Group group) {
+            return group.sendImage(image);
+        } else {
+            throw new RuntimeException("请在群聊中使用这个功能！");
+        }
+    }
+
+    default MessageReceipt replyInGroup(URL image) {
+        if (getSubject() instanceof Group group) {
+            return group.sendImage(image);
+        } else {
+            throw new RuntimeException("请在群聊中使用这个功能！");
+        }
+    }
+
+    default void replyFileInGroup(byte[] data, @Nullable String name) {
+        if (getSubject() instanceof Group group) {
+            group.sendFile(data, Optional.ofNullable(name).orElse("Yumu-file"));
+        } else {
+            throw new RuntimeException("请在群聊中使用这个功能！");
+        }
     }
 
     String getRawMessage();

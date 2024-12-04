@@ -193,7 +193,7 @@ class BeatMapSet {
         val beatMapSetID: Long,
 
         @JsonProperty("rulesets")
-        val mode: List<String>,
+        val mode: List<String>?,
 
         val reset: Boolean,
 
@@ -317,4 +317,9 @@ class BeatMapSet {
 
             return Collections.max(beatMaps!!, starComparator)
         }
+
+    @get:JsonProperty("preview_name")
+    val previewName: String
+        get() = this.artist + " - " + this.title + " (" + this.creator + ") [" + this.beatMapSetID + "]"
+
 }

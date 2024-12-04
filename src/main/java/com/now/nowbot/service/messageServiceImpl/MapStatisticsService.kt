@@ -88,7 +88,6 @@ class MapStatisticsService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: MapParam) {
-        val from = event.subject
         val image =
                 try {
                     param.getImage()
@@ -101,7 +100,7 @@ class MapStatisticsService(
                 }
 
         try {
-            from?.sendImage(image)
+            event.reply(image)
         } catch (e: Exception) {
             log.error("谱面信息：发送失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "谱面信息")

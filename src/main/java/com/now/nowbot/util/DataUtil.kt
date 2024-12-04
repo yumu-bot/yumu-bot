@@ -573,8 +573,8 @@ object DataUtil {
         return str.replace("},", "},\n\n")
     }
 
-    fun getRoundedNumberUnit(number: Double, level: Int): Char {
-        var number = number
+    private fun getRoundedNumberUnit(num: Double, level: Int): Char {
+        var number = num
         var unit = '-'
         number = abs(number)
         if (level < 1 || level > 2) return '-'
@@ -621,7 +621,7 @@ object DataUtil {
         return unit
     }
 
-    fun getRoundedNumber(number: Double, level: Int): Double {
+    fun getRoundedNumber(num: Double, level: Int): Double {
         // lv1.保留1位小数，结果不超4位字符宽(包含单位)
         // 1-99-0.1K-9.9K-10K-99K-0.1M-9.9M-10M-99M-0.1G-9.9G-10G-99G-0.1T-9.9T-10T-99T-Inf.
 
@@ -630,7 +630,7 @@ object DataUtil {
 
         // 将负值纳入计算
 
-        var number = number
+        var number = num
         while (number >= 1000 || number <= -1000) {
             number /= 1000.0
         }
@@ -648,8 +648,8 @@ object DataUtil {
         return number
     }
 
-    fun getRoundedNumberStr(number: Double, level: Int): String {
-        var number = number
+    fun getRoundedNumberStr(num: Double, level: Int): String {
+        var number = num
         val c = getRoundedNumberUnit(number, level)
         val isInt: Boolean
         val intValue: Int

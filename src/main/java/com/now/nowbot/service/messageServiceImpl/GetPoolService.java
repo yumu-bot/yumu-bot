@@ -43,7 +43,7 @@ public class GetPoolService implements MessageService<GetPoolService.GetPoolPara
             try {
                 var md = DataUtil.getMarkdownFile("Help/getpool.md");
                 var image = imageService.getPanelA6(md, "help");
-                event.getSubject().sendImage(image);
+                event.reply(image);
                 return true;
             } catch (Exception e) {
                 throw new MapPoolException(MapPoolException.Type.GP_Instructions);
@@ -73,15 +73,13 @@ public class GetPoolService implements MessageService<GetPoolService.GetPoolPara
 
     @Override
     public void HandleMessage(MessageEvent event, GetPoolParam param) throws Throwable {
-        var from = event.getSubject();
-
         var mapPool = new MapPoolDto(param.name(), param.map(), osuBeatmapApiService);
 
         if (mapPool.getModPools().isEmpty()) throw new MapPoolException(MapPoolException.Type.GP_Map_Empty);
 
         try {
             var image = imageService.getPanelH(mapPool, param.mode());
-            from.sendImage(image);
+            event.reply(image);
         } catch (Exception e) {
             log.error("GP 数据请求失败", e);
             throw new MapPoolException(MapPoolException.Type.GP_Send_Error);

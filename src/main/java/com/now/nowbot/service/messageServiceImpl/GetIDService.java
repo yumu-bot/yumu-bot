@@ -31,8 +31,6 @@ public class GetIDService implements MessageService<Matcher> {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
-
         if (Permission.isCommonUser(event)) {
             throw new GeneralTipsException(GeneralTipsException.Type.G_Permission_Group);
         }
@@ -61,6 +59,6 @@ public class GetIDService implements MessageService<Matcher> {
         }
 
 
-        from.sendMessage(sb.substring(0, sb.length() - 2));
+        event.reply(sb.substring(0, sb.length() - 2));
     }
 }

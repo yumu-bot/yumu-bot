@@ -105,7 +105,7 @@ class QualifiedMapService(
             search.sortBeatmapDiff()
 
             val img = imageService.getPanelA2(search)
-            event.getSubject().sendImage(img)
+            event.reply(img)
         } catch (e: Exception) {
             log.error("过审谱面：", e)
             throw QualifiedMapException(QualifiedMapException.Type.Q_Send_Error)

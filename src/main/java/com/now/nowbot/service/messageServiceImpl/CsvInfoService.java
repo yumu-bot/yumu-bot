@@ -1,14 +1,12 @@
 package com.now.nowbot.service.messageServiceImpl;
 
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.serviceException.CsvInfoException;
 import com.now.nowbot.util.DataUtil;
 import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.QQMsgUtil;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -35,7 +33,7 @@ public class CsvInfoService implements MessageService<CsvInfoService.CIParam> {
 
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
         List<String> users = DataUtil.parseUsername(matcher.group("data"));
-        String name = users.isEmpty() ? "CI.csv" : STR."CI-\{users.getFirst()}.csv";
+        String name = users.isEmpty() ? "CI.csv" : "CI-" + users.getFirst() +".csv";
 
         param.setValue(new CIParam(mode, users, name));
         return true;
@@ -43,9 +41,8 @@ public class CsvInfoService implements MessageService<CsvInfoService.CIParam> {
 
     @Override
     public void HandleMessage(MessageEvent event, CIParam param) throws Throwable {
-        var from = event.getSubject();
         if (param.users.isEmpty()) throw new CsvInfoException(CsvInfoException.Type.CI_Instructions);
-        if (param.users.size() >= 50) from.sendMessage(CsvInfoException.Type.CI_Fetch_TooManyUser.message);
+        if (param.users.size() >= 50) event.reply(CsvInfoException.Type.CI_Fetch_TooManyUser.message);
         if (param.users.size() > 200) throw new CsvInfoException(CsvInfoException.Type.CI_Fetch_Exceed);
 
         //主获取
@@ -65,7 +62,7 @@ public class CsvInfoService implements MessageService<CsvInfoService.CIParam> {
                 }
 
                 if (event.getSubject() != null) {
-                    from.sendMessage(CsvInfoException.Type.CI_Fetch_ReachThreshold.message);
+                    event.reply(CsvInfoException.Type.CI_Fetch_ReachThreshold.message);
                 }
 
                 try {
@@ -84,15 +81,6 @@ public class CsvInfoService implements MessageService<CsvInfoService.CIParam> {
         }
 
         //必须群聊
-        if (from instanceof Group) {
-            try {
-                QQMsgUtil.sendGroupFile(event, param.name, sb.toString().getBytes(StandardCharsets.UTF_8));
-            } catch (Exception e) {
-                log.error("玩家信息表: 发送失败", e);
-                throw new CsvInfoException(CsvInfoException.Type.CI_Send_Failed);
-            }
-        } else {
-            throw new CsvInfoException(CsvInfoException.Type.CI_Send_NotGroup);
-        }
+        event.replyFileInGroup(sb.toString().getBytes(StandardCharsets.UTF_8), param.name);
     }
 }

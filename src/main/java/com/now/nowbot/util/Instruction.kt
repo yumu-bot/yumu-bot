@@ -1,9 +1,9 @@
 package com.now.nowbot.util
 
-import com.now.nowbot.util.command.*
-import com.now.nowbot.util.command.MatchLevel.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import com.now.nowbot.util.command.*
+import com.now.nowbot.util.command.MatchLevel.*
 
 enum class Instruction(val pattern: Pattern) {
     // #0 调出帮助
@@ -360,6 +360,11 @@ enum class Instruction(val pattern: Pattern) {
             appendSpace()
             appendCaptureGroup("area2", REG_USERNAME, ANY)
         }
+    }),
+
+    SEARCH(CommandPatternBuilder.create {
+        appendCommandsIgnore(REG_IGNORE, "search", "find", "o", "look(up)?")
+        appendCaptureGroup("text", REG_ANYTHING, MORE)
     }),
 
     GET_BG(CommandPatternBuilder.create {

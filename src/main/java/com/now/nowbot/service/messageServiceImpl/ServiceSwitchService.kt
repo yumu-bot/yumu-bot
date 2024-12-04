@@ -97,7 +97,6 @@ class ServiceSwitchService(
     // @CheckPermission(isSuperAdmin = true)
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: SwitchParam) {
-        val from = event.subject
         val service = param.serviceName
         val group = param.groupID
 
@@ -107,18 +106,18 @@ class ServiceSwitchService(
                     if (group == -1L) {
                         controller.serviceSwitch(service, true)
                         //                        Permission.openService(service);
-                        from.sendMessage("已启动 ${service} 服务")
+                        event.reply("已启动 ${service} 服务")
                     } else if (group == 0L) {
                         // 这里要放对所有群聊的操作
                         // 貌似没这功能
                         //                        permission.removeGroupAll(service, true);
-                        //                        from.sendMessage(STR."已全面清除 \{service} 服务的禁止状态");
-                        from.sendMessage("已全面解禁 ${service} 服务（并未修好）")
+                        //                        event.reply(STR."已全面清除 \{service} 服务的禁止状态");
+                        event.reply("已全面解禁 ${service} 服务（并未修好）")
                     } else {
                         controller.unblockGroup(service, group)
                         //                        permission.removeGroup(service, group, true,
                         // false);
-                        from.sendMessage("已解禁群聊 ${group} 的 ${service} 服务")
+                        event.reply("已解禁群聊 ${group} 的 ${service} 服务")
                     }
                 } catch (e: TipsRuntimeException) {
                     throw ServiceSwitchException(
@@ -135,14 +134,14 @@ class ServiceSwitchService(
                 try {
                     if (group == -1L) {
                         controller.serviceSwitch(service, false)
-                        from.sendMessage("已关闭 ${service} 服务")
+                        event.reply("已关闭 ${service} 服务")
                     } else if (group == 0L) {
                         //                        permission.removeGroupAll(service, true);
-                        //                        from.sendMessage(STR."已全面清除 \{service} 服务的禁止状态");
-                        from.sendMessage("已全面禁止 ${service} 服务（并未修好）")
+                        //                        event.reply(STR."已全面清除 \{service} 服务的禁止状态");
+                        event.reply("已全面禁止 ${service} 服务（并未修好）")
                     } else {
                         controller.blockGroup(service, group)
-                        from.sendMessage("已禁止群聊 ${group} 的 ${service} 服务")
+                        event.reply("已禁止群聊 ${group} 的 ${service} 服务")
                     }
                 } catch (e: TipsRuntimeException) {
                     throw ServiceSwitchException(
@@ -159,7 +158,7 @@ class ServiceSwitchService(
                 val md = serviceListMarkdown
                 try {
                     val image = imageService.getPanelA6(md, "switch")
-                    from.sendImage(image)
+                    event.reply(image)
                 } catch (e: HttpServerErrorException.InternalServerError) {
                     throw ServiceSwitchException(ServiceSwitchException.Type.SW_Render_Failed)
                 } catch (e: WebClientResponseException.InternalServerError) {

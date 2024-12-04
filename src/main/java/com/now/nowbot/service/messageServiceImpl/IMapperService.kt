@@ -102,7 +102,7 @@ class IMapperService(
             run {
                 var resultCount = 0
                 do {
-                    if (Objects.isNull(search)) {
+                    if (search == null) {
                         search = beatmapApiService.searchBeatMapSet(query)
                         resultCount += search!!.beatmapSets.size
                     } else {
@@ -144,7 +144,7 @@ class IMapperService(
             var mostRecentRankedBeatmap = result
                 .find { it.hasLeaderBoard && user.userID == it.creatorID }
 
-            if (Objects.isNull(mostRecentRankedBeatmap) && user.rankedCount > 0) {
+            if (mostRecentRankedBeatmap == null && user.rankedCount > 0) {
                 try {
                     val newQuery = HashMap<String, Any>()
                     newQuery["q"] = user.userID.toString()

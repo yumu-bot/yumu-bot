@@ -48,7 +48,6 @@ public class MatchRoundService implements MessageService<Matcher> {
 
     @Override
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
         int matchID;
         var matchIDStr = matcher.group("matchid");
 
@@ -57,7 +56,7 @@ public class MatchRoundService implements MessageService<Matcher> {
             try {
                 var md = DataUtil.getMarkdownFile("Help/round.md");
                 var image = imageService.getPanelA6(md, "help");
-                from.sendImage(image);
+                event.reply(image);
                 return;
             } catch (Exception e) {
                 throw new MatchRoundException(MatchRoundException.Type.MR_Instructions);
@@ -90,7 +89,7 @@ public class MatchRoundService implements MessageService<Matcher> {
                 try {
                     var md = DataUtil.getMarkdownFile("Help/round.md");
                     var image = imageService.getPanelA6(md, "help");
-                    from.sendImage(image);
+                    event.reply(image);
                     return;
                 } catch (Exception e) {
                     throw new MatchRoundException(MatchRoundException.Type.MR_Instructions);
@@ -111,7 +110,7 @@ public class MatchRoundService implements MessageService<Matcher> {
         var image = getDataImage(matchID, round, keyword);
 
         try {
-            from.sendImage(image);
+            event.reply(image);
         } catch (Exception e) {
             log.error("对局信息数据请求失败", e);
             throw new MatchRoundException(MatchRoundException.Type.MR_Send_Error);

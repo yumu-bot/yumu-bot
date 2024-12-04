@@ -4,7 +4,6 @@ import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -14,14 +13,14 @@ import com.now.nowbot.throwable.serviceException.PPMinusException
 import com.now.nowbot.util.DataUtil.getBonusPP
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
-import java.nio.charset.StandardCharsets
-import java.util.*
-import java.util.regex.Matcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.CollectionUtils
 import org.springframework.util.StringUtils
+import java.nio.charset.StandardCharsets
+import java.util.*
+import java.util.regex.Matcher
 
 @Service("TEST_PPM")
 class TestPPMService(
@@ -44,8 +43,6 @@ class TestPPMService(
     @CheckPermission(test = true)
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
-        val from = event.subject
-
         val names: List<String?>? = splitString(matcher.group("data"))
         var mode = OsuMode.getMode(matcher.group("mode"))
 
@@ -139,24 +136,10 @@ class TestPPMService(
                     .append('\n')
         }
 
-        val result = sb.toString()
+        val file = sb.toString().toByteArray(StandardCharsets.UTF_8)
 
         // 必须群聊
-        if (from is Group) {
-            try {
-                from.sendFile(
-                        result.toByteArray(StandardCharsets.UTF_8),
-                        names.first() + "...-testppm.csv",
-                )
-            } catch (e: Exception) {
-                log.error("TESTPPM:", e)
-                throw PPMinusException(PPMinusException.Type.PM_Test_SendError)
-            }
-        } else {
-            throw PPMinusException(PPMinusException.Type.PM_Test_NotGroup)
-        }
-
-        // event.getSubject().sendMessage(sb.toString());
+        event.replyFileInGroup(file, names.first() + "...-testppm.csv")
     }
 
     internal class TestPPMData {

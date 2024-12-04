@@ -3,7 +3,6 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.MatchRating
 import com.now.nowbot.model.multiplayer.SeriesRating
-import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -123,21 +122,7 @@ class SeriesRatingService(
             }
         } else if (matcher.group("csv") != null) {
             // 必须群聊
-            val group = event.subject
-            if (group is Group) {
-                try {
-                    val str = parseCSA(sr)
-                    group.sendFile(
-                        str.toByteArray(StandardCharsets.UTF_8),
-                        "${sr.statistics.matchID}-results.csv",
-                    )
-                } catch (e: Exception) {
-                    log.error("CSA:", e)
-                    throw MRAException(MRAException.Type.RATING_Send_CSAFailed)
-                }
-            } else {
-                throw MRAException(MRAException.Type.RATING_Send_NotGroup)
-            }
+            event.replyFileInGroup(parseCSA(sr).toByteArray(StandardCharsets.UTF_8), "${sr.statistics.matchID}-results.csv")
         }
     }
 

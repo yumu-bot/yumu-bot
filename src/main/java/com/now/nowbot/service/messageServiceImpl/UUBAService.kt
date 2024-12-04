@@ -83,7 +83,6 @@ class UUBAService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: BPHeadTailParam) {
-        val from = event.subject
         var bu: BinUser
 
         // 是否为绑定用户
@@ -152,7 +151,7 @@ class UUBAService(
             val panelParam =
                     lines.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
             val image = imageService.getPanelAlpha(*panelParam)
-            from.sendImage(image)
+            event.reply(image)
         } catch (e: Exception) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "最好成绩分析（文字版）")
         }

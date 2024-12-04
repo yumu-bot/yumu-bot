@@ -48,22 +48,27 @@ public class QQMsgUtil {
 
 
     public static void sendImages(MessageEvent event, List<byte[]> images) throws InterruptedException {
-        var b = new MessageChain.MessageChainBuilder();
+        var builder = new MessageChain.MessageChainBuilder();
+        var bs = new ArrayList<MessageChain>();
 
         for (int i = 0; i < images.size(); i++) {
             var image = images.get(i);
 
             // qq 一次性只能发 20 张图
             if (i >= 20 && i % 20 == 0) {
-                event.reply(b.build());
-                Thread.sleep(1000L);
-                b = new MessageChain.MessageChainBuilder();
+                bs.add(builder.build());
+                builder = new MessageChain.MessageChainBuilder();
             }
 
-            b.addImage(image);
+            builder.addImage(image);
         }
 
-        event.reply(b.build());
+        bs.add(builder.build());
+
+        for (var b: bs) {
+            event.reply(b);
+            Thread.sleep(1000L);
+        }
     }
 
     private static void beforeContact(Contact from) {
@@ -87,6 +92,7 @@ public class QQMsgUtil {
         from.sendMessage(new MessageChain.MessageChainBuilder().addImage(image).addText(text).build());
     }
 
+    @Deprecated
     public static void sendGroupFile(MessageEvent event, String name, byte[] data) {
         var from = event.getSubject();
 
@@ -95,6 +101,7 @@ public class QQMsgUtil {
         }
     }
 
+    @Deprecated
     public static void sendGroupFile(Group group, String name, byte[] data) {
         group.sendFile(data, name);
     }

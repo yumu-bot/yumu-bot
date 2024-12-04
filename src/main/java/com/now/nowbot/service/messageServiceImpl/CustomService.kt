@@ -178,7 +178,7 @@ class CustomService(
                 try {
                     val md = getMarkdownFile("Help/custom.md")
                     val image = imageService.getPanelA6(md, "help")
-                    from.sendImage(image)
+                    event.reply(image)
                     return false
                 } catch (e: Exception) {
                     throw CustomException(CustomException.Type.CUSTOM_Instructions)

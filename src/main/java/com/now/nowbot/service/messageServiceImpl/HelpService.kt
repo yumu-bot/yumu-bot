@@ -14,13 +14,12 @@ import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.lang.Nullable
 import org.springframework.stereotype.Service
 import java.util.*
 
 @Service("HELP")
 class HelpService(
-    var imageService: ImageService? = null
+    private val imageService: ImageService
 ) : MessageService<String>, TencentMessageService<String> {
 
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<String>): Boolean {
@@ -33,13 +32,11 @@ class HelpService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, module: String) {
-        val from = event.subject
-
         try {
             val image = getHelpPicture(module, imageService)
 
             if (Objects.nonNull(image)) {
-                from.sendImage(image)
+                event.reply(image)
             } else {
                 throw TipsException("窝趣，找不到文件")
             }
@@ -48,22 +45,22 @@ class HelpService(
             val msgLegacy = getHelpLinkLegacy(module)
 
             if (Objects.nonNull(imgLegacy)) {
-                from.sendImage(imgLegacy)
+                event.reply(imgLegacy)
             }
 
             if (Objects.nonNull(msgLegacy)) {
-                from.sendMessage(msgLegacy).recallIn((110 * 1000).toLong())
+                event.reply(msgLegacy).recallIn((110 * 1000).toLong())
             }
         } catch (e: NullPointerException) {
             val imgLegacy = getHelpImageLegacy(module)
             val msgLegacy = getHelpLinkLegacy(module)
 
-            if (Objects.nonNull(imgLegacy)) {
-                from.sendImage(imgLegacy)
+            if (imgLegacy != null) {
+                event.reply(imgLegacy)
             }
 
-            if (Objects.nonNull(msgLegacy)) {
-                from.sendMessage(msgLegacy).recallIn((110 * 1000).toLong())
+            if (msgLegacy != null) {
+                event.reply(msgLegacy).recallIn((110 * 1000).toLong())
             }
         } catch (e: Exception) {
             log.error("Help A6 输出错误，使用默认方法也出错？", e)
@@ -78,7 +75,7 @@ class HelpService(
          * @param module 需要查询的功能名字
          * @return 图片流
          */
-        private fun getHelpPicture(module: String, imageService: ImageService?): ByteArray? {
+        private fun getHelpPicture(module: String, imageService: ImageService): ByteArray? {
             val fileName = when (module) {
                 "interbot", "inter", "it", "因特" -> "interbot"
                 "maomaobot", "meowbot", "meow", "maomao", "kanonbot", "kanon", "cat", "kn", "猫猫", "猫猫bot" -> "kanonbot"
@@ -135,7 +132,7 @@ class HelpService(
             }
 
             return try {
-                imageService!!.getPanelA6(getMarkdownFile("Help/${fileName}.md"), "help")
+                imageService.getPanelA6(getMarkdownFile("Help/${fileName}.md"), "help")
             } catch (e: Exception) {
                 null
             }
@@ -146,7 +143,7 @@ class HelpService(
          * @param module 需要查询的功能名字
          * @return 图片流
          */
-        private fun getHelpImageLegacy(@Nullable module: String): ByteArray? {
+        private fun getHelpImageLegacy(module: String?): ByteArray? {
             val fileName = when (module) {
                 "bot", "b" -> "help-bot"
                 "score", "s" -> "help-score"
@@ -168,7 +165,7 @@ class HelpService(
          * @param module 需要查询的功能名字
          * @return 请参阅：link
          */
-        private fun getHelpLinkLegacy(@Nullable module: String): String? {
+        private fun getHelpLinkLegacy(module: String?): String? {
             val web = "https://docs.365246692.xyz/help/"
             val link = when (module) {
                 "bot", "b" -> "bot"

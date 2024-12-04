@@ -71,7 +71,7 @@ class PPPlusMapService(
         dataMap["me"] = map
         dataMap["my"] = pp
         val image = imageService.getPanelB3(dataMap)
-        event.subject.sendImage(image)
+        event.reply(image)
     }
 
 
