@@ -282,7 +282,7 @@ class MapStatisticsService(
                 expected.combo,
                 expected.misses,
                 expected.isLazer,
-                expected.accuracy,
+                expected.accuracy * 100,
             )
 
             beatmap.starRating = attributes.stars ?: beatmap.starRating
@@ -302,7 +302,7 @@ class MapStatisticsService(
             calculateApiService: OsuCalculateApiService,
         ): List<Double> {
             val result = mutableListOf<Double>()
-            val accArray: DoubleArray = doubleArrayOf(1.0, 0.99, 0.98, 0.96, 0.94, 0.92)
+            val accArray: DoubleArray = doubleArrayOf(100.0, 0.99, 0.98, 0.96, 0.94, 0.92)
 
             val maxCombo = beatmap.maxCombo ?: expected.combo
             val mode = expected.mode
@@ -321,12 +321,12 @@ class MapStatisticsService(
                     maxCombo = maxCombo,
                     misses = null,
                     isLazer = isLazer,
-                    accuracy = expected.accuracy,
+                    accuracy = expected.accuracy * 100,
                 ).pp
             )
 
 
-            val fcPP = calculateApiService.getAccFcPPList(
+            val fcPP = calculateApiService.getAccPPList(
                 beatmapID = beatmap.beatMapID,
                 mode = mode,
                 mods = mods,
@@ -338,7 +338,7 @@ class MapStatisticsService(
             result.addAll(fcPP)
             if (expected.misses > 0) {
                 result.addAll(
-                    calculateApiService.getAccFcPPList(
+                    calculateApiService.getAccPPList(
                         beatmapID = beatmap.beatMapID,
                         mode = mode,
                         mods = mods,

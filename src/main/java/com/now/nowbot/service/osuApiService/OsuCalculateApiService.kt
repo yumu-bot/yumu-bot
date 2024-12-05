@@ -23,7 +23,7 @@ interface OsuCalculateApiService {
 
     fun applyPPToScores(scores: List<LazerScore>)
 
-    fun getAccFcPPList(
+    fun getAccPPList(
         beatmapID: Long,
         mode: OsuMode,
         mods: List<LazerMod>?,

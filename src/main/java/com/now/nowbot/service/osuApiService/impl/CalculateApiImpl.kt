@@ -140,7 +140,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         return beatmap to change
     }
 
-    override fun getAccFcPPList(
+    override fun getAccPPList(
         beatmapID: Long,
         mode: OsuMode,
         mods: List<LazerMod>?,
