@@ -113,10 +113,12 @@ import java.util.regex.Matcher
 
             try {
 
-                beatMap = beatmapApiService.getBeatMap(param.bid) // 从数据库拿的谱面没有游戏模式，你问我为什么，我怎么知道
+                beatMap = beatmapApiService.getBeatMap(param.bid)
                 mode = OsuMode.getMode(beatMap.modeInt)
 
-                calculateApiService.applyStarToBeatMap(beatMap, beatMap.mode, param.modsList)
+                if (isChangedRating) {
+                    beatMap.starRating = calculateApiService.getStar(beatMap.beatMapID, beatMap.mode, param.modsList)
+                }
                 fileStr = beatmapApiService.getBeatMapFileString(param.bid)!!
             } catch (e: Exception) {
                 throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)

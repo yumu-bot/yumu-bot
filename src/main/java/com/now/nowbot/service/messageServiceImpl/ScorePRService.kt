@@ -56,7 +56,7 @@ class ScorePRService(
             @JvmField val density: IntArray,
             @JvmField val progress: Double,
             @JvmField val original: Map<String, Any>,
-            @JvmField val attributes: Map<String, Any>,
+            @JvmField val attributes:Any,
             @JvmField val panel: String
     ) {
         fun toMap(): Map<String, Any> {
@@ -343,9 +343,7 @@ class ScorePRService(
             calculateApiService.applyPPToScore(score)
             calculateApiService.applyStarToScore(score)
 
-            val attributes = calculateApiService.getScoreStatistics(score).toMutableMap()
-            attributes["full_pp"] = calculateApiService.getScoreFullComboPP(score).pp
-            attributes["perfect_pp"] = calculateApiService.getScorePerfectPP(score).pp
+            val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
 
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)

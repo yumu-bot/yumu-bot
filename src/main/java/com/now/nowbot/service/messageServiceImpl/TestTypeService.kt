@@ -74,7 +74,10 @@ import org.springframework.util.StringUtils
             beatMap = beatmapApiService.getBeatMapFromDataBase(param.bid)
             mode = OsuMode.getMode(beatMap.modeInt)
 
-            calculateApiService.applyStarToBeatMap(beatMap, beatMap.mode, param.modsList)
+            if (isChangedRating) {
+                val star = calculateApiService.getStar(param.bid, beatMap.mode, param.modsList)
+                beatMap.starRating = star
+            }
             fileStr = beatmapApiService.getBeatMapFileString(param.bid)!!
         } catch (e: Exception) {
             throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)

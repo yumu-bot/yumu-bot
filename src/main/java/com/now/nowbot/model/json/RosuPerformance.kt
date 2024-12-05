@@ -6,7 +6,7 @@ import org.spring.osu.extended.rosu.*
 import kotlin.reflect.full.memberProperties
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-class RosuPerformance(result: JniPerformanceAttributes? = null) {
+open class RosuPerformance(result: JniPerformanceAttributes? = null) {
     @JsonProperty("pp")
     var pp: Double = 0.0
 
@@ -80,5 +80,12 @@ class RosuPerformance(result: JniPerformanceAttributes? = null) {
         fun String.toUnderline(): String {
             return this.replace("([a-z])([A-Z])".toRegex(), "$1_$2").lowercase()
         }
+    }
+    class FullRosuPerformance(result: JniPerformanceAttributes): RosuPerformance(result) {
+        @JsonProperty("full_pp")
+        var fullPP:Double?= null
+
+        @JsonProperty("perfect_pp")
+        var perfectPP:Double?= null
     }
 }

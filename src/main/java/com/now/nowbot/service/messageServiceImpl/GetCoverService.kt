@@ -15,7 +15,6 @@ import com.now.nowbot.util.Instruction
 import okhttp3.internal.toLongOrDefault
 import org.springframework.stereotype.Service
 import java.net.URI
-import java.nio.file.Path
 import java.util.regex.Pattern
 import kotlin.io.path.Path
 
@@ -117,10 +116,8 @@ import kotlin.io.path.Path
             for (i in bids.indices) {
                 val b = bids[i]
 
-                val path: Path?
-
-                try {
-                    path = beatmapMirrorApiService.getFullBackgroundPath(b)
+                val path = try {
+                    beatmapMirrorApiService.getFullBackgroundPath(b)
                 } catch (e: Exception) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "完整背景")
                 }

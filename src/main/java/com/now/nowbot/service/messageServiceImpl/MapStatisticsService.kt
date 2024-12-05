@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
@@ -32,11 +33,11 @@ import kotlin.math.round
 
 @Service("MAP")
 class MapStatisticsService(
-        private val beatmapApiService: OsuBeatmapApiService,
-        private val userApiService: OsuUserApiService,
-        private val calculateApiService: OsuCalculateApiService,
-        private val imageService: ImageService,
-        private val bindDao: BindDao,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val userApiService: OsuUserApiService,
+    private val calculateApiService: OsuCalculateApiService,
+    private val imageService: ImageService,
+    private val bindDao: BindDao,
 ) : MessageService<MapParam>, TencentMessageService<MapParam> {
 
     data class MapParam(val user: OsuUser?, val beatmap: BeatMap, val expected: Expected)
@@ -51,13 +52,13 @@ class MapStatisticsService(
     )
 
     data class PanelE6Param(
-            val user: OsuUser?,
-            val beatmap: BeatMap,
-            val density: IntArray,
-            val original: Map<String, Any>,
-            val attributes: RosuPerformance,
-            val pp: List<Double>,
-            val expected: Expected,
+        val user: OsuUser?,
+        val beatmap: BeatMap,
+        val density: IntArray,
+        val original: Map<String, Any>,
+        val attributes: RosuPerformance,
+        val pp: List<Double>,
+        val expected: Expected,
     ) {
         fun toMap(): Map<String, Any> {
             val map = mutableMapOf<String, Any>()
@@ -73,9 +74,9 @@ class MapStatisticsService(
     }
 
     override fun isHandle(
-            event: MessageEvent,
-            messageText: String,
-            data: DataValue<MapParam>,
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<MapParam>,
     ): Boolean {
         val matcher = Instruction.MAP.matcher(messageText)
         if (!matcher.find()) {
@@ -89,15 +90,15 @@ class MapStatisticsService(
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: MapParam) {
         val image =
-                try {
-                    param.getImage()
-                } catch (e: Exception) {
-                    log.error("谱面信息：渲染失败", e)
-                    throw GeneralTipsException(
-                            GeneralTipsException.Type.G_Malfunction_Render,
-                            "谱面信息",
-                    )
-                }
+            try {
+                param.getImage()
+            } catch (e: Exception) {
+                log.error("谱面信息：渲染失败", e)
+                throw GeneralTipsException(
+                    GeneralTipsException.Type.G_Malfunction_Render,
+                    "谱面信息",
+                )
+            }
 
         try {
             event.reply(image)
@@ -118,15 +119,15 @@ class MapStatisticsService(
 
     override fun reply(event: MessageEvent, param: MapParam): MessageChain? {
         val image =
-                try {
-                    param.getImage()
-                } catch (e: Exception) {
-                    log.error("谱面信息：渲染失败", e)
-                    throw GeneralTipsException(
-                            GeneralTipsException.Type.G_Malfunction_Render,
-                            "谱面信息",
-                    )
-                }
+            try {
+                param.getImage()
+            } catch (e: Exception) {
+                log.error("谱面信息：渲染失败", e)
+                throw GeneralTipsException(
+                    GeneralTipsException.Type.G_Malfunction_Render,
+                    "谱面信息",
+                )
+            }
 
         try {
             return QQMsgUtil.getImage(image)
@@ -164,66 +165,66 @@ class MapStatisticsService(
         var combo: Int
 
         var accuracy =
-                try {
-                    matcher.group("accuracy").toDouble()
-                } catch (e: RuntimeException) {
-                    1.0
-                }
+            try {
+                matcher.group("accuracy").toDouble()
+            } catch (e: RuntimeException) {
+                1.0
+            }
 
         combo =
+            try {
+                matcher.group("combo").toInt()
+            } catch (e: RuntimeException) {
                 try {
-                    matcher.group("combo").toInt()
-                } catch (e: RuntimeException) {
-                    try {
-                        val rate = matcher.group("combo").toDouble()
-                        if (rate in 0.0..1.0) {
-                            round(beatMap.maxCombo!! * rate).toInt()
-                        } else {
-                            0
-                        }
-                    } catch (e1: RuntimeException) {
+                    val rate = matcher.group("combo").toDouble()
+                    if (rate in 0.0..1.0) {
+                        round(beatMap.maxCombo!! * rate).toInt()
+                    } else {
                         0
                     }
-                }
-
-        val miss =
-                try {
-                    matcher.group("miss").toInt()
-                } catch (e: RuntimeException) {
+                } catch (e1: RuntimeException) {
                     0
                 }
+            }
+
+        val miss =
+            try {
+                matcher.group("miss").toInt()
+            } catch (e: RuntimeException) {
+                0
+            }
 
         val mods =
-                try {
-                    OsuMod.splitModAcronyms(matcher.group("mod")).distinct()
-                } catch (e: RuntimeException) {
-                    emptyList()
-                }
+            try {
+                OsuMod.splitModAcronyms(matcher.group("mod")).distinct()
+            } catch (e: RuntimeException) {
+                emptyList()
+            }
 
         // 标准化 acc 和 combo
         val maxCombo = beatMap.maxCombo
 
         if (maxCombo != null) {
             combo =
-                    if (combo <= 0) {
-                        maxCombo
-                    } else {
-                        min(combo.toDouble(), maxCombo.toDouble()).toInt()
-                    }
+                if (combo <= 0) {
+                    maxCombo
+                } else {
+                    min(combo.toDouble(), maxCombo.toDouble()).toInt()
+                }
         }
 
         if (combo < 0) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamCombo)
         }
         accuracy =
-                when {
-                    accuracy <= 1.0 -> accuracy
-                    accuracy <= 100.0 -> accuracy / 100.0
-                    accuracy <= 10000.0 -> accuracy / 10000.0
-                    else -> {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamAccuracy)
-                    }
+            when {
+                accuracy <= 1.0 -> accuracy
+                accuracy <= 100.0 -> accuracy / 100.0
+                accuracy <= 10000.0 -> accuracy / 10000.0
+                else -> {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamAccuracy)
                 }
+            }
 
         // 只有转谱才能赋予游戏模式
         val beatMapMode = beatMap.mode
@@ -245,12 +246,12 @@ class MapStatisticsService(
 
         @JvmStatic
         fun getPanelE6Image(
-                user: OsuUser?,
-                beatmap: BeatMap,
-                expected: Expected,
-                beatmapApiService: OsuBeatmapApiService,
-                calculateApiService: OsuCalculateApiService,
-                imageService: ImageService,
+            user: OsuUser?,
+            beatmap: BeatMap,
+            expected: Expected,
+            beatmapApiService: OsuBeatmapApiService,
+            calculateApiService: OsuCalculateApiService,
+            imageService: ImageService,
         ): ByteArray {
 
             val original = mutableMapOf<String, Any>()
@@ -265,16 +266,31 @@ class MapStatisticsService(
                 original["total"] = totalLength
             }
 
-            calculateApiService.applyStarToBeatMap(beatmap, expected)
 
             val pp = getPPList(beatmap, expected, calculateApiService)
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
-            val attributes = calculateApiService.getExpectedPP(beatmap, expected)
+
+            val mods = if (expected.mods.isEmpty()) {
+                null
+            } else {
+                LazerMod.getModsList(expected.mods)
+            }
+            val attributes = calculateApiService.getAccPP(
+                beatmap.beatMapID,
+                expected.mode,
+                mods,
+                expected.combo,
+                expected.misses,
+                expected.isLazer,
+                expected.accuracy,
+            )
+
+            beatmap.starRating = attributes.stars ?: beatmap.starRating
 
             return imageService.getPanel(
-                    PanelE6Param(user, beatmap, density, original, attributes, pp, expected)
-                            .toMap(),
-                    "E6",
+                PanelE6Param(user, beatmap, density, original, attributes, pp, expected)
+                    .toMap(),
+                "E6",
             )
         }
 
@@ -289,22 +305,50 @@ class MapStatisticsService(
             val accArray: DoubleArray = doubleArrayOf(1.0, 0.99, 0.98, 0.96, 0.94, 0.92)
 
             val maxCombo = beatmap.maxCombo ?: expected.combo
-
-            val expectIfFC = Expected(expected.mode, expected.accuracy, maxCombo, 0, expected.mods, expected.isLazer)
-            result.add(calculateApiService.getExpectedPP(beatmap, expectIfFC).pp)
-
-            for (i in 0..5) {
-                val expectFC = Expected(expected.mode, accArray[i], maxCombo, 0, expected.mods, expected.isLazer)
-
-                result.add(calculateApiService.getExpectedPP(beatmap, expectFC).pp)
+            val mode = expected.mode
+            val mods = if (expected.mods.isEmpty()) {
+                null
+            } else {
+                LazerMod.getModsList(expected.mods)
             }
+            val isLazer = expected.isLazer
 
-            for (i in 0..5) {
-                val expectNC = Expected(expected.mode, accArray[i], expected.combo, expected.misses, expected.mods, expected.isLazer)
+            result.add(
+                calculateApiService.getAccPP(
+                    beatmapID = beatmap.beatMapID,
+                    mode = mode,
+                    mods = mods,
+                    maxCombo = maxCombo,
+                    misses = null,
+                    isLazer = isLazer,
+                    accuracy = expected.accuracy,
+                ).pp
+            )
 
-                result.add(calculateApiService.getExpectedPP(beatmap, expectNC).pp)
+
+            val fcPP = calculateApiService.getAccFcPPList(
+                beatmapID = beatmap.beatMapID,
+                mode = mode,
+                mods = mods,
+                maxCombo = maxCombo,
+                misses = null,
+                isLazer = isLazer,
+                accuracy = accArray,
+            )
+            result.addAll(fcPP)
+            if (expected.misses > 0) {
+                result.addAll(
+                    calculateApiService.getAccFcPPList(
+                        beatmapID = beatmap.beatMapID,
+                        mode = mode,
+                        mods = mods,
+                        maxCombo = maxCombo,
+                        misses = expected.misses,
+                        isLazer = isLazer,
+                        accuracy = accArray,
+                    )
+                )
             }
-
             return result
         }
     }

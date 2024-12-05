@@ -6,13 +6,9 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.BeatmapDifficultyAttributes
 import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.LazerScore.LazerStatistics
 import com.now.nowbot.model.json.RosuPerformance
-import com.now.nowbot.model.json.RosuPerformance.Companion.asMap
-import com.now.nowbot.service.messageServiceImpl.MapStatisticsService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
-import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl.Companion.CalculateType.*
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
@@ -23,66 +19,271 @@ import org.spring.osu.extended.rosu.JniScoreState
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 @Service
 class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : OsuCalculateApiService {
-    override fun getBeatMapPerfectPP(beatMap: BeatMap, mode: OsuMode, mods: List<LazerMod>): RosuPerformance {
-        return getBeatMapPP(beatMap, mode, mods, PF)
-    }
 
     override fun getScorePerfectPP(score: LazerScore): RosuPerformance {
-        return getScorePP(score, PF)
-    }
+        val mode = score.mode.toRosuMode()
+        val mods = score.mods
+        val beatmapID = score.beatMapID
+        val lazer = score.isLazer
 
-    override fun getBeatMapFullComboPP(beatMap: BeatMap, mode: OsuMode, mods: List<LazerMod>): RosuPerformance {
-        return getBeatMapPP(beatMap, mode, mods, FC)
-    }
-
-    override fun getScoreFullComboPP(score: LazerScore): RosuPerformance {
-        return getScorePP(score, FC)
-    }
-
-    override fun getBeatMapPP(beatMap: BeatMap, mode: OsuMode, mods: List<LazerMod>): RosuPerformance {
-        return getBeatMapPP(beatMap, mode, mods, DEFAULT)
-    }
-
-    override fun getScorePP(score: LazerScore): RosuPerformance {
-        return getScorePP(score, DEFAULT)
-    }
-
-    override fun getExpectedPP(beatMap: BeatMap, expected: MapStatisticsService.Expected): RosuPerformance {
-        return getExpectedPP(beatMap, expected, DEFAULT)
-    }
-
-    override fun getScoreStatistics(score: LazerScore): Map<String, Double> {
-        return getScorePP(score, DEFAULT).asMap()
-    }
-
-    override fun applyStarToBeatMap(beatMap: BeatMap?, mode: OsuMode, mods: List<LazerMod>) {
-        if (beatMap == null || beatMap.beatMapID == 0L || LazerMod.noStarRatingChange(mods)) return
-
-        applyBeatMapChanges(beatMap, mods)
-
-        try {
-            val attr: BeatmapDifficultyAttributes =
-                beatmapApiService.getAttributes(beatMap.beatMapID, mode, LazerMod.getModsValue(mods))
-
-            if (attr.starRating != null) {
-                beatMap.starRating = attr.starRating!!.toDouble()
-            } else {
-                log.error("给谱面应用星级：无法获取谱面 {}，无法应用 API 提供的星数！", beatMap.beatMapID)
+        val closable = ArrayList<AutoCloseable>(1)
+        return try {
+            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
+            val objects = beatmap.objects
+            val performance = beatmap.createPerformance().apply {
+                isLazer(lazer)
+                setPassedObjects(objects)
+                if (change) this.setGameMode(mode)
+                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
             }
-        } catch (e: Exception) {
-            log.error("给谱面应用星级：无法获取谱面 {}，无法获取 API 提供的星数！", beatMap.beatMapID, e)
+            performance.calculate()
+        } finally {
+            closable.forEach { it.close() }
+        }.toRosuPerformance()
+    }
+
+    /* 3 */
+    override fun getScoreFullComboPP(score: LazerScore): RosuPerformance {
+        val mode = score.mode.toRosuMode()
+        val mods = score.mods
+        val state = with(score.statistics) {
+            val state = toScoreStatistics(score.mode)
+            JniScoreState.create(
+                maxCombo = 99999,
+                largeTickHits = largeTickHit,
+                smallTickHits = smallTickHit,
+                sliderEndHits = sliderTailHit,
+                geki = state.countGeki,
+                katu = state.countKatu,
+                n300 = state.count300 + state.countMiss,
+                n100 = state.count100,
+                n50 = state.count50,
+            )
+        }
+
+        val beatmapID = score.beatMapID
+        val lazer = score.isLazer
+
+        val closable = ArrayList<AutoCloseable>(1)
+        return try {
+            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
+            beatmap.createPerformance(state).apply {
+                setLazer(lazer)
+                setPassedObjects(beatmap.objects)
+                if (change) this.setGameMode(mode)
+                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
+            }.calculate()
+        } finally {
+            closable.forEach { it.close() }
+        }.toRosuPerformance()
+    }
+
+    private fun getScorePP(score: LazerScore): RosuPerformance {
+        val mode = score.mode.toRosuMode()
+        val mods = score.mods
+        val isNotPass = score.passed.not()
+        val state = with(score.statistics) {
+            val state = toScoreStatistics(score.mode)
+            JniScoreState.create(
+                maxCombo = score.maxCombo,
+                largeTickHits = largeTickHit,
+                smallTickHits = smallTickHit,
+                sliderEndHits = sliderTailHit,
+                geki = state.countGeki,
+                katu = state.countKatu,
+                n300 = state.count300,
+                n100 = state.count100,
+                n50 = state.count50,
+                misses = state.countMiss,
+            )
+        }
+        if (isNotPass) {
+            state.n300 = 0
+        }
+
+        val beatmapID = score.beatMapID
+        val lazer = score.isLazer
+
+        val closable = ArrayList<AutoCloseable>(1)
+        return try {
+            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
+            beatmap.createPerformance(state).apply {
+                setLazer(lazer)
+                setPassedObjects(beatmap.objects)
+                if (isNotPass) setHitResultPriority(true)
+                if (change) this.setGameMode(mode)
+                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
+            }.calculate()
+        } finally {
+            closable.forEach { it.close() }
+        }.toRosuPerformance()
+    }
+
+    private fun getBeatmap(
+        beatmapID: Long,
+        mode: org.spring.osu.OsuMode,
+        set: (JniBeatmap) -> Unit
+    ): Pair<JniBeatmap, Boolean> {
+        val map = beatmapApiService.getBeatMapFileByte(beatmapID) ?: throw Exception("无法获取谱面文件, 请稍后再试")
+        val beatmap = JniBeatmap(map)
+        set(beatmap)
+        val change = if (beatmap.mode != mode && beatmap.mode == org.spring.osu.OsuMode.Osu) {
+            beatmap.convertInPlace(mode)
+            true
+        } else {
+            false
+        }
+        return beatmap to change
+    }
+
+    override fun getAccFcPPList(
+        beatmapID: Long,
+        mode: OsuMode,
+        mods: List<LazerMod>?,
+        maxCombo: Int?,
+        misses: Int?,
+        isLazer: Boolean,
+        accuracy: DoubleArray
+    ): List<Double> {
+        val gameMode = mode.toRosuMode()
+        val cache = ArrayList<AutoCloseable>(1)
+        val modsStr = if (mods.isNullOrEmpty().not()) {
+            JacksonUtil.toJson(mods)
+        } else {
+            null
+        }
+        val (beatmap, change) = getBeatmap(beatmapID, gameMode) { cache.add(it) }
+        return try {
+            accuracy.map { acc ->
+                val performance = beatmap.createPerformance().apply {
+                    setLazer(isLazer)
+                    if (change) setGameMode(gameMode)
+                    maxCombo?.let { setCombo(it) }
+                    modsStr?.let { setMods(it) }
+                    misses?.let { setMisses(it) }
+                    setAcc(acc)
+                }
+                performance.calculate().getPP()
+            }
+        } finally {
+            cache.forEach { it.close() }
         }
     }
 
-    override fun applyStarToBeatMap(beatMap: BeatMap?, expected: MapStatisticsService.Expected) {
-        applyStarToBeatMap(beatMap, expected.mode, LazerMod.getModsList(expected.mods))
+
+    override fun getAccPP(
+        beatmapID: Long,
+        mode: OsuMode,
+        mods: List<LazerMod>?,
+        maxCombo: Int?,
+        misses: Int?,
+        isLazer: Boolean,
+        accuracy: Double
+    ): RosuPerformance {
+        val gameMode = mode.toRosuMode()
+        val modsStr = if (mods.isNullOrEmpty().not()) {
+            JacksonUtil.toJson(mods)
+        } else {
+            null
+        }
+        val cache = ArrayList<AutoCloseable>(1)
+        val (beatmap, change) = getBeatmap(beatmapID, gameMode) { cache.add(it) }
+        return try {
+            val performance = beatmap.createPerformance().apply {
+                setLazer(isLazer)
+                if (change) setGameMode(gameMode)
+                maxCombo?.let { setCombo(it) }
+                modsStr?.let { setMods(it) }
+                setAcc(accuracy)
+            }
+            performance.calculate().toRosuPerformance()
+        } finally {
+            cache.forEach { it.close() }
+        }
     }
+
+    /* 1 */
+    override fun getScoreStatisticsWithFullAndPerfectPP(score: LazerScore): RosuPerformance.FullRosuPerformance {
+        val mode = score.mode.toRosuMode()
+        val mods = score.mods
+        val isNotPass = score.passed.not()
+        val fcState: JniScoreState
+        val state: JniScoreState
+        with(score.statistics) {
+            val statistics = toScoreStatistics(score.mode)
+            fcState = JniScoreState.create(
+                maxCombo = 99999,
+                largeTickHits = largeTickHit,
+                smallTickHits = smallTickHit,
+                sliderEndHits = sliderTailHit,
+                geki = statistics.countGeki,
+                katu = statistics.countKatu,
+                n300 = statistics.count300 + statistics.countMiss,
+                n100 = statistics.count100,
+                n50 = statistics.count50,
+            )
+            state = JniScoreState.create(
+                maxCombo = score.maxCombo,
+                largeTickHits = largeTickHit,
+                smallTickHits = smallTickHit,
+                sliderEndHits = sliderTailHit,
+                geki = statistics.countGeki,
+                katu = statistics.countKatu,
+                n300 = statistics.count300,
+                n100 = statistics.count100,
+                n50 = statistics.count50,
+                misses = statistics.countMiss,
+            )
+        }
+
+        if (isNotPass) {
+            state.n300 = 0
+        }
+
+        val beatmapID = score.beatMapID
+        val lazer = score.isLazer
+
+        val closable = ArrayList<AutoCloseable>(1)
+
+        return try {
+            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
+            val notFC = beatmap.createPerformance(state).apply {
+                setLazer(lazer)
+                setPassedObjects(beatmap.objects)
+                if (isNotPass) setHitResultPriority(true)
+                if (change) this.setGameMode(mode)
+                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
+            }.calculate()
+            val result = RosuPerformance.FullRosuPerformance(notFC)
+            val fc = beatmap.createPerformance(fcState).apply {
+                setLazer(lazer)
+                setPassedObjects(beatmap.objects)
+                if (change) this.setGameMode(mode)
+                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
+            }.calculate().getPP()
+            val pf = beatmap.createPerformance().apply {
+                isLazer(lazer)
+                setPassedObjects(beatmap.objects)
+                if (change) this.setGameMode(mode)
+                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
+            }.calculate().getPP()
+            result.fullPP = fc
+            result.perfectPP = pf
+            result
+        } finally {
+            closable.forEach { it.close() }
+        }
+    }
+
+    override fun applyPPToScore(score: LazerScore) {
+        if (score.PP != null && score.PP!! > 0) return
+        score.PP = getScorePP(score).pp
+    }
+
 
     override fun applyStarToScore(score: LazerScore) {
         if (score.beatMapID == 0L || LazerMod.noStarRatingChange(score.mods)) return
@@ -96,6 +297,16 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         } else {
             applyStarToScoreFromOfficial(score)
         }
+    }
+
+    override fun applyStarToBeatMap(beatMap: BeatMap?, mode: OsuMode, mods: List<LazerMod>) {
+        if (
+            beatMap == null ||
+            beatMap.mode == mode ||
+            beatMap.mode != OsuMode.OSU ||
+            LazerMod.hasStarRatingChange(mods).not()
+        ) return
+        getStar(beatMap.beatMapID, mode, mods).let { beatMap.starRating = it }
     }
 
     override fun applyStarToScores(scores: List<LazerScore>) {
@@ -123,11 +334,6 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         }
     }
 
-    override fun applyPPToScore(score: LazerScore) {
-        if (score.PP != null && score.PP!! > 0) return
-        score.PP = getScorePP(score).pp
-    }
-
     override fun applyPPToScores(scores: List<LazerScore>) {
         val actions = scores.map {
             return@map AsyncMethodExecutor.Supplier<Unit> {
@@ -138,307 +344,22 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
         AsyncMethodExecutor.AsyncSupplier(actions)
     }
 
-    private fun getScorePP(s: LazerScore, type: CalculateType): RosuPerformance {
-        return getPP(
-            s.beatMapID,
-            s.statistics,
-            s.isLazer,
-            s.mode,
-            s.mods,
-            s.accuracy,
-            s.statistics.miss,
-            s.maxCombo,
-            s.beatMap.maxCombo,
-            type,
-            s.passed,
-            s.totalHit
-        ).toRosuPerformance()
-    }
 
-    private fun getBeatMapPP(b: BeatMap, mode: OsuMode, mods: List<LazerMod>, type: CalculateType): RosuPerformance {
-        val pp = getPP(b.beatMapID, lazer = true, mode = mode, mods = mods, maxCombo = b.maxCombo, type = type)
-        applyBeatMapChanges(b, mods)
-        return pp.toRosuPerformance()
-    }
-
-    private fun getExpectedPP(
-        b: BeatMap,
-        expected: MapStatisticsService.Expected,
-        type: CalculateType,
-    ): RosuPerformance {
-        return getPP(
-            b.beatMapID,
-            null,
-            true,
-            expected.mode,
-            LazerMod.getModsList(expected.mods),
-            expected.accuracy,
-            expected.misses,
-            expected.combo,
-            b.maxCombo,
-            type
-        ).toRosuPerformance()
-    }
-
-    private fun getStar(beatMapID: Long, mode: OsuMode, mods: List<LazerMod>): Double {
-        val map: ByteArray = beatmapApiService.getBeatMapFileByte(beatMapID)!!
-
-        val performance = calculate(map, mods = mods, mode = mode)
-        return performance.getStarRating()
-    }
-
-    private fun getPP(
-        id: Long,
-        stat: LazerStatistics? = null,
-        lazer: Boolean = false,
-        mode: OsuMode,
-        mods: List<LazerMod>,
-        accuracy: Double? = null,
-        miss: Int? = null,
-        combo: Int? = null,
-        maxCombo: Int? = null,
-        type: CalculateType,
-        passed: Boolean = false,
-        totalHit: Int? = null,
-    ): JniPerformanceAttributes {
-        val map: ByteArray = beatmapApiService.getBeatMapFileByte(id)!!
-
-        val score = if (stat == null) {
-            null
-        } else {
-            if (mode == OsuMode.DEFAULT) {
-                createJniState(stat, combo ?: maxCombo ?: 0, OsuMode.OSU)
-            } else {
-                createJniState(stat, combo ?: maxCombo ?: 0, mode)
-            }
-        }
-
-        val max = maxCombo
-        var combo = combo
-
-        return when (type) {
-            PF -> {
-                if (max == null) try {
-                    combo = beatmapApiService.getBeatMap(id).maxCombo
-                    score?.let {
-                        it.maxCombo = combo!!
-                    }
-                } catch (ignored: Exception) {
-
-                }
-                if (totalHit != null) {
-                    when (mode) {
-                        OsuMode.MANIA -> score?.apply {
-                            geki = totalHit
-                            katu = 0
-                            n300 = 0
-                            n100 = 0
-                            n50 = 0
-                            this.misses = 0
-                            sliderEndHits = 0
-                            largeTickHits = 0
-                        }
-
-                        else -> score?.apply {
-                            n300 = totalHit
-                            sliderEndHits = Int.MAX_VALUE
-                            largeTickHits = Int.MAX_VALUE
-                        }
-                    }
-
-                } else {
-                    when (mode) {
-                        OsuMode.MANIA -> score?.apply {
-                            geki += n300
-                            n300 = 0
-                            geki += katu
-                            katu = 0
-                            geki += n100
-                            n100 = 0
-                            geki += n50
-                            n50 = 0
-                            geki += misses
-                            misses = 0
-                            geki += sliderEndHits
-                            sliderEndHits = 0
-                            geki += largeTickHits
-                            largeTickHits = 0
-                        }
-
-                        else -> score?.apply {
-                            n300 += n300
-                            n300 += n100
-                            n300 += n50
-                            n300 += misses
-                            sliderEndHits = Int.MAX_VALUE
-                            largeTickHits = Int.MAX_VALUE
-                        }
-                    }
-                }
-
-                score?.apply {
-                    katu = 0
-                    n100 = 0
-                    n50 = 0
-                    misses = 0
-                }
-
-                calculate(map, lazer, score, mods, mode, combo, 1.0)
-            }
-
-            FC -> {
-                if (max == null) try {
-                    combo = beatmapApiService.getBeatMap(id).maxCombo
-                    score?.let {
-                        it.maxCombo = combo!!
-                    }
-                } catch (ignored: Exception) {
-                }
-
-                if (stat != null && totalHit != null) when (mode) {
-                    OsuMode.TAIKO -> {
-                        score?.let {
-                            it.n300 += it.misses
-                            it.misses = 0
-                        }
-                    }
-
-                    OsuMode.CATCH -> {
-                        score?.let {
-                            it.n300 += it.misses + stat.great + stat.largeTickMiss
-                            it.misses = 0
-                        }
-                    }
-
-                    OsuMode.MANIA -> { // mania 的无 miss fc pp 没有意义，故使用当前彩率下，不含 100 及以下判定（bad）的 fc
-                        score?.let {
-                            val p = it.geki
-                            val g = it.n300
-                            val bad = it.n100 + it.n50 + it.misses
-
-                            val rate = 1.0 * p / g
-                            val pb = min(max((bad * rate).roundToInt(), 0), bad)
-                            val gb = min(max((bad - pb), 0), bad)
-                            if (p + pb > 0) it.geki = p + pb
-                            if (g + gb > 0) it.n300 = g + gb
-
-                            it.n100 = 0
-                            it.n50 = 0
-                        }
-                    }
-
-                    else -> {
-                        score?.let {
-                            it.n300 += it.misses
-                            it.misses = 0
-                        }
-                    }
-                }
-
-                calculate(map, lazer, score, mods, mode, combo, accuracy)
-            }
-
-            DEFAULT -> {
-                if (stat == null) {
-                    if (miss != null) {
-                        return calculate(map, lazer, JniScoreState(misses = miss), mods, mode, combo, accuracy)
-                    } else {
-                        return calculate(map, lazer, null, mods, mode, combo, accuracy)
-                    }
-                }
-
-                if (!passed) {
-                    score?.let { it.n300 = 0 }
-                    combo = null
-                }
-
-                calculate(map, lazer, score, mods, mode, combo, accuracy)
-            }
+    override fun getStar(beatMapID: Long, mode: OsuMode, mods: List<LazerMod>): Double {
+        val closeables = ArrayList<AutoCloseable>(2)
+        return try {
+            val (beatmap, _) = getBeatmap(beatMapID, mode.toRosuMode()) { closeables.add(it) }
+            beatmap.createDifficulty().apply {
+                closeables.add(this)
+                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
+            }.calculate(beatmap).getStarRating()
+        } finally {
+            closeables.forEach { it.close() }
         }
     }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(Companion::class.java)
-
-        enum class CalculateType {
-            PF, FC, DEFAULT
-        }
-
-        private fun calculate(
-            map: ByteArray,
-            lazer: Boolean = false,
-            score: JniScoreState? = null,
-            mods: List<LazerMod>? = null,
-            mode: OsuMode? = null,
-            combo: Int? = null,
-            accuracy: Double? = null,
-        ): JniPerformanceAttributes {
-            val closeable = mutableListOf<AutoCloseable>()
-            try {
-                return calculateBox(map, lazer, score, mods, mode, combo, accuracy, closeable)
-            } finally {
-                closeable.forEach {
-                    tryRun { it.close() }
-                }
-            }
-        }
-
-        // 真正的主计算
-        private fun calculateBox(
-            map: ByteArray,
-            lazer: Boolean = false,
-            score: JniScoreState? = null,
-            mods: List<LazerMod>? = null,
-            mode: OsuMode? = null,
-            combo: Int? = null,
-            accuracy: Double? = null,
-            closeable: MutableList<AutoCloseable>,
-        ): JniPerformanceAttributes {
-            val rosuBeatmap = JniBeatmap(map)
-            closeable.add(rosuBeatmap)
-            val rosuMode = mode?.toRosuMode()
-
-            // 转谱
-            if (rosuMode != null && rosuBeatmap.mode != rosuMode && rosuBeatmap.mode == org.spring.osu.OsuMode.Osu) {
-                rosuBeatmap.convertInPlace(rosuMode)
-            }
-
-
-            val rosuPerformance = rosuBeatmap.createPerformance()
-            if (score != null) {
-                with(score) {
-                    if (maxCombo != 0) rosuPerformance.setCombo(maxCombo)
-                    if (largeTickHits != 0) rosuPerformance.setLargeTick(largeTickHits)
-                    if (sliderEndHits != 0) rosuPerformance.setSliderEnds(sliderEndHits)
-                    if (geki != 0) rosuPerformance.setGeki(geki)
-                    if (katu != 0) rosuPerformance.setKatu(katu)
-                    if (n300 != 0) rosuPerformance.setN300(n300)
-                    if (n100 != 0) rosuPerformance.setN100(n100)
-                    if (n50 != 0) rosuPerformance.setN50(n50)
-                    if (misses != 0) rosuPerformance.setMisses(misses)
-                }
-            }
-
-            rosuPerformance.setLazer(lazer)
-
-            if (!mods.isNullOrEmpty()) {
-                val modsJson = JacksonUtil.toJson(mods)
-                rosuPerformance.setMods(modsJson)
-
-            }
-            if (combo != null) rosuPerformance.setCombo(combo)
-            if (accuracy != null) {
-                if (accuracy <= 1.0) {
-                    rosuPerformance.setAcc(accuracy * 100)
-                } else {
-                    rosuPerformance.setAcc(accuracy)
-                }
-            }
-
-            closeable.add(rosuPerformance)
-
-            return rosuPerformance.calculate()
-        }
 
         // 应用四维的变化 4 dimensions
         @JvmStatic
@@ -625,29 +546,6 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
 
         private fun JniPerformanceAttributes.toRosuPerformance(): RosuPerformance {
             return RosuPerformance(this)
-        }
-
-        private fun createJniState(state: LazerStatistics, maxCombo: Int, mode: OsuMode): JniScoreState {
-            val old = state.toScoreStatistics(mode)
-            return JniScoreState(
-                maxCombo,
-                state.largeTickHit,
-                state.sliderTailHit,
-                old.countGeki,
-                old.countKatu,
-                old.count300,
-                old.count100,
-                old.count50,
-                old.countMiss,
-            )
-        }
-
-        private fun tryRun(fn: () -> Unit) {
-            try {
-                fn()
-            } catch (e: Exception) {
-                log.error("运行时出现异常", e)
-            }
         }
     }
 }
