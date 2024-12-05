@@ -348,6 +348,8 @@ class MapStatisticsService(
                         accuracy = accArray,
                     )
                 )
+            } else {
+                result.addAll(fcPP)
             }
             return result
         }
