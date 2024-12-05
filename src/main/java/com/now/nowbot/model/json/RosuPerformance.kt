@@ -10,7 +10,7 @@ open class RosuPerformance(result: JniPerformanceAttributes? = null) {
     @JsonProperty("pp")
     var pp: Double = 0.0
 
-    @JsonProperty("aim_pp")
+    @JsonProperty("pp_aim")
     var ppAim: Double? = null
 
     @JsonProperty("pp_speed")
