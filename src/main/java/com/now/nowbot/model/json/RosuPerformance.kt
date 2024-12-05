@@ -13,16 +13,16 @@ open class RosuPerformance(result: JniPerformanceAttributes? = null) {
     @JsonProperty("aim_pp")
     var ppAim: Double? = null
 
-    @JsonProperty("spd_pp")
+    @JsonProperty("pp_speed")
     var ppSpeed: Double? = null
 
-    @JsonProperty("acc_pp")
+    @JsonProperty("pp_acc")
     var ppAcc: Double? = null
 
-    @JsonProperty("fl_pp")
+    @JsonProperty("pp_flashlight")
     var ppFlashlight: Double? = null
 
-    @JsonProperty("diff_pp")
+    @JsonProperty("pp_difficulty")
     var ppDifficulty: Double? = null
 
     @JsonProperty("effective_miss_count")
