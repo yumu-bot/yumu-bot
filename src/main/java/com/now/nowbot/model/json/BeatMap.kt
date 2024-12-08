@@ -114,6 +114,12 @@ open class BeatMap {
     @JsonProperty("last_updated")
     var lastUpdated: String? = null
 
+    /**
+     * 只有 beatmapSet 内的 beatmap 才有的属性
+     */
+    @JsonProperty("owners")
+    var owners: List<MicroUser>? = null
+
     @JsonProperty("mode_int")
     var modeInt: Int? = null
 
@@ -148,7 +154,10 @@ open class BeatMap {
     val hasLeaderBoard: Boolean
         get(){
             return if (status.isNotBlank()) {
-                status == "ranked" || status == "qualified" || status == "loved" || status == "approved"
+                when (status) {
+                    "ranked", "qualified", "loved", "approved" -> true
+                    else -> false
+                }
             } else {
                 when (ranked) {
                     1, 2, 3, 4 -> true

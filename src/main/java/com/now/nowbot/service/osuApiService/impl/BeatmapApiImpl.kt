@@ -9,6 +9,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.*
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
@@ -24,6 +25,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.regex.Pattern
+import kotlin.math.min
 
 @Service class BeatmapApiImpl(
     private val base: OsuApiBaseService,
@@ -425,8 +427,8 @@ import java.util.regex.Pattern
             ).block()
     }
 
-    override fun searchBeatMapSet(query: Map<String, Any?>): BeatMapSetSearch {
-        return base.osuApiWebClient.get().uri { 
+    private fun searchBeatMapSetFromAPI(query: Map<String, Any?>): BeatMapSetSearch {
+        return base.osuApiWebClient.get().uri {
             it.path("beatmapsets/search")
             query.forEach { (k: String, v: Any?) ->
                 if (v != null) {
@@ -439,6 +441,55 @@ import java.util.regex.Pattern
         }.headers { base.insertHeader(it) }.retrieve().bodyToMono(
             BeatMapSetSearch::class.java
         ).block()!!
+    }
+
+    override fun searchBeatMapSet(query: Map<String, Any?>): BeatMapSetSearch {
+        val search = searchBeatMapSetFromAPI(query)
+
+        // 后处理
+        search.resultCount = 50
+        if (query["s"] !== null || query["s"] !== "any") {
+            search.rule = query["s"].toString()
+        }
+        search.sortBeatmapDiff()
+
+        return search
+    }
+
+    /**
+     * 依据QualifiedMapService 的逻辑来多次获取
+     * tries 一般可以设为 10（500 个结果）
+     */
+    @Throws(GeneralTipsException::class)
+    override fun searchBeatMapSet(query: Map<String, Any?>, tries: Int): BeatMapSetSearch {
+        var search = BeatMapSetSearch()
+        var page = 1
+        val queryAlt = query.toMutableMap()
+
+        run {
+            var resultCount = 0
+            do {
+                if (search.beatmapSets.isEmpty()) {
+                    search = this.searchBeatMapSetFromAPI(queryAlt)
+                    resultCount += search.beatmapSets.size
+                } else {
+                    page++
+                    queryAlt["page"] = page
+                    val result = this.searchBeatMapSetFromAPI(queryAlt)
+                    resultCount += result.beatmapSets.size
+                    search.beatmapSets.addAll(result.beatmapSets)
+                }
+            } while (resultCount < search.total && page < tries)
+        }
+
+        // 后处理
+        search.resultCount = min(search.total, search.beatmapSets.size)
+        if (query["s"] !== null || query["s"] !== "any") {
+            search.rule = query["s"].toString()
+        }
+        search.sortBeatmapDiff()
+
+        return search
     }
 
     // 给同一张图的成绩添加完整的谱面

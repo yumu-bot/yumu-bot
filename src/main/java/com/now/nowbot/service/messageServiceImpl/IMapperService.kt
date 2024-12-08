@@ -19,12 +19,10 @@ import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
-@Service("I_MAPPER")
-class IMapperService(
+@Service("I_MAPPER") class IMapperService(
     private val userApiService: OsuUserApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService,
@@ -39,12 +37,9 @@ class IMapperService(
         return true
     }
 
-    @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, osuUser: OsuUser) {
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, osuUser: OsuUser) {
         val map = parseData(
-            osuUser,
-            userApiService,
-            beatmapApiService
+            osuUser, userApiService, beatmapApiService
         )
 
         val image: ByteArray
@@ -73,9 +68,7 @@ class IMapperService(
 
     override fun reply(event: MessageEvent, param: OsuUser): MessageChain? {
         val map = parseData(
-            param,
-            userApiService,
-            beatmapApiService
+            param, userApiService, beatmapApiService
         )
 
         return MessageChainBuilder().addImage(imageService.getPanel(map, "M")).build()
@@ -85,37 +78,14 @@ class IMapperService(
         private val log: Logger = LoggerFactory.getLogger(IMapperService::class.java)
 
         fun parseData(
-            user: OsuUser,
-            userApiService: OsuUserApiService,
-            beatmapApiService: OsuBeatmapApiService
+            user: OsuUser, userApiService: OsuUserApiService, beatmapApiService: OsuBeatmapApiService
         ): Map<String, Any?> {
-            var page = 1
-            val query = HashMap<String, Any>()
-            query["q"] = "creator=" + user.userID
-            query["sort"] = "ranked_desc"
-            query["s"] = "any"
-            query["page"] = page
+            val query = mapOf(
+                "q" to "creator=" + user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
+            )
 
-            var search: BeatMapSetSearch? = null
-
-            //依据QualifiedMapService 的逻辑来多次获取
-            run {
-                var resultCount = 0
-                do {
-                    if (search == null) {
-                        search = beatmapApiService.searchBeatMapSet(query)
-                        resultCount += search!!.beatmapSets.size
-                    } else {
-                        page++
-                        query["page"] = page
-                        val result = beatmapApiService.searchBeatMapSet(query)
-                        resultCount += result.beatmapSets.size
-                        search!!.beatmapSets.addAll(result.beatmapSets)
-                    }
-                } while (resultCount < search!!.total && page < 10)
-            }
-
-            val result = search!!.beatmapSets
+            val search = beatmapApiService.searchBeatMapSet(query, 10)
+            val result = search.beatmapSets
 
             val activity: List<ActivityEvent>
             val mappingActivity: MutableList<ActivityEvent> = ArrayList()
@@ -136,40 +106,28 @@ class IMapperService(
                 log.error("谱师信息：筛选出错", e)
             }
 
-            val mostPopularBeatmap = result
-                .filter { it.creatorID == user.userID }
-                .sortedByDescending { it.playCount }
-                .take(6)
+            val mostPopularBeatmap =
+                result.filter { it.creatorID == user.userID }.sortedByDescending { it.playCount }.take(6)
 
-            var mostRecentRankedBeatmap = result
-                .find { it.hasLeaderBoard && user.userID == it.creatorID }
+            var mostRecentRankedBeatmap = result.find { it.hasLeaderBoard && user.userID == it.creatorID }
 
             if (mostRecentRankedBeatmap == null && user.rankedCount > 0) {
                 try {
-                    val newQuery = HashMap<String, Any>()
-                    newQuery["q"] = user.userID.toString()
-                    newQuery["sort"] = "ranked_desc"
-                    newQuery["s"] = "any"
-                    newQuery["page"] = 1
-
-                    val newSearch = beatmapApiService.searchBeatMapSet(newQuery)
-                    mostRecentRankedBeatmap = newSearch.beatmapSets.find { it.hasLeaderBoard }
+                    val queryAlt =
+                        mapOf("q" to user.userID.toString(), "sort" to "ranked_desc", "s" to "any", "page" to 1)
+                    val searchAlt = beatmapApiService.searchBeatMapSet(queryAlt)
+                    mostRecentRankedBeatmap = searchAlt.beatmapSets.find { it.hasLeaderBoard }
                 } catch (ignored: Exception) {
                 }
             }
 
-            val mostRecentRankedGuestDiff = result
-                .find { it.hasLeaderBoard && user.userID != it.creatorID }
+            val mostRecentRankedGuestDiff = result.find { it.hasLeaderBoard && user.userID != it.creatorID }
 
-            val beatMapSum =
-                search!!.beatmapSets.flatMap { it.beatMaps ?: emptyList() }
+            val beatMaps = search.beatmapSets.flatMap { it.beatMaps ?: emptyList() }
 
             val diffArr = IntArray(8)
             run {
-                val diffStar =
-                    beatMapSum.filter { it.mapperID == user.userID }
-                        .map { it.starRating }
-                        .toDoubleArray()
+                val diffStar = beatMaps.filter { it.mapperID == user.userID }.map { it.starRating }.toDoubleArray()
                 val starMaxBoundary = doubleArrayOf(2.0, 2.8, 4.0, 5.3, 6.5, 8.0, 10.0, Double.MAX_VALUE)
                 for (d in diffStar) {
                     for (i in 0..7) {
@@ -202,17 +160,16 @@ class IMapperService(
                 val hasAnyGenre = AtomicBoolean(false)
 
                 //逻辑应该是先每张图然后再遍历12吧？
-                if (!CollectionUtils.isEmpty(search!!.beatmapSets)) {
-                    search!!.beatmapSets.forEach {
+                if (search.beatmapSets.isNotEmpty()) {
+                    search.beatmapSets.forEach {
                         for (i in 1 until keywords.size) {
                             val keyword = keywords[i]
 
-                            if ((it.tags?: "").lowercase(Locale.getDefault()).contains(keyword)) {
+                            if ((it.tags ?: "").lowercase(Locale.getDefault()).contains(keyword)) {
                                 genre[i]++
                                 hasAnyGenre.set(true)
                             }
-                        }
-                        //0是实在找不到 tag 的时候所赋予的默认值
+                        } //0是实在找不到 tag 的时候所赋予的默认值
                         if (!hasAnyGenre.get()) {
                             genre[0]++
                         }
@@ -223,10 +180,8 @@ class IMapperService(
 
             var favorite = 0
             var playcount = 0
-            if (!CollectionUtils.isEmpty(search!!.beatmapSets)) {
-                for (i in search!!.beatmapSets.indices) {
-                    val v = search!!.beatmapSets[i]
-
+            if (search.beatmapSets.isNotEmpty()) {
+                for (v in search.beatmapSets) {
                     if (v.creatorID == user.userID) {
                         favorite += v.favouriteCount
                         playcount += v.playCount.toInt()
@@ -236,10 +191,7 @@ class IMapperService(
 
             val lengthArr = IntArray(8)
             run {
-                val lengthAll =
-                    beatMapSum.filter { it.mapperID == user.userID }
-                        .map { it.totalLength }
-                        .toIntArray()
+                val lengthAll = beatMaps.filter { it.mapperID == user.userID }.map { it.totalLength }.toIntArray()
                 val lengthMaxBoundary = intArrayOf(60, 100, 140, 180, 220, 260, 300, Int.MAX_VALUE)
                 for (f in lengthAll) {
                     for (i in 0..7) {
@@ -251,20 +203,18 @@ class IMapperService(
                 }
             }
 
-            val body = HashMap<String, Any?>()
-
-            body["user"] = user
-            body["most_popular_beatmap"] = mostPopularBeatmap
-            body["most_recent_ranked_beatmap"] = mostRecentRankedBeatmap
-            body["most_recent_ranked_guest_diff"] = mostRecentRankedGuestDiff
-            body["difficulty_arr"] = diffArr
-            body["length_arr"] = lengthArr
-            body["genre"] = genre
-            body["recent_activity"] = mappingActivity
-            body["favorite"] = favorite
-            body["playcount"] = playcount
-
-            return body
+            return mapOf(
+                "user" to user,
+                "most_popular_beatmap" to mostPopularBeatmap,
+                "most_recent_ranked_beatmap" to mostRecentRankedBeatmap,
+                "most_recent_ranked_guest_diff" to mostRecentRankedGuestDiff,
+                "difficulty_arr" to diffArr,
+                "length_arr" to lengthArr,
+                "genre" to genre,
+                "recent_activity" to mappingActivity,
+                "favorite" to favorite,
+                "playcount" to playcount,
+            )
         }
     }
 }

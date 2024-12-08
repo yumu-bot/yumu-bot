@@ -25,21 +25,13 @@ class BeatMapSetSearch {
 
     @JsonProperty("search") var info: SearchInfo? = null
 
-    companion object {
-        fun sortBeatmapDiff(search: BeatMapSetSearch) {
-            if (search.beatmapSets.isEmpty()) return
+    fun sortBeatmapDiff() {
+        if (this.beatmapSets.isEmpty()) return
 
-            for (s in search.beatmapSets) {
-                if (s.beatMaps.isNullOrEmpty()) return
+        for (s in this.beatmapSets) {
+            if (s.beatMaps.isNullOrEmpty()) return
 
-                s.beatMaps = s.beatMaps!!
-                    .stream()
-                    .sorted(
-                        Comparator.comparing { obj: BeatMap -> obj.starRating}
-                    )
-                    .sorted(Comparator.comparing { obj: BeatMap -> obj.modeInt ?: 0 })
-                    .toList()
-            }
+            s.beatMaps = s.beatMaps!!.sortedBy { it.starRating }.sortedBy { it.modeInt ?: 0 }
         }
     }
 }

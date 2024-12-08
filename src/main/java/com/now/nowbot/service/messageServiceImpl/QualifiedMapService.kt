@@ -1,13 +1,12 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatMapSetSearch
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.throwable.serviceException.QualifiedMapException
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MODE
 import org.slf4j.Logger
@@ -17,7 +16,7 @@ import java.util.*
 import java.util.regex.Matcher
 import kotlin.math.floor
 import kotlin.math.max
-import kotlin.math.min
+import kotlin.math.roundToInt
 
 @Service("QUALIFIED_MAP")
 class QualifiedMapService(
@@ -48,27 +47,25 @@ class QualifiedMapService(
         val range = try {
             rangeStr.toInt()
         } catch (e: Exception) {
-            throw QualifiedMapException(QualifiedMapException.Type.Q_Parameter_Error)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param)
         }
 
         if (range < 1 || range > 999) {
-            throw QualifiedMapException(QualifiedMapException.Type.Q_Parameter_OutOfRange)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param)
         }
 
-        var page = 1
-        val pageAim =
-            max(floor((range / 50.0)) + 1.0, 10.0)
-                .toInt() // 这里需要重复获取，page最多取10页（500个），总之我不知道怎么实现
+        val tries = max(floor(range / 50.0).roundToInt() + 1, 10)
 
-        val query = hashMapOf<String, Any>()
         val status = getStatus(statusStr)
-
-        query["m"] = mode
-        query["s"] = status
-        query["sort"] = getSort(sort)
-        query["page"] = page
+        val query = mapOf<String, Any>(
+            "m" to mode,
+            "s" to status,
+            "sort" to getSort(sort),
+            "page" to 1,
+        )
 
         try {
+            /*
             var search: BeatMapSetSearch? = null
             var resultCount = 0
             do {
@@ -101,20 +98,20 @@ class QualifiedMapService(
             }
 
             search.resultCount = min(search.total, range)
-            search.rule = status
-            search.sortBeatmapDiff()
+
+             */
+
+            val search = beatmapApiService.searchBeatMapSet(query, tries)
 
             val img = imageService.getPanelA2(search)
             event.reply(img)
         } catch (e: Exception) {
             log.error("过审谱面：", e)
-            throw QualifiedMapException(QualifiedMapException.Type.Q_Send_Error)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "过审谱面")
         }
     }
 
     companion object {
-        private fun BeatMapSetSearch.sortBeatmapDiff() = BeatMapSetSearch.sortBeatmapDiff(this)
-
         private val log: Logger = LoggerFactory.getLogger(QualifiedMapService::class.java)
 
         private fun getStatus(status: String): String {

@@ -71,7 +71,15 @@ interface OsuBeatmapApiService {
 
     fun lookupBeatmap(checksum: String?, filename: String?, id: Long?): JsonNode?
 
+    /**
+     * 单次获取搜索结果
+     */
     fun searchBeatMapSet(query: Map<String, Any?>): BeatMapSetSearch
+
+    /**
+     * 多次获取搜索结果
+     */
+    fun searchBeatMapSet(query: Map<String, Any?>, tries: Int): BeatMapSetSearch
 
     // 给同一张图的成绩添加完整的谱面
     fun applyBeatMapExtendForSameScore(scoreList: List<LazerScore>)
