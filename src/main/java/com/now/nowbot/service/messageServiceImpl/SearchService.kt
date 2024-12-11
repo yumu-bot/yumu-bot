@@ -70,7 +70,7 @@ import java.util.regex.Pattern
             val str = (text ?: return null).trim()
 
             val matcher =
-                Pattern.compile("([:：](\")?(?<genre>$REG_ANYTHING)(\")?)?\\s*((\")?(?<artist>$REG_ANYTHING)(\")?\\s*-\\s*)?\\s*((\")?(?<title>$REG_ANYTHING)(\")?)?\\s*(\\((\")?(?<creator>$REG_ANYTHING)(\")?\\))?\\s*(\\[(\")?(?<difficulty>$REG_ANYTHING)(\")?])?\\s*(#(\")?(?<status>$REG_ANYTHING)(\")?#?)?\\s*(\\*(\")?(?<sort>$REG_ANYTHING)(\")?\\*?)?\\s*")
+                Pattern.compile("([:：](\")?(?<status>$REG_ANYTHING)(\")?)?\\s*((\")?(?<artist>$REG_ANYTHING)(\")?\\s*-\\s*)?\\s*((\")?(?<title>$REG_ANYTHING)(\")?)?\\s*(\\((\")?(?<creator>$REG_ANYTHING)(\")?\\))?\\s*(\\[(\")?(?<difficulty>$REG_ANYTHING)(\")?])?\\s*(#(\")?(?<genre>$REG_ANYTHING)(\")?#?)?\\s*(\\*(\")?(?<sort>$REG_ANYTHING)(\")?\\*?)?\\s*")
                     .matcher(str)
 
             if (!matcher.find()) return null

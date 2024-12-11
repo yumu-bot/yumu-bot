@@ -375,7 +375,7 @@ import kotlin.math.roundToInt
                 OSU -> {
                     val is50Over1P = s.meh / m.great > 0.01
                     when {
-                        p300 > 0.99999 -> "X"
+                        p300 > 1.0 - 1e-6 -> "X"
                         p300 >= 0.9 -> if (hasMiss) "A" else if (is50Over1P) "A" else "S"
                         p300 >= 0.8 -> if (hasMiss) "B" else "A"
                         p300 >= 0.7 -> if (hasMiss) "C" else "B"
@@ -385,7 +385,7 @@ import kotlin.math.roundToInt
                 }
 
                 TAIKO -> when {
-                    p300 > 0.99999 -> "X"
+                    p300 > 1.0 - 1e-6 -> "X"
                     p300 >= 0.9 -> if (hasMiss) "A" else "S"
                     p300 >= 0.8 -> if (hasMiss) "B" else "A"
                     p300 >= 0.7 -> if (hasMiss) "C" else "B"
@@ -394,7 +394,7 @@ import kotlin.math.roundToInt
                 }
 
                 CATCH -> when {
-                    accuracy > 0.99999 -> "X"
+                    accuracy > 1.0 - 1e-6 -> "X"
                     accuracy > 0.98 -> "S"
                     accuracy > 0.94 -> "A"
                     accuracy > 0.90 -> "B"
@@ -403,7 +403,7 @@ import kotlin.math.roundToInt
                 }
 
                 MANIA -> when {
-                    accuracy > 0.99999 -> "X"
+                    (s.great + s.perfect) == m.great -> "X"
                     accuracy > 0.95 -> "S"
                     accuracy > 0.90 -> "A"
                     accuracy > 0.80 -> "B"

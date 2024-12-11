@@ -271,11 +271,8 @@ class MapStatisticsService(
             val pp = getPPList(beatmap, expected, calculateApiService)
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
 
-            val mods = if (expected.mods.isEmpty()) {
-                emptyList()
-            } else {
-                LazerMod.getModsList(expected.mods)
-            }
+            val mods = LazerMod.getModsList(expected.mods)
+
             val attributes = calculateApiService.getAccPP(
                 beatmap.beatMapID,
                 expected.mode,
