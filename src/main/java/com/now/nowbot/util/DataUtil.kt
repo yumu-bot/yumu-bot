@@ -353,17 +353,18 @@ object DataUtil {
 
     // 获取谱面的原信息，方便成绩面板使用。请在 applyBeatMapExtend 和 applySRAndPP 之前用。
     @JvmStatic
-    fun getOriginal(beatmap: BeatMap): HashMap<String, Any> {
-        val original = HashMap<String, Any>(6)
-        original["cs"] = beatmap.CS!!
-        original["ar"] = beatmap.AR!!
-        original["od"] = beatmap.OD!!
-        original["hp"] = beatmap.HP!!
-        original["bpm"] = beatmap.BPM!!
-        original["drain"] = beatmap.hitLength!!
-        original["total"] = beatmap.totalLength
+    fun getOriginal(beatmap: BeatMap): Map<String, Any> {
+        if (beatmap.CS == null) return mapOf()
 
-        return original
+        return mapOf(
+            "cs" to beatmap.CS!!,
+            "ar" to beatmap.AR!!,
+            "od" to beatmap.OD!!,
+            "hp" to beatmap.HP!!,
+            "bpm" to beatmap.BPM!!,
+            "drain" to beatmap.hitLength!!,
+            "total" to beatmap.totalLength,
+        )
     }
 
     /** 根据准确率，通过获取准确率，来构建一个 Statistic。 */

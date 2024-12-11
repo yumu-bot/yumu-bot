@@ -192,6 +192,9 @@ class MatchListenerService(
                 )
                 mr.calculate()
 
+                // 需要拓展
+                if (beatmap.CS == null) beatmap = beatmapApiService.getBeatMap(beatmapID)
+
                 val objectGroup = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
                 val e7 =
                     PanelE7Param(
@@ -206,7 +209,7 @@ class MatchListenerService(
 
                 val image =
                     try {
-                        imageService.getPanelE7(e7)
+                        imageService.getPanel(e7, "E7")
                     } catch (e: WebClientResponseException) {
                         log.error(e) { "获取图片失败" }
                         throw TipsRuntimeException(
@@ -243,8 +246,13 @@ class MatchListenerService(
                 val index = 1
                 val image =
                     try {
-                        val stat = match.statistics
-                        imageService.getPanelF2(stat, game, index)
+                        val body = mapOf(
+                            "stat" to match.statistics,
+                            "round" to game,
+                            "index" to index,
+                        )
+
+                        imageService.getPanel(body, "F2")
                     } catch (e: java.lang.Exception) {
                         log.error(e) { "对局信息图片渲染失败：" }
                         throw MatchRoundException(MatchRoundException.Type.MR_Fetch_Error)

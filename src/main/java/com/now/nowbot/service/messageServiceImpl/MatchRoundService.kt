@@ -1,208 +1,206 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.BeatMap;
-import com.now.nowbot.model.multiplayer.Match;
-import com.now.nowbot.model.multiplayer.MatchRating;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
-import com.now.nowbot.service.osuApiService.OsuCalculateApiService;
-import com.now.nowbot.service.osuApiService.OsuMatchApiService;
-import com.now.nowbot.throwable.serviceException.MatchRoundException;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.multiplayer.Match
+import com.now.nowbot.model.multiplayer.Match.MatchRound
+import com.now.nowbot.model.multiplayer.MatchRating
+import com.now.nowbot.model.multiplayer.MatchRating.RatingParam
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
+import com.now.nowbot.service.osuApiService.OsuMatchApiService
+import com.now.nowbot.throwable.serviceException.MatchRoundException
+import com.now.nowbot.util.DataUtil.getMarkdownFile
+import com.now.nowbot.util.Instruction
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.*
+import java.util.regex.Matcher
 
-import java.util.List;
-import java.util.Objects;
-import java.util.regex.Matcher;
+@Service("MATCH_ROUND") class MatchRoundService(
+    private val matchApiService: OsuMatchApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService,
+    private val imageService: ImageService
+) : MessageService<Matcher> {
 
-@Service("MATCH_ROUND")
-public class MatchRoundService implements MessageService<Matcher> {
-    private static final Logger log = LoggerFactory.getLogger(MatchRoundService.class);
-
-    @Resource
-    OsuMatchApiService matchApiService;
-    @Resource
-    OsuBeatmapApiService beatmapApiService;
-    @Resource
-    ImageService imageService;
-    @Resource
-    OsuCalculateApiService calculateApiService;
-
-    @Override
-    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) {
-        var m = Instruction.MATCH_ROUND.matcher(messageText);
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Matcher>): Boolean {
+        val m = Instruction.MATCH_ROUND.matcher(messageText)
         if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
+            data.value = m
+            return true
+        } else return false
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        int matchID;
-        var matchIDStr = matcher.group("matchid");
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
+        val matchID: Int
+        val matchIDStr = matcher.group("matchid")
 
         if (matchIDStr == null || matchIDStr.isBlank()) {
-
             try {
-                var md = DataUtil.getMarkdownFile("Help/round.md");
-                var image = imageService.getPanelA6(md, "help");
-                event.reply(image);
-                return;
-            } catch (Exception e) {
-                throw new MatchRoundException(MatchRoundException.Type.MR_Instructions);
+                val md = getMarkdownFile("Help/round.md")
+                val image = imageService.getPanelA6(md, "help")
+                event.reply(image)
+                return
+            } catch (e: Exception) {
+                throw MatchRoundException(MatchRoundException.Type.MR_Instructions)
             }
         }
 
         try {
-            matchID = Integer.parseInt(matchIDStr);
-        } catch (NumberFormatException e) {
-            throw new MatchRoundException(MatchRoundException.Type.MR_MatchID_RangeError);
+            matchID = matchIDStr.toInt()
+        } catch (e: NumberFormatException) {
+            throw MatchRoundException(MatchRoundException.Type.MR_MatchID_RangeError)
         }
 
-        var keyword = matcher.group("keyword");
-        boolean hasKeyword = (keyword != null && !keyword.isBlank());
+        var keyword = matcher.group("keyword")
+        val hasKeyword = keyword.isNullOrBlank().not()
 
-        int round;
-        var roundStr = matcher.group("round");
-        boolean hasRound = (roundStr != null && !roundStr.isBlank());
+        val round: Int
+        var roundStr = matcher.group("round")
+        val hasRound = roundStr.isNullOrBlank().not()
 
         if (hasRound) {
-            if (hasKeyword) {
-            //这里是把诸如 21st 类的东西全部匹配到 keyword 里
-            keyword = roundStr + keyword;
-            roundStr = "-1";
+            if (hasKeyword) { //这里是把诸如 21st 类的东西全部匹配到 keyword 里
+                keyword = roundStr + keyword
+                roundStr = "-1"
             }
         } else {
             if (hasKeyword) {
-                roundStr = "-1";
+                roundStr = "-1"
             } else {
                 try {
-                    var md = DataUtil.getMarkdownFile("Help/round.md");
-                    var image = imageService.getPanelA6(md, "help");
-                    event.reply(image);
-                    return;
-                } catch (Exception e) {
-                    throw new MatchRoundException(MatchRoundException.Type.MR_Instructions);
+                    val md = getMarkdownFile("Help/round.md")
+                    val image = imageService.getPanelA6(md, "help")
+                    event.reply(image)
+                    return
+                } catch (e: Exception) {
+                    throw MatchRoundException(MatchRoundException.Type.MR_Instructions)
                 }
             }
         }
 
-        try {
-            round = Integer.parseInt(roundStr) - 1;
-        } catch (NumberFormatException e) {
+        round = try {
+            roundStr!!.toInt() - 1
+        } catch (e: NumberFormatException) {
             if (hasKeyword) {
-                round = -1;
+                -1
             } else {
-                throw new MatchRoundException(MatchRoundException.Type.MR_Round_RangeError);
+                throw MatchRoundException(MatchRoundException.Type.MR_Round_RangeError)
             }
         }
 
-        var image = getDataImage(matchID, round, keyword);
+        val image = getDataImage(matchID, round, keyword)
 
         try {
-            event.reply(image);
-        } catch (Exception e) {
-            log.error("对局信息数据请求失败", e);
-            throw new MatchRoundException(MatchRoundException.Type.MR_Send_Error);
+            event.reply(image)
+        } catch (e: Exception) {
+            log.error("对局信息数据请求失败", e)
+            throw MatchRoundException(MatchRoundException.Type.MR_Send_Error)
         }
     }
 
-    public byte[] getDataImage(int matchID, int index, @Nullable String keyword) throws MatchRoundException {
-        boolean hasKeyword = (keyword != null && !keyword.isBlank());
+    @Throws(MatchRoundException::class) fun getDataImage(matchID: Int, index: Int, keyword: String?): ByteArray {
+        var i = index
+        val hasKeyword = keyword.isNullOrBlank().not()
 
-        Match match;
+        val match: Match
         try {
-            match = matchApiService.getMatchInfo(matchID, 10);
-        } catch (WebClientResponseException e) {
-            throw new MatchRoundException(MatchRoundException.Type.MR_MatchID_NotFound);
+            match = matchApiService.getMatchInfo(matchID.toLong(), 10)
+        } catch (e: WebClientResponseException) {
+            throw MatchRoundException(MatchRoundException.Type.MR_MatchID_NotFound)
         }
 
-        while (match.getFirstEventID() != match.getEvents().getFirst().getEventID()) {
-            List<Match.MatchEvent> events = matchApiService.getMatchInfo(matchID, 10).getEvents();
-            if (events.isEmpty()) throw new MatchRoundException(MatchRoundException.Type.MR_Round_Empty);
-            match.getEvents().addAll(0, events);
+        while (match.firstEventID != match.events.first().eventID) {
+            val events: List<Match.MatchEvent> = matchApiService.getMatchInfo(matchID.toLong(), 10).events
+            if (events.isEmpty()) throw MatchRoundException(MatchRoundException.Type.MR_Round_Empty)
+            match.events.addAll(0, events)
         }
 
         //获取所有轮的游戏
-        var mr = new MatchRating(match, new MatchRating.RatingParam(0, 0, null, 1d, true, true), beatmapApiService, calculateApiService);
-        mr.calculate();
+        val mr = MatchRating(
+            match, RatingParam(0, 0, null, 1.0, delete = true, rematch = true), beatmapApiService, calculateApiService
+        )
+        mr.calculate()
 
-        List<Match.MatchRound> rounds = mr.getRounds();
+        val rounds = mr.rounds
 
-        if (index < 0 || index > match.getEvents().size()) {
-            if (hasKeyword) {
-                index = getRoundIndexFromKeyWord(rounds, keyword);
+        if (i < 0 || i > match.events.size) {
+            i = if (hasKeyword) {
+                getRoundIndexFromKeyWord(rounds, keyword)
             } else {
                 try {
-                    index = getRoundIndexFromKeyWord(rounds, String.valueOf(index));
-                } catch (NumberFormatException e) {
-                    throw new MatchRoundException(MatchRoundException.Type.MR_Round_NotFound);
+                    getRoundIndexFromKeyWord(rounds, i.toString())
+                } catch (e: NumberFormatException) {
+                    throw MatchRoundException(MatchRoundException.Type.MR_Round_NotFound)
                 }
             }
         }
 
-        if (index == -1 && hasKeyword) {
-            throw new MatchRoundException(MatchRoundException.Type.MR_KeyWord_NotFound);
+        if (i == -1 && hasKeyword) {
+            throw MatchRoundException(MatchRoundException.Type.MR_KeyWord_NotFound)
         }
 
-        byte[] img;
+        val img: ByteArray
         try {
-            img = imageService.getPanelF2(match.getStatistics(), mr.getRounds().get(index), index);
-        } catch (Exception e) {
-            log.error("对局信息图片渲染失败：", e);
-            throw new MatchRoundException(MatchRoundException.Type.MR_Fetch_Error);
+            val body = mapOf(
+                "stat" to match.statistics,
+                "round" to mr.rounds[i],
+                "index" to i,
+            )
+
+            img = imageService.getPanel(body, "F2")
+        } catch (e: Exception) {
+            log.error("对局信息图片渲染失败：", e)
+            throw MatchRoundException(MatchRoundException.Type.MR_Fetch_Error)
         }
 
-        return img;
+        return img
     }
 
-    private static int getRoundIndexFromKeyWord (List<Match.MatchRound> infoList, @Nullable String keyword) {
-        int size = infoList.size();
-        String word;
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(MatchRoundService::class.java)
 
-        if (keyword != null && !keyword.isBlank()) {
-            word = keyword.trim().toLowerCase();
-        } else {
-            return -1;
-        }
+        private fun getRoundIndexFromKeyWord(infoList: List<MatchRound>, keyword: String?): Int {
+            val size = infoList.size
+            val word: String
 
-        for (int i = 0; i < size; i++) {
-            BeatMap beatMap;
-
-            try {
-                beatMap = infoList.get(i).getBeatMap();
-                if (Objects.isNull(beatMap)) continue;
-            } catch (NullPointerException ignored) {
-                continue;
+            if (keyword.isNullOrBlank().not()) {
+                word = keyword!!.trim { it <= ' ' }.lowercase()
+            } else {
+                return -1
             }
 
-            try {
-                if (Objects.nonNull(beatMap.getBeatMapSet()) && (
-                        beatMap.getBeatMapSet().getTitle().toLowerCase().contains(word) ||
-                        beatMap.getBeatMapSet().getArtist().toLowerCase().contains(word) ||
-                        beatMap.getBeatMapSet().getTitleUnicode().toLowerCase().contains(word) ||
-                        beatMap.getBeatMapSet().getArtistUnicode().toLowerCase().contains(word) ||
-                        beatMap.getBeatMapSet().getCreator().toLowerCase().contains(word) ||
-                        beatMap.getDifficultyName().toLowerCase().contains(word)
-                )) {
-                    return i;
+            for (i in 0..<size) {
+                val beatMap: BeatMap?
+
+                try {
+                    beatMap = infoList[i].beatMap
+                    if (beatMap == null) continue
+                } catch (ignored: NullPointerException) {
+                    continue
                 }
-            } catch (Exception ignored) {
-                //continue;
-            }
-        }
 
-        return -1;
+                try {
+                    if (beatMap.beatMapSet != null && (beatMap.beatMapSet!!.title.lowercase()
+                            .contains(word) || beatMap.beatMapSet!!.artist.lowercase()
+                            .contains(word) || beatMap.beatMapSet!!.titleUnicode.lowercase()
+                            .contains(word) || beatMap.beatMapSet!!.artistUnicode.lowercase()
+                            .contains(word) || beatMap.beatMapSet!!.creator.lowercase()
+                            .contains(word) || beatMap.difficultyName.lowercase().contains(word))) {
+                        return i
+                    }
+                } catch (ignored: Exception) { //continue;
+                }
+            }
+
+            return -1
+        }
     }
 }
 

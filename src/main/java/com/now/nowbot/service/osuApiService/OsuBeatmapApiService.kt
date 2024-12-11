@@ -41,6 +41,7 @@ interface OsuBeatmapApiService {
         return getBeatMapFromDataBase(bid.toLong())
     }
 
+    // TODO database 存的谱面缺太多东西，比如甚至谱面状态都没有。。。
     fun getBeatMapFromDataBase(bid: Long): BeatMap
 
     fun isNotOverRating(bid: Long): Boolean

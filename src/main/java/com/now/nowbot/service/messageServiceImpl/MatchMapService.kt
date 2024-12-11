@@ -90,7 +90,7 @@ class MatchMapService(
         var image = byteArrayOf()
 
         try {
-            image = imageService.getPanelE7(e7Param)
+            image = imageService.getPanel(e7Param, "E7")
         } catch (e: Exception) {
             log.error("比赛谱面信息：渲染失败: ", e)
             event.reply(

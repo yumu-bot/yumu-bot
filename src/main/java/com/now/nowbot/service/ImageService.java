@@ -2,13 +2,9 @@ package com.now.nowbot.service;
 
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.*;
-import com.now.nowbot.model.multiplayer.Match;
 import com.now.nowbot.model.ppminus.PPMinus;
 import com.now.nowbot.model.service.UserAvatarCardParam;
-import com.now.nowbot.service.messageServiceImpl.MapStatisticsService;
-import com.now.nowbot.service.messageServiceImpl.MatchMapService;
 import com.now.nowbot.util.ContextUtil;
-import com.now.nowbot.util.DataUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,10 +15,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service("NOWBOT_IMAGE")
@@ -308,105 +301,6 @@ public class ImageService {
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(hashMap, headers);
         return doPost("panel_B3", httpEntity);
     }
-
-    @Deprecated
-    public byte[] getPanelD(OsuUser osuUser, Optional<OsuUser> historyUser, List<LazerScore> BPs, OsuMode mode) {
-
-        double bonus = 0f;
-
-        if (!BPs.isEmpty()) {
-            var bpPPs = BPs.stream().mapToDouble(LazerScore::getPP).toArray();
-            bonus = DataUtil.getBonusPP(osuUser.getPP(), bpPPs);
-        }
-
-        var times = BPs.stream().map(LazerScore::getEndedTime).toList();
-        var now = LocalDate.now();
-        var bpTimes = new int[90];
-        times.forEach(time -> {
-            var d = (int) (now.toEpochDay() - time.toLocalDate().toEpochDay());
-            if (d > 0 && d <= 90) {
-                bpTimes[90 - d]++;
-            }
-        });
-
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = new HashMap<>(Map.of("user", osuUser,
-                "bp-time", bpTimes,
-                "bonus_pp", bonus,
-                "mode", mode.getName()
-        ));
-
-        historyUser.ifPresent(user -> {
-            if (user.getStatistics() instanceof InfoLogStatistics historyStat) {
-                body.put("day", ChronoUnit.DAYS.between(historyStat.getLogTime().toLocalDate(), LocalDate.now()));
-            }
-            body.put("historyUser", user);
-        });
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_D", httpEntity);
-    }
-
-    @Deprecated
-    // 请使用 E5
-    public byte[] getPanelE(OsuUser user, Score score) throws WebClientResponseException {
-        HttpHeaders headers = getDefaultHeader();
-        var body = Map.of(
-                "user", user,
-                "score", score
-        );
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_E", httpEntity);
-    }
-
-    @Deprecated
-    // 请使用 E6
-    public byte[] getPanelE2(@Nullable OsuUser user, BeatMap beatMap, MapStatisticsService.Expected expected) {
-        HttpHeaders headers = getDefaultHeader();
-        var body = new HashMap<>(Map.of(
-                "beatmap", beatMap,
-                "expected", expected
-        ));
-
-        if (user != null) {
-            body.put("user", user);
-        }
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_E2", httpEntity);
-    }
-
-    public byte[] getPanelE7(MatchMapService.PanelE7Param param) {
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = Map.of(
-                "match", param.match,
-                "players", param.players,
-                "mode", param.mode,
-                "mods", param.mods,
-                "beatmap", param.beatmap,
-                "density", param.density,
-                "original", param.original
-        );
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_E7", httpEntity);
-    }
-
-    public byte[] getPanelF2(Match.MatchStat stat, Match.MatchRound game, int index) {
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = Map.of(
-                "MatchStat", stat,
-                "MatchRound", game,
-                "index", index
-        );
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_F2", httpEntity);
-    }
-
 
     public byte[] getPanelH(Object mapPool, OsuMode mode) {
         // log.debug(JacksonUtil.objectToJsonPretty(mapPool));
