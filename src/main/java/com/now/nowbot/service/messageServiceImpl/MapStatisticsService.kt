@@ -17,6 +17,7 @@ import com.now.nowbot.service.messageServiceImpl.MapStatisticsService.MapParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.CmdUtil.getBid
@@ -271,7 +272,7 @@ class MapStatisticsService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
 
             val mods = if (expected.mods.isEmpty()) {
-                null
+                emptyList()
             } else {
                 LazerMod.getModsList(expected.mods)
             }
@@ -286,6 +287,8 @@ class MapStatisticsService(
             )
 
             beatmap.starRating = attributes.stars ?: beatmap.starRating
+
+            CalculateApiImpl.applyBeatMapChanges(beatmap, mods)
 
             return imageService.getPanel(
                 PanelE6Param(user, beatmap, density, original, attributes, pp, expected)
