@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.ModsException
 import com.now.nowbot.util.JacksonUtil
+import org.spring.core.json
 import kotlin.reflect.full.companionObjectInstance
 
 
@@ -80,6 +81,7 @@ sealed interface ValueMod {
     JsonSubTypes.Type(value = LazerMod.Synesthesia::class, name = "SY"),
     JsonSubTypes.Type(value = LazerMod.Depth::class, name = "DP"),
     JsonSubTypes.Type(value = LazerMod.TouchDevice::class, name = "TD"),
+    JsonSubTypes.Type(value = LazerMod.Bloom::class, name = "BM"),
     JsonSubTypes.Type(value = LazerMod.ScoreV2::class, name = "SV2"),
     JsonSubTypes.Type(value = LazerMod.Swap::class, name = "SW"),
     JsonSubTypes.Type(value = LazerMod.ConstantSpeed::class, name = "CS"),
@@ -1859,6 +1861,49 @@ sealed class LazerMod {
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
             override val incompatible: Set<Mod> = setOf(Autoplay, Cinema, Autopilot)
             override val value: Int = 4
+        }
+    }
+
+    class Bloom : LazerMod() {
+        @get:JsonProperty("acronym")
+        override val acronym: String = type
+
+        @get:JsonProperty("settings")
+        override var settings: Any? = null
+
+        @JsonProperty("settings")
+        private fun setSettings(node: JsonNode) {
+            settings = node.json<Value>()
+        }
+
+        @get:JsonIgnore
+        @set:JsonIgnore
+        var maxSizeComboCount: Int?
+            get() = settings?.let { (it as Value).maxSizeComboCount }
+            set(v) {
+                if (settings == null) settings = Value(maxSizeComboCount = v)
+                else (settings as Value).maxSizeComboCount = v
+            }
+
+        @get:JsonIgnore
+        @set:JsonIgnore
+        var maxCursorSize: Float?
+            get() = settings?.let { (it as Value).maxCursorSize }
+            set(v) {
+                if (settings == null) settings = Value(maxCursorSize = v)
+                else (settings as Value).maxCursorSize = v
+            }
+
+
+        private data class Value(
+            @JsonProperty("max_size_combo_count") var maxSizeComboCount: Int? = null,
+            @JsonProperty("max_cursor_size") var maxCursorSize: Float? = null,
+        )
+
+        companion object : Mod {
+            override val type: String = "BM"
+            override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
+            override val incompatible: Set<Mod> = setOf(Flashlight, NoScope, TouchDevice)
         }
     }
 
