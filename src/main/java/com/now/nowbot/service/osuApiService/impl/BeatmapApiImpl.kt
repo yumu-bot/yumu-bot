@@ -447,7 +447,7 @@ import kotlin.math.min
         val search = searchBeatMapSetFromAPI(query)
 
         // 后处理
-        search.resultCount = 50
+        search.resultCount = min(50, search.beatmapSets.size)
         if (query["s"] !== null || query["s"] !== "any") {
             search.rule = query["s"].toString()
         }

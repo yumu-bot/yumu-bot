@@ -9,6 +9,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
+import org.intellij.lang.annotations.Language
 import org.springframework.stereotype.Service
 import java.util.regex.Pattern
 
@@ -67,19 +68,23 @@ import java.util.regex.Pattern
     }
 
     companion object {
+        @Language("RegExp")
         private const val REG_ANYTHING = "[^\\-\\[\\]\"“”()（）【】—]+"
+
+        @Language("RegExp")
+        private const val REG_ANYTHING_NO_SPACE = "[^\\-\\[\\]\\s\"“”()（）【】—]+"
 
         // 拆分查询的歌曲名
         private fun constructParam(text: String?): SearchParam? { // Nishigomi Kakumi - Hyakka Ryouran (SugiuraAyano) [Kantan]
             val str = (text ?: return null).trim()
 
             val matcher =
-                Pattern.compile("\\s*([:：](\")?(?<mode>$REG_ANYTHING)(\")?)?\\s*([#＃](\")?(?<status>$REG_ANYTHING)(\")?)?\\s*((\")?(?<artist>$REG_ANYTHING)(\")?\\s*-\\s*)?\\s*((\")?(?<title>$REG_ANYTHING)(\")?)?\\s*(\\((\")?(?<creator>$REG_ANYTHING)(\")?\\))?\\s*(\\[(\")?(?<difficulty>$REG_ANYTHING)(\")?])?\\s*(&(\")?(?<genre>$REG_ANYTHING)(\")?&?)?\\s*(\\+(\")?(?<language>$REG_ANYTHING)(\")?\\+?)?\\s*(\\*(\")?(?<sort>$REG_ANYTHING)(\")?\\*?)?\\s*")
+                Pattern.compile("\\s*([:：](\")?(?<mode>$REG_ANYTHING_NO_SPACE)(\")?)?\\s*([#＃](\")?(?<status>$REG_ANYTHING_NO_SPACE)(\")?)?\\s*((\")?(?<artist>$REG_ANYTHING)(\")?\\s*-\\s*)?\\s*((\")?(?<title>$REG_ANYTHING)(\")?)?\\s*(\\((\")?(?<creator>$REG_ANYTHING)(\")?\\))?\\s*(\\[(\")?(?<difficulty>$REG_ANYTHING)(\")?])?\\s*(&(\")?(?<genre>$REG_ANYTHING)(\")?&?)?\\s*(\\+(\")?(?<language>$REG_ANYTHING_NO_SPACE)(\")?\\+?)?\\s*(\\*(\")?(?<sort>$REG_ANYTHING)(\")?\\*?)?\\s*")
                     .matcher(str)
 
             if (!matcher.find()) return null
 
-            val mode = matcher.group("status")
+            val mode = matcher.group("mode")
             val status = matcher.group("status")
             val artist = matcher.group("artist")
             val title = matcher.group("title")
@@ -167,7 +172,11 @@ import java.util.regex.Pattern
             sb.apply {
                 append("可能的结果:")
 
-                result.beatmapSets.subList(0, 10).forEach {
+                if (result.beatmapSets.size > 10) {
+                    result.beatmapSets = result.beatmapSets.subList(0, 10)
+                }
+
+                result.beatmapSets.forEach {
                     append("\n")
                     append(it.previewName)
                 }
@@ -177,7 +186,9 @@ import java.util.regex.Pattern
         }
 
         private fun MessageEvent.replyImage(result: BeatMapSetSearch, imageService: ImageService) {
-            result.beatmapSets = result.beatmapSets.subList(0, 12)
+            if (result.beatmapSets.size > 12) {
+                result.beatmapSets = result.beatmapSets.subList(0, 12)
+            }
 
             val data = imageService.getPanel(result, "A8")
 
