@@ -1122,6 +1122,83 @@ object DataUtil {
             .replace(Regex("\\s+"), "")
     }
 
+    // 标准化字段
+    @JvmStatic
+    fun getSort(sort: String?): String {
+        return when (sort?.lowercase()) {
+            "t", "t+", "ta", "title", "title asc", "title_asc" -> "title_asc"
+            "t-", "td", "title desc", "title_desc" -> "title_desc"
+            "a", "a+", "aa", "artist", "artist asc", "artist_asc" -> "artist_asc"
+            "a-", "ad", "artist desc", "artist_desc" -> "artist_desc"
+            "d", "d+", "da", "difficulty", "difficulty asc", "difficulty_asc", "s", "s+", "sa", "star", "star asc", "star_asc" -> "difficulty_asc"
+            "d-", "dd", "difficulty desc", "difficulty_desc", "s-", "sd", "star desc", "star_desc" -> "difficulty_desc"
+            "m", "m+", "ma", "map", "rating", "rating asc", "rating_asc" -> "rating_asc"
+            "m-", "md", "map desc", "rating desc", "rating_desc" -> "rating_desc"
+            "p", "p+", "pa", "plays", "pc asc", "plays asc", "plays_asc" -> "plays_asc"
+            "p-", "pd", "pc desc", "plays desc", "plays_desc" -> "plays_desc"
+            "r", "r+", "ra", "ranked", "time asc", "ranked asc", "ranked_asc" -> "ranked_asc"
+            "r-", "rd", "time desc", "ranked desc", "ranked_desc" -> "ranked_desc"
+            else -> "relevance_desc"
+        }
+    }
+
+    @JvmStatic
+    fun getStatus(status: String?): String? {
+        return when (status?.lowercase()) {
+            "0", "p", "pend", "pending" -> "pending"
+            "1", "r", "rnk", "rank", "ranked" -> "ranked"
+            "2", "a", "app", "approve", "approved" -> "approved"
+            "3", "q", "qua", "qualify", "qualified" -> "qualified"
+            "4", "l", "lvd", "loved" -> "loved"
+            "-1", "5", "w", "wip", "inprogress", "in progress", "workinprogress", "work in progress" -> "wip"
+            "-2", "6", "g", "gra", "grave", "graveyard", "graveyarded" -> "graveyard"
+            "f", "fav", "favor", "favorite", "favorites" -> "favorites"
+            "h", "has", "leader", "leaderboard", "has leaderboard" -> null
+            else -> "any"
+        }
+    }
+
+    @JvmStatic
+    fun getGenre(genre: String?): Byte? {
+        return when (genre?.lowercase()) {
+            "u", "un", "uns", "unspecified" -> 1
+            "v", "vg", "vgm", "videogame", "video game" -> 2
+            "a", "an", "ani", "manga", "anime" -> 3
+            "r", "rk", "rock" -> 4
+            "p", "pp", "pop" -> 5
+            "o", "ot", "oth", "other" -> 6
+            "n", "nv", "nvt", "novel", "novelty" -> 7
+            "h", "hh", "hip", "hop", "hiphop", "hip hop" -> 9
+            "e", "el", "ele", "elect", "electro", "electric", "electronic" -> 10
+            "m", "mt", "mtl", "metal" -> 11
+            "c", "cl", "cls", "classic", "classical" -> 12
+            "f", "fk", "folk" -> 13
+            "j", "jz", "jazz" -> 14
+            else -> null
+        }
+    }
+
+    @JvmStatic
+    fun getLanguage(language: String?): Byte? {
+        return when (language?.lowercase()) {
+            "c", "cn", "chn", "china", "chinese" -> 4
+            "e", "en", "gb", "eng", "gbr", "england", "english" -> 2
+            "f", "fr", "fra", "france", "french" -> 7
+            "g", "ge", "ger", "germany", "german" -> 8
+            "i", "it", "ita", "italy", "italian" -> 11
+            "j", "ja", "jpn", "japan", "japanese" -> 3
+            "k", "kr", "kor", "korea", "korean" -> 6
+            "s", "sp", "esp", "spa", "spain", "spanish" -> 10
+            "w", "sw", "swe", "sweden", "swedish" -> 9
+            "r", "ru", "rus", "russia", "russian" -> 12
+            "p", "po", "pol", "poland", "polish" -> 13
+            "n", "in", "ins", "instrument", "instrumental" -> 5
+            "u", "un", "uns", "unspecified" -> 1
+            "o", "ot", "oth", "any", "other", "others" -> 14
+            else -> null
+        }
+    }
+
     @JvmRecord
     private data class Range(val offset: Int, val limit: Int)
 
