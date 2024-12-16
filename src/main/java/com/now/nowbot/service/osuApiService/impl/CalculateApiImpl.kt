@@ -73,7 +73,6 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
             beatmap.createPerformance(state).apply {
                 setLazer(lazer)
-                setPassedObjects(beatmap.objects)
                 if (change) this.setGameMode(mode)
                 if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
             }.calculate()
