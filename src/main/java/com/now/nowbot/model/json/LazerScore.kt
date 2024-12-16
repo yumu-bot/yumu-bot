@@ -10,7 +10,6 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import kotlin.math.ln
-import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -186,9 +185,9 @@ import kotlin.math.roundToInt
                 }
 
                 CATCH -> {
-                    n100 = max(largeTickHit, ok)
-                    n50 = max(smallTickHit, meh)
-                    katu = max(smallTickHit, good)
+                    n100 = ok
+                    n50 = meh
+                    katu = good
                 }
 
                 MANIA -> {
