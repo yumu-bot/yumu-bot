@@ -2402,8 +2402,9 @@ sealed class LazerMod {
         fun getModsValue(acronym: String?): Int {
             return getModsList(acronym)
                 .mapNotNull {
-                    return@mapNotNull if (it is ValueMod) {
-                        it.value
+                    val klass = it::class.companionObjectInstance
+                    return@mapNotNull if (klass is ValueMod) {
+                        klass.value
                     } else {
                         null
                     }
