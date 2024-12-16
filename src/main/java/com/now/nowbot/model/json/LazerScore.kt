@@ -185,8 +185,8 @@ import kotlin.math.roundToInt
                 }
 
                 CATCH -> {
-                    n100 = ok
-                    n50 = meh
+                    n100 = largeTickHit
+                    n50 = sliderTailHit
                     katu = good
                 }
 
