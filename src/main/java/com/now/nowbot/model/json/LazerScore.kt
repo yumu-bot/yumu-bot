@@ -402,7 +402,7 @@ import kotlin.math.roundToInt
                 }
 
                 MANIA -> when {
-                    (s.great + s.perfect) == m.great -> "X"
+                    (s.great + s.perfect) == m.perfect -> "X"
                     accuracy > 0.95 -> "S"
                     accuracy > 0.90 -> "A"
                     accuracy > 0.80 -> "B"
