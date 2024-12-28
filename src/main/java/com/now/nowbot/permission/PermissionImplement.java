@@ -16,7 +16,6 @@ import com.now.nowbot.throwable.BotException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.ContextUtil;
 import jakarta.annotation.Resource;
-import kotlin.text.Regex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
@@ -41,7 +40,7 @@ public class PermissionImplement implements PermissionController {
     private static final Map<String, TencentMessageService<Object>> serviceMap4TX     = new LinkedHashMap<>();
     private static final Map<String, ScheduledFuture<?>>            futureMap         = new ConcurrentHashMap<>();
 
-    private static Set<Long>         supetList;
+    private static Set<Long>         superList;
     private static Set<Long>         testerList;
     private static PermissionService AllService;
 
@@ -111,7 +110,7 @@ public class PermissionImplement implements PermissionController {
     }
 
     private static boolean isSuper(Long id) {
-        return supetList.contains(id);
+        return superList.contains(id);
     }
 
     private static boolean isBlock(String name, MessageEvent event) {
@@ -214,7 +213,7 @@ public class PermissionImplement implements PermissionController {
 
 
         //初始化暗杀名单
-        supetList = Set.of(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L, LOCAL_GROUP_ID);
+        superList = Set.of(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L, LOCAL_GROUP_ID);
 
         log.info("权限模块初始化完成");
 
