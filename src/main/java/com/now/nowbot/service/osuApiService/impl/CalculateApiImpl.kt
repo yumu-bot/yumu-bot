@@ -450,12 +450,6 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             else -> (80 - ms) / 6f
         }
 
-        // 只有在仅计算主模式的时候才能使用这个方法
-        @JvmStatic
-        fun applyOD(od: Float, mods: List<LazerMod>): Float {
-            return applyOD(od, mods, OsuMode.OSU)
-        }
-
         @JvmStatic
         fun applyOD(od: Float, mods: List<LazerMod>, mode: OsuMode): Float {
             var o = od
@@ -474,7 +468,7 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
             val speed = LazerMod.getModSpeed(mods)
 
             if (speed != 1f) {
-                var ms = getMillisFromOD(od, mode)
+                var ms = getMillisFromOD(o, mode)
                 ms = (ms / speed)
                 o = getODFromMillis(ms)
             }

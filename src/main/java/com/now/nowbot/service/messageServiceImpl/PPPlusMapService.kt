@@ -80,7 +80,7 @@ class PPPlusMapService(
         if (mods.isNotEmpty()) {
             CS = CalculateApiImpl.applyCS(CS!!, mods)
             AR = CalculateApiImpl.applyAR(AR!!, mods)
-            OD = CalculateApiImpl.applyOD(OD!!, mods)
+            OD = CalculateApiImpl.applyOD(OD!!, mods, OsuMode.OSU)
             HP = CalculateApiImpl.applyHP(HP!!, mods)
         }
     }

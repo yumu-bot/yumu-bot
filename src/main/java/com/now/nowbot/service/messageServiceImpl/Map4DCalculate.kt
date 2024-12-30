@@ -53,7 +53,7 @@ class Map4DCalculate : MessageService<Map4DParam> {
                     }
                     "od" -> {
                         // TODO 这里要赋予游戏模式，太鼓和下落式的 OD 不一样
-                        val od = CalculateApiImpl.applyOD(param.value, mod)
+                        val od = CalculateApiImpl.applyOD(param.value, mod, OsuMode.OSU)
                         val ms = CalculateApiImpl.getMillisFromOD(od, OsuMode.OSU)
                         String.format("OD: %.2f, 300 判定区间: %.2fms", od, ms)
                     }
