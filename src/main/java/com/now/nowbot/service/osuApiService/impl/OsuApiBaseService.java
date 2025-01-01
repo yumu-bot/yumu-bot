@@ -6,7 +6,10 @@ import com.now.nowbot.config.YumuConfig;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.throwable.serviceException.BindException;
+import com.now.nowbot.util.ContextUtil;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -19,10 +22,18 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.function.Consumer;
+import java.util.function.Function;
+
+import static com.now.nowbot.config.IocAllReadyRunner.APP_ALIVE;
 
 @Service
 public class OsuApiBaseService {
@@ -33,31 +44,53 @@ public class OsuApiBaseService {
     protected final      String redirectUrl;
     protected final      String oauthToken;
 
+    private static final String THREAD_LOCAL_ENVIRONMENT = "osu-api-priority";
+    private static final int    DEFAULT_PRIORITY         = 5;
+    private static final int    MAX_RETRY                = 3;
+
+    private static final PriorityBlockingQueue<RequestTask<?>> TASKS = new PriorityBlockingQueue<>();
+
     @Lazy
     @Resource
     BindDao bindDao;
 
     @Resource
     WebClient osuApiWebClient;
-    @Resource
-    WebClient webClient;
 
     public OsuApiBaseService(OSUConfig osuConfig, YumuConfig yumuConfig) {
         String url;
         oauthId = osuConfig.getId();
-        if (! StringUtils.hasText(url = osuConfig.getCallbackUrl())) {
+        if (!StringUtils.hasText(url = osuConfig.getCallbackUrl())) {
             url = STR."\{yumuConfig.getPublicUrl()}\{osuConfig.getCallbackPath()}";
         }
         redirectUrl = url;
         oauthToken = osuConfig.getToken();
     }
 
+    /**
+     * 借助线程变量设置后续请求的优先级, 如果使用线程池, 务必在请求结束后调用 {@link #clearPriority()} 方法
+     *
+     * @param priority 默认为 5, 越低越优先, 相同优先级先来后到
+     */
+    public static void setPriority(int priority) {
+        ContextUtil.setContext(THREAD_LOCAL_ENVIRONMENT, priority);
+    }
+
     private boolean isPassed() {
         return System.currentTimeMillis() > time;
     }
 
+    public static void clearPriority() {
+        ContextUtil.setContext(THREAD_LOCAL_ENVIRONMENT, null);
+    }
+
+    @PostConstruct
+    public void init() {
+        Thread.startVirtualThread(this::runTask);
+    }
+
     protected String getBotToken() {
-        if (! isPassed()) {
+        if (!isPassed()) {
             return accessToken;
         }
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
@@ -66,11 +99,15 @@ public class OsuApiBaseService {
         body.add("grant_type", "client_credentials");
         body.add("scope", "public");
 
-        var s = osuApiWebClient.post()
+        setPriority(0);
+        var s = request(client -> client
+                .post()
                 .uri("https://osu.ppy.sh/oauth/token")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(BodyInserters.fromFormData(body)).retrieve().bodyToMono(JsonNode.class).block();
+                .body(BodyInserters.fromFormData(body)).retrieve().bodyToMono(JsonNode.class)
+        );
+        clearPriority();
 
         if (s != null) {
             accessToken = s.get("access_token").asText();
@@ -88,12 +125,16 @@ public class OsuApiBaseService {
         body.add("redirect_uri", redirectUrl);
         body.add("grant_type", first ? "authorization_code" : "refresh_token");
         body.add(first ? "code" : "refresh_token", user.getRefreshToken());
-        JsonNode s = osuApiWebClient.post()
+        setPriority(1);
+        JsonNode s = request((client) -> client
+                .post()
                 .uri("https://osu.ppy.sh/oauth/token")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData(body))
-                .retrieve().bodyToMono(JsonNode.class).block();
+                .retrieve().bodyToMono(JsonNode.class)
+        );
+        clearPriority();
         String accessToken;
         String refreshToken;
         long time;
@@ -106,7 +147,7 @@ public class OsuApiBaseService {
         } else {
             throw new RuntimeException("更新 Oauth 令牌, 接口格式错误");
         }
-        if (! first) {
+        if (!first) {
             // 第一次更新需要在外面更新去更新数据库
             bindDao.updateToken(user.getOsuID(), accessToken, refreshToken, time);
         }
@@ -114,18 +155,16 @@ public class OsuApiBaseService {
     }
 
     void insertHeader(HttpHeaders headers) {
-        // headers.set("Authorization", "Bearer " + getBotToken());
-
         headers.setAll(
                 Map.of("Authorization", "Bearer " + getBotToken(),
-                       "x-api-version", "20240529"
+                        "x-api-version", "20240529"
                 )
         );
     }
 
     Consumer<HttpHeaders> insertHeader(BinUser user) {
         final String token;
-        if (! user.isAuthorized()) {
+        if (!user.isAuthorized()) {
             token = getBotToken();
         } else if (user.isPassed()) {
             try {
@@ -150,8 +189,80 @@ public class OsuApiBaseService {
 
         return (headers) -> headers.setAll(
                 Map.of("Authorization", "Bearer " + token,
-                       "x-api-version", "20241101"
+                        "x-api-version", "20241101"
                 )
         );
+    }
+
+    public <T> T request(Function<WebClient, Mono<T>> request) {
+        var future = new CompletableFuture<T>();
+        int priority = ContextUtil.getContext(THREAD_LOCAL_ENVIRONMENT, DEFAULT_PRIORITY, Integer.class);
+        var task = new RequestTask<>(priority, future, request);
+        TASKS.offer(task);
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void runTask() {
+        while (APP_ALIVE) {
+            try {
+                var task = TASKS.take();
+                Thread.startVirtualThread(() -> task.run(osuApiWebClient));
+            } catch (InterruptedException e) {
+                log.error("请求队列异常", e);
+            }
+        }
+    }
+
+    static class RequestTask<T> implements Comparable<RequestTask<?>> {
+        int                          priority;
+        int                          time;
+        short                        retry = 0;
+        CompletableFuture<T>         future;
+        Function<WebClient, Mono<T>> request;
+
+        RequestTask(int priority, CompletableFuture<T> future, Function<WebClient, Mono<T>> request) {
+            this.priority = priority;
+            this.future = future;
+            this.request = request;
+            this.time = getNowTime();
+        }
+
+        private static int getNowTime() {
+            // seconds since 2025-01-01
+            return (int) (System.currentTimeMillis() / 1000 - 1735660800);
+        }
+
+        public void run(WebClient client) {
+            request.apply(client).subscribe(future::complete, this::onError);
+        }
+
+        private void onError(Throwable e) {
+            if (retry >= MAX_RETRY) {
+                future.completeExceptionally(e);
+            }
+
+            if (e instanceof WebClientResponseException.TooManyRequests ||
+                    e instanceof WebClientRequestException
+            ) {
+                retry++;
+                TASKS.add(this);
+            } else {
+                future.completeExceptionally(e);
+            }
+        }
+
+        @Override
+        public int compareTo(@NotNull RequestTask<?> o) {
+            return getPriority() - o.getPriority();
+        }
+
+        private int getPriority() {
+            // 用于对比, 优先级 * (一个大数 n + 时间), 这个数字大到不可能存在两个请求的时间超过 n 秒
+            return (3600 * priority) + time;
+        }
     }
 }

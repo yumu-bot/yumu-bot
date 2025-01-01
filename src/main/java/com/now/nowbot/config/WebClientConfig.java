@@ -96,7 +96,6 @@ public class WebClientConfig implements WebFluxConfigurer {
                 })
                 .baseUrl("https://osu.ppy.sh/api/v2/")
                 .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(Integer.MAX_VALUE))
-                .filter(this::doRetryFilter)
                 .build();
     }
 

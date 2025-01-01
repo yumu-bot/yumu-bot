@@ -31,6 +31,9 @@ public class ContextUtil {
         }
         if (o == null) {
             threadLocalService.get().remove(name);
+            if (threadLocalService.get().isEmpty()) {
+                threadLocalService.remove();
+            }
         } else {
             threadLocalService.get().put(name, o);
         }

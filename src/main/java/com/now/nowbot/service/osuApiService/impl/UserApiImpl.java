@@ -66,7 +66,7 @@ public class UserApiImpl implements OsuUserApiService {
 
     @Override
     public String refreshUserToken(BinUser user) {
-        if (! user.isAuthorized()) return base.getBotToken();
+        if (!user.isAuthorized()) return base.getBotToken();
         return base.refreshUserToken(user, false);
     }
 
@@ -82,8 +82,8 @@ public class UserApiImpl implements OsuUserApiService {
 
     @Override
     public OsuUser getPlayerInfo(BinUser user, OsuMode mode) {
-        if (! user.isAuthorized()) return getPlayerInfo(user.getOsuID(), mode);
-        return base.osuApiWebClient.get()
+        if (!user.isAuthorized()) return getPlayerInfo(user.getOsuID(), mode);
+        return base.request(client -> client.get()
                 .uri("me/{mode}", mode.getName())
                 .headers(base.insertHeader(user))
                 .retrieve()
@@ -94,15 +94,17 @@ public class UserApiImpl implements OsuUserApiService {
                     user.setOsuName(data.getUsername());
                     user.setOsuMode(data.getCurrentOsuMode());
                     return data;
-                }).block();
+                })
+        );
     }
 
     @Override
     public OsuUser getPlayerInfo(String userName, OsuMode mode) {
-        return base.osuApiWebClient.get()
+        return base.request(client -> client
+                .get()
                 .uri(l -> l
                         .path("users/{data}/{mode}")
-                        .build('@'+userName, mode.getName())
+                        .build('@' + userName, mode.getName())
                 )
                 .headers(base::insertHeader)
                 .retrieve()
@@ -110,12 +112,13 @@ public class UserApiImpl implements OsuUserApiService {
                 .map((data) -> {
                     userInfoDao.saveUser(data, mode);
                     return data;
-                }).block();
+                })
+        );
     }
 
     @Override
     public OsuUser getPlayerInfo(Long id, OsuMode mode) {
-        return base.osuApiWebClient.get()
+        return base.request(client -> client.get()
                 .uri(l -> l
                         .path("users/{id}/{mode}")
                         .build(id, mode.getName()))
@@ -125,7 +128,8 @@ public class UserApiImpl implements OsuUserApiService {
                 .map((data) -> {
                     userInfoDao.saveUser(data, mode);
                     return data;
-                }).block();
+                })
+        );
     }
 
     @Override
@@ -154,7 +158,7 @@ public class UserApiImpl implements OsuUserApiService {
      */
     @Override
     public <T extends Number> List<MicroUser> getUsers(Collection<T> users) {
-        return base.osuApiWebClient.get()
+        return base.request(client -> client.get()
                 .uri(b -> b.path("users")
                         .queryParam("ids[]", users)
                         .build())
@@ -166,23 +170,23 @@ public class UserApiImpl implements OsuUserApiService {
                     userInfoDao.saveUsers(userList);
                     return userList;
                 })
-                .block();
+        );
     }
 
     @Override
     public List<LazerFriend> getFriendList(BinUser user) {
-        if (! user.isAuthorized()) throw new TipsRuntimeException("无权限");
-        return base.osuApiWebClient.get()
+        if (!user.isAuthorized()) throw new TipsRuntimeException("无权限");
+        return base.request(client -> client.get()
                 .uri("friends")
                 .headers(base.insertHeader(user))
                 .retrieve().bodyToFlux(LazerFriend.class)
                 .collectList()
-                .block();
+        );
     }
 
     @Override
     public List<ActivityEvent> getUserRecentActivity(long userId, int s, int e) {
-        return base.osuApiWebClient.get()
+        return base.request(client -> client.get()
                 .uri(b -> b.path("users/{userId}/recent_activity")
                         .queryParam("offset", s)
                         .queryParam("limit", e)
@@ -191,50 +195,50 @@ public class UserApiImpl implements OsuUserApiService {
                 .retrieve()
                 .bodyToFlux(ActivityEvent.class)
                 .collectList()
-                .block();
+        );
     }
 
     @Override
     public KudosuHistory getUserKudosu(BinUser user) {
-        return base.osuApiWebClient.get()
+        return base.request(client -> client.get()
                 .uri("users/{uid}/kudosu")
                 .headers(base.insertHeader(user))
                 .retrieve()
                 .bodyToMono(KudosuHistory.class)
-                .block();
+        );
     }
 
     @Override
     public JsonNode sendPrivateMessage(BinUser sender, Long target, String message) {
         var body = Map.of("target_id", target, "message", message, "is_action", false);
-        return base.osuApiWebClient.post()
+        return base.request(client -> client.post()
                 .uri("chat/new")
                 .headers(base.insertHeader(sender))
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .block();
+        );
     }
 
     @Override
     public JsonNode acknowledgmentPrivateMessageAlive(BinUser user, Long since) {
-        return base.osuApiWebClient.post()
+        return base.request(client -> client.post()
                 .uri(b -> b.path("chat/ack")
                         .queryParamIfPresent("since", Optional.ofNullable(since))
                         .build())
                 .headers(base.insertHeader(user))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .block();
+        );
     }
 
     @Override
     public JsonNode getPrivateMessage(BinUser sender, Long channel, Long since) {
-        return base.osuApiWebClient.get()
+        return base.request(client -> client.get()
                 .uri("chat/channels/{channel}/messages?since={since}", channel, since)
                 .headers(base.insertHeader(sender))
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .block();
+        );
     }
 }

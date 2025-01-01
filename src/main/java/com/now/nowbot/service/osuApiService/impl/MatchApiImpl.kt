@@ -1,8 +1,8 @@
 package com.now.nowbot.service.osuApiService.impl
 
-import com.now.nowbot.model.multiplayer.MatchQuery
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.Match.Companion.append
+import com.now.nowbot.model.multiplayer.MatchQuery
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -14,59 +14,63 @@ class MatchApiImpl(
 ) : OsuMatchApiService {
     @Throws(WebClientResponseException::class)
     override fun queryMatch(limit: Int, sort: String, cursor: String?): MatchQuery {
-        return base.osuApiWebClient.get()
-            .uri {
-                it.path("matches")
-                it.queryParam("limit", limit)
-                it.queryParam("sort", sort)
-                if (cursor != null) it.queryParam("cursor_string", cursor)
-                it.build()
-            }
-            .headers(base::insertHeader)
-            .retrieve()
-            .bodyToMono(MatchQuery::class.java)
-            .block()!!
+        return base.request { client ->
+            client.get()
+                .uri {
+                    it.path("matches")
+                    it.queryParam("limit", limit)
+                    it.queryParam("sort", sort)
+                    if (cursor != null) it.queryParam("cursor_string", cursor)
+                    it.build()
+                }
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(MatchQuery::class.java)
+        }
     }
 
-    override fun getMonitoredMatchInfo(mid: Long, before: Long?, after: Long?, limit: Int) : Match {
-        return base.osuApiWebClient.get()
-            .uri {
-                it.path("matches/{mid}")
-                if (before != null) it.queryParam("before", before)
-                if (after != null) it.queryParam("after", after)
-                it.queryParam("limit", limit)
-                it.build(mid)
-            }
-            .headers(base::insertHeader)
-            .retrieve()
-            .bodyToMono(Match::class.java)
-            .timeout(Duration.ofSeconds(5))
-            .block()!!
+    override fun getMonitoredMatchInfo(mid: Long, before: Long?, after: Long?, limit: Int): Match {
+        return base.request { client ->
+            client.get()
+                .uri {
+                    it.path("matches/{mid}")
+                    if (before != null) it.queryParam("before", before)
+                    if (after != null) it.queryParam("after", after)
+                    it.queryParam("limit", limit)
+                    it.build(mid)
+                }
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(Match::class.java)
+                .timeout(Duration.ofSeconds(5))
+        }
     }
 
     private fun getMatchInfo(mid: Long): Match {
-        return base.osuApiWebClient.get()
-            .uri("matches/{mid}", mid)
-            .headers(base::insertHeader)
-            .retrieve()
-            .bodyToMono(Match::class.java)
-            .block()!!
+        return base.request { client ->
+            client.get()
+                .uri("matches/{mid}", mid)
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(Match::class.java)
+        }
     }
 
     private fun getMatchInfo(mid: Long, before: Long, after: Long): Match {
-        return base.osuApiWebClient.get()
-            .uri {
-                it.path("matches/{mid}")
-                if (before != 0L) it.queryParam("before", before)
-                if (after != 0L) it.queryParam("after", after)
-                it.queryParam("limit", 100)
-                it.build(mid)
-            }
-            .headers(base::insertHeader)
-            .retrieve()
-            .bodyToMono(Match::class.java)
-            .timeout(Duration.ofSeconds(5))
-            .block()!!
+        return base.request { client ->
+            client.get()
+                .uri {
+                    it.path("matches/{mid}")
+                    if (before != 0L) it.queryParam("before", before)
+                    if (after != 0L) it.queryParam("after", after)
+                    it.queryParam("limit", 100)
+                    it.build(mid)
+                }
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(Match::class.java)
+                .timeout(Duration.ofSeconds(5))
+        }
     }
 
     @Throws(WebClientResponseException::class)

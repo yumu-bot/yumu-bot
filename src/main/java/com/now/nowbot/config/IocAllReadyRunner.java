@@ -33,6 +33,7 @@ import java.util.concurrent.Executor;
 
 @Component
 public class IocAllReadyRunner implements CommandLineRunner {
+    public static boolean APP_ALIVE = true;
     Logger             log = LoggerFactory.getLogger("IocAllReadyRunner");
     ApplicationContext applicationContext;
     CheckAspect        check;
@@ -80,6 +81,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
                 .setExecutor(executor);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { //jvm结束钩子
+            APP_ALIVE = false;
             check.doEnd();
             ((ThreadPoolTaskExecutor) executor).shutdown();
             //MatchListenerServiceLegacy.stopAllListener();

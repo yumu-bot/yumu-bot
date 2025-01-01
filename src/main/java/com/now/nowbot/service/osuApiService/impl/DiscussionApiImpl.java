@@ -61,7 +61,8 @@ public class DiscussionApiImpl implements OsuDiscussionApiService {
             Long uid,
             String cursor
     ) {
-        return base.osuApiWebClient.get()
+        return base.request(client -> client
+                .get()
                 .uri(u -> u.path("beatmapsets/discussions")
                         .queryParamIfPresent("beatmap_id", Optional.ofNullable(bid))
                         .queryParamIfPresent("beatmapset_id", Optional.ofNullable(sid))
@@ -77,7 +78,7 @@ public class DiscussionApiImpl implements OsuDiscussionApiService {
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(Discussion.class)
-                .block();
+        );
     }
 
     public enum BeatMapSetStatus {
