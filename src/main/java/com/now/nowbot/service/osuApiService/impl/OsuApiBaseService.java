@@ -204,7 +204,12 @@ public class OsuApiBaseService {
         TASKS.offer(task);
         try {
             return future.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof RuntimeException r) {
+                throw r;
+            }
+            throw new RuntimeException(e.getCause());
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
