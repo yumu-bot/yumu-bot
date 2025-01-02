@@ -102,7 +102,7 @@ class UUBAService(
             var id: Long = 0
             try {
                 id = userApiService.getOsuId(name)
-                bu = bindDao.getUserFromOsuid(id)
+                bu = bindDao.getUserFromOsuID(id)
             } catch (e: BindException) {
                 // 构建只有 data + id 的对象, binUser == null
                 bu = BinUser()

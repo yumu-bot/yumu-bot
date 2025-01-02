@@ -44,7 +44,7 @@ class SetModeService (
     @Throws(Throwable::class)
     override fun reply(event: MessageEvent, param: String): MessageChain? {
         val user = try {
-            bindDao.getUserFromOsuid(-event.sender.id)
+            bindDao.getUserFromOsuID(-event.sender.id)
         } catch (e: BindException) {
             val userInfo = osuUserApiService.getPlayerInfo(-event.sender.id)
             val binUser = BinUser()

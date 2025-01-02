@@ -11,6 +11,7 @@ import com.now.nowbot.mapper.OsuFindNameMapper;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
+import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService;
 import com.now.nowbot.throwable.serviceException.BindException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,16 +20,20 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.time.Duration;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 public class BindDao {
-    private Set<Long> WAIT_UPDATE_USERS = new HashSet<>();
+    private final Set<Long>     UPDATE_USERS = new CopyOnWriteArraySet<>();
+    private final AtomicBoolean NOW_UPDATE   = new AtomicBoolean(false);
+
     Logger            log = LoggerFactory.getLogger(BindDao.class);
     BindUserMapper    bindUserMapper;
     BindQQMapper      bindQQMapper;
@@ -56,7 +61,7 @@ public class BindDao {
     public BinUser getUserFromQQ(Long qq, boolean isMyself) throws BindException {
         if (qq < 0) {
             try {
-                return getUserFromOsuid(-qq);
+                return getUserFromOsuID(-qq);
             } catch (BindException e) {
                 return new BinUser(-qq, "unknown");
             }
@@ -70,8 +75,6 @@ public class BindDao {
             }
         }
         var u = liteData.get().getOsuUser();
-        // 此处防止全局更新中再次被更新
-        WAIT_UPDATE_USERS.remove(u.getID());
         return fromLite(u);
     }
 
@@ -87,7 +90,7 @@ public class BindDao {
         return fromLite(lite);
     }
 
-    public BinUser getUserFromOsuid(Long osuId) throws BindException {
+    public BinUser getUserFromOsuID(Long osuId) throws BindException {
         if (Objects.isNull(osuId)) throw new BindException(BindException.Type.BIND_Receive_NoName);
 
         Optional<OsuBindUserLite> liteData;
@@ -100,8 +103,6 @@ public class BindDao {
 
         if (liteData.isEmpty()) throw new BindException(BindException.Type.BIND_Player_NoBind);
         var u = liteData.get();
-        // 此处防止全局更新中再次被更新
-        WAIT_UPDATE_USERS.remove(u.getID());
         return fromLite(u);
     }
 
@@ -153,16 +154,19 @@ public class BindDao {
         var id = getOsuId(name);
         if (id == null) return null;
         var data = bindUserMapper.getByOsuId(id);
-        return fromLite(data.orElseGet(null));
+        return data.map(BindDao::fromLite).orElse(null);
     }
 
     public BinUser getBindUser(Long id) {
         if (id == null) return null;
         var data = bindUserMapper.getByOsuId(id);
-        return fromLite(data.orElseGet(null));
+        return data.map(BindDao::fromLite).orElse(null);
     }
 
     public void updateToken(Long uid, String accessToken, String refreshToken, Long time) {
+        if (NOW_UPDATE.get()) {
+            UPDATE_USERS.add(uid);
+        }
         bindUserMapper.updateToken(uid, accessToken, refreshToken, time);
     }
 
@@ -237,110 +241,107 @@ public class BindDao {
     }
 
     @Async
-    public void refreshOldUserToken(OsuUserApiService osuGetService) {
-        long now = System.currentTimeMillis() + 6 * 60 * 60;
+    public void  refreshOldUserToken(OsuUserApiService osuGetService) {
+        NOW_UPDATE.set(true);
+        UPDATE_USERS.clear();
+        try {
+            refreshOldUserTokenPack(osuGetService);
+        } finally {
+            UPDATE_USERS.clear();
+            NOW_UPDATE.set(false);
+        }
+    }
+    private void refreshOldUserTokenPack(OsuUserApiService osuGetService) {
+        long now = System.currentTimeMillis();
         int succeedCount = 0;
-        int errCount = 0;
         List<OsuBindUserLite> users;
+        // 降低更新 token 时的优先级
+        OsuApiBaseService.setPriority(10);
         // 更新暂时没失败过的
         while (!(users = bindUserMapper.getOldBindUser(now)).isEmpty()) {
-            OsuBindUserLite u;
-            WAIT_UPDATE_USERS = Collections.synchronizedSet(users.stream().map(OsuBindUserLite::getID).collect(Collectors.toSet()));
-            while (!users.isEmpty()) {
-                u = users.removeLast();
-                if (!WAIT_UPDATE_USERS.remove(u.getID())) continue;
-                if (ObjectUtils.isEmpty(u.getRefreshToken())) {
-                    bindUserMapper.backupBindByOsuId(u.getOsuID());
-                    continue;
-                }
-                log.info("更新用户 [{}]", u.getOsuName());
-                try {
-                    refreshOldUserToken(u, osuGetService);
-                    errCount = 0;
-                } catch (Exception e) {
-                    bindUserMapper.addUpdateCount(u.getID());
-                    errCount++;
-                    sleepNoException(Duration.ofSeconds(errCount * 5L));
-                }
-                if (errCount > 5) {
-                    // 一般连续错误意味着网络寄了
-                    log.error("连续失败, 停止更新, 更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
-                    return;
-                }
-                succeedCount++;
-            }
             try {
-                Thread.sleep(Duration.ofSeconds(30));
-            } catch (InterruptedException ignore) {
+                succeedCount += refreshOldUserList(osuGetService, users);
+            } catch (RefreshException e) {
+                succeedCount += e.successCount;
+                log.error("连续失败, 停止更新, 更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
+                return;
             }
         }
         // 重新尝试失败的
         while (!(users = bindUserMapper.getOldBindUserHasWrong(now)).isEmpty()) {
-            OsuBindUserLite u;
-            WAIT_UPDATE_USERS = Collections.synchronizedSet(users.stream().map(OsuBindUserLite::getID).collect(Collectors.toSet()));
-            while (!users.isEmpty()) {
-                u = users.removeLast();
-                if (!WAIT_UPDATE_USERS.remove(u.getID())) continue;
-                if (ObjectUtils.isEmpty(u.getRefreshToken())) {
-                    bindUserMapper.backupBindByOsuId(u.getOsuID());
-                    continue;
-                }
-                // 出错超15次默认无法再次更新了
-                if (u.getUpdateCount() > 15) {
-                    // 回退到用户名绑定
-                    bindUserMapper.backupBindByOsuId(u.getID());
-                }
-                log.info("更新历史失败用户 [{}]", u.getOsuName());
-                try {
-                    refreshOldUserToken(u, osuGetService);
-                    bindUserMapper.clearUpdateCount(u.getID());
-                    errCount = 0;
-                } catch (Exception e) {
-                    bindUserMapper.addUpdateCount(u.getID());
-                    errCount++;
-                    sleepNoException(Duration.ofSeconds(errCount * 10L));
-                }
-                if (errCount > 15) {
-                    // 连续失败15次, 终止本次更新
-                    log.error("连续失败, 停止更新, 更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
-                    return;
-                }
-                succeedCount++;
+            try {
+                succeedCount += refreshOldUserList(osuGetService, users);
+            } catch (RefreshException e) {
+                succeedCount += e.successCount;
+                log.error("停止更新, 更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
+                return;
             }
-            sleepNoException(Duration.ofSeconds(30));
         }
         log.info("更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
     }
 
+    private int refreshOldUserList(OsuUserApiService osuGetService, List<OsuBindUserLite> users) {
+        int errCount = 0;
+        int succeedCount = 0;
+        while (!users.isEmpty()) {
+            var u = users.removeLast();
+
+            if (UPDATE_USERS.remove(u.getID())) continue;
+            if (ObjectUtils.isEmpty(u.getRefreshToken())) {
+                bindUserMapper.backupBindByOsuId(u.getOsuID());
+                continue;
+            }
+            // 出错超 5 次默认无法再次更新了
+            if (u.getUpdateCount() > 5) {
+                // 回退到用户名绑定
+                bindUserMapper.backupBindByOsuId(u.getID());
+            }
+            log.info("更新用户 [{}]", u.getOsuName());
+            try {
+                refreshOldUserToken(u, osuGetService);
+                if (u.getUpdateCount() > 0) bindUserMapper.clearUpdateCount(u.getID());
+                errCount = 0;
+            } catch (WebClientResponseException.Unauthorized e) {
+                // 绑定被取消或者过期, 不再尝试
+                bindUserMapper.backupBindByOsuId(u.getID());
+            } catch (Exception e) {
+                bindUserMapper.addUpdateCount(u.getID());
+                errCount++;
+            }
+            if (errCount > 5) {
+                // 一般连续错误意味着网络寄了
+                throw new RefreshException(succeedCount);
+            }
+            succeedCount++;
+        }
+        return succeedCount;
+    }
+
     private void refreshOldUserToken(OsuBindUserLite u, OsuUserApiService osuGetService) {
-        int sleepSecond = 5;
         int badRequest = 0;
         while (true) {
             try {
-                Thread.sleep(Duration.ofSeconds(sleepSecond));
                 osuGetService.refreshUserToken(fromLite(u));
                 return;
-            } catch (HttpClientErrorException.TooManyRequests | WebClientResponseException.TooManyRequests e) {
-                sleepSecond *= 2;
-            } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
-                log.info("更新 [{}] 令牌失败, refresh token 失效, 不做任何处理", u.getOsuName());
+            } catch (WebClientResponseException.Unauthorized e) {
+                log.info("更新 [{}] 令牌失败, refresh token 失效, 绑定被取消", u.getOsuName());
                 throw e;
-            } catch (HttpClientErrorException.BadRequest | WebClientResponseException.BadRequest e) {
+            } catch (WebClientResponseException.BadRequest e) {
                 badRequest++;
-                if (badRequest > 6) {
-                    log.error("更新 [{}] 令牌失败, 请求异常", u.getOsuName());
+                if (badRequest < 3) {
+                    log.error("更新 [{}] 令牌失败, api 服务器异常, 正在重试 {}", u.getOsuName(), badRequest);
+                } else {
+                    log.error("更新 [{}] 令牌失败, 重试 {} 次失败, 放弃更新", u.getOsuName(), badRequest);
                     throw new RuntimeException("network error");
                 }
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
             }
         }
     }
 
-    private static void sleepNoException(Duration duration) {
-        try {
-            Thread.sleep(duration);
-        } catch (InterruptedException ignore) {
+    private static class RefreshException extends RuntimeException {
+        int successCount;
+        RefreshException(int i) {
+            successCount = i;
         }
     }
 }

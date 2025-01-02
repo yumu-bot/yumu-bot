@@ -1,6 +1,7 @@
 package com.now.nowbot.service.osuApiService.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.RateLimiter;
 import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.config.YumuConfig;
 import com.now.nowbot.dao.BindDao;
@@ -26,6 +27,7 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -44,9 +46,10 @@ public class OsuApiBaseService {
     protected final      String redirectUrl;
     protected final      String oauthToken;
 
-    private static final String THREAD_LOCAL_ENVIRONMENT = "osu-api-priority";
-    private static final int    DEFAULT_PRIORITY         = 5;
-    private static final int    MAX_RETRY                = 3;
+    private static final String      THREAD_LOCAL_ENVIRONMENT = "osu-api-priority";
+    private static final int         DEFAULT_PRIORITY         = 5;
+    private static final int         MAX_RETRY                = 3;
+    private static final RateLimiter limiter                  = RateLimiter.create(10, Duration.ofSeconds(1));
 
     private static final PriorityBlockingQueue<RequestTask<?>> TASKS = new PriorityBlockingQueue<>();
 
@@ -209,6 +212,7 @@ public class OsuApiBaseService {
     private void runTask() {
         while (APP_ALIVE) {
             try {
+                limiter.acquire();
                 var task = TASKS.take();
                 Thread.startVirtualThread(() -> task.run(osuApiWebClient));
             } catch (InterruptedException e) {

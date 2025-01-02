@@ -1,6 +1,7 @@
 package com.now.nowbot.service.osuApiService;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.now.nowbot.model.BinUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.*;
@@ -23,6 +24,7 @@ public interface OsuUserApiService {
 
     String getOauthUrl(String state, boolean full) throws WebClientResponseException;
 
+    @CanIgnoreReturnValue
     String refreshUserToken(BinUser user) throws WebClientResponseException;
 
     void refreshUserTokenFirst(BinUser user) throws WebClientResponseException;
