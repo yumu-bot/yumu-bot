@@ -29,9 +29,9 @@ public class MapPoolDto {
 
         });
 
-        if (! modPools.isEmpty() && ! modPools.getFirst().getBeatMaps().isEmpty()) {
+        if (! modPools.isEmpty() && ! modPools.getFirst().getBeatmaps().isEmpty()) {
             firstMapSID = Objects.requireNonNull(
-                    modPools.getFirst().getBeatMaps()
+                    modPools.getFirst().getBeatmaps()
                             .getFirst().getBeatMapSet()).getBeatMapSetID();
         }
     }

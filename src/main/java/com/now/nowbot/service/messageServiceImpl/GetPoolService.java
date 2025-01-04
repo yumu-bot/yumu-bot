@@ -57,20 +57,6 @@ public class GetPoolService implements MessageService<GetPoolService.GetPoolPara
         return true;
     }
 
-    private OsuMode getModeOrElse(OsuMode setMode, OsuMode mapMode) {
-        if (mapMode == OsuMode.OSU) {
-            if (OsuMode.isDefaultOrNull(setMode)) {
-                return mapMode;
-            } else {
-                return setMode;
-            }
-        } else if (OsuMode.isDefaultOrNull(mapMode)) {
-            return setMode;
-        } else {
-            return mapMode;
-        }
-    }
-
     @Override
     public void HandleMessage(MessageEvent event, GetPoolParam param) throws Throwable {
         var mapPool = new MapPoolDto(param.name(), param.map(), osuBeatmapApiService);
