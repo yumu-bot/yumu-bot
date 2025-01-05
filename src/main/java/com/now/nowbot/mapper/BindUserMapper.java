@@ -37,8 +37,6 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
             """, nativeQuery = true)
     void deleteOldByOsuId(Long uid);
 
-    int deleteByIDNot(Long id);
-
     @Modifying
     @Transactional
     @Query("update OsuBindUserLite o set o.accessToken = :accessToken,o.refreshToken = :refreshToken, o.time = :time where o.osuId=:uid")

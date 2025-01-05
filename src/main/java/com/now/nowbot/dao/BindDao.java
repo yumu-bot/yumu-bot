@@ -123,19 +123,20 @@ public class BindDao {
         if (user.getRefreshToken() != null) {
             var count = bindQQMapper.countByOsuId(user.getOsuID());
             if (count > 0) bindUserMapper.deleteAllByOsuId(user.getOsuID());
+            osuBind = bindUserMapper.checkSave(osuBind);
         } else {
             Optional<OsuBindUserLite> buLiteOpt =bindUserMapper.getFirstByOsuId(user.getOsuID());
             if (buLiteOpt.isPresent()) {
                 osuBind = buLiteOpt.get();
-                var id = osuBind.getID();
-                bindUserMapper.deleteByIDNot(id);
+            } else {
+                osuBind = bindUserMapper.checkSave(osuBind);
             }
         }
 
         var qqBind = new QQBindLite();
         qqBind.setQq(qq);
 
-        qqBind.setOsuUser(bindUserMapper.checkSave(osuBind));
+        qqBind.setOsuUser(osuBind);
         return bindQQMapper.save(qqBind);
     }
 
