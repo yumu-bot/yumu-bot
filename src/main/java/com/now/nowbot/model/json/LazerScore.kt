@@ -3,6 +3,8 @@ package com.now.nowbot.model.json
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
@@ -13,19 +15,27 @@ import kotlin.math.ln
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
+@JsonNaming(PropertyNamingStrategies.UpperSnakeCaseStrategy::class)
 // 这是 API v2 version header is 20220705 or higher 会返回的成绩数据。这并不支持老版本的比赛数据（stable 比赛依旧是原来那个 score
-@JsonIgnoreProperties(ignoreUnknown = true) open class LazerScore {
-    @JsonProperty("classic_total_score") var classicScore: Long = 0L
+@JsonIgnoreProperties(ignoreUnknown = true)
+open class LazerScore {
+    @JsonProperty("classic_total_score")
+    var classicScore: Long = 0L
 
-    @JsonProperty("preserve") var preserve: Boolean = false
+    @JsonProperty("preserve")
+    var preserve: Boolean = false
 
-    @JsonProperty("processed") var processed: Boolean = false
+    @JsonProperty("processed")
+    var processed: Boolean = false
 
-    @JsonProperty("ranked") var ranked: Boolean = false
+    @JsonProperty("ranked")
+    var ranked: Boolean = false
 
-    @JsonProperty("maximum_statistics") var maximumStatistics: LazerStatistics = LazerStatistics()
+    @JsonProperty("maximum_statistics")
+    var maximumStatistics: LazerStatistics = LazerStatistics()
 
-    @get:JsonProperty("total_hit") val totalHit: Int
+    @get:JsonProperty("total_hit")
+    val totalHit: Int
         get() {
             val m = this.maximumStatistics
 
@@ -50,7 +60,8 @@ import kotlin.math.roundToInt
             }
         }
 
-    @get:JsonProperty("total_combo") val totalCombo: Int
+    @get:JsonProperty("total_combo")
+    val totalCombo: Int
         get() {
             val m = this.maximumStatistics
 
@@ -63,12 +74,14 @@ import kotlin.math.roundToInt
             }
         }
 
-    @JsonProperty("mods") var mods: List<LazerMod> = listOf()
+    @JsonProperty("mods")
+    var mods: List<LazerMod> = listOf()
         get() { // 如果是 stable 成绩，则这里的 Classic 模组应该去掉
             return field.filterNot { it is LazerMod.Classic && !this.isLazer }
         }
 
-    @JsonProperty("statistics") var statistics: LazerStatistics = LazerStatistics()
+    @JsonProperty("statistics")
+    var statistics: LazerStatistics = LazerStatistics()
 
     @get:JsonProperty("score_hit") // 获取目前成绩进度（部分未通过成绩，这里并不是总和）
     val scoreHit: Int
@@ -86,204 +99,111 @@ import kotlin.math.roundToInt
             }
         }
 
-    data class LazerStatistics(
-        // M 320
-        @JsonProperty("perfect") var perfect: Int = 0,
+    @JsonProperty("total_score_without_mods")
+    var rawScore: Long = 0L
 
-        // O、T、C、M 300
-        @JsonProperty("great") var great: Int = 0,
+    @JsonProperty("beatmap_id")
+    var beatMapID: Long = 0L
 
-        // M 200
-        @JsonProperty("good") var good: Int = 0,
+    @JvmField
+    @JsonProperty("best_id")
+    var bestID: Long? = 0L
 
-        // T、M 100
-        @JsonProperty("ok") var ok: Int = 0,
-
-        // O、M 50
-        @JsonProperty("meh") var meh: Int = 0,
-
-        // O、T、C、M 0
-        @JsonProperty("miss") var miss: Int = 0,
-
-        // ?
-        @JsonProperty("ignore_hit") var ignoreHit: Int = 0,
-        @JsonProperty("ignore_miss") var ignoreMiss: Int = 0,
-
-        // O SliderTick、C Large Droplet (medium)
-        @JsonProperty("large_tick_hit") var largeTickHit: Int = 0,
-        @JsonProperty("large_tick_miss") var largeTickMiss: Int = 0,
-
-        // C Small Droplet (small)
-        @JsonProperty("small_tick_hit") var smallTickHit: Int = 0,
-        @JsonProperty("small_tick_miss") var smallTickMiss: Int = 0,
-
-        // O SliderTail
-        @JsonProperty("slider_tail_hit") var sliderTailHit: Int = 0,
-
-        // O Spinner Bonus、T Spinner Drumroll、C Banana
-        @JsonProperty("large_bonus") var largeBonus: Int = 0,
-
-        // O Spinner Base
-        @JsonProperty("small_bonus") var smallBonus: Int = 0,
-
-        // 仅 MAX 有
-        @JsonProperty("legacy_combo_increase") var legacyComboIncrease: Int = 0,
-    ) {
-        private fun getTotalHits(mode: OsuMode) = when (mode) {
-            OSU -> great + ok + meh + miss
-            TAIKO -> great + ok + miss
-            CATCH -> great + largeTickHit + smallTickHit + miss
-            MANIA -> perfect + great + good + ok + meh + miss
-            else -> 0
-        }
-
-        fun accuracy(mode: OsuMode): Float {
-            val numerator: Int
-            val denominator: Int
-            when (mode) {
-                OSU -> {
-                    numerator = great * 300 + ok * 100 + meh * 50
-                    denominator = getTotalHits(mode) * 300
-                }
-
-                TAIKO -> {
-                    numerator = great * 2 + ok * 1
-                    denominator = getTotalHits(mode) * 2
-                }
-
-                CATCH -> {
-                    numerator = great + largeTickHit + smallTickHit
-                    denominator = getTotalHits(mode)
-                }
-
-                MANIA -> {
-                    numerator = (perfect + great) * 300 + good * 200 + ok * 100 + meh * 50
-                    denominator = getTotalHits(mode) * 300
-                }
-
-                else -> return 0f
-            }
-
-            return (10000f * numerator / denominator).roundToInt() / 100f
-        }
-
-        fun toScoreStatistics(mode: OsuMode): Statistics {
-            var geki = 0
-            var katu = 0
-            val n300 = great
-            val n100: Int
-            var n50 = 0
-            val misses = miss
-            when (mode) {
-                OSU -> {
-                    n100 = ok
-                    n50 = meh
-                }
-
-                TAIKO -> {
-                    n100 = ok
-                }
-
-                CATCH -> {
-                    n100 = largeTickHit
-                    n50 = sliderTailHit
-                    katu = good
-                }
-
-                MANIA -> {
-                    geki = perfect
-                    katu = good
-                    n100 = ok
-                    n50 = meh
-                }
-
-                else -> return Statistics()
-            }
-            return Statistics().apply {
-                count300 = n300
-                count100 = n100
-                count50 = n50
-                countMiss = misses
-                countGeki = geki
-                countKatu = katu
-            }
-        }
-    }
-
-    @JsonProperty("total_score_without_mods") var rawScore: Long = 0L
-
-    @JsonProperty("beatmap_id") var beatMapID: Long = 0L
-
-    @JvmField @JsonProperty("best_id") var bestID: Long? = 0L
-
-    @JsonProperty("id") var scoreID: Long = 0L
+    @JsonProperty("id")
+    var scoreID: Long = 0L
 
     /** 注意，这个 rank 是 lazer 计分方式计算出来的，stable 成绩放在这里会有问题 */
-    @JsonProperty("rank") var lazerRank: String = "F"
+    @JsonProperty("rank")
+    var lazerRank: String = "F"
 
-    @get:JsonIgnore @get:JvmName("getRankString") val rank: String
+    @get:JsonIgnore
+    @get:JvmName("getRankString")
+    val rank: String
         get() {
             return getRank()
         }
 
     // 傻逼 Lazer
-    @JsonIgnore private var _rank: String? = null
+    @JsonIgnore
+    private var _rank: String? = null
 
-    @JsonIgnore fun setRank(rankStr: String) {
+    @JsonIgnore
+    fun setRank(rankStr: String) {
         _rank = rankStr
     }
 
-    @JsonProperty("legacy_rank") fun getRank(): String {
+    @JsonProperty("legacy_rank")
+    fun getRank(): String {
         return _rank ?: getStableRank(this)
     }
 
-    @JsonProperty("type") var type: String = "solo_score" // solo_score 不区分是否是新老客户端
+    @JsonProperty("type")
+    var type: String = "solo_score" // solo_score 不区分是否是新老客户端
 
-    @JsonProperty("user_id") var userID: Long = 0L
+    @JsonProperty("user_id")
+    var userID: Long = 0L
 
     /** 注意，这个 accuracy 是 lazer 计分方式计算出来的，stable 成绩放在这里会有问题 */
-    @JsonProperty("accuracy") var lazerAccuracy: Double = 0.0
+    @JsonProperty("accuracy")
+    var lazerAccuracy: Double = 0.0
 
     // 傻逼 Lazer
-    @get:JsonProperty("legacy_accuracy") val accuracy: Double
+    @get:JsonProperty("legacy_accuracy")
+    val accuracy: Double
         get() {
             return getStableAccuracy(this)
         }
 
-    @JsonProperty("build_id") var buildID: Long? = 0L
+    @JsonProperty("build_id")
+    var buildID: Long? = 0L
 
-    @get:JsonProperty("is_lazer") val isLazer: Boolean
+    @get:JsonProperty("is_lazer")
+    val isLazer: Boolean
         get() {
             return buildID != null && buildID!! > 0
         }
 
-    @set:JsonProperty("ended_at") @get:JsonIgnore var endedTime: OffsetDateTime = OffsetDateTime.now()
+    @set:JsonProperty("ended_at")
+    @get:JsonIgnore
+    var endedTime: OffsetDateTime = OffsetDateTime.now()
 
     // 给 js 用
-    @get:JsonProperty("ended_at") val endedTimeString: String
+    @get:JsonProperty("ended_at")
+    val endedTimeString: String
         get() {
             return formatter.format(endedTime)
         }
 
     // @JsonProperty("has_replay") var replay: Boolean = false
 
-    @JsonProperty("is_perfect_combo") var perfectCombo: Boolean = false
+    @JsonProperty("is_perfect_combo")
+    var perfectCombo: Boolean = false
 
-    @JsonProperty("legacy_perfect") var fullCombo: Boolean = false
+    @JsonProperty("legacy_perfect")
+    var fullCombo: Boolean = false
 
-    @JsonProperty("legacy_score_id") var legacyScoreID: Long = 0L
+    @JsonProperty("legacy_score_id")
+    var legacyScoreID: Long = 0L
 
-    @JvmField @JsonProperty("legacy_total_score") var legacyScore: Long? = 0L
+    @JvmField
+    @JsonProperty("legacy_total_score")
+    var legacyScore: Long? = 0L
 
-    @JsonProperty("max_combo") var maxCombo: Int = 0
+    @JsonProperty("max_combo")
+    var maxCombo: Int = 0
 
-    @JsonProperty("passed") var passed: Boolean = false
+    @JsonProperty("passed")
+    var passed: Boolean = false
 
-    @JvmField @JsonProperty("pp") var PP: Double? = 0.0
+    @JvmField
+    @JsonProperty("pp")
+    var PP: Double? = 0.0
 
-    @JsonProperty("ruleset_id") var ruleset: Byte = 0
+    @JsonProperty("ruleset_id")
+    var ruleset: Byte = 0
 
-    @get:JsonProperty("mode") val mode: OsuMode
+    @get:JsonProperty("mode")
+    val mode: OsuMode
         get() {
             return when (this.ruleset.toInt()) {
                 0 -> OSU
@@ -298,7 +218,8 @@ import kotlin.math.roundToInt
     //@set:JsonProperty("started_at") @get:JsonIgnore
     var startedTime: OffsetDateTime? = null
 
-    @get:JsonProperty("started_at") val startedTimeString: String
+    @get:JsonProperty("started_at")
+    val startedTimeString: String
         get() {
             return if (startedTime != null) {
                 formatter.format(startedTime)
@@ -307,22 +228,28 @@ import kotlin.math.roundToInt
             }
         }
 
-    @JsonProperty("total_score") var score: Long = 0L
+    @JsonProperty("total_score")
+    var score: Long = 0L
 
-    @JsonProperty("replay") var replay: Boolean = false
+    @JsonProperty("replay")
+    var replay: Boolean = false
 
     // @JsonProperty("current_user_attributes") var userAttributes: UserAttributes =
     // UserAttributes()
     // TODO 这个有问题
     // data class UserAttributes(@JsonProperty("pin") var pin: String? = null)
 
-    @JsonProperty("beatmap") var beatMap: BeatMap = BeatMap()
+    @JsonProperty("beatmap")
+    var beatMap: BeatMap = BeatMap()
 
-    @JsonProperty("beatmapset") var beatMapSet: BeatMapSet = BeatMapSet()
+    @JsonProperty("beatmapset")
+    var beatMapSet: BeatMapSet = BeatMapSet()
 
-    @JsonProperty("user") var user: MicroUser = MicroUser()
+    @JsonProperty("user")
+    var user: MicroUser = MicroUser()
 
-    @JsonProperty("weight") var weight: Weight? = Weight() // 只在 BP 里有
+    @JsonProperty("weight")
+    var weight: Weight? = Weight() // 只在 BP 里有
         get() {
             return field ?: Weight()
         }
@@ -358,7 +285,8 @@ import kotlin.math.roundToInt
             return score.weight?.PP ?: ((score.PP ?: 0.0) * (0.95).pow(position.toDouble()))
         }
 
-        @JvmStatic private fun getStableRank(score: LazerScore): String {
+        @JvmStatic
+        private fun getStableRank(score: LazerScore): String {
             if (!score.passed) return "F"
             if (score.isLazer) return score.lazerRank
 
@@ -418,7 +346,8 @@ import kotlin.math.roundToInt
             return rank
         }
 
-        @JvmStatic private fun getStableAccuracy(score: LazerScore): Double {
+        @JvmStatic
+        private fun getStableAccuracy(score: LazerScore): Double {
             if (score.isLazer) return score.lazerAccuracy
 
             val m = score.maximumStatistics

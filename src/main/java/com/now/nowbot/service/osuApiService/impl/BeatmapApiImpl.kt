@@ -27,9 +27,10 @@ import java.util.*
 import java.util.regex.Pattern
 import kotlin.math.min
 
-@Service class BeatmapApiImpl(
+@Service
+class BeatmapApiImpl(
     private val base: OsuApiBaseService,
-    private val config: FileConfig,
+    config: FileConfig,
     private val beatMapDao: BeatMapDao,
     private val osuBeatmapMirrorApiService: OsuBeatmapMirrorApiService,
     private val beatmapObjectCountMapper: BeatmapObjectCountMapper
@@ -62,12 +63,13 @@ import kotlin.math.min
 
     fun getBeatMapFileFromOfficialWebsite(bid: Long): String? {
         try {
-            return base.osuApiWebClient.get()
-                .uri("https://osu.ppy.sh/osu/{bid}", bid)
-                .retrieve()
-                .bodyToMono(String::class.java)
-                .onErrorReturn("")
-                .block()!!
+            return base.request { client ->
+                client.get()
+                    .uri("https://osu.ppy.sh/osu/{bid}", bid)
+                    .retrieve()
+                    .bodyToMono(String::class.java)
+                    .onErrorReturn("")
+            }
         } catch (e: WebClientResponseException) {
             log.error("osu 谱面 API：请求官网谱面失败: ", e)
             return null
@@ -109,7 +111,8 @@ import kotlin.math.min
         }
     }
 
-    @Cacheable(value = ["beatmap file"], key = "#bid") override fun getBeatMapFileByte(bid: Long): ByteArray? {
+    @Cacheable(value = ["beatmap file"], key = "#bid")
+    override fun getBeatMapFileByte(bid: Long): ByteArray? {
         return getBeatMapFileString(bid)?.toByteArray(StandardCharsets.UTF_8)
     }
 
@@ -163,12 +166,14 @@ import kotlin.math.min
     }
 
     // 查一下文件是否跟 checksum 是否对得上
-    @Throws(IOException::class) override fun checkBeatMap(beatMap: BeatMap?): Boolean {
+    @Throws(IOException::class)
+    override fun checkBeatMap(beatMap: BeatMap?): Boolean {
         if (beatMap == null) return false
         return checkBeatMap(beatMap.beatMapID, beatMap.md5 ?: return false)
     }
 
-    @Throws(IOException::class) override fun checkBeatMap(bid: Long, checkStr: String?): Boolean {
+    @Throws(IOException::class)
+    override fun checkBeatMap(bid: Long, checkStr: String?): Boolean {
         if (checkStr == null) return false
 
         val path = osuDir.resolve("$bid.osu")
@@ -191,37 +196,39 @@ import kotlin.math.min
         if (OsuMode.isNotDefaultOrNull(mode)) {
             body["ruleset_id"] = mode!!.modeValue
         }
-        return base.osuApiWebClient.post().uri("beatmaps/{id}/attributes", id)
-            .headers { base.insertHeader(it) }
-            .bodyValue(body)
-            .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .mapNotNull {
-                JacksonUtil.parseObject(it["attributes"], BeatmapDifficultyAttributes::class.java)
-            }.block()!!
+        return base.request { client ->
+            client.post().uri("beatmaps/{id}/attributes", id)
+                .headers { base.insertHeader(it) }
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(JsonNode::class.java)
+                .mapNotNull {
+                    JacksonUtil.parseObject(it["attributes"], BeatmapDifficultyAttributes::class.java)
+                }
+        }
+
     }
 
     override fun getBeatMap(bid: Long): BeatMap {
-        return base.osuApiWebClient.get()
-            .uri("beatmaps/{bid}", bid)
-            .headers { base.insertHeader(it) }
-            .retrieve()
-            .bodyToMono(BeatMap::class.java).map {
-                beatMapDao.saveMap(it)
-                it
-            }.block()!!
+        return base.request { client ->
+            client.get()
+                .uri("beatmaps/{bid}", bid)
+                .headers { base.insertHeader(it) }
+                .retrieve()
+                .bodyToMono(BeatMap::class.java)
+                .doOnNext(beatMapDao::saveMap)
+        }
     }
 
     override fun getBeatMapSet(sid: Long): BeatMapSet {
-        return base.osuApiWebClient.get()
-            .uri("beatmapsets/{sid}", sid)
-            .headers { base.insertHeader(it) }
-            .retrieve()
-            .bodyToMono(BeatMapSet::class.java)
-            .map {
-                beatMapDao.saveMapSet(it)
-                it
-            }.block()!!
+        return base.request { client ->
+            client.get()
+                .uri("beatmapsets/{sid}", sid)
+                .headers { base.insertHeader(it) }
+                .retrieve()
+                .bodyToMono(BeatMapSet::class.java)
+                .doOnNext(beatMapDao::saveMapSet)
+        }
     }
 
     override fun getBeatMapFromDataBase(bid: Long): BeatMap {
@@ -251,7 +258,8 @@ import kotlin.math.min
     /**
      * @throws IndexOutOfBoundsException 谱面不完整的时候会丢这个
      */
-    @Throws(IndexOutOfBoundsException::class) private fun getMapObjectList(mapStr: String): List<Int> {
+    @Throws(IndexOutOfBoundsException::class)
+    private fun getMapObjectList(mapStr: String): List<Int> {
         val start = mapStr.indexOf("[HitObjects]") + 12
         val end = mapStr.indexOf("[", start)
         val hit = if (end > start) {
@@ -382,7 +390,8 @@ import kotlin.math.min
         if (playPercentage == null) {
             try {
                 getBeatmapObjectGrouping26(score.beatMap)
-                playPercentage = beatmapObjectCountMapper.getTimeStampPercentageByBidAndIndex(score.beatMap.beatMapID, n)
+                playPercentage =
+                    beatmapObjectCountMapper.getTimeStampPercentageByBidAndIndex(score.beatMap.beatMapID, n)
             } catch (e: Exception) {
                 log.error("计算或存储物件数据失败", e)
                 playPercentage = 1.0
@@ -403,44 +412,51 @@ import kotlin.math.min
             body["mods"] = value
         }
 
-        return base.osuApiWebClient.post().uri("beatmaps/{id}/attributes", id)
-            .headers { base.insertHeader(it) }
-            .bodyValue(body)
-            .retrieve()
-            .bodyToMono(JsonNode::class.java).mapNotNull {
-                JacksonUtil.parseObject(
-                    it["attributes"], BeatmapDifficultyAttributes::class.java
-                )
-            }.onErrorReturn(BeatmapDifficultyAttributes()).block()!!
+        return base.request { client ->
+            client.post()
+                .uri("beatmaps/{id}/attributes", id)
+                .headers { base.insertHeader(it) }
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(JsonNode::class.java)
+                .mapNotNull {
+                    JacksonUtil.parseObject(it["attributes"], BeatmapDifficultyAttributes::class.java)
+                }
+                .onErrorReturn(BeatmapDifficultyAttributes())
+        }
     }
 
     override fun lookupBeatmap(checksum: String?, filename: String?, id: Long?): JsonNode? {
-        return base.osuApiWebClient.get().uri {
-            it.path("beatmapsets/lookup")
-                .queryParamIfPresent("checksum", Optional.ofNullable(checksum))
-                .queryParamIfPresent("filename", Optional.ofNullable(filename))
-                .queryParamIfPresent("id", Optional.ofNullable(id)).build() 
+        return base.request { client ->
+            client.get().uri {
+                it.path("beatmapsets/lookup")
+                    .queryParamIfPresent("checksum", Optional.ofNullable(checksum))
+                    .queryParamIfPresent("filename", Optional.ofNullable(filename))
+                    .queryParamIfPresent("id", Optional.ofNullable(id)).build()
+            }
+                .headers { base.insertHeader(it) }
+                .retrieve()
+                .bodyToMono(JsonNode::class.java)
         }
-            .headers { base.insertHeader(it) }
-            .retrieve().bodyToMono(
-                JsonNode::class.java
-            ).block()
     }
 
     private fun searchBeatMapSetFromAPI(query: Map<String, Any?>): BeatMapSetSearch {
-        return base.osuApiWebClient.get().uri {
-            it.path("beatmapsets/search")
-            query.forEach { (k: String, v: Any?) ->
-                if (v != null) {
-                    it.queryParam(k, v)
-                } else {
-                    it.queryParam(k)
+        return base.request { client ->
+            client.get().uri {
+                it.path("beatmapsets/search")
+                query.forEach { (k: String, v: Any?) ->
+                    if (v != null) {
+                        it.queryParam(k, v)
+                    } else {
+                        it.queryParam(k)
+                    }
                 }
+                it.build()
             }
-            it.build()
-        }.headers { base.insertHeader(it) }.retrieve().bodyToMono(
-            BeatMapSetSearch::class.java
-        ).block()!!
+                .headers { base.insertHeader(it) }
+                .retrieve()
+                .bodyToMono(BeatMapSetSearch::class.java)
+        }
     }
 
     override fun searchBeatMapSet(query: Map<String, Any?>): BeatMapSetSearch {
