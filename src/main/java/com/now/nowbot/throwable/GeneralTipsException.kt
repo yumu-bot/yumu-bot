@@ -3,9 +3,10 @@ package com.now.nowbot.throwable
 // 这个类存放一些公用的 Tips，比如图片发送失败，或是图片渲染失败，或是连不上渲染模块
 class GeneralTipsException : TipsException {
     enum class Type (val message: String) {
-        G_TokenExpired_Me("您的令牌已过期，请重新授权。(!ymbind)"), 
+        G_TokenExpired_Me("您的令牌已过期，请重新授权。(!ymbind)"),
         G_TokenExpired_Player("此玩家的令牌已过期，请提醒他重新授权。(!ymbind)"), 
-        
+        G_TokenExpired_Cancel("绑定已经被取消了, 无法再使用了哦"),
+
         G_Banned_Me("你被办了。"), 
         G_Banned_Player("%s 被办了。"), 
         

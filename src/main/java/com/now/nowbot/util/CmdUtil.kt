@@ -64,11 +64,11 @@ object CmdUtil {
 
         isMyself.set(true)
 
-        val binUser = bindDao!!.getUserFromQQ(event.sender.id, true)
+        val binUser = bindDao.getUserFromQQ(event.sender.id, true)
 
         checkOsuMode(mode, binUser.osuMode)
 
-        return getOsuUser(binUser.username) { userApiService!!.getPlayerInfo(binUser, mode.data) }
+        return getOsuUser(binUser.username, binUser.osuID) { userApiService.getPlayerInfo(binUser, mode.data) }
     }
 
     /**
@@ -140,7 +140,7 @@ object CmdUtil {
             val range = parseRange(text)
             if (range[0] != null && range[1] == null && checkRangeFirst(range[0]!!)) {
                 try {
-                    val id = userApiService!!.getOsuId(range[0].toString())
+                    val id = userApiService.getOsuId(range[0].toString())
                     val user = getOsuUser(id, mode.data)
                     return CmdRange(user)
                 } catch (_: Exception) {
@@ -163,7 +163,7 @@ object CmdUtil {
                     result = CmdRange(null, range.start, range.end)
                     break
                 } // 傻逼 kotlin 自动转换
-                val id = userApiService!!.getOsuId(range.data)
+                val id = userApiService.getOsuId(range.data)
                 val user = getOsuUser(id, mode.data)
                 result = CmdRange(user, range.start, range.end)
                 break
@@ -324,7 +324,7 @@ object CmdUtil {
         }
 
         if (qq != 0L) {
-            val bind = bindDao!!.getUserFromQQ(qq)
+            val bind = bindDao.getUserFromQQ(qq)
             return getOsuUser(bind, checkOsuMode(mode, bind.osuMode))
         }
 
@@ -356,7 +356,7 @@ object CmdUtil {
      */
     @Throws(TipsException::class)
     fun getOsuUser(user: BinUser, mode: OsuMode?): OsuUser {
-        return getOsuUser(user.osuID) { userApiService!!.getPlayerInfo(user, mode) }
+        return getOsuUser(user.osuName, user.osuID) { userApiService.getPlayerInfo(user, mode) }
     }
 
     /**
@@ -367,7 +367,7 @@ object CmdUtil {
      */
     @Throws(TipsException::class)
     fun getOsuUser(name: String, mode: OsuMode?): OsuUser {
-        return getOsuUser(name) { userApiService!!.getPlayerInfo(name, mode) }
+        return getOsuUser(name) { userApiService.getPlayerInfo(name, mode) }
     }
 
     /**
@@ -378,18 +378,21 @@ object CmdUtil {
      */
     @Throws(TipsException::class)
     fun getOsuUser(uid: Long, mode: OsuMode?): OsuUser {
-        return getOsuUser(uid) { userApiService!!.getPlayerInfo(uid, mode) }
+        return getOsuUser("玩家 $uid", uid) { userApiService.getPlayerInfo(uid, mode) }
     }
 
     /** 内部方法 封装获取 user 的方法, 包装出现的异常 */
     @Throws(TipsException::class)
-    private fun <T> getOsuUser(tips: Any, consumer: Supplier<T>): T {
+    private fun <T> getOsuUser(name: String, uid: Long? = null, consumer: Supplier<T>): T {
         try {
             return consumer.get()
         } catch (e: WebClientResponseException.NotFound) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, tips.toString())
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name)
         } catch (e: WebClientResponseException.Forbidden) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, tips.toString())
+            throw GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, name)
+        } catch (e: WebClientResponseException.Unauthorized) {
+            uid?.let(bindDao::removeBind)
+            throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Cancel)
         } catch (e: WebClientResponseException) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
         } catch (e: Exception) {
@@ -470,10 +473,10 @@ object CmdUtil {
     private val JUST_RANGE: Pattern =
         Pattern.compile("^\\s*$REG_HASH?\\s*(\\d{1,3}[\\-－ ]+)?\\d{1,3}\\s*$")
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
-    private var bindDao: BindDao? = null
-    private var userApiService: OsuUserApiService? = null
-    private var scoreApiService: OsuScoreApiService? = null
-    private var beatmapApiService: OsuBeatmapApiService? = null
+    private lateinit var bindDao: BindDao
+    private lateinit var userApiService: OsuUserApiService
+    private lateinit var scoreApiService: OsuScoreApiService
+    private lateinit var beatmapApiService: OsuBeatmapApiService
 
     @JvmStatic
     fun init(applicationContext: ApplicationContext) {
@@ -483,7 +486,7 @@ object CmdUtil {
         beatmapApiService = applicationContext.getBean(OsuBeatmapApiService::class.java)
     }
 
-    private fun checkRangeFirst(i:Int): Boolean {
+    private fun checkRangeFirst(i: Int): Boolean {
         return when {
             i < 101 -> false
             i == 666 -> true
