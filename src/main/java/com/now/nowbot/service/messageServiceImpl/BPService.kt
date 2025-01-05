@@ -120,6 +120,11 @@ class BPService(
         val isDefault = offset == 0 && limit == 1
 
         val bpList = scoreApiService.getBestScores(data!!.userID, mode, offset, limit)
+        val modeStr = if (mode == OsuMode.DEFAULT) {
+            bpList.firstOrNull()?.mode?.getName() ?: "默认"
+        } else {
+            mode.getName()
+        }
         val bpMap = TreeMap<Int, LazerScore>()
 
         // 检查查到的数据是否为空
@@ -127,13 +132,13 @@ class BPService(
             if (isDefault) {
                 throw GeneralTipsException(
                     GeneralTipsException.Type.G_Null_PlayerRecord,
-                    mode.toString(),
+                    modeStr,
                 )
             } else {
                 throw GeneralTipsException(
                     GeneralTipsException.Type.G_Null_SelectedBP,
                     data!!.username ?: data!!.userID,
-                    mode.toString(),
+                    modeStr,
                 )
             }
         }
