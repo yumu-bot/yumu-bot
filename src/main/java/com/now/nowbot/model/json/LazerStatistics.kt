@@ -3,6 +3,7 @@ package com.now.nowbot.model.json
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
+import com.now.nowbot.util.JacksonUtil
 import kotlin.math.roundToInt
 
 data class LazerStatistics(
@@ -126,5 +127,26 @@ data class LazerStatistics(
             countGeki = geki
             countKatu = katu
         }
+    }
+
+    fun toShortJson(): String {
+        val map = mutableMapOf<String, Int>()
+        perfect.takeIf { it > 0 }?.let { map["perfect"] = it }
+        great.takeIf { it > 0 }?.let { map["great"] = it }
+        good.takeIf { it > 0 }?.let { map["good"] = it }
+        ok.takeIf { it > 0 }?.let { map["ok"] = it }
+        meh.takeIf { it > 0 }?.let { map["meh"] = it }
+        miss.takeIf { it > 0 }?.let { map["miss"] = it }
+        ignoreHit.takeIf { it > 0 }?.let { map["ignore_hit"] = it }
+        ignoreMiss.takeIf { it > 0 }?.let { map["ignore_miss"] = it }
+        largeTickHit.takeIf { it > 0 }?.let { map["large_tick_hit"] = it }
+        largeTickMiss.takeIf { it > 0 }?.let { map["large_tick_miss"] = it }
+        smallTickHit.takeIf { it > 0 }?.let { map["small_tick_hit"] = it }
+        smallTickMiss.takeIf { it > 0 }?.let { map["small_tick_miss"] = it }
+        sliderTailHit.takeIf { it > 0 }?.let { map["slider_tail_hit"] = it }
+        largeBonus.takeIf { it > 0 }?.let { map["large_bonus"] = it }
+        smallBonus.takeIf { it > 0 }?.let { map["small_bonus"] = it }
+        legacyComboIncrease.takeIf { it > 0 }?.let { map["legacy_combo_increase"] = it }
+        return JacksonUtil.toJson(map)
     }
 }
