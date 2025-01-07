@@ -307,6 +307,7 @@ public class BindDao {
                 bindUserMapper.backupBindByOsuId(u.getID());
             } catch (Exception e) {
                 bindUserMapper.addUpdateCount(u.getID());
+                log.error("出现异常 [{}]: ", errCount, e);
                 errCount++;
             }
             if (errCount > 5) {
@@ -333,7 +334,7 @@ public class BindDao {
                     log.error("更新 [{}] 令牌失败, api 服务器异常, 正在重试 {}", u.getOsuName(), badRequest);
                 } else {
                     log.error("更新 [{}] 令牌失败, 重试 {} 次失败, 放弃更新", u.getOsuName(), badRequest);
-                    throw new RuntimeException("network error");
+                    throw e;
                 }
             }
         }
