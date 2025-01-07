@@ -345,4 +345,8 @@ public class BindDao {
             successCount = i;
         }
     }
+
+    public List<Long> getAllUserIdLimit50(int start) {
+        return bindUserMapper.getAllBindUserIdLimit50(start);
+    }
 }

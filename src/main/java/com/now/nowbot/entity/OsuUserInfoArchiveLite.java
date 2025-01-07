@@ -8,7 +8,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "osu_user_info_archive", indexes = {
         @Index(name = "index_osu_id", columnList = "osu_id"),
-        @Index(name = "index_usermod_find", columnList = "osu_id,mode")
+        @Index(name = "index_usermod_find", columnList = "osu_id,mode"),
+        @Index(name = "index_user_time", columnList = "time")
 })
 public class OsuUserInfoArchiveLite {
     @Id
@@ -231,5 +232,20 @@ public class OsuUserInfoArchiveLite {
 
     public void setTotal_hits(Long total_hits) {
         this.total_hits = total_hits;
+    }
+
+    public interface InfoArchive {
+        long getOsuId();
+        short getModeShort();
+        long getPlayCount();
+        default OsuMode getMode() {
+            return switch (getModeShort()) {
+                case 0 -> OsuMode.OSU;
+                case 1 -> OsuMode.TAIKO;
+                case 2 -> OsuMode.CATCH;
+                case 3 -> OsuMode.MANIA;
+                default -> OsuMode.DEFAULT;
+            };
+        }
     }
 }

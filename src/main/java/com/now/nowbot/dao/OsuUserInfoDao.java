@@ -158,4 +158,8 @@ public class OsuUserInfoDao {
     public Optional<OsuUserInfoArchiveLite> getLast(Long uid, OsuMode mode) {
         return osuUserInfoMapper.selectLast(uid, mode);
     }
+
+    public List<OsuUserInfoArchiveLite.InfoArchive> getYesterdayInfo(List<Long> uid) {
+        return osuUserInfoMapper.getArchiveByUidYesterday(uid);
+    }
 }

@@ -1,16 +1,13 @@
 package com.now.nowbot.service
 
-import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.entity.NewbiePlayCount
-import com.now.nowbot.mapper.NewbiePlayCountRepository
 import com.now.nowbot.newbie.mapper.NewbieService
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import jakarta.annotation.Resource
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.ApplicationContext
 import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.annotation.Scheduled
@@ -27,79 +24,70 @@ import kotlin.io.path.Path
  * 统一设置定时任务
  */
 @Service
-class RunTimeService : SchedulingConfigurer {
-    @Resource
-    var biliApiService: BiliApiService? = null
-
-    @Resource
-    var bindDao: BindDao? = null
-
-    @Resource
-    var maimaiApiService: MaimaiApiService? = null
-
-    @Resource
-    var chunithmApiService: ChunithmApiService ? = null
-
-    @Resource
-    var userApiService: OsuUserApiService? = null
-
-    @Resource
-    var taskExecutor: TaskExecutor? = null
-
-
-    @Resource
-    var applicationContext: ApplicationContext? = null
-
-    var scheduledTaskRegistrar: ScheduledTaskRegistrar? = null
-
+class RunTimeService(
+    private val dailyStatisticsService: DailyStatisticsService,
+    private val bindDao: BindDao,
+    private val maimaiApiService: MaimaiApiService,
+    private val chunithmApiService: ChunithmApiService,
+    private val userApiService: OsuUserApiService,
+    @Qualifier("kotlinTaskExecutor")
+    private val taskExecutor: TaskExecutor,
+    private val applicationContext: ApplicationContext,
+) : SchedulingConfigurer {
 
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
-    @Scheduled(cron = "0 0 4 * * *")
+    @Scheduled(cron = "0 0 2 * * *")
     fun refreshToken() {
         log.info("开始执行更新令牌任务")
-        bindDao!!.refreshOldUserToken(userApiService)
+        bindDao.refreshOldUserToken(userApiService)
+    }
+
+    // 每天凌晨4点统计用户信息
+    @Scheduled(cron = "0 0 4 * * *")
+    fun statisticUserInfo() {
+        dailyStatisticsService.asyncTask()
     }
 
     @Scheduled(cron = "0 0 6 * * *")
     fun updateMaimaiSongLibrary() {
         log.info("开始执行更新 maimai 歌曲库任务")
-        //maimaiApiService!!.updateMaimaiSongLibraryFile()
-        maimaiApiService!!.updateMaimaiSongLibraryDatabase()
+        //maimaiApiService.updateMaimaiSongLibraryFile()
+        maimaiApiService.updateMaimaiSongLibraryDatabase()
     }
 
     @Scheduled(cron = "20 0 6 * * *")
     fun updateMaimaiRankLibrary() {
         log.info("开始执行更新 maimai 排名库任务")
-        //maimaiApiService!!.updateMaimaiRankLibraryFile()
-        maimaiApiService!!.updateMaimaiRankLibraryDatabase()
+        //maimaiApiService.updateMaimaiRankLibraryFile()
+        maimaiApiService.updateMaimaiRankLibraryDatabase()
     }
 
     @Scheduled(cron = "40 0 6 * * *")
     fun updateMaimaiFitLibrary() {
         log.info("开始执行更新 maimai 统计库任务")
-        //maimaiApiService!!.updateMaimaiFitLibraryFile()
-        maimaiApiService!!.updateMaimaiFitLibraryDatabase()
+        //maimaiApiService.updateMaimaiFitLibraryFile()
+        maimaiApiService.updateMaimaiFitLibraryDatabase()
     }
 
     @Scheduled(cron = "0 1 6 * * *")
     fun updateMaimaiAliasLibrary() {
         log.info("开始执行更新 maimai 外号库任务")
-        //maimaiApiService!!.updateMaimaiAliasLibraryFile()
-        maimaiApiService!!.updateMaimaiAliasLibraryDatabase()
+        //maimaiApiService.updateMaimaiAliasLibraryFile()
+        maimaiApiService.updateMaimaiAliasLibraryDatabase()
     }
 
     @Scheduled(cron = "20 1 6 * * *")
     fun updateChunithmSongsLibrary() {
         log.info("开始执行更新 chunithm 歌曲库任务")
-        //maimaiApiService!!.updateMaimaiAliasLibraryFile()
-        chunithmApiService!!.updateChunithmSongLibraryFile()
+        //maimaiApiService.updateMaimaiAliasLibraryFile()
+        chunithmApiService.updateChunithmSongLibraryFile()
     }
 
 
     @Scheduled(cron = "0 5 10 1 9 *")
     fun count() {
         try {
-            val service = applicationContext!!.getBean(NewbieService::class.java)
+            val service = applicationContext.getBean(NewbieService::class.java)
             val startDay = LocalDate.of(2024, 8, 12).atStartOfDay()
             val write = Files.newBufferedWriter(Path("/home/spring/res2.csv"))
             write.use {
@@ -116,48 +104,6 @@ class RunTimeService : SchedulingConfigurer {
         }
     }
 
-    fun newbiePlayCount() {
-        log.info("开始执行新人统计任务")
-        val newbiePlayCount: NewbiePlayCountRepository
-        val newbieService = try {
-            newbiePlayCount = applicationContext!!.getBean(NewbiePlayCountRepository::class.java)
-            applicationContext!!.getBean(NewbieService::class.java)
-        } catch (e: Exception) {
-            log.warn("未找到统计服务, 结束任务", e)
-            return
-        }
-        val bot: com.mikuac.shiro.core.Bot?
-        val users = try {
-            val botContainer = applicationContext!!.getBean(BotContainer::class.java)
-            bot = botContainer.robots[365246692] ?: botContainer.robots.values.find {
-                it.groupList.data.find { g -> g.groupId == 595985887L } != null
-            }
-            bot?.getGroupMemberList(595985887L)?.data?.map { it.userId }
-        } catch (e: Exception) {
-            log.warn("未找到主bot机器人, 结束任务", e)
-            return
-        }
-        if (users == null) {
-            log.info("未找到目标群, 结束任务")
-            return
-        }
-
-
-        val startDay = LocalDate.of(2024, 8, 12).atStartOfDay()
-        val today = LocalDate.now().atStartOfDay()
-
-        newbieService
-            .countDataByQQ(users, startDay, today) {
-                val user = NewbiePlayCount(it)
-                newbiePlayCount.saveAndFlush(user)
-
-                log.info("统计 ${it.id} 完成")
-            }
-
-
-        log.info("任务结束")
-    }
-
     /***
      * 白天输出内存占用信息
      */
@@ -167,12 +113,12 @@ class RunTimeService : SchedulingConfigurer {
         val nm = m.nonHeapMemoryUsage
         val t = ManagementFactory.getThreadMXBean()
         val z = ManagementFactory.getMemoryPoolMXBeans()
-        log.debug(
+        log.info(
             "方法区 已申请 {}M 已使用 {}M ",
             nm.committed / 1024 / 1024,
             nm.used / 1024 / 1024
         )
-        log.debug(
+        log.info(
             "堆内存上限{}M,当前内存占用{}M, 已使用{}M\n当前线程数 {} ,守护线程 {} ,峰值线程 {}",
             m.heapMemoryUsage.max / 1024 / 1024,
             m.heapMemoryUsage.committed / 1024 / 1024,
@@ -182,7 +128,7 @@ class RunTimeService : SchedulingConfigurer {
             t.peakThreadCount
         )
         for (pool in z) {
-            log.debug(
+            log.info(
                 "vm内存 {} 已申请 {}M 已使用 {}M ",
                 pool.name,
                 pool.usage.committed / 1024 / 1024,
@@ -192,14 +138,16 @@ class RunTimeService : SchedulingConfigurer {
     }
 
 
+    lateinit var scheduledTaskRegistrar: ScheduledTaskRegistrar
+
     override fun configureTasks(taskRegistrar: ScheduledTaskRegistrar) {
         this.scheduledTaskRegistrar = taskRegistrar
     }
 
-    fun addTask(task: Runnable?, cron: String?) {
-        scheduledTaskRegistrar!!.addCronTask({ taskExecutor!!.execute(task!!) }, cron!!)
-    } /*
-
+    fun addTask(task: Runnable, cron: String) {
+        scheduledTaskRegistrar.addCronTask({ taskExecutor.execute(task) }, cron)
+    } 
+/*
      public void example() {
         try {
             var code = """
@@ -236,6 +184,48 @@ class RunTimeService : SchedulingConfigurer {
         } catch (CompileException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    fun newbiePlayCount() {
+        log.info("开始执行新人统计任务")
+        val newbiePlayCount: NewbiePlayCountRepository
+        val newbieService = try {
+            newbiePlayCount = applicationContext!!.getBean(NewbiePlayCountRepository::class.java)
+            applicationContext!!.getBean(NewbieService::class.java)
+        } catch (e: Exception) {
+            log.warn("未找到统计服务, 结束任务", e)
+            return
+        }
+        val bot: Bot?
+        val users = try {
+            val botContainer = applicationContext!!.getBean(BotContainer::class.java)
+            bot = botContainer.robots[365246692] ?: botContainer.robots.values.find {
+                it.groupList.data.find { g -> g.groupId == 595985887L } != null
+            }
+            bot?.getGroupMemberList(595985887L)?.data?.map { it.userId }
+        } catch (e: Exception) {
+            log.warn("未找到主bot机器人, 结束任务", e)
+            return
+        }
+        if (users == null) {
+            log.info("未找到目标群, 结束任务")
+            return
+        }
+
+
+        val startDay = LocalDate.of(2024, 8, 12).atStartOfDay()
+        val today = LocalDate.now().atStartOfDay()
+
+        newbieService
+            .countDataByQQ(users, startDay, today) {
+                val user = NewbiePlayCount(it)
+                newbiePlayCount.saveAndFlush(user)
+
+                log.info("统计 ${it.id} 完成")
+            }
+
+
+        log.info("任务结束")
     }
     */
 

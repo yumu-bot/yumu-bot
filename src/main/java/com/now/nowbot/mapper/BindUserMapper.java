@@ -101,4 +101,7 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
 
         return save(entity);
     }
+
+    @Query("select u.osuId from OsuBindUserLite u order by u.osuId limit 50 offset :offset")
+    List<Long> getAllBindUserIdLimit50(int offset);
 }

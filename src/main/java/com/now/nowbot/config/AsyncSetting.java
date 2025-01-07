@@ -63,7 +63,7 @@ public class AsyncSetting implements AsyncConfigurer {
         };
     }
 
-    @Bean(name = {"applicationTaskExecutor", "taskExecutor"})
+    @Bean(name = {"applicationTaskExecutor", "taskExecutor", "kotlinTaskExecutor"})
     public TaskExecutor getTaskExecutor(){
         return AsyncSetting.threadPool;
     }

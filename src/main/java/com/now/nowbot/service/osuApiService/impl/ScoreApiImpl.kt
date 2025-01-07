@@ -1,6 +1,7 @@
 package com.now.nowbot.service.osuApiService.impl
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.BinUser
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
@@ -20,7 +21,10 @@ import java.util.function.Consumer
 import java.util.function.Function
 
 @Service
-class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
+class ScoreApiImpl(
+    val base: OsuApiBaseService,
+    val scoreDao: ScoreDao,
+) : OsuScoreApiService {
 
     override fun getBestScores(
         user: BinUser,
@@ -292,6 +296,7 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
             .retrieve()
             .bodyToFlux(LazerScore::class.java)
             .collectList()
+            .doOnNext(scoreDao::saveScoreAsync)
         }
     }
 
@@ -318,6 +323,7 @@ class ScoreApiImpl(var base: OsuApiBaseService) : OsuScoreApiService {
             .retrieve()
             .bodyToFlux(LazerScore::class.java)
             .collectList()
+            .doOnNext(scoreDao::saveScoreAsync)
         }
 
     }
