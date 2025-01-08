@@ -1,7 +1,6 @@
 package com.now.nowbot.service.osuApiService.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.util.concurrent.RateLimiter;
 import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.config.YumuConfig;
 import com.now.nowbot.dao.BindDao;
@@ -32,6 +31,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -49,7 +50,7 @@ public class OsuApiBaseService {
     private static final String      THREAD_LOCAL_ENVIRONMENT = "osu-api-priority";
     private static final int         DEFAULT_PRIORITY         = 5;
     private static final int         MAX_RETRY                = 3;
-    private static final RateLimiter limiter                  = RateLimiter.create(10, Duration.ofSeconds(1));
+    private static final RateLimiter limiter                  = new RateLimiter(1, 20);
 
     private static final PriorityBlockingQueue<RequestTask<?>> TASKS = new PriorityBlockingQueue<>();
 
@@ -272,6 +273,28 @@ public class OsuApiBaseService {
         private int getPriority() {
             // 用于对比, 优先级 * (一个大数 n + 时间), 这个数字大到不可能存在两个请求的时间超过 n 秒
             return (3600 * priority) + time;
+        }
+    }
+
+    static class RateLimiter {
+        int           rate;
+        Semaphore     semaphore;
+
+        RateLimiter(int rate, int max) {
+            this.rate = rate;
+            semaphore = new Semaphore(max);
+            Thread.startVirtualThread(this::run);
+        }
+
+        void run() {
+            while (APP_ALIVE) {
+                LockSupport.parkNanos(Duration.ofSeconds(1).toNanos());
+                semaphore.release(rate);
+            }
+        }
+
+        void acquire() throws InterruptedException {
+            semaphore.acquire();
         }
     }
 }

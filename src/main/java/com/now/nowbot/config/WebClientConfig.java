@@ -18,7 +18,6 @@ import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
-import reactor.netty.transport.ProxyProvider;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
@@ -72,11 +71,11 @@ public class WebClientConfig implements WebFluxConfigurer {
                 .maxIdleTime(Duration.ofSeconds(30))
                 .build();
         HttpClient httpClient = HttpClient.create(connectionProvider)
-                .proxy(proxy ->
-                        proxy.type("HTTP".equalsIgnoreCase(config.proxyType) ? ProxyProvider.Proxy.HTTP : ProxyProvider.Proxy.SOCKS5)
-                                .host(config.proxyHost)
-                                .port(config.proxyPort)
-                )
+//                .proxy(proxy ->
+//                        proxy.type("HTTP".equalsIgnoreCase(config.proxyType) ? ProxyProvider.Proxy.HTTP : ProxyProvider.Proxy.SOCKS5)
+//                                .host(config.proxyHost)
+//                                .port(config.proxyPort)
+//                )
                 .followRedirect(true)
                 .responseTimeout(Duration.ofSeconds(30));
         ReactorClientHttpConnector connector = new ReactorClientHttpConnector(httpClient);
