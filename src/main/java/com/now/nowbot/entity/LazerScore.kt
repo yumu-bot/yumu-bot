@@ -16,6 +16,7 @@ import java.time.OffsetDateTime
     Index(name = "s_uid", columnList = "user_id"),
     Index(name = "s_bid", columnList = "beatmap_id"),
     Index(name = "s_time", columnList = "time"),
+    Index(name = "s_mode", columnList = "mode"),
 ])
 class LazerScoreLite(
     @Id
@@ -52,6 +53,8 @@ class LazerScoreLite(
     // total_score
     var lazerScore: Int,
 
+    var mode: Short,
+
     @Enumerated
     @JdbcType(value = PostgreSQLEnumJdbcType::class)
     var rank: Rank,
@@ -71,6 +74,7 @@ class LazerScoreLite(
         score.classicScore.toInt(),
         score.legacyScore?.toInt() ?: 0,
         score.score.toInt(),
+        score.mode.modeValue,
         Rank.fromString(score.lazerRank)
     )
 
