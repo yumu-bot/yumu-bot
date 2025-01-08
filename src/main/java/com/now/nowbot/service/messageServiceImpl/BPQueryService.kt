@@ -368,6 +368,8 @@ class BPQueryService(
 
         private val split: Regex = "(\\s+)|[|,，]".toRegex()
 
+        private val quotation = "[“”＂‟]".toRegex()
+
         // 最好还是支持一下全角符号，总是有用户输入
         private fun String.standardised(): String {
             return this
@@ -378,6 +380,7 @@ class BPQueryService(
                 .replace('＝', '=')
                 .replace('！', '!')
                 .replace("≠", "!=")
+                .replace(quotation, "\"")
         }
 
         private fun String.getOperator(): Triple<String, Operator, String> {
