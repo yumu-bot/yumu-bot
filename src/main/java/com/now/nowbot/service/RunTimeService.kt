@@ -48,6 +48,13 @@ class RunTimeService(
         dailyStatisticsService.asyncTask()
     }
 
+    @Scheduled(cron = "0 10 11 9 1 *")
+    fun testRequest() {
+        log.info("测试开始")
+        bindDao.refreshOldUserToken(userApiService)
+        dailyStatisticsService.asyncTask()
+    }
+
     @Scheduled(cron = "0 0 6 * * *")
     fun updateMaimaiSongLibrary() {
         log.info("开始执行更新 maimai 歌曲库任务")

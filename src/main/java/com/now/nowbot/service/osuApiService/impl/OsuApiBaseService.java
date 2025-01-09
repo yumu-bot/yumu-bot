@@ -28,10 +28,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -220,7 +217,8 @@ public class OsuApiBaseService {
             try {
                 limiter.acquire();
                 var task = TASKS.take();
-                Thread.startVirtualThread(() -> task.run(osuApiWebClient));
+                task.run(osuApiWebClient);
+
             } catch (InterruptedException e) {
                 log.error("请求队列异常", e);
             }
@@ -228,8 +226,11 @@ public class OsuApiBaseService {
     }
 
     static class RequestTask<T> implements Comparable<RequestTask<?>> {
+        private static int            TOO_MANY_REQUESTS_COUNT = 0;
+        private final  CountDownLatch lock                    = new CountDownLatch(1);
         int                          priority;
         int                          time;
+        boolean                      toManyRequests;
         short                        retry = 0;
         CompletableFuture<T>         future;
         Function<WebClient, Mono<T>> request;
@@ -238,7 +239,8 @@ public class OsuApiBaseService {
             this.priority = priority;
             this.future = future;
             this.request = request;
-            this.time = getNowTime();
+            time = getNowTime();
+            toManyRequests = false;
         }
 
         private static int getNowTime() {
@@ -246,8 +248,15 @@ public class OsuApiBaseService {
             return (int) (System.currentTimeMillis() / 1000 - 1735660800);
         }
 
-        public void run(WebClient client) {
-            request.apply(client).subscribe(future::complete, this::onError);
+        @SuppressWarnings("all")
+        public void run(WebClient client) throws InterruptedException {
+            request.apply(client).subscribe(future::complete, this::onError, this::onComplete);
+            lock.await(1, TimeUnit.SECONDS);
+            if (toManyRequests) {
+                limiter.onTooManyRequests(TOO_MANY_REQUESTS_COUNT++);
+            } else if (TOO_MANY_REQUESTS_COUNT > 0) {
+                TOO_MANY_REQUESTS_COUNT = 0;
+            }
         }
 
         private void onError(Throwable e) {
@@ -255,14 +264,18 @@ public class OsuApiBaseService {
                 future.completeExceptionally(e);
             }
 
-            if (e instanceof WebClientResponseException.TooManyRequests ||
-                    e instanceof WebClientRequestException
-            ) {
+            if (e instanceof WebClientResponseException.TooManyRequests) {
+                toManyRequests = true;
+            } else if (e instanceof WebClientRequestException) {
                 retry++;
                 TASKS.add(this);
             } else {
                 future.completeExceptionally(e);
             }
+        }
+
+        private void onComplete() {
+            lock.countDown();
         }
 
         @Override
@@ -277,8 +290,9 @@ public class OsuApiBaseService {
     }
 
     static class RateLimiter {
-        int           rate;
-        Semaphore     semaphore;
+        int       rate;
+        int       out = -1;
+        Semaphore semaphore;
 
         RateLimiter(int rate, int max) {
             this.rate = rate;
@@ -289,12 +303,21 @@ public class OsuApiBaseService {
         void run() {
             while (APP_ALIVE) {
                 LockSupport.parkNanos(Duration.ofSeconds(1).toNanos());
+                if (out >= 0) {
+                    int seconds = (int)Math.pow(2, out);
+                    out = 0;
+                    LockSupport.parkNanos(Duration.ofSeconds(seconds).toNanos());
+                }
                 semaphore.release(rate);
             }
         }
 
         void acquire() throws InterruptedException {
             semaphore.acquire();
+        }
+
+        public void onTooManyRequests(int n) {
+            out = n + 1;
         }
     }
 }
