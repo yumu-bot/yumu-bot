@@ -220,8 +220,7 @@ public class OsuApiBaseService {
             try {
                 limiter.acquire();
                 var task = TASKS.take();
-                task.run(osuApiWebClient);
-
+                Thread.startVirtualThread(() -> task.run(osuApiWebClient));
             } catch (InterruptedException e) {
                 log.error("请求队列异常", e);
             }
@@ -229,7 +228,7 @@ public class OsuApiBaseService {
     }
 
     static class RequestTask<T> implements Comparable<RequestTask<?>> {
-        private static int            TOO_MANY_REQUESTS_COUNT = 0;
+        private static int TOO_MANY_REQUESTS_COUNT = 0;
         int                          priority;
         int                          time;
         boolean                      toManyRequests;
@@ -250,8 +249,7 @@ public class OsuApiBaseService {
             return (int) (System.currentTimeMillis() / 1000 - 1735660800);
         }
 
-        @SuppressWarnings("all")
-        public void run(WebClient client) throws InterruptedException {
+        public void run(WebClient client) {
             request.apply(client).subscribe(future::complete, this::onError, this::onComplete);
         }
 
@@ -272,6 +270,7 @@ public class OsuApiBaseService {
 
         private void onComplete() {
             if (toManyRequests) {
+                log.info("请求过多, 触发退避");
                 limiter.onTooManyRequests(TOO_MANY_REQUESTS_COUNT++);
             } else if (TOO_MANY_REQUESTS_COUNT > 0) {
                 TOO_MANY_REQUESTS_COUNT = 0;
@@ -303,16 +302,19 @@ public class OsuApiBaseService {
         void run() {
             while (APP_ALIVE) {
                 LockSupport.parkNanos(Duration.ofSeconds(1).toNanos());
-                if (out >= 0) {
-                    int seconds = (int)Math.pow(2, out);
-                    out = 0;
-                    LockSupport.parkNanos(Duration.ofSeconds(seconds).toNanos());
-                }
                 semaphore.release(rate);
             }
         }
 
         void acquire() throws InterruptedException {
+            if (out >= 0) {
+                int seconds = Math.min(2 * out + 1, 10);
+                log.info("请求触发退避, 等待时间: {} 秒", seconds);
+                LockSupport.parkNanos(Duration.ofSeconds(seconds).toNanos());
+                out = -1;
+                int permits = semaphore.availablePermits();
+                if (permits > 1) semaphore.acquire(permits - 1);
+            }
             semaphore.acquire();
         }
 

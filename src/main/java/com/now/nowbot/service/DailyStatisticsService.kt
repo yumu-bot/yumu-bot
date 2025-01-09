@@ -20,7 +20,6 @@ class DailyStatisticsService(
     fun asyncTask() {
         Thread.startVirtualThread {
             val startTime = System.currentTimeMillis()
-            log.info("开始统计全部绑定用户")
             runTask()
             val endTime = System.currentTimeMillis()
             log.info("统计全部绑定用户完成, 耗时: ${(endTime - startTime) / 1000} s")
@@ -28,6 +27,7 @@ class DailyStatisticsService(
     }
 
     fun runTask() {
+        log.info("开始统计全部绑定用户")
         OsuApiBaseService.setPriority(9)
         var offset = 0
         var usersId: List<Long> = bindDao.getAllUserIdLimit50(offset)
