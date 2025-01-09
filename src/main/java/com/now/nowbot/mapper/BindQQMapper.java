@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface BindQQMapper extends JpaRepository<QQBindLite, Long>, JpaSpecificationExecutor<QQBindLite> {
@@ -27,4 +29,7 @@ public interface BindQQMapper extends JpaRepository<QQBindLite, Long>, JpaSpecif
     @Transactional
     @Query("delete from QQBindLite qq where qq.osuUser.osuId=:osuId")
     void unBind(Long osuId);
+
+    @Query("select qq.qq as qid, qq.osuUser.osuId as uid, qq.osuUser.osuName as name from QQBindLite qq where qq.qq in (:qq)")
+    List<QQBindLite.QQUser> findAllUserByQQ(Collection<Long> qq);
 }

@@ -9,6 +9,7 @@ import com.now.nowbot.model.json.LazerScore
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Component
 class ScoreDao(
@@ -75,6 +76,12 @@ class ScoreDao(
         scoreStatisticRepository.saveAll(mapStatisticList)
         scoreStatisticRepository.saveAll(scoreStatisticList)
         scoreRepository.saveAll(scoreLiteList)
+    }
+
+    fun getUserAllScoreTime(userId: Long): List<LocalDateTime> {
+        val start = LocalDateTime.of(2025,1,1,0,0)
+        val end = LocalDateTime.now()
+        return scoreRepository.getUserAllScoreTime(userId, start, end)
     }
 
     companion object {

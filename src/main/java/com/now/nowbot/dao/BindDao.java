@@ -22,10 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -350,5 +347,9 @@ public class BindDao {
 
     public List<Long> getAllUserIdLimit50(int start) {
         return bindUserMapper.getAllBindUserIdLimit50(start);
+    }
+
+    public List<QQBindLite.QQUser> getAllQQBindUser(Collection<Long> qqId) {
+        return bindQQMapper.findAllUserByQQ(qqId);
     }
 }

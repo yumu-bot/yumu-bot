@@ -87,7 +87,10 @@ public enum OsuMode {
     }
 
 
-    public static Optional<String> getName(OsuMode mode) {
+    public static Optional<String> getName(@Nullable OsuMode mode) {
+        if (mode == null) {
+            return Optional.empty();
+        }
         if (DEFAULT.equals(mode)) {
             return Optional.empty();
         }

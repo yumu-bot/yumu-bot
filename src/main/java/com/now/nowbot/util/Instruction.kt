@@ -1,9 +1,9 @@
 package com.now.nowbot.util
 
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 import com.now.nowbot.util.command.*
 import com.now.nowbot.util.command.MatchLevel.*
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 enum class Instruction(val pattern: Pattern) {
     // #0 调出帮助
@@ -678,7 +678,9 @@ enum class Instruction(val pattern: Pattern) {
         appendRange()
     }),
 
-
+    PLAY_STATISTIC(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("ppst")
+    }),
     ;
 
     fun matcher(input: CharSequence): Matcher = this.pattern.matcher(input)

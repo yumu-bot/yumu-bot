@@ -4,6 +4,7 @@ import com.now.nowbot.entity.LazerScoreLite
 import com.now.nowbot.entity.ScoreStatisticLite
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import java.time.LocalDateTime
 import java.util.*
 
 interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
@@ -12,6 +13,9 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
 
     @Query("select id from lazer_score_lite where id = :id limit 1", nativeQuery = true)
     fun checkIdExists(id: Long): Optional<Long>
+
+    @Query("select s.time from LazerScoreLite s where s.userId = :id and s.time between :start and :end")
+    fun getUserAllScoreTime(id:Long, start: LocalDateTime, end: LocalDateTime): List<LocalDateTime>
 }
 
 interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, ScoreStatisticLite.ScoreStatisticKey> {

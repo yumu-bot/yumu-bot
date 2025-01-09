@@ -3,7 +3,10 @@ package com.now.nowbot.entity.bind;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.model.BinUser;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "osu_bind_qq")
@@ -32,5 +35,11 @@ public class QQBindLite {
 
     public BinUser getBinUser() {
         return BindDao.fromLite(osuUser);
+    }
+
+    public interface QQUser{
+        long getQid();
+        long getUid();
+        String getName();
     }
 }
