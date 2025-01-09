@@ -48,7 +48,7 @@ class RunTimeService(
         dailyStatisticsService.asyncTask()
     }
 
-    @Scheduled(cron = "0 03 13 9 1 *")
+    @Scheduled(cron = "0 10 13 9 1 *")
     fun testRequest() {
         log.info("测试开始")
         dailyStatisticsService.asyncTask()

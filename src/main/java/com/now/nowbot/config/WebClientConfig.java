@@ -77,7 +77,7 @@ public class WebClientConfig implements WebFluxConfigurer {
 //                                .port(config.proxyPort)
 //                )
                 .followRedirect(true)
-                .responseTimeout(Duration.ofSeconds(30));
+                .responseTimeout(Duration.ofSeconds(15));
         ReactorClientHttpConnector connector = new ReactorClientHttpConnector(httpClient);
         ExchangeStrategies strategies = ExchangeStrategies
                 .builder()

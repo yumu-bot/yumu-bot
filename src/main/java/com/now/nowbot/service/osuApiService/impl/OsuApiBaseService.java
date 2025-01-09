@@ -259,7 +259,9 @@ public class OsuApiBaseService {
             }
 
             if (e instanceof WebClientResponseException.TooManyRequests) {
+                log.info("出现 429 错误");
                 toManyRequests = true;
+                TASKS.add(this);
             } else if (e instanceof WebClientRequestException) {
                 retry++;
                 TASKS.add(this);

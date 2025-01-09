@@ -304,6 +304,7 @@ public class BindDao {
                 errCount = 0;
             } catch (WebClientResponseException.Unauthorized e) {
                 // 绑定被取消或者过期, 不再尝试
+                log.info("{} 取消绑定", u.getOsuName());
                 bindUserMapper.backupBindByOsuId(u.getID());
             } catch (Exception e) {
                 bindUserMapper.addUpdateCount(u.getID());
