@@ -28,7 +28,10 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -227,7 +230,6 @@ public class OsuApiBaseService {
 
     static class RequestTask<T> implements Comparable<RequestTask<?>> {
         private static int            TOO_MANY_REQUESTS_COUNT = 0;
-        private final  CountDownLatch lock                    = new CountDownLatch(1);
         int                          priority;
         int                          time;
         boolean                      toManyRequests;
@@ -251,12 +253,6 @@ public class OsuApiBaseService {
         @SuppressWarnings("all")
         public void run(WebClient client) throws InterruptedException {
             request.apply(client).subscribe(future::complete, this::onError, this::onComplete);
-            lock.await(1, TimeUnit.SECONDS);
-            if (toManyRequests) {
-                limiter.onTooManyRequests(TOO_MANY_REQUESTS_COUNT++);
-            } else if (TOO_MANY_REQUESTS_COUNT > 0) {
-                TOO_MANY_REQUESTS_COUNT = 0;
-            }
         }
 
         private void onError(Throwable e) {
@@ -275,7 +271,11 @@ public class OsuApiBaseService {
         }
 
         private void onComplete() {
-            lock.countDown();
+            if (toManyRequests) {
+                limiter.onTooManyRequests(TOO_MANY_REQUESTS_COUNT++);
+            } else if (TOO_MANY_REQUESTS_COUNT > 0) {
+                TOO_MANY_REQUESTS_COUNT = 0;
+            }
         }
 
         @Override
