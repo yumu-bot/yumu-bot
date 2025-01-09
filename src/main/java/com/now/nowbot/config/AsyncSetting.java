@@ -1,5 +1,6 @@
 package com.now.nowbot.config;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
@@ -23,21 +24,27 @@ import java.util.concurrent.ThreadPoolExecutor;
 @EnableAsync
 @Configuration
 public class AsyncSetting implements AsyncConfigurer {
-    private static final Logger log = LoggerFactory.getLogger(AsyncSetting.class);
-    public static final ThreadFactory V_THREAD_FACORY = Thread.ofVirtual().name("Bot").factory();
+    private static final Logger        log              = LoggerFactory.getLogger(AsyncSetting.class);
+    private static final ThreadFactory V_THTEAD_FACTORY = Thread.ofVirtual().name("Bot").factory();
+    public static final ThreadFactory  THREAD_FACTORY   = new ThreadFactoryBox(V_THTEAD_FACTORY);
     static private final ThreadPoolTaskExecutor threadPool;
 
     static {
         threadPool = new ThreadPoolTaskExecutor();
-        threadPool.setThreadFactory(V_THREAD_FACORY);
+        threadPool.setThreadFactory(THREAD_FACTORY);
         threadPool.setCorePoolSize(1000);
         threadPool.setMaxPoolSize(Integer.MAX_VALUE);
-        threadPool.setKeepAliveSeconds(5);
+        threadPool.setKeepAliveSeconds(0);
         threadPool.setQueueCapacity(Runtime.getRuntime().availableProcessors() * 10);
         threadPool.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardOldestPolicy());
-        threadPool.setWaitForTasksToCompleteOnShutdown(true);
+        threadPool.setWaitForTasksToCompleteOnShutdown(false);
         threadPool.setAwaitTerminationSeconds(5);
         threadPool.initialize();
+    }
+
+    @Bean
+    public AsyncTaskExecutor AsyncConf() {
+        return AsyncSetting.threadPool;
     }
 
     @Bean("botAsyncExecutor")
@@ -68,8 +75,22 @@ public class AsyncSetting implements AsyncConfigurer {
         return AsyncSetting.threadPool;
     }
 
-    @Bean
-    public AsyncTaskExecutor AstncConf() {
-        return AsyncSetting.threadPool;
+    static class ThreadFactoryBox implements ThreadFactory {
+        private final ThreadFactory threadFactory;
+
+        ThreadFactoryBox(ThreadFactory threadFactory) {
+            this.threadFactory = threadFactory;
+        }
+
+        @Override
+        public Thread newThread(@NotNull Runnable r) {
+            return threadFactory.newThread(() -> {
+                try {
+                    r.run();
+                } catch (Throwable e) {
+                    log.error("thread throw: ", e);
+                }
+            });
+        }
     }
 }

@@ -48,7 +48,7 @@ class RunTimeService(
         dailyStatisticsService.asyncTask()
     }
 
-    @Scheduled(cron = "0 27 12 9 1 *")
+    @Scheduled(cron = "0 55 12 9 1 *")
     fun testRequest() {
         log.info("测试开始")
         bindDao.refreshOldUserToken(userApiService)

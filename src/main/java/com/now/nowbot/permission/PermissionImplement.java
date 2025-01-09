@@ -31,7 +31,7 @@ import java.util.function.ToIntFunction;
 @Component
 public class PermissionImplement implements PermissionController {
     private static final Logger                                     log               = LoggerFactory.getLogger(PermissionImplement.class);
-    private static final ScheduledExecutorService                   EXECUTOR          = Executors.newScheduledThreadPool(Integer.MAX_VALUE, AsyncSetting.V_THREAD_FACORY);
+    private static final ScheduledExecutorService                   EXECUTOR          = Executors.newScheduledThreadPool(Integer.MAX_VALUE, AsyncSetting.THREAD_FACTORY);
     public static final  String                                     GLOBAL_PERMISSION = "PERMISSION_ALL";
     private static final Long                                       LOCAL_GROUP_ID    = -10086L;
     private static final Set<String>                                superService      = new CopyOnWriteArraySet<>();

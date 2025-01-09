@@ -47,7 +47,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static com.now.nowbot.config.AsyncSetting.V_THREAD_FACORY;
+import static com.now.nowbot.config.AsyncSetting.THREAD_FACTORY;
 
 @Component
 @Configuration
@@ -156,7 +156,7 @@ public class NowbotConfig {
             proxy.setHost("localhost").setPort(config.proxyPort);
         JDA jda;
         try {
-            var scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(0, V_THREAD_FACORY);
+            var scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(0, THREAD_FACTORY);
             jda = JDABuilder
                     .createDefault(discordConfig.getToken())
                     .setHttpClient(okHttpClient)
