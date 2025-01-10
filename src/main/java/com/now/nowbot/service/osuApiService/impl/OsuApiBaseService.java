@@ -71,6 +71,10 @@ public class OsuApiBaseService {
         oauthToken = osuConfig.getToken();
     }
 
+    public static boolean hasPriority() {
+        return ContextUtil.getContext(THREAD_LOCAL_ENVIRONMENT, Integer.class) != null;
+    }
+
     /**
      * 借助线程变量设置后续请求的优先级, 如果使用线程池, 务必在请求结束后调用 {@link #clearPriority()} 方法
      *
@@ -129,7 +133,9 @@ public class OsuApiBaseService {
         body.add("redirect_uri", redirectUrl);
         body.add("grant_type", first ? "authorization_code" : "refresh_token");
         body.add(first ? "code" : "refresh_token", user.getRefreshToken());
-        setPriority(1);
+        if (!hasPriority()) {
+            setPriority(1);
+        }
         JsonNode s = request((client) -> client
                 .post()
                 .uri("https://osu.ppy.sh/oauth/token")
