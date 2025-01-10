@@ -183,7 +183,7 @@ class InfoService(
         val historyUser =
             infoDao.getLastFrom(
                 user.userID,
-                if (mode == OsuMode.DEFAULT) user.currentOsuMode else mode,
+                user.currentOsuMode,
                 LocalDate.now().minusDays(day.toLong())
             ).map { archive: OsuUserInfoArchiveLite? -> OsuUserInfoDao.fromArchive(archive) }
 
