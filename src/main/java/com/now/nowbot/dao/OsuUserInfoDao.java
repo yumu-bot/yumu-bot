@@ -42,7 +42,7 @@ public class OsuUserInfoDao {
                     if (taiko != null) taiko.setOsuID(microUser.getUserID());
                     var fruits = fromStatistics(microUser.getRulesets().getFruits(), OsuMode.CATCH);
                     if (fruits != null) fruits.setOsuID(microUser.getUserID());
-                    var mania = fromStatistics(microUser.getRulesets().getMania(), OsuMode.OSU);
+                    var mania = fromStatistics(microUser.getRulesets().getMania(), OsuMode.MANIA);
                     if (mania != null) mania.setOsuID(microUser.getUserID());
 
                     return Stream.of(osu, taiko, fruits, mania);
