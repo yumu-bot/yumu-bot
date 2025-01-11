@@ -44,7 +44,6 @@ class ScoreDao(
     }
 
     fun saveScore(score: LazerScore) {
-        if (score.userID != 0L)return
         if (scoreRepository.checkIdExists(score.scoreID).isPresent) {
             return
         }
@@ -62,7 +61,6 @@ class ScoreDao(
 
     private fun saveScore(scoreList: List<LazerScore>, mode: OsuMode) {
         if (scoreList.isEmpty()) return
-        if (scoreList.first().userID != 0L)return
         val (scoreIdList, beatmapIdList) = scoreList.map { it.scoreID to it.beatMapID }.unzip()
         val alreadySaveScoreId = scoreRepository.getRecordId(scoreIdList)
 
