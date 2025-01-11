@@ -47,6 +47,11 @@ class RunTimeService(
     fun statisticUserInfo() {
         dailyStatisticsService.asyncTask()
     }
+    // 补充一次统计
+    @Scheduled(cron = "0 30 10 11 1 *")
+    fun test() {
+        dailyStatisticsService.asyncTask()
+    }
 
     @Scheduled(cron = "0 0 6 * * *")
     fun updateMaimaiSongLibrary() {
