@@ -61,10 +61,10 @@ class DailyStatisticsService(
             val mode = user.mode
             val userInfo = userMap[user.osuId] ?: continue
             val newPlayCount = when (user.mode) {
-                OsuMode.OSU -> userInfo.rulesets.osu.playCount
-                OsuMode.TAIKO -> userInfo.rulesets.taiko.playCount
-                OsuMode.CATCH -> userInfo.rulesets.fruits.playCount
-                OsuMode.MANIA -> userInfo.rulesets.mania.playCount
+                OsuMode.OSU -> userInfo.rulesets?.osu?.playCount ?: continue
+                OsuMode.TAIKO -> userInfo.rulesets?.taiko?.playCount ?: continue
+                OsuMode.CATCH -> userInfo.rulesets?.fruits?.playCount ?: continue
+                OsuMode.MANIA -> userInfo.rulesets?.mania?.playCount ?: continue
                 else -> {
                     log.error("统计用户出现异常: 数据库中出现 default mode")
                     continue
