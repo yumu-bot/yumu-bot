@@ -9,7 +9,7 @@ import org.hibernate.annotations.JdbcType
 import org.hibernate.annotations.Type
 import org.hibernate.dialect.PostgreSQLEnumJdbcType
 import java.io.Serializable
-import java.time.LocalDateTime
+import java.time.OffsetDateTime
 
 @Entity
 @Table(indexes = [
@@ -38,7 +38,7 @@ class LazerScoreLite(
 
     var maxCombo: Int,
 
-    var time: LocalDateTime,
+    var time: OffsetDateTime,
 
     var perfectCombo: Boolean,
 
@@ -68,7 +68,7 @@ class LazerScoreLite(
         (score.PP ?: 0).toFloat(),
         score.lazerAccuracy.toFloat(),
         score.maxCombo,
-        score.endedTime.toLocalDateTime(),
+        score.endedTime,
         score.perfectCombo,
         score.passed,
         score.classicScore.toInt(),

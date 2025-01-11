@@ -10,6 +10,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 @Component
 class ScoreDao(
@@ -17,7 +20,7 @@ class ScoreDao(
     val scoreStatisticRepository: LazerScoreStatisticRepository,
 ) {
     @Transactional
-    fun saveScoreAsync(scoreList: List<LazerScore>){
+    fun saveScoreAsync(scoreList: List<LazerScore>) {
         Thread.startVirtualThread {
             try {
                 saveScore(scoreList)
@@ -28,7 +31,7 @@ class ScoreDao(
     }
 
     @Transactional
-    fun saveScore(scoreList: List<LazerScore>){
+    fun saveScore(scoreList: List<LazerScore>) {
         if (scoreList.isEmpty()) {
             return
         }
@@ -40,12 +43,13 @@ class ScoreDao(
         saveScore(scoreList, mode)
     }
 
-    fun saveScore(score: LazerScore){
+    fun saveScore(score: LazerScore) {
+        if (score.userID != 0L)return
         if (scoreRepository.checkIdExists(score.scoreID).isPresent) {
             return
         }
         val data = LazerScoreLite(score)
-        val statisticList:List<ScoreStatisticLite>
+        val statisticList: List<ScoreStatisticLite>
         val statistic = ScoreStatisticLite.createByScore(score)
         if (scoreStatisticRepository.checkIdExists(score.beatMapID).isEmpty) {
             statisticList = listOf(statistic, ScoreStatisticLite.createByBeatmap(score))
@@ -57,6 +61,8 @@ class ScoreDao(
     }
 
     private fun saveScore(scoreList: List<LazerScore>, mode: OsuMode) {
+        if (scoreList.isEmpty()) return
+        if (scoreList.first().userID != 0L)return
         val (scoreIdList, beatmapIdList) = scoreList.map { it.scoreID to it.beatMapID }.unzip()
         val alreadySaveScoreId = scoreRepository.getRecordId(scoreIdList)
 
@@ -78,9 +84,13 @@ class ScoreDao(
         scoreRepository.saveAll(scoreLiteList)
     }
 
-    fun getUserAllScoreTime(userId: Long): List<LocalDateTime> {
-        val start = LocalDateTime.of(2025,1,1,0,0)
-        val end = LocalDateTime.now()
+    fun getUserAllScoreTime(userId: Long): List<OffsetDateTime> {
+        val start = ZonedDateTime
+            .of(LocalDateTime.of(2025, 1, 1, 0, 0), ZoneOffset.systemDefault())
+            .toOffsetDateTime()
+        val end = ZonedDateTime
+            .now(ZoneOffset.systemDefault())
+            .toOffsetDateTime()
         return scoreRepository.getUserAllScoreTime(userId, start, end)
     }
 
