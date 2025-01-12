@@ -11,28 +11,28 @@ public class MapSetLite {
     @Column(name = "map_id")
     private Integer id;
 
-    //@Lob
+    
     @Column(columnDefinition = "TEXT")
     private String artist;
-    //@Lob
+    
     @Column(name = "artist_unicode", columnDefinition = "TEXT")
     private String artistUTF;
     //四种 covers:{}
-    //@Lob
+    
     @Column(columnDefinition = "TEXT")
     private String cover;
-    //@Lob
+    
     @Column(columnDefinition = "TEXT")
     private String card;
-    //@Lob
+    
     @Column(columnDefinition = "TEXT")
     private String list;
-    //@Lob
+    
     @Column(columnDefinition = "TEXT")
     private String slimcover;
 
     //属性
-    //@Lob
+    
     @Column(columnDefinition = "TEXT")
     private String creator;
     @Column(name = "favourite_count")
@@ -40,25 +40,24 @@ public class MapSetLite {
     private Boolean nsfw;
     @Column(name = "play_count")
     private Long playCount;
-    //@Lob
+    
     @Column(name = "preview_url",columnDefinition = "TEXT")
     private String musicUrl;
     @Column(name = "legacy_thread_url",columnDefinition = "TEXT")
     private String legacyUrl;
     //状态
-    //@Lob
     @Column(columnDefinition = "TEXT")
     private String status;
 
-    //@Lob
+    
     @Column(columnDefinition = "TEXT")
     private String source;
     @Column(columnDefinition = "TEXT")
     private String tags;
-    //@Lob
+    
     @Column(columnDefinition = "TEXT")
     private String title;
-    //@Lob
+    
     @Column(name = "title_unicode", columnDefinition = "TEXT")
     private String titleUTF;
 

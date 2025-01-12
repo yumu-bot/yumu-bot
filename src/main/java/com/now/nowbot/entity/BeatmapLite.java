@@ -319,4 +319,9 @@ public class BeatmapLite {
         b.setMd5(getMd5());
         return b;
     }
+
+    public interface BeatmapHitLengthResult {
+        long getId();
+        int getLength();
+    }
 }

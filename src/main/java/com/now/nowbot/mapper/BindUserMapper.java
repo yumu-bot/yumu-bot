@@ -84,6 +84,12 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
     @Query("select u from OsuBindUserLite u where u.updateCount > 0 and u.time > 5000 order by u.time limit 50")
     List<OsuBindUserLite> getOldBindUserHasWrong(Long now);
 
+    @Query("select u from OsuBindUserLite u where u.time > 5000 and u.time < :now and u.updateCount = 0 order by u.time limit 1")
+    Optional<OsuBindUserLite> getOneOldBindUser(Long now);
+
+    @Query("select u from OsuBindUserLite u where u.updateCount > 0 and u.time > 5000 order by u.time limit 1")
+    Optional<OsuBindUserLite> getOneOldBindUserHasWrong(Long now);
+
     @Transactional
     default void deleteAllByOsuId(Long uid){
         deleteQQByOsuId(uid);

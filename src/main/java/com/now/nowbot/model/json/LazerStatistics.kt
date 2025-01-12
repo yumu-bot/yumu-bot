@@ -49,7 +49,7 @@ data class LazerStatistics(
     // 仅 MAX 有
     @JsonProperty("legacy_combo_increase") var legacyComboIncrease: Int = 0,
 ) {
-    private fun getTotalHits(mode: OsuMode) = when (mode) {
+    fun getTotalHits(mode: OsuMode) = when (mode) {
         OSU -> great + ok + meh + miss
         TAIKO -> great + ok + miss
         CATCH -> great + largeTickHit + smallTickHit + miss

@@ -2,51 +2,48 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.aop.CheckPermission
-import com.now.nowbot.newbie.mapper.NewbieService
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
-import org.springframework.context.annotation.DependsOn
 import org.springframework.stereotype.Service
-import java.nio.file.Files
-import kotlin.io.path.Path
+import java.time.LocalDate
 
 @Service("NIWBIE_PLAY_STATISTICS")
-@DependsOn("newbieService")
-@ConditionalOnBean(NewbieService::class)
+//@DependsOn("newbieService")
+//@ConditionalOnBean(NewbieService::class)
 class NewbiePlayStatisticsService(
-    private val newbieService: NewbieService,
+//    private val newbieService: NewbieService,
+    private val bindDao: BindDao,
+    private val scoreDao: ScoreDao,
+    private val beatmapApiService: OsuBeatmapApiService,
     private val botContainer: BotContainer,
 ) : MessageService<Any?> {
     private val log = LoggerFactory.getLogger(NewbiePlayStatisticsService::class.java)
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<Any?>): Boolean {
-        if (messageText.startsWith("统计打图数据")) {
-            data.value = messageText.substringAfter("统计打图数据").trim()
+        if (messageText.startsWith("!!pc")) {
+            data.value = "pc"
             return true
         }
-
         return false
     }
 
     @CheckPermission(isSuperAdmin = true)
     override fun HandleMessage(event: MessageEvent, data: Any?) {
         if (event !is GroupMessageEvent) return
-        val ng = event.bot.getGroup(595985887L)
-        val userIds = ng.allUser.map { it.id }
-        event.group.sendMessage("正在统计打图数据，总计 ${userIds.size} 人, 请稍候")
-        val fPath = Path("/home/spring/result.txt")
-        val write = Files.newOutputStream(fPath)
-        val buffer = write.bufferedWriter()
-        buffer.write("uid,pp,playTime,playCount,tth\n")
-        newbieService.countToday(userIds).forEachIndexed { i, user ->
-            buffer.write("${user.id},${user.pp},${user.playTime},${user.playCount},${user.tth}")
-            buffer.newLine()
-        }
-        buffer.flush()
-        buffer.close()
-
-        event.group.sendMessage("统计完成, 文件在 /home/spring/result.csv")
+        val bind = bindDao.getUserFromQQ(event.sender.id, true)
+//        val ng = event.bot.getGroup(231094840L)
+//        val userQQs = ng.allUser.map { it.id }
+//        val allBindUser = bindDao.getAllQQBindUser(userQQs)
+        val date = LocalDate.now()
+        val result = scoreDao.getAllRankedScore(bind.osuID, date, beatmapApiService)
+        val message = """
+            统计结果:
+            今日打图有效计入 ${result.playCount} pc, ${result.totalHit} tth, ${result.playTime} 秒
+            """.trimIndent()
+        event.reply(message)
     }
 }

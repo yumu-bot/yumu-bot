@@ -36,7 +36,7 @@ class RunTimeService(
 ) : SchedulingConfigurer {
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
 
-    @Scheduled(cron = "/40 * * * * *")
+    @Scheduled(cron = "0,30 * * * * *")
     fun refreshToken() {
         bindDao.refreshOldUserToken(userApiService)
     }

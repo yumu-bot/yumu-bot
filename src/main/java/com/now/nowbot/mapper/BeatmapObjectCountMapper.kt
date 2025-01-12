@@ -21,6 +21,12 @@ interface BeatmapObjectCountMapper:JpaRepository<BeatmapObjectCountLite, Long> {
     fun getTimeStampByBidAndIndex(bid: Long, index:Int): Int?
 
     @Query("""
+        select oc.bid as bid, oc.timestamp_arr as times from osu_beatmap_object_count as oc where 
+        oc.bid in (:bid)
+    """, nativeQuery = true)
+    fun getTimeStampByBid(bid: Collection<Long>): List<BeatmapObjectCountLite.TimeResult>
+
+    @Query("""
         select (oc.timestamp_arr[:index] - oc.timestamp_arr[1])::float /
          (oc.timestamp_arr[array_length(oc.timestamp_arr,1)] - oc.timestamp_arr[1]) as result
         from osu_beatmap_object_count as oc where 

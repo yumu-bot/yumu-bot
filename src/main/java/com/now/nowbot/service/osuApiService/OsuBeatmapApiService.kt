@@ -50,6 +50,10 @@ interface OsuBeatmapApiService {
 
     fun getFailTime(bid: Long, passObj: Int): Int
 
+    fun getAllFailTime(all:List<Pair<Long, Int>>): List<Int>
+
+    fun getAllBeatmapHitLength(bid: Collection<Long>): List<Pair<Long, Int>>
+
     fun getPlayPercentage(score: LazerScore): Double
 
     fun getAttributes(id: Long, mode: OsuMode?): BeatmapDifficultyAttributes

@@ -376,6 +376,67 @@ class BeatmapApiImpl(
         return (time / 1000)
     }
 
+    override fun getAllFailTime(all: List<Pair<Long, Int>>): List<Int> {
+        if (all.isEmpty()) return emptyList()
+        val bidList = all.map { it.first }
+        val timeMap: Map<Long, IntArray> = beatmapObjectCountMapper
+            .getTimeStampByBid(bidList)
+            .map { it.bid to it.times }
+            .toMap()
+
+        val result = ArrayList<Int>(all.size)
+
+        for ((bid, passObj) in all) {
+            val time = timeMap[bid] ?: try {
+                val dataObj = getCount(bid)
+                if (dataObj?.timestamp == null || dataObj.timestamp!!.size < passObj) {
+                    result.add(0)
+                    continue
+                }
+                beatmapObjectCountMapper.saveAndFlush(dataObj)
+                timeMap.plus(bid to dataObj.timestamp)
+                dataObj.timestamp!!
+            } catch (e: Exception) {
+                result.add(0)
+                continue
+            }
+            if (time.size <= passObj) {
+                result.add(0)
+                continue
+            }
+
+            result.add((time[passObj] - time[0]) / 1000)
+        }
+        return result
+    }
+
+    override fun getAllBeatmapHitLength(bid: Collection<Long>): List<Pair<Long, Int>> {
+        if (bid.isEmpty()) return emptyList()
+        val timeMap = beatMapDao.getAllBeatmapHitLength(bid)
+            .map { it.id to it.length }
+            .toMap()
+
+        val result = ArrayList<Pair<Long, Int>>(bid.size)
+
+        for (id in bid) {
+            val time = timeMap[id]
+            if (time != null) {
+                result.add(id to time)
+            } else {
+                val beatmap = try {
+                    getBeatMap(id)
+                } catch (e: Exception) {
+                    log.error("获取谱面失败", e)
+                    result.add(id to 0)
+                    continue
+                }
+                result.add(id to beatmap.hitLength!!)
+            }
+        }
+
+        return result
+    }
+
     /**
      * 计算成绩f时, 打到的进度
      *

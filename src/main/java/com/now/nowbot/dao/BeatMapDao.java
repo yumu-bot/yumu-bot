@@ -10,6 +10,8 @@ import com.now.nowbot.model.json.Covers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -52,6 +54,10 @@ public class BeatMapDao {
 
     public Optional<MapSetLite> getMapSetLite(int id){
         return getMapSetLite((long)id);
+    }
+
+    public List<BeatmapLite.BeatmapHitLengthResult> getAllBeatmapHitLength(Collection<Long> ids){
+        return beatMapMapper.getBeatmapHitLength(ids);
     }
 
     public static BeatMap fromBeatmapLite(BeatmapLite bl){
@@ -130,6 +136,5 @@ public class BeatMapDao {
 
         return s;
     }
-
 
 }

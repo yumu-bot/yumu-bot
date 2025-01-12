@@ -16,6 +16,15 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
 
     @Query("select s.time from LazerScoreLite s where s.userId = :id and s.time between :start and :end")
     fun getUserAllScoreTime(id:Long, start: OffsetDateTime, end: OffsetDateTime): List<OffsetDateTime>
+
+    @Query("""
+        select * from lazer_score_lite s
+        where s.user_id = :id
+        and s.time between :start and :end
+        and s.mode = :mode
+        and s.beatmap_id in (select bid from osu_ranked_beatmap_id)
+        """, nativeQuery = true)
+    fun getUserRankedScore(id: Long, mode:Short, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite>
 }
 
 interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, ScoreStatisticLite.ScoreStatisticKey> {
@@ -25,4 +34,7 @@ interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, Scor
 
     @Query("select id from score_statistic where id = :id limit 1", nativeQuery = true)
     fun checkIdExists(id: Long): Optional<Long>
+
+    @Query("select s from ScoreStatisticLite s where s.id in (:sid) and s.status=-1")
+    fun getByScoreId(sid: Collection<Long>): List<ScoreStatisticLite>
 }

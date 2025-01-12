@@ -22,4 +22,9 @@ class BeatmapObjectCountLite(
     @Type(IntArrayType::class)
     @Column(name = "density", columnDefinition = "integer[]")
     var density: IntArray?=null,
-)
+) {
+    interface TimeResult{
+        val bid: Long
+        val times: IntArray
+    }
+}
