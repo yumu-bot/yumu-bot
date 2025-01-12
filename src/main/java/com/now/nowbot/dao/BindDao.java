@@ -367,7 +367,7 @@ public class BindDao {
                 return;
             } catch (WebClientResponseException.Unauthorized e) {
                 log.info("更新 [{}] 令牌失败, refresh token 失效, 绑定被取消", u.getOsuName());
-                bindUserMapper.backupBindByOsuId(u.getID());
+                bindUserMapper.backupBindByOsuId(u.getOsuID());
                 throw e;
             } catch (WebClientResponseException.BadRequest e) {
                 badRequest++;

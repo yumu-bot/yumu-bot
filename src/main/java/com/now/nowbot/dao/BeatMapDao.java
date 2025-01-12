@@ -32,6 +32,16 @@ public class BeatMapDao {
         return beatMapMapper.save(fromBeatmapModel(beatMap));
     }
 
+    public void saveAllMapSet(List<BeatMapSet> beatMapSet){
+        var s = beatMapSet.stream().map(BeatMapDao::fromMapSetModel).toList();
+        mapSetMapper.saveAll(s);
+    }
+
+    public void saveAllMap(List<BeatMap> beatMap){
+        var s = beatMap.stream().map(BeatMapDao::fromBeatmapModel).toList();
+        beatMapMapper.saveAll(s);
+    }
+
     public MapSetLite saveMapSet(BeatMapSet beatMapSet){
         return mapSetMapper.save(fromMapSetModel(beatMapSet));
     }

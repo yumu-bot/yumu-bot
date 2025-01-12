@@ -68,6 +68,14 @@ class ScoreDao(
 
     private fun saveScore(scoreList: List<LazerScore>, mode: OsuMode) {
         if (scoreList.isEmpty()) return
+        try {
+            val set = scoreList.map { it.beatMapSet }
+            beatMapDao.saveAllMapSet(set)
+            val map = scoreList.map { it.beatMap }
+            beatMapDao.saveAllMap(map)
+        } catch (e: Exception) {
+            log.error("统计成绩中存储 beatmap 异常", e)
+        }
         val (scoreIdList, beatmapIdList) = scoreList.map { it.scoreID to it.beatMapID }.unzip()
         val alreadySaveScoreId = scoreRepository.getRecordId(scoreIdList)
 
