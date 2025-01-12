@@ -34,22 +34,16 @@ class RunTimeService(
     private val taskExecutor: TaskExecutor,
     private val applicationContext: ApplicationContext,
 ) : SchedulingConfigurer {
-
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
-    @Scheduled(cron = "0 0 3 * * *")
+
+    @Scheduled(cron = "/40 * * * * *")
     fun refreshToken() {
-        log.info("开始执行更新令牌任务")
         bindDao.refreshOldUserToken(userApiService)
     }
 
     // 每天凌晨4点统计用户信息
     @Scheduled(cron = "0 0 4 * * *")
     fun statisticUserInfo() {
-        dailyStatisticsService.asyncTask()
-    }
-    // 补充一次统计
-    @Scheduled(cron = "0 30 10 11 1 *")
-    fun test() {
         dailyStatisticsService.asyncTask()
     }
 

@@ -243,10 +243,48 @@ public class BindDao {
         NOW_UPDATE.set(true);
         UPDATE_USERS.clear();
         try {
-            refreshOldUserTokenPack(osuGetService);
+            refreshOldUserTokenOne(osuGetService);
+//            refreshOldUserTokenPack(osuGetService);
+        } catch (Exception e) {
+            log.error("更新用户出现异常", e);
         } finally {
             UPDATE_USERS.clear();
             NOW_UPDATE.set(false);
+        }
+    }
+
+    private void refreshOldUserTokenOne(OsuUserApiService osuGetService) {
+        long now = System.currentTimeMillis();
+        var user = bindUserMapper.getOneOldBindUser(now);
+        if (user.isPresent()) {
+            var u = user.get();
+            if (UPDATE_USERS.remove(u.getID())) return;
+
+            if (ObjectUtils.isEmpty(u.getRefreshToken())) {
+                bindUserMapper.backupBindByOsuId(u.getOsuID());
+                return;
+            }
+
+            log.info("更新用户: [{}]", u.getOsuName());
+            refreshOldUserToken(u, osuGetService);
+            return;
+        }
+
+        user = bindUserMapper.getOneOldBindUserHasWrong(now);
+        if (user.isPresent()) {
+            var u = user.get();
+            if (UPDATE_USERS.remove(u.getID())) return;
+            if (ObjectUtils.isEmpty(u.getRefreshToken())) {
+                bindUserMapper.backupBindByOsuId(u.getOsuID());
+                return;
+            }
+            // 出错超 5 次默认无法再次更新了
+            if (u.getUpdateCount() > 5) {
+                bindUserMapper.backupBindByOsuId(u.getID());
+            }
+
+            log.info("更新用户: [{}]", u.getOsuName());
+            refreshOldUserToken(u, osuGetService);
         }
     }
     private void refreshOldUserTokenPack(OsuUserApiService osuGetService) {
