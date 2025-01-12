@@ -246,7 +246,11 @@ public class BindDao {
             refreshOldUserTokenOne(osuGetService);
 //            refreshOldUserTokenPack(osuGetService);
         } catch (Exception e) {
-            log.error("更新用户出现异常", e);
+            if (e instanceof WebClientResponseException.Unauthorized) {
+                // ignore
+            } else {
+                log.error("更新用户出现异常", e);
+            }
         } finally {
             UPDATE_USERS.clear();
             NOW_UPDATE.set(false);
@@ -363,6 +367,7 @@ public class BindDao {
                 return;
             } catch (WebClientResponseException.Unauthorized e) {
                 log.info("更新 [{}] 令牌失败, refresh token 失效, 绑定被取消", u.getOsuName());
+                bindUserMapper.backupBindByOsuId(u.getID());
                 throw e;
             } catch (WebClientResponseException.BadRequest e) {
                 badRequest++;

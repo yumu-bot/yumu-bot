@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -118,7 +117,9 @@ public class BeatMapDao {
         s.setList(mapSet.getCovers().getList2x());
         s.setSlimcover(mapSet.getCovers().getSlimcover2x());
 
-        s.setAvailabilityDownloadDisable(Objects.requireNonNull(mapSet.getAvailability()).downloadDisabled());
+        if (mapSet.getAvailability() != null) {
+            s.setAvailabilityDownloadDisable(mapSet.getAvailability().downloadDisabled());
+        }
         s.setNsfw(mapSet.getNsfw());
         s.setStoryboard(mapSet.getStoryboard());
         s.setLegacyUrl(mapSet.getLegacyThreadUrl());
