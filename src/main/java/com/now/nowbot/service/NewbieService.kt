@@ -13,6 +13,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.util.JacksonUtil
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.LocalTime
@@ -117,8 +118,10 @@ class NewbieService(
     }
 
     fun dailyTask(users: List<Long>) {
+        log.info("开始执行新人群统计任务")
         users.chunked(50) { usersId ->
             for (uid in usersId) {
+                log.info("统计 [$uid] 的数据")
                 val dailyStatistic = getDailyStatistic(uid, LocalDate.now().minusDays(1))
                 val pp = osuUserInfoDao.getLast(uid, OsuMode.OSU).map { it.pp }.orElse(0.0).toFloat()
                 val saveData = NewbiePlayCount(
@@ -129,6 +132,7 @@ class NewbieService(
                     playCount = dailyStatistic.playCount,
                     playHits = dailyStatistic.totalHit,
                 )
+                log.info("昨日打图数据: {pc: ${dailyStatistic.playCount}, tth: ${dailyStatistic.totalHit}}")
                 newbiePlayCountRepository.save(saveData)
             }
         }
@@ -154,4 +158,7 @@ class NewbieService(
         var name: String? = null,
         var pp: Float? = null,
     )
+    companion object {
+        private val log = LoggerFactory.getLogger(NewbieService::class.java)
+    }
 }
