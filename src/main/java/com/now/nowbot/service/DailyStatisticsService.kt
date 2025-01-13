@@ -17,6 +17,9 @@ class DailyStatisticsService(
     private val bindDao: BindDao,
 ) {
 
+    /**
+     * 统计任务包括 user info 以及 scores
+     */
     fun asyncTask() {
         Thread.startVirtualThread {
             val startTime = System.currentTimeMillis()
@@ -26,6 +29,9 @@ class DailyStatisticsService(
         }
     }
 
+    /**
+     * 统计任务包括 user info 以及 scores
+     */
     fun runTask() {
         log.info("开始统计全部绑定用户")
         OsuApiBaseService.setPriority(9)

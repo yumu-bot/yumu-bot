@@ -6,13 +6,13 @@ import com.now.nowbot.mapper.LazerScoreRepository
 import com.now.nowbot.mapper.LazerScoreStatisticRepository
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.LazerStatistics
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.util.JacksonUtil
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import java.time.*
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 @Component
 class ScoreDao(
@@ -107,60 +107,11 @@ class ScoreDao(
         return scoreRepository.getUserAllScoreTime(userId, start, end)
     }
 
-    fun getAllRankedScore(userId: Long, date: LocalDate, beatmapApiService: OsuBeatmapApiService): ScoreDailyStatistic {
-        val start = ZonedDateTime
-            .of(date, LocalTime.of(0, 0), ZoneOffset.systemDefault())
-            .toOffsetDateTime()
-        val end = start.plusDays(1)
-
-        val scores = scoreRepository.getUserRankedScore(userId, OsuMode.OSU.modeValue, start, end)
-        val statisticsMap = scoreStatisticRepository.getByScoreId(scores.map { it.id }).associate {
-            it.id to JacksonUtil.parseObject(it.data, LazerStatistics::class.java)
-        }
-
-        val (passScore, failedScore) = scores.partition { it.passed }
-
-        // this.sliderTailHit is tth
-        val passStatistics = passScore.toStatistics(statisticsMap)
-
-        val failedStatistics = failedScore.toStatistics(statisticsMap)
-
-        val tth = passStatistics
-            .sumOf { it.second.sliderTailHit } + failedStatistics.sumOf { it.second.sliderTailHit }
-
-        val pc = passStatistics.size + failedStatistics.size
-
-        val fileTimeAll =
-            beatmapApiService.getAllFailTime(failedStatistics.map { it.first.beatmapId to it.second.sliderTailHit })
-        val passTimeMap = beatmapApiService
-            .getAllBeatmapHitLength(passStatistics.map { it.first.beatmapId }.toSet())
-            .toMap()
-
-        val pt = passScore.sumOf { passTimeMap[it.beatmapId] ?: 0 } + fileTimeAll.sum()
-        return ScoreDailyStatistic(userId, date, pc, pt, tth)
-    }
-
-    fun List<LazerScoreLite>.toStatistics(statisticsMap: Map<Long, LazerStatistics>): List<Pair<LazerScoreLite, LazerStatistics>> {
-        return mapNotNull {
-            val stat = statisticsMap[it.id]?.apply { this.sliderTailHit = getTotalHits(OsuMode.OSU) }
-            if (stat != null) {
-                it to stat
-            } else {
-                null
-            }
-        }.filter { it.second.sliderTailHit > 30 }
-    }
 
     companion object {
         @JvmStatic
         private val log = LoggerFactory.getLogger(ScoreDao::class.java)
     }
 
-    data class ScoreDailyStatistic(
-        val userId: Long,
-        val date: LocalDate,
-        val playCount: Int,
-        val playTime: Int,
-        val totalHit: Int,
-    )
+
 }

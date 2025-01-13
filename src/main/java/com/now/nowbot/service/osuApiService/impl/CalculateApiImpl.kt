@@ -1,7 +1,10 @@
 package com.now.nowbot.service.osuApiService.impl
 
+import com.now.nowbot.entity.BeatmapStartCache
+import com.now.nowbot.mapper.BeatmapStarCacheRepository
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.Mod
+import com.now.nowbot.model.ValueMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.BeatmapDifficultyAttributes
@@ -20,9 +23,13 @@ import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.RoundingMode
 import kotlin.math.roundToInt
+import kotlin.reflect.full.companionObjectInstance
 
 @Service
-class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : OsuCalculateApiService {
+class CalculateApiImpl(
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val beatmapStarCacheRepository: BeatmapStarCacheRepository,
+) : OsuCalculateApiService {
 
     override fun getScorePerfectPP(score: LazerScore): RosuPerformance {
         val mode = score.mode.toRosuMode()
@@ -344,13 +351,36 @@ class CalculateApiImpl(private val beatmapApiService: OsuBeatmapApiService) : Os
 
 
     override fun getStar(beatMapID: Long, mode: OsuMode, mods: List<LazerMod>): Double {
+        val isAllLegacy = mods.any { it.settings == null && it::class.companionObjectInstance is ValueMod }
+        val modsValue: Int = if (isAllLegacy) {
+            LazerMod.getModsValue(mods)
+        } else {
+            0
+        }
+        if (isAllLegacy) {
+            // 如果是全部为 legacy mod 且 没有自定义属性的话，就从缓存里面取
+            // 目前来看没有任何自定义 mod 计入 pp
+            val star = beatmapStarCacheRepository.findByKey(beatMapID, modsValue)
+            if (star.isPresent) return star.get()
+        }
         val closeables = ArrayList<AutoCloseable>(2)
         return try {
             val (beatmap, _) = getBeatmap(beatMapID, mode.toRosuMode()) { closeables.add(it) }
             beatmap.createDifficulty().apply {
                 closeables.add(this)
                 if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
-            }.calculate(beatmap).getStarRating()
+            }.calculate(beatmap)
+                .getStarRating()
+                .apply {
+                    if (isAllLegacy) {
+                        val cache = BeatmapStartCache(beatMapID, mode, modsValue, this)
+                        try {
+                            beatmapStarCacheRepository.save(cache)
+                        } catch (e: Exception) {
+                            log.error("保存星级缓存失败", e)
+                        }
+                    }
+                }
         } finally {
             closeables.forEach { it.close() }
         }

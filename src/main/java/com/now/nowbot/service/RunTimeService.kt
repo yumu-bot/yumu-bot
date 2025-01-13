@@ -1,7 +1,7 @@
 package com.now.nowbot.service
 
+import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.newbie.mapper.NewbieService
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -15,10 +15,6 @@ import org.springframework.scheduling.annotation.SchedulingConfigurer
 import org.springframework.scheduling.config.ScheduledTaskRegistrar
 import org.springframework.stereotype.Service
 import java.lang.management.ManagementFactory
-import java.nio.file.Files
-import java.time.LocalDate
-import kotlin.io.path.Path
-
 
 /***
  * 统一设置定时任务
@@ -27,12 +23,14 @@ import kotlin.io.path.Path
 class RunTimeService(
     private val dailyStatisticsService: DailyStatisticsService,
     private val bindDao: BindDao,
+    private val newbieService: NewbieService,
     private val maimaiApiService: MaimaiApiService,
     private val chunithmApiService: ChunithmApiService,
     private val userApiService: OsuUserApiService,
     @Qualifier("kotlinTaskExecutor")
     private val taskExecutor: TaskExecutor,
     private val applicationContext: ApplicationContext,
+    private val botContainer: BotContainer,
 ) : SchedulingConfigurer {
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
 
@@ -41,10 +39,28 @@ class RunTimeService(
         bindDao.refreshOldUserToken(userApiService)
     }
 
-    // 每天凌晨4点统计用户信息
-    @Scheduled(cron = "0 0 4 * * *")
+    // 每天凌晨3点统计用户信息
+    @Scheduled(cron = "0 0 3 * * *")
     fun statisticUserInfo() {
         dailyStatisticsService.asyncTask()
+    }
+
+    // 每天凌晨4点统计新人群用户信息
+    @Scheduled(cron = "0 30 0 * * *")
+    fun statisticNewbieInfo() {
+        val bot = botContainer.robots[1563653406] ?: botContainer.robots[1708547915]
+        if (bot == null) {
+            log.error("统计新人群信息失败, 未找到机器人")
+            return
+        }
+        val groupMembers = bot.getGroupMemberList(231094840)
+        if (groupMembers.data.isNullOrEmpty()) {
+            log.error("统计新人群信息失败, 查询群组成员为空")
+            return
+        }
+        val users = groupMembers.data.map { it.userId }
+        val uid = bindDao.getAllQQBindUser(users).map { it.uid }
+        newbieService.dailyTask(uid)
     }
 
     @Scheduled(cron = "0 0 6 * * *")
@@ -83,6 +99,7 @@ class RunTimeService(
     }
 
 
+    /*
     // @Scheduled(cron = "0 5 10 1 9 *")
     fun count() {
         try {
@@ -102,6 +119,7 @@ class RunTimeService(
             log.error("统计出现异常", e)
         }
     }
+    */
 
     /***
      * 白天输出内存占用信息

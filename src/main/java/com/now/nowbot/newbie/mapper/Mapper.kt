@@ -74,13 +74,13 @@ interface UserPlayRecordsMapper : JpaRepository<UserPlayRecords, Long> {
 @Service
 @DependsOn("newbieEntityManagerFactory")
 @ConditionalOnProperty(prefix = "spring.datasource.newbie", name = ["enable"], havingValue = "true")
-class NewbieService(
+class NewbieDao(
     private val mapper: UserPlayRecordsMapper,
     private val newbiePlayCountRepository: NewbiePlayCountRepository,
     private var osuMapService: OsuBeatmapApiService,
     private val osuUserService: OsuUserApiService,
 ) {
-    private val log = LoggerFactory.getLogger(NewbieService::class.java)
+    private val log = LoggerFactory.getLogger(NewbieDao::class.java)
 
     fun checkRank(bid: Int, cache: MutableMap<Int, Boolean>) = cache.getOrPut(bid) {
         osuMapService.isNotOverRating(bid.toLong())
