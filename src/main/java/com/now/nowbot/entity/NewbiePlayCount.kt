@@ -35,4 +35,12 @@ class NewbiePlayCount(
         playCount = record.playCount,
         playHits = record.tth,
     )
+
+    interface UserHistoryResult {
+        val data: Int
+        val pc: Int
+        val tth: Int
+        val ppMin: Float
+        val ppMax: Float
+    }
 }

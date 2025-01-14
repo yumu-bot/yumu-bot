@@ -46,7 +46,7 @@ class RunTimeService(
     }
 
     // 每天凌晨4点统计新人群用户信息
-    @Scheduled(cron = "0 36 0 * * *")
+    @Scheduled(cron = "0 0 4 * * *")
     fun statisticNewbieInfo() {
         val bot = botContainer.robots[1563653406] ?: botContainer.robots[1708547915]
         if (bot == null) {

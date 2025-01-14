@@ -1,13 +1,11 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.dao.ScoreDao
+import com.now.nowbot.model.BinUser
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.NewbieService
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.text.DecimalFormat
@@ -18,16 +16,13 @@ import java.text.DecimalFormat
 class NewbiePlayStatisticsService(
 //    private val newbieService: NewbieService,
     private val bindDao: BindDao,
-    private val scoreDao: ScoreDao,
-    private val beatmapApiService: OsuBeatmapApiService,
     private val newbieService: NewbieService,
-    private val botContainer: BotContainer,
 ) : MessageService<NewbiePlayStatisticsService.SearchType> {
     private val log = LoggerFactory.getLogger(NewbiePlayStatisticsService::class.java)
     private val ppFormat = DecimalFormat("#.##")
 
     enum class SearchType {
-        day, history, rank;
+        day, history, rank, list;
 
         companion object {
             fun fromString(str: String): SearchType? {
@@ -35,6 +30,7 @@ class NewbiePlayStatisticsService(
                     "!!pc" -> day
                     "!!pca" -> history
                     "!!pl" -> rank
+                    "!!all" -> rank
                     else -> null
                 }
             }
@@ -55,11 +51,58 @@ class NewbiePlayStatisticsService(
     //    @CheckPermission(isSuperAdmin = true)
     override fun HandleMessage(event: MessageEvent, data: SearchType) {
         if (event !is GroupMessageEvent) return
-        val bind = bindDao.getUserFromQQ(event.sender.id, true)
+        val gid = event.group.id
+        if (gid != 231094840L && gid != 695600319L) return
 
-        val result = newbieService.getToday(bind.osuID)
-        val message = getToday(result.name ?: "???", result.playCount, result.totalHit, result.pp ?: 0f)
+        val bind = bindDao.getUserFromQQ(event.sender.id, true)
+        val message = when (data) {
+            SearchType.day -> handleDay(bind)
+            SearchType.history -> handleHistory(bind)
+            SearchType.rank -> handleRank(bind)
+            SearchType.list -> handleList(bind)
+        }
+
         event.reply(message)
+    }
+
+    private fun handleDay(bind: BinUser): String {
+        val userId = bind.osuID
+        val result = newbieService.getToday(userId)
+
+        return getToday(result.name ?: bind.osuName, result.playCount, result.totalHit, result.pp ?: 0f)
+    }
+
+    private fun handleHistory(bind: BinUser): String {
+        val userId = bind.osuID
+        val result = newbieService.getHistory(userId) ?: return "暂无历史数据, 统计数据会有一天的延迟"
+
+        return getHistory(
+            bind.osuName,
+            result.playCount,
+            result.totalHit,
+            result.pp ?: 0f
+        )
+    }
+
+    private fun handleRank(bind: BinUser): String {
+        val userId = bind.osuID
+        val result = newbieService.getRank(userId)
+        val pc = getRankString(result[0])
+        val tth = getRankString(result[1])
+        val pp = getRankString(result[2])
+        return getRank(
+            bind.osuName,
+            pc, tth, pp
+        )
+    }
+
+    private fun getRankString(i:Int) = if (i > 0) {
+        "$i 名"
+    } else {
+        "未上榜"
+    }
+    private fun handleList(bind: BinUser): String {
+        return ""
     }
 
     private fun getToday(
@@ -73,6 +116,7 @@ class NewbiePlayStatisticsService(
         今日新增PC: $pc
         今日新增TTH: $tth
         今日新增PP: ${ppFormat.format(pp)}
+        p.s. 新增PP会有一天的延迟, 在最终结算时不会受到影响.
         """.trimIndent()
 
     private fun getHistory(
@@ -86,19 +130,21 @@ class NewbiePlayStatisticsService(
         活动累计新增PC: $pc
         活动累计新增TTH: $tth
         活动累计新增PP: ${ppFormat.format(pp)}
+        p.s. 新增PP会有一天的延迟, 在最终结算时不会受到影响.
         """.trimIndent()
 
     private fun getRank(
         name: String,
-        pc: Int,
-        tth: Int,
-        pp: Int,
+        pc: String,
+        tth: String,
+        pp: String,
     ): String = """
         特别活动数据如下:
         玩家：$name
-        活动排名 PC: $pc 名
-        活动排名 TTH: $tth 名
-        活动排名 PP: $pp 名
+        活动排名 PC: $pc
+        活动排名 TTH: $tth
+        活动排名 PP: $pp
+        p.s. 新增PP会有一天的延迟, 在最终结算时不会受到影响.
         """.trimIndent()
 
 }

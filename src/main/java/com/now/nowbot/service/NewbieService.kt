@@ -12,6 +12,7 @@ import com.now.nowbot.model.json.LazerStatistics
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -19,6 +20,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import kotlin.jvm.optionals.getOrNull
 
 @Service("NEWBIE_SERVICE")
 class NewbieService(
@@ -117,8 +119,33 @@ class NewbieService(
         }
     }
 
+    fun getHistory(userId: Long): ScoreDailyStatistic? {
+        val data = newbiePlayCountRepository
+            .getHistoryDate(userId)
+            .getOrNull() ?: return null
+        return ScoreDailyStatistic(
+            userId = userId,
+            date = LocalDate.now(),
+            playCount = data.pc,
+            totalHit = data.tth,
+            pp = data.ppMax - data.ppMin,
+        )
+    }
+
+    fun getRank(userId: Long): IntArray {
+        val pcRank = newbiePlayCountRepository.getPlayCountRank(userId)
+        val tthRank = newbiePlayCountRepository.getTotalHitsRank(userId)
+        val ppRank = newbiePlayCountRepository.getPPAddRank(userId)
+        val result = IntArray(3)
+        result[0] = pcRank.getOrNull() ?: -1
+        result[1] = tthRank.getOrNull() ?: -1
+        result[2] = ppRank.getOrNull() ?: -1
+        return result
+    }
+
     fun dailyTask(users: List<Long>) {
         log.info("开始执行新人群统计任务")
+        OsuApiBaseService.setPriority(15)
         users.chunked(50) { usersId ->
             for (uid in usersId) {
                 log.info("统计 [$uid] 的数据")
