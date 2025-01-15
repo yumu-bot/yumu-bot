@@ -67,8 +67,8 @@ class NewbieService(
             .toOffsetDateTime()
         val end = start.plusDays(1)
 
-        var scores = scoreRepository.getUserRankedScore(userId, OsuMode.OSU.modeValue, start, end)
-        scores = scores.filter {
+        val scores = scoreRepository.getUserRankedScore(userId, OsuMode.OSU.modeValue, start, end)
+        scores.filter {
             val star = getStarRating(it.beatmapId, it.mods ?: "[]")
             star in 0f..5.7f
         }
