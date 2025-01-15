@@ -2,7 +2,6 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
-import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.NewbieService
@@ -50,9 +49,9 @@ class NewbiePlayStatisticsService(
 
     //    @CheckPermission(isSuperAdmin = true)
     override fun HandleMessage(event: MessageEvent, data: SearchType) {
-        if (event !is GroupMessageEvent) return
-        val gid = event.group.id
-        if (gid != 231094840L && gid != 695600319L) return
+//        if (event !is GroupMessageEvent) return
+//        val gid = event.group.id
+//        if (gid != 231094840L && gid != 695600319L) return
 
         val bind = bindDao.getUserFromQQ(event.sender.id, true)
         val message = when (data) {
@@ -144,7 +143,7 @@ class NewbiePlayStatisticsService(
         活动排名 PC: $pc
         活动排名 TTH: $tth
         活动排名 PP: $pp
-        p.s. 新增PP会有一天的延迟, 在最终结算时不会受到影响.
+        p.s. 活动排名查询有延迟，仅供当前参考，以最终结算为准.
         """.trimIndent()
 
 }
