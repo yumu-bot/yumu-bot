@@ -21,7 +21,7 @@ interface NewbiePlayCountRepository : JpaRepository<NewbiePlayCount, Long> {
             with sr_rank as (
                 select uid, row_number() over (order by pc) as rank from (
                     select uid, sum(play_count) as pc from newbie_play_count
-                    where record_date >= '2025-01-13' -- 15
+                    where record_date >= '2025-01-15' -- 15
                     group by uid order by pc desc
                 ) as data
             )
@@ -33,7 +33,7 @@ interface NewbiePlayCountRepository : JpaRepository<NewbiePlayCount, Long> {
             with sr_rank as (
                 select uid, row_number() over (order by tth) as rank from (
                     select uid, sum(play_hits) as tth from newbie_play_count
-                    where record_date >= '2025-01-13' -- 15
+                    where record_date >= '2025-01-15' -- 15
                     group by uid order by tth desc
                 ) as data
             )
@@ -45,7 +45,7 @@ interface NewbiePlayCountRepository : JpaRepository<NewbiePlayCount, Long> {
             with sr_rank as (
                 select uid, row_number() over (order by pp_diff) as rank from (
                     select uid, (max(pp) - min(pp)) as pp_diff from newbie_play_count
-                    where record_date >= '2025-01-13' -- 14
+                    where record_date >= '2025-01-14' -- 14
                     group by uid
                     having count(uid) > 1
                     order by pp_diff desc
