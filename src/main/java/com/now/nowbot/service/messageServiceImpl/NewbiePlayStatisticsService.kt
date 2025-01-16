@@ -49,9 +49,9 @@ class NewbiePlayStatisticsService(
 
     //    @CheckPermission(isSuperAdmin = true)
     override fun HandleMessage(event: MessageEvent, data: SearchType) {
-//        if (event !is GroupMessageEvent) return
-//        val gid = event.group.id
-//        if (gid != 231094840L && gid != 695600319L) return
+        if (event !is GroupMessageEvent) return
+        val gid = event.group.id
+        if (gid != 231094840L && gid != 695600319L) return
 
         val bind = bindDao.getUserFromQQ(event.sender.id, true)
         val message = when (data) {
