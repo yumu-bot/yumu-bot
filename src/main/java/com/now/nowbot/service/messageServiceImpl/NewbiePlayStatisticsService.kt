@@ -2,7 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
-import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.event.*
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.NewbieService
 import org.slf4j.LoggerFactory
