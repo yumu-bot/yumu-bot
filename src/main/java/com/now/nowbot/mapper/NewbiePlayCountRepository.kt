@@ -19,10 +19,10 @@ interface NewbiePlayCountRepository : JpaRepository<NewbiePlayCount, Long> {
 
     @Query("""
             with sr_rank as (
-                select uid, row_number() over (order by pc) as rank from (
+                select uid, row_number() over (order by pc desc) as rank from (
                     select uid, sum(play_count) as pc from newbie_play_count
                     where record_date >= '2025-01-15' -- 15
-                    group by uid order by pc desc
+                    group by uid
                 ) as data
             )
             select rank from sr_rank where uid = :uid
@@ -31,10 +31,10 @@ interface NewbiePlayCountRepository : JpaRepository<NewbiePlayCount, Long> {
 
     @Query("""
             with sr_rank as (
-                select uid, row_number() over (order by tth) as rank from (
+                select uid, row_number() over (order by tth desc) as rank from (
                     select uid, sum(play_hits) as tth from newbie_play_count
                     where record_date >= '2025-01-15' -- 15
-                    group by uid order by tth desc
+                    group by uid
                 ) as data
             )
             select rank from sr_rank where uid = :uid
@@ -43,7 +43,7 @@ interface NewbiePlayCountRepository : JpaRepository<NewbiePlayCount, Long> {
 
     @Query("""
             with sr_rank as (
-                select uid, row_number() over (order by pp_diff) as rank from (
+                select uid, row_number() over (order by pp_diff desc) as rank from (
                     select uid, (max(pp) - min(pp)) as pp_diff from newbie_play_count
                     where record_date >= '2025-01-14' -- 14
                     group by uid
