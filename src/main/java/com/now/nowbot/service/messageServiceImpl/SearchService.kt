@@ -184,6 +184,7 @@ import java.util.regex.Pattern
                 result.beatmapSets = result.beatmapSets.subList(0, 12)
             }
 
+            result.beatmapSets.sortByDescending { it.playCount }
             result.beatmapSets.sortByDescending {
                 when (it.status) {
                     "ranked" -> 6
