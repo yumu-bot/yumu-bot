@@ -44,7 +44,7 @@ import java.util.regex.Pattern
 
     override fun HandleMessage(event: MessageEvent, param: SearchParam) {
         val query = constructQuery(param)
-        
+
         var result: BeatMapSetSearch = try {
             beatmapApiService.searchBeatMapSet(query)
         } catch (e: Exception) {
@@ -67,11 +67,9 @@ import java.util.regex.Pattern
     }
 
     companion object {
-        @Language("RegExp")
-        private const val REG_ANYTHING = "[^\\-\\[\\]\"“”()（）【】—]+"
+        @Language("RegExp") private const val REG_ANYTHING = "[^\\-\\[\\]\"“”()（）【】—]+"
 
-        @Language("RegExp")
-        private const val REG_ANYTHING_NO_SPACE = "[^\\-\\[\\]\\s\"“”()（）【】—]+"
+        @Language("RegExp") private const val REG_ANYTHING_NO_SPACE = "[^\\-\\[\\]\\s\"“”()（）【】—]+"
 
         // 拆分查询的歌曲名
         private fun constructParam(text: String?): SearchParam? { // Nishigomi Kakumi - Hyakka Ryouran (SugiuraAyano) [Kantan]
@@ -105,10 +103,7 @@ import java.util.regex.Pattern
                         "creator" to param.creator,
                         "difficulty" to param.difficulty,
                     )
-                ),
-                "sort" to DataUtil.getSort(param.sort),
-                "m" to OsuMode.getMode(param.mode),
-                "page" to 1
+                ), "sort" to DataUtil.getSort(param.sort), "m" to OsuMode.getMode(param.mode), "page" to 1
             )
 
             DataUtil.getStatus(param.status)?.let { query["s"] = it }
@@ -142,12 +137,12 @@ import java.util.regex.Pattern
 
 
             val query = mutableMapOf<String, Any>(
-                "q" to sb.toString().trim(),
-                "sort" to DataUtil.getSort(param.sort), "page" to 1
+                "q" to sb.toString().trim(), "sort" to DataUtil.getSort(param.sort), "page" to 1
             )
 
             DataUtil.getStatus(param.status)?.let { query["s"] = it }
-            DataUtil.getGenre(param.genre)?.let { query["g"] = it } // getLanguage(param.language)?.let { query["l"] = it }
+            DataUtil.getGenre(param.genre)
+                ?.let { query["g"] = it } // getLanguage(param.language)?.let { query["l"] = it }
 
             return query
         }
@@ -187,7 +182,10 @@ import java.util.regex.Pattern
         private fun MessageEvent.replyImage(result: BeatMapSetSearch, imageService: ImageService) {
             if (result.beatmapSets.size > 12) {
                 result.beatmapSets = result.beatmapSets.subList(0, 12)
-                result.beatmapSets.sortByDescending { when(it.status) {
+            }
+
+            result.beatmapSets.sortByDescending {
+                when (it.status) {
                     "ranked" -> 6
                     "approved" -> 5
                     "qualified" -> 4
@@ -195,7 +193,7 @@ import java.util.regex.Pattern
                     "pending" -> 2
                     "wip" -> 1
                     else -> 0
-                } }
+                }
             }
 
             val data = imageService.getPanel(result, "A8")
