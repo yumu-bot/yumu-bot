@@ -32,6 +32,10 @@ public class OsuBeatmapMirrorApiService {
                     .uri(URL, b -> b.path("/api/file/map/osufile/{bid}").build(bid))
                     .retrieve()
                     .bodyToMono(String.class)
+                    .map(s -> {
+                        if (s.trim().startsWith("osu file format")) return s;
+                        throw new IllegalStateException("not beatmap file");
+                    })
                     .block();
         } catch (Exception e) {
             if (e instanceof WebClientResponseException re) {
