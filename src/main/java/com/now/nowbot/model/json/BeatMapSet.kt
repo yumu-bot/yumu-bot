@@ -51,6 +51,17 @@ class BeatMapSet {
 
     var status: String = ""
 
+    val statusInt: Int
+        get() = when(status) {
+            "wip" -> -1
+            "pending" -> 0
+            "ranked" -> 1
+            "approved" -> 2
+            "qualified" -> 3
+            "loved" -> 4
+            else -> -2
+        }
+
     @JsonProperty("spotlight")
     var spotlight: Boolean = false
 
@@ -297,9 +308,9 @@ class BeatMapSet {
              if (Objects.nonNull(status)) {
                  return (status == "ranked" || status == "qualified" || status == "loved" || status == "approved")
              } else {
-                 when (ranked) {
-                               1, 2, 3, 4 -> return true
-                     else -> return false
+                 return when (ranked) {
+                     1, 2, 3, 4 -> true
+                     else -> false
                  }
              }
          }

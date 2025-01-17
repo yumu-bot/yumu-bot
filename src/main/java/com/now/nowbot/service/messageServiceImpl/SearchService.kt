@@ -44,13 +44,12 @@ import java.util.regex.Pattern
 
     override fun HandleMessage(event: MessageEvent, param: SearchParam) {
         val query = constructQuery(param)
-        var result: BeatMapSetSearch
-
-        try {
-            result = beatmapApiService.searchBeatMapSet(query)
+        
+        var result: BeatMapSetSearch = try {
+            beatmapApiService.searchBeatMapSet(query)
         } catch (e: Exception) {
             try {
-                result = beatmapApiService.searchBeatMapSet(constructQueryAlternative(param))
+                beatmapApiService.searchBeatMapSet(constructQueryAlternative(param))
             } catch (e: Exception) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Result)
             }
@@ -188,6 +187,15 @@ import java.util.regex.Pattern
         private fun MessageEvent.replyImage(result: BeatMapSetSearch, imageService: ImageService) {
             if (result.beatmapSets.size > 12) {
                 result.beatmapSets = result.beatmapSets.subList(0, 12)
+                result.beatmapSets.sortByDescending { when(it.status) {
+                    "ranked" -> 6
+                    "approved" -> 5
+                    "qualified" -> 4
+                    "loved" -> 3
+                    "pending" -> 2
+                    "wip" -> 1
+                    else -> 0
+                } }
             }
 
             val data = imageService.getPanel(result, "A8")

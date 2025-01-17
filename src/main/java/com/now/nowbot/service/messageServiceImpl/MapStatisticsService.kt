@@ -1,6 +1,5 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
@@ -19,7 +18,6 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.isAvoidance
 import com.now.nowbot.util.Instruction
@@ -38,7 +36,6 @@ class MapStatisticsService(
     private val userApiService: OsuUserApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
-    private val bindDao: BindDao,
 ) : MessageService<MapParam>, TencentMessageService<MapParam> {
 
     data class MapParam(val user: OsuUser?, val beatmap: BeatMap, val expected: Expected)
@@ -84,7 +81,7 @@ class MapStatisticsService(
             return false
         }
 
-        data.value = getParam(matcher, event.sender.id, messageText) ?: return false
+        data.value = getParam(matcher, messageText) ?: return false
         return true
     }
 
@@ -115,7 +112,7 @@ class MapStatisticsService(
             return null
         }
 
-        return getParam(matcher, event.sender.id, messageText)
+        return getParam(matcher, messageText)
     }
 
     override fun reply(event: MessageEvent, param: MapParam): MessageChain? {
@@ -138,7 +135,7 @@ class MapStatisticsService(
         }
     }
 
-    private fun getParam(matcher: Matcher, userID: Long, messageText: String): MapParam? {
+    private fun getParam(matcher: Matcher, messageText: String): MapParam? {
         val bid = getBid(matcher)
         var beatMap: BeatMap? = null
 
@@ -154,13 +151,15 @@ class MapStatisticsService(
         }
 
         var mode = OsuMode.getMode(matcher.group("mode"))
-        var user: OsuUser?
 
-        try {
-            val bind = bindDao.getUserFromQQ(userID)
-            user = userApiService.getPlayerInfo(bind, mode)
-        } catch (e: BindException) {
-            user = null
+        val user: OsuUser? = try {
+            if (beatMap.mapperID > 0L) {
+                userApiService.getPlayerInfo(beatMap.mapperID, mode)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
         }
 
         var combo: Int
@@ -295,14 +294,14 @@ class MapStatisticsService(
         }
 
         // 等于绘图模块的 calcMap
-        // 注意，0 是 iffc，1-6是fc，7-12是nc，acc分别是100 99 98 96 94 92
+        // 注意，0 是 if fc，1-6是 fc，7-12是 nc，acc 分别是100 99 98 96 94 92
         private fun getPPList(
             beatmap: BeatMap,
             expected: Expected,
             calculateApiService: OsuCalculateApiService,
         ): List<Double> {
             val result = mutableListOf<Double>()
-            val accArray: DoubleArray = doubleArrayOf(100.0, 0.99, 0.98, 0.96, 0.94, 0.92)
+            val accArray: DoubleArray = doubleArrayOf(100.0, 99.0, 98.0, 96.0, 94.0, 92.0)
 
             val maxCombo = beatmap.maxCombo ?: expected.combo
             val mode = expected.mode

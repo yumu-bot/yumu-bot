@@ -297,7 +297,7 @@ class CalculateApiImpl(
 
         val sr = getStar(score.beatMapID, score.mode, score.mods)
 
-        if (sr > 0) {
+        if (sr > 0.15) {
             score.beatMap.starRating = sr
         } else {
             applyStarToScoreFromOfficial(score)
