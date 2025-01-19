@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,6 +69,9 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
     @Transactional
     @Query(value = "update osu_bind_user set update_count = 0 where id=:id", nativeQuery = true)
     void clearUpdateCount(Long id);
+
+    @Query("select u from OsuBindUserLite u where u.osuId in (:uid)")
+    List<OsuBindUserLite> getAllByOsuId(Collection<Long> uid);
 
     @Modifying
     @Transactional

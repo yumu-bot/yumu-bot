@@ -2,7 +2,8 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BinUser
-import com.now.nowbot.qq.event.*
+import com.now.nowbot.qq.event.GroupMessageEvent
+import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.NewbieService
 import org.slf4j.LoggerFactory
@@ -29,7 +30,7 @@ class NewbiePlayStatisticsService(
                     "!!pc" -> day
                     "!!pca" -> history
                     "!!pl" -> rank
-                    "!!all" -> rank
+                    "!!all" -> list
                     else -> null
                 }
             }
@@ -58,7 +59,11 @@ class NewbiePlayStatisticsService(
             SearchType.day -> handleDay(bind)
             SearchType.history -> handleHistory(bind)
             SearchType.rank -> handleRank(bind)
-            SearchType.list -> handleList(bind)
+            SearchType.list -> if (gid == 695600319L) {
+                handleList()
+            } else {
+                return
+            }
         }
 
         event.reply(message)
@@ -95,13 +100,14 @@ class NewbiePlayStatisticsService(
         )
     }
 
-    private fun getRankString(i:Int) = if (i > 0) {
+    private fun handleList(): String {
+        return newbieService.getAlList(ppFormat)
+    }
+
+    private fun getRankString(i: Int) = if (i > 0) {
         "$i 名"
     } else {
         "未上榜"
-    }
-    private fun handleList(bind: BinUser): String {
-        return ""
     }
 
     private fun getToday(

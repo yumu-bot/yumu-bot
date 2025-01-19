@@ -55,5 +55,34 @@ interface NewbiePlayCountRepository : JpaRepository<NewbiePlayCount, Long> {
             """, nativeQuery = true)
     fun getPPAddRank(uid: Long): Optional<Int>
 
+    @Query("""
+        select uid, sum(play_count) as play_count  
+        from newbie_play_count
+        where record_date >= '2025-01-15'
+        group by uid
+        order by play_count desc
+        limit 10
+        """, nativeQuery = true)
+    fun getDailyTop5PlayCount(): List<NewbiePlayCount.UserListResult>
+
+    @Query("""
+        select uid, sum(play_hits) as play_hits  
+        from newbie_play_count
+        where record_date >= '2025-01-15'
+        group by uid
+        order by play_hits desc
+        limit 10
+        """, nativeQuery = true)
+    fun getDailyTop5TotalHits(): List<NewbiePlayCount.UserListResult>
+
+    @Query("""
+        select uid, (max(pp) - min(pp)) as pp  
+        from newbie_play_count
+        where record_date >= '2025-01-14'
+        group by uid
+        order by pp desc
+        limit 10
+        """, nativeQuery = true)
+    fun getDailyTop5pp(): List<NewbiePlayCount.UserListResult>
 
 }

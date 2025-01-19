@@ -43,4 +43,11 @@ class NewbiePlayCount(
         val ppMin: Float
         val ppMax: Float
     }
+
+    interface UserListResult {
+        val uid: Int
+        var pp: Float?
+        var playCount: Int?
+        var playHits: Int?
+    }
 }

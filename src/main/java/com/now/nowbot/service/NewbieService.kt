@@ -1,5 +1,6 @@
 package com.now.nowbot.service
 
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.LazerScoreLite
 import com.now.nowbot.entity.NewbiePlayCount
@@ -16,6 +17,7 @@ import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.text.DecimalFormat
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
@@ -31,6 +33,7 @@ class NewbieService(
     private val calculateApiService: OsuCalculateApiService,
     private val osuUserApiService: OsuUserApiService,
     private val newbiePlayCountRepository: NewbiePlayCountRepository,
+    private val bindDao: BindDao,
 ) {
 
     val allowedMods = setOf(
@@ -165,6 +168,50 @@ class NewbieService(
         }
     }
 
+    fun getAlList(format: DecimalFormat): String {
+        val pc = newbiePlayCountRepository.getDailyTop5PlayCount()
+        val tth = newbiePlayCountRepository.getDailyTop5TotalHits()
+        val pp = newbiePlayCountRepository.getDailyTop5pp()
+
+        val users = mutableSetOf<Long>()
+        pc.map { it.uid.toLong() }.forEach(users::add)
+        tth.map { it.uid.toLong() }.forEach(users::add)
+        pp.map { it.uid.toLong() }.forEach(users::add)
+
+        val userData = bindDao.getAllBindUser(users)
+        val userMap = userData.associate { it.osuID to it.osuName }
+
+        val pcList = pc.mapIndexed { i, it ->
+            val name = userMap[it.uid.toLong()] ?: "???"
+            val pcVal = it.playCount ?: 0
+            "${i + 1}. $name: $pcVal pc"
+        }.joinToString("\n")
+
+        val tthList = tth.mapIndexed { i, it ->
+            val name = userMap[it.uid.toLong()] ?: "???"
+            val tthVal = it.playHits ?: 0
+            "${i + 1}. $name: $tthVal tth"
+        }.joinToString("\n")
+
+        val ppList = pp.mapIndexed { i, it ->
+            val name = userMap[it.uid.toLong()] ?: "???"
+            val ppVal = it.pp ?: 0
+            "${i + 1}. $name: ${format.format(ppVal)} pp"
+        }.joinToString("\n")
+
+        return """
+活动整体统计数据如下:
+pc总榜:
+$pcList
+
+tth总榜:
+$tthList
+
+pp总榜:
+$ppList
+""".trimIndent()
+    }
+
 
     fun List<LazerScoreLite>.toStatistics(statisticsMap: Map<Long, LazerStatistics>): List<Pair<LazerScoreLite, LazerStatistics>> {
         return mapNotNull {
@@ -185,6 +232,7 @@ class NewbieService(
         var name: String? = null,
         var pp: Float? = null,
     )
+
     companion object {
         private val log = LoggerFactory.getLogger(NewbieService::class.java)
     }

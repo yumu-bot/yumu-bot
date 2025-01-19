@@ -103,6 +103,10 @@ public class BindDao {
         return fromLite(u);
     }
 
+    public List<OsuBindUserLite> getAllBindUser(Collection<Long> osuId) {
+        return bindUserMapper.getAllByOsuId(osuId);
+    }
+
     public Optional<QQBindLite> getQQLiteFromOsuId(Long osuId) {
         return bindQQMapper.findByOsuId(osuId);
     }
