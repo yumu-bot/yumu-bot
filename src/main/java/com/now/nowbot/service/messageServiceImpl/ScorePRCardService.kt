@@ -9,6 +9,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.ScorePRCardService.PRCardParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.CmdUtil.getMode
@@ -28,6 +29,7 @@ class ScorePRCardService(
     private val imageService: ImageService,
     private val scoreApiService: OsuScoreApiService,
     private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService
 
     ) : MessageService<PRCardParam>, TencentMessageService<PRCardParam> {
     @JvmRecord
@@ -60,8 +62,10 @@ class ScorePRCardService(
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.name?: "默认")
         }
 
-        data.value = PRCardParam(score)
+        calculateApiService.applyPPToScore(score)
+        calculateApiService.applyStarToScore(score)
 
+        data.value = PRCardParam(score)
         return true
     }
 
@@ -69,6 +73,7 @@ class ScorePRCardService(
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: PRCardParam) {
         val score = param.score
+
         val message = getMessageChain(score)
         try {
             event.reply(message)
