@@ -70,11 +70,12 @@ class NewbieService(
             .toOffsetDateTime()
         val end = start.plusDays(1)
 
-        val scores = scoreRepository.getUserRankedScore(userId, OsuMode.OSU.modeValue, start, end)
-        scores.filter {
-            val star = getStarRating(it.beatmapId, it.mods ?: "[]")
-            star in 0f..5.7f
-        }
+        val scores = scoreRepository
+            .getUserRankedScore(userId, OsuMode.OSU.modeValue, start, end)
+            .filter {
+                val star = getStarRating(it.beatmapId, it.mods ?: "[]")
+                star in 0f..5.7f
+            }
 
         val statisticsMap = scoreStatisticRepository
             .getByScoreId(scores.map { it.id })
@@ -212,6 +213,21 @@ $ppList
 """.trimIndent()
     }
 
+    fun recalculate() {
+        val end = LocalDate.of(2025,1,20)
+        var date = LocalDate.of(2025,1,14)
+        while (date.isBefore(end)) {
+            val allRecord = newbiePlayCountRepository.getAllByDate(date)
+            for (record in allRecord) {
+                val dailyStatistic = getDailyStatistic(record.uid!!.toLong(), date)
+                record.playCount = dailyStatistic.playCount
+                record.playHits = dailyStatistic.totalHit
+                newbiePlayCountRepository.save(record)
+            }
+
+            date = date.plusDays(1)
+        }
+    }
 
     fun List<LazerScoreLite>.toStatistics(statisticsMap: Map<Long, LazerStatistics>): List<Pair<LazerScoreLite, LazerStatistics>> {
         return mapNotNull {
