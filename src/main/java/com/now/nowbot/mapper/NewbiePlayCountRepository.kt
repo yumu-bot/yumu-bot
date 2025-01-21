@@ -85,4 +85,8 @@ interface NewbiePlayCountRepository : JpaRepository<NewbiePlayCount, Long> {
         """, nativeQuery = true)
     fun getDailyTop5pp(): List<NewbiePlayCount.UserListResult>
 
+    @Query("""
+        select * from newbie_play_count where record_date = :date and play_count > 0
+        """, nativeQuery = true)
+    fun getAllByDate(date: LocalDate): MutableList<NewbiePlayCount>
 }

@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.SchedulingConfigurer
 import org.springframework.scheduling.config.ScheduledTaskRegistrar
 import org.springframework.stereotype.Service
 import java.lang.management.ManagementFactory
+import java.time.LocalDate
 
 /***
  * 统一设置定时任务
@@ -34,6 +35,7 @@ class RunTimeService(
 ) : SchedulingConfigurer {
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
 
+    // 每 30 秒刷新一次 token
     @Scheduled(cron = "0,30 * * * * *")
     fun refreshToken() {
         bindDao.refreshOldUserToken(userApiService)
@@ -61,6 +63,14 @@ class RunTimeService(
         val users = groupMembers.data.map { it.userId }
         val uid = bindDao.getAllQQBindUser(users).map { it.uid }
         newbieService.dailyTask(uid)
+    }
+
+    // 今天下午更新数据
+    @Scheduled(cron = "0 0 14 20 1 *")
+    fun update() {
+        if (LocalDate.now().year == 2025) {
+            newbieService.recalculate()
+        }
     }
 
     @Scheduled(cron = "0 0 6 * * *")
