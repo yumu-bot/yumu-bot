@@ -67,9 +67,9 @@ import java.util.regex.Pattern
     }
 
     companion object {
-        @Language("RegExp") private const val REG_ANYTHING = "[^\\-\\[\\]\"“”()（）【】—]+"
+        @Language("RegExp") private const val REG_ANYTHING = "[^+#＃&*\\-\\[\\]\"“”()（）【】—]+"
 
-        @Language("RegExp") private const val REG_ANYTHING_NO_SPACE = "[^\\-\\[\\]\\s\"“”()（）【】—]+"
+        @Language("RegExp") private const val REG_ANYTHING_NO_SPACE = "[^+#＃&*\\-\\[\\]\\s\"“”()（）【】—]+"
 
         // 拆分查询的歌曲名
         private fun constructParam(text: String?): SearchParam? { // Nishigomi Kakumi - Hyakka Ryouran (SugiuraAyano) [Kantan]
@@ -141,8 +141,8 @@ import java.util.regex.Pattern
             )
 
             DataUtil.getStatus(param.status)?.let { query["s"] = it }
-            DataUtil.getGenre(param.genre)
-                ?.let { query["g"] = it } // getLanguage(param.language)?.let { query["l"] = it }
+            DataUtil.getGenre(param.genre)?.let { query["g"] = it }
+            DataUtil.getLanguage(param.language)?.let { query["l"] = it }
 
             return query
         }
