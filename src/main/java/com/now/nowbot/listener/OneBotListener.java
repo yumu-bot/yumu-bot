@@ -7,11 +7,13 @@ import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.permission.PermissionImplement;
+import com.now.nowbot.service.IdempotentService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.BotException;
 import com.now.nowbot.throwable.LogException;
 import com.now.nowbot.throwable.PermissionException;
 import com.now.nowbot.util.ContextUtil;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -56,6 +58,9 @@ public class OneBotListener {
     Logger log = LoggerFactory.getLogger(OneBotListener.class);
     private static Map<String, MessageService> messageServiceMap = null;
 
+    @Resource
+    IdempotentService idempotentService;
+
     public void init(Map<String, MessageService> beanMap) throws BeansException {
         messageServiceMap = beanMap;
     }
@@ -63,7 +68,18 @@ public class OneBotListener {
     @GroupMessageHandler()
     @Async
     public void handle(Bot bot, GroupMessageEvent onebotEvent) {
-        log.trace("收到消息[{}] -> {}", onebotEvent.getGroupId(), ShiroUtils.unescape(onebotEvent.getRawMessage()));
+        var groupId = onebotEvent.getGroupId();
+        var message = ShiroUtils.unescape(onebotEvent.getMessage());
+        var messageId = String.format(
+                "[%s|%s]%s",
+                groupId,
+                onebotEvent.getSender().getUserId(),
+                message
+                );
+        if (!idempotentService.checkByMessageId(messageId)) {
+            return;
+        }
+        log.debug("收到消息 {}", messageId);
         var nowTime = System.currentTimeMillis();
         if (onebotEvent.getTime() < 1e10) {
             nowTime /= 1000;
