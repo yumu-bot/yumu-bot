@@ -139,6 +139,7 @@ class UUBAService(
             }
         }
 
+        calculateApiService.applyBeatMapChanges(bps)
         calculateApiService.applyStarToScores(bps)
         val lines =
                 if (OsuMode.isDefaultOrNull(mode)) {
@@ -178,8 +179,12 @@ class UUBAService(
             osuName = param.user.name
             osuMode = mode
         }
-        val bps = scoreApiService.getBestScores(bu, mode, 0, 100)
+
+        val bps = scoreApiService.getBestScores(bu, mode)
+
+        calculateApiService.applyBeatMapChanges(bps)
         calculateApiService.applyStarToScores(bps)
+
         val modeStr = mode?.getName() ?: ""
         val lines = getTextPlus(bps, bu.osuName, modeStr)
         return MessageChain(lines)

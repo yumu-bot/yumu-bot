@@ -83,16 +83,15 @@ class BPQueryService(
 
         // ContextUtil.setContext("breakApplySR", true)
         val image = if (result.size == 1) {
-            val appliedScore = result.first() // 这里的成绩已经被处理过了，所以不能传递这个
-            val score = bests.find { it.scoreID == appliedScore.scoreID }
+            // 这里的成绩即将被处理，所以不能 applyBeatMapChanges
 
-            if (score == null) throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, appliedScore.beatMapID)
-
-            val e5Param = ScorePRService.getScore4PanelE5(user, score, "BQ", beatmapApiService, calculateApiService)
+            val e5Param = ScorePRService.getScore4PanelE5(user, result.first(), "BQ", beatmapApiService, calculateApiService)
             imageService.getPanel(e5Param.toMap(), "E5")
         } else {
             val indexMap = bests.mapIndexed { i, s -> s.scoreID to i }.toMap()
             val ranks = result.map { indexMap[it.scoreID]!! + 1 }
+
+            calculateApiService.applyBeatMapChanges(result)
 
             val body = mapOf("user" to user, "scores" to result, "rank" to ranks, "panel" to "BQ")
             imageService.getPanel(body, "A4")

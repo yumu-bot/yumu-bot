@@ -216,6 +216,7 @@ class ScoreService(
             if (scores.size > 1) {
                 // TODO 这里应用星数的时候，可以想办法优化，因为这里的谱面是相同的
                 calculateApiService.applyStarToScores(scores)
+                calculateApiService.applyBeatMapChanges(scores)
                 beatmapApiService.applyBeatMapExtendForSameScore(scores)
                 image = imageService.getPanelA5(user, scores, "SS")
             } else {

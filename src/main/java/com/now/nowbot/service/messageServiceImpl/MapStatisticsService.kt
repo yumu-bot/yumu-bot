@@ -16,7 +16,6 @@ import com.now.nowbot.service.messageServiceImpl.MapStatisticsService.MapParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.isAvoidance
@@ -284,7 +283,7 @@ class MapStatisticsService(
 
             beatmap.starRating = attributes.stars ?: beatmap.starRating
 
-            CalculateApiImpl.applyBeatMapChanges(beatmap, mods)
+            calculateApiService.applyBeatMapChanges(beatmap, mods)
 
             return imageService.getPanel(
                 PanelE6Param(user, beatmap, density, original, attributes, pp, expected)

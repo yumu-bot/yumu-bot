@@ -671,6 +671,12 @@ enum class Instruction(val pattern: Pattern) {
         appendNameAnyButNoHash()
     }),
 
+    MAI_SEARCH(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("mai(mai)?\\s*search?", "mh")
+        appendQQID()
+        appendNameAnyButNoHash()
+    }),
+
     CHU_BP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("chu(nithm)?\\s*best", "cb", "y")
         appendQQID()

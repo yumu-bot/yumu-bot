@@ -349,6 +349,36 @@ class CalculateApiImpl(
         AsyncMethodExecutor.AsyncSupplier(actions)
     }
 
+    override fun applyBeatMapChanges(score: LazerScore) {
+        applyBeatMapChanges(score.beatMap, score.mods)
+    }
+
+    // 应用四维的变化 4 dimensions
+    override fun applyBeatMapChanges(beatMap: BeatMap?, mods: List<LazerMod>) {
+        if (beatMap == null || beatMap.beatMapID == 0L) return
+
+        val mode = beatMap.mode
+
+        if (LazerMod.hasStarRatingChange(mods)) {
+            beatMap.BPM = applyBPM(beatMap.BPM ?: 0f, mods)
+            beatMap.AR = applyAR(beatMap.AR ?: 0f, mods)
+            beatMap.CS = applyCS(beatMap.CS ?: 0f, mods)
+            beatMap.OD = applyOD(beatMap.OD ?: 0f, mods, mode)
+            beatMap.HP = applyHP(beatMap.HP ?: 0f, mods)
+            beatMap.totalLength = applyLength(beatMap.totalLength, mods)
+            beatMap.hitLength = applyLength(beatMap.hitLength, mods)
+        }
+    }
+
+    override fun applyBeatMapChanges(scores: List<LazerScore>) {
+        val actions = scores.map {
+            return@map AsyncMethodExecutor.Supplier<Unit> {
+                applyBeatMapChanges(it)
+            }
+        }
+
+        AsyncMethodExecutor.AsyncSupplier(actions)
+    }
 
     override fun getStar(beatMapID: Long, mode: OsuMode, mods: List<LazerMod>): Double {
         val isAllLegacy = mods.any { it.settings == null && it::class.companionObjectInstance is ValueMod }
@@ -388,29 +418,6 @@ class CalculateApiImpl(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(Companion::class.java)
-
-        // 应用四维的变化 4 dimensions
-        @JvmStatic
-        fun applyBeatMapChanges(beatMap: BeatMap?, mods: List<LazerMod>) {
-            if (beatMap == null || beatMap.beatMapID == 0L) return
-
-            val mode = beatMap.mode
-
-            if (LazerMod.hasStarRatingChange(mods)) {
-                beatMap.BPM = applyBPM(beatMap.BPM ?: 0f, mods)
-                beatMap.AR = applyAR(beatMap.AR ?: 0f, mods)
-                beatMap.CS = applyCS(beatMap.CS ?: 0f, mods)
-                beatMap.OD = applyOD(beatMap.OD ?: 0f, mods, mode)
-                beatMap.HP = applyHP(beatMap.HP ?: 0f, mods)
-                beatMap.totalLength = applyLength(beatMap.totalLength, mods)
-                beatMap.hitLength = applyLength(beatMap.hitLength, mods)
-            }
-        }
-
-        @JvmStatic
-        fun applyBeatMapChanges(score: LazerScore) {
-            applyBeatMapChanges(score.beatMap, score.mods)
-        }
 
         @JvmStatic
         fun getMillisFromAR(ar: Float): Float = when {

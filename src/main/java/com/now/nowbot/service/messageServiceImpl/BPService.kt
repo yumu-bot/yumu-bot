@@ -160,6 +160,7 @@ class BPService(
                 }
 
                 calculateApiService.applyStarToScores(scores)
+                calculateApiService.applyBeatMapChanges(scores)
 
                 imageService.getPanelA4(user, scores, ranks, "BS")
             } else {

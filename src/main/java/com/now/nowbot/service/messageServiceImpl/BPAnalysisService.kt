@@ -388,6 +388,7 @@ import kotlin.math.min
             }
 
             // 提取星级变化的谱面 DT/HT 等
+            calculateApiService.applyBeatMapChanges(scores)
             calculateApiService.applyStarToScores(scores)
 
             val data = parseData(

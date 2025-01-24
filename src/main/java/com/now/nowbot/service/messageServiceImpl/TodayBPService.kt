@@ -132,6 +132,7 @@ class TodayBPService(
             scores.add(value)
         }
 
+        calculateApiService.applyBeatMapChanges(scores)
         calculateApiService.applyStarToScores(scores)
 
         return try {

@@ -337,6 +337,7 @@ public class BotWebApi {
                 for (int i = offset; i <= (offset + limit); i++) ranks.add(i + 1);
 
                 if (isMultipleScore) {
+                    calculateApiService.applyBeatMapChanges(scores);
                     calculateApiService.applyStarToScores(scores);
                     data = imageService.getPanelA4(osuUser, scores, ranks, "BS");
                     suffix = "-bps.jpg";
@@ -354,6 +355,7 @@ public class BotWebApi {
             case Pass -> {
                 scores = scoreApiService.getPassedScore(osuUser.getUserID(), mode, offset, limit);
 
+                calculateApiService.applyBeatMapChanges(scores);
                 calculateApiService.applyStarToScores(scores);
 
                 if (isMultipleScore) {
@@ -374,6 +376,7 @@ public class BotWebApi {
             case Recent -> {
                 scores = scoreApiService.getPassedScore(osuUser.getUserID(), mode, offset, limit);
 
+                calculateApiService.applyBeatMapChanges(scores);
                 calculateApiService.applyStarToScores(scores);
 
                 if (isMultipleScore) {
@@ -395,6 +398,7 @@ public class BotWebApi {
                 scores = scoreApiService.getScore(osuUser.getUserID(), mode, offset, 1, true);
                 var score = scores.getFirst();
 
+                calculateApiService.applyBeatMapChanges(scores);
                 calculateApiService.applyStarToScores(scores);
 
                 data = imageService.getPanelGamma(score);
@@ -406,6 +410,7 @@ public class BotWebApi {
                 scores = scoreApiService.getScore(osuUser.getUserID(), mode, offset, 1, false);
                 var score = scores.getFirst();
 
+                calculateApiService.applyBeatMapChanges(scores);
                 calculateApiService.applyStarToScores(scores);
 
                 data = imageService.getPanelGamma(score);
@@ -431,6 +436,7 @@ public class BotWebApi {
                     }
                 }
 
+                calculateApiService.applyBeatMapChanges(scores);
                 calculateApiService.applyStarToScores(scores);
 
                 data = imageService.getPanelA4(osuUser, scores, ranks, "T");

@@ -278,6 +278,7 @@ class ScorePRService(
             val scores: List<LazerScore> = scoreList.subList(offset, offset + limit)
 
             calculateApiService.applyPPToScores(scores)
+            calculateApiService.applyBeatMapChanges(scores)
             calculateApiService.applyStarToScores(scores)
 
             try {
@@ -341,6 +342,7 @@ class ScorePRService(
             val original = DataUtil.getOriginal(beatmap)
 
             calculateApiService.applyPPToScore(score)
+            calculateApiService.applyBeatMapChanges(score)
             calculateApiService.applyStarToScore(score)
 
             val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
