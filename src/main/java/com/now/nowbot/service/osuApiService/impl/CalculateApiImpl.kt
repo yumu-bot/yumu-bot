@@ -293,8 +293,6 @@ class CalculateApiImpl(
     override fun applyStarToScore(score: LazerScore) {
         if (score.beatMapID == 0L || LazerMod.noStarRatingChange(score.mods)) return
 
-        applyBeatMapChanges(score)
-
         val sr = getStar(score.beatMapID, score.mode, score.mods)
 
         if (sr > 0.15) {
