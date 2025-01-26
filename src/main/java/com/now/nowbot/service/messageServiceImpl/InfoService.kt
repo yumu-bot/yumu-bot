@@ -89,7 +89,7 @@ class InfoService(
             val out = mutableMapOf<String, Any>()
 
             val scores = if (bests.size >= 6) {
-                bests.subList(0, 6)
+                bests.take(6)
             } else {
                 bests
             }

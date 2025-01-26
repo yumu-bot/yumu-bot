@@ -113,8 +113,8 @@ import kotlin.math.min
             val bpSize = bps.size
 
             // top
-            val t6: List<LazerScore> = bps.subList(0, 6)
-            val b5: List<LazerScore> = bps.subList(max((bpSize - 5).toDouble(), 0.0).toInt(), bpSize)
+            val t6: List<LazerScore> = bps.take(6)
+            val b5: List<LazerScore> = bps.takeLast(bpSize - max((bpSize - 5).toDouble(), 0.0).toInt())
 
             data class BeatMap4BA(
                 val ranking: Int,

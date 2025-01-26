@@ -87,6 +87,20 @@ import java.util.concurrent.atomic.AtomicBoolean
             val search = beatmapApiService.searchBeatMapSet(query, 10)
             val result = search.beatmapSets
 
+            // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
+            val query2 = mapOf(
+                "q" to user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
+            )
+
+            val search2 = beatmapApiService.searchBeatMapSet(query2, 10)
+            val result2 = search2.beatmapSets
+                .filter { it.beatMapSetID != user.userID && (it.beatMaps?.all { that -> that.beatMapID != user.id } ?: true) }
+                .toMutableList()
+
+            result2.removeIf { that -> result.any { it.beatMapSetID == that.beatMapSetID } }
+
+            result.addAll(result2)
+
             val activity: List<ActivityEvent>
             val mappingActivity: MutableList<ActivityEvent> = ArrayList()
 
@@ -107,9 +121,16 @@ import java.util.concurrent.atomic.AtomicBoolean
             }
 
             val mostPopularBeatmap =
-                result.filter { it.creatorID == user.userID }.sortedByDescending { it.playCount }.take(6)
+                result.filter { it.creatorID == user.userID }
+                    .sortedByDescending { it.playCount }
+                    .sortedByDescending { it.ranked }
+                    .take(6)
 
-            var mostRecentRankedBeatmap = result.find { it.hasLeaderBoard && user.userID == it.creatorID }
+            val mostRecentRankedBeatmap = result.sortedByDescending { it.rankedDate?.toEpochSecond() }
+                .find { it.hasLeaderBoard && user.userID == it.creatorID }
+
+            // 这个问题正好是上面引起的，就注释掉了
+            /*
 
             if (mostRecentRankedBeatmap == null && user.rankedCount > 0) {
                 try {
@@ -120,10 +141,12 @@ import java.util.concurrent.atomic.AtomicBoolean
                 } catch (ignored: Exception) {
                 }
             }
+             */
 
-            val mostRecentRankedGuestDiff = result.find { it.hasLeaderBoard && user.userID != it.creatorID }
+            val mostRecentRankedGuestDiff = result.sortedByDescending { it.rankedDate?.toEpochSecond() }
+                .find { it.hasLeaderBoard && user.userID != it.creatorID }
 
-            val beatMaps = search.beatmapSets.flatMap { it.beatMaps ?: emptyList() }
+            val beatMaps = result.flatMap { it.beatMaps ?: emptyList() }
 
             val diffArr = IntArray(8)
             run {
@@ -160,8 +183,8 @@ import java.util.concurrent.atomic.AtomicBoolean
                 val hasAnyGenre = AtomicBoolean(false)
 
                 //逻辑应该是先每张图然后再遍历12吧？
-                if (search.beatmapSets.isNotEmpty()) {
-                    search.beatmapSets.forEach {
+                if (result.isNotEmpty()) {
+                    result.forEach {
                         for (i in 1 until keywords.size) {
                             val keyword = keywords[i]
 
@@ -180,8 +203,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
             var favorite = 0
             var playcount = 0
-            if (search.beatmapSets.isNotEmpty()) {
-                for (v in search.beatmapSets) {
+            if (result.isNotEmpty()) {
+                for (v in result) {
                     if (v.creatorID == user.userID) {
                         favorite += v.favouriteCount
                         playcount += v.playCount.toInt()

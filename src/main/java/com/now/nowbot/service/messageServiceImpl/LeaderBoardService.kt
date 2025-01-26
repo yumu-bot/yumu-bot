@@ -94,7 +94,7 @@ class LeaderBoardService(
         if (scores.isEmpty())
             throw LeaderBoardException(LeaderBoardException.Type.LIST_Score_NotFound)
         if (range > scores.size) range = scores.size
-        val subScores = scores.subList(0, range)
+        val subScores = scores.take(range)
 
         calculateApiService.applyPPToScores(subScores)
 

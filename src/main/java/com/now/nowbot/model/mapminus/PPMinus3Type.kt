@@ -97,7 +97,7 @@ class PPMinus3Type {
                 val typeMap = mutableMapOf<ManiaType, Double>()
 
                 val mapList = getStandardizedList(
-                    m.values.subList(0, 6)
+                    m.values.take(6)
                 ) // SV 不参与计算
                 for (e in ManiaType.entries) {
                     var similarity = 1.0
