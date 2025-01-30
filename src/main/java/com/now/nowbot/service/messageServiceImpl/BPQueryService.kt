@@ -5,10 +5,12 @@ import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.MicroUser
+import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.BPQueryService.Operator.*
+import com.now.nowbot.service.messageServiceImpl.ScorePRService.PanelE5Param
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
@@ -17,6 +19,7 @@ import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.serviceException.BPQueryException
 import com.now.nowbot.throwable.serviceException.BPQueryException.*
 import com.now.nowbot.throwable.serviceException.BindException
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import kotlin.math.min
@@ -83,17 +86,14 @@ class BPQueryService(
 
         // ContextUtil.setContext("breakApplySR", true)
         val image = if (result.size == 1) {
-            // 这里的成绩即将被处理，所以不能 applyBeatMapChanges
+            val e5Param = getScore4PanelE5(user, result.first(), beatmapApiService, calculateApiService)
 
-            val e5Param = ScorePRService.getScore4PanelE5(user, result.first(), "BQ", beatmapApiService, calculateApiService)
             imageService.getPanel(e5Param.toMap(), "E5")
         } else {
             val indexMap = bests.mapIndexed { i, s -> s.scoreID to i }.toMap()
             val ranks = result.map { indexMap[it.scoreID]!! + 1 }
-
-            calculateApiService.applyBeatMapChanges(result)
-
             val body = mapOf("user" to user, "scores" to result, "rank" to ranks, "panel" to "BQ")
+
             imageService.getPanel(body, "A4")
         }
         event.reply(image)
@@ -333,6 +333,7 @@ class BPQueryService(
 
     private fun getBP(filters: List<(LazerScore) -> Boolean>, scores: List<LazerScore>): List<LazerScore> {
         // bp 有 pp，所以只需要查星数
+        calculateApiService.applyBeatMapChanges(scores)
         calculateApiService.applyStarToScores(scores)
 
         // 处理麻婆, 与 set 主不一致
@@ -550,6 +551,31 @@ class BPQueryService(
 
         private fun Char.isDigitOrDot(): Boolean {
             return this.isDigit() || this == '.'
+        }
+
+
+        // 这个是不带 applyBeatMapChanges 的版本
+        private fun getScore4PanelE5(
+            user: OsuUser,
+            score: LazerScore,
+            beatmapApiService: OsuBeatmapApiService,
+            calculateApiService: OsuCalculateApiService,
+        ): PanelE5Param {
+            beatmapApiService.applyBeatMapExtend(score)
+
+            val beatmap = score.beatMap
+            val original = DataUtil.getOriginal(beatmap)
+
+            calculateApiService.applyPPToScore(score)
+            // calculateApiService.applyBeatMapChanges(score)
+            calculateApiService.applyStarToScore(score)
+
+            val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
+
+            val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
+            val progress = beatmapApiService.getPlayPercentage(score)
+
+            return PanelE5Param(user, score, null, density, progress, original, attributes, "BQ")
         }
     }
 }
