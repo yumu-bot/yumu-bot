@@ -1,5 +1,6 @@
 package com.now.nowbot.model.json
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
 // 这个类有个几把用...真不知道他返回这么简单的数据怎么用
@@ -29,6 +30,9 @@ class MaiScoreSimplified {
     // 谱面种类，有DX和SD之分
     @JsonProperty("type") var type: String = ""
 
+    // BP 多少
+    @JsonIgnoreProperties var position: Int = 0
+
     fun toMaiScore(): MaiScore {
         val s = MaiScore()
 
@@ -40,6 +44,7 @@ class MaiScoreSimplified {
         s.index = this.index
         s.title = this.title
         s.type = this.type
+        s.position = this.position
 
         return s
     }

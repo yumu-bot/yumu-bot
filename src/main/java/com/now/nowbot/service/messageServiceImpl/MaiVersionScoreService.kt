@@ -131,13 +131,14 @@ class MaiVersionScoreService(
         val full = getFullScore(param.qq, param.name, param.isMyself, maimaiApiService)
 
         val user = full.getUser()
-        val scores =
-                MaiScoreSimplified.parseMaiScoreList(full.records, vs.scores)
-                        .stream()
-                        .filter { MaiDifficulty.getIndex(it.index).equalDefault(param.difficulty) }
-                        .toList()
+        val scores = MaiScoreSimplified.parseMaiScoreList(full.records, vs.scores)
+            .filter {
+                MaiDifficulty.getIndex(it.index).equalDefault(param.difficulty)
+            }.toMutableList()
+
         maimaiApiService.insertSongData(scores)
         maimaiApiService.insertMaimaiAliasForScore(scores)
+        maimaiApiService.insertPosition(scores, true)
 
         val image =
                 imageService.getPanel(
