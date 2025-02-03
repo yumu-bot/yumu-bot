@@ -47,7 +47,7 @@ class AudioService(
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
             }
 
-        val isBID = type != null && (type == "b" || type == "bid")
+        val isBID = !(type != null && (type == "s" || type == "sid"))
 
         data.value = AudioParam(id, isBID)
         return true
