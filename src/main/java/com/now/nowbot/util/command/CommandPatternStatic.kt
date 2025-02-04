@@ -46,6 +46,9 @@ val REG_CAPS_INSENSITIVE: String = "(?i)"
 val REG_ANYTHING: String = "[\\s\\S]"
 
 @Language("RegExp")
+val REG_ANYTHING_BUT_NO_SPACE: String = "\\S"
+
+@Language("RegExp")
 val REG_ANYTHING_BUT_NO_HASH: String = "[^:：#＃]"
 
 @Language("RegExp")
@@ -80,6 +83,15 @@ val REG_NUMBER_DECIMAL: String = "\\d+\\.?\\d*"
 
 @Language("RegExp")
 val REG_PLUS: String = "[＋+]"
+
+@Language("RegExp")
+val REG_GREATER: String = "[＞>]"
+
+@Language("RegExp")
+val REG_SMALLER: String = "[＜<]"
+
+@Language("RegExp")
+val REG_EQUAL: String = "[＝=]"
 
 @Language("RegExp")
 val REG_COLON: String = "[:：]"

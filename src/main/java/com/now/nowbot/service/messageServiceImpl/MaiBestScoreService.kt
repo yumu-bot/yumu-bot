@@ -258,7 +258,7 @@ class MaiBestScoreService(
                 // sd + dx
 
                 if (isStandardEmpty && isDeluxeEmpty) {
-                    throw TipsException("您的成绩是空的！")
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Score)
                 } else if (isDeluxeEmpty) {
                     maimaiApiService.insertSongData(c.standard)
                     maimaiApiService.insertPosition(c.standard, true)

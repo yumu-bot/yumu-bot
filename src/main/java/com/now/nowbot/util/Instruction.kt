@@ -652,7 +652,7 @@ enum class Instruction(val pattern: Pattern) {
             append(REG_HASH)
             appendMatchLevel(MAYBE)
             appendSpace()
-            appendCaptureGroup("version", REG_ANYTHING, MORE)
+            appendCaptureGroup("version", REG_ANYTHING_BUT_NO_SPACE, MORE)
         }
     }),
 
@@ -672,9 +672,34 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     MAI_SEARCH(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("mai(mai)?\\s*search?", "mh")
+        appendCommandsIgnoreAll("mai(mai)?\\s*search", "mh")
         appendQQID()
         appendNameAnyButNoHash()
+    }),
+
+    MAI_COUPLE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("mai(mai)?\\s*((couple)|(cp))", "mc")
+        appendGroup(MAYBE) {
+            append(REG_COLON)
+            appendSpace()
+            appendCaptureGroup(FLAG_DIFF, REG_ANYTHING_BUT_NO_SPACE, MORE
+            )
+        }
+        appendCaptureGroup("any", REG_ANYTHING, MORE)
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendMatchLevel(MAYBE)
+            appendSpace()
+            appendCaptureGroup("version", REG_ANYTHING, MORE
+            )
+        }
+        appendGroup(MAYBE) {
+            append(REG_STAR)
+            appendMatchLevel(MAYBE)
+            appendSpace()
+            appendCaptureGroup("score", REG_NUMBER, MORE
+            )
+        }
     }),
 
     CHU_BP(CommandPatternBuilder.create {

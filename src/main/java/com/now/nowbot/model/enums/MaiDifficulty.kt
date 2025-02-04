@@ -6,8 +6,9 @@ enum class MaiDifficulty(val full : String) {
     ADVANCED("Advanced"),
     EXPERT("Expert"),
     MASTER("Master"),
-    RE_MASTER("Re: Master");
-
+    RE_MASTER("Re: Master"),
+    UTAGE("U·TA·GE")
+    ;
     // default 默认与所有相等
     fun equalDefault(other: Any?): Boolean {
         return when (other) {
@@ -26,6 +27,7 @@ enum class MaiDifficulty(val full : String) {
                 2 -> EXPERT
                 3 -> MASTER
                 4 -> RE_MASTER
+                5 -> UTAGE
                 else -> DEFAULT
             }
         }
@@ -63,6 +65,10 @@ enum class MaiDifficulty(val full : String) {
                 "re",
                 "r",
                 "4" -> RE_MASTER
+                "utage",
+                "uta",
+                "u",
+                "5" -> UTAGE
                 else -> DEFAULT
             }
         }

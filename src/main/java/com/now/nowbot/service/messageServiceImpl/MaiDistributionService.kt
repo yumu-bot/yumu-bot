@@ -84,7 +84,7 @@ import kotlin.math.min
         val best = MaiBestScoreService.getBestScores(param.qq, param.name, param.isMySelf, maimaiApiService)
 
         if (best.charts.standard.isEmpty() && best.charts.deluxe.isEmpty()) {
-            throw GeneralTipsException("您的成绩是空的！")
+            throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Score)
         }
 
         maimaiApiService.insertPosition(best.charts.deluxe, false)

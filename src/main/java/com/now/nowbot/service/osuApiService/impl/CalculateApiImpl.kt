@@ -25,8 +25,7 @@ import java.math.RoundingMode
 import kotlin.math.roundToInt
 import kotlin.reflect.full.companionObjectInstance
 
-@Service
-class CalculateApiImpl(
+@Service class CalculateApiImpl(
     private val beatmapApiService: OsuBeatmapApiService,
     private val beatmapStarCacheRepository: BeatmapStarCacheRepository,
 ) : OsuCalculateApiService {
@@ -129,9 +128,7 @@ class CalculateApiImpl(
     }
 
     private fun getBeatmap(
-        beatmapID: Long,
-        mode: org.spring.osu.OsuMode,
-        set: (JniBeatmap) -> Unit
+        beatmapID: Long, mode: org.spring.osu.OsuMode, set: (JniBeatmap) -> Unit
     ): Pair<JniBeatmap, Boolean> {
         val map = beatmapApiService.getBeatMapFileByte(beatmapID) ?: throw Exception("无法获取谱面文件, 请稍后再试")
         val beatmap = JniBeatmap(map)
@@ -178,7 +175,6 @@ class CalculateApiImpl(
             cache.forEach { it.close() }
         }
     }
-
 
     override fun getAccPP(
         beatmapID: Long,
@@ -289,7 +285,6 @@ class CalculateApiImpl(
         score.PP = getScorePP(score).pp
     }
 
-
     override fun applyStarToScore(score: LazerScore) {
         if (score.beatMapID == 0L || LazerMod.noStarRatingChange(score.mods)) return
 
@@ -303,12 +298,14 @@ class CalculateApiImpl(
     }
 
     override fun applyStarToBeatMap(beatMap: BeatMap?, mode: OsuMode, mods: List<LazerMod>) {
-        if (
-            beatMap == null ||
-            beatMap.mode == mode ||
-            beatMap.mode != OsuMode.OSU ||
-            LazerMod.hasStarRatingChange(mods).not()
-        ) return
+        if (beatMap == null || (beatMap.mode != OsuMode.OSU && mode != beatMap.mode && mode != OsuMode.DEFAULT)) return
+
+        if (beatMap.mode == OsuMode.OSU && mode != beatMap.mode && mode != OsuMode.DEFAULT) {
+            applyStarToBeatMapFromOfficial(beatMap, mode, mods)
+        }
+
+        if (LazerMod.hasStarRatingChange(mods).not()) return
+
         getStar(beatMap.beatMapID, mode, mods).let { beatMap.starRating = it }
     }
 
@@ -334,6 +331,21 @@ class CalculateApiImpl(
             }
         } catch (e: Exception) {
             log.error("给成绩应用星级：无法获取谱面 {}，无法获取 API 提供的星数！", score.beatMapID, e)
+        }
+    }
+
+    private fun applyStarToBeatMapFromOfficial(beatMap: BeatMap, mode: OsuMode, mods: List<LazerMod>) {
+        try {
+            val attr: BeatmapDifficultyAttributes =
+                beatmapApiService.getAttributes(beatMap.beatMapID, mode, LazerMod.getModsValue(mods))
+
+            if (attr.starRating != null) {
+                beatMap.starRating = attr.starRating!!.toDouble()
+            } else {
+                log.error("给谱面应用星级：无法获取谱面 {}，无法应用 API 提供的星数！", beatMap.beatMapID)
+            }
+        } catch (e: Exception) {
+            log.error("给谱面应用星级：无法获取谱面 {}，无法获取 API 提供的星数！", beatMap.beatMapID, e)
         }
     }
 
@@ -385,8 +397,7 @@ class CalculateApiImpl(
         } else {
             0
         }
-        if (isAllLegacy) {
-            // 如果是全部为 legacy mod 且 没有自定义属性的话，就从缓存里面取
+        if (isAllLegacy) { // 如果是全部为 legacy mod 且 没有自定义属性的话，就从缓存里面取
             // 目前来看没有任何自定义 mod 计入 pp
             val star = beatmapStarCacheRepository.findByKey(beatMapID, modsValue)
             if (star.isPresent) return star.get()
@@ -397,9 +408,7 @@ class CalculateApiImpl(
             beatmap.createDifficulty().apply {
                 closeables.add(this)
                 if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
-            }.calculate(beatmap)
-                .getStarRating()
-                .apply {
+            }.calculate(beatmap).getStarRating().apply {
                     if (isAllLegacy) {
                         val cache = BeatmapStartCache(beatMapID, mode, modsValue, this)
                         try {
@@ -417,24 +426,21 @@ class CalculateApiImpl(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(Companion::class.java)
 
-        @JvmStatic
-        fun getMillisFromAR(ar: Float): Float = when {
+        @JvmStatic fun getMillisFromAR(ar: Float): Float = when {
             ar > 11f -> 300f
             ar > 5f -> 1200 - (150 * (ar - 5))
             ar > 0f -> 1800 - (120 * ar)
             else -> 1800f
         }
 
-        @JvmStatic
-        fun getARFromMillis(ms: Float): Float = when {
+        @JvmStatic fun getARFromMillis(ms: Float): Float = when {
             ms < 300 -> 11f
             ms < 1200 -> 5 + (1200 - ms) / 150f
             ms < 2400 -> (1800 - ms) / 120f
             else -> -5f
         }
 
-        @JvmStatic
-        fun applyAR(ar: Float, mods: List<LazerMod>): Float {
+        @JvmStatic fun applyAR(ar: Float, mods: List<LazerMod>): Float {
             var a = ar
 
             for (mod in mods) {
@@ -461,8 +467,7 @@ class CalculateApiImpl(
             return a.roundToDigits2()
         }
 
-        @JvmStatic
-        fun getMillisFromOD(od: Float, mode: OsuMode): Float = when (mode) {
+        @JvmStatic fun getMillisFromOD(od: Float, mode: OsuMode): Float = when (mode) {
             OsuMode.TAIKO -> when {
                 od > 11 -> 17f
                 else -> 50 - 3 * od
@@ -479,14 +484,12 @@ class CalculateApiImpl(
             }
         }
 
-        @JvmStatic
-        fun getODFromMillis(ms: Float): Float = when {
+        @JvmStatic fun getODFromMillis(ms: Float): Float = when {
             ms < 14 -> 11f
             else -> (80 - ms) / 6f
         }
 
-        @JvmStatic
-        fun applyOD(od: Float, mods: List<LazerMod>, mode: OsuMode): Float {
+        @JvmStatic fun applyOD(od: Float, mods: List<LazerMod>, mode: OsuMode): Float {
             var o = od
             if (mods.contains(LazerMod.HardRock)) {
                 o = (o * 1.4f).clamp()
@@ -511,8 +514,7 @@ class CalculateApiImpl(
             return o.roundToDigits2()
         }
 
-        @JvmStatic
-        fun applyCS(cs: Float, mods: List<LazerMod>): Float {
+        @JvmStatic fun applyCS(cs: Float, mods: List<LazerMod>): Float {
             var c = cs
 
             for (mod in mods) {
@@ -530,8 +532,7 @@ class CalculateApiImpl(
             return c.clamp().roundToDigits2()
         }
 
-        @JvmStatic
-        fun applyHP(hp: Float, mods: List<LazerMod>): Float {
+        @JvmStatic fun applyHP(hp: Float, mods: List<LazerMod>): Float {
             var h = hp
 
             for (mod in mods) {
@@ -549,13 +550,11 @@ class CalculateApiImpl(
             return h.clamp().roundToDigits2()
         }
 
-        @JvmStatic
-        fun applyBPM(bpm: Float?, mods: List<LazerMod>): Float {
+        @JvmStatic fun applyBPM(bpm: Float?, mods: List<LazerMod>): Float {
             return ((bpm ?: 0f) * LazerMod.getModSpeed(mods)).roundToDigits2()
         }
 
-        @JvmStatic
-        fun applyLength(length: Int?, mods: List<LazerMod>): Int {
+        @JvmStatic fun applyLength(length: Int?, mods: List<LazerMod>): Int {
             return ((length ?: 0).toDouble() / LazerMod.getModSpeed(mods)).roundToInt()
         }
 

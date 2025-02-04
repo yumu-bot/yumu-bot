@@ -18,7 +18,8 @@ class GeneralTipsException : TipsException {
         G_Maimai_NoDeveloperToken("机器人没有配置开发者授权，暂时无法获取。"), 
         
         G_Exceed_Param("请输入正确的编号或范围！"), 
-        G_Exceed_Day("你输入的天数范围太久远了！"), 
+        G_Exceed_Day("你输入的天数范围太久远了！"),
+        G_Exceed_Score("符合筛选要求的成绩太多了！请缩小查询范围。"),
         G_Exceed_Version("符合筛选版本的成绩太多了！请减少版本，缩小查询范围。"), 
         G_Exceed_Version_Default("符合筛选版本的成绩太多了！请指定难度（\":\" + \"b、a、e、m、r\"），缩小查询范围。"), 
         
@@ -58,7 +59,8 @@ class GeneralTipsException : TipsException {
         G_Wrong_QQ("QQ 参数错误，请检查。"), 
         G_Wrong_ParamAccuracy("准确率参数错误，请检查。"), 
         G_Wrong_ParamCombo("连击参数错误，请检查。"), 
-        
+
+        G_Empty_Score("您的成绩是空的！"),
         G_Empty_TodayBP("玩家 %s 今天之内没有新增的 BP 呢...\n尝试修改范围，或尝试扩大搜索天数吧。"), 
         G_Empty_PeriodBP("玩家 %s 这段时间之内，在 %s 模式里都没有新增的 BP 呢...\n尝试修改范围，或扩大搜索天数吧。"), 
         

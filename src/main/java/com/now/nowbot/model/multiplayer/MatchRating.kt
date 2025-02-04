@@ -519,5 +519,15 @@ class MatchRating(
                 }
             }
         }
+
+        @JvmStatic
+        fun MatchRating.applyDTMod() {
+            this.match.events.forEach { e ->
+                if (e.round?.beatMap != null) {
+                    calculateApiService.applyBeatMapChanges(e.round.beatMap, LazerMod.getModsList(e.round.mods))
+                    calculateApiService.applyStarToBeatMap(e.round.beatMap, e.round.mode, LazerMod.getModsList(e.round.mods))
+                }
+            }
+        }
     }
 }

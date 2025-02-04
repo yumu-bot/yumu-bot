@@ -266,7 +266,7 @@ class ChuBestScoreService(
                 // sd + dx
 
                 if (isStandardEmpty && isDeluxeEmpty) {
-                    throw TipsException("您的成绩是空的！")
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Score)
                 } else if (isDeluxeEmpty) {
                     ChuScore.insertSongData(c.best30, song)
                     ChuScore.insertPosition(c.best30, true)

@@ -37,6 +37,9 @@ class MaiSong {
         // 物件数量
         @JsonIgnoreProperties var notes: MaiNote = MaiNote()
 
+        @get:JsonProperty val dxScore: Int
+            get() = 3 * (notes.tap + notes.touch + notes.hold + notes.slide + notes.break_)
+
         @JsonProperty("notes")
         fun setNotes(list: List<Int>) {
             if (list.isEmpty() || list.size < 4) {

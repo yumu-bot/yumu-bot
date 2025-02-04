@@ -1199,6 +1199,32 @@ object DataUtil {
         }
     }
 
+    /**
+     * 自己写的匹配器，这样子就可以无所谓匹配顺序了
+     * @param regexes 正则表达式。注意，这里的正则需要写的越简洁越好，不然会有大量重复匹配
+     */
+    fun paramMatcher(str: String?, regexes: List<Regex>) : List<String?> {
+        if (str == null) return emptyList()
+
+        val result = MutableList<String?>(regexes.size) {null}
+        var matcher = ""
+
+        for (s in str.split("\\s+".toRegex())) {
+            matcher += s
+
+            for (i in regexes.indices) {
+                val reg = regexes[i]
+
+                if (reg.matches(matcher) && result[i] == null) {
+                    result[i] = matcher
+                    matcher = ""
+                }
+            }
+        }
+
+        return result.toList()
+    }
+
     @JvmRecord
     private data class Range(val offset: Int, val limit: Int)
 

@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.multiplayer.MatchRating
+import com.now.nowbot.model.multiplayer.MatchRating.Companion.applyDTMod
 import com.now.nowbot.model.multiplayer.MatchRating.Companion.insertMicroUserToScores
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -90,12 +91,14 @@ import org.springframework.stereotype.Service
             }
 
             val mr: MatchRating
+
             try {
                 mr = MatchRating(
                     panel.match, panel.param, beatmapApiService, calculateApiService
                 )
                 mr.calculate()
                 mr.insertMicroUserToScores()
+                mr.applyDTMod()
 
                 // 如果只有一两个人，则不排序（slot 从小到大）
                 val isSize2p = mr.rounds.any { it.scores.size > 2 }
