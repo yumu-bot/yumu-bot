@@ -5,7 +5,7 @@ import org.springframework.util.CollectionUtils
 
 enum class MaiVersion(val full: String, val abbreviation: String, val code: String) {
     DEFAULT("", "", ""),
-    MAIMAI("maimai", "真", "mai"),
+    MAIMAI("maimai", "", "mai"),
     PLUS("maimai PLUS", "真", "mai"),
     GREEN("maimai GreeN", "超", "grn"),
     GREEN_PLUS("maimai GreeN PLUS", "檄", "grp"),
@@ -143,11 +143,13 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "buddies+",
                 "bd+",
                 "bud+",
+                "宴",
                 "1.41" -> BUDDIES_PLUS
                 "buddies",
                 "bd",
                 "bud",
                 "1.4",
+                "双",
                 "1.40" -> BUDDIES
                 "festivalplus",
                 "festival plus",
@@ -158,12 +160,14 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "fs+",
                 "fes+",
                 "fst+",
+                "祝",
                 "1.31" -> FESTIVAL_PLUS
                 "festival",
                 "fs",
                 "fes",
                 "fst",
                 "1.3",
+                "祭",
                 "1.30" -> FESTIVAL
                 "universeplus",
                 "universe plus",
@@ -174,12 +178,14 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "un+",
                 "uv+",
                 "uni+",
+                "星",
                 "1.21" -> UNIVERSE_PLUS
                 "universe",
                 "un",
                 "uv",
                 "uni",
                 "1.2",
+                "宙",
                 "1.20" -> UNIVERSE
                 "splashplus",
                 "splash plus",
@@ -188,11 +194,13 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "splash+",
                 "sp+",
                 "spl+",
+                "煌",
                 "1.11" -> SPLASH_PLUS
                 "splash",
                 "sp",
                 "spl",
                 "1.1",
+                "爽",
                 "1.10" -> SPLASH
                 "deluxeplus",
                 "deluxe plus",
@@ -201,11 +209,14 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "deluxe+",
                 "dx+",
                 "dlx+",
+                "華",
+                "华",
                 "1.01" -> DX_PLUS
                 "deluxe",
                 "dx",
                 "dlx",
                 "1.0",
+                "熊",
                 "1.00" -> DX
                 "allfinale",
                 "all finale",
@@ -217,12 +228,15 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "final+",
                 "fn+",
                 "fnl+",
+                "舞",
                 "0.71" -> ALL_FINALE
                 "finale",
                 "final",
                 "fn",
                 "fnl",
                 "0.7",
+                "輝",
+                "辉",
                 "0.70" -> FINALE
                 "milkplus",
                 "milk plus",
@@ -231,12 +245,14 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "white+",
                 "mk+",
                 "mlk+",
+                "雪",
                 "0.61" -> MILK_PLUS
                 "milk",
                 "white",
                 "mk",
                 "mlk",
                 "0.6",
+                "白",
                 "0.60" -> MILK
                 "murasakiplus",
                 "murasaki plus",
@@ -244,11 +260,13 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "murasaki+",
                 "ms+",
                 "msk+",
+                "菫",
                 "0.51" -> MURASAKI_PLUS
                 "murasaki",
                 "ms",
                 "msk",
                 "0.5",
+                "紫",
                 "0.50" -> MURASAKI
                 "pinkplus",
                 "pink plus",
@@ -256,11 +274,14 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "pink+",
                 "pk+",
                 "pnk+",
+                "櫻",
+                "樱",
                 "0.41" -> PINK_PLUS
                 "pink",
                 "pk",
                 "pnk",
                 "0.4",
+                "桃",
                 "0.40" -> PINK
                 "orangeplus",
                 "orange plus",
@@ -268,11 +289,14 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "orp",
                 "or+",
                 "org+",
+                "暁",
+                "晓",
                 "0.31" -> ORANGE_PLUS
                 "orange",
                 "or",
                 "org",
                 "0.3",
+                "橙",
                 "0.30" -> ORANGE
                 "greenplus",
                 "green plus",
@@ -281,12 +305,14 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "gre+",
                 "grn+",
                 "gr+",
+                "檄",
                 "0.21" -> GREEN_PLUS
                 "green",
                 "gr",
                 "gre",
                 "grn",
                 "0.2",
+                "超",
                 "0.20" -> GREEN
                 "plus",
                 "maimaiplus",
@@ -295,6 +321,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "pl",
                 "pls",
                 "mai+",
+                "真",
                 "0.11" -> PLUS
                 "maimai",
                 "mi",
