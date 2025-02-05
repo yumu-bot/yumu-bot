@@ -41,35 +41,67 @@ enum class MaiDifficulty(val full : String) {
                 "bsc",
                 "ba",
                 "b",
-                "0" -> BASIC
+                "0",
+                "初",
+                "初级" -> {
+                    BASIC
+                }
                 "advanced",
                 "adv",
                 "ad",
                 "a",
-                "1" -> ADVANCED
+                "1",
+                "高",
+                "高级" -> {
+                    ADVANCED
+                }
                 "expert",
                 "exp",
                 "ex",
                 "e",
-                "2" -> EXPERT
+                "2",
+                "专",
+                "专家" -> {
+                    EXPERT
+                }
                 "master",
                 "mas",
                 "mst",
                 "ma",
                 "m",
-                "3" -> MASTER
+                "3",
+                "大",
+                "大师" -> {
+                    MASTER
+                }
                 "remaster",
+                "re:master",
+                "re：master",
                 "re master",
                 "rem",
                 "rms",
                 "re",
+                "rm",
                 "r",
-                "4" -> RE_MASTER
+                "4",
+                "宗",
+                "宗师" -> {
+                    RE_MASTER
+                }
                 "utage",
                 "uta",
+                "ut",
                 "u",
-                "5" -> UTAGE
-                else -> DEFAULT
+                "5",
+                "宴",
+                "宴会",
+                "宴会场",
+                "宴会場" -> {
+                    UTAGE
+                }
+                else -> {
+                    DEFAULT
+                }
             }
         }
     }
