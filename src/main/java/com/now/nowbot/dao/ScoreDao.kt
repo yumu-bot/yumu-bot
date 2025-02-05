@@ -7,6 +7,7 @@ import com.now.nowbot.mapper.LazerScoreStatisticRepository
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -104,7 +105,7 @@ class ScoreDao(
         val end = ZonedDateTime
             .now(ZoneOffset.systemDefault())
             .toOffsetDateTime()
-        return scoreRepository.getUserAllScoreTime(userId, start, end)
+        return scoreRepository.getUserAllScoreTime(userId, start, end, PageRequest.ofSize(500))
     }
 
 

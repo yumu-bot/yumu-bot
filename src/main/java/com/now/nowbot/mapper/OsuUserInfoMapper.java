@@ -30,9 +30,8 @@ public interface OsuUserInfoMapper extends JpaRepository<OsuUserInfoArchiveLite,
                 from (
                     select osu_id, mode, play_count from osu_user_info_archive
                     where osu_id in (:uid) and time between :time1 and :time2 and pp > 0
-                    order by play_count asc
+                    order by osu_id, mode, play_count asc
                 ) as shadow
-                limit 1
                 """, nativeQuery = true)
     List<OsuUserInfoArchiveLite.InfoArchive> getArchiveByUid(List<Long> uid, LocalDateTime time1, LocalDateTime time2);
 

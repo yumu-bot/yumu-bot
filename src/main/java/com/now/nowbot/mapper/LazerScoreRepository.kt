@@ -2,6 +2,7 @@ package com.now.nowbot.mapper
 
 import com.now.nowbot.entity.LazerScoreLite
 import com.now.nowbot.entity.ScoreStatisticLite
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import java.time.OffsetDateTime
@@ -15,7 +16,7 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
     fun checkIdExists(id: Long): Optional<Long>
 
     @Query("select s.time from LazerScoreLite s where s.userId = :id and s.time between :start and :end")
-    fun getUserAllScoreTime(id:Long, start: OffsetDateTime, end: OffsetDateTime): List<OffsetDateTime>
+    fun getUserAllScoreTime(id:Long, start: OffsetDateTime, end: OffsetDateTime, page: Pageable): List<OffsetDateTime>
 
     @Query("""
         select * from lazer_score_lite s
