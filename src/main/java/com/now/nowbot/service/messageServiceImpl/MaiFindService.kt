@@ -17,7 +17,6 @@ import org.intellij.lang.annotations.Language
 import org.springframework.stereotype.Service
 import kotlin.math.abs
 import kotlin.math.floor
-import kotlin.math.round
 
 @Service("MAI_FIND") class MaiFindService(
     private val maimaiApiService: MaimaiApiService,
@@ -97,7 +96,7 @@ import kotlin.math.round
                     }
 
                     if (param.difficulty != diff) {
-                        continue@diff
+                        continue@song
                     }
                 }
 
