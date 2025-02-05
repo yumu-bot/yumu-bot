@@ -1201,12 +1201,12 @@ object DataUtil {
 
     /**
      * 自己写的匹配器，这样子就可以无所谓匹配顺序了
-     * @param regexes 正则表达式。注意，这里的正则需要写的越简洁越好，不然会有大量重复匹配
+     * @param regexes 正则表达式。注意，这里的正则需要写得越简洁越好，不然会有大量重复匹配
      */
-    fun paramMatcher(str: String?, regexes: List<Regex>) : List<String?> {
+    fun paramMatcher(str: String?, regexes: List<Regex>) : List<List<String>> {
         if (str == null) return emptyList()
 
-        val result = MutableList<String?>(regexes.size) {null}
+        val result = List(regexes.size) { emptyList<String>().toMutableList() }
         var matcher = ""
 
         for (s in str.split("\\s+".toRegex())) {
@@ -1215,14 +1215,14 @@ object DataUtil {
             for (i in regexes.indices) {
                 val reg = regexes[i]
 
-                if (reg.matches(matcher) && result[i] == null) {
-                    result[i] = matcher
+                if (reg.matches(matcher)) {
+                    result[i].add(matcher)
                     matcher = ""
                 }
             }
         }
 
-        return result.toList()
+        return result
     }
 
     @JvmRecord

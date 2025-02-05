@@ -660,13 +660,13 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("[!！]update\\s*mai(mai)?", "[!！]um")
     }),
 
-    MAI_FIND(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("mai(mai)?\\s*find", "mf", "mother\\s*fucker")
+    MAI_COUPLE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("mai(mai)?\\s*((couple)|(cp))", "mc", "mine\\s*craft")
         appendCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
     }),
 
     MAI_DIST(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("mai(mai)?\\s*dist(ribution)?", "md", "markdown")
+        appendCommandsIgnoreAll("mai(mai)?\\s*dist(ribution)?", "md", "mark\\s*down")
         appendQQID()
         appendNameAnyButNoHash()
     }),
@@ -677,8 +677,8 @@ enum class Instruction(val pattern: Pattern) {
         appendNameAnyButNoHash()
     }),
 
-    MAI_COUPLE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("mai(mai)?\\s*((couple)|(cp))", "mc")
+    MAI_FIND(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("mai(mai)?\\s*find", "mf", "mother\\s*fucker")
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
