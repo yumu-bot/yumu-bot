@@ -77,7 +77,7 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         if (d != null && d.getData() != null && d.getData().getMessageId() != null) {
             return OneBotMessageReceipt.create(bot, d.getData().getMessageId(), this);
         } else {
-            log.error(STR."发送消息时获取回执失败, 发送到[\{id}] 内容:[\{getMsg4Chain(msg)}]");
+            log.error("发送消息时获取回执失败, [{}]发送到[{}] 内容:[{}]", bot.getSelfId(), id, getMsg4Chain(msg));
             return OneBotMessageReceipt.create();
         }
     }
