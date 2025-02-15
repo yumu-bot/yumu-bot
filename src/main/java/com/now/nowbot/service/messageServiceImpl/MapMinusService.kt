@@ -78,6 +78,8 @@ import java.util.regex.Matcher
         private fun getMapMinusParam(matcher: Matcher): MapMinusParam {
             val modsList: List<LazerMod> = LazerMod.getModsList(matcher.group(FLAG_MOD))
 
+            if (matcher.group("bid") == null) throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
+
             val bid = try {
                 matcher.group("bid").toLong()
             } catch (e: NumberFormatException) {

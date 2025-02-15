@@ -96,7 +96,7 @@ import kotlin.math.floor
                     }
 
                     if (param.difficulty != diff) {
-                        continue@song
+                        continue@diff
                     }
                 }
 
