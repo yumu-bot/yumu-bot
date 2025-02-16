@@ -272,6 +272,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
             append("[×xX]?")
         }
 
+        appendSpace()
         appendCaptureGroup("skip", "-?\\d+")
         appendSpace()
         appendCaptureGroup("ignore", "-?\\d+")
