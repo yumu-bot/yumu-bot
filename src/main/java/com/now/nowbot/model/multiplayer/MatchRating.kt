@@ -110,7 +110,7 @@ class MatchRating(
         if (param.easy != 1.0) {
             rs.forEach {
                 for (s in it.scores) {
-                    if (LazerMod.hasModByString(it.mods, LazerMod.Easy)) {
+                    if (LazerMod.hasModByString(s.mods, LazerMod.Easy)) {
                         s.score = (s.score * param.easy).roundToInt()
                     }
                 }
@@ -511,23 +511,21 @@ class MatchRating(
     companion object {
         @JvmStatic
         fun MatchRating.insertMicroUserToScores() {
-            this.match.events.forEach { e ->
-                if (e.round != null) {
-                    e.round.scores.forEach {
-                        s -> s.user = this.players[s.userID]
-                    }
-                }
-            }
+            this.match.events
+                .filter { it.round != null }
+                .flatMap { it.round!!.scores }
+                .forEach { s -> s.user = this.players[s.userID] }
         }
 
         @JvmStatic
         fun MatchRating.applyDTMod() {
-            this.match.events.forEach { e ->
-                if (e.round?.beatMap != null) {
-                    calculateApiService.applyBeatMapChanges(e.round.beatMap, LazerMod.getModsList(e.round.mods))
-                    calculateApiService.applyStarToBeatMap(e.round.beatMap, e.round.mode, LazerMod.getModsList(e.round.mods))
+            this.match.events
+                .filter { it.round?.beatMap != null }
+                .map { it.round!! }
+                .forEach {
+                    calculateApiService.applyBeatMapChanges(it.beatMap, LazerMod.getModsList(it.mods))
+                    calculateApiService.applyStarToBeatMap(it.beatMap, it.mode, LazerMod.getModsList(it.mods))
                 }
-            }
         }
     }
 }
