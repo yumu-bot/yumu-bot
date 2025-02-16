@@ -534,6 +534,12 @@ enum class Instruction(val pattern: Pattern) {
         appendColonCaptureGroup(MAYBE, "type", "${REG_WORD}${LEVEL_MORE}")
     }),
 
+    TEST_MAP_MINUS(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("testmapminus", "testmm", "tmm", "tn")
+        appendMode()
+        appendCaptureGroup(FLAG_DATA, REG_NUMBER_SEPERATOR, MORE)
+    }),
+
     TEST_PPM(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("testppm", "testcost", "tp", "tc")
         appendMode()

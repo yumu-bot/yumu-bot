@@ -1,9 +1,8 @@
 package com.now.nowbot.model.mapminus
 
-import com.now.nowbot.model.mapminus.impl.PPMinus3ManiaImpl
 import kotlin.math.*
 
-class PPMinus3Type {
+class PPMinus4Type {
 
     enum class ManiaType(
         val chinese: String,
@@ -92,17 +91,17 @@ class PPMinus3Type {
 
     companion object {
         // 获取谱面的 ppm3 类型
-        fun getType(m: PPMinus3): Map<ManiaType, Double> {
-            if (m is PPMinus3ManiaImpl) {
+        fun getType(m: PPMinus4): Map<ManiaType, Double> {
+            if (m is PPMinus4Mania) {
                 val typeMap = mutableMapOf<ManiaType, Double>()
 
                 val mapList = getStandardizedList(
-                    m.values.take(6)
+                    m.values.take(6).map {it.toDouble()}
                 ) // SV 不参与计算
                 for (e in ManiaType.entries) {
                     var similarity = 1.0
 
-                    similarity *= getDifference(m.sr, e.star)
+                    similarity *= getDifference(m.star.toDouble(), e.star)
 
                     val typeList = getStandardizedList(
                         listOf(e.rice, e.ln, e.coordination, e.precision, e.speed, e.stamina)

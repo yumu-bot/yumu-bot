@@ -4,11 +4,10 @@ import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.mapminus.PPMinus3
-import com.now.nowbot.model.mapminus.PPMinus3Type
+import com.now.nowbot.model.mapminus.PPMinus4Type
+import com.now.nowbot.model.mapminus.PPMinus4
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
-import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.TestTypeService.MapTypeParam
@@ -22,7 +21,6 @@ import org.springframework.util.StringUtils
 
 @Service("TEST_TYPE") class TestTypeService(
     private val beatmapApiService: OsuBeatmapApiService,
-    private val imageService: ImageService,
     private val calculateApiService: OsuCalculateApiService
 ) : MessageService<MapTypeParam> {
     data class MapTypeParam(val bid: Long, val rate: Double = 1.0, val modsList: List<LazerMod>)
@@ -94,7 +92,7 @@ import org.springframework.util.StringUtils
             throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
         }
 
-        val mapMinus = PPMinus3.getInstance(
+        val mapMinus = PPMinus4.getInstance(
             file,
             if (isChangedRating) {
                 LazerMod.getModSpeedForStarCalculate(param.modsList).toDouble()
@@ -105,7 +103,7 @@ import org.springframework.util.StringUtils
 
         // =======================
 
-        val result = PPMinus3Type.getType(mapMinus)
+        val result = PPMinus4Type.getType(mapMinus)
         val sb = StringBuilder("\n")
 
         var i = 1

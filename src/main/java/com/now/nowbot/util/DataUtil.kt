@@ -153,7 +153,7 @@ object DataUtil {
         return strings.map { obj -> obj.trim() }.toList()
     }
 
-    val nameSplitReg = "[,，、|:：]+".toRegex()
+    private val nameSplitReg = "[,，、|:：]+".toRegex()
 
     /**
      * 根据分隔符，分割玩家名
