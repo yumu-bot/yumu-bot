@@ -40,14 +40,8 @@ import kotlin.math.*
         val text = m.group("text")
 
         if (text.isNullOrBlank().not()) { // 如果 dice 有符合，但是并不是 1，选择主动忽视
-            if (dice.isNullOrBlank().not()) {
-                try {
-                    if (dice.toLong() > 1) {
-                        return false
-                    }
-                } catch (e: NumberFormatException) {
-                    return false
-                }
+            if ((dice.toLongOrNull() ?: return false) > 1L) {
+                return false
             } else if (number.isNullOrBlank().not()) {
                 data.value = DiceParam(null, null, (number + text).trim { it <= ' ' })
                 return true
@@ -82,6 +76,7 @@ import kotlin.math.*
             }
 
             data.setValue(DiceParam(d, n, null))
+            return true
         } else if (number.isNullOrBlank().not()) {
             val n: Long
 
@@ -96,12 +91,13 @@ import kotlin.math.*
             }
 
             data.setValue(DiceParam(1L, n, null))
+            return true
         } else {
             data.setValue(DiceParam(1L, 100L, null))
+            return true
         }
-        return true
 
-        // throw new DiceException(DiceException.Type.DICE_Instruction);
+        // throw DiceException(DiceException.Type.DICE_Instruction);
     }
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: DiceParam) {
