@@ -91,9 +91,9 @@ data class LazerStatistics(
         var geki = 0
         var katu = 0
         val n300 = great
-        val n100: Int
-        var n50 = 0
         val misses = miss
+        val n100: Int
+        val n50: Int
         when (mode) {
             OSU -> {
                 n100 = ok
@@ -102,12 +102,13 @@ data class LazerStatistics(
 
             TAIKO -> {
                 n100 = ok
+                n50 = 0
             }
 
             CATCH -> {
                 n100 = largeTickHit
-                n50 = sliderTailHit
-                katu = good
+                n50 = smallTickHit
+                katu = smallTickMiss
             }
 
             MANIA -> {

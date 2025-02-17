@@ -12,7 +12,6 @@ import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
-import org.springframework.lang.NonNull
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
@@ -134,24 +133,29 @@ class ScoreApiImpl(
     override fun getBeatMapScore(
         bid: Long,
         user: BinUser,
-        @NonNull mode: OsuMode?,
+        mode: OsuMode?,
     ): BeatmapUserScore? {
         if (!user.isAuthorized) return getBeatMapScore(bid, user.osuID, mode)
         return retryOn404<BeatmapUserScore>(
-            { uriBuilder: UriBuilder ->
-                uriBuilder
-                    .path("beatmaps/{bid}/scores/users/{uid}")
-                    .queryParam("legacy_only", 0)
-                    .queryParamIfPresent("mode", OsuMode.getName(mode))
-                    .build(bid, user.osuID)
+            {
+                it.path("beatmaps/{bid}/scores/users/{uid}").queryParam("legacy_only", 0)
+
+                if (OsuMode.isNotDefaultOrNull(mode)) {
+                    it.queryParam("mode", OsuMode.getName(mode))
+                }
+
+                it.build(bid, user.osuID)
             },
             base.insertHeader(user),
-            { uriBuilder: UriBuilder ->
-                uriBuilder
-                    .path("beatmaps/{bid}/scores/users/{uid}")
+            {
+                it.path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", 1)
-                    .queryParamIfPresent("mode", OsuMode.getName(mode))
-                    .build(bid, user.osuID)
+
+                if (OsuMode.isNotDefaultOrNull(mode)) {
+                    it.queryParam("mode", OsuMode.getName(mode))
+                }
+
+                it.build(bid, user.osuID)
             },
         )
     }
@@ -167,7 +171,11 @@ class ScoreApiImpl(
                 uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", n)
-                    .queryParamIfPresent("mode", OsuMode.getName(mode))
+
+                if (OsuMode.isNotDefaultOrNull(mode)) {
+                    uriBuilder.queryParam("mode", OsuMode.getName(mode))
+                }
+
                 setMods(uriBuilder, mods)
                 uriBuilder.build(bid, uid)
             }
@@ -207,7 +215,7 @@ class ScoreApiImpl(
 
     private fun setMods(builder: UriBuilder, mods: Iterable<LazerMod?>) {
         for (mod in mods) {
-            if (mod is LazerMod.None) {
+            if (mod is LazerMod.NoMod) {
                 builder.queryParam("mods[]", "NM")
                 return
             }

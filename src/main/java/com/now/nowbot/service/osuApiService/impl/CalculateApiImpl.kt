@@ -133,13 +133,13 @@ import kotlin.reflect.full.companionObjectInstance
         val map = beatmapApiService.getBeatMapFileByte(beatmapID) ?: throw Exception("无法获取谱面文件, 请稍后再试")
         val beatmap = JniBeatmap(map)
         set(beatmap)
-        val change = if (beatmap.mode != mode && beatmap.mode == org.spring.osu.OsuMode.Osu) {
+        val isConvert = if (beatmap.mode != mode && beatmap.mode == org.spring.osu.OsuMode.Osu) {
             beatmap.convertInPlace(mode)
             true
         } else {
             false
         }
-        return beatmap to change
+        return beatmap to isConvert
     }
 
     override fun getAccPPList(
@@ -217,7 +217,7 @@ import kotlin.reflect.full.companionObjectInstance
         with(score.statistics) {
             val statistics = toScoreStatistics(score.mode)
             fcState = JniScoreState.create(
-                maxCombo = 99999,
+                maxCombo = 2147483647 / 2,
                 largeTickHits = largeTickHit,
                 smallTickHits = smallTickHit,
                 sliderEndHits = sliderTailHit,
@@ -226,6 +226,7 @@ import kotlin.reflect.full.companionObjectInstance
                 n300 = statistics.count300 + statistics.countMiss,
                 n100 = statistics.count100,
                 n50 = statistics.count50,
+                misses = 0
             )
             state = JniScoreState.create(
                 maxCombo = score.maxCombo,
@@ -251,25 +252,25 @@ import kotlin.reflect.full.companionObjectInstance
         val closable = ArrayList<AutoCloseable>(1)
 
         return try {
-            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
+            val (beatmap, isConvert) = getBeatmap(beatmapID, mode) { closable.add(it) }
             val notFC = beatmap.createPerformance(state).apply {
                 setLazer(lazer)
                 setPassedObjects(beatmap.objects)
                 if (isNotPass) setHitResultPriority(true)
-                if (change) this.setGameMode(mode)
+                if (isConvert) this.setGameMode(mode)
                 if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
             }.calculate()
             val result = RosuPerformance.FullRosuPerformance(notFC)
             val fc = beatmap.createPerformance(fcState).apply {
                 setLazer(lazer)
                 setPassedObjects(beatmap.objects)
-                if (change) this.setGameMode(mode)
+                if (isConvert) this.setGameMode(mode)
                 if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
             }.calculate().getPP()
             val pf = beatmap.createPerformance().apply {
                 isLazer(lazer)
                 setPassedObjects(beatmap.objects)
-                if (change) this.setGameMode(mode)
+                if (isConvert) this.setGameMode(mode)
                 if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
             }.calculate().getPP()
             result.fullPP = fc

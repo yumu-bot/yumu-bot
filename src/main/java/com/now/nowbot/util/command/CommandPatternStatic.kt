@@ -132,7 +132,7 @@ val REG_USERNAME_SEPERATOR: String = "[0-9a-zA-Z\\[\\]\\-\\s_,，|:：`、]"
 val REG_USERNAME: String = "[0-9a-zA-Z\\[\\]\\-\\s_]"
 
 @Language("RegExp")
-val REG_MOD: String = "(EZ|NF|HT|HR|SD|PF|DT|NC|HD|FI|FL|SO|[1-9]K|CP|MR|RD|TD)"
+val REG_MOD: String = "([1-9a-zA-Z][a-zA-Z])"
 
 @Language("RegExp")
 val REG_MODE: String = "(osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)"

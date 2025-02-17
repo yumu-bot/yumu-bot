@@ -592,6 +592,11 @@ class BeatmapApiImpl(
 
     override fun applyBeatMapExtend(score: LazerScore) {
         val extended = getBeatMap(score.beatMapID)
+
+        applyBeatMapExtend(score, extended)
+    }
+
+    override fun applyBeatMapExtend(score: LazerScore, extended: BeatMap) {
         val lite = score.beatMap
 
         score.beatMap = extend(lite, extended)!!

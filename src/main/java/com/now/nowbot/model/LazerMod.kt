@@ -101,6 +101,7 @@ sealed interface ValueMod {
     JsonSubTypes.Type(value = LazerMod.Key8::class, name = "8K"),
     JsonSubTypes.Type(value = LazerMod.Key9::class, name = "9K"),
     JsonSubTypes.Type(value = LazerMod.Key10::class, name = "10K"),
+    JsonSubTypes.Type(value = LazerMod.NoMod::class, name = "NM"),
     JsonSubTypes.Type(value = LazerMod.None::class, name = ""),
 )
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -2256,6 +2257,21 @@ sealed class LazerMod {
         }
     }
 
+    class NoMod : LazerMod() {
+        @get:JsonProperty("acronym")
+        override val acronym: String = type
+
+        @get:JsonProperty("settings")
+        override var settings: Any? = null
+
+        companion object : Mod {
+            override val type: String = "NM"
+            override val mode: Set<OsuMode> = setOf()
+            override val incompatible: Set<Mod> = setOf()
+
+        }
+    }
+
     override fun toString() = acronym
 
     companion object {
@@ -2365,6 +2381,7 @@ sealed class LazerMod {
                 Key8.type -> Key8()
                 Key9.type -> Key9()
                 Key10.type -> Key10()
+                NoMod.type -> NoMod()
                 else -> None()
             }
         }

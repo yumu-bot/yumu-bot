@@ -92,6 +92,8 @@ interface OsuBeatmapApiService {
     // 给成绩添加完整的谱面
     fun applyBeatMapExtend(score: LazerScore)
 
+    fun applyBeatMapExtend(score: LazerScore, beatMap: BeatMap)
+
     // 给成绩添加完整的谱面
     fun applyBeatMapExtendFromDataBase(score: LazerScore)
 }
