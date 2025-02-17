@@ -16,6 +16,7 @@ public class DiceException extends TipsException {
         DICE_Number_NotSupportNegative("请不要输入负数！"),
         DICE_Compare_NotMatch("我也不知道该选什么...扔骰子解决吧。"),
         DICE_Compare_All("我全都要！！！"),
+        DICE_Compare_NoDifference_Everyday("这么喜欢 %s？\n你这辈子就天天研究 %s 去吧！"),
         DICE_Compare_NoDifference("有区别？重新选吧！"),
         DICE_Compare_Tie("硬币立在墙角了。再投一次？"),
         DICE_Compare_Wtf("你不可能看到这条消息。"),

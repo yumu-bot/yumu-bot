@@ -8,6 +8,7 @@ import com.now.nowbot.service.messageServiceImpl.DiceService.DiceParam
 import com.now.nowbot.throwable.serviceException.DiceException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
+import okhttp3.internal.format
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -75,7 +76,7 @@ import kotlin.math.*
                 100L
             }
 
-            data.setValue(DiceParam(d, n, null))
+            data.value = DiceParam(d, n, null)
             return true
         } else if (number.isNullOrBlank().not()) {
             val n: Long
@@ -90,10 +91,10 @@ import kotlin.math.*
                 throw DiceException(DiceException.Type.DICE_Number_ParseFailed)
             }
 
-            data.setValue(DiceParam(1L, n, null))
+            data.value = DiceParam(1L, n, null)
             return true
         } else {
-            data.setValue(DiceParam(1L, 100L, null))
+            data.value = DiceParam(1L, 100L, null)
             return true
         }
 
@@ -118,7 +119,7 @@ import kotlin.math.*
                     val r = getRandom<Long?>(param.number)
                     val format = if ((r < 1f)) "%.2f" else "%.0f"
 
-                    receipt = event.reply(String.format(format, r))
+                    receipt = event.reply(format(format, r))
 
                     // 容易被识别成 QQ
                     if (r >= 1000000f && r < 1000000000f) {
@@ -132,7 +133,7 @@ import kotlin.math.*
                         val r = getRandomInstantly<Long?>(param.number)
                         val format = if ((r < 1f)) "%.2f" else "%.0f"
 
-                        sb.append(String.format(format, r))
+                        sb.append(format(format, r))
 
                         if (i != param.dice) {
                             sb.append(", ")
@@ -607,18 +608,25 @@ import kotlin.math.*
                         }
 
                         else -> {}
-                    } // 排除掉AB一样的选择要求
+                    }
+
+                    // 排除掉AB一样的选择要求
                     if (left.isNullOrBlank().not() && right.isNullOrBlank().not() && num == 0.0) {
-                        val m: Boolean = try {
-                            (left.lowercase().contains(right.lowercase()) ||
-                                    right.lowercase().contains(left.lowercase()))
-                                    && (left.length >= 3) && (right.length >= 3)
+                        val isSame: Boolean = try {
+                            val l = left.lowercase().trim()
+                            val r = right.lowercase().trim()
+
+                            (l == r) || ((l.contains(r) || r.contains(l)) && l.length >= 3 && r.length >= 3)
                         } catch (ignored: PatternSyntaxException) {
                             false
                         }
 
-                        if (m) {
-                            throw DiceException(DiceException.Type.DICE_Compare_NoDifference)
+                        if (isSame) {
+                            if (getRandomInstantly(100) < 30) {
+                                throw DiceException(DiceException.Type.DICE_Compare_NoDifference_Everyday, left.trim(), right.trim())
+                            } else {
+                                throw DiceException(DiceException.Type.DICE_Compare_NoDifference)
+                            }
                         }
                     }
 
@@ -732,38 +740,38 @@ import kotlin.math.*
                     }
 
                     Split.RANGE, Split.AMOUNT -> {
-                        return String.format(leftFormat, num)
+                        return format(leftFormat, num)
                     }
 
                     Split.TIME, Split.TIMES, Split.POSSIBILITY, Split.ACCURACY -> {
-                        return String.format(leftFormat, num, iis)
+                        return format(leftFormat, num, iis)
                     }
 
                     Split.RANK -> {
-                        return String.format(leftFormat, iis, num)
+                        return format(leftFormat, iis, num)
                     }
 
                     Split.BETTER, Split.COMPARE, Split.JUXTAPOSITION, Split.PREFER, Split.HESITATE, Split.QUESTION, Split.MULTIPLE -> {
-                        return String.format(leftFormat, left)
+                        return format(leftFormat, left)
                     }
 
                     Split.ASSUME, Split.EVEN -> {
-                        return String.format(leftFormat, right)
+                        return format(leftFormat, right)
                     }
 
                     Split.COULD, Split.WHETHER -> {
-                        return String.format(leftFormat, left, iis, right)
+                        return format(leftFormat, left, iis, right)
                     }
 
                     Split.LIKE, Split.IS -> {
-                        return String.format(leftFormat, iis)
+                        return format(leftFormat, iis)
                     }
 
                     Split.OR -> {
                         if (left.contains("是")) {
                             leftFormat = "我觉得，%s。"
                         }
-                        return String.format(leftFormat, left)
+                        return format(leftFormat, left)
                     }
                 }
             } else if (result > boundary + 0.002f) { // 选第二个
@@ -773,34 +781,34 @@ import kotlin.math.*
                     }
 
                     Split.RANGE, Split.AMOUNT -> {
-                        return String.format(rightFormat, num)
+                        return format(rightFormat, num)
                     }
 
                     Split.TIME, Split.TIMES, Split.POSSIBILITY, Split.ACCURACY -> {
-                        return String.format(rightFormat, num, iis)
+                        return format(rightFormat, num, iis)
                     }
 
                     Split.RANK -> {
-                        return String.format(rightFormat, iis, num)
+                        return format(rightFormat, iis, num)
                     }
 
                     Split.BETTER, Split.COMPARE, Split.JUXTAPOSITION, Split.PREFER, Split.HESITATE, Split.EVEN, Split.MULTIPLE -> {
-                        return String.format(rightFormat, right)
+                        return format(rightFormat, right)
                     }
 
                     Split.OR -> {
                         if (right.contains("是")) {
                             rightFormat = "我觉得，%s。"
                         }
-                        return String.format(rightFormat, right)
+                        return format(rightFormat, right)
                     }
 
                     Split.COULD, Split.WHETHER -> {
-                        return String.format(rightFormat, left, not, iis, right)
+                        return format(rightFormat, left, not, iis, right)
                     }
 
                     Split.LIKE, Split.IS -> {
-                        return String.format(rightFormat, iis)
+                        return format(rightFormat, iis)
                     }
                 }
             } else { // 打平机会千分之四。彩蛋？
@@ -851,11 +859,15 @@ import kotlin.math.*
             }
 
             if (same == strings.size) { // 只有多个全部一样才抛错
-                throw DiceException(DiceException.Type.DICE_Compare_NoDifference)
+                if (getRandomInstantly(100) < 30) {
+                    throw DiceException(DiceException.Type.DICE_Compare_NoDifference_Everyday, stringSet.first(), stringSet.first())
+                } else {
+                    throw DiceException(DiceException.Type.DICE_Compare_NoDifference)
+                }
             }
 
             val r = round(getRandom(strings.size) - 1.0).toInt()
-            return String.format("当然%s啦！", changeCase(strings[r])) // lr format一样的
+            return format("当然%s啦！", changeCase(strings[r])) // lr format一样的
         }
 
         /**
