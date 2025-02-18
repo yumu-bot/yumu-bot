@@ -92,8 +92,16 @@ interface OsuBeatmapApiService {
     // 给成绩添加完整的谱面
     fun applyBeatMapExtend(score: LazerScore)
 
-    fun applyBeatMapExtend(score: LazerScore, beatMap: BeatMap)
+    fun applyBeatMapExtend(score: LazerScore, extended: BeatMap)
 
     // 给成绩添加完整的谱面
     fun applyBeatMapExtendFromDataBase(score: LazerScore)
+
+    // 获取Q区谱面大致的上架时间
+    fun getBeatMapSetRankedTime(beatMap: BeatMap): String
+
+    // 获取谱面大致的上架时间
+    fun getBeatMapSetRankedTime(): Map<Long, String>
+
+    fun applyBeatMapSetRankedTime(beatMapSets: List<BeatMapSet>)
 }

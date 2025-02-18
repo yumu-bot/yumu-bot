@@ -61,11 +61,14 @@ public class OsuApiBaseService {
     @Resource
     WebClient osuApiWebClient;
 
+    @Resource
+    WebClient webClient;
+
     public OsuApiBaseService(OSUConfig osuConfig, YumuConfig yumuConfig) {
         String url;
         oauthId = osuConfig.getId();
         if (!StringUtils.hasText(url = osuConfig.getCallbackUrl())) {
-            url = STR."\{yumuConfig.getPublicUrl()}\{osuConfig.getCallbackPath()}";
+            url = yumuConfig.getPublicUrl() + osuConfig.getCallbackPath();
         }
         redirectUrl = url;
         oauthToken = osuConfig.getToken();

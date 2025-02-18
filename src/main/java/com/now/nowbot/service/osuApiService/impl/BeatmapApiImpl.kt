@@ -23,6 +23,7 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.OffsetDateTime
 import java.util.*
 import java.util.regex.Pattern
 import kotlin.math.min
@@ -614,6 +615,67 @@ class BeatmapApiImpl(
             score.beatMapSet = extended.beatMapSet!!
         }
     }
+
+    override fun getBeatMapSetRankedTime(beatMap: BeatMap): String {
+        return if (beatMap.ranked == 3) {
+            try {
+                val t = getBeatMapSetWithRankedTime(beatMap.beatMapSetID)
+
+                if (t.isEarly) {
+                    t.rankDateEarly
+                } else {
+                    t.rankDate
+                }
+            } catch (e: WebClientResponseException) {
+                ""
+            }
+        } else {
+            ""
+        }
+    }
+
+    override fun getBeatMapSetRankedTime(): Map<Long, String> {
+        return getBeatMapSetWithRankedTimeLibrary
+            .associate { it.beatMapID to (if (it.isEarly) it.rankDateEarly else it.rankDate) }
+    }
+
+    override fun applyBeatMapSetRankedTime(beatMapSets: List<BeatMapSet>) {
+        val l = getBeatMapSetWithRankedTimeLibrary
+            .associate { it.beatMapID to (if (it.isEarly) it.rankDateEarly else it.rankDate) }
+
+        beatMapSets.forEach {
+            val t = l[it.beatMapSetID]
+
+            if (t != null) {
+                it.rankedDate = OffsetDateTime.parse(t)
+            }
+        }
+    }
+
+    private val getBeatMapSetWithRankedTimeLibrary: List<BeatMapSetWithRankTime>
+        get() = base.webClient!!.get()
+            .uri {
+                it.scheme("https").host("mapranktimes.vercel.app").replacePath("api/beatmapsets").build()
+            }
+            .retrieve()
+            .bodyToMono(JsonNode::class.java)
+            .map { JacksonUtil.parseObjectList(it, BeatMapSetWithRankTime::class.java) }
+
+            //.bodyToFlux(BeatMapSetWithRankTime::class.java)
+            //.collectList()
+            .block()!!
+
+
+    private fun getBeatMapSetWithRankedTime(beatMapSetID: Long): BeatMapSetWithRankTime {
+        return base.webClient!!.get()
+            .uri {
+                it.scheme("https").host("mapranktimes.vercel.app").replacePath("api/beatmapsets").pathSegment(beatMapSetID.toString()).build()
+            }
+            .retrieve()
+            .bodyToMono(BeatMapSetWithRankTime::class.java)
+            .block()!!
+    }
+
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BeatmapApiImpl::class.java)
