@@ -41,7 +41,7 @@ import kotlin.math.*
         val text = m.group("text")
 
         if (text.isNullOrBlank().not()) { // 如果 dice 有符合，但是并不是 1，选择主动忽视
-            if ((dice.toLongOrNull() ?: return false) > 1L) {
+            if (dice.isNullOrBlank().not() && (dice.toLongOrNull() ?: return false) > 1L) {
                 return false
             } else if (number.isNullOrBlank().not()) {
                 data.value = DiceParam(null, null, (number + text).trim { it <= ' ' })
