@@ -192,11 +192,11 @@ import kotlin.reflect.full.companionObjectInstance
             null
         }
         val cache = ArrayList<AutoCloseable>(1)
-        val (beatmap, change) = getBeatmap(beatmapID, gameMode) { cache.add(it) }
+        val (beatmap, isConvert) = getBeatmap(beatmapID, gameMode) { cache.add(it) }
         return try {
             val performance = beatmap.createPerformance().apply {
                 setLazer(isLazer)
-                if (change) setGameMode(gameMode)
+                if (isConvert) setGameMode(gameMode)
                 maxCombo?.let { setCombo(it) }
                 modsStr?.let { setMods(it) }
                 setAcc(accuracy)
@@ -263,15 +263,17 @@ import kotlin.reflect.full.companionObjectInstance
             val result = RosuPerformance.FullRosuPerformance(notFC)
             val fc = beatmap.createPerformance(fcState).apply {
                 setLazer(lazer)
-                setPassedObjects(beatmap.objects)
-                if (isConvert) this.setGameMode(mode)
+                // setPassedObjects(beatmap.objects)
+                if (isConvert) setGameMode(mode)
                 if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
+
             }.calculate().getPP()
             val pf = beatmap.createPerformance().apply {
-                isLazer(lazer)
-                setPassedObjects(beatmap.objects)
-                if (isConvert) this.setGameMode(mode)
+                setLazer(lazer)
+                // setPassedObjects(beatmap.objects)
+                if (isConvert) setGameMode(mode)
                 if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
+
             }.calculate().getPP()
             result.fullPP = fc
             result.perfectPP = pf
