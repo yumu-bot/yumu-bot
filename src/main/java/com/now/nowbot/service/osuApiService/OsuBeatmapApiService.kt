@@ -101,7 +101,7 @@ interface OsuBeatmapApiService {
     fun getBeatMapSetRankedTime(beatMap: BeatMap): String
 
     // 获取谱面大致的上架时间
-    fun getBeatMapSetRankedTime(): Map<Long, String>
+    fun getBeatMapSetRankedTimeMap(): Map<Long, String>
 
     fun applyBeatMapSetRankedTime(beatMapSets: List<BeatMapSet>)
 }

@@ -626,9 +626,9 @@ class BeatmapApiImpl(
                 val t = getBeatMapSetWithRankedTime(beatMap.beatMapSetID)
 
                 if (t.isEarly) {
-                    t.rankDateEarly
+                    t.rankDateEarly.replace(".000Z", "Z")
                 } else {
-                    t.rankDate
+                    t.rankDate.replace(".000Z", "Z")
                 }
             } catch (e: WebClientResponseException) {
                 ""
@@ -638,14 +638,21 @@ class BeatmapApiImpl(
         }
     }
 
-    override fun getBeatMapSetRankedTime(): Map<Long, String> {
+    override fun getBeatMapSetRankedTimeMap(): Map<Long, String> {
         return getBeatMapSetWithRankedTimeLibrary()
-            .associate { it.beatMapID to (if (it.isEarly) it.rankDateEarly else it.rankDate) }
+            .associate {
+                it.beatMapID to (
+                    if (it.isEarly) {
+                        it.rankDateEarly.replace(".000Z", "Z")
+                    } else {
+                        it.rankDate.replace(".000Z", "Z")
+                    }
+            )
+            }
     }
 
     override fun applyBeatMapSetRankedTime(beatMapSets: List<BeatMapSet>) {
-        val l = getBeatMapSetWithRankedTimeLibrary()
-            .associate { it.beatMapID to (if (it.isEarly) it.rankDateEarly else it.rankDate) }
+        val l = getBeatMapSetRankedTimeMap()
 
         beatMapSets.forEach {
             val t = l[it.beatMapSetID]
@@ -670,11 +677,16 @@ class BeatmapApiImpl(
         return proxyClient.get()
             .uri("https://mapranktimes.vercel.app/api/beatmapsets/{sid}", beatMapSetID)
             .retrieve()
+            .bodyToMono(BeatMapSetWithRankTime::class.java)
+
+            /*
             .bodyToMono(String::class.java)
             .map {
                 println(it)
                 return@map JacksonUtil.parseObject(it, BeatMapSetWithRankTime::class.java)
             }
+
+             */
             .block()!!
     }
 
@@ -705,6 +717,7 @@ class BeatmapApiImpl(
             return liteMap
         }
 
+        /*
         private fun getScoreJudgeCount(score: Score): Int {
             val mode = score.mode
 
@@ -723,5 +736,7 @@ class BeatmapApiImpl(
                 else -> n320 + n300 + n200 + n100 + n50 + n0
             }
         }
+
+         */
     }
 }
