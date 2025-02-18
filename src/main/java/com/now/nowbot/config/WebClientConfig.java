@@ -18,20 +18,23 @@ import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
+import reactor.netty.transport.ProxyProvider;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
 import java.util.Collections;
+
 @Component
 @Configuration
 public class WebClientConfig implements WebFluxConfigurer {
     private static final Logger log = LoggerFactory.getLogger(WebClientConfig.class);
+
     public void configureHttpMessageCodecs(ServerCodecConfigurer configurer) {
         configurer.defaultCodecs().maxInMemorySize(20 * 1024 * 1024);
     }
 
     @Bean("divingFishApiWebClient")
-    public WebClient DivingFishApiWebClient(WebClient.Builder builder, NowbotConfig config) {
+    public WebClient DivingFishApiWebClient(WebClient.Builder builder) {
         ConnectionProvider connectionProvider = ConnectionProvider.builder("connectionProvider")
                 .maxIdleTime(Duration.ofSeconds(30))
                 .build();
@@ -61,7 +64,7 @@ public class WebClientConfig implements WebFluxConfigurer {
 
     @Bean("osuApiWebClient")
     @Primary
-    public WebClient OsuApiWebClient(WebClient.Builder builder, NowbotConfig config) {
+    public WebClient OsuApiWebClient(WebClient.Builder builder) {
         /*
          * Setting maxIdleTime as 30s, because servers usually have a keepAliveTimeout of 60s, after which the connection gets closed.
          * If the connection pool has any connection which has been idle for over 10s, it will be evicted from the pool.
@@ -116,6 +119,20 @@ public class WebClientConfig implements WebFluxConfigurer {
                     }
                     return Mono.error(e);
                 });
+    }
+
+    @Bean("proxyClient")
+    public WebClient proxyClient(WebClient.Builder builder, NowbotConfig config) {
+        HttpClient httpClient = HttpClient.newConnection()
+                .proxy(proxy ->
+                        proxy.type("HTTP".equalsIgnoreCase(config.proxyType) ? ProxyProvider.Proxy.HTTP : ProxyProvider.Proxy.SOCKS5)
+                                .host(config.proxyHost)
+                                .port(config.proxyPort)
+                )
+                .responseTimeout(Duration.ofSeconds(30));
+        return builder
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .build();
     }
 
     @Bean("webClient")

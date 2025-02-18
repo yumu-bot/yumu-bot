@@ -14,10 +14,12 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.util.DigestUtils
 import org.springframework.util.StringUtils
+import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.io.IOException
 import java.nio.charset.StandardCharsets
@@ -34,7 +36,9 @@ class BeatmapApiImpl(
     config: FileConfig,
     private val beatMapDao: BeatMapDao,
     private val osuBeatmapMirrorApiService: OsuBeatmapMirrorApiService,
-    private val beatmapObjectCountMapper: BeatmapObjectCountMapper
+    private val beatmapObjectCountMapper: BeatmapObjectCountMapper,
+
+    @Qualifier("proxyClient") private val proxyClient: WebClient,
 ) : OsuBeatmapApiService {
     private val osuDir: Path = Path.of(config.osuFilePath)
 
@@ -635,12 +639,12 @@ class BeatmapApiImpl(
     }
 
     override fun getBeatMapSetRankedTime(): Map<Long, String> {
-        return getBeatMapSetWithRankedTimeLibrary
+        return getBeatMapSetWithRankedTimeLibrary()
             .associate { it.beatMapID to (if (it.isEarly) it.rankDateEarly else it.rankDate) }
     }
 
     override fun applyBeatMapSetRankedTime(beatMapSets: List<BeatMapSet>) {
-        val l = getBeatMapSetWithRankedTimeLibrary
+        val l = getBeatMapSetWithRankedTimeLibrary()
             .associate { it.beatMapID to (if (it.isEarly) it.rankDateEarly else it.rankDate) }
 
         beatMapSets.forEach {
@@ -652,27 +656,25 @@ class BeatmapApiImpl(
         }
     }
 
-    private val getBeatMapSetWithRankedTimeLibrary: List<BeatMapSetWithRankTime>
-        get() = base.webClient!!.get()
-            .uri {
-                it.scheme("https").host("mapranktimes.vercel.app").replacePath("api/beatmapsets").build()
-            }
+    private fun getBeatMapSetWithRankedTimeLibrary(): List<BeatMapSetWithRankTime> {
+        return proxyClient.get()
+            .uri("https://mapranktimes.vercel.app/api/beatmapsets")
             .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .map { JacksonUtil.parseObjectList(it, BeatMapSetWithRankTime::class.java) }
-
-            //.bodyToFlux(BeatMapSetWithRankTime::class.java)
-            //.collectList()
+            .bodyToFlux(BeatMapSetWithRankTime::class.java)
+            .collectList()
             .block()!!
+    }
 
 
-    private fun getBeatMapSetWithRankedTime(beatMapSetID: Long): BeatMapSetWithRankTime {
-        return base.webClient!!.get()
-            .uri {
-                it.scheme("https").host("mapranktimes.vercel.app").replacePath("api/beatmapsets").pathSegment(beatMapSetID.toString()).build()
-            }
+    fun getBeatMapSetWithRankedTime(beatMapSetID: Long): BeatMapSetWithRankTime {
+        return proxyClient.get()
+            .uri("https://mapranktimes.vercel.app/api/beatmapsets/{sid}", beatMapSetID)
             .retrieve()
-            .bodyToMono(BeatMapSetWithRankTime::class.java)
+            .bodyToMono(String::class.java)
+            .map {
+                println(it)
+                return@map JacksonUtil.parseObject(it, BeatMapSetWithRankTime::class.java)
+            }
             .block()!!
     }
 

@@ -61,9 +61,6 @@ public class OsuApiBaseService {
     @Resource
     WebClient osuApiWebClient;
 
-    @Resource
-    WebClient webClient;
-
     public OsuApiBaseService(OSUConfig osuConfig, YumuConfig yumuConfig) {
         String url;
         oauthId = osuConfig.getId();
