@@ -627,12 +627,6 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     // #11 maimai & CHUNITHM
-    MAI_BP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("mai(mai)?\\s*best", "mb", "x")
-        appendQQID()
-        appendNameAnyButNoHash()
-        appendRange()
-    }),
 
     MAI_SCORE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mai(mai)?\\s*(score|song)", "ms")
@@ -708,8 +702,15 @@ enum class Instruction(val pattern: Pattern) {
         }
     }),
 
+    MAI_BP(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("mai(mai)?\\s*(best|best50|b50)?", "mb", "x")
+        appendQQID()
+        appendNameAnyButNoHash()
+        appendRange()
+    }),
+
     CHU_BP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("chu(nithm)?\\s*best", "cb", "y")
+        appendCommandsIgnoreAll("chu(nithm)?\\s*(best|best40|b40)?", "cb", "y")
         appendQQID()
         appendNameAnyButNoHash()
         appendRange()
