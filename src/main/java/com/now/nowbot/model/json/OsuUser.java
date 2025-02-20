@@ -278,6 +278,16 @@ public class OsuUser {
     @JsonProperty("support_level")
     Integer supportLevel;
 
+    @JsonProperty("team")
+    @Nullable
+    Team team;
+
+    public record Team(
+            @JsonProperty("flag_url") String flag,
+            @JsonProperty("id") Long id,
+            @JsonProperty("name") String name,
+            @JsonProperty("short_name") String short_name
+    ) {}
 
     @JsonProperty("user_achievements")
     List<UserAchievement> userAchievements;
