@@ -26,7 +26,6 @@ class MatchListener(
     private var kill: ScheduledFuture<*>? = null
 
     init {
-
         adapter.forEach {
             it.match = match
         }
@@ -55,11 +54,12 @@ class MatchListener(
         try {
             // 对局没有任何新事件
             if (nowEventID == newMatch.latestEventID) return
+
+            // 现在有对局正在进行中
             if (newMatch.currentGameID != null) {
-                // 现在有对局正在进行中
                 val gameEvent = newMatch.events.last { it.round != null }
                 var isAbort = false
-                if (newMatch.currentGameID != nowGameID) {
+                if (nowGameID != null && newMatch.currentGameID != nowGameID) {
                     nowGameID = newMatch.currentGameID
                     isAbort = true
                 }
@@ -71,6 +71,7 @@ class MatchListener(
             } else {
                 nowEventID = newMatch.latestEventID
             }
+
             match += newMatch
             parseUsers(newMatch.events, newMatch.players)
             onEvent(newMatch.events)
@@ -88,7 +89,6 @@ class MatchListener(
             onStop(StopType.MATCH_END)
             return
         }
-        nowEventID = match.latestEventID
         future = executorService.scheduleAtFixedRate(this::listen, 0, 8, TimeUnit.SECONDS)
         kill = executorService.schedule({
             if (isStart()) stop(StopType.TIME_OUT)
@@ -221,6 +221,9 @@ class MatchListener(
         SUPER_STOP("超级管理员关闭"),
         SERVER_REBOOT("服务器重启"),
         TIME_OUT("超时了"),
+        ;
+
+        override fun toString() = this.tips
     }
 
     companion object {

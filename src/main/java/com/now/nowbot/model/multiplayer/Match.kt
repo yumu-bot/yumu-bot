@@ -23,8 +23,11 @@ data class Match(
         get() = statistics.endTime != null
 
     @get:JsonProperty("current_game_id")
-    val currentGameID: Long?
-        get() = events.lastOrNull { it.round != null }?.round?.roundID
+    val currentGameID: Long? by lazy {
+        val e = events.lastOrNull { it.round != null } ?: return@lazy null
+        if (e.round?.endTime == null) return@lazy e.round?.roundID
+        return@lazy null
+    }
 
     val name by statistics::name
 
