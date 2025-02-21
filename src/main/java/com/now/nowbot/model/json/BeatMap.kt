@@ -54,14 +54,14 @@ open class BeatMap {
             return field ?: ""
         }
 
-    @get:JsonProperty("retryList")
-    val retryList: List<Int>
+    @get:JsonProperty("retries")
+    val retries: List<Int>
         get() {
             return getList(failTimes, "fail")
         }
 
-    @get:JsonProperty("failList")
-    val failList: List<Int>
+    @get:JsonProperty("fails")
+    val fails: List<Int>
         get() {
             return getList(failTimes, "exit")
         }
@@ -139,14 +139,14 @@ open class BeatMap {
     @get:JsonProperty("retry")
     val retry: Int
         get() {
-            return retryList.sum()
+            return retries.sum()
         }
 
     //自己算
     @get:JsonProperty("fail")
     val fail: Int
         get() {
-            return failList.sum()
+            return fails.sum()
         }
 
     //自己算
