@@ -762,13 +762,14 @@ public class BotWebApi {
         try {
             var mode = OsuMode.getMode(modeStr, OsuMode.OSU);
             var beatMap = beatmapApiService.getBeatMap(bid);
+            var mods = LazerMod.getModsList(modStr);
 
             var expected = new MapStatisticsService.Expected(
                     mode,
                     accuracy,
                     combo,
                     miss,
-                    OsuMod.splitModAcronyms(modStr),
+                    mods,
                     false
             );
 

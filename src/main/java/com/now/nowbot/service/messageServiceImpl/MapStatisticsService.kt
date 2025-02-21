@@ -1,7 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.OsuUser
@@ -44,7 +43,7 @@ class MapStatisticsService(
         @JvmField val accuracy: Double,
         @JvmField val combo: Int,
         @JvmField val misses: Int,
-        @JvmField val mods: List<String>,
+        @JvmField val mods: List<LazerMod>,
         @JvmField val isLazer: Boolean = false,
     )
 
@@ -195,7 +194,7 @@ class MapStatisticsService(
 
         val mods =
             try {
-                OsuMod.splitModAcronyms(matcher.group("mod")).distinct()
+                LazerMod.getModsList(matcher.group("mod"))
             } catch (e: RuntimeException) {
                 emptyList()
             }
@@ -269,12 +268,10 @@ class MapStatisticsService(
             val pp = getPPList(beatmap, expected, calculateApiService)
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
 
-            val mods = LazerMod.getModsList(expected.mods)
-
             val attributes = calculateApiService.getAccPP(
                 beatmap.beatMapID,
                 expected.mode,
-                mods,
+                expected.mods,
                 expected.combo,
                 expected.misses,
                 expected.isLazer,
@@ -283,7 +280,7 @@ class MapStatisticsService(
 
             beatmap.starRating = attributes.stars ?: beatmap.starRating
 
-            calculateApiService.applyBeatMapChanges(beatmap, mods)
+            calculateApiService.applyBeatMapChanges(beatmap, expected.mods)
 
             return imageService.getPanel(
                 PanelE6Param(user, beatmap, density, original, attributes, pp, expected)
@@ -304,11 +301,7 @@ class MapStatisticsService(
 
             val maxCombo = beatmap.maxCombo ?: expected.combo
             val mode = expected.mode
-            val mods = if (expected.mods.isEmpty()) {
-                null
-            } else {
-                LazerMod.getModsList(expected.mods)
-            }
+            val mods = expected.mods.ifEmpty { null }
             val isLazer = expected.isLazer
 
             result.add(
