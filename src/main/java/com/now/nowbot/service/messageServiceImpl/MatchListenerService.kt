@@ -3,8 +3,10 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.config.Permission
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.MicroUser
-import com.now.nowbot.model.multiplayer.*
+import com.now.nowbot.model.multiplayer.Match
+import com.now.nowbot.model.multiplayer.MatchAdapter
+import com.now.nowbot.model.multiplayer.MatchListener
+import com.now.nowbot.model.multiplayer.MatchRating
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -23,11 +25,9 @@ import com.now.nowbot.util.DataUtil.getOriginal
 import com.now.nowbot.util.Instruction
 import com.yumu.core.extensions.isNotNull
 import io.github.oshai.kotlinlogging.KotlinLogging
-import okhttp3.internal.toImmutableMap
 import org.springframework.stereotype.Service
 import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.util.stream.Collectors
 
 @Service("MATCH_LISTENER")
 class MatchListenerService(
@@ -230,20 +230,48 @@ class MatchListenerService(
 
                 val userMap =
                     match.players
-                        .stream()
                         .distinct()
-                        .collect(Collectors.toMap(MicroUser::getUserID) { it })
-                        .toImmutableMap()
+                        .associateBy { it.userID }
 
                 for (s in game.scores) {
                     val u = userMap[s.userID]
 
                     if (u != null && u.id != 0L) {
                         s.user = u
+                    } else if (s.userID != 0L) {
+                        // TODO 如果 match 比较大，则 userMap 很可能不全，需要想个办法来补充无法获取的玩家信息
+                        /*
+                        try {
+                            s.user = MicroUser()
+                            val n = userApiService.getPlayerInfo(s.userID)
+                            s.user!!.apply {
+                                this.userID = n.userID
+                                this.userName = n.username
+                                this.avatarUrl = n.avatarUrl
+                                this.cover = n.cover
+                                this.country = n.country
+                                this.coverUrl = n.coverUrl
+                            }
+                        } catch (ignored: Exception) { }
+
+                         */
                     }
                 }
 
                 val index = 1
+
+                // 手动调位置和赋值
+                if (game.scores.size > 2) {
+                    game.scores = game.scores.sortedByDescending { it.score }
+                }
+
+                for (i in game.scores.indices) {
+                    game.scores[i].ranking = i
+                }
+
+                calculateApiService.applyBeatMapChanges(game.beatMap, LazerMod.getModsList(game.mods))
+                calculateApiService.applyStarToBeatMap(game.beatMap, game.mode, LazerMod.getModsList(game.mods))
+
                 val image =
                     try {
                         val body = mapOf(
@@ -252,7 +280,7 @@ class MatchListenerService(
                             "index" to index,
                         )
 
-                        imageService.getPanel(body, "F2")
+                        imageService.getPanel(body, "F3")
                     } catch (e: java.lang.Exception) {
                         log.error(e) { "对局信息图片渲染失败：" }
                         throw MatchRoundException(MatchRoundException.Type.MR_Fetch_Error)

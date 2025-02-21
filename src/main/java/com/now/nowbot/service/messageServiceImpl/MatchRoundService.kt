@@ -1,9 +1,11 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.Match.MatchRound
 import com.now.nowbot.model.multiplayer.MatchRating
+import com.now.nowbot.model.multiplayer.MatchRating.Companion.insertMicroUserToScores
 import com.now.nowbot.model.multiplayer.MatchRating.RatingParam
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -127,6 +129,7 @@ import java.util.regex.Matcher
             match, RatingParam(0, 0, null, 1.0, delete = true, rematch = true), beatmapApiService, calculateApiService
         )
         mr.calculate()
+        mr.insertMicroUserToScores()
 
         val rounds = mr.rounds
 
@@ -147,14 +150,24 @@ import java.util.regex.Matcher
         }
 
         val img: ByteArray
+
+        val round = rounds[i]
+
+        calculateApiService.applyBeatMapChanges(round.beatMap, LazerMod.getModsList(round.mods))
+        calculateApiService.applyStarToBeatMap(round.beatMap, round.mode, LazerMod.getModsList(round.mods))
+
+        if (round.scores.size > 2) {
+            round.scores = round.scores.sortedByDescending { it.score }
+        }
+
         try {
             val body = mapOf(
                 "stat" to match.statistics,
-                "round" to mr.rounds[i],
+                "round" to round,
                 "index" to i,
             )
 
-            img = imageService.getPanel(body, "F2")
+            img = imageService.getPanel(body, "F3")
         } catch (e: Exception) {
             log.error("对局信息图片渲染失败：", e)
             throw MatchRoundException(MatchRoundException.Type.MR_Fetch_Error)
