@@ -137,7 +137,10 @@ class MatchListenerService(
             }
         }
 
-        val nonUserID = listener.usersIDSet.filter { !listener.userMap.containsKey(it) }
+        val nonUserID = game
+            .scores
+            .map { it.userID }
+            .filterNot { listener.userMap.containsKey(it) }
         if (nonUserID.isEmpty()) return
         val users = userApiService.getUsers(nonUserID)
         users.forEach {
@@ -238,23 +241,6 @@ class MatchListenerService(
 
                     if (u != null && u.id != 0L) {
                         s.user = u
-                    } else if (s.userID != 0L) {
-                        // TODO 如果 match 比较大，则 userMap 很可能不全，需要想个办法来补充无法获取的玩家信息
-                        /*
-                        try {
-                            s.user = MicroUser()
-                            val n = userApiService.getPlayerInfo(s.userID)
-                            s.user!!.apply {
-                                this.userID = n.userID
-                                this.userName = n.username
-                                this.avatarUrl = n.avatarUrl
-                                this.cover = n.cover
-                                this.country = n.country
-                                this.coverUrl = n.coverUrl
-                            }
-                        } catch (ignored: Exception) { }
-
-                         */
                     }
                 }
 
@@ -344,10 +330,10 @@ class MatchListenerService(
     companion object {
         val log = KotlinLogging.logger {}
         const val BREAK_ROUND: Int = 16
-        const val USER_MAX = 3
-        const val GROUP_MAX = 3
+        private const val USER_MAX = 3
+        private const val GROUP_MAX = 3
 
-        val listeners = mutableMapOf<Long, MatchListener>()
+        private val listeners = mutableMapOf<Long, MatchListener>()
 
         // group user listener
         val senderSet = mutableSetOf<Triple<Long, Long, MatchListenerImplement>>()
