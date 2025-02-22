@@ -248,6 +248,7 @@ public class UserApiImpl implements OsuUserApiService {
             .compile("application</div>\\s+<div class=\"team-info-entry__value\">\\s+(.+)\\s+</div>");
     private final Pattern teamDescriptionPattern = Pattern
             .compile("<div class='bbcode'>(.+)</div>");
+    private final Pattern teamBannerPattern = Pattern.compile("url\\('(https://assets.ppy.sh/teams/header/.+)'\\)");
     @Override
     public TeamInfo getTeamInfo(int id) {
         var html = base.request(client -> client.get()
@@ -255,6 +256,15 @@ public class UserApiImpl implements OsuUserApiService {
                 .retrieve()
                 .bodyToMono(String.class)
         );
+
+        String banner;
+
+        var bannerMatcher = teamBannerPattern.matcher(html);
+        if (bannerMatcher.find()) {
+            banner = bannerMatcher.group(1);
+        } else {
+            banner = "";
+        }
 
         String formed;
         var formedMatcher = teamFormedPattern.matcher(html);
@@ -296,6 +306,7 @@ public class UserApiImpl implements OsuUserApiService {
         }
         return new TeamInfo(
                 formed,
+                banner,
                 users,
                 mode,
                 application,

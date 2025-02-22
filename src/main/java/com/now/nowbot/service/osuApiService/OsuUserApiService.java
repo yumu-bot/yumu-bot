@@ -108,6 +108,7 @@ public interface OsuUserApiService {
 
     public static record TeamInfo(
             String formed,
+            String banner,
             List<OsuUser> users,
             OsuMode ruleset,
             String application,
