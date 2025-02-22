@@ -107,8 +107,12 @@ public interface OsuUserApiService {
     TeamInfo getTeamInfo(int id);
 
     public static record TeamInfo(
+            Integer id,
+            String name,
+            String abbr,
             String formed,
             String banner,
+            String flag,
             List<OsuUser> users,
             OsuMode ruleset,
             String application,

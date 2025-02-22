@@ -43,14 +43,8 @@ enum class Instruction(val pattern: Pattern) {
     BAN(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("super", "sp", "operate", "op")
         appendColonCaptureGroup(
-                    MAYBE,
-                    "operate",
-                    "(black|white|ban)?list",
-                    "add",
-                    "remove",
-                    "(un)?ban",
-                    "[lkarubw]"
-                )
+            MAYBE, "operate", "(black|white|ban)?list", "add", "remove", "(un)?ban", "[lkarubw]"
+        )
         appendIgnore()
         appendSpace()
         appendQQID()
@@ -236,11 +230,6 @@ enum class Instruction(val pattern: Pattern) {
          */
     }),
 
-    TEAM(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("team", "t")
-        appendQQUIDName()
-    }),
-
     MUTUAL(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mutual", "mu")
         appendCaptureGroup("names", REG_USERNAME_SEPERATOR, ANY)
@@ -255,6 +244,18 @@ enum class Instruction(val pattern: Pattern) {
             append(REG_COLON)
             appendSpace()
             appendCaptureGroup("area2", REG_USERNAME, MORE)
+        }
+    }),
+
+    TEAM(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("tm", "team", "clan")
+        appendQQUIDName()
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendSpace()
+            appendCaptureGroup(
+                "team", REG_NUMBER, MORE
+            )
         }
     }),
 
@@ -518,8 +519,7 @@ enum class Instruction(val pattern: Pattern) {
         appendCommands("kt(?![^x\\s])", "kita")
         appendCaptureGroup("noBG", "x")
         appendIgnore()
-        appendSpace()
-        // 这里改了
+        appendSpace() // 这里改了
         appendBID()
         appendMod()
         appendSpace()
@@ -546,7 +546,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     TEST_PPM(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("testppm", "testcost", "tp", "tc")
+        appendCommandsIgnoreAll("testppm", "tp")
         appendMode()
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, MORE)
     }),
@@ -564,7 +564,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     TEST_MAP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("testmap", "tm")
+        appendCommandsIgnoreAll("testmap", "testdiff", "td")
         appendID()
         appendMod()
     }),
@@ -687,7 +687,8 @@ enum class Instruction(val pattern: Pattern) {
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
-            appendCaptureGroup(FLAG_DIFF, REG_ANYTHING_BUT_NO_SPACE, MORE
+            appendCaptureGroup(
+                FLAG_DIFF, REG_ANYTHING_BUT_NO_SPACE, MORE
             )
         }
         appendCaptureGroup("any", REG_ANYTHING, MORE)
@@ -695,14 +696,16 @@ enum class Instruction(val pattern: Pattern) {
             append(REG_HASH)
             appendMatchLevel(MAYBE)
             appendSpace()
-            appendCaptureGroup("version", REG_ANYTHING, MORE
+            appendCaptureGroup(
+                "version", REG_ANYTHING, MORE
             )
         }
         appendGroup(MAYBE) {
             append(REG_STAR)
             appendMatchLevel(MAYBE)
             appendSpace()
-            appendCaptureGroup("score", REG_NUMBER, MORE
+            appendCaptureGroup(
+                "score", REG_NUMBER, MORE
             )
         }
     }),
@@ -723,8 +726,7 @@ enum class Instruction(val pattern: Pattern) {
 
     PLAY_STATISTIC(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("ppst")
-    }),
-    ;
+    }), ;
 
     fun matcher(input: CharSequence): Matcher = this.pattern.matcher(input)
 }

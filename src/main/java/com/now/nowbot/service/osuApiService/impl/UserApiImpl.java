@@ -244,11 +244,15 @@ public class UserApiImpl implements OsuUserApiService {
             .compile("Formed</div>\\s+<div class=\"team-info-entry__value\">\\s+(.+)\\s+</div>");
     private final Pattern teamUserPattern = Pattern.compile("data-user=\"(?<json>.+)\"");
     private final Pattern teamModePattern = Pattern.compile("fa-extra-mode-(\\w+)");
+    private final Pattern teamNamePattern        = Pattern.compile("<h1 class=\"profile-info__name\">\\s+([\\S\\s]+)\\s+</h1>");
+    private final Pattern teamAbbrPattern        = Pattern.compile(
+            "<p class=\"profile-info__flag\">\\s+\\[([\\S\\s]+)]\\s+</p>");
     private final Pattern teamApplicationPattern = Pattern
             .compile("application</div>\\s+<div class=\"team-info-entry__value\">\\s+(.+)\\s+</div>");
     private final Pattern teamDescriptionPattern = Pattern
             .compile("<div class='bbcode'>(.+)</div>");
     private final Pattern teamBannerPattern = Pattern.compile("url\\('(https://assets.ppy.sh/teams/header/.+)'\\)");
+    private final Pattern teamFlagPattern = Pattern.compile("url\\('(https://assets.ppy.sh/teams/flag/.+)'\\)");
     @Override
     public TeamInfo getTeamInfo(int id) {
         var html = base.request(client -> client.get()
@@ -258,12 +262,35 @@ public class UserApiImpl implements OsuUserApiService {
         );
 
         String banner;
-
         var bannerMatcher = teamBannerPattern.matcher(html);
         if (bannerMatcher.find()) {
             banner = bannerMatcher.group(1);
         } else {
             banner = "";
+        }
+
+        String name;
+        var nameMatcher = teamNamePattern.matcher(html);
+        if (nameMatcher.find()) {
+            name = nameMatcher.group(1).trim();
+        } else {
+            name = "";
+        }
+
+        String abbr;
+        var abbrMatcher = teamAbbrPattern.matcher(html);
+        if (abbrMatcher.find()) {
+            abbr = abbrMatcher.group(1).trim();
+        } else {
+            abbr = "";
+        }
+
+        String flag;
+        var flagMatcher = teamFlagPattern.matcher(html);
+        if (flagMatcher.find()) {
+            flag = flagMatcher.group(1);
+        } else {
+            flag = "";
         }
 
         String formed;
@@ -305,8 +332,12 @@ public class UserApiImpl implements OsuUserApiService {
             users.add(JacksonUtil.parseObject(json, OsuUser.class));
         }
         return new TeamInfo(
+                id,
+                name,
+                abbr,
                 formed,
                 banner,
+                flag,
                 users,
                 mode,
                 application,
