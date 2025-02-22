@@ -14,7 +14,6 @@ import com.now.nowbot.throwable.LogException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.command.*
-import com.yumu.core.extensions.isNotNull
 import com.yumu.core.extensions.isNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -34,12 +33,12 @@ object CmdUtil {
     /** 获取玩家信息, 末尾没有 range。在未找到匹配的玩家时，抛错 */
     @JvmStatic
     @Throws(TipsException::class)
-    fun getUserWithOutRange(
+    fun getUserWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
     ): OsuUser {
-        return getUserWithOutRange(event, matcher, mode, AtomicBoolean(false))
+        return getUserWithoutRange(event, matcher, mode, AtomicBoolean(false))
     }
 
     /**
@@ -49,7 +48,7 @@ object CmdUtil {
      */
     @JvmStatic
     @Throws(TipsException::class)
-    fun getUserWithOutRange(
+    fun getUserWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
@@ -57,14 +56,24 @@ object CmdUtil {
     ): OsuUser {
         val user = getOsuUser(event, matcher, mode)
 
-        if (user.isNotNull()) {
-            // 找到了别人, 直接返回结果
-            return user!!
+        val binUser = try {
+            bindDao.getUserFromQQ(event.sender.id, true)
+        } catch (e: Exception) {
+            if (user != null) {
+
+                isMyself.set(false)
+                return user
+            } else {
+                throw e
+            }
+        }
+
+        if (user != null) {
+            isMyself.set(binUser.osuID == user.userID)
+            return user
         }
 
         isMyself.set(true)
-
-        val binUser = bindDao.getUserFromQQ(event.sender.id, true)
 
         checkOsuMode(mode, binUser.osuMode)
 
@@ -89,7 +98,7 @@ object CmdUtil {
         isMyself.set(false)
         val range = getUserAndRange(matcher, mode)
         if (range.data.isNull()) {
-            range.data = getUserWithOutRange(event, matcher, mode, isMyself)
+            range.data = getUserWithoutRange(event, matcher, mode, isMyself)
         }
         return range
     }

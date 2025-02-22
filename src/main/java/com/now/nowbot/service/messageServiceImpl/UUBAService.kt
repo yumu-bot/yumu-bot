@@ -166,7 +166,7 @@ class UUBAService(
             else -> return null
         }
         val mode = CmdUtil.getMode(matcher)
-        val user = CmdUtil.getUserWithOutRange(event, matcher, mode)
+        val user = CmdUtil.getUserWithoutRange(event, matcher, mode)
 
         return BPHeadTailParam(UserParam(user.userID, user.username, mode.data, false), info = true)
     }

@@ -13,7 +13,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.serviceException.IMapperException
 import com.now.nowbot.util.CmdObject
-import com.now.nowbot.util.CmdUtil.getUserWithOutRange
+import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean
         val m = Instruction.I_MAPPER.matcher(messageText)
         if (!m.find()) return false
         val mode = CmdObject(OsuMode.DEFAULT)
-        val osuUser = getUserWithOutRange(event, m, mode)
+        val osuUser = getUserWithoutRange(event, m, mode)
         data.value = osuUser
         return true
     }
@@ -63,7 +63,7 @@ import java.util.concurrent.atomic.AtomicBoolean
         val matcher = OfficialInstruction.I_MAPPER.matcher(messageText)
         if (!matcher.find()) return null
         val mode = CmdObject(OsuMode.DEFAULT)
-        return getUserWithOutRange(event, matcher, mode)
+        return getUserWithoutRange(event, matcher, mode)
     }
 
     override fun reply(event: MessageEvent, param: OsuUser): MessageChain? {

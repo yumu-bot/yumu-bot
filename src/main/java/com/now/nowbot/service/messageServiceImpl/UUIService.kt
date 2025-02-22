@@ -8,7 +8,7 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.UUIService.UUIParam
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserWithOutRange
+import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -32,7 +32,7 @@ class UUIService(private val client: WebClient) : MessageService<UUIParam> {
             return false
         }
         val mode = getMode(m)
-        val user = getUserWithOutRange(event, m, mode)
+        val user = getUserWithoutRange(event, m, mode)
         data.value = UUIParam(user, mode.data)
         return true
     }

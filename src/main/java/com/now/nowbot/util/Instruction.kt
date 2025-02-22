@@ -527,6 +527,11 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup("round", "[\\w\\s]", MORE)
     }),
 
+    TAKE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("tk", "take(\\s*name)?", "claim(\\s*name)?")
+        appendQQUIDName()
+    }),
+
     GROUP_STATISTICS(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("groupstat(s)?", "groupstatistic(s)?", "统计(超限)?", "gs")
         appendColonCaptureGroup(MAYBE, "group", "[nah]|((新人|进阶|高阶)群)")
@@ -692,7 +697,7 @@ enum class Instruction(val pattern: Pattern) {
                 FLAG_DIFF, REG_ANYTHING_BUT_NO_SPACE, MORE
             )
         }
-        appendCaptureGroup("any", REG_ANYTHING, MORE)
+        appendCaptureGroup("any", REG_ANYTHING_BUT_NO_SPACE_HASH, MORE)
         appendGroup(MAYBE) {
             append(REG_HASH)
             appendMatchLevel(MAYBE)

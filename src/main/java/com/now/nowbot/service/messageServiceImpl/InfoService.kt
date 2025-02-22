@@ -19,7 +19,7 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserWithOutRange
+import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
@@ -208,7 +208,7 @@ class InfoService(
         private fun getParam(event: MessageEvent, matcher: Matcher, version: Int = 1): InfoParam {
             val isMyself = AtomicBoolean(false)
 
-            val user = getUserWithOutRange(event, matcher, getMode(matcher), isMyself)
+            val user = getUserWithoutRange(event, matcher, getMode(matcher), isMyself)
             val mode = user.currentOsuMode
 
             val dayStr = matcher.group(FLAG_DAY)

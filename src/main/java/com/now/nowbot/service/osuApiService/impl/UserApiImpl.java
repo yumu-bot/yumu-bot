@@ -153,13 +153,15 @@ public class UserApiImpl implements OsuUserApiService {
      * 批量获取用户信息
      *
      * @param users 注意, 单次请求数量必须小于50
+     * @param isVariant 是否获取玩家的多模式信息
      */
     @Override
-    public <T extends Number> List<MicroUser> getUsers(Collection<T> users) {
+    public <T extends Number> List<MicroUser> getUsers(Collection<T> users, Boolean isVariant) {
         return base.request(client -> client.get()
                 .uri(b -> b.path("users")
-                        .queryParam("ids[]", users)
-                        .build())
+                           .queryParam("ids[]", users)
+                           .queryParam("include_variant_statistics", isVariant)
+                           .build())
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(JsonNode.class)
@@ -272,7 +274,7 @@ public class UserApiImpl implements OsuUserApiService {
         String name;
         var nameMatcher = teamNamePattern.matcher(html);
         if (nameMatcher.find()) {
-            name = nameMatcher.group(1).trim();
+            name = unescapeHTML(nameMatcher.group(1).trim());
         } else {
             name = "";
         }
@@ -280,7 +282,7 @@ public class UserApiImpl implements OsuUserApiService {
         String abbr;
         var abbrMatcher = teamAbbrPattern.matcher(html);
         if (abbrMatcher.find()) {
-            abbr = abbrMatcher.group(1).trim();
+            abbr = unescapeHTML(abbrMatcher.group(1).trim());
         } else {
             abbr = "";
         }
@@ -343,5 +345,22 @@ public class UserApiImpl implements OsuUserApiService {
                 application,
                 description
         );
+    }
+
+    // 反转义字符
+    private String unescapeHTML(String str) {
+        return str.replace("&amp;", "&")
+                  .replace("&lt;", "<")
+                  .replace("&rt;", ">")
+                  .replace("&quot;", "\"")
+                  .replace("&apos;", "'")
+                  .replace("&nbsp;", " ")
+
+                  .replace("&#038;", "&")
+                  .replace("&#034;", "\"")
+                  .replace("&#039;", "'")
+                  .replace("&#160;", " ")
+
+                ;
     }
 }

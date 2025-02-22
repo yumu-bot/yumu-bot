@@ -21,7 +21,7 @@ import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.getMod
 import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserWithOutRange
+import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
@@ -77,7 +77,7 @@ import java.util.regex.Matcher
         val isDefault = OsuMode.isDefaultOrNull(mode.data)
 
         val user: OsuUser = try {
-            getUserWithOutRange(event, matcher, mode, isMyself)
+            getUserWithoutRange(event, matcher, mode, isMyself)
         } catch (e: BindException) {
             if (isMyself.get() && messageText.lowercase(Locale.getDefault()).contains("score")) {
                 log.info("score 退避")
@@ -133,7 +133,7 @@ import java.util.regex.Matcher
         val mode = getMode(matcher)
         val isMyself = AtomicBoolean(false)
         val isDefault = OsuMode.isDefaultOrNull(mode.data)
-        val user = getUserWithOutRange(event, matcher, mode, isMyself)
+        val user = getUserWithoutRange(event, matcher, mode, isMyself)
 
         val bid = getBid(matcher)
         val mods = LazerMod.getModsList(getMod(matcher))

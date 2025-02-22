@@ -9,7 +9,7 @@ import com.now.nowbot.service.messageServiceImpl.FriendService.Companion.SortTyp
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.CmdObject
-import com.now.nowbot.util.CmdUtil.getUserWithOutRange
+import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import java.util.*
@@ -32,7 +32,7 @@ class TeamService(
             return false
         }
 
-        val user = getUserWithOutRange(event, m, CmdObject(OsuMode.DEFAULT))
+        val user = getUserWithoutRange(event, m, CmdObject(OsuMode.DEFAULT))
 
         if (m.group("team")?.matches("\\d+".toRegex()) == true) {
             data.value = TeamParam(

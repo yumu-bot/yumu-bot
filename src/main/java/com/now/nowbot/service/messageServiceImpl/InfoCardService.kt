@@ -9,7 +9,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.throwable.serviceException.MiniCardException
 import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserWithOutRange
+import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
@@ -27,7 +27,7 @@ class InfoCardService(
         if (!matcher.find()) return false
 
         val mode = getMode(matcher)
-        val user = getUserWithOutRange(event, matcher, mode)
+        val user = getUserWithoutRange(event, matcher, mode)
 
         data.value = user
         return true
@@ -55,7 +55,7 @@ class InfoCardService(
         val matcher = OfficialInstruction.INFO_CARD.matcher(messageText)
         return if (matcher.find()) {
             val mode = getMode(matcher)
-            getUserWithOutRange(event, matcher, mode)
+            getUserWithoutRange(event, matcher, mode)
         } else {
             null
         }

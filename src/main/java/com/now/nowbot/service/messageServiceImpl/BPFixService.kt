@@ -16,7 +16,7 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserWithOutRange
+import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.CmdUtil.processBP
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
@@ -49,7 +49,7 @@ class BPFixService(
 
         val mode = getMode(matcher)
 
-        val user = getUserWithOutRange(event, matcher, mode)
+        val user = getUserWithoutRange(event, matcher, mode)
 
         val bpMap = scoreApiService.getBestScores(user.userID, mode.data)
 
@@ -74,7 +74,7 @@ class BPFixService(
         if (!matcher.find()) return null
 
         val mode = getMode(matcher)
-        val user = getUserWithOutRange(event, matcher, mode)
+        val user = getUserWithoutRange(event, matcher, mode)
         val bests = scoreApiService.getBestScores(user.userID, mode.data)
 
         return BPFixParam(user, processBP(bests), mode.data!!)

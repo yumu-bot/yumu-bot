@@ -78,7 +78,9 @@ import kotlin.math.floor
         val songs = mutableListOf<MaiSong>()
 
         song@ for (s in library.entries) {
-            if (param.version != null && param.version == MaiVersion.getVersion(s.value.info.version)) continue@song
+            if (param.version != MaiVersion.DEFAULT && param.version != MaiVersion.getVersion(s.value.info.version)) {
+                continue@song
+            }
 
             var meetCount = 0
 

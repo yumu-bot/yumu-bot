@@ -10,7 +10,7 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserWithOutRange
+import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -35,7 +35,7 @@ class BPAnalysisLegacyService (
 
         val isMyself = AtomicBoolean(false)
         val mode = getMode(matcher)
-        val user = getUserWithOutRange(event, matcher, mode, isMyself)
+        val user = getUserWithoutRange(event, matcher, mode, isMyself)
         val bpList = scoreApiService.getBestScores(user.userID, mode.data)
         data.value = BAParam(user, bpList, isMyself.get())
 

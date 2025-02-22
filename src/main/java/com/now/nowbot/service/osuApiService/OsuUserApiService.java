@@ -86,7 +86,11 @@ public interface OsuUserApiService {
      *
      * @param users 注意, 单次请求数量必须小于50
      */
-    <T extends Number> List<MicroUser> getUsers(Collection<T> users) throws WebClientResponseException;
+    <T extends Number> List<MicroUser> getUsers(Collection<T> users, Boolean isVariant) throws WebClientResponseException;
+
+    default <T extends Number> List<MicroUser> getUsers(Collection<T> users) {
+        return getUsers(users, false);
+    }
 
     List<LazerFriend> getFriendList(BinUser user) throws WebClientResponseException;
 
