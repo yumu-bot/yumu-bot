@@ -103,4 +103,6 @@ public interface OsuUserApiService {
     }
 
     JsonNode getPrivateMessage(BinUser sender, Long channel, Long since);
+
+    List<OsuUser> getTeamUsers(int id);
 }

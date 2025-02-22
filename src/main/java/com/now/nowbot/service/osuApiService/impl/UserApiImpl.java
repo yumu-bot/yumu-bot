@@ -15,10 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 public class UserApiImpl implements OsuUserApiService {
@@ -240,5 +238,22 @@ public class UserApiImpl implements OsuUserApiService {
                 .retrieve()
                 .bodyToMono(JsonNode.class)
         );
+    }
+
+    private final Pattern teamPattern = Pattern.compile("data-user=\"(?<json>.+)\"");
+    @Override
+    public List<OsuUser> getTeamUsers(int id) {
+        var html = base.request(client -> client.get()
+                .uri("https://osu.ppy.sh/teams/{id}", id)
+                .retrieve()
+                .bodyToMono(String.class)
+        );
+        var m = teamPattern.matcher(html);
+        var result = new ArrayList<OsuUser>();
+        while (m.find()) {
+            var json = m.group("json").replaceAll("&quot;", "\"");
+            result.add(JacksonUtil.parseObject(json, OsuUser.class));
+        }
+        return result;
     }
 }
