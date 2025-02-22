@@ -104,5 +104,14 @@ public interface OsuUserApiService {
 
     JsonNode getPrivateMessage(BinUser sender, Long channel, Long since);
 
-    List<OsuUser> getTeamUsers(int id);
+    TeamInfo getTeamInfo(int id);
+
+    public static record TeamInfo(
+            String formed,
+            List<OsuUser> users,
+            OsuMode ruleset,
+            String application,
+            String description
+    ) {
+    }
 }

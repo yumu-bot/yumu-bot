@@ -240,20 +240,66 @@ public class UserApiImpl implements OsuUserApiService {
         );
     }
 
-    private final Pattern teamPattern = Pattern.compile("data-user=\"(?<json>.+)\"");
+    private final Pattern teamFormedPattern = Pattern
+            .compile("Formed</div>\\s+<div class=\"team-info-entry__value\">\\s+(.+)\\s+</div>");
+    private final Pattern teamUserPattern = Pattern.compile("data-user=\"(?<json>.+)\"");
+    private final Pattern teamModePattern = Pattern.compile("fa-extra-mode-(\\w+)");
+    private final Pattern teamApplicationPattern = Pattern
+            .compile("application</div>\\s+<div class=\"team-info-entry__value\">\\s+(.+)\\s+</div>");
+    private final Pattern teamDescriptionPattern = Pattern
+            .compile("<div class='bbcode'>(.+)</div>");
     @Override
-    public List<OsuUser> getTeamUsers(int id) {
+    public TeamInfo getTeamInfo(int id) {
         var html = base.request(client -> client.get()
                 .uri("https://osu.ppy.sh/teams/{id}", id)
                 .retrieve()
                 .bodyToMono(String.class)
         );
-        var m = teamPattern.matcher(html);
-        var result = new ArrayList<OsuUser>();
-        while (m.find()) {
-            var json = m.group("json").replaceAll("&quot;", "\"");
-            result.add(JacksonUtil.parseObject(json, OsuUser.class));
+
+        String formed;
+        var formedMatcher = teamFormedPattern.matcher(html);
+        if (formedMatcher.find()) {
+            formed = formedMatcher.group(1);
+        } else {
+            formed = "";
         }
-        return result;
+
+        OsuMode mode;
+        var modeMatcher = teamModePattern.matcher(html);
+        if (modeMatcher.find()) {
+            mode = OsuMode.getMode(modeMatcher.group(1), OsuMode.OSU);
+        } else {
+            mode = OsuMode.OSU;
+        }
+
+        String application;
+        var applicationMatcher = teamApplicationPattern.matcher(html);
+        if (applicationMatcher.find()) {
+            application = applicationMatcher.group(1);
+        } else {
+            application = "";
+        }
+
+        String description;
+        var descriptionMatcher = teamDescriptionPattern.matcher(html);
+        if (descriptionMatcher.find()) {
+            description = descriptionMatcher.group(1);
+        } else {
+            description = "";
+        }
+
+        var userMatcher = teamUserPattern.matcher(html);
+        var users = new ArrayList<OsuUser>();
+        while (userMatcher.find()) {
+            var json = userMatcher.group("json").replaceAll("&quot;", "\"");
+            users.add(JacksonUtil.parseObject(json, OsuUser.class));
+        }
+        return new TeamInfo(
+                formed,
+                users,
+                mode,
+                application,
+                description
+        );
     }
 }
