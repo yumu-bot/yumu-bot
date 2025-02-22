@@ -402,7 +402,7 @@ enum class Instruction(val pattern: Pattern) {
     MU_RATING(CommandPatternBuilder.create {
         append(REG_EXCLAMATION)
         appendSpace()
-        append("((?<uu>(u{1,2})(rating|ra))|(?<main>((ym)?rating|((ym)?ra)|(mra?))))")
+        append("((?<uu>(u{1,2})(rating|ra))|(?<main>((ym)?rating|((ym)?ra)|(mra))))")
         appendIgnore()
         appendSpace()
 
