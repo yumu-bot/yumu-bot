@@ -117,7 +117,14 @@ class MatchListenerService(
         regentListener(
             event.group.id,
             event.sender.id,
-            MatchListenerImplement(beatmapApiService, calculateApiService, imageService, event, data.id),
+            MatchListenerImplement(
+                beatmapApiService,
+                matchApiService,
+                calculateApiService,
+                imageService,
+                event,
+                data.id
+            ),
             matchApiService,
             this,
         )
@@ -150,6 +157,7 @@ class MatchListenerService(
 
     class MatchListenerImplement(
         val beatmapApiService: OsuBeatmapApiService,
+        val matchApiService: OsuMatchApiService,
         val calculateApiService: OsuCalculateApiService,
         val imageService: ImageService,
         val messageEvent: MessageEvent,
@@ -176,7 +184,13 @@ class MatchListenerService(
             return lock.get().isNotNull()
         }
 
-        override fun onStart() {}
+        override fun onStart() {
+            for (i in 0..4) {
+                val firstEvent = match.events.first()
+                if (firstEvent.type == Match.EventType.MatchCreated) return
+                match += matchApiService.getMatchInfoBefore(matchID, firstEvent.eventID)
+            }
+        }
 
         override fun onGameAbort(beatmapID: Long) {
             messageEvent.reply(MatchListenerException.Type.ML_Listen_Aborted.message)
@@ -244,7 +258,7 @@ class MatchListenerService(
                     }
                 }
 
-                val index = 1
+                val index = 1 + match.events.count { it.round != null }
 
                 // 手动调位置和赋值
                 if (game.scores.size > 2) {
