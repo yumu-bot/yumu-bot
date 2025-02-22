@@ -236,6 +236,11 @@ enum class Instruction(val pattern: Pattern) {
          */
     }),
 
+    TEAM(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("team", "t")
+        appendQQUIDName()
+    }),
+
     MUTUAL(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mutual", "mu")
         appendCaptureGroup("names", REG_USERNAME_SEPERATOR, ANY)
