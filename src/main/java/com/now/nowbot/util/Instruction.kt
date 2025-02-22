@@ -252,6 +252,7 @@ enum class Instruction(val pattern: Pattern) {
         appendQQUIDName()
         appendGroup(MAYBE) {
             append(REG_HASH)
+            appendMatchLevel(MAYBE)
             appendSpace()
             appendCaptureGroup(
                 "team", REG_NUMBER, MORE
