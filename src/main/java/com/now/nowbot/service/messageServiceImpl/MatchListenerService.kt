@@ -266,7 +266,7 @@ class MatchListenerService(
                 }
 
                 for (i in game.scores.indices) {
-                    game.scores[i].ranking = i
+                    game.scores[i].ranking = (i + 1)
                 }
 
                 calculateApiService.applyBeatMapChanges(game.beatMap, LazerMod.getModsList(game.mods))
