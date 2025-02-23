@@ -51,6 +51,7 @@ public class OsuUser {
     Boolean isRestricted;
 
     @JsonProperty("last_visit")
+    @Nullable
     OffsetDateTime lastVisit;
 
     @JsonProperty("pm_friends_only")
@@ -406,11 +407,12 @@ public class OsuUser {
         isSupporter = supporter;
     }
 
+    @Nullable
     public OffsetDateTime getLastVisit() {
         return lastVisit;
     }
 
-    public void setLastVisit(OffsetDateTime lastVisit) {
+    public void setLastVisit(@Nullable OffsetDateTime lastVisit) {
         this.lastVisit = lastVisit;
     }
 
