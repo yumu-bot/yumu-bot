@@ -21,13 +21,16 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.exp
 import kotlin.math.floor
 
-@Service("TAKE")
-class TakeService(
-private val userApiService: OsuUserApiService,
+@Service("TAKE") class TakeService(
+    private val userApiService: OsuUserApiService,
 ) : MessageService<TakeService.TakeParam> {
     data class TakeParam(val user: OsuUser, val isMyself: Boolean = false)
 
-    override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<TakeParam>): Boolean {
+    override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: MessageService.DataValue<TakeParam>
+    ): Boolean {
 
         val m = Instruction.TAKE.matcher(messageText)
         if (!m.find()) {
@@ -81,7 +84,8 @@ private val userApiService: OsuUserApiService,
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, user.username)
         }
 
-        val pc = (micro?.rulesets?.osu?.playCount ?: 0L) + (micro?.rulesets?.taiko?.playCount ?: 0L) + (micro?.rulesets?.fruits?.playCount ?: 0L) + (micro?.rulesets?.mania?.playCount ?: 0L)
+        val pc = (micro?.rulesets?.osu?.playCount ?: 0L) + (micro?.rulesets?.taiko?.playCount
+            ?: 0L) + (micro?.rulesets?.fruits?.playCount ?: 0L) + (micro?.rulesets?.mania?.playCount ?: 0L)
 
         val plus = if (pc == 0L) {
             180L
@@ -97,16 +101,20 @@ private val userApiService: OsuUserApiService,
 
             val actions = rulesets.map {
                 return@map AsyncMethodExecutor.Supplier<Unit> {
-                    val lastMonth = userApiService.getPlayerInfo(user.userID, it)
-                        .monthlyPlaycounts.lastOrNull()?.start_date ?: OffsetDateTime.MIN.format(formatter2)
+                    val lastMonth =
+                        userApiService.getPlayerInfo(user.userID, it).monthlyPlaycounts.lastOrNull()?.start_date
+                            ?: OffsetDateTime.MIN.format(formatter2)
 
-                    users[it.modeValue.toInt()] = LocalDate.parse(lastMonth, formatter2).atTime(0, 0).atOffset(ZoneOffset.UTC)
+                    users[it.modeValue.toInt()] =
+                        LocalDate.parse(lastMonth, formatter2).atTime(0, 0).atOffset(ZoneOffset.UTC)
                 }
             }
 
             AsyncMethodExecutor.AsyncSupplier(actions)
 
-            val most = users.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Play)
+            val most = users.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value ?: throw GeneralTipsException(
+                GeneralTipsException.Type.G_Null_Play
+            )
 
             if (most.format(formatter2) == OffsetDateTime.MIN.format(formatter2)) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Play)
@@ -132,7 +140,7 @@ private val userApiService: OsuUserApiService,
             "$takeDays 天后"
         } else if (takeHours > 0L) {
             "$takeHours 小时后"
-        }  else {
+        } else {
             "不久后"
         }
 
@@ -156,21 +164,45 @@ private val userApiService: OsuUserApiService,
         val lastVisitFormat = if (isShownOffline) "保密" else user.lastVisit!!.format(formatter)
         val visitTimeFormat = if (isShownOffline) "未知" else visitTime
         val takeTimeFormat = take.format(formatter)
+        val verySoon = if (takeYears >= 5) "不过可能会很久。" else ""
 
-        if (param.isMyself) {
-            event.reply("""
-            别人可以占据你的玩家名。
-            你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
-            玩家的游戏次数：${pc}
-            你的玩家名可被占用的时间：${takeTimeFormat}（${takeTime}）
-            """.trimIndent())
+        if (take.isBefore(OffsetDateTime.now())) {
+            if (param.isMyself) {
+                event.reply(
+                    """
+                    别人现在就可以占据你的玩家名。赶快回坑开一把！
+                    你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
+                    玩家的游戏次数：${pc}
+                    你的玩家名可被占用的时间：${takeTimeFormat}
+                    """.trimIndent()
+                )
+            } else {
+                event.reply("""
+                    您现在就可以占据玩家 $name 的玩家名。
+                    玩家 $name 上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
+                    玩家的游戏次数：${pc}
+                    玩家名可用的时间：${takeTimeFormat}
+                    """.trimIndent()
+                )
+            }
         } else {
-            event.reply("""
-            您可以占据玩家 $name 的玩家名。
-            玩家 $name 上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
-            玩家的游戏次数：${pc}
-            玩家名可用的时间：${takeTimeFormat}（${takeTime}）
-            """.trimIndent())
+            if (param.isMyself) {
+                event.reply("""
+                    别人可以占据你的玩家名。${verySoon}
+                    你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
+                    玩家的游戏次数：${pc}
+                    你的玩家名可被占用的时间：${takeTimeFormat}（${takeTime}）
+                    """.trimIndent()
+                )
+            } else {
+                event.reply("""
+                    您可以占据玩家 $name 的玩家名。${verySoon}
+                    玩家 $name 上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
+                    玩家的游戏次数：${pc}
+                    玩家名可用的时间：${takeTimeFormat}（${takeTime}）
+                    """.trimIndent()
+                )
+            }
         }
     }
 
