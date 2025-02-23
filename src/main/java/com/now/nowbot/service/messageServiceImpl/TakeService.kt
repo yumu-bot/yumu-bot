@@ -10,9 +10,12 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
+import io.ktor.util.collections.*
 import org.springframework.stereotype.Service
+import java.time.LocalDate
 import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatterBuilder
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.exp
@@ -86,26 +89,35 @@ private val userApiService: OsuUserApiService,
             floor(1580.0 * (1.0 - exp((-pc) / 5900.0)) + 180.0 + (8.0 * pc / 5900.0)).toLong()
         }
 
-        val take = user.lastVisit?.plusDays(plus) ?: run {
+        val isShownOffline = user.lastVisit == null
+
+        val visit = if (isShownOffline) {
             val rulesets = listOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
-            val users = ArrayList<OffsetDateTime>(4)
+            val users = ConcurrentMap<Int, OffsetDateTime>(4)
 
             val actions = rulesets.map {
                 return@map AsyncMethodExecutor.Supplier<Unit> {
                     val lastMonth = userApiService.getPlayerInfo(user.userID, it)
                         .monthlyPlaycounts.lastOrNull()?.start_date ?: OffsetDateTime.MIN.format(formatter2)
 
-                    users.add(it.modeValue.toInt(), OffsetDateTime.parse(lastMonth, formatter2))
+                    users[it.modeValue.toInt()] = LocalDate.parse(lastMonth, formatter2).atTime(0, 0).atOffset(ZoneOffset.UTC)
                 }
             }
 
             AsyncMethodExecutor.AsyncSupplier(actions)
 
-            val most = users.maxByOrNull { it.toEpochSecond() } ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Play)
-            if (most.format(formatter2) == OffsetDateTime.MIN.format(formatter2)) throw GeneralTipsException(GeneralTipsException.Type.G_Null_Play)
+            val most = users.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Play)
+
+            if (most.format(formatter2) == OffsetDateTime.MIN.format(formatter2)) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Play)
+            }
 
             most
+        } else {
+            user.lastVisit!!
         }
+
+        val take = visit.plusDays(plus)
 
         val takeHours = ChronoUnit.HOURS.between(OffsetDateTime.now(), take)
         val takeDays = ChronoUnit.DAYS.between(OffsetDateTime.now(), take)
@@ -124,10 +136,10 @@ private val userApiService: OsuUserApiService,
             "不久后"
         }
 
-        val visitHours = ChronoUnit.HOURS.between(user.lastVisit, OffsetDateTime.now())
-        val visitDays = ChronoUnit.DAYS.between(user.lastVisit, OffsetDateTime.now())
-        val visitMonths = ChronoUnit.MONTHS.between(user.lastVisit, OffsetDateTime.now())
-        val visitYears = ChronoUnit.YEARS.between(user.lastVisit, OffsetDateTime.now())
+        val visitHours = ChronoUnit.HOURS.between(visit, OffsetDateTime.now())
+        val visitDays = ChronoUnit.DAYS.between(visit, OffsetDateTime.now())
+        val visitMonths = ChronoUnit.MONTHS.between(visit, OffsetDateTime.now())
+        val visitYears = ChronoUnit.YEARS.between(visit, OffsetDateTime.now())
 
         val visitTime = if (visitYears > 0L) {
             "$visitYears 年前"
@@ -141,30 +153,29 @@ private val userApiService: OsuUserApiService,
             "不久前"
         }
 
+        val lastVisitFormat = if (isShownOffline) "保密" else user.lastVisit!!.format(formatter)
+        val visitTimeFormat = if (isShownOffline) "未知" else visitTime
+        val takeTimeFormat = take.format(formatter)
+
         if (param.isMyself) {
             event.reply("""
             别人可以占据你的玩家名。
-            你上次在线的时间：${user.lastVisit?.format(formatter) ?: "保密"}（${visitTime}）
+            你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
             玩家的游戏次数：${pc}
-            你的玩家名可被占用的时间：${take.format(formatter)}（${takeTime}）
+            你的玩家名可被占用的时间：${takeTimeFormat}（${takeTime}）
             """.trimIndent())
         } else {
             event.reply("""
             您可以占据玩家 $name 的玩家名。
-            玩家 $name 上次在线的时间：${user.lastVisit?.format(formatter) ?: "保密"}（${visitTime}）
+            玩家 $name 上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
             玩家的游戏次数：${pc}
-            玩家名可用的时间：${take.format(formatter)}（${takeTime}）
+            玩家名可用的时间：${takeTimeFormat}（${takeTime}）
             """.trimIndent())
         }
     }
 
     companion object {
-        private val formatter = DateTimeFormatterBuilder()
-            .appendPattern("YYYY/MM/dd")
-            .toFormatter()
-
-        private val formatter2 = DateTimeFormatterBuilder()
-            .appendPattern("YYYY-MM-dd")
-            .toFormatter()
+        private val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
+        private val formatter2 = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     }
 }
