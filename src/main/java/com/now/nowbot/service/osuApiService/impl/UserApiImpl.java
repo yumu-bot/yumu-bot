@@ -328,7 +328,7 @@ public class UserApiImpl implements OsuUserApiService {
         var userMatcher = teamUserPattern.matcher(html);
         var users = new ArrayList<OsuUser>();
         while (userMatcher.find()) {
-            var json = userMatcher.group("json").replaceAll("&quot;", "\"");
+            var json = unescapeHTML(userMatcher.group("json"));
             users.add(JacksonUtil.parseObject(json, OsuUser.class));
         }
         return new TeamInfo(
@@ -347,17 +347,17 @@ public class UserApiImpl implements OsuUserApiService {
 
     // 反转义字符
     private String unescapeHTML(String str) {
-        return str.replace("&amp;", "&")
-                  .replace("&lt;", "<")
-                  .replace("&gt;", ">")
-                  .replace("&quot;", "\"")
-                  .replace("&apos;", "'")
-                  .replace("&nbsp;", " ")
+        return str.replaceAll("&amp;", "&")
+                  .replaceAll("&lt;", "<")
+                  .replaceAll("&gt;", ">")
+                  .replaceAll("&quot;", "\"")
+                  .replaceAll("&apos;", "'")
+                  .replaceAll("&nbsp;", " ")
 
-                  .replace("&#038;", "&")
-                  .replace("&#034;", "\"")
-                  .replace("&#039;", "'")
-                  .replace("&#160;", " ")
+                  .replaceAll("&#038;", "&")
+                  .replaceAll("&#034;", "\"")
+                  .replaceAll("&#039;", "'")
+                  .replaceAll("&#160;", " ")
 
                 ;
     }
