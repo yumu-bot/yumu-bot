@@ -126,22 +126,25 @@ import kotlin.math.floor
         }
 
         val take = visit.plusDays(plus)
+        val isImmediately = take.isBefore(OffsetDateTime.now())
 
         val takeHours = ChronoUnit.HOURS.between(OffsetDateTime.now(), take)
         val takeDays = ChronoUnit.DAYS.between(OffsetDateTime.now(), take)
         val takeMonths = ChronoUnit.MONTHS.between(OffsetDateTime.now(), take)
         val takeYears = ChronoUnit.YEARS.between(OffsetDateTime.now(), take)
 
+        val takeUnit = if (isImmediately) "前" else "后"
+
         val takeTime = if (takeYears > 0L) {
-            "$takeYears 年后"
+            "$takeYears 年$takeUnit"
         } else if (takeMonths > 0L) {
-            "$takeMonths 个月后"
+            "$takeMonths 个月$takeUnit"
         } else if (takeDays > 0L) {
-            "$takeDays 天后"
+            "$takeDays 天$takeUnit"
         } else if (takeHours > 0L) {
-            "$takeHours 小时后"
+            "$takeHours 小时$takeUnit"
         } else {
-            "不久后"
+            "不久$takeUnit"
         }
 
         val visitHours = ChronoUnit.HOURS.between(visit, OffsetDateTime.now())
@@ -161,16 +164,22 @@ import kotlin.math.floor
             "不久前"
         }
 
-        val lastVisitFormat = if (isShownOffline) "保密" else user.lastVisit!!.format(formatter)
+        val lastVisitFormat = if (isShownOffline) "保密" else visit.format(formatter)
         val visitTimeFormat = if (isShownOffline) "未知" else visitTime
         val takeTimeFormat = take.format(formatter)
-        val verySoon = if (takeYears >= 5) "不过可能会很久。" else ""
+        val soon = if (takeYears >= 4) {
+            "在很久之后"
+        } else if (takeYears >= 1) {
+            "在一段时间之后"
+        } else {
+            "即将"
+        }
 
-        if (take.isBefore(OffsetDateTime.now())) {
+        if (isImmediately) {
             if (param.isMyself) {
                 event.reply(
                     """
-                    别人现在就可以占据你的玩家名。赶快回坑开一把！
+                    别人现在就可以变成 $name，之后你会变成 ${name}_old。赶快回坑开一把！
                     你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
                     玩家的游戏次数：${pc}
                     你的玩家名可被占用的时间：${takeTimeFormat}
@@ -178,31 +187,32 @@ import kotlin.math.floor
                 )
             } else {
                 event.reply("""
-                    您现在就可以占据玩家 $name 的玩家名。
-                    玩家 $name 上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
+                    您现在就可以变成玩家 $name。
+                    玩家上次在线时间：${lastVisitFormat}（${visitTimeFormat}）
                     玩家的游戏次数：${pc}
-                    玩家名可用的时间：${takeTimeFormat}
+                    玩家名可被占用的时间：${takeTimeFormat}
                     """.trimIndent()
                 )
             }
-        } else {
-            if (param.isMyself) {
-                event.reply("""
-                    别人可以占据你的玩家名。${verySoon}
+            return
+        }
+
+        if (param.isMyself) {
+            event.reply("""
+                    别人${soon}可以占据你的玩家名。
                     你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
                     玩家的游戏次数：${pc}
                     你的玩家名可被占用的时间：${takeTimeFormat}（${takeTime}）
                     """.trimIndent()
-                )
-            } else {
-                event.reply("""
-                    您可以占据玩家 $name 的玩家名。${verySoon}
-                    玩家 $name 上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
+            )
+        } else {
+            event.reply("""
+                    您${soon}可以占据玩家 $name 的玩家名。
+                    玩家上次在线时间：${lastVisitFormat}（${visitTimeFormat}）
                     玩家的游戏次数：${pc}
-                    玩家名可用的时间：${takeTimeFormat}（${takeTime}）
+                    玩家名可被占用的时间：${takeTimeFormat}（${takeTime}）
                     """.trimIndent()
-                )
-            }
+            )
         }
     }
 
