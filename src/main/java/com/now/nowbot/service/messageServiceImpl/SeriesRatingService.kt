@@ -318,14 +318,14 @@ class SeriesRatingService(
                             skips.add(v)
                             ignores.add(0)
 
-                            removes.addLast(ArrayList<Int>(remove))
+                            removes.addLast(ArrayList(remove))
                             remove.clear()
                         }
                         Status.IGNORE -> {
                             matchIDs.add(matchID)
                             skips.add(skip)
                             ignores.add(v)
-                            removes.addLast(ArrayList<Int>(remove))
+                            removes.addLast(ArrayList(remove))
                             remove.clear()
                         }
                         Status.REMOVE_RECEIVED ->
@@ -338,7 +338,7 @@ class SeriesRatingService(
                             matchIDs.add(matchID)
                             skips.add(skip)
                             ignores.add(ignore)
-                            removes.addLast(ArrayList<Int>(remove))
+                            removes.addLast(ArrayList(remove))
                             remove.clear()
                         }
                         else ->
@@ -355,17 +355,21 @@ class SeriesRatingService(
                             matchIDs.add(matchID)
                             skips.add(0)
                             ignores.add(0)
+                            removes.addLast(ArrayList(remove))
+                            remove.clear()
                         }
                         Status.IGNORE -> {
                             matchIDs.add(matchID)
                             skips.add(skip)
                             ignores.add(0)
+                            removes.addLast(ArrayList(remove))
+                            remove.clear()
                         }
                         Status.OK -> {
                             matchIDs.add(matchID)
                             skips.add(skip)
                             ignores.add(ignore)
-                            removes.addLast(ArrayList<Int>(remove))
+                            removes.addLast(ArrayList(remove))
                             remove.clear()
                         }
                         else -> {}
@@ -373,6 +377,7 @@ class SeriesRatingService(
                     matchIDs.add(v)
                     skips.add(0)
                     ignores.add(0)
+                    removes.addLast(arrayListOf())
 
                     status = Status.OK
                 }
@@ -409,7 +414,7 @@ class SeriesRatingService(
                             matchIDs.add(matchID)
                             skips.add(skip)
                             ignores.add(ignore)
-                            removes.addLast(ArrayList<Int>(remove))
+                            removes.addLast(ArrayList(remove))
 
                             matchID = v
                             skip = 0
