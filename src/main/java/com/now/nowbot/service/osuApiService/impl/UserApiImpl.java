@@ -10,8 +10,6 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.JacksonUtil;
 import org.codehaus.plexus.util.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -20,7 +18,7 @@ import java.util.regex.Pattern;
 
 @Service
 public class UserApiImpl implements OsuUserApiService {
-    private static final Logger log = LoggerFactory.getLogger(UserApiImpl.class);
+    // private static final Logger log = LoggerFactory.getLogger(UserApiImpl.class);
     OsuApiBaseService base;
     BindDao           bindDao;
     OsuUserInfoDao    userInfoDao;
@@ -51,7 +49,7 @@ public class UserApiImpl implements OsuUserApiService {
 
     @Override
     public String getOauthUrl(String state, boolean full) {
-        return UriComponentsBuilder.fromHttpUrl("https://osu.ppy.sh/oauth/authorize")
+        return UriComponentsBuilder.fromUriString("https://osu.ppy.sh/oauth/authorize")
                 .queryParam("client_id", base.oauthId)
                 .queryParam("redirect_uri", base.redirectUrl)
                 .queryParam("response_type", "code")
@@ -351,7 +349,7 @@ public class UserApiImpl implements OsuUserApiService {
     private String unescapeHTML(String str) {
         return str.replace("&amp;", "&")
                   .replace("&lt;", "<")
-                  .replace("&rt;", ">")
+                  .replace("&gt;", ">")
                   .replace("&quot;", "\"")
                   .replace("&apos;", "'")
                   .replace("&nbsp;", " ")
