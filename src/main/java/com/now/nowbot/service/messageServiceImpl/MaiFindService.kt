@@ -77,17 +77,19 @@ import kotlin.math.floor
         val library = maimaiApiService.getMaimaiSongLibrary()
         val songs = mutableListOf<MaiSong>()
 
-        song@ for (s in library.entries) {
+        song@
+        for (s in library.entries) {
             if (param.version != MaiVersion.DEFAULT && param.version != MaiVersion.getVersion(s.value.info.version)) {
                 continue@song
             }
 
             var meetCount = 0
 
-            diff@ for (i in s.value.star.indices) {
+            diff@
+            for (i in s.value.star.indices) {
                 if (param.dxScore != null) {
                     val dxScore = s.value.charts[i].dxScore
-                    if (dxScore < param.dxScore || dxScore > param.dxScore + 1000) continue
+                    if (dxScore > param.dxScore + 1000 || dxScore < param.dxScore) continue@diff
                 }
 
                 if (param.difficulty != MaiDifficulty.DEFAULT) {
@@ -102,7 +104,7 @@ import kotlin.math.floor
                     }
                 }
 
-                if (param.ranges == null) {
+                if (param.ranges.isNullOrEmpty()) {
                     songs.add(s.value)
                     continue@song
                 }
@@ -117,7 +119,7 @@ import kotlin.math.floor
                 }
             }
 
-            if (param.ranges != null && meetCount == param.ranges.size) {
+            if (meetCount > 0 && meetCount == param.ranges?.size) {
                 songs.add(s.value)
                 continue@song
             }

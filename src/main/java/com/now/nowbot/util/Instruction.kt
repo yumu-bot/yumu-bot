@@ -697,15 +697,19 @@ enum class Instruction(val pattern: Pattern) {
                 FLAG_DIFF, REG_ANYTHING_BUT_NO_SPACE, MORE
             )
         }
-        appendCaptureGroup("any", REG_ANYTHING_BUT_NO_SPACE_HASH, MORE)
+        appendSpace()
+        appendCaptureGroup("any", REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendSpace()
         appendGroup(MAYBE) {
             append(REG_HASH)
             appendMatchLevel(MAYBE)
             appendSpace()
+            append(REG_ANYTHING_BUT_NO_STARS)
             appendCaptureGroup(
                 "version", REG_ANYTHING, MORE
             )
         }
+        appendSpace()
         appendGroup(MAYBE) {
             append(REG_STAR)
             appendMatchLevel(MAYBE)

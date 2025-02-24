@@ -52,7 +52,10 @@ val REG_ANYTHING_BUT_NO_SPACE: String = "\\S"
 val REG_ANYTHING_BUT_NO_HASH: String = "[^:：#＃]"
 
 @Language("RegExp")
-val REG_ANYTHING_BUT_NO_SPACE_HASH: String = "[^:：#＃\\s]"
+val REG_ANYTHING_BUT_NO_STARS: String = "[^☆✪★*⋆]"
+
+@Language("RegExp")
+val REG_ANYTHING_BUT_NO_HASH_STARS: String = "[^☆✪★*⋆:：#＃]"
 
 @Language("RegExp")
 val REG_SPACE: String = "\\s"

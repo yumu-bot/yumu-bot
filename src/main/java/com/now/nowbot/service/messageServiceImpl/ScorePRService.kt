@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.UUScore
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -322,7 +323,8 @@ class ScorePRService(
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService
         ): PanelE5Param {
-            return getScore4PanelE5(user, score, null, panel, beatmapApiService, calculateApiService)
+            beatmapApiService.applyBeatMapExtend(score)
+            return getScore4PanelE5AfterExtended(user, score, position = null, panel, beatmapApiService, calculateApiService)
         }
 
         @JvmStatic
@@ -330,13 +332,26 @@ class ScorePRService(
         fun getScore4PanelE5(
             user: OsuUser,
             score: LazerScore,
+            beatMap: BeatMap,
             position: Int? = null,
             panel: String,
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService,
         ): PanelE5Param {
-            beatmapApiService.applyBeatMapExtend(score)
+            beatmapApiService.applyBeatMapExtend(score, beatMap)
+            return getScore4PanelE5AfterExtended(user, score, position, panel, beatmapApiService, calculateApiService)
+        }
 
+        @JvmStatic
+        @Throws(Exception::class)
+        fun getScore4PanelE5AfterExtended(
+            user: OsuUser,
+            score: LazerScore,
+            position: Int? = null,
+            panel: String,
+            beatmapApiService: OsuBeatmapApiService,
+            calculateApiService: OsuCalculateApiService,
+        ): PanelE5Param {
             val beatmap = score.beatMap
             val original = DataUtil.getOriginal(beatmap)
 

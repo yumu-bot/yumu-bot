@@ -86,6 +86,15 @@ public enum OsuMode {
         return ! isDefaultOrNull(mode);
     }
 
+    // 修正无法转换的模式
+    public static OsuMode correctConvert(@Nullable OsuMode convert, @Nullable OsuMode map) {
+        if (map != OSU && map != null && map != DEFAULT) {
+            return map;
+        } else {
+            return Optional.ofNullable(convert).orElse(DEFAULT);
+        }
+    }
+
 
     public static Optional<String> getName(@Nullable OsuMode mode) {
         if (mode == null) {

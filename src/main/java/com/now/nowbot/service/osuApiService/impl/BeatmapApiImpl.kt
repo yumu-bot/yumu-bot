@@ -579,17 +579,15 @@ class BeatmapApiImpl(
     }
 
     // 给同一张图的成绩添加完整的谱面
-    override fun applyBeatMapExtendForSameScore(scoreList: List<LazerScore>) {
+    override fun applyBeatMapExtendForSameScore(scoreList: List<LazerScore>, beatMap: BeatMap) {
         if (scoreList.isEmpty()) return
-
-        val extended = getBeatMap(scoreList.first().beatMapID)
 
         for (score in scoreList) {
             val lite = score.beatMap
 
-            score.beatMap = extend(lite, extended)!!
-            if (extended.beatMapSet != null) {
-                score.beatMapSet = extended.beatMapSet!!
+            score.beatMap = extend(lite, beatMap)!!
+            if (beatMap.beatMapSet != null) {
+                score.beatMapSet = beatMap.beatMapSet!!
             }
         }
     }

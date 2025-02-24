@@ -57,8 +57,6 @@ class GeneralTipsException : TipsException {
         G_NotEnoughBP_Me("您在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
         G_NotEnoughBP_Player("对方在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
         
-        G_Overtime_ExchangeTooMany("%s：连接渲染模块超时（请求数据太多了）。\n如果你是第一次见到这条消息，第二次通常就会恢复了。\n如果你多次见到这条消息，可以尝试缩小范围。"), 
-        
         G_Wrong_QQ("QQ 参数错误，请检查。"), 
         G_Wrong_ParamAccuracy("准确率参数错误，请检查。"), 
         G_Wrong_ParamCombo("连击参数错误，请检查。"), 
@@ -73,12 +71,13 @@ class GeneralTipsException : TipsException {
         G_Fetch_Discussion("讨论区获取失败，请重试。"),
         G_Fetch_BeatMapAttr("获取变化的谱面数据超时（太多了），如果你是第一次见到这条消息，第二次通常就会恢复了。"),
 
-        G_Suggest_AnotherFunction("推荐您使用另一个功能来获取数据：%s"), 
+        G_Suggest_AnotherFunction("推荐您使用另一个功能：%s"),
         
         G_Malfunction_ppyAPI("ppy API 状态异常！"),
         G_Malfunction_Calculate("%s：数据计算失败。"), 
         G_Malfunction_Fetch("%s：数据获取失败。"), 
-        G_Malfunction_Render("%s：渲染模块连接失败。"), 
+        G_Malfunction_Render("%s：渲染模块连接失败。"),
+        G_Malfunction_RenderTooMany("%s：连接渲染模块超时（请求数据太多了）。\n如果你是第一次见到这条消息，第二次通常就会恢复了。\n如果你多次见到这条消息，可以尝试缩小范围。"),
         G_Malfunction_Send("%s：图片发送失败。\n请耐心等待问题修复。"), 
         G_Malfunction_IOException("%s：遇到了文件读取异常，请重试。"), 
         G_Malfunction_Classification("%s：分类失败。"), 

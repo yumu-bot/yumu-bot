@@ -2,6 +2,7 @@ package com.now.nowbot.util
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
@@ -53,30 +54,26 @@ object CmdUtil {
         mode: CmdObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): OsuUser {
-        val user = getOsuUser(event, matcher, mode)
-
-        val bu = try {
+        val bu : BindUser? = try {
             bindDao.getUserFromQQ(event.sender.id, true)
-        } catch (e: Exception) {
-            if (user != null) {
-
-                isMyself.set(false)
-                return user
-            } else {
-                throw e
-            }
+        } catch (ignored: Exception) {
+            null
         }
+
+        // 用于查询的模式，如果有设定则
+        val queryMode = if (OsuMode.isDefaultOrNull(mode.data) && bu != null) CmdObject(bu.osuMode) else mode
+
+        val user = getOsuUser(event, matcher, queryMode)
 
         if (user != null) {
-            isMyself.set(bu.osuID == user.userID)
+            isMyself.set(bu?.osuID == user.userID)
             return user
+        } else if (bu != null) {
+            isMyself.set(true)
+            return getOsuUser(bu.username, bu.osuID) { userApiService.getPlayerInfo(bu, queryMode.data) }
+        } else {
+            throw BindException(BindException.Type.BIND_Me_TokenExpired)
         }
-
-        isMyself.set(true)
-
-        checkOsuMode(mode, bu.osuMode)
-
-        return getOsuUser(bu.username, bu.osuID) { userApiService.getPlayerInfo(bu, mode.data) }
     }
 
     /**
@@ -451,11 +448,11 @@ object CmdUtil {
 
     /** 从正则中提取mod (结果为字符串) */
     @JvmStatic
-    fun getMod(matcher: Matcher): String {
+    fun getMod(matcher: Matcher): List<LazerMod> {
         if (!matcher.namedGroups().containsKey(FLAG_MOD)) {
-            return ""
+            return listOf()
         }
-        return matcher.group(FLAG_MOD) ?: ""
+        return LazerMod.getModsList(matcher.group(FLAG_MOD) ?: "")
     }
 
     /** 将 [LazerScore]列表转换为 indexMap 注意, 这里 index 从 1 开始 */
