@@ -210,8 +210,8 @@ class InfoService(
             val user = getUserWithoutRange(event, matcher, getMode(matcher), isMyself)
             val mode = user.currentOsuMode
 
-            val dayStr = matcher.group(FLAG_DAY)
-            val day = if (dayStr.isBlank().not()) try {
+            val dayStr = matcher.group(FLAG_DAY) ?: ""
+            val day = if (dayStr.isNotBlank()) try {
                 dayStr.toInt()
             } catch (e: NumberFormatException) {
                 1
