@@ -3,7 +3,7 @@ package com.now.nowbot.service.messageServiceImpl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.aop.CheckPermission;
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.BindUser;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.ImageService;
 import com.now.nowbot.service.MessageService;
@@ -68,7 +68,7 @@ public class PrivateMessageService implements MessageService<PrivateMessageServi
     public record PMParam(Type type, Long id, String message) {
     }
 
-    private JsonNode getJson(PMParam param, BinUser bin) throws TipsException {
+    private JsonNode getJson(PMParam param, BindUser bin) throws TipsException {
         final boolean hasParam = Objects.isNull(param.id) || Objects.isNull(param.message);
         return switch (param.type) {
             case send -> {

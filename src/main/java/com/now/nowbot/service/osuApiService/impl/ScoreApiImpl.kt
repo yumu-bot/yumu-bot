@@ -2,7 +2,7 @@ package com.now.nowbot.service.osuApiService.impl
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.dao.ScoreDao
-import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatmapUserScore
@@ -26,7 +26,7 @@ class ScoreApiImpl(
 ) : OsuScoreApiService {
 
     override fun getBestScores(
-        user: BinUser,
+        user: BindUser,
         mode: OsuMode?,
         offset: Int,
         limit: Int,
@@ -75,7 +75,7 @@ class ScoreApiImpl(
     }
 
     override fun getPassedScore(
-        user: BinUser,
+        user: BindUser,
         mode: OsuMode?,
         offset: Int,
         limit: Int,
@@ -93,7 +93,7 @@ class ScoreApiImpl(
     }
 
     override fun getRecentScore(
-        user: BinUser,
+        user: BindUser,
         mode: OsuMode?,
         offset: Int,
         limit: Int,
@@ -132,7 +132,7 @@ class ScoreApiImpl(
 
     override fun getBeatMapScore(
         bid: Long,
-        user: BinUser,
+        user: BindUser,
         mode: OsuMode?,
     ): BeatmapUserScore? {
         if (!user.isAuthorized) return getBeatMapScore(bid, user.osuID, mode)
@@ -189,7 +189,7 @@ class ScoreApiImpl(
 
     override fun getBeatMapScore(
         bid: Long,
-        user: BinUser,
+        user: BindUser,
         mode: OsuMode,
         mods: Iterable<LazerMod?>,
     ): BeatmapUserScore? {
@@ -223,7 +223,7 @@ class ScoreApiImpl(
         mods.forEach(Consumer { mod: LazerMod? -> builder.queryParam("mods[]", mod!!.acronym) })
     }
 
-    override fun getBeatMapScores(bid: Long, user: BinUser, mode: OsuMode?): List<LazerScore> {
+    override fun getBeatMapScores(bid: Long, user: BindUser, mode: OsuMode?): List<LazerScore> {
         if (!user.isAuthorized) getBeatMapScores(bid, user.osuID, mode)
         return base.request { client ->
             client.get()
@@ -282,7 +282,7 @@ class ScoreApiImpl(
     }
 
     private fun getRecent(
-        user: BinUser,
+        user: BindUser,
         mode: OsuMode?,
         includeFails: Boolean,
         offset: Int,

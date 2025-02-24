@@ -1,7 +1,6 @@
 package com.now.nowbot.model.enums
 
 import java.util.Locale
-import org.springframework.util.CollectionUtils
 
 enum class MaiVersion(val full: String, val abbreviation: String, val code: String) {
     DEFAULT("", "", ""),
@@ -36,7 +35,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
     companion object {
         @JvmStatic
         fun getNameList(versions: MutableList<MaiVersion>): MutableList<String> {
-            if (CollectionUtils.isEmpty(versions)) {
+            if (versions.isEmpty()) {
                 return mutableListOf()
             }
 
@@ -45,7 +44,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
 
         @JvmStatic
         fun getCodeList(versions: MutableList<MaiVersion>): MutableList<String> {
-            if (CollectionUtils.isEmpty(versions)) {
+            if (versions.isEmpty()) {
                 return mutableListOf()
             }
 

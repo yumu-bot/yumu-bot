@@ -21,7 +21,6 @@ import com.now.nowbot.util.CmdUtil.getUserWithRange
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
@@ -45,7 +44,7 @@ class BPService(
         val matcher = Instruction.BP.matcher(messageText)
         if (!matcher.find()) return false
 
-        val isMultiple = StringUtils.hasText(matcher.group("s"))
+        val isMultiple = matcher.group("s").isNullOrBlank().not()
         val isMyself = AtomicBoolean()
         // 处理 range
         val mode = getMode(matcher)

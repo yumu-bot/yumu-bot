@@ -2,7 +2,6 @@ package com.now.nowbot.model.json
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import org.springframework.util.CollectionUtils
 
 class ChuScore {
     @JsonProperty("cid") var chartID: Int = 0
@@ -54,7 +53,7 @@ class ChuScore {
             }
         }
 
-        fun insertSongData(score: ChuScore, song: ChuSong) {
+        private fun insertSongData(score: ChuScore, song: ChuSong) {
             val chart = song.charts.get(score.index)
 
             score.charter = chart.charter
@@ -62,7 +61,7 @@ class ChuScore {
         }
 
         fun insertPosition(scores: List<ChuScore>, isBest30: Boolean) {
-            if (CollectionUtils.isEmpty(scores)) return
+            if (scores.isEmpty()) return
 
             for (i in scores.indices) {
                 val s = scores[i]

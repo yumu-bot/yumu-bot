@@ -22,7 +22,6 @@ import com.now.nowbot.util.command.FLAG_MOD
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import java.util.regex.Matcher
 
 @Service("MAP_MINUS") class MapMinusService(
@@ -86,7 +85,7 @@ import java.util.regex.Matcher
                 throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
             }
 
-            val rate = if (StringUtils.hasText(matcher.group("rate"))) {
+            val rate = if (matcher.group("rate").isNullOrBlank().not()) {
                 try {
                     matcher.group("rate").toDouble()
                 } catch (e: NumberFormatException) {

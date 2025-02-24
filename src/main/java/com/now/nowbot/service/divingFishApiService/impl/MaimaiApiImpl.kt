@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
@@ -253,7 +252,7 @@ import kotlin.text.Charsets.UTF_8
     }
 
     override fun insertPosition(scores: List<MaiScore>, isBest35: Boolean) {
-        if (CollectionUtils.isEmpty(scores)) return
+        if (scores.isEmpty()) return
 
         for (i in scores.indices) {
             val s = scores[i]

@@ -1,6 +1,6 @@
 package com.now.nowbot.entity;
 
-import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.BindUser;
 import com.now.nowbot.model.enums.OsuMode;
 import jakarta.persistence.*;
 
@@ -39,7 +39,7 @@ public class OsuBindUserLite {
     @Column(name = "main_mode")
     private OsuMode mainMode;
 
-    public OsuBindUserLite(BinUser data) {
+    public OsuBindUserLite(BindUser data) {
         this.joinDate = LocalDateTime.now();
         this.osuId = data.getOsuID();
         this.osuName = data.getOsuName();

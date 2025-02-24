@@ -62,7 +62,7 @@ public class GetNameService implements MessageService<Matcher> {
             }
 
             try {
-                name = userApiService.getPlayerOsuInfo(id).getUsername();
+                name = userApiService.getPlayerInfo(id).getUsername();
             } catch (Exception e) {
                 sb.append("id=").append(id).append(" not found").append(',').append(' ');
                 break;

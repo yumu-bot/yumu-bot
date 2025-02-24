@@ -2,7 +2,6 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.permission.PermissionController
-import com.now.nowbot.permission.PermissionImplement
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -14,7 +13,6 @@ import com.now.nowbot.throwable.serviceException.ServiceSwitchException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
@@ -53,9 +51,9 @@ class ServiceSwitchService(
         // var o = Pattern.compile("(black|white)?list|on|off|start|close|[bkwlofsc]+");
         val groupStr: String = m.group(FLAG_QQ_GROUP) ?: ""
 
-        if (StringUtils.hasText(service)) {
-            if (StringUtils.hasText(operate)) {
-                if (StringUtils.hasText(groupStr)) {
+        if (service.isNotBlank()) {
+            if (operate.isNotBlank()) {
+                if (groupStr.isNotBlank()) {
                     data.setValue(
                         SwitchParam(
                             groupStr.toLong(),
@@ -73,7 +71,7 @@ class ServiceSwitchService(
                     )
                 }
             } else {
-                if (StringUtils.hasText(groupStr)) {
+                if (groupStr.isNotBlank()) {
                     throw ServiceSwitchException(ServiceSwitchException.Type.SW_Parameter_OnlyGroup)
                 } else {
                     val op = getOperation(service.uppercase(Locale.getDefault()))
@@ -84,7 +82,7 @@ class ServiceSwitchService(
                 }
             }
         } else {
-            if (StringUtils.hasText(groupStr)) {
+            if (groupStr.isNotBlank()) {
                 throw ServiceSwitchException(ServiceSwitchException.Type.SW_Parameter_OnlyGroup)
             } else {
                 throw ServiceSwitchException(ServiceSwitchException.Type.SW_Instructions)
@@ -103,21 +101,25 @@ class ServiceSwitchService(
         when (param.operation) {
             Operation.ON -> {
                 try {
-                    if (group == -1L) {
-                        controller.serviceSwitch(service, true)
-                        //                        Permission.openService(service);
-                        event.reply("已启动 ${service} 服务")
-                    } else if (group == 0L) {
-                        // 这里要放对所有群聊的操作
-                        // 貌似没这功能
-                        //                        permission.removeGroupAll(service, true);
-                        //                        event.reply(STR."已全面清除 \{service} 服务的禁止状态");
-                        event.reply("已全面解禁 ${service} 服务（并未修好）")
-                    } else {
-                        controller.unblockGroup(service, group)
-                        //                        permission.removeGroup(service, group, true,
-                        // false);
-                        event.reply("已解禁群聊 ${group} 的 ${service} 服务")
+                    when (group) {
+                        -1L -> {
+                            controller.serviceSwitch(service, true)
+                            //                        Permission.openService(service);
+                            event.reply("已启动 $service 服务")
+                        }
+                        0L -> {
+                            // 这里要放对所有群聊的操作
+                            // 貌似没这功能
+                            //                        permission.removeGroupAll(service, true);
+                            //                        event.reply(STR."已全面清除 \{service} 服务的禁止状态");
+                            event.reply("已全面解禁 $service 服务（并未修好）")
+                        }
+                        else -> {
+                            controller.unblockGroup(service, group)
+                            //                        permission.removeGroup(service, group, true,
+                            // false);
+                            event.reply("已解禁群聊 $group 的 $service 服务")
+                        }
                     }
                 } catch (e: TipsRuntimeException) {
                     throw ServiceSwitchException(
@@ -132,16 +134,20 @@ class ServiceSwitchService(
 
             Operation.OFF -> {
                 try {
-                    if (group == -1L) {
-                        controller.serviceSwitch(service, false)
-                        event.reply("已关闭 ${service} 服务")
-                    } else if (group == 0L) {
-                        //                        permission.removeGroupAll(service, true);
-                        //                        event.reply(STR."已全面清除 \{service} 服务的禁止状态");
-                        event.reply("已全面禁止 ${service} 服务（并未修好）")
-                    } else {
-                        controller.blockGroup(service, group)
-                        event.reply("已禁止群聊 ${group} 的 ${service} 服务")
+                    when (group) {
+                        -1L -> {
+                            controller.serviceSwitch(service, false)
+                            event.reply("已关闭 $service 服务")
+                        }
+                        0L -> {
+                            //                        permission.removeGroupAll(service, true);
+                            //                        event.reply(STR."已全面清除 \{service} 服务的禁止状态");
+                            event.reply("已全面禁止 $service 服务（并未修好）")
+                        }
+                        else -> {
+                            controller.blockGroup(service, group)
+                            event.reply("已禁止群聊 $group 的 $service 服务")
+                        }
                     }
                 } catch (e: TipsRuntimeException) {
                     throw ServiceSwitchException(
@@ -186,9 +192,9 @@ class ServiceSwitchService(
             service1.ignores
 
             // 另外作用在全局服务的状态是第一个, 可以通过下面来判断
-            service1.name == PermissionImplement.GLOBAL_PERMISSION
+            // service1.name == PermissionImplement.GLOBAL_PERMISSION
             // 或者直接获取
-            controller!!.queryGlobal()
+            // controller!!.queryGlobal()
 
             val sb = StringBuilder()
             sb.append("## 服务：开关状态\n")

@@ -16,8 +16,6 @@ import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
-import org.springframework.util.StringUtils
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.regex.Matcher
@@ -46,35 +44,34 @@ class TestPPMService(
         val names: List<String?>? = splitString(matcher.group("data"))
         var mode = OsuMode.getMode(matcher.group("mode"))
 
-        if (CollectionUtils.isEmpty(names))
+        if (names.isNullOrEmpty())
                 throw PPMinusException(PPMinusException.Type.PM_Test_Empty)
 
         val sb = StringBuilder()
 
-        for (name in names!!) {
-            if (!StringUtils.hasText(name)) {
+        for (name in names) {
+            if (name.isNullOrBlank()) {
                 break
             }
 
             var user: OsuUser
-            var bpList: List<LazerScore>?
+            var bps: List<LazerScore>?
 
             try {
-                val id = userApiService.getOsuId(name)
-                user = userApiService.getPlayerOsuInfo(id)
+                user = userApiService.getPlayerInfo(name)
 
-                if (mode == OsuMode.DEFAULT) {
+                if (OsuMode.isDefaultOrNull(mode)) {
                     mode = user.currentOsuMode
                 }
 
-                bpList = scoreApiService.getBestScores(id, mode, 0, 100)
+                bps = scoreApiService.getBestScores(user.userID, mode, 0, 100)
             } catch (e: Exception) {
                 sb.append("name=").append(name).append(" not found").append('\n')
                 break
             }
 
             val ppmData = TestPPMData()
-            ppmData.init(user, bpList)
+            ppmData.init(user, bps)
 
             sb.append(user.username)
                     .append(',')
@@ -191,7 +188,7 @@ class TestPPMService(
                     ppv0 += bp.PP!!.toFloat()
                     accv0 += bp.accuracy.toFloat()
                     lengv0 += bp.beatMap.totalLength.toLong()
-                } else if (i >= 45 && i < 55) {
+                } else if (i in 45..54) {
                     ppv45 += bp.PP!!.toFloat()
                     accv45 += bp.accuracy.toFloat()
                     lengv45 += bp.beatMap.totalLength.toLong()

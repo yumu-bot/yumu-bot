@@ -6,7 +6,6 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.MicroUser
 import com.now.nowbot.model.json.Statistics
-import org.springframework.util.CollectionUtils
 import java.time.OffsetDateTime
 import kotlin.math.max
 
@@ -349,7 +348,7 @@ data class Match(
                 this.events.addAll(m.events)
             }
 
-            if (CollectionUtils.isEmpty(this.players)) {
+            if (this.players.isEmpty()) {
                 this.players = m.players
             } else {
                 val p = ArrayList<MicroUser>(this.players.size)
@@ -357,7 +356,7 @@ data class Match(
                 p.addAll(this.players)
                 p.addAll(m.players)
 
-                this.players = p.stream().distinct().toList()
+                this.players = p.distinct().toMutableList()
             }
 
             //更新状态

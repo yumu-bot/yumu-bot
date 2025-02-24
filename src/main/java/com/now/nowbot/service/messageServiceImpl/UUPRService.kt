@@ -17,7 +17,6 @@ import com.now.nowbot.util.CmdUtil.getUserWithRange
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClient
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -47,7 +46,7 @@ class UUPRService(
             return false
         }
         val uid = range.data!!.userID
-        val includeFail = StringUtils.hasText(matcher.group("recent"))
+        val includeFail = matcher.group("recent").isNullOrBlank().not()
         val offset = range.getOffset(0, false)
 
         val list = scoreApiService.getScore(uid, mode.data, offset, 1, includeFail)

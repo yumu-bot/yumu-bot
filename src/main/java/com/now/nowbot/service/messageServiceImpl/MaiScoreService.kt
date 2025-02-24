@@ -14,9 +14,7 @@ import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
-import com.yumu.core.extensions.isNotNull
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 
 @Service("MAI_SCORE") class MaiScoreService(
     private val maimaiApiService: MaimaiApiService,
@@ -55,7 +53,7 @@ import org.springframework.util.StringUtils
             return false
         }
 
-        val difficulty = if (matcher.group(FLAG_DIFF).isNotNull()) {
+        val difficulty = if (matcher.group(FLAG_DIFF).isNullOrBlank().not()) {
             MaiDifficulty.getDifficulty(matcher.group(FLAG_DIFF))
         } else {
             MaiDifficulty.DEFAULT
@@ -67,13 +65,13 @@ import org.springframework.util.StringUtils
 
         val qq = if (event.isAt) {
             event.target
-        } else if (StringUtils.hasText(qqStr)) {
+        } else if (qqStr.isNotBlank()) {
             qqStr.toLong()
         } else {
             event.sender.id
         }
 
-        if (StringUtils.hasText(nameOrTitleStr)) {
+        if (nameOrTitleStr.isNotBlank()) {
             if (nameOrTitleStr.contains(Regex(REG_SPACE))) {
                 val s = nameOrTitleStr.split(Regex(REG_SPACE))
 
@@ -223,15 +221,15 @@ import org.springframework.util.StringUtils
             name: String?,
             maimaiApiService: MaimaiApiService,
         ): MaiBestScore? {
-            return if (qq.isNotNull()) {
+            return if (qq != null) {
                 try {
-                    maimaiApiService.getMaimaiFullScores(qq!!)
+                    maimaiApiService.getMaimaiFullScores(qq)
                 } catch (e: Exception) {
                     return null
                 }
-            } else if (name.isNotNull()) {
+            } else if (name != null) {
                 try {
-                    maimaiApiService.getMaimaiFullScores(name!!)
+                    maimaiApiService.getMaimaiFullScores(name)
                 } catch (e: Exception) {
                     return null
                 }

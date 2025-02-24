@@ -5,7 +5,6 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.Resource
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClient
 import java.nio.file.Path
 
@@ -25,13 +24,13 @@ class DivingFishBaseService(fishConfig: DivingFishConfig) {
 
     // 这里写 token 相关的
     init {
-        if (StringUtils.hasText(fishConfig.token)) {
+        if (fishConfig.token.isNullOrBlank().not()) {
             accessToken = fishConfig.token
         }
     }
 
     fun hasToken(): Boolean {
-        return StringUtils.hasText(accessToken)
+        return accessToken.isNullOrBlank().not()
     }
 
     fun insertDeveloperHeader(headers: HttpHeaders?) {

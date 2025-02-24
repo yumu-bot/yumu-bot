@@ -1,7 +1,7 @@
 package com.now.nowbot.util
 
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
@@ -18,7 +18,6 @@ import com.yumu.core.extensions.isNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
-import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -56,7 +55,7 @@ object CmdUtil {
     ): OsuUser {
         val user = getOsuUser(event, matcher, mode)
 
-        val binUser = try {
+        val bu = try {
             bindDao.getUserFromQQ(event.sender.id, true)
         } catch (e: Exception) {
             if (user != null) {
@@ -69,15 +68,15 @@ object CmdUtil {
         }
 
         if (user != null) {
-            isMyself.set(binUser.osuID == user.userID)
+            isMyself.set(bu.osuID == user.userID)
             return user
         }
 
         isMyself.set(true)
 
-        checkOsuMode(mode, binUser.osuMode)
+        checkOsuMode(mode, bu.osuMode)
 
-        return getOsuUser(binUser.username, binUser.osuID) { userApiService.getPlayerInfo(binUser, mode.data) }
+        return getOsuUser(bu.username, bu.osuID) { userApiService.getPlayerInfo(bu, mode.data) }
     }
 
     /**
@@ -204,7 +203,7 @@ object CmdUtil {
         var hashIndex: Int = text.indexOf(CHAR_HASH)
         if (hashIndex < 0) hashIndex = text.indexOf(CHAR_HASH_FULL)
         var nameStr: String? = text.substring(0, hashIndex).trim()
-        if (!StringUtils.hasText(nameStr)) nameStr = null
+        if (nameStr?.isBlank() == true) nameStr = null
         val rangeStr = text.substring(hashIndex + 1).trim()
         val rangeInt = parseRange(rangeStr)
         ranges.add(CmdRange(nameStr, rangeInt[0], rangeInt[1]))
@@ -349,7 +348,7 @@ object CmdUtil {
 
         if (matcher.namedGroups().containsKey(FLAG_NAME)) {
             val name: String = matcher.group(FLAG_NAME) ?: ""
-            if (StringUtils.hasText(name)) {
+            if (name.isBlank().not()) {
                 return getOsuUser(name, mode.data)
             }
         }
@@ -364,7 +363,7 @@ object CmdUtil {
      * @param mode 指定模式
      */
     @Throws(TipsException::class)
-    fun getOsuUser(user: BinUser, mode: OsuMode?): OsuUser {
+    fun getOsuUser(user: BindUser, mode: OsuMode?): OsuUser {
         return getOsuUser(user.osuName, user.osuID) { userApiService.getPlayerInfo(user, mode) }
     }
 
@@ -517,7 +516,7 @@ data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int
 
     private fun fullRange() = start != null && end != null
 
-    fun setZeroToRange100(n: Int = 100) {
+    fun setZeroToRange100() {
         rangeZero = (start == 0 && end == null)
     }
 

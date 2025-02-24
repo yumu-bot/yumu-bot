@@ -20,7 +20,6 @@ import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 
@@ -47,9 +46,9 @@ class ScorePRCardService(
         range.setZeroToRange100()
 
         val offset = range.getOffset(0, false)
-        val scores = if (StringUtils.hasText(matcher.group("recent"))) {
+        val scores = if (matcher.group("recent").isNullOrBlank().not()) {
             scoreApiService.getPassedScore(range.data!!.userID, mode.data, offset, 1)
-        } else if (StringUtils.hasText(matcher.group("pass"))) {
+        } else if (matcher.group("pass").isNullOrBlank().not()) {
             scoreApiService.getRecentScore(range.data!!.userID, mode.data, offset, 1)
         } else {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Classification, "迷你")

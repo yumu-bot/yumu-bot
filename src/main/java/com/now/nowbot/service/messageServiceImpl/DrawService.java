@@ -38,7 +38,7 @@ public class DrawService implements MessageService<Matcher> {
     @Override
     @CheckPermission(test = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var binUser = bindDao.getUserFromQQ(event.getSender().getId(), true);
+        var bindUser = bindDao.getUserFromQQ(event.getSender().getId(), true);
 
         int times = 1;
         if (matcher.group("d") != null) {
@@ -50,11 +50,11 @@ public class DrawService implements MessageService<Matcher> {
         List<DrawConfig.Card> clist = new LinkedList<>();
         // 10 连
         for (int i = 0; i < tenTimes; i++) {
-            var gradeList = defaultConfig.getGrade10(binUser.getOsuID(), drawLogLiteRepository);
+            var gradeList = defaultConfig.getGrade10(bindUser.getOsuID(), drawLogLiteRepository);
             var cards = gradeList.stream().map(defaultConfig::getCard).toList();
             var cardLites = new ArrayList<DrawLogLite>(gradeList.size());
             for (int j = 0; j < gradeList.size(); j++) {
-                cardLites.add(new DrawLogLite(cards.get(i), gradeList.get(i), binUser.getOsuID()));
+                cardLites.add(new DrawLogLite(cards.get(i), gradeList.get(i), bindUser.getOsuID()));
             }
             drawLogLiteRepository.saveAll(cardLites);
             clist.addAll(cards);
@@ -62,9 +62,9 @@ public class DrawService implements MessageService<Matcher> {
         // 单抽
         {
             for (int i = 0; i < times; i++) {
-                var grade = defaultConfig.getGrade(binUser.getOsuID(), drawLogLiteRepository);
+                var grade = defaultConfig.getGrade(bindUser.getOsuID(), drawLogLiteRepository);
                 var card = defaultConfig.getCard(grade);
-                drawLogLiteRepository.save(new DrawLogLite(card, grade, binUser.getOsuID()));
+                drawLogLiteRepository.save(new DrawLogLite(card, grade, bindUser.getOsuID()));
                 clist.add(card);
             }
         }

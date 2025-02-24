@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -69,14 +69,14 @@ class NewbiePlayStatisticsService(
         event.reply(message)
     }
 
-    private fun handleDay(bind: BinUser): String {
+    private fun handleDay(bind: BindUser): String {
         val userId = bind.osuID
         val result = newbieService.getToday(userId)
 
         return getToday(result.name ?: bind.osuName, result.playCount, result.totalHit, result.pp ?: 0f)
     }
 
-    private fun handleHistory(bind: BinUser): String {
+    private fun handleHistory(bind: BindUser): String {
         val userId = bind.osuID
         val result = newbieService.getHistory(userId) ?: return "暂无历史数据, 统计数据会有一天的延迟"
 
@@ -88,7 +88,7 @@ class NewbiePlayStatisticsService(
         )
     }
 
-    private fun handleRank(bind: BinUser): String {
+    private fun handleRank(bind: BindUser): String {
         val userId = bind.osuID
         val result = newbieService.getRank(userId)
         val pc = getRankString(result[0])

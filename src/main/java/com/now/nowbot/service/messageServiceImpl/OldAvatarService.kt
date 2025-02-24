@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -18,8 +18,6 @@ import com.now.nowbot.util.command.FLAG_UID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
-import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 
@@ -47,23 +45,23 @@ class OldAvatarService(
         val matcher = Instruction.OLD_AVATAR.matcher(messageText)
         if (!matcher.find()) return false
 
-        val qqStr: String? = matcher.group(FLAG_QQ_ID)
-        val uidStr: String? = matcher.group(FLAG_UID)
-        val name: String? = matcher.group(FLAG_DATA)
+        val qqStr: String = matcher.group(FLAG_QQ_ID) ?: ""
+        val uidStr: String = matcher.group(FLAG_UID) ?: ""
+        val name: String = matcher.group(FLAG_DATA) ?: ""
 
         if (event.isAt) {
             data.value = OAParam(event.target, null, null, at = true,  isMyself = false)
             return true
-        } else if (StringUtils.hasText(qqStr)) {
-            data.value = OAParam(qqStr!!.toLong(), null, null, at = false, isMyself = false)
+        } else if (qqStr.isNotBlank()) {
+            data.value = OAParam(qqStr.toLong(), null, null, at = false, isMyself = false)
             return true
         }
 
-        if (StringUtils.hasText(uidStr)) {
-            data.value = OAParam(null, uidStr!!.toLong(), null, at = false, isMyself = false)
+        if (uidStr.isNotBlank()) {
+            data.value = OAParam(null, uidStr.toLong(), null, at = false, isMyself = false)
             return true
-        } else if (StringUtils.hasText(name)) {
-            data.value = OAParam(null, null, name!!.trim { it <= ' ' }, at = false, isMyself = false)
+        } else if (name.isNotBlank()) {
+            data.value = OAParam(null, null, name.trim { it <= ' ' }, at = false, isMyself = false)
             return true
         } else {
             data.value = OAParam(event.sender.id, null, null, at = false, isMyself = true)
@@ -82,9 +80,9 @@ class OldAvatarService(
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, param.uid)
             }
         } else if (Objects.nonNull(param.qq)) {
-            val binUser: BinUser
+            val bindUser: BindUser
             try {
-                binUser = bindDao.getUserFromQQ(param.qq)
+                bindUser = bindDao.getUserFromQQ(param.qq)
             } catch (e: Exception) {
                 if (param.isMyself) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
@@ -94,9 +92,9 @@ class OldAvatarService(
             }
 
             try {
-                user = userApiService.getPlayerInfo(binUser)
+                user = userApiService.getPlayerInfo(bindUser)
             } catch (e: WebClientResponseException) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, binUser.osuName)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, bindUser.osuName)
             } catch (e: Exception) {
                 log.error("旧头像：获取玩家信息失败: ", e)
                 throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_PlayerInfo)
@@ -104,10 +102,10 @@ class OldAvatarService(
         } else {
             val users = parseDataString(param.name)
 
-            if (CollectionUtils.isEmpty(users))
+            if (users.isNullOrEmpty())
                 throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
 
-            val images = ArrayList<ByteArray>(users!!.size)
+            val images = ArrayList<ByteArray>(users.size)
 
             try {
                 for (u in users) {
@@ -149,7 +147,7 @@ class OldAvatarService(
         val users = mutableListOf<OsuUser>()
 
         for (s in dataStrArray) {
-            if (!StringUtils.hasText(s)) continue
+            if (s.isNullOrBlank()) continue
 
             try {
                 ids.add(userApiService.getOsuId(s))

@@ -13,8 +13,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.lang.NonNull
 import org.springframework.lang.Nullable
-import org.springframework.util.CollectionUtils
-import org.springframework.util.StringUtils
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -142,8 +140,8 @@ object DataUtil {
      */
     @JvmStatic
     @Nullable
-    fun splitString(@Nullable str: String): List<String>? {
-        if (!StringUtils.hasText(str)) return null
+    fun splitString(@Nullable str: String?): List<String>? {
+        if (str.isNullOrBlank()) return null
         val strings =
             str.trim()
                 .split(splitReg)
@@ -715,7 +713,7 @@ object DataUtil {
     }
 
     fun getBonusPP(playerPP: Double, fullPP: List<Double>): Float {
-        if (CollectionUtils.isEmpty(fullPP)) return 0f
+        if (fullPP.isEmpty()) return 0f
 
         val array = DoubleArray(fullPP.size)
 
@@ -1044,7 +1042,7 @@ object DataUtil {
         var count = 0.0
         var sequentMax = 0.0
         var sequent = 0.0
-        if (StringUtils.hasText(compare) && StringUtils.hasText(to)) {
+        if (compare.isNotBlank() && to.isNotBlank()) {
 
             outer@ for (v in compare) {
                 for (w in to) {

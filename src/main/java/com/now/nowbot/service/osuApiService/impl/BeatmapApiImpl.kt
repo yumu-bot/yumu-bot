@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.util.DigestUtils
-import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.io.IOException
@@ -187,7 +186,7 @@ class BeatmapApiImpl(
         if (checkStr == null) return false
 
         val path = osuDir.resolve("$bid.osu")
-        if (Files.isRegularFile(path) && StringUtils.hasText(checkStr)) {
+        if (Files.isRegularFile(path) && checkStr.isNotBlank()) {
             return getBeatMapMD5(Files.readString(path)) == checkStr
         }
         return false

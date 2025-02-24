@@ -21,7 +21,6 @@ import java.time.Duration
 import java.util.*
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -49,7 +48,7 @@ class MapPoolService(
         val name: String = m.group(FLAG_NAME)
         val mode = getMode(m).data!!
 
-        if (!StringUtils.hasText(name)) {
+        if (name.isBlank()) {
             throw TipsException("id 解析错误, 请确保只有数字")
         }
 
@@ -66,7 +65,7 @@ class MapPoolService(
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: PoolParam) {
         val image: ByteArray
-        if (StringUtils.hasText(param.name)) {
+        if (param.name.isNullOrBlank().not()) {
             val result = searchByName(param.name!!)
             if (result.isEmpty()) throw TipsException("未找到名称包含 ${param.name} 的图池")
             if (result.size == 1) {
@@ -119,7 +118,7 @@ class MapPoolService(
                 webClient
                         .get()
                         .uri { u: UriBuilder? ->
-                            UriComponentsBuilder.fromHttpUrl(URL)
+                            UriComponentsBuilder.fromUriString(URL)
                                     .path("/api/public/searchPool")
                                     .queryParam("poolName", name)
                                     .build()
@@ -142,7 +141,7 @@ class MapPoolService(
             webClient
                     .get()
                     .uri { u: UriBuilder? ->
-                        UriComponentsBuilder.fromHttpUrl(URL)
+                        UriComponentsBuilder.fromUriString(URL)
                                 .path("/api/public/searchPool")
                                 .queryParam("poolId", id)
                                 .build()

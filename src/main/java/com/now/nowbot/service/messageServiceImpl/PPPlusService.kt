@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.model.json.PPPlus
@@ -20,7 +20,6 @@ import com.now.nowbot.throwable.serviceException.PPPlusException
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import kotlin.math.atan
@@ -131,19 +130,19 @@ class PPPlusService(
     }
 
     @Throws(PPPlusException::class) private fun setUser(
-        a1: String?, a2: String?, me: BinUser?, isVs: Boolean, data: DataValue<PPPlusParam>
+        a1: String?, a2: String?, me: BindUser?, isVs: Boolean, data: DataValue<PPPlusParam>
     ) {
         var p1: OsuUser?
         var p2: OsuUser?
 
         try {
-            p1 = if (StringUtils.hasText(a1)) userApiService.getPlayerInfo(a1, OsuMode.OSU)
+            p1 = if (a1.isNullOrBlank().not()) userApiService.getPlayerInfo(a1, OsuMode.OSU)
             else userApiService.getPlayerInfo(me, OsuMode.OSU)
 
-            p2 = if (StringUtils.hasText(a2)) userApiService.getPlayerInfo(a2, OsuMode.OSU)
+            p2 = if (a2.isNullOrBlank().not()) userApiService.getPlayerInfo(a2, OsuMode.OSU)
             else null
 
-            if (isVs && Objects.isNull(p2)) {
+            if (isVs && p2 == null) {
                 p2 = p1
                 p1 = userApiService.getPlayerInfo(me, OsuMode.OSU)
             }

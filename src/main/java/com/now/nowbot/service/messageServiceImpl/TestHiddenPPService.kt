@@ -14,8 +14,6 @@ import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
-import org.springframework.util.StringUtils
 import java.util.regex.Matcher
 
 @Service("TEST_HD")
@@ -43,16 +41,16 @@ class TestHiddenPPService(
             throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Group)
         }
 
-        val names: List<String?>? = splitString(matcher.group("data"))
+        val names: List<String>? = splitString(matcher.group("data"))
         var mode = OsuMode.getMode(matcher.group("mode"))
 
-        if (CollectionUtils.isEmpty(names))
+        if (names.isNullOrEmpty())
             throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
 
         val sb = StringBuilder()
 
-        for (name in names!!) {
-            if (!StringUtils.hasText(name)) {
+        for (name in names) {
+            if (name.isBlank()) {
                 break
             }
 
@@ -61,20 +59,19 @@ class TestHiddenPPService(
             var hiddenPP = 0.0
 
             try {
-                val id = userApiService.getOsuId(name)
-                user = userApiService.getPlayerOsuInfo(id)
+                user = userApiService.getPlayerInfo(name)
 
                 if (mode == OsuMode.DEFAULT) {
                     mode = user.currentOsuMode
                 }
 
-                bps = scoreApiService.getBestScores(id, mode, 0, 100)
+                bps = scoreApiService.getBestScores(user, mode)
             } catch (e: Exception) {
                 sb.append("name=").append(name).append(" not found").append('\n')
                 break
             }
 
-            if (CollectionUtils.isEmpty(bps)) {
+            if (bps.isEmpty()) {
                 sb.append("name=").append(name).append(" bp is empty").append('\n')
             }
 

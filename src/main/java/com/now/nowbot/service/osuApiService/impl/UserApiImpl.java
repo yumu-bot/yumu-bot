@@ -3,7 +3,7 @@ package com.now.nowbot.service.osuApiService.impl;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.dao.OsuUserInfoDao;
-import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.BindUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.*;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
@@ -61,13 +61,13 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public String refreshUserToken(BinUser user) {
+    public String refreshUserToken(BindUser user) {
         if (!user.isAuthorized()) return base.getBotToken();
         return base.refreshUserToken(user, false);
     }
 
     @Override
-    public void refreshUserTokenFirst(BinUser user) {
+    public void refreshUserTokenFirst(BindUser user) {
         base.refreshUserToken(user, true);
         var osuInfo = getPlayerInfo(user);
         var uid = osuInfo.getUserID();
@@ -77,7 +77,7 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public OsuUser getPlayerInfo(BinUser user, OsuMode mode) {
+    public OsuUser getPlayerInfo(BindUser user, OsuMode mode) {
         if (!user.isAuthorized()) return getPlayerInfo(user.getOsuID(), mode);
         return base.request(client -> client.get()
                 .uri("me/{mode}", mode.getName())
@@ -95,12 +95,12 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public OsuUser getPlayerInfo(String userName, OsuMode mode) {
+    public OsuUser getPlayerInfo(String name, OsuMode mode) {
         return base.request(client -> client
                 .get()
                 .uri(l -> l
                         .path("users/{data}/{mode}")
-                        .build('@' + userName, mode.getName())
+                        .build('@' + name, mode.getName())
                 )
                 .headers(base::insertHeader)
                 .retrieve()
@@ -172,7 +172,7 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public List<LazerFriend> getFriendList(BinUser user) {
+    public List<LazerFriend> getFriendList(BindUser user) {
         if (!user.isAuthorized()) throw new TipsRuntimeException("无权限");
         return base.request(client -> client.get()
                 .uri("friends")
@@ -197,7 +197,7 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public KudosuHistory getUserKudosu(BinUser user) {
+    public KudosuHistory getUserKudosu(BindUser user) {
         return base.request(client -> client.get()
                 .uri("users/{uid}/kudosu")
                 .headers(base.insertHeader(user))
@@ -207,7 +207,7 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public JsonNode sendPrivateMessage(BinUser sender, Long target, String message) {
+    public JsonNode sendPrivateMessage(BindUser sender, Long target, String message) {
         var body = Map.of("target_id", target, "message", message, "is_action", false);
         return base.request(client -> client.post()
                 .uri("chat/new")
@@ -219,7 +219,7 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public JsonNode acknowledgmentPrivateMessageAlive(BinUser user, Long since) {
+    public JsonNode acknowledgmentPrivateMessageAlive(BindUser user, Long since) {
         return base.request(client -> client.post()
                 .uri(b -> b.path("chat/ack")
                         .queryParamIfPresent("since", Optional.ofNullable(since))
@@ -231,7 +231,7 @@ public class UserApiImpl implements OsuUserApiService {
     }
 
     @Override
-    public JsonNode getPrivateMessage(BinUser sender, Long channel, Long since) {
+    public JsonNode getPrivateMessage(BindUser sender, Long channel, Long since) {
         return base.request(client -> client.get()
                 .uri("chat/channels/{channel}/messages?since={since}", channel, since)
                 .headers(base.insertHeader(sender))

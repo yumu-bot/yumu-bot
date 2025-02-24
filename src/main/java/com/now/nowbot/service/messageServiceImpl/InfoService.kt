@@ -28,7 +28,6 @@ import com.now.nowbot.util.command.FLAG_DAY
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -212,7 +211,7 @@ class InfoService(
             val mode = user.currentOsuMode
 
             val dayStr = matcher.group(FLAG_DAY)
-            val day = if (StringUtils.hasText(dayStr)) try {
+            val day = if (dayStr.isBlank().not()) try {
                 dayStr.toInt()
             } catch (e: NumberFormatException) {
                 1

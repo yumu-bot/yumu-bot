@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
@@ -83,7 +83,7 @@ class UUBAService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: BPHeadTailParam) {
-        var bu: BinUser
+        var bu: BindUser
 
         // 是否为绑定用户
         if (Objects.nonNull(param.user.qq)) {
@@ -104,8 +104,8 @@ class UUBAService(
                 id = userApiService.getOsuId(name)
                 bu = bindDao.getUserFromOsuID(id)
             } catch (e: BindException) {
-                // 构建只有 data + id 的对象, binUser == null
-                bu = BinUser()
+                // 构建只有 data + id 的对象, bindUser == null
+                bu = BindUser()
                 bu.osuID = id
                 bu.osuName = name
             } catch (e: Exception) {
@@ -173,7 +173,7 @@ class UUBAService(
 
     override fun reply(event: MessageEvent, param: BPHeadTailParam): MessageChain? {
         val mode = param.user.mode
-        val bu = BinUser()
+        val bu = BindUser()
         with(bu) {
             osuID = param.user.qq
             osuName = param.user.name

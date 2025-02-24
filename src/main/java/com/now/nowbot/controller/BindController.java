@@ -2,7 +2,7 @@ package com.now.nowbot.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.BindUser;
 import com.now.nowbot.service.messageServiceImpl.BindService;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import org.slf4j.Logger;
@@ -81,7 +81,7 @@ public class BindController {
     private String doBind(StringBuilder sb, String code, BindService.BindData msg, long key) {
         try {
 
-            BinUser bd = BinUser.create(code);
+            BindUser bd = BindUser.create(code);
             userApiService.refreshUserTokenFirst(bd);
             var u = bindDao.bindQQ(msg.QQ(), bd);
             BindService.removeBind(key);

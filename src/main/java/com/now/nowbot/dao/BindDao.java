@@ -8,7 +8,7 @@ import com.now.nowbot.mapper.BindDiscordMapper;
 import com.now.nowbot.mapper.BindQQMapper;
 import com.now.nowbot.mapper.BindUserMapper;
 import com.now.nowbot.mapper.OsuFindNameMapper;
-import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.BindUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService;
@@ -45,7 +45,7 @@ public class BindDao {
         bindDiscordMapper = discordMapper;
     }
 
-    public BinUser getUserFromQQ(Long qq) throws BindException {
+    public BindUser getUserFromQQ(Long qq) throws BindException {
         return getUserFromQQ(qq, false);
     }
 
@@ -55,12 +55,12 @@ public class BindDao {
      * @param isMyself 仅影响报错信息，不影响结果
      * @return 绑定的玩家
      */
-    public BinUser getUserFromQQ(Long qq, boolean isMyself) throws BindException {
+    public BindUser getUserFromQQ(Long qq, boolean isMyself) throws BindException {
         if (qq < 0) {
             try {
                 return getUserFromOsuID(-qq);
             } catch (BindException e) {
-                return new BinUser(-qq, "unknown");
+                return new BindUser(-qq, "unknown");
             }
         }
         var liteData = bindQQMapper.findById(qq);
@@ -75,11 +75,11 @@ public class BindDao {
         return fromLite(u);
     }
 
-    public BinUser getUserFromQQ(int qq) throws BindException {
+    public BindUser getUserFromQQ(int qq) throws BindException {
         return getUserFromQQ((long) qq);
     }
 
-    public BinUser saveBind(BinUser user) {
+    public BindUser saveBind(BindUser user) {
         OsuBindUserLite lite = new OsuBindUserLite(user);
 
         lite = bindUserMapper.save(lite);
@@ -87,7 +87,7 @@ public class BindDao {
         return fromLite(lite);
     }
 
-    public BinUser getUserFromOsuID(Long osuId) throws BindException {
+    public BindUser getUserFromOsuID(Long osuId) throws BindException {
         if (Objects.isNull(osuId)) throw new BindException(BindException.Type.BIND_Receive_NoName);
 
         Optional<OsuBindUserLite> liteData;
@@ -115,7 +115,7 @@ public class BindDao {
         return bindQQMapper.findById(qq);
     }
 
-    public QQBindLite bindQQ(Long qq, BinUser user) {
+    public QQBindLite bindQQ(Long qq, BindUser user) {
         return bindQQ(qq, fromModel(user));
     }
 
@@ -141,7 +141,7 @@ public class BindDao {
         return bindQQMapper.save(qqBind);
     }
 
-    public DiscordBindLite bindDiscord(String discordId, BinUser user) {
+    public DiscordBindLite bindDiscord(String discordId, BindUser user) {
         return bindDiscord(discordId, fromModel(user));
     }
 
@@ -152,14 +152,14 @@ public class BindDao {
         return bindDiscordMapper.save(discordBind);
     }
 
-    public BinUser getBindUser(String name) {
+    public BindUser getBindUser(String name) {
         var id = getOsuId(name);
         if (id == null) return null;
         var data = bindUserMapper.getByOsuId(id);
         return data.map(BindDao::fromLite).orElse(null);
     }
 
-    public BinUser getBindUser(Long id) {
+    public BindUser getBindUser(Long id) {
         if (id == null) return null;
         var data = bindUserMapper.getByOsuId(id);
         return data.map(BindDao::fromLite).orElse(null);
@@ -176,7 +176,7 @@ public class BindDao {
         bindUserMapper.updateMode(uid, mode);
     }
 
-    public boolean unBindQQ(BinUser user) {
+    public boolean unBindQQ(BindUser user) {
         try {
             bindQQMapper.unBind(user.getOsuID());
             return true;
@@ -225,19 +225,19 @@ public class BindDao {
         }
     }
 
-    public static BinUser fromLite(OsuBindUserLite buLite) {
+    public static BindUser fromLite(OsuBindUserLite buLite) {
         if (buLite == null) return null;
-        var binUser = new BinUser();
-        binUser.setOsuID(buLite.getOsuID());
-        binUser.setOsuName(buLite.getOsuName());
-        binUser.setAccessToken(buLite.getAccessToken());
-        binUser.setRefreshToken(buLite.getRefreshToken());
-        binUser.setTime(buLite.getTime());
-        binUser.setOsuMode(buLite.getMainMode());
-        return binUser;
+        var bu = new BindUser();
+        bu.setOsuID(buLite.getOsuID());
+        bu.setOsuName(buLite.getOsuName());
+        bu.setAccessToken(buLite.getAccessToken());
+        bu.setRefreshToken(buLite.getRefreshToken());
+        bu.setTime(buLite.getTime());
+        bu.setOsuMode(buLite.getMainMode());
+        return bu;
     }
 
-    public static OsuBindUserLite fromModel(BinUser user) {
+    public static OsuBindUserLite fromModel(BindUser user) {
         if (user == null) return null;
         return new OsuBindUserLite(user);
     }
@@ -250,9 +250,7 @@ public class BindDao {
             refreshOldUserTokenOne(osuGetService);
 //            refreshOldUserTokenPack(osuGetService);
         } catch (Exception e) {
-            if (e instanceof WebClientResponseException.Unauthorized) {
-                // ignore
-            } else {
+            if (!(e instanceof WebClientResponseException.Unauthorized)) {
                 log.error("更新用户出现异常", e);
             }
         } finally {

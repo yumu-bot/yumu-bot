@@ -14,10 +14,7 @@ import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_HYPHEN
 import com.yumu.core.extensions.isNotNull
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
-import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import kotlin.math.max
 import kotlin.math.min
@@ -79,7 +76,7 @@ class ChuBestScoreService(
         val rangeStr = matcher.group("range")
 
         val range =
-            if (StringUtils.hasText(rangeStr)) {
+            if (rangeStr.isNullOrBlank().not()) {
                 if (rangeStr.contains(Regex(REG_HYPHEN))) {
                     val s = rangeStr.split(Regex(REG_HYPHEN))
 
@@ -101,7 +98,7 @@ class ChuBestScoreService(
                 CmdRange<Int>(null, 1, 50)
             }
 
-        if (StringUtils.hasText(matcher.group("name"))) {
+        if (matcher.group("name").isNullOrBlank().not()) {
             val name = matcher.group("name").trim()
             if (name.contains(Regex("\\s+"))) {
                 val strs = name.split(Regex("\\s+"))
@@ -122,7 +119,7 @@ class ChuBestScoreService(
             }
 
             data.value = ChuBestScoreParam(matcher.group("name").trim(), null, range)
-        } else if (StringUtils.hasText(matcher.group("qq"))) {
+        } else if (matcher.group("qq").isNullOrBlank().not()) {
             data.value = ChuBestScoreParam(null, matcher.group("qq").toLong(), range)
         } else if (event.isAt) {
             data.value = ChuBestScoreParam(null, event.target, range)
@@ -168,8 +165,6 @@ class ChuBestScoreService(
     }
 
     companion object {
-        val log = KotlinLogging.logger { }
-
         @JvmStatic
         fun getBestScores(
             qq: Long?,
@@ -227,8 +222,8 @@ class ChuBestScoreService(
 
             val c = bp.records
 
-            val isStandardEmpty = CollectionUtils.isEmpty(c.best30)
-            val isDeluxeEmpty = CollectionUtils.isEmpty(c.recent10)
+            val isStandardEmpty = c.best30.isEmpty()
+            val isDeluxeEmpty = c.recent10.isEmpty()
 
             if (offset > 35) {
                 // dx

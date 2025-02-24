@@ -14,11 +14,7 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_HYPHEN
-import com.yumu.core.extensions.isNotNull
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
-import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import kotlin.math.max
 import kotlin.math.min
@@ -84,7 +80,7 @@ class MaiBestScoreService(
         val rangeStr = matcher.group("range")
 
         val range =
-            if (StringUtils.hasText(rangeStr)) {
+            if (rangeStr.isNullOrBlank().not()) {
                 if (rangeStr.contains(Regex(REG_HYPHEN))) {
                     val s = rangeStr.split(Regex(REG_HYPHEN))
 
@@ -106,7 +102,7 @@ class MaiBestScoreService(
                 CmdRange<Int>(null, 1, 50)
             }
 
-        if (StringUtils.hasText(matcher.group("name"))) {
+        if (matcher.group("name").isNullOrBlank().not()) {
             val name = matcher.group("name").trim()
             if (name.contains(Regex("\\s+"))) {
                 val strs = name.split(Regex("\\s+"))
@@ -127,7 +123,7 @@ class MaiBestScoreService(
             }
 
             data.value = MaiBestScoreParam(matcher.group("name").trim(), null, range)
-        } else if (StringUtils.hasText(matcher.group("qq"))) {
+        } else if (matcher.group("qq").isNullOrBlank().not()) {
             data.value = MaiBestScoreParam(null, matcher.group("qq").toLong(), range)
         } else if (event.isAt) {
             data.value = MaiBestScoreParam(null, event.target, range)
@@ -168,8 +164,6 @@ class MaiBestScoreService(
     }
 
     companion object {
-        val log = KotlinLogging.logger { }
-
         @JvmStatic
         fun getBestScores(
             qq: Long?,
@@ -177,9 +171,9 @@ class MaiBestScoreService(
             isMyself: Boolean,
             maimaiApiService: MaimaiApiService,
         ): MaiBestScore {
-            return if (qq.isNotNull()) {
+            return if (qq != null) {
                 try {
-                    maimaiApiService.getMaimaiBest50(qq!!)
+                    maimaiApiService.getMaimaiBest50(qq)
                 } catch (e: WebClientResponseException.BadRequest) {
                     if (isMyself) {
                         throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouBadRequest)
@@ -193,9 +187,9 @@ class MaiBestScoreService(
                         throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_PlayerForbidden)
                     }
                 }
-            } else if (name.isNotNull()) {
+            } else if (name != null) {
                 try {
-                    maimaiApiService.getMaimaiBest50(name!!)
+                    maimaiApiService.getMaimaiBest50(name)
                 } catch (e: WebClientResponseException.BadRequest) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_NameBadRequest)
                 } catch (e: WebClientResponseException.Forbidden) {
@@ -217,8 +211,8 @@ class MaiBestScoreService(
 
             val c = bp.charts
 
-            val isStandardEmpty = CollectionUtils.isEmpty(c.standard)
-            val isDeluxeEmpty = CollectionUtils.isEmpty(c.deluxe)
+            val isStandardEmpty = c.standard.isEmpty()
+            val isDeluxeEmpty = c.deluxe.isEmpty()
 
             if (offset > 35) {
                 // dx

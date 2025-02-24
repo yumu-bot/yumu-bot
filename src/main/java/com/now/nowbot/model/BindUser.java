@@ -8,8 +8,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.Objects;
 
-public class BinUser {
-    private static final Logger log = LoggerFactory.getLogger(BinUser.class);
+public class BindUser {
+    private static final Logger log = LoggerFactory.getLogger(BindUser.class);
 
     Long baseId;
     /**
@@ -37,15 +37,15 @@ public class BinUser {
      */
     OsuMode mode;
 
-    public BinUser() {
+    public BindUser() {
         setTimeToNow();
     }
 
-    public BinUser(long base) {
+    public BindUser(long base) {
         this();
         baseId = base;
     }
-    public BinUser(long osuId, String osuName) {
+    public BindUser(long osuId, String osuName) {
         this.osuID = osuId;
         this.osuName = osuName;
         mode = OsuMode.DEFAULT;
@@ -53,8 +53,8 @@ public class BinUser {
         setTimeToNow();
     }
 
-    public static BinUser create(String refreshToken) {
-        var user = new BinUser();
+    public static BindUser create(String refreshToken) {
+        var user = new BindUser();
         user.refreshToken = refreshToken;
         user.setTimeToNow();
         return user;
@@ -148,16 +148,16 @@ public class BinUser {
 
     @Override
     public String toString() {
-        return STR."BinUser{baseId=\{baseId}, osuName='\{osuName}\{'\''}, osuID=\{osuID}, accessToken='\{accessToken}\{'\''}, refreshToken='\{refreshToken}\{'\''}, time=\{time}, mode=\{mode}\{'}'}";
+        return STR."BindUser{baseId=\{baseId}, osuName='\{osuName}\{'\''}, osuID=\{osuID}, accessToken='\{accessToken}\{'\''}, refreshToken='\{refreshToken}\{'\''}, time=\{time}, mode=\{mode}\{'}'}";
     }
 
     // 重写 equals 必须要重写 hashCode, 如果别的地方使用 HashSet/HashMap 会炸
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof BinUser binUser)) return false;
+        if (!(o instanceof BindUser bindUser)) return false;
 
-        return osuName.equalsIgnoreCase(binUser.osuName) || osuID.equals(binUser.osuID);
+        return osuName.equalsIgnoreCase(bindUser.osuName) || osuID.equals(bindUser.osuID);
     }
 
     @Override

@@ -25,7 +25,6 @@ import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.client.ResourceAccessException
@@ -379,7 +378,7 @@ import kotlin.math.min
             val scores = scores
             val user = user
 
-            if (CollectionUtils.isEmpty(scores) || scores.size <= 5) {
+            if (scores.isEmpty() || scores.size <= 5) {
                 if (isMyself) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Me, user.mode)
                 } else {

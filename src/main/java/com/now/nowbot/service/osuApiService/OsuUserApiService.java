@@ -2,7 +2,7 @@ package com.now.nowbot.service.osuApiService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.BindUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.*;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -25,58 +25,26 @@ public interface OsuUserApiService {
     String getOauthUrl(String state, boolean full) throws WebClientResponseException;
 
     @CanIgnoreReturnValue
-    String refreshUserToken(BinUser user) throws WebClientResponseException;
+    String refreshUserToken(BindUser user) throws WebClientResponseException;
 
-    void refreshUserTokenFirst(BinUser user) throws WebClientResponseException;
+    void refreshUserTokenFirst(BindUser user) throws WebClientResponseException;
 
-    OsuUser getPlayerInfo(BinUser user, OsuMode mode) throws WebClientResponseException;
+    OsuUser getPlayerInfo(BindUser user, OsuMode mode) throws WebClientResponseException;
 
-    OsuUser getPlayerInfo(String userName, OsuMode mode) throws WebClientResponseException;
+    OsuUser getPlayerInfo(String name, OsuMode mode) throws WebClientResponseException;
 
     OsuUser getPlayerInfo(Long id, OsuMode mode) throws WebClientResponseException;
 
-    default OsuUser getPlayerInfo(BinUser user) throws WebClientResponseException {
-        return getPlayerInfo(user, OsuMode.DEFAULT);
+    default OsuUser getPlayerInfo(BindUser user) throws WebClientResponseException {
+        return getPlayerInfo(user, user.getOsuMode());
     }
 
-    default OsuUser getPlayerInfo(String userName) throws WebClientResponseException {
-        return getPlayerInfo(userName, OsuMode.DEFAULT);
+    default OsuUser getPlayerInfo(String name) throws WebClientResponseException {
+        return getPlayerInfo(name, OsuMode.DEFAULT);
     }
 
     default OsuUser getPlayerInfo(Long UID) throws WebClientResponseException {
         return getPlayerInfo(UID, OsuMode.DEFAULT);
-    }
-
-    default OsuUser getPlayerOsuInfo(BinUser user) throws WebClientResponseException {
-        return getPlayerInfo(user, OsuMode.OSU);
-    }
-
-    default OsuUser getPlayerTaikoInfo(BinUser user) throws WebClientResponseException {
-        return getPlayerInfo(user, OsuMode.TAIKO);
-    }
-
-    default OsuUser getPlayerCatchInfo(BinUser user) throws WebClientResponseException {
-        return getPlayerInfo(user, OsuMode.CATCH);
-    }
-
-    default OsuUser getPlayerManiaInfo(BinUser user) throws WebClientResponseException {
-        return getPlayerInfo(user, OsuMode.MANIA);
-    }
-
-    default OsuUser getPlayerOsuInfo(Long UID) throws WebClientResponseException {
-        return getPlayerInfo(UID, OsuMode.OSU);
-    }
-
-    default OsuUser getPlayerTaikoInfo(Long UID) throws WebClientResponseException {
-        return getPlayerInfo(UID, OsuMode.TAIKO);
-    }
-
-    default OsuUser getPlayerCatchInfo(Long UID) throws WebClientResponseException {
-        return getPlayerInfo(UID, OsuMode.CATCH);
-    }
-
-    default OsuUser getPlayerManiaInfo(Long UID) throws WebClientResponseException {
-        return getPlayerInfo(UID, OsuMode.MANIA);
     }
 
     Long getOsuId(String name);
@@ -92,21 +60,21 @@ public interface OsuUserApiService {
         return getUsers(users, false);
     }
 
-    List<LazerFriend> getFriendList(BinUser user) throws WebClientResponseException;
+    List<LazerFriend> getFriendList(BindUser user) throws WebClientResponseException;
 
     List<ActivityEvent> getUserRecentActivity(long UID, int s, int e);
 
-    KudosuHistory getUserKudosu(BinUser user);
+    KudosuHistory getUserKudosu(BindUser user);
 
-    JsonNode sendPrivateMessage(BinUser sender, Long target, String message);
+    JsonNode sendPrivateMessage(BindUser sender, Long target, String message);
 
-    JsonNode acknowledgmentPrivateMessageAlive(BinUser user, Long since);
+    JsonNode acknowledgmentPrivateMessageAlive(BindUser user, Long since);
 
-    default JsonNode acknowledgmentPrivateMessageAlive(BinUser user) {
+    default JsonNode acknowledgmentPrivateMessageAlive(BindUser user) {
         return acknowledgmentPrivateMessageAlive(user, null);
     }
 
-    JsonNode getPrivateMessage(BinUser sender, Long channel, Long since);
+    JsonNode getPrivateMessage(BindUser sender, Long channel, Long since);
 
     TeamInfo getTeamInfo(int id);
 

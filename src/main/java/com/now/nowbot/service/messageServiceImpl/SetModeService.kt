@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -47,19 +47,19 @@ class SetModeService (
             bindDao.getUserFromOsuID(-event.sender.id)
         } catch (e: BindException) {
             val userInfo = osuUserApiService.getPlayerInfo(-event.sender.id)
-            val binUser = BinUser()
-            with(binUser) {
+            val bindUser = BindUser()
+            with(bindUser) {
                 osuID = userInfo.id
                 osuName = userInfo.username
                 osuMode = userInfo.defaultOsuMode
             }
-            bindDao.saveBind(binUser)
+            bindDao.saveBind(bindUser)
         }
 
         return getReply(param, user)
     }
 
-    fun getReply(modeStr: String?, user: BinUser): MessageChain {
+    fun getReply(modeStr: String?, user: BindUser): MessageChain {
         val mode = OsuMode.getMode(modeStr)
         if (mode == OsuMode.DEFAULT) {
             return MessageChain("未知的格式,修改请使用0(osu),1(taiko),2(catch),3(mania)")

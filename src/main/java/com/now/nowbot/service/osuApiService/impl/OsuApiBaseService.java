@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.config.OSUConfig;
 import com.now.nowbot.config.YumuConfig;
 import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.BindUser;
 import com.now.nowbot.throwable.serviceException.BindException;
 import com.now.nowbot.util.ContextUtil;
 import jakarta.annotation.PostConstruct;
@@ -126,7 +126,7 @@ public class OsuApiBaseService {
         return accessToken;
     }
 
-    String refreshUserToken(BinUser user, boolean first) {
+    String refreshUserToken(BindUser user, boolean first) {
         LinkedMultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("client_id", String.valueOf(oauthId));
         body.add("client_secret", oauthToken);
@@ -172,7 +172,7 @@ public class OsuApiBaseService {
         );
     }
 
-    Consumer<HttpHeaders> insertHeader(BinUser user) {
+    Consumer<HttpHeaders> insertHeader(BindUser user) {
         final String token;
         if (!user.isAuthorized()) {
             token = getBotToken();

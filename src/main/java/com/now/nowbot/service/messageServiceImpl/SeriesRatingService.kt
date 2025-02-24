@@ -17,8 +17,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.lang.NonNull
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
-import org.springframework.util.StringUtils
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.nio.charset.StandardCharsets
@@ -282,7 +280,7 @@ class SeriesRatingService(
         for (i in dataStrArray.indices) {
             var v: Int
             var s = dataStrArray[i]
-            if (!StringUtils.hasText(s)) continue
+            if (s.isBlank()) continue
 
             if (s.contains("[")) {
                 status = Status.REMOVE_RECEIVED
@@ -439,7 +437,7 @@ class SeriesRatingService(
 
     @Throws(MRAException::class)
     private fun fetchMatchFromMatchID(matchIDs: List<Long>, event: MessageEvent): List<Match> {
-        if (CollectionUtils.isEmpty(matchIDs)) return ArrayList()
+        if (matchIDs.isEmpty()) return ArrayList()
 
         val matches: MutableList<Match> = ArrayList(matchIDs.size)
 
@@ -510,10 +508,10 @@ class SeriesRatingService(
         @NonNull
         @Throws(MRAException::class)
         private fun getEasyMultiplier(matcher: Matcher): Double {
-            val easyStr = matcher.group("easy")
+            val easyStr = matcher.group("easy") ?: ""
             var easy = 1.0
 
-            if (StringUtils.hasText(easyStr)) {
+            if (easyStr.isNotBlank()) {
                 try {
                     easy = easyStr.toDouble()
                 } catch (e: NullPointerException) {

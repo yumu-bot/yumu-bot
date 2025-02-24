@@ -60,15 +60,14 @@ import java.util.regex.Matcher
             var playerPP: Double
 
             try {
-                val id = userApiService.getOsuId(name)
-                user = userApiService.getPlayerOsuInfo(id)
-                playerPP = Objects.requireNonNullElse(user.pp, 0.0)
+                user = userApiService.getPlayerInfo(name)
+                playerPP = user.pp ?: 0.0
 
                 if (mode == OsuMode.DEFAULT) {
                     mode = user.currentOsuMode
                 }
 
-                bps = scoreApiService.getBestScores(id, mode)
+                bps = scoreApiService.getBestScores(user.userID, mode)
             } catch (e: Exception) {
                 sb.append("name=").append(name).append(" not found").append('\n')
                 break

@@ -21,7 +21,6 @@ import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
@@ -252,7 +251,7 @@ class ScorePRService(
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "成绩")
         }
 
-        if (CollectionUtils.isEmpty(scoreList)) {
+        if (scoreList.isEmpty()) {
             throw GeneralTipsException(
                 GeneralTipsException.Type.G_Null_RecentScore,
                 user.username,

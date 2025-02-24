@@ -14,7 +14,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.floor
 import kotlin.math.min
@@ -63,13 +62,13 @@ import kotlin.math.min
 
         val qq = if (event.isAt) {
             event.target
-        } else if (StringUtils.hasText(qqStr)) {
+        } else if (qqStr.isNotBlank()) {
             qqStr.toLong()
         } else {
             event.sender.id
         }
 
-        if (StringUtils.hasText(nameStr)) {
+        if (nameStr.isNotBlank()) {
             data.value = MaiDistParam(null, nameStr, false)
         } else if (qq == event.sender.id) {
             data.value = MaiDistParam(qq, null, true)

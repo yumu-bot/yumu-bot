@@ -6,7 +6,7 @@ import com.now.nowbot.entity.UserProfileItem
 import com.now.nowbot.entity.UserProfileKey
 import com.now.nowbot.mapper.UserProfileItemRepository
 import com.now.nowbot.mapper.UserProfileMapper
-import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.UserProfile
 import com.now.nowbot.model.UserProfile.Type.*
 import com.now.nowbot.qq.event.MessageEvent
@@ -24,7 +24,6 @@ import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClient
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -68,7 +67,7 @@ class CustomService(
             return false
         }
 
-        val u: BinUser
+        val u: BindUser
         try {
             u = bindDao.getUserFromQQ(event.sender.id, true)
         } catch (e: BindException) {
@@ -85,7 +84,7 @@ class CustomService(
         var operate: Operate
         val type: UserProfile.Type
 
-        if (StringUtils.hasText(typeStr)) {
+        if (typeStr.isNullOrBlank().not()) {
             operate = when (operateStr) {
                 "s",
                 "save",

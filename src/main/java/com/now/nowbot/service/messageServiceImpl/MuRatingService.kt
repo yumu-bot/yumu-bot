@@ -21,7 +21,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.lang.NonNull
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import java.util.*
 import java.util.regex.Matcher
 
@@ -148,10 +147,10 @@ import java.util.regex.Matcher
         private val log: Logger = LoggerFactory.getLogger(MuRatingService::class.java)
 
         @NonNull @Throws(MRAException::class) private fun getEasyMultiplier(matcher: Matcher): Double {
-            val easyStr = matcher.group("easy")
+            val easyStr = matcher.group("easy") ?: ""
             var easy = 1.0
 
-            if (StringUtils.hasText(easyStr)) {
+            if (easyStr.isNotBlank()) {
                 try {
                     easy = easyStr.toDouble()
                 } catch (e: NullPointerException) {

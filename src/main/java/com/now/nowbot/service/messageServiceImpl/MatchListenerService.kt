@@ -23,10 +23,8 @@ import com.now.nowbot.throwable.serviceException.MatchRoundException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.DataUtil.getOriginal
 import com.now.nowbot.util.Instruction
-import com.yumu.core.extensions.isNotNull
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 @Service("MATCH_LISTENER")
@@ -48,7 +46,7 @@ class MatchListenerService(
         val operate = getStatus(matcher.group("operate"))
 
         try {
-            if (StringUtils.hasText(matcher.group("matchid"))) {
+            if (matcher.group("matchid").isNullOrBlank().not()) {
                 val id = matcher.group("matchid").toLong()
 
                 data.value = ListenerParam(id, operate)
@@ -181,7 +179,7 @@ class MatchListenerService(
                 ASyncMessageUtil.getLock(messageEvent.subject.id, null, 60 * 1000) {
                     it.rawMessage.equals(matchID.toString())
                 }
-            return lock.get().isNotNull()
+            return lock.get() != null
         }
 
         override fun onStart() {

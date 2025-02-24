@@ -17,7 +17,6 @@ import com.now.nowbot.throwable.serviceException.MapMinusException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MOD
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 
 @Service("TEST_TYPE") class TestTypeService(
     private val beatmapApiService: OsuBeatmapApiService,
@@ -43,7 +42,7 @@ import org.springframework.util.StringUtils
             throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
         }
 
-        val rate = if (StringUtils.hasText(m.group("rate"))) {
+        val rate = if (m.group("rate").isNullOrBlank().not()) {
             try {
                 m.group("rate").toDouble()
             } catch (e: NumberFormatException) {

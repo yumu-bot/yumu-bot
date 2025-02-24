@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
@@ -24,7 +24,6 @@ import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.StringUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.regex.Matcher
@@ -52,48 +51,37 @@ class PPMinusService(
     }
 
     fun parseName(
-            name1: String?,
-            name2: String?,
-            binMe: BinUser,
-            binOther: BinUser,
-            status: PPMinusStatus,
+        name1: String,
+        name2: String,
+        binMe: BindUser,
+        binOther: BindUser,
+        status: PPMinusStatus,
     ): Boolean {
-        if (StringUtils.hasText(name1) && StringUtils.hasText(name2)) {
-            // pv 1v2
-            binMe.osuID = userApiService.getOsuId(name1)
-            binOther.osuID = userApiService.getOsuId(name2)
+        try {
+            if (name1.isNotBlank() && name2.isNotBlank()) {
+                // pv 1v2
+                binMe.osuID = userApiService.getOsuId(name1)
+                binOther.osuID = userApiService.getOsuId(name2)
 
-            if (Objects.isNull(binMe.osuID) || Objects.isNull(binOther.osuID)) {
-                throw PPMinusException(PPMinusException.Type.PM_Me_FetchFailed)
+                return false
+            }
+            val area = name1.ifBlank { name2 }
+            when (status) {
+                PPMinusStatus.USER -> {
+                    // pm 1 or 2
+                    binMe.osuID = userApiService.getOsuId(area)
+                }
+
+                PPMinusStatus.USER_VS -> {
+                    // pv 0v1 or 0v2
+                    binOther.osuID = userApiService.getOsuId(area)
+                }
             }
 
-            return false
+            return status == PPMinusStatus.USER_VS
+        } catch (e: Exception) {
+            throw PPMinusException(PPMinusException.Type.PM_Me_FetchFailed)
         }
-        val area =
-                if (StringUtils.hasText(name1)) {
-                    name1
-                } else {
-                    name2
-                }
-        when (status) {
-            PPMinusStatus.USER -> {
-                // pm 1 or 2
-                binMe.osuID = userApiService.getOsuId(area)
-                if (Objects.isNull(binMe.osuID)) {
-                    throw PPMinusException(PPMinusException.Type.PM_Me_FetchFailed)
-                }
-            }
-
-            PPMinusStatus.USER_VS -> {
-                // pv 0v1 or 0v2
-                binOther.osuID = userApiService.getOsuId(area)
-                if (Objects.isNull(binOther.osuID)) {
-                    throw PPMinusException(PPMinusException.Type.PM_Me_FetchFailed)
-                }
-            }
-        }
-
-        return status == PPMinusStatus.USER_VS
     }
 
     override fun isHandle(
@@ -105,11 +93,7 @@ class PPMinusService(
         if (!matcher.find()) return false
 
         val status =
-                when (
-                        Optional.ofNullable(matcher.group("function"))
-                                .orElse("pm")
-                                .trim { it <= ' ' }
-                                .lowercase(Locale.getDefault())
+                when ((matcher.group("function") ?: "pm").trim().lowercase(Locale.getDefault())
                 ) {
                     "pm",
                     "ppm",
@@ -127,11 +111,11 @@ class PPMinusService(
                     else -> throw RuntimeException("PP-：未知的类型")
                 }
 
-        val area1 = matcher.group("area1")
-        val area2 = matcher.group("area2")
+        val area1 = matcher.group("area1") ?: ""
+        val area2 = matcher.group("area2") ?: ""
 
-        var binMe = BinUser()
-        var binOther = BinUser()
+        var binMe = BindUser()
+        var binOther = BindUser()
 
         var isMyself = false
 
@@ -148,7 +132,7 @@ class PPMinusService(
                         binOther = bindDao.getUserFromQQ(event.target)
                     }
                 }
-            } else if (StringUtils.hasText(area1) || StringUtils.hasText(area2)) {
+            } else if (area1.isNotBlank() || area2.isNotBlank()) {
                 isMyself = parseName(area1, area2, binMe, binOther, status)
                 if (isMyself) {
                     binMe = bindDao.getUserFromQQ(event.sender.id, true)
@@ -275,14 +259,14 @@ class PPMinusService(
                     else -> return null
                 }
 
-        val area1 = matcher.group("area1")
-        val area2 = matcher.group("area2")
+        val area1 = matcher.group("area1") ?: ""
+        val area2 = matcher.group("area2") ?: ""
 
-        var binMe = BinUser()
-        val binOther = BinUser()
+        var binMe = BindUser()
+        val binOther = BindUser()
 
         try {
-            if (StringUtils.hasText(area1) || StringUtils.hasText(area2)) {
+            if (area1.isNotBlank() || area2.isNotBlank()) {
                 if (parseName(area1, area2, binMe, binOther, status)) {
                     binMe = bindDao.getUserFromQQ(event.sender.id, true)
                 }

@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.json.LazerFriend
 import com.now.nowbot.model.json.MicroUser
 import com.now.nowbot.model.json.OsuUser
@@ -22,7 +22,6 @@ import com.yumu.core.extensions.isNotNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
@@ -71,43 +70,43 @@ class FriendService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: FriendParam) {
-        val binUser = bindDao.getUserFromQQ(event.sender.id, true)
+        val bu = bindDao.getUserFromQQ(event.sender.id, true)
 
 
-        if (!binUser.isAuthorized) {
+        if (!bu.isAuthorized) {
             throw FriendException(FriendException.Type.FRIEND_Me_NoPermission)
             // 无权限
         }
 
         val message = if (param.uid != 0L) {
             // 判断是不是好友
-            checkMultiFriend(binUser, param)
+            checkMultiFriend(bu, param)
         } else {
-            sendFriendList(binUser, param)
+            sendFriendList(bu, param)
         }
 
         event.reply(message)
     }
 
-    fun checkMultiFriend(binUser: BinUser, param: FriendParam): MessageChain {
-        if (param.uid == binUser.osuID) {
+    fun checkMultiFriend(bindUser: BindUser, param: FriendParam): MessageChain {
+        if (param.uid == bindUser.osuID) {
             return MessageChain("你自己与你自己就是最好的朋友。")
         }
 
-        val friendList = userApiService.getFriendList(binUser)
+        val friendList = userApiService.getFriendList(bindUser)
 
-        val message = getMutualInfo(binUser, param, friendList)
+        val message = getMutualInfo(bindUser, param, friendList)
 
         return MessageChain(message)
     }
 
     fun getMutualInfo(
-        binUser: BinUser,
+        bindUser: BindUser,
         param: FriendParam,
         friendList: MutableList<LazerFriend>
     ): String {
         val uid = param.uid
-        val name = param.user?.username ?: binUser.username
+        val name = param.user?.username ?: bindUser.username
         val friend = friendList.find { it.target.userID == uid }
 
         // 加了对方 直接判断是否互 mu
@@ -133,7 +132,7 @@ class FriendService(
         val isFollowed = try {
             userApiService
                 .getFriendList(other)
-                .find { it.target.userID == binUser.osuID }
+                .find { it.target.userID == bindUser.osuID }
                 .isNotNull()
         } catch (ignored: Exception) {
             false
@@ -147,7 +146,7 @@ class FriendService(
         }
     }
 
-    fun sendFriendList(binUser: BinUser, param: FriendParam): MessageChain {
+    fun sendFriendList(bindUser: BindUser, param: FriendParam): MessageChain {
         val friends = mutableListOf<MicroUser>()
         val sortType = param.sort.first
         val sortDirection = param.sort.second
@@ -161,7 +160,7 @@ class FriendService(
         }
 
         val osuUser = param.user ?: try {
-            userApiService.getPlayerInfo(binUser)
+            userApiService.getPlayerInfo(bindUser)
         } catch (e: HttpClientErrorException.Unauthorized) {
             throw FriendException(FriendException.Type.FRIEND_Me_TokenExpired)
         } catch (e: WebClientResponseException.Unauthorized) {
@@ -171,7 +170,7 @@ class FriendService(
         }
 
         val rawList = try {
-            userApiService.getFriendList(binUser).map {
+            userApiService.getFriendList(bindUser).map {
                 it.target
             }.toMutableList()
         } catch (e: Exception) {
@@ -240,7 +239,7 @@ class FriendService(
             i++
         }
 
-        if (CollectionUtils.isEmpty(friends)) {
+        if (friends.isEmpty()) {
             if (sortType == NULL) {
                 throw FriendException(FriendException.Type.FRIEND_Client_NoFriend)
             } else {

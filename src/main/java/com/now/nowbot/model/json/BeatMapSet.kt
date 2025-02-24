@@ -3,7 +3,6 @@ package com.now.nowbot.model.json
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.yumu.core.extensions.isNotNull
 import org.springframework.lang.Nullable
-import org.springframework.util.CollectionUtils
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatterBuilder
@@ -111,7 +110,7 @@ class BeatMapSet {
 
             val secondary: Int
 
-            if (CollectionUtils.isEmpty(beatMaps)) {
+            if (beatMaps.isNullOrEmpty()) {
                 secondary = 0
             } else {
                 val formatter = DateTimeFormatterBuilder()
@@ -249,7 +248,7 @@ class BeatMapSet {
         get(){
             val m = mutableListOf<OsuUser>()
 
-            if (relatedUsers.isNotNull() && nominators.isNotNull()) {
+            if (relatedUsers.isNullOrEmpty().not() && nominators.isNotEmpty()) {
                 for (u in relatedUsers!!) {
                     if (!(nominators.contains(u) || u.userID == creatorID)) {
                         m.add(u)
@@ -262,14 +261,14 @@ class BeatMapSet {
 
     //自己算
     @get:JsonProperty("nominators")
-    val nominators: MutableList<OsuUser>
+    val nominators: List<OsuUser>
          get(){
              val n = mutableListOf<OsuUser>()
 
              if (currentNominations.isNotNull() && relatedUsers.isNotNull()) {
-                 for ((_, _, _, UID) in currentNominations!!) {
+                 for ((_, _, _, userID) in currentNominations!!) {
                      for (u in relatedUsers!!) {
-                         if (u.userID == UID) {
+                         if (u.userID == userID) {
                              n.add(u)
                              break
                          }
@@ -277,7 +276,7 @@ class BeatMapSet {
                  }
              }
 
-             return n
+             return n.toList()
          }
 
 
@@ -305,10 +304,10 @@ class BeatMapSet {
     @get:JsonProperty("has_leader_board")
     val hasLeaderBoard: Boolean
          get() {
-             if (Objects.nonNull(status)) {
-                 return (status == "ranked" || status == "qualified" || status == "loved" || status == "approved")
+             return if (Objects.nonNull(status)) {
+                 (status == "ranked" || status == "qualified" || status == "loved" || status == "approved")
              } else {
-                 return when (ranked) {
+                 when (ranked) {
                      1, 2, 3, 4 -> true
                      else -> false
                  }

@@ -15,8 +15,6 @@ import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
-import org.springframework.util.StringUtils
 import java.util.*
 
 @Service("MUTUAL")
@@ -34,18 +32,15 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
         val m = Instruction.MUTUAL.matcher(messageText)
         if (!m.find()) return false
 
-        val name = m.group("names")
+        val name = m.group("names") ?: ""
         val atList = QQMsgUtil.getTypeAll(event.message, AtMessage::class.java)
 
         val users =
-            if (!CollectionUtils.isEmpty(atList)) {
-                atList.stream().map { at: AtMessage? -> this.at2Mutual(at) }.toList()
-            } else if (StringUtils.hasText(name)) {
-                Arrays.stream(
-                        name.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-                    )
-                    .map { n: String -> this.name2Mutual(name) }
-                    .toList()
+            if (atList.isEmpty().not()) {
+                atList.map { this.at2Mutual(it) }
+            } else if (name.isNotBlank()) {
+                name.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                    .map { this.name2Mutual(name) }
             } else {
                 mutableListOf(qq2Mutual(event.sender.id))
             }
@@ -72,7 +67,7 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
             val u = bindDao.getUserFromQQ(qq)
             return MutualParam(u.osuID, qq, u.osuName)
         } catch (e: BindException) {
-            return MutualParam(null, qq, "${qq} : 未绑定或绑定状态失效！")
+            return MutualParam(null, qq, "$qq : 未绑定或绑定状态失效！")
         }
     }
 
@@ -81,7 +76,7 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
             val id = userApiService.getOsuId(name)
             return MutualParam(id, null, name)
         } catch (e: Exception) {
-            return MutualParam(null, null, "${name} : 找不到玩家或网络错误！")
+            return MutualParam(null, null, "$name : 找不到玩家或网络错误！")
         }
     }
 

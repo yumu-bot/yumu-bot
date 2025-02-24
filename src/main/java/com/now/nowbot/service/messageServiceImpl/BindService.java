@@ -3,7 +3,7 @@ package com.now.nowbot.service.messageServiceImpl;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.BindDao;
 import com.now.nowbot.entity.bind.QQBindLite;
-import com.now.nowbot.model.BinUser;
+import com.now.nowbot.model.BindUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.OsuUser;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -188,7 +188,7 @@ public class BindService implements MessageService<BindService.BindParam> {
             throw new BindException(BindException.Type.BIND_Player_NoBind);
         }
 
-        if (bindDao.unBindQQ(bind.get().getBinUser())) {
+        if (bindDao.unBindQQ(bind.get().getBindUser())) {
             throw new BindException(BindException.Type.BIND_UnBind_Successes, qq);
         } else {
             throw new BindException(BindException.Type.BIND_UnBind_Failed);
@@ -226,7 +226,7 @@ public class BindService implements MessageService<BindService.BindParam> {
             event.reply(
                     String.format(BindException.Type.BIND_Progress_Binding.message, qq, UID, name)
             );
-            bindDao.bindQQ(qq, new BinUser(UID, name));
+            bindDao.bindQQ(qq, new BindUser(UID, name));
             throw new BindException(BindException.Type.BIND_Response_Success);
         }
 
@@ -250,29 +250,29 @@ public class BindService implements MessageService<BindService.BindParam> {
 
     //默认绑定路径
     private void bindQQ(MessageEvent event, long qq, boolean isFull) throws BindException {
-        BinUser binUser;
+        BindUser bindUser;
         OsuUser osuUser = null;
 
         //检查是否已经绑定
         var qqLiteFromQQ = bindDao.getQQLiteFromQQ(qq);
         QQBindLite qqBindLite;
-        if (qqLiteFromQQ.isPresent() && (qqBindLite = qqLiteFromQQ.get()).getBinUser().isAuthorized()) {
-            binUser = qqBindLite.getBinUser();
+        if (qqLiteFromQQ.isPresent() && (qqBindLite = qqLiteFromQQ.get()).getBindUser().isAuthorized()) {
+            bindUser = qqBindLite.getBindUser();
             try {
                 try {
-                    osuUser = userApiService.getPlayerInfo(binUser, OsuMode.DEFAULT);
+                    osuUser = userApiService.getPlayerInfo(bindUser, OsuMode.DEFAULT);
                     event.reply(
-                            String.format(BindException.Type.BIND_Progress_BindingRecoverInfo.message, binUser.getOsuID(), binUser.getOsuName())
+                            String.format(BindException.Type.BIND_Progress_BindingRecoverInfo.message, bindUser.getOsuID(), bindUser.getOsuName())
                     );
                 } catch (WebClientResponseException.Unauthorized e) {
                     event.reply(
                             String.format(BindException.Type.BIND_Progress_NeedToReBindInfo.message,
-                                    binUser.getOsuID(), Optional.ofNullable(binUser.getOsuName()).orElse("?")
+                                          bindUser.getOsuID(), Optional.ofNullable(bindUser.getOsuName()).orElse("?")
                             )
                     );
                 }
 
-                if (Objects.nonNull(osuUser) && !osuUser.getUserID().equals(binUser.getOsuID())) {
+                if (Objects.nonNull(osuUser) && !osuUser.getUserID().equals(bindUser.getOsuID())) {
                     throw new RuntimeException();
                 }
 
@@ -390,7 +390,7 @@ public class BindService implements MessageService<BindService.BindParam> {
 //            throw new BindException(BindException.Type.BIND_Question_Wrong);
 //        }
 
-        bindDao.bindQQ(qq, new BinUser(UID, name));
+        bindDao.bindQQ(qq, new BindUser(UID, name));
 
         event.reply(
                 String.format(BindException.Type.BIND_Progress_Binding.message, qq, UID, name)

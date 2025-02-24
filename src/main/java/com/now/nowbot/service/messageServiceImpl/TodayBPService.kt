@@ -19,7 +19,6 @@ import com.now.nowbot.util.CmdUtil.getUserWithRange
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.CollectionUtils
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -115,7 +114,7 @@ class TodayBPService(
     fun TodayBPParam.getImage(): ByteArray {
         val todayMap = scores
 
-        if (CollectionUtils.isEmpty(todayMap)) {
+        if (todayMap.isEmpty()) {
             if (!user.active) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerInactive, user.username)
             } else if (isToday) {

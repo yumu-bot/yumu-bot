@@ -1,6 +1,6 @@
 package com.now.nowbot.service.osuApiService
 
-import com.now.nowbot.model.BinUser
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatmapUserScore
@@ -10,7 +10,7 @@ import com.now.nowbot.model.json.OsuUser
 interface OsuScoreApiService {
 
     // 获取最好成绩
-    fun getBestScores(user: BinUser, mode: OsuMode?, offset: Int, limit: Int): List<LazerScore>
+    fun getBestScores(user: BindUser, mode: OsuMode?, offset: Int, limit: Int): List<LazerScore>
 
     fun getBestScores(id: Long, mode: OsuMode?, offset: Int, limit: Int): List<LazerScore>
 
@@ -18,7 +18,11 @@ interface OsuScoreApiService {
         return getBestScores(user.userID, user.currentOsuMode, 0, 100)
     }
 
-    fun getBestScores(user: BinUser, mode: OsuMode?): List<LazerScore> {
+    fun getBestScores(user: OsuUser, mode: OsuMode?): List<LazerScore> {
+        return getBestScores(user.userID, mode, 0, 100)
+    }
+
+    fun getBestScores(user: BindUser, mode: OsuMode?): List<LazerScore> {
         return getBestScores(user = user, mode = mode, 0, 100)
     }
 
@@ -60,7 +64,7 @@ interface OsuScoreApiService {
      * @param offset 起始 从0开始
      * @param limit 数据是几条
      */
-    fun getPassedScore(user: BinUser, mode: OsuMode?, offset: Int, limit: Int): List<LazerScore>
+    fun getPassedScore(user: BindUser, mode: OsuMode?, offset: Int, limit: Int): List<LazerScore>
 
     /**
      * 获得成绩 不包含fail 共获取 e 条 [s, e)
@@ -81,10 +85,10 @@ interface OsuScoreApiService {
      * @param limit 数据是几条
      */
     fun getRecentScore(
-            user: BinUser,
-            mode: OsuMode?,
-            offset: Int,
-            limit: Int,
+        user: BindUser,
+        mode: OsuMode?,
+        offset: Int,
+        limit: Int,
     ): List<LazerScore>
 
     fun getRecentScore(uid: Long, mode: OsuMode?, offset: Int, limit: Int): List<LazerScore>
@@ -95,18 +99,18 @@ interface OsuScoreApiService {
 
     fun getBeatMapScore(bid: Long, uid: Long, mode: OsuMode?): BeatmapUserScore?
 
-    fun getBeatMapScore(bid: Long, user: BinUser, mode: OsuMode?): BeatmapUserScore?
+    fun getBeatMapScore(bid: Long, user: BindUser, mode: OsuMode?): BeatmapUserScore?
 
     fun getBeatMapScore(bid: Long, uid: Long, mode: OsuMode?, mods: Iterable<LazerMod?>): BeatmapUserScore?
 
     fun getBeatMapScore(
         bid: Long,
-        user: BinUser,
+        user: BindUser,
         mode: OsuMode,
         mods: Iterable<LazerMod?>,
     ): BeatmapUserScore?
 
-    fun getBeatMapScores(bid: Long, user: BinUser, mode: OsuMode?): List<LazerScore>
+    fun getBeatMapScores(bid: Long, user: BindUser, mode: OsuMode?): List<LazerScore>
 
     fun getBeatMapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore>
 
