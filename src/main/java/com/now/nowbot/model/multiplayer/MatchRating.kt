@@ -199,7 +199,7 @@ class MatchRating(
     @get:JsonProperty("team_point_map")
     val teamPointMap: Map<String, Int>
         get() {
-            val map = mutableMapOf<String, Int>()
+            val map = HashMap<String, Int>(3)
 
             for (r in rounds) {
                 val winner = r.winningTeam
@@ -210,7 +210,7 @@ class MatchRating(
                 }
             }
 
-            return map.toMap()
+            return map
         }
 
     @JsonProperty("player_data_list")

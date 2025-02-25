@@ -162,9 +162,10 @@ import java.util.regex.Matcher
 
         try {
             val body = mapOf(
-                "stat" to match.statistics,
+                "match" to mr,
                 "round" to round,
                 "index" to i,
+                "panel" to "MR"
             )
 
             img = imageService.getPanel(body, "F3")

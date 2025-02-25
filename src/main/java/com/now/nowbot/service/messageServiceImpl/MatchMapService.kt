@@ -129,6 +129,7 @@ class MatchMapService(
         ): PanelE7Param {
             val mr = MatchRating(
                 param.match,
+                MatchRating.RatingParam(),
                 beatmapApiService,
                 calculateApiService
             )

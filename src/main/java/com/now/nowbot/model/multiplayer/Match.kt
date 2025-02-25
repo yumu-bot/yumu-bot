@@ -13,7 +13,7 @@ data class Match(
     @JsonProperty("match") var statistics: MatchStat,
     val events: MutableList<MatchEvent>,
     @JsonProperty("users")
-    var players: MutableList<MicroUser>,
+    val players: MutableList<MicroUser>,
     @JsonProperty("first_event_id") var firstEventID: Long,
     @JsonProperty("latest_event_id") var latestEventID: Long,
 ) {
@@ -313,9 +313,26 @@ data class Match(
         firstEventID = match.firstEventID
 
         if (match.events.isEmpty()) return
-        when { // 插入新事件
-            events.last().eventID < match.events.first().eventID -> events.addAll(match.events) // 插入旧事件
-            events.first().eventID > match.events.last().eventID -> events.addAll(0, match.events) // 中间插入
+
+        // 处理空 score 对局
+        val lastGame = this.events.lastOrNull {it.round != null}
+
+        if (lastGame?.round?.scores?.isEmpty() == true) {
+            val replacer = match.events.lastOrNull { r -> lastGame.eventID == r.eventID }
+            if (replacer != null) {
+                val index = this.events.indexOf(lastGame)
+                this.events[index] = replacer
+            }
+        }
+
+        when {
+            // 插入新事件
+            events.last().eventID < match.events.first().eventID -> {
+                events.addAll(match.events)
+            } // 插入旧事件
+            events.first().eventID > match.events.last().eventID -> {
+                events.addAll(0, match.events)
+            } // 中间插入
             events.last().eventID < match.events.last().eventID -> {
                 events.removeIf { it.eventID >= match.events.first().eventID }
                 events.addAll(match.events)
@@ -349,14 +366,11 @@ data class Match(
             }
 
             if (this.players.isEmpty()) {
-                this.players = m.players
+                this.players.addAll(m.players)
             } else {
-                val p = ArrayList<MicroUser>(this.players.size)
+                val p = m.players.subtract(this.players.toSet())
 
-                p.addAll(this.players)
-                p.addAll(m.players)
-
-                this.players = p.distinct().toMutableList()
+                this.players.addAll(p)
             }
 
             //更新状态

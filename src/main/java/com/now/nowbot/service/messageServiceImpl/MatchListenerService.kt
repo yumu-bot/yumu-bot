@@ -154,9 +154,9 @@ class MatchListenerService(
     }
 
     class MatchListenerImplement(
-        val beatmapApiService: OsuBeatmapApiService,
-        val matchApiService: OsuMatchApiService,
-        val calculateApiService: OsuCalculateApiService,
+        private val beatmapApiService: OsuBeatmapApiService,
+        private val matchApiService: OsuMatchApiService,
+        private val calculateApiService: OsuCalculateApiService,
         val imageService: ImageService,
         val messageEvent: MessageEvent,
         val matchID: Long,
@@ -183,7 +183,7 @@ class MatchListenerService(
         }
 
         override fun onStart() {
-            for (i in 0..4) {
+            for (i in 0..5) {
                 val firstEvent = match.events.first()
                 if (firstEvent.type == Match.EventType.MatchCreated) return
                 match += matchApiService.getMatchInfoBefore(matchID, firstEvent.eventID)
@@ -241,6 +241,8 @@ class MatchListenerService(
 
         override fun onGameEnd(event: MatchAdapter.GameEndEvent) =
             with(event) {
+
+                /*
                 game.scores = game.scores.filter { s -> s.score >= 1000 }
 
                 val userMap =
@@ -270,12 +272,20 @@ class MatchListenerService(
                 calculateApiService.applyBeatMapChanges(game.beatMap, LazerMod.getModsList(game.mods))
                 calculateApiService.applyStarToBeatMap(game.beatMap, game.mode, LazerMod.getModsList(game.mods))
 
+                 */
+
+                val mr = MatchRating(match, beatmapApiService, calculateApiService)
+
+                val round = mr.rounds.last { it.roundID == game.roundID }
+                val index = mr.rounds.map { it.roundID }.indexOf(game.roundID)
+
                 val image =
                     try {
                         val body = mapOf(
-                            "stat" to match.statistics,
-                            "round" to game,
+                            "match" to mr,
+                            "round" to round,
                             "index" to index,
+                            "panel" to "RR"
                         )
 
                         imageService.getPanel(body, "F3")

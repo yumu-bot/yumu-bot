@@ -12,10 +12,10 @@ import java.util.concurrent.TimeUnit
 
 class MatchListener(
     val match: Match,
-    val matchApiService: OsuMatchApiService,
+    private val matchApiService: OsuMatchApiService,
     vararg adapter: MatchAdapter
 ) {
-    val usersIDSet = mutableSetOf<Long>()
+    private val usersIDSet = mutableSetOf<Long>()
     val userMap = mutableMapOf<Long, MicroUser>()
     var beforeGame: (Match.MatchEvent, MatchListener) -> Unit = { _, _ -> }
     private val matchId = match.id
@@ -72,8 +72,12 @@ class MatchListener(
                 nowEventID = newMatch.latestEventID
             }
 
-            match += newMatch
+            // 先添加新玩家，再添加新对局
             parseUsers(newMatch.events, newMatch.players)
+            addUsers(newMatch.events)
+
+            match += newMatch
+
             onEvent(newMatch.events)
             if (newMatch.isMatchEnd) stop(StopType.MATCH_END)
         } catch (e: Exception) {
@@ -192,7 +196,16 @@ class MatchListener(
         eventListener.forEach { it.onMatchEnd(type) }
     }
 
-    fun isStart() = future?.isDone?.not() == true
+    private fun isStart() = future?.isDone?.not() == true
+
+    private fun addUsers(events: List<Match.MatchEvent>) {
+        events
+            .map { it.round?.scores }
+            .filter { !it.isNullOrEmpty() }
+            .forEach {
+                scores -> scores!!.forEach { s -> s.user = userMap[s.userID] }
+            }
+    }
 
     private fun parseUsers(events: List<Match.MatchEvent>, users: List<MicroUser>) {
         users.forEach {
@@ -229,7 +242,7 @@ class MatchListener(
     companion object {
         // private val log = LoggerFactory.getLogger(MatchListener::class.java)
         val executorService: ScheduledExecutorService
-        val log = LoggerFactory.getLogger(MatchListener::class.java)
+        val log = LoggerFactory.getLogger(MatchListener::class.java)!!
 
         init {
             val threadFactory = Thread.ofVirtual().name("v-MatchListener", 50).factory()
