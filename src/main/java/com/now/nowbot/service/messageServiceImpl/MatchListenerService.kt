@@ -277,6 +277,14 @@ class MatchListenerService(
                 val mr = MatchRating(match, beatmapApiService, calculateApiService)
 
                 val round = mr.rounds.last { it.roundID == game.roundID }
+
+                // 手动调位置
+                if (round.scores.size > 2) {
+                    round.scores = round.scores.sortedByDescending { it.score }
+                } else {
+                    round.scores = round.scores.sortedBy { it.playerStat.slot }
+                }
+
                 val index = mr.rounds.map { it.roundID }.indexOf(game.roundID)
 
                 val image =
@@ -289,7 +297,7 @@ class MatchListenerService(
                         )
 
                         imageService.getPanel(body, "F3")
-                    } catch (e: java.lang.Exception) {
+                    } catch (e: Exception) {
                         log.error(e) { "对局信息图片渲染失败：" }
                         throw MatchRoundException(MatchRoundException.Type.MR_Fetch_Error)
                     }
