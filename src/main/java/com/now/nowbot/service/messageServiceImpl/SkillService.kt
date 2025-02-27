@@ -1,11 +1,11 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.model.mapminus.PPMinus4
-import com.now.nowbot.model.mapminus.PPMinus4Mania
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -60,8 +60,7 @@ import kotlin.math.sqrt
         calculateApiService.applyBeatMapChanges(bests)
         calculateApiService.applyStarToScores(bests)
 
-        val fileMap = getOsuFileMap(bests, beatmapApiService)
-        val skillMap = getSkill(fileMap)
+        val skillMap = getSkillMap(bests, beatmapApiService)
 
         val body = getBody(param.user, bests, skillMap)
 
@@ -78,37 +77,19 @@ import kotlin.math.sqrt
         }
     }
 
-    private fun getOsuFileMap(bests: List<LazerScore>?, beatmapApiService: OsuBeatmapApiService): Map<Long, OsuFile?> {
+    private fun getSkillMap(bests: List<LazerScore>?, beatmapApiService: OsuBeatmapApiService): Map<Long, PPMinus4?> {
         if (bests.isNullOrEmpty()) return mapOf()
 
-        val files = ConcurrentHashMap<Long, OsuFile?>(bests.size)
+        val skillMap = ConcurrentHashMap<Long, PPMinus4?>(bests.size)
 
         val actions = bests.map {
             return@map AsyncMethodExecutor.Supplier<Unit> {
                 try {
-                    files[it.beatMapID] = OsuFile.getInstance(beatmapApiService.getBeatMapFileString(it.beatMapID))
+                    val file = OsuFile.getInstance(beatmapApiService.getBeatMapFileString(it.beatMapID))
+
+                    skillMap[it.beatMapID] = PPMinus4.getInstance(file, LazerMod.getModSpeedForStarCalculate(it.mods).toDouble())
                 } catch (_: Exception) {
 
-                }
-            }
-        }
-
-        AsyncMethodExecutor.AsyncSupplier(actions)
-
-        return files
-    }
-
-    private fun getSkill(fileMap: Map<Long, OsuFile?>): Map<Long, PPMinus4?> {
-        val skillMap = ConcurrentHashMap<Long, PPMinus4?>(fileMap.size)
-
-        val actions = fileMap.map {
-            return@map AsyncMethodExecutor.Supplier<Unit> {
-                val file = it.value
-
-                skillMap[it.key] = if (file?.mode == OsuMode.MANIA) {
-                    PPMinus4Mania(file.mania)
-                } else {
-                    null
                 }
             }
         }
@@ -145,7 +126,7 @@ import kotlin.math.sqrt
                 star += powers[i] * skill[i]
             }
 
-            star / 3.0
+            star / 3.2
         }
 
         return mapOf(
@@ -159,7 +140,7 @@ import kotlin.math.sqrt
 
     companion object {
         // 用于求和并归一化
-        private val DIVISOR = (1 - (0.95).pow(100)) / 0.05 // 19.88158941559331949
+        private const val DIVISOR = 18.0 // (1 - (0.95).pow(100)) / 0.05 // 19.88158941559331949
 
         private fun nerfByAccuracy(score: LazerScore): Double {
             return when(score.mode) {
