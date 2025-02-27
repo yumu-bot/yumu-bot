@@ -260,6 +260,11 @@ enum class Instruction(val pattern: Pattern) {
         }
     }),
 
+    SKILL(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("skills?", "k")
+        appendModeQQUIDName()
+    }),
+
     GET_ID(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("getid", "gi")
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)

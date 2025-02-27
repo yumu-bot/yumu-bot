@@ -77,7 +77,7 @@ class GeneralTipsException : TipsException {
         G_Malfunction_Calculate("%s：数据计算失败。"), 
         G_Malfunction_Fetch("%s：数据获取失败。"), 
         G_Malfunction_Render("%s：渲染模块连接失败。"),
-        G_Malfunction_RenderTooMany("%s：连接渲染模块超时（请求数据太多了）。\n如果你是第一次见到这条消息，第二次通常就会恢复了。\n如果你多次见到这条消息，可以尝试缩小范围。"),
+        G_Malfunction_RenderTooMany("%s：渲染模块连接超时（请求数据太多了）。\n如果你是第一次见到这条消息，第二次通常就会恢复了。\n如果你多次见到这条消息，可以尝试一会后重试。"),
         G_Malfunction_Send("%s：图片发送失败。\n请耐心等待问题修复。"), 
         G_Malfunction_IOException("%s：遇到了文件读取异常，请重试。"), 
         G_Malfunction_Classification("%s：分类失败。"), 

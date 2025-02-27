@@ -85,7 +85,7 @@ class PPMinus4Mania(val file: ManiaBeatmapAttributes): PPMinus4() {
                 star += powers[i] * values[i]
             }
 
-            star /= 3.2f
+            star /= 3.0f
 
             return 0.6f * star + 0.4f * values.sorted()[4]
         }
