@@ -1,14 +1,19 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.NewbieService
+import com.now.nowbot.throwable.TipsException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.text.DecimalFormat
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 
 @Service("NEWBIE_PLAY_STATISTICS")
 //@DependsOn("newbieService")
@@ -43,6 +48,16 @@ class NewbiePlayStatisticsService(
         data: MessageService.DataValue<SearchType?>
     ): Boolean {
         val type = SearchType.fromString(messageText) ?: return false
+
+        // 活动已停止
+        if (Permission.isSuperAdmin(event.sender.id).not()) {
+            val endTime = OffsetDateTime.of(2025, 3, 1, 0, 0, 0, 0, ZoneOffset.ofHours(8))
+            val now = OffsetDateTime.now()
+
+            val delta = ChronoUnit.DAYS.between(now, endTime)
+
+            throw TipsException("活动已于 $delta 天前结束！感谢您的参与！")
+        }
 
         data.value = type
         return true

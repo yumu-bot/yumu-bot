@@ -85,7 +85,8 @@ class ServiceSwitchService(
             if (groupStr.isNotBlank()) {
                 throw ServiceSwitchException(ServiceSwitchException.Type.SW_Parameter_OnlyGroup)
             } else {
-                throw ServiceSwitchException(ServiceSwitchException.Type.SW_Instructions)
+                data.setValue(SwitchParam(-1L, null, Operation.REVIEW))
+                // throw ServiceSwitchException(ServiceSwitchException.Type.SW_Instructions)
             }
         }
 
@@ -201,6 +202,9 @@ class ServiceSwitchService(
 
             sb.append(
                 """
+                
+                要控制开关，请按 !sw service operate 的语法输入！
+                
                 | 状态 | 服务名 | 无法使用的群聊 |
                 | :-: | :-- | :-- |
                 
@@ -208,13 +212,22 @@ class ServiceSwitchService(
                     .trimIndent()
             )
 
-            val list = Permission.getClosedService()
+            val closedServices = Permission.getClosedService()
 
-            for (serviceName in Permission.getAllService()) {
+            for (name in Permission.getAllService().sorted()) {
+                var isClosed = false
+
+                for (it in closedServices) {
+                    if (name.equals(it, true)) {
+                        isClosed = true
+                        break
+                    }
+                }
+
                 sb.append("| ")
-                    .append(if (list.contains(serviceName)) "-" else "O")
+                    .append(if (isClosed) "❌" else "✔\uFE0F")
                     .append(" | ")
-                    .append(serviceName)
+                    .append(name)
                     .append(" | ")
                     .append("-") // 114514, 1919810
                     .append(" |\n")

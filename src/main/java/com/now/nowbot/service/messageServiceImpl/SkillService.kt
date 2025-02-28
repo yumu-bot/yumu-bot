@@ -54,7 +54,7 @@ import kotlin.math.sqrt
         val bests = try {
             scoreApiService.getBestScores(param.user, param.mode)
         } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, param.user.username)
         }
 
         calculateApiService.applyBeatMapChanges(bests)

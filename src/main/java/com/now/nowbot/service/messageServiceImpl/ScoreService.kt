@@ -163,9 +163,8 @@ import java.util.regex.Matcher
         val b = param.beatMap
         val bid = b.beatMapID
 
-        var scores: List<LazerScore> = try {
-            scoreApiService.getBeatMapScores(bid, user.userID, mode)
-                .sortedByDescending { it.PP }
+        val scores: List<LazerScore> = try {
+            scoreApiService.getBeatMapScores(bid, user.userID, mode).sortedByDescending { it.PP }
         } catch (e: WebClientResponseException.NotFound) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, b.previewName)
         } catch (e: WebClientResponseException.Unauthorized) {
@@ -173,18 +172,6 @@ import java.util.regex.Matcher
                 throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
             } else {
                 throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
-            }
-        }
-
-        if (scores.isEmpty()) { // 当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
-            if (b.mode == OsuMode.OSU && mode != OsuMode.OSU && mode != OsuMode.DEFAULT) {
-                scores = scoreApiService.getBeatMapScores(bid, user.userID, OsuMode.DEFAULT)
-                    .sortedByDescending { it.PP }
-            } else {
-                throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Null_SpecifiedMode,
-                    mode.getName(),
-                )
             }
         }
 
@@ -202,7 +189,8 @@ import java.util.regex.Matcher
                 image = imageService.getPanelA5(user, scores, "SS")
             } else {
                 val score = scores.first()
-                val e5Param = ScorePRService.getScore4PanelE5(user, score, b, null, "S", beatmapApiService, calculateApiService)
+                val e5Param =
+                    ScorePRService.getScore4PanelE5(user, score, b, null, "S", beatmapApiService, calculateApiService)
 
                 image = imageService.getPanel(e5Param.toMap(), "E5")
             }
@@ -228,49 +216,26 @@ import java.util.regex.Matcher
             score = try {
                 scoreApiService.getBeatMapScore(bid, user.userID, mode, param.mods)?.score
             } catch (e: WebClientResponseException) {
-                throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Null_Score,
-                    b.previewName,
-                )
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, b.previewName)
             }
 
             beatmapApiService.applyBeatMapExtend(score!!, b)
             position = null
         } else {
             val beatMapScore = try {
-                scoreApiService.getBeatMapScore(bid, user.userID, mode)
-            } catch (e: WebClientResponseException.NotFound) { // 当在玩家设定的模式上找不到时，寻找基于谱面获取的游戏模式的成绩
-                if (b.mode == OsuMode.OSU && mode != OsuMode.OSU && mode != OsuMode.DEFAULT) {
-                    try {
-                        scoreApiService.getBeatMapScore(bid, user.userID, OsuMode.DEFAULT)
-                    } catch (e1: WebClientResponseException) {
-                        throw GeneralTipsException(
-                            GeneralTipsException.Type.G_Null_Score,
-                            b.previewName,
-                        )
-                    }
-                } else {
-                    throw GeneralTipsException(
-                        GeneralTipsException.Type.G_Null_SpecifiedMode,
-                        mode.getName(),
-                    )
-                }
-            } catch (e: WebClientResponseException.Unauthorized) {
-                if (param.isMyself) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-                } else {
-                    throw GeneralTipsException(
-                        GeneralTipsException.Type.G_TokenExpired_Player
-                    )
-                }
+                scoreApiService.getBeatMapScore(bid, user.userID, mode)!!
+            } catch (e: WebClientResponseException.NotFound) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, b.previewName)
             }
-            score = beatMapScore!!.score!!
+
+            score = beatMapScore.score!!
             position = beatMapScore.position
         }
 
         val image: ByteArray
 
-        val e5Param = ScorePRService.getScore4PanelE5(user, score, b, position, "S", beatmapApiService, calculateApiService)
+        val e5Param =
+            ScorePRService.getScore4PanelE5(user, score, b, position, "S", beatmapApiService, calculateApiService)
 
         try {
             image = imageService.getPanel(e5Param.toMap(), "E5")
