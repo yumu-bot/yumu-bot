@@ -105,20 +105,22 @@ object CmdUtil {
         vararg ignores: String,
     ): CmdRange<OsuUser> {
         try {
-            return CmdRange(getUserWithoutRange(event, matcher, mode, isMyself))
-        } catch (e: Exception) {
-            if (isMyself.get() && isAvoidance(text, *ignores)) {
-                throw LogException("退避指令 $ignores")
-            } else if (matcher.namedGroups().containsKey("name") &&
-                matcher.group("name")?.contains("(\\d{1,2}$REG_HYPHEN)?(100|\\d{1,2})".toRegex()) == true) {
-                // 错误匹配到 range 的解决办法，，，
+            if (matcher.namedGroups().containsKey("name") &&
+                matcher.group("name")?.trim()?.matches("(\\d{1,2}$REG_HYPHEN)?(100|\\d{1,2})".toRegex()) == true) {
+                // 如果人名完全符合 xx-yyy? 或 xx 的形式，则主动抛弃
 
                 val split = matcher.group("name")?.split(REG_HYPHEN.toRegex())
 
                 val start = split?.firstOrNull()?.toIntOrNull()
-                val end = split?.lastOrNull()?.toIntOrNull()
+                val end = if (split != null && split.size == 2) split.lastOrNull()?.toIntOrNull() else null
 
                 return CmdRange(getOsuUser(bindDao.getUserFromQQ(event.sender.id), mode.data), start, end)
+            } else {
+                return CmdRange(getUserWithoutRange(event, matcher, mode, isMyself))
+            }
+        } catch (e: Exception) {
+            if (isMyself.get() && isAvoidance(text, *ignores)) {
+                throw LogException("退避指令 $ignores")
             } else {
                 throw e
             }

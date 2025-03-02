@@ -65,12 +65,32 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     BP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("b")
-        appendModeQQUIDNameRange()
+        appendModeQQUIDName()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup(
+                "any", REG_ANYTHING_BUT_NO_HASH_STARS, MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
     }),
 
     BPS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("bs")
-        appendModeQQUIDNameRange()
+        appendModeQQUIDName()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup(
+                "any", REG_ANYTHING_BUT_NO_HASH_STARS, MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
     }),
 
     TODAY_BP(CommandPatternBuilder.create {
@@ -297,7 +317,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
 // 检查正则
 fun main() {
-    val test: String? = "/i"
+    val test: String = "/i"
     for (i in OfficialInstruction.entries) {
         if (test != null) {
             if (i.pattern.matcher(test).find()) {

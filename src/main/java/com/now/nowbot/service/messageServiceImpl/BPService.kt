@@ -18,7 +18,6 @@ import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithBackoff
-import com.now.nowbot.util.CmdUtil.getUserWithRange
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 import org.slf4j.Logger
@@ -95,27 +94,51 @@ import kotlin.math.roundToLong
     }
 
     override fun accept(event: MessageEvent, messageText: String): BPParam? {
-        var matcher: Matcher
+        val matcher1 = OfficialInstruction.BP.matcher(messageText)
+        val matcher2 = OfficialInstruction.BPS.matcher(messageText)
+
+        val matcher: Matcher
         val isMultiple: Boolean
 
-        when {
-            OfficialInstruction.BP.matcher(messageText).apply { matcher = this }.find() -> isMultiple = false
-
-            OfficialInstruction.BPS.matcher(messageText).apply { matcher = this }.find() -> isMultiple = true
-
-            else -> return null
+        if (matcher1.find()) {
+            matcher = matcher1
+            isMultiple = false
+        } else if (matcher2.find()) {
+            matcher = matcher2
+            isMultiple = true
+        } else {
+            return null
         }
-
         val isMyself = AtomicBoolean() // 处理 range
         val mode = getMode(matcher)
 
-        val range = getUserWithRange(event, matcher, mode, isMyself)
+        val range = getUserWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
 
-        val user = range.data ?: return null
+        val any = matcher.group("any")
+        val conditions = DataUtil.paramMatcher(any, Filter.entries.map { it.regex })
 
-        val scores = range.getBPScores(mode.data!!, isMultiple, false)
+        // 如果不加井号，则有时候范围会被匹配到这里来
+        val rangeInConditions = conditions.lastOrNull()
+        val hasRange = (rangeInConditions.isNullOrEmpty().not())
+        val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
-        return BPParam(user, scores, isMyself.get())
+        val ranges = if (hasRange) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN)
+
+        val range2 = if (range.start != null) {
+            range
+        } else {
+            CmdRange(range.data!!, ranges?.firstOrNull()?.toIntOrNull(), ranges?.lastOrNull()?.toIntOrNull())
+        }
+
+        val scores = range2.getBPScores(mode.data!!, isMultiple, hasCondition)
+
+        val filteredScores = filterScores(scores, conditions)
+
+        if (filteredScores.isEmpty()) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_FilterBP, range.data!!.username)
+        }
+
+        return BPParam(range.data, filteredScores, isMyself.get())
     }
 
     override fun reply(event: MessageEvent, param: BPParam): MessageChain? = QQMsgUtil.getImage(param.getImage())

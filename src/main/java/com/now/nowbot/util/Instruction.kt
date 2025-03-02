@@ -498,7 +498,7 @@ enum class Instruction(val pattern: Pattern) {
     // #7 娱乐指令
 
     DICE(CommandPatternBuilder.create {
-        append("($REG_EXCLAMATION|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d${REG_IGNORE})")
+        append("($REG_EXCLAMATION|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d(?!${REG_IGNORE}))")
         appendCaptureGroup("number", "${REG_HYPHEN}?\\d", ANY)
         appendSpace()
         appendCaptureGroup("text", REG_ANYTHING, MORE)
