@@ -82,6 +82,9 @@ val REG_NUMBER: String = "\\d"
 val REG_WORD: String = "\\w"
 
 @Language("RegExp")
+val REG_OPERATOR: String = "([<>＜＞][=＝]?|[=＝][=＝]?|[!！][=＝])"
+
+@Language("RegExp")
 val REG_NUMBER_SEPERATOR: String = "[\\d\\-\\s_,，|:：`、]"
 
 @Language("RegExp")
@@ -94,7 +97,7 @@ val REG_PLUS: String = "[＋+]"
 val REG_GREATER: String = "[＞>]"
 
 @Language("RegExp")
-val REG_SMALLER: String = "[＜<]"
+val REG_LESS: String = "[＜<]"
 
 @Language("RegExp")
 val REG_EQUAL: String = "[＝=]"
@@ -118,15 +121,15 @@ val REG_EXCLAMATION: String = "[!！]"
 val REG_QUOTATION : String = "[“”\"«»《》＂‟]"
 
 @Language("RegExp")
-val REG_IGNORE: String = "(?![A-Za-z\\-_])"
+val REG_IGNORE: String = "[A-Za-z\\-_]"
 
 @Language("RegExp")
 // 用在多成绩的指令里（可能有 s）
-val REG_IGNORE_S: String = "(?![^s:：\\d\\s])"
+val REG_IGNORE_S: String = "[^s:：\\d\\s]"
 
 @Language("RegExp")
 // 用在有时候需要匹配 bid 和 sid 的指令里
-val REG_IGNORE_BS: String = "(?![^bs:：\\d\\s])"
+val REG_IGNORE_BS: String = "[^bs:：\\d\\s]"
 
 @Language("RegExp")
 val REG_NAME: String = "($CHAR_NAME$CHAR_NAME_WITH_SPACE+$CHAR_NAME)"

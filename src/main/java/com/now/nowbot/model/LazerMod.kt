@@ -2294,6 +2294,16 @@ sealed class LazerMod {
             }
         }
 
+        // to 内 完全 含有 compare 的 mod
+        inline fun <reified T : LazerMod> hasMod(compare: Collection<T>, to: Collection<T>): Boolean {
+            if (compare.isEmpty() || to.isEmpty()) return false
+
+            val compareSet = compare.filter { it.acronym != "CL" || it.acronym.isNotEmpty() }.map { it::class }.toSet()
+            val toSet = to.filter { it.acronym != "CL" || it.acronym.isNotEmpty() }.map { it::class }.toSet()
+            val intersectSet = compareSet.intersect(toSet)
+            return intersectSet.size == compareSet.size
+        }
+
         inline fun <reified T : LazerMod> hasMod(mods: List<LazerMod>): Boolean {
             return mods.any {
                 it is T

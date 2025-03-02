@@ -131,7 +131,18 @@ enum class Instruction(val pattern: Pattern) {
             append("(?<bp>(ym)?(bestperformance|best|bp|b))(?<s>s)?")
             appendIgnore()
         }
-        appendModeQQUIDNameRange()
+        appendModeQQUIDName()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup("any",
+                REG_ANYTHING_BUT_NO_HASH_STARS,
+                MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
     }),
 
     TODAY_BP(CommandPatternBuilder.create {
@@ -749,6 +760,8 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
+        if (i.name != "BP") continue
+
         println("${i.name}: ${i.pattern.pattern()}")
     }
 }

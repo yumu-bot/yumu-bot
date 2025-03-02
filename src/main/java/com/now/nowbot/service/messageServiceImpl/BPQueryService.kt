@@ -16,11 +16,13 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.serviceException.BPQueryException
 import com.now.nowbot.throwable.serviceException.BPQueryException.*
 import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.REG_QUOTATION
 import org.springframework.stereotype.Service
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -45,10 +47,19 @@ class BPQueryService(
     ): Boolean {
         val matcher = Instruction.BP_QUERY.matcher(messageText)
         return if (matcher.find()) {
+            throw TipsException("""
+                BQ 功能已正式下线。
+                类似的功能已合并到 B 功能，并已支持多条无序匹配！
+                试试 !b acc>98 combo>400 rank=s 吧！
+            """.trimIndent())
+            /*
+
             val text: String = matcher.group("text") ?: throw NullInput()
 
             data.value = BPQueryParam(text, OsuMode.getMode(matcher.group("mode")))
             true
+
+             */
         } else {
             false
         }
@@ -368,8 +379,6 @@ class BPQueryService(
 
         private val split: Regex = "(\\s+)|[|,，]".toRegex()
 
-        private val quotation = "[“”＂‟]".toRegex()
-
         // 最好还是支持一下全角符号，总是有用户输入
         private fun String.standardised(): String {
             return this
@@ -380,7 +389,7 @@ class BPQueryService(
                 .replace('＝', '=')
                 .replace('！', '!')
                 .replace("≠", "!=")
-                .replace(quotation, "\"")
+                .replace(REG_QUOTATION, "\"")
         }
 
         private fun String.getOperator(): Triple<String, Operator, String> {

@@ -571,15 +571,20 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
-     * 忽略随便一段正则。如果有输入的其他正则，则**和 append 无异**。主要是方便辨认。
+     * 忽略随便一段正则。如果有输入的其他正则，则使用后向忽略包围起来。
      */
-    fun appendIgnore(@Language("RegExp") ign: String?) {
-        if (ign.isNullOrEmpty()) appendIgnore()
-        else append(ign)
-    }
+    fun appendIgnore(@Language("RegExp") ign: String? = REG_IGNORE) {
+        append('(')
+        append('?')
+        append('!')
 
-    fun appendIgnore() {
-        append(REG_IGNORE)
+        if (ign.isNullOrEmpty()) {
+            append(REG_IGNORE)
+        } else {
+            append(ign)
+        }
+
+        append(')')
     }
 
     // 以下是构建

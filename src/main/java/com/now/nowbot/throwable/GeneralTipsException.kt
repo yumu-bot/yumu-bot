@@ -59,7 +59,9 @@ class GeneralTipsException : TipsException {
         
         G_Wrong_QQ("QQ 参数错误，请检查。"), 
         G_Wrong_ParamAccuracy("准确率参数错误，请检查。"), 
-        G_Wrong_ParamCombo("连击参数错误，请检查。"), 
+        G_Wrong_ParamCombo("连击参数错误，请检查。"),
+        G_Wrong_ParamOperator("逻辑运算符错误，请检查。"),
+        G_Wrong_ParamOnly("仅支持使用 %s 逻辑运算符。"),
 
         G_Empty_Score("您的成绩是空的！"),
         G_Empty_TodayBP("玩家 %s 今天之内没有新增的 BP 呢...\n尝试修改范围，或尝试扩大搜索天数吧。"), 

@@ -67,7 +67,11 @@ object CmdUtil {
                 userApiService.getPlayerInfo(bu, checkOsuMode(mode, bu.osuMode))
             }
         } else {
-            throw BindException(BindException.Type.BIND_Me_TokenExpired)
+            if (isMyself.get()) {
+                throw BindException(BindException.Type.BIND_Me_TokenExpired)
+            } else {
+                throw BindException(BindException.Type.BIND_Player_TokenExpired)
+            }
         }
     }
 
@@ -90,6 +94,35 @@ object CmdUtil {
             range.data = getUserWithoutRange(event, matcher, mode, isMyself)
         }
         return range
+    }
+
+    @JvmStatic fun getUserWithBackoff(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
+        text: String,
+        vararg ignores: String,
+    ): CmdRange<OsuUser> {
+        try {
+            return CmdRange(getUserWithoutRange(event, matcher, mode, isMyself))
+        } catch (e: Exception) {
+            if (isMyself.get() && isAvoidance(text, *ignores)) {
+                throw LogException("退避指令 $ignores")
+            } else if (matcher.namedGroups().containsKey("name") &&
+                matcher.group("name")?.contains("(\\d{1,2}$REG_HYPHEN)?(100|\\d{1,2})".toRegex()) == true) {
+                // 错误匹配到 range 的解决办法，，，
+
+                val split = matcher.group("name")?.split(REG_HYPHEN.toRegex())
+
+                val start = split?.firstOrNull()?.toIntOrNull()
+                val end = split?.lastOrNull()?.toIntOrNull()
+
+                return CmdRange(getOsuUser(bindDao.getUserFromQQ(event.sender.id), mode.data), start, end)
+            } else {
+                throw e
+            }
+        }
     }
 
     /**
@@ -557,10 +590,4 @@ data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int
             default
         }
     }
-
-    /**
-     * 获取值 参数 important 是表示取值是否优先 default 只有取值是 null 时才会返回 如果 range 为 [5, 9], getValue(20, true) 返回
-     * 5, getValue(20, false) 返回 9 如果 range 为 [5, null], getValue(20, true) 返回 5, getValue(20,
-     * false) 返回 20 如果 range 为 [null, null], getValue(20, true) 返回 20, getValue(20, false) 返回 20
-     */ // 你有毛病？
 }

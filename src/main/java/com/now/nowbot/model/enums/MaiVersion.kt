@@ -128,7 +128,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "pr+",
                 "pri+",
                 "prs+",
-                "1.51" -> PRISM_PLUS
+                "1.55" -> PRISM_PLUS
                 "prism",
                 "pr",
                 "pri",
@@ -143,7 +143,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "bd+",
                 "bud+",
                 "宴",
-                "1.41" -> BUDDIES_PLUS
+                "1.45" -> BUDDIES_PLUS
                 "buddies",
                 "bd",
                 "bud",
@@ -160,7 +160,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "fes+",
                 "fst+",
                 "祝",
-                "1.31" -> FESTIVAL_PLUS
+                "1.35" -> FESTIVAL_PLUS
                 "festival",
                 "fs",
                 "fes",
@@ -178,7 +178,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "uv+",
                 "uni+",
                 "星",
-                "1.21" -> UNIVERSE_PLUS
+                "1.25" -> UNIVERSE_PLUS
                 "universe",
                 "un",
                 "uv",
@@ -194,7 +194,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "sp+",
                 "spl+",
                 "煌",
-                "1.11" -> SPLASH_PLUS
+                "1.15" -> SPLASH_PLUS
                 "splash",
                 "sp",
                 "spl",
@@ -210,7 +210,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "dlx+",
                 "華",
                 "华",
-                "1.01" -> DX_PLUS
+                "1.05" -> DX_PLUS
                 "deluxe",
                 "dx",
                 "dlx",
@@ -228,7 +228,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "fn+",
                 "fnl+",
                 "舞",
-                "0.71" -> ALL_FINALE
+                "0.75" -> ALL_FINALE
                 "finale",
                 "final",
                 "fn",
@@ -245,7 +245,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "mk+",
                 "mlk+",
                 "雪",
-                "0.61" -> MILK_PLUS
+                "0.65" -> MILK_PLUS
                 "milk",
                 "white",
                 "mk",
@@ -260,7 +260,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "ms+",
                 "msk+",
                 "菫",
-                "0.51" -> MURASAKI_PLUS
+                "0.55" -> MURASAKI_PLUS
                 "murasaki",
                 "ms",
                 "msk",
@@ -275,7 +275,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "pnk+",
                 "櫻",
                 "樱",
-                "0.41" -> PINK_PLUS
+                "0.45" -> PINK_PLUS
                 "pink",
                 "pk",
                 "pnk",
@@ -290,7 +290,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "org+",
                 "暁",
                 "晓",
-                "0.31" -> ORANGE_PLUS
+                "0.35" -> ORANGE_PLUS
                 "orange",
                 "or",
                 "org",
@@ -305,7 +305,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "grn+",
                 "gr+",
                 "檄",
-                "0.21" -> GREEN_PLUS
+                "0.25" -> GREEN_PLUS
                 "green",
                 "gr",
                 "gre",
@@ -321,7 +321,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "pls",
                 "mai+",
                 "真",
-                "0.11" -> PLUS
+                "0.15" -> PLUS
                 "maimai",
                 "mi",
                 "mai",

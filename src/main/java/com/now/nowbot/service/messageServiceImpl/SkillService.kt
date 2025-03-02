@@ -126,7 +126,7 @@ import kotlin.math.sqrt
                 star += powers[i] * skill[i]
             }
 
-            star / 3.2
+            star / STAR_DIVISOR
         }
 
         return mapOf(
@@ -134,13 +134,15 @@ import kotlin.math.sqrt
             "skill" to skill,
             "scores" to scores,
             "total" to total,
-            "size" to skill.size
         )
     }
 
     companion object {
+        // 用于控制最后的星数
+        private const val STAR_DIVISOR = 3.6
+
         // 用于求和并归一化
-        private const val DIVISOR = 18.0 // (1 - (0.95).pow(100)) / 0.05 // 19.88158941559331949
+        private const val DIVISOR = 16.0 // (1 - (0.95).pow(100)) / 0.05 // 19.88158941559331949
 
         private fun nerfByAccuracy(score: LazerScore): Double {
             return when(score.mode) {
