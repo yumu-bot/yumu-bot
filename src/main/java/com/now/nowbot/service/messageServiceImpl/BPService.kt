@@ -169,20 +169,24 @@ import kotlin.math.roundToLong
     enum class Filter(@Language("RegExp") val regex: Regex) {
         MAPPER("(mapper|creator|host|u)(?<n>$REG_OPERATOR$REG_NAME)".toRegex()),
 
-        SCORE_ID("(score|scoreid|s)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+        SCORE_ID("(score|scoreid|i)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
         TITLE("(title|name|song|t)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-        ARTIST("(artist|f)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+        ARTIST("(artist|f?a)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-        STAR("(star|sr|s)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+        SOURCE("(source|src|o)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+
+        DIFFICULTY("(difficulty|diff|d)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+
+        STAR("(star|sr|r)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
 
         // 既然都整合了，为什么还要用 index ?
-        INDEX("(index|i)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+        // INDEX("(index|i)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
         AR("(ar|approach)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
 
-        CS("(cs|circle|keys?|k)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+        CS("(cs|circle|keys?)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
 
         OD("(od|difficulty)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
 
@@ -190,13 +194,13 @@ import kotlin.math.roundToLong
 
         PERFORMANCE("(performance|pp|p)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
 
-        RANK("(rank(ing)?|r)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+        RANK("(rank(ing)?|k)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
         LENGTH("(length|drain|time|l)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE($REG_COLON$REG_NUMBER$LEVEL_MORE)?)".toRegex()),
 
         BPM("(bpm|b)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
 
-        ACCURACY("(accuracy|acc|a)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+        ACCURACY("(accuracy|acc)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
 
         COMBO("(combo|cb?)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
@@ -318,7 +322,13 @@ import kotlin.math.roundToLong
                 val condition = c.split("[<>＜＞=＝!！]".toRegex()).lastOrNull() ?: ""
 
                 scores.removeIf {
-                    fitScore(it, operator, filter, condition).not()
+                    println("当前谱面：${it.beatMap.previewName}")
+                    val f = fitScore(it, operator, filter, condition).not()
+                    println("是否删除？：$f")
+                    println("当前成绩数量：${scores.size}")
+                    println(" ")
+
+                    f
                 }
             }
         }
@@ -334,6 +344,8 @@ import kotlin.math.roundToLong
                         || fit(operator, it.beatMapSet.titleUnicode, condition))
                 Filter.ARTIST -> (fit(operator, it.beatMapSet.artist, condition)
                         || fit(operator, it.beatMapSet.artistUnicode, condition))
+                Filter.SOURCE -> fit(operator, it.beatMapSet.source, condition)
+                Filter.DIFFICULTY -> fit(operator, it.beatMap.difficultyName, condition)
 
                 Filter.STAR -> fit(operator, it.beatMap.starRating, double)
 
