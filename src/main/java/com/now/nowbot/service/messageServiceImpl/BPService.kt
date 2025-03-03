@@ -322,11 +322,11 @@ import kotlin.math.roundToLong
                 val condition = c.split("[<>＜＞=＝!！]".toRegex()).lastOrNull() ?: ""
 
                 scores.removeIf {
-                    println("当前谱面：${it.beatMap.previewName}")
+                    // println("当前谱面：${it.beatMap.previewName}")
                     val f = fitScore(it, operator, filter, condition).not()
-                    println("是否删除？：$f")
-                    println("当前成绩数量：${scores.size}")
-                    println(" ")
+                    // println("是否删除？：$f")
+                    // println("当前成绩数量：${scores.size}")
+                    // println(" ")
 
                     f
                 }
