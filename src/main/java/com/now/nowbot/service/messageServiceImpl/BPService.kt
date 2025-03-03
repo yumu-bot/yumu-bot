@@ -461,16 +461,17 @@ import kotlin.math.roundToLong
                     Operator.LE -> c <= t
                 }
             } else if (compare is String && to is String) {
-                val c: String = compare.trim()
-                val t: String = to.trim()
+                val c: String = DataUtil.getStandardisedString(compare.trim())
+                val t: String = DataUtil.getStandardisedString(to.trim())
 
                 when (operator) {
-                    Operator.XQ -> c.equals(t, ignoreCase = true)
-                    Operator.EQ -> t.contains(c, ignoreCase = true)
-                    Operator.NE -> t.contains(c, ignoreCase = true).not()
-                    else -> throw GeneralTipsException(
-                        GeneralTipsException.Type.G_Wrong_ParamOnly, ">, >=, <, <="
-                    )
+                    Operator.XQ -> t.equals(c, ignoreCase = true)
+                    Operator.EQ -> c.contains(t, ignoreCase = true)
+                    Operator.NE -> c.contains(t, ignoreCase = true).not()
+                    Operator.GT -> t.contains(c, ignoreCase = true) && t.length > c.length
+                    Operator.GE -> t.contains(c, ignoreCase = true) && t.length >= c.length
+                    Operator.LT -> c.contains(t, ignoreCase = true) && t.length < c.length
+                    Operator.LE -> c.contains(t, ignoreCase = true) && t.length <= c.length
                 }
             } else {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Calculate, "最好成绩")
