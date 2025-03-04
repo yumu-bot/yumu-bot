@@ -289,7 +289,7 @@ import kotlin.reflect.full.companionObjectInstance
     }
 
     override fun applyStarToScore(score: LazerScore) {
-        if (score.beatMapID == 0L || LazerMod.noStarRatingChange(score.mods)) return
+        if ((score.beatMapID == 0L || LazerMod.noStarRatingChange(score.mods)) && score.beatMap.mode == score.mode) return
 
         val sr = getStar(score.beatMapID, score.mode, score.mods)
 
@@ -301,10 +301,11 @@ import kotlin.reflect.full.companionObjectInstance
     }
 
     override fun applyStarToBeatMap(beatMap: BeatMap?, mode: OsuMode, mods: List<LazerMod>) {
-        if (beatMap == null || (beatMap.mode != OsuMode.OSU && mode != beatMap.mode && mode != OsuMode.DEFAULT)) return
+        if (beatMap == null || (beatMap.mode != OsuMode.OSU && OsuMode.isNotDefaultOrNull(mode) && mode != beatMap.mode)) return
 
-        if (beatMap.mode == OsuMode.OSU && mode != beatMap.mode && mode != OsuMode.DEFAULT) {
+        if (beatMap.mode == OsuMode.OSU && OsuMode.isNotDefaultOrNull(mode) && mode != beatMap.mode) {
             applyStarToBeatMapFromOfficial(beatMap, mode, mods)
+            return
         }
 
         if (LazerMod.hasStarRatingChange(mods).not()) return

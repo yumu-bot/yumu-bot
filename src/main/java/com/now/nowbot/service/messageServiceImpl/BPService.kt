@@ -37,7 +37,7 @@ import kotlin.math.roundToLong
     private val imageService: ImageService,
 ) : MessageService<BPParam>, TencentMessageService<BPParam> {
 
-    data class BPParam(val user: OsuUser?, val scores: List<LazerScore>, val isMyself: Boolean)
+    data class BPParam(val user: OsuUser?, val scores: Map<Int, LazerScore>, val isMyself: Boolean)
 
     @Throws(Throwable::class) override fun isHandle(
         event: MessageEvent,
@@ -229,7 +229,7 @@ import kotlin.math.roundToLong
         mode: OsuMode,
         isMultiple: Boolean,
         isSearch: Boolean = false,
-    ): List<LazerScore> {
+    ): Map<Int, LazerScore> {
         val offset: Int
         val limit: Int
 
@@ -273,17 +273,17 @@ import kotlin.math.roundToLong
             }
         }
 
-        return scores
+        return scores.mapIndexed { index: Int, score: LazerScore -> (index + 1) to score }.toMap()
     }
 
     private fun BPParam.getImage(): ByteArray = try {
         if (scores.size > 1) {
-            val ranks = List(scores.size) { it + 1 }
-            val scores = this.scores
+            val ranks = scores.map{it.key}.toList()
+            val scores = scores.map{it.value}.toList()
 
             imageService.getPanelA4(user, scores, ranks, "BS")
         } else {
-            val score: LazerScore = scores.first()
+            val score: LazerScore = scores.toList().first().second
 
             val e5Param = ScorePRService.getScore4PanelE5(user!!, score, "B", beatmapApiService, calculateApiService)
             imageService.getPanel(e5Param.toMap(), "E5")
@@ -296,8 +296,8 @@ import kotlin.math.roundToLong
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BPService::class.java)
 
-        private fun filterScores(scores: List<LazerScore>, conditions: List<List<String>>): List<LazerScore> {
-            val s = scores.toMutableList()
+        private fun filterScores(scores: Map<Int, LazerScore>, conditions: List<List<String>>): Map<Int, LazerScore> {
+            val s = scores.toMutableMap()
 
             conditions.forEachIndexed { index, strings ->
                 if (strings.isNotEmpty()) {
@@ -305,7 +305,7 @@ import kotlin.math.roundToLong
                 }
             }
 
-            return s.toList()
+            return s.toMap()
         }
 
         private fun getOperator(string: String): Operator {
@@ -316,20 +316,14 @@ import kotlin.math.roundToLong
             throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamOperator)
         }
 
-        private fun filterConditions(scores: MutableList<LazerScore>, filter: Filter, conditions: List<String>) {
+        private fun filterConditions(scores: MutableMap<Int, LazerScore>, filter: Filter, conditions: List<String>) {
             for (c in conditions) {
                 val operator = getOperator(c)
                 val condition = c.split("[<>＜＞=＝!！]".toRegex()).lastOrNull() ?: ""
 
-                scores.removeIf {
-                    // println("当前谱面：${it.beatMap.previewName}")
-                    val f = fitScore(it, operator, filter, condition).not()
-                    // println("是否删除？：$f")
-                    // println("当前成绩数量：${scores.size}")
-                    // println(" ")
+                val remove: Map<Int, Boolean> = scores.map { it.key to fitScore(it.value, operator, filter, condition).not() }.toMap()
 
-                    f
-                }
+                remove.forEach { if (it.value) scores.remove(it.key) }
             }
         }
 
