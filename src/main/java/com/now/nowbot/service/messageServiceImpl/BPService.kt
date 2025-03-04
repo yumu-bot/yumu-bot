@@ -65,7 +65,10 @@ import kotlin.math.roundToLong
         val range2 = if (range.start != null) {
             range
         } else {
-            CmdRange(range.data!!, ranges?.firstOrNull()?.toIntOrNull(), ranges?.lastOrNull()?.toIntOrNull())
+            val start = ranges?.firstOrNull()?.toIntOrNull()
+            val end = if (ranges?.size == 2) ranges.last().toIntOrNull() else null
+
+            CmdRange(range.data!!, start, end)
         }
 
         val isMultiple = matcher.group("s").isNullOrBlank().not()
@@ -127,7 +130,10 @@ import kotlin.math.roundToLong
         val range2 = if (range.start != null) {
             range
         } else {
-            CmdRange(range.data!!, ranges?.firstOrNull()?.toIntOrNull(), ranges?.lastOrNull()?.toIntOrNull())
+            val start = ranges?.firstOrNull()?.toIntOrNull()
+            val end = if (ranges?.size == 2) ranges.last().toIntOrNull() else null
+
+            CmdRange(range.data!!, start, end)
         }
 
         val scores = range2.getBPScores(mode.data!!, isMultiple, hasCondition)
@@ -321,9 +327,7 @@ import kotlin.math.roundToLong
                 val operator = getOperator(c)
                 val condition = c.split("[<>＜＞=＝!！]".toRegex()).lastOrNull() ?: ""
 
-                val remove: Map<Int, Boolean> = scores.map { it.key to fitScore(it.value, operator, filter, condition).not() }.toMap()
-
-                remove.forEach { if (it.value) scores.remove(it.key) }
+                scores.entries.removeIf { fitScore(it.value, operator, filter, condition).not() }
             }
         }
 
