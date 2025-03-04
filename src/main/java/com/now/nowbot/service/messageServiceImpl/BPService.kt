@@ -160,9 +160,6 @@ import kotlin.math.roundToLong
         // 完全等于
         XQ("$REG_EQUAL$REG_EQUAL".toRegex()),
 
-        // 等于
-        EQ(REG_EQUAL.toRegex()),
-
         // 大于等于
         GE("$REG_GREATER$REG_EQUAL".toRegex()),
 
@@ -174,6 +171,9 @@ import kotlin.math.roundToLong
 
         // 小于
         LT(REG_LESS.toRegex()),
+
+        // 等于
+        EQ(REG_EQUAL.toRegex()),
     }
 
     enum class Filter(@Language("RegExp") val regex: Regex) {

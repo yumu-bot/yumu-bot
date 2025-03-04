@@ -6,8 +6,10 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
+import io.ktor.util.collections.*
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
 
@@ -37,6 +39,30 @@ class GetIDService(private val userApiService: OsuUserApiService) : MessageServi
 
         val sb = StringBuilder()
 
+        val map = ConcurrentMap<String, String>(names.size)
+
+        val actions = names.map {
+            return@map AsyncMethodExecutor.Supplier<Unit> {
+                val id = try {
+                    userApiService.getOsuId(it).toString()
+                } catch (e: Exception) {
+                    "name=$it not found"
+                }
+
+                map[it] = id
+            }
+        }
+
+        AsyncMethodExecutor.AsyncSupplier(actions)
+
+        names.forEach {
+            val id = map[it] ?: "unknown"
+
+            sb.append(id).append(',')
+        }
+
+        /*
+
         for (name in names) {
             if (name.isBlank()) {
                 continue
@@ -47,12 +73,14 @@ class GetIDService(private val userApiService: OsuUserApiService) : MessageServi
             try {
                 id = userApiService.getOsuId(name)
             } catch (e: Exception) {
-                sb.append("name=").append(name).append(" not found").append(',').append(' ')
+                sb.append("name=").append(name).append(" not found").append(',')
                 continue
             }
 
-            sb.append(id).append(',').append(' ')
+            sb.append(id).append(',')
         }
+
+         */
 
 
         event.reply(sb.substring(0, sb.length - 2))

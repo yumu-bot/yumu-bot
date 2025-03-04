@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
+import com.now.nowbot.model.json.MicroUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -31,17 +32,20 @@ class GetNameService(private val userApiService: OsuUserApiService) : MessageSer
             throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Group)
         }
 
-        val ids: List<String>? = splitString(matcher.group("data"))
-        if (ids.isNullOrEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
+        val idStr: List<String>? = splitString(matcher.group("data"))
+        if (idStr.isNullOrEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
 
         val sb = StringBuilder()
 
         // 使用批量获取
-        val chunk = ids.mapNotNull { it.toLongOrNull() }.chunked(50)
-        val names = chunk.map { userApiService.getUsers(it) }.flatten()
+        val ids = idStr.mapNotNull { it.toLongOrNull() }
 
-        names.forEach {
-            sb.append(it.userName).append(',').append(' ')
+        val nameMap: Map<Long, MicroUser> = ids.chunked(50).map { userApiService.getUsers(it) }.flatten().associateBy { it.userID }
+
+        ids.forEach {
+            val user = nameMap[it]
+
+            sb.append(user?.userName ?: "-").append(',')
         }
 
         event.reply(sb.substring(0, sb.length - 2))
@@ -55,18 +59,18 @@ class GetNameService(private val userApiService: OsuUserApiService) : MessageSer
             val id = try {
                 i.toLong()
             } catch (e: NumberFormatException) {
-                sb.append("id=").append(i).append(" can't parse").append(',').append(' ')
+                sb.append("id=").append(i).append(" can't parse").append(',')
                 continue
             }
 
             val name = try {
                 userApiService.getPlayerInfo(id).username
             } catch (e: Exception) {
-                sb.append("id=").append(id).append(" not found").append(',').append(' ')
+                sb.append("id=").append(id).append(" not found").append(',')
                 break
             }
 
-            sb.append(name).append(',').append(' ')
+            sb.append(name).append(',')
         }
 
 
