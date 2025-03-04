@@ -58,7 +58,7 @@ class UUScore (score: LazerScore, osuBeatmapApiService: OsuBeatmapApiService) {
         val modsList = score.mods
         
         name = user.userName
-        mode = score.mode.getName()
+        mode = score.mode.shortName
         country = user.countryCode
         mods = arrayOfNulls(modsList.size)
         for (i in mods.indices) {
@@ -101,12 +101,12 @@ class UUScore (score: LazerScore, osuBeatmapApiService: OsuBeatmapApiService) {
         play_time = score.endedTimeString
         
         val stat = score.statistics
-        n_300 = stat.great ?: 0
-        n_100 = stat.ok ?: 0
-        n_50 = stat.meh ?: 0
-        n_geki = stat.perfect ?: 0
-        n_katu = stat.good ?: 0
-        n_0 = stat.miss ?: 0
+        n_300 = stat.great
+        n_100 = stat.ok
+        n_50 = stat.meh
+        n_geki = stat.perfect
+        n_katu = stat.good
+        n_0 = stat.miss
         
         if (!passed) rank = "F"
     }

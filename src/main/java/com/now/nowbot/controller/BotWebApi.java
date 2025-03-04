@@ -656,7 +656,7 @@ public class BotWebApi {
             name = name.trim();
             long uid = userApiService.getOsuId(name);
             osuUser = userApiService.getPlayerInfo(uid, mode);
-            if (mode != OsuMode.DEFAULT) osuUser.setMode(mode.getName());
+            if (mode != OsuMode.DEFAULT) osuUser.setMode(mode.shortName);
             scores = scoreApiService.getBestScores(uid, mode, 0, 100);
         } catch (Exception e) {
             throw new RuntimeException(GeneralTipsException.Type.G_Fetch_List.getMessage());

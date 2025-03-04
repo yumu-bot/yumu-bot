@@ -171,7 +171,7 @@ class BPFixService(
     private fun BPFixParam.getImage(): ByteArray {
         if (bpMap.isEmpty()) throw GeneralTipsException(
             GeneralTipsException.Type.G_Null_PlayerRecord,
-            mode.getName()
+            mode.fullName
         )
 
         val fixData = fix(user.pp, bpMap) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP)

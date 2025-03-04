@@ -11,6 +11,9 @@ import java.util.Objects;
 public class BindUser {
     private static final Logger log = LoggerFactory.getLogger(BindUser.class);
 
+    /**
+     * 看起来这个 ID 没用到，只有 BindQQ 那边的一个 User 才是真正的存储
+     */
     Long baseId;
     /**
      * osu data
@@ -45,9 +48,9 @@ public class BindUser {
         this();
         baseId = base;
     }
-    public BindUser(long osuId, String osuName) {
-        this.osuID = osuId;
-        this.osuName = osuName;
+    public BindUser(long osuID, String name) {
+        this.osuID = osuID;
+        this.osuName = name;
         mode = OsuMode.DEFAULT;
         time = 0L;
         setTimeToNow();
@@ -92,13 +95,14 @@ public class BindUser {
         return accessToken;
     }
 
+    // 是否绑定过
     public boolean isAuthorized() {
         boolean expired = true; // auth 的反
         try {
             // 请求 token ，如果过期会报 Unauthorized
-            expired = Objects.isNull(time) || time <= 0 || Objects.isNull(accessToken);
+            expired = time == null || time <= 0 || accessToken == null;
         } catch (Exception ignored) {
-            log.info(String.format("玩家 %s 已掉绑", osuName));
+            log.info("玩家 {} 已掉绑", osuName);
         }
         return ! expired;
     }

@@ -51,7 +51,7 @@ object CmdUtil {
         isMyself: AtomicBoolean,
     ): OsuUser {
         val bu: BindUser? = try {
-            bindDao.getUserFromQQ(event.sender.id, true)
+            bindDao.getBindFromQQ(event.sender.id, true)
         } catch (ignored: Exception) {
             null
         }
@@ -116,7 +116,7 @@ object CmdUtil {
                     val start = split.firstOrNull()?.toIntOrNull()
                     val end = if (split.size == 2) split.lastOrNull()?.toIntOrNull() else null
 
-                    return CmdRange(getOsuUser(bindDao.getUserFromQQ(event.sender.id), mode.data), start, end)
+                    return CmdRange(getOsuUser(bindDao.getBindFromQQ(event.sender.id), mode.data), start, end)
                 }
 
                 val split2 = name.trim().split("\\s+".toRegex())
@@ -364,7 +364,7 @@ object CmdUtil {
         }
 
         if (qq != 0L) {
-            val bind = bindDao.getUserFromQQ(qq)
+            val bind = bindDao.getBindFromQQ(qq)
             return getOsuUser(bind, checkOsuMode(mode, bind.osuMode))
         }
 

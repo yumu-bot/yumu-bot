@@ -40,7 +40,7 @@ class ScoreApiImpl(
                         .queryParam("legacy_only", 0)
                         .queryParam("offset", offset)
                         .queryParam("limit", limit)
-                        .queryParamIfPresent("mode", OsuMode.getName(mode))
+                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                         .build(user.osuID)
                 }
                 .headers(base.insertHeader(user))
@@ -64,7 +64,7 @@ class ScoreApiImpl(
                         .queryParam("legacy_only", 0)
                         .queryParam("offset", offset)
                         .queryParam("limit", limit)
-                        .queryParamIfPresent("mode", OsuMode.getName(mode))
+                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                         .build(id)
                 }
                 .headers { headers: HttpHeaders? -> base.insertHeader(headers) }
@@ -116,7 +116,7 @@ class ScoreApiImpl(
                 uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", 0)
-                    .queryParamIfPresent("mode", OsuMode.getName(mode))
+                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                     .build(bid, uid)
             },
             { headers: HttpHeaders? -> base.insertHeader(headers) },
@@ -124,7 +124,7 @@ class ScoreApiImpl(
                 uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", 1)
-                    .queryParamIfPresent("mode", OsuMode.getName(mode))
+                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                     .build(bid, uid)
             },
         )
@@ -141,7 +141,7 @@ class ScoreApiImpl(
                 it.path("beatmaps/{bid}/scores/users/{uid}").queryParam("legacy_only", 0)
 
                 if (OsuMode.isNotDefaultOrNull(mode)) {
-                    it.queryParam("mode", OsuMode.getName(mode))
+                    it.queryParam("mode", OsuMode.getQueryName(mode))
                 }
 
                 it.build(bid, user.osuID)
@@ -152,7 +152,7 @@ class ScoreApiImpl(
                     .queryParam("legacy_only", 1)
 
                 if (OsuMode.isNotDefaultOrNull(mode)) {
-                    it.queryParam("mode", OsuMode.getName(mode))
+                    it.queryParam("mode", OsuMode.getQueryName(mode))
                 }
 
                 it.build(bid, user.osuID)
@@ -173,7 +173,7 @@ class ScoreApiImpl(
                     .queryParam("legacy_only", n)
 
                 if (OsuMode.isNotDefaultOrNull(mode)) {
-                    uriBuilder.queryParam("mode", OsuMode.getName(mode))
+                    uriBuilder.queryParam("mode", OsuMode.getQueryName(mode))
                 }
 
                 setMods(uriBuilder, mods)
@@ -201,7 +201,7 @@ class ScoreApiImpl(
                 uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", n)
-                    .queryParamIfPresent("mode", OsuMode.getName(mode))
+                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                 setMods(uriBuilder, mods)
                 uriBuilder.build(bid, user.osuID)
             }
@@ -231,7 +231,7 @@ class ScoreApiImpl(
                 uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}/all")
                     .queryParam("legacy_only", 0)
-                    .queryParamIfPresent("mode", OsuMode.getName(mode))
+                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                     .build(bid, user.osuID)
             }
             .headers(base.insertHeader(user))
@@ -250,7 +250,7 @@ class ScoreApiImpl(
                 uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}/all")
                     .queryParam("legacy_only", 0)
-                    .queryParamIfPresent("mode", OsuMode.getName(mode))
+                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                     .build(bid, uid)
             }
             .headers { headers: HttpHeaders? -> base.insertHeader(headers) }
@@ -269,7 +269,7 @@ class ScoreApiImpl(
                 uriBuilder
                     .path("beatmaps/{bid}/scores")
                     .queryParam("legacy_only", 0)
-                    .queryParamIfPresent("mode", OsuMode.getName(mode))
+                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                     .build(bid)
             }
             .headers { headers: HttpHeaders? -> base.insertHeader(headers) }
@@ -297,7 +297,7 @@ class ScoreApiImpl(
                     .queryParam("include_fails", if (includeFails) 1 else 0)
                     .queryParam("offset", offset)
                     .queryParam("limit", limit)
-                    .queryParamIfPresent("mode", OsuMode.getName(mode))
+                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                     .build(user.osuID)
             }
             .headers(base.insertHeader(user))
@@ -324,7 +324,7 @@ class ScoreApiImpl(
                     .queryParam("include_fails", if (includeFails) 1 else 0)
                     .queryParam("offset", offset)
                     .queryParam("limit", limit)
-                    .queryParamIfPresent("mode", OsuMode.getName(mode))
+                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                     .build(uid)
             }
             .headers { headers: HttpHeaders? -> base.insertHeader(headers) }

@@ -30,7 +30,7 @@ open class BeatMap {
             return OsuMode.getMode(modeStr)
         }
         set(value) {
-            modeStr = value.name.lowercase()
+            modeStr = value.shortName
         }
 
     @JsonProperty("status")

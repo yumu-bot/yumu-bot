@@ -85,7 +85,12 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SYSTEM_INFO(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("systeminfo", "sys", "si")
+        appendCommandsIgnoreAll("systeminfo", "sys(tem)?", "si", "sy")
+    }),
+
+    CHECK(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("check", "ck")
+        appendQQUIDName()
     }),
 
     // #2 osu! 成绩指令

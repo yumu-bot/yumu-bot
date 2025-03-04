@@ -82,7 +82,7 @@ class OldAvatarService(
         } else if (Objects.nonNull(param.qq)) {
             val bindUser: BindUser
             try {
-                bindUser = bindDao.getUserFromQQ(param.qq)
+                bindUser = bindDao.getBindFromQQ(param.qq)
             } catch (e: Exception) {
                 if (param.isMyself) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)

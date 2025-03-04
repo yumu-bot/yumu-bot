@@ -52,7 +52,7 @@ class UUPRService(
         val list = scoreApiService.getScore(uid, mode.data, offset, 1, includeFail)
         if (list.isEmpty())
                 throw GeneralTipsException(
-                        GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.name ?: "默认")
+                        GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.fullName ?: "默认")
         data.value = UUPRParam(range.data, list.first(), mode.data)
         return true
     }

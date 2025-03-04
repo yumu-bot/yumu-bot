@@ -69,7 +69,7 @@ class NewbiePlayStatisticsService(
         val gid = event.group.id
         if (gid != 231094840L && gid != 695600319L) return
 
-        val bind = bindDao.getUserFromQQ(event.sender.id, true)
+        val bind = bindDao.getBindFromQQ(event.sender.id, true)
         val message = when (data) {
             SearchType.day -> handleDay(bind)
             SearchType.history -> handleHistory(bind)

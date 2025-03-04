@@ -237,7 +237,7 @@ data class Match(
                 }
                 r.scores = ss
                 r.mods = g.mods
-                r.mode = g.mode.name
+                r.mode = g.mode.shortname
                 r.startTime = g.startTime
                 r.endTime = g.endTime
                 r.beatMap = g.beatMap

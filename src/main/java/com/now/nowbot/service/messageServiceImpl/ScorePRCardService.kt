@@ -58,7 +58,7 @@ class ScorePRCardService(
         score = if (scores.isNotEmpty()) {
             scores.first()
         } else {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.name?: "默认")
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.fullName?: "默认")
         }
 
         calculateApiService.applyPPToScore(score)
@@ -122,7 +122,7 @@ class ScorePRCardService(
         if (scores.isNotEmpty()) {
             score = scores.first()
         } else {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.name ?: "默认")
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.fullName ?: "默认")
         }
 
         return PRCardParam(score)

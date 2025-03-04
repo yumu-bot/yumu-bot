@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -45,8 +46,8 @@ public class BindDao {
         bindDiscordMapper = discordMapper;
     }
 
-    public BindUser getUserFromQQ(Long qq) throws BindException {
-        return getUserFromQQ(qq, false);
+    public BindUser getBindFromQQ(Long qq) throws BindException {
+        return getBindFromQQ(qq, false);
     }
 
     /**
@@ -55,10 +56,10 @@ public class BindDao {
      * @param isMyself 仅影响报错信息，不影响结果
      * @return 绑定的玩家
      */
-    public BindUser getUserFromQQ(Long qq, boolean isMyself) throws BindException {
+    public BindUser getBindFromQQ(Long qq, boolean isMyself) throws BindException {
         if (qq < 0) {
             try {
-                return getUserFromOsuID(-qq);
+                return getBindUserFromOsuID(-qq);
             } catch (BindException e) {
                 return new BindUser(-qq, "unknown");
             }
@@ -75,8 +76,8 @@ public class BindDao {
         return fromLite(u);
     }
 
-    public BindUser getUserFromQQ(int qq) throws BindException {
-        return getUserFromQQ((long) qq);
+    public BindUser getBindFromQQ(int qq) throws BindException {
+        return getBindFromQQ((long) qq);
     }
 
     public BindUser saveBind(BindUser user) {
@@ -87,7 +88,7 @@ public class BindDao {
         return fromLite(lite);
     }
 
-    public BindUser getUserFromOsuID(Long osuId) throws BindException {
+    public BindUser getBindUserFromOsuID(Long osuId) throws BindException {
         if (Objects.isNull(osuId)) throw new BindException(BindException.Type.BIND_Receive_NoName);
 
         Optional<OsuBindUserLite> liteData;
@@ -153,7 +154,7 @@ public class BindDao {
     }
 
     public BindUser getBindUser(String name) {
-        var id = getOsuId(name);
+        var id = getOsuID(name);
         if (id == null) return null;
         var data = bindUserMapper.getByOsuId(id);
         return data.map(BindDao::fromLite).orElse(null);
@@ -185,6 +186,38 @@ public class BindDao {
         }
     }
 
+    /**
+     * 高危权限
+     * @param user 绑定
+     * @return qq
+     */
+    public Long getQQ(BindUser user) {
+        return getQQ(user.getOsuID());
+    }
+
+    public Long getQQ(Long osuID) {
+        var qqBind = bindQQMapper.findByOsuId(osuID);
+
+        if (qqBind.isPresent()) {
+            return qqBind.get().getQq();
+        } else {
+            return -1L;
+        }
+    }
+
+    @Nullable
+    public QQBindLite getQQBindInfo(BindUser user) {
+        return getQQBindInfo(user.getOsuID());
+    }
+
+    @Nullable
+    public QQBindLite getQQBindInfo(Long osuID) {
+        var qqBind = bindQQMapper.findByOsuId(osuID);
+
+        return qqBind.orElse(null);
+    }
+
+
     public void removeBind(long uid) {
         bindUserMapper.deleteAllByOsuId(uid);
     }
@@ -193,13 +226,7 @@ public class BindDao {
         bindUserMapper.backupBindByOsuId(uid);
     }
 
-    public Long getQQ(Long uid) {
-        var q = bindQQMapper.findByOsuId(uid);
-        if (q.isPresent()) return q.get().getQq();
-        throw new RuntimeException("没有绑定");
-    }
-
-    public Long getOsuId(String name) {
+    public Long getOsuID(String name) {
         Long uid;
         try {
             uid = osuFindNameMapper.getFirstByNameOrderByIndex(name.toUpperCase()).getUid();

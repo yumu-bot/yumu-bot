@@ -88,7 +88,7 @@ class UUBAService(
         // 是否为绑定用户
         if (Objects.nonNull(param.user.qq)) {
             try {
-                bu = bindDao.getUserFromQQ(param.user.qq)
+                bu = bindDao.getBindFromQQ(param.user.qq)
             } catch (e: BindException) {
                 if (!param.user.at) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
@@ -102,7 +102,7 @@ class UUBAService(
             var id: Long = 0
             try {
                 id = userApiService.getOsuId(name)
-                bu = bindDao.getUserFromOsuID(id)
+                bu = bindDao.getBindUserFromOsuID(id)
             } catch (e: BindException) {
                 // 构建只有 data + id 的对象, bindUser == null
                 bu = BindUser()
@@ -133,9 +133,9 @@ class UUBAService(
 
         if (bps.size <= 10) {
             if (!param.user.at && Objects.isNull(param.user.name)) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Me, mode!!.getName())
+                throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Me, mode.fullName)
             } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Player, mode!!.getName())
+                throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Player, mode.fullName)
             }
         }
 
@@ -145,7 +145,7 @@ class UUBAService(
                 if (OsuMode.isDefaultOrNull(mode)) {
                     getTextPlus(bps, bu.osuName, "")
                 } else {
-                    getTextPlus(bps, bu.osuName, mode.getName())
+                    getTextPlus(bps, bu.osuName, mode.fullName)
                 }
 
         try {
@@ -185,7 +185,7 @@ class UUBAService(
         calculateApiService.applyBeatMapChanges(bps)
         calculateApiService.applyStarToScores(bps)
 
-        val modeStr = mode?.getName() ?: ""
+        val modeStr = mode?.fullName ?: ""
         val lines = getTextPlus(bps, bu.osuName, modeStr)
         return MessageChain(lines)
     }

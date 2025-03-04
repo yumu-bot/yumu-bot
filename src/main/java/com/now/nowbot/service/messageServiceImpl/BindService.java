@@ -169,15 +169,12 @@ public class BindService implements MessageService<BindService.BindParam> {
     }
 
     private void unbindName(String name) throws BindException {
-        var uid = bindDao.getOsuId(name);
-        if (uid == null)
-            throw new BindException(BindException.Type.BIND_Player_HadNotBind);
-        Long qq;
-        try {
-            qq = bindDao.getQQ(uid);
-        } catch (Exception e) {
-            throw new BindException(BindException.Type.BIND_Player_HadNotBind);
-        }
+        var uid = bindDao.getOsuID(name);
+        if (uid == null) throw new BindException(BindException.Type.BIND_Player_HadNotBind);
+        Long qq = bindDao.getQQ(uid);
+
+        if (qq < 0L) throw new BindException(BindException.Type.BIND_Player_HadNotBind);
+
         unbindQQ(qq);
     }
 

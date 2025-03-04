@@ -38,7 +38,7 @@ public class DrawService implements MessageService<Matcher> {
     @Override
     @CheckPermission(test = true)
     public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var bindUser = bindDao.getUserFromQQ(event.getSender().getId(), true);
+        var bindUser = bindDao.getBindFromQQ(event.getSender().getId(), true);
 
         int times = 1;
         if (matcher.group("d") != null) {

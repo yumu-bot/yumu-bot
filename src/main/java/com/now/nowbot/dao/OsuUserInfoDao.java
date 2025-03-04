@@ -55,7 +55,7 @@ public class OsuUserInfoDao {
 
     public static OsuUser fromArchive(OsuUserInfoArchiveLite archive) {
         OsuUser user = new OsuUser();
-        user.setMode(archive.getMode().getName());
+        user.setMode(archive.getMode().shortName);
         user.setUserID(archive.getOsuID());
 
         InfoLogStatistics statistics = new InfoLogStatistics();

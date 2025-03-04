@@ -124,23 +124,23 @@ class PPMinusService(
             if (event.isAt) {
                 when (status) {
                     PPMinusStatus.USER -> // pm @
-                    binMe = bindDao.getUserFromQQ(event.target)
+                    binMe = bindDao.getBindFromQQ(event.target)
 
                     PPMinusStatus.USER_VS -> {
                         // pv 0v@
-                        binMe = bindDao.getUserFromQQ(event.sender.id, true)
-                        binOther = bindDao.getUserFromQQ(event.target)
+                        binMe = bindDao.getBindFromQQ(event.sender.id, true)
+                        binOther = bindDao.getBindFromQQ(event.target)
                     }
                 }
             } else if (area1.isNotBlank() || area2.isNotBlank()) {
                 isMyself = parseName(area1, area2, binMe, binOther, status)
                 if (isMyself) {
-                    binMe = bindDao.getUserFromQQ(event.sender.id, true)
+                    binMe = bindDao.getBindFromQQ(event.sender.id, true)
                 }
             } else {
                 // pm 0
                 isMyself = true
-                binMe = bindDao.getUserFromQQ(event.sender.id, true)
+                binMe = bindDao.getBindFromQQ(event.sender.id, true)
             }
         } catch (e: WebClientResponseException) {
             throw when (e) {
@@ -202,7 +202,7 @@ class PPMinusService(
         if (user.statistics.playTime < 60 || user.statistics.playCount < 30) {
             throw PPMinusException(
                     PPMinusException.Type.PM_Player_PlayTimeTooShort,
-                    user.currentOsuMode.getName(),
+                    user.currentOsuMode.fullName,
             )
         }
 
@@ -268,11 +268,11 @@ class PPMinusService(
         try {
             if (area1.isNotBlank() || area2.isNotBlank()) {
                 if (parseName(area1, area2, binMe, binOther, status)) {
-                    binMe = bindDao.getUserFromQQ(event.sender.id, true)
+                    binMe = bindDao.getBindFromQQ(event.sender.id, true)
                 }
             } else {
                 // pm 0
-                binMe = bindDao.getUserFromQQ(event.sender.id, true)
+                binMe = bindDao.getBindFromQQ(event.sender.id, true)
             }
         } catch (e: WebClientResponseException) {
             throw when (e) {

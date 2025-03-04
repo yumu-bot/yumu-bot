@@ -243,7 +243,7 @@ class ScorePRService(
                         GeneralTipsException(
                                 GeneralTipsException.Type.G_Null_RecentScore,
                                 user!!.username,
-                                user.currentOsuMode.getName())
+                                user.currentOsuMode.fullName)
 
                 else -> e
             }
@@ -256,7 +256,7 @@ class ScorePRService(
             throw GeneralTipsException(
                 GeneralTipsException.Type.G_Null_RecentScore,
                 user.username,
-                user.currentOsuMode.getName())
+                user.currentOsuMode.fullName)
         }
 
         // 成绩发送

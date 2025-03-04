@@ -86,16 +86,16 @@ public class BindController {
             var u = bindDao.bindQQ(msg.QQ(), bd);
             BindService.removeBind(key);
             sb.append("成功绑定:\n<br/>")
-                    .append(msg.QQ())
-                    .append(" -> ")
-                    .append(bd.getOsuName())
-                    .append("\n<br/>")
-                    .append("您的默认游戏模式为：[")
-                    .append(u.getOsuUser().getMainMode().getName()).append("]。")
-                    .append("\n<br/>")
-                    .append("如果您不是主模式 [osu] 玩家，请使用 `!ymmode [mode]` 来修改默认模式。否则可能会影响您查询成绩。")
-                    .append("\n<br/>")
-                    .append("[mode]：0 osu(standard)，1 taiko，2 catch，3 mania")
+              .append(msg.QQ())
+              .append(" -> ")
+              .append(bd.getOsuName())
+              .append("\n<br/>")
+              .append("您的默认游戏模式为：[")
+              .append(u.getOsuUser().getMainMode().shortName).append("]。")
+              .append("\n<br/>")
+              .append("如果您不是主模式 [osu] 玩家，请使用 `!ymmode [mode]` 来修改默认模式。否则可能会影响您查询成绩。")
+              .append("\n<br/>")
+              .append("[mode]：0 osu(standard)，1 taiko，2 catch，3 mania")
             ;
         } catch (HttpClientErrorException.BadRequest | WebClientResponseException.BadRequest e) {
             log.error("绑定时异常：400", e);

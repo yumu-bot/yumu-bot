@@ -549,7 +549,7 @@ public class OsuUser {
     }
 
     public void setOsuMode(OsuMode mode) {
-        this.mode = mode.getName();
+        this.mode = mode.shortName;
     }
 
     public OsuMode getDefaultOsuMode() {
@@ -557,7 +557,7 @@ public class OsuUser {
     }
 
     public void setDefaultOsuMode(OsuMode mode) {
-        this.mode = mode.getName();
+        this.mode = mode.shortName;
     }
 
     public List<String> getPlayStyle() {
@@ -974,7 +974,7 @@ public class OsuUser {
 
     public void setCurrentOsuMode(OsuMode mode) {
         if (this.rankHistory == null) {
-            this.rankHistory = new RankHistory(mode.getName(), new ArrayList<>(0));
+            this.rankHistory = new RankHistory(mode.shortName, new ArrayList<>(0));
         }
     }
 

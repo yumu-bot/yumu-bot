@@ -262,9 +262,9 @@ import kotlin.math.roundToLong
         calculateApiService.applyBeatMapChanges(scores)
 
         val modeStr = if (OsuMode.isDefaultOrNull(mode)) {
-            scores.firstOrNull()?.mode?.getName() ?: this.data?.currentOsuMode?.name ?: "默认"
+            scores.firstOrNull()?.mode?.fullName ?: this.data?.currentOsuMode?.fullName ?: "默认"
         } else {
-            mode.getName()
+            mode.fullName
         }
 
         // 检查查到的数据是否为空

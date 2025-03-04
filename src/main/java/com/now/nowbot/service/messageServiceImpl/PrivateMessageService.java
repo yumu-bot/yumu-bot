@@ -51,7 +51,7 @@ public class PrivateMessageService implements MessageService<PrivateMessageServi
     @Override
     @CheckPermission(isSuperAdmin = true)
     public void HandleMessage(MessageEvent event, PMParam param) throws Throwable {
-        var bin = bindDao.getUserFromQQ(event.getSender().getId(), true);
+        var bin = bindDao.getBindFromQQ(event.getSender().getId(), true);
         JsonNode json;
         try {
             json = getJson(param, bin);

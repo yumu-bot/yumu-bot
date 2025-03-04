@@ -210,7 +210,7 @@ public class ImageService {
                 "SAN", my.getValue8()
         );
 
-        var statistics = Map.of("isVS", false, "gameMode", mode.getModeValue());
+        var statistics = Map.of("isVS", false, "gameMode", mode.modeValue);
 
         HttpHeaders headers = getDefaultHeader();
 
@@ -254,7 +254,7 @@ public class ImageService {
                 "SAN", others.getValue8()
         ) : null;
 
-        var statistics = Map.of("isVS", isVs, "gameMode", mode.getModeValue());
+        var statistics = Map.of("isVS", isVs, "gameMode", mode.modeValue);
         HttpHeaders headers = getDefaultHeader();
 
         var body = new HashMap<String, Object>(4);
@@ -308,7 +308,7 @@ public class ImageService {
 
         var body = Map.of(
                 "pool", mapPool,
-                "mode", mode.getName()
+                "mode", mode.shortName
         );
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
@@ -361,7 +361,7 @@ public class ImageService {
                 "SAN", my.getValue8()
         );
 
-        var statistics = Map.of("isVS", false, "gameMode", mode.getModeValue());
+        var statistics = Map.of("isVS", false, "gameMode", mode.modeValue);
 
         HttpHeaders headers = getDefaultHeader();
 

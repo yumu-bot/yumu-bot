@@ -31,7 +31,7 @@ class SetModeService (
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, modeStr: String) {
-        val user = bindDao.getUserFromQQ(event.sender.id, true)
+        val user = bindDao.getBindFromQQ(event.sender.id, true)
         event.reply(getReply(modeStr, user))
     }
 
@@ -44,7 +44,7 @@ class SetModeService (
     @Throws(Throwable::class)
     override fun reply(event: MessageEvent, param: String): MessageChain? {
         val user = try {
-            bindDao.getUserFromOsuID(-event.sender.id)
+            bindDao.getBindUserFromOsuID(-event.sender.id)
         } catch (e: BindException) {
             val userInfo = osuUserApiService.getPlayerInfo(-event.sender.id)
             val bindUser = BindUser()
@@ -66,6 +66,6 @@ class SetModeService (
         }
         user.osuMode = mode
         bindDao.updateMod(user.osuID, mode)
-        return MessageChain("已修改主模式为: " + mode.getName())
+        return MessageChain("已修改主模式为: " + mode.fullName)
     }
 }

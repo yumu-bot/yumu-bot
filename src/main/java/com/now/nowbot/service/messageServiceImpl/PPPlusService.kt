@@ -46,21 +46,21 @@ class PPPlusService(
         var a1 = matcher.group("area1")
         var a2 = matcher.group("area2")
 
-        val me = bindDao.getUserFromQQ(event.getSender().getId(), true)
+        val me = bindDao.getBindFromQQ(event.getSender().getId(), true)
 
         try {
             when (cmd.lowercase()) {
                 "pp", "ppp", "pp+", "p+", "ppplus", "plus" -> { // user 非vs
                     if (Objects.nonNull(a1) && a1!!.isBlank()) a1 = null
                     if (Objects.nonNull(a2) && a2!!.isBlank()) a2 = null
-                    if (event.isAt) setUser(null, null, bindDao.getUserFromQQ(event.target), false, data)
+                    if (event.isAt) setUser(null, null, bindDao.getBindFromQQ(event.target), false, data)
                     else setUser(a1, a2, me, false, data)
                 }
 
                 "px", "ppx", "ppv", "ppvs", "pppvs", "ppplusvs", "plusvs" -> { // user vs
                     if (event.isAt) {
                         setUser(
-                            null, bindDao.getUserFromQQ(event.target).osuName, me, true, data
+                            null, bindDao.getBindFromQQ(event.target).osuName, me, true, data
                         )
                     } else {
                         setUser(a1, a2, me, true, data)

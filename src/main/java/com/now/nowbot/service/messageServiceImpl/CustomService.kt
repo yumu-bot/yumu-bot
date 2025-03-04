@@ -69,7 +69,7 @@ class CustomService(
 
         val u: BindUser
         try {
-            u = bindDao.getUserFromQQ(event.sender.id, true)
+            u = bindDao.getBindFromQQ(event.sender.id, true)
         } catch (e: BindException) {
             throw CustomException(CustomException.Type.CUSTOM_Me_TokenExpired)
         }

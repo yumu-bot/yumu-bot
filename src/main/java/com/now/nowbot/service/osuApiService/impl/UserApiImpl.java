@@ -80,7 +80,7 @@ public class UserApiImpl implements OsuUserApiService {
     public OsuUser getPlayerInfo(BindUser user, OsuMode mode) {
         if (!user.isAuthorized()) return getPlayerInfo(user.getOsuID(), mode);
         return base.request(client -> client.get()
-                .uri("me/{mode}", mode.getName())
+                .uri("me/{mode}", mode.shortName)
                 .headers(base.insertHeader(user))
                 .retrieve()
                 .bodyToMono(OsuUser.class)
@@ -100,7 +100,7 @@ public class UserApiImpl implements OsuUserApiService {
                 .get()
                 .uri(l -> l
                         .path("users/{data}/{mode}")
-                        .build('@' + name, mode.getName())
+                        .build('@' + name, mode.shortName)
                 )
                 .headers(base::insertHeader)
                 .retrieve()
@@ -117,7 +117,7 @@ public class UserApiImpl implements OsuUserApiService {
         return base.request(client -> client.get()
                 .uri(l -> l
                         .path("users/{id}/{mode}")
-                        .build(id, mode.getName()))
+                        .build(id, mode.shortName))
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(OsuUser.class)
@@ -130,7 +130,7 @@ public class UserApiImpl implements OsuUserApiService {
 
     @Override
     public Long getOsuId(String name) {
-        Long id = bindDao.getOsuId(name);
+        Long id = bindDao.getOsuID(name);
         if (id != null) {
             return id;
 

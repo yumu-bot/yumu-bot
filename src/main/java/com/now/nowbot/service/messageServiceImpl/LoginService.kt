@@ -4,7 +4,6 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.service.messageServiceImpl.LoginService.LoginUser
 import org.springframework.stereotype.Service
 import java.time.Duration
 import java.util.Locale
@@ -42,15 +41,13 @@ class LoginService(private val bindDao: BindDao) : MessageService<String> {
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, data: String?) {
         val qq = event.getSender().getId()
-        val u = bindDao.getUserFromQQ(qq)
+        val u = bindDao.getBindFromQQ(qq)
         var code: String?
         // 防止key重复, 循环构造随机字符串
         while (LOGIN_USER_MAP.containsKey(
                 (getRoStr().also { code = it }).uppercase(Locale.getDefault()))) {}
-        event.reply("您的登录验证码: " + code)
-        LOGIN_USER_MAP.put(
-                code!!.uppercase(Locale.getDefault()),
-                LoginUser(u.getOsuID(), u.getOsuName(), System.currentTimeMillis()))
+        event.reply("您的登录验证码: $code")
+        LOGIN_USER_MAP[code!!.uppercase(Locale.getDefault())] = LoginUser(u.osuID, u.osuName, System.currentTimeMillis())
     }
 
     @JvmRecord data class LoginUser(val uid: Long, val name: String, val time: Long)

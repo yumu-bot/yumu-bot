@@ -67,7 +67,7 @@ class BPQueryService(
 
     override fun HandleMessage(event: MessageEvent, param: BPQueryParam) {
         val bindUser = try {
-            bindDao.getUserFromQQ(event.sender.id)
+            bindDao.getBindFromQQ(event.sender.id)
         } catch (e: BindException) {
             throw BindException(BindException.Type.BIND_Me_NotBind)
         }

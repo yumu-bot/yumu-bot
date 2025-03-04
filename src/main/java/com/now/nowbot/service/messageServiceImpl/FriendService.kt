@@ -70,7 +70,7 @@ class FriendService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: FriendParam) {
-        val bu = bindDao.getUserFromQQ(event.sender.id, true)
+        val bu = bindDao.getBindFromQQ(event.sender.id, true)
 
 
         if (!bu.isAuthorized) {

@@ -4,8 +4,9 @@ package com.now.nowbot.throwable
 class GeneralTipsException : TipsException {
     enum class Type (val message: String) {
         G_TokenExpired_Me("您的令牌已过期，请重新授权。(!ymbind)"),
-        G_TokenExpired_Player("此玩家的令牌已过期，请提醒他重新授权。(!ymbind)"), 
+        G_TokenExpired_Player("该玩家的令牌已过期，请提醒他重新授权。(!ymbind)"),
         G_TokenExpired_Cancel("绑定已经被取消了, 无法再使用了哦"),
+        G_NotBind_Player("该玩家没有绑定。"),
 
         G_Banned_Me("你被办了。"), 
         G_Banned_Player("%s 被办了。"), 
