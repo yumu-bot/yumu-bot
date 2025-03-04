@@ -1,64 +1,60 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.osuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
-import java.util.regex.Matcher;
+import com.now.nowbot.config.Permission
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.util.DataUtil.splitString
+import com.now.nowbot.util.Instruction
+import org.springframework.stereotype.Service
+import java.util.regex.Matcher
 
 @Service("GET_ID")
-public class GetIDService implements MessageService<Matcher> {
-    @Resource
-    OsuUserApiService userApiService;
+class GetIDService(private val userApiService: OsuUserApiService) : MessageService<Matcher> {
 
-    @Override
-    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) throws Throwable {
-        var m = Instruction.GET_ID.matcher(messageText);
+    @Throws(Throwable::class) override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<Matcher>
+    ): Boolean {
+        val m = Instruction.GET_ID.matcher(messageText)
         if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
+            data.value = m
+            return true
+        } else return false
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
         if (Permission.isCommonUser(event)) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Permission_Group);
+            throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Group)
         }
 
-        var names = DataUtil.splitString(matcher.group("data"));
+        val names: List<String>? = splitString(matcher.group("data"))
 
-        if (CollectionUtils.isEmpty(names)) throw new GeneralTipsException(GeneralTipsException.Type.G_Fetch_List);
+        if (names.isNullOrEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
 
-        StringBuilder sb = new StringBuilder();
+        val sb = StringBuilder()
 
-        for (var name : names) {
-            if (! StringUtils.hasText(name)) {
-                break;
+        for (name in names) {
+            if (name.isBlank()) {
+                continue
             }
 
-            long id;
+            val id: Long
 
             try {
-                id = userApiService.getOsuId(name);
-            } catch (Exception e) {
-                sb.append("name=").append(name).append(" not found").append(',').append(' ');
-                break;
+                id = userApiService.getOsuId(name)
+            } catch (e: Exception) {
+                sb.append("name=").append(name).append(" not found").append(',').append(' ')
+                continue
             }
 
-            sb.append(id).append(',').append(' ');
+            sb.append(id).append(',').append(' ')
         }
 
 
-        event.reply(sb.substring(0, sb.length() - 2));
+        event.reply(sb.substring(0, sb.length - 2))
     }
 }

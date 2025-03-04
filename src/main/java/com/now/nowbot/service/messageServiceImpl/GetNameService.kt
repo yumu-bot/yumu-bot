@@ -1,77 +1,77 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.Permission;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.osuApiService.OsuScoreApiService;
-import com.now.nowbot.service.osuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
-
-import java.util.regex.Matcher;
+import com.now.nowbot.config.Permission
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.util.DataUtil.splitString
+import com.now.nowbot.util.Instruction
+import org.springframework.stereotype.Service
+import java.util.regex.Matcher
 
 @Service("GET_NAME")
-public class GetNameService implements MessageService<Matcher> {
-    @Resource
-    OsuUserApiService userApiService;
-    @Resource
-    OsuScoreApiService scoreApiService;
+class GetNameService(private val userApiService: OsuUserApiService) : MessageService<Matcher> {
 
-    @Override
-    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) throws Throwable {
-        var m = Instruction.GET_NAME.matcher(messageText);
+    @Throws(Throwable::class) override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<Matcher>
+    ): Boolean {
+        val m = Instruction.GET_NAME.matcher(messageText)
         if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
+            data.value = m
+            return true
+        } else return false
     }
 
-    @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var from = event.getSubject();
-
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
         if (Permission.isCommonUser(event)) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Permission_Group);
+            throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Group)
         }
 
-        var ids = DataUtil.splitString(matcher.group("data"));
+        val ids: List<String>? = splitString(matcher.group("data"))
+        if (ids.isNullOrEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
 
-        if (CollectionUtils.isEmpty(ids)) throw new GeneralTipsException(GeneralTipsException.Type.G_Fetch_List);
+        val sb = StringBuilder()
 
-        StringBuilder sb = new StringBuilder();
+        // 使用批量获取
+        val chunk = ids.mapNotNull { it.toLongOrNull() }.chunked(50)
+        val names = chunk.map { userApiService.getUsers(it) }.flatten()
 
-        for (var i : ids) {
-            if (! StringUtils.hasText(i)) {
-                break;
+        names.forEach {
+            sb.append(it.userName).append(',').append(' ')
+        }
+
+        event.reply(sb.substring(0, sb.length - 2))
+
+        /*
+        for (i in idStrs) {
+            if (i.isBlank()) {
+                continue
             }
 
-            long id;
-            String name;
-
-            try {
-                id = Long.parseLong(i);
-            } catch (NumberFormatException e) {
-                sb.append("id=").append(i).append(" can't parse").append(',').append(' ');
-                break;
+            val id = try {
+                i.toLong()
+            } catch (e: NumberFormatException) {
+                sb.append("id=").append(i).append(" can't parse").append(',').append(' ')
+                continue
             }
 
-            try {
-                name = userApiService.getPlayerInfo(id).getUsername();
-            } catch (Exception e) {
-                sb.append("id=").append(id).append(" not found").append(',').append(' ');
-                break;
+            val name = try {
+                userApiService.getPlayerInfo(id).username
+            } catch (e: Exception) {
+                sb.append("id=").append(id).append(" not found").append(',').append(' ')
+                break
             }
 
-            sb.append(name).append(',').append(' ');
+            sb.append(name).append(',').append(' ')
         }
 
 
-        from.sendMessage(sb.substring(0, sb.length() - 2));
+        from.sendMessage(sb.substring(0, sb.length - 2))
+
+         */
     }
 }

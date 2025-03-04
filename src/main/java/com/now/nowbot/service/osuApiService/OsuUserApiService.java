@@ -56,6 +56,12 @@ public interface OsuUserApiService {
      */
     <T extends Number> List<MicroUser> getUsers(Collection<T> users, Boolean isVariant) throws WebClientResponseException;
 
+
+    /**
+     * 批量获取用户信息
+     *
+     * @param users 注意, 单次请求数量必须小于50
+     */
     default <T extends Number> List<MicroUser> getUsers(Collection<T> users) {
         return getUsers(users, false);
     }

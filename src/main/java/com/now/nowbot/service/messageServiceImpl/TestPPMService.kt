@@ -41,33 +41,36 @@ class TestPPMService(
     @CheckPermission(test = true)
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
-        val names: List<String?>? = splitString(matcher.group("data"))
-        var mode = OsuMode.getMode(matcher.group("mode"))
+        val names: List<String>? = splitString(matcher.group("data"))
+        val inputMode = OsuMode.getMode(matcher.group("mode"))
 
-        if (names.isNullOrEmpty())
-                throw PPMinusException(PPMinusException.Type.PM_Test_Empty)
+        if (names.isNullOrEmpty()) {
+            throw PPMinusException(PPMinusException.Type.PM_Test_Empty)
+        }
 
         val sb = StringBuilder()
 
         for (name in names) {
-            if (name.isNullOrBlank()) {
-                break
+            if (name.isBlank()) {
+                continue
             }
 
             var user: OsuUser
             var bps: List<LazerScore>?
 
             try {
-                user = userApiService.getPlayerInfo(name)
+                user = userApiService.getPlayerInfo(name, inputMode)
 
-                if (OsuMode.isDefaultOrNull(mode)) {
-                    mode = user.currentOsuMode
+                val mode = if (OsuMode.isDefaultOrNull(inputMode)) {
+                    user.currentOsuMode
+                } else {
+                    inputMode
                 }
 
-                bps = scoreApiService.getBestScores(user.userID, mode, 0, 100)
+                bps = scoreApiService.getBestScores(user.userID, mode)
             } catch (e: Exception) {
                 sb.append("name=").append(name).append(" not found").append('\n')
-                break
+                continue
             }
 
             val ppmData = TestPPMData()
@@ -75,7 +78,7 @@ class TestPPMService(
 
             sb.append(user.username)
                     .append(',')
-                    .append(user.globalRank)
+                    .append(user.globalRank ?: 0L)
                     .append(',')
                     .append(user.pp)
                     .append(',')
@@ -130,6 +133,8 @@ class TestPPMService(
                     .append(ppmData.lengv90)
                     .append(',')
                     .append(ppmData.pgr90)
+                    .append(',')
+                    .append(user.statistics?.pP4K ?: 0.0)
                     .append('\n')
         }
 
@@ -148,13 +153,13 @@ class TestPPMService(
         var pgr45: Float = 0f
         var pgr90: Float = 0f
         var accv45: Float = 0f
-        protected var accv90: Float = 0f
+        private var accv90: Float = 0f
         var lengv0: Long = 0
         var lengv45: Long = 0
         var lengv90: Long = 0
-        protected var bpPP: Double = 0.0
+        private var bpPP: Double = 0.0
         var rawpp: Double = 0.0
-        protected var bonus: Double = 0.0
+        private var bonus: Double = 0.0
         var xd: Int = 0
         var xc: Int = 0
         var xb: Int = 0

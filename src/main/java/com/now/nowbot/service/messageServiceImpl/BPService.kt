@@ -185,7 +185,7 @@ import kotlin.math.roundToLong
 
         ARTIST("(artist|f?a)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-        SOURCE("(source|src|o)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+        SOURCE("(source|src|s)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
         DIFFICULTY("(difficulty|diff|d)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
@@ -229,6 +229,16 @@ import kotlin.math.roundToLong
         MOD("(m(od)?s?)(?<n>$REG_OPERATOR$REG_MOD$LEVEL_MORE)".toRegex()),
 
         RATE("(rate|e|pm)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+
+        CIRCLE("((hit)?circles?|hi?t|click|rice|ci|cr|rc)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+
+        SLIDER("(slider?s?|sl|longnote|ln)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+
+        SPINNER("(spin(ner)?s?|rattle|sp)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+
+        TOTAL("(total|all|ttl|(hit)?objects?|o)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+
+        CONVERT("(convert|cv)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
         CLIENT("(client|z|v|version)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
@@ -410,11 +420,11 @@ import kotlin.math.roundToLong
                     fit(operator, it.maxCombo.toLong(), combo)
                 }
                 Filter.PERFECT -> fit(operator, it.statistics.perfect.toLong(), long)
-                Filter.GREAT -> fit(operator,  it.statistics.great.toLong(), long)
-                Filter.GOOD -> fit(operator,  it.statistics.good.toLong(), long)
-                Filter.OK -> fit(operator,  it.statistics.ok.toLong(), long)
-                Filter.MEH -> fit(operator,  it.statistics.meh.toLong(), long)
-                Filter.MISS -> fit(operator,  it.statistics.miss.toLong(), long)
+                Filter.GREAT -> fit(operator, it.statistics.great.toLong(), long)
+                Filter.GOOD -> fit(operator, it.statistics.good.toLong(), long)
+                Filter.OK -> fit(operator, it.statistics.ok.toLong(), long)
+                Filter.MEH -> fit(operator, it.statistics.meh.toLong(), long)
+                Filter.MISS -> fit(operator, it.statistics.miss.toLong(), long)
                 Filter.MOD -> run {
                     val mods = LazerMod.getModsList(condition)
 
@@ -435,6 +445,17 @@ import kotlin.math.roundToLong
                     val input = if (double > 0.0) max(double, 100.0) else double
 
                     fit(operator, rate, input, isPlus = true)
+                }
+
+                Filter.CIRCLE -> fit(operator, it.beatMap.circles?.toLong() ?: -1L, long)
+                Filter.SLIDER -> fit(operator, it.beatMap.sliders?.toLong() ?: -1L, long)
+                Filter.SPINNER -> fit(operator, it.beatMap.spinners?.toLong() ?: -1L, long)
+                Filter.TOTAL -> fit(operator, (it.beatMap.circles?.toLong() ?: -1L) + (it.beatMap.sliders?.toLong() ?: -1L) + (it.beatMap.spinners?.toLong() ?: -1L), long)
+
+                Filter.CONVERT -> when (condition.trim().lowercase()) {
+                    "true", "t", "yes", "y" -> it.beatMap.convert == true
+                    "false", "f", "no", "not", "n" -> it.beatMap.convert != true
+                    else -> it.beatMap.convert != true
                 }
 
                 Filter.CLIENT -> when (condition.trim().lowercase()) {
