@@ -23,10 +23,10 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser?> {
 
         data.value = run {
             try {
-                val qq = if (matcher.namedGroups().containsKey("qq")) {
-                    matcher.group("qq")?.toLongOrNull()
-                } else if (event.isAt) {
+                val qq = if (event.isAt) {
                     event.target
+                } else if (matcher.namedGroups().containsKey("qq")) {
+                    matcher.group("qq")?.toLongOrNull()
                 } else null
 
                 if (qq != null) {
