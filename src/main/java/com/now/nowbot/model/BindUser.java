@@ -4,6 +4,7 @@ import com.now.nowbot.model.enums.OsuMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Objects;
@@ -111,7 +112,8 @@ public class BindUser {
         this.accessToken = accessToken;
     }
 
-    public long getTime() {
+    @Nullable
+    public Long getTime() {
         return time;
     }
 

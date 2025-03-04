@@ -55,7 +55,7 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser?> {
             throw GeneralTipsException(GeneralTipsException.Type.G_NotBind_Player)
         }
 
-        val time = Instant.ofEpochMilli(param.time).atOffset(ZoneOffset.ofHours(8))
+        val time = Instant.ofEpochMilli(param.time ?: 0).atOffset(ZoneOffset.ofHours(8))
         val timeStr = if (time.isBefore(botCreatedTime)) {
             "无效"
         } else {
