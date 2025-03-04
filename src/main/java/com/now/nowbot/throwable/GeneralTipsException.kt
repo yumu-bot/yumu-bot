@@ -44,10 +44,10 @@ class GeneralTipsException : TipsException {
         G_Null_PlayerUnknown("找不到玩家，请检查。"), 
         G_Null_Player("找不到玩家 %s，请检查。"), 
         G_Null_PlayerRecord("该玩家在 %s 模式内基本没玩过。"), 
-        G_Null_PlayerInactive("玩家 %s 最近不活跃...\n如果这不是你想查询的玩家，请在末尾添加 #1。"), 
-        G_Null_BP("无法获取玩家 %s 的最好成绩...\n如果这不是你想查询的玩家，请在末尾添加 #1。"), 
+        G_Null_PlayerInactive("玩家 %s 最近不活跃..."),
+        G_Null_BP("无法获取玩家 %s 的最好成绩..."),
         G_Null_FilterBP("无法获取玩家 %s 符合条件的最好成绩。"), 
-        G_Null_SelectedBP("无法获取玩家 %s 在 %s 模式内指定的最好成绩。"), 
+        G_Null_ModeBP("无法获取玩家 %s 在 %s 模式内指定的最好成绩。"),
         G_Null_TheoreticalBP("您（选中）的最好成绩已经全是理论值了！"), 
         G_Null_Score("找不到您在谱面 %s 内的成绩，请检查。"), 
         G_Null_Version("找不到您在版本 %s 内的成绩，请检查。"), 
@@ -56,8 +56,8 @@ class GeneralTipsException : TipsException {
 
         G_NotEnoughBP_Me("您在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
         G_NotEnoughBP_Player("对方在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
-        
-        G_Wrong_QQ("QQ 参数错误，请检查。"), 
+
+        G_Wrong_Mode("游戏模式错误，请检查。"),
         G_Wrong_ParamAccuracy("准确率参数错误，请检查。"), 
         G_Wrong_ParamCombo("连击参数错误，请检查。"),
         G_Wrong_ParamOperator("逻辑运算符错误，请检查。"),

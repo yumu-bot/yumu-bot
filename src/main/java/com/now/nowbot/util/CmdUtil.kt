@@ -56,7 +56,7 @@ object CmdUtil {
             null
         }
 
-        val user = getOsuUser(event, matcher, mode)
+        val user = getOsuUser(event, matcher, if (bu != null) CmdObject(bu.osuMode) else mode)
 
         if (user != null) {
             isMyself.set(bu?.osuID == user.userID)
@@ -105,19 +105,29 @@ object CmdUtil {
         vararg ignores: String,
     ): CmdRange<OsuUser> {
         try {
-            if (matcher.namedGroups().containsKey("name") &&
-                matcher.group("name")?.trim()?.matches("(\\d{1,2}$REG_HYPHEN)?(100|\\d{1,2})".toRegex()) == true) {
-                // 如果人名完全符合 xx-yyy? 或 xx 的形式，则主动抛弃
+            if (matcher.namedGroups().containsKey("name")) {
+                val name = (matcher.group("name") ?: "")
 
-                val split = matcher.group("name")?.split(REG_HYPHEN.toRegex())
+                if (name.trim().matches("(\\d{1,2}$REG_HYPHEN)?(100|\\d{1,2})".toRegex())) {
+                    // 如果人名完全符合 xx-yyy? 或 xx 的形式，则主动抛弃
 
-                val start = split?.firstOrNull()?.toIntOrNull()
-                val end = if (split != null && split.size == 2) split.lastOrNull()?.toIntOrNull() else null
+                    val split = name.split(REG_HYPHEN.toRegex())
 
-                return CmdRange(getOsuUser(bindDao.getUserFromQQ(event.sender.id), mode.data), start, end)
-            } else {
-                return CmdRange(getUserWithoutRange(event, matcher, mode, isMyself))
+                    val start = split.firstOrNull()?.toIntOrNull()
+                    val end = if (split.size == 2) split.lastOrNull()?.toIntOrNull() else null
+
+                    return CmdRange(getOsuUser(bindDao.getUserFromQQ(event.sender.id), mode.data), start, end)
+                }
+
+                val split2 = name.trim().split("\\s+".toRegex())
+
+                if (split2.size == 2 && split2.last().matches("100|\\d{1,2}".toRegex())) {
+                    // 如果人名符合 www xx 的形式，则选择将后面的视为数字
+                    return CmdRange(getOsuUser(split2.first(), mode.data), split2.last().toInt(), null)
+                }
             }
+
+            return CmdRange(getUserWithoutRange(event, matcher, mode, isMyself))
         } catch (e: Exception) {
             if (isMyself.get() && isAvoidance(text, *ignores)) {
                 throw LogException("退避指令 $ignores")
@@ -295,9 +305,9 @@ object CmdUtil {
         )
 
         if (tempChar != ' ') { // 优先认为紧贴的数字是名字的一部分, 交换位置
-            val ttmp = ranges.poll()
+            val temp = ranges.poll()
             ranges.push(tempRange)
-            ranges.push(ttmp)
+            ranges.push(temp)
         } else {
             ranges.push(tempRange)
         }

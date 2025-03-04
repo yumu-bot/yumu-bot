@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import kotlin.math.abs
 import kotlin.math.floor
+import kotlin.math.max
 import kotlin.math.roundToLong
 
 @Service("BP") class BPService(
@@ -48,19 +49,19 @@ import kotlin.math.roundToLong
         if (!matcher.find()) return false
 
         val isMyself = AtomicBoolean() // 处理 range
-        val mode = getMode(matcher)
+        val inputMode = getMode(matcher)
 
-        val range = getUserWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
+        val range = getUserWithBackoff(event, matcher, inputMode, isMyself, messageText, "bp")
 
         val any = matcher.group("any")
         val conditions = DataUtil.paramMatcher(any, Filter.entries.map { it.regex })
 
         // 如果不加井号，则有时候范围会被匹配到这里来
         val rangeInConditions = conditions.lastOrNull()
-        val hasRange = (rangeInConditions.isNullOrEmpty().not())
+        val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
         val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
-        val ranges = if (hasRange) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN)
+        val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN)
 
         val range2 = if (range.start != null) {
             range
@@ -72,7 +73,9 @@ import kotlin.math.roundToLong
         }
 
         val isMultiple = matcher.group("s").isNullOrBlank().not()
-        val scores = range2.getBPScores(mode.data!!, isMultiple, hasCondition)
+
+        val mode = if (OsuMode.isNotDefaultOrNull(inputMode.data)) inputMode.data!! else range.data!!.currentOsuMode
+        val scores = range2.getBPScores(mode, isMultiple, hasCondition)
 
         val filteredScores = filterScores(scores, conditions)
 
@@ -113,19 +116,19 @@ import kotlin.math.roundToLong
             return null
         }
         val isMyself = AtomicBoolean() // 处理 range
-        val mode = getMode(matcher)
+        val inputMode = getMode(matcher)
 
-        val range = getUserWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
+        val range = getUserWithBackoff(event, matcher, inputMode, isMyself, messageText, "bp")
 
         val any = matcher.group("any")
         val conditions = DataUtil.paramMatcher(any, Filter.entries.map { it.regex })
 
         // 如果不加井号，则有时候范围会被匹配到这里来
         val rangeInConditions = conditions.lastOrNull()
-        val hasRange = (rangeInConditions.isNullOrEmpty().not())
+        val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
         val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
-        val ranges = if (hasRange) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN)
+        val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN)
 
         val range2 = if (range.start != null) {
             range
@@ -136,7 +139,8 @@ import kotlin.math.roundToLong
             CmdRange(range.data!!, start, end)
         }
 
-        val scores = range2.getBPScores(mode.data!!, isMultiple, hasCondition)
+        val mode = if (OsuMode.isNotDefaultOrNull(inputMode.data)) inputMode.data!! else range.data!!.currentOsuMode
+        val scores = range2.getBPScores(mode, isMultiple, hasCondition)
 
         val filteredScores = filterScores(scores, conditions)
 
@@ -257,8 +261,8 @@ import kotlin.math.roundToLong
         calculateApiService.applyStarToScores(scores)
         calculateApiService.applyBeatMapChanges(scores)
 
-        val modeStr = if (mode == OsuMode.DEFAULT) {
-            scores.firstOrNull()?.mode?.getName() ?: "默认"
+        val modeStr = if (OsuMode.isDefaultOrNull(mode)) {
+            scores.firstOrNull()?.mode?.getName() ?: this.data?.currentOsuMode?.name ?: "默认"
         } else {
             mode.getName()
         }
@@ -272,7 +276,7 @@ import kotlin.math.roundToLong
                 )
             } else {
                 throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Null_SelectedBP,
+                    GeneralTipsException.Type.G_Null_ModeBP,
                     data!!.username ?: data!!.userID,
                     modeStr,
                 )
@@ -424,7 +428,14 @@ import kotlin.math.roundToLong
                     }
                 }
 
-                Filter.RATE -> fit(operator, (it.statistics.perfect / it.statistics.great), double, isPlus = true)
+                Filter.RATE -> run {
+                    if (it.mode != OsuMode.MANIA) throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_Mode)
+
+                    val rate = max((it.statistics.perfect * 1.0 / it.statistics.great), 100.0)
+                    val input = if (double > 0.0) max(double, 100.0) else double
+
+                    fit(operator, rate, input, isPlus = true)
+                }
 
                 Filter.CLIENT -> when (condition.trim().lowercase()) {
                     "lazer", "l", "lz", "lzr" -> it.isLazer

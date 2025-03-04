@@ -88,7 +88,9 @@ public class OsuUser {
 
     String occupation;
 
-    //不要动这个
+    /**
+     * 不要用这个
+     */
     @JsonProperty("playmode")
     String mode;
 
@@ -521,6 +523,12 @@ public class OsuUser {
         this.occupation = occupation;
     }
 
+    /**
+     * 注意，如果以其他模式请求 OsuUser，这里依旧是玩家的默认模式。需要获得其他模式请使用 getCurrentOsuMode
+     * 所以尽量不要用这个。如果你一定要用，那肯定是请求玩家的默认模式
+     * 保留是因为这个类已经计入数据库。如果你能修改，请帮忙改掉
+     * @return 默认游戏模式
+     */
     public String getMode() {
         return mode;
     }
@@ -529,10 +537,12 @@ public class OsuUser {
         this.mode = mode;
     }
 
-    // 注意，如果以其他模式请求 OsuUser，这里依旧是玩家的默认模式。需要获得其他模式请使用 getCurrentOsuMode
-    // 所以尽量不要用这个。如果你一定要用，那肯定是请求玩家的默认模式
-    // 保留是因为这个类已经计入数据库。如果你能修改，请帮忙改掉
-    // 存的是字符串, 你想改成什么
+    /**
+     * 注意，如果以其他模式请求 OsuUser，这里依旧是玩家的默认模式。需要获得其他模式请使用 getCurrentOsuMode
+     * 所以尽量不要用这个。如果你一定要用，那肯定是请求玩家的默认模式
+     * 保留是因为这个类已经计入数据库。如果你能修改，请帮忙改掉
+     * @return 默认游戏模式
+     */
     @Deprecated
     public OsuMode getOsuMode() {
         return getCurrentOsuMode();

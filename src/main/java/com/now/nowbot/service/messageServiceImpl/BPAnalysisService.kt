@@ -380,9 +380,9 @@ import kotlin.math.min
 
             if (scores.isEmpty() || scores.size <= 5) {
                 if (isMyself) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Me, user.mode)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Me, user.currentOsuMode)
                 } else {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Player, user.mode)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Player, user.currentOsuMode)
                 }
             }
 
