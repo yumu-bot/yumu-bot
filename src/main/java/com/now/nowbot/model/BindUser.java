@@ -131,7 +131,7 @@ public class BindUser {
     }
 
     public boolean isPassed() {
-        return System.currentTimeMillis() > time;
+        return time != null && System.currentTimeMillis() > time;
     }
 
     @NonNull
@@ -154,7 +154,13 @@ public class BindUser {
 
     @Override
     public String toString() {
-        return STR."BindUser{baseId=\{baseId}, osuName='\{osuName}\{'\''}, osuID=\{osuID}, accessToken='\{accessToken}\{'\''}, refreshToken='\{refreshToken}\{'\''}, time=\{time}, mode=\{mode}\{'}'}";
+        return baseId +
+               "," + osuName +
+               "," + osuID +
+               "," + accessToken +
+               "," + refreshToken +
+               "," + time +
+               "," + mode;
     }
 
     // 重写 equals 必须要重写 hashCode, 如果别的地方使用 HashSet/HashMap 会炸
