@@ -76,8 +76,8 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser?> {
             绑定时间：${join}
             游戏模式：${param.osuMode.fullName}
             
-            Oauth2 验证历史：${if (param.isAuthorized) "已验证" else "未验证"}
-            令牌是否有效：${if (param.isPassed) "无效" else "有效"}
+            Oauth2 验证历史：${if (param.isAuthorized) "已验证" else "未验证"}过
+            令牌状态：${if (param.isNotExpired) "有效" else "无效"}
             令牌过期时间：${timeStr}
         """.trimIndent()
 

@@ -130,8 +130,16 @@ public class BindUser {
         return time;
     }
 
-    public boolean isPassed() {
-        return time != null && System.currentTimeMillis() > time;
+    /**
+     * 已过期
+     * @return true = 过期
+     */
+    public boolean isExpired() {
+        return ! isNotExpired();
+    }
+
+    public boolean isNotExpired() {
+        return time != null && System.currentTimeMillis() < time;
     }
 
     @NonNull

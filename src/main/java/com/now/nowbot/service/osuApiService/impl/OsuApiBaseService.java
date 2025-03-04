@@ -176,7 +176,7 @@ public class OsuApiBaseService {
         final String token;
         if (!user.isAuthorized()) {
             token = getBotToken();
-        } else if (user.isPassed()) {
+        } else if (user.isExpired()) {
             try {
                 token = refreshUserToken(user, false);
             } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
