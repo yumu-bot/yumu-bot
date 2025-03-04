@@ -189,7 +189,7 @@ import kotlin.math.roundToLong
 
         DIFFICULTY("(difficulty|diff|d)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-        STAR("(star|sr|r)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+        STAR("(star|rating|sr|r)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
 
         // 既然都整合了，为什么还要用 index ?
         // INDEX("(index|i)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
@@ -198,7 +198,7 @@ import kotlin.math.roundToLong
 
         CS("(cs|circle|keys?)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
 
-        OD("(od|difficulty)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+        OD("(od|overall)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
 
         HP("(hp|health)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
 
@@ -220,7 +220,7 @@ import kotlin.math.roundToLong
 
         GOOD("(good|200|gd)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-        OK("(ok|150|100|可|ba?d)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+        OK("(ok|150|100|(?<!不)可|ba?d)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
         MEH("(meh|p(oo)?r|50)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
