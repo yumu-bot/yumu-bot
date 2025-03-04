@@ -25,6 +25,8 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser?> {
             try {
                 val qq = if (matcher.namedGroups().containsKey("qq")) {
                     matcher.group("qq")?.toLongOrNull()
+                } else if (event.isAt) {
+                    event.target
                 } else null
 
                 if (qq != null) {
