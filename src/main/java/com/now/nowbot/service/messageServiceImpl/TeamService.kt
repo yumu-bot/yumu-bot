@@ -36,8 +36,6 @@ class TeamService(
             return false
         }
 
-        val user = getUserWithoutRange(event, m, CmdObject(OsuMode.DEFAULT))
-
         if (m.group("team")?.matches("\\d+".toRegex()) == true) {
             data.value = TeamParam(
                 m.group("team")?.toIntOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param), true) // 因为是确信用户输入的是战队的编号
@@ -45,6 +43,8 @@ class TeamService(
             data.value = TeamParam(
                 m.group("name")?.toIntOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param), false)
         } else {
+            val user = getUserWithoutRange(event, m, CmdObject(OsuMode.DEFAULT))
+
             data.value = TeamParam(
                 user.team?.id ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerTeam, user.username), true)
         }
