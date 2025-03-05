@@ -56,7 +56,7 @@ object CmdUtil {
             null
         }
 
-        val user = getOsuUser(event, matcher, if (bu != null) CmdObject(bu.osuMode) else mode)
+        val user = getOsuUser(event, matcher, CmdObject(OsuMode.getMode(mode.data, bu?.osuMode)))
 
         if (user != null) {
             isMyself.set(bu?.osuID == user.userID)

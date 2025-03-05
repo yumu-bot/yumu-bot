@@ -36,21 +36,21 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
             return false
         }
 
-        @JvmStatic fun getMode(mode: String?, default: String?): OsuMode {
-            val m = getMode(default)
-            if (DEFAULT != m) return getMode(mode, m)
-            return getMode(mode)
+        @JvmStatic fun getMode(str: String?, default: String?): OsuMode {
+            val mode = getMode(default)
+            if (DEFAULT != mode) return getMode(str, mode)
+            return getMode(str)
         }
 
-        @JvmStatic fun getMode(mode: String?, default: OsuMode): OsuMode {
-            val m = getMode(mode)
-            if (DEFAULT == m) return default
-            return m
+        @JvmStatic fun getMode(str: String?, default: OsuMode?): OsuMode {
+            val mode = getMode(str)
+            if (DEFAULT == mode) return default ?: DEFAULT
+            return mode
         }
 
-        @JvmStatic fun getMode(m: OsuMode, default: OsuMode): OsuMode {
-            if (DEFAULT == m) return default
-            return m
+        @JvmStatic fun getMode(mode: OsuMode?, default: OsuMode?): OsuMode {
+            if (isDefaultOrNull(mode)) return default ?: DEFAULT
+            return mode!!
         }
 
         @JvmStatic fun getMode(@Nullable name: String?): OsuMode {
@@ -86,7 +86,7 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
             return if (map != OSU && map != null && map != DEFAULT) {
                 map
             } else {
-                Optional.ofNullable(convert).orElse(DEFAULT)
+                convert ?: DEFAULT
             }
         }
 

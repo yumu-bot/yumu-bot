@@ -7,6 +7,8 @@ import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.model.mapminus.PPMinus4
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -17,6 +19,7 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.QQMsgUtil
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -29,14 +32,12 @@ import kotlin.math.sqrt
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService
-) : MessageService<SkillService.SkillParam> {
+) : MessageService<SkillService.SkillParam>, TencentMessageService<SkillService.SkillParam> {
     data class SkillParam(val user: OsuUser, val mode: OsuMode, val isMyself: Boolean = true)
 
     data class SkillScore(val score: LazerScore, val skill: List<Float>)
 
-    override fun isHandle(
-        event: MessageEvent, messageText: String, data: MessageService.DataValue<SkillParam>
-    ): Boolean {
+    override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<SkillParam>): Boolean {
         val matcher = Instruction.SKILL.matcher(messageText)
         if (!matcher.find()) {
             return false
@@ -75,6 +76,42 @@ import kotlin.math.sqrt
         } catch (e: Exception) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "技巧分析")
         }
+    }
+
+    override fun accept(event: MessageEvent, messageText: String): SkillParam? {
+        val matcher = Instruction.SKILL.matcher(messageText)
+        if (!matcher.find()) {
+            return null
+        }
+
+        val isMyself = AtomicBoolean(true)
+        val mode = OsuMode.MANIA // CmdUtil.getMode(matcher)
+        val user = CmdUtil.getUserWithoutRange(event, matcher, CmdObject(mode), isMyself) //mode
+
+        return SkillParam(user, mode, isMyself.get())
+    }
+
+    override fun reply(event: MessageEvent, param: SkillParam): MessageChain? {
+        val bests = try {
+            scoreApiService.getBestScores(param.user, param.mode)
+        } catch (e: Exception) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, param.user.username)
+        }
+
+        calculateApiService.applyBeatMapChanges(bests)
+        calculateApiService.applyStarToScores(bests)
+
+        val skillMap = getSkillMap(bests, beatmapApiService)
+
+        val body = getBody(param.user, bests, skillMap)
+
+        val image = try {
+            imageService.getPanel(body, "K")
+        } catch (e: Exception) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderTooMany, "技巧分析")
+        }
+
+        return QQMsgUtil.getImage(image)
     }
 
     private fun getSkillMap(bests: List<LazerScore>?, beatmapApiService: OsuBeatmapApiService): Map<Long, PPMinus4?> {

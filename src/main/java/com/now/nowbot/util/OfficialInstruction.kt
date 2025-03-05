@@ -165,6 +165,24 @@ enum class OfficialInstruction(val pattern: Pattern) {
         }
     }),
 
+    TEAM(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("tm", "team", "clan")
+        appendQQUIDName()
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendMatchLevel(MAYBE)
+            appendSpace()
+            appendCaptureGroup(
+                "team", REG_NUMBER, MORE
+            )
+        }
+    }),
+
+    SKILL(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("skills?", "k")
+        appendModeQQUIDName()
+    }),
+
 
     // #4 osu! 谱面指令
     MAP(CommandPatternBuilder.create {
