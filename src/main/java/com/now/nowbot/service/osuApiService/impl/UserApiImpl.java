@@ -244,7 +244,7 @@ public class UserApiImpl implements OsuUserApiService {
             .compile("Formed</div>\\s+<div class=\"team-info-entry__value\">\\s+(.+)\\s+</div>");
     private final Pattern teamUserPattern = Pattern.compile("data-user=\"(?<json>.+)\"");
     private final Pattern teamModePattern = Pattern.compile("fa-extra-mode-(\\w+)");
-    private final Pattern teamNamePattern        = Pattern.compile("<h1 class=\"profile-info__name\">\\s+([\\S\\s]+)\\s+</h1>");
+    private final Pattern teamNamePattern        = Pattern.compile("<h1 class=\"profile-info__name\">\\s*<span class=\"u-ellipsis-overflow\">\\s*([\\S\\s]+)\\s*</span>\\s*</h1>");
     private final Pattern teamAbbrPattern        = Pattern.compile(
             "<p class=\"profile-info__flag\">\\s+\\[([\\S\\s]+)]\\s+</p>");
     private final Pattern teamApplicationPattern = Pattern
