@@ -15,11 +15,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.util.AsyncMethodExecutor
-import com.now.nowbot.util.CmdObject
-import com.now.nowbot.util.CmdUtil
-import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.QQMsgUtil
+import com.now.nowbot.util.*
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -79,7 +75,7 @@ import kotlin.math.sqrt
     }
 
     override fun accept(event: MessageEvent, messageText: String): SkillParam? {
-        val matcher = Instruction.SKILL.matcher(messageText)
+        val matcher = OfficialInstruction.SKILL.matcher(messageText)
         if (!matcher.find()) {
             return null
         }

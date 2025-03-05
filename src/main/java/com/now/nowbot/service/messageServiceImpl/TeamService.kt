@@ -13,6 +13,7 @@ import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
 import org.springframework.stereotype.Service
 import java.util.*
@@ -84,7 +85,7 @@ class TeamService(
     }
 
     override fun accept(event: MessageEvent, messageText: String): TeamParam? {
-        val m = Instruction.TEAM.matcher(messageText)
+        val m = OfficialInstruction.TEAM.matcher(messageText)
         if (!m.find()) {
             return null
         }
