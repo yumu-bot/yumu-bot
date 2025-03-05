@@ -56,7 +56,9 @@ object CmdUtil {
             null
         }
 
-        val user = getOsuUser(event, matcher, CmdObject(OsuMode.getMode(mode.data, bu?.osuMode)))
+        mode.data = OsuMode.getMode(mode.data, bu?.osuMode)
+
+        val user = getOsuUser(event, matcher, mode)
 
         if (user != null) {
             isMyself.set(bu?.osuID == user.userID)
@@ -116,7 +118,11 @@ object CmdUtil {
                     val start = split.firstOrNull()?.toIntOrNull()
                     val end = if (split.size == 2) split.lastOrNull()?.toIntOrNull() else null
 
-                    return CmdRange(getOsuUser(bindDao.getBindFromQQ(event.sender.id), mode.data), start, end)
+                    val bindUser = bindDao.getBindFromQQ(event.sender.id)
+
+                    mode.data = OsuMode.getMode(mode.data, bindUser.osuMode)
+
+                    return CmdRange(getOsuUser(bindUser, mode.data), start, end)
                 }
 
                 val split2 = name.trim().split("\\s+".toRegex())

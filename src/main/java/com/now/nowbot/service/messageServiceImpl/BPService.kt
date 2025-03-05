@@ -49,9 +49,9 @@ import kotlin.math.roundToLong
         if (!matcher.find()) return false
 
         val isMyself = AtomicBoolean() // 处理 range
-        val inputMode = getMode(matcher)
+        val mode = getMode(matcher)
 
-        val range = getUserWithBackoff(event, matcher, inputMode, isMyself, messageText, "bp")
+        val range = getUserWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
 
         val any = matcher.group("any")
         val conditions = DataUtil.paramMatcher(any, Filter.entries.map { it.regex })
@@ -74,8 +74,7 @@ import kotlin.math.roundToLong
 
         val isMultiple = matcher.group("s").isNullOrBlank().not()
 
-        val mode = if (OsuMode.isNotDefaultOrNull(inputMode.data)) inputMode.data!! else range.data!!.currentOsuMode
-        val scores = range2.getBPScores(mode, isMultiple, hasCondition)
+        val scores = range2.getBPScores(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition)
 
         val filteredScores = filterScores(scores, conditions)
 
@@ -115,10 +114,11 @@ import kotlin.math.roundToLong
         } else {
             return null
         }
-        val isMyself = AtomicBoolean() // 处理 range
-        val inputMode = getMode(matcher)
 
-        val range = getUserWithBackoff(event, matcher, inputMode, isMyself, messageText, "bp")
+        val isMyself = AtomicBoolean() // 处理 range
+        val mode = getMode(matcher)
+
+        val range = getUserWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
 
         val any = matcher.group("any")
         val conditions = DataUtil.paramMatcher(any, Filter.entries.map { it.regex })
@@ -139,8 +139,7 @@ import kotlin.math.roundToLong
             CmdRange(range.data!!, start, end)
         }
 
-        val mode = if (OsuMode.isNotDefaultOrNull(inputMode.data)) inputMode.data!! else range.data!!.currentOsuMode
-        val scores = range2.getBPScores(mode, isMultiple, hasCondition)
+        val scores = range2.getBPScores(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition)
 
         val filteredScores = filterScores(scores, conditions)
 
