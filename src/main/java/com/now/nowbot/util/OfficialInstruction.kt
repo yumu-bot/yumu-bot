@@ -65,7 +65,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     BP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("b")
-        appendModeQQUIDName()
+        appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
             appendSpace(MORE) // 至少需要一个空格区分开来
@@ -80,7 +80,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     BPS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("bs")
-        appendModeQQUIDName()
+        appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
             appendSpace(MORE) // 至少需要一个空格区分开来
