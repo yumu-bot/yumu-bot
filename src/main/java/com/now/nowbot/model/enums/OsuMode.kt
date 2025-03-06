@@ -28,7 +28,7 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
         /**
          * 当 mode 为 Default 或者 mode == mode2 时，返回 true
          */
-        @JvmStatic fun equal(mode: OsuMode, mode2: Any?) : Boolean {
+        @JvmStatic fun equalOrDefault(mode: OsuMode, mode2: Any?) : Boolean {
             if (mode2 is OsuMode) {
                 return mode == mode2 || mode == DEFAULT
             }

@@ -7,7 +7,6 @@ import com.now.nowbot.model.Mod
 import com.now.nowbot.model.ValueMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.BeatmapDifficultyAttributes
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.RosuPerformance
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -289,7 +288,16 @@ import kotlin.reflect.full.companionObjectInstance
     }
 
     override fun applyStarToScore(score: LazerScore) {
-        if ((score.beatMapID == 0L || LazerMod.noStarRatingChange(score.mods)) && score.beatMap.mode == score.mode) return
+        if (score.beatMapID == 0L ||
+            (LazerMod.noStarRatingChange(score.mods)) && OsuMode.equalOrDefault(score.mode, score.beatMap.mode)) return
+
+        applyStarToScoreFromOfficial(score)
+
+        if (score.beatMap.starRating < 0.15) {
+            score.beatMap.starRating = getBeatMapStarRating(score.beatMapID, score.mode, score.mods)
+        }
+
+        /*
 
         val sr = getBeatMapStarRating(score.beatMapID, score.mode, score.mods)
 
@@ -298,10 +306,13 @@ import kotlin.reflect.full.companionObjectInstance
         } else {
             applyStarToScoreFromOfficial(score)
         }
+
+         */
     }
 
     override fun applyStarToBeatMap(beatMap: BeatMap?, mode: OsuMode, mods: List<LazerMod>) {
         if (beatMap == null || (beatMap.mode != OsuMode.OSU && OsuMode.isNotDefaultOrNull(mode) && mode != beatMap.mode)) return
+
 
         if (beatMap.mode == OsuMode.OSU && OsuMode.isNotDefaultOrNull(mode) && mode != beatMap.mode) {
             applyStarToBeatMapFromOfficial(beatMap, mode, mods)
@@ -310,7 +321,16 @@ import kotlin.reflect.full.companionObjectInstance
 
         if (LazerMod.hasStarRatingChange(mods).not()) return
 
+        applyStarToBeatMapFromOfficial(beatMap, mode, mods)
+
+        if (beatMap.starRating < 0.15) {
+            beatMap.starRating = getBeatMapStarRating(beatMap.beatMapID, mode, mods)
+        }
+        /*
+
         getBeatMapStarRating(beatMap.beatMapID, mode, mods).let { beatMap.starRating = it }
+
+         */
     }
 
     override fun applyStarToScores(scores: List<LazerScore>) {
@@ -325,11 +345,10 @@ import kotlin.reflect.full.companionObjectInstance
 
     private fun applyStarToScoreFromOfficial(score: LazerScore) {
         try {
-            val attr: BeatmapDifficultyAttributes =
-                beatmapApiService.getAttributes(score.beatMapID, score.mode, LazerMod.getModsValue(score.mods))
+            val attr = beatmapApiService.getAttributes(score.beatMapID, score.mode, LazerMod.getModsValue(score.mods))
 
-            if (attr.starRating != null) {
-                score.beatMap.starRating = attr.starRating!!.toDouble()
+            if (attr.starRating > 0.0) {
+                score.beatMap.starRating = attr.starRating
             } else {
                 log.error("给成绩应用星级：无法获取谱面 {}，无法应用 API 提供的星数！", score.beatMapID)
             }
@@ -340,11 +359,10 @@ import kotlin.reflect.full.companionObjectInstance
 
     private fun applyStarToBeatMapFromOfficial(beatMap: BeatMap, mode: OsuMode, mods: List<LazerMod>) {
         try {
-            val attr: BeatmapDifficultyAttributes =
-                beatmapApiService.getAttributes(beatMap.beatMapID, mode, LazerMod.getModsValue(mods))
+            val attr = beatmapApiService.getAttributes(beatMap.beatMapID, mode, LazerMod.getModsValue(mods))
 
-            if (attr.starRating != null) {
-                beatMap.starRating = attr.starRating!!.toDouble()
+            if (attr.starRating > 0.0) {
+                beatMap.starRating = attr.starRating
             } else {
                 log.error("给谱面应用星级：无法获取谱面 {}，无法应用 API 提供的星数！", beatMap.beatMapID)
             }
@@ -394,7 +412,7 @@ import kotlin.reflect.full.companionObjectInstance
         AsyncMethodExecutor.AsyncSupplier(actions)
     }
 
-    override fun getBeatMapStarRating(beatMapID: Long, mode: OsuMode, mods: List<LazerMod>):  Double {
+    override fun getBeatMapStarRating(beatMapID: Long, mode: OsuMode, mods: List<LazerMod>): Double {
         val isAllLegacy = mods.any { it.settings == null && it::class.companionObjectInstance is ValueMod }
         val modsValue: Int = if (isAllLegacy) {
             LazerMod.getModsValue(mods)

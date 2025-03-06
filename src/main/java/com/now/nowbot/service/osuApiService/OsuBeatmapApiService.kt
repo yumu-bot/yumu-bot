@@ -58,7 +58,7 @@ interface OsuBeatmapApiService {
 
     fun getAttributes(id: Long, mode: OsuMode?): BeatmapDifficultyAttributes
 
-    fun getAttributes(id: Long, mode: OsuMode?, value: Int): BeatmapDifficultyAttributes
+    fun getAttributes(id: Long, mode: OsuMode?, modsInt: Int): BeatmapDifficultyAttributes
 
     fun getAttributes(id: Long): BeatmapDifficultyAttributes {
         return getAttributes(id, OsuMode.DEFAULT)

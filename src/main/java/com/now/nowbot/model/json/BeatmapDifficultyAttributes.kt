@@ -10,10 +10,10 @@ import com.fasterxml.jackson.annotation.JsonProperty
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 class BeatmapDifficultyAttributes {
     @JsonProperty("max_combo")
-    val maxCombo: Int = 0
+    var maxCombo: Int = 0
 
     @JsonProperty("star_rating")
-    val starRating: Float = 0f
+    var starRating: Double = 0.0
 
     /**
      * OSU

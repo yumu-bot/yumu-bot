@@ -474,14 +474,14 @@ class BeatmapApiImpl(
 
     data class AttributesResponse(val attributes: BeatmapDifficultyAttributes = BeatmapDifficultyAttributes())
 
-    override fun getAttributes(id: Long, mode: OsuMode?, value: Int): BeatmapDifficultyAttributes {
+    override fun getAttributes(id: Long, mode: OsuMode?, modsInt: Int): BeatmapDifficultyAttributes {
         val body: MutableMap<String, Any> = HashMap()
         if (OsuMode.isNotDefaultOrNull(mode)) {
             body["ruleset_id"] = mode!!.modeValue
         }
 
-        if (value != 0) {
-            body["mods"] = value
+        if (modsInt != 0) {
+            body["mods"] = modsInt
         }
 
         return base.request { client ->
