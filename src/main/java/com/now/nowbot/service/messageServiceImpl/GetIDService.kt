@@ -82,7 +82,6 @@ class GetIDService(private val userApiService: OsuUserApiService) : MessageServi
 
          */
 
-
-        event.reply(sb.substring(0, sb.length - 2))
+        event.reply(sb.toString().removeSuffix(","))
     }
 }
