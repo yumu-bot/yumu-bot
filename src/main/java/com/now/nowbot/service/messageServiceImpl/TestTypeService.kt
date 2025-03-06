@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService
 ) : MessageService<MapTypeParam> {
-    data class MapTypeParam(val bid: Long, val rate: Double = 1.0, val modsList: List<LazerMod>)
+    data class MapTypeParam(val bid: Long, val rate: Double = 1.0, val mods: List<LazerMod>)
 
     override fun isHandle(
         event: MessageEvent,
@@ -64,17 +64,15 @@ import org.springframework.stereotype.Service
         val beatMap: BeatMap
         val mode: OsuMode
 
-        val isChangedRating = LazerMod.hasStarRatingChange(param.modsList)
+        val isChangedRating = LazerMod.hasStarRatingChange(param.mods)
 
         try {
 
             beatMap = beatmapApiService.getBeatMapFromDataBase(param.bid)
             mode = OsuMode.getMode(beatMap.modeInt)
 
-            if (isChangedRating) {
-                val star = calculateApiService.getBeatMapStarRating(param.bid, beatMap.mode, param.modsList)
-                beatMap.starRating = star
-            }
+            calculateApiService.applyStarToBeatMap(beatMap, mode, param.mods)
+
             fileStr = beatmapApiService.getBeatMapFileString(param.bid)!!
         } catch (e: Exception) {
             throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
@@ -94,7 +92,7 @@ import org.springframework.stereotype.Service
         val mapMinus = PPMinus4.getInstance(
             file,
             if (isChangedRating) {
-                LazerMod.getModSpeedForStarCalculate(param.modsList).toDouble()
+                LazerMod.getModSpeedForStarCalculate(param.mods).toDouble()
             } else {
                 param.rate
             },

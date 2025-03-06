@@ -472,9 +472,11 @@ class BeatmapApiImpl(
         return playPercentage ?: 1.0
     }
 
+    data class AttributesResponse(val attributes: BeatmapDifficultyAttributes = BeatmapDifficultyAttributes())
+
     override fun getAttributes(id: Long, mode: OsuMode?, value: Int): BeatmapDifficultyAttributes {
         val body: MutableMap<String, Any> = HashMap()
-        if (!OsuMode.isDefaultOrNull(mode)) {
+        if (OsuMode.isNotDefaultOrNull(mode)) {
             body["ruleset_id"] = mode!!.modeValue
         }
 
@@ -488,11 +490,17 @@ class BeatmapApiImpl(
                 .headers { base.insertHeader(it) }
                 .bodyValue(body)
                 .retrieve()
+                .bodyToMono(AttributesResponse::class.java)
+                .onErrorReturn(AttributesResponse())
+                .map { it.attributes }
+
+                /*
                 .bodyToMono(JsonNode::class.java)
                 .mapNotNull {
                     JacksonUtil.parseObject(it["attributes"], BeatmapDifficultyAttributes::class.java)
                 }
-                .onErrorReturn(BeatmapDifficultyAttributes())
+
+                 */
         }
     }
 

@@ -1,7 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.OsuUserInfoDao
-import com.now.nowbot.entity.OsuUserInfoArchiveLite
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.InfoLogStatistics
@@ -14,7 +13,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.InfoService.InfoParam
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
@@ -40,7 +39,7 @@ import kotlin.math.min
 @Service("INFO")
 class InfoService(
     private val scoreApiService: OsuScoreApiService,
-    private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService,
     private val infoDao: OsuUserInfoDao,
     private val imageService: ImageService,
 ) : MessageService<InfoParam>, TencentMessageService<InfoParam> {
@@ -156,12 +155,12 @@ class InfoService(
 
             if (this.version == 2) {
                 for(i in 0..min(bests.size - 1, 5)) {
-                    val b = bests[i]
+                    val score = bests[i]
 
-                    if (LazerMod.noStarRatingChange(b.mods)) continue
+                    if (LazerMod.noStarRatingChange(score.mods)) continue
 
                     try {
-                        b.beatMap.starRating = beatmapApiService.getAttributes(b.beatMapID, b.mods).starRating.toDouble()
+                        calculateApiService.applyStarToScore(score)
                     } catch (e: Exception) {
                         log.info("玩家信息：获取新谱面星数失败")
                         continue
@@ -184,7 +183,7 @@ class InfoService(
                 user.userID,
                 user.currentOsuMode,
                 LocalDate.now().minusDays(day.toLong())
-            ).map { archive: OsuUserInfoArchiveLite? -> OsuUserInfoDao.fromArchive(archive) }
+            ).map { OsuUserInfoDao.fromArchive(it) }
 
         return try {
             val panelDParam = PanelDParam(user, historyUser.getOrNull(), bests, mode)

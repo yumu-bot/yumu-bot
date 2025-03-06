@@ -1,112 +1,65 @@
-package com.now.nowbot.model.json;
+package com.now.nowbot.model.json
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class BeatmapDifficultyAttributes {
+class BeatmapDifficultyAttributes {
     @JsonProperty("max_combo")
-    Integer maxCombo;
+    val maxCombo: Int = 0
+
     @JsonProperty("star_rating")
-    Float starRating;
+    val starRating: Float = 0f
+
     /**
      * OSU
      */
-
     @JsonProperty("aim_difficulty")
-    Float aim;
+    var aim: Float? = null
+
     @JsonProperty("flashlight_difficulty")
-    Float flashlight;
+    var flashlight: Float? = null
+
     @JsonProperty("overall_difficulty")
-    Float overall;
+    var overall: Float? = null
+
     @JsonProperty("speed_difficulty")
-    Float speed;
+    var speed: Float? = null
+
     @JsonProperty("slider_factor")
-    Float slider;
+    var slider: Float? = null
 
     /**
      * taiko
      */
     @JsonProperty("stamina_difficulty")
-    Float stamina;
+    val stamina: Float? = null
+
     @JsonProperty("rhythm_difficulty")
-    Float rhythm;
+    val rhythm: Float? = null
+
     @JsonProperty("colour_difficulty")
-    Float colour;
+    val colour: Float? = null
 
     /**
      * mania
      */
     @JsonProperty("score_multiplier")
-    Float scoreMultiplier;
+    val scoreMultiplier: Float? = null
 
     /**
      * osu & taiko & fruits
      */
     @JsonProperty("approach_rate")
-    Float approachRate;
-
+    val approachRate: Float? = null
 
     /**
-     * tokio & mania
+     * taiko & mania
      */
     @JsonProperty("great_hit_window")
-    Float great_hit_window;
-
-
-    public Integer getMaxCombo() {
-        return maxCombo;
-    }
-
-    public Float getStarRating() {
-        return starRating;
-    }
-
-    public Float getAim() {
-        return aim;
-    }
-
-    public Float getFlashlight() {
-        return flashlight;
-    }
-
-    public Float getOverall() {
-        return overall;
-    }
-
-    public Float getSpeed() {
-        return speed;
-    }
-
-    public Float getSlider() {
-        return slider;
-    }
-
-    public Float getStamina() {
-        return stamina;
-    }
-
-    public Float getRhythm() {
-        return rhythm;
-    }
-
-    public Float getColour() {
-        return colour;
-    }
-
-    public Float getScoreMultiplier() {
-        return scoreMultiplier;
-    }
-
-    public Float getApproachRate() {
-        return approachRate;
-    }
-
-    public Float getGreat_hit_window() {
-        return great_hit_window;
-    }
+    val greatHitWindow: Float? = null
 }
