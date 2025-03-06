@@ -147,11 +147,11 @@ class InfoService(
         return getParam(event, matcher)
     }
 
-    override fun reply(event: MessageEvent, param: InfoParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
+    override fun reply(event: MessageEvent, param: InfoParam): MessageChain = QQMsgUtil.getImage(param.getImage())
 
     private fun InfoParam.getImage(): ByteArray {
         val bests: List<LazerScore> = try {
-            val bests = scoreApiService.getBestScores(user.userID, mode, 0, 100)
+            val bests = scoreApiService.getBestScores(user.userID, mode)
 
             if (this.version == 2) {
                 for(i in 0..min(bests.size - 1, 5)) {
@@ -167,8 +167,6 @@ class InfoService(
                     }
                 }
             }
-
-
 
             bests
         } catch (e: WebClientResponseException.NotFound) {
@@ -206,45 +204,34 @@ class InfoService(
         private fun getParam(event: MessageEvent, matcher: Matcher, version: Int = 1): InfoParam {
             val isMyself = AtomicBoolean(false)
 
+            val mode = getMode(matcher)
             val user = getUserWithoutRange(event, matcher, getMode(matcher), isMyself)
-            val mode = user.currentOsuMode
+            val day = (matcher.group(FLAG_DAY) ?: "").toIntOrNull() ?: 1
 
-            val dayStr = matcher.group(FLAG_DAY) ?: ""
-            val day = if (dayStr.isNotBlank()) try {
-                dayStr.toInt()
-            } catch (e: NumberFormatException) {
-                1
-            } else {
-                1
-            }
-
-            return InfoParam(user, mode, day, isMyself.get(), version)
+            return InfoParam(user, mode.data!!, day, isMyself.get(), version)
         }
 
         private fun getBestTimes(bests: List<LazerScore>): IntArray {
-            val times : List<OffsetDateTime> = bests.stream().map(LazerScore::endedTime).toList()
-
+            val times: List<OffsetDateTime> = bests.map(LazerScore::endedTime)
             val now = LocalDate.now()
 
-            val bpt = IntArray(90)
+            val timeArray = IntArray(90)
 
             times.forEach { time ->
                 run {
                     val day = (now.toEpochDay() - time.toLocalDate().toEpochDay()).toInt()
                     if (day in 0..89) {
-                        bpt[89 - day]++
+                        timeArray[89 - day]++
                     }
                 }
             }
 
-            return bpt
+            return timeArray
         }
 
         private fun getBonus(bests: List<LazerScore>, user: OsuUser): Double {
             return if (bests.isNotEmpty()) {
-                val bestPPs = bests.stream().mapToDouble(LazerScore::getPP).toArray()
-
-                DataUtil.getBonusPP(user.pp, bestPPs).toDouble()
+                DataUtil.getBonusPP(user.pp, bests.map { it.PP!! })
             } else {
                 0.0
             }

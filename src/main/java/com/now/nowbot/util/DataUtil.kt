@@ -27,10 +27,6 @@ object DataUtil {
         get() {
             if (field == null || field!!.isClosed) {
                 try {
-                    //                InputStream in =
-                    // class.getClassLoader().getResourceAsStream("static/font/Torus-Regular.ttf");
-                    //                TORUS_REGULAR =
-                    // Typeface.makeFromData(Data.makeFromBytes(in.readAllBytes()));
                     field = Typeface.makeFromFile("${NowbotConfig.FONT_PATH}Torus-Regular.ttf")
                 } catch (e: Exception) {
                     log.error("未读取到目标字体:Torus-Regular.ttf", e)
@@ -130,7 +126,7 @@ object DataUtil {
         return String.format("#%02x%02x%02x", r, g, b)
     }
 
-    val splitReg = "[,，|:：`、]+".toRegex()
+    private val splitReg = "[,，|:：`、]+".toRegex()
 
     /**
      * 将按逗号或者 |、:：分隔的字符串分割 如果未含有分隔的字符，返回 null
@@ -161,19 +157,15 @@ object DataUtil {
      */
     @JvmStatic
     @NonNull
-    fun parseUsername(@Nullable str: String): List<String> {
-        if (Objects.isNull(str)) return listOf("")
+    fun parseUsername(@Nullable str: String?): List<String> {
+        if (str.isNullOrBlank()) return listOf("")
         val split =
             str.trim()
                 .split(nameSplitReg)
                 .dropLastWhile { it.isEmpty() }
         if (split.isEmpty()) return listOf(str)
 
-        return split
-            .mapNotNull { obj ->
-                val s = obj.trim()
-                if (s.isEmpty()) null else s
-            }
+        return split.mapNotNull { it.trim().ifEmpty { null } }
     }
 
     /**
@@ -216,17 +208,17 @@ object DataUtil {
 
     // 获取优秀成绩的私有方法
     private fun getPP(score: Score, user: OsuUser): Double {
-        var pp = Objects.requireNonNullElse(user.pp, 0.0)
+        var pp = user.pp
 
         val is4K = score.beatMap.mode == MANIA && score.beatMap.CS == 4f
         val is7K = score.beatMap.mode == MANIA && score.beatMap.CS == 7f
 
         if (is4K) {
-            pp = Objects.requireNonNullElse(user.statistics.pP4K, pp)
+            pp = user.statistics.pP4K
         }
 
         if (is7K) {
-            pp = Objects.requireNonNullElse(user.statistics.pP7K, pp)
+            pp = user.statistics.pP7K
         }
 
         return pp
@@ -325,7 +317,7 @@ object DataUtil {
         for (e in match.events) {
             if (e.eventID == eventID) {
                 // 跳出
-                return playerSet.stream().toList()
+                return playerSet.toMutableList()
             } else {
                 when (e.detail.type) {
                     "player-joined" -> {
@@ -567,8 +559,8 @@ object DataUtil {
         return str.replace("\n", "\n\n")
     }
 
-    fun jsonString2Markdown(str: String): String? {
-        if (Objects.isNull(str)) return null
+    fun jsonString2Markdown(str: String?): String? {
+        if (str.isNullOrBlank()) return null
         return str.replace("},", "},\n\n")
     }
 
@@ -704,29 +696,21 @@ object DataUtil {
     }
 
     fun getPlayedRankedMapCount(bonusPP: Double): Int {
-        val v = -(bonusPP / (1000f / 2.4f)) + 1
+        val v = -(bonusPP / (1000 / 2.4)) + 1.0
         return if (v < 0) {
             0
         } else {
-            Math.round(ln(v) / ln(0.9994)).toInt()
+            round(ln(v) / ln(0.9994)).toInt()
         }
     }
 
-    fun getBonusPP(playerPP: Double, fullPP: List<Double>): Float {
-        if (fullPP.isEmpty()) return 0f
-
-        val array = DoubleArray(fullPP.size)
-
-        for (i in fullPP.indices) {
-            array[i] = Objects.requireNonNullElse(fullPP[i], 0.0)
-        }
-
-        return getBonusPP(playerPP, array)
+    fun getBonusPP(playerPP: Double, fullPP: List<Double>): Double {
+        return getBonusPP(playerPP, fullPP.toDoubleArray())
     }
 
     /** 计算bonusPP 算法是最小二乘 y = kx + b 输入的PP数组应该是加权之前的数组。 */
     @JvmStatic
-    fun getBonusPP(playerPP: Double, fullPP: DoubleArray?): Float {
+    fun getBonusPP(playerPP: Double, fullPP: DoubleArray?): Double {
         val bonusPP: Double
         var remainPP = 0.0
         val k: Double
@@ -737,7 +721,7 @@ object DataUtil {
         var xy = 0.0
         var y = 0.0
 
-        if (fullPP == null || fullPP.size.toDouble() == 0.0) return 0f
+        if (fullPP == null || fullPP.size.toDouble() == 0.0) return 0.0
 
         val length = fullPP.size
 
@@ -777,7 +761,7 @@ object DataUtil {
             bonusPP = playerPP - bpPP - remainPP
         }
 
-        return max(min(bonusPP, 413.894179759), 0.0).toFloat()
+        return max(min(bonusPP, 413.894179759), 0.0)
     }
 
     fun getV3ScoreProgress(score: Score): Double { // 下下策

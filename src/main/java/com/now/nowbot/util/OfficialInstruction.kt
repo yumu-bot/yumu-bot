@@ -128,7 +128,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendModeQQUIDName()
         appendGroup(MAYBE) {
             append(REG_HASH)
-            appendMatchLevel(EXIST)
+            appendSpace()
             appendCaptureGroup(FLAG_DAY, REG_NUMBER, MORE)
         }
     }),
