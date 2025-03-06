@@ -60,7 +60,7 @@ class NewbieService(
             return -1f
         }
 
-        val start = calculateApiService.getStar(bid, OsuMode.OSU, mods).toFloat()
+        val start = calculateApiService.getBeatMapStarRating(bid, OsuMode.OSU, mods).toFloat()
         return start
     }
 

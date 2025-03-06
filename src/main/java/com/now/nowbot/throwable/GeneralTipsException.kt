@@ -3,8 +3,9 @@ package com.now.nowbot.throwable
 // 这个类存放一些公用的 Tips，比如图片发送失败，或是图片渲染失败，或是连不上渲染模块
 class GeneralTipsException : TipsException {
     enum class Type (val message: String) {
-        G_TokenExpired_Me("您的令牌已过期，请重新授权。(!ymbind)"),
-        G_TokenExpired_Player("该玩家的令牌已过期，请提醒他重新授权。(!ymbind)"),
+        G_TokenExpired_Me("令牌失效，请重新授权。(!ymbind)"),
+        G_TokenExpired_Player("玩家令牌失效，请提醒他重新授权。(!ymbind)"),
+        G_TokenExpired_Official("令牌失效，请重新授权。(/bind [your name])"),
         G_TokenExpired_Cancel("绑定已经被取消了, 无法再使用了哦"),
         G_NotBind_Player("该玩家没有绑定。"),
 
@@ -59,6 +60,7 @@ class GeneralTipsException : TipsException {
         G_NotEnoughBP_Me("您在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
         G_NotEnoughBP_Player("对方在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
 
+        G_Wrong_Instruction("指令错误，请检查。"),
         G_Wrong_Mode("游戏模式错误，请检查。"),
         G_Wrong_ParamAccuracy("准确率参数错误，请检查。"), 
         G_Wrong_ParamCombo("连击参数错误，请检查。"),
@@ -76,7 +78,8 @@ class GeneralTipsException : TipsException {
         G_Fetch_BeatMapAttr("获取变化的谱面数据超时（太多了），如果你是第一次见到这条消息，第二次通常就会恢复了。"),
 
         G_Suggest_AnotherFunction("推荐您使用另一个功能：%s"),
-        
+
+        G_Malfunction_Response("没有响应呢，请稍后再试。"),
         G_Malfunction_ppyAPI("ppy API 状态异常！"),
         G_Malfunction_Calculate("%s：数据计算失败。"), 
         G_Malfunction_Fetch("%s：数据获取失败。"), 

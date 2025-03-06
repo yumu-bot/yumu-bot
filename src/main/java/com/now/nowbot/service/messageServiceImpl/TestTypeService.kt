@@ -72,7 +72,7 @@ import org.springframework.stereotype.Service
             mode = OsuMode.getMode(beatMap.modeInt)
 
             if (isChangedRating) {
-                val star = calculateApiService.getStar(param.bid, beatMap.mode, param.modsList)
+                val star = calculateApiService.getBeatMapStarRating(param.bid, beatMap.mode, param.modsList)
                 beatMap.starRating = star
             }
             fileStr = beatmapApiService.getBeatMapFileString(param.bid)!!

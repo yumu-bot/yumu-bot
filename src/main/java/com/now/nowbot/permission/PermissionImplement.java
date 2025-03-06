@@ -13,6 +13,7 @@ import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.qq.tencent.TencentMessageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.BotException;
+import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.ContextUtil;
 import jakarta.annotation.Resource;
@@ -96,13 +97,13 @@ public class PermissionImplement implements PermissionController {
             }
 
             if (reply == null) {
-                reply = new MessageChain("没有响应呢, 一会再试试吧");
+                reply = new MessageChain(GeneralTipsException.Type.G_Malfunction_Response.getMessage());
             }
             onMessage.accept(reply);
             return;
         }
 
-        onMessage.accept(new MessageChain("没找到对应的功能, 是不是打错命令了呢？"));
+        onMessage.accept(new MessageChain(GeneralTipsException.Type.G_Wrong_Instruction.getMessage()));
     }
 
     private static boolean checkStopListener() {
@@ -139,6 +140,7 @@ public class PermissionImplement implements PermissionController {
         throw new RuntimeException("未找到对应的服务");
     }
 
+    @SuppressWarnings("unchecked")
     public void init(
             Map<String, MessageService> services
     ) {

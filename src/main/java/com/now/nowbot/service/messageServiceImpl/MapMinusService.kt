@@ -118,7 +118,7 @@ import java.util.regex.Matcher
                 mode = OsuMode.getMode(beatMap.modeInt)
 
                 if (isChangedRating) {
-                    beatMap.starRating = calculateApiService.getStar(beatMap.beatMapID, beatMap.mode, param.modsList)
+                    beatMap.starRating = calculateApiService.getBeatMapStarRating(beatMap.beatMapID, beatMap.mode, param.modsList)
                 }
                 fileStr = beatmapApiService.getBeatMapFileString(param.bid)!!
             } catch (e: Exception) {

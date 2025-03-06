@@ -49,5 +49,5 @@ interface OsuCalculateApiService {
         accuracy: Double
     ): RosuPerformance
 
-    fun getStar(beatMapID: Long, mode: OsuMode, mods: List<LazerMod>): Double
+    fun getBeatMapStarRating(beatMapID: Long, mode: OsuMode, mods: List<LazerMod>): Double
 }

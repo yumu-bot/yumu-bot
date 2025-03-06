@@ -5,6 +5,7 @@ import com.now.nowbot.qq.message.ImageMessage
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.TextMessage
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.QQMsgUtil
 import com.yumu.YumuService
 import com.yumu.model.packages.Command
@@ -49,7 +50,7 @@ object YumuServer : YumuService {
             .partition { it is TextMessage }
         var text = textList.joinToString { it.toString() }
         if (text.contains("!ymbind")) {
-            text = text.replace("!ymbind", "/bind [osu name]")
+            text = GeneralTipsException.Type.G_TokenExpired_Official.message //text.replace("!ymbind", "/bind [osu name]")
         }
         var image: String? = null
         var isUrl = false
