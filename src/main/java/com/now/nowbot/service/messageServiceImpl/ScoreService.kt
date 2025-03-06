@@ -77,9 +77,10 @@ import java.util.regex.Matcher
 
         val bid = getBid(matcher)
         if (bid == 0L) throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
-        val beatMap = beatmapApiService.getBeatMap(bid)
+        val map = beatmapApiService.getBeatMap(bid)
+        if (map.hasLeaderBoard.not()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_LeaderBoard, map.previewName)
 
-        val mode = OsuMode.correctConvert(inputMode.data, beatMap.mode)
+        val mode = OsuMode.correctConvert(inputMode.data, map.mode)
 
         val user: OsuUser = try {
             getUserWithoutRange(event, matcher, CmdObject(mode), isMyself)
@@ -97,7 +98,7 @@ import java.util.regex.Matcher
 
         val mods = getMod(matcher)
 
-        data.value = ScoreParam(user, mode, beatMap, mods, isMyself.get(), isMultipleScore)
+        data.value = ScoreParam(user, mode, map, mods, isMyself.get(), isMultipleScore)
 
         return true
     }
@@ -139,14 +140,15 @@ import java.util.regex.Matcher
 
         val bid = getBid(matcher)
         if (bid == 0L) throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
-        val beatMap = beatmapApiService.getBeatMap(bid)
+        val map = beatmapApiService.getBeatMap(bid)
+        if (map.hasLeaderBoard.not()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_LeaderBoard, map.previewName)
 
-        val mode = OsuMode.correctConvert(inputMode.data, beatMap.mode)
+        val mode = OsuMode.correctConvert(inputMode.data, map.mode)
         val user = getUserWithoutRange(event, matcher, CmdObject(mode), isMyself)
 
         val mods = getMod(matcher)
 
-        return ScoreParam(user, mode, beatMap, mods, isMyself.get(), isMultipleScore)
+        return ScoreParam(user, mode, map, mods, isMyself.get(), isMultipleScore)
     }
 
     override fun reply(event: MessageEvent, param: ScoreParam): MessageChain? {

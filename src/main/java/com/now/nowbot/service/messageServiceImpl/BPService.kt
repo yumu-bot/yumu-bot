@@ -17,7 +17,7 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserWithBackoff
+import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 import org.slf4j.Logger
@@ -51,7 +51,8 @@ import kotlin.math.roundToLong
         val isMyself = AtomicBoolean() // 处理 range
         val mode = getMode(matcher)
 
-        val range = getUserWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
+        val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
+        range.setZeroToRange100()
 
         val any = matcher.group("any")
         val conditions = DataUtil.paramMatcher(any, Filter.entries.map { it.regex })
@@ -61,7 +62,7 @@ import kotlin.math.roundToLong
         val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
         val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
-        val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN)
+        val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
 
         val range2 = if (range.start != null) {
             range
@@ -118,7 +119,8 @@ import kotlin.math.roundToLong
         val isMyself = AtomicBoolean() // 处理 range
         val mode = getMode(matcher)
 
-        val range = getUserWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
+        val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
+        range.setZeroToRange100()
 
         val any = matcher.group("any")
         val conditions = DataUtil.paramMatcher(any, Filter.entries.map { it.regex })
@@ -128,7 +130,7 @@ import kotlin.math.roundToLong
         val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
         val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
-        val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN)
+        val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
 
         val range2 = if (range.start != null) {
             range
@@ -338,7 +340,7 @@ import kotlin.math.roundToLong
         private fun filterConditions(scores: MutableMap<Int, LazerScore>, filter: Filter, conditions: List<String>) {
             for (c in conditions) {
                 val operator = getOperator(c)
-                val condition = c.split("[<>＜＞=＝!！]".toRegex()).lastOrNull() ?: ""
+                val condition = c.split(REG_OPERATOR.toRegex()).lastOrNull() ?: ""
 
                 scores.entries.removeIf { fitScore(it.value, operator, filter, condition).not() }
             }
@@ -377,7 +379,7 @@ import kotlin.math.roundToLong
                 Filter.LENGTH -> run {
                     var seconds = 0L
                     if (condition.contains(REG_COLON.toRegex())) {
-                        val strs = condition.split(REG_COLON)
+                        val strs = condition.split(REG_COLON.toRegex())
                         var parseMinute = true
 
                         for (s in strs) {

@@ -136,7 +136,7 @@ enum class Instruction(val pattern: Pattern) {
             append("(?<bp>(ym)?(bestperformance|best|bp|b))(?<s>s)?")
             appendIgnore()
         }
-        appendModeQQUIDName()
+        appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
             appendSpace(MORE) // 至少需要一个空格区分开来

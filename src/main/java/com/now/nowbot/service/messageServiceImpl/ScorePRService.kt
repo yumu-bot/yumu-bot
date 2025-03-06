@@ -138,32 +138,30 @@ class ScorePRService(
     override fun accept(event: MessageEvent, messageText: String): ScorePRParam? {
         var matcher: Matcher
         val isRecent: Boolean
-        val isMulti: Boolean
+        val isMultiInput: Boolean
         when {
-            OfficialInstruction.SCORE_PASS.matcher(messageText).apply { matcher = this }.find() -> {
+            OfficialInstruction.SCORE_PASS.matcher(messageText)
+                .apply { matcher = this }.find() -> {
                 isRecent = false
-                isMulti = false
+                isMultiInput = false
             }
 
             OfficialInstruction.SCORE_PASSES.matcher(messageText)
-                    .apply { matcher = this }
-                    .find() -> {
+                    .apply { matcher = this }.find() -> {
                 isRecent = false
-                isMulti = true
+                isMultiInput = true
             }
 
             OfficialInstruction.SCORE_RECENT.matcher(messageText)
-                    .apply { matcher = this }
-                    .find() -> {
+                    .apply { matcher = this }.find() -> {
                 isRecent = true
-                isMulti = false
+                isMultiInput = false
             }
 
             OfficialInstruction.SCORE_RECENTS.matcher(messageText)
-                    .apply { matcher = this }
-                    .find() -> {
+                    .apply { matcher = this }.find() -> {
                 isRecent = true
-                isMulti = true
+                isMultiInput = true
             }
 
             else -> return null
@@ -174,14 +172,13 @@ class ScorePRService(
 
         val isMyself = AtomicBoolean()
         val mode = getMode(matcher)
-        val range =
-                getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent")
+        val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent")
 
-        if (Objects.isNull(range.data)) {
+        if (range.data == null) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Param)
         }
 
-        if (isMulti) {
+        if (isMultiInput) {
             offset = range.getOffset(0, true)
             limit = range.getLimit(20, true)
         } else {
@@ -224,8 +221,7 @@ class ScorePRService(
         val scoreList: List<LazerScore?>
 
         try {
-            scoreList =
-                    scoreApiService.getScore(user!!.userID, param.mode, offset, limit, !isRecent)
+            scoreList = scoreApiService.getScore(user!!.userID, param.mode, offset, limit, !isRecent)
         } catch (e: WebClientResponseException) {
             // 退避 !recent
             if (event != null &&
