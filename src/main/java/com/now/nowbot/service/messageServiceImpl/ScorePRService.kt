@@ -108,14 +108,13 @@ class ScorePRService(
 
         val isMyself = AtomicBoolean()
         val mode = getMode(matcher)
-        val range =
-                getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent")
+
+        val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent")
         range.setZeroToRange100()
 
-        if (Objects.isNull(range.data)) {
+        if (range.data == null) {
             throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
         }
-
         if (isMulti) {
             offset = range.getOffset(0, true)
             limit = range.getLimit(20, true)

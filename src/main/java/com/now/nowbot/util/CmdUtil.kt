@@ -98,51 +98,6 @@ object CmdUtil {
         return range
     }
 
-    @JvmStatic fun getUserWithBackoff(
-        event: MessageEvent,
-        matcher: Matcher,
-        mode: CmdObject<OsuMode>,
-        isMyself: AtomicBoolean,
-        text: String,
-        vararg ignores: String,
-    ): CmdRange<OsuUser> {
-        try {
-            if (matcher.namedGroups().containsKey("name")) {
-                val name = (matcher.group("name") ?: "")
-
-                if (name.trim().matches("(\\d{1,2}$REG_HYPHEN)?(100|\\d{1,2})".toRegex())) {
-                    // 如果人名完全符合 xx-yyy? 或 xx 的形式，则主动抛弃
-
-                    val split = name.split(REG_HYPHEN.toRegex())
-
-                    val start = split.firstOrNull()?.toIntOrNull()
-                    val end = if (split.size == 2) split.lastOrNull()?.toIntOrNull() else null
-
-                    val bindUser = bindDao.getBindFromQQ(event.sender.id)
-
-                    mode.data = OsuMode.getMode(mode.data, bindUser.osuMode)
-
-                    return CmdRange(getOsuUser(bindUser, mode.data), start, end)
-                }
-
-                val split2 = name.trim().split("\\s+".toRegex())
-
-                if (split2.size == 2 && split2.last().matches("100|\\d{1,2}".toRegex())) {
-                    // 如果人名符合 www xx 的形式，则选择将后面的视为数字
-                    return CmdRange(getOsuUser(split2.first(), mode.data), split2.last().toInt(), null)
-                }
-            }
-
-            return CmdRange(getUserWithoutRange(event, matcher, mode, isMyself))
-        } catch (e: Exception) {
-            if (isMyself.get() && isAvoidance(text, *ignores)) {
-                throw LogException("退避指令 $ignores")
-            } else {
-                throw e
-            }
-        }
-    }
-
     /**
      * 前四个参数同 [getUserWithRange]
      *
@@ -198,8 +153,8 @@ object CmdUtil {
                         OsuMode.DEFAULT
                     }
 
-                    val id = userApiService.getOsuId(name)
-                    val user = getOsuUser(id, checkOsuMode(mode, bindMode))
+                    // val id = userApiService.getOsuId(name)
+                    val user = getOsuUser(name, checkOsuMode(mode, bindMode))
                     return CmdRange(user)
                 } catch (_: Exception) {
 
@@ -207,6 +162,7 @@ object CmdUtil {
             }
             return CmdRange(null, range[0], range[1])
         } // -1 才是没找到
+
         val ranges = if (text.indexOf(CHAR_HASH) >= 0 || text.indexOf(CHAR_HASH_FULL) >= 0) {
             parseNameAndRangeHasHash(text)
         } else {
@@ -227,8 +183,8 @@ object CmdUtil {
                     OsuMode.DEFAULT
                 }
 
-                val id = userApiService.getOsuId(range.data)
-                val user = getOsuUser(id, checkOsuMode(mode, bindMode))
+                // val id = userApiService.getOsuId(range.data)
+                val user = getOsuUser(range.data!!, checkOsuMode(mode, bindMode))
                 result = CmdRange(user, range.start, range.end)
                 break
             } catch (ignore: Exception) { // 其余的忽略
@@ -245,6 +201,7 @@ object CmdUtil {
         if (result.data.isNull()) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, text)
         }
+
         return result
     }
 
