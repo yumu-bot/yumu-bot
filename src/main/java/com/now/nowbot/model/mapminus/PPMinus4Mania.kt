@@ -82,8 +82,7 @@ class PPMinus4Mania(val file: ManiaBeatmapAttributes): PPMinus4() {
                 .take(6)
                 .sortedDescending()
 
-            return stars.first() * 0.5f + stars[2] * 0.3f + stars[3] * 0.2f + stars[4] * 0.15f + stars[5] * 0.1f
-
+            return stars[0] * 0.5f + stars[1] * 0.3f + stars[2] * 0.2f + stars[3] * 0.1f + stars[4] * 0.05f
 
             /*
             var star = 0f

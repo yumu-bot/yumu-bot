@@ -181,8 +181,30 @@ enum class OfficialInstruction(val pattern: Pattern) {
     SKILL(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("skills?", "k")
         appendModeQQUIDName()
+        appendSpace()
+        appendGroup(MAYBE) {
+            append(REG_COLON)
+            appendSpace()
+            appendCaptureGroup("vs",
+                REG_USERNAME,
+                MORE
+            )
+        }
     }),
 
+    SKILL_VS(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("skills?\\s*v(ersu)?s", "kv")
+        appendModeQQUIDName()
+        appendSpace()
+        appendGroup(MAYBE) {
+            append(REG_COLON)
+            appendSpace()
+            appendCaptureGroup("vs",
+                REG_USERNAME,
+                MORE
+            )
+        }
+    }),
 
     // #4 osu! 谱面指令
     MAP(CommandPatternBuilder.create {

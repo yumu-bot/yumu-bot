@@ -1,6 +1,5 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -16,7 +15,6 @@ import okhttp3.internal.toLongOrDefault
 import org.springframework.stereotype.Service
 import java.net.URI
 import java.util.regex.Pattern
-import kotlin.io.path.Path
 
 @Service("GET_COVER") class GetCoverService(private val beatmapApiService: OsuBeatmapApiService, private val beatmapMirrorApiService: OsuBeatmapMirrorApiService) :
     MessageService<GetCoverService.CoverParam>, TencentMessageService<GetCoverService.CoverParam> {
@@ -122,7 +120,7 @@ import kotlin.io.path.Path
                     throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "完整背景")
                 }
 
-                val imageStr = path.toString()
+                val imageStr = path?.toString() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "完整背景")
 
                 // qq 一次性只能发 20 张图
                 if ((i >= 20) && (i % 20 == 0)) {
@@ -130,11 +128,7 @@ import kotlin.io.path.Path
                     builder = MessageChainBuilder()
                 }
 
-                if (path != null) {
-                    builder.addImage(imageStr)
-                } else {
-                    builder.addImage(Path(NowbotConfig.EXPORT_FILE_PATH).resolve("help-ping.png").toString())
-                }
+                builder.addImage(imageStr)
             }
 
             if (builder.isNotEmpty) {
