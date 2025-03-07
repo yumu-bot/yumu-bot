@@ -120,7 +120,7 @@ import kotlin.math.sqrt
                 try {
                     val file = OsuFile.getInstance(beatmapApiService.getBeatMapFileString(it.beatMapID))
 
-                    skillMap[it.beatMapID] = PPMinus4.getInstance(file, LazerMod.getModSpeedForStarCalculate(it.mods).toDouble())
+                    skillMap[it.beatMapID] = PPMinus4.getInstance(file, OsuMode.MANIA, LazerMod.getModSpeedForStarCalculate(it.mods).toDouble())
                 } catch (_: Exception) {
 
                 }

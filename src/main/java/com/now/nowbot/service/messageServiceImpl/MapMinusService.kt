@@ -30,7 +30,7 @@ import java.util.regex.Matcher
     private val imageService: ImageService,
 ) : MessageService<MapMinusService.MapMinusParam>, TencentMessageService<MapMinusService.MapMinusParam> {
 
-    data class MapMinusParam(val bid: Long, val rate: Double = 1.0, val modsList: List<LazerMod>)
+    data class MapMinusParam(val bid: Long, val mode: OsuMode, val rate: Double = 1.0, val mods: List<LazerMod>)
 
     override fun isHandle(
         event: MessageEvent,
@@ -98,7 +98,7 @@ import java.util.regex.Matcher
             if (rate < 0.1) throw MapMinusException(MapMinusException.Type.MM_Rate_TooSmall)
             if (rate > 5.0) throw MapMinusException(MapMinusException.Type.MM_Rate_TooLarge)
 
-            return MapMinusParam(bid, rate, modsList)
+            return MapMinusParam(bid, OsuMode.MANIA, rate, modsList)
         }
 
         private fun getMapMinusImage(
@@ -108,36 +108,36 @@ import java.util.regex.Matcher
             imageService: ImageService,
         ): ByteArray {
             val fileStr: String
-            val beatMap: BeatMap
-            val mode: OsuMode
-            val isChangedRating = LazerMod.hasStarRatingChange(param.modsList)
+            val map: BeatMap
+            val isChangedRating = LazerMod.hasStarRatingChange(param.mods)
 
             try {
 
-                beatMap = beatmapApiService.getBeatMap(param.bid)
-                mode = OsuMode.getMode(beatMap.modeInt)
+                map = beatmapApiService.getBeatMap(param.bid)
 
                 if (isChangedRating) {
-                    beatMap.starRating = calculateApiService.getBeatMapStarRating(beatMap.beatMapID, beatMap.mode, param.modsList)
+                    map.starRating = calculateApiService.getBeatMapStarRating(map.beatMapID, map.mode, param.mods)
                 }
                 fileStr = beatmapApiService.getBeatMapFileString(param.bid)!!
             } catch (e: Exception) {
                 throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
             }
 
+            if (map.mode.isNotConvertAble(param.mode)) {
+                throw MapMinusException(MapMinusException.Type.MM_Function_NotSupported)
+            }
+
             val file = try {
-                when (mode) {
-                    OsuMode.MANIA -> OsuFile.getInstance(fileStr)
-                    else -> throw MapMinusException(MapMinusException.Type.MM_Function_NotSupported)
-                }
+                OsuFile.getInstance(fileStr)
             } catch (e: NullPointerException) {
                 throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
             }
 
             val mapMinus = PPMinus4.getInstance(
                 file,
+                param.mode,
                 if (isChangedRating) {
-                    LazerMod.getModSpeedForStarCalculate(param.modsList).toDouble()
+                    LazerMod.getModSpeedForStarCalculate(param.mods).toDouble()
                 } else {
                     param.rate
                 },
@@ -149,7 +149,7 @@ import java.util.regex.Matcher
 
             try {
                 val body = mapOf(
-                    "beatmap" to beatMap,
+                    "beatmap" to map,
                     "map_minus" to mapMinus,
                     "type" to type.keys.first().name,
                     "type_percent" to type.values.first()

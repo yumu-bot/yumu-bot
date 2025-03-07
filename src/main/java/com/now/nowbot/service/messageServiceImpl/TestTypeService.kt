@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService
 ) : MessageService<MapTypeParam> {
-    data class MapTypeParam(val bid: Long, val rate: Double = 1.0, val mods: List<LazerMod>)
+    data class MapTypeParam(val bid: Long, val mode: OsuMode, val rate: Double = 1.0, val mods: List<LazerMod>)
 
     override fun isHandle(
         event: MessageEvent,
@@ -55,42 +55,38 @@ import org.springframework.stereotype.Service
         if (rate < 0.1) throw MapMinusException(MapMinusException.Type.MM_Rate_TooSmall)
         if (rate > 5.0) throw MapMinusException(MapMinusException.Type.MM_Rate_TooLarge)
 
-        data.value = MapTypeParam(bid, rate, modsList)
+        data.value = MapTypeParam(bid, OsuMode.MANIA, rate, modsList)
         return true
     }
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: MapTypeParam) {
         val fileStr: String
-        val beatMap: BeatMap
-        val mode: OsuMode
+        val map: BeatMap
 
         val isChangedRating = LazerMod.hasStarRatingChange(param.mods)
 
         try {
-
-            beatMap = beatmapApiService.getBeatMapFromDataBase(param.bid)
-            mode = OsuMode.getMode(beatMap.modeInt)
-
-            calculateApiService.applyStarToBeatMap(beatMap, mode, param.mods)
-
+            map = beatmapApiService.getBeatMapFromDataBase(param.bid)
             fileStr = beatmapApiService.getBeatMapFileString(param.bid)!!
         } catch (e: Exception) {
             throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
         }
 
+        if (map.mode.isNotConvertAble(param.mode)) {
+            throw MapMinusException(MapMinusException.Type.MM_Function_NotSupported)
+        }
+
+        calculateApiService.applyStarToBeatMap(map, param.mode, param.mods)
+
         val file = try {
-            when (mode) {
-                OsuMode.MANIA -> OsuFile.getInstance(fileStr)
-                else -> throw MapMinusException(
-                    MapMinusException.Type.MM_Function_NotSupported
-                )
-            }
+            OsuFile.getInstance(fileStr)
         } catch (e: NullPointerException) {
             throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
         }
 
         val mapMinus = PPMinus4.getInstance(
             file,
+            param.mode,
             if (isChangedRating) {
                 LazerMod.getModSpeedForStarCalculate(param.mods).toDouble()
             } else {

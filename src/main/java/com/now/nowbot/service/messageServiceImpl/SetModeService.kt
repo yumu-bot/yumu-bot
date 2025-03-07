@@ -46,12 +46,12 @@ class SetModeService (
         val user = try {
             bindDao.getBindUserFromOsuID(-event.sender.id)
         } catch (e: BindException) {
-            val userInfo = osuUserApiService.getPlayerInfo(-event.sender.id)
+            val osuUser = osuUserApiService.getPlayerInfo(-event.sender.id)
             val bindUser = BindUser()
             with(bindUser) {
-                osuID = userInfo.id
-                osuName = userInfo.username
-                osuMode = userInfo.defaultOsuMode
+                osuID = osuUser.id
+                osuName = osuUser.username
+                osuMode = osuUser.defaultOsuMode
             }
             bindDao.saveBind(bindUser)
         }
@@ -59,13 +59,21 @@ class SetModeService (
         return getReply(param, user)
     }
 
-    fun getReply(modeStr: String?, user: BindUser): MessageChain {
+    private fun getReply(modeStr: String?, user: BindUser): MessageChain {
         val mode = OsuMode.getMode(modeStr)
+
         if (mode == OsuMode.DEFAULT) {
-            return MessageChain("未知的格式,修改请使用0(osu),1(taiko),2(catch),3(mania)")
+            return MessageChain("未知的游戏模式。请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania)")
         }
+
+        val info = if (user.osuMode.isDefault() || user.osuMode == mode) {
+            "已将绑定的游戏模式修改为: ${mode.fullName}"
+        } else {
+            "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为: ${mode.fullName}"
+        }
+
         user.osuMode = mode
         bindDao.updateMod(user.osuID, mode)
-        return MessageChain("已修改主模式为: " + mode.fullName)
+        return MessageChain(info)
     }
 }

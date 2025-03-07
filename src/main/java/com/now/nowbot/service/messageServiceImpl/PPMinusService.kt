@@ -159,25 +159,20 @@ class PPMinusService(
         }
 
         val modeObj = getMode(matcher)
-        var mode: OsuMode
         // 在新人群管理群里查询，则主动认为是 osu 模式
-        mode =
-                if (event.subject.id == newbieGroup && OsuMode.isDefaultOrNull(modeObj.data)) {
-                    OsuMode.OSU
-                } else {
-                    checkOsuMode(modeObj, binMe.osuMode)
-                }
+        val mode: OsuMode =
+            if (event.subject.id == newbieGroup && OsuMode.isDefaultOrNull(modeObj.data)) {
+                OsuMode.OSU
+            } else {
+                checkOsuMode(modeObj, binMe.osuMode)
+            }
 
         val isVs = (binOther.osuID != null) && binMe.osuID != binOther.osuID
 
         val me = userApiService.getPlayerInfo(binMe, mode)
         val other = if (isVs) userApiService.getPlayerInfo(binOther, mode) else null
 
-        if (OsuMode.isDefaultOrNull(mode)) {
-            mode = OsuMode.getMode(mode, me.currentOsuMode)
-        }
-
-        data.value = PPMinusParam(isVs, me, other, mode)
+        data.value = PPMinusParam(isVs, me, other, OsuMode.getMode(mode, me.currentOsuMode))
 
         return true
     }
@@ -287,18 +282,14 @@ class PPMinusService(
         }
 
         val modeObj = getMode(matcher)
-        var mode: OsuMode = checkOsuMode(modeObj, binMe.osuMode)
+        val mode: OsuMode = checkOsuMode(modeObj, binMe.osuMode)
 
         val isVs = (binOther.osuID != null) && binMe.osuID != binOther.osuID
 
         val other = if (isVs) userApiService.getPlayerInfo(binOther, mode) else null
         val me = userApiService.getPlayerInfo(binMe, mode)
 
-        if (OsuMode.isDefaultOrNull(mode)) {
-            mode = OsuMode.getMode(mode, me.currentOsuMode)
-        }
-
-        return PPMinusParam(isVs, me, other, mode)
+        return PPMinusParam(isVs, me, other, mode = OsuMode.getMode(mode, me.currentOsuMode))
     }
 
     override fun reply(event: MessageEvent, param: PPMinusParam): MessageChain? {

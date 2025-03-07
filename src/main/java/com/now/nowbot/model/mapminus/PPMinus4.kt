@@ -78,12 +78,18 @@ abstract class PPMinus4 {
     }
 
     /**
-     * 求和算法： (0.8 倍 75% 高值（去掉 0） + 0.2 最大) * 长度加成
-     * 长度加成 = log10(大小 / 180 + 1) + 1
-     * 在 100 个计算元的时候（4 分钟）达到 2 倍
+     * 求和算法：按最大排到最小 0.95^n，逐个求值
      */
     protected fun sum(values: List<Float>?): Float {
         if (values.isNullOrEmpty()) return 0f
+
+        return values
+            .filter { it > 1e-6 }
+            .sortedDescending()
+            .mapIndexed { index, it -> it * 0.95.pow(index) }
+            .sum().toFloat()
+
+        /*
 
         val nonZero = values.filter { it > 1e-4 }
 
@@ -93,6 +99,8 @@ abstract class PPMinus4 {
         val bonus = log10(nonZero.size / 60f + 1) + 1
 
         return (0.8f * threeQuarter + 0.2f * nonZero.max()) * bonus
+
+         */
     }
 
     /**
@@ -104,8 +112,8 @@ abstract class PPMinus4 {
     }
 
     companion object {
-        fun getInstance(file: OsuFile, clockRate: Double = 1.0): PPMinus4 {
-            return when(file.mode) {
+        fun getInstance(file: OsuFile, mode: OsuMode, clockRate: Double = 1.0): PPMinus4 {
+            return when(mode) {
                 OsuMode.MANIA -> {
                     val f = file.mania
                     f.clockRate = clockRate

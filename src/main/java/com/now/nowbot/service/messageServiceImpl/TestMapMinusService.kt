@@ -2,11 +2,11 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.model.beatmapParse.OsuFile
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.mapminus.PPMinus4
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import java.nio.file.Files
@@ -14,8 +14,7 @@ import java.nio.file.Path
 import java.util.regex.Matcher
 
 @Service("TEST_MAP_MINUS") class TestMapMinusService(
-    private val beatmapApiService: OsuBeatmapApiService,
-    private val calculateApiService: OsuCalculateApiService
+    private val beatmapApiService: OsuBeatmapApiService
 ) : MessageService<Matcher> {
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<Matcher>): Boolean {
 
@@ -38,7 +37,7 @@ import java.util.regex.Matcher
             }
 
         val mapMinuses = files.map {
-            PPMinus4.getInstance(it)
+            PPMinus4.getInstance(it, OsuMode.MANIA)
         }
 
         val sb = StringBuilder()

@@ -24,6 +24,36 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
         }
     }
 
+    fun isDefault(): Boolean {
+        return isDefaultOrNull(this)
+    }
+
+    fun isNotDefault(): Boolean {
+        return isNotDefaultOrNull(this)
+    }
+
+    /**
+     * 返回可以被 mode 转换
+     */
+    fun isConvertAble(mode: OsuMode?): Boolean {
+        return this == OSU && (mode == TAIKO || mode == CATCH || mode == MANIA)
+    }
+
+    /**
+     * 返回相等，或是 mode 默认
+     * 它位于 ConvertAble 和 NotConvertAble 之间
+     */
+    fun isEqualOrDefault(mode: OsuMode?): Boolean {
+        return mode == DEFAULT || this == mode
+    }
+
+    /**
+     * 返回不可以被 mode 转换
+     */
+    fun isNotConvertAble(mode: OsuMode?): Boolean {
+        return (this == TAIKO || this == CATCH || this == MANIA) && (mode != DEFAULT && mode != this)
+    }
+
     companion object {
         /**
          * 当 mode 为 Default 或者 mode == mode2 时，返回 true
@@ -78,7 +108,7 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
         }
 
         @JvmStatic fun isNotDefaultOrNull(@Nullable mode: OsuMode?): Boolean {
-            return !isDefaultOrNull(mode)
+            return isDefaultOrNull(mode).not()
         }
 
         // 修正无法转换的模式
