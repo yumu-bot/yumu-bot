@@ -11,6 +11,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPService.BPParam
+import com.now.nowbot.service.messageServiceImpl.ScorePRService.PanelE5Param
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
@@ -38,7 +39,7 @@ import kotlin.math.roundToLong
     private val imageService: ImageService,
 ) : MessageService<BPParam>, TencentMessageService<BPParam> {
 
-    data class BPParam(val user: OsuUser?, val scores: Map<Int, LazerScore>, val isMyself: Boolean)
+    data class BPParam(val user: OsuUser, val scores: Map<Int, LazerScore>, val isMyself: Boolean)
 
     @Throws(Throwable::class) override fun isHandle(
         event: MessageEvent,
@@ -83,7 +84,7 @@ import kotlin.math.roundToLong
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_FilterBP, range.data!!.username)
         }
 
-        data.value = BPParam(range.data, filteredScores, isMyself.get())
+        data.value = BPParam(range.data!!, filteredScores, isMyself.get())
 
         return true
     }
@@ -149,7 +150,7 @@ import kotlin.math.roundToLong
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_FilterBP, range.data!!.username)
         }
 
-        return BPParam(range.data, filteredScores, isMyself.get())
+        return BPParam(range.data!!, filteredScores, isMyself.get())
     }
 
     override fun reply(event: MessageEvent, param: BPParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
@@ -306,8 +307,18 @@ import kotlin.math.roundToLong
         } else {
             val score: LazerScore = scores.toList().first().second
 
-            val e5Param = ScorePRService.getScore4PanelE5(user!!, score, "B", beatmapApiService, calculateApiService)
-            imageService.getPanel(e5Param.toMap(), "E5")
+            beatmapApiService.applyBeatMapExtend(score)
+
+            val beatmap = score.beatMap
+            val original = DataUtil.getOriginal(beatmap)
+
+            val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
+
+            val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
+            val progress = beatmapApiService.getPlayPercentage(score)
+
+            val body = PanelE5Param(user, score, null, density, progress, original, attributes, "B").toMap()
+            imageService.getPanel(body, "E5")
         }
     } catch (e: Exception) {
         log.error("最好成绩：渲染失败", e)

@@ -84,7 +84,7 @@ abstract class PPMinus4 {
         if (values.isNullOrEmpty()) return 0f
 
         return values
-            .filter { it > 1e-6 }
+            .filter { it > 0f }
             .sortedDescending()
             .mapIndexed { index, it -> it * 0.95.pow(index) }
             .sum().toFloat()

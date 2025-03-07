@@ -19,7 +19,6 @@ import com.now.nowbot.util.*
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -133,6 +132,31 @@ import kotlin.math.sqrt
     }
 
     private fun getBody(user: OsuUser, bests: List<LazerScore>, skillMap: Map<Long, PPMinus4?>): Map<String, Any> {
+        val skills = List(8) { mutableListOf<Double>() }
+
+        bests.forEachIndexed { i, it ->
+            val k = skillMap[it.beatMapID]?.values ?: listOf()
+
+            for (j in k.indices) {
+                skills[j].add(k[j] * nerfByAccuracy(it))
+            }
+        }
+
+        val skill = skills.map {
+            it.sortedDescending().mapIndexed { i, v ->
+                val percent: Double = (0.95).pow(i)
+                v * percent
+            }.sum() / DIVISOR
+        }
+
+        val scores: List<SkillScore> = bests
+            .map { SkillScore(it, skillMap[it.beatMapID]?.values ?: listOf()) }
+
+        val k = skill.take(6).sortedDescending()
+        val total = k.first() * 0.5f + k[2] * 0.3f + k[3] * 0.2f + k[4] * 0.15f + k[5] * 0.1f
+
+        /*
+
         val sum = MutableList(8) {0.0}
 
         for (i in bests.indices) {
@@ -162,6 +186,8 @@ import kotlin.math.sqrt
             star / STAR_DIVISOR
         }
 
+         */
+
         return mapOf(
             "user" to user,
             "skill" to skill,
@@ -172,7 +198,7 @@ import kotlin.math.sqrt
 
     companion object {
         // 用于控制最后的星数
-        private const val STAR_DIVISOR = 3.6
+        // private const val STAR_DIVISOR = 3.6
 
         // 用于求和并归一化
         private const val DIVISOR = 16.0 // (1 - (0.95).pow(100)) / 0.05 // 19.88158941559331949

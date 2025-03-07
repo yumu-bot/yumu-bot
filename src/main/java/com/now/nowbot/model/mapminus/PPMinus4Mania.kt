@@ -9,31 +9,31 @@ import kotlin.math.*
 class PPMinus4Mania(val file: ManiaBeatmapAttributes): PPMinus4() {
     override val values: List<Float>
         get() = listOf(
-            (eval(noteDataList.map { it.stream }, 0.49f, 0.6f)
-                    + eval(noteDataList.map { it.jack }, 0.56f, 0.56f)
+            (eval(noteDataList.map { it.stream }, 0.23f, 0.5f)
+                    + eval(noteDataList.map { it.jack }, 0.05f, 0.69f)
                     ) / 2f,
 
-            (eval(noteDataList.map { it.release }, 0.44f, 0.67f)
-                    + eval(noteDataList.map { it.shield }, 0.48f, 0.64f)
-                    + eval(noteDataList.map { it.reverseShield },1.08f, 0.62f)
+            (eval(noteDataList.map { it.release }, 0.15f, 0.58f)
+                    + eval(noteDataList.map { it.shield }, 0.25f, 0.51f)
+                    + eval(noteDataList.map { it.reverseShield },0.43f, 0.5f)
                     ) / 3f,
 
-            (eval(noteDataList.map { it.bracket }, 0.75f, 0.64f)
-                    + eval(noteDataList.map { it.handLock }, 0.51f, 1.06f)
-                    + eval(noteDataList.map { it.overlap },0.67f, 0.8f)
+            (eval(noteDataList.map { it.bracket }, 0.28f, 0.54f)
+                    + eval(noteDataList.map { it.handLock }, 0.19f, 0.78f)
+                    + eval(noteDataList.map { it.overlap },0.35f, 0.54f)
                     ) / 3f,
 
-            (eval(noteDataList.map { it.grace }, 0.69f, 0.72f)
-                    + eval(noteDataList.map { it.delayedTail }, 0.8f, 0.59f)
+            (eval(noteDataList.map { it.grace }, 0.4f, 0.53f)
+                    + eval(noteDataList.map { it.delayedTail }, 0.26f, 0.52f)
                     ) / 2f,
 
-            (eval(noteDataList.map { it.speedJack }, 0.8f, 0.6f)
-                    + eval(noteDataList.map { it.trill }, 0.43f, 0.84f)
-                    + 0.32f * ((noteDataList.maxOfOrNull { it.burst } ?: 0f) / 2.5f).pow(0.87f)
+            (eval(noteDataList.map { it.speedJack }, 0.22f, 0.56f)
+                    + eval(noteDataList.map { it.trill }, 0.35f, 0.54f)
+                    + 0.2f * ((noteDataList.maxOfOrNull { it.burst } ?: 0f) / 2.5f)
                     ) / 3f,
 
-            (eval(noteDataList.map { it.riceDensity }, 0.17f, 0.82f)
-                    + eval(noteDataList.map { it.lnDensity }, 0.41f, 0.76f)
+            (eval(noteDataList.map { it.riceDensity }, 0.05f, 0.71f)
+                    + eval(noteDataList.map { it.lnDensity }, 0.07f, 0.73f)
                     ) / 2f,
         )
     override val bases: List<Float>
@@ -78,6 +78,14 @@ class PPMinus4Mania(val file: ManiaBeatmapAttributes): PPMinus4() {
         get() = arrayListOf("RC", "LN", "CO", "PR", "SP", "ST", "SV")
     override val star: Float
         get() {
+            val stars = values
+                .take(6)
+                .sortedDescending()
+
+            return stars.first() * 0.5f + stars[2] * 0.3f + stars[3] * 0.2f + stars[4] * 0.15f + stars[5] * 0.1f
+
+
+            /*
             var star = 0f
             val powers = listOf(0.8f, 0.8f, 0.8f, 0.4f, 0.6f, 1.2f)
 
@@ -88,6 +96,8 @@ class PPMinus4Mania(val file: ManiaBeatmapAttributes): PPMinus4() {
             star /= 3.2f
 
             return 0.6f * star + 0.4f * values.sorted()[4]
+
+             */
         }
 
     private val valueDataList: MutableList<ValueData> = mutableListOf()
