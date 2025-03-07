@@ -70,7 +70,7 @@ import kotlin.math.sqrt
                     user = maybe
                     vs = null
                 } else {
-                    user = userApiService.getPlayerInfo(me)
+                    user = userApiService.getPlayerInfo(me, mode)
                     vs = maybe
                 }
             }
@@ -163,7 +163,7 @@ import kotlin.math.sqrt
                     user = maybe
                     vs = null
                 } else {
-                    user = userApiService.getPlayerInfo(me)
+                    user = userApiService.getPlayerInfo(me, mode)
                     vs = maybe
                 }
             }
