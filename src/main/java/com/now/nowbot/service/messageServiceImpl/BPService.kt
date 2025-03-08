@@ -27,10 +27,7 @@ import org.springframework.stereotype.Service
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.math.abs
-import kotlin.math.floor
-import kotlin.math.max
-import kotlin.math.roundToLong
+import kotlin.math.*
 
 @Service("BP") class BPService(
     private val calculateApiService: OsuCalculateApiService,
@@ -163,13 +160,13 @@ import kotlin.math.roundToLong
         XQ("$REG_EQUAL$REG_EQUAL".toRegex()),
 
         // 大于等于
-        GE("$REG_GREATER$REG_EQUAL".toRegex()),
+        GE("$REG_GREATER$REG_EQUAL|≥".toRegex()),
 
         // 大于
         GT(REG_GREATER.toRegex()),
 
         // 小于等于
-        LE("$REG_LESS$REG_EQUAL".toRegex()),
+        LE("$REG_LESS$REG_EQUAL|≤".toRegex()),
 
         // 小于
         LT(REG_LESS.toRegex()),
@@ -270,7 +267,7 @@ import kotlin.math.roundToLong
 
         val scores = scoreApiService.getBestScores(data!!.userID, mode, offset, limit)
 
-        calculateApiService.applyStarToScores(scores)
+        calculateApiService.applyStarToScores(scores, local = false)
         calculateApiService.applyBeatMapChanges(scores)
 
         val modeStr = if (mode.isDefault()) {
@@ -307,10 +304,13 @@ import kotlin.math.roundToLong
         } else {
             val score: LazerScore = scores.toList().first().second
 
-            beatmapApiService.applyBeatMapExtend(score)
+            // 无需 applyExtend
+            val beatmap = beatmapApiService.getBeatMap(score.beatMapID)
+            score.beatMap = beatmap
 
-            val beatmap = score.beatMap
             val original = DataUtil.getOriginal(beatmap)
+
+            calculateApiService.applyBeatMapChanges(score)
 
             val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
 
@@ -345,13 +345,13 @@ import kotlin.math.roundToLong
                 if (string.contains(it.regex)) return it
             }
 
-            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamOperator)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_S, "逻辑运算符")
         }
 
         private fun filterConditions(scores: MutableMap<Int, LazerScore>, filter: Filter, conditions: List<String>) {
             for (c in conditions) {
                 val operator = getOperator(c)
-                val condition = c.split(REG_OPERATOR.toRegex()).lastOrNull() ?: ""
+                val condition = (c.split(REG_OPERATOR.toRegex()).lastOrNull() ?: "").trim()
 
                 scores.entries.removeIf { fitScore(it.value, operator, filter, condition).not() }
             }
@@ -379,13 +379,23 @@ import kotlin.math.roundToLong
                 Filter.HP -> fit(operator, it.beatMap.HP?.toDouble() ?: 0.0, double)
                 Filter.PERFORMANCE -> fit(operator, it.PP ?: 0.0, double)
                 Filter.RANK -> run {
-                    val rank = when(condition.lowercase()) {
-                        "ssh" -> "xh"
-                        "ss" -> "x"
-                        else -> condition.lowercase()
+                    val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
+
+                    val cr = rankArray.indexOf(
+                        when(condition.uppercase()) {
+                            "SSH" -> "XH"
+                            "SS" -> "X"
+                            else -> condition.uppercase()
+                        }
+                    )
+
+                    val ir = rankArray.indexOf(it.rank.uppercase())
+
+                    if (cr == -1) {
+                        throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_S, "评级")
                     }
 
-                    fit(operator, it.rank, rank)
+                    fit(operator, ir, cr)
                 }
                 Filter.LENGTH -> run {
                     var seconds = 0L
@@ -451,10 +461,10 @@ import kotlin.math.roundToLong
                 }
 
                 Filter.RATE -> run {
-                    if (it.mode != OsuMode.MANIA) throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_Mode)
+                    if (it.mode != OsuMode.MANIA) throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_S, "游戏模式")
 
-                    val rate = max((it.statistics.perfect * 1.0 / it.statistics.great), 100.0)
-                    val input = if (double > 0.0) max(double, 100.0) else double
+                    val rate = min((it.statistics.perfect * 1.0 / it.statistics.great), 100.0)
+                    val input = if (double > 0.0) min(double, 100.0) else double
 
                     fit(operator, rate, input, isPlus = true)
                 }

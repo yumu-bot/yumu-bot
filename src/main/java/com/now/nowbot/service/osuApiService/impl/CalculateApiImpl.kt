@@ -287,42 +287,49 @@ import kotlin.reflect.full.companionObjectInstance
         score.PP = getScorePP(score).pp
     }
 
-    override fun applyStarToScore(score: LazerScore) {
-        if (score.beatMapID == 0L || (LazerMod.noStarRatingChange(score.mods)) && score.beatMap.mode.isEqualOrDefault(score.mode)) return
-
-        applyStarToScoreFromOfficial(score)
-
-        if (score.beatMap.starRating < 0.15) {
-            score.beatMap.starRating = getBeatMapStarRating(score.beatMapID, score.mode, score.mods)
+    override fun applyStarToScore(score: LazerScore, local: Boolean) {
+        if (score.beatMapID == 0L || (LazerMod.noStarRatingChange(score.mods)) && score.beatMap.mode.isEqualOrDefault(score.mode)) {
+            return
         }
 
-        /*
+        if (local) {
+            applyStarToScoreFromLocal(score)
 
-        val sr = getBeatMapStarRating(score.beatMapID, score.mode, score.mods)
-
-        if (sr > 0.15) {
-            score.beatMap.starRating = sr
+            if (score.beatMap.starRating < 0.15) {
+                applyStarToScoreFromOfficial(score)
+            }
         } else {
             applyStarToScoreFromOfficial(score)
-        }
 
-         */
+            if (score.beatMap.starRating < 0.15) {
+                applyStarToScoreFromLocal(score)
+            }
+        }
     }
 
-    override fun applyStarToBeatMap(beatMap: BeatMap?, mode: OsuMode, mods: List<LazerMod>) {
+    override fun applyStarToBeatMap(beatMap: BeatMap?, mode: OsuMode, mods: List<LazerMod>, local: Boolean) {
         if (beatMap == null || beatMap.mode.isNotConvertAble(mode)) return
 
         if (beatMap.mode.isConvertAble(mode)) {
+            // TODO Local 无法计算转谱星级
             applyStarToBeatMapFromOfficial(beatMap, mode, mods)
             return
         }
 
         if (LazerMod.noStarRatingChange(mods)) return
 
-        applyStarToBeatMapFromOfficial(beatMap, mode, mods)
+        if (local) {
+            applyStarToBeatMapFromLocal(beatMap, mode, mods)
 
-        if (beatMap.starRating < 0.15) {
-            beatMap.starRating = getBeatMapStarRating(beatMap.beatMapID, mode, mods)
+            if (beatMap.starRating < 0.15) {
+                applyStarToBeatMapFromOfficial(beatMap, mode, mods)
+            }
+        } else {
+            applyStarToBeatMapFromOfficial(beatMap, mode, mods)
+
+            if (beatMap.starRating < 0.15) {
+                applyStarToBeatMapFromLocal(beatMap, mode, mods)
+            }
         }
         /*
 
@@ -331,10 +338,10 @@ import kotlin.reflect.full.companionObjectInstance
          */
     }
 
-    override fun applyStarToScores(scores: List<LazerScore>) {
+    override fun applyStarToScores(scores: List<LazerScore>, local: Boolean) {
         val actions = scores.map {
             return@map AsyncMethodExecutor.Supplier<Unit> {
-                applyStarToScore(it)
+                applyStarToScore(it, local)
             }
         }
 
@@ -410,19 +417,33 @@ import kotlin.reflect.full.companionObjectInstance
         AsyncMethodExecutor.AsyncSupplier(actions)
     }
 
+    private fun applyStarToScoreFromLocal(score: LazerScore) {
+        applyStarToBeatMapFromLocal(score.beatMap, score.mode, score.mods)
+    }
+
+    private fun applyStarToBeatMapFromLocal(beatMap: BeatMap, mode: OsuMode, mods: List<LazerMod>) {
+        beatMap.starRating = getBeatMapStarRating(beatMap.beatMapID, mode, mods)
+    }
+
     override fun getBeatMapStarRating(beatMapID: Long, mode: OsuMode, mods: List<LazerMod>): Double {
         val isAllLegacy = mods.any { it.settings == null && it::class.companionObjectInstance is ValueMod }
+
         val modsValue: Int = if (isAllLegacy) {
             LazerMod.getModsValue(mods)
         } else {
             0
         }
+
         if (isAllLegacy) { // 如果是全部为 legacy mod 且 没有自定义属性的话，就从缓存里面取
             // 目前来看没有任何自定义 mod 计入 pp
             val star = beatmapStarCacheRepository.findByKey(beatMapID, modsValue)
-            if (star.isPresent) return star.get()
+            if (star.isPresent) {
+                return star.get()
+            }
         }
+
         val closeables = ArrayList<AutoCloseable>(2)
+
         return try {
             val (beatmap, _) = getBeatmap(beatMapID, mode.toRosuMode()) { closeables.add(it) }
             beatmap.createDifficulty().apply {

@@ -212,7 +212,7 @@ class MapStatisticsService(
         }
 
         if (combo < 0) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamCombo)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_S, "连击参数")
         }
         accuracy =
             when {
@@ -220,7 +220,7 @@ class MapStatisticsService(
                 accuracy <= 100.0 -> accuracy / 100.0
                 accuracy <= 10000.0 -> accuracy / 10000.0
                 else -> {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParamAccuracy)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_S, "准确率参数")
                 }
             }
 

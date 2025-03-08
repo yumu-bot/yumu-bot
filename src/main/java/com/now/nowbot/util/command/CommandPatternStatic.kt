@@ -82,7 +82,7 @@ val REG_NUMBER: String = "\\d"
 val REG_WORD: String = "\\w"
 
 @Language("RegExp")
-val REG_OPERATOR: String = "([<>＜＞][=＝]?|[=＝][=＝]?|[!！][=＝])"
+val REG_OPERATOR: String = "([<>＜＞][=＝]?|[=＝][=＝]?|[!！][=＝]|[≥≤])"
 
 @Language("RegExp")
 val REG_NUMBER_SEPERATOR: String = "[\\d\\-\\s_,，|:：`、]"

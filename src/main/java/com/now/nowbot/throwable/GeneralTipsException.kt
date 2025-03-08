@@ -61,10 +61,7 @@ class GeneralTipsException : TipsException {
         G_NotEnoughBP_Player("对方在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
 
         G_Wrong_Instruction("指令错误，请检查。"),
-        G_Wrong_Mode("游戏模式错误，请检查。"),
-        G_Wrong_ParamAccuracy("准确率参数错误，请检查。"), 
-        G_Wrong_ParamCombo("连击参数错误，请检查。"),
-        G_Wrong_ParamOperator("逻辑运算符错误，请检查。"),
+        G_Wrong_S("%s错误，请检查。"),
         G_Wrong_ParamOnly("仅支持使用 %s 逻辑运算符。"),
 
         G_Empty_Score("您的成绩是空的！"),
