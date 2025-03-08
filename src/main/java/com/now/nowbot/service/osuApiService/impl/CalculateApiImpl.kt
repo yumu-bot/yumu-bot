@@ -290,7 +290,6 @@ import kotlin.reflect.full.companionObjectInstance
     override fun applyStarToScore(score: LazerScore) {
         if (score.beatMapID == 0L || (LazerMod.noStarRatingChange(score.mods)) && score.beatMap.mode.isEqualOrDefault(score.mode)) return
 
-        println("当前正在处理的成绩：${score.beatMap.previewName}")
         applyStarToScoreFromOfficial(score)
 
         if (score.beatMap.starRating < 0.15) {
