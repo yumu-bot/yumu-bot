@@ -395,7 +395,7 @@ import kotlin.math.*
                         throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_S, "评级")
                     }
 
-                    fit(operator, ir, cr)
+                    fit(operator, ir.toLong(), cr.toLong())
                 }
                 Filter.LENGTH -> run {
                     var seconds = 0L
