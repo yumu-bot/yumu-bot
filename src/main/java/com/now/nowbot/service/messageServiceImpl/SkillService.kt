@@ -20,6 +20,7 @@ import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.*
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
+import java.util.regex.Matcher
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -43,88 +44,14 @@ import kotlin.math.sqrt
         val m = Instruction.SKILL.matcher(messageText)
         val m2 = Instruction.SKILL_VS.matcher(messageText)
 
-        val isVs: Boolean = if (m.find()) {
-            false
-        } else if (m2.find()) {
-            true
-        } else return false
+        val param = getParam(event, m, m2)
 
-        val mode = OsuMode.MANIA
-
-        val me = try {
-            bindDao.getBindFromQQ(event.sender.id)
-        } catch (e: Exception) {
-            null
-        }
-
-        val user: OsuUser
-        val vs: OsuUser?
-
-        if (isVs) {
-            if (m2.group("vs").isNullOrBlank().not()) {
-                user = CmdUtil.getUserWithoutRange(event, m2, CmdObject(mode))
-                vs = CmdUtil.getOsuUser(m2.group("vs"), mode)
-            } else {
-                val maybe = CmdUtil.getUserWithoutRange(event, m2, CmdObject(mode))
-                if (me == null || maybe.id == me.osuID) {
-                    user = maybe
-                    vs = null
-                } else {
-                    user = userApiService.getPlayerInfo(me, mode)
-                    vs = maybe
-                }
-            }
-        } else {
-            vs = if (m.group("vs").isNullOrBlank().not()) {
-                CmdUtil.getOsuUser(m.group("vs"), mode)
-            } else {
-                null
-            }
-            user = CmdUtil.getUserWithoutRange(event, m, CmdObject(mode))
-        }
-
-        data.value = SkillParam(user, vs, mode)
+        data.value = param ?: return false
         return true
     }
 
     override fun HandleMessage(event: MessageEvent, param: SkillParam) {
-        val vs = if (param.vs != null) {
-            val bests = try {
-                scoreApiService.getBestScores(param.vs, param.mode)
-            } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, param.vs.username)
-            }
-
-            calculateApiService.applyBeatMapChanges(bests)
-            calculateApiService.applyStarToScores(bests)
-
-            val skillMap = getSkillMap(bests, beatmapApiService)
-
-            getBody(param.vs, bests, skillMap, true)
-        } else null
-
-        val bests = try {
-            scoreApiService.getBestScores(param.user, param.mode)
-        } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, param.user.username)
-        }
-
-        calculateApiService.applyBeatMapChanges(bests)
-        calculateApiService.applyStarToScores(bests)
-
-        val skillMap = getSkillMap(bests, beatmapApiService)
-
-        val body = getBody(param.user, bests, skillMap)
-
-        val image = try {
-            if (vs != null) {
-                imageService.getPanel(vs + body + mapOf("panel" to "KV"), "K")
-            } else {
-                imageService.getPanel(body + mapOf("panel" to "K"), "K")
-            }
-        } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderTooMany, "技巧分析")
-        }
+        val image = param.getImage()
 
         try {
             event.reply(image)
@@ -137,6 +64,14 @@ import kotlin.math.sqrt
         val m = OfficialInstruction.SKILL.matcher(messageText)
         val m2 = OfficialInstruction.SKILL_VS.matcher(messageText)
 
+        return getParam(event, m, m2)
+    }
+
+    override fun reply(event: MessageEvent, param: SkillParam): MessageChain? {
+        return QQMsgUtil.getImage(param.getImage())
+    }
+
+    private fun getParam(event: MessageEvent, m: Matcher, m2: Matcher): SkillParam? {
         val isVs: Boolean = if (m.find()) {
             false
         } else if (m2.find()) {
@@ -153,6 +88,7 @@ import kotlin.math.sqrt
 
         val user: OsuUser
         val vs: OsuUser?
+
         if (isVs) {
             if (m2.group("vs").isNullOrBlank().not()) {
                 user = CmdUtil.getUserWithoutRange(event, m2, CmdObject(mode))
@@ -179,46 +115,54 @@ import kotlin.math.sqrt
         return SkillParam(user, vs, mode)
     }
 
-    override fun reply(event: MessageEvent, param: SkillParam): MessageChain? {
-        val vs = if (param.vs != null) {
-            val bests = try {
-                scoreApiService.getBestScores(param.vs, param.mode)
-            } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, param.vs.username)
-            }
+    private fun SkillParam.getImage(): ByteArray {
+        val vs: Map<String, Any>?
+        val me: Map<String, Any>
 
-            calculateApiService.applyBeatMapChanges(bests)
-            calculateApiService.applyStarToScores(bests)
+        if (this.vs != null) {
+            val bests = try {
+                scoreApiService.getBestScores(this.user, this.mode)
+            } catch (e: Exception) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, this.user.username)
+            }
 
             val skillMap = getSkillMap(bests, beatmapApiService)
 
-            getBody(param.vs, bests, skillMap, true)
-        } else null
+            me = getBody(this.user, bests, skillMap, isVS = false, isShowScores = false)
 
-        val bests = try {
-            scoreApiService.getBestScores(param.user, param.mode)
-        } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, param.user.username)
+            val vsBests = try {
+                scoreApiService.getBestScores(this.vs, this.mode)
+            } catch (e: Exception) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, this.vs.username)
+            }
+
+            val vsSkillMap = getSkillMap(vsBests, beatmapApiService)
+
+            vs = getBody(this.vs, vsBests, vsSkillMap, isVS = true, isShowScores = false)
+        } else {
+            val bests = try {
+                scoreApiService.getBestScores(this.user, this.mode)
+            } catch (e: Exception) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, this.user.username)
+            }
+
+            val skillMap = getSkillMap(bests, beatmapApiService)
+
+            me = getBody(this.user, bests, skillMap, isVS = false, isShowScores = true)
+            vs = null
         }
-
-        calculateApiService.applyBeatMapChanges(bests)
-        calculateApiService.applyStarToScores(bests)
-
-        val skillMap = getSkillMap(bests, beatmapApiService)
-
-        val body = getBody(param.user, bests, skillMap)
 
         val image = try {
             if (vs != null) {
-                imageService.getPanel(vs + body, "KV")
+                imageService.getPanel(vs + me + mapOf("panel" to "KV"), "K")
             } else {
-                imageService.getPanel(body, "K")
+                imageService.getPanel(me + mapOf("panel" to "K"), "K")
             }
         } catch (e: Exception) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderTooMany, "技巧分析")
         }
 
-        return QQMsgUtil.getImage(image)
+        return image
     }
 
     private fun getSkillMap(bests: List<LazerScore>?, beatmapApiService: OsuBeatmapApiService): Map<Long, PPMinus4?> {
@@ -251,7 +195,8 @@ import kotlin.math.sqrt
         user: OsuUser,
         bests: List<LazerScore>,
         skillMap: Map<Long, PPMinus4?>,
-        isVS: Boolean = false
+        isVS: Boolean = false,
+        isShowScores: Boolean = true,
     ): Map<String, Any> {
         val skills = List(8) { mutableListOf<Double>() }
 
@@ -270,10 +215,19 @@ import kotlin.math.sqrt
             }.sum() / DIVISOR
         }
 
-        val scores: List<SkillScore> = bests.map { SkillScore(it, skillMap[it.beatMapID]?.values ?: listOf()) }
+        val scores: List<SkillScore> = if (isShowScores) {
+            val s10 = bests.take(10)
 
-        val k = skill.take(6).sortedDescending()
-        val total = k[0] * 0.5f + k[1] * 0.3f + k[2] * 0.2f + k[3] * 0.1f + k[4] * 0.05f
+            calculateApiService.applyBeatMapChanges(s10)
+            calculateApiService.applyStarToScores(s10)
+
+            s10.map { SkillScore(it, skillMap[it.beatMapID]?.values ?: listOf()) }
+        } else {
+            listOf()
+        }
+
+        val kSort = skill.take(6).sortedDescending()
+        val total = kSort[0] * 0.5f + kSort[1] * 0.3f + kSort[2] * 0.2f + kSort[3] * 0.1f + kSort[4] * 0.05f
 
         /*
 
