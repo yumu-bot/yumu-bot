@@ -154,10 +154,10 @@ import kotlin.math.*
 
     enum class Operator(@Language("RegExp") val regex: Regex) {
         // 不等于
-        NE("$REG_EXCLAMATION$REG_EQUAL".toRegex()),
+        NE("$REG_EXCLAMATION$REG_EQUAL|≠".toRegex()),
 
         // 完全等于
-        XQ("$REG_EQUAL$REG_EQUAL".toRegex()),
+        XQ("$REG_EQUAL$REG_EQUAL|≌".toRegex()),
 
         // 大于等于
         GE("$REG_GREATER$REG_EQUAL|≥".toRegex()),
@@ -171,8 +171,8 @@ import kotlin.math.*
         // 小于
         LT(REG_LESS.toRegex()),
 
-        // 等于
-        EQ(REG_EQUAL.toRegex()),
+        // （约）等于
+        EQ("$REG_EQUAL|≈".toRegex()),
     }
 
     enum class Filter(@Language("RegExp") val regex: Regex) {
@@ -450,26 +450,33 @@ import kotlin.math.*
                 Filter.MEH -> fit(operator, it.statistics.meh.toLong(), long)
                 Filter.MISS -> fit(operator, it.statistics.miss.toLong(), long)
                 Filter.MOD -> run {
-                    if (condition.uppercase().contains("(NM)|(NO\\s*MOD)".toRegex())) {
+                    if (condition.contains("NM", ignoreCase = true)) {
                         when (operator) {
-                            Operator.XQ -> it.mods.isEmpty()
-                            Operator.EQ -> it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")
-                            Operator.NE -> it.mods.isNotEmpty()
+                            Operator.XQ, Operator.EQ -> it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")
+                            Operator.NE -> (it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")).not()
                             else -> throw GeneralTipsException(
                                 GeneralTipsException.Type.G_Wrong_ParamOnly, ">, >=, <, <="
                             )
                         }
-                    }
+                    } else if (condition.contains("FM", ignoreCase = true)) {
+                        when (operator) {
+                            Operator.XQ, Operator.EQ -> it.mods.isNotEmpty() && (it.mods.size == 1 && it.mods.first().acronym == "CL").not()
+                            Operator.NE -> it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")
+                            else -> throw GeneralTipsException(
+                                GeneralTipsException.Type.G_Wrong_ParamOnly, ">, >=, <, <="
+                            )
+                        }
+                    } else {
+                        val mods = LazerMod.getModsList(condition)
 
-                    val mods = LazerMod.getModsList(condition)
-
-                    when (operator) {
-                        Operator.XQ -> LazerMod.hasMod(mods, it.mods) && (mods.size == it.mods.size)
-                        Operator.EQ -> LazerMod.hasMod(mods, it.mods)
-                        Operator.NE -> LazerMod.hasMod(mods, it.mods).not()
-                        else -> throw GeneralTipsException(
-                            GeneralTipsException.Type.G_Wrong_ParamOnly, ">, >=, <, <="
-                        )
+                        when (operator) {
+                            Operator.XQ -> LazerMod.hasMod(mods, it.mods) && (mods.size == it.mods.size)
+                            Operator.EQ -> LazerMod.hasMod(mods, it.mods)
+                            Operator.NE -> LazerMod.hasMod(mods, it.mods).not()
+                            else -> throw GeneralTipsException(
+                                GeneralTipsException.Type.G_Wrong_ParamOnly, ">, >=, <, <="
+                            )
+                        }
                     }
                 }
 

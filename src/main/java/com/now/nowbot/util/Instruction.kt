@@ -748,9 +748,8 @@ enum class Instruction(val pattern: Pattern) {
             append(REG_HASH)
             appendMatchLevel(MAYBE)
             appendSpace()
-            append(REG_ANYTHING_BUT_NO_STARS)
             appendCaptureGroup(
-                "version", REG_ANYTHING, MORE
+                "version", REG_ANYTHING_BUT_NO_STARS, MORE
             )
         }
         appendSpace()
