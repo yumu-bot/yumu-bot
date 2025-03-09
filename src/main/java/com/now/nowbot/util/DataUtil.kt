@@ -126,7 +126,7 @@ object DataUtil {
         return String.format("#%02x%02x%02x", r, g, b)
     }
 
-    private val splitReg = "[,，|:：`、]+".toRegex()
+    private val splitReg = "[,，|:：`、\n]+".toRegex()
 
     /**
      * 将按逗号或者 |、:：分隔的字符串分割 如果未含有分隔的字符，返回 null

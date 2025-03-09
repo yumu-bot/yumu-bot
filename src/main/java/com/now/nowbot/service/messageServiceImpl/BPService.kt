@@ -310,7 +310,9 @@ import kotlin.math.*
 
             val original = DataUtil.getOriginal(beatmap)
 
+            // calculateApiService.applyPPToScore(score) // BP 不需要？
             calculateApiService.applyBeatMapChanges(score)
+            calculateApiService.applyStarToScore(score, local = false)
 
             val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
 
@@ -448,6 +450,17 @@ import kotlin.math.*
                 Filter.MEH -> fit(operator, it.statistics.meh.toLong(), long)
                 Filter.MISS -> fit(operator, it.statistics.miss.toLong(), long)
                 Filter.MOD -> run {
+                    if (condition.uppercase().contains("(NM)|(NO\\s*MOD)".toRegex())) {
+                        when (operator) {
+                            Operator.XQ -> it.mods.isEmpty()
+                            Operator.EQ -> it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")
+                            Operator.NE -> it.mods.isNotEmpty()
+                            else -> throw GeneralTipsException(
+                                GeneralTipsException.Type.G_Wrong_ParamOnly, ">, >=, <, <="
+                            )
+                        }
+                    }
+
                     val mods = LazerMod.getModsList(condition)
 
                     when (operator) {

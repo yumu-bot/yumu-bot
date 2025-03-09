@@ -162,7 +162,7 @@ object AsyncMethodExecutor {
         val size = works.size
         val lock = CountDownLatch(size)
         val results: MutableList<T?> = LinkedList()
-        works.stream().map { w: Supplier<T> ->
+        works.map { w: Supplier<T> ->
             Runnable {
                 try {
                     val result = w.get()

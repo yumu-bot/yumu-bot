@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
+import com.now.nowbot.config.Permission
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
@@ -10,15 +11,18 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.serviceException.PPMinusException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.getBonusPP
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
+import io.ktor.util.collections.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.regex.Matcher
+import kotlin.math.min
 
 @Service("TEST_PPM")
 class TestPPMService(
@@ -32,7 +36,7 @@ class TestPPMService(
             data: DataValue<Matcher>,
     ): Boolean {
         val m = Instruction.TEST_PPM.matcher(messageText)
-        if (m.find()) {
+        if (m.find() && Permission.isGroupAdmin(event)) {
             data.value = m
             return true
         } else return false
@@ -48,39 +52,77 @@ class TestPPMService(
             throw PPMinusException(PPMinusException.Type.PM_Test_Empty)
         }
 
-        val sb = StringBuilder()
+        val userMap = ConcurrentMap<String, OsuUser?>(names.size)
+        val dataMap = ConcurrentMap<String, TestPPMData?>(names.size)
 
-        for (name in names) {
-            if (name.isBlank()) {
-                continue
+        event.reply("正在处理玩家数据。注意需要输入玩家名，而并非玩家 ID！")
+
+        names.chunked(20).forEachIndexed { i, chunk ->
+            val actions = chunk.map {
+                return@map AsyncMethodExecutor.Supplier<Unit> {
+                    val user: OsuUser
+                    val bps: List<LazerScore>
+
+                    try {
+                        // 神奇！如果这里传 ID，会有问题！
+                        user = userApiService.getPlayerInfo(it, inputMode)
+
+                        val mode = if (OsuMode.isDefaultOrNull(inputMode)) {
+                            user.currentOsuMode
+                        } else {
+                            inputMode
+                        }
+
+                        bps = scoreApiService.getBestScores(user.userID, mode)
+
+                        val ppmData = TestPPMData()
+
+                        ppmData.init(user, bps)
+
+                        userMap.putIfAbsent(it, user)
+                        dataMap.putIfAbsent(it, ppmData)
+                    } catch (e: Exception) {
+                        // sb.append("name=").append(name).append(" not found").append('\n')
+                        e.printStackTrace()
+                        userMap.putIfAbsent(it, null)
+                        dataMap.putIfAbsent(it, null)
+                    }
+                }
             }
 
-            var user: OsuUser
-            var bps: List<LazerScore>?
+            event.reply("当前进度：${min(20 * i, names.size)} - ${min(20 * (i + 1) - 1, names.size)} / ${names.size}")
 
-            try {
-                user = userApiService.getPlayerInfo(name, inputMode)
+            AsyncMethodExecutor.AsyncSupplier(actions)
 
-                val mode = if (OsuMode.isDefaultOrNull(inputMode)) {
-                    user.currentOsuMode
-                } else {
-                    inputMode
-                }
+            val await = 20 * (i + 1) < names.size
 
-                bps = scoreApiService.getBestScores(user.userID, mode)
-            } catch (e: Exception) {
+            event.reply("处理完成：${min(20 * i, names.size)} - ${min(20 * (i + 1) - 1, names.size)}，${if (await) "等待 1 秒" else "即将发送"}")
+
+            if (await) {
+                // 虚拟线程等待，避免 429
+                Thread.sleep(1000L)
+            }
+        }
+
+        val sb = StringBuilder()
+
+        sb.append("name,rank,pp,acc,level,maxcombo,totalhits,pc,pt,notfc,rawpp,ss,s,a,b,c,d,top10pp,top10acc,top10length,top10rate,mid10pp,mid10acc,mid10length,mid10rate,bottom10pp,bottom10acc,bottom10length,bottom10rate,4keypp")
+            .append('\n')
+
+        for (name in names) {
+            val user = userMap[name]
+            val data = dataMap[name]
+
+            if (user == null || data == null) {
                 sb.append("name=").append(name).append(" not found").append('\n')
                 continue
             }
-
-            val ppmData = TestPPMData()
-            ppmData.init(user, bps)
 
             sb.append(user.username)
                     .append(',')
                     .append(user.globalRank ?: 0L)
                     .append(',')
-                    .append(user.pp)
+                    .append(user.pp ?: 0.0)
                     .append(',')
                     .append(user.accuracy)
                     .append(',')
@@ -94,45 +136,45 @@ class TestPPMService(
                     .append(',')
                     .append(user.playTime)
                     .append(',')
-                    .append(ppmData.notfc)
+                    .append(data.notfc)
                     .append(',')
-                    .append(ppmData.rawpp)
+                    .append(data.rawpp)
                     .append(',')
-                    .append(ppmData.xx)
+                    .append(data.xx)
                     .append(',')
-                    .append(ppmData.xs)
+                    .append(data.xs)
                     .append(',')
-                    .append(ppmData.xa)
+                    .append(data.xa)
                     .append(',')
-                    .append(ppmData.xb)
+                    .append(data.xb)
                     .append(',')
-                    .append(ppmData.xc)
+                    .append(data.xc)
                     .append(',')
-                    .append(ppmData.xd)
+                    .append(data.xd)
                     .append(',')
-                    .append(ppmData.ppv0)
+                    .append(data.ppv0)
                     .append(',')
-                    .append(ppmData.accv0)
+                    .append(data.accv0)
                     .append(',')
-                    .append(ppmData.lengv0)
+                    .append(data.lengv0)
                     .append(',')
-                    .append(ppmData.pgr0)
+                    .append(data.pgr0)
                     .append(',')
-                    .append(ppmData.ppv45)
+                    .append(data.ppv45)
                     .append(',')
-                    .append(ppmData.accv45)
+                    .append(data.accv45)
                     .append(',')
-                    .append(ppmData.lengv45)
+                    .append(data.lengv45)
                     .append(',')
-                    .append(ppmData.pgr45)
+                    .append(data.pgr45)
                     .append(',')
-                    .append(ppmData.ppv90)
+                    .append(data.ppv90)
                     .append(',')
-                    .append(ppmData.accv45)
+                    .append(data.accv45)
                     .append(',')
-                    .append(ppmData.lengv90)
+                    .append(data.lengv90)
                     .append(',')
-                    .append(ppmData.pgr90)
+                    .append(data.pgr90)
                     .append(',')
                     .append(user.statistics?.pP4K ?: 0.0)
                     .append('\n')
@@ -204,7 +246,7 @@ class TestPPMService(
                 }
             }
             // bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
-            bonus = getBonusPP(user.pp, bpPPs).toDouble()
+            bonus = getBonusPP(user.pp, bpPPs)
             rawpp = user.pp - bonus
 
             ppv0 /= 10f
