@@ -240,30 +240,33 @@ public class UserApiImpl implements OsuUserApiService {
         );
     }
 
-    private final Pattern teamFormedPattern = Pattern
-            .compile("Formed</div>\\s+<div class=\"team-info-entry__value\">\\s+(.+)\\s+</div>");
+    private final Pattern teamFormedPattern = Pattern.compile(
+            "Formed</div>\\s+<div class=\"team-info-entry__value\">\\s+(.+)\\s+</div>");
     private final Pattern teamUserPattern = Pattern.compile("data-user=\"(?<json>.+)\"");
-    private final Pattern teamModePattern = Pattern.compile("fa-extra-mode-(\\w+)");
-    private final Pattern teamNamePattern        = Pattern.compile("<h1 class=\"profile-info__name\">\\s*<span class=\"u-ellipsis-overflow\">\\s*([\\S\\s]+)\\s*</span>\\s*</h1>");
-    private final Pattern teamAbbrPattern        = Pattern.compile(
+    private final Pattern teamModePattern = Pattern.compile("<div class=\"team-info-entry__title\">Default ruleset</div>\\s+<div class=\"team-info-entry__value\">\\s+<span class=\"fal fa-extra-mode-(\\w+)\">");
+    // 有点刻晴了
+    // "<a\s+class="game-mode-link"\s+href="https://osu.ppy.sh/teams/\d+/(.+)"\s+>"
+    // "<div class=\"team-info-entry__title\">Default ruleset</div>\\s+<div class=\"team-info-entry__value\">\\s+<span class=\"fal fa-extra-mode-mania\">[^<]+</span>\\s+(.+)\\s+</div>"
+    private final Pattern teamNamePattern = Pattern.compile(
+            "<h1 class=\"profile-info__name\">\\s*<span class=\"u-ellipsis-overflow\">\\s*([\\S\\s]+)\\s*</span>\\s*</h1>");
+    private final Pattern teamAbbrPattern = Pattern.compile(
             "<p class=\"profile-info__flag\">\\s+\\[([\\S\\s]+)]\\s+</p>");
-    private final Pattern teamApplicationPattern = Pattern
-            .compile("application</div>\\s+<div class=\"team-info-entry__value\">\\s+(.+)\\s+</div>");
+    private final Pattern teamApplicationPattern = Pattern.compile(
+            "application</div>\\s+<div class=\"team-info-entry__value\">\\s+(.+)\\s+</div>");
 
-    private final Pattern rankPattern = Pattern
-            .compile("<div class=\"team-info-entry__value team-info-entry__value--large\">\\s+#([\\d,]+)\\s+</div>");
+    private final Pattern rankPattern = Pattern.compile(
+            "<div class=\"team-info-entry__value team-info-entry__value--large\">\\s+#([\\d,]+)\\s+</div>");
 
-    private final Pattern ppPattern = Pattern
-            .compile("<div class=\"team-info-entry__title\">\\s+Performance\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>");
-    private final Pattern rankedScorePattern = Pattern
-            .compile("<div class=\"team-info-entry__title\">\\s+Ranked Score\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>");
-    private final Pattern playCountPattern = Pattern
-            .compile("<div class=\"team-info-entry__title\">\\s+Play Count\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>");
-    private final Pattern membersPattern = Pattern
-            .compile("<div class=\"team-info-entry__title\">\\s+Members\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>");
+    private final Pattern ppPattern = Pattern.compile(
+            "<div class=\"team-info-entry__title\">\\s+Performance\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>");
+    private final Pattern rankedScorePattern = Pattern.compile(
+            "<div class=\"team-info-entry__title\">\\s+Ranked Score\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>");
+    private final Pattern playCountPattern = Pattern.compile(
+            "<div class=\"team-info-entry__title\">\\s+Play Count\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>");
+    private final Pattern membersPattern = Pattern.compile(
+            "<div class=\"team-info-entry__title\">\\s+Members\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>");
 
-    private final Pattern teamDescriptionPattern = Pattern
-            .compile("<div class='bbcode'>(.+)</div>");
+    private final Pattern teamDescriptionPattern = Pattern.compile("<div class='bbcode'>(.+)</div>");
     private final Pattern teamBannerPattern = Pattern.compile("url\\('(https://assets.ppy.sh/teams/header/.+)'\\)");
     private final Pattern teamFlagPattern = Pattern.compile("url\\('(https://assets.ppy.sh/teams/flag/.+)'\\)");
     @Override
@@ -317,9 +320,9 @@ public class UserApiImpl implements OsuUserApiService {
         OsuMode mode;
         var modeMatcher = teamModePattern.matcher(html);
         if (modeMatcher.find()) {
-            mode = OsuMode.getMode(modeMatcher.group(1), OsuMode.OSU);
+            mode = OsuMode.getMode(modeMatcher.group(1));
         } else {
-            mode = OsuMode.OSU;
+            mode = OsuMode.DEFAULT;
         }
 
         String application;
