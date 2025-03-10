@@ -18,13 +18,17 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.isAvoidance
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
+import com.now.nowbot.util.command.*
+import org.intellij.lang.annotations.Language
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.round
 
@@ -133,8 +137,17 @@ class MapStatisticsService(
         }
     }
 
+    enum class Filter(@Language("RegExp") val regex: Regex) {
+        ACCURACY("$REG_NUMBER_DECIMAL[a%]|[a%]$REG_NUMBER_DECIMAL".toRegex()),
+        COMBO("$REG_NUMBER_DECIMAL[cx]|[cx]$REG_NUMBER_DECIMAL".toRegex()),
+        MISS("$REG_NUMBER$LEVEL_MORE[\\-m]|[\\-m]$REG_NUMBER$LEVEL_MORE".toRegex()),
+        ANY(REG_NUMBER_DECIMAL.toRegex()),
+    }
+
     private fun getParam(matcher: Matcher, messageText: String): MapParam? {
         val bid = getBid(matcher)
+        val conditions = DataUtil.paramMatcher(matcher.group("any"), Filter.entries.map { it.regex })
+
         var beatMap: BeatMap? = null
 
         if (bid != 0L) {
@@ -160,69 +173,61 @@ class MapStatisticsService(
             null
         }
 
-        var combo: Int
+        var accuracyStr = ""
+        var comboStr = ""
+        var missStr = ""
 
-        var accuracy =
-            try {
-                matcher.group("accuracy").toDouble()
-            } catch (e: RuntimeException) {
-                1.0
-            }
+        conditions.forEachIndexed { index, condition ->
+            if (condition.isNotEmpty()) {
+                val c = condition.first()
 
-        combo =
-            try {
-                matcher.group("combo").toInt()
-            } catch (e: RuntimeException) {
-                try {
-                    val rate = matcher.group("combo").toDouble()
-                    if (rate in 0.0..1.0) {
-                        round(beatMap.maxCombo!! * rate).toInt()
-                    } else {
-                        0
+                when (index) {
+                    0 -> accuracyStr = c.replace("[a%]".toRegex(), "")
+                    1 -> comboStr = c.replace("[cx]".toRegex(), "")
+                    2 -> missStr = c.replace("[\\-m]".toRegex(), "")
+                    3 -> for (cc in condition) {
+                        if (accuracyStr.isBlank()) {
+                            accuracyStr = cc
+                            continue
+                        }
+
+                        if (comboStr.isBlank()) {
+                            comboStr = cc
+                            continue
+                        }
+
+                        if (missStr.isBlank()) {
+                            missStr = cc
+                            continue
+                        }
                     }
-                } catch (e1: RuntimeException) {
-                    0
                 }
             }
-
-        val miss =
-            try {
-                matcher.group("miss").toInt()
-            } catch (e: RuntimeException) {
-                0
-            }
-
-        val mods =
-            try {
-                LazerMod.getModsList(matcher.group("mod"))
-            } catch (e: RuntimeException) {
-                emptyList()
-            }
-
-        // 标准化 acc 和 combo
-        val maxCombo = beatMap.maxCombo
-
-        if (maxCombo != null) {
-            combo =
-                if (combo <= 0) {
-                    maxCombo
-                } else {
-                    min(combo.toDouble(), maxCombo.toDouble()).toInt()
-                }
         }
 
-        if (combo < 0) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_S, "连击参数")
-        }
-        accuracy =
-            when {
-                accuracy <= 1.0 -> accuracy
-                accuracy <= 100.0 -> accuracy / 100.0
-                accuracy <= 10000.0 -> accuracy / 10000.0
+        val accuracy = run {
+            val acc = accuracyStr.toDoubleOrNull() ?: 1.0
+
+            return@run when(acc) {
+                in 0.0..1.0 -> acc
+                in 1.0..100.0 -> acc / 100.0
+                in 100.0..10000.0 -> acc / 10000.0
                 else -> {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_S, "准确率参数")
                 }
             }
+        }
+
+        val combo = if ((comboStr.toDoubleOrNull() ?: -1.0) in 0.0..1.0) {
+            val rate = comboStr.toDouble()
+            round(beatMap.maxCombo!! * rate).toInt()
+        } else {
+            min(max(comboStr.toIntOrNull() ?: 0, 0), beatMap.maxCombo ?: Int.MAX_VALUE)
+        }
+
+        val miss = missStr.toIntOrNull() ?: 0
+
+        val mods = LazerMod.getModsList(matcher.group("mod") ?: "")
 
         // 只有转谱才能赋予游戏模式
         val beatMapMode = beatMap.mode

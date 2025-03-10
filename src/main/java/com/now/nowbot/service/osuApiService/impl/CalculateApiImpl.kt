@@ -283,7 +283,7 @@ import kotlin.reflect.full.companionObjectInstance
     }
 
     override fun applyPPToScore(score: LazerScore) {
-        if (score.PP != null && score.PP!! > 0) return
+        if (score.PP != null && score.PP!! > 0.0 + 1e-6) return
         score.PP = getScorePP(score).pp
     }
 

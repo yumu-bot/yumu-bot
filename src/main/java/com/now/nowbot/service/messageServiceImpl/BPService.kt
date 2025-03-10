@@ -60,6 +60,10 @@ import kotlin.math.*
         val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
         val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
+        if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_Cabbage)
+        }
+
         val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
 
         val range2 = if (range.start != null) {
@@ -333,7 +337,8 @@ import kotlin.math.*
         private fun filterScores(scores: Map<Int, LazerScore>, conditions: List<List<String>>): Map<Int, LazerScore> {
             val s = scores.toMutableMap()
 
-            conditions.forEachIndexed { index, strings ->
+            // 最后一个筛选条件无需匹配
+            conditions.take(Filter.entries.size - 1).forEachIndexed { index, strings ->
                 if (strings.isNotEmpty()) {
                     filterConditions(s, Filter.entries.toList()[index], strings)
                 }
@@ -455,7 +460,7 @@ import kotlin.math.*
                             Operator.XQ, Operator.EQ -> it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")
                             Operator.NE -> (it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")).not()
                             else -> throw GeneralTipsException(
-                                GeneralTipsException.Type.G_Wrong_ParamOnly, ">, >=, <, <="
+                                GeneralTipsException.Type.G_Wrong_ParamOnly, "==, =, !="
                             )
                         }
                     } else if (condition.contains("FM", ignoreCase = true)) {
@@ -463,7 +468,7 @@ import kotlin.math.*
                             Operator.XQ, Operator.EQ -> it.mods.isNotEmpty() && (it.mods.size == 1 && it.mods.first().acronym == "CL").not()
                             Operator.NE -> it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")
                             else -> throw GeneralTipsException(
-                                GeneralTipsException.Type.G_Wrong_ParamOnly, ">, >=, <, <="
+                                GeneralTipsException.Type.G_Wrong_ParamOnly, "==, =, !="
                             )
                         }
                     } else {
@@ -474,7 +479,7 @@ import kotlin.math.*
                             Operator.EQ -> LazerMod.hasMod(mods, it.mods)
                             Operator.NE -> LazerMod.hasMod(mods, it.mods).not()
                             else -> throw GeneralTipsException(
-                                GeneralTipsException.Type.G_Wrong_ParamOnly, ">, >=, <, <="
+                                GeneralTipsException.Type.G_Wrong_ParamOnly, "==, =, !="
                             )
                         }
                     }

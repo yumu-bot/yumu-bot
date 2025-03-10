@@ -1184,8 +1184,9 @@ object DataUtil {
     /**
      * 自己写的匹配器，这样子就可以无所谓匹配顺序了
      * @param regexes 正则表达式。注意，这里的正则需要写得越简洁越好，不然会有大量重复匹配
+     * @param isMultipleMatches 是否允许单个匹配器被多次匹配。默认为 true
      */
-    fun paramMatcher(str: String?, regexes: List<Regex>) : List<List<String>> {
+    fun paramMatcher(str: String?, regexes: List<Regex>, isMultipleMatches: Boolean = true) : List<List<String>> {
         if (str == null) return emptyList()
 
         val result = List(regexes.size) { emptyList<String>().toMutableList() }
@@ -1198,6 +1199,8 @@ object DataUtil {
                 val reg = regexes[i]
 
                 if (reg.matches(matcher)) {
+                    if (isMultipleMatches.not() && result[i].isNotEmpty()) continue
+
                     result[i].add(matcher)
                     matcher = ""
                 }

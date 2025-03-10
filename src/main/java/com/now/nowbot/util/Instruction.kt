@@ -320,15 +320,23 @@ enum class Instruction(val pattern: Pattern) {
 
         appendMode()
         appendBID()
+        appendGroup()
+
+        appendSpace()
+        appendCaptureGroup("any", REG_ANYTHING_BUT_NO_HASH, MORE)
+
+        /*
 
         appendGroup(MAYBE) {
             append("[a%]?")
+            appendIgnore("[\\-mcx]", forward = true)
             appendCaptureGroup("accuracy", REG_NUMBER_DECIMAL)
             append("[a%]?")
         }
         appendSpace()
         appendGroup(MAYBE) {
             append("[cx]?")
+            appendIgnore("[\\-m]", forward = true)
             appendCaptureGroup("combo", REG_NUMBER_DECIMAL)
             append("[cx]?")
         }
@@ -338,6 +346,8 @@ enum class Instruction(val pattern: Pattern) {
             appendCaptureGroup("miss", REG_NUMBER, MORE)
             append("[\\-m]?")
         }
+
+         */
         appendSpace()
 
         appendMod()
@@ -787,7 +797,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i.name != "BP") continue
+        if (i.name != "MAP") continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

@@ -572,10 +572,12 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     /**
      * 忽略随便一段正则。如果有输入的其他正则，则使用后向忽略包围起来。
+     * @param forward 是否是前向忽略。(?<!...)
      */
-    fun appendIgnore(@Language("RegExp") ign: String? = REG_IGNORE) {
+    fun appendIgnore(@Language("RegExp") ign: String? = REG_IGNORE, forward: Boolean = false) {
         append('(')
         append('?')
+        if (forward) append('<')
         append('!')
 
         if (ign.isNullOrEmpty()) {
