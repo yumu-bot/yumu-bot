@@ -249,6 +249,19 @@ public class UserApiImpl implements OsuUserApiService {
             "<p class=\"profile-info__flag\">\\s+\\[([\\S\\s]+)]\\s+</p>");
     private final Pattern teamApplicationPattern = Pattern
             .compile("application</div>\\s+<div class=\"team-info-entry__value\">\\s+(.+)\\s+</div>");
+
+    private final Pattern rankPattern = Pattern
+            .compile("<div class=\"team-info-entry__value team-info-entry__value--large\">\\s+#([\\d,]+)\\s+</div>");
+
+    private final Pattern ppPattern = Pattern
+            .compile("<div class=\"team-info-entry__title\">\\s+Performance\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>");
+    private final Pattern rankedScorePattern = Pattern
+            .compile("<div class=\"team-info-entry__title\">\\s+Ranked Score\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>");
+    private final Pattern playCountPattern = Pattern
+            .compile("<div class=\"team-info-entry__title\">\\s+Play Count\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>");
+    private final Pattern membersPattern = Pattern
+            .compile("<div class=\"team-info-entry__title\">\\s+Members\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>");
+
     private final Pattern teamDescriptionPattern = Pattern
             .compile("<div class='bbcode'>(.+)</div>");
     private final Pattern teamBannerPattern = Pattern.compile("url\\('(https://assets.ppy.sh/teams/header/.+)'\\)");
@@ -317,6 +330,66 @@ public class UserApiImpl implements OsuUserApiService {
             application = "";
         }
 
+        Integer rank;
+        var rankMatcher = rankPattern.matcher(html);
+        if (rankMatcher.find()) {
+            try {
+                rank = Integer.parseInt(rankMatcher.group(1).replace(",", ""));
+            } catch (NumberFormatException e) {
+                rank = null;
+            }
+        } else {
+            rank = null;
+        }
+
+        Integer pp;
+        var ppMatcher = ppPattern.matcher(html);
+        if (ppMatcher.find()) {
+            try {
+                pp = Integer.parseInt(ppMatcher.group(1).replace(",", ""));
+            } catch (NumberFormatException e) {
+                pp = null;
+            }
+        } else {
+            pp = null;
+        }
+
+        Long rankedScore;
+        var rankedScoreMatcher = rankedScorePattern.matcher(html);
+        if (rankedScoreMatcher.find()) {
+            try {
+                rankedScore = Long.parseLong(rankedScoreMatcher.group(1).replace(",", ""));
+            } catch (NumberFormatException e) {
+                rankedScore = null;
+            }
+        } else {
+            rankedScore = null;
+        }
+
+        Long playCount;
+        var playCountMatcher = playCountPattern.matcher(html);
+        if (playCountMatcher.find()) {
+            try {
+                playCount = Long.parseLong(playCountMatcher.group(1).replace(",", ""));
+            } catch (NumberFormatException e) {
+                playCount = null;
+            }
+        } else {
+            playCount = null;
+        }
+
+        Integer members;
+        var membersMatcher = membersPattern.matcher(html);
+        if (membersMatcher.find()) {
+            try {
+                members = Integer.parseInt(membersMatcher.group(1).replace(",", ""));
+            } catch (NumberFormatException e) {
+                members = null;
+            }
+        } else {
+            members = null;
+        }
+
         String description;
         var descriptionMatcher = teamDescriptionPattern.matcher(html);
         if (descriptionMatcher.find()) {
@@ -331,6 +404,7 @@ public class UserApiImpl implements OsuUserApiService {
             var json = unescapeHTML(userMatcher.group("json"));
             users.add(JacksonUtil.parseObject(json, OsuUser.class));
         }
+
         return new TeamInfo(
                 id,
                 name,
@@ -341,6 +415,13 @@ public class UserApiImpl implements OsuUserApiService {
                 users,
                 mode,
                 application,
+
+                rank,
+                pp,
+                rankedScore,
+                playCount,
+                members,
+
                 description
         );
     }

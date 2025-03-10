@@ -161,7 +161,7 @@ class MapStatisticsService(
             return null
         }
 
-        var mode = OsuMode.getMode(matcher.group("mode"))
+        val mode = OsuMode.getMode(matcher.group("mode"))
 
         val user: OsuUser? = try {
             if (beatMap.mapperID > 0L) {
@@ -232,14 +232,7 @@ class MapStatisticsService(
 
         val mods = LazerMod.getModsList(matcher.group("mod") ?: "")
 
-        // 只有转谱才能赋予游戏模式
-        val beatMapMode = beatMap.mode
-
-        if (beatMapMode != OsuMode.OSU || OsuMode.isDefaultOrNull(mode)) {
-            mode = beatMapMode
-        }
-
-        val expected = Expected(mode, accuracy, combo, miss, mods)
+        val expected = Expected(OsuMode.correctConvert(mode, beatMap.mode), accuracy, combo, miss, mods)
         return MapParam(user, beatMap, expected)
     }
 

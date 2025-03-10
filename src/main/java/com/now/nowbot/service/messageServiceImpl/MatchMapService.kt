@@ -149,18 +149,7 @@ class MatchMapService(
 
             val beatmap = beatmapApiService.getBeatMap(round.beatMapID)
 
-            // 只有转谱才能赋予游戏模式
-            val mode: OsuMode
-            val beatMapMode = beatmap.mode
-
-            mode =
-                if (
-                    beatMapMode != OsuMode.OSU || OsuMode.isDefaultOrNull(round.mode)
-                ) {
-                    beatMapMode
-                } else {
-                    round.mode
-                }
+            val mode = OsuMode.correctConvert(round.mode, beatmap.mode)
 
             val original = DataUtil.getOriginal(beatmap)
 

@@ -963,7 +963,9 @@ public class OsuUser {
         this.pmFriendsOnly = pmFriendsOnly;
     }
 
-    // 在查询其他模式时，这里会给出其他模式，而不是玩家的默认模式
+    /**
+     * 在查询其他模式时，这里会给出其他模式，而不是玩家的默认模式
+     */
     public OsuMode getCurrentOsuMode() {
         if (this.rankHistory != null) {
             return OsuMode.getMode(this.rankHistory.mode);

@@ -425,10 +425,7 @@ object CmdUtil {
 
     /** 获取一个包装的 mode 传入的 mode 如果不是 default 且命令中没显式指定 mode 则覆盖掉结果 */
     @JvmStatic fun getMode(matcher: Matcher, other: OsuMode = OsuMode.DEFAULT): CmdObject<OsuMode> {
-        val result = getMode(matcher)
-        if (OsuMode.isDefaultOrNull(result.data) && OsuMode.isNotDefaultOrNull(other)) {
-            result.data = other
-        }
+        val result = CmdObject(OsuMode.getMode(getMode(matcher).data, other))
         return result
     }
 

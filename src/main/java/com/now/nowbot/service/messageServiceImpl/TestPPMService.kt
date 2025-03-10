@@ -51,16 +51,24 @@ class TestPPMService(
             throw PPMinusException(PPMinusException.Type.PM_Test_Empty)
         }
 
-        event.reply("正在处理玩家数据。注意需要输入玩家名，而并非玩家 ID！")
+        val isOsuID = names.first().matches("\\d+".toRegex())
+
+        event.reply("正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。")
 
         var mode: OsuMode? = null
         val actions = names.map { name ->
             return@map AsyncMethodExecutor.Supplier<TestPPMData?> {
                 try {
-                    val u = userApiService.getPlayerInfo(name, mode ?: inputMode)
+                    val u = if (isOsuID) {
+                        userApiService.getPlayerInfo(name, mode ?: inputMode)
+                    } else {
+                        userApiService.getPlayerInfo(name.toLongOrNull() ?: -1L, mode ?: inputMode)
+                    }
+
                     if (OsuMode.isDefaultOrNull(mode)) {
                         mode = u.currentOsuMode
                     }
+
                     val s = scoreApiService.getBestScores(u.id, mode)
                     val ppmData = TestPPMData()
 
@@ -72,6 +80,7 @@ class TestPPMService(
                 }
             }
         }
+
         val result = AsyncMethodExecutor.AsyncSupplier(actions)
             .filterNotNull()
 

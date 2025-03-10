@@ -208,7 +208,7 @@ class InfoService(
             val user = getUserWithoutRange(event, matcher, getMode(matcher), isMyself)
             val day = (matcher.group(FLAG_DAY) ?: "").toIntOrNull() ?: 1
 
-            return InfoParam(user, mode.data!!, day, isMyself.get(), version)
+            return InfoParam(user, OsuMode.getMode(mode.data!!, user.currentOsuMode), day, isMyself.get(), version)
         }
 
         private fun getBestTimes(bests: List<LazerScore>): IntArray {

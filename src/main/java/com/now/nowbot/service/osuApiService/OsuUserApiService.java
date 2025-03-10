@@ -1,5 +1,6 @@
 package com.now.nowbot.service.osuApiService;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.now.nowbot.model.BindUser;
@@ -84,16 +85,25 @@ public interface OsuUserApiService {
 
     TeamInfo getTeamInfo(int id);
 
-    public static record TeamInfo(
+    record TeamInfo(
             Integer id,
             String name,
             String abbr,
             String formed,
+
             String banner,
             String flag,
+
             List<OsuUser> users,
             OsuMode ruleset,
             String application,
+
+            Integer rank,
+            Integer pp,
+            @JsonProperty("ranked_score") Long rankedScore,
+            @JsonProperty("play_count") Long playCount,
+            Integer members,
+
             String description
     ) {
     }

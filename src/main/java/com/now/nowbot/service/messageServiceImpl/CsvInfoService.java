@@ -32,8 +32,8 @@ public class CsvInfoService implements MessageService<CsvInfoService.CIParam> {
         if (! matcher.find()) return false;
 
         OsuMode mode = OsuMode.getMode(matcher.group("mode"));
-        List<String> users = DataUtil.parseUsername(matcher.group("data"));
-        String name = users.isEmpty() ? "CI.csv" : "CI-" + users.getFirst() +".csv";
+        List<String> users = DataUtil.splitString(matcher.group("data"));
+        String name = (users == null || users.isEmpty()) ? "CI.csv" : "CI-" + users.getFirst() +".csv";
 
         param.setValue(new CIParam(mode, users, name));
         return true;

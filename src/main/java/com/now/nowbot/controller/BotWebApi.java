@@ -800,8 +800,7 @@ public class BotWebApi {
     ) {
         if (Objects.isNull(day)) day = 1;
         var user = getPlayerInfoJson(uid, name, modeStr);
-        var mode = OsuMode.getMode(modeStr);
-        if (OsuMode.isDefaultOrNull(mode)) mode = user.getCurrentOsuMode();
+        var mode = OsuMode.getMode(modeStr, user.getCurrentOsuMode());
 
         var BPs = scoreApiService.getBestScores(user);
         //var recents = scoreApiService.getRecentIncludingFail(osuUser);

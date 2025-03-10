@@ -71,11 +71,9 @@ class BPQueryService(
         } catch (e: BindException) {
             throw BindException(BindException.Type.BIND_Me_NotBind)
         }
-        val mode = if (OsuMode.isDefaultOrNull(param.mode)) {
-            bindUser.osuMode
-        } else {
-            param.mode
-        }
+
+        val mode = OsuMode.getMode(param.mode, bindUser.osuMode)
+
         val (order, text) = getOrder(param.filter)
         val filters = getAllFilter(text)
         val bests = scoreApiService.getBestScores(bindUser, mode)

@@ -45,13 +45,14 @@ public abstract class PPMinus {
     protected double value8;
 
     public static PPMinus getInstance(OsuMode mode, OsuUser user, List<LazerScore> bps){
-        PPMinus PPMinus = null;
-        if (OsuMode.isDefaultOrNull(mode)) mode = user.getCurrentOsuMode();
-        switch (mode) {
+        PPMinus PPMinus;
+
+        switch (OsuMode.getMode(mode, user.getCurrentOsuMode())) {
             case OSU -> PPMinus = new PPMinusOsu(user, bps);
             case TAIKO -> PPMinus = new PPMinusTaiko(user, bps);
             case CATCH -> PPMinus = new PPMinusCatch(user, bps);
             case MANIA -> PPMinus = new PPMinusMania(user, bps);
+            default -> PPMinus = null;
         }
         return PPMinus;
     }

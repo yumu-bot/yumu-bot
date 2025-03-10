@@ -84,11 +84,11 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
         }
 
         @JvmStatic fun getMode(@Nullable name: String?): OsuMode {
-            return when (name?.lowercase()) {
-                "osu", "o", "0" -> OSU
-                "taiko", "t", "1" -> TAIKO
-                "catch", "c", "fruits", "f", "2" -> CATCH
-                "mania", "m", "3" -> MANIA
+            return when (name?.trim()?.lowercase()) {
+                "taiko", "t", "1", "osu!taiko" -> TAIKO
+                "catch", "c", "fruits", "f", "2", "osu!catch" -> CATCH
+                "mania", "m", "3", "osu!mania" -> MANIA
+                "osu", "o", "0", "osu!" -> OSU
                 else -> DEFAULT
             }
         }
@@ -111,7 +111,9 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
             return isDefaultOrNull(mode).not()
         }
 
-        // 修正无法转换的模式
+        /**
+         * 修正无法转换的模式：只有可转换的谱面才能赋予模式
+         */
         @JvmStatic fun correctConvert(@Nullable convert: OsuMode?, @Nullable map: OsuMode?): OsuMode {
             return if (map != OSU && map != null && map != DEFAULT) {
                 map

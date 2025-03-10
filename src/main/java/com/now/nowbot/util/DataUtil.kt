@@ -130,6 +130,7 @@ object DataUtil {
 
     /**
      * 将按逗号或者 |、:：分隔的字符串分割 如果未含有分隔的字符，返回 null
+     * 根据分隔符，分割玩家名
      *
      * @param str 需要分析的字符串
      * @return 玩家名列表
@@ -144,28 +145,7 @@ object DataUtil {
                 .dropLastWhile { it.isEmpty() }
         // 空格和-_不能匹配
         if (strings.isEmpty()) return null
-        return strings.map { obj -> obj.trim() }.toList()
-    }
-
-    private val nameSplitReg = "[,，、|:：]+".toRegex()
-
-    /**
-     * 根据分隔符，分割玩家名
-     *
-     * @param str 需要分割的，含分割符和玩家名的长文本
-     * @return 分割好的玩家名
-     */
-    @JvmStatic
-    @NonNull
-    fun parseUsername(@Nullable str: String?): List<String> {
-        if (str.isNullOrBlank()) return listOf("")
-        val split =
-            str.trim()
-                .split(nameSplitReg)
-                .dropLastWhile { it.isEmpty() }
-        if (split.isEmpty()) return listOf(str)
-
-        return split.mapNotNull { it.trim().ifEmpty { null } }
+        return strings.map { it.trim() }
     }
 
     /**
