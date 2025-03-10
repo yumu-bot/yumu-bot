@@ -218,11 +218,14 @@ class MapStatisticsService(
             }
         }
 
-        val combo = if ((comboStr.toDoubleOrNull() ?: -1.0) in 0.0..1.0) {
+        val combo = if ((comboStr.toDoubleOrNull() ?: -1.0) in (0.0 - 1e-6)..1.0) {
             val rate = comboStr.toDouble()
             round(beatMap.maxCombo!! * rate).toInt()
         } else {
-            min(max(comboStr.toIntOrNull() ?: 0, 0), beatMap.maxCombo ?: Int.MAX_VALUE)
+            val max = beatMap.maxCombo ?: Int.MAX_VALUE
+            val maxCombo = beatMap.maxCombo ?: 0
+
+            min(max(comboStr.toIntOrNull() ?: maxCombo, 0), max)
         }
 
         val miss = missStr.toIntOrNull() ?: 0
