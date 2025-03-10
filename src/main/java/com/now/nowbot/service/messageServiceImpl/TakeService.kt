@@ -10,7 +10,6 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
-import io.ktor.util.collections.*
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -97,22 +96,22 @@ import kotlin.math.floor
 
         val visit = if (isShownOffline) {
             val rulesets = listOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
-            val users = ConcurrentMap<Int, OffsetDateTime>(4)
 
             val actions = rulesets.map {
-                return@map AsyncMethodExecutor.Supplier<Unit> {
+                return@map AsyncMethodExecutor.Supplier<Pair<Int, OffsetDateTime>> {
                     val lastMonth =
                         userApiService.getPlayerInfo(user.userID, it).monthlyPlaycounts.lastOrNull()?.start_date
                             ?: OffsetDateTime.MIN.format(formatter2)
 
-                    users[it.modeValue.toInt()] =
-                        LocalDate.parse(lastMonth, formatter2).atTime(0, 0).atOffset(ZoneOffset.UTC)
+                    return@Supplier it.modeValue.toInt() to
+                            LocalDate.parse(lastMonth, formatter2).atTime(0, 0).atOffset(ZoneOffset.UTC)
                 }
             }
 
-            AsyncMethodExecutor.AsyncSupplier(actions)
+            val result = AsyncMethodExecutor.AsyncSupplier(actions)
+                .filterNotNull().toMap()
 
-            val most = users.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value ?: throw GeneralTipsException(
+            val most = result.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value ?: throw GeneralTipsException(
                 GeneralTipsException.Type.G_Null_Play
             )
 

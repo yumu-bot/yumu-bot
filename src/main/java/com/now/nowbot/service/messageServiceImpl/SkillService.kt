@@ -19,7 +19,6 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.*
 import org.springframework.stereotype.Service
-import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Matcher
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -168,27 +167,28 @@ import kotlin.math.sqrt
     private fun getSkillMap(bests: List<LazerScore>?, beatmapApiService: OsuBeatmapApiService): Map<Long, PPMinus4?> {
         if (bests.isNullOrEmpty()) return mapOf()
 
-        val skillMap = ConcurrentHashMap<Long, PPMinus4?>(bests.size)
-
         val actions = bests.map {
-            return@map AsyncMethodExecutor.Supplier<Unit> {
+            val id = it.beatMapID
+
+            return@map AsyncMethodExecutor.Supplier<Pair<Long, PPMinus4?>> {
                 try {
                     val file = OsuFile.getInstance(beatmapApiService.getBeatMapFileString(it.beatMapID))
 
-                    skillMap[it.beatMapID] = PPMinus4.getInstance(
+                    return@Supplier id to PPMinus4.getInstance(
                         file,
                         OsuMode.MANIA,
                         LazerMod.getModSpeedForStarCalculate(it.mods).toDouble()
                     )
                 } catch (_: Exception) {
-
+                    return@Supplier id to null
                 }
             }
         }
 
-        AsyncMethodExecutor.AsyncSupplier(actions)
+        val result = AsyncMethodExecutor.AsyncSupplier(actions)
+            .filterNotNull().toMap()
 
-        return skillMap
+        return bests.associate { it.beatMapID to result[it.beatMapID] }
     }
 
     private fun getBody(

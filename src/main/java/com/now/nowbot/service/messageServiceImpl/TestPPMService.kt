@@ -72,8 +72,7 @@ class TestPPMService(
                 }
             }
         }
-        val result = AsyncMethodExecutor
-            .AsyncSupplier(actions)
+        val result = AsyncMethodExecutor.AsyncSupplier(actions)
             .filterNotNull()
 
         val sb = StringBuilder()

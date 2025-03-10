@@ -146,18 +146,17 @@ import kotlin.math.min
 
         // 多线程获取歌曲的的 ChartData
         private fun getChartData(scores: List<MaiScore>, maimaiApiService: MaimaiApiService): Map<Long, ChartData> {
-            val charts = ConcurrentHashMap<Long, ChartData>()
+            ConcurrentHashMap<Long, ChartData>()
 
             val actions = scores.map {
-                return@map AsyncMethodExecutor.Supplier<Unit> {
-                    charts[it.songID * 10 + it.index] =
-                        maimaiApiService.getMaimaiChartData(it.songID).getOrNull(it.index) ?: ChartData()
+                return@map AsyncMethodExecutor.Supplier<Pair<Long, ChartData>> {
+                    return@Supplier it.songID * 10 + it.index to
+                            (maimaiApiService.getMaimaiChartData(it.songID).getOrNull(it.index) ?: ChartData())
                     }
                 }
 
-            AsyncMethodExecutor.AsyncSupplier(actions)
-
-            return charts.toMap()
+            return AsyncMethodExecutor.AsyncSupplier(actions)
+                .filterNotNull().toMap()
         }
 
         // 计算对应成绩的对应 DX 评分
