@@ -225,7 +225,7 @@ class ServiceSwitchService(
                 }
 
                 sb.append("| ")
-                    .append(if (isClosed) "❌" else "✔\uFE0F")
+                    .append(if (isClosed) "X" else "O")
                     .append(" | ")
                     .append(name)
                     .append(" | ")

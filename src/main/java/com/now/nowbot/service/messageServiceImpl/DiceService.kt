@@ -644,7 +644,7 @@ import kotlin.math.*
                     Split.RANGE, Split.AMOUNT -> "您许愿的结果是：%.0f。"
                     Split.TIME, Split.TIMES -> "您许愿的结果是：%.0f %s。"
                     Split.RANK -> "您许愿的结果是：%s %.0f。"
-                    Split.WHAT, Split.WHY, Split.WHO -> "我怎么知道。我又不是 GPT。"
+                    Split.WHAT, Split.WHY, Split.WHO -> "我怎么知道。我又不是 deepseek。"
                     Split.REAL -> "我觉得，是真的。"
                     Split.BETTER, Split.COMPARE, Split.OR, Split.JUXTAPOSITION, Split.PREFER, Split.HESITATE, Split.EVEN -> "当然%s啦！"
                     Split.ASSUME, Split.LIKE, Split.IS, Split.QUESTION -> "%s。"

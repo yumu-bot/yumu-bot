@@ -271,7 +271,7 @@ import kotlin.math.*
 
         val scores = scoreApiService.getBestScores(data!!.userID, mode, offset, limit)
 
-        calculateApiService.applyStarToScores(scores, local = false)
+        calculateApiService.applyStarToScores(scores)
         calculateApiService.applyBeatMapChanges(scores)
 
         val modeStr = if (mode.isDefault()) {
@@ -316,7 +316,7 @@ import kotlin.math.*
 
             // calculateApiService.applyPPToScore(score) // BP 不需要？
             calculateApiService.applyBeatMapChanges(score)
-            calculateApiService.applyStarToScore(score, local = false)
+            calculateApiService.applyStarToScore(score)
 
             val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
 

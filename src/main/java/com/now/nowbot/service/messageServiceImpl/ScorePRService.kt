@@ -274,7 +274,7 @@ class ScorePRService(
 
             calculateApiService.applyPPToScores(scores)
             calculateApiService.applyBeatMapChanges(scores)
-            calculateApiService.applyStarToScores(scores, local = false)
+            calculateApiService.applyStarToScores(scores)
 
             try {
                 // 处理新人群 ps 超星问题
@@ -352,7 +352,7 @@ class ScorePRService(
 
             calculateApiService.applyPPToScore(score)
             calculateApiService.applyBeatMapChanges(score)
-            calculateApiService.applyStarToScore(score, local = false)
+            calculateApiService.applyStarToScore(score)
 
             val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
 

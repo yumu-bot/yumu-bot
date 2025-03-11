@@ -343,7 +343,7 @@ class BPQueryService(
     private fun getBP(filters: List<(LazerScore) -> Boolean>, scores: List<LazerScore>): List<LazerScore> {
         // bp 有 pp，所以只需要查星数
         calculateApiService.applyBeatMapChanges(scores)
-        calculateApiService.applyStarToScores(scores, local = false)
+        calculateApiService.applyStarToScores(scores)
 
         // 处理麻婆, 与 set 主不一致
         val mapperMap = mutableMapOf<Int, Long>()
@@ -575,7 +575,7 @@ class BPQueryService(
 
             calculateApiService.applyPPToScore(score)
             // calculateApiService.applyBeatMapChanges(score)
-            calculateApiService.applyStarToScore(score, local = false)
+            calculateApiService.applyStarToScore(score)
 
             val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
 
