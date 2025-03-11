@@ -163,8 +163,10 @@ public class OsuUser {
 
     List<UserBadge> badges;
 
-    public record UserBadge(@JsonProperty("awarded_at") OffsetDateTime awardAt, String description,
-                            @JsonProperty("image@2x_url") String image2xUrl, @JsonProperty("image_url") String imageUrl,
+    public record UserBadge(@JsonProperty("awarded_at") OffsetDateTime awardAt,
+                            @JsonProperty("description") String description,
+                            @JsonProperty("image@2x_url") String image2xUrl,
+                            @JsonProperty("image_url") String imageUrl,
                             @Nullable String url) {
     }
 

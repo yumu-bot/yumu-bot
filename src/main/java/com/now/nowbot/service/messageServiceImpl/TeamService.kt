@@ -80,8 +80,6 @@ class TeamService(
         } catch (e: Exception) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "战队信息")
         }
-
-
     }
 
     override fun accept(event: MessageEvent, messageText: String): TeamParam? {

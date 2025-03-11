@@ -206,6 +206,11 @@ enum class OfficialInstruction(val pattern: Pattern) {
         }
     }),
 
+    BADGE(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("badge", "bd")
+        appendQQUIDName()
+    }),
+
     // #4 osu! 谱面指令
     MAP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("m")

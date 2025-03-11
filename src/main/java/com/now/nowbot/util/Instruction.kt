@@ -304,6 +304,11 @@ enum class Instruction(val pattern: Pattern) {
         }
     }),
 
+    BADGE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("badge", "bd")
+        appendQQUIDName()
+    }),
+
     GET_ID(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("getid", "gi")
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)

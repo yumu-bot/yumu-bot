@@ -48,6 +48,7 @@ class GeneralTipsException : TipsException {
         G_Null_PlayerRecord("该玩家在 %s 模式内基本没玩过。"), 
         G_Null_PlayerInactive("玩家 %s 最近不活跃..."),
         G_Null_BP("无法获取玩家 %s 的最好成绩..."),
+        G_Null_Badge("%s还没有主页奖牌呢..."),
         G_Null_FilterBP("无法获取玩家 %s 符合条件的最好成绩。"), 
         G_Null_ModeBP("无法获取玩家 %s 在 %s 模式内指定的最好成绩。"),
         G_Null_TheoreticalBP("您（选中）的最好成绩已经全是理论值了！"),
