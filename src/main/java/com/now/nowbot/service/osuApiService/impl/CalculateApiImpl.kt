@@ -544,7 +544,13 @@ import kotlin.reflect.full.companionObjectInstance
                     break
                 }
             }
-            val speed = LazerMod.getModSpeed(mods)
+
+            // mania 模式内，模组改变速率不影响 OD
+            val speed = if (mode == OsuMode.MANIA) {
+                1f
+            } else {
+                LazerMod.getModSpeed(mods)
+            }
 
             if (speed != 1f) {
                 var ms = getMillisFromOD(o, mode)
