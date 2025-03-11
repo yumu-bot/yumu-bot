@@ -235,12 +235,11 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * @param hashMust '#' 是否必须
      */
     fun appendRange(hashMust: Boolean = false) {
-        // 你这原来是 -?\s*(?<range>([100|\d])+)? 写错了
         appendGroup(MAYBE) {
             append(REG_HASH)
             if (!hashMust) append('?')
             appendSpace()
-            appendCaptureGroup(FLAG_RANGE, "(\\d{1,2}$REG_HYPHEN)?(100|\\d{1,2})")
+            appendCaptureGroup(FLAG_RANGE, REG_RANGE)
         }
         appendSpace()
     }

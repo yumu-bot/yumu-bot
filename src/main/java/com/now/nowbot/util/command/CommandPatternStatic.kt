@@ -52,6 +52,9 @@ val REG_ANYTHING_BUT_NO_SPACE: String = "\\S"
 val REG_ANYTHING_BUT_NO_HASH: String = "[^:：#＃]"
 
 @Language("RegExp")
+val REG_ANYTHING_BUT_NO_PLUS: String = "[^:：＋+]"
+
+@Language("RegExp")
 val REG_ANYTHING_BUT_NO_STARS: String = "[^☆✪★*⋆]"
 
 @Language("RegExp")
@@ -124,10 +127,6 @@ val REG_QUOTATION : String = "[“”\"«»《》＂‟]"
 val REG_IGNORE: String = "[A-Za-z\\-_]"
 
 @Language("RegExp")
-// 用在多成绩的指令里（可能有 s）
-val REG_IGNORE_S: String = "[^s:：\\d\\s]"
-
-@Language("RegExp")
 // 用在有时候需要匹配 bid 和 sid 的指令里
 val REG_IGNORE_BS: String = "[^bs:：\\d\\s]"
 
@@ -150,7 +149,7 @@ val REG_MODE: String = "(osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)"
 val REG_DIFF: String = "([0-4baemr]|bsc|adv|exp|mas|rem|rms|ba|ad|ex|ma|re|basic|advanced|expert|master|re[:：]?\\s*master)"
 
 @Language("RegExp")
-val REG_RANGE: String = "((100|$REG_NUMBER_12)($REG_HYPHEN$REG_NUMBER_13)?)"
+val REG_RANGE: String = "($REG_NUMBER_12$REG_HYPHEN)?(100|$REG_NUMBER_12)"
 
 @Language("RegExp")
 val REG_RANGE_DAY: String = "($REG_NUMBER_13($REG_HYPHEN$REG_NUMBER_13)?)"

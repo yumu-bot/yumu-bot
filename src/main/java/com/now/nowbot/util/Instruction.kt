@@ -323,22 +323,22 @@ enum class Instruction(val pattern: Pattern) {
         appendGroup()
 
         appendSpace()
-        appendCaptureGroup("any", REG_ANYTHING_BUT_NO_HASH, MORE)
+        appendCaptureGroup("any", REG_ANYTHING_BUT_NO_PLUS, MORE)
 
         /*
 
         appendGroup(MAYBE) {
-            append("[a%]?")
-            appendIgnore("[\\-mcx]", forward = true)
+            append("[a%％]?")
+            appendIgnore("[\\-mcx×]", forward = true)
             appendCaptureGroup("accuracy", REG_NUMBER_DECIMAL)
-            append("[a%]?")
+            append("[a%％]?")
         }
         appendSpace()
         appendGroup(MAYBE) {
-            append("[cx]?")
+            append("[cx×]?")
             appendIgnore("[\\-m]", forward = true)
             appendCaptureGroup("combo", REG_NUMBER_DECIMAL)
-            append("[cx]?")
+            append("[cx×]?")
         }
         appendSpace()
         appendGroup(MAYBE) {

@@ -192,7 +192,7 @@ import kotlin.math.*
 
         DIFFICULTY("(difficulty|diff|d)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-        STAR("(star|rating|sr|r)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+        STAR("(star|rating|sr|r)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)$REG_STAR$LEVEL_MAYBE".toRegex()),
 
         // 既然都整合了，为什么还要用 index ?
         // INDEX("(index|i)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
@@ -213,9 +213,9 @@ import kotlin.math.*
 
         BPM("(bpm|b)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
 
-        ACCURACY("(accuracy|acc)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+        ACCURACY("(accuracy|acc)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
 
-        COMBO("(combo|cb?)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+        COMBO("(combo|cb?)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE[xX]?)".toRegex()),
 
         PERFECT("(perfect|320|305|pf)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
@@ -245,7 +245,7 @@ import kotlin.math.*
 
         CLIENT("(client|z|v|version)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-        RANGE("(\\d{1,2}$REG_HYPHEN)?(100|\\d{1,2})".toRegex())
+        RANGE(REG_RANGE.toRegex())
     }
 
     private fun CmdRange<OsuUser>.getBPScores(

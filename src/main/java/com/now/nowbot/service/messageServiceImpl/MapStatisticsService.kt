@@ -138,8 +138,8 @@ class MapStatisticsService(
     }
 
     enum class Filter(@Language("RegExp") val regex: Regex) {
-        ACCURACY("$REG_NUMBER_DECIMAL[a%]|[a%]$REG_NUMBER_DECIMAL".toRegex()),
-        COMBO("$REG_NUMBER_DECIMAL[cx]|[cx]$REG_NUMBER_DECIMAL".toRegex()),
+        ACCURACY("$REG_NUMBER_DECIMAL[a%％]|[a%％]$REG_NUMBER_DECIMAL".toRegex()),
+        COMBO("$REG_NUMBER_DECIMAL[cx×]|[cx×]$REG_NUMBER_DECIMAL".toRegex()),
         MISS("$REG_NUMBER$LEVEL_MORE[\\-m]|[\\-m]$REG_NUMBER$LEVEL_MORE".toRegex()),
         ANY(REG_NUMBER_DECIMAL.toRegex()),
     }
