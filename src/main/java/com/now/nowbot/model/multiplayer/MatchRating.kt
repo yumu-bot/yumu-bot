@@ -90,7 +90,10 @@ class MatchRating(
             return rs
         }
 
-        rs = rs.subList(skip, limit)
+        rs.drop(param.skip)
+        rs.dropLast(param.ignore)
+
+        // rs = rs.subList(skip, limit)
 
         if (! param.remove.isNullOrEmpty()) {
             val remove = param.remove
@@ -192,9 +195,26 @@ class MatchRating(
             }
         }
 
+    @get:JsonProperty("first_map_sid")
+    val firstMapSID: Long
+        get() {
+            return if (rounds.isNotEmpty()) {
+                rounds.first().beatMap?.beatMapSetID ?: 0L
+            } else {
+                0L
+            }
+        }
+
     @JsonIgnore
     private var playerDataMap: Map<Long, PlayerData> =
         players.map { (k, v) -> k to PlayerData(v)}.toMap()
+
+    @get:JsonProperty("skip_ignore_map")
+    val skipIgnoreMap: Map<String, Int>
+        get() = mapOf(
+            "skip" to ratingParam.skip,
+            "ignore" to ratingParam.ignore
+        )
 
     @get:JsonProperty("team_point_map")
     val teamPointMap: Map<String, Int>

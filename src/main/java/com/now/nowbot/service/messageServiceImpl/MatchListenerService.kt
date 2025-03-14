@@ -276,7 +276,10 @@ class MatchListenerService(
 
                 val mr = MatchRating(match, beatmapApiService, calculateApiService)
 
+                // 其实这个就是 game
                 val round = mr.rounds.last { it.roundID == game.roundID }
+
+                calculateApiService.applyBeatMapChanges(round.beatMap, LazerMod.getModsList(round.mods))
 
                 // 手动调位置
                 if (round.scores.size > 2) {
@@ -285,7 +288,7 @@ class MatchListenerService(
                     round.scores = round.scores.sortedBy { it.playerStat.slot }
                 }
 
-                val index = mr.rounds.map { it.roundID }.indexOf(game.roundID)
+                val index = mr.rounds.map { it.roundID }.indexOf(round.roundID)
 
                 val image =
                     try {
