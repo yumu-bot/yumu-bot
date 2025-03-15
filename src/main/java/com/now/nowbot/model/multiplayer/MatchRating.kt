@@ -90,10 +90,10 @@ class MatchRating(
             return rs
         }
 
-        rs.drop(param.skip)
-        rs.dropLast(param.ignore)
+        // rs.drop(param.skip)
+        // rs.dropLast(param.ignore)
 
-        // rs = rs.subList(skip, limit)
+        rs = rs.subList(skip, limit)
 
         if (! param.remove.isNullOrEmpty()) {
             val remove = param.remove
