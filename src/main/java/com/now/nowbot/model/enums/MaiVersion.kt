@@ -1,7 +1,5 @@
 package com.now.nowbot.model.enums
 
-import java.util.Locale
-
 enum class MaiVersion(val full: String, val abbreviation: String, val code: String) {
     DEFAULT("", "", ""),
     MAIMAI("maimai", "", "mai"),
@@ -28,7 +26,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
     FESTIVAL_PLUS("maimai でらっくす FESTiVAL PLUS", "祝", "fep"),
     BUDDIES("maimai でらっくす BUDDiES", "双", "bud"),
     BUDDIES_PLUS("maimai でらっくす BUDDiES PLUS", "宴", "bdp"),
-    PRISM("maimai でらっくす PRiSM", "", "pri"),
+    PRISM("maimai でらっくす PRiSM", "鏡", "pri"),
     PRISM_PLUS("maimai でらっくす PRiSM PLUS", "", "prp"),
     ;
 
@@ -118,7 +116,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
             return when (str.trim { it <= ' ' }
                 .replace(Regex("[-—_]"), " ")
                 .replace(Regex("\\s*[＋+]"), "+")
-                .lowercase(Locale.getDefault())) {
+                .lowercase()) {
                 "prismplus",
                 "prism plus",
                 "prp",
@@ -133,6 +131,8 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "pr",
                 "pri",
                 "prs",
+                "镜",
+                "鏡",
                 "1.5",
                 "1.50" -> PRISM
                 "buddiesplus",
@@ -222,6 +222,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "finale plus",
                 "before deluxe",
                 "beforedeluxe",
+                "beforedx",
                 "afn",
                 "finale+",
                 "final+",

@@ -60,9 +60,9 @@ class TestPPMService(
             return@map AsyncMethodExecutor.Supplier<TestPPMData?> {
                 try {
                     val u = if (isOsuID) {
-                        userApiService.getPlayerInfo(name, mode ?: inputMode)
-                    } else {
                         userApiService.getPlayerInfo(name.toLongOrNull() ?: -1L, mode ?: inputMode)
+                    } else {
+                        userApiService.getPlayerInfo(name, mode ?: inputMode)
                     }
 
                     if (OsuMode.isDefaultOrNull(mode)) {
@@ -71,8 +71,9 @@ class TestPPMService(
 
                     val s = scoreApiService.getBestScores(u.id, mode)
                     val ppmData = TestPPMData()
-
                     ppmData.init(u, s)
+
+                    log.info("testPPM get user [$name] OK")
                     return@Supplier ppmData
                 } catch (e: Exception) {
                     log.error("testPPM get user [$name] info error", e)

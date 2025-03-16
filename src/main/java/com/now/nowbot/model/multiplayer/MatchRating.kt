@@ -382,13 +382,33 @@ class MatchRating(
         val ai3 = AtomicInteger(1)
         val ai4 = AtomicInteger(1)
 
-        val v = playerDataMap.values
-
-        v.sortedByDescending { it.era }.forEach { it.eraIndex = (1.0 * ai1.getAndIncrement() / players.size) }
-        v.sortedByDescending { it.dra }.forEach { it.draIndex = (1.0 * ai2.getAndIncrement() / players.size) }
-        v.sortedByDescending { it.rws }.forEach { it.rwsIndex = (1.0 * ai3.getAndIncrement() / players.size) }
-        v.sortedByDescending { it.mra }.forEach { it.ranking = (ai4.getAndIncrement()) }
+        playerDataMap = playerDataMap.asSequence()
+            .sortedByDescending { it.value.era }
+            .map {
+                it.value.eraIndex = (1.0 * ai1.getAndIncrement() / players.size)
+                it
+            }
+            .sortedByDescending { it.value.dra }
+            .map {
+                it.value.draIndex = 1.0 * ai2.getAndIncrement() / (players.size)
+                it
+            }
+            .sortedByDescending { it.value.rws }
+            .map {
+                it.value.rwsIndex = 1.0 * (ai3.getAndIncrement() / players.size)
+                it
+            }
+            .sortedByDescending { it.value.mra }
+            .map {
+                it.value.ranking = (ai4.getAndIncrement())
+                it
+            }
+            .map {
+                it.key to it.value
+            }
+            .toMap()
     }
+
 
     private fun calculateClass() {
         playerDataMap.values

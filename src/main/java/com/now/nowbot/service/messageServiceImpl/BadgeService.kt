@@ -13,6 +13,7 @@ import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
+import com.now.nowbot.util.command.FLAG_NAME
 import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -23,6 +24,12 @@ import java.util.concurrent.atomic.AtomicBoolean
         val m = Instruction.BADGE.matcher(messageText)
         if (!m.find()) {
             return false
+        }
+
+        // 过滤猫猫指令
+        when (m.group(FLAG_NAME)?.trim()?.lowercase()) {
+            "set", "info", "list", "redeem" -> return false
+            else -> {}
         }
 
         val isMyself = AtomicBoolean(false)

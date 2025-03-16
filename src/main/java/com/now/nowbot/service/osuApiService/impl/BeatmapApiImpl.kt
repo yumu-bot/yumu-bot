@@ -717,6 +717,7 @@ class BeatmapApiImpl(
             extended.totalLength = liteMap.totalLength
             extended.hitLength = liteMap.hitLength
             extended.BPM = liteMap.BPM
+            extended.convert = liteMap.convert
 
             liteMap = extended
             return liteMap
