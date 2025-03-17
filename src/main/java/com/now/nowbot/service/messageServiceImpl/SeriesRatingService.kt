@@ -80,6 +80,7 @@ class SeriesRatingService(
         }
 
         val sr: SeriesRating
+
         try {
             val matches = fetchMatchFromMatchID(matchIDs, event)
             sr = SeriesRating(
@@ -90,7 +91,7 @@ class SeriesRatingService(
             )
 
             if (nameStr != null) {
-                sr.statistics.name = nameStr
+                sr.name = nameStr
             }
 
             sr.calculate()
@@ -441,13 +442,13 @@ class SeriesRatingService(
 
         val matches: MutableList<Match> = ArrayList(matchIDs.size)
 
-        var fetchMapFail = 0
+        var failTimes = 0
         for (m in matchIDs) {
             try {
                 matches.add(matchApiService.getMatchInfo(m, 10))
             } catch (e: HttpClientErrorException.TooManyRequests) {
-                fetchMapFail++
-                if (fetchMapFail > 3) {
+                failTimes++
+                if (failTimes > 3) {
                     log.error("SRA 查询次数超限", e)
                     throw MRAException(MRAException.Type.RATING_Series_TooManyRequest, m.toString())
                 }
@@ -464,8 +465,8 @@ class SeriesRatingService(
                     )
                 }
             } catch (e: WebClientResponseException.TooManyRequests) {
-                fetchMapFail++
-                if (fetchMapFail > 3) {
+                failTimes++
+                if (failTimes > 3) {
                     log.error("SRA 查询次数超限", e)
                     throw MRAException(MRAException.Type.RATING_Series_TooManyRequest, m.toString())
                 }
@@ -485,13 +486,13 @@ class SeriesRatingService(
                 log.error("SRA 对局找不到", e)
 
                 event.reply(
-                    String.format(MRAException.Type.RATING_Series_NotFound.message, m)
+                    m.toString().format(MRAException.Type.RATING_Series_NotFound.message)
                 )
             } catch (e: WebClientResponseException.NotFound) {
                 log.error("SRA 对局找不到", e)
 
                 event.reply(
-                    String.format(MRAException.Type.RATING_Series_NotFound.message, m)
+                    m.toString().format(MRAException.Type.RATING_Series_NotFound.message)
                 )
             } catch (e: Exception) {
                 log.error("SRA 对局获取失败", e)

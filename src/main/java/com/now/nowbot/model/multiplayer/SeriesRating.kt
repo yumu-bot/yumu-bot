@@ -61,6 +61,9 @@ class SeriesRating(
         return@run ratings.flatMap { it.scores }.toList()
     }
 
+    @JsonIgnore
+    var name: String? = null
+
     @get:JsonProperty("score_count")
     val scoreCount: Int
         get() = this.scores.size
@@ -84,7 +87,7 @@ class SeriesRating(
 
             val startTime = firstMatch.startTime
             val endTime = matches.map { it.endTime }.maxBy { it?.toEpochSecond() ?: 0L }
-            val name = firstMatch.name + "..."
+            val name = name ?: (firstMatch.name + "...")
             return Match.MatchStat(firstMatch.id, startTime, endTime, name)
         }
 
@@ -113,6 +116,16 @@ class SeriesRating(
         get() {
             return if (rounds.isNotEmpty()) {
                 rounds.first().beatMapID
+            } else {
+                0L
+            }
+        }
+
+    @get:JsonProperty("first_map_sid")
+    val firstMapSID: Long
+        get() {
+            return if (rounds.isNotEmpty()) {
+                rounds.first().beatMap?.beatMapSetID ?: 0L
             } else {
                 0L
             }
