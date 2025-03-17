@@ -210,6 +210,8 @@ class MatchListenerService(
                 // 需要拓展
                 if (beatmap.CS == null) beatmap = beatmapApiService.getBeatMap(beatmapID)
 
+                calculateApiService.applyBeatMapChanges(beatmap, LazerMod.getModsList(event.mods.map { it.acronym }))
+
                 val objectGroup = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
                 val e7 =
                     PanelE7Param(

@@ -53,7 +53,7 @@ class TestPPMService(
 
         val isOsuID = names.first().matches("\\d+".toRegex())
 
-        event.reply("正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。")
+        event.reply("正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。\n推荐一次输入的数据量小于 48，不然会出现很多特殊的问题。")
 
         var mode: OsuMode? = null
         val actions = names.map { name ->
@@ -82,8 +82,15 @@ class TestPPMService(
             }
         }
 
-        val result = AsyncMethodExecutor.AsyncSupplier(actions)
+        val async: Map<Any, TestPPMData> = AsyncMethodExecutor.AsyncSupplier(actions)
             .filterNotNull()
+            .filter { it.user != null }
+            .associateBy { if (isOsuID) it.user!!.userID else it.user!!.username }
+
+        val result = names.filter { it.isNotEmpty() }
+            .mapNotNull {
+                if (isOsuID) async[it.toLongOrNull() ?: -1L] else async[it.trim()]
+            }
 
         val sb = StringBuilder()
 

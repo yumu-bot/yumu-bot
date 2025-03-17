@@ -63,7 +63,15 @@ class FriendService(
         } else {
             val offset = range.getOffset(0, true)
             val limit = range.getLimit(20, true)
-            data.value = FriendParam(offset, limit, 0, range.data, sort)
+
+            // 如果有输入参数，则默认按名称排序
+            val s = if ((range.start == null && range.end == null).not() && sort.second == RANDOM) {
+                NAME to ASCEND
+            } else {
+                sort
+            }
+
+            data.value = FriendParam(offset, limit, 0, range.data, s)
         }
         return true
     }
@@ -151,7 +159,6 @@ class FriendService(
         val sortType = param.sort.first
         val sortDirection = param.sort.second
 
-        // 拿到参数,默认1-24个
         val offset = param.offset
         val limit = param.limit
 

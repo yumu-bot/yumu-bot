@@ -180,7 +180,7 @@ import kotlin.math.*
     }
 
     enum class Filter(@Language("RegExp") val regex: Regex) {
-        MAPPER("(mapper|creator|host|u)(?<n>$REG_OPERATOR$REG_NAME)".toRegex()),
+        MAPPER("(mapper|creator|gd(er)?|host|u)(?<n>$REG_OPERATOR$REG_NAME)".toRegex()),
 
         SCORE_ID("(score|scoreid|i)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
@@ -369,7 +369,16 @@ import kotlin.math.*
             val double = condition.toDoubleOrNull() ?: -1.0
 
             return when (filter) {
-                Filter.MAPPER -> fit(operator, it.beatMapSet.creator, condition)
+                Filter.MAPPER ->
+                    if (it.beatMap.owners != null) {
+                        for (o in it.beatMap.owners!!) {
+                            if (fit(operator, o.userName, condition)) return true
+                        }
+                        false
+                    } else {
+                        fit(operator, it.beatMapSet.creator, condition)
+                    }
+
                 Filter.SCORE_ID -> fit(operator, it.scoreID, long)
                 Filter.TITLE -> (fit(operator, it.beatMapSet.title, condition)
                         || fit(operator, it.beatMapSet.titleUnicode, condition))

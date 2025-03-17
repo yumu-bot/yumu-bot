@@ -176,7 +176,7 @@ object AsyncMethodExecutor {
             }
         }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
         try {
-            lock.await(120, TimeUnit.SECONDS)
+            lock.await(15, TimeUnit.MINUTES)
         } catch (e: InterruptedException) {
             log.error("lock error", e)
         }
