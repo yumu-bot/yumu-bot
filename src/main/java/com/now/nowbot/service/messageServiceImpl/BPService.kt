@@ -182,7 +182,9 @@ import kotlin.math.*
     enum class Filter(@Language("RegExp") val regex: Regex) {
         MAPPER("(mapper|creator|gd(er)?|host|u)(?<n>$REG_OPERATOR$REG_NAME)".toRegex()),
 
-        SCORE_ID("(score|scoreid|i)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+        BID("(beatmapid|b?id|i)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+
+        SID("((beatmap)?setid|sid?)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
         TITLE("(title|name|song|t)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
@@ -379,7 +381,8 @@ import kotlin.math.*
                         fit(operator, it.beatMapSet.creator, condition)
                     }
 
-                Filter.SCORE_ID -> fit(operator, it.scoreID, long)
+                Filter.BID -> fit(operator, it.beatMapID, long)
+                Filter.SID -> fit(operator, it.beatMapSet.beatMapSetID, long)
                 Filter.TITLE -> (fit(operator, it.beatMapSet.title, condition)
                         || fit(operator, it.beatMapSet.titleUnicode, condition))
                 Filter.ARTIST -> (fit(operator, it.beatMapSet.artist, condition)

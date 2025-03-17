@@ -2,7 +2,7 @@ package com.now.nowbot.model.enums
 
 enum class MaiVersion(val full: String, val abbreviation: String, val code: String) {
     DEFAULT("", "", ""),
-    MAIMAI("maimai", "", "mai"),
+    MAIMAI("maimai", "初", "mai"),
     PLUS("maimai PLUS", "真", "mai"),
     GREEN("maimai GreeN", "超", "grn"),
     GREEN_PLUS("maimai GreeN PLUS", "檄", "grp"),
@@ -326,6 +326,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "maimai",
                 "mi",
                 "mai",
+                "初",
                 "0.1",
                 "0.10" -> MAIMAI
                 else -> {
