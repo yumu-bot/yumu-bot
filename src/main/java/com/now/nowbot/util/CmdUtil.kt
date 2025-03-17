@@ -50,30 +50,22 @@ object CmdUtil {
         mode: CmdObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): OsuUser {
-        val bu: BindUser? = try {
+        val user = getOsuUser(event, matcher, mode)
+
+        val me: BindUser? = try {
             bindDao.getBindFromQQ(event.sender.id, true)
         } catch (ignored: Exception) {
             null
         }
 
-        mode.data = OsuMode.getMode(mode.data, bu?.osuMode)
-
-        val user = getOsuUser(event, matcher, mode)
-
         if (user != null) {
-            isMyself.set(bu?.osuID == user.userID)
+            isMyself.set(me?.osuID == user.userID)
             return user
-        } else if (bu != null) {
+        } else if (me != null) {
             isMyself.set(true)
-            return getOsuUser(bu.username, bu.osuID) {
-                userApiService.getPlayerInfo(bu, checkOsuMode(mode, bu.osuMode))
-            }
+            return getOsuUser(me.username, me.osuID) { userApiService.getPlayerInfo(me, checkOsuMode(mode, me.osuMode)) }
         } else {
-            if (isMyself.get()) {
-                throw BindException(BindException.Type.BIND_Me_TokenExpired)
-            } else {
-                throw BindException(BindException.Type.BIND_Player_TokenExpired)
-            }
+            throw BindException(BindException.Type.BIND_Player_TokenExpired)
         }
     }
 
