@@ -33,19 +33,10 @@ class AudioService(
         if (!matcher.find()) {
             return false
         }
-        val idStr: String? = matcher.group("id")
+        val idStr: String = matcher.group("id") ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Audio)
         val type: String? = matcher.group("type")
 
-        if (idStr == null) {
-            throw GeneralTipsException("请输入想要试听的 bid 或者 sid！\n(!a <bid> / !a:s <sid>)")
-        }
-
-        val id =
-            try {
-                idStr.toLong()
-            } catch (e: NumberFormatException) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
-            }
+        val id = idStr.toLongOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
 
         val isBID = !(type != null && (type == "s" || type == "sid"))
 
@@ -67,7 +58,7 @@ class AudioService(
         if (voice == null) {
             val type = if (param.isBid) 'B' else 'S'
             log.info("谱面试听：无法获取 ${type}${param.id} 的音频")
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Audio)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_AudioDownload)
         }
 
         try {
@@ -86,6 +77,17 @@ class AudioService(
     }
 
     private fun getVoiceFromSID(sid: Long): ByteArray? {
+        val s =
+            try {
+                beatmapApiService.getBeatMapSet(sid)
+            } catch (e: Exception) {
+                return null
+            }
+
+        if (s.nsfw) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Restricted_NSFW)
+        }
+
         return try {
             getVoice(sid)
         } catch (e: WebClientException) {
@@ -94,15 +96,19 @@ class AudioService(
     }
 
     private fun getVoiceFromBID(bid: Long): ByteArray? {
-        val sid =
+        val b =
             try {
-                beatmapApiService.getBeatMapFromDataBase(bid).beatMapSetID
+                beatmapApiService.getBeatMap(bid)
             } catch (e: Exception) {
                 return null
             }
 
+        if (b.beatMapSet?.nsfw == true) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Restricted_NSFW)
+        }
+
         return try {
-            getVoice(sid)
+            getVoice(b.beatMapSetID)
         } catch (e: WebClientException) {
             null
         }

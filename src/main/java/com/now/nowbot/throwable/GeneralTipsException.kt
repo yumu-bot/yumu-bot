@@ -10,8 +10,10 @@ class GeneralTipsException : TipsException {
         G_NotBind_Player("该玩家没有绑定。"),
 
         G_Banned_Me("你被办了。"), 
-        G_Banned_Player("%s 被办了。"), 
-        
+        G_Banned_Player("%s 被办了。"),
+
+        G_Restricted_NSFW("这种歌曲，还是有点唱不出口呢。"),
+
         G_Maimai_YouForbidden("您已禁止其他人获取数据。"), 
         G_Maimai_PlayerForbidden("该玩家已禁止其他人获取数据。"), 
         G_Maimai_YouBadRequest("您的 QQ 似乎并没有和您的水鱼账号绑定。"), 
@@ -30,10 +32,11 @@ class GeneralTipsException : TipsException {
         G_Null_ResultNotAccurate("找不到可能的结果...试试输入更常见的外号或准确的歌曲编号吧。"), 
         G_Null_Param("请输入正确的参数！"), 
         G_Null_UserName("请输入正确的玩家名！"), 
-        G_Null_BID_Quotation("您在使用引号包括住玩家名时，也需要输入谱面的曲名或是编号！"), 
+        G_Null_BID_Quotation("您在使用引号包括住玩家名时，也需要输入谱面的曲名或是编号！"),
+        G_Null_Audio("请输入想要试听的 bid 或者 sid！\n(!a <bid> / !a:s <sid>)"),
         G_Null_BID("请输入正确的谱面编号 (BID)！"),
         G_Null_SID("请输入正确的谱面编号 (SID)！"),
-        G_Null_Audio("试听音频下载失败。\n也许是谱面输入错误，或者谱面被版权限制了。\n自己去官网听算了。"),
+        G_Null_AudioDownload("试听音频下载失败。\n也许是谱面输入错误，或者谱面被版权限制了。\n自己去官网听算了。"),
         G_Null_Song("找不到歌曲 %s，请检查。"),
         G_Null_PlayerTeam("找不到玩家 %s 所属的战队，请检查。"),
         G_Null_Team("找不到战队 %s，请检查。"),
