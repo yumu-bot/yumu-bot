@@ -111,8 +111,6 @@ class ScorePRService(
 
         val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent")
 
-        mode.data = OsuMode.getMode(mode.data, range.data!!.currentOsuMode)
-
         range.setZeroToRange100()
 
         if (range.data == null) {
@@ -175,8 +173,6 @@ class ScorePRService(
         val isMyself = AtomicBoolean()
         val mode = getMode(matcher)
         val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent")
-
-        mode.data = OsuMode.getMode(mode.data, range.data!!.currentOsuMode)
 
         if (range.data == null) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Param)
