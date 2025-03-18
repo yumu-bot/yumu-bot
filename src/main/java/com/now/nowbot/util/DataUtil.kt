@@ -1162,24 +1162,43 @@ object DataUtil {
     }
 
     /**
-     * 自己写的匹配器，这样子就可以无所谓匹配顺序了
-     * @param regexes 正则表达式。注意，这里的正则需要写得越简洁越好，不然会有大量重复匹配
-     * @param isMultipleMatches 是否允许单个匹配器被多次匹配。默认为 true
+     * 自己写的空格分隔的匹配器，这样子就可以无所谓匹配顺序了
+     * @param regexes 正则表达式。注意，这里的正则需要写得越简洁越好，不然会有大量重复匹配。推荐写成 xxx=yyy 的形式
+     * @param noContains 如果不填，默认遵循一匹配到就输出的逻辑。如果填写，则只有在靠近末尾的字符串含有这样的字符时，切断并输出当前匹配到的
      */
-    fun paramMatcher(str: String?, regexes: List<Regex>, isMultipleMatches: Boolean = true) : List<List<String>> {
+    fun paramMatcher(str: String?, regexes: List<Regex>, noContains: Regex? = null) : List<List<String>> {
         if (str == null) return emptyList()
 
         val result = List(regexes.size) { emptyList<String>().toMutableList() }
         var matcher = ""
 
-        for (s in str.split("\\s+".toRegex())) {
+        val strs = str.split("\\s+".toRegex())
+
+        strs.forEachIndexed { j, s ->
             matcher += s
 
             for (i in regexes.indices) {
                 val reg = regexes[i]
 
                 if (reg.matches(matcher)) {
-                    if (isMultipleMatches.not() && result[i].isNotEmpty()) continue
+
+                    if (noContains == null || (j <= strs.size - 2 && strs[j + 1].contains(noContains)) || (j == strs.size - 1)) {
+                        // 正常输出、不包含输出、已经结尾，可以输出
+
+                        result[i].add(matcher)
+                        matcher = ""
+                    }
+                }
+            }
+        }
+
+        for (s in strs) {
+            matcher += s
+
+            for (i in regexes.indices) {
+                val reg = regexes[i]
+
+                if (reg.matches(matcher)) {
 
                     result[i].add(matcher)
                     matcher = ""

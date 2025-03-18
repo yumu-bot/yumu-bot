@@ -248,9 +248,9 @@ class BeatMapSet {
         get(){
             val m = mutableListOf<OsuUser>()
 
-            if (relatedUsers.isNullOrEmpty().not() && nominators.isNotEmpty()) {
+            if (relatedUsers.isNullOrEmpty().not()) {
                 for (u in relatedUsers!!) {
-                    if (!(nominators.contains(u) || u.userID == creatorID)) {
+                    if ((nominators.isEmpty() || nominators.contains(u).not()) && u.userID != creatorID) {
                         m.add(u)
                     }
                 }
