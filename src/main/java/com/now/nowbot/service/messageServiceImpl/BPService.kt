@@ -46,13 +46,18 @@ import kotlin.math.*
         val matcher = Instruction.BP.matcher(messageText)
         if (!matcher.find()) return false
 
+        val any: String? = matcher.group("any")
+
+        // 避免指令冲突
+        if (any?.contains("&sb", ignoreCase = true) == true) return false
+
         val isMyself = AtomicBoolean() // 处理 range
         val mode = getMode(matcher)
 
         val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
         range.setZeroToRange100()
 
-        val any = matcher.group("any")
+
         val conditions = DataUtil.paramMatcher(any, Filter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
 
         // 如果不加井号，则有时候范围会被匹配到这里来
