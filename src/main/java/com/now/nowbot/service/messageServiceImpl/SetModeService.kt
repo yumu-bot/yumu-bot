@@ -67,7 +67,7 @@ class SetModeService (
 
         val info = if (mode == OsuMode.DEFAULT) {
             if (user.osuMode.isDefault()) {
-                throw TipsException("你没有已绑定的游戏模式。\n请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来绑定游戏模式。")
+                throw TipsException("你没有已绑定的游戏模式。\n请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来修改绑定的游戏模式。")
             } else {
                 if (predeterminedMode.isDefault()) {
                     "已移除绑定的游戏模式 ${user.osuMode.fullName}。"
