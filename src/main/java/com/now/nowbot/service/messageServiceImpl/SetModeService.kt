@@ -75,7 +75,7 @@ class SetModeService (
                 }
             }
             // return MessageChain("未知的游戏模式。请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania)")
-        } else if (user.osuMode.isEqualOrDefault(mode)) {
+        } else if (mode.isEqualOrDefault(user.osuMode)) {
             if (predeterminedMode.isDefault()) {
                 "已将绑定的游戏模式修改为: ${mode.fullName}。"
             } else {
