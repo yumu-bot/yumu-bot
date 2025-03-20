@@ -56,7 +56,11 @@ class SetGroupModeService (
 
         val text = if (OsuMode.isNotDefaultOrNull(predeterminedMode)) {
             if (isNotGroupAdmin) {
-                "当前群组绑定的游戏模式为：${predeterminedMode.fullName}"
+                if (OsuMode.isNotDefaultOrNull(mode)) {
+                    "当前群组绑定的游戏模式为：${predeterminedMode.fullName}。\n你没有修改群组绑定游戏模式的权限。"
+                } else {
+                    "当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
+                }
             } else {
                 // 修改已有模式状态
                 if (OsuMode.isNotDefaultOrNull(mode)) {
@@ -69,7 +73,11 @@ class SetGroupModeService (
             }
         } else {
             if (isNotGroupAdmin) {
-                "当前群组没有已绑定的游戏模式。\n如果你是群主或管理员，可以输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来修改群组的绑定游戏模式。"
+                if (OsuMode.isNotDefaultOrNull(mode)) {
+                    "当前群组没有已绑定的游戏模式。\n你没有修改群组绑定游戏模式的权限。"
+                } else {
+                    "当前群组没有已绑定的游戏模式。\n你可以输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来修改群组的绑定游戏模式。"
+                }
             } else {
                 // 赋予新模式状态
                 if (OsuMode.isNotDefaultOrNull(mode)) {
