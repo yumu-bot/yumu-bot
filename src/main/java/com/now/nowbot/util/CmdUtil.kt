@@ -6,6 +6,7 @@ import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
@@ -62,7 +63,7 @@ object CmdUtil {
             return user
         } else if (me != null) {
             isMyself.set(true)
-            checkGroupOsuMode(mode, me.osuMode, event.subject.id)
+            checkGroupOsuMode(mode, me.osuMode, event)
             return getOsuUser(me.username, me.osuID) { userApiService.getPlayerInfo(me, mode.data) }
         } else {
             throw BindException(BindException.Type.BIND_Player_TokenExpired)
@@ -147,7 +148,7 @@ object CmdUtil {
                     }
 
                     // val id = userApiService.getOsuId(name)
-                    checkGroupOsuMode(mode, bindMode, event.subject.id)
+                    checkGroupOsuMode(mode, bindMode, event)
                     val user = getOsuUser(name, mode.data)
                     return CmdRange(user)
                 } catch (_: Exception) {
@@ -178,7 +179,7 @@ object CmdUtil {
                 }
 
                 // val id = userApiService.getOsuId(range.data)
-                checkGroupOsuMode(mode, bindMode, event.subject.id)
+                checkGroupOsuMode(mode, bindMode, event)
                 val user = getOsuUser(range.data!!, mode.data)
                 result = CmdRange(user, range.start, range.end)
                 break
@@ -324,7 +325,7 @@ object CmdUtil {
         if (qq != 0L) {
             val bind = bindDao.getBindFromQQ(qq)
 
-            checkGroupOsuMode(mode, bind.osuMode, event.subject.id)
+            checkGroupOsuMode(mode, bind.osuMode, event)
             return getOsuUser(bind, mode.data)
         }
 
@@ -449,12 +450,39 @@ object CmdUtil {
         return result
     }
 
-    /** 用于 default mode 覆盖 */
-    fun checkGroupOsuMode(mode: CmdObject<OsuMode>, selfMode: OsuMode, groupID: Long? = null) {
+    /**
+     * 用于覆盖默认的游戏模式。优先级：mode > groupMode > selfMode
+     * @param mode 玩家查询时输入的游戏模式
+     * @param selfMode 一般是玩家自己绑定的游戏模式
+     * @param event 可能为群组
+     */
+    fun checkGroupOsuMode(mode: CmdObject<OsuMode>, selfMode: OsuMode, event: MessageEvent? = null) {
+        if (OsuMode.isNotDefaultOrNull(mode.data)) return
+
+        val groupMode = if (event != null && event.subject is Group) {
+            bindDao.getGroupModeConfig(event.subject.id)
+        } else {
+            OsuMode.DEFAULT
+        }
+
+        mode.data = if (OsuMode.isNotDefaultOrNull(groupMode)) {
+            groupMode
+        } else if (OsuMode.isNotDefaultOrNull(selfMode)) {
+            selfMode
+        } else {
+            OsuMode.DEFAULT
+        }
+
+        /*
+
         if (OsuMode.isNotDefaultOrNull(selfMode)) {
             mode.data = selfMode
         } else if (OsuMode.isDefaultOrNull(mode.data)) {
-            val groupMode = if (groupID == null) OsuMode.DEFAULT else bindDao.getGroupModeConfig(groupID)
+            val groupMode = if (event != null && event.subject is Group) {
+                bindDao.getGroupModeConfig(event.subject.id)
+            } else {
+                OsuMode.DEFAULT
+            }
 
             if (OsuMode.isNotDefaultOrNull(groupMode)) {
                 mode.data = groupMode
@@ -462,6 +490,8 @@ object CmdUtil {
                 mode.data = OsuMode.DEFAULT
             }
         }
+
+         */
 
         /*
         if (OsuMode.isDefaultOrNull(mode.data) && OsuMode.isNotDefaultOrNull(predeterminedMode)) {

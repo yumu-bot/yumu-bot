@@ -21,30 +21,30 @@ import org.springframework.stereotype.Service
 class SetModeService (
     private val bindDao: BindDao,
     private val osuUserApiService: OsuUserApiService,
-): MessageService<String>, TencentMessageService<String> {
+): MessageService<OsuMode>, TencentMessageService<OsuMode> {
 
-    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<String>): Boolean {
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<OsuMode>): Boolean {
         val m = Instruction.SET_MODE.matcher(messageText)
         if (m.find()) {
-            data.value = m.group(FLAG_MODE)
+            data.value = OsuMode.getMode(m.group(FLAG_MODE))
             return true
         } else return false
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, modeStr: String) {
+    override fun HandleMessage(event: MessageEvent, param: OsuMode) {
         val user = bindDao.getBindFromQQ(event.sender.id, true)
-        event.reply(getReply(modeStr, event, user))
+        event.reply(getReply(param, event, user))
     }
 
-    override fun accept(event: MessageEvent, messageText: String): String? {
+    override fun accept(event: MessageEvent, messageText: String): OsuMode? {
         val m = OfficialInstruction.SET_MODE.matcher(messageText)
-        if (m.find()) return m.group(FLAG_MODE)
+        if (m.find()) return OsuMode.getMode(m.group(FLAG_MODE))
         return null
     }
 
     @Throws(Throwable::class)
-    override fun reply(event: MessageEvent, param: String): MessageChain? {
+    override fun reply(event: MessageEvent, param: OsuMode): MessageChain? {
         val user = try {
             bindDao.getBindUserFromOsuID(-event.sender.id)
         } catch (e: BindException) {
@@ -61,8 +61,7 @@ class SetModeService (
         return getReply(param, event, user)
     }
 
-    private fun getReply(modeStr: String?, event: MessageEvent, user: BindUser): MessageChain {
-        val mode = OsuMode.getMode(modeStr)
+    private fun getReply(mode: OsuMode, event: MessageEvent, user: BindUser): MessageChain {
         val predeterminedMode = if (event.subject is Group) bindDao.getGroupModeConfig(event.subject.id) else OsuMode.DEFAULT
 
         val info = if (mode == OsuMode.DEFAULT) {
@@ -76,7 +75,7 @@ class SetModeService (
                 }
             }
             // return MessageChain("未知的游戏模式。请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania)")
-        } else if (user.osuMode.isDefault() || user.osuMode == mode) {
+        } else if (user.osuMode.isEqualOrDefault(mode)) {
             if (predeterminedMode.isDefault()) {
                 "已将绑定的游戏模式修改为: ${mode.fullName}。"
             } else {

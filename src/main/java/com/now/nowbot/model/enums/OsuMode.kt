@@ -40,7 +40,7 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
     }
 
     /**
-     * 返回相等，或是 mode 默认
+     * 返回相等，或是 mode 等于默认。
      * 它位于 ConvertAble 和 NotConvertAble 之间
      */
     fun isEqualOrDefault(mode: OsuMode?): Boolean {
