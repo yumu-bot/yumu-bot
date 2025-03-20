@@ -8,7 +8,6 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MODE
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
@@ -57,8 +56,10 @@ class SetGroupModeService (
         val text = if (OsuMode.isNotDefaultOrNull(predeterminedMode)) {
             if (isNotGroupAdmin) {
                 if (OsuMode.isNotDefaultOrNull(mode)) {
+                    // 无权限，想修改
                     "当前群组绑定的游戏模式为：${predeterminedMode.fullName}。\n你没有修改群组绑定游戏模式的权限。"
                 } else {
+                    // 无权限，不想修改
                     "当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
                 }
             } else {
@@ -74,9 +75,11 @@ class SetGroupModeService (
         } else {
             if (isNotGroupAdmin) {
                 if (OsuMode.isNotDefaultOrNull(mode)) {
+                    // 无权限，想修改
                     "当前群组没有已绑定的游戏模式。\n你没有修改群组绑定游戏模式的权限。"
                 } else {
-                    "当前群组没有已绑定的游戏模式。\n你可以输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来修改群组的绑定游戏模式。"
+                    // 无权限，不想修改
+                    "当前群组没有已绑定的游戏模式。"
                 }
             } else {
                 // 赋予新模式状态
@@ -84,7 +87,7 @@ class SetGroupModeService (
                     bindDao.saveGroupModeConfig(group, mode)
                     "已将群组绑定的游戏模式修改为: ${mode.fullName}。"
                 } else {
-                    throw TipsException("当前群组没有已绑定的游戏模式。\n请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来修改群组的绑定游戏模式。")
+                    "当前群组没有已绑定的游戏模式。\n你可以输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来修改群组的绑定游戏模式。"
                 }
             }
         }
