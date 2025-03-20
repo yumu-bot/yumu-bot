@@ -1,13 +1,11 @@
 package com.now.nowbot.dao;
 
 import com.now.nowbot.entity.OsuBindUserLite;
+import com.now.nowbot.entity.OsuGroupConfigLite;
 import com.now.nowbot.entity.OsuNameToIdLite;
 import com.now.nowbot.entity.bind.DiscordBindLite;
 import com.now.nowbot.entity.bind.QQBindLite;
-import com.now.nowbot.mapper.BindDiscordMapper;
-import com.now.nowbot.mapper.BindQQMapper;
-import com.now.nowbot.mapper.BindUserMapper;
-import com.now.nowbot.mapper.OsuFindNameMapper;
+import com.now.nowbot.mapper.*;
 import com.now.nowbot.model.BindUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
@@ -32,18 +30,26 @@ public class BindDao {
     private final Set<Long>     UPDATE_USERS = new CopyOnWriteArraySet<>();
     private final AtomicBoolean NOW_UPDATE   = new AtomicBoolean(false);
 
-    Logger            log = LoggerFactory.getLogger(BindDao.class);
-    BindUserMapper    bindUserMapper;
-    BindQQMapper      bindQQMapper;
-    BindDiscordMapper bindDiscordMapper;
-    OsuFindNameMapper osuFindNameMapper;
+    Logger                   log = LoggerFactory.getLogger(BindDao.class);
+    BindUserMapper           bindUserMapper;
+    BindQQMapper             bindQQMapper;
+    BindDiscordMapper        bindDiscordMapper;
+    OsuFindNameMapper        osuFindNameMapper;
+    OsuGroupConfigRepository osuGroupConfigRepository;
 
     @Autowired
-    public BindDao(BindUserMapper mapper, OsuFindNameMapper nameMapper, BindQQMapper QQMapper, BindDiscordMapper discordMapper) {
+    public BindDao(
+            BindUserMapper mapper,
+            OsuFindNameMapper nameMapper,
+            BindQQMapper QQMapper,
+            BindDiscordMapper discordMapper,
+            OsuGroupConfigRepository osuGroupConfigRepository
+    ) {
         bindUserMapper = mapper;
         osuFindNameMapper = nameMapper;
         bindQQMapper = QQMapper;
         bindDiscordMapper = discordMapper;
+        this.osuGroupConfigRepository = osuGroupConfigRepository;
     }
 
     public BindUser getBindFromQQ(Long qq) throws BindException {
@@ -52,7 +58,8 @@ public class BindDao {
 
     /**
      * 获取绑定的玩家
-     * @param qq qq
+     *
+     * @param qq       qq
      * @param isMyself 仅影响报错信息，不影响结果
      * @return 绑定的玩家
      */
@@ -127,7 +134,7 @@ public class BindDao {
             if (count > 0) bindUserMapper.deleteAllByOsuId(user.getOsuID());
             osuBind = bindUserMapper.checkSave(osuBind);
         } else {
-            Optional<OsuBindUserLite> buLiteOpt =bindUserMapper.getFirstByOsuId(user.getOsuID());
+            Optional<OsuBindUserLite> buLiteOpt = bindUserMapper.getFirstByOsuId(user.getOsuID());
             if (buLiteOpt.isPresent()) {
                 osuBind = buLiteOpt.get();
             } else {
@@ -188,6 +195,7 @@ public class BindDao {
 
     /**
      * 高危权限
+     *
      * @param user 绑定
      * @return qq
      */
@@ -270,7 +278,7 @@ public class BindDao {
     }
 
     @Async
-    public void  refreshOldUserToken(OsuUserApiService osuGetService) {
+    public void refreshOldUserToken(OsuUserApiService osuGetService) {
         NOW_UPDATE.set(true);
         UPDATE_USERS.clear();
         try {
@@ -320,6 +328,7 @@ public class BindDao {
             refreshOldUserToken(u, osuGetService);
         }
     }
+
     private void refreshOldUserTokenPack(OsuUserApiService osuGetService) {
         long now = System.currentTimeMillis();
         int succeedCount = 0;
@@ -410,11 +419,9 @@ public class BindDao {
         }
     }
 
-    private static class RefreshException extends RuntimeException {
-        int successCount;
-        RefreshException(int i) {
-            successCount = i;
-        }
+    public OsuMode getGroupModeConfig(long groupId) {
+        var config = osuGroupConfigRepository.findById(groupId);
+        return config.map(OsuGroupConfigLite::getMainMode).orElse(OsuMode.DEFAULT);
     }
 
     public List<Long> getAllUserIdLimit50(int start) {
@@ -423,5 +430,21 @@ public class BindDao {
 
     public List<QQBindLite.QQUser> getAllQQBindUser(Collection<Long> qqId) {
         return bindQQMapper.findAllUserByQQ(qqId);
+    }
+
+    public void saveGroupModeConfig(long groupId, OsuMode mode) {
+        if (mode == OsuMode.DEFAULT) {
+            osuGroupConfigRepository.deleteById(groupId);
+        } else {
+            osuGroupConfigRepository.save(new OsuGroupConfigLite(groupId, mode));
+        }
+    }
+
+    private static class RefreshException extends RuntimeException {
+        int successCount;
+
+        RefreshException(int i) {
+            successCount = i;
+        }
     }
 }

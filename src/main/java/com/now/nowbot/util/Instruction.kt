@@ -99,6 +99,11 @@ enum class Instruction(val pattern: Pattern) {
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
     }),
 
+    SET_GROUP_MODE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("(set)?groupmode", "gm")
+        appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
+    }),
+
     SCORE_PR(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))(?<s>s)?")
         appendModeQQUIDNameRange()

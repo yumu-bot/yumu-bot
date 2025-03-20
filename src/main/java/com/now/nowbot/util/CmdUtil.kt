@@ -57,13 +57,13 @@ object CmdUtil {
         } catch (ignored: Exception) {
             null
         }
-
         if (user != null) {
             isMyself.set(me?.osuID == user.userID)
             return user
         } else if (me != null) {
             isMyself.set(true)
-            return getOsuUser(me.username, me.osuID) { userApiService.getPlayerInfo(me, checkOsuMode(mode, me.osuMode)) }
+            checkGroupOsuMode(mode, me.osuMode, event.subject.id)
+            return getOsuUser(me.username, me.osuID) { userApiService.getPlayerInfo(me, mode.data) }
         } else {
             throw BindException(BindException.Type.BIND_Player_TokenExpired)
         }
@@ -83,7 +83,7 @@ object CmdUtil {
         isMyself: AtomicBoolean,
     ): CmdRange<OsuUser> {
         isMyself.set(false)
-        val range = getUserAndRange(matcher, mode)
+        val range = getUserAndRange(event, matcher, mode)
         if (range.data.isNull()) {
             range.data = getUserWithoutRange(event, matcher, mode, isMyself)
         }
@@ -120,6 +120,7 @@ object CmdUtil {
      * @throws [GeneralTipsException.Type.G_Null_Player] 当输入字符串包含用户名, 并且查找后无此人时抛出
      */
     @Throws(GeneralTipsException::class) private fun getUserAndRange(
+        event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>
     ): CmdRange<OsuUser> {
@@ -146,7 +147,8 @@ object CmdUtil {
                     }
 
                     // val id = userApiService.getOsuId(name)
-                    val user = getOsuUser(name, checkOsuMode(mode, bindMode))
+                    checkGroupOsuMode(mode, bindMode, event.subject.id)
+                    val user = getOsuUser(name, mode.data)
                     return CmdRange(user)
                 } catch (_: Exception) {
 
@@ -176,7 +178,8 @@ object CmdUtil {
                 }
 
                 // val id = userApiService.getOsuId(range.data)
-                val user = getOsuUser(range.data!!, checkOsuMode(mode, bindMode))
+                checkGroupOsuMode(mode, bindMode, event.subject.id)
+                val user = getOsuUser(range.data!!, mode.data)
                 result = CmdRange(user, range.start, range.end)
                 break
             } catch (ignore: Exception) { // 其余的忽略
@@ -320,7 +323,9 @@ object CmdUtil {
 
         if (qq != 0L) {
             val bind = bindDao.getBindFromQQ(qq)
-            return getOsuUser(bind, checkOsuMode(mode, bind.osuMode))
+
+            checkGroupOsuMode(mode, bind.osuMode, event.subject.id)
+            return getOsuUser(bind, mode.data)
         }
 
         if (matcher.namedGroups().containsKey(FLAG_UID)) {
@@ -445,11 +450,18 @@ object CmdUtil {
     }
 
     /** 用于 default mode 覆盖 */
-    @JvmStatic fun checkOsuMode(mode: CmdObject<OsuMode>, other: OsuMode?): OsuMode {
-        if (OsuMode.isDefaultOrNull(mode.data) && OsuMode.isNotDefaultOrNull(other)) {
-            mode.data = other
+    fun checkGroupOsuMode(mode: CmdObject<OsuMode>, selfMode: OsuMode, groupId:Long) {
+        if (OsuMode.isDefaultOrNull(mode.data) && OsuMode.isNotDefaultOrNull(selfMode)) {
+            mode.data = selfMode
+            return
         }
-        return mode.data ?: OsuMode.DEFAULT
+        val groupMode = bindDao.getGroupModeConfig(groupId)
+        if (OsuMode.isDefaultOrNull(mode.data) && OsuMode.isNotDefaultOrNull(groupMode)) {
+            mode.data = groupMode
+        }
+        if (mode.data == null) {
+            mode.data = OsuMode.DEFAULT
+        }
     }
 
     private const val OSU_MIN_INDEX = 2
