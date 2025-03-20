@@ -180,7 +180,7 @@ public class BindDao {
         bindUserMapper.updateToken(uid, accessToken, refreshToken, time);
     }
 
-    public void updateMod(Long uid, OsuMode mode) {
+    public void updateMode(Long uid, OsuMode mode) {
         bindUserMapper.updateMode(uid, mode);
     }
 
@@ -433,7 +433,7 @@ public class BindDao {
     }
 
     public void saveGroupModeConfig(long groupId, OsuMode mode) {
-        if (mode == OsuMode.DEFAULT) {
+        if (OsuMode.isDefaultOrNull(mode)) {
             osuGroupConfigRepository.deleteById(groupId);
         } else {
             osuGroupConfigRepository.save(new OsuGroupConfigLite(groupId, mode));

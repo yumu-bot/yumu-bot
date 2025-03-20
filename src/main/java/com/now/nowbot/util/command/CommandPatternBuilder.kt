@@ -125,11 +125,14 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     /**
      * group=(?<group>\d+)
+     * @param maybe 如果设置为真，则可以只匹配数字作为群号，不需要输入 group=
      */
-    fun appendQQGroup() {
+    fun appendQQGroup(maybe: Boolean = false) {
         appendGroup(MAYBE) {
             append(FLAG_QQ_GROUP)
+            if (maybe) append(LEVEL_MAYBE)
             append(CHAR_EQUAL)
+            if (maybe) append(LEVEL_MAYBE)
             appendCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, MORE, EXIST)
         }
         appendSpace()

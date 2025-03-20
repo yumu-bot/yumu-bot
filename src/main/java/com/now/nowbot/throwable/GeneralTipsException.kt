@@ -13,6 +13,7 @@ class GeneralTipsException : TipsException {
         G_Banned_Player("%s 被办了。"),
 
         G_Restricted_NSFW("这种歌曲，还是有点唱不出口呢。"),
+        G_Restricted_Group("请在群聊中使用这个功能！"),
 
         G_Maimai_YouForbidden("您已禁止其他人获取数据。"), 
         G_Maimai_PlayerForbidden("该玩家已禁止其他人获取数据。"), 

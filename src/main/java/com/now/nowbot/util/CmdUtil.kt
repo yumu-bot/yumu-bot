@@ -450,18 +450,33 @@ object CmdUtil {
     }
 
     /** 用于 default mode 覆盖 */
-    fun checkGroupOsuMode(mode: CmdObject<OsuMode>, selfMode: OsuMode, groupId:Long) {
-        if (OsuMode.isDefaultOrNull(mode.data) && OsuMode.isNotDefaultOrNull(selfMode)) {
+    fun checkGroupOsuMode(mode: CmdObject<OsuMode>, selfMode: OsuMode, groupID: Long? = null) {
+        if (OsuMode.isNotDefaultOrNull(selfMode)) {
             mode.data = selfMode
+        } else if (OsuMode.isDefaultOrNull(mode.data)) {
+            val groupMode = if (groupID == null) OsuMode.DEFAULT else bindDao.getGroupModeConfig(groupID)
+
+            if (OsuMode.isNotDefaultOrNull(groupMode)) {
+                mode.data = groupMode
+            } else if (mode.data == null) {
+                mode.data = OsuMode.DEFAULT
+            }
+        }
+
+        /*
+        if (OsuMode.isDefaultOrNull(mode.data) && OsuMode.isNotDefaultOrNull(predeterminedMode)) {
+            mode.data = predeterminedMode
             return
         }
-        val groupMode = bindDao.getGroupModeConfig(groupId)
+        val groupMode = if (groupID == null) OsuMode.DEFAULT else bindDao.getGroupModeConfig(groupID)
         if (OsuMode.isDefaultOrNull(mode.data) && OsuMode.isNotDefaultOrNull(groupMode)) {
             mode.data = groupMode
         }
         if (mode.data == null) {
             mode.data = OsuMode.DEFAULT
         }
+
+         */
     }
 
     private const val OSU_MIN_INDEX = 2

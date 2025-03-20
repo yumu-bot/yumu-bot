@@ -3,12 +3,14 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
@@ -32,7 +34,7 @@ class SetModeService (
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, modeStr: String) {
         val user = bindDao.getBindFromQQ(event.sender.id, true)
-        event.reply(getReply(modeStr, user))
+        event.reply(getReply(modeStr, event, user))
     }
 
     override fun accept(event: MessageEvent, messageText: String): String? {
@@ -56,24 +58,41 @@ class SetModeService (
             bindDao.saveBind(bindUser)
         }
 
-        return getReply(param, user)
+        return getReply(param, event, user)
     }
 
-    private fun getReply(modeStr: String?, user: BindUser): MessageChain {
+    private fun getReply(modeStr: String?, event: MessageEvent, user: BindUser): MessageChain {
         val mode = OsuMode.getMode(modeStr)
+        val predeterminedMode = if (event.subject is Group) bindDao.getGroupModeConfig(event.subject.id) else OsuMode.DEFAULT
 
-        if (mode == OsuMode.DEFAULT) {
-            return MessageChain("未知的游戏模式。请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania)")
-        }
-
-        val info = if (user.osuMode.isDefault() || user.osuMode == mode) {
-            "已将绑定的游戏模式修改为: ${mode.fullName}"
+        val info = if (mode == OsuMode.DEFAULT) {
+            if (user.osuMode.isDefault()) {
+                throw TipsException("你没有已绑定的游戏模式。\n请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来绑定游戏模式。")
+            } else {
+                if (predeterminedMode.isDefault()) {
+                    "已移除绑定的游戏模式 ${user.osuMode.fullName}。"
+                } else {
+                    "已移除绑定的游戏模式 ${user.osuMode.fullName}。\n当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
+                }
+            }
+            // return MessageChain("未知的游戏模式。请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania)")
+        } else if (user.osuMode.isDefault() || user.osuMode == mode) {
+            if (predeterminedMode.isDefault()) {
+                "已将绑定的游戏模式修改为: ${mode.fullName}。"
+            } else {
+                "已将绑定的游戏模式修改为: ${mode.fullName}。\n当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
+            }
         } else {
-            "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为: ${mode.fullName}"
+            if (predeterminedMode.isDefault()) {
+                "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为: ${mode.fullName}。"
+            } else {
+                "已将绑定的游戏模式修改为: ${mode.fullName} 修改为: ${mode.fullName}。\n当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
+            }
         }
 
         user.osuMode = mode
-        bindDao.updateMod(user.osuID, mode)
+        bindDao.updateMode(user.osuID, mode)
+
         return MessageChain(info)
     }
 }
