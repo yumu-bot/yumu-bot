@@ -48,9 +48,10 @@ class SetGroupModeService (
             } else {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Super)
             }
-        } else if (event is Group) {
+        } else if (event.subject is Group) {
             event.subject.id
         } else {
+            // 必须群聊
             throw GeneralTipsException(GeneralTipsException.Type.G_Restricted_Group)
         }
 
