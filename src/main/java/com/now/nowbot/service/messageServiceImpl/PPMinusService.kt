@@ -17,7 +17,6 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.serviceException.PPMinusException
-import com.now.nowbot.util.CmdUtil.checkOsuMode
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
@@ -30,19 +29,19 @@ import java.util.regex.Matcher
 
 @Service("PP_MINUS")
 class PPMinusService(
-        private val userApiService: OsuUserApiService,
-        private val scoreApiService: OsuScoreApiService,
-        private val bindDao: BindDao,
-        private val imageService: ImageService,
+    private val userApiService: OsuUserApiService,
+    private val scoreApiService: OsuScoreApiService,
+    private val bindDao: BindDao,
+    private val imageService: ImageService,
 ) : MessageService<PPMinusParam>, TencentMessageService<PPMinusParam> {
 
     private val newbieGroup: Long = 695600319L
 
     data class PPMinusParam(
-            val isVs: Boolean,
-            val me: OsuUser,
-            val other: OsuUser?,
-            val mode: OsuMode,
+        val isVs: Boolean,
+        val me: OsuUser,
+        val other: OsuUser?,
+        val mode: OsuMode,
     )
 
     enum class PPMinusStatus {
@@ -85,31 +84,33 @@ class PPMinusService(
     }
 
     override fun isHandle(
-            event: MessageEvent,
-            messageText: String,
-            data: DataValue<PPMinusParam>,
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<PPMinusParam>,
     ): Boolean {
         val matcher = Instruction.PP_MINUS.matcher(messageText)
         if (!matcher.find()) return false
 
         val status =
-                when ((matcher.group("function") ?: "pm").trim().lowercase(Locale.getDefault())
-                ) {
-                    "pm",
-                    "ppm",
-                    "pp-",
-                    "p-",
-                    "ppminus",
-                    "minus" -> PPMinusStatus.USER
-                    "pv",
-                    "ppmv",
-                    "pmv",
-                    "pmvs",
-                    "ppmvs",
-                    "ppminusvs",
-                    "minusvs" -> PPMinusStatus.USER_VS
-                    else -> throw RuntimeException("PP-：未知的类型")
-                }
+            when ((matcher.group("function") ?: "pm").trim().lowercase(Locale.getDefault())
+            ) {
+                "pm",
+                "ppm",
+                "pp-",
+                "p-",
+                "ppminus",
+                "minus" -> PPMinusStatus.USER
+
+                "pv",
+                "ppmv",
+                "pmv",
+                "pmvs",
+                "ppmvs",
+                "ppminusvs",
+                "minusvs" -> PPMinusStatus.USER_VS
+
+                else -> throw RuntimeException("PP-：未知的类型")
+            }
 
         val area1 = matcher.group("area1") ?: ""
         val area2 = matcher.group("area2") ?: ""
@@ -124,7 +125,7 @@ class PPMinusService(
             if (event.isAt) {
                 when (status) {
                     PPMinusStatus.USER -> // pm @
-                    binMe = bindDao.getBindFromQQ(event.target)
+                        binMe = bindDao.getBindFromQQ(event.target)
 
                     PPMinusStatus.USER_VS -> {
                         // pv 0v@
@@ -145,14 +146,14 @@ class PPMinusService(
         } catch (e: WebClientResponseException) {
             throw when (e) {
                 is WebClientResponseException.Unauthorized ->
-                        if (isMyself) {
-                            PPMinusException(PPMinusException.Type.PM_Me_TokenExpired)
-                        } else {
-                            PPMinusException(PPMinusException.Type.PM_Player_TokenExpired)
-                        }
+                    if (isMyself) {
+                        PPMinusException(PPMinusException.Type.PM_Me_TokenExpired)
+                    } else {
+                        PPMinusException(PPMinusException.Type.PM_Player_TokenExpired)
+                    }
 
                 is WebClientResponseException.NotFound ->
-                        PPMinusException(PPMinusException.Type.PM_Player_NotFound)
+                    PPMinusException(PPMinusException.Type.PM_Player_NotFound)
 
                 else -> PPMinusException(PPMinusException.Type.PM_BPList_FetchFailed)
             }
@@ -164,7 +165,12 @@ class PPMinusService(
             if (event.subject.id == newbieGroup && OsuMode.isDefaultOrNull(modeObj.data)) {
                 OsuMode.OSU
             } else {
-                checkOsuMode(modeObj, binMe.osuMode)
+                if (OsuMode.isDefaultOrNull(modeObj.data) && OsuMode.isNotDefaultOrNull(binMe.osuMode)) {
+                    modeObj.data = binMe.osuMode
+                    binMe.osuMode
+                } else {
+                    OsuMode.DEFAULT
+                }
             }
 
         val isVs = (binOther.osuID != null) && binMe.osuID != binOther.osuID
@@ -196,8 +202,8 @@ class PPMinusService(
 
         if (user.statistics.playTime < 60 || user.statistics.playCount < 30) {
             throw PPMinusException(
-                    PPMinusException.Type.PM_Player_PlayTimeTooShort,
-                    user.currentOsuMode.fullName,
+                PPMinusException.Type.PM_Player_PlayTimeTooShort,
+                user.currentOsuMode.fullName,
             )
         }
 
@@ -215,11 +221,11 @@ class PPMinusService(
 
         try {
             image =
-                    if (!param.isVs && event.subject.id == newbieGroup) {
-                        param.getPPMSpecialImage()
-                    } else {
-                        param.getPPMImage()
-                    }
+                if (!param.isVs && event.subject.id == newbieGroup) {
+                    param.getPPMSpecialImage()
+                } else {
+                    param.getPPMImage()
+                }
         } catch (e: TipsException) {
             throw e
         } catch (e: Exception) {
@@ -238,21 +244,21 @@ class PPMinusService(
     override fun accept(event: MessageEvent, messageText: String): PPMinusParam? {
         var matcher: Matcher
         val status =
-                when {
-                    OfficialInstruction.PP_MINUS.matcher(messageText)
-                            .apply { matcher = this }
-                            .find() -> {
-                        PPMinusStatus.USER
-                    }
-
-                    OfficialInstruction.PP_MINUS_VS.matcher(messageText)
-                            .apply { matcher = this }
-                            .find() -> {
-                        PPMinusStatus.USER_VS
-                    }
-
-                    else -> return null
+            when {
+                OfficialInstruction.PP_MINUS.matcher(messageText)
+                    .apply { matcher = this }
+                    .find() -> {
+                    PPMinusStatus.USER
                 }
+
+                OfficialInstruction.PP_MINUS_VS.matcher(messageText)
+                    .apply { matcher = this }
+                    .find() -> {
+                    PPMinusStatus.USER_VS
+                }
+
+                else -> return null
+            }
 
         val area1 = matcher.group("area1") ?: ""
         val area2 = matcher.group("area2") ?: ""
@@ -272,17 +278,22 @@ class PPMinusService(
         } catch (e: WebClientResponseException) {
             throw when (e) {
                 is WebClientResponseException.Unauthorized ->
-                        PPMinusException(PPMinusException.Type.PM_Me_TokenExpired)
+                    PPMinusException(PPMinusException.Type.PM_Me_TokenExpired)
 
                 is WebClientResponseException.NotFound ->
-                        PPMinusException(PPMinusException.Type.PM_Player_NotFound)
+                    PPMinusException(PPMinusException.Type.PM_Player_NotFound)
 
                 else -> PPMinusException(PPMinusException.Type.PM_BPList_FetchFailed)
             }
         }
 
         val modeObj = getMode(matcher)
-        val mode: OsuMode = checkOsuMode(modeObj, binMe.osuMode)
+        val mode: OsuMode = if (OsuMode.isDefaultOrNull(modeObj.data) && OsuMode.isNotDefaultOrNull(binMe.osuMode)) {
+            modeObj.data = binMe.osuMode
+            binMe.osuMode
+        } else {
+            OsuMode.DEFAULT
+        }
 
         val isVs = (binOther.osuID != null) && binMe.osuID != binOther.osuID
 
@@ -316,11 +327,11 @@ class PPMinusService(
     }
 
     fun ImageService.getVS(
-            me: OsuUser,
-            other: OsuUser?,
-            my: PPMinus,
-            others: PPMinus?,
-            mode: OsuMode,
+        me: OsuUser,
+        other: OsuUser?,
+        my: PPMinus,
+        others: PPMinus?,
+        mode: OsuMode,
     ): ByteArray {
         if (other != null) {
             if (other.id == 17064371L) {
@@ -340,16 +351,16 @@ class PPMinusService(
 
             val ppmClass = Class.forName("com.now.nowbot.model.ppminus.PPMinus")
             val valueFields =
-                    arrayOf(
-                            ppmClass.getDeclaredField("value1"),
-                            ppmClass.getDeclaredField("value2"),
-                            ppmClass.getDeclaredField("value3"),
-                            ppmClass.getDeclaredField("value4"),
-                            ppmClass.getDeclaredField("value5"),
-                            ppmClass.getDeclaredField("value6"),
-                            ppmClass.getDeclaredField("value7"),
-                            ppmClass.getDeclaredField("value8"),
-                    )
+                arrayOf(
+                    ppmClass.getDeclaredField("value1"),
+                    ppmClass.getDeclaredField("value2"),
+                    ppmClass.getDeclaredField("value3"),
+                    ppmClass.getDeclaredField("value4"),
+                    ppmClass.getDeclaredField("value5"),
+                    ppmClass.getDeclaredField("value6"),
+                    ppmClass.getDeclaredField("value7"),
+                    ppmClass.getDeclaredField("value8"),
+                )
             for (i in valueFields) {
                 i.isAccessible = true
                 i[minus] = value
