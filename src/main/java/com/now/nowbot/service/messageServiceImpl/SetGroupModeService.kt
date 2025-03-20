@@ -12,6 +12,7 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MODE
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
+import com.now.nowbot.util.command.FLAG_QQ_ID
 import org.springframework.stereotype.Service
 
 @Service("SET_GROUP_MODE")
@@ -24,7 +25,9 @@ class SetGroupModeService (
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<SetGroupParam>): Boolean {
         val m = Instruction.SET_GROUP_MODE.matcher(messageText)
         if (m.find()) {
-            data.value = SetGroupParam(m.group(FLAG_QQ_GROUP)?.toLongOrNull(), OsuMode.getMode(m.group(FLAG_MODE)))
+            data.value = SetGroupParam(
+                m.group(FLAG_QQ_ID)?.toLongOrNull() ?: m.group(FLAG_QQ_GROUP)?.toLongOrNull(),
+                OsuMode.getMode(m.group(FLAG_MODE)))
             return true
         } else return false
     }
@@ -59,16 +62,16 @@ class SetGroupModeService (
             // 修改已有模式状态
             if (OsuMode.isNotDefaultOrNull(mode)) {
                 bindDao.saveGroupModeConfig(group, mode)
-                event.reply("已将群组的默认游戏模式 ${predeterminedMode.fullName} 修改为: ${mode.fullName}。")
+                event.reply("已将群组绑定的游戏模式 ${predeterminedMode.fullName} 修改为: ${mode.fullName}。")
             } else {
                 bindDao.saveGroupModeConfig(group, OsuMode.DEFAULT)
-                event.reply("已移除群组的默认游戏模式 ${predeterminedMode.fullName}。")
+                event.reply("已移除群组绑定的游戏模式 ${predeterminedMode.fullName}。")
             }
         } else {
             // 赋予新模式状态
             if (OsuMode.isNotDefaultOrNull(mode)) {
                 bindDao.saveGroupModeConfig(group, mode)
-                event.reply("已将群组的默认游戏模式修改为: ${mode.fullName}。")
+                event.reply("已将群组绑定的游戏模式修改为: ${mode.fullName}。")
             } else {
                 throw TipsException("当前群组没有已绑定的游戏模式。\n请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来绑定游戏模式。")
             }

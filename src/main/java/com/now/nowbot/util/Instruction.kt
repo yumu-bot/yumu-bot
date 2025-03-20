@@ -102,6 +102,7 @@ enum class Instruction(val pattern: Pattern) {
     SET_GROUP_MODE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(set)?groupmode", "gm")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
+        appendQQID(maybe = true)
         appendQQGroup(maybe = true)
     }),
 

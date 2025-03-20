@@ -86,7 +86,7 @@ class SetModeService (
             if (predeterminedMode.isDefault()) {
                 "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为: ${mode.fullName}。"
             } else {
-                "已将绑定的游戏模式修改为: ${mode.fullName} 修改为: ${mode.fullName}。\n当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
+                "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为: ${mode.fullName}。\n当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
             }
         }
 

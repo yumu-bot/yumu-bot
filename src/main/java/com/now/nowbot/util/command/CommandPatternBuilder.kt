@@ -103,12 +103,14 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     /**
      * 加 qq=(?<qq>\d+) 的匹配。
-     * 不是很懂 qq 为什么要传MathLevel, 难道qq还能有一个字符?
+     * @param maybe 如果设置为真，则可以只匹配数字作为群号，不需要输入 group=
      */
-    fun appendQQID() {
+    fun appendQQID(maybe: Boolean = false) {
         appendGroup(MAYBE) {
             append(FLAG_QQ_ID)
+            if (maybe) append(LEVEL_MAYBE)
             append(CHAR_EQUAL)
+            if (maybe) append(LEVEL_MAYBE)
             // qq起码5位
             appendCaptureGroup(FLAG_QQ_ID, REG_NUMBER, MORE, EXIST)
         }
