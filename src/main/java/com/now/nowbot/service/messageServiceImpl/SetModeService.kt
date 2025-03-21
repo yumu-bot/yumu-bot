@@ -77,15 +77,15 @@ class SetModeService (
             // return MessageChain("未知的游戏模式。请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania)")
         } else if (mode.isEqualOrDefault(user.osuMode)) {
             if (predeterminedMode.isDefault()) {
-                "已将绑定的游戏模式修改为: ${mode.fullName}。"
+                "已将绑定的游戏模式修改为：${mode.fullName}。"
             } else {
-                "已将绑定的游戏模式修改为: ${mode.fullName}。\n当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
+                "已将绑定的游戏模式修改为：${mode.fullName}。\n当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
             }
         } else {
             if (predeterminedMode.isDefault()) {
-                "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为: ${mode.fullName}。"
+                "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为：${mode.fullName}。"
             } else {
-                "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为: ${mode.fullName}。\n当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
+                "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为：${mode.fullName}。\n当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
             }
         }
 

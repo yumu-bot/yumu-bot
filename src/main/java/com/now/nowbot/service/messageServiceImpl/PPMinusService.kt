@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
+import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -159,14 +160,20 @@ class PPMinusService(
             }
         }
 
-        val modeObj = getMode(matcher)
-        // 在新人群管理群里查询，则主动认为是 osu 模式
+        val inputMode = getMode(matcher)
+
         val mode: OsuMode =
-            if (event.subject.id == newbieGroup && OsuMode.isDefaultOrNull(modeObj.data)) {
+            if (event.subject.id == newbieGroup && OsuMode.isDefaultOrNull(inputMode.data)) {
+                // 在新人群管理群里查询，则主动认为是 osu 模式
                 OsuMode.OSU
             } else {
-                if (OsuMode.isDefaultOrNull(modeObj.data) && OsuMode.isNotDefaultOrNull(binMe.osuMode)) {
-                    modeObj.data = binMe.osuMode
+                val groupMode = bindDao.getGroupModeConfig(event.subject.id)
+
+                if (event.subject is Group && OsuMode.isNotDefaultOrNull(groupMode)) {
+                    groupMode
+                } else if (OsuMode.isNotDefaultOrNull(inputMode.data)) {
+                    inputMode.data!!
+                } else if (OsuMode.isNotDefaultOrNull(binMe.osuMode)) {
                     binMe.osuMode
                 } else {
                     OsuMode.DEFAULT
@@ -178,7 +185,7 @@ class PPMinusService(
         val me = userApiService.getPlayerInfo(binMe, mode)
         val other = if (isVs) userApiService.getPlayerInfo(binOther, mode) else null
 
-        data.value = PPMinusParam(isVs, me, other, OsuMode.getMode(mode, me.currentOsuMode))
+        data.value = PPMinusParam(isVs, me, other, mode)
 
         return true
     }
@@ -287,20 +294,32 @@ class PPMinusService(
             }
         }
 
-        val modeObj = getMode(matcher)
-        val mode: OsuMode = if (OsuMode.isDefaultOrNull(modeObj.data) && OsuMode.isNotDefaultOrNull(binMe.osuMode)) {
-            modeObj.data = binMe.osuMode
-            binMe.osuMode
-        } else {
-            OsuMode.DEFAULT
-        }
+        val inputMode = getMode(matcher)
+
+        val mode: OsuMode =
+            if (event.subject.id == newbieGroup && OsuMode.isDefaultOrNull(inputMode.data)) {
+                // 在新人群管理群里查询，则主动认为是 osu 模式
+                OsuMode.OSU
+            } else {
+                val groupMode = bindDao.getGroupModeConfig(event.subject.id)
+
+                if (event.subject is Group && OsuMode.isNotDefaultOrNull(groupMode)) {
+                    groupMode
+                } else if (OsuMode.isNotDefaultOrNull(inputMode.data)) {
+                    inputMode.data!!
+                } else if (OsuMode.isNotDefaultOrNull(binMe.osuMode)) {
+                    binMe.osuMode
+                } else {
+                    OsuMode.DEFAULT
+                }
+            }
 
         val isVs = (binOther.osuID != null) && binMe.osuID != binOther.osuID
 
         val other = if (isVs) userApiService.getPlayerInfo(binOther, mode) else null
         val me = userApiService.getPlayerInfo(binMe, mode)
 
-        return PPMinusParam(isVs, me, other, mode = OsuMode.getMode(mode, me.currentOsuMode))
+        return PPMinusParam(isVs, me, other, mode)
     }
 
     override fun reply(event: MessageEvent, param: PPMinusParam): MessageChain? {

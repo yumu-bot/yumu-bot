@@ -66,7 +66,7 @@ class SetGroupModeService (
                 // 修改已有模式状态
                 if (OsuMode.isNotDefaultOrNull(mode)) {
                     bindDao.saveGroupModeConfig(group, mode)
-                    "已将群组绑定的游戏模式 ${predeterminedMode.fullName} 修改为: ${mode.fullName}。"
+                    "已将群组绑定的游戏模式 ${predeterminedMode.fullName} 修改为：${mode.fullName}。"
                 } else {
                     bindDao.saveGroupModeConfig(group, OsuMode.DEFAULT)
                     "已移除群组绑定的游戏模式 ${predeterminedMode.fullName}。"
@@ -85,7 +85,7 @@ class SetGroupModeService (
                 // 赋予新模式状态
                 if (OsuMode.isNotDefaultOrNull(mode)) {
                     bindDao.saveGroupModeConfig(group, mode)
-                    "已将群组绑定的游戏模式修改为: ${mode.fullName}。"
+                    "已将群组绑定的游戏模式修改为：${mode.fullName}。"
                 } else {
                     "当前群组没有已绑定的游戏模式。\n你可以输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来修改群组的绑定游戏模式。"
                 }
