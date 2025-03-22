@@ -7,7 +7,6 @@ import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.BPService.Companion.filterScores
@@ -56,7 +55,7 @@ class NewbieRestrictOverSRService(
         messageText: String,
         data: MessageService.DataValue<List<LazerScore>>
     ): Boolean {
-        if (event.subject !is Group || event.subject.id != newbieGroupID) return false
+        // if (event.subject !is Group || event.subject.id != newbieGroupID) return false
 
         val ss = Instruction.SCORES.matcher(messageText)
         val s = Instruction.SCORE.matcher(messageText)
@@ -211,10 +210,10 @@ class NewbieRestrictOverSRService(
         calculateApiService.applyStarToScores(scores, local = false)
 
         data.value = scores.filterNot {
-            remitBIDs.contains(it.beatMapID) && LazerMod.noStarRatingChange(it.mods)
+            remitBIDs.contains(it.beatMap.beatMapID) && LazerMod.noStarRatingChange(it.mods)
         }
 
-        return scores.isNotEmpty()
+        return data.value.isNotEmpty()
     }
 
     override fun HandleMessage(event: MessageEvent, param: List<LazerScore>) {
