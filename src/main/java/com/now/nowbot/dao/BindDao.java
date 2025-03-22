@@ -427,7 +427,7 @@ public class BindDao {
     }
 
     public OsuMode getGroupModeConfig(MessageEvent event) {
-        if (!(event instanceof Group group)) {
+        if (!(event.getSubject() instanceof Group group)) {
             return OsuMode.DEFAULT;
         }
 

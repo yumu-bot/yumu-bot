@@ -48,6 +48,9 @@ class NewbieRestrictOverSRService(
     private val killerGroupID = 695600319L
     private val executorBotID = 1708547915L
 
+    // 赦免图：No title，竹取飞翔，C type
+    private val remitBIDs = listOf(738063L, 86324L, 1620144L)
+
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
@@ -207,7 +210,10 @@ class NewbieRestrictOverSRService(
         // 主动从 API 获取成绩，这样可以避免本地计算的失误
         calculateApiService.applyStarToScores(scores, local = false)
 
-        data.value = scores
+        data.value = scores.filterNot {
+            remitBIDs.contains(it.beatMapID) && LazerMod.noStarRatingChange(it.mods)
+        }
+
         return scores.isNotEmpty()
     }
 
