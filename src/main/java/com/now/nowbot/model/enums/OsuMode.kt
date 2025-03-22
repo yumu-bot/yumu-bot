@@ -90,8 +90,8 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
          * @param groupMode 群聊绑定游戏模式
          */
         @JvmStatic fun getMode(mode: OsuMode?, selfMode: OsuMode?, groupMode: OsuMode?): OsuMode {
-            if (isNotDefaultOrNull(groupMode)) return groupMode!!
             if (isNotDefaultOrNull(mode)) return mode!!
+            if (isNotDefaultOrNull(groupMode)) return groupMode!!
             return selfMode ?: DEFAULT
         }
 
