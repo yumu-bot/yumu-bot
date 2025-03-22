@@ -55,7 +55,7 @@ class NewbieRestrictOverSRService(
         messageText: String,
         data: MessageService.DataValue<List<LazerScore>>
     ): Boolean {
-        // if (event.subject !is Group || event.subject.id != newbieGroupID) return false
+        if (event.subject !is Group || event.subject.id != newbieGroupID) return false
 
         val ss = Instruction.SCORES.matcher(messageText)
         val s = Instruction.SCORE.matcher(messageText)
