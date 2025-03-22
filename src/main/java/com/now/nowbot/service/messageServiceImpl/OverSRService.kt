@@ -38,9 +38,9 @@ import kotlin.math.roundToInt
             throw GeneralTipsException(GeneralTipsException.Type.G_Success_NotOverRating)
         } else if (star < 20.0) { // 超 0.01 星加 10 分钟，6星 以上所有乘以二
             silence = if (star < 6.0) {
-                ((star - 5.7) * 10).roundToInt()
+                ((star - 5.7) * 1000).roundToInt()
             } else {
-                ((star - 5.7) * 20).roundToInt()
+                ((star - 5.7) * 2000).roundToInt()
             }
         } else {
             throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_StarRating)

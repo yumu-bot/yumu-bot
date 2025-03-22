@@ -3,7 +3,7 @@ package com.now.nowbot.model.enums
 import org.springframework.lang.Nullable
 import java.util.*
 
-enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: String, @JvmField val modeValue: Byte) {
+enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: String, @JvmField val modeValue: Short) {
     OSU("osu!standard", "osu", 0),
     TAIKO("osu!taiko", "taiko", 1),
     CATCH("osu!catch", "fruits", 2),

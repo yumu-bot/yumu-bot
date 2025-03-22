@@ -195,7 +195,7 @@ class NewbieRestrictOverSRService(
 
                 constructScore.beatMap = beatMap
                 constructScore.beatMapSet = beatMap.beatMapSet!!
-                constructScore.ruleset = mode.modeValue
+                constructScore.ruleset = mode.modeValue.toByte()
                 constructScore.mods = mods
 
                 scores = listOf(constructScore)
@@ -262,9 +262,9 @@ class NewbieRestrictOverSRService(
                 // 未超星
                 0
             } else if (star < 6.0) {
-                ((star - 5.7) * 10).roundToInt()
+                ((star - 5.7) * 1000).roundToInt()
             } else {
-                ((star - 5.7) * 20).roundToInt()
+                ((star - 5.7) * 2000).roundToInt()
             }
         }
 
