@@ -384,13 +384,13 @@ class MatchRating(
         val v = playerDataMap.values
 
         v.sortedByDescending { it.era }.forEach {
-            it.eraIndex = if (players.size > 1) (1.0 * ai1.getAndIncrement() / (players.size - 1.0)) else 1.0
+            it.eraIndex = if (playerDataMap.size > 1) (1.0 * ai1.getAndIncrement() / (playerDataMap.size - 1.0)) else 0.5
         }
         v.sortedByDescending { it.dra }.forEach {
-            it.draIndex = if (players.size > 1) (1.0 * ai2.getAndIncrement() / (players.size - 1.0)) else 1.0
+            it.draIndex = if (playerDataMap.size > 1) (1.0 * ai2.getAndIncrement() / (playerDataMap.size - 1.0)) else 0.5
         }
         v.sortedByDescending { it.rws }.forEach {
-            it.rwsIndex = if (players.size > 1) (1.0 * ai3.getAndIncrement() / (players.size - 1.0)) else 1.0
+            it.rwsIndex = if (playerDataMap.size > 1) (1.0 * ai3.getAndIncrement() / (playerDataMap.size - 1.0)) else 0.5
         }
         v.sortedByDescending { it.mra }.forEach {
             it.ranking = (ai4.getAndIncrement())
