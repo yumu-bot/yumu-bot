@@ -69,7 +69,7 @@ import kotlin.math.roundToInt
 
             beatmapApiService.applyBeatMapSetRankedTime(search.beatmapSets)
 
-            val img = imageService.getPanelA2(search)
+            val img = imageService.getPanel(search, "A2")
             event.reply(img)
         } catch (e: Exception) {
             log.error("过审谱面：", e)

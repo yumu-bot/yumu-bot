@@ -3,7 +3,6 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -62,7 +61,7 @@ class SetModeService (
     }
 
     private fun getReply(mode: OsuMode, event: MessageEvent, user: BindUser): MessageChain {
-        val predeterminedMode = if (event.subject is Group) bindDao.getGroupModeConfig(event.subject.id) else OsuMode.DEFAULT
+        val predeterminedMode = bindDao.getGroupModeConfig(event)
 
         val info = if (mode == OsuMode.DEFAULT) {
             if (user.osuMode.isDefault()) {
@@ -71,7 +70,7 @@ class SetModeService (
                 if (predeterminedMode.isDefault()) {
                     "已移除绑定的游戏模式 ${user.osuMode.fullName}。"
                 } else {
-                    "已移除绑定的游戏模式 ${user.osuMode.fullName}。\n当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
+                    "已移除绑定的游戏模式 ${user.osuMode.fullName}。\n当前群聊绑定的游戏模式为：${predeterminedMode.fullName}。"
                 }
             }
             // return MessageChain("未知的游戏模式。请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania)")
@@ -79,13 +78,13 @@ class SetModeService (
             if (predeterminedMode.isDefault()) {
                 "已将绑定的游戏模式修改为：${mode.fullName}。"
             } else {
-                "已将绑定的游戏模式修改为：${mode.fullName}。\n当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
+                "已将绑定的游戏模式修改为：${mode.fullName}。\n当前群聊绑定的游戏模式为：${predeterminedMode.fullName}。"
             }
         } else {
             if (predeterminedMode.isDefault()) {
                 "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为：${mode.fullName}。"
             } else {
-                "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为：${mode.fullName}。\n当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
+                "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为：${mode.fullName}。\n当前群聊绑定的游戏模式为：${predeterminedMode.fullName}。"
             }
         }
 

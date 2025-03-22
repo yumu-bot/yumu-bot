@@ -19,7 +19,7 @@ public class GroupContact extends Contact implements com.now.nowbot.qq.contact.G
     }
 
     @Override
-    public Role getRoll() {
+    public Role getRole() {
         return role;
     }
 }

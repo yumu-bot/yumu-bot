@@ -57,7 +57,7 @@ class RunTimeService(
         }
         val groupMembers = bot.getGroupMemberList(231094840)
         if (groupMembers.data.isNullOrEmpty()) {
-            log.error("统计新人群信息失败, 查询群组成员为空")
+            log.error("统计新人群信息失败, 查询群聊成员为空")
             return
         }
         val users = groupMembers.data.map { it.userId }

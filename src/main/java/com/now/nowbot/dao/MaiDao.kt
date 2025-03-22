@@ -154,7 +154,7 @@ class MaiDao(
     }
 
     fun saveMaiAliases(maiAliases: List<MaiAlias>) {
-        val lites = maiAliases.stream().map { MaiAliasLite.from(it) }.toList()
+        val lites = maiAliases.map { MaiAliasLite.from(it) }
 
         maiAliasLiteRepository.saveAll(lites)
     }

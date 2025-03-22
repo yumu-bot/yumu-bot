@@ -32,7 +32,7 @@ public class LocalGroup extends LocalContact implements com.now.nowbot.qq.contac
     class GroupContact extends LocalContact implements com.now.nowbot.qq.contact.GroupContact {
 
         @Override
-        public Role getRoll() {
+        public Role getRole() {
             return Role.ADMIN;
         }
     }

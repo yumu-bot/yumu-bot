@@ -230,7 +230,7 @@ class MapStatisticsService(
 
         val miss = missStr.toIntOrNull() ?: 0
 
-        val mods = LazerMod.getModsList(matcher.group("mod") ?: "")
+        val mods = LazerMod.getModsList(matcher.group("mod"))
 
         val expected = Expected(OsuMode.correctConvert(mode, beatMap.mode), accuracy, combo, miss, mods)
         return MapParam(user, beatMap, expected)

@@ -94,13 +94,18 @@ class LeaderBoardService(
         if (scores.isEmpty())
             throw LeaderBoardException(LeaderBoardException.Type.LIST_Score_NotFound)
         if (range > scores.size) range = scores.size
-        val subScores = scores.take(range)
 
-        calculateApiService.applyPPToScores(subScores)
+        val ss = scores.take(range)
+
+        calculateApiService.applyPPToScores(ss)
 
         try {
-            val image = imageService.getPanelA3(beatMap,
-                subScores.stream().map { it.beatMap = beatMap; it }.toList())
+            val body = mapOf(
+                "beatmap" to beatMap,
+                "scores" to ss.map { it.beatMap = beatMap; it })
+
+            val image = imageService.getPanel(body, "A3")
+
             event.reply(image)
         } catch (e: Exception) {
             log.error("排行榜", e)

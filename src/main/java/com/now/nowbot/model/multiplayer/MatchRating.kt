@@ -7,7 +7,6 @@ import com.now.nowbot.model.json.MicroUser
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.stream.Collectors
 import kotlin.math.exp
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -49,7 +48,7 @@ class MatchRating(
     @JsonIgnore
     val players: Map<Long, MicroUser> = run {
         // 有可用成绩的才能进这个分组
-        val playersHasScoreSet = scores.stream().map { it.userID }.collect(Collectors.toSet())
+        val playersHasScoreSet = scores.map { it.userID }.toSet()
 
         return@run match.players.distinctBy { it.userID }
             .filter { it.userID in playersHasScoreSet }
@@ -377,36 +376,17 @@ class MatchRating(
     }
 
     private fun calculateIndex() {
-        val ai1 = AtomicInteger(1)
-        val ai2 = AtomicInteger(1)
-        val ai3 = AtomicInteger(1)
-        val ai4 = AtomicInteger(1)
+        val ai1 = AtomicInteger(0)
+        val ai2 = AtomicInteger(0)
+        val ai3 = AtomicInteger(0)
+        val ai4 = AtomicInteger(0)
 
-        playerDataMap = playerDataMap.asSequence()
-            .sortedByDescending { it.value.era }
-            .map {
-                it.value.eraIndex = (1.0 * ai1.getAndIncrement() / players.size)
-                it
-            }
-            .sortedByDescending { it.value.dra }
-            .map {
-                it.value.draIndex = 1.0 * ai2.getAndIncrement() / (players.size)
-                it
-            }
-            .sortedByDescending { it.value.rws }
-            .map {
-                it.value.rwsIndex = 1.0 * (ai3.getAndIncrement() / players.size)
-                it
-            }
-            .sortedByDescending { it.value.mra }
-            .map {
-                it.value.ranking = (ai4.getAndIncrement())
-                it
-            }
-            .map {
-                it.key to it.value
-            }
-            .toMap()
+        val v = playerDataMap.values
+
+        v.sortedByDescending { it.era }.forEach { it.eraIndex = (1.0 * ai1.getAndIncrement() / players.size) }
+        v.sortedByDescending { it.dra }.forEach { it.draIndex = (1.0 * ai2.getAndIncrement() / players.size) }
+        v.sortedByDescending { it.rws }.forEach { it.rwsIndex = (1.0 * ai3.getAndIncrement() / players.size) }
+        v.sortedByDescending { it.mra }.forEach { it.ranking = (ai4.getAndIncrement()) }
     }
 
 
@@ -544,6 +524,7 @@ class MatchRating(
         }
 
         fun calculateClass() {
+            println(rwsIndex)
             playerClass = PlayerClass(eraIndex, draIndex, rwsIndex)
         }
     }

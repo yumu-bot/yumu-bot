@@ -24,11 +24,8 @@ public class ASyncMessageUtil {
     private static final Set<Lock> lockList = new CopyOnWriteArraySet<>();
 
     /**
-     * 指定群组跟发送人的锁
+     * 指定群聊跟发送人的锁
      *
-     * @param group
-     * @param send
-     * @return
      */
     public static Lock getLock(long group, long send) {
         return getLock(group, send, OFF_TIME, null);
@@ -37,8 +34,7 @@ public class ASyncMessageUtil {
     private static final Logger log = LoggerFactory.getLogger(ASyncMessageUtil.class);
 
     public static Lock getLock(Long group, Long send, long offTime, Function<MessageEvent, Boolean> check) {
-        var l = new OLock(group, send, offTime, check);
-        return l;
+        return new OLock(group, send, offTime, check);
     }
 
     public static Lock getLock(MessageEvent event, long offTime) {
@@ -60,15 +56,12 @@ public class ASyncMessageUtil {
     }
 
     public static Lock getSenderLock(long send, Long offTime, Function<MessageEvent, Boolean> check) {
-        var l = new OLock(null, send, offTime, check);
-        return l;
+        return new OLock(null, send, offTime, check);
     }
 
     /**
      * 指定发送人的锁(无论哪个群)
      *
-     * @param send
-     * @return
      */
     public static Lock getSenderLock(long send) {
         return getSenderLock(send, OFF_TIME, null);
@@ -77,22 +70,18 @@ public class ASyncMessageUtil {
     /**
      * 指定群的锁,无论发送人
      *
-     * @param group
-     * @return
      */
     public static Lock getGroupLock(long group) {
         return getGroupLock(group, OFF_TIME);
     }
 
     public static Lock getGroupLock(long group, Long offTime) {
-        var l = new OLock(group, null, offTime, null);
-        return l;
+        return new OLock(group, null, offTime, null);
     }
 
     /**
      * 在event监听使用
      *
-     * @param message
      */
     public static void put(MessageEvent message) {
         lockList.forEach(lock -> lock.checkAdd(message));

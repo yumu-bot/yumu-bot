@@ -108,30 +108,27 @@ enum class OsuMod(
 
         @JvmStatic
         fun getModsList(acronym: String?): List<OsuMod> {
-            if (acronym.isNullOrBlank()) return mutableListOf()
+            if (acronym.isNullOrBlank()) return listOf()
 
             val acronyms = splitModAcronyms(acronym.uppercase(Locale.getDefault()))
-            val modList =
-                acronyms
-                    .stream()
-                    .map { a: String -> getModFromAcronym(acronym) }
-                    .filter { e: OsuMod? -> e != Other }
-                    .distinct()
-                    .toList()
+            val modList = acronyms
+                .map { a: String -> getModFromAcronym(acronym) }
+                .filter { e: OsuMod? -> e != Other }
+                .distinct()
+                .toList()
             checkMods(modList)
             return modList
         }
 
         @JvmStatic
         fun getModsList(mods: List<String>?): List<OsuMod> {
-            if (mods.isNullOrEmpty()) return mutableListOf()
+            if (mods.isNullOrEmpty()) return listOf()
 
-            val modList =
-                mods.stream()
-                    .map { a: String -> getModFromAcronym(a.uppercase()) }
-                    .filter { e: OsuMod? -> e != Other }
-                    .distinct()
-                    .toList()
+            val modList = mods
+                .map { a: String -> getModFromAcronym(a.uppercase()) }
+                .filter { e: OsuMod? -> e != Other }
+                .distinct()
+                .toList()
 
             checkMods(modList)
             return modList
@@ -145,11 +142,7 @@ enum class OsuMod(
          */
         @JvmStatic
         fun getModsList(value: Int): List<OsuMod> {
-            val modList =
-                Arrays.stream(entries.toTypedArray())
-                    .filter { e: OsuMod? -> 0 != (e!!.value and value) }
-                    .distinct()
-                    .toList()
+            val modList = entries.filter { it.value and value != 0 }.distinct().toList()
             checkMods(modList)
             return modList
         }
@@ -163,7 +156,7 @@ enum class OsuMod(
         @JvmStatic
         fun splitModAcronyms(value: Int): List<String> {
             val modList = getModsList(value)
-            return modList.stream().map { obj: OsuMod? -> obj!!.acronym }.toList()
+            return modList.map { it.acronym }
         }
 
         /**
@@ -175,8 +168,7 @@ enum class OsuMod(
         @JvmStatic
         fun getModsAcronym(value: Int): String {
             return getModsList(value)
-                .stream()
-                .map { obj: OsuMod? -> obj!!.acronym }
+                .map { it.acronym }
                 .toList()
                 .joinToString { "" }
         }
@@ -199,10 +191,9 @@ enum class OsuMod(
         fun getModsValue(acronymArray: Array<String?>?): Int {
             if (acronymArray == null) return 0
 
-            val mList =
-                Arrays.stream(acronymArray)
-                    .map { acronym: String? -> getModFromAcronym(acronym?.uppercase(Locale.getDefault())) }
-                    .filter { e: OsuMod? -> e != Other }
+            val mList = acronymArray
+                    .map { getModFromAcronym(it?.uppercase()) }
+                    .filter { it != Other }
                     .distinct()
                     .toList()
             return getModsValue(mList)
@@ -214,10 +205,7 @@ enum class OsuMod(
 
             checkMods(mods)
 
-            return mods.stream()
-                .map(OsuMod::value)
-                .filter { it >= 0 }
-                .reduce(0) { a, b -> a + b }
+            return mods.map(OsuMod::value).filter { it >= 0 }.sum()
         }
 
         @JvmStatic
@@ -227,8 +215,7 @@ enum class OsuMod(
 
             return getModsValue(
                 acronyms
-                    .stream()
-                    .map { acronym: String? -> getModFromAcronym(acronym?.uppercase(Locale.getDefault())) }
+                    .map { getModFromAcronym(it?.uppercase()) }
                     .distinct()
                     .toList()
             )
@@ -242,13 +229,7 @@ enum class OsuMod(
             if (newStr.length % 2 != 0) {
                 throw ModsException(ModsException.Type.MOD_Receive_CharNotPaired)
             }
-            val list =
-                Arrays.stream(
-                    newStr.split("(?<=\\w)(?=(\\w{2})+$)".toRegex())
-                        .dropLastWhile { it.isEmpty() }
-                        .toTypedArray()
-                )
-                    .toList()
+            val list = newStr.split("(?<=\\w)(?=(\\w{2})+$)".toRegex()).dropLastWhile { it.isEmpty() }
             checkAcronyms(list)
 
             return list
@@ -348,12 +329,7 @@ enum class OsuMod(
          */
         @JvmStatic
         fun getModSpeed(value: Int): Double {
-            return getModSpeed(
-                Arrays.stream(entries.toTypedArray())
-                    .filter { e: OsuMod -> 0 != (e.value and value) }
-                    .distinct()
-                    .toList()
-            )
+            return getModSpeed(entries.filter { it.value and value != 0 }.distinct().toList())
         }
 
         @JvmStatic

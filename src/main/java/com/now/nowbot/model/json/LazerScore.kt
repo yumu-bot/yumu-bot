@@ -202,6 +202,9 @@ open class LazerScore {
     @JsonProperty("ruleset_id")
     var ruleset: Byte = 0
 
+    /**
+     * 如果要设置，请设置 ruleset
+     */
     @get:JsonProperty("mode")
     val mode: OsuMode
         get() {

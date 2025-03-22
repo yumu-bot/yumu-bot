@@ -188,7 +188,14 @@ import java.util.regex.Matcher
                 calculateApiService.applyStarToScores(scores)
                 calculateApiService.applyBeatMapChanges(scores)
                 beatmapApiService.applyBeatMapExtendForSameScore(scores, b)
-                image = imageService.getPanelA5(user, scores, "SS")
+
+                val body = mapOf(
+                    "user" to user,
+                    "score" to scores,
+                    "panel" to "SS"
+                )
+
+                image = imageService.getPanel(body, "A5")
             } else {
                 val score = scores.first()
                 val e5Param =

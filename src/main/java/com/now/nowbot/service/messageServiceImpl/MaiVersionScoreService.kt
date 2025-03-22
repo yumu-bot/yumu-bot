@@ -33,25 +33,23 @@ class MaiVersionScoreService(
             val name: String?,
             val qq: Long?,
             val difficulty: MaiDifficulty,
-            val versions: MutableList<MaiVersion>,
+            val versions: List<MaiVersion>,
             val isMyself: Boolean = false
     )
 
     @JvmRecord
     data class PanelMA2Param(
             val user: MaiBestScore.User,
-            val scores: MutableList<MaiScore>,
-            val versions: MutableList<String>,
+            val scores: List<MaiScore>,
+            val versions: List<String>,
     ) {
         fun toMap(): Map<String, Any> {
-            val out = mutableMapOf<String, Any>()
-
-            out["user"] = user
-            out["scores"] = scores
-            out["versions"] = versions
-            out["panel"] = "MV"
-
-            return out
+            return mapOf(
+                "user" to user,
+                "scores" to scores,
+                "versions" to versions,
+                "panel" to "MV"
+            )
         }
     }
 
@@ -190,7 +188,7 @@ class MaiVersionScoreService(
         fun getVersionScores(
                 qq: Long?,
                 name: String?,
-                version: MutableList<MaiVersion>,
+                version: List<MaiVersion>,
                 isMyself: Boolean,
                 maimaiApiService: MaimaiApiService,
         ): MaiVersionScore {

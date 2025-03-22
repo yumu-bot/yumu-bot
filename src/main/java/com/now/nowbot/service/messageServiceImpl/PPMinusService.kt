@@ -6,7 +6,6 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
-import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -167,17 +166,7 @@ class PPMinusService(
                 // 在新人群管理群里查询，则主动认为是 osu 模式
                 OsuMode.OSU
             } else {
-                val groupMode = bindDao.getGroupModeConfig(event.subject.id)
-
-                if (event.subject is Group && OsuMode.isNotDefaultOrNull(groupMode)) {
-                    groupMode
-                } else if (OsuMode.isNotDefaultOrNull(inputMode.data)) {
-                    inputMode.data!!
-                } else if (OsuMode.isNotDefaultOrNull(binMe.osuMode)) {
-                    binMe.osuMode
-                } else {
-                    OsuMode.DEFAULT
-                }
+                OsuMode.getMode(inputMode.data, binMe.osuMode, bindDao.getGroupModeConfig(event))
             }
 
         val isVs = (binOther.osuID != null) && binMe.osuID != binOther.osuID
@@ -301,17 +290,7 @@ class PPMinusService(
                 // 在新人群管理群里查询，则主动认为是 osu 模式
                 OsuMode.OSU
             } else {
-                val groupMode = bindDao.getGroupModeConfig(event.subject.id)
-
-                if (event.subject is Group && OsuMode.isNotDefaultOrNull(groupMode)) {
-                    groupMode
-                } else if (OsuMode.isNotDefaultOrNull(inputMode.data)) {
-                    inputMode.data!!
-                } else if (OsuMode.isNotDefaultOrNull(binMe.osuMode)) {
-                    binMe.osuMode
-                } else {
-                    OsuMode.DEFAULT
-                }
+                OsuMode.getMode(inputMode.data, binMe.osuMode, bindDao.getGroupModeConfig(event))
             }
 
         val isVs = (binOther.osuID != null) && binMe.osuID != binOther.osuID

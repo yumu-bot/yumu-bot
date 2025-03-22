@@ -23,12 +23,11 @@ import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_QUOTATION
-import org.springframework.stereotype.Service
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-@Service("BP_QUERY")
+// @Service("BP_QUERY")
 class BPQueryService(
     private var bindDao: BindDao,
     private var beatmapApiService: OsuBeatmapApiService,
@@ -72,7 +71,7 @@ class BPQueryService(
             throw BindException(BindException.Type.BIND_Me_NotBind)
         }
 
-        val mode = OsuMode.getMode(param.mode, bindUser.osuMode)
+        val mode = OsuMode.getMode(param.mode, bindUser.osuMode, bindDao.getGroupModeConfig(event))
 
         val (order, text) = getOrder(param.filter)
         val filters = getAllFilter(text)

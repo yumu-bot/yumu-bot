@@ -8,6 +8,8 @@ import com.now.nowbot.entity.bind.QQBindLite;
 import com.now.nowbot.mapper.*;
 import com.now.nowbot.model.BindUser;
 import com.now.nowbot.model.enums.OsuMode;
+import com.now.nowbot.qq.contact.Group;
+import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService;
 import com.now.nowbot.throwable.serviceException.BindException;
@@ -421,6 +423,15 @@ public class BindDao {
 
     public OsuMode getGroupModeConfig(long groupId) {
         var config = osuGroupConfigRepository.findById(groupId);
+        return config.map(OsuGroupConfigLite::getMainMode).orElse(OsuMode.DEFAULT);
+    }
+
+    public OsuMode getGroupModeConfig(MessageEvent event) {
+        if (!(event instanceof Group group)) {
+            return OsuMode.DEFAULT;
+        }
+
+        var config = osuGroupConfigRepository.findById(group.getId());
         return config.map(OsuGroupConfigLite::getMainMode).orElse(OsuMode.DEFAULT);
     }
 

@@ -88,10 +88,7 @@ class ScorePRService(
         val matcher = Instruction.SCORE_PR.matcher(messageText)
         if (!matcher.find()) return false
 
-        val s = matcher.group("s")
-        val es = matcher.group("es")
-
-        val isMulti = (Objects.nonNull(s) || Objects.nonNull(es))
+        val isMulti = (matcher.group("s").isNullOrBlank().not() || matcher.group("es").isNullOrBlank().not())
 
         val offset: Int
         val limit: Int
@@ -211,17 +208,17 @@ class ScorePRService(
     }
 
     private fun getMessageChain(param: ScorePRParam, event: MessageEvent? = null): MessageChain? {
-        var offset = param.offset
-        var limit = param.limit
+        val offset = param.offset
+        val limit = param.limit
         val isRecent = param.isRecent
         val isMultipleScore = param.isMultipleScore
 
         val user = param.user
 
-        val scoreList: List<LazerScore?>
+        val scores: List<LazerScore>
 
         try {
-            scoreList = scoreApiService.getScore(user!!.userID, param.mode, offset, limit, !isRecent)
+            scores = scoreApiService.getScore(user!!.userID, param.mode, offset, limit, !isRecent)
         } catch (e: WebClientResponseException) {
             // 退避 !recent
             if (event != null &&
@@ -229,6 +226,7 @@ class ScorePRService(
                 log.info("recent 退避成功")
                 return null
             }
+
             throw when (e) {
                 is WebClientResponseException.Unauthorized ->
                         GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
@@ -248,7 +246,7 @@ class ScorePRService(
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "成绩")
         }
 
-        if (scoreList.isEmpty()) {
+        if (scores.isEmpty()) {
             throw GeneralTipsException(
                 GeneralTipsException.Type.G_Null_RecentScore,
                 user.username,
@@ -259,49 +257,33 @@ class ScorePRService(
         val image: ByteArray
 
         if (isMultipleScore) {
-            val scoreSize = scoreList.size
-
-            // M太大
-            if (scoreSize < offset + limit) {
-                if (scoreSize - offset < 1) {
-                    limit = scoreSize
-                    offset = 0
-                } else {
-                    limit = scoreSize - offset
-                }
-            }
-
-            val scores: List<LazerScore> = scoreList.subList(offset, offset + limit)
-
             calculateApiService.applyPPToScores(scores)
             calculateApiService.applyBeatMapChanges(scores)
             calculateApiService.applyStarToScores(scores)
 
             try {
-                // 处理新人群 ps 超星问题
-                if (event?.subject?.id == 595985887L) {
-                    ContextUtil.setContext("isNewbie", true)
-                }
-                image = imageService.getPanelA5(user, scores, if (isRecent) "RS" else "PS")
+                val body = mapOf(
+                    "user" to user,
+                    "score" to scores,
+                    "panel" to if (isRecent) "RS" else "PS"
+                )
+
+                image = imageService.getPanel(body, "A5")
                 return QQMsgUtil.getImage(image)
             } catch (e: Exception) {
                 log.error("成绩发送失败：", e)
                 throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "成绩")
-            } finally {
-                ContextUtil.remove()
             }
         } else {
             // 单成绩发送
-            val score: LazerScore = scoreList.first()
+            val score: LazerScore = scores.first()
             val e5Param = getScore4PanelE5(user, score, (if (isRecent) "R" else "P"), beatmapApiService, calculateApiService)
             try {
                 image = imageService.getPanel(e5Param.toMap(), "E5")
                 return QQMsgUtil.getImage(image)
             } catch (e: Exception) {
-                log.error(
-                        "成绩：绘图出错, 成绩信息:\n {}",
-                        JacksonUtil.objectToJsonPretty(e5Param.score),
-                        e)
+                log.error("成绩：绘图出错, 成绩信息:\n {}",
+                    JacksonUtil.objectToJsonPretty(e5Param.score), e)
                 return getTextOutput(e5Param.score)
             }
         }

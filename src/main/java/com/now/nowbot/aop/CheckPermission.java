@@ -32,7 +32,7 @@ public @interface CheckPermission {
 
 
     /***
-     * 群组记录
+     * 群聊记录
      */
     boolean group() default true;
 

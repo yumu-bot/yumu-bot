@@ -7,7 +7,6 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatterBuilder
 import java.util.*
-import java.util.stream.Collectors
 import kotlin.math.max
 
 class BeatMapSet {
@@ -50,7 +49,7 @@ class BeatMapSet {
 
     var status: String = ""
 
-    val statusInt: Int
+    val statusByte: Byte
         get() = when(status) {
             "wip" -> -1
             "pending" -> 0
@@ -122,20 +121,11 @@ class BeatMapSet {
                 val changedTime = LocalDateTime.from(formatter.parse("2024-06-03T00:00:00Z"))
 
                 // 没榜，或者最后更新时间晚于这一天的谱面才应用这次更改
-                secondary = if (lastUpdated!!.toLocalDateTime()
-                        .isAfter(changedTime) || !this.hasLeaderBoard) {
-                    max(
-                        (beatMaps!!.stream().map{ it!!.modeInt ?: 0}
-                            .collect(Collectors.toSet()).size - 1).toDouble(),
-                        0.0
-                    ).toInt()
+                secondary = if (lastUpdated!!.toLocalDateTime().isAfter(changedTime) || !this.hasLeaderBoard) {
+                    max(beatMaps!!.map { it.modeInt }.toSet().size - 1, 0)
                 } else {
                     // 之前的，其他模式要 x2
-                    max(
-                        ((beatMaps!!.stream().map{ it!!.modeInt ?: 0}
-                            .collect(Collectors.toSet()).size - 1) * 2).toDouble(),
-                        0.0
-                    ).toInt()
+                    max((beatMaps!!.map { it.modeInt }.toSet().size - 1) * 2, 0)
                 }
             }
 

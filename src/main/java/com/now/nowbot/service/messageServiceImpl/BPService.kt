@@ -311,7 +311,14 @@ import kotlin.math.*
             val ranks = scores.map{it.key}.toList()
             val scores = scores.map{it.value}.toList()
 
-            imageService.getPanelA4(user, scores, ranks, "BS")
+            val body = mapOf(
+                "user" to user,
+                "scores" to scores,
+                "rank" to ranks,
+                "panel" to "B"
+            )
+
+            imageService.getPanel(body, "A4")
         } else {
             val score: LazerScore = scores.toList().first().second
 
@@ -341,7 +348,8 @@ import kotlin.math.*
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BPService::class.java)
 
-        private fun filterScores(scores: Map<Int, LazerScore>, conditions: List<List<String>>): Map<Int, LazerScore> {
+        @JvmStatic
+        fun filterScores(scores: Map<Int, LazerScore>, conditions: List<List<String>>): Map<Int, LazerScore> {
             val s = scores.toMutableMap()
 
             // 最后一个筛选条件无需匹配

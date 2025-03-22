@@ -146,7 +146,7 @@ object AsyncMethodExecutor {
     }
 
     fun AsyncRunnable(works: Collection<Runnable>) {
-        works.stream().map { w: Runnable ->
+        works.map { w: Runnable ->
             (Runnable {
                 try {
                     w.run()

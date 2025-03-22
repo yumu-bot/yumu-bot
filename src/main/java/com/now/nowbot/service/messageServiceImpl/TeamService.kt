@@ -58,7 +58,7 @@ class TeamService(
             userApiService.getTeamInfo(param.teamID)
         } catch (ignored: Exception) {
             if (param.isInputTeam) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerTeam, param.teamID.toString())
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Team, param.teamID.toString())
             } else try {
                 userApiService.getTeamInfo(
                     userApiService.getPlayerInfo(param.teamID.toLong()).team?.id ?:
@@ -104,7 +104,7 @@ class TeamService(
             userApiService.getTeamInfo(param.teamID)
         } catch (ignored: Exception) {
             if (param.isInputTeam) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerTeam, param.teamID.toString())
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Team, param.teamID.toString())
             } else try {
                 userApiService.getTeamInfo(
                     userApiService.getPlayerInfo(param.teamID.toLong()).team?.id ?:

@@ -183,13 +183,11 @@ open class BeatMap {
         private fun getList(data: JsonNode?, fieldName: String): List<Int> {
             if (data == null) return listOf(0)
 
-            var list: List<Int> = listOf()
-            if (data.hasNonNull(fieldName) && data[fieldName].isArray) {
-                list = StreamSupport.stream(data[fieldName].spliterator(), false)
+            return if (data.hasNonNull(fieldName) && data[fieldName].isArray) {
+                StreamSupport.stream(data[fieldName].spliterator(), false)
                     .map { n: JsonNode -> n.asInt(0) }
                     .toList()
-            }
-            return list
+            } else listOf()
         }
     }
 }

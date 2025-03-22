@@ -17,8 +17,8 @@ public class ServiceSwitchException extends TipsException {
         SW_Parameter_OnlyGroup("如果输入了群聊，则必须输入服务名称和操作！"),
         SW_Service_Missing("未输入服务名！"),
         SW_Service_NotFound("找不到名为 %s 的服务！"),
-        SW_Service_RemoveNotExists("不需要解封本来就没被封禁的群组！"),
-        SW_Service_AddExists("不需要封禁本来就已经被封禁的群组！"),
+        SW_Service_RemoveNotExists("不需要解封本来就没被封禁的群聊！"),
+        SW_Service_AddExists("不需要封禁本来就已经被封禁的群聊！"),
         SW_Render_Failed("服务列表渲染失败。"),
 
         ;

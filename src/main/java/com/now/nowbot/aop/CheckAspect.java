@@ -101,7 +101,6 @@ public class CheckAspect {
     /***
      * 注解权限切点
      * 加了@CheckPermission注解的
-     * @throws TipsException
      */
 //    @Before(value = "@annotation(CheckPermission) && @target(Service)", argNames = "point,CheckPermission,Service")
     public Object checkPermission(JoinPoint point, CheckPermission CheckPermission, Service Service) throws Exception {
@@ -118,7 +117,7 @@ public class CheckAspect {
         }
         //超管权限判断
         if (CheckPermission.isGroupAdmin()) {
-            if (event.getSender() instanceof GroupContact groupUser && ! (groupUser.getRoll().equals(Role.ADMIN) || groupUser.getRoll().equals(Role.OWNER))) {
+            if (event.getSender() instanceof GroupContact groupUser && ! (groupUser.getRole().equals(Role.ADMIN) || groupUser.getRole().equals(Role.OWNER))) {
                 throw new PermissionException(STR."\{servicename}非管理员使用管理功能", STR."\{event.getSender().getId()} -> \{servicename}");
             }
         }
@@ -136,14 +135,14 @@ public class CheckAspect {
                 throw new PermissionException(STR."\{servicename} 白名单过滤(个人)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
             if (CheckPermission.group() && event instanceof GroupMessageEvent g && ! permission.hasGroup(servicename, g.getGroup().getId())) {
-                throw new PermissionException(STR."\{servicename} 白名单过滤(群组)", STR."\{event.getSender().getId()} -> \{servicename}");
+                throw new PermissionException(STR."\{servicename} 白名单过滤(群聊)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
         } else {
             if (CheckPermission.friend() && permission.hasUser(servicename, event.getSender().getId())) {
                 throw new PermissionException(STR."\{servicename} 黑名单过滤(个人)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
             if (CheckPermission.group() && event instanceof GroupMessageEvent g && permission.hasGroup(servicename, g.getGroup().getId())) {
-                throw new PermissionException(STR."\{servicename} 黑名单过滤(群组)", STR."\{event.getSender().getId()} -> \{servicename}");
+                throw new PermissionException(STR."\{servicename} 黑名单过滤(群聊)", STR."\{event.getSender().getId()} -> \{servicename}");
             }
         }
         return args;

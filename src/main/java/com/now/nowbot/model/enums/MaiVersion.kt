@@ -32,21 +32,21 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
 
     companion object {
         @JvmStatic
-        fun getNameList(versions: MutableList<MaiVersion>): MutableList<String> {
+        fun getNameList(versions: List<MaiVersion>): List<String> {
             if (versions.isEmpty()) {
-                return mutableListOf()
+                return listOf()
             }
 
-            return versions.stream().map(MaiVersion::full).toList()
+            return versions.map(MaiVersion::full)
         }
 
         @JvmStatic
-        fun getCodeList(versions: MutableList<MaiVersion>): MutableList<String> {
+        fun getCodeList(versions: List<MaiVersion>): List<String> {
             if (versions.isEmpty()) {
-                return mutableListOf()
+                return listOf()
             }
 
-            return versions.stream().map(MaiVersion::code).toList()
+            return versions.map(MaiVersion::code)
         }
 
         fun getVersionFromAbbr(abbreviation: String): MaiVersion {
@@ -58,13 +58,13 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
         }
 
         @JvmStatic
-        fun getVersionList(str: String?): MutableList<MaiVersion> {
-            if (str == null) return mutableListOf(DEFAULT)
+        fun getVersionList(str: String?): List<MaiVersion> {
+            if (str == null) return listOf(DEFAULT)
 
             val out = mutableSetOf<MaiVersion>()
             val strList = str.split(Regex("[,，|:：]"))
 
-            if (strList.isEmpty()) return mutableListOf(DEFAULT)
+            if (strList.isEmpty()) return listOf(DEFAULT)
 
             for (s in strList) {
                 val v = MaiVersion.getVersion(s)
@@ -72,14 +72,17 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 if (v != DEFAULT) out.add(v)
             }
 
-            if (out.isEmpty()) return mutableListOf(DEFAULT)
+            if (out.isEmpty()) return listOf(DEFAULT)
 
-            return out.stream().toList()
+            return out.toList()
         }
 
         @JvmStatic
         fun List<MaiVersion>.listToString(): String {
-            return this.stream().filter{it != DEFAULT}.map(MaiVersion::full).toList().joinToString(separator = ", ", prefix = "[", postfix = "]")
+            return this
+                .filter{it != DEFAULT}
+                .map(MaiVersion::full)
+                .joinToString(separator = ", ", prefix = "[", postfix = "]")
         }
 
         @JvmStatic

@@ -3,8 +3,6 @@ package com.now.nowbot.service;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.model.json.*;
 import com.now.nowbot.model.ppminus.PPMinus;
-import com.now.nowbot.model.service.UserAvatarCardParam;
-import com.now.nowbot.util.ContextUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,12 +67,6 @@ public class ImageService {
         return doPost("md", httpEntity);
     }
 
-    public byte[] getPanelA2(BeatMapSetSearch search) {
-        HttpHeaders headers = getDefaultHeader();
-        HttpEntity<BeatMapSetSearch> httpEntity = new HttpEntity<>(search, headers);
-        return doPost("panel_A2", httpEntity);
-    }
-
     public byte[] getPanelA3(BeatMap beatMap, List<LazerScore> scores) {
         HttpHeaders headers = getDefaultHeader();
 
@@ -84,39 +76,6 @@ public class ImageService {
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_A3", httpEntity);
-    }
-
-    public byte[] getPanelA4(OsuUser osuUser, List<LazerScore> todayBPs, List<Integer> BPRanks, String panel) {
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = Map.of(
-                "user", osuUser,
-                "scores", todayBPs,
-                "rank", BPRanks,
-                "panel", panel
-        );
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_A4", httpEntity);
-    }
-
-    public byte[] getPanelA5(OsuUser user, List<LazerScore> scores, String panel) {
-        HttpHeaders headers = getDefaultHeader();
-        if (ContextUtil.getContext("isNewbie", Boolean.FALSE, Boolean.class)) {
-            scores = scores.stream().filter(s -> s.getBeatMap().getStarRating() <= 5.7f).toList();
-        }
-        var body = Map.of(
-                "user", user,
-                "score", scores,
-                "panel", panel
-        );
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_A5", httpEntity);
-    }
-
-    public byte[] getUserAvatarCard(UserAvatarCardParam param) {
-
-        return doPost("panel_avatar", new HttpEntity<>(param, getDefaultHeader()));
     }
 
     /**

@@ -23,7 +23,7 @@ interface MaimaiApiService {
             WebClientResponseException.Forbidden::class,
             WebClientResponseException.BadGateway::class,
     )
-    fun getMaimaiScoreByVersion(qq: Long, versions: MutableList<MaiVersion>): MaiVersionScore
+    fun getMaimaiScoreByVersion(qq: Long, versions: List<MaiVersion>): MaiVersionScore
 
     @Throws(
             WebClientResponseException.Forbidden::class,
@@ -31,7 +31,7 @@ interface MaimaiApiService {
     )
     fun getMaimaiScoreByVersion(
             username: String,
-            versions: MutableList<MaiVersion>,
+            versions: List<MaiVersion>,
     ): MaiVersionScore
 
     fun getMaimaiCover(songID: Long): ByteArray

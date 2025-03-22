@@ -280,10 +280,10 @@ class SeriesRating(
     private fun calculateIndex() {
         if (players.isEmpty()) return
 
-        val ai1 = AtomicInteger(1)
-        val ai2 = AtomicInteger(1)
-        val ai3 = AtomicInteger(1)
-        val ai4 = AtomicInteger(1)
+        val ai1 = AtomicInteger(0)
+        val ai2 = AtomicInteger(0)
+        val ai3 = AtomicInteger(0)
+        val ai4 = AtomicInteger(0)
 
         val v = playerDataMap.values
 

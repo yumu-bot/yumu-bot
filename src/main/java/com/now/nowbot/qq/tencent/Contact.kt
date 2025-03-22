@@ -20,7 +20,7 @@ class Contact(val UID: Long, val send:(Command.Response) -> Unit) : Group, Group
         return FakeReceipt
     }
 
-    override fun getRoll() = Role.MEMBER
+    override fun getRole() = Role.MEMBER
 
     override fun isAdmin() = false
 

@@ -77,7 +77,7 @@ import kotlin.text.Charsets.UTF_8
     }
 
     override fun getMaimaiScoreByVersion(
-        username: String, versions: MutableList<MaiVersion>
+        username: String, versions: List<MaiVersion>
     ): MaiVersionScore {
         val b = MaimaiVersionNameRequestBody(username, getNameList(versions))
 
@@ -94,7 +94,7 @@ import kotlin.text.Charsets.UTF_8
     }
 
     override fun getMaimaiScoreByVersion(
-        qq: Long, versions: MutableList<MaiVersion>
+        qq: Long, versions: List<MaiVersion>
     ): MaiVersionScore {
         val b = MaimaiVersionQQRequestBody(qq, getNameList(versions))
 

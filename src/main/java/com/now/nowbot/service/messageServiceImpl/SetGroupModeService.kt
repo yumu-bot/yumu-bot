@@ -34,7 +34,7 @@ class SetGroupModeService (
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: SetGroupParam) {
         val mode = param.mode
-        val predeterminedMode = bindDao.getGroupModeConfig(event.subject.id)
+        val predeterminedMode = bindDao.getGroupModeConfig(event)
 
         val isNotGroupAdmin = Permission.isGroupAdmin(event).not()
 
@@ -57,37 +57,37 @@ class SetGroupModeService (
             if (isNotGroupAdmin) {
                 if (OsuMode.isNotDefaultOrNull(mode)) {
                     // 无权限，想修改
-                    "当前群组绑定的游戏模式为：${predeterminedMode.fullName}。\n你没有修改群组绑定游戏模式的权限。"
+                    "当前群聊绑定的游戏模式为：${predeterminedMode.fullName}。\n你没有修改群聊绑定游戏模式的权限。"
                 } else {
                     // 无权限，不想修改
-                    "当前群组绑定的游戏模式为：${predeterminedMode.fullName}。"
+                    "当前群聊绑定的游戏模式为：${predeterminedMode.fullName}。"
                 }
             } else {
                 // 修改已有模式状态
                 if (OsuMode.isNotDefaultOrNull(mode)) {
                     bindDao.saveGroupModeConfig(group, mode)
-                    "已将群组绑定的游戏模式 ${predeterminedMode.fullName} 修改为：${mode.fullName}。"
+                    "已将群聊绑定的游戏模式 ${predeterminedMode.fullName} 修改为：${mode.fullName}。"
                 } else {
                     bindDao.saveGroupModeConfig(group, OsuMode.DEFAULT)
-                    "已移除群组绑定的游戏模式 ${predeterminedMode.fullName}。"
+                    "已移除群聊绑定的游戏模式 ${predeterminedMode.fullName}。"
                 }
             }
         } else {
             if (isNotGroupAdmin) {
                 if (OsuMode.isNotDefaultOrNull(mode)) {
                     // 无权限，想修改
-                    "当前群组没有已绑定的游戏模式。\n你没有修改群组绑定游戏模式的权限。"
+                    "当前群聊没有已绑定的游戏模式。\n你没有修改群聊绑定游戏模式的权限。"
                 } else {
                     // 无权限，不想修改
-                    "当前群组没有已绑定的游戏模式。"
+                    "当前群聊没有已绑定的游戏模式。"
                 }
             } else {
                 // 赋予新模式状态
                 if (OsuMode.isNotDefaultOrNull(mode)) {
                     bindDao.saveGroupModeConfig(group, mode)
-                    "已将群组绑定的游戏模式修改为：${mode.fullName}。"
+                    "已将群聊绑定的游戏模式修改为：${mode.fullName}。"
                 } else {
-                    "当前群组没有已绑定的游戏模式。\n你可以输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来修改群组的绑定游戏模式。"
+                    "当前群聊没有已绑定的游戏模式。\n你可以输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来修改群聊的绑定游戏模式。"
                 }
             }
         }

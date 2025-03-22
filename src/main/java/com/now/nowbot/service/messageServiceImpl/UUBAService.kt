@@ -51,6 +51,8 @@ class UUBAService(
             data: DataValue<BPHeadTailParam>
     ): Boolean {
         // 旧功能指引
+
+        /*
         val matcher2 = Instruction.DEPRECATED_BPHT.matcher(messageText)
         if (matcher2.find()) {
             throw GeneralTipsException("bpht 已移至 ua。\n您也可以使用 !ba 来体验丰富版本。\n猫猫 Bot 的 bpht 需要输入 !get bpht。"
@@ -61,6 +63,8 @@ class UUBAService(
         if (matcher3.find()) {
             throw GeneralTipsException("uuba-i 已移至 ua。\n您也可以使用 !ba 来体验丰富版本。")
         }
+
+         */
 
         val matcher = Instruction.UU_BA.matcher(messageText)
         if (!matcher.find()) return false
@@ -115,7 +119,7 @@ class UUBAService(
 
         val bps: List<LazerScore>?
 
-        val mode = OsuMode.getMode(param.user.mode, bu.osuMode)
+        val mode = OsuMode.getMode(param.user.mode, bu.osuMode, bindDao.getGroupModeConfig(event))
 
         try {
             bps = scoreApiService.getBestScores(bu, mode)

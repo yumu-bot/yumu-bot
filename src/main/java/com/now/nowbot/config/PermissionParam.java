@@ -83,7 +83,7 @@ public class PermissionParam {
         sb.append("->").append(isWhite?"白":"黑").append("名单模式\n")
                 .append("管理员").append(isAdministrator()?"不":"").append("可修改\n");
         if (GroupList != null) {
-            sb.append("\n群组: ");
+            sb.append("\n群聊: ");
             for (Long id : getGroupList()) {
                 sb.append(id).append(' ');
             }

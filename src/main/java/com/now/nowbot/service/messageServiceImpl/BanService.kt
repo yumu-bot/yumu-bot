@@ -82,10 +82,10 @@ class BanService(private val permission: Permission, private val imageService: I
                         event.reply("成功添加用户 ${param.qq} 进白名单")
                     }
                 } else if (Objects.nonNull(param.qq)) {
-                    // throw new TipsException("群组功能还在制作中");
+                    // throw new TipsException("群聊功能还在制作中");
                     val add = permission.addGroup(param.qq, true, true)
                     if (add) {
-                        event.reply("成功添加群组 ${param.qq} 进白名单")
+                        event.reply("成功添加群聊 ${param.qq} 进白名单")
                     }
                 } else {
                     throw BanException(BanException.Type.SUPER_Receive_NoQQ, "add", "add")
@@ -96,13 +96,13 @@ class BanService(private val permission: Permission, private val imageService: I
                 if (Objects.nonNull(param.qq) && param.isUser) {
                     val remove = permission.removeUser(param.qq, true)
                     if (remove) {
-                        event.reply("成功添加群组 ${param.qq} 出白名单")
+                        event.reply("成功添加群聊 ${param.qq} 出白名单")
                     }
                 } else if (Objects.nonNull(param.qq)) {
-                    // throw new TipsException("群组功能还在制作中");
+                    // throw new TipsException("群聊功能还在制作中");
                     val add = permission.removeGroup(param.qq, false, true)
                     if (add) {
-                        event.reply("成功移除群组 ${param.qq} 出白名单")
+                        event.reply("成功移除群聊 ${param.qq} 出白名单")
                     }
                 } else {
                     throw BanException(BanException.Type.SUPER_Receive_NoQQ, "remove", "remove")
@@ -116,10 +116,10 @@ class BanService(private val permission: Permission, private val imageService: I
                         event.reply("成功拉黑用户 ${param.qq}")
                     }
                 } else if (Objects.nonNull(param.qq)) {
-                    // throw new TipsException("群组功能还在制作中");
+                    // throw new TipsException("群聊功能还在制作中");
                     val add = permission.addGroup(param.qq, false, true)
                     if (add) {
-                        event.reply("成功拉黑群组 ${param.qq}")
+                        event.reply("成功拉黑群聊 ${param.qq}")
                     }
                 } else {
                     throw BanException(BanException.Type.SUPER_Receive_NoQQ, "ban", "ban")
@@ -133,10 +133,10 @@ class BanService(private val permission: Permission, private val imageService: I
                         event.reply("成功恢复用户 ${param.qq}")
                     }
                 } else if (Objects.nonNull(param.qq)) {
-                    // throw new TipsException("群组功能还在制作中");
+                    // throw new TipsException("群聊功能还在制作中");
                     val add = permission.removeGroup(param.qq, false, true)
                     if (add) {
-                        event.reply("成功恢复群组 ${param.qq}")
+                        event.reply("成功恢复群聊 ${param.qq}")
                     }
                 } else {
                     throw BanException(BanException.Type.SUPER_Receive_NoQQ, "unban", "unban")

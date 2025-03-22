@@ -135,7 +135,14 @@ class TodayBPService(
         calculateApiService.applyStarToScores(scores)
 
         return try {
-            imageService.getPanelA4(user, scores, ranks, "T")
+            val body = mapOf(
+                "user" to user,
+                "scores" to scores,
+                "rank" to ranks,
+                "panel" to "T"
+            )
+
+            imageService.getPanel(body, "A4")
         } catch (e: Exception) {
             log.error("今日最好成绩：图片渲染失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "今日最好成绩")

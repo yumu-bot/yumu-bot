@@ -3,7 +3,7 @@ package com.now.nowbot.model.enums
 import org.springframework.lang.Nullable
 import java.util.*
 
-enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: String, @JvmField val modeValue: Short) {
+enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: String, @JvmField val modeValue: Byte) {
     OSU("osu!standard", "osu", 0),
     TAIKO("osu!taiko", "taiko", 1),
     CATCH("osu!catch", "fruits", 2),
@@ -81,6 +81,18 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
         @JvmStatic fun getMode(mode: OsuMode?, default: OsuMode?): OsuMode {
             if (isDefaultOrNull(mode)) return default ?: DEFAULT
             return mode!!
+        }
+
+        /**
+         * 用于覆盖默认的游戏模式。优先级：mode > groupMode > selfMode
+         * @param mode 玩家查询时输入的游戏模式
+         * @param selfMode 一般是玩家自己绑定的游戏模式
+         * @param groupMode 群聊绑定游戏模式
+         */
+        @JvmStatic fun getMode(mode: OsuMode?, selfMode: OsuMode?, groupMode: OsuMode?): OsuMode {
+            if (isNotDefaultOrNull(groupMode)) return groupMode!!
+            if (isNotDefaultOrNull(mode)) return mode!!
+            return selfMode ?: DEFAULT
         }
 
         @JvmStatic fun getMode(@Nullable name: String?): OsuMode {

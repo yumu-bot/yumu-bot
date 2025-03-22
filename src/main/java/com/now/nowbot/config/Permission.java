@@ -234,7 +234,7 @@ public class Permission {
                             user = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_B));
                         }
                     }
-                    // 存放群组名单
+                    // 存放群聊名单
                     if ($beansCheck.group()) {
                         if ($beansCheck.isWhite()) {
                             group = Set.copyOf(permissionDao.getQQList(name, PermissionType.GROUP_W));
@@ -400,17 +400,30 @@ public class Permission {
         return testerList.contains(qq);
     }
 
-    public static boolean isGroupAdmin(Bot bot, long groupId, long qq) {
+    public static boolean isBotGroupAdmin(Bot bot, long groupID) {
         if (bot == null) return false;
         Group group;
-        if ((group = bot.getGroup(groupId)) == null) return false;
-        GroupContact member;
-        if ((member = group.getUser(qq)) == null) return false;
-        return member.getRoll() == Role.ADMIN || member.getRoll() == Role.OWNER;
+        if ((group = bot.getGroup(groupID)) == null) return false;
+        GroupContact botMyself;
+        if ((botMyself = group.getUser(bot.getSelfId())) == null) return false;
+        return botMyself.getRole() == Role.ADMIN || botMyself.getRole() == Role.OWNER;
     }
 
-    //超级管理员无视此限制
-    @SuppressWarnings("all")
+    /**
+     * 对方是否为群聊管理员。超级管理员无视此限制
+     * @param bot 机器人
+     * @param groupID 群聊 ID
+     * @param qq （对方）成员 ID
+     */
+    public static boolean isGroupAdmin(Bot bot, long groupID, long qq) {
+        if (bot == null) return false;
+        Group group;
+        if ((group = bot.getGroup(groupID)) == null) return false;
+        GroupContact member;
+        if ((member = group.getUser(qq)) == null) return false;
+        return member.getRole() == Role.ADMIN || member.getRole() == Role.OWNER;
+    }
+
     public static boolean isGroupAdmin(MessageEvent event) {
         return isGroupAdmin(event.getBot(), event.getSubject().getId(), event.getSender().getId()) || isSuperAdmin(event.getSender().getId());
     }

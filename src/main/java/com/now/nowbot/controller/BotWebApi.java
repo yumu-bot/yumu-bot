@@ -339,7 +339,13 @@ public class BotWebApi {
                 if (isMultipleScore) {
                     calculateApiService.applyBeatMapChanges(scores);
                     calculateApiService.applyStarToScores(scores);
-                    data = imageService.getPanelA4(osuUser, scores, ranks, "BS");
+
+                    data = imageService.getPanel(Map.of(
+                            "user", osuUser,
+                            "scores", scores,
+                            "rank", ranks,
+                            "panel", "BS"
+                    ), "A4");
                     suffix = "-bps.jpg";
                 } else {
                     try {
@@ -359,7 +365,13 @@ public class BotWebApi {
                 calculateApiService.applyStarToScores(scores);
 
                 if (isMultipleScore) {
-                    data = imageService.getPanelA5(osuUser, scores, "PS");
+                    data = imageService.getPanel(
+                            Map.of("user", osuUser,
+                                   "score", scores,
+                                   "panel", "PS")
+                            , "A5"
+                    );
+
                     suffix = "-passes.jpg";
                 } else {
                     try {
@@ -380,7 +392,13 @@ public class BotWebApi {
                 calculateApiService.applyStarToScores(scores);
 
                 if (isMultipleScore) {
-                    data = imageService.getPanelA5(osuUser, scores, "RS");
+                    data = imageService.getPanel(
+                            Map.of("user", osuUser,
+                                   "score", scores,
+                                   "panel", "RS")
+                            , "A5"
+                    );
+
                     suffix = "-recents.jpg";
                 } else {
                     try {
@@ -439,7 +457,12 @@ public class BotWebApi {
                 calculateApiService.applyBeatMapChanges(scores);
                 calculateApiService.applyStarToScores(scores);
 
-                data = imageService.getPanelA4(osuUser, scores, ranks, "T");
+                data = imageService.getPanel(Map.of(
+                        "user", osuUser,
+                        "scores", scores,
+                        "rank", ranks,
+                        "panel", "T"
+                ), "A4");
                 suffix = "-todaybp.jpg";
             }
         }
