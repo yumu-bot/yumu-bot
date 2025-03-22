@@ -212,11 +212,12 @@ class NewbieRestrictOverSRService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: List<LazerScore>) {
-        val silence = param.sumOf { getSilence(it.beatMap.starRating) }
+        val sr = param.maxOf { it.beatMap.starRating }
+        val silence = getSilence(sr)
         if (silence <= 0) return
 
         val criminal = event.sender
-        val message = getSilenceMessage(silence)
+        val message = String.format("%.2f", sr) + " -> " + getSilenceMessage(silence)
         val executorBot = botContainer.robots[executorBotID]
             ?: run {
                 log.info("检测到 ${criminal.name} 超星 ($message)，但是执行机器人并未上线。无法执行禁言任务。")
