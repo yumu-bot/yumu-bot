@@ -21,6 +21,7 @@ import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.getMod
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
+import com.now.nowbot.util.CmdUtil.getUserWithRange
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
@@ -62,8 +63,10 @@ class NewbieRestrictOverSRService(
         val s = Instruction.SCORE.matcher(messageText)
 
         val pr = Instruction.SCORE_PR.matcher(messageText)
+        val t = Instruction.TODAY_BP.matcher(messageText)
         val b = Instruction.BP.matcher(messageText)
         val m = Instruction.MAP.matcher(messageText)
+        val ba = Instruction.BP_ANALYSIS.matcher(messageText)
 
         val scores: List<LazerScore>
         val user: OsuUser
@@ -202,13 +205,31 @@ class NewbieRestrictOverSRService(
                 constructScore.mods = mods
 
                 scores = listOf(constructScore)
+            } else if (t.find()) {
+                val mode = getMode(t)
+                val range = getUserWithRange(event, t, mode, AtomicBoolean())
+                range.setZeroDay()
+                user = range.data ?: return false
+
+                val dayStart = range.getDayStart()
+                val dayEnd = range.getDayEnd()
+
+                val bps = scoreApiService.getBestScores(user.userID, mode.data)
+                val laterDay = java.time.OffsetDateTime.now().minusDays(dayStart.toLong())
+                val earlierDay = java.time.OffsetDateTime.now().minusDays(dayEnd.toLong())
+
+                scores = bps.filter { it.endedTime.isBefore(laterDay) && it.endedTime.isAfter(earlierDay) }
+            } else if (ba.find()) {
+                val mode = getMode(ba)
+                user = getUserWithoutRange(event, ba, mode, AtomicBoolean())
+                scores = scoreApiService.getBestScores(user.userID, mode.data).take(6)
             } else return false
         } catch (e: Exception) {
             return false
         }
 
         // 虽然主动从 API 获取成绩，可以避免本地计算的失误，但是还是容易出现误操作
-        calculateApiService.applyStarToScores(scores)
+        calculateApiService.applyStarToScores(scores, local = true)
 
         data.value = scores.filterNot {
             remitBIDs.contains(it.beatMap.beatMapID) && LazerMod.noStarRatingChange(it.mods)

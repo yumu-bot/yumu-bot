@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Matcher
 
 @Service("TODAY_BP")
@@ -86,7 +87,7 @@ class TodayBPService(
 
         val bpList: List<LazerScore>
         try {
-            bpList = scoreApiService.getBestScores(user.userID, mode.data, 0, 100)
+            bpList = scoreApiService.getBestScores(user.userID, mode.data)
         } catch (e: WebClientResponseException.Forbidden) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.username)
         } catch (e: WebClientResponseException.NotFound) {
@@ -101,13 +102,14 @@ class TodayBPService(
         val earlierDay = java.time.OffsetDateTime.now().minusDays(dayEnd.toLong())
         val dataMap = TreeMap<Int, LazerScore>()
 
-        bpList.forEach(
-            ContextUtil.consumerWithIndex { s: LazerScore, index: Int ->
-                if (s.endedTime.isBefore(laterDay) && s.endedTime.isAfter(earlierDay)) {
-                    dataMap[index] = s
-                }
+        val i = AtomicInteger(1)
+
+        bpList.forEach {
+            if (it.endedTime.isBefore(laterDay) && it.endedTime.isAfter(earlierDay)) {
+                dataMap[i.getAndIncrement()] = it
             }
-        )
+        }
+
         return TodayBPParam(user, mode.data!!, dataMap, isMyself.get(), isToday)
     }
 
@@ -127,7 +129,7 @@ class TodayBPService(
         val ranks = mutableListOf<Int>()
         val scores = mutableListOf<LazerScore>()
         for ((key, value) in todayMap) {
-            ranks.add(key + 1)
+            ranks.add(key)
             scores.add(value)
         }
 
