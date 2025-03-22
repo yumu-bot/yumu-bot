@@ -207,8 +207,8 @@ class NewbieRestrictOverSRService(
             return false
         }
 
-        // 主动从 API 获取成绩，这样可以避免本地计算的失误
-        calculateApiService.applyStarToScores(scores, local = false)
+        // 虽然主动从 API 获取成绩，可以避免本地计算的失误，但是还是容易出现误操作
+        calculateApiService.applyStarToScores(scores)
 
         data.value = scores.filterNot {
             remitBIDs.contains(it.beatMap.beatMapID) && LazerMod.noStarRatingChange(it.mods)
