@@ -379,14 +379,22 @@ class MatchRating(
         val ai1 = AtomicInteger(0)
         val ai2 = AtomicInteger(0)
         val ai3 = AtomicInteger(0)
-        val ai4 = AtomicInteger(0)
+        val ai4 = AtomicInteger(1)
 
         val v = playerDataMap.values
 
-        v.sortedByDescending { it.era }.forEach { it.eraIndex = (1.0 * ai1.getAndIncrement() / players.size) }
-        v.sortedByDescending { it.dra }.forEach { it.draIndex = (1.0 * ai2.getAndIncrement() / players.size) }
-        v.sortedByDescending { it.rws }.forEach { it.rwsIndex = (1.0 * ai3.getAndIncrement() / players.size) }
-        v.sortedByDescending { it.mra }.forEach { it.ranking = (ai4.getAndIncrement()) }
+        v.sortedByDescending { it.era }.forEach {
+            it.eraIndex = if (players.size > 1) (1.0 * ai1.getAndIncrement() / (players.size - 1.0)) else 1.0
+        }
+        v.sortedByDescending { it.dra }.forEach {
+            it.draIndex = if (players.size > 1) (1.0 * ai2.getAndIncrement() / (players.size - 1.0)) else 1.0
+        }
+        v.sortedByDescending { it.rws }.forEach {
+            it.rwsIndex = if (players.size > 1) (1.0 * ai3.getAndIncrement() / (players.size - 1.0)) else 1.0
+        }
+        v.sortedByDescending { it.mra }.forEach {
+            it.ranking = (ai4.getAndIncrement())
+        }
     }
 
 
@@ -524,7 +532,6 @@ class MatchRating(
         }
 
         fun calculateClass() {
-            println(rwsIndex)
             playerClass = PlayerClass(eraIndex, draIndex, rwsIndex)
         }
     }
