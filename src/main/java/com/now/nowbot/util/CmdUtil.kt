@@ -62,7 +62,7 @@ object CmdUtil {
             return user
         } else if (me != null) {
             isMyself.set(true)
-            getMode(mode, me.osuMode, event)
+            setMode(mode, me.osuMode, event)
             return getOsuUser(me.username, me.osuID) { userApiService.getPlayerInfo(me, mode.data) }
         } else {
             throw BindException(BindException.Type.BIND_Player_TokenExpired)
@@ -147,7 +147,7 @@ object CmdUtil {
                     }
 
                     // val id = userApiService.getOsuId(name)
-                    getMode(mode, bindMode, event)
+                    setMode(mode, bindMode, event)
                     val user = getOsuUser(name, mode.data)
                     return CmdRange(user)
                 } catch (_: Exception) {
@@ -178,7 +178,7 @@ object CmdUtil {
                 }
 
                 // val id = userApiService.getOsuId(range.data)
-                getMode(mode, bindMode, event)
+                setMode(mode, bindMode, event)
                 val user = getOsuUser(range.data!!, mode.data)
                 result = CmdRange(user, range.start, range.end)
                 break
@@ -301,7 +301,7 @@ object CmdUtil {
      * 内部方法 获取玩家信息, 优先级为 at > qq= > uid= > name, 不处理自身绑定, 如果传入 mode 为 default, 同时是 @qq 绑定, 则改为绑定的模式,
      * 否则就是对应用户的官网主模式 at / qq / uid / name。都没有找到，就返回一个没有 uid，只有 username 的 osuUser
      *
-     * @param mode 如果是非默认模式则使用该模式查询 user
+     * @param mode 玩家查询时输入的模式
      */
     @Throws(TipsException::class) private fun getOsuUser(
         event: MessageEvent,
@@ -324,8 +324,10 @@ object CmdUtil {
         if (qq != 0L) {
             val bind = bindDao.getBindFromQQ(qq)
 
-            getMode(mode, bind.osuMode, event)
+            setMode(mode, bind.osuMode, event)
             return getOsuUser(bind, mode.data)
+        } else {
+            setMode(mode, event)
         }
 
         if (matcher.namedGroups().containsKey(FLAG_UID)) {
@@ -455,8 +457,17 @@ object CmdUtil {
      * @param selfMode 一般是玩家自己绑定的游戏模式
      * @param event 可能为群聊
      */
-    private fun getMode(mode: CmdObject<OsuMode>, selfMode: OsuMode, event: MessageEvent? = null) {
+    private fun setMode(mode: CmdObject<OsuMode>, selfMode: OsuMode, event: MessageEvent? = null) {
         mode.data = OsuMode.getMode(mode.data, selfMode, bindDao.getGroupModeConfig(event))
+    }
+
+    /**
+     * 用于覆盖默认的游戏模式。优先级：mode > groupMode
+     * @param mode 玩家查询时输入的游戏模式
+     * @param event 可能为群聊
+     */
+    private fun setMode(mode: CmdObject<OsuMode>, event: MessageEvent? = null) {
+        mode.data = OsuMode.getMode(mode.data, OsuMode.DEFAULT, bindDao.getGroupModeConfig(event))
     }
 
     private const val OSU_MIN_INDEX = 2

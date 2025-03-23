@@ -1,8 +1,6 @@
 package com.now.nowbot.newbie.entity
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.Id
+import jakarta.persistence.*
 import org.hibernate.proxy.HibernateProxy
 import java.time.LocalDateTime
 

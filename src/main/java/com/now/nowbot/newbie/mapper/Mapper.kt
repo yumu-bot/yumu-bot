@@ -18,7 +18,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 
-
 interface UserPlayRecordsMapper : JpaRepository<UserPlayRecords, Long> {
     @Query(
         """
