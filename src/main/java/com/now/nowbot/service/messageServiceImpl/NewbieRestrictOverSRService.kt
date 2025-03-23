@@ -99,6 +99,7 @@ class NewbieRestrictOverSRService(
 
                 user = getUserWithoutRange(event, s, CmdObject(mode))
                 scores = listOf(scoreApiService.getBeatMapScore(map.beatMapID, user.userID, mode, mods)?.score ?: return false)
+                calculateApiService.applyStarToScores(scores, local = true)
             } else if (pr.find()) {
                 val isMulti = (pr.group("s").isNullOrBlank().not() || pr.group("es").isNullOrBlank().not())
 
@@ -130,6 +131,7 @@ class NewbieRestrictOverSRService(
                 }
 
                 scores = scoreApiService.getScore(range.data!!.userID, mode.data, offset, limit, isPass)
+                calculateApiService.applyStarToScores(scores, local = true)
             } else if (b.find()) {
                 val any: String? = b.group("any")
 
@@ -181,8 +183,10 @@ class NewbieRestrictOverSRService(
                         limit = getLimit(1, false)
                     }
 
-                    scoreApiService.getBestScores(range2.data!!.userID, mode.data, offset, limit)
-                        .mapIndexed { index: Int, score: LazerScore -> (index + 1) to score }.toMap()
+                    val bss = scoreApiService.getBestScores(range2.data!!.userID, mode.data, offset, limit)
+                    calculateApiService.applyStarToScores(bss, local = true)
+
+                    bss.mapIndexed { index: Int, score: LazerScore -> (index + 1) to score }.toMap()
                 }
 
                 val filteredScores = filterScores(bs, conditions)
@@ -209,6 +213,7 @@ class NewbieRestrictOverSRService(
                 constructScore.mods = mods
 
                 scores = listOf(constructScore)
+                calculateApiService.applyStarToScores(scores, local = true)
             } else if (t.find()) {
                 val mode = getMode(t)
                 val range = getUserWithRange(event, t, mode, AtomicBoolean())
@@ -223,6 +228,7 @@ class NewbieRestrictOverSRService(
                 val earlierDay = java.time.OffsetDateTime.now().minusDays(dayEnd.toLong())
 
                 scores = bps.filter { it.endedTime.isBefore(laterDay) && it.endedTime.isAfter(earlierDay) }
+                calculateApiService.applyStarToScores(scores, local = true)
             } else if (ba.find()) {
                 /*
                 val mode = getMode(ba)
@@ -237,9 +243,6 @@ class NewbieRestrictOverSRService(
         } catch (e: Exception) {
             return false
         }
-
-        // 虽然主动从 API 获取成绩，可以避免本地计算的失误，但是还是容易出现误操作
-        calculateApiService.applyStarToScores(scores, local = true)
 
         data.value = scores.filterNot {
             remitBIDs.contains(it.beatMap.beatMapID) && LazerMod.noStarRatingChange(it.mods)
