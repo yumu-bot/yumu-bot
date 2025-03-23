@@ -315,7 +315,7 @@ import kotlin.math.*
                 "user" to user,
                 "scores" to scores,
                 "rank" to ranks,
-                "panel" to "B"
+                "panel" to "BS"
             )
 
             imageService.getPanel(body, "A4")
