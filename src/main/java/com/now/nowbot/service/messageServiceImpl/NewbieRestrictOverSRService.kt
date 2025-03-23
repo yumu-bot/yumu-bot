@@ -53,7 +53,7 @@ class NewbieRestrictOverSRService(
     private val executorBotID = 1708547915L
 
     // 赦免图：No title，竹取飞翔，C type
-    private val remitBIDs = listOf(738063L, 86324L, 1620144L)
+    private val remitBIDs = listOf(760488L, 738063L, 86324L, 1620144L)
 
     override fun isHandle(
         event: MessageEvent,
