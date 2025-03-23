@@ -264,19 +264,37 @@ class NewbieRestrictOverSRService(
         try {
             newbieDao.saveRestricted(criminal.id, sr, System.currentTimeMillis(), min(silence * 60000L, 7L * 24 * 60 * 60 * 1000))
         } catch (e: Throwable) {
-            log.error("检测到 ${criminal.name} 超星 ($message)，但是保存记录失败了。", e)
+            log.error(
+                """
+                    检测到 ${criminal.name} 超星 ($message)。
+                    七天之内超星次数：${count}。
+                    七天之内总计禁言时间：${duration}。
+                    但是保存记录失败了。
+                """.trimIndent(), e)
         }
 
         val executorBot = botContainer.robots[executorBotID]
             ?: run {
-                log.info("检测到 ${criminal.name} 超星 ($message)，但是执行机器人并未上线。无法执行禁言任务。")
+                log.info(
+                    """
+                    检测到 ${criminal.name} 超星 ($message)。
+                    七天之内超星次数：${count}。
+                    七天之内总计禁言时间：${duration}。
+                    但是执行机器人并未上线。无法执行禁言任务。
+                """.trimIndent())
                 return
             }
 
         val isReportable = executorBot.groupList.data?.map { it.groupId }?.contains(killerGroupID) == true
 
         if (Permission.isGroupAdmin(event)) {
-            report(isReportable, executorBot, "检测到 ${criminal.name} 超星 ($message)，但是对方是管理员或群主，无法执行禁言任务。")
+            report(isReportable, executorBot,
+                """
+                    检测到 ${criminal.name} 超星 ($message)。
+                    七天之内超星次数：${count}。
+                    七天之内总计禁言时间：${duration}。
+                    但是对方是管理员或群主，无法执行禁言任务。
+                """.trimIndent())
             return
         }
 
@@ -291,7 +309,12 @@ class NewbieRestrictOverSRService(
                 """.trimIndent())
 
             executorBot.setGroupBan(newbieGroupID, event.sender.id, (30 * 24 * 60 - 1) * 60)
-                ?: report(isReportable, executorBot, "检测到 ${criminal.name} 超星 ($message)，但是机器人执行禁言任务时失败了。")
+                ?: report(isReportable, executorBot, """
+                    检测到 ${criminal.name} 超星 ($message)。
+                    七天之内超星次数：${count}。
+                    七天之内总计禁言时间：${duration}。
+                    但是机器人执行禁言任务失败了。
+                """.trimIndent())
         } else {
             report(isReportable, executorBot,
                 """
@@ -302,7 +325,13 @@ class NewbieRestrictOverSRService(
                 """.trimIndent())
 
             executorBot.setGroupBan(newbieGroupID, event.sender.id, silence * 60)
-                ?: report(isReportable, executorBot, "检测到 ${criminal.name} 超星 ($message)，但是机器人执行禁言任务时失败了。")
+                ?: report(isReportable, executorBot,
+                    """
+                    检测到 ${criminal.name} 超星 ($message)。
+                    七天之内超星次数：${count}。
+                    七天之内总计禁言时间：${duration}。
+                    但是机器人执行禁言任务失败了。
+                """.trimIndent())
         }
     }
 
