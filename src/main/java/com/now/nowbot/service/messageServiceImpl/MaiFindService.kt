@@ -89,7 +89,9 @@ import kotlin.math.floor
             for (i in s.value.star.indices) {
                 if (param.dxScore != null) {
                     val dxScore = s.value.charts[i].dxScore
-                    if (dxScore > param.dxScore + 1000 || dxScore < param.dxScore) continue@diff
+                    if (dxScore >= param.dxScore + 100 || dxScore < param.dxScore) {
+                        continue@diff
+                    }
                 }
 
                 if (param.difficulty != MaiDifficulty.DEFAULT) {
@@ -104,17 +106,17 @@ import kotlin.math.floor
                     }
                 }
 
+                val sr = s.value.star[i]
+
                 if (param.ranges.isNullOrEmpty()) {
                     songs.add(s.value)
                     continue@song
-                }
-
-                val sr = s.value.star[i]
-
-                for (range in param.ranges) {
-                    if (isInRange(sr, range)) {
-                        meetCount++
-                        continue@diff
+                } else {
+                    for (range in param.ranges) {
+                        if (isInRange(sr, range)) {
+                            meetCount++
+                            continue@diff
+                        }
                     }
                 }
             }

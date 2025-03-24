@@ -809,7 +809,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i.name != "MAP") continue
+        if (i.name != "MAI_FIND") continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }
