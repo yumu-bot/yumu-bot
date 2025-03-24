@@ -197,6 +197,8 @@ import kotlin.math.*
 
         SOURCE("(source|src|s)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
+        TAG("(tags?|g)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+
         DIFFICULTY("(difficulty|diff|d)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
         STAR("(star|rating|sr|r)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)$REG_STAR$LEVEL_MAYBE".toRegex()),
@@ -401,6 +403,15 @@ import kotlin.math.*
                 Filter.ARTIST -> (fit(operator, it.beatMapSet.artist, condition)
                         || fit(operator, it.beatMapSet.artistUnicode, condition))
                 Filter.SOURCE -> fit(operator, it.beatMapSet.source, condition)
+                Filter.TAG -> run {
+                    if (it.beatMapSet.tags == null) return false
+
+                    for (t in it.beatMapSet.tags!!.split("\\s+".toRegex())) {
+                        if (fit(operator, it.beatMapSet.source, condition)) return true
+                    }
+
+                    return false
+                }
                 Filter.DIFFICULTY -> fit(operator, it.beatMap.difficultyName, condition)
 
                 Filter.STAR -> fit(operator, it.beatMap.starRating, double)
