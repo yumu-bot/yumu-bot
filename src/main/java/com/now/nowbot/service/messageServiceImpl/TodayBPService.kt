@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Matcher
 
 @Service("TODAY_BP")
@@ -85,9 +84,8 @@ class TodayBPService(
         val dayEnd = range.getDayEnd()
         val isToday = (dayStart == 0 && dayEnd == 1)
 
-        val bpList: List<LazerScore>
-        try {
-            bpList = scoreApiService.getBestScores(user.userID, mode.data)
+        val bs: List<LazerScore> = try {
+            scoreApiService.getBestScores(user.userID, mode.data)
         } catch (e: WebClientResponseException.Forbidden) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.username)
         } catch (e: WebClientResponseException.NotFound) {
@@ -98,15 +96,14 @@ class TodayBPService(
             log.error("今日最好成绩：获取失败！", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "今日最好成绩")
         }
+
         val laterDay = java.time.OffsetDateTime.now().minusDays(dayStart.toLong())
         val earlierDay = java.time.OffsetDateTime.now().minusDays(dayEnd.toLong())
         val dataMap = TreeMap<Int, LazerScore>()
 
-        val i = AtomicInteger(1)
-
-        bpList.forEach {
+        bs.forEachIndexed { i, it ->
             if (it.endedTime.isBefore(laterDay) && it.endedTime.isAfter(earlierDay)) {
-                dataMap[i.getAndIncrement()] = it
+                dataMap[i + 1] = it
             }
         }
 
