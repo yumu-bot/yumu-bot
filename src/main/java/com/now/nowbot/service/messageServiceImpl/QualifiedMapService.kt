@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -22,6 +23,7 @@ import kotlin.math.roundToInt
 @Service("QUALIFIED_MAP") class QualifiedMapService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService,
+    private val bindDao: BindDao
 ) : MessageService<Matcher> {
 
     override fun isHandle(
@@ -40,13 +42,10 @@ import kotlin.math.roundToInt
         val statusStr = matcher.group("status") ?: "q"
         val sortStr = matcher.group("sort") ?: "ranked_asc"
         val rangeStr = matcher.group("range") ?: "12"
-        val mode = OsuMode.getMode(matcher.group(FLAG_MODE)).modeValue
 
-        val range = try {
-            rangeStr.toInt()
-        } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param)
-        }
+        val mode = OsuMode.getMode(OsuMode.getMode(matcher.group(FLAG_MODE)), null, bindDao.getGroupModeConfig(event))
+
+        val range = rangeStr.toIntOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_Param)
 
         if (range < 1 || range > 999) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param)
@@ -58,7 +57,7 @@ import kotlin.math.roundToInt
         val sort = DataUtil.getSort(sortStr)
 
         val query = mapOf<String, Any>(
-            "m" to mode,
+            "m" to mode.modeValue,
             "s" to if (status == "any" || status == null) "qualified" else status,
             "sort" to sort,
             "page" to 1,

@@ -1,185 +1,163 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.config.Permission;
-import com.now.nowbot.entity.ServiceCallLite;
-import com.now.nowbot.mapper.ServiceCallRepository;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.util.Instruction;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
+import com.now.nowbot.aop.CheckPermission
+import com.now.nowbot.config.Permission
+import com.now.nowbot.entity.ServiceCallLite.ServiceCallResult
+import com.now.nowbot.mapper.ServiceCallRepository
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.util.Instruction
+import org.springframework.lang.Nullable
+import org.springframework.stereotype.Service
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
+@Service("SERVICE_COUNT") class ServiceCountService(
+    private val serviceCallRepository: ServiceCallRepository, private val imageService: ImageService
+) : MessageService<Int> {
+    @Throws(Throwable::class) override fun isHandle(
+        event: MessageEvent, messageText: String, data: DataValue<Int>
+    ): Boolean {
+        val matcher = Instruction.SERVICE_COUNT.matcher(messageText)
+        if (!matcher.find()) return false
 
-@Service("SERVICE_COUNT")
-public class ServiceCountService implements MessageService<Integer> {
-    private final ServiceCallRepository serviceCallRepository;
-    private final ImageService imageService;
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yy/MM/dd HH:mm");
+        if (!Permission.isSuperAdmin(event.sender.id)) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Super)
+        }
 
-    public ServiceCountService(ServiceCallRepository serviceCallRepository, ImageService imageService) {
-        this.serviceCallRepository = serviceCallRepository;
-        this.imageService = imageService;
+        val d = matcher.group("days")
+        val h = matcher.group("hours")
+
+        val hours = if (d.isNullOrEmpty() && h.isNullOrEmpty()) {
+            24
+        } else if (d.isNullOrEmpty().not()) {
+            24 * (d.toIntOrNull() ?: 0) + (h.toIntOrNull() ?: 0)
+        } else {
+            h.toIntOrNull() ?: 24
+        }
+
+        data.value = hours
+        return true
     }
 
-    @Override
-    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Integer> data) throws Throwable {
-        var matcher = Instruction.SERVICE_COUNT.matcher(messageText);
-        if (! matcher.find()) return false;
+    @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun HandleMessage(
+        event: MessageEvent, hours: Int
+    ) {
+        val sb = StringBuilder()
+        val result: List<ServiceCallResult>?
 
-        if (!Permission.isSuperAdmin(event.getSender().getId())) {
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Permission_Super);
-        }
+        val now = LocalDateTime.now()
+        val before: LocalDateTime
 
-        var d = matcher.group("days");
-        var h = matcher.group("hours");
-        Integer hours = 0;
-        boolean hasDays = true;
+        when (hours) {
+            24 -> {
+                before = now.minusHours(24)
+                result = serviceCallRepository.countBetween(before, now)
+                sb.append("## 时间段：今天之内\n")
+            }
 
-        try {
-            hours += 24 * Integer.parseInt(d);
-        } catch (NumberFormatException ignored) {
-            hasDays = false;
-        }
+            0 -> {
+                before = LocalDateTime.of(2021, 4, 26, 0, 0, 0)
+                result = serviceCallRepository.countAll()
+                sb.append("## 时间段：迄今为止\n")
+            }
 
-        try {
-            hours += Integer.parseInt(h);
-        } catch (NumberFormatException e) {
-            if (! hasDays) {
-                hours = null;
+            else -> {
+                before = now.minusHours(hours.toLong())
+                sb.append(
+                    "## 时间段：**${before.format(dateTimeFormatter)}** - **${now.format(dateTimeFormatter)}**\n"
+                )
+                result = serviceCallRepository.countBetween(before, now)
             }
         }
 
-        data.setValue(hours);
-        return true;
+        val r1 = serviceCallRepository.countBetweenLimit(before, now, 0.01).associate { it.service to it.data }
+        val r50 = serviceCallRepository.countBetweenLimit(before, now, 0.50).associate { it.service to it.data }
+        val r80 = serviceCallRepository.countBetweenLimit(before, now, 0.80).associate { it.service to it.data }
+        val r99 = serviceCallRepository.countBetweenLimit(before, now, 0.99).associate { it.service to it.data }
+
+        sb.getCharts(result, r1, r50, r80, r99)
+
+        val image = imageService.getPanelA6(sb.toString(), "service")
+        event.reply(image)
     }
 
-    @Override
-    @CheckPermission(isSuperAdmin = true)
-    public void HandleMessage(MessageEvent event, Integer hours) throws Throwable {
-        StringBuilder sb = new StringBuilder();
-        List<ServiceCallLite.ServiceCallResult> result;
+    // 构建表格
+    private fun StringBuilder.getCharts(
+        result: List<ServiceCallResult>?,
+        r1: Map<String, Long>,
+        r50: Map<String, Long>,
+        r80: Map<String, Long>,
+        r99: Map<String, Long>
+    ) {
+        if (result == null) return
 
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime before;
+        this.append(
+            """
+                | 服务名 | 调用次数 | 最长用时 (99%) | 大部分人用时 (80%) | 平均用时 (50%) | 最短用时 (1%) |
+                | :-- | :-: | :-: | :-: | :-: | :-: |
+                
+                """.trimIndent()
+        )
 
-        if (Objects.isNull(hours)) {
-            before = now.minusHours(24);
-            result = serviceCallRepository.countBetween(before, now);
-            sb.append("## 时间段：今天之内\n");
-        } else if (hours == 0) {
-            before = LocalDateTime.of(1900, 1, 1, 0, 0, 0);
-            result = serviceCallRepository.countAll();
-            sb.append("## 时间段：迄今为止\n");
-        } else {
-            before = now.minusHours(hours);
-            sb.append(STR."## 时间段：**\{before.format(dateTimeFormatter)}** - **\{now.format(dateTimeFormatter)}**\n");
-            result = serviceCallRepository.countBetween(before, now);
+        var count = 0
+        val r99List = ArrayList<Long>()
+        val r80List = ArrayList<Long>()
+        val r50List = ArrayList<Long>()
+        val r1List = ArrayList<Long>()
+
+        for (r in result) {
+            val service = r.service
+            val size = r.size
+
+            count += size
+
+            r99List.add(r99.getOrDefault(service, 0L) * size)
+            r80List.add(r80.getOrDefault(service, 0L) * size)
+            r50List.add(r50.getOrDefault(service, 0L) * size)
+            r1List.add(r1.getOrDefault(service, 0L) * size)
+
+            this.append("| ").append(service).append(" | ").append(size).append(" | ")
+                .append(roundToSec(r99.getOrDefault(service, 0L))).append('s').append(" | ")
+                .append(roundToSec(r80.getOrDefault(service, 0L))).append('s').append(" | ")
+                .append(roundToSec(r50.getOrDefault(service, 0L))).append('s').append(" | ")
+                .append(roundToSec(r1.getOrDefault(service, 0L))).append('s').append(" |\n")
         }
 
-        Map<String, Long> r1 = serviceCallRepository.countBetweenLimit(before, now, 0.01)
-                .stream().collect(Collectors.toMap(
-                ServiceCallLite.ServiceCallResultLimit::getService,
-                ServiceCallLite.ServiceCallResultLimit::getData
-        ));
-        Map<String, Long> r50 = serviceCallRepository.countBetweenLimit(before, now, 0.50)
-                .stream().collect(Collectors.toMap(
-                ServiceCallLite.ServiceCallResultLimit::getService,
-                ServiceCallLite.ServiceCallResultLimit::getData
-        ));
-        Map<String, Long> r80 = serviceCallRepository.countBetweenLimit(before, now, 0.80)
-                .stream().collect(Collectors.toMap(
-                ServiceCallLite.ServiceCallResultLimit::getService,
-                ServiceCallLite.ServiceCallResultLimit::getData
-        ));
-        Map<String, Long> r99 = serviceCallRepository.countBetweenLimit(before, now, 0.99)
-                .stream().collect(Collectors.toMap(
-                ServiceCallLite.ServiceCallResultLimit::getService,
-                ServiceCallLite.ServiceCallResultLimit::getData
-        ));
-
-        Consumer(sb, result, r1, r50, r80, r99);
-
-        var image = imageService.getPanelA6(sb.toString(), "service");
-        event.reply(image);
-    }
-
-    //
-    private void Consumer(StringBuilder sb, List<ServiceCallLite.ServiceCallResult> result,
-                          Map<String, Long> r1, Map<String, Long> r50, Map<String, Long> r80, Map<String, Long> r99) {
-        if (Objects.isNull(result)) return;
-
-        sb.append("""
-                | 服务名 | 调用次数 | 最长用时 (100%) | 99% | 80% | 50% | 1% | 最短用时 (0%) |
-                | :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-                """);
-
-        int sum = 0;
-        var maxList = new ArrayList<Long>();
-        var r99List = new ArrayList<Long>();
-        var r80List = new ArrayList<Long>();
-        var r50List = new ArrayList<Long>();
-        var r1List = new ArrayList<Long>();
-        var minList = new ArrayList<Long>();
-
-        for (var r : result) {
-            var s = r.getService();
-            var size = Optional.ofNullable(r.getSize()).orElse(0);
-
-            sum += size;
-            maxList.add(r.getMaxTime() * size);
-            r99List.add(r99.getOrDefault(s, 0L) * size);
-            r80List.add(r80.getOrDefault(s, 0L) * size);
-            r50List.add(r50.getOrDefault(s, 0L) * size);
-            r1List.add(r1.getOrDefault(s, 0L) * size);
-            minList.add(r.getMinTime() * size);
-
-            sb.append("| ").append(r.getService())
-                    .append(" | ").append(size)
-                    .append(" | ").append(getString(r.getMaxTime())).append('s')
-                    .append(" | ").append(getString(r99.getOrDefault(s, 0L))).append('s')
-                    .append(" | ").append(getString(r80.getOrDefault(s, 0L))).append('s')
-                    .append(" | ").append(getString(r50.getOrDefault(s, 0L))).append('s')
-                    .append(" | ").append(getString(r1.getOrDefault(s, 0L))).append('s')
-                    .append(" | ").append(getString(r.getMinTime())).append('s')
-                    .append(" |\n");
-        }
-
-        sb.append("| ").append("总计和平均")
-                .append(" | ").append(sum)
-                .append(" | ").append(getString(getListAverage(maxList, sum))).append('s')
-                .append(" | ").append(getString(getListAverage(r99List, sum))).append('s')
-                .append(" | ").append(getString(getListAverage(r80List, sum))).append('s')
-                .append(" | ").append(getString(getListAverage(r50List, sum))).append('s')
-                .append(" | ").append(getString(getListAverage(r1List, sum))).append('s')
-                .append(" | ").append(getString(getListAverage(minList, sum))).append('s')
-                .append(" |\n");
+        this.append("| ").append("总计和平均").append(" | ").append(count).append(" | ")
+            .append(roundToSec(getListAverage(r99List, count))).append('s').append(" | ")
+            .append(roundToSec(getListAverage(r80List, count))).append('s').append(" | ")
+            .append(roundToSec(getListAverage(r50List, count))).append('s').append(" | ")
+            .append(roundToSec(getListAverage(r1List, count))).append('s').append(" |\n")
     }
 
     //数组求平均值
-    private float getListAverage(List<Long> list, int sum) {
-        if (CollectionUtils.isEmpty(list) || sum == 0) return 0f;
-        else return 1f * list.stream().reduce(Long::sum).orElse(0L) / sum;
+    private fun getListAverage(list: List<Long>?, count: Int): Float {
+        return if (list.isNullOrEmpty() || count == 0) {
+            0f
+        } else {
+            list.sum() * 1f / count
+        }
     }
 
     //1926ms -> 1.9s
-    private <T extends Number> String getString(@Nullable T millis) {
-        if (millis == null) return "0";
+    private fun <T : Number?> roundToSec(@Nullable millis: T?): String {
+        if (millis == null) return "0"
 
-        String str = String.format("%.1f", Math.round(millis.floatValue() / 100f) / 10f);
+        val str = String.format("%.1f", Math.round(millis.toFloat() / 100f) / 10f)
 
         if (str.endsWith(".0")) {
-            return str.replace(".0", "");
+            return str.replace(".0", "")
         }
 
-        return str;
+        return str
+    }
+
+    companion object {
+        private val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yy/MM/dd HH:mm")
     }
 }

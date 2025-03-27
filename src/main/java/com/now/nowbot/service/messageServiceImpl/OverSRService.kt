@@ -16,7 +16,7 @@ import kotlin.math.roundToInt
             val starStr = m.group("SR")
 
             if (starStr.matches(REG_NUMBER_DECIMAL.toRegex()).not()) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_StarRating)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_Param)
             }
             val star =
                 starStr.toDoubleOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_StarRating)

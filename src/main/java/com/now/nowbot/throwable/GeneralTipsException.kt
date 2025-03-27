@@ -63,12 +63,13 @@ class GeneralTipsException : TipsException {
         G_NotEnoughBP_Me("您在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
         G_NotEnoughBP_Player("对方在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
 
-        G_Wrong_StarRating("捞翔，恁发嘞是个啥玩应啊？"),
+        G_Wrong_Param("捞翔，恁发嘞是个啥玩应啊？"),
         G_Wrong_Instruction("指令错误。"),
         G_Wrong_S("%s错误。"),
         G_Wrong_ParamOnly("仅支持使用 %s 逻辑运算符。"),
         G_Wrong_Cabbage("如果你给他...传递一些完全看不懂的参数...你等于...你也等于...你也有泽任吧？"),
 
+        G_Empty_Result("结果是空的！"),
         G_Empty_Score("您的成绩是空的！"),
         G_Empty_TodayBP("玩家 %s 今天之内没有新增的 BP 呢...\n尝试修改范围，或尝试扩大搜索天数吧。"), 
         G_Empty_PeriodBP("玩家 %s 这段时间之内，在 %s 模式里都没有新增的 BP 呢...\n尝试修改范围，或扩大搜索天数吧。"), 

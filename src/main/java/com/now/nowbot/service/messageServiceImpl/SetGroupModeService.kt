@@ -5,6 +5,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.throwable.GeneralTipsException
@@ -12,35 +13,78 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MODE
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_QQ_ID
+import com.now.nowbot.util.command.FLAG_RANGE
 import org.springframework.stereotype.Service
+import kotlin.math.*
 
 @Service("SET_GROUP_MODE")
 class SetGroupModeService (
     private val bindDao: BindDao,
+    private val imageService: ImageService,
 ): MessageService<SetGroupModeService.SetGroupParam>{
 
     data class SetGroupParam(val group: Long?, val mode: OsuMode)
 
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<SetGroupParam>): Boolean {
         val m = Instruction.SET_GROUP_MODE.matcher(messageText)
+        val m2 = Instruction.GROUP_MODE.matcher(messageText)
+
+        if (!m.find() && !m2.find()) return false
+
         if (m.find()) {
             data.value = SetGroupParam(
                 m.group(FLAG_QQ_ID)?.toLongOrNull() ?: m.group(FLAG_QQ_GROUP)?.toLongOrNull(),
                 OsuMode.getMode(m.group(FLAG_MODE)))
-            return true
-        } else return false
+        } else {
+            data.value = SetGroupParam(0L - (m2.group(FLAG_RANGE)?.toLongOrNull() ?: 1L), OsuMode.DEFAULT)
+        }
+
+        return true
+    }
+
+    private fun getGroupModeCharts(page: Int = 1): ByteArray {
+        val sb = StringBuilder()
+
+        sb.append("""
+                | 群聊 QQ | 默认游戏模式 |
+                | :-- | :-: |
+                """)
+
+        val list = bindDao.allGroupMode.map { it.key to it.value }
+
+        if (list.isEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Result)
+
+        val maxPage = ceil(list.size / 50.0).roundToInt()
+
+        val start = max(min(page, maxPage) * 50 - 50, 0)
+        val end = min(min(page, maxPage) * 50, list.size)
+
+        for (i in start..< end) {
+            val v = list[i]
+            sb.append("| ").append(v.first).append(" | ").append(v.second).append(" |\n")
+        }
+
+        sb.append("\n\n第 ${min(page, maxPage)} 页，共 $maxPage 页")
+
+        return imageService.getPanelA6(sb.toString(), "group")
     }
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: SetGroupParam) {
-        val mode = param.mode
+        val isSuperAdmin = Permission.isSuperAdmin(event)
+
+        if (param.group != null && param.group < 0L && isSuperAdmin) {
+            event.reply(getGroupModeCharts(0 - param.group.toInt()))
+            return
+        }
+
+        val mode: OsuMode = param.mode
+
         val predeterminedMode = bindDao.getGroupModeConfig(event)
 
         val isNotGroupAdmin = Permission.isGroupAdmin(event).not()
 
         val group = if (param.group != null) {
-            val isSuperAdmin = Permission.isSuperAdmin(event)
-
             if (isSuperAdmin || param.group == event.subject.id) {
                 param.group
             } else {
@@ -55,7 +99,7 @@ class SetGroupModeService (
 
         val text = if (OsuMode.isNotDefaultOrNull(predeterminedMode)) {
             if (isNotGroupAdmin) {
-                if (OsuMode.isNotDefaultOrNull(mode)) {
+                if (mode.isNotDefault()) {
                     // 无权限，想修改
                     "当前群聊绑定的游戏模式为：${predeterminedMode.fullName}。\n你没有修改群聊绑定游戏模式的权限。"
                 } else {
@@ -64,7 +108,7 @@ class SetGroupModeService (
                 }
             } else {
                 // 修改已有模式状态
-                if (OsuMode.isNotDefaultOrNull(mode)) {
+                if (mode.isNotDefault()) {
                     bindDao.saveGroupModeConfig(group, mode)
                     "已将群聊绑定的游戏模式 ${predeterminedMode.fullName} 修改为：${mode.fullName}。"
                 } else {
@@ -74,7 +118,7 @@ class SetGroupModeService (
             }
         } else {
             if (isNotGroupAdmin) {
-                if (OsuMode.isNotDefaultOrNull(mode)) {
+                if (mode.isNotDefault()) {
                     // 无权限，想修改
                     "当前群聊没有已绑定的游戏模式。\n你没有修改群聊绑定游戏模式的权限。"
                 } else {
@@ -83,7 +127,7 @@ class SetGroupModeService (
                 }
             } else {
                 // 赋予新模式状态
-                if (OsuMode.isNotDefaultOrNull(mode)) {
+                if (mode.isNotDefault()) {
                     bindDao.saveGroupModeConfig(group, mode)
                     "已将群聊绑定的游戏模式修改为：${mode.fullName}。"
                 } else {

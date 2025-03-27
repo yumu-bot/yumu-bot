@@ -100,10 +100,18 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SET_GROUP_MODE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(set)?groupmode", "gm")
+        appendCommandsIgnoreAll("(set)?group\\s*mode", "gm")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
         appendQQID(maybe = true)
         appendQQGroup(maybe = true)
+    }),
+
+    GROUP_MODE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("[!！]group\\s*mode", "[!！]gm")
+        appendCaptureGroup(FLAG_RANGE,
+            REG_NUMBER,
+            ANY
+        )
     }),
 
     SCORE_PR(CommandPatternBuilder.create {

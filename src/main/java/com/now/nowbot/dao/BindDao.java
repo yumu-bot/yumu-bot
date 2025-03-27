@@ -26,6 +26,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 @Component
 public class BindDao {
@@ -421,9 +422,11 @@ public class BindDao {
         }
     }
 
-    public OsuMode getGroupModeConfig(long groupId) {
-        var config = osuGroupConfigRepository.findById(groupId);
-        return config.map(OsuGroupConfigLite::getMainMode).orElse(OsuMode.DEFAULT);
+    public Map<Long, OsuMode> getAllGroupMode() {
+        return osuGroupConfigRepository
+                .findAll()
+                .stream()
+                .collect(Collectors.toMap(OsuGroupConfigLite::getGroupId, it -> Optional.ofNullable(it.getMainMode()).orElse(OsuMode.DEFAULT)));
     }
 
     public OsuMode getGroupModeConfig(MessageEvent event) {
