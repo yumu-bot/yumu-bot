@@ -48,7 +48,8 @@ class SetGroupModeService (
         sb.append("""
                 | 群聊 QQ | 默认游戏模式 |
                 | :-- | :-: |
-                """)
+                """.trimIndent())
+        sb.append('\n')
 
         val list = bindDao.allGroupMode.map { it.key to it.value }
 

@@ -96,13 +96,11 @@ import java.util.*
     ) {
         if (result == null) return
 
-        this.append(
-            """
+        this.append("""
                 | 服务名 | 调用次数 | 最长用时 (99%) | 大部分人用时 (80%) | 平均用时 (50%) | 最短用时 (1%) |
                 | :-- | :-: | :-: | :-: | :-: | :-: |
-                
                 """.trimIndent()
-        )
+        ).append('\n')
 
         var count = 0
         val r99List = ArrayList<Long>()
