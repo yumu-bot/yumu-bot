@@ -168,9 +168,11 @@ class MatchRating(
     val isTeamVs: Boolean
         get() {
             return if (rounds.isNotEmpty()) {
-                rounds.first().teamType == "team-vs"
+                rounds.first().isTeamVS
             } else {
-                false
+                // 比赛刚开始的时候有 round，但是没有 beatmap
+                // 或许能这么筛？
+                match.events.mapNotNull { it.round }.lastOrNull()?.isTeamVS ?: false
             }
         }
 
@@ -381,7 +383,7 @@ class MatchRating(
         val ai3 = AtomicInteger(0)
         val ai4 = AtomicInteger(1)
 
-        val v = playerDataMap.values
+        val v = playerDataMap.values.asSequence()
 
         v.sortedByDescending { it.era }.forEach {
             it.eraIndex = if (playerDataMap.size > 1) (1.0 * ai1.getAndIncrement() / (playerDataMap.size - 1.0)) else 0.5
@@ -389,7 +391,7 @@ class MatchRating(
         v.sortedByDescending { it.dra }.forEach {
             it.draIndex = if (playerDataMap.size > 1) (1.0 * ai2.getAndIncrement() / (playerDataMap.size - 1.0)) else 0.5
         }
-        v.sortedByDescending { it.rws }.forEach {
+        v.sortedByDescending { it.dra }.sortedByDescending { it.rws }.forEach {
             it.rwsIndex = if (playerDataMap.size > 1) (1.0 * ai3.getAndIncrement() / (playerDataMap.size - 1.0)) else 0.5
         }
         v.sortedByDescending { it.mra }.forEach {
