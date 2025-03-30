@@ -24,6 +24,8 @@ import org.intellij.lang.annotations.Language
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
@@ -340,7 +342,16 @@ import kotlin.math.*
             val progress = beatmapApiService.getPlayPercentage(score)
 
             val body = PanelE5Param(user, score, null, density, progress, original, attributes, "B").toMap()
-            imageService.getPanel(body, "E5")
+
+            val st = OffsetDateTime.of(2025, 4, 1, 0, 0, 0, 0, ZoneOffset.ofHours(8))
+            val ed = OffsetDateTime.of(2025, 4, 2, 0, 0, 0, 0, ZoneOffset.ofHours(8))
+
+            if (OffsetDateTime.now().isAfter(st) && OffsetDateTime.now().isBefore(ed)) {
+                imageService.getPanel(body, "Eta" +
+                        (floor((System.currentTimeMillis() % 1000) / 1000.0 * 4) + 1).toInt())
+            } else {
+                imageService.getPanel(body, "E5")
+            }
         }
     } catch (e: Exception) {
         log.error("最好成绩：渲染失败", e)

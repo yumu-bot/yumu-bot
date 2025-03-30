@@ -946,14 +946,14 @@ import kotlin.math.*
                         100
                     }
                 } catch (e1: NumberFormatException) {
-                    return millis / 999.0
+                    return millis / 1000.0
                 }
             }
 
             return if (r > 1) {
-                (millis / 999.0 * (r - 1)).roundToInt() + 1.0
+                floor(millis / 1000.0 * r) + 1.0
             } else {
-                millis / 999.0
+                millis / 1000.0
             }
         }
 

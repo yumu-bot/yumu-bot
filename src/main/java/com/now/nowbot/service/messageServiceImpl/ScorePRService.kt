@@ -24,9 +24,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
+import kotlin.math.floor
 
 // Multiple Score也合并进来了
 @Service("SCORE_PR")
@@ -279,7 +282,16 @@ class ScorePRService(
             val score: LazerScore = scores.first()
             val e5Param = getScore4PanelE5(user, score, (if (isRecent) "R" else "P"), beatmapApiService, calculateApiService)
             try {
-                image = imageService.getPanel(e5Param.toMap(), "E5")
+                val st = OffsetDateTime.of(2025, 4, 1, 0, 0, 0, 0, ZoneOffset.ofHours(8))
+                val ed = OffsetDateTime.of(2025, 4, 2, 0, 0, 0, 0, ZoneOffset.ofHours(8))
+
+                image = if (OffsetDateTime.now().isAfter(st) && OffsetDateTime.now().isBefore(ed)) {
+                    imageService.getPanel(e5Param.toMap(), "Eta" +
+                            (floor((System.currentTimeMillis() % 1000) / 1000.0 * 4) + 1).toInt())
+                } else {
+                    imageService.getPanel(e5Param.toMap(), "E5")
+                }
+
                 return QQMsgUtil.getImage(image)
             } catch (e: Exception) {
                 log.error("成绩：绘图出错, 成绩信息:\n {}",
