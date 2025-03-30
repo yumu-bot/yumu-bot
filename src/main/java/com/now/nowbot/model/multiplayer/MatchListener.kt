@@ -78,7 +78,7 @@ class MatchListener(
 
             match += newMatch
 
-            onEvent(newMatch.events)
+            onAllEvent(newMatch.events)
             if (newMatch.isMatchEnd) stop(StopType.MATCH_END)
         } catch (e: Exception) {
             onError(e)
@@ -129,7 +129,7 @@ class MatchListener(
     /**
      * 处理批量对局
      */
-    private fun onEvent(events: List<Match.MatchEvent>) {
+    private fun onAllEvent(events: List<Match.MatchEvent>) {
         val gameEvent = events.filter { it.round != null }
         if (gameEvent.isEmpty()) return
         // game 事件多于一个认为可能有 abort

@@ -118,6 +118,12 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         } catch (NullPointerException e) {
             log.error("Shiro 框架：无法获取 Bot 实例的登录信息", e);
             return false;
+        } catch (ShiroException e) {
+            log.error("Shiro 框架异常", e);
+            return false;
+        } catch (Exception e) {
+            log.error("未知异常", e);
+            return false;
         }
 
         try {
