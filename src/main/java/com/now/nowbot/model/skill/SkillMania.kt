@@ -1,4 +1,4 @@
-package com.now.nowbot.model.mapminus
+package com.now.nowbot.model.skill
 
 import com.now.nowbot.model.beatmapParse.HitObject
 import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType.CIRCLE
@@ -6,7 +6,7 @@ import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType.LONGNOTE
 import com.now.nowbot.model.beatmapParse.parse.ManiaBeatmapAttributes
 import kotlin.math.*
 
-class PPMinus4Mania(val file: ManiaBeatmapAttributes): PPMinus4() {
+class SkillMania(val file: ManiaBeatmapAttributes): Skill() {
     override val values: List<Float>
         get() = listOf(
             (eval(noteDataList.map { it.stream }, 0.23f, 0.5f)

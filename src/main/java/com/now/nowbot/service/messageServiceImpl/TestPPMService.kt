@@ -60,9 +60,9 @@ class TestPPMService(
             return@map AsyncMethodExecutor.Supplier<TestPPMData?> {
                 try {
                     val u = if (isOsuID) {
-                        userApiService.getPlayerInfo(name.toLongOrNull() ?: -1L, mode ?: inputMode)
+                        userApiService.getPlayerInfo(name.toLongOrNull() ?: -1L, OsuMode.getMode(mode, inputMode))
                     } else {
-                        userApiService.getPlayerInfo(name, mode ?: inputMode)
+                        userApiService.getPlayerInfo(name, OsuMode.getMode(mode, inputMode))
                     }
 
                     if (OsuMode.isDefaultOrNull(mode)) {
@@ -85,11 +85,11 @@ class TestPPMService(
         val async: Map<Any, TestPPMData> = AsyncMethodExecutor.AsyncSupplier(actions)
             .filterNotNull()
             .filter { it.user != null }
-            .associateBy { if (isOsuID) it.user!!.userID else it.user!!.username }
+            .associateBy { if (isOsuID) it.user!!.userID else it.user!!.username.lowercase() }
 
         val result = names.filter { it.isNotEmpty() }
             .mapNotNull {
-                if (isOsuID) async[it.toLongOrNull() ?: -1L] else async[it.trim()]
+                if (isOsuID) async[it.toLongOrNull() ?: -1L] else async[it.trim().lowercase()]
             }
 
         val sb = StringBuilder()

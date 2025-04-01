@@ -6,7 +6,7 @@ import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.mapminus.PPMinus4
+import com.now.nowbot.model.skill.Skill
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -164,17 +164,17 @@ import kotlin.math.sqrt
         return image
     }
 
-    private fun getSkillMap(bests: List<LazerScore>?, beatmapApiService: OsuBeatmapApiService): Map<Long, PPMinus4?> {
+    private fun getSkillMap(bests: List<LazerScore>?, beatmapApiService: OsuBeatmapApiService): Map<Long, Skill?> {
         if (bests.isNullOrEmpty()) return mapOf()
 
         val actions = bests.map {
             val id = it.beatMapID
 
-            return@map AsyncMethodExecutor.Supplier<Pair<Long, PPMinus4?>> {
+            return@map AsyncMethodExecutor.Supplier<Pair<Long, Skill?>> {
                 try {
                     val file = OsuFile.getInstance(beatmapApiService.getBeatMapFileString(it.beatMapID))
 
-                    return@Supplier id to PPMinus4.getInstance(
+                    return@Supplier id to Skill.getInstance(
                         file,
                         OsuMode.MANIA,
                         LazerMod.getModSpeedForStarCalculate(it.mods).toDouble()
@@ -194,7 +194,7 @@ import kotlin.math.sqrt
     private fun getBody(
         user: OsuUser,
         bests: List<LazerScore>,
-        skillMap: Map<Long, PPMinus4?>,
+        skillMap: Map<Long, Skill?>,
         isVS: Boolean = false,
         isShowScores: Boolean = true,
     ): Map<String, Any> {

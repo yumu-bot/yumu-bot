@@ -1,11 +1,11 @@
-package com.now.nowbot.model.mapminus
+package com.now.nowbot.model.skill
 
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.TipsException
 import kotlin.math.*
 
-abstract class PPMinus4 {
+abstract class Skill {
     abstract val values: List<Float>
 
     abstract val bases: List<Float>
@@ -112,13 +112,13 @@ abstract class PPMinus4 {
     }
 
     companion object {
-        fun getInstance(file: OsuFile, mode: OsuMode, clockRate: Double = 1.0): PPMinus4 {
+        fun getInstance(file: OsuFile, mode: OsuMode, clockRate: Double = 1.0): Skill {
             return when(mode) {
                 OsuMode.MANIA -> {
                     val f = file.mania
                     f.clockRate = clockRate
 
-                    PPMinus4Mania(f)
+                    SkillMania(f)
                 }
                 else -> throw TipsException("仅 mania 可用！")
             }

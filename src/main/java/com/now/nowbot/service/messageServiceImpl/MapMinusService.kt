@@ -4,8 +4,8 @@ import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.mapminus.PPMinus4Type
-import com.now.nowbot.model.mapminus.PPMinus4
+import com.now.nowbot.model.skill.SkillType
+import com.now.nowbot.model.skill.Skill
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
@@ -133,7 +133,7 @@ import java.util.regex.Matcher
                 throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
             }
 
-            val mapMinus = PPMinus4.getInstance(
+            val mapMinus = Skill.getInstance(
                 file,
                 param.mode,
                 if (isChangedRating) {
@@ -143,7 +143,7 @@ import java.util.regex.Matcher
                 },
             )
 
-            val type = PPMinus4Type.getType(mapMinus)
+            val type = SkillType.getType(mapMinus)
 
             val image: ByteArray
 

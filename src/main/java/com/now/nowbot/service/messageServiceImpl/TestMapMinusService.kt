@@ -3,7 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.mapminus.PPMinus4
+import com.now.nowbot.model.skill.Skill
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -37,7 +37,7 @@ import java.util.regex.Matcher
             }
 
         val mapMinuses = files.map {
-            PPMinus4.getInstance(it, OsuMode.MANIA)
+            Skill.getInstance(it, OsuMode.MANIA)
         }
 
         val sb = StringBuilder()

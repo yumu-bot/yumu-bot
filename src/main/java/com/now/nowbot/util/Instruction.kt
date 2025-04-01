@@ -651,7 +651,7 @@ enum class Instruction(val pattern: Pattern) {
 
     TEST_TAIKO_SR_CALCULATE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("testtaiko", "tt")
-        appendCaptureGroup(FLAG_DATA, "[xo\\s]", MORE)
+        appendCaptureGroup(FLAG_DATA, "[xo\\s（）()]", MORE)
     }),
 
     TEST_TYPE(CommandPatternBuilder.create {

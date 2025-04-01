@@ -1,8 +1,8 @@
-package com.now.nowbot.model.mapminus
+package com.now.nowbot.model.skill
 
 import kotlin.math.*
 
-class PPMinus4Type {
+class SkillType {
 
     enum class ManiaType(
         val chinese: String,
@@ -91,8 +91,8 @@ class PPMinus4Type {
 
     companion object {
         // 获取谱面的 ppm3 类型
-        fun getType(m: PPMinus4): Map<ManiaType, Double> {
-            if (m is PPMinus4Mania) {
+        fun getType(m: Skill): Map<ManiaType, Double> {
+            if (m is SkillMania) {
                 val typeMap = mutableMapOf<ManiaType, Double>()
 
                 val mapList = getStandardizedList(
