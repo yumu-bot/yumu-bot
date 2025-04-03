@@ -106,8 +106,8 @@ enum class Instruction(val pattern: Pattern) {
         appendQQGroup(maybe = true)
     }),
 
-    GROUP_MODE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("[!！]group\\s*mode", "[!！]gm")
+    GROUP_LIST(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("group\\s*list", "gl")
         appendCaptureGroup(FLAG_RANGE,
             REG_NUMBER,
             ANY
@@ -742,7 +742,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     MAI_UPDATE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("[!！]update\\s*mai(mai)?", "[!！]um")
+        appendCommandsIgnoreAll("update\\s*mai(mai)?", "um")
     }),
 
     MAI_COUPLE(CommandPatternBuilder.create {

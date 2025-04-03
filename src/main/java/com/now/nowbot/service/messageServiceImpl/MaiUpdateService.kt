@@ -21,19 +21,19 @@ class MaiUpdateService(private val maimaiApiService: MaimaiApiService, private v
             return false
         }
 
-        data.value = true
-        return true
+        if (Permission.isSuperAdmin(event.sender.id)) {
+            data.value = true
+            return true
+        } else return false
     }
 
     override fun HandleMessage(event: MessageEvent, update: Boolean) {
-        if (Permission.isSuperAdmin(event.sender.id)) {
-            event.reply("正在尝试更新！")
-            maimaiApiService.updateMaimaiSongLibraryDatabase()
-            maimaiApiService.updateMaimaiAliasLibraryDatabase()
-            maimaiApiService.updateMaimaiRankLibraryDatabase()
-            maimaiApiService.updateMaimaiFitLibraryDatabase()
-            chunithmApiService.updateChunithmSongLibraryFile()
-            event.reply("已尝试更新！")
-        }
+        event.reply("正在尝试更新 maimai 数据！")
+        maimaiApiService.updateMaimaiSongLibraryDatabase()
+        maimaiApiService.updateMaimaiAliasLibraryDatabase()
+        maimaiApiService.updateMaimaiRankLibraryDatabase()
+        maimaiApiService.updateMaimaiFitLibraryDatabase()
+        chunithmApiService.updateChunithmSongLibraryFile()
+        event.reply("已尝试更新！")
     }
 }
