@@ -71,7 +71,7 @@ class TestTaikoSRCalculateService : MessageService<Matcher> {
             str.first() != str.last()
         } else false
 
-        val difficulty = mainColorChanged + mainFingerChanged + 3 * subColorChanged * subFingerChanged + (if (isStartDifferent) 1 else 0)
+        val difficulty = mainColorChanged + mainFingerChanged + 3 * ((subColorChanged + 1) * (subFingerChanged + 1) - 1) + (if (isStartDifferent) 1 else 0)
 
         return """
             对 $str 的难度分析：
