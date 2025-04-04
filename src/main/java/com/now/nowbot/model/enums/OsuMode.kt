@@ -10,6 +10,9 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
     MANIA("osu!mania", "mania", 3),
     DEFAULT("default", "", -1);
 
+    val modeByte
+        get() = this.modeValue.toByte()
+
     override fun toString(): String {
         return fullName
     }

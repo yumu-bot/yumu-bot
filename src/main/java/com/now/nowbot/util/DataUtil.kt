@@ -7,6 +7,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.json.*
 import com.now.nowbot.model.multiplayer.Match
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.command.*
 import io.github.humbleui.skija.Typeface
 import org.slf4j.Logger
@@ -1211,6 +1212,49 @@ object DataUtil {
          */
 
         return result
+    }
+
+    /**
+     * 一个将列表转换成 markdown 语法的表的方法。
+     * 这在列表很大的时候很实用。
+     * @param list 含有某个类的列表
+     * @param page 当前页面，默认为 1
+     * @param supplier 将这个类（行）拆分成不同列的闭包
+     * @param heading 表头，格式是
+     * | 标题1 | 标题2 |
+     * | :-- | :-: |
+     * @param maxPerPage 一页中最多存在的行数。
+     */
+    fun <T, U> getMarkDownChartFromList(list: List<T>, page: Int = 1, supplier: (T) -> List<U>, heading: String = """
+                | 标题1 | 标题2 |
+                | :-- | :-: |
+                """.trimIndent(), maxPerPage: Int = 50): String {
+
+        if (list.isEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Result)
+
+        val sb = StringBuilder()
+        sb.append(heading).append('\n') // 导入表头
+
+        val maxPage = ceil(list.size * 1.0 / maxPerPage).roundToInt()
+
+        val start = max(min(page, maxPage) * maxPerPage - maxPerPage, 0)
+        val end = min(min(page, maxPage) * maxPerPage, list.size)
+
+        for (i in start..< end) {
+            val row = list[i]
+            val columns = supplier(row)
+
+            for (c in columns) {
+                sb.append(c).append(" | ")
+            }
+
+            sb.append('\n')
+        }
+
+
+        sb.append("\n\n第 ${min(page, maxPage)} 页，共 $maxPage 页")
+
+        return sb.toString()
     }
 
     @JvmRecord

@@ -9,6 +9,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MODE
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
@@ -43,31 +44,18 @@ class SetGroupModeService (
     }
 
     private fun getGroupModeCharts(page: Int = 1): ByteArray {
-        val sb = StringBuilder()
-
-        sb.append("""
-                | 群聊 QQ | 默认游戏模式 |
-                | :-- | :-: |
-                """.trimIndent())
-        sb.append('\n')
-
         val list = bindDao.allGroupMode.map { it.key to it.value }
 
-        if (list.isEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Result)
-
-        val maxPage = ceil(list.size / 50.0).roundToInt()
-
-        val start = max(min(page, maxPage) * 50 - 50, 0)
-        val end = min(min(page, maxPage) * 50, list.size)
-
-        for (i in start..< end) {
-            val v = list[i]
-            sb.append("| ").append(v.first).append(" | ").append(v.second).append(" |\n")
+        val supplier: (Pair<Long, OsuMode>) -> List<String> = {
+            pair -> listOf(pair.first.toString(), pair.second.fullName)
         }
 
-        sb.append("\n\n第 ${min(page, maxPage)} 页，共 $maxPage 页")
+        val str = DataUtil.getMarkDownChartFromList(list, page, supplier, """
+                | 群聊 QQ | 默认游戏模式 |
+                | :-- | :-: |
+                """.trimIndent(), maxPerPage = 50)
 
-        return imageService.getPanelA6(sb.toString(), "group")
+        return imageService.getPanelA6(str, "group")
     }
 
     @Throws(Throwable::class)

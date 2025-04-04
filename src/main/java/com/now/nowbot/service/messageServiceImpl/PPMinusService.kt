@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.PPMinusDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
@@ -32,10 +33,11 @@ class PPMinusService(
     private val userApiService: OsuUserApiService,
     private val scoreApiService: OsuScoreApiService,
     private val bindDao: BindDao,
+    private val ppMinusDao: PPMinusDao,
     private val imageService: ImageService,
 ) : MessageService<PPMinusParam>, TencentMessageService<PPMinusParam> {
 
-    private val newbieGroup: Long = 695600319L
+    private val killerGroup: Long = 695600319L
 
     data class PPMinusParam(
         val isVs: Boolean,
@@ -162,12 +164,15 @@ class PPMinusService(
         val inputMode = getMode(matcher)
 
         val mode: OsuMode =
-            if (event.subject.id == newbieGroup && OsuMode.isDefaultOrNull(inputMode.data)) {
-                // 在新人群管理群里查询，则主动认为是 osu 模式
+            if (event.subject.id == killerGroup && OsuMode.isDefaultOrNull(inputMode.data)) {
+                // 在杀手群里查询，则主动认为是 osu 模式
                 OsuMode.OSU
             } else {
                 OsuMode.getMode(inputMode.data, binMe.osuMode, bindDao.getGroupModeConfig(event))
             }
+
+        binMe.osuMode = mode
+        binOther.osuMode = mode
 
         val isVs = (binOther.osuID != null) && binMe.osuID != binOther.osuID
 
@@ -204,6 +209,12 @@ class PPMinusService(
         }
 
         try {
+            ppMinusDao.savePPMinus(user, bests)
+        } catch (e: Exception) {
+            log.error("PP-：数据保存失败", e)
+        }
+
+        try {
             return PPMinus.getInstance(user.currentOsuMode, user, bests)
         } catch (e: Exception) {
             log.error("PP-：数据计算失败", e)
@@ -217,7 +228,7 @@ class PPMinusService(
 
         try {
             image =
-                if (!param.isVs && event.subject.id == newbieGroup) {
+                if (!param.isVs && event.subject.id == killerGroup) {
                     param.getPPMSpecialImage()
                 } else {
                     param.getPPMImage()
@@ -286,7 +297,7 @@ class PPMinusService(
         val inputMode = getMode(matcher)
 
         val mode: OsuMode =
-            if (event.subject.id == newbieGroup && OsuMode.isDefaultOrNull(inputMode.data)) {
+            if (event.subject.id == killerGroup && OsuMode.isDefaultOrNull(inputMode.data)) {
                 // 在新人群管理群里查询，则主动认为是 osu 模式
                 OsuMode.OSU
             } else {

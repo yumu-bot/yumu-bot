@@ -94,6 +94,9 @@ public class OsuUser {
     @JsonProperty("playmode")
     String mode;
 
+    @JsonIgnoreProperties
+    String currentOsuMode;
+
     @JsonProperty("playstyle")
     List<String> playStyle;
 
@@ -970,7 +973,9 @@ public class OsuUser {
      */
     public OsuMode getCurrentOsuMode() {
         if (this.rankHistory != null) {
-            return OsuMode.getMode(this.rankHistory.mode);
+            return OsuMode.getMode(this.rankHistory.mode, this.getDefaultOsuMode());
+        } else if (OsuMode.getMode(this.currentOsuMode) != OsuMode.DEFAULT) {
+            return OsuMode.getMode(this.currentOsuMode);
         } else {
             return this.getDefaultOsuMode();
         }
@@ -980,6 +985,8 @@ public class OsuUser {
         if (this.rankHistory == null) {
             this.rankHistory = new RankHistory(mode.shortName, new ArrayList<>(0));
         }
+
+        this.currentOsuMode = mode.shortName;
     }
 
     @Override
