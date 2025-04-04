@@ -9,7 +9,7 @@ class GeneralTipsException : TipsException {
         G_TokenExpired_Cancel("绑定已经被取消了, 无法再使用了哦"),
         G_NotBind_Player("该玩家没有绑定。"),
 
-        G_Banned_Me("你被办了。"), 
+        // G_Banned_Me("你被办了。"),
         G_Banned_Player("%s 被办了。"),
 
         G_Restricted_NSFW("这种歌曲，还是有点唱不出口呢。"),
@@ -47,7 +47,8 @@ class GeneralTipsException : TipsException {
         G_Null_MatchRound("没有找到这场对局。"),
         G_Null_Play("该玩家基本没玩过。"), 
         G_Null_PlayerUnknown("没有找到玩家。"), 
-        G_Null_Player("没有找到玩家 %s。"), 
+        G_Null_Player("没有找到玩家 %s。"),
+        G_Null_PlayerReverse("没有找到玩家 %s。\n你可能把范围和玩家名输反了。"),
         G_Null_PlayerRecord("该玩家在 %s 模式内基本没玩过。"), 
         G_Null_PlayerInactive("玩家 %s 最近不活跃..."),
         G_Null_BP("无法获取玩家 %s 的最好成绩..."),

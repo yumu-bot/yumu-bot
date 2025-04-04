@@ -194,6 +194,10 @@ object CmdUtil {
         }
 
         if (result.data.isNull()) {
+            if (text.matches("$REG_RANGE\\s*.*".toRegex())) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerReverse, text)
+            }
+
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, text)
         }
 
@@ -389,6 +393,9 @@ object CmdUtil {
         try {
             return consumer.get()
         } catch (e: WebClientResponseException.NotFound) {
+            if (name.matches("$REG_RANGE\\s*.*".toRegex())) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerReverse, name)
+            }
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name)
         } catch (e: WebClientResponseException.Forbidden) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, name)
