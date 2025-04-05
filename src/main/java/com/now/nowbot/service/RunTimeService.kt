@@ -104,8 +104,8 @@ class RunTimeService(
     @Scheduled(cron = "20 1 6 * * *")
     fun updateChunithmSongsLibrary() {
         log.info("开始执行更新 chunithm 歌曲库任务")
-        //maimaiApiService.updateMaimaiAliasLibraryFile()
-        chunithmApiService.updateChunithmSongLibraryFile()
+        //chunithmApiService.updateChunithmSongLibraryFile()
+        chunithmApiService.updateChunithmSongLibraryDatabase()
     }
 
 

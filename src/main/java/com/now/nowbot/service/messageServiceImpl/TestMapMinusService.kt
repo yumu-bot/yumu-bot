@@ -8,6 +8,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.REG_SEPERATOR
 import org.springframework.stereotype.Service
 import java.nio.file.Files
 import java.nio.file.Path
@@ -26,7 +27,7 @@ import java.util.regex.Matcher
     }
 
     override fun HandleMessage(event: MessageEvent?, param: Matcher) {
-        val bids = param.group("data").split("[,，、|:：\\s]+".toRegex()).map { it.toLongOrNull() ?: -1L }
+        val bids = param.group("data").split(REG_SEPERATOR.toRegex()).map { it.toLongOrNull() ?: -1L }
 
         val files = bids.filter { it != -1L }.map {
                 try {

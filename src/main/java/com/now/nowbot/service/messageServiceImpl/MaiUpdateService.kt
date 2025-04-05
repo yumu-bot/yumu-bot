@@ -28,12 +28,12 @@ class MaiUpdateService(private val maimaiApiService: MaimaiApiService, private v
     }
 
     override fun HandleMessage(event: MessageEvent, update: Boolean) {
-        event.reply("正在尝试更新 maimai 数据！")
+        event.reply("正在尝试更新舞萌、中二数据！")
         maimaiApiService.updateMaimaiSongLibraryDatabase()
         maimaiApiService.updateMaimaiAliasLibraryDatabase()
         maimaiApiService.updateMaimaiRankLibraryDatabase()
         maimaiApiService.updateMaimaiFitLibraryDatabase()
-        chunithmApiService.updateChunithmSongLibraryFile()
+        chunithmApiService.updateChunithmSongLibraryDatabase()
         event.reply("已尝试更新！")
     }
 }

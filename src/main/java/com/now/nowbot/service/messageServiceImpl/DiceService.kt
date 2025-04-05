@@ -5,6 +5,7 @@ import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.DiceService.DiceParam
+import com.now.nowbot.service.messageServiceImpl.DiceService.Split.*
 import com.now.nowbot.throwable.serviceException.DiceException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
@@ -195,9 +196,15 @@ import kotlin.math.*
             ), onlyC3 = true
         ),
 
+        AGE(
+            Pattern.compile(
+                "(?<m1>[\\S\\s]*)?(?<c3>(岁数?)|(年龄)|(?<!\\w)age(?!\\w))(?<m2>[\\S\\s]*)?"
+            ), onlyC3 = true
+        ),
+
         AMOUNT(
             Pattern.compile(
-                "(?<m1>[\\S\\s]*)?(?<c3>[是有]?多少[次个位件名只发层岁人枚字章节]?|数量(?!级)|(?<![一两二三四五六七八九十百千万亿这那上下哪点排报成出提命匿爆真假实])[次个位件名只发层岁人枚字章节分指大小级]数)(?<m2>[\\S\\s]*)?"
+                "(?<m1>[\\S\\s]*)?(?<c3>[是有]?多少[次个位件名只发层岁人枚字章节]?|数量(?!级)|(?<![一两二三四五六七八九十百千万亿这那上下哪点排报成出提命匿爆真假实])([次个位件名只发层人枚字章节分指大小级]数))(?<m2>[\\S\\s]*)?"
             ), onlyC3 = true
         ),
 
@@ -410,7 +417,7 @@ import kotlin.math.*
             var split: Split? = null
 
             for (sp in Split.entries) {
-                val hasC3 = sp == Split.BETTER || sp.onlyC3
+                val hasC3 = sp == BETTER || sp.onlyC3
                 val matcher = sp.pattern.matcher(s)
 
                 if (isPerfectMatch(matcher, hasC3, sp.onlyC3)) {
@@ -420,7 +427,7 @@ import kotlin.math.*
                     right = matcher.group("m2")
 
                     when (split) {
-                        Split.RANGE -> {
+                        RANGE -> {
                             val range = try {
                                 right.toInt()
                             } catch (e: NumberFormatException) {
@@ -440,8 +447,8 @@ import kotlin.math.*
                             }
                         }
 
-                        Split.AMOUNT -> num = getRandom(100)
-                        Split.TIME -> {
+                        AMOUNT, AGE -> num = getRandom(120)
+                        TIME -> {
                             val c3 = matcher.group("c3").trim { it <= ' ' }
 
                             // 4% 触发彩蛋。
@@ -519,7 +526,7 @@ import kotlin.math.*
                             }
                         }
 
-                        Split.RANK -> { // 缩放结果，让给出的排名更靠前（小
+                        RANK -> { // 缩放结果，让给出的排名更靠前（小
                             num = floor(16.0 * (randomInstantly.pow(2.0))) + 1.0
 
                             val i = randomInstantly
@@ -528,7 +535,7 @@ import kotlin.math.*
                             iis = "第"
                         }
 
-                        Split.TIMES -> {
+                        TIMES -> {
                             val c3 = matcher.group("c3").trim { it <= ' ' }
 
                             num = getRandom(100)
@@ -544,7 +551,7 @@ import kotlin.math.*
                             }
                         }
 
-                        Split.WHETHER -> {
+                        WHETHER -> {
                             iis = matcher.group("c3")
                             not = matcher.group("m3")
 
@@ -560,14 +567,14 @@ import kotlin.math.*
                             }
                         }
 
-                        Split.COULD -> {
+                        COULD -> {
                             iis = matcher.group("c3")
                             not = "不"
                             if (left.isNullOrBlank()) left = "..."
                             if (right.isNullOrBlank()) right = ""
                         }
 
-                        Split.POSSIBILITY -> { // 做点手脚，让 0% 和 100% 更容易出现 -4 ~ 104
+                        POSSIBILITY -> { // 做点手脚，让 0% 和 100% 更容易出现 -4 ~ 104
                             // 7.07% 触发彩蛋。
                             num = ((getRandom(1) * 10800.0).roundToInt() / 100.0) - 4.0
 
@@ -582,7 +589,7 @@ import kotlin.math.*
                             if (num <= 0f) num = 0.0
                         }
 
-                        Split.ACCURACY -> { // 做点手脚，让 90%-100% 和 100% 更容易出现 90 ~ 104
+                        ACCURACY -> { // 做点手脚，让 90%-100% 和 100% 更容易出现 90 ~ 104
                             num = if (randomInstantly < 0.9) {
                                 Math.round(getRandom(1) * 1400.0) / 100.0 + 90.0
                             } else {
@@ -596,14 +603,14 @@ import kotlin.math.*
                             if (num <= 0.0) num = 0.0
                         }
 
-                        Split.LIKE -> iis = matcher.group("c3")
-                        Split.IS -> {
+                        LIKE -> iis = matcher.group("c3")
+                        IS -> {
                             iis = matcher.group("c3") // 有时候，”是“结尾的句子并不是问是否，还可以问比如时间。
                             // 比如，“OWC 的开启时间是？”
                             if (right.isNullOrBlank()) return "我怎么知道。"
                         }
 
-                        Split.REAL, Split.QUESTION -> { // 10% 触发彩蛋。
+                        REAL, QUESTION -> { // 10% 触发彩蛋。
                             if (getRandom(100) <= 10f) return "我怎么知道。"
                         }
 
@@ -636,52 +643,54 @@ import kotlin.math.*
 
             if (split != null && (split.onlyC3 || (left.isNotBlank() && right.isNotBlank()))) {
                 leftFormat = when (split) {
-                    Split.MULTIPLE -> "要我选的话，我觉得，%s。"
-                    Split.NEST -> "你搁这搁这呢？"
-                    Split.AM -> "我是 Yumu 机器人。"
-                    Split.POSSIBILITY -> "概率是：%.2f%s%%"
-                    Split.ACCURACY -> "准确率是：%.2f%s%%"
-                    Split.RANGE, Split.AMOUNT -> "您许愿的结果是：%.0f。"
-                    Split.TIME, Split.TIMES -> "您许愿的结果是：%.0f %s。"
-                    Split.RANK -> "您许愿的结果是：%s %.0f。"
-                    Split.WHAT, Split.WHY, Split.WHO -> "我怎么知道。我又不是 deepseek。"
-                    Split.REAL -> "我觉得，是真的。"
-                    Split.BETTER, Split.COMPARE, Split.OR, Split.JUXTAPOSITION, Split.PREFER, Split.HESITATE, Split.EVEN -> "当然%s啦！"
-                    Split.ASSUME, Split.LIKE, Split.IS, Split.QUESTION -> "%s。"
-                    Split.COULD, Split.WHETHER -> "%s%s%s。"
-                    Split.CONDITION -> "是的。"
-                    Split.THINK -> "嗯。"
+                    MULTIPLE -> "要我选的话，我觉得，%s。"
+                    NEST -> "你搁这搁这呢？"
+                    AM -> "我是 Yumu 机器人。"
+                    POSSIBILITY -> "概率是：%.2f%s%%"
+                    ACCURACY -> "准确率是：%.2f%s%%"
+                    RANGE, AMOUNT -> "您许愿的结果是：%.0f。"
+                    AGE -> "您许愿的岁数是：%.0f。"
+                    TIME, TIMES -> "您许愿的结果是：%.0f %s。"
+                    RANK -> "您许愿的结果是：%s %.0f。"
+                    WHAT, WHY, WHO -> "我怎么知道。我又不是 deepseek。"
+                    REAL -> "我觉得，是真的。"
+                    BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！"
+                    ASSUME, LIKE, IS, QUESTION -> "%s。"
+                    COULD, WHETHER -> "%s%s%s。"
+                    CONDITION -> "是的。"
+                    THINK -> "嗯。"
                 }
 
                 rightFormat = when (split) {
-                    Split.MULTIPLE -> "要我选的话，我觉得，%s。"
-                    Split.NEST -> "你搁这搁这呢？"
-                    Split.AM -> "别问了，我也想知道自己是谁。"
-                    Split.POSSIBILITY -> "概率是：%.2f%s%%"
-                    Split.ACCURACY -> "准确率是：%.2f%s%%"
-                    Split.RANGE, Split.AMOUNT -> "您许愿的结果是：%.0f。"
-                    Split.TIME, Split.TIMES -> "您许愿的结果是：%.0f %s。"
-                    Split.RANK -> "您许愿的结果是：%s %.0f。"
-                    Split.WHAT -> "是哈基米。\n整个宇宙都是哈基米组成的。"
-                    Split.WHY -> "你不如去问问神奇海螺？"
-                    Split.WHO -> "我知道，芝士雪豹。"
-                    Split.REAL -> "我觉得，是假的。"
-                    Split.BETTER, Split.OR, Split.JUXTAPOSITION, Split.PREFER, Split.HESITATE, Split.COMPARE -> "当然%s啦！"
-                    Split.EVEN -> "当然不%s啦！"
-                    Split.ASSUME -> "没有如果。"
-                    Split.COULD, Split.WHETHER -> "%s%s%s%s。"
-                    Split.CONDITION -> "不是。"
-                    Split.LIKE, Split.IS -> "不%s。"
-                    Split.THINK -> "也没有吧。"
-                    Split.QUESTION -> "不。"
+                    MULTIPLE -> "要我选的话，我觉得，%s。"
+                    NEST -> "你搁这搁这呢？"
+                    AM -> "别问了，我也想知道自己是谁。"
+                    POSSIBILITY -> "概率是：%.2f%s%%"
+                    ACCURACY -> "准确率是：%.2f%s%%"
+                    RANGE, AMOUNT -> "您许愿的结果是：%.0f。"
+                    AGE -> "您许愿的岁数是：%.0f。"
+                    TIME, TIMES -> "您许愿的结果是：%.0f %s。"
+                    RANK -> "您许愿的结果是：%s %.0f。"
+                    WHAT -> "是哈基米。\n整个宇宙都是哈基米组成的。"
+                    WHY -> "你不如去问问神奇海螺？"
+                    WHO -> "我知道，芝士雪豹。"
+                    REAL -> "我觉得，是假的。"
+                    BETTER, OR, JUXTAPOSITION, PREFER, HESITATE, COMPARE -> "当然%s啦！"
+                    EVEN -> "当然不%s啦！"
+                    ASSUME -> "没有如果。"
+                    COULD, WHETHER -> "%s%s%s%s。"
+                    CONDITION -> "不是。"
+                    LIKE, IS -> "不%s。"
+                    THINK -> "也没有吧。"
+                    QUESTION -> "不。"
                 }
 
                 // 改变几率
                 boundary = when (split) {
-                    Split.PREFER -> 0.35
-                    Split.HESITATE -> 0.65
-                    Split.EVEN -> 0.7
-                    Split.WHAT, Split.AM, Split.WHY -> 0.8
+                    PREFER -> 0.35
+                    HESITATE -> 0.65
+                    EVEN -> 0.7
+                    WHAT, AM, WHY -> 0.8
                     else -> 0.5
                 }
             } else {
@@ -704,21 +713,21 @@ import kotlin.math.*
 
             // 如果还是有空格，那么进入多匹配模式。
             run {
-                val lm = Split.MULTIPLE.pattern.matcher(left)
-                val rm = Split.MULTIPLE.pattern.matcher(right)
+                val lm = MULTIPLE.pattern.matcher(left)
+                val rm = MULTIPLE.pattern.matcher(right)
 
                 val leftHas = lm.find() && (lm.group("m1").isNullOrBlank().not() || lm.group("m2").isNullOrBlank().not())
                 val rightHas = rm.find() && (rm.group("m1").isNullOrBlank().not() || rm.group("m2").isNullOrBlank().not())
 
                 // 临时修改，还没有更好的解决方法
-                if (split != Split.TIME && split != Split.COULD && (leftHas || rightHas)) {
+                if (split != TIME && split != COULD && (leftHas || rightHas)) {
                     return chooseMultiple(s) // LR一样的
                 }
             }
 
             if (result < boundary - 0.002f) { // 选第一个
                 when (split) {
-                    Split.AM -> {
+                    AM -> {
                         if (right.isNotBlank()) {
                             val botMatcher =
                                 Pattern.compile("(?i)((\\s*Yumu\\s*)|雨沐)\\s*(机器人|Bot)?").matcher(right)
@@ -735,39 +744,39 @@ import kotlin.math.*
                         return leftFormat
                     }
 
-                    Split.WHAT, Split.WHY, Split.WHO, Split.CONDITION, Split.THINK, Split.NEST, Split.REAL -> {
+                    WHAT, WHY, WHO, CONDITION, THINK, NEST, REAL -> {
                         return leftFormat
                     }
 
-                    Split.RANGE, Split.AMOUNT -> {
+                    RANGE, AMOUNT, AGE -> {
                         return format(leftFormat, num)
                     }
 
-                    Split.TIME, Split.TIMES, Split.POSSIBILITY, Split.ACCURACY -> {
+                    TIME, TIMES, POSSIBILITY, ACCURACY -> {
                         return format(leftFormat, num, iis)
                     }
 
-                    Split.RANK -> {
+                    RANK -> {
                         return format(leftFormat, iis, num)
                     }
 
-                    Split.BETTER, Split.COMPARE, Split.JUXTAPOSITION, Split.PREFER, Split.HESITATE, Split.QUESTION, Split.MULTIPLE -> {
+                    BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, QUESTION, MULTIPLE -> {
                         return format(leftFormat, left)
                     }
 
-                    Split.ASSUME, Split.EVEN -> {
+                    ASSUME, EVEN -> {
                         return format(leftFormat, right)
                     }
 
-                    Split.COULD, Split.WHETHER -> {
+                    COULD, WHETHER -> {
                         return format(leftFormat, left, iis, right)
                     }
 
-                    Split.LIKE, Split.IS -> {
+                    LIKE, IS -> {
                         return format(leftFormat, iis)
                     }
 
-                    Split.OR -> {
+                    OR -> {
                         if (left.contains("是")) {
                             leftFormat = "我觉得，%s。"
                         }
@@ -776,38 +785,38 @@ import kotlin.math.*
                 }
             } else if (result > boundary + 0.002f) { // 选第二个
                 when (split) {
-                    Split.WHAT, Split.WHY, Split.WHO, Split.AM, Split.ASSUME, Split.CONDITION, Split.THINK, Split.NEST, Split.REAL, Split.QUESTION -> {
+                    WHAT, WHY, WHO, AM, ASSUME, CONDITION, THINK, NEST, REAL, QUESTION -> {
                         return rightFormat
                     }
 
-                    Split.RANGE, Split.AMOUNT -> {
+                    RANGE, AMOUNT, AGE -> {
                         return format(rightFormat, num)
                     }
 
-                    Split.TIME, Split.TIMES, Split.POSSIBILITY, Split.ACCURACY -> {
+                    TIME, TIMES, POSSIBILITY, ACCURACY -> {
                         return format(rightFormat, num, iis)
                     }
 
-                    Split.RANK -> {
+                    RANK -> {
                         return format(rightFormat, iis, num)
                     }
 
-                    Split.BETTER, Split.COMPARE, Split.JUXTAPOSITION, Split.PREFER, Split.HESITATE, Split.EVEN, Split.MULTIPLE -> {
+                    BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, EVEN, MULTIPLE -> {
                         return format(rightFormat, right)
                     }
 
-                    Split.OR -> {
+                    OR -> {
                         if (right.contains("是")) {
                             rightFormat = "我觉得，%s。"
                         }
                         return format(rightFormat, right)
                     }
 
-                    Split.COULD, Split.WHETHER -> {
+                    COULD, WHETHER -> {
                         return format(rightFormat, left, not, iis, right)
                     }
 
-                    Split.LIKE, Split.IS -> {
+                    LIKE, IS -> {
                         return format(rightFormat, iis)
                     }
                 }

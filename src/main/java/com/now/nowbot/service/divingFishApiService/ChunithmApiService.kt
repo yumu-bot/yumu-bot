@@ -17,5 +17,7 @@ interface ChunithmApiService {
 
     fun getChunithmSongLibrary(): Map<Int, ChuSong>
 
+    fun updateChunithmSongLibraryDatabase()
+
     fun updateChunithmSongLibraryFile()
 }

@@ -11,10 +11,10 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.REG_SEPERATOR
 import okhttp3.internal.toLongOrDefault
 import org.springframework.stereotype.Service
 import java.net.URI
-import java.util.regex.Pattern
 
 @Service("GET_COVER") class GetCoverService(private val beatmapApiService: OsuBeatmapApiService, private val beatmapMirrorApiService: OsuBeatmapMirrorApiService) :
     MessageService<GetCoverService.CoverParam>, TencentMessageService<GetCoverService.CoverParam> {
@@ -93,7 +93,7 @@ import java.util.regex.Pattern
         private fun parseDataString(
             dataStr: String,
         ): List<Long> {
-            val dataStrArray = dataStr.trim().split(Pattern.compile("[,，|:：\\s]+"), 0)
+            val dataStrArray = dataStr.trim().split(REG_SEPERATOR.toRegex(), 0)
 
             if (dataStrArray.isEmpty()) return listOf()
             return dataStrArray.filter { it.isNotBlank() }.map { it.toLongOrDefault(0L) }

@@ -21,7 +21,6 @@ import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import java.io.IOException
 import java.nio.file.Files
-import java.util.stream.Collectors
 import kotlin.text.Charsets.UTF_8
 
 @Service class MaimaiApiImpl(
@@ -161,7 +160,7 @@ import kotlin.text.Charsets.UTF_8
     }
 
     override fun getMaimaiSong(songID: Long): MaiSong? { //return getMaimaiSongLibraryFromFile()[songID.toInt()] ?: MaiSong()
-        val o = maiDao.findMaiSongById(songID.toInt())
+        val o = maiDao.findMaiSongByID(songID.toInt())
         insertMaimaiAlias(o)
         return o
     }
@@ -183,11 +182,11 @@ import kotlin.text.Charsets.UTF_8
     }
 
     override fun getMaimaiAlias(songID: Int): MaiAlias? {
-        return maiDao.getMaiAliasById((songID % 10000))
+        return maiDao.getMaiAliasByID((songID % 10000))
     }
 
     override fun getMaimaiAliasLibrary(): Map<Int, List<String>> {
-        return maiDao.getAllMaiAliases().stream().collect(Collectors.toMap(MaiAlias::songID, MaiAlias::alias))
+        return maiDao.getAllMaiAliases().associate { it.songID to it.alias }
     }
 
     override fun insertMaimaiAlias(songs: List<MaiSong>?) {
@@ -271,11 +270,11 @@ import kotlin.text.Charsets.UTF_8
         if (isRegularFile("data-songs.json")) {
             song = parseFileList("data-songs.json", MaiSong::class.java)
         } else {
-            log.info("maimai: 本地歌曲库不存在，获取 API 版本")
+            log.info("舞萌: 本地歌曲库不存在，获取 API 版本")
             song = JacksonUtil.parseObjectList(maimaiSongLibraryFromAPI, MaiSong::class.java)
         }
 
-        return song.stream().collect(Collectors.toMap(MaiSong::songID) { s: MaiSong -> s })
+        return song.associateBy { it.songID }
     }
 
     @Deprecated("请使用 From Database") private fun getMaimaiRankLibraryFromFile(): Map<String, Int> {
@@ -284,11 +283,11 @@ import kotlin.text.Charsets.UTF_8
         if (isRegularFile("data-songs.json")) {
             ranking = parseFileList("data-ranking.json", MaiRanking::class.java)
         } else {
-            log.info("maimai: 本地排名库不存在，获取 API 版本")
+            log.info("舞萌: 本地排名库不存在，获取 API 版本")
             ranking = JacksonUtil.parseObjectList(maimaiRankLibraryFromAPI, MaiRanking::class.java)
         }
 
-        return ranking.stream().collect(Collectors.toMap(MaiRanking::name, MaiRanking::rating))
+        return ranking.associate { it.name to it.rating }
     }
 
     @Deprecated("请使用 From Database") private fun getMaimaiFitLibraryFromFile(): MaiFit {
@@ -298,7 +297,7 @@ import kotlin.text.Charsets.UTF_8
                 MaiFit::class.java
             )
         } else {
-            log.info("maimai: 本地统计库不存在，获取 API 版本")
+            log.info("舞萌: 本地统计库不存在，获取 API 版本")
             return JacksonUtil.parseObject(maimaiFitLibraryFromAPI, MaiFit::class.java)
         }
     }
@@ -311,7 +310,7 @@ import kotlin.text.Charsets.UTF_8
                     MaimaiAliasResponseBody::class.java
                 ).aliases
         } else {
-            log.info("maimai: 本地外号库不存在，获取 API 版本")
+            log.info("舞萌: 本地外号库不存在，获取 API 版本")
             return JacksonUtil.parseObject(maimaiAliasLibraryFromAPI, MaimaiAliasResponseBody::class.java).aliases
         }
     }
@@ -334,25 +333,25 @@ import kotlin.text.Charsets.UTF_8
         for (s in songs) {
             maiDao.saveMaiSong(s)
         }
-        log.info("maimai: 歌曲数据库已更新")
+        log.info("舞萌: 歌曲数据库已更新")
     }
 
     override fun updateMaimaiRankLibraryDatabase() {
         val rank = JacksonUtil.parseObjectList(maimaiRankLibraryFromAPI, MaiRanking::class.java)
         maiDao.saveMaiRanking(rank)
-        log.info("maimai: 排名数据库已更新")
+        log.info("舞萌: 排名数据库已更新")
     }
 
     override fun updateMaimaiFitLibraryDatabase() {
         val fit = JacksonUtil.parseObject(maimaiFitLibraryFromAPI, MaiFit::class.java)
         maiDao.saveMaiFit(fit)
-        log.info("maimai: 统计数据库已更新")
+        log.info("舞萌: 统计数据库已更新")
     }
 
     override fun updateMaimaiAliasLibraryDatabase() {
         val alias = JacksonUtil.parseObject(maimaiAliasLibraryFromAPI, MaimaiAliasResponseBody::class.java).aliases
         maiDao.saveMaiAliases(alias)
-        log.info("maimai: 外号数据库已更新")
+        log.info("舞萌: 外号数据库已更新")
     }
 
     @Throws(
@@ -427,7 +426,9 @@ import kotlin.text.Charsets.UTF_8
     override fun getMaimaiPossibleSongs(text: String): List<MaiSong>? {
         val o = maiDao.findMaiSongByTitle(text)
         insertMaimaiAlias(o)
-        return o/*
+        return o
+
+        /*
         val songs = getMaimaiSongLibrary()
 
         val result = mutableMapOf<Double, MaiSong>()
@@ -463,8 +464,8 @@ import kotlin.text.Charsets.UTF_8
                 val y = DataUtil.getStringSimilarity(text, alias)
 
                 if (y >= 0.5) {
-                    val s = maiDao.findMaiSongById(e.key)
-                        ?: maiDao.findMaiSongById(e.key + 10000) //getMaimaiSong(e.key.toLong()) ?: getMaimaiSong(e.key + 10000L) 避免循环引用
+                    val s = maiDao.findMaiSongByID(e.key)
+                        ?: maiDao.findMaiSongByID(e.key + 10000) //getMaimaiSong(e.key.toLong()) ?: getMaimaiSong(e.key + 10000L) 避免循环引用
 
                     if (s != null) {
                         s.alias = e.value.firstOrNull()
@@ -483,8 +484,6 @@ import kotlin.text.Charsets.UTF_8
                 .sortedBy { it.second }
                 .sortedByDescending { it.third }
                 .map { it.first }
-
-            // result.stream().sorted(Comparator.comparingInt { it.second }).sorted(Comparator.comparingDouble<Triple<MaiSong, Int, Double>> { it.third }.reversed()).map { it.first }.toList()
         }
     }
 
@@ -516,12 +515,12 @@ import kotlin.text.Charsets.UTF_8
             if (Files.isRegularFile(file)) {
                 return JacksonUtil.parseObject(s, clazz)
             } else {
-                log.info("maimai: 文件{}不存在", fileName)
+                log.info("舞萌: 文件{}不存在", fileName)
                 return null
             }
 
         } catch (e: IOException) {
-            log.error("maimai: 获取文件失败", e)
+            log.error("舞萌: 获取文件失败", e)
             return null
         }
     }
@@ -532,7 +531,7 @@ import kotlin.text.Charsets.UTF_8
             val s = Files.readString(file)
             return JacksonUtil.parseObjectList(s, clazz)
         } catch (e: IOException) {
-            log.error("maimai: 获取文件失败", e)
+            log.error("舞萌: 获取文件失败", e)
             return listOf()
         }
     }
@@ -543,15 +542,15 @@ import kotlin.text.Charsets.UTF_8
         try {
             if (isRegularFile(fileName)) {
                 Files.writeString(file, data, UTF_8)
-                log.info("maimai: 已更新{}库", dictionaryName)
+                log.info("舞萌: 已更新{}库", dictionaryName)
             } else if (Files.isWritable(path)) {
                 Files.writeString(file, data, UTF_8)
-                log.info("maimai: 已保存{}库", dictionaryName)
+                log.info("舞萌: 已保存{}库", dictionaryName)
             } else {
-                log.info("maimai: 未保存{}库", dictionaryName)
+                log.info("舞萌: 未保存{}库", dictionaryName)
             }
         } catch (e: IOException) {
-            log.error(String.format("maimai: %s库保存失败", dictionaryName), e)
+            log.error(String.format("舞萌: %s库保存失败", dictionaryName), e)
         }
     }
 

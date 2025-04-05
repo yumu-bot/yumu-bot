@@ -1,5 +1,6 @@
 package com.now.nowbot.service.divingFishApiService.impl
 
+import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.model.json.ChuBestScore
 import com.now.nowbot.model.json.ChuSong
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
@@ -18,7 +19,7 @@ import java.nio.file.Files
 import kotlin.text.Charsets.UTF_8
 
 @Service
-class ChunithmApiImpl(private val base: DivingFishBaseService) : ChunithmApiService {
+class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDao: MaiDao) : ChunithmApiService {
     private val path = base.chunithmPath!!
 
     @JvmRecord private data class ChunithmBestScoreQQBody(val qq: Long, val b50: Boolean)
@@ -121,25 +122,36 @@ class ChunithmApiImpl(private val base: DivingFishBaseService) : ChunithmApiServ
     }
 
     override fun getChunithmSongLibrary(): Map<Int, ChuSong> {
-        return getChunithmSongLibraryFromFile()
+        // return getChunithmSongLibraryFromFile()
+
+        return maiDao.getAllChuSong().associateBy { it.songID }
     }
 
-    private fun getChunithmSongLibraryFromFile(): Map<Int, ChuSong> {
+    @Deprecated("请使用 From Database") private fun getChunithmSongLibraryFromFile(): Map<Int, ChuSong> {
         val song: List<ChuSong>
 
         if (isRegularFile("data-songs.json")) {
             song = parseFileList("data-songs.json", ChuSong::class.java)
         } else {
-            log.info("chunithm: 本地歌曲库不存在，获取 API 版本")
+            log.info("中二节奏: 本地歌曲库不存在，获取 API 版本")
             song = JacksonUtil.parseObjectList(chunithmSongLibraryFromAPI, ChuSong::class.java)
         }
 
         return song.associateBy { it.songID }
     }
 
+    override fun updateChunithmSongLibraryDatabase() {
+        val songs = JacksonUtil.parseObjectList(chunithmSongLibraryFromAPI, ChuSong::class.java)
+
+        for (s in songs) {
+            maiDao.saveChuSong(s)
+        }
+
+        log.info("中二节奏: 歌曲数据库已更新")
+    }
+
     override fun updateChunithmSongLibraryFile() {
         saveFile(chunithmSongLibraryFromAPI, "data-fit.json", "统计")
-        log.info("chunithm: 歌曲数据库已更新")
     }
 
     private val chunithmSongLibraryFromAPI: String

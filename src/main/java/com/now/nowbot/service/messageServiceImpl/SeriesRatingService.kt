@@ -13,6 +13,7 @@ import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.serviceException.MRAException
 import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.REG_SEPERATOR
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.lang.NonNull
@@ -261,7 +262,7 @@ class SeriesRatingService(
         val dataStrArray =
             dataStr
                 .trim { it <= ' ' }
-                .split("[\\s,，\\-|:]+".toRegex())
+                .split(REG_SEPERATOR.toRegex())
                 .dropLastWhile { it.isEmpty() }
                 .toTypedArray()
         if (dataStr.isBlank() || dataStrArray.isEmpty()) return null

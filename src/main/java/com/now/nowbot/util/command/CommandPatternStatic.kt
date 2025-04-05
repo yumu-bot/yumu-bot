@@ -133,6 +133,15 @@ val REG_IGNORE_BS: String = "[^bs:：\\d\\s]"
 @Language("RegExp")
 val REG_NAME: String = "($CHAR_NAME$CHAR_NAME_WITH_SPACE+$CHAR_NAME)"
 
+/**
+ * 这个分隔符会分隔空格
+ */
+@Language("RegExp")
+val REG_SEPERATOR: String = "[\\s,，|:：`、]+"
+
+@Language("RegExp")
+val REG_SEPERATOR_NO_SPACE: String = "[,，|:：`、]+"
+
 @Language("RegExp")
 val REG_USERNAME_SEPERATOR: String = "[0-9a-zA-Z\\[\\]\\-\\s\\n_,，|:：`、]"
 

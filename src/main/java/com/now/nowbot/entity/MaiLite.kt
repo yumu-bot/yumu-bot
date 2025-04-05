@@ -1,9 +1,6 @@
 package com.now.nowbot.entity
 
-import com.now.nowbot.model.json.MaiAlias
-import com.now.nowbot.model.json.MaiFit
-import com.now.nowbot.model.json.MaiRanking
-import com.now.nowbot.model.json.MaiSong
+import com.now.nowbot.model.json.*
 import com.now.nowbot.util.DataUtil
 import io.hypersistence.utils.hibernate.type.array.DoubleArrayType
 import io.hypersistence.utils.hibernate.type.array.IntArrayType
@@ -20,7 +17,7 @@ class MaiSongLite(
     @Column(columnDefinition = "text")
     var title: String,
 
-    @Column(name = "query_text",columnDefinition = "text")
+    @Column(name = "query_text", columnDefinition = "text")
     var queryTitle: String = title,
 
     @Column(columnDefinition = "text")
@@ -293,7 +290,7 @@ class MaiFitDiffLite(
     }
 }
 
-@Entity(name = "maimai_user_rank")
+@Entity(name = "maimai_rank")
 class MaiRankingLite(
     @Id
     @Column(columnDefinition = "text")
@@ -334,6 +331,136 @@ class MaiAliasLite(
         fun from(model: MaiAlias): MaiAliasLite {
             if (model.alias.isEmpty()) throw IllegalArgumentException("alias not be empty")
             return MaiAliasLite(model.songID, model.alias)
+        }
+    }
+}
+
+@Entity(name = "chunithm_song")
+@Table(indexes = [Index(name = "title_query", columnList = "query_text")])
+class ChuSongLite(
+    @Id
+    @Column(columnDefinition = "integer")
+    var songID: Int,
+
+    @Column(columnDefinition = "text")
+    var title: String,
+
+    @Column(name = "query_text", columnDefinition = "text")
+    var queryTitle: String = title,
+
+    @Type(DoubleArrayType::class)
+    @Column(columnDefinition = "float[]")
+    var star: DoubleArray,
+
+    @Type(StringArrayType::class)
+    @Column(columnDefinition = "text[]")
+    var level: Array<String>,
+
+    @Type(IntArrayType::class)
+    @Column(columnDefinition = "integer[]")
+    var chartIDs: IntArray,
+
+    @Column(columnDefinition = "text")
+    var songTitle: String,
+
+    @Column(columnDefinition = "text")
+    var songArtist: String,
+
+    @Column(columnDefinition = "text")
+    var songGenre: String,
+
+    @Column(columnDefinition = "integer")
+    var songBPM: Int,
+
+    @Column(columnDefinition = "text")
+    var version: String,
+
+    ) {
+    @Transient
+    var charts: ArrayList<ChuChartLite>? = null
+
+    fun toModel(): ChuSong = ChuSong().apply {
+        val lite = this@ChuSongLite
+
+        info = ChuSong.SongInfo().apply {
+            title = lite.songTitle
+            artist = lite.songArtist
+            genre = lite.songGenre
+            bpm = lite.songBPM
+            version = lite.version
+        }
+
+        songID = lite.songID
+        title = lite.title
+        star = lite.star.toList()
+        chartIDs = lite.chartIDs.toList()
+        level = lite.level.toList()
+
+        val c = mutableListOf<ChuSong.ChuChart>()
+
+        val chartLite = this@ChuSongLite.charts
+        if (chartLite != null) {
+            for (cl in chartLite) {
+                val l = ChuSong.ChuChart()
+
+                l.charter = cl.charter
+                l.combo = cl.combo
+                c.add(l)
+            }
+        }
+
+        charts = c
+    }
+
+    companion object {
+        @JvmStatic
+        fun from(song: ChuSong): ChuSongLite {
+            val queryTitle = DataUtil.getStandardisedString(song.title)
+
+            val result = ChuSongLite(
+                songID = song.songID,
+                title = song.title,
+                star = song.star.toDoubleArray(),
+                level = song.level.toTypedArray(),
+                chartIDs = song.chartIDs.toIntArray(),
+                songTitle = song.info.title,
+                songArtist = song.info.artist,
+                songGenre = song.info.genre,
+                songBPM = song.info.bpm,
+                version = song.info.version,
+            )
+
+            result.queryTitle = queryTitle
+
+            result.charts = song.charts.mapIndexed { i, c ->
+                ChuChartLite.from(result.chartIDs[i], c)
+            }.toCollection(ArrayList())
+
+            return result
+        }
+    }
+}
+
+@Entity(name = "chunithm_chart")
+class ChuChartLite(
+    @Id
+    var id: Int,
+
+    @Column(columnDefinition = "integer")
+    var combo: Int,
+
+    @Column(columnDefinition = "text")
+    var charter: String
+) {
+
+    companion object {
+        @JvmStatic
+        fun from(id: Int, chart: ChuSong.ChuChart): ChuChartLite {
+            return ChuChartLite(
+                id = id,
+                combo = chart.combo,
+                charter = chart.charter
+            )
         }
     }
 }

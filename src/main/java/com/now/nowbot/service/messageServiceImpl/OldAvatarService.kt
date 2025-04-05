@@ -15,6 +15,7 @@ import com.now.nowbot.util.QQMsgUtil
 import com.now.nowbot.util.command.FLAG_DATA
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.FLAG_UID
+import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -136,7 +137,7 @@ class OldAvatarService(
         val dataStrArray =
             dataStr
                 .trim { it <= ' ' }
-                .split("[,，|:：]+".toRegex())
+                .split(REG_SEPERATOR_NO_SPACE.toRegex())
                 .dropLastWhile { it.isEmpty() }
                 .stream()
                 .map(String::trim)

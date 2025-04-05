@@ -44,7 +44,7 @@ class ChuSong {
         // 预期解禁时间，chu 没有这个
         // @JsonProperty("release_date") var release: String = ""
 
-        // 加入 maimai 时的版本
+        // 加入 chunithm 时的版本
         @JsonProperty("from") var version: String = ""
 
     }

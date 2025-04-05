@@ -127,8 +127,6 @@ object DataUtil {
         return String.format("#%02x%02x%02x", r, g, b)
     }
 
-    private val splitReg = "[,，|:：`、\n]+".toRegex()
-
     /**
      * 将按逗号或者 |、:：分隔的字符串分割 如果未含有分隔的字符，返回 null
      * 根据分隔符，分割玩家名
@@ -142,7 +140,7 @@ object DataUtil {
         if (str.isNullOrBlank()) return null
         val strings =
             str.trim()
-                .split(splitReg)
+                .split(REG_SEPERATOR)
                 .dropLastWhile { it.isEmpty() }
         // 空格和-_不能匹配
         if (strings.isEmpty()) return null
@@ -240,7 +238,7 @@ object DataUtil {
      */
     @NonNull
     private fun parseRange(start: Int?, end: Int?): Range {
-        val start =
+        val st =
             start.let {
                 if (it == null || it < 1 || it > 100) {
                     1
@@ -253,19 +251,19 @@ object DataUtil {
         val limit: Int
 
         if (end == null || end < 1 || end > 100) {
-            offset = start - 1
+            offset = st - 1
             limit = 1
         } else {
             // 分流：正常，相等，相反
-            if (end > start) {
-                offset = start - 1
-                limit = end - start + 1
-            } else if (start == end) {
-                offset = start - 1
+            if (end > st) {
+                offset = st - 1
+                limit = end - st + 1
+            } else if (st == end) {
+                offset = st - 1
                 limit = 1
             } else {
                 offset = end - 1
-                limit = start - end + 1
+                limit = st - end + 1
             }
         }
 
@@ -1078,11 +1076,14 @@ object DataUtil {
             .replace(Regex(REG_PLUS), "+")
             .replace(Regex(REG_COLON), ":")
             .replace(Regex(REG_HASH), "#")
+            .replace(Regex(REG_STAR), "*")
             .replace(Regex(REG_EXCLAMATION), "!")
             .replace(Regex(REG_QUESTION), "?")
             .replace(Regex(REG_QUOTATION), "\"")
             .replace(Regex(REG_FULL_STOP), ".")
-            .replace(Regex("\\s+"), "")
+            .replace("【", "[")
+            .replace("】", "]")
+            .replace(Regex("[\\s　]+"), "") // 这里有个全宽还是零宽空格？
     }
 
     // 标准化字段
@@ -1163,7 +1164,7 @@ object DataUtil {
     }
 
     /**
-     * 自己写的空格分隔的匹配器，这样子就可以无所谓匹配顺序了
+     * 自己写的空格或逗号分隔的匹配器，这样子就可以无所谓匹配顺序了
      * @param regexes 正则表达式。注意，这里的正则需要写得越简洁越好，不然会有大量重复匹配。推荐写成 xxx=yyy 的形式
      * @param noContains 如果不填，默认遵循一匹配到就输出的逻辑。如果填写，则只有在靠近末尾的字符串含有这样的字符时，切断并输出当前匹配到的
      */
@@ -1173,7 +1174,7 @@ object DataUtil {
         val result = List(regexes.size) { emptyList<String>().toMutableList() }
         var matcher = ""
 
-        val strs = str.split("\\s+".toRegex())
+        val strs = str.split(REG_SEPERATOR.toRegex())
 
         strs.forEachIndexed { j, s ->
             matcher += s

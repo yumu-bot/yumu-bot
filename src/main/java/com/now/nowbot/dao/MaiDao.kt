@@ -2,10 +2,7 @@ package com.now.nowbot.dao
 
 import com.now.nowbot.entity.*
 import com.now.nowbot.mapper.*
-import com.now.nowbot.model.json.MaiAlias
-import com.now.nowbot.model.json.MaiFit
-import com.now.nowbot.model.json.MaiRanking
-import com.now.nowbot.model.json.MaiSong
+import com.now.nowbot.model.json.*
 import jakarta.persistence.Transient
 import org.springframework.stereotype.Component
 import kotlin.jvm.optionals.getOrNull
@@ -18,13 +15,17 @@ class MaiDao(
     val maiFitDiffLiteRepository: MaiFitDiffLiteRepository,
     val maiRankLiteRepository: MaiRankLiteRepository,
     val maiAliasLiteRepository: MaiAliasLiteRepository,
+    val chuSongLiteRepository: ChuSongLiteRepository,
+    val chuChartLiteRepository: ChuChartLiteRepository,
 ) {
     fun saveMaiRanking(ranking: List<MaiRanking>) {
         val rankingLite = ranking.mapNotNull {
             if (it.name.isBlank()) null
             else MaiRankingLite.from(it)
         }
-        maiRankLiteRepository.saveAll(rankingLite)
+
+        rankingLite.forEach { maiRankLiteRepository.saveAndUpdate(it.name, it.rating) }
+
     }
 
     fun getMaiRanking(name: String): MaiRanking? {
@@ -36,7 +37,7 @@ class MaiDao(
         return maiRankLiteRepository.findAll().map { it.toModel() }
     }
 
-    fun findMaiSongById(id: Int): MaiSong? {
+    fun findMaiSongByID(id: Int): MaiSong? {
         val songOpt = maiSongLiteRepository.findById(id)
         if (songOpt.isEmpty) {
             return null
@@ -83,7 +84,7 @@ class MaiDao(
     }
 
     @Transient
-    fun deleteMaiSongById(id: Int) {
+    fun deleteMaiSongByID(id: Int) {
         val songOpt = maiSongLiteRepository.findById(id)
         if (songOpt.isEmpty) return
         val song = songOpt.get()
@@ -130,6 +131,7 @@ class MaiDao(
         val allDiff = maiFit
             .diffData
             .map { (id, diff) -> MaiFitDiffLite.from(id, diff) }
+
         maiFitDiffLiteRepository.saveAll(allDiff)
     }
 
@@ -164,7 +166,7 @@ class MaiDao(
         return aliases.map { it.toModel() }
     }
 
-    fun getMaiAliasById(id: Int): MaiAlias? {
+    fun getMaiAliasByID(id: Int): MaiAlias? {
         // 他只存 10000 以下的 id，除了两个协作宴谱
         val i = if (id >= 10000) {
             id % 10000
@@ -178,5 +180,47 @@ class MaiDao(
         }
         val alias = aliasOpt.get()
         return alias.toModel()
+    }
+
+    fun findChuSongByID(id: Int): ChuSong? {
+        val songOpt = chuSongLiteRepository.findById(id)
+        if (songOpt.isEmpty) {
+            return null
+        }
+        val song = songOpt.get()
+        val charts = chuChartLiteRepository
+            .findAllById(song.chartIDs.asList())
+            .toCollection(ArrayList())
+        song.charts = charts
+        return song.toModel()
+    }
+
+    fun getAllChuSong(): List<ChuSong> {
+        val songs = chuSongLiteRepository.findAll()
+        songs.forEach {
+            val charts = chuChartLiteRepository
+                .findAllById(it.chartIDs.asList())
+                .toCollection(ArrayList())
+            it.charts = charts
+        }
+        return songs.map { it.toModel() }
+    }
+
+    fun ChuSong.getChartLite(): List<ChuChartLite> {
+        if (this.charts.size != this.chartIDs.size) {
+            throw IllegalArgumentException("Chart size not match")
+        }
+
+        return charts.mapIndexed { i, chart ->
+            ChuChartLite.from(chartIDs[i], chart)
+        }
+    }
+
+    @Transient
+    fun saveChuSong(song: ChuSong) {
+        val charts = song.getChartLite()
+        chuChartLiteRepository.saveAll(charts)
+        val songLite = ChuSongLite.from(song)
+        chuSongLiteRepository.save(songLite)
     }
 }

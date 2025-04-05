@@ -1,5 +1,7 @@
 package com.now.nowbot.model.enums
 
+import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
+
 enum class MaiVersion(val full: String, val abbreviation: String, val code: String) {
     DEFAULT("", "", ""),
     MAIMAI("maimai", "初", "mai"),
@@ -62,7 +64,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
             if (str == null) return listOf(DEFAULT)
 
             val out = mutableSetOf<MaiVersion>()
-            val strList = str.split(Regex("[,，|:：]"))
+            val strList = str.split(REG_SEPERATOR_NO_SPACE.toRegex())
 
             if (strList.isEmpty()) return listOf(DEFAULT)
 
