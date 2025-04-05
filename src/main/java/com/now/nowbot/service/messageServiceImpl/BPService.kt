@@ -24,8 +24,6 @@ import org.intellij.lang.annotations.Language
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
@@ -307,7 +305,7 @@ import kotlin.math.*
             }
         }
 
-        return scores.mapIndexed { index: Int, score: LazerScore -> (index + 1) to score }.toMap()
+        return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
 
     private fun BPParam.getImage(): ByteArray = try {
@@ -332,7 +330,7 @@ import kotlin.math.*
 
             val original = DataUtil.getOriginal(beatmap)
 
-            // calculateApiService.applyPPToScore(score) // BP 不需要？
+            // calculateApiService.applyPPToScore(score) // BP 不需要
             calculateApiService.applyBeatMapChanges(score)
             calculateApiService.applyStarToScore(score)
 
@@ -343,6 +341,9 @@ import kotlin.math.*
 
             val body = PanelE5Param(user, score, null, density, progress, original, attributes, "B").toMap()
 
+            imageService.getPanel(body, "E5")
+
+            /*
             val st = OffsetDateTime.of(2025, 4, 1, 0, 0, 0, 0, ZoneOffset.ofHours(8))
             val ed = OffsetDateTime.of(2025, 4, 2, 0, 0, 0, 0, ZoneOffset.ofHours(8))
 
@@ -352,6 +353,8 @@ import kotlin.math.*
             } else {
                 imageService.getPanel(body, "E5")
             }
+
+             */
         }
     } catch (e: Exception) {
         log.error("最好成绩：渲染失败", e)

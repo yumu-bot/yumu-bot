@@ -1,112 +1,92 @@
 package com.now.nowbot.model
 
-import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.throwable.GeneralTipsException
-import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.text.NumberFormat
-import java.util.*
+import com.now.nowbot.model.json.LazerStatistics
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import kotlin.math.floor
+import kotlin.math.round
 
-class UUScore (score: LazerScore, osuBeatmapApiService: OsuBeatmapApiService) {
+class UUScore(score: LazerScore, calculateApiService: OsuCalculateApiService) {
     var name: String
-    var mode: String
+    var mode: OsuMode
     var country: String
-    var map_length: Int
-    var map_name: String? = ""
-    var difficulty_name: String
+    var totalLength: Int
+    var titleUnicode: String? = ""
+    var difficultyName: String
     var artist: String? = ""
-    var star_rating: Double
-    var star_str: String
+    var starRating: Double
+    var starStr: String
     var rank: String
     var mods: Array<String?>
     var score: Int
     var acc: Double
     var pp: Double
-    var max_combo: Int
+    var maxCombo: Int
     var combo: Int
-    var bid: Int
+    var bid: Long
     
-    var n_300: Int
-    var n_100: Int
-    var n_50: Int
-    var n_geki: Int
-    var n_katu: Int
-    var n_0: Int
+    var statistics: LazerStatistics = score.statistics
     var passed: Boolean
     var url: String? = ""
     var key: Int
-    var play_time: String
+    var playTime: String
 
     init {
         val user = score.user
-        bid = Math.toIntExact(score.beatMap.beatMapID)
-        
-        val b: BeatMap
-        
-        try {
-            b = osuBeatmapApiService.getBeatMapFromDataBase(bid)
-        }catch (e: HttpClientErrorException.Unauthorized) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-        }catch (e: WebClientResponseException.Unauthorized) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-        }
-        
-        val s = b.beatMapSet
+        bid = score.beatMap.beatMapID
+
+        calculateApiService.applyPPToScore(score)
+        calculateApiService.applyBeatMapChanges(score)
+        calculateApiService.applyStarToScore(score)
+
         val modsList = score.mods
         
         name = user.userName
-        mode = score.mode.shortName
+        mode = score.mode
         country = user.countryCode
         mods = arrayOfNulls(modsList.size)
         for (i in mods.indices) {
             mods[i] = modsList[i].acronym
         }
-        if (s != null) {
-            map_name = s.titleUnicode
-            artist = s.artistUnicode
-            url = s.covers.card
-        }
-        max_combo = b.maxCombo!!
-        difficulty_name = b.difficultyName
+
+        titleUnicode = score.beatMapSet.titleUnicode
+        artist = score.beatMapSet.artistUnicode
+        url = score.beatMapSet.covers.card
+
+        maxCombo = score.beatMap.maxCombo!!
+        difficultyName = score.beatMap.difficultyName
         
-        star_rating = b.starRating
-        map_length = b.totalLength
+        starRating = score.beatMap.starRating
+        totalLength = score.beatMap.totalLength
         
-        val sr_floor = floor(star_rating).toInt()
-        val sr_str = StringBuilder()
+        val starInteger = floor(starRating).toInt()
+        val srStr = StringBuilder()
+
         var i = 0
-        while (i < sr_floor && i < 10) {
-            sr_str.append('★')
+        while (i < starInteger && i < 10) {
+            srStr.append('★')
             i++
         }
 
-        if (0.5 < (star_rating - sr_floor) && sr_floor < 10) {
-            sr_str.append('☆')
+        if (0.5 < (starRating - starInteger) && starInteger < 10) {
+            srStr.append('☆')
         }
 
-        star_str = sr_str.toString()
+        starStr = srStr.toString()
         
         rank = score.rank
         this.score = score.score.toInt()
-        acc = ((Math.round(score.accuracy * 10000)) / 100.0).toFloat().toDouble()
+        acc = ((round(score.accuracy * 10000.0)) / 100.0)
         
-        pp = if (Objects.nonNull(score.PP)) score.PP!! else 0.0
+        pp = score.PP ?: 0.0
         
         combo = score.maxCombo
         passed = score.passed
         key = score.beatMap.CS!!.toInt()
-        play_time = score.endedTimeString
-        
-        val stat = score.statistics
-        n_300 = stat.great
-        n_100 = stat.ok
-        n_50 = stat.meh
-        n_geki = stat.perfect
-        n_katu = stat.good
-        n_0 = stat.miss
+        playTime = score.endedTimeString
+
+        statistics = score.statistics
         
         if (!passed) rank = "F"
     }
@@ -118,21 +98,21 @@ class UUScore (score: LazerScore, osuBeatmapApiService: OsuBeatmapApiService) {
             //  "username" ("country_code"): "mode" ("key"K)-if needed
             sb.append(name).append(' ').append('(').append(country).append(')').append(':').append(' ').append(mode)
 
-            if (mode == "mania") {
-                difficulty_name = difficulty_name.replace("^\\[\\d{1,2}K]\\s*".toRegex(), "")
+            if (mode == OsuMode.MANIA) {
+                difficultyName = difficultyName.replace("^\\[\\d{1,2}K]\\s*".toRegex(), "")
                 sb.append(' ').append('(').append(key).append("K").append(')').append('\n')
             } else {
                 sb.append('\n')
             }
 
             //  "artist_unicode" - "title_unicode" ["version"]
-            sb.append(artist).append(" - ").append(map_name).append(' ').append('[').append(difficulty_name).append(']')
+            sb.append(artist).append(" - ").append(titleUnicode).append(' ').append('[').append(difficultyName).append(']')
                 .append('\n')
 
             //  ★★★★★ "difficulty_rating"* mm:ss
-            sb.append(star_str).append(' ').append(format(star_rating)).append('*')
+            sb.append(starStr).append(' ').append(format(starRating)).append('*')
                 .append(' ')
-                .append(map_length / 60).append(':').append(String.format("%02d", map_length % 60)).append('\n')
+                .append(totalLength / 60).append(':').append(String.format("%02d", totalLength % 60)).append('\n')
 
             //  ["rank"] +"mods" "score" "pp"(###)PP
             sb.append('[').append(rank).append(']').append(' ')
@@ -148,34 +128,42 @@ class UUScore (score: LazerScore, osuBeatmapApiService: OsuBeatmapApiService) {
                 .append(format(pp)).append("PP").append(')').append('\n')
 
             //  "max_combo"/###x "accuracy"%
-            sb.append(combo).append('x').append(' ').append('/').append(' ').append(max_combo).append('x')
+            sb.append(combo).append('x').append(' ').append('/').append(' ').append(maxCombo).append('x')
                 .append(' ').append('/').append('/').append(' ').append(format(acc)).append('%')
                 .append('\n')
 
             //  "count_300" /  "count_100" / "count_50" / "count_miss"
             when (mode) {
-                "taiko" -> sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_0).append('\n')
+                OsuMode.TAIKO -> sb.append(statistics.great).append(" / ").append(statistics.ok).append(" / ").append(statistics.miss).append('\n')
                     .append('\n')
 
-                "mania" -> {
-                    sb.append(n_300).append('+').append(n_geki).append('(')
-                    if (n_300 >= n_geki && n_geki != 0) {
-                        sb.append(String.format("%.2f", (1f * n_geki / n_300)))
-                    } else if (n_300 < n_geki && n_300 != 0) {
-                        sb.append(String.format("%.1f", (1f * n_geki / n_300)))
+                OsuMode.MANIA -> {
+                    sb.append(statistics.great).append('+').append(statistics.perfect).append('(')
+                    if (statistics.great >= statistics.perfect && statistics.great != 0) {
+                        sb.append(String.format("%.2f", (1.0 * statistics.perfect / statistics.great)))
+                    } else if (statistics.great < statistics.perfect && statistics.great != 0) {
+                        sb.append(String.format("%.1f", (1.0 * statistics.perfect / statistics.great)))
                     } else {
                         sb.append('-')
                     }
-                    sb.append(')').append(" / ").append(n_katu).append(" / ").append(n_100).append(" / ").append(n_50)
-                        .append(" / ").append(n_0).append('\n').append('\n')
+                    sb.append(')').append(" / ")
+                        .append(statistics.good).append(" / ")
+                        .append(statistics.ok).append(" / ")
+                        .append(statistics.meh).append(" / ")
+                        .append(statistics.miss)
+                        .append('\n').append('\n')
                 }
 
-                "catch", "fruits" -> sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50)
-                    .append(" / ").append(n_0).append('(').append('-').append(n_katu).append(')').append('\n')
-                    .append('\n')
+                OsuMode.CATCH -> sb.append(statistics.great).append(" / ")
+                    .append(statistics.largeTickHit).append(" / ")
+                    .append(statistics.smallTickHit).append(" / ")
+                    .append(statistics.miss).append('(').append('-').append(statistics.smallTickMiss).append(')')
+                    .append('\n').append('\n')
 
-                else -> sb.append(n_300).append(" / ").append(n_100).append(" / ").append(n_50).append(" / ")
-                    .append(n_0).append('\n').append('\n')
+                else -> sb.append(statistics.great).append(" / ")
+                    .append(statistics.ok).append(" / ")
+                    .append(statistics.meh).append(" / ")
+                    .append(statistics.miss).append('\n').append('\n')
             }
 
             //DateTimeFormatter.ISO_ZONED_DATE_TIME.parse(play_time) 格式化 ISO-8601 日期格式
@@ -184,13 +172,7 @@ class UUScore (score: LazerScore, osuBeatmapApiService: OsuBeatmapApiService) {
         }
 
     companion object {
-        @Throws(GeneralTipsException::class) fun getInstance(score: LazerScore, beatmapApiService: OsuBeatmapApiService): UUScore {
-            return UUScore(score, beatmapApiService)
-        }
-        
         fun format(d: Double): String {
-            val x = Math.round(d * 100) / 100.0
-            val nf = NumberFormat.getInstance()
-            return nf.format(x)
+            return String.format("%.2f", d)
         }
     }}

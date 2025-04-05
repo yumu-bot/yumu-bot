@@ -24,12 +24,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.math.floor
 
 // Multiple Score也合并进来了
 @Service("SCORE_PR")
@@ -47,7 +44,6 @@ class ScorePRService(
             val offset: Int,
             val limit: Int,
             val isRecent: Boolean,
-            val isMultipleScore: Boolean,
             val mode: OsuMode?
     )
 
@@ -124,9 +120,7 @@ class ScorePRService(
             limit = range.getLimit(1, false)
         }
 
-        val isMultipleScore = limit > 1
-
-        data.value = ScorePRParam(range.data, offset, limit, isRecent, isMultipleScore, mode.data)
+        data.value = ScorePRParam(range.data, offset, limit, isRecent, mode.data)
         return true
     }
 
@@ -186,9 +180,7 @@ class ScorePRService(
             limit = range.getLimit(1, false)
         }
 
-        val isMultipleScore = limit > 1
-
-        return ScorePRParam(range.data, offset, limit, isRecent, isMultipleScore, mode.data)
+        return ScorePRParam(range.data, offset, limit, isRecent, mode.data)
     }
 
     @Throws(Throwable::class)
@@ -198,7 +190,7 @@ class ScorePRService(
 
     @Throws(GeneralTipsException::class)
     private fun getTextOutput(score: LazerScore): MessageChain {
-        val d = UUScore.getInstance(score, beatmapApiService)
+        val d = UUScore(score, calculateApiService)
 
         val imgBytes = client.get()
             .uri(d.url ?: "")
@@ -214,14 +206,14 @@ class ScorePRService(
         val offset = param.offset
         val limit = param.limit
         val isRecent = param.isRecent
-        val isMultipleScore = param.isMultipleScore
 
         val user = param.user
 
-        val scores: List<LazerScore>
+        val scoreMap: Map<Int, LazerScore>
 
         try {
-            scores = scoreApiService.getScore(user!!.userID, param.mode, offset, limit, !isRecent)
+            scoreMap = scoreApiService.getScore(user!!.userID, param.mode, offset, limit, !isRecent)
+                .mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
         } catch (e: WebClientResponseException) {
             // 退避 !recent
             if (event != null &&
@@ -249,7 +241,7 @@ class ScorePRService(
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "成绩")
         }
 
-        if (scores.isEmpty()) {
+        if (scoreMap.isEmpty()) {
             throw GeneralTipsException(
                 GeneralTipsException.Type.G_Null_RecentScore,
                 user.username,
@@ -259,7 +251,10 @@ class ScorePRService(
         // 成绩发送
         val image: ByteArray
 
-        if (isMultipleScore) {
+        if (scoreMap.size > 1) {
+            val ranks = scoreMap.map{it.key}.toList()
+            val scores = scoreMap.map{it.value}.toList()
+
             calculateApiService.applyPPToScores(scores)
             calculateApiService.applyBeatMapChanges(scores)
             calculateApiService.applyStarToScores(scores)
@@ -268,6 +263,7 @@ class ScorePRService(
                 val body = mapOf(
                     "user" to user,
                     "score" to scores,
+                    "rank" to ranks,
                     "panel" to if (isRecent) "RS" else "PS"
                 )
 
@@ -279,9 +275,11 @@ class ScorePRService(
             }
         } else {
             // 单成绩发送
-            val score: LazerScore = scores.first()
+            val score = scoreMap.map { it.value }.first()
+
             val e5Param = getScore4PanelE5(user, score, (if (isRecent) "R" else "P"), beatmapApiService, calculateApiService)
             try {
+                /*
                 val st = OffsetDateTime.of(2025, 4, 1, 0, 0, 0, 0, ZoneOffset.ofHours(8))
                 val ed = OffsetDateTime.of(2025, 4, 2, 0, 0, 0, 0, ZoneOffset.ofHours(8))
 
@@ -289,9 +287,11 @@ class ScorePRService(
                     imageService.getPanel(e5Param.toMap(), "Eta" +
                             (floor((System.currentTimeMillis() % 1000) / 1000.0 * 4) + 1).toInt())
                 } else {
-                    imageService.getPanel(e5Param.toMap(), "E5")
                 }
 
+                 */
+
+                image = imageService.getPanel(e5Param.toMap(), "E5")
                 return QQMsgUtil.getImage(image)
             } catch (e: Exception) {
                 log.error("成绩：绘图出错, 成绩信息:\n {}",
