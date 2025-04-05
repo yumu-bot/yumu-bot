@@ -26,12 +26,12 @@ class MaiDao(
         }
 
         val actions = rankingLite.map {
-            AsyncMethodExecutor.Runnable {
+            return@map AsyncMethodExecutor.Supplier<Unit> {
                 maiRankLiteRepository.saveAndUpdate(it.name, it.rating)
             }
         }
 
-        AsyncMethodExecutor.AsyncRunnable(actions)
+        AsyncMethodExecutor.AsyncSupplier(actions)
     }
 
     fun getMaiRanking(name: String): MaiRanking? {
