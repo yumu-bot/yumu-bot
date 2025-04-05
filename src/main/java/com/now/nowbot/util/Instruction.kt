@@ -745,8 +745,8 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("update\\s*mai(mai)?", "um")
     }),
 
-    MAI_COUPLE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("mai(mai)?\\s*((couple)|(cp))", "mc", "mine\\s*craft")
+    MAI_SEEK(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("mai(mai)?\\s*(seek)", "mk")
         appendCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
     }),
 

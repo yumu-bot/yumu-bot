@@ -33,6 +33,11 @@ interface MaiRankLiteRepository : JpaRepository<MaiRankingLite, String> {
         DO UPDATE SET name = :name, rating = :rating;
         """, nativeQuery = true)
     fun saveAndUpdate(name: String, rating: Int)
+
+    @Query("""
+        SELECT * FROM maimai_rank WHERE rating BETWEEN :bottomRating AND :topRating
+    """, nativeQuery = true)
+    fun findSurrounding(bottomRating: Int, topRating: Int): List<MaiRankingLite>
 }
 
 interface MaiAliasLiteRepository : JpaRepository<MaiAliasLite, Int>

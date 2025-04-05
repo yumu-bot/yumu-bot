@@ -66,6 +66,8 @@ interface MaimaiApiService {
 
     fun getMaimaiRank(): Map<String, Int>
 
+    fun getMaimaiSurroundingRank(rating: Int = 15000): Map<String, Int>
+
     fun getMaimaiChartData(songID: Long): List<MaiFit.ChartData>
 
     fun getMaimaiDiffData(difficulty: String): MaiFit.DiffData

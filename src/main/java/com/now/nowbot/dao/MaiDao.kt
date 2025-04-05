@@ -3,6 +3,7 @@ package com.now.nowbot.dao
 import com.now.nowbot.entity.*
 import com.now.nowbot.mapper.*
 import com.now.nowbot.model.json.*
+import com.now.nowbot.util.AsyncMethodExecutor
 import jakarta.persistence.Transient
 import org.springframework.stereotype.Component
 import kotlin.jvm.optionals.getOrNull
@@ -24,8 +25,13 @@ class MaiDao(
             else MaiRankingLite.from(it)
         }
 
-        rankingLite.forEach { maiRankLiteRepository.saveAndUpdate(it.name, it.rating) }
+        val actions = rankingLite.map {
+            AsyncMethodExecutor.Runnable {
+                maiRankLiteRepository.saveAndUpdate(it.name, it.rating)
+            }
+        }
 
+        AsyncMethodExecutor.AsyncRunnable(actions)
     }
 
     fun getMaiRanking(name: String): MaiRanking? {
@@ -35,6 +41,10 @@ class MaiDao(
 
     fun getAllMaiRanking(): List<MaiRanking> {
         return maiRankLiteRepository.findAll().map { it.toModel() }
+    }
+
+    fun getSurroundingMaiRanking(rating: Int = 15000): List<MaiRanking> {
+        return maiRankLiteRepository.findSurrounding(rating - 500, rating + 500).map { it.toModel() }
     }
 
     fun findMaiSongByID(id: Int): MaiSong? {

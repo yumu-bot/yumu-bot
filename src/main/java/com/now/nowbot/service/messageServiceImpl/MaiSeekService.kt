@@ -7,40 +7,63 @@ import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
+import com.now.nowbot.util.command.LEVEL_MORE
+import com.now.nowbot.util.command.REG_NUMBER
 import org.springframework.stereotype.Service
-import java.util.stream.Collectors
 
-@Service("MAI_COUPLE")
-class MaiCoupleService(private val maimaiApiService: MaimaiApiService) : MessageService<String> {
+@Service("MAI_SEEK")
+class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageService<String> {
     override fun isHandle(
             event: MessageEvent,
             messageText: String,
             data: MessageService.DataValue<String>,
     ): Boolean {
-        val matcher = Instruction.MAI_COUPLE.matcher(messageText)
+        val matcher = Instruction.MAI_SEEK.matcher(messageText)
         if (!matcher.find()) {
             return false
         }
+        
+        val str: String? = matcher.group(FLAG_NAME)
 
-        data.value = matcher.group(FLAG_NAME)
+        if (str.isNullOrEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_UserName)
+
+        data.value = str
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, input: String?) {
-        if (input.isNullOrEmpty())
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_UserName)
+    override fun HandleMessage(event: MessageEvent, input: String) {
+        if (input.matches("\\s*$REG_NUMBER$LEVEL_MORE\\s*".toRegex())) {
+            val rating = input.toIntOrNull() ?: 0
+            
+            val surrounding = maimaiApiService.getMaimaiSurroundingRank(rating)
+            
+            val sb = StringBuilder("搜索结果：\n")
 
+            var i = 1
+            
+            for (e in surrounding) {
+                val name = e.key
+                val achievement = e.value
+
+                sb.append("#${i}: ")
+                    .append(achievement - rating)
+                    .append(" ")
+                    .append(name)
+                    .append(" ")
+                    .append("[${achievement}]")
+                    .append("\n")
+
+                i++
+
+                if (i > 15) break
+            }
+
+            event.reply(sb.toString())
+            return
+        }
+        
         val rankMap = maimaiApiService.getMaimaiRank()
-        val nameMap =
-                rankMap.keys
-                        .stream()
-                        .collect(
-                                Collectors.toMap(
-                                        { DataUtil.getStandardisedString(it) },
-                                        { it },
-                                        { _, v2 -> v2 },
-                                )
-                        )
+        val nameMap = rankMap.keys.associateBy { DataUtil.getStandardisedString(it).replace("\"", "") }
 
         val similarities = mutableListOf<Pair<String, Double>>()
 
@@ -55,7 +78,8 @@ class MaiCoupleService(private val maimaiApiService: MaimaiApiService) : Message
         if (similarities.isEmpty()) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Result)
         }
-        val sort = similarities.stream().sorted(Comparator.comparingDouble<Pair<String, Double>?> { it.second }.reversed()).toList()
+        val sort = similarities.sortedByDescending { it.second }
+            //.stream().sorted(Comparator.comparingDouble<Pair<String, Double>?> { it.second }.reversed()).toList()
 
         val sb = StringBuilder("搜索结果：\n")
 
