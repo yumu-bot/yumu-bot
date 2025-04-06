@@ -185,7 +185,7 @@ import kotlin.math.sqrt
             }
         }
 
-        val result = AsyncMethodExecutor.AsyncSupplier(actions)
+        val result = AsyncMethodExecutor.awaitSupplierExecute(actions)
             .filterNotNull().toMap()
 
         return bests.associate { it.beatMapID to result[it.beatMapID] }

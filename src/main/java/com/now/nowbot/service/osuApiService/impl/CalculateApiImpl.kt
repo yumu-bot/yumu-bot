@@ -340,12 +340,12 @@ import kotlin.reflect.full.companionObjectInstance
 
     override fun applyStarToScores(scores: List<LazerScore>, local: Boolean) {
         val actions = scores.map {
-            return@map AsyncMethodExecutor.Supplier<Unit> {
+            return@map AsyncMethodExecutor.Runnable {
                 applyStarToScore(it, local)
             }
         }
 
-        AsyncMethodExecutor.AsyncSupplier(actions)
+        AsyncMethodExecutor.awaitRunnableExecute(actions)
     }
 
     private fun applyStarToScoreFromOfficial(score: LazerScore) {
@@ -378,12 +378,12 @@ import kotlin.reflect.full.companionObjectInstance
 
     override fun applyPPToScores(scores: List<LazerScore>) {
         val actions = scores.map {
-            return@map AsyncMethodExecutor.Supplier<Unit> {
+            return@map AsyncMethodExecutor.Runnable {
                 applyPPToScore(it)
             }
         }
 
-        AsyncMethodExecutor.AsyncSupplier(actions)
+        AsyncMethodExecutor.awaitRunnableExecute(actions)
     }
 
     override fun applyBeatMapChanges(score: LazerScore) {
@@ -409,12 +409,12 @@ import kotlin.reflect.full.companionObjectInstance
 
     override fun applyBeatMapChanges(scores: List<LazerScore>) {
         val actions = scores.map {
-            return@map AsyncMethodExecutor.Supplier<Unit> {
+            return@map AsyncMethodExecutor.Runnable {
                 applyBeatMapChanges(it)
             }
         }
 
-        AsyncMethodExecutor.AsyncSupplier(actions)
+        AsyncMethodExecutor.awaitRunnableExecute(actions)
     }
 
     private fun applyStarToScoreFromLocal(score: LazerScore) {

@@ -56,7 +56,6 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
     WE("ゑ", "ヰ", "we"),
     WE2("ゑ", "ヱ", "we"),
     WO("を", "ヲ", "wo"),
-    N("ん", "ン", "n"),
     GA("が", "ガ", "ga"),
     GI("ぎ", "ギ", "gi"),
     GU("ぐ", "グ", "gu"),
@@ -82,6 +81,9 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
     PU("ぷ", "プ", "pu"),
     PE("ぺ", "ペ", "pe"),
     PO("ぽ", "ポ", "po"),
+
+    N("ん", "ン", "n"),
+    V("ゔ", "ヴ", "v"),
 
     // 拗音
     KYA("きゃ", "キャ", "kya"),
@@ -122,9 +124,13 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
     RYO("りょ", "リョ", "ryo"),
     VYA("ゔゃ", "ヴャ", "vya"),
     VYU("ゔゅ", "ヴュ", "vyu"),
+    VYE("ゔぇ", "ヴェ", "vye"),
     VYO("ゔょ", "ヴョ", "vyo"),
+
     YA2("ゃ", "ャ", "a"),
+    YI2("ぃ", "ィ", "i"),
     YU2("ゅ", "ュ", "u"),
+    YE2("ぇ", "ェ", "e"),
     YO2("ょ", "ョ", "o"),
 
     ;
@@ -136,7 +142,7 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
                 return ""
             }
 
-            if (!containsJapanese(japanese)) {
+            if (hasJapanese(japanese).not()) {
                 return japanese
             }
 
@@ -144,55 +150,90 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
             val sb = StringBuilder()
 
             outro@ for (i in charArray.indices) {
-                val c = charArray[i]
-                val n = if (i + 1 < charArray.size) charArray[i + 1] else null
+                val now = charArray[i]
+                val after = if (i + 1 < charArray.size) charArray[i + 1] else null
+                val before = if (i > 0) charArray[i - 1] else null
 
-                if (c == ' ') {
+                if (now == ' ') {
                     sb.append(' ')
                     continue@outro
                 }
 
+                // 长音 えー -> ee
+                if (isChouon(now) && before != null) {
+                    for (j in JaChar.entries) {
+                        if (isEqual(before, j)) {
+                            sb.append(j.romanized.last())
+                            continue@outro
+                        }
+                    }
+                }
 
-                if (n != null) {
+                // 促音 さっき -> Sakki (c = っ)
+                if (isSokuon(now)) {
+                    if (after != null && hasJapanese(after)) {
 
-                    // 促音 さっき -> Sakki (n = っ)
-                    if (isSokuon(c)) {
+                        // は (ha) 行前有拗音的话，有音变，要变成 ぱ (pa) 行。放在下一轮处理。
+                        if (isEqual(after, listOf(HA, HI, FU, HE, HO))) {
+                            continue@outro
+                        }
+
                         for (j in JaChar.entries) {
-                            if (isEqual(n, j)) {
+                            if (isEqual(after, j)) {
                                 sb.append(j.romanized.first())
                                 continue@outro
                             }
                         }
-                    }
-
-                    // 拗音 みゃ -> mya (n = み)
-                    if (isYouon(n)) {
+                    } else if (before != null) {
+                        // 比如 んっあっあっ，此时最后一个促音应该跟着前面 a。
                         for (j in JaChar.entries) {
-                            if (isEqual(c.toString() + n.toString(), j)) {
-                                sb.append(j.romanized.dropLast(1))
+                            if (isEqual(before, j)) {
+                                sb.append(j.romanized.last())
                                 continue@outro
                             }
                         }
                     }
                 }
 
+                // は (ha) 行前有拗音的话，有音变，要变成 ぱ (pa) 行。在这里处理。
+                if (before != null && isSokuon(before) && isEqual(now, listOf(HA, HI, FU, HE, HO))) {
+                    for (j in listOf(HA, HI, FU, HE, HO)) {
+                        if (isEqual(now, j)) {
+                            sb.append((j.romanized.first() + j.romanized).replace('h', 'p'))
+                            continue@outro
+                        }
+                    }
+                }
 
+                // 拗音 みゃ -> mya (c = み)
+                if (after != null && isYouon(after)) {
+                    for (j in JaChar.entries) {
+                        if (isEqual(now.toString() + after.toString(), j)) {
+                            sb.append(j.romanized.dropLast(1))
+                            continue@outro
+                        }
+                    }
+                }
 
                 for (j in JaChar.entries) {
-                    if (isEqual(c, j)) {
+                    if (isEqual(now, j)) {
                         sb.append(j.romanized)
                         continue@outro
                     }
                 }
 
-                sb.append(c)
+                sb.append(now)
             }
 
             return sb.toString()
         }
 
-        private fun containsJapanese(T: CharSequence): Boolean {
-            return T.contains(Regex("[\u3040-\u30ff]"))
+        private fun hasJapanese(char: CharSequence): Boolean {
+            return char.contains(Regex("[\u3040-\u30ff]"))
+        }
+
+        private fun hasJapanese(char: Char): Boolean {
+            return char.toString().matches(Regex("[\u3040-\u30ff]"))
         }
 
         // 促音 さっき -> Sakki
@@ -202,11 +243,24 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
 
         // 拗音 みゃ -> mya
         private fun isYouon(char: Char): Boolean {
-            return isEqual(char, YA2) || isEqual(char, YU2) || isEqual(char, YO2)
+            return isEqual(char, listOf(YA2, YI2, YU2, YE2, YO2))
+        }
+
+        // 长音 ええ -> ee
+        private fun isChouon(char: Char): Boolean {
+            return char == 'ー'
         }
 
         private fun isEqual(char: Char, jaChar: JaChar): Boolean {
             return isEqual(char.toString(), jaChar)
+        }
+
+        private fun isEqual(char: Char, jaChars: List<JaChar>): Boolean {
+            for (j in jaChars) {
+                if (isEqual(char.toString(), j)) return true
+            }
+
+            return false
         }
 
         private fun isEqual(str: String, jaChar: JaChar): Boolean {

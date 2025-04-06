@@ -1,298 +1,278 @@
-package com.now.nowbot.service;
+package com.now.nowbot.service
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.config.FileConfig;
-import com.now.nowbot.entity.PerformancePlusLite;
-import com.now.nowbot.mapper.PerformancePlusLiteRepository;
-import com.now.nowbot.model.LazerMod;
-import com.now.nowbot.model.json.LazerScore;
-import com.now.nowbot.model.json.PPPlus;
-import com.now.nowbot.service.osuApiService.impl.BeatmapApiImpl;
-import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.AsyncMethodExecutor;
-import com.now.nowbot.util.JacksonUtil;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.config.FileConfig
+import com.now.nowbot.entity.PerformancePlusLite
+import com.now.nowbot.mapper.PerformancePlusLiteRepository
+import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.json.LazerScore
+import com.now.nowbot.model.json.PPPlus
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.AsyncMethodExecutor.awaitSupplierExecute
+import com.now.nowbot.util.JacksonUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.http.MediaType
+import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.util.UriBuilder
+import java.io.IOException
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+@Service("PP_PLUS_SEV") class PerformancePlusService(
+    config: FileConfig,
+    private val performancePlusLiteRepository: PerformancePlusLiteRepository,
+    private val webClient: WebClient,
+    private val beatmapApiService: OsuBeatmapApiService
+) {
+    private val osuPath: Path = Path.of(config.osuFilePath)
 
-@Service("PP_PLUS_SEV")
-public class PerformancePlusService {
-    private static final Logger log        = LoggerFactory.getLogger(PerformancePlusService.class);
-    private static       String API_SCHEME = "http";// 不用改了
-    private static       String API_HOST   = "localhost";
-    private static       String API_PORT   = "46880";
-
-    public static void runDevelopment() {
-        API_SCHEME = "https";
-        API_HOST = "ppp.365246692.xyz";
-        API_PORT = "443";
-    }
-
-    private final Path OSU_FILE_DIR;
-
-    @Resource
-    PerformancePlusLiteRepository performancePlusLiteRepository;
-    @Resource
-    WebClient                     webClient;
-    @Resource
-    BeatmapApiImpl                beatmapApi;
-
-    public PerformancePlusService(FileConfig config) {
-        OSU_FILE_DIR = Path.of(config.getOsuFilePath());
-    }
-
-    public PPPlus getMapPerformancePlus(Long beatmapId, List<LazerMod> modList) {
-        checkFile(beatmapId);
-        Optional<String> mods;
-        if (CollectionUtils.isEmpty(modList)) {
-            mods = Optional.empty();
+    fun getMapPerformancePlus(beatmapId: Long, modList: List<LazerMod?>?): PPPlus? {
+        checkFile(beatmapId)
+        val mods: Optional<String>
+        if (modList.isNullOrEmpty()) {
+            mods = Optional.empty()
         } else {
-            var s = JacksonUtil.toJson(modList);
-            mods = Optional.of(URLEncoder.encode(s, StandardCharsets.UTF_8));
+            val s = JacksonUtil.toJson(modList)
+            mods = Optional.of(URLEncoder.encode(s, StandardCharsets.UTF_8))
         }
-        var p = performancePlusLiteRepository.findBeatMapPPPById(beatmapId);
-        if (p.isPresent()) {
-            var result = new PPPlus();
-            result.setDifficulty(p.get().toStats());
-            return result;
+        val p = performancePlusLiteRepository.findBeatMapPPPById(beatmapId)
+        if (p.isPresent) {
+            val result = PPPlus()
+            result.difficulty = p.get().toStats()
+            return result
         }
-        return webClient.get()
-                .uri(
-                        u -> u.scheme(API_SCHEME)
-                                .host(API_HOST)
-                                .port(API_PORT)
-                                .path("/api/calculation")
-                                .queryParam("BeatmapId", beatmapId)
-                                .queryParamIfPresent("Mods", mods)
-                                .build()
-                )
-                .retrieve()
-                .bodyToMono(PPPlus.class)
-                .block();
+        return webClient.get().uri { u: UriBuilder ->
+                u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/calculation")
+                    .queryParam("BeatmapId", beatmapId).queryParamIfPresent("Mods", mods).build()
+            }.retrieve().bodyToMono(PPPlus::class.java).block()
     }
 
-    public void clearCache(String beatmapId) {
-        var p = new ProcessBuilder("pkill", "-9", "-f", "Difficalcy.PerformancePlus");
-        Thread.startVirtualThread(() -> {
+    fun clearCache(beatmapId: String?) {
+        val p = ProcessBuilder("pkill", "-9", "-f", "Difficulty.PerformancePlus")
+        Thread.startVirtualThread {
             try {
-                p.start();
-            } catch (IOException e) {
-                log.error("", e);
+                p.start()
+            } catch (e: IOException) {
+                log.error("", e)
             }
-        });
+        }
     }
 
-    public PPPlus.Stats calculateUserPerformance(List<LazerScore> bps) throws TipsException {
-        List<PPPlus> ppPlus;
-        ppPlus = getScorePerformancePlus(bps);
+    @Throws(TipsException::class) fun calculateUserPerformance(bps: List<LazerScore>): PPPlus.Stats {
+        val ppPlus = getScorePerformancePlus(bps)
 
-        double aim = 0;
-        double jumpAim = 0;
-        double flowAim = 0;
-        double precision = 0;
-        double speed = 0;
-        double stamina = 0;
-        double accuracy = 0;
-        double total = 0;
+        var aim = 0.0
+        var jumpAim = 0.0
+        var flowAim = 0.0
+        var precision = 0.0
+        var speed = 0.0
+        var stamina = 0.0
+        var accuracy = 0.0
+        var total = 0.0
 
-        List<AsyncMethodExecutor.Supplier<String>> suppliers = new ArrayList<>(7);
-        Map<String, List<Double>> ppPlusMap = new ConcurrentHashMap<>(7);
+        val suppliers: MutableList<AsyncMethodExecutor.Supplier<String>> = ArrayList(7)
+        val ppPlusMap: MutableMap<String, List<Double>> = ConcurrentHashMap(7)
 
 
         // 逐个排序
-        suppliers.add(createSupplier("aim", ppPlusMap, ppPlus.stream(), PPPlus.Stats::aim));
-        suppliers.add(createSupplier("jumpAim", ppPlusMap, ppPlus.stream(), PPPlus.Stats::jumpAim));
-        suppliers.add(createSupplier("flowAim", ppPlusMap, ppPlus.stream(), PPPlus.Stats::flowAim));
-        suppliers.add(createSupplier("precision", ppPlusMap, ppPlus.stream(), PPPlus.Stats::precision));
-        suppliers.add(createSupplier("speed", ppPlusMap, ppPlus.stream(), PPPlus.Stats::speed));
-        suppliers.add(createSupplier("stamina", ppPlusMap, ppPlus.stream(), PPPlus.Stats::stamina));
-        suppliers.add(createSupplier("accuracy", ppPlusMap, ppPlus.stream(), PPPlus.Stats::accuracy));
-        suppliers.add(createSupplier("total", ppPlusMap, ppPlus.stream(), PPPlus.Stats::total));
+        suppliers.add(createSupplier("aim", ppPlusMap, ppPlus, PPPlus.Stats::aim))
+        suppliers.add(createSupplier("jumpAim", ppPlusMap, ppPlus, PPPlus.Stats::jumpAim))
+        suppliers.add(createSupplier("flowAim", ppPlusMap, ppPlus, PPPlus.Stats::flowAim))
+        suppliers.add(createSupplier("precision", ppPlusMap, ppPlus, PPPlus.Stats::precision))
+        suppliers.add(createSupplier("speed", ppPlusMap, ppPlus, PPPlus.Stats::speed))
+        suppliers.add(createSupplier("stamina", ppPlusMap, ppPlus, PPPlus.Stats::stamina))
+        suppliers.add(createSupplier("accuracy", ppPlusMap, ppPlus, PPPlus.Stats::accuracy))
+        suppliers.add(createSupplier("total", ppPlusMap, ppPlus, PPPlus.Stats::total))
 
-        AsyncMethodExecutor.AsyncSupplier(suppliers);
+        awaitSupplierExecute(suppliers)
 
         // 计算加权和
-        double weight = 1d / 0.95d;
+        var weight = 1.0 / 0.95
 
-        for (int n = 0; n < ppPlus.size(); n++) {
-            weight *= 0.95d;
+        for (n in ppPlus.indices) {
+            weight *= 0.95
 
-            aim += ppPlusMap.get("aim").get(n) * weight;
-            jumpAim += ppPlusMap.get("jumpAim").get(n) * weight;
-            flowAim += ppPlusMap.get("flowAim").get(n) * weight;
-            precision += ppPlusMap.get("precision").get(n) * weight;
-            speed += ppPlusMap.get("speed").get(n) * weight;
-            stamina += ppPlusMap.get("stamina").get(n) * weight;
-            accuracy += ppPlusMap.get("accuracy").get(n) * weight;
-            total += ppPlusMap.get("total").get(n) * weight;
+            aim += ppPlusMap["aim"]!![n] * weight
+            jumpAim += ppPlusMap["jumpAim"]!![n] * weight
+            flowAim += ppPlusMap["flowAim"]!![n] * weight
+            precision += ppPlusMap["precision"]!![n] * weight
+            speed += ppPlusMap["speed"]!![n] * weight
+            stamina += ppPlusMap["stamina"]!![n] * weight
+            accuracy += ppPlusMap["accuracy"]!![n] * weight
+            total += ppPlusMap["total"]!![n] * weight
         }
 
-        return new PPPlus.Stats(aim, jumpAim, flowAim, precision, speed, stamina, accuracy, total);
+        return PPPlus.Stats(aim, jumpAim, flowAim, precision, speed, stamina, accuracy, total)
     }
 
-    public List<PPPlus> getScorePerformancePlus(Iterable<LazerScore> scores) throws TipsException {
-        var scoreIds = StreamSupport.stream(scores.spliterator(), true).map(LazerScore::getScoreID).toList();
-        var ppPlusList = performancePlusLiteRepository.findScorePPP(scoreIds);
-        var ppPlusMap = ppPlusList.stream().collect(Collectors.toMap(PerformancePlusLite::getId, p -> p));
+    @Throws(TipsException::class) fun getScorePerformancePlus(scores: Iterable<LazerScore>): List<PPPlus> {
+        val scoreIDs = scores.map { it.scoreID }
+        val ppPlusList = performancePlusLiteRepository.findScorePPP(scoreIDs)
+        val ppPlusMap = ppPlusList.associateBy { it.id }
 
         // 挑选出没有记录的 score
-        List<ScorePerformancePlus> body = new ArrayList<>();
-        var postDataId = new LinkedList<Long>();
-        var allScoreIdList = new LinkedList<Long>();
-        for (var score : scores) {
-            allScoreIdList.add(score.getScoreID());
-            if (ppPlusMap.containsKey(score.getScoreID())) {
-                continue;
+        val body: MutableList<ScorePerformancePlus> = ArrayList()
+        val postDataID = LinkedList<Long>()
+        val allScoreIDs = LinkedList<Long>()
+        for (score in scores) {
+            allScoreIDs.add(score.scoreID)
+            if (ppPlusMap.containsKey(score.scoreID)) {
+                continue
             }
-            postDataId.add(score.getScoreID());
-            checkFile(score.getBeatMap().getBeatMapID());
-            var combo = score.getMaxCombo();
-            var misses = Objects.requireNonNullElse(score.getStatistics().getMiss(), 0);
-            // 这俩我猜测是 50 和 100 的数量
-            var mehs = Objects.requireNonNullElse(score.getStatistics().getMeh(), 0);
-            var oks = Objects.requireNonNullElse(score.getStatistics().getOk(), 0);
-            body.add(new ScorePerformancePlus(score.getBeatMap().getBeatMapID() + "", score.getMods(), combo, misses, mehs, oks));
+            postDataID.add(score.scoreID)
+            checkFile(score.beatMap.beatMapID)
+            val combo = score.maxCombo
+            val misses = score.statistics.miss
+            val meh = score.statistics.meh
+            val oks = score.statistics.ok
+            body.add(
+                ScorePerformancePlus(
+                    score.beatMap.beatMapID.toString() + "", score.mods, combo, misses, meh, oks
+                )
+            )
         }
 
         if (body.isEmpty()) {
-            return allScoreIdList.stream().map(ppPlusMap::get).map(stats -> {
-                var ppp = new PPPlus();
-                ppp.setPerformance(stats.toStats());
-                return ppp;
-            }).collect(Collectors.toList());
-        }
-        List<PPPlus> result;
-
-        try {
-            result = getScorePerformancePlus(body);
-        } catch (WebClientResponseException e) {
-            var n = findErrorBid(body);
-            getMapPerformancePlus(Long.parseLong(n), List.of());
-            beatmapApi.refreshBeatMapFileFromDirectory(Long.parseLong(n));
-            Thread.startVirtualThread(() -> this.clearCache(n));
-            throw new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PP+：谱面编号 " + n);
-        }
-
-        int i = 0;
-        var data = new ArrayList<PerformancePlusLite>(postDataId.size());
-        for (var scoreId : postDataId) {
-            data.add(new PerformancePlusLite(scoreId, Objects.requireNonNull(result).get(i).getPerformance(), PerformancePlusLite.SCORE));
-            i++;
-        }
-        performancePlusLiteRepository.saveAll(data);
-        var allScorePPP = new ArrayList<PPPlus>(allScoreIdList.size());
-        i = 0;
-        for (var id : allScoreIdList) {
-            if (postDataId.contains(id)) {
-                allScorePPP.add(result.get(i));
-                i++;
-            } else {
-                var lite = ppPlusMap.get(id);
-                var ppp = new PPPlus();
-                ppp.setPerformance(lite.toStats());
-                allScorePPP.add(ppp);
+            return allScoreIDs.mapNotNull { key: Long -> ppPlusMap[key] }.map {
+                val p = PPPlus()
+                p.performance = it.toStats()
+                p
             }
         }
-        return allScorePPP;
+        val result: List<PPPlus>?
+
+        try {
+            result = getScorePerformancePlus(body)
+        } catch (e: WebClientResponseException) {
+            val n = findErrorBid(body)
+            getMapPerformancePlus(n.toLong(), listOf<LazerMod>())
+            beatmapApiService.refreshBeatMapFileFromDirectory(n.toLong())
+            Thread.startVirtualThread { this.clearCache(n) }
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PP+：谱面编号 $n")
+        }
+
+        var i = 0
+        val data = ArrayList<PerformancePlusLite>(postDataID.size)
+        for (scoreId in postDataID) {
+            data.add(
+                PerformancePlusLite(
+                    scoreId, result!![i].performance, PerformancePlusLite.SCORE
+                )
+            )
+            i++
+        }
+
+        performancePlusLiteRepository.saveAll(data)
+
+        val allPPPlus = ArrayList<PPPlus>(allScoreIDs.size)
+        i = 0
+        for (id in allScoreIDs) {
+            if (postDataID.contains(id)) {
+                allPPPlus.add(result!![i])
+                i++
+            } else {
+                val lite = ppPlusMap[id]
+                val ppp = PPPlus()
+                ppp.performance = lite!!.toStats()
+                allPPPlus.add(ppp)
+            }
+        }
+        return allPPPlus
     }
 
     // beatmapId 居然要 String ??? [https://difficalcy.syrin.me/api-reference/difficalcy-osu/#post-apibatchcalculation](啥玩意)
-    record ScorePerformancePlus(
-            @JsonProperty("beatmapId")
-            String beatmapId,
-            List<LazerMod> mods,
-            int combo,
-            int misses,
-            int mehs,
-            int oks
-    ) {
+    @JvmRecord internal data class ScorePerformancePlus(
+        @field:JsonProperty("beatmapId") @param:JsonProperty(
+            "beatmapId"
+        ) val beatmapId: String, val mods: List<LazerMod>, val combo: Int, val misses: Int, val mehs: Int, val oks: Int
+    )
+
+    private fun getScorePerformancePlus(body: List<ScorePerformancePlus>): List<PPPlus>? {
+        return webClient.post().uri { u: UriBuilder ->
+                u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/batch/calculation").build()
+            }.contentType(MediaType.APPLICATION_JSON).bodyValue(JacksonUtil.toJson(body)).retrieve()
+            .bodyToMono(JsonNode::class.java).map { node: JsonNode? ->
+                JacksonUtil.parseObjectList(
+                    node, PPPlus::class.java
+                )
+            }.block()
     }
 
-    private List<PPPlus> getScorePerformancePlus(List<ScorePerformancePlus> body) {
-        return webClient.post()
-                .uri(u -> u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/batch/calculation").build())
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(JacksonUtil.toJson(body))
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .map(node -> JacksonUtil.parseObjectList(node, PPPlus.class))
-                .block();
-    }
-
-    private void checkFile(Long beatmapId) {
-        var beatmapFiles = OSU_FILE_DIR.resolve(beatmapId + ".osu");
+    private fun checkFile(beatmapId: Long) {
+        val beatmapFiles = osuPath.resolve("$beatmapId.osu")
         if (!Files.isRegularFile(beatmapFiles)) {
             try {
-                var fileStr = beatmapApi.getBeatMapFileString(beatmapId);
+                val fileStr = beatmapApiService.getBeatMapFileString(beatmapId) ?: throw RuntimeException()
 
-                if (fileStr == null) throw new RuntimeException();
-
-                Files.writeString(beatmapFiles, fileStr);
-            } catch (Throwable e) {
-                log.error("下载谱面文件失败", e);
-                throw new RuntimeException("下载谱面文件失败");
+                Files.writeString(beatmapFiles, fileStr)
+            } catch (e: Throwable) {
+                log.error("下载谱面文件失败", e)
+                throw RuntimeException("下载谱面文件失败")
             }
         }
     }
 
-    private String findErrorBid(List<ScorePerformancePlus> x) {
-        if (x.size() > 2) {
-            var mid = x.size() / 2;
-            var left = x.subList(0, mid);
-            var right = x.subList(mid, x.size());
-            if (testScorePerformancePlus(left)) {
-                return findErrorBid(left);
+    private fun findErrorBid(x: List<ScorePerformancePlus>): String {
+        if (x.size > 2) {
+            val mid = x.size / 2
+            val left = x.subList(0, mid)
+            val right = x.subList(mid, x.size)
+            return if (testScorePerformancePlus(left)) {
+                findErrorBid(left)
             } else {
-                return findErrorBid(right);
+                findErrorBid(right)
             }
-        } else if (x.size() == 2) {
-            if (testScorePerformancePlus(x.subList(0,1))) {
-                return x.getFirst().beatmapId;
+        } else if (x.size == 2) {
+            return if (testScorePerformancePlus(x.subList(0, 1))) {
+                x.first().beatmapId
             } else {
-                return x.getLast().beatmapId;
+                x.last().beatmapId
             }
         } else {
-            return x.getFirst().beatmapId;
+            return x.first().beatmapId
         }
     }
 
-    private boolean testScorePerformancePlus(List<ScorePerformancePlus> allPPP) {
+    private fun testScorePerformancePlus(allPPP: List<ScorePerformancePlus>): Boolean {
         try {
-            getScorePerformancePlus(allPPP);
-        }  catch (Exception e) {
-            return true;
+            getScorePerformancePlus(allPPP)
+        } catch (e: Exception) {
+            return true
         }
-        return false;
+        return false
     }
 
-    private AsyncMethodExecutor.Supplier<String> createSupplier(String key, Map<String, List<Double>> ppPlusMap, Stream<PPPlus> stream, Function<PPPlus.Stats, Double> function) {
-        return () -> {
-            ppPlusMap.put(key, stream
-                    .map(PPPlus::getPerformance)
-                    .map(function)
-                    .sorted(Comparator.reverseOrder())
-                    .toList()
-            );
-            return key;
-        };
+    private fun createSupplier(
+        key: String, ppPlusMap: MutableMap<String, List<Double>>, list: List<PPPlus>, function: (PPPlus.Stats) -> Double
+    ): AsyncMethodExecutor.Supplier<String> {
+        return AsyncMethodExecutor.Supplier {
+            ppPlusMap[key] = list.map { it.performance }.map { function(it) }.sortedDescending().toList()
+
+            return@Supplier key
+        }
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(PerformancePlusService::class.java)
+        private var API_SCHEME = "http" // 不用改了
+        private var API_HOST = "localhost"
+        private var API_PORT = "46880"
+
+        @JvmStatic fun runDevelopment() {
+            API_SCHEME = "https"
+            API_HOST = "ppp.365246692.xyz"
+            API_PORT = "443"
+        }
     }
 }

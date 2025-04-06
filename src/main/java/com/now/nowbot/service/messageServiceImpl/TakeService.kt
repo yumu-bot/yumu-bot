@@ -108,7 +108,7 @@ import kotlin.math.floor
                 }
             }
 
-            val result = AsyncMethodExecutor.AsyncSupplier(actions)
+            val result = AsyncMethodExecutor.awaitSupplierExecute(actions)
                 .filterNotNull().toMap()
 
             val most = result.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value ?: throw GeneralTipsException(

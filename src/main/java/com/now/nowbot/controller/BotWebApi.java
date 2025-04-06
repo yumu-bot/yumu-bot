@@ -36,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 import static com.now.nowbot.service.messageServiceImpl.LoginService.LOGIN_USER_MAP;
 
@@ -364,10 +365,13 @@ public class BotWebApi {
                 calculateApiService.applyBeatMapChanges(scores);
                 calculateApiService.applyStarToScores(scores);
 
+                var ranks = IntStream.range(offset + 1, scores.size());
+
                 if (isMultipleScore) {
                     data = imageService.getPanel(
                             Map.of("user", osuUser,
                                    "score", scores,
+                                   "rank", ranks,
                                    "panel", "PS")
                             , "A5"
                     );
@@ -392,9 +396,12 @@ public class BotWebApi {
                 calculateApiService.applyStarToScores(scores);
 
                 if (isMultipleScore) {
+                    var ranks = IntStream.range(offset + 1, scores.size());
+
                     data = imageService.getPanel(
                             Map.of("user", osuUser,
                                    "score", scores,
+                                   "rank", ranks,
                                    "panel", "RS")
                             , "A5"
                     );

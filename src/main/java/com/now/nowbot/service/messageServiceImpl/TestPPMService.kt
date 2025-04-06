@@ -82,7 +82,7 @@ class TestPPMService(
             }
         }
 
-        val async: Map<Any, TestPPMData> = AsyncMethodExecutor.AsyncSupplier(actions)
+        val async: Map<Any, TestPPMData> = AsyncMethodExecutor.awaitSupplierExecute(actions)
             .filterNotNull()
             .filter { it.user != null }
             .associateBy { if (isOsuID) it.user!!.userID else it.user!!.username.lowercase() }

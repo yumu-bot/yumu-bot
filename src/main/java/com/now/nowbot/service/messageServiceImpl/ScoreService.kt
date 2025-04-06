@@ -194,6 +194,8 @@ import kotlin.math.floor
 
                 val body = mapOf(
                     "user" to user,
+
+                    "rank" to (1..(scores.size)).toList(),
                     "score" to scores,
                     "panel" to "SS"
                 )

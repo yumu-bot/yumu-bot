@@ -155,7 +155,7 @@ import kotlin.math.min
                     }
                 }
 
-            return AsyncMethodExecutor.AsyncSupplier(actions)
+            return AsyncMethodExecutor.awaitSupplierExecute(actions)
                 .filterNotNull().toMap()
         }
 

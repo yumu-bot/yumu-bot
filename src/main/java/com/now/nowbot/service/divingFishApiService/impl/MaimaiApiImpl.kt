@@ -199,12 +199,12 @@ import kotlin.text.Charsets.UTF_8
         if (songs.isNullOrEmpty()) return
 
         val actions = songs.map {
-            return@map AsyncMethodExecutor.Supplier<Unit> {
+            return@map AsyncMethodExecutor.Runnable {
                 it.alias = getMaimaiAlias(it.songID)?.alias?.firstOrNull()
             }
         }
 
-        AsyncMethodExecutor.AsyncSupplier(actions)
+        AsyncMethodExecutor.awaitRunnableExecute(actions)
     }
 
     override fun insertMaimaiAlias(song: MaiSong?) {
@@ -217,12 +217,12 @@ import kotlin.text.Charsets.UTF_8
         if (scores.isNullOrEmpty()) return
 
         val actions = scores.map {
-            return@map AsyncMethodExecutor.Supplier<Unit> {
+            return@map AsyncMethodExecutor.Runnable {
                 it.alias = getMaimaiAlias(it.songID)?.alias?.firstOrNull()
             }
         }
 
-        AsyncMethodExecutor.AsyncSupplier(actions)
+        AsyncMethodExecutor.awaitRunnableExecute(actions)
     }
 
     override fun insertMaimaiAliasForScore(score: MaiScore?) {
@@ -233,7 +233,7 @@ import kotlin.text.Charsets.UTF_8
 
     override fun insertSongData(scores: List<MaiScore>) {
         val actions = scores.map {
-            return@map AsyncMethodExecutor.Supplier<Unit> {
+            return@map AsyncMethodExecutor.Runnable {
                 if (it.songID != 0L) {
                     val o = getMaimaiSong(it.songID) ?: MaiSong()
                     insertSongData(it, o)
@@ -241,7 +241,7 @@ import kotlin.text.Charsets.UTF_8
             }
         }
 
-        AsyncMethodExecutor.AsyncSupplier(actions)
+        AsyncMethodExecutor.awaitRunnableExecute(actions)
     }
 
     override fun insertSongData(score: MaiScore, song: MaiSong) {

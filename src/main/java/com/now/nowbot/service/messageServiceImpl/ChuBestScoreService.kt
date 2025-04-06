@@ -203,13 +203,12 @@ class ChuBestScoreService(
 
         fun checkCover(scores: List<ChuScore>, chunithmApiService: ChunithmApiService) {
             val actions = scores.map {
-                return@map AsyncMethodExecutor.Supplier<Unit> {
+                return@map AsyncMethodExecutor.Runnable {
                     chunithmApiService.downloadChunithmCover(it.songID)
                 }
             }
 
-
-            AsyncMethodExecutor.AsyncSupplier(actions)
+            AsyncMethodExecutor.awaitRunnableExecute(actions)
         }
 
         @JvmStatic

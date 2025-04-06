@@ -49,7 +49,7 @@ class GetIDService(private val userApiService: OsuUserApiService) : MessageServi
             }
         }
 
-        val ids = AsyncMethodExecutor.AsyncSupplier(actions)
+        val ids = AsyncMethodExecutor.awaitSupplierExecute(actions)
 
         ids.forEach {
             sb.append(it).append(',')

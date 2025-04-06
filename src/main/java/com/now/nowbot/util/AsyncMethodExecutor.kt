@@ -150,7 +150,12 @@ object AsyncMethodExecutor {
         }
     }
 
-    fun AsyncRunnable(works: Collection<Runnable>) {
+    /**
+     * 异步执行不需要返回的结果。
+     * 这个方法不等待结果返回，直接进行下一步。如果需要等待所有异步操作完成，请使用 awaitRunnableExecute
+     */
+    @JvmStatic
+    fun asyncRunnableExecute(works: Collection<Runnable>) {
         works.map { w: Runnable ->
             (Runnable {
                 try {
@@ -162,7 +167,12 @@ object AsyncMethodExecutor {
         }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
     }
 
-    fun AwaitRunnable(works: Collection<Runnable>, timeout: Duration) {
+    /**
+     * 异步执行不需要返回的结果，并等待至所有操作都完成。
+     * 这个方法会等待结果返回，不直接进行下一步。如果不需要等待所有异步操作完成，请使用 asyncRunnableExecute
+     */
+    @JvmStatic
+    fun awaitRunnableExecute(works: Collection<Runnable>, timeout: Duration = Duration.ofMinutes(4)) {
         val lock = CountDownLatch(works.size)
         works.map { w: Runnable ->
             (Runnable {
@@ -178,9 +188,17 @@ object AsyncMethodExecutor {
 
         lock.await(timeout.toMillis(), TimeUnit.MILLISECONDS)
     }
-
     @JvmStatic
-    fun <T> AsyncSupplier(works: Collection<Supplier<T>>): List<T?> {
+    fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>): List<T?> {
+        return awaitSupplierExecute(works, Duration.ofMinutes(4))
+    }
+
+    /**
+     * 异步执行需要返回的结果，并等待至所有操作都完成。
+     * 这个方法会等待结果返回，不直接进行下一步。如果不需要返回结果（void 方法），请使用 awaitRunnableExecute
+     */
+    @JvmStatic
+    fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>, timeout: Duration = Duration.ofMinutes(4)): List<T?> {
         val size = works.size
         val lock = CountDownLatch(size)
         val results: MutableList<T?> = LinkedList()
@@ -198,7 +216,7 @@ object AsyncMethodExecutor {
             }
         }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
         try {
-            lock.await(15, TimeUnit.MINUTES)
+            lock.await(timeout.toMillis(), TimeUnit.MILLISECONDS)
         } catch (e: InterruptedException) {
             log.error("lock error", e)
         }

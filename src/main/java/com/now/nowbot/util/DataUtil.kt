@@ -1071,6 +1071,7 @@ object DataUtil {
         return str
             .toRomanizedJaChar()
             .toRomanizedGreekChar()
+            .toHalfWidthChar()
             .lowercase()
             .replace(Regex(REG_HYPHEN), "-")
             .replace(Regex(REG_PLUS), "+")
@@ -1081,8 +1082,8 @@ object DataUtil {
             .replace(Regex(REG_QUESTION), "?")
             .replace(Regex(REG_QUOTATION), "\"")
             .replace(Regex(REG_FULL_STOP), ".")
-            .replace("【", "[")
-            .replace("】", "]")
+            .replace(Regex(REG_LEFT_BRACKET), "[")
+            .replace(Regex(REG_RIGHT_BRACKET), "]")
             .replace(Regex("[\\s　]+"), "") // 这里有个全宽还是零宽空格？
     }
 
@@ -1266,4 +1267,17 @@ object DataUtil {
 
     private fun String.toRomanizedJaChar() = JaChar.getRomanized(this)
     private fun String.toRomanizedGreekChar() = GreekChar.getRomanized(this)
+    private fun String.toHalfWidthChar() = run {
+        val sb = StringBuilder(this.length)
+
+        for (c in this) {
+            if (c.code in 0xFF01..0xFF5E) {
+                sb.append((c.code - 0xFEE0).toChar())
+            } else {
+                sb.append(c)
+            }
+        }
+
+        return@run sb.toString()
+    }
 }

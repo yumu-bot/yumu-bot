@@ -64,10 +64,10 @@ val REG_ANYTHING_BUT_NO_HASH_STARS: String = "[^☆✪★*⋆:：#＃]"
 val REG_SPACE: String = "\\s"
 
 @Language("RegExp")
-val REG_STAR: String = "[☆✪★*⋆]"
+val REG_STAR: String = "[⁂☆✪★*⋆＊]"
 
 @Language("RegExp")
-val REG_FULL_STOP: String = "[.։܂۔。﹒．｡︒・]"
+val REG_FULL_STOP: String = "[.։܂۔。﹒．｡︒・、]"
 
 @Language("RegExp")
 val REG_NUMBER_12: String = "\\d{1,2}"
@@ -115,10 +115,16 @@ val REG_QUESTION: String = "[?？]"
 val REG_HASH: String = "[#＃]"
 
 @Language("RegExp")
-val REG_HYPHEN: String = "[\\-－—ー~～]"
+val REG_HYPHEN: String = "[\\-－—~～〜]"
 
 @Language("RegExp")
 val REG_EXCLAMATION: String = "[!！]"
+
+@Language("RegExp")
+val REG_LEFT_BRACKET: String = "[\\[{『【［｢]"
+
+@Language("RegExp")
+val REG_RIGHT_BRACKET: String = "[]}』】］｣]"
 
 @Language("RegExp")
 val REG_QUOTATION : String = "[“”\"«»《》＂‟]"

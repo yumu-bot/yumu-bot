@@ -2,7 +2,6 @@ package com.now.nowbot.model.json
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.MaiVersion
-import java.util.*
 
 class MaiBestScore {
     // 看用户段位信息，其中0-10对应初学者-十段，11-20对应真初段-真十段，21-22对应真皆传-里皆传
@@ -50,24 +49,11 @@ class MaiBestScore {
     )
 
     fun getUser(): User {
-        val best35 =
-                this.charts.standard
-                        .stream()
-                        .map(MaiScore::rating)
-                        .filter(Objects::nonNull)
-                        .reduce { a: Int, b: Int -> a + b }
-                        .orElse(0)
-        val best15 =
-                this.charts.deluxe
-                        .stream()
-                        .map(MaiScore::rating)
-                        .filter(Objects::nonNull)
-                        .reduce { a: Int, b: Int -> a + b }
-                        .orElse(0)
+        val best35 = this.charts.standard.sumOf { it.rating }
+        val best15 = this.charts.deluxe.sumOf { it.rating }
+        val plateName = getPlateName(this.plate)
 
-        val platename = getPlateName(this.plate)
-
-        return User(this.name, this.probername, this.dan, this.plate, this.rating, best35, best15, platename)
+        return User(this.name, this.probername, this.dan, this.plate, this.rating, best35, best15, plateName)
     }
 
     private fun getPlateName(plate: String?) : String {
