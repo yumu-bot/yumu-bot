@@ -55,7 +55,7 @@ class PPPlusMapService(
             throw PPPlusException(PPPlusException.Type.PL_Function_NotSupported)
         }
         val pp = try {
-            performancePlusService.getMapPerformancePlus(data.bid, data.mods)
+            performancePlusService.getMapPerformancePlus(data.bid, data.mods)!!
         } catch (e: Exception) {
             if (e is WebClientResponseException) {
                 log.error { e.responseBodyAsString }
