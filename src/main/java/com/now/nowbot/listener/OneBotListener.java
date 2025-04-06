@@ -71,10 +71,11 @@ public class OneBotListener {
         var groupId = onebotEvent.getGroupId();
         var message = ShiroUtils.unescape(onebotEvent.getMessage());
         var messageId = String.format(
-                "[%s|%s]%s",
+                "[%s|%s]%s(%s)",
                 groupId,
                 onebotEvent.getSender().getUserId(),
-                message
+                onebotEvent.getSubType(),
+                onebotEvent.getTime()
                 );
         if (!idempotentService.checkByMessageId(messageId)) {
             return;
@@ -87,6 +88,7 @@ public class OneBotListener {
         // 对于超过 30秒 的消息直接舍弃, 解决重新登陆后疯狂刷命令
         if (nowTime - onebotEvent.getTime() > 30) return;
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
+        if (event.getGroup().getId() != 746671531) return;
         if (event.getSender().getId() == 365246692L) {
             ContextUtil.setContext("isTest", Boolean.TRUE);
         }
