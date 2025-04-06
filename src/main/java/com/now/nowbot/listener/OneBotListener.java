@@ -71,12 +71,18 @@ public class OneBotListener {
         var groupId = onebotEvent.getGroupId();
         var message = ShiroUtils.unescape(onebotEvent.getMessage());
         var messageId = String.format(
-                "[%s|%s]%s(%s)",
+                "[%s|%s]%s",
                 groupId,
                 onebotEvent.getSender().getUserId(),
-                onebotEvent.getSubType(),
-                onebotEvent.getTime()
-                );
+                message
+        );
+//        var messageId = String.format(
+//                "[%s|%s]%s(%s)",
+//                groupId,
+//                onebotEvent.getSender().getUserId(),
+//                onebotEvent.getSubType(),
+//                onebotEvent.getTime()
+//                );
         if (!idempotentService.checkByMessageId(messageId)) {
             return;
         }
