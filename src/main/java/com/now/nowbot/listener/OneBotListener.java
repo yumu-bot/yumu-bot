@@ -54,7 +54,7 @@ import java.util.Map;
 @Component("OneBotListener")
 @SuppressWarnings("unused")
 public class OneBotListener {
-    static int RECAL_TIME = 1000 * 100;
+    static int RECALL_TIME = 1000 * 100;
     Logger log = LoggerFactory.getLogger(OneBotListener.class);
     private static Map<String, MessageService> messageServiceMap = null;
 
@@ -71,18 +71,12 @@ public class OneBotListener {
         var groupId = onebotEvent.getGroupId();
         var message = ShiroUtils.unescape(onebotEvent.getMessage());
         var messageId = String.format(
-                "[%s|%s]%s",
-                groupId,
-                onebotEvent.getSender().getUserId(),
-                message
-        );
-//        var messageId = String.format(
-//                "[%s|%s]%s(%s)",
-//                groupId,
-//                onebotEvent.getSender().getUserId(),
-//                onebotEvent.getSubType(),
-//                onebotEvent.getTime()
-//                );
+                "[%s|%s]%s(%s)",
+                groupId.toString(),
+                onebotEvent.getSender().getUserId().toString(),
+                onebotEvent.getSubType(),
+                onebotEvent.getTime().toString()
+                );
         if (!idempotentService.checkByMessageId(messageId)) {
             return;
         }
@@ -113,11 +107,11 @@ public class OneBotListener {
                 event.reply(((BotException) e).getImage());
                 //QQMsgUtil.sendImage(from, ((BotException) e).getImage());
             } else {
-                event.reply(e.getMessage()).recallIn(RECAL_TIME);
+                event.reply(e.getMessage()).recallIn(RECALL_TIME);
             }
         } else if (e instanceof SocketTimeoutException || e instanceof ConnectException || e instanceof UnknownHttpStatusCodeException) {
             log.info("连接超时:", e);
-            event.reply("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。").recallIn(RECAL_TIME);
+            event.reply("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。").recallIn(RECALL_TIME);
         } else if (e instanceof LogException) {
             log.info(e.getMessage(), ((LogException) e).getThrowable());
         } else if (e instanceof IllegalArgumentException) {
