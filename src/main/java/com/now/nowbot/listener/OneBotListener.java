@@ -88,7 +88,8 @@ public class OneBotListener {
         // 对于超过 30秒 的消息直接舍弃, 解决重新登陆后疯狂刷命令
         if (nowTime - onebotEvent.getTime() > 30) return;
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
-        if (event.getGroup().getId() != 746671531) return;
+        // if (event.getGroup().getId() != 746671531) return;
+        // TODO 推测试代码？
         if (event.getSender().getId() == 365246692L) {
             ContextUtil.setContext("isTest", Boolean.TRUE);
         }
