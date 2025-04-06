@@ -414,6 +414,8 @@ class MatchListenerService(
                 return
             }
 
+            senderSet.removeIf { it.first == group }
+
             val stopType =
                 if (isSuper) {
                     MatchListener.StopType.SUPER_STOP
@@ -431,6 +433,7 @@ class MatchListenerService(
         }
 
         fun stopAllListenerFromSuperAdmin() {
+            senderSet.clear()
             listeners.forEach { (_, u) -> u.stop(MatchListener.StopType.SUPER_STOP) }
         }
 
@@ -440,6 +443,7 @@ class MatchListenerService(
         }
 
         fun stopAllListenerFromReboot() {
+            senderSet.clear()
             listeners.forEach { (_, u) -> u.stop(MatchListener.StopType.SERVER_REBOOT) }
         }
 
