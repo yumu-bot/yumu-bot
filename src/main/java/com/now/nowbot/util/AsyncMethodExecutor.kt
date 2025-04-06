@@ -1,7 +1,12 @@
 package com.now.nowbot.util
 
+import com.now.nowbot.util.AsyncMethodExecutor.Runnable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.lang.InterruptedException
+import java.lang.System
+import java.lang.Thread
+import java.time.Duration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
@@ -155,6 +160,23 @@ object AsyncMethodExecutor {
                 }
             })
         }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
+    }
+
+    fun AwaitRunnable(works: Collection<Runnable>, timeout: Duration) {
+        val lock = CountDownLatch(works.size)
+        works.map { w: Runnable ->
+            (Runnable {
+                try {
+                    w.run()
+                } catch (e: Throwable) {
+                    log.error("Async error", e)
+                } finally {
+                    lock.countDown()
+                }
+            })
+        }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
+
+        lock.await(timeout.toMillis(), TimeUnit.MILLISECONDS)
     }
 
     @JvmStatic
