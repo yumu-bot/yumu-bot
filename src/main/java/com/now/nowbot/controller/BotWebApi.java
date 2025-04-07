@@ -31,7 +31,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
@@ -1144,6 +1143,7 @@ public class BotWebApi {
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         return headers;
     }
+    /*
 
     @Resource
     Over6KUserService over6KUserService;
@@ -1158,5 +1158,7 @@ public class BotWebApi {
             return "[]";
         }
     }
+
+     */
 }
 
