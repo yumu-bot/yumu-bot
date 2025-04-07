@@ -47,7 +47,7 @@ class PPMinus4Osu(user: OsuUser, bests: List<LazerScore>, surrounding: List<PPMi
         val hpt = getRelativePPMinus((me.totalHits ?: 0) * 1.0 / ((me.playTime ?: 0) + 1.0), surrounding.map { (it.totalHits ?: 0) * 1.0 / ((it.playTime ?: 0) + 1.0) })
         val lnx = getRelativePPMinus(ln1p((me.topPP ?: 0.0) * (me.topLength ?: 0)), surrounding.map { ln1p((it.topPP ?: 0.0) * (me.topLength ?: 0)) })
 
-        val total = (fa + ba) / 2 * 0.2 + (bir + bdr) / 2 * 0.1 + (spt + bpt) / 2 * 0.2 + (fcr + grs) / 2 * 0.2 + (lnh + lnt) / 2 * 0.1 + (hpt + lnx) / 2 * 0.2 * 100.0
+        val total = ((fa + ba) / 2 * 0.2 + (bir + bdr) / 2 * 0.1 + (spt + bpt) / 2 * 0.2 + (fcr + grs) / 2 * 0.2 + (lnh + lnt) / 2 * 0.1 + (hpt + lnx) / 2 * 0.2 ) * 100.0
 
         val san = 101.0
 
@@ -89,6 +89,10 @@ private fun <T: Number, U: Number> getRelativePPMinus(compare: T?, to: List<U?>)
     }
 }
 
+/*
+
 private fun Double.clamp(max: Double = 1.2, min: Double = 0.0): Double {
     return min(max, max(this, min))
 }
+
+ */

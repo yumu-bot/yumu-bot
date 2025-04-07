@@ -90,7 +90,7 @@ import java.io.Serializable
             log.error("PP-：数据保存失败", e)
         }
 
-        val surrounding = ppMinusDao.getSurroundingPPMinus(user, bests, 1000)
+        val surrounding = ppMinusDao.getSurroundingPPMinus(user, bests, 10000)
 
         try {
             return PPMinus4.getInstance(user, bests, surrounding, user.currentOsuMode)!!
