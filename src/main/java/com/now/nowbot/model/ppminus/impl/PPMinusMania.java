@@ -33,17 +33,17 @@ public class PPMinusMania extends PPMinus {
                 ppv0 += bp.getPP();
                 accv0 += bp.getAccuracy();
                 lengv0 += bp.getBeatMap().getTotalLength();
-                pgr0 += 1.0f * Optional.ofNullable(bp.getStatistics().getPerfect()).orElse(0) / Optional.ofNullable(bp.getStatistics().getGreat()).orElse(1);
+                pgr0 += 1.0f * Optional.of(bp.getStatistics().getPerfect()).orElse(0) / Optional.of(bp.getStatistics().getGreat()).orElse(1);
             }else if(i>=45 && i<55){
                 ppv45 += bp.getPP();
                 accv45 += bp.getAccuracy();
                 lengv45 += bp.getBeatMap().getTotalLength();
-                pgr45 += 1.0f * Optional.ofNullable(bp.getStatistics().getPerfect()).orElse(0) / Optional.ofNullable(bp.getStatistics().getGreat()).orElse(1);
+                pgr45 += 1.0f * Optional.of(bp.getStatistics().getPerfect()).orElse(0) / Optional.of(bp.getStatistics().getGreat()).orElse(1);
             }else if(i>=90){
                 ppv90 += bp.getPP();
                 accv90 += bp.getAccuracy();
                 lengv90 += bp.getBeatMap().getTotalLength();
-                pgr90 += 1.0f * Optional.ofNullable(bp.getStatistics().getPerfect()).orElse(0) / Optional.ofNullable(bp.getStatistics().getGreat()).orElse(1);
+                pgr90 += 1.0f * Optional.of(bp.getStatistics().getPerfect()).orElse(0) / Optional.of(bp.getStatistics().getGreat()).orElse(1);
             }
         }
         //bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
@@ -279,7 +279,6 @@ public class PPMinusMania extends PPMinus {
 
         // 4.7 总计TTL Total / Overall 0-1.2
         value7 = value1 * 0.2 + value2 * 0.1 + value3 * 0.2 + value4 * 0.25 + value5 * 0.05 + value6 * 0.2;
-        value7 *= 100;
 
         // 4.8 理智SAN sanity 0-1.2
         {
@@ -297,7 +296,6 @@ public class PPMinusMania extends PPMinus {
                 value8 = 1.2 - rSAN * 0.2D;
             }
             value8 = check(value8, 0, 1.2);
-            value8 *= 100;
         }
     }
 }

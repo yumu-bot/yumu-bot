@@ -169,14 +169,12 @@ public class ImageService {
                 "SAN", my.getValue8()
         );
 
-        var statistics = Map.of("isVS", false, "gameMode", mode.modeValue);
-
         HttpHeaders headers = getDefaultHeader();
 
         var body = Map.of(
-                "card_A1", cardA1,
-                "card_b_1", cardB,
-                "statistics", statistics
+                "users", cardA1,
+                "me", cardB,
+                "stat", Map.of("is_vs", false, "mode_int", mode.modeValue)
         );
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_B1", httpEntity);
@@ -213,15 +211,15 @@ public class ImageService {
                 "SAN", others.getValue8()
         ) : null;
 
-        var statistics = Map.of("isVS", isVs, "gameMode", mode.modeValue);
+        var statistics = Map.of("is_vs", isVs, "mode_int", mode.modeValue);
         HttpHeaders headers = getDefaultHeader();
 
         var body = new HashMap<String, Object>(4);
 
-        body.put("card_A1", cardA1s);
-        body.put("card_b_1", cardB1);
-        body.putIfAbsent("card_b_2", cardB2);
-        body.put("statistics", statistics);
+        body.put("users", cardA1s);
+        body.put("my", cardB1);
+        body.putIfAbsent("others", cardB2);
+        body.put("stat", statistics);
 
         HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
         return doPost("panel_B1", httpEntity);

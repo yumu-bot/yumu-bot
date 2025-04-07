@@ -257,7 +257,6 @@ public class PPMinusTaiko extends PPMinus {
 
         // 2.7 总计TTL Total / Overall 0-1.2
         value7 = value1 * 0.2 + value2 * 0.1 + value3 * 0.2 + value4 * 0.2 + value5 * 0.1 + value6 * 0.2;
-        value7 *= 100;
 
         // 1.8 理智SAN sanity 0-1.2
         {
@@ -275,7 +274,6 @@ public class PPMinusTaiko extends PPMinus {
                 value8 = 1.2 - rSAN * 0.2D;
             }
             value8 = check(value8, 0, 1.2);
-            value8 *= 100;
         }
     }
 }

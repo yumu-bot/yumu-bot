@@ -36,10 +36,7 @@ import java.io.Serializable
         val users = CmdUtil.get2User(event, matcher, inputMode, false)
 
         data.value = PPMinusParam(
-            users.size == 2,
-            users.first(),
-            if (users.size == 2) users.last() else null,
-            users.first().currentOsuMode
+            users.size == 2, users.first(), if (users.size == 2) users.last() else null, users.first().currentOsuMode
         )
 
         return true
@@ -106,18 +103,19 @@ import java.io.Serializable
 
         if (other != null) cardA1s.add(other)
 
-        val titles = listOf("ACC", "PTT", "STA", "STB", "EFT", "STH", "OVA", "SAN")
+        val titles =
+            listOf("ACC", "PTT", "STA", if (mode == OsuMode.MANIA) "PRE" else "STB", "EFT", "STH", "OVA", "SAN")
         val cardB1 = my.values.mapIndexed { i, it -> titles[i] to it }.toMap()
 
         val cardB2 = others?.values?.mapIndexed { i, it -> titles[i] to it }?.toMap()
 
-        val statistics: Map<String, Serializable> = mapOf("isVS" to (other != null), "gameMode" to mode.modeValue)
+        val statistics: Map<String, Serializable> = mapOf("is_vs" to (other != null), "mode_int" to mode.modeValue)
 
         val body = mutableMapOf(
-            "card_A1" to cardA1s, "card_b_1" to cardB1, "statistics" to statistics
+            "users" to cardA1s, "my" to cardB1, "stat" to statistics, "panel" to "PM4"
         )
 
-        if (cardB2 != null) body["card_b_2"] = cardB2
+        if (cardB2 != null) body["others"] = cardB2
 
         return imageService.getPanel(body.toMap(), "B1")
     }

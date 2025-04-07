@@ -240,7 +240,6 @@ public class PPMinusCatch extends PPMinus {
         }
         // 3.7 总计TTL Total / Overall 0-1.2
         value7 = value1 * 0.2 + value2 * 0.1 + value3 * 0.2 + value4 * 0.25 + value5 * 0.05 + value6 * 0.2;
-        value7 *= 100;
 
         // 3.8 理智SAN sanity 0-1.2
         {
@@ -258,7 +257,6 @@ public class PPMinusCatch extends PPMinus {
                 value8 = 1.2 - rSAN * 0.2D;
             }
             value8 = check(value8, 0, 1.2);
-            value8 *= 100;
         }
     }
 
