@@ -267,13 +267,13 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     PP_MINUS(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(p?p[m\\-]|(pp)?minus)")
+        appendCommandsIgnoreAll("(p?p[m\\-])", "(pp)?minus")
         appendModeQQUID()
         append2Name()
     }),
 
     PP_MINUS_VS(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("p?pv|p?pm(inus)?vs?")
+        appendCommandsIgnoreAll("(p?pv)", "p?pm(inus)?vs")
         appendModeQQUID()
         append2Name()
     }),
@@ -823,7 +823,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i.name != "MAI_FIND") continue
+        if (i.name != "INFO") continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

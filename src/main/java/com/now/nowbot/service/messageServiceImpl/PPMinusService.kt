@@ -49,9 +49,14 @@ import java.util.*
         val m1 = Instruction.PP_MINUS.matcher(messageText)
         val m2 = Instruction.PP_MINUS_VS.matcher(messageText)
 
-        if (m1.find().not() && m2.find().not()) return false
-        val matcher = if (m1.find()) m1 else m2
-        val isVS = matcher == m2
+        val isVS: Boolean
+        val matcher = if (m1.find()) {
+            isVS = false
+            m1
+        } else if (m2.find()) {
+            isVS = true
+            m2
+        } else return false
 
         val inputMode = getMode(matcher)
 
@@ -97,9 +102,14 @@ import java.util.*
         val m1 = OfficialInstruction.PP_MINUS.matcher(messageText)
         val m2 = OfficialInstruction.PP_MINUS_VS.matcher(messageText)
 
-        if (m1.find().not() && m2.find().not()) return null
-        val matcher = if (m1.find()) m1 else m2
-        val isVS = matcher == m2
+        val isVS: Boolean
+        val matcher = if (m1.find()) {
+            isVS = false
+            m1
+        } else if (m2.find()) {
+            isVS = true
+            m2
+        } else return null
 
         val inputMode = getMode(matcher)
 

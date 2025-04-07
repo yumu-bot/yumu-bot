@@ -9,7 +9,7 @@ import jakarta.persistence.*
 import org.hibernate.annotations.Type
 
 @Entity(name = "maimai_song")
-@Table(indexes = [Index(name = "title_query", columnList = "query_text")])
+@Table(indexes = [Index(name = "mai_title_query", columnList = "query_text")])
 class MaiSongLite(
     @Id
     var songID: Int? = null,
@@ -336,7 +336,7 @@ class MaiAliasLite(
 }
 
 @Entity(name = "chunithm_song")
-@Table(indexes = [Index(name = "title_query", columnList = "query_text")])
+@Table(indexes = [Index(name = "chu_title_query", columnList = "query_text")])
 class ChuSongLite(
     @Id
     @Column(columnDefinition = "integer")
