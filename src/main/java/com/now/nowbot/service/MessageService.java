@@ -7,7 +7,7 @@ public interface MessageService<T> {
 
     boolean isHandle(@NonNull MessageEvent event, @NonNull String messageText, @NonNull DataValue<T> data) throws Throwable;
 
-    void HandleMessage(MessageEvent event, T param) throws Throwable;
+    void HandleMessage(@NonNull MessageEvent event, @NonNull T param) throws Throwable;
 
     class DataValue<T> {
         T value;

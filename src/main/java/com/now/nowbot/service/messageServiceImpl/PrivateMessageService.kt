@@ -1,101 +1,111 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BindUser;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.osuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.JacksonUtil;
-import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-
-import java.util.Objects;
-import java.util.regex.Pattern;
+import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.aop.CheckPermission
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.model.BindUser
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.messageServiceImpl.PrivateMessageService.PMParam
+import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.util.JacksonUtil
+import jakarta.annotation.Resource
+import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.*
+import java.util.regex.Pattern
 
 @Service("PRIVATE_MESSAGE")
-public class PrivateMessageService implements MessageService<PrivateMessageService.PMParam> {
+class PrivateMessageService : MessageService<PMParam> {
     @Resource
-    OsuUserApiService userApiService;
-    @Resource
-    ImageService      imageService;
-    @Resource
-    BindDao           bindDao;
-    private static final Pattern pattern = Pattern
-            .compile("^!testmsg (?<type>send|get|act)\\s*(?<id>\\d+)?\\s*(?<msg>.*)?$");
+    var userApiService: OsuUserApiService? = null
 
-    @Override
-    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<PMParam> data) throws Throwable {
-        if (!messageText.startsWith("!testmsg")) return false;
-        var m = pattern.matcher(messageText);
-        if (!m.matches()) return false;
-        var type = Type.valueOf(m.group("type"));
-        String s;
-        Long id;
-        if (Objects.isNull(s = m.group("id"))) {
-            id = null;
+    @Resource
+    var imageService: ImageService? = null
+
+    @Resource
+    var bindDao: BindDao? = null
+    @Throws(Throwable::class) override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<PMParam>
+    ): Boolean {
+        if (!messageText.startsWith("!testmsg")) return false
+        val m = pattern.matcher(messageText)
+        if (!m.matches()) return false
+        val type = Type.valueOf(m.group("type"))
+        var s: String
+        val id: Long?
+        if (Objects.isNull(m.group("id").also { s = it })) {
+            id = null
         } else {
-            id = Long.parseLong(s);
+            id = s.toLong()
         }
-        s = m.group("msg");
+        s = m.group("msg")
 
-        data.setValue(new PMParam(type, id, s));
-        return true;
+        data.value = PMParam(type, id, s)
+        return true
     }
 
-    @Override
-    @CheckPermission(isSuperAdmin = true)
-    public void HandleMessage(MessageEvent event, PMParam param) throws Throwable {
-        var bin = bindDao.getBindFromQQ(event.getSender().getId(), true);
-        JsonNode json;
+    @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun HandleMessage(
+        event: MessageEvent,
+        param: PMParam
+    ) {
+        val bin = bindDao!!.getBindFromQQ(event.sender.id, true)
+        val json: JsonNode
         try {
-            json = getJson(param, bin);
-        } catch (WebClientResponseException.Forbidden e) {
-            throw new TipsException("权限不足");
+            json = getJson(param, bin)
+        } catch (e: WebClientResponseException.Forbidden) {
+            throw TipsException("权限不足")
         }
-        event.reply(getCodeImage(JacksonUtil.objectToJsonPretty(json)));
+        event.reply(getCodeImage(JacksonUtil.objectToJsonPretty(json)))
     }
 
-    enum Type {
+    enum class Type {
         send, get, act
     }
 
-    public record PMParam(Type type, Long id, String message) {
-    }
+    @JvmRecord
+    data class PMParam(val type: Type, val id: Long?, val message: String)
 
-    private JsonNode getJson(PMParam param, BindUser bin) throws TipsException {
-        final boolean hasParam = Objects.isNull(param.id) || Objects.isNull(param.message);
-        return switch (param.type) {
-            case send -> {
-                if (hasParam) throw new TipsException("参数缺失");
-                yield userApiService.sendPrivateMessage(bin, param.id, param.message);
+    @Throws(TipsException::class) private fun getJson(param: PMParam, bin: BindUser): JsonNode {
+        val hasParam = Objects.isNull(param.id) || Objects.isNull(param.message)
+        return when (param.type) {
+            Type.send -> {
+                if (hasParam) throw TipsException("参数缺失")
+                userApiService!!.sendPrivateMessage(bin, param.id, param.message)
             }
-            case get -> {
-                if (hasParam) throw new TipsException("参数缺失");
-                yield userApiService.getPrivateMessage(bin, param.id, Long.parseLong(param.message));
 
+            Type.get -> {
+                if (hasParam) throw TipsException("参数缺失")
+                userApiService!!.getPrivateMessage(bin, param.id, param.message.toLong())
             }
-            case act -> {
+
+            Type.act -> {
                 if (Objects.isNull(param.id)) {
-                    yield userApiService.acknowledgmentPrivateMessageAlive(bin);
+                    userApiService!!.acknowledgmentPrivateMessageAlive(bin)
                 } else {
-                    yield userApiService.acknowledgmentPrivateMessageAlive(bin, param.id);
+                    userApiService!!.acknowledgmentPrivateMessageAlive(bin, param.id)
                 }
             }
-        };
+        }
     }
 
-    private byte[] getCodeImage(String code) {
-        var codeStr = STR. """
+    private fun getCodeImage(code: String): ByteArray {
+        val codeStr: String =
+            """
                 ```
-                \{ code }
+                $code
                 ```
-                """ ;
-        return imageService.getPanelA6(codeStr, "NO NAME");
+            """.trimMargin()
+        return imageService!!.getPanelA6(codeStr, "NO NAME")
+    }
+
+    companion object {
+        private val pattern: Pattern = Pattern
+            .compile("^!testmsg (?<type>send|get|act)\\s*(?<id>\\d+)?\\s*(?<msg>.*)?$")
     }
 }

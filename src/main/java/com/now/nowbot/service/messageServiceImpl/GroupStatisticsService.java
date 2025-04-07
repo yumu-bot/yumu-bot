@@ -132,7 +132,7 @@ public class GroupStatisticsService implements MessageService<Long> {
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, Long group) throws Throwable {
+    public void HandleMessage(@NotNull MessageEvent event, @NotNull Long group) throws Throwable {
         var from = event.getSubject();
         if (from instanceof Group groupSend) {
             try {

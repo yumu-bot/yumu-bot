@@ -10,7 +10,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.serviceException.PPMinusException
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.getBonusPP
 import com.now.nowbot.util.DataUtil.splitString
@@ -23,8 +23,8 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.regex.Matcher
 
-@Service("TEST_PPM")
-class TestPPMService(
+@Service("CSV_PPM")
+class CsvPPMinusService(
     private val userApiService: OsuUserApiService,
     private val scoreApiService: OsuScoreApiService,
 ) : MessageService<Matcher> {
@@ -34,7 +34,7 @@ class TestPPMService(
         messageText: String,
         data: DataValue<Matcher>,
     ): Boolean {
-        val m = Instruction.TEST_PPM.matcher(messageText)
+        val m = Instruction.CSV_PPM.matcher(messageText)
         if (m.find() && Permission.isGroupAdmin(event)) {
             data.value = m
             return true
@@ -48,7 +48,7 @@ class TestPPMService(
         val inputMode = OsuMode.getMode(matcher.group("mode"))
 
         if (names.isNullOrEmpty()) {
-            throw PPMinusException(PPMinusException.Type.PM_Test_Empty)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Data)
         }
 
         val isOsuID = names.first().matches("\\d+".toRegex())
@@ -268,6 +268,6 @@ class TestPPMService(
     }
 
     companion object {
-        private val log: Logger = LoggerFactory.getLogger(TestPPMService::class.java)
+        private val log: Logger = LoggerFactory.getLogger(CsvPPMinusService::class.java)
     }
 }

@@ -145,24 +145,14 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     PP_MINUS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("pm")
-        appendMode()
-        appendCaptureGroup("area1", REG_USERNAME, ANY)
-        appendGroup(MAYBE) {
-            append(REG_COLON)
-            appendSpace()
-            appendCaptureGroup("area2", REG_USERNAME, MORE)
-        }
+        appendModeQQUID()
+        append2Name()
     }),
 
     PP_MINUS_VS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("pv")
-        appendMode()
-        appendCaptureGroup("area1", REG_USERNAME, MORE)
-        appendGroup(MAYBE) {
-            append(REG_COLON)
-            appendSpace()
-            appendCaptureGroup("area2", REG_USERNAME, MORE)
-        }
+        appendModeQQUID()
+        append2Name()
     }),
 
     TEAM(CommandPatternBuilder.create {

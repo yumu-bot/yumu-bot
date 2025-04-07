@@ -267,15 +267,15 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     PP_MINUS(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(?<function>(p?p[mv\\-]|p?pmvs?|ppminus|minus|minusvs))")
-        appendMode()
-        appendCaptureGroup("area1", REG_USERNAME, ANY)
-        appendSpace()
-        appendGroup(MAYBE) {
-            append(REG_COLON)
-            appendSpace()
-            appendCaptureGroup("area2", REG_USERNAME, MORE)
-        }
+        appendCommandsIgnoreAll("(p?p[m\\-]|(pp)?minus)")
+        appendModeQQUID()
+        append2Name()
+    }),
+
+    PP_MINUS_VS(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("p?pv|p?pm(inus)?vs?")
+        appendModeQQUID()
+        append2Name()
     }),
 
     TEAM(CommandPatternBuilder.create {
@@ -627,6 +627,12 @@ enum class Instruction(val pattern: Pattern) {
 
     TEST_PPM(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("testppm", "tp")
+        appendModeQQUID()
+        append2Name()
+    }),
+
+    CSV_PPM(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("csvppm", "cm")
         appendMode()
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, MORE)
     }),

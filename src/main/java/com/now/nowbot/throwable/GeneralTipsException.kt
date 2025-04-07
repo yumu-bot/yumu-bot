@@ -6,10 +6,9 @@ class GeneralTipsException : TipsException {
         G_TokenExpired_Me("令牌失效，请重新授权。(!ymbind)"),
         G_TokenExpired_Player("玩家令牌失效，请提醒他重新授权。(!ymbind)"),
         G_TokenExpired_Official("令牌失效，请重新授权。(/bind [your name])"),
-        G_TokenExpired_Cancel("绑定已经被取消了, 无法再使用了哦"),
         G_NotBind_Player("该玩家没有绑定。"),
 
-        // G_Banned_Me("你被办了。"),
+        G_Banned_Me("你被办了。"),
         G_Banned_Player("%s 被办了。"),
 
         G_Restricted_NSFW("这种歌曲，还是有点唱不出口呢。"),
@@ -61,6 +60,7 @@ class GeneralTipsException : TipsException {
         G_Null_Version("没有找到您在版本 %s 内的成绩。"), 
         G_Null_RecentScore("没有找到玩家 %s 在 %s 模式内的最近成绩。"),
 
+        G_NotEnough_PlayTime("此玩家在 %s 模式上的游戏时长太短了，快去多玩几局吧！"),
         G_NotEnoughBP_Me("您在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
         G_NotEnoughBP_Player("对方在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
 
@@ -70,6 +70,7 @@ class GeneralTipsException : TipsException {
         G_Wrong_ParamOnly("仅支持使用 %s 逻辑运算符。"),
         G_Wrong_Cabbage("如果你给他...传递一些完全看不懂的参数...你等于...你也等于...你也有泽任吧？"),
 
+        G_Empty_Data("数据是空的！"),
         G_Empty_Result("结果是空的！"),
         G_Empty_Score("您的成绩是空的！"),
         G_Empty_TodayBP("玩家 %s 今天之内没有新增的 BP 呢...\n尝试修改范围，或尝试扩大搜索天数吧。"), 

@@ -1,91 +1,91 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.entity.DrawLogLite;
-import com.now.nowbot.mapper.DrawLogLiteRepository;
-import com.now.nowbot.model.DrawConfig;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.JacksonUtil;
-import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.regex.Matcher;
+import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.aop.CheckPermission
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.DrawLogLite
+import com.now.nowbot.mapper.DrawLogLiteRepository
+import com.now.nowbot.model.DrawConfig
+import com.now.nowbot.model.enums.DrawGrade
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.JacksonUtil
+import jakarta.annotation.Resource
+import org.springframework.stereotype.Service
+import java.util.*
+import java.util.function.Consumer
+import java.util.regex.Matcher
 
 @Service("DRAW")
-public class DrawService implements MessageService<Matcher> {
+class DrawService : MessageService<Matcher> {
     @Resource
-    private BindDao bindDao;
-    @Resource
-    private DrawLogLiteRepository drawLogLiteRepository;
+    private val bindDao: BindDao? = null
 
-    @Override
-    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) {
-        var m = Instruction.DRAW.matcher(messageText);
+    @Resource
+    private val drawLogLiteRepository: DrawLogLiteRepository? = null
+
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Matcher>): Boolean {
+        val m = Instruction.DRAW.matcher(messageText)
         if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
+            data.value = m
+            return true
+        } else return false
     }
 
-    @Override
-    @CheckPermission(test = true)
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
-        var bindUser = bindDao.getBindFromQQ(event.getSender().getId(), true);
+    @CheckPermission(test = true) @Throws(Throwable::class) override fun HandleMessage(
+        event: MessageEvent,
+        matcher: Matcher
+    ) {
+        val bindUser = bindDao!!.getBindFromQQ(event.sender.id, true)
 
-        int times = 1;
+        var times = 1
         if (matcher.group("d") != null) {
-            times = Integer.parseInt(matcher.group("d"));
+            times = matcher.group("d").toInt()
         }
 
-        int tenTimes = times / 10;
-        times = times % 10;
-        List<DrawConfig.Card> clist = new LinkedList<>();
+        val tenTimes = times / 10
+        times %= 10
+        val clist: MutableList<DrawConfig.Card> = LinkedList()
         // 10 连
-        for (int i = 0; i < tenTimes; i++) {
-            var gradeList = defaultConfig.getGrade10(bindUser.getOsuID(), drawLogLiteRepository);
-            var cards = gradeList.stream().map(defaultConfig::getCard).toList();
-            var cardLites = new ArrayList<DrawLogLite>(gradeList.size());
-            for (int j = 0; j < gradeList.size(); j++) {
-                cardLites.add(new DrawLogLite(cards.get(i), gradeList.get(i), bindUser.getOsuID()));
+        for (i in 0..<tenTimes) {
+            val gradeList = defaultConfig!!.getGrade10(bindUser.osuID, drawLogLiteRepository)
+            val cards = gradeList.stream().map { grade: DrawGrade? -> defaultConfig.getCard(grade) }.toList()
+            val cardLites = ArrayList<DrawLogLite>(gradeList.size)
+            for (j in gradeList.indices) {
+                cardLites.add(DrawLogLite(cards[i], gradeList[i], bindUser.osuID))
             }
-            drawLogLiteRepository.saveAll(cardLites);
-            clist.addAll(cards);
+            drawLogLiteRepository!!.saveAll(cardLites)
+            clist.addAll(cards)
         }
         // 单抽
-        {
-            for (int i = 0; i < times; i++) {
-                var grade = defaultConfig.getGrade(bindUser.getOsuID(), drawLogLiteRepository);
-                var card = defaultConfig.getCard(grade);
-                drawLogLiteRepository.save(new DrawLogLite(card, grade, bindUser.getOsuID()));
-                clist.add(card);
+        run {
+            for (i in 0..<times) {
+                val grade = defaultConfig!!.getGrade(bindUser.osuID, drawLogLiteRepository)
+                val card = defaultConfig.getCard(grade)
+                drawLogLiteRepository!!.save(DrawLogLite(card, grade, bindUser.osuID))
+                clist.add(card)
             }
         }
 
-        StringBuilder sb = new StringBuilder();
-        clist.forEach(c -> sb.append(c.name()).append(", "));
-        event.getSubject().sendMessage(sb.toString());
+        val sb = StringBuilder()
+        clist.forEach(Consumer { c: DrawConfig.Card -> sb.append(c.name).append(", ") })
+        event.subject.sendMessage(sb.toString())
     }
 
-    private static DrawConfig getConfig(String config) {
-        var jsonData = JacksonUtil.parseObject(config, JsonNode.class);
-        if (jsonData == null) return null;
+    companion object {
+        private fun getConfig(config: String): DrawConfig? {
+            val jsonData = JacksonUtil.parseObject(
+                config,
+                JsonNode::class.java
+            )
+            if (jsonData == null) return null
 
-        return new DrawConfig(jsonData);
-    }
+            return DrawConfig(jsonData)
+        }
 
-    public static DrawConfig getDefaultConfig() {
-        return defaultConfig;
-    }
-
-    static String config = """
+        var config: String = """
             {
               "N": {
                 "name": "普通",
@@ -177,6 +177,8 @@ public class DrawService implements MessageService<Matcher> {
                 ]
               }
             }
-            """;
-    private static final DrawConfig defaultConfig = getConfig(config);
+            
+            """.trimIndent()
+        val defaultConfig: DrawConfig? = getConfig(config)
+    }
 }

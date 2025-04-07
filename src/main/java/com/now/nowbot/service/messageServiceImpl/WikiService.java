@@ -42,7 +42,7 @@ public class WikiService implements MessageService<Matcher> {
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, Matcher matcher) throws Throwable {
+    public void HandleMessage(@NotNull MessageEvent event, @NotNull Matcher matcher) throws Throwable {
         String key = matcher.group("key");
         var msg = event.getSubject().sendMessage(getWiki(key));
         event.getSubject().recallIn(msg, 60*1000);

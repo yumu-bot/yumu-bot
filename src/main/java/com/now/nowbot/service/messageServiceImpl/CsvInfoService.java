@@ -40,7 +40,7 @@ public class CsvInfoService implements MessageService<CsvInfoService.CIParam> {
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, CIParam param) throws Throwable {
+    public void HandleMessage(@NotNull MessageEvent event, @NotNull CIParam param) throws Throwable {
         if (param.users.isEmpty()) throw new CsvInfoException(CsvInfoException.Type.CI_Instructions);
         if (param.users.size() >= 50) event.reply(CsvInfoException.Type.CI_Fetch_TooManyUser.message);
         if (param.users.size() > 200) throw new CsvInfoException(CsvInfoException.Type.CI_Fetch_Exceed);

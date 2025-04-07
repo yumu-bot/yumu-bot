@@ -50,7 +50,7 @@ object CmdUtil {
         mode: CmdObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): OsuUser {
-        val user = getOsuUser(event, matcher, mode)
+        val user = getOsuUser(event, matcher, mode, isMyself)
 
         val me: BindUser? = try {
             bindDao.getBindFromQQ(event.sender.id, true)
@@ -204,6 +204,97 @@ object CmdUtil {
         return result
     }
 
+
+    /**
+     * 获取 2 个玩家信息。常用在 Skill、PPMinus 上。
+     *
+     * @param isVS 是否采用 VS 匹配方式。正常匹配方式和 VS 方式的不同体现在请求者本身之上。
+     */
+    @JvmStatic @Throws(TipsException::class) fun get2User(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isVS: Boolean = false,
+    ): List<OsuUser> {
+        require(matcher.namedGroups().containsKey(FLAG_2_USER)) { "Matcher 中不包含 u2 分组" }
+
+        val myBind = try {
+            bindDao.getBindFromQQ(event.sender.id, true)
+        } catch (ignored: Exception) {
+            null
+        }
+
+        /**
+         * @param qq 如果是负数，则认为是 UID
+         */
+        fun parseAtQQUID(qq: Long, myBind: BindUser?, mode: CmdObject<OsuMode>, isVS: Boolean): List<OsuUser> {
+            val you = if (qq > 0) {
+                getOsuUser(bindDao.getBindFromQQ(qq, false), mode.data)
+            } else {
+                getOsuUser(-qq, mode.data)
+            }
+
+            if (isVS && myBind != null) {
+                val me = getOsuUser(myBind.osuName, mode.data)
+
+                return listOf(me, you)
+            } else {
+                return listOf(you)
+            }
+        }
+
+        if (event.isAt) {
+            return parseAtQQUID(event.target, myBind, mode, isVS)
+        }
+
+        val qq = matcher.group(FLAG_QQ_ID)?.toLong() ?: 0L
+        if (qq != 0L) {
+            return parseAtQQUID(qq, myBind, mode, isVS)
+        }
+
+        val uid = matcher.group(FLAG_UID)?.toLong() ?: 0L
+        if (uid != 0L) {
+            return parseAtQQUID(0L - uid, myBind, mode, isVS)
+        }
+
+        val g = matcher.group(FLAG_2_USER)
+
+        if (g.isNullOrEmpty()) {
+            if (myBind == null) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
+            }
+
+            setMode(mode, myBind.osuMode, event)
+            return listOf(getOsuUser(myBind, mode.data))
+        }
+
+        val gs = g.split(REG_SEPERATOR_NO_SPACE.toRegex())
+
+        if (gs.size == 1) {
+            val you = getOsuUser(gs.first().trim(), mode.data, false)
+
+            if (isVS && myBind != null) {
+                val me = getOsuUser(myBind.osuName, mode.data)
+
+                return listOf(me, you)
+            } else {
+                return listOf(you)
+            }
+        } else if (gs.size == 2) {
+            // 默认 VS 状态
+
+            val you = getOsuUser(gs.first().trim(), mode.data)
+            val they = getOsuUser(gs.last().trim(), mode.data)
+
+            return listOf(you, they)
+        } else {
+            val bind = bindDao.getBindFromQQ(event.sender.id, true)
+
+            setMode(mode, bind.osuMode, event)
+            return listOf(getOsuUser(bind, mode.data))
+        }
+    }
+
     /** 内部方法, 解析'#'后的 range */
     private fun parseNameAndRangeHasHash(text: String): LinkedList<CmdRange<String>> {
         val ranges = LinkedList<CmdRange<String>>()
@@ -311,6 +402,7 @@ object CmdUtil {
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
     ): OsuUser? {
 
         val qq = if (event.isAt) {
@@ -326,7 +418,7 @@ object CmdUtil {
         }
 
         if (qq != 0L) {
-            val bind = bindDao.getBindFromQQ(qq)
+            val bind = bindDao.getBindFromQQ(qq, isMyself.get())
 
             setMode(mode, bind.osuMode, event)
             return getOsuUser(bind, mode.data)
@@ -340,8 +432,7 @@ object CmdUtil {
                 if (uid != 0L) {
                     return getOsuUser(uid, mode.data)
                 }
-            } catch (ignore: RuntimeException) {
-            }
+            } catch (ignore: RuntimeException) {}
         }
 
         if (matcher.namedGroups().containsKey(FLAG_NAME)) {
@@ -370,8 +461,8 @@ object CmdUtil {
      * @param name 用户名
      * @param mode 指定模式
      */
-    @Throws(TipsException::class) fun getOsuUser(name: String, mode: OsuMode?): OsuUser {
-        return getOsuUser(name) { userApiService.getPlayerInfo(name, mode) }
+    @Throws(TipsException::class) fun getOsuUser(name: String, mode: OsuMode?, isMyself: Boolean = false): OsuUser {
+        return getOsuUser(name, isMyself = isMyself) { userApiService.getPlayerInfo(name, mode) }
     }
 
     /**
@@ -388,6 +479,7 @@ object CmdUtil {
     @Throws(TipsException::class) private fun <T> getOsuUser(
         name: String,
         uid: Long? = null,
+        isMyself: Boolean = false,
         consumer: Supplier<T>
     ): T {
         try {
@@ -398,10 +490,18 @@ object CmdUtil {
             }
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name)
         } catch (e: WebClientResponseException.Forbidden) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, name)
+            throw if (isMyself) {
+                GeneralTipsException(GeneralTipsException.Type.G_Banned_Me)
+            } else {
+                GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, name)
+            }
         } catch (e: WebClientResponseException.Unauthorized) {
-            uid?.let(bindDao::removeBind)
-            throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Cancel)
+            uid?.let(bindDao::backupBind)
+            throw if (isMyself) {
+                GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
+            } else {
+                GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
+            }
         } catch (e: WebClientResponseException) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
         } catch (e: Exception) {

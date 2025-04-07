@@ -23,6 +23,7 @@ const val CHAR_NAME: String = "[0-9a-zA-Z\\[\\]\\-_]"
 const val CHAR_NAME_WITH_SPACE: String = "[0-9a-zA-Z\\[\\]\\-_ ]"
 
 const val FLAG_USER_AND_RANGE: String = "ur"
+const val FLAG_2_USER: String = "u2"
 const val FLAG_MOD: String = "mod"
 const val FLAG_MODE: String = "mode"
 const val FLAG_NAME: String = "name"
@@ -171,4 +172,7 @@ val REG_RANGE_DAY: String = "($REG_NUMBER_13($REG_HYPHEN$REG_NUMBER_13)?)"
 
 @Language("RegExp")
 val REG_COVER: String = "[A-Za-z@12]"
+
+@Language("RegExp")
+val REG_2_USER: String = "$REG_USERNAME+\\s*($REG_SEPERATOR_NO_SPACE|\\s+vs\\s+)?\\s*$REG_USERNAME*"
 

@@ -150,6 +150,15 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
+     * osu 合法名称
+     * (?<name> X X+ X)
+     */
+    fun append2Name() {
+        appendCaptureGroup(FLAG_2_USER, REG_2_USER)
+        appendSpace()
+    }
+
+    /**
      * maimai 合法名称（基本就是啥都匹配）
      * (?<name> X X+ X)
      */
@@ -293,7 +302,16 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
-     * 添加一个复合匹配组, 包括 mode, qq, uid, name
+     * 添加一个复合匹配组, 包括 mode, qq, uid
+     */
+    fun appendModeQQUID() {
+        appendMode()
+        appendQQID()
+        appendUID()
+    }
+
+    /**
+     * 添加一个复合匹配组, 包括 qq, uid, name
      */
     fun appendQQUIDName() {
         appendQQID()

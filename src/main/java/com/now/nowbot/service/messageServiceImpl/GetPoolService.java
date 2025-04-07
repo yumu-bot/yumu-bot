@@ -58,7 +58,7 @@ public class GetPoolService implements MessageService<GetPoolService.GetPoolPara
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, GetPoolParam param) throws Throwable {
+    public void HandleMessage(@NotNull MessageEvent event, @NotNull GetPoolParam param) throws Throwable {
         var mapPool = new MapPoolDto(param.name(), param.map(), osuBeatmapApiService);
 
         if (mapPool.getModPools().isEmpty()) throw new MapPoolException(MapPoolException.Type.GP_Map_Empty);

@@ -161,10 +161,8 @@ public class BotWebApi {
         var ppm1 = PPMinus.getInstance(mode, user1, bplist1);
         var ppm2 = PPMinus.getInstance(mode, user2, bplist2);
 
-        if (ppm1 == null) {
-            throw new RuntimeException(PPMinusException.Type.PM_Me_FetchFailed.message); //"ppm 请求失败：ppmMe/Other 不存在"
-        } else if (ppm2 == null) {
-            throw new RuntimeException(PPMinusException.Type.PM_Player_FetchFailed.message);
+        if (ppm1 == null || ppm2 == null) {
+            throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PPM").getMessage());
         } else {
             var data = imageService.getPanelB1(user1, user2, ppm1, ppm2, mode);
             return new ResponseEntity<>(data, getImageHeader(STR."\{name.trim()} vs \{name2.trim()}-pv.jpg", data.length), HttpStatus.OK);
@@ -212,7 +210,7 @@ public class BotWebApi {
             image = imageService.getPanel(data, "F");
         } catch (Exception err) {
             log.error("比赛结果：API 异常", err);
-            throw new RuntimeException(MatchNowException.Type.MN_Render_Error.message);
+            throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "比赛结果").getMessage());
         }
 
         return new ResponseEntity<>(image, getImageHeader(STR."\{matchID}-match.jpg", image.length), HttpStatus.OK);

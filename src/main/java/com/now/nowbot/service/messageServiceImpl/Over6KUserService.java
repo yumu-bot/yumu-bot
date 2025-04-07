@@ -9,7 +9,6 @@ import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.JacksonUtil;
 import jakarta.annotation.Resource;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,13 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Service("FOR_NEWBIE_GROUP_WEB_API")
+//@Service("FOR_NEWBIE_GROUP_WEB_API")
 public class Over6KUserService implements MessageService<Over6KUserService.OverUser> {
     private static File DATA_FILE;
     private static boolean INITED = false;
     @Resource
     OsuUserApiService userApiService;
-    public Over6KUserService(FileConfig fileConfig) throws IOException {
+    public Over6KUserService(FileConfig fileConfig) {
         DATA_FILE = new File(fileConfig.getRoot(), "6k.out");
         try {
             if (! DATA_FILE.exists()) {
@@ -68,7 +67,7 @@ public class Over6KUserService implements MessageService<Over6KUserService.OverU
 
     @CheckPermission(isSuperAdmin = true)
     @Override
-    public void HandleMessage(MessageEvent event, OverUser user) throws Throwable {
+    public void HandleMessage(@NotNull MessageEvent event, @NotNull OverUser user) throws Throwable {
         saveUser(user);
         event.getSubject().sendMessage("添加成功");
     }

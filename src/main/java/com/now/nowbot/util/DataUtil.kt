@@ -1259,6 +1259,16 @@ object DataUtil {
         return sb.toString()
     }
 
+    /**
+     * 离散变量估计正态分布的均值和方差
+     */
+    fun <T: Number> getNormalDistribution(numbers: List<T>): Pair<Double, Double> {
+        val u = numbers.map { it.toDouble() }.average()
+        val o2 = numbers.map { (it.toDouble() - u).pow(2.0) }.average()
+
+        return u to o2
+    }
+
     @JvmRecord
     private data class Range(val offset: Int, val limit: Int)
 

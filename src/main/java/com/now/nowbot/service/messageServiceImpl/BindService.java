@@ -128,7 +128,7 @@ public class BindService implements MessageService<BindService.BindParam> {
     }
 
     @Override
-    public void HandleMessage(MessageEvent event, BindParam param) throws Throwable {
+    public void HandleMessage(@NotNull MessageEvent event, @NotNull BindParam param) throws Throwable {
         var me = event.getSender().getId();
 
         if (me == param.qq) {
