@@ -14,8 +14,8 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 @Service("CHECK")
-class CheckService(private val bindDao: BindDao): MessageService<BindUser?> {
-    override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<BindUser?>): Boolean {
+class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
+    override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<BindUser>): Boolean {
         val matcher = Instruction.CHECK.matcher(messageText)
         if (!matcher.find()) return false
 
@@ -43,17 +43,14 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser?> {
 
                 return@run bindDao.getBindFromQQ(event.sender.id)
             } catch (e: Exception) {
-                null
+                throw GeneralTipsException(GeneralTipsException.Type.G_NotBind_Player)
             }
         }
 
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: BindUser?) {
-        if (param == null) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_NotBind_Player)
-        }
+    override fun HandleMessage(event: MessageEvent, param: BindUser) {
 
         val time = Instant.ofEpochMilli(param.time ?: 0).atOffset(ZoneOffset.ofHours(8))
         val timeStr = if (time.isBefore(botCreatedTime)) {

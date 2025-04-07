@@ -14,19 +14,18 @@ import java.util.random.RandomGenerator
 @Service("LOGIN")
 class LoginService(private val bindDao: BindDao) : MessageService<String> {
     init {
-        Thread.startVirtualThread(
-                Runnable {
-                    while (true) {
-                        try {
-                            Thread.sleep(Duration.ofSeconds(120))
-                        } catch (ignore: InterruptedException) {}
-                        val t = System.currentTimeMillis()
-                        LOGIN_USER_MAP.entries.removeIf {
-                                entry: MutableMap.MutableEntry<String?, LoginUser?> ->
-                            t.minus(entry.value!!.time) > 60 * 1000
-                        }
-                    }
-                })
+        Thread.startVirtualThread {
+            while (true) {
+                try {
+                    Thread.sleep(Duration.ofSeconds(120))
+                } catch (ignore: InterruptedException) {
+                }
+                val t = System.currentTimeMillis()
+                LOGIN_USER_MAP.entries.removeIf { entry: MutableMap.MutableEntry<String?, LoginUser?> ->
+                    t.minus(entry.value!!.time) > 60 * 1000
+                }
+            }
+        }
     }
 
     @Throws(Throwable::class)
@@ -39,7 +38,7 @@ class LoginService(private val bindDao: BindDao) : MessageService<String> {
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, data: String?) {
+    override fun HandleMessage(event: MessageEvent, data: String) {
         val qq = event.getSender().getId()
         val u = bindDao.getBindFromQQ(qq)
         var code: String?

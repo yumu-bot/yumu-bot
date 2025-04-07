@@ -26,7 +26,7 @@ import java.util.regex.Matcher
         } else return false
     }
 
-    override fun HandleMessage(event: MessageEvent?, param: Matcher) {
+    override fun HandleMessage(event: MessageEvent, param: Matcher) {
         val bids = param.group("data").split(REG_SEPERATOR.toRegex()).map { it.toLongOrNull() ?: -1L }
 
         val files = bids.filter { it != -1L }.map {
