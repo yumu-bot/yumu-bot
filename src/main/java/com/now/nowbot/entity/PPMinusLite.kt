@@ -26,6 +26,15 @@ class PPMinusLite(
     @Column(name = "raw_pp")
     var rawPP: Double? = null,
 
+    @Column(name = "accuracy")
+    var accuracy: Double? = null,
+    @Column(name = "total_hits")
+    var totalHits: Long? = null,
+    @Column(name = "play_count")
+    var playCount: Long? = null,
+    @Column(name = "play_time")
+    var playTime: Long? = null,
+
     @Column(name = "top_pp")
     var topPP: Double? = null,
     @Column(name = "middle_pp")
@@ -85,12 +94,21 @@ class PPMinusLite(
         lite.userPP = user.pp
         lite.rawPP = user.pp - DataUtil.getBonusPP(user.pp, bests.map { it.PP ?: 0.0 })
 
-        val top: List<LazerScore> = bests.take(5)
-        val middle: List<LazerScore> = if (bests.size >= 10) {
+        lite.accuracy = user.accuracy / 100.0
+        lite.totalHits = user.totalHits
+        lite.playCount = user.playCount
+        lite.playTime = user.playTime
+
+        val top: List<LazerScore> = bests.take(10)
+        val middle: List<LazerScore> = if (bests.size >= 30) {
             bests.subList(bests.size / 2, bests.size / 2 + 5)
+        } else if (bests.size >= 20) {
+            bests.subList(9, 19)
+        } else if (bests.size >= 10) {
+            bests.takeLast(bests.size - 10)
         } else emptyList()
-        val bottom: List<LazerScore> = if (bests.size >= 15) {
-            bests.takeLast(5)
+        val bottom: List<LazerScore> = if (bests.size >= 30) {
+            bests.takeLast(10)
         } else emptyList()
 
         lite.topPP = top.map { it.PP ?: 0.0 }.average()
