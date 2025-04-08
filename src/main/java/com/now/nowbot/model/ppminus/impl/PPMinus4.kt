@@ -216,13 +216,16 @@ private fun <T : Number, U : Number> getRelativePPMinus(compare: T?, to: List<U?
     val c = compare?.toDouble() ?: 0.0
     val coo = if (c.isNaN().not()) c else 0.0
 
+    println(too)
+
     val normal = DataUtil.getNormalDistribution(too)
     val u = normal.first
     val o = sqrt(normal.second)
+    println(normal)
 
     val max = too.max()
 
-    return if ((coo >= max - 1e-4) || coo >= u + 3 * o) {
+    val result = if ((coo >= max - 1e-4) || coo >= u + 3 * o) {
         1.01
     } else if (coo >= u + 2 * o) {
         1.0 + 0.01 * (coo - (u + 2 * o)) / o
@@ -237,6 +240,8 @@ private fun <T : Number, U : Number> getRelativePPMinus(compare: T?, to: List<U?
     } else {
         max(0.6 * (coo) / (u - 2 * o), 0.0)
     }
+
+    return if (result.isNaN() || result.isInfinite()) 0.8 else result
 }
 
 /*
