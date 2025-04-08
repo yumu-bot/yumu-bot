@@ -99,7 +99,7 @@ class PPMinus4Osu(user: OsuUser, bests: List<LazerScore>, surrounding: List<PPMi
             } else if (rSAN >= 1) {
                 1.1 - rSAN * 0.1
             } else {
-                1.2 - rSAN * 0.2
+                1.01 - rSAN * 0.01
             }
         }
 
@@ -187,7 +187,7 @@ class PPMinus4Mania(user: OsuUser, bests: List<LazerScore>, surrounding: List<PP
             } else if (rSAN >= 1) {
                 1.1 - rSAN * 0.1
             } else {
-                1.2 - rSAN * 0.2
+                1.01 - rSAN * 0.01
             }
         }
 
