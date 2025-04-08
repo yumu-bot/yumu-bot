@@ -34,27 +34,27 @@ class PPMinus4Osu(user: OsuUser, bests: List<LazerScore>, surrounding: List<PPMi
     init {
         val me = PPMinusLite().toLite(user, bests)
 
-        val fa = getRelativePPMinus(me.accuracy, surrounding.map { it.accuracy })
-        val ba = getRelativePPMinus(me.topAccuracy, surrounding.map { it.topAccuracy })
+        val fa: Double = getRelativePPMinus(me.accuracy, surrounding.map { it.accuracy })
+        val ba: Double = getRelativePPMinus(me.topAccuracy, surrounding.map { it.topAccuracy })
 
-        val bir = getRelativePPMinus(
-            (me.topPP ?: 0.0) / (me.rawPP ?: 1.0),
-            surrounding.map { (it.topPP ?: 0.0) / (it.rawPP ?: 1.0) })
-        val bdr = getRelativePPMinus(
-            (me.topPP ?: 0.0) / ((me.bottomPP ?: 0.0) + 1.0),
-            surrounding.map { (it.topPP ?: 0.0) / ((it.bottomPP ?: 0.0) + 1.0) })
+        val bir: Double = getRelativePPMinus(
+            (me.topPP ?: 0.0) / (me.rawPP ?: 1.0) * 100.0,
+            surrounding.map { (it.topPP ?: 0.0) / (it.rawPP ?: 1.0) * 100.0 })
+        val bdr: Double = getRelativePPMinus(
+            (me.topPP ?: 0.0) / (me.bottomPP ?: 1.0),
+            surrounding.map { (it.topPP ?: 0.0) / (it.bottomPP ?: 1.0) })
 
-        val spt = getRelativePPMinus(
+        val spt: Double = getRelativePPMinus(
             (me.playTime ?: 0L) / ((me.playCount ?: 0L) + 1L),
             surrounding.map { (it.playTime ?: 0L) / ((it.playCount ?: 0L) + 1L) })
-        val bpt = getRelativePPMinus(
+        val bpt: Double = getRelativePPMinus(
             (me.topLength ?: 0) * 0.7 + (me.middleLength ?: 0) * 0.2 + (me.bottomLength ?: 0) * 0.1,
             surrounding.map { (it.topLength ?: 0) * 0.7 + (it.middleLength ?: 0) * 0.2 + (it.bottomLength ?: 0) * 0.1 })
 
-        val fcr = getRelativePPMinus(
+        val fcr: Double = getRelativePPMinus(
             (me.countFC ?: 0) * 1.0 / (me.count ?: 1),
             surrounding.map { (it.countFC ?: 0) * 1.0 / (it.count ?: 1) })
-        val grs = getRelativePPMinus(
+        val grs: Double = getRelativePPMinus(
             (me.countSS ?: 0) * 3 + (me.countS ?: 0) * 2 + (me.countA ?: 0) * 1 - (me.countC ?: 0) * 1 - (me.countD
                 ?: 0) * 2 + (me.count ?: 0) * 2,
             surrounding.map {
@@ -62,21 +62,21 @@ class PPMinus4Osu(user: OsuUser, bests: List<LazerScore>, surrounding: List<PPMi
                     ?: 0) * 2 + (it.count ?: 0) * 2
             })
 
-        val lnh = getRelativePPMinus(
+        val lnh: Double = getRelativePPMinus(
             ln1p((me.totalHits ?: 0).toDouble()),
             surrounding.map { ln1p((it.totalHits ?: 0).toDouble()) })
-        val lnt = getRelativePPMinus(
+        val lnt: Double = getRelativePPMinus(
             ln1p((me.playTime ?: 0).toDouble()),
             surrounding.map { ln1p((it.playTime ?: 0).toDouble()) })
 
-        val hpt = getRelativePPMinus(
+        val hpt: Double = getRelativePPMinus(
             (me.totalHits ?: 0) * 1.0 / ((me.playTime ?: 0) + 1.0),
             surrounding.map { (it.totalHits ?: 0) * 1.0 / ((it.playTime ?: 0) + 1.0) })
-        val lnx = getRelativePPMinus(
+        val lnx: Double = getRelativePPMinus(
             ln1p((me.topPP ?: 0.0) * (me.topLength ?: 0)),
             surrounding.map { ln1p((it.topPP ?: 0.0) * (me.topLength ?: 0)) })
 
-        val total = ((fa + ba) / 2 * 0.2
+        val total: Double = ((fa + ba) / 2 * 0.2
                 + (bir + bdr) / 2 * 0.1
                 + (spt + bpt) / 2 * 0.2
                 + (fcr + grs) / 2 * 0.2
@@ -84,7 +84,7 @@ class PPMinus4Osu(user: OsuUser, bests: List<LazerScore>, surrounding: List<PPMi
                 + (hpt + lnx) / 2 * 0.2
                 )
 
-        val san = run {
+        val san: Double = run {
             // low PP index 低pp指数 过低PP会导致rSAN异常偏高，故需补正。
             val lowPPIndex =
                 if ((me.rawPP ?: 0.0) > 1000) 1.0 else ((me.rawPP ?: 0.0) / 1000.0).pow(0.5) // play count index PC因子
@@ -122,27 +122,27 @@ class PPMinus4Mania(user: OsuUser, bests: List<LazerScore>, surrounding: List<PP
     init {
         val me = PPMinusLite().toLite(user, bests)
 
-        val fa = getRelativePPMinus(me.accuracy, surrounding.map { it.accuracy })
-        val ba = getRelativePPMinus(me.topAccuracy, surrounding.map { it.topAccuracy })
+        val fa: Double = getRelativePPMinus(me.accuracy, surrounding.map { it.accuracy })
+        val ba: Double = getRelativePPMinus(me.topAccuracy, surrounding.map { it.topAccuracy })
 
-        val bir = getRelativePPMinus(
-            (me.topPP ?: 0.0) / (me.rawPP ?: 1.0),
-            surrounding.map { (it.topPP ?: 0.0) / (it.rawPP ?: 1.0) })
-        val bdr = getRelativePPMinus(
-            (me.topPP ?: 0.0) / ((me.bottomPP ?: 0.0) + 1.0),
-            surrounding.map { (it.topPP ?: 0.0) / ((it.bottomPP ?: 0.0) + 1.0) })
+        val bir: Double = getRelativePPMinus(
+            (me.topPP ?: 0.0) / (me.rawPP ?: 1.0) * 100.0,
+            surrounding.map { (it.topPP ?: 0.0) / (it.rawPP ?: 1.0) * 100.0 })
+        val bdr: Double = getRelativePPMinus(
+            (me.topPP ?: 0.0) / (me.bottomPP ?: 1.0),
+            surrounding.map { (it.topPP ?: 0.0) / (it.bottomPP ?: 1.0) })
 
-        val spt = getRelativePPMinus(
+        val spt: Double = getRelativePPMinus(
             (me.playTime ?: 0L) / ((me.playCount ?: 0L) + 1L),
             surrounding.map { (it.playTime ?: 0L) / ((it.playCount ?: 0L) + 1L) })
-        val bpt = getRelativePPMinus(
+        val bpt: Double = getRelativePPMinus(
             (me.topLength ?: 0) * 0.7 + (me.middleLength ?: 0) * 0.2 + (me.bottomLength ?: 0) * 0.1,
             surrounding.map { (it.topLength ?: 0) * 0.7 + (it.middleLength ?: 0) * 0.2 + (it.bottomLength ?: 0) * 0.1 })
 
-        val pgr = getRelativePPMinus(
+        val pgr: Double = getRelativePPMinus(
             (me.topPGRate ?: 0.0) * 0.7 + (me.topPGRate ?: 0.0) * 0.2 + (me.topPGRate ?: 0.0) * 0.1,
             surrounding.map { (it.topPGRate ?: 0.0) * 0.7 + (it.topPGRate ?: 0.0) * 0.2 + (it.topPGRate ?: 0.0) * 0.1 })
-        val grs = getRelativePPMinus(
+        val grs: Double = getRelativePPMinus(
             (me.countSS ?: 0) * 3 + (me.countS ?: 0) * 2 + (me.countA ?: 0) * 1 - (me.countC ?: 0) * 1 - (me.countD
                 ?: 0) * 2 + (me.count ?: 0) * 2,
             surrounding.map {
@@ -150,21 +150,21 @@ class PPMinus4Mania(user: OsuUser, bests: List<LazerScore>, surrounding: List<PP
                     ?: 0) * 2 + (it.count ?: 0) * 2
             })
 
-        val lnh = getRelativePPMinus(
+        val lnh: Double = getRelativePPMinus(
             ln1p((me.totalHits ?: 0).toDouble()),
             surrounding.map { ln1p((it.totalHits ?: 0).toDouble()) })
-        val lnt = getRelativePPMinus(
+        val lnt: Double = getRelativePPMinus(
             ln1p((me.playTime ?: 0).toDouble()),
             surrounding.map { ln1p((it.playTime ?: 0).toDouble()) })
 
-        val hpt = getRelativePPMinus(
+        val hpt: Double = getRelativePPMinus(
             (me.totalHits ?: 0) * 1.0 / ((me.playTime ?: 0) + 1.0),
             surrounding.map { (it.totalHits ?: 0) * 1.0 / ((it.playTime ?: 0) + 1.0) })
-        val lnx = getRelativePPMinus(
+        val lnx: Double = getRelativePPMinus(
             ln1p((me.topPP ?: 0.0) * (me.topLength ?: 0)),
             surrounding.map { ln1p((it.topPP ?: 0.0) * (me.topLength ?: 0)) })
 
-        val total = ((fa + ba) / 2 * 0.2
+        val total: Double = ((fa + ba) / 2 * 0.2
                 + (bir + bdr) / 2 * 0.1
                 + (spt + bpt) / 2 * 0.2
                 + (pgr + grs) / 2 * 0.25
@@ -173,7 +173,7 @@ class PPMinus4Mania(user: OsuUser, bests: List<LazerScore>, surrounding: List<PP
                 )
 
 
-        val san = run {
+        val san: Double = run {
             // low PP index 低pp指数 过低PP会导致rSAN异常偏高，故需补正。
             val lowPPIndex =
                 if ((me.rawPP ?: 0.0) > 1000) 1.0 else ((me.rawPP ?: 0.0) / 1000.0).pow(0.5) // play count index PC因子

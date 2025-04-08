@@ -935,7 +935,7 @@ object DataUtil {
      * @return 文件内容
      */
     @JvmStatic
-    fun getMarkdownFile(path: String?): String? {
+    fun getMarkdownFile(path: String?): String {
         val sb = StringBuilder()
 
         try {
@@ -955,7 +955,7 @@ object DataUtil {
 
             return sb.toString()
         } catch (ignored: Exception) {
-            return null
+            return ""
         }
     }
 
@@ -1263,8 +1263,8 @@ object DataUtil {
      * 离散变量估计正态分布的均值和方差
      */
     fun <T: Number> getNormalDistribution(numbers: List<T>): Pair<Double, Double> {
-        val u = numbers.map { it.toDouble() }.average()
-        val o2 = numbers.map { (it.toDouble() - u).pow(2.0) }.average()
+        val u = if (numbers.isNotEmpty()) numbers.map { it.toDouble() }.average() else 0.0
+        val o2 = if (numbers.isNotEmpty()) numbers.map { (it.toDouble() - u).pow(2.0) }.average() else 0.0
 
         return u to o2
     }

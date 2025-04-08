@@ -1,92 +1,76 @@
-package com.now.nowbot.listener;
+package com.now.nowbot.listener
 
-import com.now.nowbot.aop.OpenResource;
-import com.now.nowbot.controller.BotWebApi;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.commands.OptionMapping;
-import net.dv8tion.jda.api.utils.FileUpload;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Optional;
+import com.now.nowbot.aop.OpenResource
+import com.now.nowbot.controller.BotWebApi
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.hooks.ListenerAdapter
+import net.dv8tion.jda.api.utils.FileUpload
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.http.ResponseEntity
+import org.springframework.stereotype.Component
+import java.lang.reflect.Method
+import java.util.*
 
 @Component
-public class DiscordListener extends ListenerAdapter {
+class DiscordListener(private val botWebApi: BotWebApi) : ListenerAdapter() {
+    override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
+        event.deferReply().queue()
 
-    private static final Logger log = LoggerFactory.getLogger(DiscordListener.class);
+        val first = botWebApi.javaClass.declaredMethods.firstOrNull { method: Method ->
+            val annotation = method.getAnnotation(
+                OpenResource::class.java
+            )
 
-    @Autowired
-    BotWebApi botWebApi;
-
-    @Override
-    public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-        event.deferReply().queue();
-        Optional<Method> first = Arrays.stream(botWebApi.getClass().getDeclaredMethods()).filter(
-                method -> {
-                    OpenResource annotation = method.getAnnotation(OpenResource.class);
-                    if (annotation == null) {
-                        return false;
-                    }
-                    return annotation.name().equalsIgnoreCase(event.getName().substring(event.getName().indexOf("-") + 1));
-
-                }
-        ).findFirst();
-        if (first.isPresent()) {
-            Method method = first.get();
-            Parameter[] parameters = method.getParameters();
-            Object[] objects = new Object[parameters.length];
-            try {
-                for (int i = 0; i < parameters.length; i++) {
-                    Parameter parameter = parameters[i];
-                    OpenResource parameterAnnotation = parameter.getAnnotation(OpenResource.class);
-                    if (parameterAnnotation == null) {
-                        continue;
-                    }
-                    OptionMapping option = event.getOption(parameterAnnotation.name().toLowerCase());
-                    if (option == null) {
-                        continue;
-                    }
-                    Class<?> type = parameter.getType();
-                    if (type.equals(int.class) || type.equals(Integer.class)) {
-                        objects[i] = option.getAsInt();
-                    } else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
-                        objects[i] = option.getAsBoolean();
-                    } else {
-                        objects[i] = option.getAsString();
-                    }
-                }
-                Object invoke = method.invoke(botWebApi, objects);
-                if (invoke instanceof ResponseEntity) {
-                    //noinspection unchecked
-                    ResponseEntity<byte[]> response = (ResponseEntity<byte[]>) invoke;
-                    FileUpload fileUpload = FileUpload.fromData(Objects.requireNonNull(response.getBody()), event.getName() + ".png");
-                    event.getHook().sendFiles(fileUpload).queue();
-
-                } else if (invoke instanceof String str) {
-                    event.getHook().sendMessage(str).queue();
-                }
-            } catch (Exception e) {
-                log.error("处理命令时发生了异常", e);
-                Throwable throwable;
-                if (e.getCause() != null) {
-                    throwable = e.getCause();
-                } else {
-                    throwable = e;
-                }
-                event.getHook().sendMessage("处理命令时发生了异常," + throwable.getMessage()).queue();
-            }
-
-        } else {
-            event.getHook().sendMessage("Can't find any handler to handle this command").queue();
+            annotation?.name?.equals(event.name.substring(event.name.indexOf("-") + 1), ignoreCase = true) ?: false
         }
+
+        if (first != null) {
+            val parameters = first.parameters
+            val objects = arrayOfNulls<Any>(parameters.size)
+            try {
+                for (i in parameters.indices) {
+                    val parameter = parameters[i]
+                    val parameterAnnotation =
+                        parameter.getAnnotation(OpenResource::class.java) ?: continue
+                    val option = event.getOption(parameterAnnotation.name.lowercase(Locale.getDefault())) ?: continue
+                    val type = parameter.type
+
+                    when (type) {
+                        Int::class.javaPrimitiveType, Int::class.java -> {
+                            objects[i] = option.asInt
+                        }
+                        Boolean::class.java, Boolean::class.javaPrimitiveType -> {
+                            objects[i] = option.asBoolean
+                        }
+                        else -> {
+                            objects[i] = option.asString
+                        }
+                    }
+                }
+                val invoke = first.invoke(botWebApi, *objects)
+                if (invoke is ResponseEntity<*>) {
+                    val response = invoke as ResponseEntity<ByteArray>
+                    val fileUpload = FileUpload.fromData(response.body!!, event.name + ".png")
+                    event.hook.sendFiles(fileUpload).queue()
+                } else if (invoke is String) {
+                    event.hook.sendMessage(invoke).queue()
+                }
+            } catch (e: Exception) {
+                log.error("处理命令时发生了异常", e)
+                val throwable = if (e.cause != null) {
+                    e.cause
+                } else {
+                    e
+                }
+                event.hook.sendMessage("处理命令时发生了异常," + throwable!!.message).queue()
+            }
+        } else {
+            event.hook.sendMessage("Can't find any handler to handle this command").queue()
+        }
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(DiscordListener::class.java)
     }
 }

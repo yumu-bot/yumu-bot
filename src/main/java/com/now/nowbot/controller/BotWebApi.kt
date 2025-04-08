@@ -1,66 +1,58 @@
-package com.now.nowbot.controller;
+package com.now.nowbot.controller
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
-import com.now.nowbot.aop.OpenResource;
-import com.now.nowbot.dao.OsuUserInfoDao;
-import com.now.nowbot.model.LazerMod;
-import com.now.nowbot.model.enums.OsuMod;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.json.BeatMap;
-import com.now.nowbot.model.json.BeatmapDifficultyAttributes;
-import com.now.nowbot.model.json.LazerScore;
-import com.now.nowbot.model.json.OsuUser;
-import com.now.nowbot.model.mappool.old.MapPoolDto;
-import com.now.nowbot.model.multiplayer.Match;
-import com.now.nowbot.model.multiplayer.MatchRating;
-import com.now.nowbot.model.ppminus.PPMinus;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.messageServiceImpl.*;
-import com.now.nowbot.service.osuApiService.*;
-import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.throwable.serviceException.*;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.QQMsgUtil;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.*;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.LoggerContext
+import com.now.nowbot.aop.OpenResource
+import com.now.nowbot.dao.OsuUserInfoDao
+import com.now.nowbot.entity.OsuUserInfoArchiveLite
+import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.enums.OsuMod
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.getMode
+import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.json.BeatmapDifficultyAttributes
+import com.now.nowbot.model.json.LazerScore
+import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.mappool.old.MapPoolDto
+import com.now.nowbot.model.multiplayer.Match
+import com.now.nowbot.model.multiplayer.MatchRating
+import com.now.nowbot.model.ppminus.PPMinus
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.messageServiceImpl.*
+import com.now.nowbot.service.osuApiService.*
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.serviceException.DiceException
+import com.now.nowbot.throwable.serviceException.MRAException
+import com.now.nowbot.throwable.serviceException.MapPoolException
+import com.now.nowbot.util.DataUtil.parseRange2Limit
+import com.now.nowbot.util.DataUtil.parseRange2Offset
+import com.now.nowbot.util.QQMsgUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.http.*
+import org.springframework.lang.NonNull
+import org.springframework.lang.Nullable
+import org.springframework.web.bind.annotation.*
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.nio.charset.StandardCharsets
+import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.util.*
+import kotlin.math.max
+import kotlin.math.min
 
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.regex.Pattern;
-import java.util.stream.IntStream;
-
-import static com.now.nowbot.service.messageServiceImpl.LoginService.LOGIN_USER_MAP;
-
-@RestController
-@ResponseBody
-@CrossOrigin({"http://localhost:5173", "https://siyuyuko.github.io", "https://a.yasunaori.be"})
-@RequestMapping(value = "/pub", method = RequestMethod.GET)
-public class BotWebApi {
-    private static final Logger log = LoggerFactory.getLogger(BotWebApi.class);
-    @Resource
-    OsuUserApiService       userApiService;
-    @Resource
-    OsuMatchApiService      matchApiService;
-    @Resource
-    OsuScoreApiService      scoreApiService;
-    @Resource
-    OsuBeatmapApiService    beatmapApiService;
-    @Resource
-    OsuCalculateApiService  calculateApiService;
-    @Resource
-    ImageService            imageService;
-    @Resource
-    OsuDiscussionApiService discussionApiService;
-    @Resource
-    OsuUserInfoDao          infoDao;
+@RestController @ResponseBody
+@CrossOrigin("http://localhost:5173", "https://siyuyuko.github.io", "https://a.yasunaori.be")
+@RequestMapping(value = ["/pub"], method = [RequestMethod.GET]) class BotWebApi(
+    private val userApiService: OsuUserApiService,
+    private val matchApiService: OsuMatchApiService,
+    private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService,
+    private val imageService: ImageService,
+    private val discussionApiService: OsuDiscussionApiService,
+    private val infoDao: OsuUserInfoDao
+) {
 
     /**
      * SN 图片接口 (SAN)
@@ -70,29 +62,33 @@ public class BotWebApi {
      * @param playMode 模式，可为空
      * @return image PPM 图片
      */
-    @GetMapping(value = "san")
-    @OpenResource(name = "sn", desp = "查询玩家的 SAN")
-    public ResponseEntity<byte[]> getSan(
-            @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam(value = "name") String name,
-            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode) {
+    @GetMapping(value = ["san"]) @OpenResource(name = "sn", desp = "查询玩家的 SAN") fun getSan(
+        @OpenResource(
+            name = "name", desp = "第一个玩家的名称", required = true
+        ) @RequestParam(value = "name") name: String,
+        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
+    ): ResponseEntity<ByteArray> {
+        val mode = getMode(playMode)
 
-        var mode = OsuMode.getMode(playMode);
-
-        OsuUser info;
-        List<LazerScore> bplist;
-        PPMinus ppm;
+        var info: OsuUser?
+        val bplist: List<LazerScore>
+        var ppm: PPMinus?
 
         try {
-            info = userApiService.getPlayerInfo(name.trim(), mode);
-            bplist = scoreApiService.getBestScores(info.getUserID(), mode, 0, 100);
-            ppm = PPMinus.getInstance(mode, info, bplist);
-        } catch (Exception e) {
-            info = null;
-            ppm = null;
+            info = userApiService.getPlayerInfo(name.trim(), mode)
+            bplist = scoreApiService.getBestScores(info.userID, mode)
+            ppm = PPMinus.getInstance(mode, info, bplist)
+        } catch (e: Exception) {
+            info = null
+            ppm = null
         }
 
-        var data = imageService.getPanelGamma(info, mode, ppm);
-        return new ResponseEntity<>(data, getImageHeader(STR."\{name.trim()}-sn.jpg", data.length), HttpStatus.OK);
+        val data = imageService.getPanelGamma(info, mode, ppm)
+        return ResponseEntity(
+            data, getImageHeader(
+                "${name.trim()}-sn.jpg", data.size
+            ), HttpStatus.OK
+        )
     }
 
     /**
@@ -103,68 +99,70 @@ public class BotWebApi {
      * @param playMode 模式，可为空
      * @return image PPM 图片
      */
-    @GetMapping(value = "ppm")
-    @OpenResource(name = "pm", desp = "查询玩家的 PPM")
-    public ResponseEntity<byte[]> getPPM(
-            @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam(value = "name", required = false) String name,
-            @OpenResource(name = "name2", desp = "第二个玩家的名称") @Nullable @RequestParam("name2") String name2,
-            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
-            @RequestParam(value = "u1", required = false) String u1) {
-
-        if (Objects.nonNull(name2)) {
-            return getPPMVS(name, name2, playMode);
+    @GetMapping(value = ["ppm"]) @OpenResource(name = "pm", desp = "查询玩家的 PPM") fun getPPMinus(
+        @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam(
+            value = "name", required = true
+        ) name: String,
+        @OpenResource(name = "name2", desp = "第二个玩家的名称") @Nullable @RequestParam("name2") name2: String?,
+        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @RequestParam(value = "u1", required = false) u1: String
+    ): ResponseEntity<ByteArray> {
+        if (name2.isNullOrBlank().not()) {
+            return getPPMinusVS(name, name2!!, playMode)
         }
 
-        if (Objects.isNull(name) && Objects.isNull(u1)) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } else if (Objects.isNull(name)) name = u1;
+        val mode = getMode(playMode)
 
-        var mode = OsuMode.getMode(playMode);
-
-        var info = userApiService.getPlayerInfo(name.trim(), mode);
-        var bplist = scoreApiService.getBestScores(info.getUserID(), mode, 0, 100);
-        var ppm = PPMinus.getInstance(mode, info, bplist);
+        val info = userApiService.getPlayerInfo(name.trim(), mode)
+        val bplist = scoreApiService.getBestScores(info.userID, mode)
+        val ppm = PPMinus.getInstance(mode, info, bplist)
         if (ppm == null) {
-            throw new RuntimeException("PPM：API 异常");
+            throw RuntimeException("PPM：API 异常")
         } else {
-            var data = imageService.getPanelB1(info, mode, ppm);
-            return new ResponseEntity<>(data, getImageHeader(STR."\{name.trim()}-pm.jpg", data.length), HttpStatus.OK);
+            val data = imageService.getPanelB1(info, mode, ppm)
+            return ResponseEntity(
+                data, getImageHeader(
+                    "${name.trim()}-pm.jpg", data.size
+                ), HttpStatus.OK
+            )
         }
     }
 
     /**
-     * PV 图片接口 (PPMVS)
+     * PV 图片接口 (PV)
      *
      * @param name     玩家名称
      * @param name2    第二个玩家名称，必填
      * @param playMode 模式，可为空
      * @return image PPM 图片
      */
-    @GetMapping(value = "ppm/vs")
-    @OpenResource(name = "pv", desp = "比较玩家的 PPM")
-    public ResponseEntity<byte[]> getPPMVS(
-            @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam("name") String name,
-            @OpenResource(name = "name2", desp = "第二个玩家的名称", required = true) @RequestParam("name2") String name2,
-            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode) {
+    @GetMapping(value = ["ppm/vs"]) @OpenResource(name = "pv", desp = "比较玩家的 PPM") fun getPPMinusVS(
+        @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam("name") name: String,
+        @OpenResource(name = "name2", desp = "第二个玩家的名称", required = true) @RequestParam("name2") name2: String,
+        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
+    ): ResponseEntity<ByteArray> {
+        var mode = getMode(playMode)
 
-        var mode = OsuMode.getMode(playMode);
+        val user1 = userApiService.getPlayerInfo(name.trim(), mode)
+        val user2 = userApiService.getPlayerInfo(name2.trim(), mode)
 
-        var user1 = userApiService.getPlayerInfo(name.trim(), mode);
-        var user2 = userApiService.getPlayerInfo(name2.trim(), mode);
+        mode = getMode(playMode, user1.currentOsuMode)
 
-        mode = OsuMode.getMode(playMode, user1.getCurrentOsuMode());
+        val bplist1 = scoreApiService.getBestScores(user1.userID, mode)
+        val bplist2 = scoreApiService.getBestScores(user2.userID, mode)
 
-        var bplist1 = scoreApiService.getBestScores(user1.getUserID(), mode, 0, 100);
-        var bplist2 = scoreApiService.getBestScores(user2.getUserID(), mode, 0, 100);
-
-        var ppm1 = PPMinus.getInstance(mode, user1, bplist1);
-        var ppm2 = PPMinus.getInstance(mode, user2, bplist2);
+        val ppm1 = PPMinus.getInstance(mode, user1, bplist1)
+        val ppm2 = PPMinus.getInstance(mode, user2, bplist2)
 
         if (ppm1 == null || ppm2 == null) {
-            throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PPM").getMessage());
+            throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PPM").message)
         } else {
-            var data = imageService.getPanelB1(user1, user2, ppm1, ppm2, mode);
-            return new ResponseEntity<>(data, getImageHeader(STR."\{name.trim()} vs \{name2.trim()}-pv.jpg", data.length), HttpStatus.OK);
+            val data = imageService.getPanelB1(user1, user2, ppm1, ppm2, mode)
+            return ResponseEntity(
+                data, getImageHeader(
+                    "${name.trim()} vs ${name2.trim()}-pv.jpg", data.size
+                ), HttpStatus.OK
+            )
         }
     }
 
@@ -178,41 +176,45 @@ public class BotWebApi {
      * @param r       是否保留重复对局，不传默认保留
      * @return image 比赛结果图片
      */
-    @GetMapping(value = "match/now")
-    @OpenResource(name = "mn", desp = "查询比赛结果")
-    public ResponseEntity<byte[]> getMatchNow(
-            @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchID,
-            @OpenResource(name = "easy-multiplier", desp = "Easy 模组倍率") @Nullable Double e,
-            @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
-            @OpenResource(name = "ignore", desp = "忽略结尾") @Nullable Integer d,
-            @OpenResource(name = "delete-low", desp = "删除低分成绩") @Nullable Boolean f,
-            @OpenResource(name = "keep-rematch", desp = "保留重复对局") @Nullable Boolean r) throws RuntimeException {
-        if (k == null) k = 0;
-        if (d == null) d = 0;
-        if (e == null) e = 1d;
-        if (f == null) f = true;
-        if (r == null) r = true;
-        byte[] image;
-
-        Match match;
+    @GetMapping(value = ["match/now"]) @OpenResource(name = "mn", desp = "查询比赛结果")
+    @Throws(RuntimeException::class) fun getMatchNow(
+        @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") matchID: Int,
+        @OpenResource(name = "easy-multiplier", desp = "Easy 模组倍率") @Nullable e: Double?,
+        @OpenResource(name = "skip", desp = "跳过开头") @Nullable k: Int?,
+        @OpenResource(name = "ignore", desp = "忽略结尾") @Nullable d: Int?,
+        @OpenResource(name = "delete-low", desp = "删除低分成绩") @Nullable f: Boolean?,
+        @OpenResource(name = "keep-rematch", desp = "保留重复对局") @Nullable r: Boolean?
+    ): ResponseEntity<ByteArray> {
+        val image: ByteArray
+        val match: Match
 
         try {
-            match = matchApiService.getMatchInfo(matchID, 10);
-        } catch (WebClientResponseException ex) {
-            throw new RuntimeException(GeneralTipsException.Type.G_Null_MatchID.getMessage());
+            match = matchApiService.getMatchInfo(matchID.toLong(), 10)
+        } catch (ex: WebClientResponseException) {
+            throw RuntimeException(GeneralTipsException.Type.G_Null_MatchID.message)
         }
 
         try {
-            var data = MatchNowService.calculate(
-                    new MuRatingService.MuRatingPanelParam(match, new MatchRating.RatingParam(k, d, null, e, f, r), false),
-                    beatmapApiService, calculateApiService);
-            image = imageService.getPanel(data, "F");
-        } catch (Exception err) {
-            log.error("比赛结果：API 异常", err);
-            throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "比赛结果").getMessage());
+            val data = MatchNowService.calculate(
+                MuRatingService.MuRatingPanelParam(
+                    match, MatchRating.RatingParam(k ?: 0, d ?: 0, null, e ?: 1.0, f ?: true, r ?: true), false
+                ), beatmapApiService, calculateApiService
+            )
+            image = imageService.getPanel(data, "F")
+        } catch (err: Exception) {
+            log.error("比赛结果：API 异常", err)
+            throw RuntimeException(
+                GeneralTipsException(
+                    GeneralTipsException.Type.G_Malfunction_Render, "比赛结果"
+                ).message
+            )
         }
 
-        return new ResponseEntity<>(image, getImageHeader(STR."\{matchID}-match.jpg", image.length), HttpStatus.OK);
+        return ResponseEntity(
+            image, getImageHeader(
+                "${matchID}-match.jpg", image.size
+            ), HttpStatus.OK
+        )
     }
 
     /**
@@ -225,42 +227,40 @@ public class BotWebApi {
      * @param r       是否保留重复对局，不传默认保留
      * @return image 评分图片
      */
-    @GetMapping(value = "match/rating")
-    @OpenResource(name = "ra", desp = "查询比赛评分")
-    public ResponseEntity<byte[]> getRating(
-            @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") int matchID,
-            @OpenResource(name = "easy-multiplier", desp = "Easy 模组倍率") @Nullable Double e,
-            @OpenResource(name = "skip", desp = "跳过开头") @Nullable Integer k,
-            @OpenResource(name = "ignore", desp = "忽略结尾") @Nullable Integer d,
-            @OpenResource(name = "delete-low", desp = "删除低分成绩") @Nullable Boolean f,
-            @OpenResource(name = "keep-rematch", desp = "保留重复对局") @Nullable Boolean r
-    ) {
-        if (k == null) k = 0;
-        if (d == null) d = 0;
-        if (e == null) e = 1d;
-        if (f == null) f = true;
-        if (r == null) r = true;
-        byte[] image;
-
-        Match match;
+    @GetMapping(value = ["match/rating"]) @OpenResource(name = "ra", desp = "查询比赛评分") fun getRating(
+        @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") matchID: Int,
+        @OpenResource(name = "easy-multiplier", desp = "Easy 模组倍率") @Nullable e: Double?,
+        @OpenResource(name = "skip", desp = "跳过开头") @Nullable k: Int?,
+        @OpenResource(name = "ignore", desp = "忽略结尾") @Nullable d: Int?,
+        @OpenResource(name = "delete-low", desp = "删除低分成绩") @Nullable f: Boolean?,
+        @OpenResource(name = "keep-rematch", desp = "保留重复对局") @Nullable r: Boolean?
+    ): ResponseEntity<ByteArray> {
+        val image: ByteArray
+        val match: Match
 
         try {
-            match = matchApiService.getMatchInfo(matchID, 10);
-        } catch (WebClientResponseException ex) {
-            throw new RuntimeException(GeneralTipsException.Type.G_Null_MatchID.getMessage());
+            match = matchApiService.getMatchInfo(matchID.toLong(), 10)
+        } catch (ex: WebClientResponseException) {
+            throw RuntimeException(GeneralTipsException.Type.G_Null_MatchID.message)
         }
 
         try {
-            var c = MuRatingService.calculate(
-                    new MuRatingService.MuRatingPanelParam(match, new MatchRating.RatingParam(k, d, null, e, f, r), false),
-                    beatmapApiService, calculateApiService);
-            image = imageService.getPanel(c, "C");
-        } catch (Exception err) {
-            log.error("比赛评分：API 异常", err);
-            throw new RuntimeException(MRAException.Type.RATING_Send_MRAFailed.message);
+            val c = MuRatingService.calculate(
+                MuRatingService.MuRatingPanelParam(
+                    match, MatchRating.RatingParam(k ?: 0, d ?: 0, null, e ?: 1.0, f ?: true, r ?: true), false
+                ), beatmapApiService, calculateApiService
+            )
+            image = imageService.getPanel(c, "C")
+        } catch (err: Exception) {
+            log.error("比赛评分：API 异常", err)
+            throw RuntimeException(MRAException.Type.RATING_Send_MRAFailed.message)
         }
 
-        return new ResponseEntity<>(image, getImageHeader(STR."\{matchID}-mra.jpg", image.length), HttpStatus.OK);
+        return ResponseEntity(
+            image, getImageHeader(
+                "${matchID}-mra.jpg", image.size
+            ), HttpStatus.OK
+        )
     }
 
     /**
@@ -270,28 +270,26 @@ public class BotWebApi {
      * @param dataMap 需要传进来的图池请求体。结构是 {"HD": [114514, 1919810]} 组成的 Map
      * @return image 生成图池图片
      */
-    @PostMapping(value = "match/getpool")
-    public ResponseEntity<byte[]> getPool(
-            @RequestParam("name") @Nullable String name,
-            @RequestParam("mode") @Nullable String modeStr,
-            @RequestBody Map<String, List<Long>> dataMap
-    ) throws RuntimeException {
-        var mapPool = new MapPoolDto(name, dataMap, beatmapApiService);
-        if (mapPool.getModPools().isEmpty()) throw new RuntimeException(MapPoolException.Type.GP_Map_Empty.message);
+    @PostMapping(value = ["match/getpool"]) @Throws(RuntimeException::class) fun getPool(
+        @RequestParam("name") @Nullable name: String?,
+        @RequestParam("mode") @Nullable modeStr: String?,
+        @RequestBody dataMap: Map<String?, List<Long?>?>?
+    ): ResponseEntity<ByteArray> {
+        val mapPool = MapPoolDto(name, dataMap, beatmapApiService)
+        if (mapPool.modPools.isEmpty()) throw RuntimeException(MapPoolException.Type.GP_Map_Empty.message)
 
-        var mode = OsuMode.getMode(modeStr);
+        val mode = getMode(modeStr)
 
-        var image = imageService.getPanelH(mapPool, mode);
-        return new ResponseEntity<>(image, getImageHeader(STR."\{mapPool.getName()}-pool.jpg", image.length), HttpStatus.OK);
+        val image = imageService.getPanelH(mapPool, mode)
+        return ResponseEntity(
+            image, getImageHeader(
+                "${mapPool.name}-pool.jpg", image.size
+            ), HttpStatus.OK
+        )
     }
 
-    public enum scoreType {
-        TodayBP,
-        BP,
-        Pass,
-        Recent,
-        PassCard,
-        RecentCard,
+    enum class ScoreType {
+        TodayBP, BP, Pass, Recent, PassCard, RecentCard,
     }
 
     /**
@@ -304,174 +302,175 @@ public class BotWebApi {
      * @param end      !bp 45-55 里的 55
      * @return image 成绩图片
      */
-    public ResponseEntity<byte[]> getScore(
-            @RequestParam("name") String name,
-            @Nullable @RequestParam("mode") String playMode,
-            @Nullable @RequestParam("type") scoreType type,
-            @Nullable @RequestParam("start") Integer start,
-            @Nullable @RequestParam("end") Integer end
-    ) {
-        var mode = OsuMode.getMode(playMode);
-        name = name.trim();
+    fun getScore(
+        @RequestParam("name") name: String,
+        @Nullable @RequestParam("mode") playMode: String?,
+        @Nullable @RequestParam("type") type: ScoreType,
+        @Nullable @RequestParam("start") start: Int?,
+        @Nullable @RequestParam("end") end: Int?
+    ): ResponseEntity<ByteArray> {
+        val mode = getMode(playMode)
 
-        var osuUser = userApiService.getPlayerInfo(name, mode);
-        List<LazerScore> scores;
+        val osuUser = userApiService.getPlayerInfo(name.trim(), mode)
+        val scores: List<LazerScore>
 
-        int offset = DataUtil.parseRange2Offset(start, end);
-        int limit = DataUtil.parseRange2Limit(start, end);
+        val offset = parseRange2Offset(start, end)
+        val limit = parseRange2Limit(start, end)
 
-        boolean isMultipleScore = (limit > 1);
+        val isMultipleScore = (limit > 1)
 
         //渲染面板
-        byte[] data;
-        String suffix;
+        val data: ByteArray
+        val suffix: String
 
-        switch (type) {
-            // bp
-            case BP -> {
-                scores = scoreApiService.getBestScores(osuUser.getUserID(), mode, offset, limit);
+        when (type) {
+            ScoreType.BP -> {
+                scores = scoreApiService.getBestScores(osuUser.userID, mode, offset, limit)
 
-                ArrayList<Integer> ranks = new ArrayList<>();
-                for (int i = offset; i <= (offset + limit); i++) ranks.add(i + 1);
+                val ranks = ArrayList<Int>()
+                for (i in offset..(offset + limit)) ranks.add(i + 1)
 
                 if (isMultipleScore) {
-                    calculateApiService.applyBeatMapChanges(scores);
-                    calculateApiService.applyStarToScores(scores);
+                    calculateApiService.applyBeatMapChanges(scores)
+                    calculateApiService.applyStarToScores(scores)
 
-                    data = imageService.getPanel(Map.of(
-                            "user", osuUser,
-                            "scores", scores,
-                            "rank", ranks,
-                            "panel", "BS"
-                    ), "A4");
-                    suffix = "-bps.jpg";
+                    data = imageService.getPanel(
+                        mapOf(
+                            "user" to osuUser, "scores" to scores, "rank" to ranks, "panel" to "BS"
+                        ), "A4"
+                    )
+                    suffix = "-bps.jpg"
                 } else {
                     try {
-                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), "B", beatmapApiService, calculateApiService);
-                        data = imageService.getPanel(e5Param.toMap(), "E5");
-                    } catch (Exception e) {
-                        throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩"));
+                        val e5Param = ScorePRService.getScore4PanelE5(
+                            osuUser, scores.first(), "B", beatmapApiService, calculateApiService
+                        )
+                        data = imageService.getPanel(e5Param.toMap(), "E5")
+                    } catch (e: Exception) {
+                        throw RuntimeException(
+                            GeneralTipsException(
+                                GeneralTipsException.Type.G_Malfunction_Render, "最好成绩"
+                            )
+                        )
                     }
-                    suffix = "-bp.jpg";
+                    suffix = "-bp.jpg"
                 }
             }
-            // pass
-            case Pass -> {
-                scores = scoreApiService.getPassedScore(osuUser.getUserID(), mode, offset, limit);
 
-                calculateApiService.applyBeatMapChanges(scores);
-                calculateApiService.applyStarToScores(scores);
+            ScoreType.Pass -> {
+                scores = scoreApiService.getPassedScore(osuUser.userID, mode, offset, limit)
 
-                var ranks = IntStream.range(offset + 1, scores.size());
+                calculateApiService.applyBeatMapChanges(scores)
+                calculateApiService.applyStarToScores(scores)
+
+                val ranks = ((offset + 1)..scores.size).toList()
 
                 if (isMultipleScore) {
                     data = imageService.getPanel(
-                            Map.of("user", osuUser,
-                                   "score", scores,
-                                   "rank", ranks,
-                                   "panel", "PS")
-                            , "A5"
-                    );
+                        mapOf(
+                            "user" to osuUser, "score" to scores, "rank" to ranks, "panel" to "PS"
+                        ), "A5"
+                    )
 
-                    suffix = "-passes.jpg";
+                    suffix = "-passes.jpg"
                 } else {
                     try {
-                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), "P", beatmapApiService, calculateApiService);
-                        data = imageService.getPanel(e5Param.toMap(), "E5");
-                    } catch (Exception e) {
-                        throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "通过成绩"));
+                        val e5Param = ScorePRService.getScore4PanelE5(
+                            osuUser, scores.first(), "P", beatmapApiService, calculateApiService
+                        )
+                        data = imageService.getPanel(e5Param.toMap(), "E5")
+                    } catch (e: Exception) {
+                        throw RuntimeException(
+                            GeneralTipsException(
+                                GeneralTipsException.Type.G_Malfunction_Render, "通过成绩"
+                            )
+                        )
                     }
-                    suffix = "-pass.jpg";
+                    suffix = "-pass.jpg"
                 }
             }
 
-            //recent
-            case Recent -> {
-                scores = scoreApiService.getPassedScore(osuUser.getUserID(), mode, offset, limit);
+            ScoreType.Recent -> {
+                scores = scoreApiService.getPassedScore(osuUser.userID, mode, offset, limit)
 
-                calculateApiService.applyBeatMapChanges(scores);
-                calculateApiService.applyStarToScores(scores);
+                calculateApiService.applyBeatMapChanges(scores)
+                calculateApiService.applyStarToScores(scores)
 
                 if (isMultipleScore) {
-                    var ranks = IntStream.range(offset + 1, scores.size());
+                    val ranks = ((offset + 1)..scores.size).toList()
 
                     data = imageService.getPanel(
-                            Map.of("user", osuUser,
-                                   "score", scores,
-                                   "rank", ranks,
-                                   "panel", "RS")
-                            , "A5"
-                    );
+                        mapOf(
+                            "user" to osuUser, "score" to scores, "rank" to ranks, "panel" to "RS"
+                        ), "A5"
+                    )
 
-                    suffix = "-recents.jpg";
+                    suffix = "-recents.jpg"
                 } else {
                     try {
-                        var e5Param = ScorePRService.getScore4PanelE5(osuUser, scores.getFirst(), "R", beatmapApiService, calculateApiService);
-                        data = imageService.getPanel(e5Param.toMap(), "E5");
-                    } catch (Exception e) {
-                        throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最近成绩"));
+                        val e5Param = ScorePRService.getScore4PanelE5(
+                            osuUser, scores.first(), "R", beatmapApiService, calculateApiService
+                        )
+                        data = imageService.getPanel(e5Param.toMap(), "E5")
+                    } catch (e: Exception) {
+                        throw RuntimeException(
+                            GeneralTipsException(
+                                GeneralTipsException.Type.G_Malfunction_Render, "最近成绩"
+                            )
+                        )
                     }
-                    suffix = "-recent.jpg";
+                    suffix = "-recent.jpg"
                 }
             }
 
-            //passCard
-            case PassCard -> {
-                scores = scoreApiService.getScore(osuUser.getUserID(), mode, offset, 1, true);
-                var score = scores.getFirst();
+            ScoreType.PassCard -> {
+                scores = scoreApiService.getScore(osuUser.userID, mode, offset, 1, true)
+                val score: LazerScore = scores.first()
 
-                calculateApiService.applyBeatMapChanges(scores);
-                calculateApiService.applyStarToScores(scores);
+                calculateApiService.applyBeatMapChanges(scores)
+                calculateApiService.applyStarToScores(scores)
 
-                data = imageService.getPanelGamma(score);
-                suffix = "-pass_card.jpg";
+                data = imageService.getPanelGamma(score)
+                suffix = "-pass_card.jpg"
             }
 
-            //recentCard
-            case RecentCard -> {
-                scores = scoreApiService.getScore(osuUser.getUserID(), mode, offset, 1, false);
-                var score = scores.getFirst();
+            ScoreType.RecentCard -> {
+                scores = scoreApiService.getScore(osuUser.userID, mode, offset, 1, false)
+                val score: LazerScore = scores.first()
 
-                calculateApiService.applyBeatMapChanges(scores);
-                calculateApiService.applyStarToScores(scores);
+                calculateApiService.applyBeatMapChanges(scores)
+                calculateApiService.applyStarToScores(scores)
 
-                data = imageService.getPanelGamma(score);
-                suffix = "-recent_card.jpg";
+                data = imageService.getPanelGamma(score)
+                suffix = "-recent_card.jpg"
             }
 
-            // todaybp
-            case null, default -> {
-                // 时间计算
-                var day = Math.max(Math.min(Optional.ofNullable(start).orElse(1), 999), 1);
-                var bps = scoreApiService.getBestScores(osuUser.getUserID(), mode, 0, 100);
-                ArrayList<Integer> ranks = new ArrayList<>();
+            else -> { // 时间计算
+                val day = max(min((start ?: 1), 999), 1)
+                val dayBefore = OffsetDateTime.now().minusDays(day.toLong())
 
-                java.time.OffsetDateTime dayBefore = java.time.OffsetDateTime.now().minusDays(day);
+                val bests =
+                    scoreApiService.getBestScores(osuUser.userID, mode).mapIndexed { i, it -> i + 1 to it }.toMap()
+                        .filter { dayBefore.isBefore(it.value.endedTime) }
 
                 //scoreList = BPList.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
-                scores = new ArrayList<>();
-                for (int i = 0; i < bps.size(); i++) {
-                    var s = bps.get(i);
-                    if (dayBefore.isBefore(s.getEndedTime())) {
-                        scores.add(s);
-                        ranks.add(i + 1);
-                    }
-                }
 
-                calculateApiService.applyBeatMapChanges(scores);
-                calculateApiService.applyStarToScores(scores);
+                val ranks = bests.map { it.key }
+                scores = bests.map { it.value }
 
-                data = imageService.getPanel(Map.of(
-                        "user", osuUser,
-                        "scores", scores,
-                        "rank", ranks,
-                        "panel", "T"
-                ), "A4");
-                suffix = "-todaybp.jpg";
+                calculateApiService.applyBeatMapChanges(scores)
+                calculateApiService.applyStarToScores(scores)
+
+                data = imageService.getPanel(
+                    mapOf(
+                        "user" to osuUser, "scores" to scores, "rank" to ranks, "panel" to "T"
+                    ), "A4"
+                )
+                suffix = "-todaybp.jpg"
             }
         }
 
-        return new ResponseEntity<>(data, getImageHeader(name + suffix, data.length), HttpStatus.OK);
+        return ResponseEntity(data, getImageHeader(name + suffix, data.size), HttpStatus.OK)
     }
 
     /**
@@ -482,25 +481,21 @@ public class BotWebApi {
      * @param day      天数，不传默认一天内
      * @return image 今日最好成绩图片
      */
-    @GetMapping(value = "bp/today")
-    @OpenResource(name = "t", desp = "查询今日最好成绩")
-    public ResponseEntity<byte[]> getTodayBP(
-            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
-            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
-            @OpenResource(name = "day", desp = "天数") @Nullable @RequestParam("day") Integer day
-    ) {
-        return getScore(name, playMode, scoreType.TodayBP, day, null);
+    @GetMapping(value = ["bp/today"]) @OpenResource(name = "t", desp = "查询今日最好成绩") fun getTodayBP(
+        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
+        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @OpenResource(name = "day", desp = "天数") @Nullable @RequestParam("day") day: Int?
+    ): ResponseEntity<ByteArray> {
+        return getScore(name, playMode, ScoreType.TodayBP, day, null)
     }
 
-    @GetMapping(value = "bp/scores")
-    @OpenResource(name = "bs", desp = "查询多个最好成绩")
-    public ResponseEntity<byte[]> getBPScores(
-            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
-            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
-            @OpenResource(name = "start", desp = "开始位置") @Nullable @RequestParam("start") Integer start,
-            @OpenResource(name = "end", desp = "结束位置") @Nullable @RequestParam("end") Integer end
-    ) {
-        return getScore(name, playMode, scoreType.BP, start, end);
+    @GetMapping(value = ["bp/scores"]) @OpenResource(name = "bs", desp = "查询多个最好成绩") fun getBPScores(
+        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
+        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @OpenResource(name = "start", desp = "开始位置") @Nullable @RequestParam("start") start: Int?,
+        @OpenResource(name = "end", desp = "结束位置") @Nullable @RequestParam("end") end: Int?
+    ): ResponseEntity<ByteArray> {
+        return getScore(name, playMode, ScoreType.BP, start, end)
     }
 
     /**
@@ -512,15 +507,13 @@ public class BotWebApi {
      * @param end      结束位置，不传默认等于开始位置
      * @return image 多个最近通过成绩图片
      */
-    @GetMapping(value = "score/passes")
-    @OpenResource(name = "ps", desp = "查询多个最近通过成绩")
-    public ResponseEntity<byte[]> getPassedScores(
-            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
-            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
-            @OpenResource(name = "start", desp = "开始位置") @Nullable @RequestParam("start") Integer start,
-            @OpenResource(name = "end", desp = "结束位置") @Nullable @RequestParam("end") Integer end
-    ) {
-        return getScore(name, playMode, scoreType.Pass, start, end);
+    @GetMapping(value = ["score/passes"]) @OpenResource(name = "ps", desp = "查询多个最近通过成绩") fun getPassedScores(
+        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
+        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @OpenResource(name = "start", desp = "开始位置") @Nullable @RequestParam("start") start: Int?,
+        @OpenResource(name = "end", desp = "结束位置") @Nullable @RequestParam("end") end: Int?
+    ): ResponseEntity<ByteArray> {
+        return getScore(name, playMode, ScoreType.Pass, start, end)
     }
 
     /**
@@ -532,15 +525,13 @@ public class BotWebApi {
      * @param end      结束位置，不传默认等于开始位置
      * @return image 多个最近成绩图片
      */
-    @GetMapping(value = "score/recents")
-    @OpenResource(name = "rs", desp = "查询多个最近成绩")
-    public ResponseEntity<byte[]> getRecentScores(
-            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
-            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
-            @OpenResource(name = "start", desp = "开始位置") @Nullable @RequestParam("start") Integer start,
-            @OpenResource(name = "end", desp = "结束位置") @Nullable @RequestParam("end") Integer end
-    ) {
-        return getScore(name, playMode, scoreType.Recent, start, end);
+    @GetMapping(value = ["score/recents"]) @OpenResource(name = "rs", desp = "查询多个最近成绩") fun getRecentScores(
+        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
+        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @OpenResource(name = "start", desp = "开始位置") @Nullable @RequestParam("start") start: Int?,
+        @OpenResource(name = "end", desp = "结束位置") @Nullable @RequestParam("end") end: Int?
+    ): ResponseEntity<ByteArray> {
+        return getScore(name, playMode, ScoreType.Recent, start, end)
     }
 
     /**
@@ -551,14 +542,12 @@ public class BotWebApi {
      * @param start    开始位置，不传默认 1
      * @return image 最好成绩图片
      */
-    @GetMapping(value = "bp")
-    @OpenResource(name = "b", desp = "查询最好成绩")
-    public ResponseEntity<byte[]> getBPScore(
-            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
-            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
-            @OpenResource(name = "start", desp = "位置") @Nullable @RequestParam("start") Integer start
-    ) {
-        return getScore(name, playMode, scoreType.BP, start, null);
+    @GetMapping(value = ["bp"]) @OpenResource(name = "b", desp = "查询最好成绩") fun getBPScore(
+        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
+        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @OpenResource(name = "start", desp = "位置") @Nullable @RequestParam("start") start: Int?
+    ): ResponseEntity<ByteArray> {
+        return getScore(name, playMode, ScoreType.BP, start, null)
     }
 
     /**
@@ -569,14 +558,12 @@ public class BotWebApi {
      * @param start    开始位置，不传默认 1
      * @return image 最近通过成绩图片
      */
-    @GetMapping(value = "score/pass")
-    @OpenResource(name = "p", desp = "查询最近通过成绩")
-    public ResponseEntity<byte[]> getPassedScore(
-            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
-            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
-            @OpenResource(name = "start", desp = "位置") @Nullable @RequestParam("start") Integer start
-    ) {
-        return getScore(name, playMode, scoreType.Pass, start, null);
+    @GetMapping(value = ["score/pass"]) @OpenResource(name = "p", desp = "查询最近通过成绩") fun getPassedScore(
+        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
+        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @OpenResource(name = "start", desp = "位置") @Nullable @RequestParam("start") start: Int?
+    ): ResponseEntity<ByteArray> {
+        return getScore(name, playMode, ScoreType.Pass, start, null)
     }
 
     /**
@@ -587,14 +574,12 @@ public class BotWebApi {
      * @param start    开始位置，不传默认 1
      * @return image 最近成绩图片
      */
-    @GetMapping(value = "score/recent")
-    @OpenResource(name = "r", desp = "查询最近成绩")
-    public ResponseEntity<byte[]> getRecentScore(
-            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
-            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
-            @OpenResource(name = "start", desp = "位置") @Nullable @RequestParam("start") Integer start
-    ) {
-        return getScore(name, playMode, scoreType.Recent, start, null);
+    @GetMapping(value = ["score/recent"]) @OpenResource(name = "r", desp = "查询最近成绩") fun getRecentScore(
+        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
+        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @OpenResource(name = "start", desp = "位置") @Nullable @RequestParam("start") start: Int?
+    ): ResponseEntity<ByteArray> {
+        return getScore(name, playMode, ScoreType.Recent, start, null)
     }
 
     /**
@@ -606,60 +591,67 @@ public class BotWebApi {
      * @param mods     模组字符串，可为空
      * @return image 谱面成绩图片
      */
-    @GetMapping(value = "score")
-    @OpenResource(name = "s", desp = "查询玩家谱面成绩")
-    public ResponseEntity<byte[]> getBeatMapScore(
-            @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") String name,
-            @OpenResource(name = "bid", desp = "谱面编号", required = true) @RequestParam("bid") Long bid,
-            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode,
-            @OpenResource(name = "mods", desp = "模组") @Nullable @RequestParam("mods") String mods
-    ) {
-        OsuUser osuUser;
+    @GetMapping(value = ["score"]) @OpenResource(name = "s", desp = "查询玩家谱面成绩") fun getBeatMapScore(
+        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String?,
+        @OpenResource(name = "bid", desp = "谱面编号", required = true) @RequestParam("bid") bid: Long,
+        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @OpenResource(name = "mods", desp = "模组") @Nullable @RequestParam("mods") mods: String?
+    ): ResponseEntity<ByteArray> {
+        val osuUser: OsuUser
 
-        OsuMode mode = OsuMode.getMode(playMode);
-        long uid;
-        int modInt = 0;
-        if (Objects.nonNull(mods)) modInt = OsuMod.getModsValue(mods);
-
-        List<LazerScore> scoreList;
-        LazerScore score = null;
-
-        try {
-            osuUser = userApiService.getPlayerInfo(name);
-            uid = osuUser.getUserID();
-        } catch (WebClientResponseException.NotFound e) {
-            throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name));
+        val mode = getMode(playMode)
+        val uid: Long
+        val modInt = if (mods.isNullOrBlank()) {
+            LazerMod.getModsValue(mods)
+        } else {
+            0
         }
 
-        if (Objects.isNull(mods)) {
-            score = Objects.requireNonNull(scoreApiService.getBeatMapScore(bid, uid, mode)).score;
+        val scoreList: List<LazerScore>
+        var score: LazerScore? = null
+
+        try {
+            osuUser = userApiService.getPlayerInfo(name)
+            uid = osuUser.userID
+        } catch (e: WebClientResponseException.NotFound) {
+            throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name))
+        }
+
+        if (mods.isNullOrBlank()) {
+            score = scoreApiService.getBeatMapScore(bid, uid, mode)!!.score
         } else {
             try {
-                scoreList = scoreApiService.getBeatMapScores(bid, uid, mode);
-                for (var s : scoreList) {
-                    if (LazerMod.getModsValue(s.getMods()) == modInt) {
-                        score = s;
-                        break;
+                scoreList = scoreApiService.getBeatMapScores(bid, uid, mode)
+                for (s in scoreList) {
+                    if (LazerMod.getModsValue(s.mods) == modInt) {
+                        score = s
+                        break
                     }
                 }
-            } catch (WebClientResponseException.NotFound e) {
-                throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "成绩列表"));
+            } catch (e: WebClientResponseException.NotFound) {
+                throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "成绩列表"))
             }
         }
 
-        if (Objects.isNull(score)) {
-            throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Null_Score, bid.toString()));
+        if (score == null) {
+            throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Null_Score, bid.toString()))
         }
 
-        byte[] image;
+        val image: ByteArray
 
         try {
-            var e5Param = ScorePRService.getScore4PanelE5(osuUser, score, "S", beatmapApiService, calculateApiService);
-            image = imageService.getPanel(e5Param.toMap(), "E5");
-        } catch (Exception e) {
-            throw new RuntimeException(new GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "成绩列表"));
+            val e5Param = ScorePRService.getScore4PanelE5(
+                osuUser, score, "S", beatmapApiService, calculateApiService
+            )
+            image = imageService.getPanel(e5Param.toMap(), "E5")
+        } catch (e: Exception) {
+            throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "成绩列表"))
         }
-        return new ResponseEntity<>(image, getImageHeader(STR."\{name}@\{bid}-score.jpg", image.length), HttpStatus.OK);
+        return ResponseEntity(
+            image, getImageHeader(
+                "${name}@${bid}-score.jpg", image.size
+            ), HttpStatus.OK
+        )
     }
 
     /**
@@ -669,35 +661,37 @@ public class BotWebApi {
      * @param playMode 模式，可为空
      * @return image 最好成绩分析图片
      */
-    @GetMapping(value = "bp/analysis")
-    @OpenResource(name = "ba", desp = "最好成绩分析")
-    public ResponseEntity<byte[]> getBPAnalysis(
-            @OpenResource(name = "name", desp = "玩家名称", required = true) @NonNull @RequestParam("name") String name,
-            @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") String playMode
-    ) throws RuntimeException {
-        List<LazerScore> scores;
-        OsuUser osuUser;
+    @GetMapping(value = ["bp/analysis"]) @OpenResource(name = "ba", desp = "最好成绩分析")
+    @Throws(RuntimeException::class) fun getBPAnalysis(
+        @OpenResource(name = "name", desp = "玩家名称", required = true) @NonNull @RequestParam("name") name: String,
+        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
+    ): ResponseEntity<ByteArray> {
+        val scores: List<LazerScore>
+        val osuUser: OsuUser
 
         try {
-            var mode = OsuMode.getMode(playMode);
-            name = name.trim();
-            long uid = userApiService.getOsuId(name);
-            osuUser = userApiService.getPlayerInfo(uid, mode);
-            if (mode != OsuMode.DEFAULT) osuUser.setMode(mode.shortName);
-            scores = scoreApiService.getBestScores(uid, mode, 0, 100);
-        } catch (Exception e) {
-            throw new RuntimeException(GeneralTipsException.Type.G_Fetch_List.getMessage());
+            val mode = getMode(playMode)
+            val uid = userApiService.getOsuId(name.trim())
+            osuUser = userApiService.getPlayerInfo(uid, mode)
+            if (mode != OsuMode.DEFAULT) osuUser.currentOsuMode = mode
+            scores = scoreApiService.getBestScores(uid, mode)
+        } catch (e: Exception) {
+            throw RuntimeException(GeneralTipsException.Type.G_Fetch_List.message)
         }
 
-        Map<String, Object> data;
+        val data: Map<String, Any>
         try {
-            data = BPAnalysisService.parseData(osuUser, scores, userApiService, 2);
-        } catch (Exception e) {
-            throw new RuntimeException(GeneralTipsException.Type.G_Fetch_BeatMapAttr.getMessage());
+            data = BPAnalysisService.parseData(osuUser, scores, userApiService, 2)
+        } catch (e: Exception) {
+            throw RuntimeException(GeneralTipsException.Type.G_Fetch_BeatMapAttr.message)
         }
 
-        var image = imageService.getPanel(data, "J2");
-        return new ResponseEntity<>(image, getImageHeader(STR."\{name}-ba.jpg", image.length), HttpStatus.OK);
+        val image = imageService.getPanel(data, "J2")
+        return ResponseEntity(
+            image, getImageHeader(
+                "${name}-ba.jpg", image.size
+            ), HttpStatus.OK
+        )
     }
 
     /**
@@ -707,56 +701,54 @@ public class BotWebApi {
      * @param compare 需要比较的文本，也可以把范围输入到这里来
      * @return String 扔骰子结果
      */
-    @GetMapping(value = "dice")
-    @OpenResource(name = "d", desp = "扔骰子")
-    public ResponseEntity<byte[]> getDice(
-            @OpenResource(name = "range", desp = "范围") @RequestParam("range") @Nullable Integer range,
-            @OpenResource(name = "compare", desp = "需要比较的文本") @RequestParam("compare") @Nullable String compare
-    ) throws RuntimeException {
-        String message;
+    @GetMapping(value = ["dice"]) @OpenResource(name = "d", desp = "扔骰子") @Throws(RuntimeException::class)
+    fun getDice(
+        @OpenResource(name = "range", desp = "范围") @RequestParam("range") @Nullable range: Int?,
+        @OpenResource(name = "compare", desp = "需要比较的文本") @RequestParam("compare") @Nullable compare: String?
+    ): ResponseEntity<ByteArray> {
+        var message: String
 
         try {
-            if (Objects.isNull(range)) {
-                if (Objects.isNull(compare)) {
-                    message = String.format("%.0f", DiceService.getRandom(100));
+            if (range == null) {
+                if (compare.isNullOrBlank()) {
+                    message = String.format("%.0f", DiceService.getRandom(100))
                 } else {
-                    var isOnlyNumbers = Pattern.matches("^[0-9.]+$", compare);
+                    val isOnlyNumbers = compare.matches("^[0-9.]+$".toRegex())
 
                     if (isOnlyNumbers) {
                         try {
-                            var r = DiceService.getRandom(Integer.parseInt(compare));
+                            val r = DiceService.getRandom(compare.toInt())
 
-                            if (r <= 1) {
-                                message = String.format("%.2f", r);
+                            message = if (r <= 1) {
+                                String.format("%.2f", r)
                             } else {
-                                message = String.format("%.0f", r);
+                                String.format("%.0f", r)
                             }
-                        } catch (NumberFormatException e) {
-                            message = DiceService.compare(compare);
+                        } catch (e: NumberFormatException) {
+                            message = DiceService.compare(compare)
                         }
                     } else {
-                        message = DiceService.compare(compare);
+                        message = DiceService.compare(compare)
                     }
                 }
             } else {
-                var r = DiceService.getRandom(range);
+                val r = DiceService.getRandom(range)
 
-                if (r <= 1) {
-                    message = String.format("%.2f", r);
+                message = if (r <= 1) {
+                    String.format("%.2f", r)
                 } else {
-                    message = String.format("%.0f", r);
+                    String.format("%.0f", r)
                 }
             }
 
-            return new ResponseEntity<>(message.getBytes(StandardCharsets.UTF_8), HttpStatus.OK);
-
-        } catch (DiceException e) {
-            return new ResponseEntity<>(
-                    String.format("%.0f", DiceService.getRandom(100)).getBytes(StandardCharsets.UTF_8)
-                    , HttpStatus.OK);
-        } catch (Exception e) {
-            log.error("扔骰子：API 异常", e);
-            throw new RuntimeException("扔骰子：API 异常");
+            return ResponseEntity(message.toByteArray(StandardCharsets.UTF_8), HttpStatus.OK)
+        } catch (e: DiceException) {
+            return ResponseEntity(
+                String.format("%.0f", DiceService.getRandom(100)).toByteArray(StandardCharsets.UTF_8), HttpStatus.OK
+            )
+        } catch (e: Exception) {
+            log.error("扔骰子：API 异常", e)
+            throw RuntimeException("扔骰子：API 异常")
         }
     }
 
@@ -771,41 +763,41 @@ public class BotWebApi {
      * @return 谱面信息图片
      * @throws RuntimeException API 出错
      */
-    @GetMapping(value = "map")
-    @OpenResource(name = "m", desp = "获取谱面信息")
-    public ResponseEntity<byte[]> getMapInfo(
-            @OpenResource(name = "bid", desp = "谱面编号") @RequestParam("bid") Long bid,
-            @OpenResource(name = "mode", desp = "游戏模式") @RequestParam("mode") @Nullable String modeStr,
-            @OpenResource(name = "accuracy", desp = "准确率，允许输入 0-10000") @RequestParam("accuracy") @Nullable Double accuracy,
-            @OpenResource(name = "combo", desp = "连击数") @RequestParam("combo") @Nullable Integer combo,
-            @OpenResource(name = "miss", desp = "失误数") @RequestParam("miss") @Nullable Integer miss,
-            @OpenResource(name = "mods", desp = "模组，允许按成对的双字母输入") @RequestParam("mods") @Nullable String modStr
-    ) throws RuntimeException {
-        if (Objects.isNull(accuracy)) accuracy = 1D;
-        if (Objects.isNull(combo)) combo = 0;
-        if (Objects.isNull(miss)) miss = 0;
-        if (Objects.isNull(modStr)) modStr = "";
+    @GetMapping(value = ["map"]) @OpenResource(name = "m", desp = "获取谱面信息") @Throws(RuntimeException::class)
+    fun getMapInfo(
+        @OpenResource(name = "bid", desp = "谱面编号") @RequestParam("bid") bid: Long,
+        @OpenResource(name = "mode", desp = "游戏模式") @RequestParam("mode") @Nullable modeStr: String?,
+        @OpenResource(
+            name = "accuracy", desp = "准确率，允许输入 0-10000"
+        ) @RequestParam("accuracy") @Nullable accuracy: Double?,
+        @OpenResource(name = "combo", desp = "连击数") @RequestParam("combo") @Nullable combo: Int?,
+        @OpenResource(name = "miss", desp = "失误数") @RequestParam("miss") @Nullable miss: Int?,
+        @OpenResource(
+            name = "mods", desp = "模组，允许按成对的双字母输入"
+        ) @RequestParam("mods") @Nullable modStr: String?
+    ): ResponseEntity<ByteArray> {
 
         try {
-            var mode = OsuMode.getMode(modeStr, OsuMode.OSU);
-            var beatMap = beatmapApiService.getBeatMap(bid);
-            var mods = LazerMod.getModsList(modStr);
+            val mode = getMode(modeStr, OsuMode.OSU)
+            val beatMap = beatmapApiService.getBeatMap(bid)
+            val mods = LazerMod.getModsList(modStr ?: "")
 
-            var expected = new MapStatisticsService.Expected(
-                    mode,
-                    accuracy,
-                    combo,
-                    miss,
-                    mods,
-                    false
-            );
+            val expected = MapStatisticsService.Expected(
+                mode, accuracy ?: 1.0, combo ?: 0, miss ?: 0, mods, false
+            )
 
-            var image = MapStatisticsService.getPanelE6Image(null, beatMap, expected, beatmapApiService, calculateApiService, imageService);
+            val image = MapStatisticsService.getPanelE6Image(
+                null, beatMap, expected, beatmapApiService, calculateApiService, imageService
+            )
 
-            return new ResponseEntity<>(image, getImageHeader(STR."\{bid}-mapinfo.jpg", image.length), HttpStatus.OK);
-        } catch (Exception e) {
-            log.error("谱面信息：API 异常", e);
-            throw new RuntimeException("谱面信息：API 异常");
+            return ResponseEntity(
+                image, getImageHeader(
+                    "${bid}-mapinfo.jpg", image.size
+                ), HttpStatus.OK
+            )
+        } catch (e: Exception) {
+            log.error("谱面信息：API 异常", e)
+            throw RuntimeException("谱面信息：API 异常")
         }
     }
 
@@ -817,35 +809,29 @@ public class BotWebApi {
      * @param modeStr 游戏模式
      * @return 玩家信息图片
      */
-    @GetMapping(value = "info")
-    @OpenResource(name = "i", desp = "获取玩家信息")
-    public ResponseEntity<byte[]> getPlayerInfo(
-            @OpenResource(name = "uid", desp = "玩家编号") @RequestParam("uid") @Nullable Long uid,
-            @OpenResource(name = "name", desp = "玩家名称") @RequestParam("name") @Nullable String name,
-            @OpenResource(name = "mode", desp = "游戏模式") @RequestParam("mode") @Nullable String modeStr,
-            @OpenResource(name = "day", desp = "回溯天数") @RequestParam("day") @Nullable Integer day
-    ) {
-        if (Objects.isNull(day)) day = 1;
-        var user = getPlayerInfoJson(uid, name, modeStr);
-        var mode = OsuMode.getMode(modeStr, user.getCurrentOsuMode());
+    @GetMapping(value = ["info"]) @OpenResource(name = "i", desp = "获取玩家信息") fun getPlayerInfo(
+        @OpenResource(name = "uid", desp = "玩家编号") @RequestParam("uid") @Nullable uid: Long?,
+        @OpenResource(name = "name", desp = "玩家名称") @RequestParam("name") @Nullable name: String?,
+        @OpenResource(name = "mode", desp = "游戏模式") @RequestParam("mode") @Nullable modeStr: String?,
+        @OpenResource(name = "day", desp = "回溯天数") @RequestParam("day") @Nullable day: Int = 1
+    ): ResponseEntity<ByteArray> {
+        val user = getPlayerInfoJson(uid, name, modeStr)
+        val mode = getMode(modeStr, user.currentOsuMode)
 
-        var BPs = scoreApiService.getBestScores(user);
-        //var recents = scoreApiService.getRecentIncludingFail(osuUser);
-        var historyUser = infoDao.getLastFrom(user.getUserID(),
-                        mode,
-                        LocalDate.now().minusDays(day))
-                .map(OsuUserInfoDao::fromArchive).orElse(null);
+        val bests = scoreApiService.getBestScores(user)
+        val historyUser = infoDao.getLastFrom(
+            user.userID, mode, LocalDate.now().minusDays(day.toLong())
+        ).map { archive: OsuUserInfoArchiveLite? -> OsuUserInfoDao.fromArchive(archive) }.orElse(null)
 
-        var param = new InfoService.PanelDParam(user, historyUser, BPs, user.getCurrentOsuMode());
+        val param = InfoService.PanelDParam(user, historyUser, bests, user.currentOsuMode)
 
-        var image = imageService.getPanel(param.toMap(), "D");
+        val image = imageService.getPanel(param.toMap(), "D")
 
-                /*
-        var image = imageService.getPanelD(user, historyUser, BPs, user.getCurrentOsuMode());
-
-                 */
-
-        return new ResponseEntity<>(image, getImageHeader(STR."\{user.getUserID()}-info.jpg", image.length), HttpStatus.OK);
+        return ResponseEntity(
+            image, getImageHeader(
+                "${user.userID}-info.jpg", image.size
+            ), HttpStatus.OK
+        )
     }
 
     /**
@@ -855,17 +841,21 @@ public class BotWebApi {
      * @param name 玩家名称
      * @return 谱师信息图片
      */
-    @GetMapping(value = "info/mapper")
-    @OpenResource(name = "im", desp = "获取谱师信息")
-    public ResponseEntity<byte[]> getMapperInfo(
-            @OpenResource(name = "uid", desp = "玩家编号") @RequestParam("uid") @Nullable Long uid,
-            @OpenResource(name = "name", desp = "玩家名称") @RequestParam("name") @Nullable String name
-    ) {
-        var osuUser = getPlayerInfoJson(uid, name, null);
-        var data = IMapperService.Companion.parseData(osuUser, userApiService, beatmapApiService);
-        var image = imageService.getPanel(data, "M");
+    @GetMapping(value = ["info/mapper"]) @OpenResource(name = "im", desp = "获取谱师信息") fun getMapperInfo(
+        @OpenResource(name = "uid", desp = "玩家编号") @RequestParam("uid") @Nullable uid: Long?,
+        @OpenResource(name = "name", desp = "玩家名称") @RequestParam("name") @Nullable name: String?
+    ): ResponseEntity<ByteArray> {
+        val osuUser = getPlayerInfoJson(uid, name, null)
+        val data = IMapperService.parseData(
+            osuUser, userApiService, beatmapApiService
+        )
+        val image = imageService.getPanel(data, "M")
 
-        return new ResponseEntity<>(image, getImageHeader(STR."\{osuUser.getUserID()}-mapper.jpg", image.length), HttpStatus.OK);
+        return ResponseEntity(
+            image, getImageHeader(
+                "${osuUser.userID}-mapper.jpg", image.size
+            ), HttpStatus.OK
+        )
     }
 
     /**
@@ -875,38 +865,43 @@ public class BotWebApi {
      * @param bid 谱面编号
      * @return 提名信息图片
      */
-
-    @GetMapping(value = "map/nomination")
-    @OpenResource(name = "n", desp = "获取提名信息")
-    public ResponseEntity<byte[]> getNomination(
-            @OpenResource(name = "sid", desp = "谱面集编号") @RequestParam("sid") @Nullable Integer sid,
-            @OpenResource(name = "bid", desp = "谱面编号") @RequestParam("bid") @Nullable Integer bid
-    ) throws RuntimeException {
-        Map<String, Object> data;
+    @GetMapping(value = ["map/nomination"]) @OpenResource(name = "n", desp = "获取提名信息")
+    @Throws(RuntimeException::class) fun getNomination(
+        @OpenResource(name = "sid", desp = "谱面集编号") @RequestParam("sid") @Nullable sid: Int?,
+        @OpenResource(name = "bid", desp = "谱面编号") @RequestParam("bid") @Nullable bid: Int?
+    ): ResponseEntity<ByteArray> {
+        val data: Map<String, Any>
 
         try {
-            if (Objects.isNull(sid)) {
-                if (Objects.isNull(bid)) {
-                    throw new GeneralTipsException(GeneralTipsException.Type.G_Null_Map);
+            data = if (sid == null) {
+                if (bid == null) {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
                 } else {
-                    data = NominationService.parseData(bid, false, beatmapApiService, discussionApiService, userApiService);
+                    NominationService.parseData(
+                        bid.toLong(), false, beatmapApiService, discussionApiService, userApiService
+                    )
                 }
             } else {
-                data = NominationService.parseData(sid, true, beatmapApiService, discussionApiService, userApiService);
+                NominationService.parseData(
+                    sid.toLong(), true, beatmapApiService, discussionApiService, userApiService
+                )
             }
-        } catch (GeneralTipsException e) {
-            throw new RuntimeException(e.getMessage());
+        } catch (e: GeneralTipsException) {
+            throw RuntimeException(e.message)
         }
 
         try {
-            byte[] image = imageService.getPanel(data, "N");
+            val image = imageService.getPanel(data, "N")
 
-            return new ResponseEntity<>(image, getImageHeader(STR."\{Optional.ofNullable(sid).orElse(bid)}-nomination.jpg", image.length), HttpStatus.OK);
-        } catch (Exception e) {
-            log.error("提名信息：API 异常", e);
-            throw new RuntimeException("提名信息：API 异常");
+            return ResponseEntity(
+                image, getImageHeader(
+                    "${sid ?: bid ?: 0}-nomination.jpg", image.size
+                ), HttpStatus.OK
+            )
+        } catch (e: Exception) {
+            log.error("提名信息：API 异常", e)
+            throw RuntimeException("提名信息：API 异常")
         }
-
     }
 
     /**
@@ -914,37 +909,39 @@ public class BotWebApi {
      *
      * @return 比赛结果文件
      */
-
-    @GetMapping(value = "match/rating/csv")
-    @OpenResource(name = "ca", desp = "获取比赛结果")
-    public ResponseEntity<byte[]> getCsvRating(
-            @OpenResource(name = "match", desp = "比赛编号（逗号分隔）") @RequestParam("match") @Nullable String matchIDs
-    ) throws RuntimeException {
+    @GetMapping(value = ["match/rating/csv"]) @OpenResource(name = "ca", desp = "获取比赛结果")
+    @Throws(RuntimeException::class) fun getCsvRating(
+        @OpenResource(name = "match", desp = "比赛编号（逗号分隔）") @RequestParam("match") @Nullable matchIDs: String?
+    ): ResponseEntity<ByteArray> {
         try {
-            var sb = new StringBuilder();
-            var ids = CsvMatchService.Companion.parseDataString(matchIDs);
+            val sb = StringBuilder()
+            val ids = CsvMatchService.parseDataString(matchIDs)
 
             if (ids == null) {
-                throw new RuntimeException("请输入对局！");
-            } else if (ids.size() == 1) {
-                CsvMatchService.Companion.parseCRA(sb, ids.getFirst(), matchApiService, beatmapApiService, calculateApiService);
+                throw RuntimeException("请输入对局！")
+            } else if (ids.size == 1) {
+                CsvMatchService.parseCRA(
+                    sb, ids.first(), matchApiService, beatmapApiService, calculateApiService
+                )
             } else {
-                CsvMatchService.Companion.parseCRAs(sb, ids, matchApiService, beatmapApiService, calculateApiService);
+                CsvMatchService.parseCRAs(
+                    sb, ids, matchApiService, beatmapApiService, calculateApiService
+                )
             }
 
-            var data = sb.toString().getBytes();
+            val data = sb.toString().toByteArray()
 
-            return new ResponseEntity<>(data, getByteHeader(ids.getFirst() + "-csvrating.csv", data.length), HttpStatus.OK);
-        } catch (Exception e) {
-            log.error("比赛结果：API 异常", e);
-            throw new RuntimeException("比赛结果：API 异常");
+            return ResponseEntity<ByteArray>(
+                data, getByteHeader(ids.first().toString() + "-csvrating.csv", data.size), HttpStatus.OK
+            )
+        } catch (e: Exception) {
+            log.error("比赛结果：API 异常", e)
+            throw RuntimeException("比赛结果：API 异常")
         }
-
     }
 
 
     //======================  以下是跨域调用 osu!API 的部分，可获取到各种原始 JSON  ===================================
-
     /**
      * 获取玩家信息的 OsuUser JSON，即原 uui
      *
@@ -953,19 +950,18 @@ public class BotWebApi {
      * @param modeStr 玩家模组
      * @return OsuUser JSON
      */
-    @GetMapping(value = "info/json")
-    public OsuUser getPlayerInfoJson(
-            @RequestParam("uid") @Nullable Long uid,
-            @RequestParam("name") @Nullable String name,
-            @RequestParam("mode") @Nullable String modeStr
-    ) {
-        var mode = OsuMode.getMode(modeStr);
-        if (Objects.nonNull(uid)) {
-            return userApiService.getPlayerInfo(uid, mode);
-        } else if (Objects.nonNull(name)) {
-            return userApiService.getPlayerInfo(name, mode);
+    @GetMapping(value = ["info/json"]) fun getPlayerInfoJson(
+        @RequestParam("uid") @Nullable uid: Long?,
+        @RequestParam("name") @Nullable name: String?,
+        @RequestParam("mode") @Nullable modeStr: String?
+    ): OsuUser {
+        val mode = getMode(modeStr)
+        return if (uid != null) {
+            userApiService.getPlayerInfo(uid, mode)
+        } else if (name.isNullOrBlank().not()) {
+            userApiService.getPlayerInfo(name, mode)
         } else {
-            return userApiService.getPlayerInfo(17064371L, mode);
+            userApiService.getPlayerInfo(17064371L, mode)
         }
     }
 
@@ -975,14 +971,13 @@ public class BotWebApi {
      * @param bid 谱面编号
      * @return BeatMap JSON
      */
-    @GetMapping(value = "map/json")
-    public BeatMap getBeatMapInfoJson(
-            @RequestParam("bid") @Nullable Long bid
-    ) {
-        if (Objects.nonNull(bid)) {
-            return beatmapApiService.getBeatMap(bid);
+    @GetMapping(value = ["map/json"]) fun getBeatMapInfoJson(
+        @RequestParam("bid") @Nullable bid: Long?
+    ): BeatMap {
+        return if (bid != null) {
+            beatmapApiService.getBeatMap(bid)
         } else {
-            return new BeatMap();
+            BeatMap()
         }
     }
 
@@ -994,16 +989,17 @@ public class BotWebApi {
      * @param mode 游戏模式，默认为谱面自己的
      * @return BeatMap JSON
      */
-    @GetMapping(value = "attr/json")
-    public BeatmapDifficultyAttributes getDifficultyAttributes(
-            @RequestParam("bid") @Nullable Long bid,
-            @RequestParam("mods") @Nullable String mods,
-            @RequestParam("mode") @Nullable String mode
-    ) {
-        if (Objects.nonNull(bid)) {
-            return beatmapApiService.getAttributes(bid, OsuMode.getMode(mode), OsuMod.getModsValue(mods));
+    @GetMapping(value = ["attr/json"]) fun getDifficultyAttributes(
+        @RequestParam("bid") @Nullable bid: Long?,
+        @RequestParam("mods") @Nullable mods: String?,
+        @RequestParam("mode") @Nullable mode: String?
+    ): BeatmapDifficultyAttributes {
+        return if (bid != null) {
+            beatmapApiService.getAttributes(
+                bid, getMode(mode), OsuMod.getModsValue(mods)
+            )
         } else {
-            return new BeatmapDifficultyAttributes();
+            BeatmapDifficultyAttributes()
         }
     }
 
@@ -1017,26 +1013,25 @@ public class BotWebApi {
      * @param end     !bp 45-55 里的 55
      * @return OsuUser JSON
      */
-    @GetMapping(value = "bp/json")
-    public List<LazerScore> getBPJson(
-            @RequestParam("uid") @Nullable Long uid,
-            @RequestParam("name") @Nullable String name,
-            @RequestParam("mode") @Nullable String modeStr,
-            @RequestParam("start") @Nullable Integer start,
-            @RequestParam("end") @Nullable Integer end
-    ) {
-        var mode = OsuMode.getMode(modeStr);
+    @GetMapping(value = ["bp/json"]) fun getBPJson(
+        @RequestParam("uid") @Nullable uid: Long?,
+        @RequestParam("name") @Nullable name: String?,
+        @RequestParam("mode") @Nullable modeStr: String?,
+        @RequestParam("start") @Nullable start: Int?,
+        @RequestParam("end") @Nullable end: Int?
+    ): List<LazerScore> {
+        val mode = getMode(modeStr)
 
-        int offset = DataUtil.parseRange2Offset(start, end);
-        int limit = DataUtil.parseRange2Limit(start, end);
+        val offset = parseRange2Offset(start, end)
+        val limit = parseRange2Limit(start, end)
 
-        if (Objects.nonNull(uid)) {
-            return scoreApiService.getBestScores(uid, mode, offset, limit);
-        } else if (Objects.nonNull(name)) {
-            var user = userApiService.getPlayerInfo(name, mode);
-            return scoreApiService.getBestScores(user, offset, limit);
+        if (uid != null) {
+            return scoreApiService.getBestScores(uid, mode, offset, limit)
+        } else if (name.isNullOrBlank()) {
+            val user = userApiService.getPlayerInfo(name, mode)
+            return scoreApiService.getBestScores(user, offset, limit)
         } else {
-            return scoreApiService.getBestScores(7003013L, OsuMode.DEFAULT, offset, limit);
+            return scoreApiService.getBestScores(7003013L, OsuMode.DEFAULT, offset, limit)
         }
     }
 
@@ -1050,31 +1045,27 @@ public class BotWebApi {
      * @param end      !bp 45-55 里的 55
      * @param isPass 是否通过，默认通过（真）
      * @return List<Score> JSON
-     */
-    @GetMapping(value = "score/json")
-    public List<LazerScore> getScoreJson(
-            @RequestParam("uid") @Nullable Long uid,
-            @RequestParam("name") @Nullable String name,
-            @RequestParam("mode") @Nullable String modeStr,
-            @RequestParam("start") @Nullable Integer start,
-            @RequestParam("end") @Nullable Integer end,
-            @RequestParam("isPassed") @Nullable Boolean isPass
-    ) {
-        var mode = OsuMode.getMode(modeStr);
-        if (Objects.isNull(isPass)) {
-            isPass = true;
-        }
+    </Score> */
+    @GetMapping(value = ["score/json"]) fun getScoreJson(
+        @RequestParam("uid") @Nullable uid: Long?,
+        @RequestParam("name") @Nullable name: String?,
+        @RequestParam("mode") @Nullable modeStr: String?,
+        @RequestParam("start") @Nullable start: Int?,
+        @RequestParam("end") @Nullable end: Int?,
+        @RequestParam("isPassed") @Nullable isPass: Boolean? = true
+    ): List<LazerScore> {
+        val mode = getMode(modeStr)
 
-        int offset = DataUtil.parseRange2Offset(start, end);
-        int limit = DataUtil.parseRange2Limit(start, end);
+        val offset = parseRange2Offset(start, end)
+        val limit = parseRange2Limit(start, end)
 
-        if (Objects.nonNull(uid)) {
-            return scoreApiService.getScore(uid, mode, offset, limit, isPass);
-        } else if (Objects.nonNull(name)) {
-            var user = userApiService.getPlayerInfo(name, mode);
-            return scoreApiService.getScore(user.getUserID(), mode, offset, limit, isPass);
+        if (uid != null) {
+            return scoreApiService.getScore(uid, mode, offset, limit, isPass)
+        } else if (name.isNullOrBlank().not()) {
+            val user = userApiService.getPlayerInfo(name, mode)
+            return scoreApiService.getScore(user.userID, mode, offset, limit, isPass)
         } else {
-            return scoreApiService.getScore(7003013L, OsuMode.DEFAULT, offset, limit, isPass);
+            return scoreApiService.getScore(7003013L, OsuMode.DEFAULT, offset, limit, isPass)
         }
     }
 
@@ -1083,14 +1074,13 @@ public class BotWebApi {
      *
      * @param code 验证码
      */
-    @GetMapping(value = "login")
-    public OsuUser doLogin(@RequestParam("code") @NonNull String code) {
-        var u = LOGIN_USER_MAP.getOrDefault(code.toUpperCase(), null);
-        if (Objects.nonNull(u)) {
-            LOGIN_USER_MAP.remove(code.toUpperCase());
-            return userApiService.getPlayerInfo(u.uid());
+    @GetMapping(value = ["login"]) fun doLogin(@RequestParam("code") @NonNull code: String): OsuUser {
+        val u = LoginService.LOGIN_USER_MAP.getOrDefault(code.uppercase(Locale.getDefault()), null)
+        if (u != null) {
+            LoginService.LOGIN_USER_MAP.remove(code.uppercase(Locale.getDefault()))
+            return userApiService.getPlayerInfo(u.uid)
         }
-        throw new RuntimeException("已过期或者不存在");
+        throw RuntimeException("已过期或者不存在")
     }
 
     /**
@@ -1099,51 +1089,60 @@ public class BotWebApi {
      * @param key file key
      * @return file
      */
-    @GetMapping("file/{key}")
-    public ResponseEntity<byte[]> downloadFile(@PathVariable("key") String key) {
-        var data = QQMsgUtil.getFileData(key);
-        if (data == null) throw new RuntimeException("文件不存在");
+    @GetMapping("file/{key}") fun downloadFile(@PathVariable("key") key: String?): ResponseEntity<ByteArray> {
+        val data = QQMsgUtil.getFileData(key) ?: throw RuntimeException("文件不存在")
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentDisposition(ContentDisposition.inline().filename(data.name()).build());
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.setContentLength(data.bytes().capacity());
-        return new ResponseEntity<>(data.bytes().array(), headers, HttpStatus.OK);
+        val headers = HttpHeaders()
+        headers.contentDisposition = ContentDisposition.inline().filename(data.name).build()
+        headers.contentType = MediaType.APPLICATION_OCTET_STREAM
+        headers.contentLength = data.bytes.capacity().toLong()
+        return ResponseEntity(data.bytes.array(), headers, HttpStatus.OK)
     }
 
-    @GetMapping("log-level")
-    public String setLoggerLever(@RequestParam("l") String level, @RequestParam("package") @Nullable String package$) {
-        var l = Level.toLevel(level, Level.INFO);
-        if (Objects.isNull(package$)) {
-            ((LoggerContext) LoggerFactory.getILoggerFactory()).getLogger("com.now.nowbot").setLevel(l);
+    @GetMapping("log-level") fun setLoggerLever(
+        @RequestParam("l") level: String?, @RequestParam("package") @Nullable packageName: String?
+    ): String {
+        val l = Level.toLevel(level, Level.INFO)
+        if (packageName == null) {
+            (LoggerFactory.getILoggerFactory() as LoggerContext).getLogger("com.now.nowbot").level = l
         } else {
-            ((LoggerContext) LoggerFactory.getILoggerFactory()).getLogger(package$).setLevel(l);
+            (LoggerFactory.getILoggerFactory() as LoggerContext).getLogger(packageName).level = l
         }
-        log.trace("trace");
-        log.debug("debug");
-        log.info("info");
-        log.warn("warn");
-        log.error("error");
+        log.trace("trace")
+        log.debug("debug")
+        log.info("info")
+        log.warn("warn")
+        log.error("error")
 
-        return "ok - " + l.levelStr;
+        return "ok - " + l.levelStr
     }
 
-    private static HttpHeaders getImageHeader(String name, long length) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentDisposition(ContentDisposition.inline().filename(name).build());
-        headers.setContentLength(length);
-        headers.setContentType(MediaType.IMAGE_JPEG);
-        return headers;
-    }
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(BotWebApi::class.java)
 
-    private static HttpHeaders getByteHeader(String name, long length) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentDisposition(ContentDisposition.inline().filename(name).build());
-        headers.setContentLength(length);
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        return headers;
-    }
-    /*
+        private fun getImageHeader(name: String, length: Int): HttpHeaders {
+            return getImageHeader(name, length.toLong())
+        }
+
+        private fun getByteHeader(name: String, length: Int): HttpHeaders {
+            return getByteHeader(name, length.toLong())
+        }
+
+        private fun getImageHeader(name: String, length: Long): HttpHeaders {
+            val headers = HttpHeaders()
+            headers.contentDisposition = ContentDisposition.inline().filename(name).build()
+            headers.contentLength = length
+            headers.contentType = MediaType.IMAGE_JPEG
+            return headers
+        }
+
+        private fun getByteHeader(name: String, length: Long): HttpHeaders {
+            val headers = HttpHeaders()
+            headers.contentDisposition = ContentDisposition.inline().filename(name).build()
+            headers.contentLength = length
+            headers.contentType = MediaType.APPLICATION_OCTET_STREAM
+            return headers
+        } /*
 
     @Resource
     Over6KUserService over6KUserService;
@@ -1160,5 +1159,6 @@ public class BotWebApi {
     }
 
      */
+    }
 }
 

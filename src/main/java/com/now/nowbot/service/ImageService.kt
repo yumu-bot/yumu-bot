@@ -1,39 +1,33 @@
-package com.now.nowbot.service;
+package com.now.nowbot.service
 
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.json.*;
-import com.now.nowbot.model.ppminus.PPMinus;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.reactive.function.client.WebClient;
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.json.LazerScore
+import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.ppminus.PPMinus
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
+import org.springframework.stereotype.Service
+import org.springframework.web.client.RestClientException
+import org.springframework.web.reactive.function.client.WebClient
+import java.io.Serializable
+import java.util.*
 
-import java.util.*;
-
-@Service("NOWBOT_IMAGE")
-public class ImageService {
-    private static final Logger log = LoggerFactory.getLogger(ImageService.class);
-    @Resource
-    WebClient    webClient;
-    public static final String IMAGE_PATH = "http://127.0.0.1:1611/";
-
+@Service("NOWBOT_IMAGE") class ImageService(private val webClient: WebClient) {
     // 2024+ 统一获取方法
-    public byte[] getPanel(Map<String, Object> body, String name) {
-        HttpHeaders headers = getDefaultHeader();
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_" + name, httpEntity);
+    fun getPanel(body: Map<String, Any>, name: String): ByteArray {
+        val headers = defaultHeader
+        val httpEntity = HttpEntity(body, headers)
+        return doPost("panel_$name", httpEntity)
     }
 
-    public byte[] getPanel(Object any, String name) {
-        HttpHeaders headers = getDefaultHeader();
-        HttpEntity<Object> httpEntity = new HttpEntity<>(any, headers);
-        return doPost("panel_" + name, httpEntity);
+    fun getPanel(any: Any?, name: String): ByteArray {
+        val headers = defaultHeader
+        val httpEntity = HttpEntity(any, headers)
+        return doPost("panel_$name", httpEntity)
     }
 
     /**
@@ -42,13 +36,12 @@ public class ImageService {
      * @param markdown md 字符串
      * @return 图片流
      */
-    @Deprecated
-    public byte[] getMarkdownImage(String markdown) {
-        HttpHeaders headers = getDefaultHeader();
+    @Deprecated("") fun getMarkdownImage(markdown: String): ByteArray {
+        val headers = defaultHeader
 
-        var body = Map.of("md", markdown, "width", 1500);
-        HttpEntity<Map<String, ?>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("md", httpEntity);
+        val body: Map<String, Serializable> = java.util.Map.of("md", markdown, "width", 1500)
+        val httpEntity = HttpEntity<Map<String, *>>(body, headers)
+        return doPost("md", httpEntity)
     }
 
     /***
@@ -58,52 +51,40 @@ public class ImageService {
      * @param width 宽度
      * @return 图片流
      */
-    @Deprecated
-    public byte[] getMarkdownImage(String markdown, int width) {
-        HttpHeaders headers = getDefaultHeader();
+    @Deprecated("") fun getMarkdownImage(markdown: String, width: Int): ByteArray {
+        val headers = defaultHeader
 
-        var body = Map.of("md", markdown, "width", width);
-        HttpEntity<Map<String, ?>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("md", httpEntity);
-    }
-
-    public byte[] getPanelA3(BeatMap beatMap, List<LazerScore> scores) {
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = Map.of(
-                "beatmap", beatMap,
-                "scores", scores
-        );
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_A3", httpEntity);
+        val body: Map<String, Serializable> = java.util.Map.of("md", markdown, "width", width)
+        val httpEntity = HttpEntity<Map<String, *>>(body, headers)
+        return doPost("md", httpEntity)
     }
 
     /**
      * Markdown 页面，用于帮助和维基 MD/H/W，user 默认 Optional.empty，width 默认 1840， data 默认 ""
      */
-    public byte[] getPanelA6(String markdown) {
-        return getPanelA6(Optional.empty(), markdown, "", 1840);
+    fun getPanelA6(markdown: String): ByteArray {
+        return getPanelA6(null, markdown, "", 1840)
     }
 
     /**
      * Markdown 页面，用于帮助和维基 MD/H/W，user 默认 Optional.empty，width 默认 1840
      */
-    public byte[] getPanelA6(String markdown, String name) {
-        return getPanelA6(Optional.empty(), markdown, name, 1840);
+    fun getPanelA6(markdown: String, name: String): ByteArray {
+        return getPanelA6(null, markdown, name, 1840)
     }
 
     /**
      * Markdown 页面，用于帮助和维基 MD/H/W， width 默认 1840， data 默认 null
      */
-    public byte[] getPanelA6(Optional<OsuUser> user, String markdown) {
-        return getPanelA6(user, markdown, "", 1840);
+    fun getPanelA6(user: OsuUser?, markdown: String): ByteArray {
+        return getPanelA6(user, markdown, "", 1840)
     }
 
     /**
      * Markdown 页面，用于帮助和维基 MD/H/W， width 默认 1840
      */
-    public byte[] getPanelA6(Optional<OsuUser> user, String markdown, String name) {
-        return getPanelA6(user, markdown, name, 1840);
+    fun getPanelA6(user: OsuUser?, markdown: String, name: String): ByteArray {
+        return getPanelA6(user, markdown, name, 1840)
     }
 
     /**
@@ -115,258 +96,212 @@ public class ImageService {
      * @param width    默认 1840
      * @return 图片流
      */
+    fun getPanelA6(user: OsuUser?, markdown: String, name: String, width: Int = 1840): ByteArray {
+        val headers = defaultHeader
 
-    public byte[] getPanelA6(Optional<OsuUser> user, String markdown, String name, Integer width) {
-        HttpHeaders headers = getDefaultHeader();
+        val body = mutableMapOf<String, Any>(
+            "markdown" to markdown, "name" to name, "width" to width
+        )
 
-        if (Objects.isNull(width)) width = 1840;
-
-        var body = new HashMap<String, Object>(Map.of(
-                "markdown", markdown,
-                "name", name,
-                "width", width
-        ));
-
-        if (user.isPresent()) {
-            body.put("user", user);
+        if (user != null) {
+            body["user"] = user
         }
 
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_A6", httpEntity);
+        val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
+        return doPost("panel_A6", httpEntity)
     }
 
-    public byte[] getPanelA7(OsuUser user, Map<String, Object> fixes) {
-        HttpHeaders headers = getDefaultHeader();
-        Map<String, Object> body;
-        try {
-            fixes.put("user", user);
-            body = fixes;
-        } catch (UnsupportedOperationException ignore) {
-            body = Map.of(
-                    "user", user,
-                    "scores", fixes.get("scores"),
-                    "pp", fixes.get("pp")
-            );
-        }
+    fun getPanelA7(user: OsuUser, fixes: Map<String, Any>): ByteArray {
+        val headers = defaultHeader
+        val body: Map<String, Any> = mapOf(
+            "user" to user, "scores" to fixes["scores"]!!, "pp" to fixes["pp"]!!
+        )
 
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_A7", httpEntity);
+        val httpEntity = HttpEntity(body, headers)
+        return doPost("panel_A7", httpEntity)
     }
 
+    fun getPanelB1(user: OsuUser, mode: OsuMode, my: PPMinus): ByteArray {
+        val cardA1 = listOf(user)
 
-    public byte[] getPanelB1(OsuUser user, OsuMode mode, PPMinus my) {
+        val cardB = mapOf(
+            "ACC" to my.value1,
+            "PTT" to my.value2,
+            "STA" to my.value3,
+            (if (mode == OsuMode.MANIA) "PRE" else "STB") to my.value4,
+            "EFT" to my.value5,
+            "STH" to my.value6,
+            "OVA" to my.value7,
+            "SAN" to my.value8
+        )
 
-        var cardA1 = List.of(user);
+        val headers = defaultHeader
 
-        var cardB = Map.of(
-                "ACC", my.getValue1(),
-                "PTT", my.getValue2(),
-                "STA", my.getValue3(),
-                (mode == OsuMode.MANIA) ? "PRE" : "STB", my.getValue4(),
-                "EFT", my.getValue5(),
-                "STH", my.getValue6(),
-                "OVA", my.getValue7(),
-                "SAN", my.getValue8()
-        );
-
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = Map.of(
-                "users", cardA1,
-                "me", cardB,
-                "stat", Map.of("is_vs", false, "mode_int", mode.modeValue)
-        );
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_B1", httpEntity);
+        val body = java.util.Map.of(
+            "users", cardA1, "me", cardB, "stat", java.util.Map.of("is_vs", false, "mode_int", mode.modeValue)
+        )
+        val httpEntity = HttpEntity(body, headers)
+        return doPost("panel_B1", httpEntity)
     }
 
-    public byte[] getPanelB1(OsuUser me, @Nullable OsuUser other, PPMinus my, @Nullable PPMinus others, OsuMode mode) {
-        boolean isVs = other != null && others != null;
+    fun getPanelB1(
+        me: OsuUser?, other: OsuUser?, my: PPMinus, others: PPMinus?, mode: OsuMode
+    ): ByteArray {
+        val isVs = other != null && others != null
 
         //var Card_A = List.of(getPanelBUser(userMe), getPanelBUser(userOther));
+        val cardA1s = ArrayList<OsuUser?>(2)
+        cardA1s.add(me)
 
-        var cardA1s = new ArrayList<OsuUser>(2);
-        cardA1s.add(me);
+        if (isVs) cardA1s.add(other)
 
-        if (isVs) cardA1s.add(other);
+        val cardB1 = mapOf(
+            "ACC" to my.value1,
+            "PTT" to my.value2,
+            "STA" to my.value3,
+            (if (mode == OsuMode.MANIA) "PRE" else "STB") to my.value4,
+            "EFT" to my.value5,
+            "STH" to my.value6,
+            "OVA" to my.value7,
+            "SAN" to my.value8
+        )
+        val cardB2 = if (isVs) mapOf(
+            "ACC" to others!!.value1,
+            "PTT" to others.value2,
+            "STA" to others.value3,
+            (if (mode == OsuMode.MANIA) "PRE" else "STB") to others.value4,
+            "EFT" to others.value5,
+            "STH" to others.value6,
+            "OVA" to others.value7,
+            "SAN" to others.value8
+        ) else null
 
-        var cardB1 = Map.of(
-                "ACC", my.getValue1(),
-                "PTT", my.getValue2(),
-                "STA", my.getValue3(),
-                (mode == OsuMode.MANIA) ? "PRE" : "STB", my.getValue4(),
-                "EFT", my.getValue5(),
-                "STH", my.getValue6(),
-                "OVA", my.getValue7(),
-                "SAN", my.getValue8()
-        );
-        var cardB2 = isVs ? Map.of(
-                "ACC", others.getValue1(),
-                "PTT", others.getValue2(),
-                "STA", others.getValue3(),
-                (mode == OsuMode.MANIA) ? "PRE" : "STB", others.getValue4(),
-                "EFT", others.getValue5(),
-                "STH", others.getValue6(),
-                "OVA", others.getValue7(),
-                "SAN", others.getValue8()
-        ) : null;
+        val statistics: Map<String, Serializable> = java.util.Map.of("is_vs", isVs, "mode_int", mode.modeValue)
+        val headers = defaultHeader
 
-        var statistics = Map.of("is_vs", isVs, "mode_int", mode.modeValue);
-        HttpHeaders headers = getDefaultHeader();
+        val body = HashMap<String, Any?>(4)
 
-        var body = new HashMap<String, Object>(4);
+        body["users"] = cardA1s
+        body["my"] = cardB1
+        body.putIfAbsent("others", cardB2)
+        body["stat"] = statistics
 
-        body.put("users", cardA1s);
-        body.put("my", cardB1);
-        body.putIfAbsent("others", cardB2);
-        body.put("stat", statistics);
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_B1", httpEntity);
+        val httpEntity = HttpEntity<Map<String, Any?>>(body, headers)
+        return doPost("panel_B1", httpEntity)
     }
 
-    public byte[] getPanelB3(OsuUser user, PPPlus plus) {
-        var hashMap = new HashMap<String, Object>(6);
+    fun getPanelB3(hashMap: MutableMap<String, Any>): ByteArray {
+        hashMap["isVs"] = hashMap.containsKey("other")
+        val headers = defaultHeader
 
-        hashMap.put("isUser", true);
-        hashMap.put("isVs", false);
-        hashMap.put("me", user);
-        hashMap.put("my", plus);
-        hashMap.put("other", null);
-        hashMap.put("others", null);
-
-        return getPanelB3(hashMap);
+        val httpEntity = HttpEntity<Map<String, Any>>(hashMap, headers)
+        return doPost("panel_B3", httpEntity)
     }
 
-    public byte[] getPanelB3(BeatMap beatMap, PPPlus plus) {
-        var hashMap = new HashMap<String, Object>(6);
+    fun getPanelH(mapPool: Any, mode: OsuMode): ByteArray { // log.debug(JacksonUtil.objectToJsonPretty(mapPool));
+        val headers = defaultHeader
 
-        hashMap.put("isUser", false);
-        hashMap.put("isVs", false);
-        hashMap.put("me", beatMap);
-        hashMap.put("my", plus);
-        hashMap.put("other", null);
-        hashMap.put("others", null);
+        val body = java.util.Map.of(
+            "pool", mapPool, "mode", mode.shortName
+        )
 
-        return getPanelB3(hashMap);
+        val httpEntity = HttpEntity(body, headers)
+        return doPost("panel_H", httpEntity)
     }
 
-    public byte[] getPanelB3(Map<String, Object> hashMap) {
-        hashMap.put("isVs", hashMap.containsKey("other"));
-        HttpHeaders headers = getDefaultHeader();
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(hashMap, headers);
-        return doPost("panel_B3", httpEntity);
+    fun getPanelAlpha(vararg lines: String?): ByteArray {
+        val headers = defaultHeader
+        val body: MutableMap<String, Any> = HashMap()
+        body["strs"] = lines
+        val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
+        return doPost("panel_Alpha", httpEntity)
     }
 
-    public byte[] getPanelH(Object mapPool, OsuMode mode) {
-        // log.debug(JacksonUtil.objectToJsonPretty(mapPool));
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = Map.of(
-                "pool", mapPool,
-                "mode", mode.shortName
-        );
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_H", httpEntity);
+    /*
+    fun getPanelBeta(s: LazerScore?): ByteArray {
+        val headers = defaultHeader
+        val httpEntity = HttpEntity(s, headers)
+        return doPost("panel_Beta", httpEntity)
     }
 
-    public byte[] getPanelAlpha(String... lines) {
-        var headers = getDefaultHeader();
-        Map<String, Object> body = new HashMap<>();
-        body.put("strs", lines);
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_Alpha", httpEntity);
+     */
+
+    fun getPanelGamma(score: LazerScore): ByteArray {
+        val headers = defaultHeader
+        val body = mapOf(
+            "score" to score,
+            "panel" to "score"
+        )
+        val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
+        return doPost("panel_Gamma", httpEntity)
     }
 
-    public byte[] getPanelBeta(LazerScore s) {
-        var headers = getDefaultHeader();
-        HttpEntity<LazerScore> httpEntity = new HttpEntity<>(s, headers);
-        return doPost("panel_Beta", httpEntity);
+    fun getPanelGamma(osuUser: OsuUser): ByteArray {
+        val headers = defaultHeader
+        val body: MutableMap<String, Any> = HashMap()
+        body["user"] = osuUser
+        body["panel"] = "info"
+        val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
+        return doPost("panel_Gamma", httpEntity)
     }
 
-    public byte[] getPanelGamma(LazerScore score) {
-        var headers = getDefaultHeader();
-        Map<String, Object> body = new HashMap<>();
-        body.put("score", score);
-        body.put("panel", "score");
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_Gamma", httpEntity);
+    fun getPanelGamma(user: OsuUser?, mode: OsuMode, my: PPMinus?): ByteArray {
+        val cardA1 = if (user == null) emptyList() else listOf(user)
+
+        val cardB = if (my == null) emptyMap() else mapOf(
+            "ACC" to my.value1,
+            "PTT" to my.value2,
+            "STA" to my.value3,
+            (if (mode == OsuMode.MANIA) "PRE" else "STB") to my.value4,
+            "EFT" to my.value5,
+            "STH" to my.value6,
+            "OVA" to my.value7,
+            "SAN" to my.value8
+        )
+
+        val statistics: Map<String, Any> = mapOf("is_vs" to false, "mode_int" to mode.modeValue)
+
+        val headers = defaultHeader
+
+        val body = mapOf(
+            "users" to cardA1, "my" to cardB, "stat" to statistics, "panel" to "sanity"
+        )
+
+        val httpEntity = HttpEntity<Map<String, Any?>>(body, headers)
+        return doPost("panel_Gamma", httpEntity)
     }
 
-    public byte[] getPanelGamma(OsuUser osuUser) {
-        var headers = getDefaultHeader();
-        Map<String, Object> body = new HashMap<>();
-        body.put("user", osuUser);
-        body.put("panel", "info");
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_Gamma", httpEntity);
+    fun getPanelDelta(beatMap: BeatMap, round: String, mod: String, position: Short, hasBG: Boolean): ByteArray {
+        val headers = defaultHeader
+        val body = mapOf(
+            "beatmap" to beatMap, "round" to round, "mod" to mod, "position" to position, "hasBG" to hasBG
+        )
+        val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
+        return doPost("panel_Delta", httpEntity)
     }
 
-    public byte[] getPanelGamma(@Nullable OsuUser user, OsuMode mode, @Nullable PPMinus my) {
-        var cardA1 = user == null ? null : List.of(user);
-
-        var cardB = my == null ? null : Map.of(
-                "ACC", my.getValue1(),
-                "PTT", my.getValue2(),
-                "STA", my.getValue3(),
-                (mode == OsuMode.MANIA) ? "PRE" : "STB", my.getValue4(),
-                "EFT", my.getValue5(),
-                "STH", my.getValue6(),
-                "OVA", my.getValue7(),
-                "SAN", my.getValue8()
-        );
-
-        var statistics = Map.of("isVS", false, "gameMode", mode.modeValue);
-
-        HttpHeaders headers = getDefaultHeader();
-
-        var body = new HashMap<String, Object>(4);
-
-        body.putIfAbsent("card_A1", cardA1);
-        body.putIfAbsent("card_b_1", cardB);
-        body.put("statistics", statistics);
-        body.put("panel", "sanity");
-
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_Gamma", httpEntity);
+    fun getPanelAlpha(sb: StringBuilder): ByteArray {
+        return getPanelAlpha(*sb.toString().split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray())
     }
 
-    public byte[] getPanelDelta(BeatMap beatMap, String round, String mod, Short position, boolean hasBG) {
-        var headers = getDefaultHeader();
-        Map<String, Object> body = new HashMap<>();
-        body.put("beatmap", beatMap);
-        body.put("round", round);
-        body.put("mod", mod);
-        body.put("position", position);
-        body.put("hasBG", hasBG);
-        HttpEntity<Map<String, Object>> httpEntity = new HttpEntity<>(body, headers);
-        return doPost("panel_Delta", httpEntity);
-    }
-
-    public byte[] getPanelAlpha(StringBuilder sb) {
-        return getPanelAlpha(sb.toString().split("\n"));
-    }
-
-    private HttpHeaders getDefaultHeader() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        return headers;
-    }
-
-    private byte[] doPost(String path, HttpEntity<?> entity) throws RestClientException {
-        var request = webClient.post()
-                .uri(IMAGE_PATH + path)
-                .headers(h -> h.addAll(entity.getHeaders()));
-        if (entity.hasBody()) {
-            // noinspection all
-            request.bodyValue(entity.getBody());
+    private val defaultHeader: HttpHeaders
+        get() {
+            val headers = HttpHeaders()
+            headers.contentType = MediaType.APPLICATION_JSON
+            return headers
         }
-        return request
-                .retrieve()
-                .bodyToMono(byte[].class)
-                .doOnError(e -> log.error("post image error", e))
-                .block();
+
+    @Throws(RestClientException::class) private fun doPost(path: String, entity: HttpEntity<*>): ByteArray {
+        val request = webClient.post().uri(IMAGE_PATH + path).headers { h: HttpHeaders -> h.addAll(entity.headers) }
+        if (entity.hasBody()) {
+            request.bodyValue(entity.body!!)
+        }
+        return request.retrieve().bodyToMono(ByteArray::class.java)
+            .doOnError { e: Throwable? -> log.error("post image error", e) }.block()!!
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(ImageService::class.java)
+        const val IMAGE_PATH: String = "http://127.0.0.1:1611/"
     }
 }

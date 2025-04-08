@@ -43,14 +43,13 @@ import java.io.Serializable
     }
 
     override fun HandleMessage(event: MessageEvent, param: PPMinusParam) {
+        val my = getPPMinus4(param.me)
+        val others = if (param.isVs) {
+            getPPMinus4(param.other!!)
+        } else null
+
         val image = try {
-            val my = getPPMinus4(param.me)
-            val others = if (param.isVs) {
-                getPPMinus4(param.other!!)
-            } else null
-
             getPanelB1(param.me, param.other, my, others, param.mode)
-
         } catch (e: Exception) {
             log.error("PP-：渲染失败：", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "PPM")
