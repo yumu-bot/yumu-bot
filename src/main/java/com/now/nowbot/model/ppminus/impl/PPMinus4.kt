@@ -172,7 +172,6 @@ class PPMinus4Mania(user: OsuUser, bests: List<LazerScore>, surrounding: List<PP
                 + (hpt + lnx) / 2 * 0.2
                 )
 
-
         val san: Double = run {
             // low PP index 低pp指数 过低PP会导致rSAN异常偏高，故需补正。
             val lowPPIndex =
@@ -213,8 +212,9 @@ class PPMinus4Mania(user: OsuUser, bests: List<LazerScore>, surrounding: List<PP
 private fun <T : Number, U : Number> getRelativePPMinus(compare: T?, to: List<U?>): Double {
     if (to.size <= 4) return 0.8 // 数据太少
 
-    val too = to.map { it?.toDouble()?.clamp(10000.0, 0.0) ?: 0.0 }
-    val coo = compare?.toDouble()?.clamp(10000.0, 0.0) ?: 0.0
+    val too = to.map { it?.toDouble() ?: 0.0 }.filterNot { it.isNaN() }
+    val c = compare?.toDouble() ?: 0.0
+    val coo = if (c.isNaN().not()) c else 0.0
 
     val normal = DataUtil.getNormalDistribution(too)
     val u = normal.first
@@ -239,7 +239,9 @@ private fun <T : Number, U : Number> getRelativePPMinus(compare: T?, to: List<U?
     }
 }
 
-
+/*
 private fun Double.clamp(max: Double = 1.2, min: Double = 0.0): Double {
     return min(max, max(this, min))
 }
+
+ */
