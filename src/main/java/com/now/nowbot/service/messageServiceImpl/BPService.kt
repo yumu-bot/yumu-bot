@@ -57,7 +57,6 @@ import kotlin.math.*
         val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
         range.setZeroToRange100()
 
-
         val conditions = DataUtil.paramMatcher(any, Filter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
 
         // 如果不加井号，则有时候范围会被匹配到这里来
@@ -265,7 +264,7 @@ import kotlin.math.*
         val offset: Int
         val limit: Int
 
-        if (isSearch) {
+        if (isSearch && this.start == null) {
             offset = 0
             limit = 100
         } else if (isMultiple) {
