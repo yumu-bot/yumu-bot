@@ -743,7 +743,7 @@ object DataUtil {
         return max(min(bonusPP, 413.894179759), 0.0)
     }
 
-    fun getV3ScoreProgress(score: Score): Double { // 下下策
+    private fun getV3ScoreProgress(score: Score): Double { // 下下策
         val mode = score.mode
 
         val progress =
