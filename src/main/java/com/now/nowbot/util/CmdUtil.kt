@@ -224,6 +224,8 @@ object CmdUtil {
             null
         }
 
+        setMode(mode, myBind?.osuMode ?: OsuMode.DEFAULT, event)
+
         /**
          * @param qq 如果是负数，则认为是 UID
          */
@@ -233,6 +235,8 @@ object CmdUtil {
             } else {
                 getOsuUser(-qq, mode.data)
             }
+
+            setMode(mode, you.currentOsuMode)
 
             if (isVS && myBind != null) {
                 val me = getOsuUser(myBind.osuName, mode.data)
@@ -273,6 +277,8 @@ object CmdUtil {
         if (gs.size == 1) {
             val you = getOsuUser(gs.first().trim(), mode.data, false)
 
+            setMode(mode, you.currentOsuMode)
+
             if (isVS && myBind != null) {
                 val me = getOsuUser(myBind.osuName, mode.data)
 
@@ -284,6 +290,8 @@ object CmdUtil {
             // 默认 VS 状态
 
             val you = getOsuUser(gs.first().trim(), mode.data)
+            setMode(mode, you.currentOsuMode)
+
             val they = getOsuUser(gs.last().trim(), mode.data)
 
             return listOf(you, they)

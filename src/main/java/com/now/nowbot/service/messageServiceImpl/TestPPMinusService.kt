@@ -12,7 +12,6 @@ import com.now.nowbot.service.messageServiceImpl.PPMinusService.PPMinusParam
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.CmdUtil
-import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -31,7 +30,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
         if (matcher.find().not()) return false
 
-        val inputMode = getMode(matcher)
+        val inputMode = CmdUtil.getMode(matcher)
         val users = CmdUtil.get2User(event, matcher, inputMode, false)
 
         data.value = PPMinusParam(
