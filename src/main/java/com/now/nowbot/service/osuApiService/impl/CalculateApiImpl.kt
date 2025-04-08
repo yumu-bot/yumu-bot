@@ -58,7 +58,7 @@ import kotlin.reflect.full.companionObjectInstance
         val state = with(score.statistics) {
             val state = toScoreStatistics(score.mode)
             JniScoreState.create(
-                maxCombo = 99999,
+                maxCombo = 2147483647 / 2,
                 largeTickHits = largeTickHit,
                 smallTickHits = smallTickHit,
                 sliderEndHits = sliderTailHit,

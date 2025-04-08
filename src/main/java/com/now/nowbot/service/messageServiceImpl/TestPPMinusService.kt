@@ -18,7 +18,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.io.Serializable
 
 @Service("TEST_PPM") class TestPPMinusService(
     private val scoreApiService: OsuScoreApiService,
@@ -86,7 +85,7 @@ import java.io.Serializable
             log.error("PP-：数据保存失败", e)
         }
 
-        val surrounding = ppMinusDao.getSurroundingPPMinus(user, bests, 10000)
+        val surrounding = ppMinusDao.getSurroundingPPMinus(user, bests, 3000)
 
         try {
             return PPMinus4.getInstance(user, bests, surrounding, user.currentOsuMode)!!
@@ -108,7 +107,7 @@ import java.io.Serializable
 
         val cardB2 = others?.values?.mapIndexed { i, it -> titles[i] to it }?.toMap()
 
-        val statistics: Map<String, Serializable> = mapOf("is_vs" to (other != null), "mode_int" to mode.modeValue)
+        val statistics: Map<String, Any> = mapOf("is_vs" to (other != null), "mode_int" to mode.modeValue)
 
         val body = mutableMapOf(
             "users" to cardA1s, "my" to cardB1, "stat" to statistics, "panel" to "PM4"

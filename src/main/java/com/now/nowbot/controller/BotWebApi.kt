@@ -103,12 +103,15 @@ import kotlin.math.min
         @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam(
             value = "name", required = true
         ) name: String,
-        @OpenResource(name = "name2", desp = "第二个玩家的名称") @Nullable @RequestParam("name2") name2: String?,
-        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @RequestParam(value = "u1", required = false) u1: String
+        @OpenResource(name = "name2", desp = "第二个玩家的名称") @Nullable @RequestParam("name2") name2: String? = null,
+        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String? = "osu",
+        @RequestParam(value = "u1", required = false) u1: String? = null
     ): ResponseEntity<ByteArray> {
         if (name2.isNullOrBlank().not()) {
             return getPPMinusVS(name, name2!!, playMode)
+        }
+        if (u1.isNullOrBlank().not()) {
+            return getPPMinus(u1!!, playMode = playMode)
         }
 
         val mode = getMode(playMode)
@@ -305,7 +308,7 @@ import kotlin.math.min
     fun getScore(
         @RequestParam("name") name: String,
         @Nullable @RequestParam("mode") playMode: String?,
-        @Nullable @RequestParam("type") type: ScoreType,
+        @Nullable @RequestParam("type") type: ScoreType?,
         @Nullable @RequestParam("start") start: Int?,
         @Nullable @RequestParam("end") end: Int?
     ): ResponseEntity<ByteArray> {
