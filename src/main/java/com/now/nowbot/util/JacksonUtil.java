@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("unchecked")
 public class JacksonUtil {
 
     private static final Logger       log         = LoggerFactory.getLogger(JacksonUtil.class);
@@ -168,8 +169,8 @@ public class JacksonUtil {
             node = mapper.readTree(body);
             JsonNode leaf = node.get(field);
             if (leaf != null) {
-                Integer value = leaf.asInt();
-                return value.shortValue();
+                int value = leaf.asInt();
+                return (short) value;
             }
         } catch (IOException e) {
             log.error(e.getMessage(), e);
@@ -183,8 +184,8 @@ public class JacksonUtil {
             node = mapper.readTree(body);
             JsonNode leaf = node.get(field);
             if (leaf != null) {
-                Integer value = leaf.asInt();
-                return value.byteValue();
+                int value = leaf.asInt();
+                return (byte) value;
             }
         } catch (IOException e) {
             log.error(e.getMessage(), e);

@@ -1,50 +1,41 @@
-package com.now.nowbot.qq.local;
+package com.now.nowbot.qq.local
 
-import com.now.nowbot.qq.contact.Friend;
-import com.now.nowbot.qq.contact.Group;
-import com.now.nowbot.qq.contact.Stranger;
-import com.now.nowbot.qq.message.MessageChain;
+import com.now.nowbot.qq.Bot
+import com.now.nowbot.qq.contact.Friend
+import com.now.nowbot.qq.contact.Group
+import com.now.nowbot.qq.contact.Stranger
+import com.now.nowbot.qq.message.MessageChain
 
-import java.util.List;
-
-public class Bot implements com.now.nowbot.qq.Bot {
-    @Override
-    public long getSelfId() {
-        return 0;
+class Bot : Bot {
+    override fun getBotID(): Long {
+        return 0
     }
 
-    @Override
-    public List<? extends Friend> getFriends() {
-        return List.of();
+    override fun getFriends(): List<Friend> {
+        return listOf()
     }
 
-    @Override
-    public Friend getFriend(Long id) {
-        return null;
+    override fun getFriend(id: Long): Friend? {
+        return null
     }
 
-    @Override
-    public List<? extends Group> getGroups() {
-        return List.of();
+    override fun getGroups(): List<Group> {
+        return listOf()
     }
 
-    @Override
-    public Group getGroup(Long id) {
-        return null;
+    override fun getGroup(id: Long): Group? {
+        return null
     }
 
-    @Override
-    public MessageChain getMessage(Long id) {
-        return null;
+    override fun getMessage(id: Long): MessageChain? {
+        return null
     }
 
-    @Override
-    public List<? extends Stranger> getStrangers() {
-        return List.of();
+    override fun getStrangers(): List<Stranger> {
+        return listOf()
     }
 
-    @Override
-    public Stranger getStranger(Long id) {
-        return null;
+    override fun getStranger(id: Long): Stranger? {
+        return null
     }
 }

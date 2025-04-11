@@ -8,7 +8,8 @@ import com.now.nowbot.qq.message.MessageChain;
 import java.util.List;
 
 public interface Bot {
-    long getSelfId();
+    long getBotID();
+
     List<? extends Friend> getFriends();
 
     Friend getFriend(Long id);

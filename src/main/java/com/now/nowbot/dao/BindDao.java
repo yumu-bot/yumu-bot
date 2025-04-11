@@ -429,8 +429,8 @@ public class BindDao {
                 .collect(Collectors.toMap(OsuGroupConfigLite::getGroupId, it -> Optional.ofNullable(it.getMainMode()).orElse(OsuMode.DEFAULT)));
     }
 
-    public OsuMode getGroupModeConfig(MessageEvent event) {
-        if (!(event.getSubject() instanceof Group group)) {
+    public OsuMode getGroupModeConfig(@Nullable MessageEvent event) {
+        if (event == null || !(event.getSubject() instanceof Group group)) {
             return OsuMode.DEFAULT;
         }
 

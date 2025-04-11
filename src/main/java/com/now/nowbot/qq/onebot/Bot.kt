@@ -1,88 +1,62 @@
-package com.now.nowbot.qq.onebot;
+package com.now.nowbot.qq.onebot
 
-import com.mikuac.shiro.model.ArrayMsg;
-import com.now.nowbot.qq.contact.Stranger;
-import com.now.nowbot.qq.message.MessageChain;
-import com.now.nowbot.qq.onebot.contact.Group;
-import com.now.nowbot.qq.onebot.event.MessageEvent;
-import com.now.nowbot.util.JacksonUtil;
-import org.springframework.util.CollectionUtils;
+import com.mikuac.shiro.core.Bot
+import com.mikuac.shiro.model.ArrayMsg
+import com.now.nowbot.qq.contact.Stranger
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.onebot.contact.Friend
+import com.now.nowbot.qq.onebot.contact.Group
+import com.now.nowbot.qq.onebot.event.MessageEvent.Companion.getMessageChain
+import com.now.nowbot.util.JacksonUtil
 
-import java.util.List;
-import java.util.Objects;
-
-public class Bot implements com.now.nowbot.qq.Bot {
-    private final com.mikuac.shiro.core.Bot bot;
-
-    public Bot(com.mikuac.shiro.core.Bot bot) {
-        this.bot = bot;
+class Bot(val trueBot: Bot) : com.now.nowbot.qq.Bot {
+    override fun getBotID(): Long {
+        return trueBot.selfId
     }
 
-    @Override
-    public long getSelfId() {
-        return bot.getSelfId();
+    override fun getFriends(): List<Friend> {
+        val data = trueBot.friendList.data
+        return data.map {
+            Friend(trueBot, it.userId, it.nickname)
+        }
     }
 
-    @Override
-    public List<com.now.nowbot.qq.onebot.contact.Friend> getFriends() {
-        var data = bot.getFriendList().getData();
-        return data.stream()
-                .map(f -> new com.now.nowbot.qq.onebot.contact.Friend(bot, f.getUserId(), f.getNickname()))
-                .toList();
+    override fun getFriend(id: Long): Friend {
+        val data = trueBot.getStrangerInfo(id, false).data
+        return Friend(trueBot, data.userId, data.nickname)
     }
 
-    @Override
-    public com.now.nowbot.qq.onebot.contact.Friend getFriend(Long id) {
-        var data = bot.getStrangerInfo(id, false).getData();
-        return new com.now.nowbot.qq.onebot.contact.Friend(bot, data.getUserId(), data.getNickname());
+    override fun getGroups(): List<Group> {
+        val data = trueBot.groupList.data
+        return data.map { Group(trueBot, it.groupId, it.groupName) }
     }
 
-    @Override
-    public List<com.now.nowbot.qq.onebot.contact.Group> getGroups() {
-        var data = bot.getGroupList().getData();
-        return data.stream()
-                .map(g -> new com.now.nowbot.qq.onebot.contact.Group(bot, g.getGroupId(), g.getGroupName()))
-                .toList();
+    override fun getGroup(id: Long): Group {
+        val data = trueBot.getGroupInfo(id, false).data
+        return Group(trueBot, data.groupId, data.groupName)
     }
 
-    @Override
-    public com.now.nowbot.qq.onebot.contact.Group getGroup(Long id) {
-        var data = bot.getGroupInfo(id, false).getData();
-        return new Group(bot, data.getGroupId(), data.getGroupName());
-    }
+    override fun getMessage(id: Long): MessageChain? {
+        val action = trueBot.getMsg(id.toInt())
+        val data = JacksonUtil.parseObjectList(action?.data?.message ?: return null, ArrayMsg::class.java)
 
-    @Override
-    public MessageChain getMessage(Long id) {
-        var action = bot.getMsg(id.intValue());
-
-        if (Objects.isNull(action.getData())) return null;
-
-        var data = JacksonUtil.parseObjectList(action.getData().getMessage(), ArrayMsg.class);
-
-        if (CollectionUtils.isEmpty(data)) return null;
-
-        return MessageEvent.getMessageChain(data);
+        if (data.isEmpty()) return null
+        return getMessageChain(data)
     }
 
     /***
      * 未实现
      * @return null
      */
-    @Override
-    public List<Stranger> getStrangers() {
-        return null;
+    override fun getStrangers(): List<Stranger>? {
+        return null
     }
 
     /***
      * 未实现
      * @return null
      */
-    @Override
-    public Stranger getStranger(Long id) {
-        return null;
-    }
-
-    public com.mikuac.shiro.core.Bot getTrueBot() {
-        return bot;
+    override fun getStranger(id: Long): Stranger? {
+        return null
     }
 }

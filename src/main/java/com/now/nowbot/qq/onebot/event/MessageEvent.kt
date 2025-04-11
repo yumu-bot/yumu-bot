@@ -1,102 +1,99 @@
-package com.now.nowbot.qq.onebot.event;
+package com.now.nowbot.qq.onebot.event
 
-import com.mikuac.shiro.common.utils.ShiroUtils;
-import com.mikuac.shiro.core.Bot;
-import com.mikuac.shiro.enums.MsgTypeEnum;
-import com.mikuac.shiro.model.ArrayMsg;
-import com.now.nowbot.qq.message.*;
-import com.now.nowbot.qq.onebot.contact.Contact;
-import com.now.nowbot.qq.onebot.contact.Group;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.mikuac.shiro.common.utils.ShiroUtils
+import com.mikuac.shiro.core.Bot
+import com.mikuac.shiro.dto.event.message.GroupMessageEvent
+import com.mikuac.shiro.dto.event.message.MessageEvent
+import com.mikuac.shiro.enums.MsgTypeEnum
+import com.mikuac.shiro.model.ArrayMsg
+import com.now.nowbot.qq.message.*
+import com.now.nowbot.qq.onebot.contact.Contact
+import com.now.nowbot.qq.onebot.contact.Group
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.net.MalformedURLException
+import java.net.URI
+import java.net.URISyntaxException
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-public class MessageEvent extends Event implements com.now.nowbot.qq.event.MessageEvent {
-    private static final Logger log = LoggerFactory.getLogger("msg");
-    com.mikuac.shiro.dto.event.message.MessageEvent event;
-
-    public MessageEvent(com.mikuac.shiro.dto.event.message.MessageEvent event, Bot bot) {
-        super(bot);
-        this.event = event;
-    }
-
-    @Override
-    public Contact getSubject() {
-        if (event instanceof com.mikuac.shiro.dto.event.message.GroupMessageEvent e) {
-            return new Group(getBot().getTrueBot(), e.getGroupId());
+open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot),
+    com.now.nowbot.qq.event.MessageEvent {
+    override fun getSubject(): Contact {
+        if (event is GroupMessageEvent) {
+            return Group(bot.trueBot, event.groupId)
         }
-        return new Contact(getBot().getTrueBot(), event.getUserId());
+        return Contact(bot.trueBot, event.userId)
     }
 
-    @Override
-    public Contact getSender() {
-        if (event instanceof com.mikuac.shiro.dto.event.message.GroupMessageEvent e) {
-            return new Group(getBot().getTrueBot(), e.getSender().getUserId());
+    override fun getSender(): Contact {
+        return if (event is GroupMessageEvent) {
+            Group(bot.trueBot, event.sender.userId)
+        } else {
+            Contact(bot.trueBot, event.userId)
         }
-        return new Contact(getBot().getTrueBot(), event.getUserId());
     }
 
-    @Override
-    public MessageChain getMessage() {
-        return getMessageChain(event.getArrayMsg());
+    override fun getMessage(): MessageChain {
+        return getMessageChain(event.arrayMsg)
     }
 
-    public String getRawMessage() {
-        return event.getRawMessage();
+    override fun getRawMessage(): String {
+        return event.rawMessage
     }
 
-    @Override
-    public String getTextMessage() {
-        return getMessage().getMessageList()
-                .stream()
-                .filter(m -> m instanceof TextMessage)
-                .map(Message::toString)
-                .collect(Collectors.joining());
+    override fun getTextMessage(): String {
+        return message.messageList
+            .filterIsInstance<TextMessage>()
+            .joinToString("") { it.toString() }
     }
 
-    public static MessageChain getMessageChain(List<ArrayMsg> msgs) {
-        var msg = msgs.stream().map(arrayMsg -> {
-            Message m;
-            switch (arrayMsg.getType()) {
-                case at -> {
-                    var qqStr = arrayMsg.getData().getOrDefault("qq", "0");
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger("msg")
 
-                    try {
-                        m = new AtMessage(Long.parseLong(qqStr));
-                    } catch (NumberFormatException e) {
+        @JvmStatic
+        fun getMessageChain(msgs: List<ArrayMsg>): MessageChain {
+            val msg = msgs.map {
+                return@map when (it.type) {
+                    MsgTypeEnum.at -> {
+                        val qqStr = it.data.getOrDefault("qq", "0")
+
                         //艾特全体是 -1。扔过来的可能是 "all"
-                        m = new AtMessage(-1L);
+                        AtMessage(qqStr.toLongOrNull() ?: -1L)
                     }
-                }
-                case text -> m = new TextMessage(decodeArr(arrayMsg.getData().getOrDefault("text", "")));
-                case reply -> m = new ReplyMessage(Integer.parseInt(arrayMsg.getData().getOrDefault("id", "0")),
-                        decodeArr(arrayMsg.getData().getOrDefault("text", "")));
-                case image -> {
-                    try {
-                        m = new ImageMessage(new URL(arrayMsg.getData().getOrDefault("url", "")));
-                    } catch (MalformedURLException e) {
-                        m = new TextMessage("[图片;加载异常]");
-                    }
-                }
 
-                case null, default -> m = new TextMessage(
-                        String.format("[%s;不支持的操作类型]", Optional.ofNullable(arrayMsg.getType()).orElse(MsgTypeEnum.unknown))
-                );
+                    MsgTypeEnum.text -> TextMessage(
+                        decodeArr(it.data.getOrDefault("text", ""))
+                    )
+
+                    MsgTypeEnum.reply -> ReplyMessage(
+                        it.data.getOrDefault("id", "0").toInt().toLong(),
+                        decodeArr(it.data.getOrDefault("text", ""))
+                    )
+
+                    MsgTypeEnum.image -> {
+                        try {
+                            ImageMessage(URI(it.data.getOrDefault("url", "")).toURL())
+                        } catch (e: MalformedURLException) {
+                            TextMessage("[图片;加载异常]")
+                        } catch (e: URISyntaxException) {
+                            TextMessage("[图片;加载异常]")
+                        }
+                    }
+
+                    else -> TextMessage(
+                        String.format("[%s;不支持的操作类型]", it.type ?: MsgTypeEnum.unknown)
+                    )
+                }
             }
-            return m;
-        }).toList();
-        return new MessageChain(msg);
-    }
 
-    private static String decode(String m) {
-        return ShiroUtils.unescape(m);
-    }
-    private static String decodeArr(String m) {
-        return m;
+            return MessageChain(msg)
+        }
+
+        private fun decode(m: String): String {
+            return ShiroUtils.unescape(m)
+        }
+
+        private fun decodeArr(m: String): String {
+            return m
+        }
     }
 }

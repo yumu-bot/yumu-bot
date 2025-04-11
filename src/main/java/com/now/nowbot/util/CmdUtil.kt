@@ -588,7 +588,7 @@ object CmdUtil {
     private const val OSU_MIN_INDEX = 2
 
     private val SPLIT_RANGE = "[\\-－ ]".toRegex()
-    private val JUST_RANGE: Pattern = Pattern.compile("^\\s*$REG_HASH?\\s*(\\d{1,3}[\\-－ ]+)?\\d{1,3}\\s*$")
+    private val JUST_RANGE: Pattern = "^\\s*$REG_HASH?\\s*(\\d{1,3}[\\-－ ]+)?\\d{1,3}\\s*$".toPattern()
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
     private lateinit var bindDao: BindDao
     private lateinit var userApiService: OsuUserApiService

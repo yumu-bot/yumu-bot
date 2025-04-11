@@ -405,7 +405,7 @@ public class Permission {
         Group group;
         if ((group = bot.getGroup(groupID)) == null) return false;
         GroupContact botMyself;
-        if ((botMyself = group.getUser(bot.getSelfId())) == null) return false;
+        if ((botMyself = group.getUser(bot.getBotID())) == null) return false;
         return botMyself.getRole() == Role.ADMIN || botMyself.getRole() == Role.OWNER;
     }
 
