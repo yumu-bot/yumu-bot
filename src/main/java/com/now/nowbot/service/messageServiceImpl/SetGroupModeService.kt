@@ -30,15 +30,13 @@ class SetGroupModeService (
         val m = Instruction.SET_GROUP_MODE.matcher(messageText)
         val m2 = Instruction.GROUP_LIST.matcher(messageText)
 
-        if (!m.find() && !m2.find()) return false
-
         if (m.find()) {
             data.value = SetGroupParam(
                 m.group(FLAG_QQ_ID)?.toLongOrNull() ?: m.group(FLAG_QQ_GROUP)?.toLongOrNull(),
                 OsuMode.getMode(m.group(FLAG_MODE)))
-        } else {
+        } else if (m2.find()) {
             data.value = SetGroupParam(0L - (m2.group(FLAG_RANGE)?.toLongOrNull() ?: 1L), OsuMode.DEFAULT)
-        }
+        } else return false
 
         return true
     }
