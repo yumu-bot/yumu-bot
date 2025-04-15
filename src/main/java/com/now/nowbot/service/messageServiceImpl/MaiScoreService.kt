@@ -10,6 +10,7 @@ import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.service.messageServiceImpl.MaiScoreService.Companion.Version.*
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
@@ -26,19 +27,18 @@ import org.springframework.stereotype.Service
         val title: String?,
         val name: String?,
         val qq: Long?,
+        val version: Version,
         val difficulty: MaiDifficulty,
     )
 
-    data class MSPanelParam(val songs: List<MaiSong>, val scores: List<MaiScore>) {
+    data class MSPanelParam(val songs: List<MaiSong>, val scores: List<MaiScore>, val version: Version) {
         fun toMap(): Map<String, Any> {
-            val out = mutableMapOf<String, Any>()
-
-            out["songs"] = songs
-            out["scores"] = scores
-
-            out["panel"] = "MS"
-
-            return out
+            return mapOf(
+                "songs" to songs,
+                "scores" to scores,
+                "version" to version.name,
+                "panel" to "MS"
+            )
         }
     }
 
@@ -58,6 +58,8 @@ import org.springframework.stereotype.Service
         } else {
             MaiDifficulty.DEFAULT
         }
+
+        val version = getVersion(matcher.group(FLAG_VERSION))
 
         val nameOrTitleStr = (matcher.group(FLAG_NAME) ?: "").trim()
 
@@ -82,6 +84,7 @@ import org.springframework.stereotype.Service
                             null,
                             s.last().replace(Regex(REG_QUOTATION), ""),
                             null,
+                            version,
                             difficulty,
                         )
                     } else {
@@ -90,27 +93,28 @@ import org.springframework.stereotype.Service
                             nameOrTitleStr.replace(Regex(REG_QUOTATION), ""),
                             null,
                             qq,
+                            version,
                             difficulty,
                         )
                     }
                 } else if (s.size == 1) {
                     if (s.first().matches(Regex(REG_NUMBER_15))) {
-                        data.value = MaiScoreParam(s.first().toInt(), null, null, qq, difficulty)
+                        data.value = MaiScoreParam(s.first().toInt(), null, null, qq, version, difficulty)
                     } else if (s.first().contains(Regex(REG_QUOTATION))) {
                         throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID_Quotation)
                     } else {
-                        data.value = MaiScoreParam(null, nameOrTitleStr, null, qq, difficulty)
+                        data.value = MaiScoreParam(null, nameOrTitleStr, null, qq, version, difficulty)
                     }
                 } else {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
                 }
             } else {
                 if (nameOrTitleStr.matches(Regex(REG_NUMBER_15))) {
-                    data.value = MaiScoreParam(nameOrTitleStr.toInt(), null, null, qq, difficulty)
+                    data.value = MaiScoreParam(nameOrTitleStr.toInt(), null, null, qq, version, difficulty)
                 } else if (nameOrTitleStr.contains(Regex(REG_QUOTATION))) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID_Quotation)
                 } else {
-                    data.value = MaiScoreParam(null, nameOrTitleStr, null, qq, difficulty)
+                    data.value = MaiScoreParam(null, nameOrTitleStr, null, qq, version, difficulty)
                 }
             }
         } else {
@@ -129,18 +133,15 @@ import org.springframework.stereotype.Service
 
          */
 
-        val image: ByteArray
-
         val result: MaiSong = if (param.title != null) { // 标题搜歌模式
             val title = DataUtil.getStandardisedString(param.title)
 
             // 外号模式
             val s = maimaiApiService.getMaimaiAliasSong(title)
 
-            if (s != null) {
+            if (s != null && (DataUtil.getStringSimilarity(title, s.title) >= 0.4 || DataUtil.getStringSimilarity(title, s.alias) >= 0.4)) {
                 s
             } else {
-
                 // 实在走不通的保底模式
 
                 val possibles = maimaiApiService.getMaimaiPossibleSongs(title) ?: throw GeneralTipsException(
@@ -161,8 +162,7 @@ import org.springframework.stereotype.Service
                     GeneralTipsException.Type.G_Null_ResultNotAccurate
                 )
 
-                r.stream().sorted(Comparator.comparingDouble<Pair<MaiSong, Double>?> { it.second }.reversed())
-                    .map { it.first }.toList().first()
+                r.maxBy { it.second }.first
             }
         } else if (param.id != null) { // 搜歌模式
             maimaiApiService.getMaimaiSong(param.id.toLong())
@@ -178,38 +178,53 @@ import org.springframework.stereotype.Service
             )
         }
 
-        run {
-            val standard: MaiSong
-            val deluxe: MaiSong
+
+        val image: ByteArray = run {
 
             // 获取符合的成绩
-            val scores: List<MaiScore> = if (full != null) {
-                full.records.stream().filter {
-                        if (result.songID < 10000) {
-                            return@filter it.songID == result.songID.toLong() || it.songID == (result.songID + 10000).toLong()
-                        } else {
-                            return@filter it.songID == result.songID.toLong() || it.songID == (result.songID - 10000).toLong()
-                        }
-                    }.toList()
-            } else {
-                listOf()
-            }
+            val scores: List<MaiScore> = full?.records?.filter {
+                if (result.isDeluxe) {
+                    return@filter it.songID == result.songID.toLong() || it.songID == (result.songID - 10000).toLong()
+                } else {
+                    return@filter it.songID == result.songID.toLong() || it.songID == (result.songID + 10000).toLong()
+                }
+            } ?: listOf()
 
             maimaiApiService.insertSongData(scores)
 
-            // 判断谱面种类
-            if (result.songID < 10000) {
-                standard = result
-                deluxe = maimaiApiService.getMaimaiSong(result.songID + 10000L) ?: MaiSong()
+            val anotherResult: MaiSong? = if (result.isDeluxe) {
+                maimaiApiService.getMaimaiSong(result.songID - 10000L)
             } else {
-                standard = maimaiApiService.getMaimaiSong(result.songID - 10000L) ?: MaiSong()
-                deluxe = result
+                maimaiApiService.getMaimaiSong(result.songID + 10000L)
             }
 
-            image = imageService.getPanel(
-                MSPanelParam(songs = listOf(standard, deluxe), scores = scores).toMap(),
-                "MS",
-            )
+            // 只有一种谱面
+            if (anotherResult == null) {
+                val version = if (result.isDeluxe) DX else SD
+
+                return@run imageService.getPanel(
+                    MSPanelParam(songs = listOf(result), scores = scores, version = version).toMap(),
+                    "MS")
+            } else if (scores.map { it.isDeluxe }.toSet().size > 1 && param.version == ANY) {
+                // 有两种谱面，两种成绩，没有规定难度。此时取玩家成绩最好的那个
+                val isDX = scores.maxBy { it.rating }.isDeluxe
+
+                val songs = listOf(listOf(result, anotherResult).first { it.isDeluxe == isDX })
+
+                return@run imageService.getPanel(
+                    MSPanelParam(songs = songs,
+                        scores = scores.filter { it.isDeluxe == isDX }, version = ANY).toMap(),
+                    "MS")
+            } else {
+                // 有两种谱面
+                val isDX = param.version == DX || param.version == ANY
+
+                val songs = listOf(listOf(result, anotherResult).first { it.isDeluxe == isDX })
+
+                return@run imageService.getPanel(
+                    MSPanelParam(songs = songs, scores = scores.filter { it.isDeluxe == isDX }, version = ANY).toMap(),
+                    "MS")
+            }
         }
 
         event.reply(image)
@@ -323,6 +338,21 @@ import org.springframework.stereotype.Service
                 "fsd" -> "FDX"
                 "fsdp" -> "FDX+"
                 else -> "?"
+            }
+        }
+
+
+        enum class Version {
+            DX, SD, ANY;
+        }
+
+        private fun getVersion(string: String?): Version {
+            if (string.isNullOrBlank()) return ANY
+
+            return when(string.lowercase()) {
+                "sd", "标准", "standard" -> SD
+                "dx", "豪华", "deluxe" -> DX
+                else -> ANY
             }
         }
     }

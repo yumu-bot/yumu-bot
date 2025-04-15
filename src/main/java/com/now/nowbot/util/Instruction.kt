@@ -724,9 +724,12 @@ enum class Instruction(val pattern: Pattern) {
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
-            appendCaptureGroup("diff", REG_DIFF)
+            appendCaptureGroup(FLAG_DIFF, REG_DIFF)
         }
         appendQQID()
+        appendSpace()
+        appendCaptureGroup(FLAG_VERSION, "dx|sd|deluxe|standard|标准|豪华")
+        appendSpace()
         appendNameAny()
     }),
 
@@ -735,7 +738,7 @@ enum class Instruction(val pattern: Pattern) {
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
-            appendCaptureGroup("diff", REG_DIFF)
+            appendCaptureGroup(FLAG_DIFF, REG_DIFF)
         }
         appendQQID()
         appendNameAnyButNoHash()
@@ -743,7 +746,7 @@ enum class Instruction(val pattern: Pattern) {
             append(REG_HASH)
             appendMatchLevel(MAYBE)
             appendSpace()
-            appendCaptureGroup("version", REG_ANYTHING_BUT_NO_SPACE, MORE)
+            appendCaptureGroup(FLAG_VERSION, REG_ANYTHING_BUT_NO_SPACE, MORE)
         }
     }),
 
@@ -784,9 +787,7 @@ enum class Instruction(val pattern: Pattern) {
             append(REG_HASH)
             appendMatchLevel(MAYBE)
             appendSpace()
-            appendCaptureGroup(
-                "version", REG_ANYTHING_BUT_NO_STARS, MORE
-            )
+            appendCaptureGroup(FLAG_VERSION, REG_ANYTHING_BUT_NO_STARS, MORE)
         }
         appendSpace()
         appendGroup(MAYBE) {

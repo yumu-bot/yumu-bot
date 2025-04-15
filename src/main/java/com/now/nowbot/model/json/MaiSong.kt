@@ -33,6 +33,10 @@ class MaiSong {
 
     @JsonProperty("basic_info") var info: SongInfo = SongInfo()
 
+    @get:JsonIgnoreProperties
+    val isDeluxe: Boolean
+        get() = this.songID >= 10000
+
     class MaiChart {
         // 物件数量
         @JsonIgnoreProperties var notes: MaiNote = MaiNote()

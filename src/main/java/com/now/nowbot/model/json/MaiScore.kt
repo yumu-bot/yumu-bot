@@ -58,4 +58,7 @@ class MaiScore {
 
     // 自己拿
     @JsonIgnoreProperties var charter: String = ""
+
+    @get:JsonIgnoreProperties val isDeluxe: Boolean
+        get() = this.songID >= 10000
 }
