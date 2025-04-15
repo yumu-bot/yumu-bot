@@ -5,7 +5,7 @@ yumu:
   public-domain: ${yumu.private-domain}
   private-device: [ ]
   mirror: # 谱面镜像站的设定
-    url: "http://192.168.243.253:47150",
+    url: ~
     api: ~
   group:
     # osu! 新人杀手群
