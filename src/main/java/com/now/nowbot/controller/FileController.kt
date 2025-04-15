@@ -1,61 +1,57 @@
-package com.now.nowbot.controller;
+package com.now.nowbot.controller
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.config.NowbotConfig;
-import jakarta.annotation.Resource;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.client.WebClient;
+import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.config.BeatmapMirrorConfig
+import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.reactive.function.client.WebClient
 
-import java.util.Map;
-import java.util.Optional;
+@RestController @RequestMapping(value = ["/pub"], method = [RequestMethod.GET])
+@CrossOrigin("http://localhost:5173", "https://siyuyuko.github.io")
+class FileController(private val webClient: WebClient, mirrorConfig: BeatmapMirrorConfig) {
+    private final val token: String? = mirrorConfig.token
+    private final val url = mirrorConfig.url
 
-@RestController
-@RequestMapping(value = "/pub", method = RequestMethod.GET)
-@CrossOrigin({"http://localhost:5173", "https://siyuyuko.github.io"})
-public class FileController {
-    private static final String API_URL = NowbotConfig.BEATMAP_MIRROR_URL;
-    @Resource
-    WebClient webClient;
-    final Optional<String> token = NowbotConfig.BEATMAP_MIRROR_TOKEN;
+    @GetMapping("/api/{type}/{bid}") fun download(
+        @PathVariable("type") type: String, @PathVariable("bid") bid: Long?
+    ): ResponseEntity<*> {
 
-    @GetMapping("/api/{type}/{bid}")
-    public ResponseEntity<?> download(@PathVariable("type") String type, @PathVariable("bid") Long bid) {
-        if ("info".equals(type)) {
-            JsonNode data;
-            try {
-                data = webClient.get().uri(STR."\{API_URL}/api/map/getBeatMapInfo/\{bid}")
-                        .headers(h -> token.ifPresent(t -> h.addIfAbsent("AuthorizationX", t)))
-                        .retrieve()
-                        .bodyToMono(JsonNode.class)
-                        .block();
-            } catch (Exception e) {
-                return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(Map.of("code", 400, "message", e.getMessage()));
+        return when(type) {
+            "info" -> {
+                val data: JsonNode = try {
+                    webClient.get().uri("${url}/api/map/getBeatMapInfo/${bid}").headers {
+                        it.addIfAbsent("AuthorizationX", token)
+                    }.retrieve().bodyToMono(JsonNode::class.java).block()!!
+                } catch (e: Exception) {
+                    return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON)
+                        .body(mapOf("code" to 400, "message" to e.message))
+                }
 
-            }
-            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(data);
-        }
-        if ("background".equals(type)) {
-            byte[] data;
-            try {
-                data = webClient.get().uri(STR."\{API_URL}/api/file/map/bg/\{bid}")
-                        .headers(h -> token.ifPresent(t -> h.addIfAbsent("AuthorizationX", t)))
-                        .retrieve()
-                        .bodyToMono(byte[].class).block();
-            } catch (Exception e) {
-                return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON).body(Map.of("code", 400, "message", e.getMessage()));
+                ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(data)
             }
 
+            "background" -> {
+                val data: ByteArray = try {
+                    webClient.get().uri(
+                        "${url}/api/file/map/bg/${bid}"
+                    ).headers {
+                        it.addIfAbsent("AuthorizationX", token)
+                    }.retrieve().bodyToMono(ByteArray::class.java).block()!!
+                } catch (e: Exception) {
+                    return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON)
+                        .body(mapOf("code" to 400, "message" to e.message))
+                }
 
-            return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(data);
+                ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(data)
+            }
+
+            else -> ResponseEntity.status(400).build<Any>()
         }
-        return ResponseEntity.status(400).build();
     }
 
-
-    private void ref(String name, MultipartFile file) {
-        System.out.println(STR."\{name}'s size is \{file.getSize()}");
+    private fun ref(name: String, file: MultipartFile) {
+        println("${name}'s size is ${file.size}")
     }
 }

@@ -42,7 +42,6 @@ import java.lang.reflect.Parameter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -52,14 +51,7 @@ import static com.now.nowbot.config.AsyncSetting.THREAD_FACTORY;
 @Component
 @Configuration
 public class NowbotConfig {
-    public static final  String           BEATMAP_MIRROR_URL = "http://192.168.243.253:47150";
-    public static final  Optional<String> BEATMAP_MIRROR_TOKEN;
-    private static final Logger           log        = LoggerFactory.getLogger(NowbotConfig.class);
-
-    static {
-        var s = System.getenv("API_TOKEN");
-        BEATMAP_MIRROR_TOKEN = Optional.ofNullable(s);
-    }
+    private static final Logger log = LoggerFactory.getLogger(NowbotConfig.class);
 
     /**
      * bot 运行目录
@@ -81,13 +73,13 @@ public class NowbotConfig {
      * 网络图片 本地缓存
      */
     public static String IMGBUFFER_PATH;
-    public static int PORT;
+    public static int    PORT;
     @Value("${spring.proxy.type:'HTTP'}")
-    public String proxyType;
+    public        String proxyType;
     @Value("${spring.proxy.host:'localhost'}")
-    public String proxyHost;
+    public        String proxyHost;
     @Value("${spring.proxy.port:7890}")
-    public int proxyPort;
+    public        int    proxyPort;
 
     @Autowired
     public NowbotConfig(FileConfig fileConfig) {
@@ -103,10 +95,8 @@ public class NowbotConfig {
     public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
         ObjectMapper mapper = builder.createXmlMapper(false).build();
 //        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        mapper
-                .registerModule(new Jdk8Module())
-                .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
-                .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        mapper.registerModule(new Jdk8Module()).setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+              .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         return mapper;
     }
 
@@ -119,7 +109,7 @@ public class NowbotConfig {
 
     public String createDir(String path) {
         Path pt = Path.of(path);
-        if (! Files.isDirectory(pt)) {
+        if (!Files.isDirectory(pt)) {
             try {
                 Files.createDirectories(pt);
             } catch (IOException e) {
@@ -135,9 +125,7 @@ public class NowbotConfig {
     }
 
     static boolean testProxy(OkHttpClient client) {
-        Request request = new Request.Builder()
-                .url("https://osu.ppy.sh/users/17064371/scores/best?mode=osu&limit=1&offset=0")
-                .build();
+        Request request = new Request.Builder().url("https://osu.ppy.sh/users/17064371/scores/best?mode=osu&limit=1&offset=0").build();
         try (Response response = client.newCall(request).execute()) {
             if (response.isSuccessful()) return true;
         } catch (IOException e) {
@@ -152,22 +140,16 @@ public class NowbotConfig {
         if (discordConfig.getToken().equals("*")) return null;
         WebSocketFactory factory = new WebSocketFactory();
         var proxy = factory.getProxySettings();
-        if (config.proxyPort != 0)
-            proxy.setHost("localhost").setPort(config.proxyPort);
+        if (config.proxyPort != 0) proxy.setHost("localhost").setPort(config.proxyPort);
         JDA jda;
         try {
             var scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(0, THREAD_FACTORY);
-            jda = JDABuilder
-                    .createDefault(discordConfig.getToken())
-                    .setHttpClient(okHttpClient)
-                    .setWebsocketFactory(factory)
-                    .addEventListeners(listenerAdapters.toArray())
-                    .setCallbackPool(botAsyncExecutor.getThreadPoolExecutor())
-                    .setGatewayPool(scheduledThreadPoolExecutor)
-                    .setRateLimitPool(scheduledThreadPoolExecutor)
-                    .setEventPool(botAsyncExecutor.getThreadPoolExecutor())
-                    .setAudioPool(scheduledThreadPoolExecutor)
-                    .build();
+            jda = JDABuilder.createDefault(discordConfig.getToken()).setHttpClient(okHttpClient)
+                            .setWebsocketFactory(factory).addEventListeners(listenerAdapters.toArray())
+                            .setCallbackPool(botAsyncExecutor.getThreadPoolExecutor())
+                            .setGatewayPool(scheduledThreadPoolExecutor).setRateLimitPool(scheduledThreadPoolExecutor)
+                            .setEventPool(botAsyncExecutor.getThreadPoolExecutor())
+                            .setAudioPool(scheduledThreadPoolExecutor).build();
             jda.awaitReady();
         } catch (Exception e) {
             log.error("create jda error: {}", e.getMessage());
@@ -183,7 +165,8 @@ public class NowbotConfig {
                 continue;
             }
             String name = methodAnnotation.name();
-            SlashCommandData commandData = Commands.slash((discordConfig.getCommandSuffix() + name).toLowerCase(), methodAnnotation.desp());
+            SlashCommandData commandData =
+                    Commands.slash((discordConfig.getCommandSuffix() + name).toLowerCase(), methodAnnotation.desp());
             for (Parameter parameter : declaredMethod.getParameters()) {
                 OpenResource parameterAnnotation = parameter.getAnnotation(OpenResource.class);
                 if (parameterAnnotation == null) {
@@ -229,10 +212,8 @@ public class NowbotConfig {
 
     @Bean
     public CacheManager cacheManager(Executor mainExecutor) {
-        var caffeine = Caffeine.newBuilder()
-                .executor(mainExecutor)
-                .expireAfterAccess(5, TimeUnit.SECONDS)
-                .maximumSize(60);
+        var caffeine =
+                Caffeine.newBuilder().executor(mainExecutor).expireAfterAccess(5, TimeUnit.SECONDS).maximumSize(60);
         var manager = new CaffeineCacheManager();
         manager.setCaffeine(caffeine);
         manager.setAllowNullValues(true);

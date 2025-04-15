@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.now.nowbot.config.NowbotConfig
+import com.now.nowbot.config.BeatmapMirrorConfig
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.mappool.now.Pool
 import com.now.nowbot.model.mappool.old.MapPoolDto
@@ -17,12 +17,10 @@ import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.command.FLAG_NAME
-import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import org.springframework.web.util.UriBuilder
 import org.springframework.web.util.UriComponentsBuilder
 import java.time.Duration
 import java.util.*
@@ -31,7 +29,10 @@ import java.util.*
     private val imageService: ImageService,
     private val osuBeatmapApiService: OsuBeatmapApiService,
     private val webClient: WebClient,
+    beatmapMirrorConfig: BeatmapMirrorConfig
 ) : MessageService<PoolParam> {
+    private val url = beatmapMirrorConfig.url
+    private val token = beatmapMirrorConfig.token
 
     data class PoolParam(val id: Int, val name: String?, val mode: OsuMode)
 
@@ -97,51 +98,45 @@ import java.util.*
                 )
             }
         } else {
-            val p = searchById(param.id)
-            image = imageService.getPanelH(
-                p.map { pool: Pool? -> MapPoolDto(pool, osuBeatmapApiService) }
-                    .orElseThrow { TipsException("未找到id为 ${param.id} 的图池") },
-                param.mode,
-            )
+            val pool = searchByID(param.id) ?: throw TipsException("未找到id为 ${param.id} 的图池")
+            image = imageService.getPanelH(MapPoolDto(pool, osuBeatmapApiService), param.mode)
         }
 
         event.reply(image)
     }
 
     fun searchByName(name: String): List<Pool> {
-        val nodeOpt = webClient.get().uri { u: UriBuilder? ->
-                UriComponentsBuilder.fromUriString(URL).path("/api/public/searchPool").queryParam("poolName", name)
-                    .build().toUri()
-            }.headers { h: HttpHeaders ->
-                token.ifPresent { t: String -> h.addIfAbsent("AuthorizationX", t) }
-            }.retrieve().bodyToMono(JsonNode::class.java).blockOptional(Duration.ofSeconds(30))
+        if (url == null) return emptyList()
+
+        val nodeOpt = webClient.get().uri {
+            UriComponentsBuilder.fromUriString(url).path("/api/public/searchPool").queryParam("poolName", name).build()
+                .toUri()
+        }.headers {
+            it.addIfAbsent("AuthorizationX", token)
+        }.retrieve().bodyToMono(JsonNode::class.java).block(Duration.ofSeconds(30)) ?: return emptyList()
+
         return nodeOpt.map { node: JsonNode ->
             JacksonUtil.parseObjectList(node["data"], Pool::class.java)
-        }.orElseThrow()
+        }.flatten()
     }
 
-    fun searchById(id: Int): Optional<Pool> {
+    fun searchByID(id: Int): Pool? {
+        if (url == null) return null
+
         return try {
-            webClient.get().uri { u: UriBuilder? ->
-                    UriComponentsBuilder.fromUriString(URL).path("/api/public/searchPool").queryParam("poolId", id)
-                        .build().toUri()
-                }.headers { h: HttpHeaders ->
-                    token.ifPresent { t: String -> h.addIfAbsent("AuthorizationX", t) }
-                }.retrieve().bodyToMono(JsonNode::class.java).map { json: JsonNode ->
-                    if (json.has("data")) Optional.ofNullable(
-                        JacksonUtil.parseObject(json["data"], Pool::class.java)
-                    )
-                    else Optional.empty()
-                }.block(Duration.ofSeconds(30)) ?: Optional.empty()
+            webClient.get().uri {
+                UriComponentsBuilder.fromUriString(url).path("/api/public/searchPool").queryParam("poolId", id).build()
+                    .toUri()
+            }.headers {
+                it.addIfAbsent("AuthorizationX", token)
+            }.retrieve().bodyToMono(JsonNode::class.java).map { json: JsonNode ->
+                if (json.has("data")) JacksonUtil.parseObject(json["data"], Pool::class.java)
+                else null
+            }.block(Duration.ofSeconds(30))
         } catch (e: HttpClientErrorException.NotFound) {
-            Optional.empty()
+            null
         } catch (e: WebClientResponseException.NotFound) {
-            Optional.empty()
+            null
         }
-    }
-
-    companion object {
-        private const val URL = NowbotConfig.BEATMAP_MIRROR_URL
-        private val token: Optional<String> = NowbotConfig.BEATMAP_MIRROR_TOKEN
     }
 }
