@@ -205,8 +205,8 @@ import org.springframework.stereotype.Service
                 return@run imageService.getPanel(
                     MSPanelParam(songs = listOf(result), scores = scores, version = version).toMap(),
                     "MS")
-            } else if (scores.map { it.isDeluxe }.toSet().size > 1 && param.version == ANY) {
-                // 有两种谱面，两种成绩，没有规定难度。此时取玩家成绩最好的那个
+            } else if (scores.isNotEmpty() && param.version == ANY) {
+                // 有两种谱面，有成绩，没有规定难度。此时取玩家成绩最好的那个
                 val isDX = scores.maxBy { it.rating }.isDeluxe
 
                 val songs = listOf(listOf(result, anotherResult).first { it.isDeluxe == isDX })
@@ -216,7 +216,7 @@ import org.springframework.stereotype.Service
                         scores = scores.filter { it.isDeluxe == isDX }, version = ANY).toMap(),
                     "MS")
             } else {
-                // 有两种谱面
+                // 有两种谱面，但是没有成绩
                 val isDX = param.version == DX || param.version == ANY
 
                 val songs = listOf(listOf(result, anotherResult).first { it.isDeluxe == isDX })
