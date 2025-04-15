@@ -139,7 +139,11 @@ import org.springframework.stereotype.Service
             // 外号模式
             val s = maimaiApiService.getMaimaiAliasSong(title)
 
-            if (s != null && (DataUtil.getStringSimilarity(title, s.title) >= 0.4 || DataUtil.getStringSimilarity(title, s.alias) >= 0.4)) {
+            if (s != null
+                && (DataUtil.getStringSimilarity(title, s.title) >= 0.4 ||
+                        (maimaiApiService.getMaimaiAlias(s.songID)?.alias?.maxOfOrNull {
+                            DataUtil.getStringSimilarity(title, it)
+                        } ?: 0.0) >= 0.4)) {
                 s
             } else {
                 // 实在走不通的保底模式
