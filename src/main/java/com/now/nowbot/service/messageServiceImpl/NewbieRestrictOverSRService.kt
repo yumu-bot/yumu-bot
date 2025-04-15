@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.mikuac.shiro.core.Bot
 import com.mikuac.shiro.core.BotContainer
+import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.NewbieDao
 import com.now.nowbot.model.LazerMod
@@ -44,16 +45,17 @@ class NewbieRestrictOverSRService(
     private val calculateApiService: OsuCalculateApiService,
     private val newbieDao: NewbieDao,
     private val botContainer: BotContainer,
+    config: NewbieConfig
 ): MessageService<List<LazerScore>> {
     // 这里放幻数
 
     // 新人群、杀手群、执行机器人
-    private val newbieGroupID = 231094840L
-    private val killerGroupID = 695600319L
-    private val executorBotID = 1708547915L
+    private val newbieGroupID = config.newbieGroup
+    private val killerGroupID = config.killerGroup
+    private val executorBotID = config.hydrantBot
 
     // 赦免图：No title，竹取飞翔，C type
-    private val remitBIDs = listOf(760488L, 738063L, 86324L, 1620144L)
+    private val remitBIDs = config.remitBIDs.toList()
 
     override fun isHandle(
         event: MessageEvent,

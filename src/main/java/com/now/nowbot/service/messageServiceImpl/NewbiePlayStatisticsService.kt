@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
@@ -22,20 +23,21 @@ class NewbiePlayStatisticsService(
 //    private val newbieService: NewbieService,
     private val bindDao: BindDao,
     private val newbieService: NewbieService,
+    private val newbieConfig: NewbieConfig
 ) : MessageService<NewbiePlayStatisticsService.SearchType> {
     private val log = LoggerFactory.getLogger(NewbiePlayStatisticsService::class.java)
     private val ppFormat = DecimalFormat("#.##")
 
     enum class SearchType {
-        day, history, rank, list;
+        DAY, HISTORY, RANK, LIST;
 
         companion object {
             fun fromString(str: String): SearchType? {
                 return when (str) {
-                    "!!pc" -> day
-                    "!!pca" -> history
-                    "!!pl" -> rank
-                    "!!all" -> list
+                    "!!pc" -> DAY
+                    "!!pca" -> HISTORY
+                    "!!pl" -> RANK
+                    "!!all" -> LIST
                     else -> null
                 }
             }
@@ -67,14 +69,14 @@ class NewbiePlayStatisticsService(
     override fun HandleMessage(event: MessageEvent, data: SearchType) {
         if (event !is GroupMessageEvent) return
         val gid = event.group.id
-        if (gid != 231094840L && gid != 695600319L) return
+        if (gid != newbieConfig.newbieGroup && gid != newbieConfig.killerGroup) return
 
         val bind = bindDao.getBindFromQQ(event.sender.id, true)
         val message = when (data) {
-            SearchType.day -> handleDay(bind)
-            SearchType.history -> handleHistory(bind)
-            SearchType.rank -> handleRank(bind)
-            SearchType.list -> if (gid == 695600319L) {
+            SearchType.DAY -> handleDay(bind)
+            SearchType.HISTORY -> handleHistory(bind)
+            SearchType.RANK -> handleRank(bind)
+            SearchType.LIST -> if (gid == newbieConfig.killerGroup) {
                 handleList()
             } else {
                 return

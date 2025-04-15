@@ -4,6 +4,21 @@ yumu:
   #如果无法通过公网访问则保持与私网一致
   public-domain: ${yumu.private-domain}
   private-device: [ ]
+  group:
+    # osu! 新人杀手群
+    killerGroup: -1
+    # osu! 新人群
+    newbieGroup: -1
+    # osu! 进阶群
+    advancedGroup: -1
+    # osu! 高阶群
+    hyperGroup: -1
+    # 此 Bot QQ，一般用于新人群相关的内容
+    yumuBot: -1
+    # 消防栓，执行禁言的 Bot QQ
+    hydrantBot: -1
+    # 赦免图，比如 No title，竹取飞翔，C type
+    remitBIDs: [ ]
   file: # 运行路径 file 设置
     # 基目录
     root: ""

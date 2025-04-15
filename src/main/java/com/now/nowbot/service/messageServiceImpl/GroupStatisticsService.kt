@@ -1,242 +1,235 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.mikuac.shiro.core.BotContainer;
-import com.mikuac.shiro.dto.action.response.GroupMemberInfoResp;
-import com.now.nowbot.config.FileConfig;
-import com.now.nowbot.model.json.MicroUser;
-import com.now.nowbot.qq.contact.Group;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.osuApiService.OsuUserApiService;
-import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.util.Instruction;
-import com.now.nowbot.util.JacksonUtil;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.JsonNode
+import com.mikuac.shiro.core.BotContainer
+import com.mikuac.shiro.dto.action.response.GroupMemberInfoResp
+import com.now.nowbot.config.FileConfig
+import com.now.nowbot.config.NewbieConfig
+import com.now.nowbot.model.json.MicroUser
+import com.now.nowbot.qq.contact.Group
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.JacksonUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.http.HttpHeaders
+import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import reactor.core.publisher.SynchronousSink
+import java.io.IOException
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
 
 @Service("GROUP_STATISTICS")
-public class GroupStatisticsService implements MessageService<Long> {
-    private static final Logger log = LoggerFactory.getLogger(GroupStatisticsService.class);
-    private static final String getBinding = "https://api.bleatingsheep.org/api/Binding/{qq}";
-    public static final String getBP = "https://osu.ppy.sh/users/{osuId}/scores/best?mode=osu&limit=1";
+class GroupStatisticsService(
+    private val client: WebClient,
+    private val bots: BotContainer,
+    private val userApiService: OsuUserApiService,
+    private val newbieConfig: NewbieConfig,
+    fileConfig: FileConfig,
+) : MessageService<Long> {
+    private val cachePath: Path = Path.of(fileConfig.root, "StatisticalOverPPService.json")
 
-    private final BotContainer bots;
-    private final WebClient client;
-    private final OsuUserApiService userApiService;
+    private fun getOsuId(qq: Long): Long? {
+        if (UserCache.containsKey(qq)) {
+            return UserCache[qq]
+        }
+        val id = client.get()
+            .uri(GET_BINDING, qq)
+            .retrieve()
+            .bodyToMono(JsonNode::class.java)
+            .handle { json: JsonNode, sink: SynchronousSink<Long?> ->
+                if (!json.hasNonNull("userId")) {
+                    sink.error(WebClientResponseException.create(404, "NOT FOUND", HttpHeaders(), byteArrayOf(), null))
+                    return@handle
+                }
+                sink.next(json["osuId"].asLong())
+            }
+            .block()
+        UserCache[qq] = id
+        return id
+    }
 
-    private static final Map<Long, Long> UserCache = new HashMap<>();
+    fun getOsuBp1(osuId: Long): Float {
+        return client.get()
+            .uri(GET_BP_URL, osuId)
+            .retrieve()
+            .bodyToMono(JsonNode::class.java)
+            .handle { json: JsonNode, sink: SynchronousSink<Double> ->
+                if (!json.isArray || json.isEmpty) {
+                    sink.error(WebClientResponseException.create(404, "NOT FOUND", HttpHeaders(), byteArrayOf(), null))
+                    return@handle
+                }
+                val b1 = json[0]
+                sink.next(b1["pp"].asDouble(0.0))
+            }
+            .block()!!.toFloat()
+    }
 
-    private static int lock = 0;
-    private final Path CachePath;
+    @Throws(Throwable::class) override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<Long>
+    ): Boolean {
+        if (event.subject !is Group || lock != 0) {
+            return false
+        }
+        val m = Instruction.GROUP_STATISTICS.matcher(messageText)
+        if (m.find()) {
+            when (m.group("group")) {
+                "a", "进阶群" -> data.setValue(newbieConfig.advancedGroup)
+                "h", "高阶群" -> data.setValue(newbieConfig.hyperGroup)
+                "n", "新人群" -> data.setValue(newbieConfig.newbieGroup)
+                null -> {
+                    return false
+                }
+            }
+            lock = 3
+            return true
+        }
+        lock = 0
+        return false
+    }
 
-    public GroupStatisticsService(
-            WebClient osuApiWebClient,
-            BotContainer botContainer,
-            OsuUserApiService userApiService,
-            FileConfig config
-    ) {
-        client = osuApiWebClient;
-        bots = botContainer;
-        this.userApiService = userApiService;
-
-        CachePath = Path.of(config.getRoot(), "StatisticalOverPPService.json");
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, group: Long) {
+        // init 搬到这里来，别每次启动都要存个文件到那里
         try {
-            if (Files.isRegularFile(CachePath)) {
-                String jsonStr = Files.readString(CachePath);
+            if (Files.isRegularFile(cachePath)) {
+                val jsonStr = Files.readString(cachePath)
 
-                //noinspection Convert2Diamond
-                HashMap<Long, Long> cache = JacksonUtil.parseObject(jsonStr, new TypeReference<HashMap<Long, Long>>() {
-                });
-                if (Objects.nonNull(cache)) {
-                    UserCache.putAll(cache);
+                val cache = JacksonUtil.parseObject(
+                    jsonStr,
+                    object : TypeReference<HashMap<Long, Long>>() {
+                    })
+                if (cache != null) {
+                    UserCache.putAll(cache)
                 }
             } else {
-                Files.createFile(CachePath);
+                Files.createFile(cachePath)
             }
-        } catch (IOException e) {
-            log.error("文件操作失败", e);
+        } catch (e: IOException) {
+            log.error("文件操作失败", e)
         }
-    }
 
-    private Long getOsuId(Long qq) {
-        if (UserCache.containsKey(qq)) {
-            return UserCache.get(qq);
-        }
-        Long id = client.get()
-                .uri(getBinding, qq)
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .<Long>handle((json, sink) -> {
-                    if (!json.hasNonNull("userId")) {
-                        sink.error(WebClientResponseException.create(404, "NOT FOUND", null, null, null));
-                        return;
-                    }
-                    sink.next(json.get("osuId").asLong());
-                })
-                .block();
-        UserCache.put(qq, id);
-        return id;
-    }
-
-    public float getOsuBp1(Long osuId) {
-        return client.get()
-                .uri(getBP, osuId)
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .<Double>handle((json, sink) -> {
-                    if (!json.isArray() || json.isEmpty()) {
-                        sink.error(WebClientResponseException.create(404, "NOT FOUND", null, null, null));
-                        return;
-                    }
-                    var b1 = json.get(0);
-
-                    sink.next(b1.get("pp").asDouble(0));
-                })
-                .block()
-                .floatValue();
-    }
-
-    @Override
-    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Long> data) throws Throwable {
-        if (!(event.getSubject() instanceof Group) || lock != 0) {
-            return false;
-        }
-        var m = Instruction.GROUP_STATISTICS.matcher(messageText);
-        if (m.find()) {
-            switch (m.group("group")) {
-                case "a", "进阶群" -> data.setValue(928936255L);
-                case "h", "高阶群" -> data.setValue(281624271L);
-                case "n", "新人群" -> data.setValue(595985887L);
-                case null, default -> {
-                    return false;
-                }
-            }
-            lock = 3;
-            return true;
-        }
-        lock = 0;
-        return false;
-
-    }
-
-    @Override
-    public void HandleMessage(@NotNull MessageEvent event, @NotNull Long group) throws Throwable {
-        var from = event.getSubject();
-        if (from instanceof Group groupSend) {
+        val from = event.subject
+        if (from is Group) {
             try {
-                work(groupSend, group);
-            } catch (Exception e) {
-                log.error("出现错误:", e);
+                work(from, group)
+            } catch (e: Exception) {
+                log.error("出现错误:", e)
             } finally {
-                lock = 0;
-                Files.writeString(CachePath, Objects.requireNonNull(JacksonUtil.toJson(UserCache)));
+                lock = 0
+                Files.writeString(cachePath, JacksonUtil.toJson(UserCache)!!)
             }
         }
     }
 
-    private void work(Group group, Long groupId) throws Exception {
-        com.mikuac.shiro.core.Bot bot = bots.robots.get(1563653406L);
-        if (Objects.isNull(bot)) {
-            group.sendMessage("主bot未在线");
-            return;
+    @Throws(Exception::class) private fun work(group: Group, groupId: Long) {
+        val bot = bots.robots[newbieConfig.yumuBot]
+        if (bot == null) {
+            group.sendMessage("主bot未在线")
+            return
         } else {
-            var targetGroup = bot.getGroupInfo(groupId, true).getData();
-            if (Objects.isNull(targetGroup) || targetGroup.getMemberCount() <= 0) {
-                throw new TipsException("获取群信息失败, 可能为未加入此群");
+            val targetGroup = bot.getGroupInfo(groupId, true).data
+            if (Objects.isNull(targetGroup) || targetGroup.memberCount <= 0) {
+                throw TipsException("获取群信息失败, 可能未加入此群")
             }
         }
-        group.sendMessage("开始统计: " + groupId);
+        group.sendMessage("开始统计: $groupId")
 
-        List<GroupMemberInfoResp> groupInfo = null;
-        for (int i = 0; i < 5; i++) {
+        var groupInfo: List<GroupMemberInfoResp>? = null
+        for (i in 0..4) {
             try {
-                groupInfo = bot.getGroupMemberList(groupId).getData();
-            } catch (Exception e) {
-                continue;
+                groupInfo = bot.getGroupMemberList(groupId).data
+            } catch (e: Exception) {
+                continue
             }
-            if (Objects.nonNull(groupInfo)) break;
+            if (groupInfo == null) break
         }
-        if (Objects.isNull(groupInfo)) throw new TipsException("获取群成员失败");
-        groupInfo = groupInfo.stream().filter(r -> r.getRole().equalsIgnoreCase("member")).toList();
-        int checkPoints = groupInfo.size() / 5;
+        if (groupInfo == null) throw TipsException("获取群成员失败")
+        groupInfo = groupInfo.filter { r: GroupMemberInfoResp -> r.role.equals("member", ignoreCase = true) }
+        val checkPoints = groupInfo.size / 5
         // qq-info
-        Map<Long, MicroUser> users = new HashMap<>(groupInfo.size());
+        val users: MutableMap<Long, MicroUser?> = HashMap(groupInfo.size)
         // qq-bp1
-        Map<Long, Float> usersBP1 = new HashMap<>(groupInfo.size());
+        val usersBP1: MutableMap<Long, Float> = HashMap(groupInfo.size)
         // uid-qq
-        Map<Long, Long> nowOsuId = new HashMap<>(150);
+        val nowOsuId: MutableMap<Long, Long> = HashMap(150)
         // qq-err
-        Map<Long, String> errMap = new HashMap<>();
+        val errMap: MutableMap<Long?, String?> = HashMap()
 
-        int count = 0;
-        for (var u : groupInfo) {
-            long qq = u.getUserId();
-            long id;
+        var count = 0
+        for (u in groupInfo) {
+            val qq = u.userId
+            val id: Long
             try {
-                Thread.sleep(1000);
-                id = getOsuId(qq);
-                float bp1 = getOsuBp1(id);
-                nowOsuId.put(id, qq);
-                usersBP1.put(qq, bp1);
-                log.debug("统计 [{}] 信息获取成功. bp1 {}pp", qq, bp1);
-            } catch (WebClientResponseException.NotFound err) {
+                Thread.sleep(1000)
+                id = getOsuId(qq)!!
+                val bp1 = getOsuBp1(id)
+                nowOsuId[id] = qq
+                usersBP1[qq] = bp1
+                log.debug("统计 [{}] 信息获取成功. bp1 {}pp", qq, bp1)
+            } catch (err: WebClientResponseException.NotFound) {
                 //这个err不需要记录下来 修改了日志等级, 默认不记录
-                log.debug("统计 [{}] 未找到: {}", qq, err.getMessage());
-                if (err.getMessage().contains("bleatingsheep.org")) {
-                    errMap.put(qq, "未绑定");
+                log.debug("统计 [{}] 未找到: {}", qq, err.message)
+                if (err.message.contains("bleatingsheep.org")) {
+                    errMap[qq] = "未绑定"
                 } else {
-                    errMap.put(qq, "osu信息查询不到, 可能已删号");
+                    errMap[qq] = "osu信息查询不到, 可能已删号"
                 }
-                users.put(qq, null);
-            } catch (Exception e) {
-                log.error("统计出现异常: {}", qq, e);
-                errMap.put(qq, e.getMessage());
-                users.put(qq, null);
+                users[qq] = null
+            } catch (e: Exception) {
+                log.error("统计出现异常: {}", qq, e)
+                errMap[qq] = e.message
+                users[qq] = null
             }
-            count++;
+            count++
             if (count % checkPoints == 0) {
-                group.sendMessage(String.format("%d 统计进行到 %.2f%%", groupId, 100f * count / groupInfo.size()));
+                group.sendMessage(String.format("%d 统计进行到 %.2f%%", groupId, 100f * count / groupInfo.size))
             }
-            if (nowOsuId.size() >= 50) {
-                var result = userApiService.getUsers(nowOsuId.keySet());
-                for (var uInfo : result) {
-                    users.put(nowOsuId.get(uInfo.getUserID()), uInfo);
+            if (nowOsuId.size >= 50) {
+                val result = userApiService.getUsers(nowOsuId.keys)
+                for (uInfo in result) {
+                    users[nowOsuId[uInfo.userID] ?: continue] = uInfo
                 }
-                nowOsuId.clear();
+                nowOsuId.clear()
             }
         }
 
-        StringBuilder sb = new StringBuilder("qq,id,data,pp,bp1\n");
+        val sb = StringBuilder("qq,id,data,pp,bp1\n")
 
-        users.entrySet().stream()
-                .sorted(Comparator.<Map.Entry<Long, MicroUser>, Double>comparing(e -> {
-                    if (Objects.isNull(e.getValue())) return 0D;
-                    return e.getValue().getRulesets().getOsu().getPP();
-                }).reversed())
-                .forEach(entry -> {
-                    sb.append('\'').append(entry.getKey()).append(',');
-                    if (Objects.isNull(entry.getValue())) {
-                        var s = errMap.get(entry.getKey());
-                        sb.append("加载失败").append(s).append('\n');
-                        return;
-                    }
-                    sb.append(entry.getValue().getUserID()).append(',');
-                    sb.append(entry.getValue().getUserName()).append(',');
-                    sb.append(entry.getValue().getRulesets().getOsu().getPP()).append(',');
-                    sb.append(usersBP1.get(entry.getKey())).append('\n');
-                });
-        group.sendFile(sb.toString().getBytes(StandardCharsets.UTF_8), groupId + ".csv");
+        users.entries
+            .sortedByDescending { it.value?.rulesets?.osu?.pp ?: 0.0 }
+            .forEach { entry: Map.Entry<Long?, MicroUser?> ->
+                sb.append('\'').append(entry.key).append(',')
+                if (entry.value == null) {
+                    val s = errMap[entry.key]
+                    sb.append("加载失败").append(s).append('\n')
+                    return@forEach
+                }
+                sb.append(entry.value!!.userID).append(',')
+                sb.append(entry.value!!.userName).append(',')
+                sb.append(entry.value!!.rulesets.osu.pp).append(',')
+                sb.append(usersBP1[entry.key]).append('\n')
+            }
+        group.sendFile(sb.toString().toByteArray(StandardCharsets.UTF_8), "$groupId.csv")
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(GroupStatisticsService::class.java)
+        private const val GET_BINDING = "https://api.bleatingsheep.org/api/Binding/{qq}"
+        private const val GET_BP_URL: String = "https://osu.ppy.sh/users/{osuId}/scores/best?mode=osu&limit=1"
+
+        private val UserCache: MutableMap<Long, Long?> = HashMap()
+
+        private var lock = 0
     }
 }

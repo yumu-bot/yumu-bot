@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.dao.PPMinusDao
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
@@ -30,9 +31,10 @@ import java.util.*
     private val scoreApiService: OsuScoreApiService,
     private val ppMinusDao: PPMinusDao,
     private val imageService: ImageService,
+    newbieConfig: NewbieConfig
 ) : MessageService<PPMinusParam>, TencentMessageService<PPMinusParam> {
 
-    private val killerGroup: Long = 695600319L
+    private val killerGroup: Long = newbieConfig.killerGroup
 
     data class PPMinusParam(
         val isVs: Boolean,

@@ -1,6 +1,7 @@
 package com.now.nowbot.service
 
 import com.mikuac.shiro.core.BotContainer
+import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
@@ -32,6 +33,7 @@ class RunTimeService(
     private val taskExecutor: TaskExecutor,
     private val applicationContext: ApplicationContext,
     private val botContainer: BotContainer,
+    private val newbieConfig: NewbieConfig
 ) : SchedulingConfigurer {
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
 
@@ -50,12 +52,12 @@ class RunTimeService(
     // 每天凌晨4点统计新人群用户信息
     @Scheduled(cron = "0 0 4 * * *")
     fun statisticNewbieInfo() {
-        val bot = botContainer.robots[1563653406] ?: botContainer.robots[1708547915]
+        val bot = botContainer.robots[newbieConfig.yumuBot] ?: botContainer.robots[newbieConfig.hydrantBot]
         if (bot == null) {
             log.error("统计新人群信息失败, 未找到机器人")
             return
         }
-        val groupMembers = bot.getGroupMemberList(231094840)
+        val groupMembers = bot.getGroupMemberList(newbieConfig.newbieGroup)
         if (groupMembers.data.isNullOrEmpty()) {
             log.error("统计新人群信息失败, 查询群聊成员为空")
             return
