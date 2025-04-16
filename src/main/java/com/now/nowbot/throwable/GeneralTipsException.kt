@@ -80,7 +80,7 @@ class GeneralTipsException : TipsException {
         G_Fetch_List("列表获取失败，请重试。"), 
         G_Fetch_BeatMap("谱面获取失败，请重试。"),
         G_Fetch_Discussion("讨论区获取失败，请重试。"),
-        G_Fetch_BeatMapAttr("获取变化的谱面数据超时（太多了），如果你是第一次见到这条消息，第二次通常就会恢复了。"),
+        G_Fetch_BeatMapAttr("获取变化的谱面数据超时（太多了），如果你是第一次见到这条消息，再请求一次。通常来说会拿到结果。"),
 
         // G_Suggest_AnotherFunction("推荐您使用另一个功能：%s"),
 
@@ -89,7 +89,7 @@ class GeneralTipsException : TipsException {
         G_Malfunction_Calculate("%s：数据计算失败。"), 
         G_Malfunction_Fetch("%s：数据获取失败。"), 
         G_Malfunction_Render("%s：渲染模块连接失败。"),
-        G_Malfunction_RenderTooMany("%s：渲染模块连接超时（请求数据太多了）。\n如果你是第一次见到这条消息，第二次通常就会恢复了。"),
+        G_Malfunction_RenderTooMany("%s：渲染模块连接超时（请求数据太多了）。\n如果你是第一次见到这条消息，再请求一次。通常来说会拿到结果。"),
         G_Malfunction_Send("%s：图片发送失败。"),
         G_Malfunction_IOException("%s：遇到了文件读取异常，请重试。"), 
         G_Malfunction_Classification("%s：分类失败。"), 

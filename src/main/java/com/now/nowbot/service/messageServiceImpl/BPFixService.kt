@@ -17,7 +17,6 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
-import com.now.nowbot.util.CmdUtil.processBP
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
@@ -51,9 +50,12 @@ class BPFixService(
 
         val user = getUserWithoutRange(event, matcher, mode)
 
-        val bpMap = scoreApiService.getBestScores(user.userID, mode.data)
+        val bests100 = scoreApiService.getBestScores(user.userID, mode.data)
+        val bests200 = scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
+        val bestsMap = listOf(bests100, bests200).flatten()
+            .mapIndexed { i, it -> (i + 1) to it }.toMap()
 
-        data.value = BPFixParam(user, processBP(bpMap), mode.data!!)
+        data.value = BPFixParam(user, bestsMap, mode.data!!)
 
         return true
     }
@@ -75,18 +77,22 @@ class BPFixService(
 
         val mode = getMode(matcher)
         val user = getUserWithoutRange(event, matcher, mode)
-        val bests = scoreApiService.getBestScores(user.userID, mode.data)
 
-        return BPFixParam(user, processBP(bests), mode.data!!)
+        val bests100 = scoreApiService.getBestScores(user.userID, mode.data)
+        val bests200 = scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
+        val bestsMap = listOf(bests100, bests200).flatten()
+            .mapIndexed { i, it -> (i + 1) to it }.toMap()
+
+        return BPFixParam(user, bestsMap, mode.data!!)
     }
 
     override fun reply(event: MessageEvent, param: BPFixParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
 
-    fun fix(playerPP: Double, bpMap: Map<Int, LazerScore>): Map<String, Any>? {
+    fun fix(playerPP: Double, bestsMap: Map<Int, LazerScore>): Map<String, Any>? {
         val bpList = mutableListOf<LazerScore>()
         val beforeBpSumAtomic = AtomicReference(0.0)
 
-        bpMap.forEach { (index: Int, score: LazerScore) ->
+        bestsMap.forEach { (index: Int, score: LazerScore) ->
             beforeBpSumAtomic.updateAndGet { it + (score.weight?.PP ?: 0.0) }
             beatmapApiService.applyBeatMapExtendFromDataBase(score)
 
@@ -153,7 +159,10 @@ class BPFixService(
         result["scores"] = scoreList
         result["pp"] = newPlayerPP
 
-        return result
+        return mapOf(
+            "scores" to scoreList,
+            "pp" to newPlayerPP
+        )
     }
 
     private fun initFixScore(score: LazerScore, index: Int): LazerScoreWithFcPP {
@@ -178,9 +187,14 @@ class BPFixService(
 
         return try {
             imageService.getPanelA7(user, fixData)
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             log.error("理论最好成绩：渲染失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "理论最好成绩")
+
+            if (bpMap.size >= 80) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderTooMany, "理论最好成绩")
+            } else {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "理论最好成绩")
+            }
         }
     }
 }

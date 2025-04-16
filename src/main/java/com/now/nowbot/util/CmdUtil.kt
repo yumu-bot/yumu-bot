@@ -4,7 +4,6 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -15,7 +14,6 @@ import com.now.nowbot.throwable.LogException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.command.*
-import com.yumu.core.extensions.isNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
@@ -84,7 +82,7 @@ object CmdUtil {
     ): CmdRange<OsuUser> {
         isMyself.set(false)
         val range = getUserAndRange(event, matcher, mode)
-        if (range.data.isNull()) {
+        if (range.data == null) {
             range.data = getUserWithoutRange(event, matcher, mode, isMyself)
         }
         return range
@@ -193,7 +191,7 @@ object CmdUtil {
             result.end = temp
         }
 
-        if (result.data.isNull()) {
+        if (result.data == null) {
             if (text.matches("$REG_RANGE\\s*.*".toRegex())) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerReverse, text)
             }
@@ -557,13 +555,6 @@ object CmdUtil {
             return listOf()
         }
         return LazerMod.getModsList(matcher.group(FLAG_MOD) ?: "")
-    }
-
-    /** 将 [LazerScore]列表转换为 indexMap 注意, 这里 index 从 1 开始 */
-    @JvmStatic fun processBP(bp: List<LazerScore>): Map<Int, LazerScore> {
-        val result = TreeMap<Int, LazerScore>()
-        bp.forEachIndexed { index, score -> result[index + 1] = score }
-        return result
     }
 
     /**
