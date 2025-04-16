@@ -604,7 +604,7 @@ object CmdUtil {
 
     private fun checkRangeFirst(i: Int): Boolean {
         return when {
-            i < 101 -> false
+            i < 201 -> false
             i == 666 -> true
             i < 999 -> true
             else -> false

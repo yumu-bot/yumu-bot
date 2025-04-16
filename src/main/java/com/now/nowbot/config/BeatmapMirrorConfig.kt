@@ -8,8 +8,8 @@ import org.springframework.validation.annotation.Validated
 @Validated
 @ConfigurationProperties(prefix = "yumu.mirror", ignoreInvalidFields = true)
 class BeatmapMirrorConfig {
-    var url: String? = null
+    var url: String? = ""
 
-    var token: String? = null
-        get() = field ?: System.getenv("API_TOKEN")
+    var token: String? = ""
+        get() = if (field.isNullOrEmpty()) System.getenv("API_TOKEN") else field
 }

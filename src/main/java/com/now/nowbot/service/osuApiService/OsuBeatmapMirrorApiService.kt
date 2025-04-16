@@ -19,7 +19,7 @@ import java.nio.file.Path
     private val url = beatmapMirrorConfig.url
 
     @Nullable fun getOsuFile(bid: Long): String? {
-        if (url == null) return null
+        if (url.isNullOrEmpty()) return null
 
         try {
             return webClient.get().uri(url) { it.path("/api/file/map/osufile/{bid}").build(bid) }.retrieve()
@@ -43,7 +43,7 @@ import java.nio.file.Path
     }
 
     @Nullable fun getFullBackgroundPath(bid: Long): Path? {
-        if (url == null) return null
+        if (url.isNullOrEmpty()) return null
 
         try {
             val localPath = webClient.get().uri(url) { it.path("/api/file/local/bg/{bid}").build(bid) }.retrieve()

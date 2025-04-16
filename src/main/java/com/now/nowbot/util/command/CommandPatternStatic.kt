@@ -165,7 +165,7 @@ val REG_MODE: String = "(osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)"
 val REG_DIFF: String = "([0-4baemr]|bsc|adv|exp|mas|rem|rms|ba|ad|ex|ma|re|basic|advanced|expert|master|re[:：]?\\s*master)"
 
 @Language("RegExp")
-val REG_RANGE: String = "($REG_NUMBER_12$REG_HYPHEN)?(100|$REG_NUMBER_12)"
+val REG_RANGE: String = "((200)|(1?$REG_NUMBER_12)$REG_HYPHEN)?((200)|(1?$REG_NUMBER_12))"
 
 @Language("RegExp")
 val REG_RANGE_DAY: String = "($REG_NUMBER_13($REG_HYPHEN$REG_NUMBER_13)?)"
