@@ -116,7 +116,7 @@ class BPFixService(
             // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
             if (isChoke || has1pMiss) {
                 bpList.add(
-                    initFixScore(score, index + 1)
+                    initFixScore(score, index)
                 )
             } else {
                 bpList.add(score)
@@ -167,7 +167,7 @@ class BPFixService(
 
     private fun initFixScore(score: LazerScore, index: Int): LazerScoreWithFcPP {
         val result = LazerScoreWithFcPP.copyOf(score)
-        result.index = index + 1
+        result.index = index
         try {
             val pp = calculateApiService.getScoreFullComboPP(score)
             result.fcPP = pp.pp
