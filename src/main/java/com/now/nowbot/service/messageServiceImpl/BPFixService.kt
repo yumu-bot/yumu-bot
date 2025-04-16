@@ -135,12 +135,13 @@ class BPFixService(
 
         val afterBpSumAtomic = AtomicReference(0.0)
 
-        bpList.forEachIndexed { index, score ->
-            val weight: Double = 0.95.pow(index)
+        // 这里的 i 是重排过后的，从 0 开始
+        bpList.forEachIndexed { i, score ->
+            val weight: Double = 0.95.pow(i)
             val pp: Double
             if (score is LazerScoreWithFcPP) {
                 pp = score.fcPP
-                score.indexAfter = index + 1
+                score.indexAfter = i + 1
             } else {
                 pp = score.PP ?: 0.0
             }
@@ -155,9 +156,7 @@ class BPFixService(
 
         if (scoreList.isEmpty()) return null
 
-        val result = HashMap<String, Any>(2)
-        result["scores"] = scoreList
-        result["pp"] = newPlayerPP
+        calculateApiService.applyStarToScores(scoreList)
 
         return mapOf(
             "scores" to scoreList,
