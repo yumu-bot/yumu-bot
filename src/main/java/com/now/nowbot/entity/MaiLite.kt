@@ -335,6 +335,29 @@ class MaiAliasLite(
     }
 }
 
+@Entity(name = "chunithm_alias")
+class ChuAliasLite(
+    @Id
+    @Column(columnDefinition = "integer")
+    var id: Int,
+
+    @Column(columnDefinition = "text[]")
+    var alias: List<String>,
+) {
+    fun toModel(): ChuAlias {
+        return ChuAlias(
+            id, alias
+        )
+    }
+
+    companion object {
+        fun from(model: ChuAlias): ChuAliasLite {
+            if (model.alias.isEmpty()) throw IllegalArgumentException("alias not be empty")
+            return ChuAliasLite(model.songID, model.alias)
+        }
+    }
+}
+
 @Entity(name = "chunithm_song")
 @Table(indexes = [Index(name = "chu_title_query", columnList = "query_text")])
 class ChuSongLite(

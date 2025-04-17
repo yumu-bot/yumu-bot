@@ -34,6 +34,7 @@ class MaiUpdateService(private val maimaiApiService: MaimaiApiService, private v
         maimaiApiService.updateMaimaiRankLibraryDatabase()
         maimaiApiService.updateMaimaiFitLibraryDatabase()
         chunithmApiService.updateChunithmSongLibraryDatabase()
+        chunithmApiService.updateChunithmAliasLibraryDatabase()
         event.reply("已尝试更新！")
     }
 }

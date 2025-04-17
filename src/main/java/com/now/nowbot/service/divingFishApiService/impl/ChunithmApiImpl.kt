@@ -1,9 +1,10 @@
 package com.now.nowbot.service.divingFishApiService.impl
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.MaiDao
-import com.now.nowbot.model.json.ChuBestScore
-import com.now.nowbot.model.json.ChuSong
+import com.now.nowbot.model.json.*
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -12,7 +13,6 @@ import org.springframework.http.MediaType
 import org.springframework.lang.NonNull
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import java.io.IOException
 import java.nio.file.Files
@@ -35,14 +35,16 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
             @NonNull val version: List<String>
     )
 
+    @JvmRecord
+    private data class ChunithmAliasResponseBody(
+        @JsonProperty("aliases") val aliases: List<ChuAlias>
+    )
+
     override fun getChunithmBest30Recent10(qq: Long): ChuBestScore {
         val b = ChunithmBestScoreQQBody(qq, true)
 
-        return base.divingFishApiWebClient!!
-                .post()
-                .uri { uriBuilder: UriBuilder ->
-                    uriBuilder.path("api/chunithmprober/query/player").build()
-                }
+        return base.divingFishApiWebClient!!.post()
+                .uri { it.path("api/chunithmprober/query/player").build() }
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(b), ChunithmBestScoreQQBody::class.java)
                 .headers { headers: HttpHeaders -> base.insertJSONHeader(headers) }
@@ -54,11 +56,8 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
     override fun getChunithmBest30Recent10(probername: String): ChuBestScore {
         val b = ChunithmBestScoreNameBody(probername, true)
 
-        return base.divingFishApiWebClient!!
-                .post()
-                .uri { uriBuilder: UriBuilder ->
-                    uriBuilder.path("api/chunithmprober/query/player").build()
-                }
+        return base.divingFishApiWebClient!!.post()
+                .uri { it.path("api/chunithmprober/query/player").build()}
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(b), ChunithmBestScoreNameBody::class.java)
                 .headers { headers: HttpHeaders -> base.insertJSONHeader(headers) }
@@ -95,28 +94,21 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
 
     override fun getChunithmCoverFromAPI(songID: Long): ByteArray {
         val song: String = songID.toString()
-        val cover =
-                try {
-                    base.webClient!!
-                            .get()
-                            .uri { uriBuilder: UriBuilder ->
-                                uriBuilder
-                                    .scheme("https")
-                                    .host("assets2.lxns.net")
-                                    .path("chunithm/jacket/${song}.png").build()
-                            }
-                            .retrieve()
-                            .bodyToMono(ByteArray::class.java)
-                            .block()
-                } catch (e: WebClientResponseException.NotFound) {
-                    val path = path.resolve("Cover").resolve("0.png")
+        val cover = try {
+            base.webClient!!.get()
+                .uri { it.scheme("https").host("assets2.lxns.net").path("chunithm/jacket/${song}.png").build()}
+                .retrieve()
+                .bodyToMono(ByteArray::class.java)
+                .block()
+        } catch (e: WebClientResponseException.NotFound) {
+            val path = path.resolve("Cover").resolve("0.png")
 
-                    try {
-                        return Files.readAllBytes(path)
-                    } catch (e: IOException) {
-                        return byteArrayOf()
-                    }
-                }
+            try {
+                return Files.readAllBytes(path)
+            } catch (e: IOException) {
+                return byteArrayOf()
+            }
+        }
 
         return cover ?: byteArrayOf()
     }
@@ -125,6 +117,12 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
         // return getChunithmSongLibraryFromFile()
 
         return maiDao.getAllChuSong().associateBy { it.songID }
+    }
+
+    override fun getChunithmSong(songID: Long): ChuSong? {
+        val o = maiDao.findChuSongByID(songID.toInt())
+        insertChunithmAlias(o)
+        return o
     }
 
     @Deprecated("请使用 From Database") private fun getChunithmSongLibraryFromFile(): Map<Int, ChuSong> {
@@ -140,6 +138,88 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
         return song.associateBy { it.songID }
     }
 
+    override fun getChunithmAlias(songID: Long): ChuAlias? {
+        return getChunithmAlias(songID.toInt())
+    }
+
+    override fun getChunithmAlias(songID: Int): ChuAlias? {
+        return maiDao.getChuAliasByID(songID)
+    }
+
+    override fun getChunithmAliasLibrary(): Map<Int, List<String>>? {
+        return maiDao.getAllChuAliases().associate { it.songID to it.alias }
+    }
+
+    override fun insertChunithmAlias(song: ChuSong?) {
+        if (song != null) {
+            song.alias = getChunithmAlias(song.songID)?.alias?.firstOrNull()
+        }
+    }
+
+    override fun insertChunithmAlias(songs: List<ChuSong>?) {
+        if (songs.isNullOrEmpty()) return
+
+        val actions = songs.map {
+            return@map AsyncMethodExecutor.Runnable {
+                it.alias = getChunithmAlias(it.songID)?.alias?.firstOrNull()
+            }
+        }
+
+        AsyncMethodExecutor.awaitRunnableExecute(actions)
+    }
+
+    override fun insertChunithmAliasForScore(scores: List<ChuScore>?) {
+        if (scores.isNullOrEmpty()) return
+
+        val actions = scores.map {
+            return@map AsyncMethodExecutor.Runnable {
+                it.alias = getChunithmAlias(it.songID)?.alias?.firstOrNull()
+            }
+        }
+
+        AsyncMethodExecutor.awaitRunnableExecute(actions)
+    }
+
+    override fun insertChunithmAliasForScore(score: ChuScore?) {
+        if (score != null) {
+            score.alias = getChunithmAlias(score.songID)?.alias?.firstOrNull()
+        }
+    }
+
+    override fun insertSongData(scores: List<ChuScore>) {
+        val actions = scores.map {
+            return@map AsyncMethodExecutor.Runnable {
+                if (it.songID != 0L) {
+                    val o = getChunithmSong(it.songID) ?: ChuSong()
+                    insertSongData(it, o)
+                }
+            }
+        }
+
+        AsyncMethodExecutor.awaitRunnableExecute(actions)
+    }
+
+    override fun insertSongData(score: ChuScore, song: ChuSong) {
+        val chart = song.charts[score.index]
+
+        score.charter = chart.charter
+        score.artist = song.info.artist
+    }
+
+    override fun insertPosition(scores: List<ChuScore>, isBest30: Boolean) {
+        if (scores.isEmpty()) return
+
+        for (i in scores.indices) {
+            val s = scores[i]
+
+            if (isBest30) {
+                s.position = (i + 1)
+            } else {
+                s.position = (i + 31)
+            }
+        }
+    }
+
     override fun updateChunithmSongLibraryDatabase() {
         val songs = JacksonUtil.parseObjectList(chunithmSongLibraryFromAPI, ChuSong::class.java)
 
@@ -150,21 +230,28 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
         log.info("中二节奏: 歌曲数据库已更新")
     }
 
+    override fun updateChunithmAliasLibraryDatabase() {
+        val alias = JacksonUtil.parseObject(chunithmAliasLibraryFromAPI, ChunithmAliasResponseBody::class.java).aliases
+        maiDao.saveChuAliases(alias)
+        log.info("中二节奏: 外号数据库已更新")
+    }
+
+    @Deprecated("请使用 From Database")
     override fun updateChunithmSongLibraryFile() {
         saveFile(chunithmSongLibraryFromAPI, "data-fit.json", "统计")
     }
 
     private val chunithmSongLibraryFromAPI: String
-        get() =
-                base.divingFishApiWebClient!!
-                        .get()
-                        .uri { uriBuilder: UriBuilder ->
-                            uriBuilder.path("api/chunithmprober/music_data").build()
-                        }
-                        .retrieve()
-                        .bodyToMono(String::class.java)
-                        .block() ?: ""
+        get() = base.divingFishApiWebClient!!.get()
+            .uri { it.path("api/chunithmprober/music_data").build()}
+            .retrieve()
+            .bodyToMono(String::class.java)
+            .block() ?: ""
 
+    private val chunithmAliasLibraryFromAPI: String
+        get() = base.webClient!!.get()
+            .uri { it.scheme("https").host("maimai.lxns.net").path("api/v0/chunithm/alias/list").build()
+        }.retrieve().bodyToMono(String::class.java).block()!!
 
     private fun <T> parseFile(fileName: String, clazz: Class<T>): T? {
         val file = path.resolve(fileName)

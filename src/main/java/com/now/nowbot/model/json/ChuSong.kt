@@ -8,6 +8,9 @@ class ChuSong {
     // 曲名
     @JsonProperty("title") var title: String = ""
 
+    // 曲名外号，需要自己设置
+    @get:JsonProperty("alias") var alias: String? = null
+
     // 定数，也就是实际难度，类似于 osu 的星数
     @JsonProperty("ds") var star: List<Double> = listOf()
 

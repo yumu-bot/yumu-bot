@@ -34,12 +34,11 @@ class ChuBestScoreService(
         val song: ChuSong,
     ) {
         fun toMap(): Map<String, Any> {
-            val out = mutableMapOf<String, Any>()
-
-            out["user"] = user
-            out["score"] = score
-            out["song"] = song
-            return out
+            return mapOf(
+                "user" to user,
+                "score" to score,
+                "song" to song
+            )
         }
     }
 
@@ -50,14 +49,12 @@ class ChuBestScoreService(
         val scoresLatest: List<ChuScore>,
     ) {
         fun toMap(): Map<String, Any> {
-            val out = mutableMapOf<String, Any>()
-
-            out["user"] = user
-            out["scores"] = scores
-            out["scores_latest"] = scoresLatest
-            out["panel"] = "CB"
-
-            return out
+            return mapOf(
+                "user" to user,
+                "scores" to scores,
+                "scores_latest" to scoresLatest,
+                "panel" to "CB"
+            )
         }
     }
 
@@ -132,8 +129,7 @@ class ChuBestScoreService(
 
     override fun HandleMessage(event: MessageEvent, param: ChuBestScoreParam) {
         val scores = getBestScores(param.qq, param.name, param.isMyself, chunithmApiService)
-        val songs = chunithmApiService.getChunithmSongLibrary()
-        val charts = implementScore(param.range, scores, songs.toMutableMap())
+        val charts = implementScore(param.range, scores, chunithmApiService)
         val isMultipleScore = charts.recent10.size + charts.best30.size > 1
 
         if (charts.recent10.isNotEmpty()) {
@@ -150,14 +146,13 @@ class ChuBestScoreService(
             if (isMultipleScore) {
                 imageService.getPanel(PanelMA2Param(user, charts.best30, charts.recent10).toMap(), "MA2")
             } else {
-                val score =
-                    if (charts.recent10.size > 0) {
-                        charts.recent10.first()
-                    } else {
-                        charts.best30.first()
-                    }
+                val score = if (charts.recent10.size > 0) {
+                    charts.recent10.first()
+                } else {
+                    charts.best30.first()
+                }
 
-                val song = songs[score.songID.toInt()] ?: ChuSong()
+                val song = chunithmApiService.getChunithmSong(score.songID) ?: ChuSong()
 
                 imageService.getPanel(PanelME2Param(user, score, song).toMap(), "ME")
             }
@@ -215,7 +210,7 @@ class ChuBestScoreService(
         fun implementScore(
             range: CmdRange<Int>,
             bp: ChuBestScore,
-            song: MutableMap<Int, ChuSong>,
+            chunithmApiService: ChunithmApiService
         ): ChuBestScore.Records {
             val offset = range.getOffset()
             val limit = range.getLimit()
@@ -230,8 +225,10 @@ class ChuBestScoreService(
                 if (isDeluxeEmpty) {
                     throw TipsException("您的新版本成绩是空的！")
                 } else {
-                    ChuScore.insertSongData(c.best30, song)
-                    ChuScore.insertPosition(c.recent10, false)
+                    chunithmApiService.insertSongData(c.best30)
+                    chunithmApiService.insertPosition(c.recent10, false)
+                    chunithmApiService.insertChunithmAliasForScore(c.best30)
+                    chunithmApiService.insertChunithmAliasForScore(c.recent10)
 
                     return ChuBestScore.Records(
                         c.recent10.subList(
@@ -246,8 +243,9 @@ class ChuBestScoreService(
                 if (isStandardEmpty) {
                     throw TipsException("您的旧版本成绩是空的！")
                 } else {
-                    ChuScore.insertSongData(c.best30, song)
-                    ChuScore.insertPosition(c.best30, true)
+                    chunithmApiService.insertSongData(c.best30)
+                    chunithmApiService.insertPosition(c.best30, true)
+                    chunithmApiService.insertChunithmAliasForScore(c.best30)
 
                     return ChuBestScore.Records(
                         mutableListOf(),
@@ -263,8 +261,9 @@ class ChuBestScoreService(
                 if (isStandardEmpty && isDeluxeEmpty) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Score)
                 } else if (isDeluxeEmpty) {
-                    ChuScore.insertSongData(c.best30, song)
-                    ChuScore.insertPosition(c.best30, true)
+                    chunithmApiService.insertSongData(c.best30)
+                    chunithmApiService.insertPosition(c.best30, true)
+                    chunithmApiService.insertChunithmAliasForScore(c.best30)
 
                     return ChuBestScore.Records(
                         mutableListOf(),
@@ -274,8 +273,9 @@ class ChuBestScoreService(
                         ),
                     )
                 } else if (isStandardEmpty) {
-                    ChuScore.insertSongData(c.recent10, song)
-                    ChuScore.insertPosition(c.recent10, false)
+                    chunithmApiService.insertSongData(c.recent10)
+                    chunithmApiService.insertPosition(c.recent10, false)
+                    chunithmApiService.insertChunithmAliasForScore(c.recent10)
 
                     return ChuBestScore.Records(
                         c.recent10.subList(
@@ -285,11 +285,15 @@ class ChuBestScoreService(
                         mutableListOf(),
                     )
                 } else {
-                    ChuScore.insertSongData(c.best30, song)
-                    ChuScore.insertSongData(c.recent10, song)
+                    chunithmApiService.insertSongData(c.best30)
+                    chunithmApiService.insertSongData(c.recent10)
 
-                    ChuScore.insertPosition(c.best30, true)
-                    ChuScore.insertPosition(c.recent10, false)
+                    chunithmApiService.insertPosition(c.best30, true)
+                    chunithmApiService.insertPosition(c.recent10, false)
+
+                    chunithmApiService.insertChunithmAliasForScore(c.best30)
+                    chunithmApiService.insertChunithmAliasForScore(c.recent10)
+
                     return ChuBestScore.Records(
                         c.recent10.subList(
                             min(max(offset - 35, 0), c.recent10.size - 1),

@@ -1,7 +1,6 @@
 package com.now.nowbot.service.divingFishApiService
 
-import com.now.nowbot.model.json.ChuBestScore
-import com.now.nowbot.model.json.ChuSong
+import com.now.nowbot.model.json.*
 
 interface ChunithmApiService {
 
@@ -17,7 +16,31 @@ interface ChunithmApiService {
 
     fun getChunithmSongLibrary(): Map<Int, ChuSong>
 
+    fun getChunithmSong(songID: Long): ChuSong?
+
+    fun getChunithmAlias(songID: Long): ChuAlias?
+
+    fun getChunithmAlias(songID: Int): ChuAlias?
+
+    fun getChunithmAliasLibrary(): Map<Int, List<String>>?
+
+    fun insertChunithmAlias(song: ChuSong?)
+
+    fun insertChunithmAlias(songs: List<ChuSong>?)
+
+    fun insertChunithmAliasForScore(score: ChuScore?)
+
+    fun insertChunithmAliasForScore(scores: List<ChuScore>?)
+
+    fun insertSongData(scores: List<ChuScore>)
+
+    fun insertSongData(score: ChuScore, song: ChuSong)
+
+    fun insertPosition(scores: List<ChuScore>, isBest30: Boolean)
+
     fun updateChunithmSongLibraryDatabase()
+
+    fun updateChunithmAliasLibraryDatabase()
 
     fun updateChunithmSongLibraryFile()
 }

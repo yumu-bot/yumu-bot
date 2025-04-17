@@ -31,6 +31,9 @@ class ChuScore {
 
     @JsonProperty("title") var title: String = ""
 
+    // 曲名外号，需要自己设置
+    @get:JsonProperty("alias") var alias: String? = null
+
     // BP 多少
     @JsonIgnoreProperties var position: Int = 0
 
@@ -39,39 +42,4 @@ class ChuScore {
 
     // 自己拿
     @JsonIgnoreProperties var charter: String = ""
-
-    companion object {
-        fun insertSongData(scores: List<ChuScore>, data: MutableMap<Int, ChuSong>) {
-            for (s in scores) {
-                if (s.songID == 0L) {
-                    continue
-                }
-
-                val d = data[s.songID.toInt()] ?: continue
-
-                insertSongData(s, d)
-            }
-        }
-
-        private fun insertSongData(score: ChuScore, song: ChuSong) {
-            val chart = song.charts.get(score.index)
-
-            score.charter = chart.charter
-            score.artist = song.info.artist
-        }
-
-        fun insertPosition(scores: List<ChuScore>, isBest30: Boolean) {
-            if (scores.isEmpty()) return
-
-            for (i in scores.indices) {
-                val s = scores[i]
-
-                if (isBest30) {
-                    s.position = (i + 1)
-                } else {
-                    s.position = (i + 31)
-                }
-            }
-        }
-    }
 }

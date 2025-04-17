@@ -18,6 +18,7 @@ class MaiDao(
     val maiAliasLiteRepository: MaiAliasLiteRepository,
     val chuSongLiteRepository: ChuSongLiteRepository,
     val chuChartLiteRepository: ChuChartLiteRepository,
+    val chuAliasLiteRepository: ChuAliasLiteRepository,
 ) {
     fun saveMaiRanking(ranking: List<MaiRanking>) {
         val rankingLite = ranking.mapNotNull {
@@ -167,7 +168,6 @@ class MaiDao(
 
     fun saveMaiAliases(maiAliases: List<MaiAlias>) {
         val lites = maiAliases.map { MaiAliasLite.from(it) }
-
         maiAliasLiteRepository.saveAll(lites)
     }
 
@@ -185,6 +185,25 @@ class MaiDao(
         }
 
         val aliasOpt = maiAliasLiteRepository.findById(i)
+        if (aliasOpt.isEmpty) {
+            return null
+        }
+        val alias = aliasOpt.get()
+        return alias.toModel()
+    }
+
+    fun saveChuAliases(maiAliases: List<ChuAlias>) {
+        val lites = maiAliases.map {ChuAliasLite.from(it) }
+        chuAliasLiteRepository.saveAll(lites)
+    }
+
+    fun getAllChuAliases(): List<ChuAlias> {
+        val aliases = chuAliasLiteRepository.findAll()
+        return aliases.map { it.toModel() }
+    }
+
+    fun getChuAliasByID(id: Int): ChuAlias? {
+        val aliasOpt = chuAliasLiteRepository.findById(id)
         if (aliasOpt.isEmpty) {
             return null
         }

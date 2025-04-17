@@ -42,6 +42,8 @@ interface MaiRankLiteRepository : JpaRepository<MaiRankingLite, String> {
 
 interface MaiAliasLiteRepository : JpaRepository<MaiAliasLite, Int>
 
+interface ChuAliasLiteRepository : JpaRepository<ChuAliasLite, Int>
+
 interface ChuSongLiteRepository : JpaRepository<ChuSongLite, Int> {
     fun findByQueryTitleLikeIgnoreCase(queryTitle: String): List<ChuSongLite>?
 }
