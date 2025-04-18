@@ -17,11 +17,11 @@ public class DiscordConfig {
     /**
      * dc 申请的token
      */
-    private String token = "*";
+    private String token = "";
     /**
      * 分割命令, 不需要改
      */
-    private String commandSuffix = "ym-";
+    private String commandSuffix = "";
 
     public String getToken() {
         return token;
