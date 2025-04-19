@@ -65,7 +65,7 @@ public class BindController {
                     """;
         } else {
             try {
-                msg.receipt().recall();
+                msg.receipt.recall();
             } catch (Exception e) {
                 log.error("绑定消息撤回失败", e);
                 return """
@@ -83,10 +83,10 @@ public class BindController {
 
             BindUser bd = BindUser.create(code);
             userApiService.refreshUserTokenFirst(bd);
-            var u = bindDao.bindQQ(msg.QQ(), bd);
+            var u = bindDao.bindQQ(msg.qq, bd);
             BindService.removeBind(key);
             sb.append("成功绑定:\n<br/>")
-              .append(msg.QQ())
+              .append(msg.qq)
               .append(" -> ")
               .append(bd.getOsuName())
               .append("\n<br/>")
