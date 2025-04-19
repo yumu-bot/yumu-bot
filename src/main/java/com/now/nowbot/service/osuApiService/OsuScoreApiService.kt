@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatmapUserScore
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.service.messageServiceImpl.GetCoverService
 
 interface OsuScoreApiService {
 
@@ -115,4 +116,10 @@ interface OsuScoreApiService {
     fun getBeatMapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore>
 
     fun getLeaderBoardScore(bid: Long, mode: OsuMode?): List<LazerScore>
+
+    fun asyncDownloadBackground(score: LazerScore, type: GetCoverService.Type? = GetCoverService.Type.COVER) {
+        asyncDownloadBackground(listOf(score), type)
+    }
+
+    fun asyncDownloadBackground(scores: Iterable<LazerScore>, type: GetCoverService.Type? = GetCoverService.Type.COVER)
 }

@@ -85,7 +85,7 @@ class TodayBPService(
         val dayEnd = range.getDayEnd()
         val isToday = (dayStart == 0 && dayEnd == 1)
 
-        val bs: List<LazerScore> = try {
+        val bests: List<LazerScore> = try {
             scoreApiService.getBestScores(user.userID, mode.data, 0, 100) +
                     scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
         } catch (e: WebClientResponseException.Forbidden) {
@@ -101,13 +101,13 @@ class TodayBPService(
 
         val laterDay = OffsetDateTime.now().minusDays(dayStart.toLong())
         val earlierDay = OffsetDateTime.now().minusDays(dayEnd.toLong())
-        val dataMap = TreeMap<Int, LazerScore>()
-
-        bs.forEachIndexed { i, it ->
-            if (it.endedTime.isBefore(laterDay) && it.endedTime.isAfter(earlierDay)) {
-                dataMap[i + 1] = it
+        val dataMap = bests.mapIndexed { i, it ->
+            return@mapIndexed if (it.endedTime.isBefore(laterDay) && it.endedTime.isAfter(earlierDay)) {
+                i + 1 to it
+            } else {
+                null
             }
-        }
+        }.filterNotNull().toMap()
 
         return TodayBPParam(user, mode.data!!, dataMap, isMyself.get(), isToday)
     }
@@ -125,12 +125,10 @@ class TodayBPService(
             }
         }
 
-        val ranks = mutableListOf<Int>()
-        val scores = mutableListOf<LazerScore>()
-        for ((key, value) in todayMap) {
-            ranks.add(key)
-            scores.add(value)
-        }
+        val ranks = todayMap.map { it.key }
+        val scores = todayMap.map { it.value }
+
+        scoreApiService.asyncDownloadBackground(scores)
 
         calculateApiService.applyBeatMapChanges(scores)
         calculateApiService.applyStarToScores(scores)

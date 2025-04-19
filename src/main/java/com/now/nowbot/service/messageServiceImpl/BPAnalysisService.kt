@@ -203,7 +203,7 @@ import kotlin.math.min
             sortCount("bpm") { it.bpm }
 
             val ppRawList = bps.map { it.PP!! }
-            val ppSum = bps.map(LazerScore::getWeightPP).sum()
+            val ppSum = bps.sumOf { it.weight?.PP ?: 0.0 }
             val rankList = bps.map { it.rank }
             val lengthList = beatMapList.map { it.length }
             val starList = beatMapList.map { it.star }

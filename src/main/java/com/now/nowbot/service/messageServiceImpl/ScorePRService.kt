@@ -255,6 +255,9 @@ class ScorePRService(
             val ranks = scoreMap.map{it.key}.toList()
             val scores = scoreMap.map{it.value}.toList()
 
+            scoreApiService.asyncDownloadBackground(scores)
+            scoreApiService.asyncDownloadBackground(scores, GetCoverService.Type.LIST)
+
             calculateApiService.applyPPToScores(scores)
             calculateApiService.applyBeatMapChanges(scores)
             calculateApiService.applyStarToScores(scores)
@@ -276,6 +279,9 @@ class ScorePRService(
         } else {
             // 单成绩发送
             val score = scoreMap.map { it.value }.first()
+
+            scoreApiService.asyncDownloadBackground(score)
+            scoreApiService.asyncDownloadBackground(score, GetCoverService.Type.LIST)
 
             val e5Param = getScore4PanelE5(user, score, (if (isRecent) "R" else "P"), beatmapApiService, calculateApiService)
             try {

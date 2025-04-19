@@ -218,6 +218,8 @@ import kotlin.math.sqrt
         val scores: List<SkillScore> = if (isShowScores) {
             val s10 = bests.take(10)
 
+            scoreApiService.asyncDownloadBackground(s10, GetCoverService.Type.LIST)
+
             calculateApiService.applyBeatMapChanges(s10)
             calculateApiService.applyStarToScores(s10)
 

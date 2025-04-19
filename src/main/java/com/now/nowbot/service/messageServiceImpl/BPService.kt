@@ -95,6 +95,7 @@ import kotlin.math.*
     }
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: BPParam) {
+        param.asyncImage()
         val image: ByteArray = param.getImage()
 
         try {
@@ -158,7 +159,10 @@ import kotlin.math.*
         return BPParam(range.data!!, filteredScores, isMyself.get())
     }
 
-    override fun reply(event: MessageEvent, param: BPParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
+    override fun reply(event: MessageEvent, param: BPParam): MessageChain? = run {
+        param.asyncImage()
+        return QQMsgUtil.getImage(param.getImage())
+    }
 
     enum class Operator(@Language("RegExp") val regex: Regex) {
         // 不等于
@@ -305,6 +309,11 @@ import kotlin.math.*
         }
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
+    }
+
+    private fun BPParam.asyncImage() = run {
+        scoreApiService.asyncDownloadBackground(scores.values)
+        scoreApiService.asyncDownloadBackground(scores.values, GetCoverService.Type.LIST)
     }
 
     private fun BPParam.getImage(): ByteArray = try {
