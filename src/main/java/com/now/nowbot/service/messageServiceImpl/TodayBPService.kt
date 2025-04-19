@@ -20,6 +20,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
@@ -85,7 +86,8 @@ class TodayBPService(
         val isToday = (dayStart == 0 && dayEnd == 1)
 
         val bs: List<LazerScore> = try {
-            scoreApiService.getBestScores(user.userID, mode.data)
+            scoreApiService.getBestScores(user.userID, mode.data, 0, 100) +
+                    scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
         } catch (e: WebClientResponseException.Forbidden) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.username)
         } catch (e: WebClientResponseException.NotFound) {
@@ -97,8 +99,8 @@ class TodayBPService(
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "今日最好成绩")
         }
 
-        val laterDay = java.time.OffsetDateTime.now().minusDays(dayStart.toLong())
-        val earlierDay = java.time.OffsetDateTime.now().minusDays(dayEnd.toLong())
+        val laterDay = OffsetDateTime.now().minusDays(dayStart.toLong())
+        val earlierDay = OffsetDateTime.now().minusDays(dayEnd.toLong())
         val dataMap = TreeMap<Int, LazerScore>()
 
         bs.forEachIndexed { i, it ->
