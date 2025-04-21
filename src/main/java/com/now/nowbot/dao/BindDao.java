@@ -404,7 +404,15 @@ public class BindDao {
         int badRequest = 0;
         while (true) {
             try {
-                osuGetService.refreshUserToken(fromLite(u));
+                try {
+                    osuGetService.refreshUserToken(fromLite(u));
+                } catch (Exception e) {
+                    if (e instanceof WebClientResponseException) {
+                        throw e;
+                    } else {
+                        throw e.getCause();
+                    }
+                }
                 return;
             } catch (WebClientResponseException.Unauthorized e) {
                 log.info("更新 [{}] 令牌失败, refresh token 失效, 绑定被取消", u.getOsuName());
@@ -418,6 +426,8 @@ public class BindDao {
                     log.error("更新 [{}] 令牌失败, 重试 {} 次失败, 放弃更新", u.getOsuName(), badRequest);
                     throw e;
                 }
+            } catch (Throwable e) {
+                log.error("神秘错误: ", e);
             }
         }
     }
