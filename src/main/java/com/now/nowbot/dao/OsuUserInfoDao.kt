@@ -1,87 +1,49 @@
-package com.now.nowbot.dao;
+package com.now.nowbot.dao
 
-import com.now.nowbot.entity.OsuUserInfoArchiveLite;
-import com.now.nowbot.mapper.OsuUserInfoMapper;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.json.InfoLogStatistics;
-import com.now.nowbot.model.json.MicroUser;
-import com.now.nowbot.model.json.OsuUser;
-import com.now.nowbot.model.json.Statistics;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Stream;
+import com.now.nowbot.entity.OsuUserInfoArchiveLite
+import com.now.nowbot.entity.OsuUserInfoArchiveLite.InfoArchive
+import com.now.nowbot.mapper.OsuUserInfoMapper
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.InfoLogStatistics
+import com.now.nowbot.model.json.MicroUser
+import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.json.Statistics
+import org.springframework.stereotype.Component
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.util.*
 
 @Component
-public class OsuUserInfoDao {
-    OsuUserInfoMapper osuUserInfoMapper;
+class OsuUserInfoDao(private val osuUserInfoMapper: OsuUserInfoMapper) {
 
-    @Autowired
-    public OsuUserInfoDao(OsuUserInfoMapper mapper) {
-        osuUserInfoMapper = mapper;
+    fun saveUser(user: OsuUser, mode: OsuMode) {
+        val u = fromModel(user, mode)
+        osuUserInfoMapper.save(u)
     }
 
-    public void saveUser(OsuUser user, OsuMode mode) {
-        var u = fromModel(user, mode);
-        osuUserInfoMapper.save(u);
-    }
+    fun saveUsers(users: List<MicroUser>) {
+        val all = users.flatMap {
+            if (it.rulesets == null) return@flatMap emptyList<OsuUserInfoArchiveLite>()
 
-    public void saveUsers(List<MicroUser> users) {
-        var all = users.stream()
-                .flatMap(microUser -> {
-                    if (microUser.getRulesets() == null) return Stream.empty();
-                    var osu = fromStatistics(microUser.getRulesets().getOsu(), OsuMode.OSU);
-                    if (osu != null) osu.setOsuID(microUser.getUserID());
-                    var taiko = fromStatistics(microUser.getRulesets().getTaiko(), OsuMode.TAIKO);
-                    if (taiko != null) taiko.setOsuID(microUser.getUserID());
-                    var fruits = fromStatistics(microUser.getRulesets().getFruits(), OsuMode.CATCH);
-                    if (fruits != null) fruits.setOsuID(microUser.getUserID());
-                    var mania = fromStatistics(microUser.getRulesets().getMania(), OsuMode.MANIA);
-                    if (mania != null) mania.setOsuID(microUser.getUserID());
+            val osu = fromStatistics(it.rulesets!!.osu, OsuMode.OSU)
+            if (osu != null) osu.osuID = it.userID
 
-                    return Stream.of(osu, taiko, fruits, mania);
-                })
-                .filter(Objects::nonNull)
-                .toList();
+            val taiko = fromStatistics(it.rulesets!!.taiko, OsuMode.TAIKO)
+            if (taiko != null) taiko.osuID = it.userID
 
-        osuUserInfoMapper.saveAllAndFlush(all);
-    }
+            val fruits = fromStatistics(it.rulesets!!.fruits, OsuMode.CATCH)
+            if (fruits != null) fruits.osuID = it.userID
 
-    public static OsuUser fromArchive(OsuUserInfoArchiveLite archive) {
-        OsuUser user = new OsuUser();
-        user.mode = archive.getMode().shortName;
-        user.setId(archive.getOsuID());
+            val mania = fromStatistics(it.rulesets!!.mania, OsuMode.MANIA)
+            if (mania != null) mania.osuID = it.userID
 
-        InfoLogStatistics statistics = new InfoLogStatistics();
-        statistics.setCountA(archive.getGrade_counts_a());
-        statistics.setCountS(archive.getGrade_counts_s());
-        statistics.setCountSS(archive.getGrade_counts_ss());
-        statistics.setCountSH(archive.getGrade_counts_sh());
-        statistics.setCountSSH(archive.getGrade_counts_ssh());
+            return@flatMap listOf(osu, taiko, fruits, mania)
+            }
+            .filterNotNull()
+            .toList()
 
-        statistics.globalRank = archive.getGlobal_rank();
-        statistics.countryRank = archive.getCountry_rank();
-        statistics.totalScore = archive.getTotal_score();
-        statistics.totalHits = archive.getTotal_hits();
-        statistics.rankedScore = archive.getRanked_score();
-        statistics.accuracy = archive.getHit_accuracy();
-        statistics.playCount = archive.getPlay_count();
-        statistics.playTime = archive.getPlay_time();
-        statistics.setLevelCurrent(archive.getLevel_current());
-        statistics.setLevelProgress(archive.getLevel_progress());
-        statistics.maxCombo = archive.getMaximum_combo();
-        statistics.setPp(archive.getPP());
-
-        statistics.setLogTime(archive.getTime());
-
-        user.statistics = statistics;
-        return user;
+        osuUserInfoMapper.saveAllAndFlush(all)
     }
 
     /**
@@ -90,8 +52,8 @@ public class OsuUserInfoDao {
      * @param date 当天
      * @return 那一天最后的数据
      */
-    public Optional<OsuUserInfoArchiveLite> getLast(Long uid, OsuMode mode, LocalDate date) {
-        return osuUserInfoMapper.selectDayLast(uid, mode, date);
+    fun getLast(uid: Long?, mode: OsuMode?, date: LocalDate?): Optional<OsuUserInfoArchiveLite> {
+        return osuUserInfoMapper.selectDayLast(uid, mode, date)
     }
 
     /**
@@ -99,67 +61,99 @@ public class OsuUserInfoDao {
      *
      * @param date 那一天
      */
-    public Optional<OsuUserInfoArchiveLite> getLastFrom(Long uid, OsuMode mode, LocalDate date) {
-        var time = LocalDateTime.of(date, LocalTime.MAX);
-        return osuUserInfoMapper.selectDayLast(uid, mode, time.minusYears(1), time);
+    fun getLastFrom(uid: Long?, mode: OsuMode?, date: LocalDate): Optional<OsuUserInfoArchiveLite> {
+        val time = LocalDateTime.of(date, LocalTime.MAX)
+        return osuUserInfoMapper.selectDayLast(uid, mode, time.minusYears(1), time)
     }
 
-    public static OsuUserInfoArchiveLite fromModel(OsuUser data, OsuMode mode) {
-        var archive = new OsuUserInfoArchiveLite();
-        var statistics = Objects.requireNonNull(data.statistics);
+    fun getLast(uid: Long?, mode: OsuMode?): Optional<OsuUserInfoArchiveLite> {
+        return osuUserInfoMapper.selectLast(uid, mode)
+    }
 
-        archive.setOsuID(data.getUserID());
-        setOut(archive, statistics);
+    fun getYesterdayInfo(uid: List<Long?>?): List<InfoArchive> {
+        return osuUserInfoMapper.getArchiveByUidYesterday(uid)
+    }
 
-        archive.setPlay_count(data.getPlayCount());
-        archive.setPlay_time(data.getPlayTime());
+    companion object {
+        fun fromArchive(archive: OsuUserInfoArchiveLite): OsuUser {
+            val user = OsuUser()
+            user.mode = archive.mode.shortName
+            user.id = archive.osuID
 
-        if (mode.equals(OsuMode.DEFAULT)) {
-            archive.setMode(data.getCurrentOsuMode());
-        } else {
-            archive.setMode(mode);
+            val statistics = InfoLogStatistics()
+            statistics.countA = archive.grade_counts_a
+            statistics.countS = archive.grade_counts_s
+            statistics.countSS = archive.grade_counts_ss
+            statistics.countSH = archive.grade_counts_sh
+            statistics.countSSH = archive.grade_counts_ssh
+
+            statistics.globalRank = archive.global_rank
+            statistics.countryRank = archive.country_rank
+            statistics.totalScore = archive.total_score
+            statistics.totalHits = archive.total_hits
+            statistics.rankedScore = archive.ranked_score
+            statistics.accuracy = archive.hit_accuracy
+            statistics.playCount = archive.play_count
+            statistics.playTime = archive.play_time
+            statistics.levelCurrent = archive.level_current
+            statistics.levelProgress = archive.level_progress
+            statistics.maxCombo = archive.maximum_combo
+            statistics.pp = archive.pp
+
+            statistics.logTime = archive.time
+
+            user.statistics = statistics
+            return user
         }
-        archive.setTime(LocalDateTime.now());
-        return archive;
-    }
 
-    private static void setOut(OsuUserInfoArchiveLite out, Statistics statistics) {
-        out.setGlobal_rank(statistics.globalRank);
-        out.setCountry_rank(statistics.countryRank);
-        out.setTotal_score(statistics.totalScore);
-        out.setRanked_score(statistics.rankedScore);
-        out.setGrade_counts_a(statistics.getCountA());
-        out.setGrade_counts_s(statistics.getCountS());
-        out.setGrade_counts_sh(statistics.getCountSH());
-        out.setGrade_counts_ss(statistics.getCountSS());
-        out.setGrade_counts_ssh(statistics.getCountSSH());
+        fun fromModel(data: OsuUser, mode: OsuMode): OsuUserInfoArchiveLite {
+            val archive = OsuUserInfoArchiveLite()
 
-        out.setHit_accuracy(statistics.accuracy);
-        out.setPP(statistics.getPp());
-        out.setLevel_current(statistics.getLevelCurrent());
-        out.setLevel_progress(statistics.getLevelProgress());
-        out.setIs_ranked(statistics.getRanked());
-        out.setMaximum_combo(statistics.maxCombo);
-        out.setTotal_hits(statistics.totalHits);
-    }
+            archive.osuID = data.userID
+            setOut(archive, data.statistics!!)
 
-    private static OsuUserInfoArchiveLite fromStatistics(Statistics s, OsuMode mode){
-        if (s == null) return null;
-        var out = new OsuUserInfoArchiveLite();
-        out.setPlay_count(s.playCount);
-        out.setPlay_time(s.playTime);
-        out.setMode(mode);
-        out.setTime(LocalDateTime.now());
-        setOut(out, s);
+            archive.play_count = data.playCount
+            archive.play_time = data.playTime
 
-        return out;
-    }
+            if (mode.isDefault()) {
+                archive.mode = data.currentOsuMode
+            } else {
+                archive.mode = mode
+            }
+            archive.time = LocalDateTime.now()
+            return archive
+        }
 
-    public Optional<OsuUserInfoArchiveLite> getLast(Long uid, OsuMode mode) {
-        return osuUserInfoMapper.selectLast(uid, mode);
-    }
+        private fun setOut(out: OsuUserInfoArchiveLite, statistics: Statistics) {
+            out.global_rank = statistics.globalRank
+            out.country_rank = statistics.countryRank
+            out.total_score = statistics.totalScore
+            out.ranked_score = statistics.rankedScore
+            out.grade_counts_a = statistics.countA
+            out.grade_counts_s = statistics.countS
+            out.grade_counts_sh = statistics.countSH
+            out.grade_counts_ss = statistics.countSS
+            out.grade_counts_ssh = statistics.countSSH
 
-    public List<OsuUserInfoArchiveLite.InfoArchive> getYesterdayInfo(List<Long> uid) {
-        return osuUserInfoMapper.getArchiveByUidYesterday(uid);
+            out.hit_accuracy = statistics.accuracy
+            out.pp = statistics.pp
+            out.level_current = statistics.levelCurrent
+            out.level_progress = statistics.levelProgress
+            out.is_ranked = statistics.ranked
+            out.maximum_combo = statistics.maxCombo
+            out.total_hits = statistics.totalHits
+        }
+
+        private fun fromStatistics(s: Statistics?, mode: OsuMode): OsuUserInfoArchiveLite? {
+            if (s == null) return null
+            val out = OsuUserInfoArchiveLite()
+            out.play_count = s.playCount
+            out.play_time = s.playTime
+            out.mode = mode
+            out.time = LocalDateTime.now()
+            setOut(out, s)
+
+            return out
+        }
     }
 }

@@ -4,7 +4,6 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.LoggerContext
 import com.now.nowbot.aop.OpenResource
 import com.now.nowbot.dao.OsuUserInfoDao
-import com.now.nowbot.entity.OsuUserInfoArchiveLite
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
@@ -824,7 +823,7 @@ import kotlin.math.min
         val bests = scoreApiService.getBestScores(user)
         val historyUser = infoDao.getLastFrom(
             user.userID, mode, LocalDate.now().minusDays(day.toLong())
-        ).map { archive: OsuUserInfoArchiveLite? -> OsuUserInfoDao.fromArchive(archive) }.orElse(null)
+        ).map { OsuUserInfoDao.fromArchive(it) }.orElse(null)
 
         val param = InfoService.PanelDParam(user, historyUser, bests, user.currentOsuMode)
 

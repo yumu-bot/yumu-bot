@@ -15,6 +15,7 @@ import com.now.nowbot.service.messageServiceImpl.ScorePRService.PanelE5Param
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
+import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
@@ -306,7 +307,7 @@ import kotlin.math.*
             } else {
                 throw GeneralTipsException(
                     GeneralTipsException.Type.G_Null_ModeBP,
-                    data!!.username ?: data!!.userID,
+                    data!!.username,
                     modeStr,
                 )
             }
@@ -317,7 +318,7 @@ import kotlin.math.*
 
     private fun BPParam.asyncImage() = run {
         scoreApiService.asyncDownloadBackground(scores.values)
-        scoreApiService.asyncDownloadBackground(scores.values, GetCoverService.Type.LIST)
+        scoreApiService.asyncDownloadBackground(scores.values, ScoreApiImpl.CoverType.LIST)
     }
 
     private fun BPParam.getImage(): ByteArray = try {

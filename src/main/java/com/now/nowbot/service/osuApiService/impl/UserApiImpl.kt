@@ -122,7 +122,7 @@ import java.util.regex.Pattern
     override fun <T : Number> getUsers(users: Iterable<T>, isVariant: Boolean): List<MicroUser> {
         return base.osuApiWebClient.get()
             .uri { it.path("users")
-                .queryParam("ids[]", users)
+                .queryParam("ids[]", users.toList())
                 .queryParam("include_variant_statistics", isVariant)
                 .build()
             }.headers { base.insertHeader(it)

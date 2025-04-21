@@ -11,7 +11,6 @@ import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.onebot.contact.GroupContact;
 import com.now.nowbot.throwable.PermissionException;
-import com.now.nowbot.throwable.TipsException;
 import com.now.nowbot.util.ContextUtil;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -230,7 +229,7 @@ public class CheckAspect {
         if (ser != null) {
             name = ser.value();
         }
-        if (pjp.getArgs()[0] instanceof MessageEvent e && Objects.nonNull(e)) {
+        if (pjp.getArgs()[0] instanceof MessageEvent e) {
             if (e.getSubject().getId() < 0) {
                 log.debug("官方bot [uid {}] 调用 -> {}", - e.getSender().getId(), name);
             } else {
@@ -253,7 +252,7 @@ public class CheckAspect {
     }
 
     private OsuUser getUser(OsuUser user) {
-        if (Objects.isNull(user.getUserID())) return user;
+        if (user.getUserID() == 0L) return user;
         var data = userProfileMapper.findTopByUserId(user.getUserID());
 
         return data.map(profile -> {
@@ -287,7 +286,7 @@ public class CheckAspect {
     }
 
     private LazerScore getScore(LazerScore score) {
-        if (score == null || score.getUser().getUserID() == null) return score;
+        if (score == null || score.getUser().getUserID() == 0L) return score;
         var data = userProfileMapper.findTopByUserId(score.getUser().getUserID());
 
         return data.map(profile -> {

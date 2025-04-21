@@ -217,7 +217,7 @@ class GroupStatisticsService(
                 }
                 sb.append(entry.value!!.userID).append(',')
                 sb.append(entry.value!!.userName).append(',')
-                sb.append(entry.value!!.rulesets.osu.pp).append(',')
+                sb.append(entry.value!!.rulesets!!.osu.pp).append(',')
                 sb.append(usersBP1[entry.key]).append('\n')
             }
         group.sendFile(sb.toString().toByteArray(StandardCharsets.UTF_8), "$groupId.csv")

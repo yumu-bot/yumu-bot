@@ -130,18 +130,17 @@ class NewbieDao(
         end: LocalDateTime,
         callback: ((UserCount) -> Unit) = { }
     ): List<UserCount> {
-        val users = uid
-        val under3K = mutableSetOf<Int>()
-        val userPP = mutableMapOf<Int, Float>()
+        val under3K = mutableSetOf<Long>()
+        val userPP = mutableMapOf<Long, Float>()
 
         // 分批次 筛选出pp小于3600的用户
-        users.chunked(50) { i ->
+        uid.chunked(50) { i ->
             Thread.sleep(3000)
             osuUserService.getUsers(i)
-                .filter { it.rulesets != null && it.rulesets.osu != null && it.rulesets.osu.pp!! < 3600 }
+                .filter { it.rulesets != null && it.rulesets!!.osu != null && it.rulesets!!.osu.pp!! < 3600 }
                 .map {
-                    userPP[it.id.toInt()] = it.rulesets.osu.pp!!.toFloat()
-                    it.id.toInt()
+                    userPP[it.id] = it.rulesets!!.osu.pp!!.toFloat()
+                    it.id
                 }.forEach { under3K.add(it) }
         }
         val timeRange = TimeRange(start, end)
@@ -167,9 +166,9 @@ class NewbieDao(
 
 
     fun getAll(
-        uid: List<Int>,
+        uid: List<Long>,
         timeRange: TimeRange,
-        ppMap: Map<Int, Float>,
+        ppMap: Map<Long, Float>,
         cache: MutableMap<Int, Boolean> = ConcurrentHashMap(),
         callback: ((UserCount) -> Unit) = { }
     ): List<UserCount> {
@@ -178,7 +177,7 @@ class NewbieDao(
             val data = AsyncMethodExecutor.doRetry(5) {
                 Thread.sleep(3000)
                 log.info("start to count $id")
-                this.getUserPlayRecords(id, timeRange.start, timeRange.end, ppMap[id] ?: 0f, cache)
+                this.getUserPlayRecords(id.toInt(), timeRange.start, timeRange.end, ppMap[id] ?: 0f, cache)
             }
             if (data.playCount < 1) return@forEachIndexed
             callback(data)

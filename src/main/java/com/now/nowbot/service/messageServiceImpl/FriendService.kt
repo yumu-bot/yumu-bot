@@ -119,7 +119,7 @@ class FriendService(
 
         // 加了对方 直接判断是否互 mu
         if (friend != null) {
-            return if (friend.mutual) {
+            return if (friend.isMutual) {
                 "恭喜！你已经与 $name 互相成为好友了。"
             } else {
                 "你已经添加了 $name 作为你的好友，但对方似乎还没有添加你。"
@@ -186,38 +186,38 @@ class FriendService(
 
         val sequence = if (sortDirection == DESCEND) {
             // 先翻一次，因为等会要翻回来，这样可以保证都是默认按名字升序排序的
-            rawList.asSequence().filter { it.isBot != true }.sortedByDescending { it.userName }
+            rawList.asSequence().filter { !it.isBot }.sortedByDescending { it.userName }
         } else {
-            rawList.asSequence().filter { it.isBot != true }.sortedBy { it.userName }
+            rawList.asSequence().filter { !it.isBot }.sortedBy { it.userName }
         }
 
         val sorted =
             when (sortType) {
                 PERFORMANCE -> sequence
-                    .filter { it.statistics.pp!! > 0 }
-                    .sortedBy { it.statistics.pp!! }
+                    .filter { it.statistics!!.pp!! > 0 }
+                    .sortedBy { it.statistics!!.pp!! }
 
                 ACCURACY -> sequence
-                    .filter { it.statistics.accuracy!! > 0 }
-                    .sortedBy { it.statistics.accuracy!! }
+                    .filter { it.statistics!!.accuracy!! > 0 }
+                    .sortedBy { it.statistics!!.accuracy!! }
 
                 TIME -> sequence
-                    .filter { it.lastTime != null }
-                    .sortedBy { it.lastTime }
+                    .filter { it.lastVisitTime != null }
+                    .sortedBy { it.lastVisitTime }
 
                 PLAY_COUNT -> sequence
-                    .sortedBy { it.statistics.playCount }
+                    .sortedBy { it.statistics!!.playCount }
                 PLAY_TIME -> sequence
-                    .sortedBy { it.statistics.playTime }
+                    .sortedBy { it.statistics!!.playTime }
                 TOTAL_HITS -> sequence
-                    .sortedBy { it.statistics.totalHits }
+                    .sortedBy { it.statistics!!.totalHits }
                 ONLINE -> sequence
-                    .filter { it.statistics.pp!! > 0 }
-                    .sortedByDescending { it.statistics.pp!! }
+                    .filter { it.statistics!!.pp!! > 0 }
+                    .sortedByDescending { it.statistics!!.pp!! }
                     .filter { it.isOnline }
 
                 MUTUAL -> sequence
-                    .filter { it.mutual }
+                    .filter { it.isMutual }
                 UID -> sequence
                     .sortedBy { it.userID }
                 COUNTRY -> sequence

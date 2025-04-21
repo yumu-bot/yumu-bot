@@ -9,6 +9,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
+import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl.CoverType
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
@@ -18,11 +19,7 @@ import java.net.URI
 
 @Service("GET_COVER") class GetCoverService(private val beatmapApiService: OsuBeatmapApiService, private val beatmapMirrorApiService: OsuBeatmapMirrorApiService) :
     MessageService<GetCoverService.CoverParam>, TencentMessageService<GetCoverService.CoverParam> {
-    @JvmRecord data class CoverParam(val type: Type, val bids: List<Long>)
-
-    enum class Type {
-        RAW, CARD, CARD_2X, COVER, COVER_2X, LIST, LIST_2X, SLIM_COVER, SLIM_COVER_2X
-    }
+    @JvmRecord data class CoverParam(val type: CoverType, val bids: List<Long>)
 
     @Throws(Throwable::class) override fun isHandle(
         event: MessageEvent, messageText: String, data: DataValue<CoverParam>
@@ -32,16 +29,16 @@ import java.net.URI
 
         if (matcher.find()) {
             val type = when (matcher.group("type")) {
-                "raw", "r", "full", "f", "background", "b" -> Type.RAW
-                "list", "l", "l1" -> Type.LIST
-                "list2", "list2x", "list@2x", "l2" -> Type.LIST_2X
-                "c", "card", "c1" -> Type.CARD
-                "card2", "card2x", "card@2x", "c2" -> Type.CARD_2X
-                "slim", "slimcover", "s", "s1" -> Type.SLIM_COVER
-                "slim2", "slim2x", "slim@2x", "slimcover2", "slimcover2x", "slimcover@2x", "s2" -> Type.SLIM_COVER_2X
-                "2", "cover2", "cover2x", "cover@2x", "o2" -> Type.COVER_2X
-                null -> Type.COVER
-                else -> Type.COVER
+                "raw", "r", "full", "f", "background", "b" -> CoverType.RAW
+                "list", "l", "l1" -> CoverType.LIST
+                "list2", "list2x", "list@2x", "l2" -> CoverType.LIST_2X
+                "c", "card", "c1" -> CoverType.CARD
+                "card2", "card2x", "card@2x", "c2" -> CoverType.CARD_2X
+                "slim", "slimcover", "s", "s1" -> CoverType.SLIM_COVER
+                "slim2", "slim2x", "slim@2x", "slimcover2", "slimcover2x", "slimcover@2x", "s2" -> CoverType.SLIM_COVER_2X
+                "2", "cover2", "cover2x", "cover@2x", "o2" -> CoverType.COVER_2X
+                null -> CoverType.COVER
+                else -> CoverType.COVER
             }
 
             val dataStr: String? = matcher.group("data")
@@ -56,7 +53,7 @@ import java.net.URI
             if (dataStr.isNullOrBlank()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
             val bids = parseDataString(dataStr)
 
-            data.value = CoverParam(Type.RAW, bids)
+            data.value = CoverParam(CoverType.RAW, bids)
             return true
         } else {
             return false
@@ -66,8 +63,10 @@ import java.net.URI
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: CoverParam) {
         val messageChains: List<MessageChain>
 
-        if (param.type == Type.RAW) {
-            messageChains = getMessageChains(param.bids, beatmapMirrorApiService)
+        if (param.type == CoverType.RAW) {
+            messageChains = listOf(MessageChainBuilder().addText("抱歉，应急运行时是没有 getBG 服务的呢...").build())
+
+            //messageChains = getMessageChains(param.bids, beatmapMirrorApiService)
         } else {
             val beatmaps = getBeatMaps(param.bids, beatmapApiService)
             messageChains = getMessageChains(param.type, beatmaps)
@@ -138,7 +137,7 @@ import java.net.URI
             return list
         }
 
-        private fun getMessageChains(type: Type, beatmaps: List<BeatMap>): List<MessageChain> {
+        private fun getMessageChains(type: CoverType, beatmaps: List<BeatMap>): List<MessageChain> {
             val list = mutableListOf<MessageChain>()
             var builder = MessageChainBuilder()
 
@@ -147,13 +146,13 @@ import java.net.URI
 
                 val covers = b.beatMapSet!!.covers
                 val url = when (type) {
-                    Type.LIST -> covers.list
-                    Type.LIST_2X -> covers.list2x
-                    Type.CARD -> covers.card
-                    Type.CARD_2X -> covers.card2x
-                    Type.SLIM_COVER -> covers.slimcover
-                    Type.SLIM_COVER_2X -> covers.slimcover2x
-                    Type.COVER_2X -> covers.cover2x
+                    CoverType.LIST -> covers.list
+                    CoverType.LIST_2X -> covers.list2x
+                    CoverType.CARD -> covers.card
+                    CoverType.CARD_2X -> covers.card2x
+                    CoverType.SLIM_COVER -> covers.slimcover
+                    CoverType.SLIM_COVER_2X -> covers.slimcover2x
+                    CoverType.COVER_2X -> covers.cover2x
                     else -> covers.cover
                 }
                 val imageUri = URI.create(url)
@@ -182,7 +181,7 @@ import java.net.URI
     override fun reply(event: MessageEvent, param: CoverParam): MessageChain {
         val messageChains: List<MessageChain>
 
-        if (param.type == Type.RAW) {
+        if (param.type == CoverType.RAW) {
             messageChains = getMessageChains(param.bids, beatmapMirrorApiService)
         } else {
             val beatmaps = getBeatMaps(param.bids, beatmapApiService)

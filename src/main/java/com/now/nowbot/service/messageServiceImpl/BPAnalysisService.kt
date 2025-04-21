@@ -15,6 +15,7 @@ import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
@@ -59,8 +60,10 @@ import kotlin.math.min
         val isMyself = AtomicBoolean(false)
         val mode = getMode(matcher)
         val user = getUserWithoutRange(event, matcher, mode, isMyself)
-        val bpList = scoreApiService.getBestScores(user.userID, mode.data)
-        data.value = BAParam(user, bpList, isMyself.get())
+        val bests = scoreApiService.getBestScores(user.userID, mode.data)
+
+        scoreApiService.asyncDownloadBackground(bests.take(6), ScoreApiImpl.CoverType.LIST)
+        data.value = BAParam(user, bests, isMyself.get())
 
         return true
     }
@@ -107,13 +110,13 @@ import kotlin.math.min
         ): Map<String, Any> {
             if (bpList == null || bpList.size <= 5) return HashMap.newHashMap(1)
 
-            val bps: List<LazerScore> = ArrayList(bpList)
+            val bests: List<LazerScore> = ArrayList(bpList)
 
-            val bpSize = bps.size
+            val bpSize = bests.size
 
             // top
-            val t6: List<LazerScore> = bps.take(6)
-            val b5: List<LazerScore> = bps.takeLast(bpSize - max((bpSize - 5).toDouble(), 0.0).toInt())
+            val t6: List<LazerScore> = bests.take(6)
+            val b5: List<LazerScore> = bests.takeLast(bpSize - max((bpSize - 5).toDouble(), 0.0).toInt())
 
             data class BeatMap4BA(
                 val ranking: Int,
@@ -142,7 +145,7 @@ import kotlin.math.min
             var modsSum = 0
 
             for (i in 0 until bpSize) {
-                val s = bps[i]
+                val s = bests[i]
                 val b = s.beatMap
 
                 val m = s.mods.filter {
@@ -202,15 +205,15 @@ import kotlin.math.min
             sortCount("star") { it.star }
             sortCount("bpm") { it.bpm }
 
-            val ppRawList = bps.map { it.PP!! }
-            val ppSum = bps.sumOf { it.weight?.PP ?: 0.0 }
-            val rankList = bps.map { it.rank }
+            val ppRawList = bests.map { it.PP!! }
+            val ppSum = bests.sumOf { it.weight?.PP ?: 0.0 }
+            val rankList = bests.map { it.rank }
             val lengthList = beatMapList.map { it.length }
             val starList = beatMapList.map { it.star }
             val modsList: List<List<String>> = beatMapList.map {
                 it.mods.map { mod -> mod.acronym }
             }
-            val timeList = bps.map { 1.0 * it.endedTime.plusHours(8).hour + (it.endedTime.plusHours(8).minute / 60.0) }
+            val timeList = bests.map { 1.0 * it.endedTime.plusHours(8).hour + (it.endedTime.plusHours(8).minute / 60.0) }
             val timeDist = mutableListOf(0, 0, 0, 0, 0, 0, 0, 0)
 
             for (time in timeList) {
@@ -230,7 +233,7 @@ import kotlin.math.min
                 val ppCount: Float
             )
 
-            val mapperMap = bps
+            val mapperMap = bests
                 .groupingBy { it.beatMap.mapperID }
                 .eachCount()
 
@@ -242,7 +245,7 @@ import kotlin.math.min
 
             val mapperInfo = userApiService.getUsers(mapperCount.keys)
             val mapperList =
-                bps.filter { mapperCount.containsKey(it.beatMap.mapperID) }
+                bests.filter { mapperCount.containsKey(it.beatMap.mapperID) }
                     .groupingBy { it.beatMap.mapperID }
                     .aggregate<LazerScore, Long, Double>({ _, accumulator, element, _ ->
                         if (accumulator == null) {
@@ -250,29 +253,25 @@ import kotlin.math.min
                         } else {
                             accumulator + (element.PP ?: 0.0)
                         }
-                    }).entries
-                    .sortedWith(compareByDescending<Map.Entry<Long, Double>> { mapperCount[it.key] }
-                        .thenByDescending { it.value })
+                    }).entries.sortedByDescending { it.value }
                     .map {
                         var name = ""
                         var avatar = ""
                         for (node in mapperInfo) {
                             if (it.key == node.userID) {
                                 name = node.userName
-                                avatar = node.avatarUrl
+                                avatar = node.avatarUrl!!
                                 break
                             }
                         }
                         Mapper(avatar, name, mapperCount[it.key] ?: 0, it.value.toFloat())
                     }.toList()
 
-            val bpPPs = bps.map { obj: LazerScore -> obj.PP ?: 0.0 }.toDoubleArray()
-
             val userPP = user.pp
-            val bonusPP = getBonusPP(userPP, bpPPs)
+            val bonusPP = getBonusPP(userPP, bests.map { it.PP ?: 0.0 }.toDoubleArray())
 
             //bpPP + remainPP (bp100之后的) = rawPP
-            val bpPP = bps.sumOf { it.weight!!.PP }
+            val bpPP = bests.sumOf { it.weight!!.PP }
             val rawPP = (userPP - bonusPP)
 
             val modsAttr: List<Attr>
@@ -316,10 +315,7 @@ import kotlin.math.min
                 }
             }
 
-            val clientCount =
-                listOf(
-                    bps.stream().filter { !it.isLazer }.count(), bps.stream().filter { it.isLazer }.count()
-                )
+            val clientCount = listOf(bests.count { !it.isLazer }, bests.count { it.isLazer })
 
             val data = HashMap<String, Any>(18)
 
@@ -341,7 +337,7 @@ import kotlin.math.min
                 data["rank_attr"] = rankAttr
                 data["pp_raw"] = rawPP
                 data["pp"] = userPP
-                data["game_mode"] = bps.first().mode
+                data["game_mode"] = bests.first().mode
             } else {
                 data["user"] = user
                 data["bests"] = t6

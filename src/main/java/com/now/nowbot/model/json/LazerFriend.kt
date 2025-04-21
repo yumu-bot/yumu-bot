@@ -1,56 +1,23 @@
-package com.now.nowbot.model.json;
+package com.now.nowbot.model.json
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true) @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class LazerFriend {
+class LazerFriend {
     @JsonProperty("target_id")
-    Long targetId;
+    var targetId: Long = 0L
 
     @JsonProperty("relation_type")
-    String relationType;
+    var relationType: String = ""
 
     @JsonProperty("mutual")
-    Boolean isMutual;
+    var isMutual: Boolean = false
 
     @JsonProperty("target")
-    MicroUser target;
-
-    public Long getTargetId() {
-        return targetId;
-    }
-
-    public void setTargetId(Long targetId) {
-        this.targetId = targetId;
-    }
-
-    public String getRelationType() {
-        return relationType;
-    }
-
-    public void setRelationType(String relationType) {
-        this.relationType = relationType;
-    }
-
-    public Boolean getMutual() {
-        return isMutual;
-    }
-
-    public void setMutual(Boolean mutual) {
-        isMutual = mutual;
-    }
-
-    public MicroUser getTarget() {
-        target.isMutual = isMutual;
-        return target;
-    }
-
-    public void setTarget(MicroUser target) {
-        this.target = target;
-    }
+    var target: MicroUser = MicroUser()
+        get() = field.apply { field.isMutual = isMutual }
 }

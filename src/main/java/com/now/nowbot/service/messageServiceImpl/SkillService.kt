@@ -16,6 +16,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.*
 import org.springframework.stereotype.Service
@@ -218,7 +219,7 @@ import kotlin.math.sqrt
         val scores: List<SkillScore> = if (isShowScores) {
             val s10 = bests.take(10)
 
-            scoreApiService.asyncDownloadBackground(s10, GetCoverService.Type.LIST)
+            scoreApiService.asyncDownloadBackground(s10, ScoreApiImpl.CoverType.LIST)
 
             calculateApiService.applyBeatMapChanges(s10)
             calculateApiService.applyStarToScores(s10)

@@ -15,6 +15,7 @@ import com.now.nowbot.service.messageServiceImpl.ScoreService.ScoreParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
+import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.serviceException.BindException
@@ -187,7 +188,7 @@ import java.util.regex.Matcher
             if (scores.size > 1) {
 
                 scoreApiService.asyncDownloadBackground(scores.first())
-                scoreApiService.asyncDownloadBackground(scores.first(), GetCoverService.Type.LIST)
+                scoreApiService.asyncDownloadBackground(scores.first(), ScoreApiImpl.CoverType.LIST)
 
                 calculateApiService.applyStarToScores(scores)
                 calculateApiService.applyBeatMapChanges(scores)
@@ -248,7 +249,7 @@ import java.util.regex.Matcher
         }
 
         scoreApiService.asyncDownloadBackground(score)
-        scoreApiService.asyncDownloadBackground(score, GetCoverService.Type.LIST)
+        scoreApiService.asyncDownloadBackground(score, ScoreApiImpl.CoverType.LIST)
 
         val e5Param =
             ScorePRService.getScore4PanelE5(user, score, b, position, "S", beatmapApiService, calculateApiService)

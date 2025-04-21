@@ -15,6 +15,7 @@ import com.now.nowbot.service.messageServiceImpl.ScorePRService.ScorePRParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
+import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
@@ -256,7 +257,7 @@ class ScorePRService(
             val scores = scoreMap.map{it.value}.toList()
 
             scoreApiService.asyncDownloadBackground(scores)
-            scoreApiService.asyncDownloadBackground(scores, GetCoverService.Type.LIST)
+            scoreApiService.asyncDownloadBackground(scores, ScoreApiImpl.CoverType.LIST)
 
             calculateApiService.applyPPToScores(scores)
             calculateApiService.applyBeatMapChanges(scores)
@@ -281,7 +282,7 @@ class ScorePRService(
             val score = scoreMap.map { it.value }.first()
 
             scoreApiService.asyncDownloadBackground(score)
-            scoreApiService.asyncDownloadBackground(score, GetCoverService.Type.LIST)
+            scoreApiService.asyncDownloadBackground(score, ScoreApiImpl.CoverType.LIST)
 
             val e5Param = getScore4PanelE5(user, score, (if (isRecent) "R" else "P"), beatmapApiService, calculateApiService)
             try {
