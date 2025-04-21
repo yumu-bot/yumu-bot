@@ -98,7 +98,7 @@ import kotlin.math.sqrt
                     user = maybe
                     vs = null
                 } else {
-                    user = userApiService.getPlayerInfo(me, mode)
+                    user = userApiService.getOsuUser(me, mode)
                     vs = maybe
                 }
             }

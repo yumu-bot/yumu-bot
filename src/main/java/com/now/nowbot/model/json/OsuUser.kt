@@ -1,312 +1,345 @@
-package com.now.nowbot.model.json;
+package com.now.nowbot.model.json
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.service.osuApiService.OsuUserApiService;
-import org.springframework.beans.BeanUtils;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
-import org.springframework.util.CollectionUtils;
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.getMode
+import com.now.nowbot.service.osuApiService.OsuUserApiService
+import org.springframework.beans.BeanUtils
+import org.springframework.lang.Nullable
+import java.time.OffsetDateTime
+import java.util.*
 
-import java.time.OffsetDateTime;
-import java.util.*;
-
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class OsuUser {
+open class OsuUser {
     @JsonProperty("avatar_url")
-    String avatarUrl;
+    var avatarUrl: String = ""
 
     @JsonProperty("country_code")
-    String countryCode;
+    var countryCode: String = ""
 
     @JsonProperty("default_group")
-    @Nullable
-    String defaultGroup;
+    var defaultGroup: String? = ""
 
     //不要动这个
-    Long id;
+    var id: Long = 0L
+    
+    @get:JsonIgnoreProperties
+    val userID: Long
+        get() = id
 
     //最近有活跃？
     @JsonProperty("is_active")
-    Boolean isActive;
+    var isActive: Boolean = false
 
     @JsonProperty("is_bot")
-    Boolean isBot;
+    var isBot: Boolean = false
 
     @JsonProperty("is_deleted")
-    Boolean isDeleted;
+    var isDeleted: Boolean = false
 
     @JsonProperty("is_online")
-    Boolean isOnline;
+    var isOnline: Boolean = false
 
     @JsonProperty("is_supporter")
-    Boolean isSupporter;
+    var isSupporter: Boolean = false
 
     @JsonProperty("is_restricted")
-    Boolean isRestricted;
+    var isRestricted: Boolean = false
 
-    @JsonProperty("last_visit")
-    @Nullable
-    OffsetDateTime lastVisit;
+    @get:Nullable @JsonProperty("last_visit") @Nullable
+    var lastVisit: OffsetDateTime? = null
 
     @JsonProperty("pm_friends_only")
-    Boolean pmFriendsOnly;
+    var pmFriendsOnly: Boolean = false
 
-    @JsonProperty("profile_colour")
-    @Nullable
-    String profileColor;
+    @get:Nullable @JsonProperty("profile_colour") @Nullable
+    var profileColor: String? = null
 
-    String username;
+    var username: String = ""
 
     // Optional attributes
-
     @JsonProperty("cover_url")
-    String coverUrl;
+    var coverUrl: String = ""
 
-    String discord;
+    var discord: String? = ""
 
     @JsonProperty("has_supported")
-    Boolean hasSupported;
+    var hasSupported: Boolean = false
 
-    String interests;
+    var interests: String? = ""
 
     @JsonProperty("join_date")
-    OffsetDateTime joinDate;
+    var joinDate: OffsetDateTime? = null
 
-    String location;
+    var location: String? = ""
 
     @JsonProperty("max_blocks")
-    Integer maxBlocks;
+    var maxBlocks: Int = 0
 
     @JsonProperty("max_friends")
-    Integer maxFriends;
+    var maxFriends: Int = 0
 
-    String occupation;
+    var occupation: String? = ""
 
+    /**
+     * 注意，如果以其他模式请求 OsuUser，这里依旧是玩家的默认模式。需要获得其他模式请使用 getCurrentOsuMode
+     * 所以尽量不要用这个。如果你一定要用，那肯定是请求玩家的默认模式
+     * 保留是因为这个类已经计入数据库。如果你能修改，请帮忙改掉
+     * @return 默认游戏模式
+     */
     /**
      * 不要用这个
      */
-    @JsonProperty("playmode")
-    String mode;
+    @JvmField @JsonProperty("playmode")
+    var mode: String = ""
 
     @JsonIgnoreProperties
-    String currentOsuMode;
+    var currentOsuMode: OsuMode = OsuMode.DEFAULT
+        get() = if (rankHistory != null) {
+            getMode(rankHistory!!.mode, defaultOsuMode)
+        } else {
+            field
+        }
+        
+        set(mode) {
+            if (rankHistory == null) {
+                rankHistory = RankHistory(mode.shortName, listOf())
+            }
+            
+            field = mode
+        }
 
     @JsonProperty("playstyle")
-    List<String> playStyle;
+    var playStyle: List<String>? = listOf()
 
     @JsonProperty("post_count")
-    Integer postCount;
+    var postCount: Int = 0
 
     @JsonProperty("profile_hue")
-    @Nullable
-    // 这个很重要，是新增的撒泼特自设功能。只要面板知道你的色相，即可生成对应的面板类型。
+    var profileHue: Int = 0
+     // 这个很重要，是新增的撒泼特自设功能。只要面板知道你的色相，即可生成对应的面板类型。
     // 区域 0-255，可以为 null
-    Integer profileHue;
 
     @JsonProperty("profile_order")
-    List<String> profileOrder;
+    var profileOrder: List<String>? = listOf()
 
-    @Nullable
-    String title;
+    var title: String? = null
 
     @JsonProperty("title_url")
-    @Nullable
-    String titleUrl;
+    var titleUrl: String? = null
 
-    String twitter;
+    var twitter: String? = null
 
-    String website;
+    var website: String? = null
 
     @JsonProperty("country")
-    Country country;
+    var country: Country? = null
 
-    public record Country(String code, String name) {
-    }
+    @JvmRecord
+    data class Country(val code: String, val name: String)
 
     @JsonProperty("cover")
-    Cover cover;
+    var cover: Cover? = null
 
     @JsonProperty("kudosu")
-    Kudosu kudosu;
+    var kudosu: Kudosu? = Kudosu(0, 0)
 
-    public record Kudosu(Integer available, Integer total) {
-    }
+    @JvmRecord
+    data class Kudosu(val available: Int, val total: Int)
 
     @JsonProperty("account_history")
-    @Nullable
-    List<UserAccountHistory> accountHistory;
+    var accountHistory: List<UserAccountHistory>? = null
 
     //type: note, restriction, silence.
-    public record UserAccountHistory(@Nullable String description, Long id, Integer length, Boolean permanent,
-                                     OffsetDateTime timestamp, String type) {
-    }
+    @JvmRecord
+    data class UserAccountHistory(
+        val description: String?, val id: Long, val length: Int, val permanent: Boolean,
+        val timestamp: OffsetDateTime, val type: String
+    )
 
     /*
 
-    @JsonProperty("active_tournament_banner")
-    @Nullable
-    @Deprecated
-    ProfileBanner profileBanner;
+   @JsonProperty("active_tournament_banner")
+   @Nullable
+   @Deprecated
+   ProfileBanner profileBanner;
 
-     */
-
-    public record ProfileBanner(Long id, Long tournament_id, @Nullable String image,
-                                @JsonProperty("image@2x") @Nullable String image2x) {
-    }
+    */
+    @JvmRecord
+    data class ProfileBanner(
+        val id: Long,
+        @JsonProperty("tournament_id") val tournamentID: Long,
+        val image: String?,
+        @JsonProperty("image@2x") val image2x: String?
+    )
 
 
     @JsonProperty("active_tournament_banners")
-    List<ProfileBanner> profileBanners;
+    var profileBanners: List<ProfileBanner> = listOf()
 
-    List<UserBadge> badges;
+    var badges: List<UserBadge> = listOf()
 
-    public record UserBadge(@JsonProperty("awarded_at") OffsetDateTime awardAt,
-                            @JsonProperty("description") String description,
-                            @JsonProperty("image@2x_url") String image2xUrl,
-                            @JsonProperty("image_url") String imageUrl,
-                            @Nullable String url) {
-    }
+
+    @JvmRecord
+    data class UserBadge(
+        @field:JsonProperty("awarded_at") @param:JsonProperty(
+            "awarded_at"
+        ) val awardAt: OffsetDateTime,
+        @field:JsonProperty("description") @param:JsonProperty(
+            "description"
+        ) val description: String,
+        @field:JsonProperty("image@2x_url") @param:JsonProperty(
+            "image@2x_url"
+        ) val image2xUrl: String,
+        @field:JsonProperty("image_url") @param:JsonProperty(
+            "image_url"
+        ) val imageUrl: String,
+        @field:Nullable @param:Nullable val url: String?
+    )
 
     @JsonProperty("beatmap_playcounts_count")
-    Integer beatmapPlaycount;
+    var beatmapPlaycount: Int = 0
 
     @JsonProperty("comments_count")
-    Integer commentsCount;
+    var commentsCount: Int = 0
 
-    @JsonProperty("daily_challenge_user_stats")
-    @Nullable
-    DailyChallenge dailyChallenge;
+    @JsonProperty("daily_challenge_user_stats") @Nullable
+    var dailyChallenge: DailyChallenge? = null
 
-    public record DailyChallenge(@JsonProperty("daily_streak_best") Integer bestDayStreak,
-                                 @JsonProperty("daily_streak_current") Integer currentDayStreak,
-                                 @JsonProperty("last_update") OffsetDateTime lastUpdate,
-                                 @JsonProperty("last_weekly_streak") OffsetDateTime lastWeeklyStreak,
-                                 @JsonProperty("playcount") Integer playCount,
-                                 @JsonProperty("top_10p_placements") Integer top10PercentCount,
-                                 @JsonProperty("top_50p_placements") Integer top50PercentCount,
-                                 @JsonProperty("user_id") Integer userID,
-                                 @JsonProperty("weekly_streak_best") Integer bestWeekStreak,
-                                 @JsonProperty("weekly_streak_current") Integer currentWeekStreak) {
-    }
+    @JvmRecord
+    data class DailyChallenge(
+        @JsonProperty("daily_streak_best")
+        val bestDayStreak: Int,
+        @JsonProperty("daily_streak_current")
+        val currentDayStreak: Int,
+        @JsonProperty("last_update")
+        val lastUpdate: OffsetDateTime,
+        @JsonProperty("last_weekly_streak")
+        val lastWeeklyStreak: OffsetDateTime,
+        @JsonProperty("playcount")
+        val playCount: Int,
+        @JsonProperty("top_10p_placements")
+        val top10PercentCount: Int,
+        @JsonProperty("top_50p_placements")
+        val top50PercentCount: Int,
+        @JsonProperty("user_id")
+        val userID: Int,
+        @JsonProperty("weekly_streak_best")
+        val bestWeekStreak: Int,
+        @JsonProperty("weekly_streak_current")
+        val currentWeekStreak: Int
+    )
 
     @JsonProperty("favourite_beatmapset_count")
-    Integer favoriteCount;
+    var favoriteCount: Int = 0
 
     @JsonProperty("follower_count")
-    Integer followerCount;
+    var followerCount: Int = 0
 
     @JsonProperty("graveyard_beatmapset_count")
-    Integer graveyardCount;
+    var graveyardCount: Int = 0
 
     @JsonProperty("groups")
-    List<UserGroup> groups;
+    var groups: List<UserGroup> = listOf()
 
     @JsonProperty("guest_beatmapset_count")
-    Integer guestCount;
+    var guestCount: Int = 0
 
     @JsonProperty("loved_beatmapset_count")
-    Integer lovedCount;
+    var lovedCount: Int = 0
 
     @JsonProperty("mapping_follower_count")
-    Integer mappingFollowerCount;
+    var mappingFollowerCount: Int = 0
 
     @JsonIgnoreProperties
-    List<UserMonthly> monthlyPlaycounts;
+    var monthlyPlaycounts: List<UserMonthly> = listOf()
 
-    @JsonProperty("monthly_playcounts")
-    void setMonthlyPlayCount(List<HashMap<String, Object>> dataList) {
-        monthlyPlaycounts = new ArrayList<>(dataList.size());
-        for (var d : dataList) {
-            var mp = new UserMonthly((String) d.get("start_date"), (Integer) d.get("count"));
-            monthlyPlaycounts.add(mp);
-        }
+    @JsonProperty("monthly_playcounts") fun setMonthlyPlayCount(dataList: List<HashMap<String, Any>>) {
+        monthlyPlaycounts = dataList.map { UserMonthly(it["start_date"] as String, it["count"] as Int) }
     }
 
 
-    public record UserMonthly(String start_date, Integer count) {
-    }
+    @JvmRecord
+    data class UserMonthly(@JsonProperty("start_date") val startDate: String, val count: Int)
 
     @JsonProperty("nominated_beatmapset_count")
-    Integer nominatedCount;
+    var nominatedCount: Int = 0
 
-    Page page;
+    var page: Page? = null
 
-    public record Page(String html, String raw) {
-    }
+    @JvmRecord
+    data class Page(val html: String, val raw: String)
 
     @JsonProperty("pending_beatmapset_count")
-    Integer pendingCount;
+    var pendingCount: Int = 0
 
     @JsonProperty("previous_usernames")
-    List<String> previousNames;
+    var previousNames: List<String>? = listOf()
 
     @JsonProperty("rank_highest")
-    @Nullable
-    HighestRank highestRank;
+    var highestRank: HighestRank = HighestRank()
 
-    public record HighestRank(Integer rank, @JsonProperty("updated_at") OffsetDateTime updatedAt) {
-    }
+    @JvmRecord
+    data class HighestRank(
+        val rank: Int = 0,
+        
+        @JsonProperty("updated_at")
+        val updatedAt: OffsetDateTime? = null
+    )
 
     @JsonProperty("ranked_beatmapset_count")
-    Integer rankedCount;
+    var rankedCount: Int = 0
 
     @JsonIgnoreProperties
-    List<UserMonthly> replaysWatchedCounts;
+    var replaysWatchedCounts: List<UserMonthly> = listOf()
 
-    @JsonProperty("replays_watched_counts")
-    void setReplaysWatchedCount(List<HashMap<String, Object>> dataList) {
-        replaysWatchedCounts = new ArrayList<>(dataList.size());
-        for (var d : dataList) {
-            var mp = new UserMonthly((String) d.get("start_date"), (Integer) d.get("count"));
-            replaysWatchedCounts.add(mp);
-        }
+    @JsonProperty("replays_watched_counts") fun setReplaysWatchedCount(dataList: List<HashMap<String, Any>>) {
+        replaysWatchedCounts = dataList.map { UserMonthly(it["start_date"] as String, it["count"] as Int) }
     }
 
     @JsonProperty("scores_best_count")
-    Integer scoreBestCount;
+    var scoreBestCount: Int = 0
 
     @JsonProperty("scores_first_count")
-    Integer scoreFirstCount;
+    var scoreFirstCount: Int = 0
 
     @JsonProperty("scores_pinned_count")
-    Integer scorePinnedCount;
+    var scorePinnedCount: Int = 0
 
     @JsonProperty("scores_recent_count")
-    Integer scoreRecentCount;
+    var scoreRecentCount: Int = 0
 
-    @JsonProperty("statistics")
-    Statistics statistics;
+    @JvmField @JsonProperty("statistics")
+    var statistics: Statistics? = null
 
     @JsonProperty("support_level")
-    Integer supportLevel;
+    var supportLevel: Int = 0
 
-    @JsonProperty("team")
-    @Nullable
-    Team team;
-
-    @Nullable
-    public Team getTeam() {
-        return team;
-    }
+    @get:Nullable @JsonProperty("team") @Nullable
+    var team: Team? = null
 
     @JsonProperty("user_achievements")
-    List<UserAchievement> userAchievements;
+    var userAchievements: List<UserAchievement>? = null
 
-    public record UserAchievement(@JsonProperty("achieved_at") OffsetDateTime achievedAt,
-                                  @JsonProperty("achievement_id") Integer achievementID) {
-    }
+    @JvmRecord
+    data class UserAchievement(
+        @field:JsonProperty("achieved_at") @param:JsonProperty(
+            "achieved_at"
+        ) val achievedAt: OffsetDateTime,
+        @field:JsonProperty("achievement_id") @param:JsonProperty(
+            "achievement_id"
+        ) val achievementID: Int
+    )
 
     @JsonProperty("rank_history")
-    RankHistory rankHistory;
+    var rankHistory: RankHistory? = null
 
-    public record RankHistory(String mode, List<Integer> data) {
-    }
+    @JvmRecord
+    data class RankHistory(val mode: String, val data: List<Int>)
 
     // ranked 和 pending
     /*
@@ -317,215 +350,34 @@ public class OsuUser {
     Integer unrankedCount;
 
      */
-
     //自己算
-    Double PP;
 
-    public OsuUser() {
+    @get:JsonProperty("pp")
+    var pp: Double = 0.0
+        get() = statistics?.pp ?: field
 
+    constructor()
+
+    constructor(id: Long, pp: Double) {
+        this.id = id
+        this.pp = pp
     }
 
-    public OsuUser(Long id) {
-        this.id = id;
-    }
-
-    public OsuUser(String username) {
-        this.username = username;
-    }
-
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
-    }
-
-    public String getCountryCode() {
-        return countryCode;
-    }
-
-    public void setCountryCode(String countryCode) {
-        this.countryCode = countryCode;
-    }
-
-    @Nullable
-    public String getDefaultGroup() {
-        return defaultGroup;
-    }
-
-    public void setDefaultGroup(@Nullable String defaultGroup) {
-        this.defaultGroup = defaultGroup;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getUserID() {
-        return id;
-    }
-
-    public void setUserID(Long id) {
-        this.id = id;
-    }
-
-    public Boolean getActive() {
-        return isActive;
-    }
-
-    public void setActive(Boolean active) {
-        isActive = active;
-    }
-
-    public Boolean getBot() {
-        return isBot;
-    }
-
-    public void setBot(Boolean bot) {
-        isBot = bot;
-    }
-
-    public Boolean getDeleted() {
-        return isDeleted;
-    }
-
-    public void setDeleted(Boolean deleted) {
-        isDeleted = deleted;
-    }
-
-    public Boolean getOnline() {
-        return isOnline;
-    }
-
-    public void setOnline(Boolean online) {
-        isOnline = online;
-    }
-
-    public Boolean getSupporter() {
-        return isSupporter;
-    }
-
-    public void setSupporter(Boolean supporter) {
-        isSupporter = supporter;
-    }
-
-    @Nullable
-    public OffsetDateTime getLastVisit() {
-        return lastVisit;
-    }
-
-    public void setLastVisit(@Nullable OffsetDateTime lastVisit) {
-        this.lastVisit = lastVisit;
+    constructor(username: String, pp: Double) {
+        this.username = username
+        this.pp = pp
     }
 
     //这个是把基础 OsuUser 转换成完整 OsuUser 的方法
-    public void parseFull(OsuUserApiService osuUserApiService) {
-        OsuUser o;
+    fun parseFull(osuUserApiService: OsuUserApiService) {
+        val o: OsuUser
         try {
-            o = osuUserApiService.getPlayerInfo(this.getUserID());
-        } catch (Exception e) {
-            return;
+            o = osuUserApiService.getOsuUser(userID)
+        } catch (e: Exception) {
+            return
         }
 
-        BeanUtils.copyProperties(o, this);
-    }
-
-    public Boolean getPmFriendsOnly() {
-        return pmFriendsOnly;
-    }
-
-    @Nullable
-    public String getProfileColor() {
-        return profileColor;
-    }
-
-    public void setProfileColor(@Nullable String profileColor) {
-        this.profileColor = profileColor;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getCoverUrl() {
-        return coverUrl;
-    }
-
-    public void setCoverUrl(String coverUrl) {
-        this.coverUrl = coverUrl;
-    }
-
-    public String getDiscord() {
-        return discord;
-    }
-
-    public void setDiscord(String discord) {
-        this.discord = discord;
-    }
-
-    public Boolean getHasSupported() {
-        return hasSupported;
-    }
-
-    public void setHasSupported(Boolean hasSupported) {
-        this.hasSupported = hasSupported;
-    }
-
-    public String getInterests() {
-        return interests;
-    }
-
-    public void setInterests(String interests) {
-        this.interests = interests;
-    }
-
-    public OffsetDateTime getJoinDate() {
-        return joinDate;
-    }
-
-    public void setJoinDate(OffsetDateTime joinDate) {
-        this.joinDate = joinDate;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public Integer getMaxBlocks() {
-        return maxBlocks;
-    }
-
-    public void setMaxBlocks(Integer maxBlocks) {
-        this.maxBlocks = maxBlocks;
-    }
-
-    public Integer getMaxFriends() {
-        return maxFriends;
-    }
-
-    public void setMaxFriends(Integer maxFriends) {
-        this.maxFriends = maxFriends;
-    }
-
-    public String getOccupation() {
-        return occupation;
-    }
-
-    public void setOccupation(String occupation) {
-        this.occupation = occupation;
+        BeanUtils.copyProperties(o, this)
     }
 
     /**
@@ -534,547 +386,109 @@ public class OsuUser {
      * 保留是因为这个类已经计入数据库。如果你能修改，请帮忙改掉
      * @return 默认游戏模式
      */
-    public String getMode() {
-        return mode;
-    }
-
-    public void setMode(String mode) {
-        this.mode = mode;
-    }
-
-    /**
-     * 注意，如果以其他模式请求 OsuUser，这里依旧是玩家的默认模式。需要获得其他模式请使用 getCurrentOsuMode
-     * 所以尽量不要用这个。如果你一定要用，那肯定是请求玩家的默认模式
-     * 保留是因为这个类已经计入数据库。如果你能修改，请帮忙改掉
-     * @return 默认游戏模式
-     */
-    @Deprecated
-    public OsuMode getOsuMode() {
-        return getCurrentOsuMode();
-    }
-
-    public void setOsuMode(OsuMode mode) {
-        this.mode = mode.shortName;
-    }
-
-    public OsuMode getDefaultOsuMode() {
-        return OsuMode.getMode(mode);
-    }
-
-    public void setDefaultOsuMode(OsuMode mode) {
-        this.mode = mode.shortName;
-    }
-
-    public List<String> getPlayStyle() {
-        return playStyle;
-    }
-
-    public void setPlayStyle(List<String> playStyle) {
-        this.playStyle = playStyle;
-    }
-
-    public Integer getPostCount() {
-        return postCount;
-    }
-
-    public void setPostCount(Integer postCount) {
-        this.postCount = postCount;
-    }
-
-    @Nullable
-    public Integer getProfileHue() {
-        return profileHue;
-    }
-
-    public void setProfileHue(@Nullable Integer profileHue) {
-        this.profileHue = profileHue;
-    }
-
-    public List<String> getProfileOrder() {
-        return profileOrder;
-    }
-
-    public void setProfileOrder(List<String> profileOrder) {
-        this.profileOrder = profileOrder;
-    }
-
-    @Nullable
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(@Nullable String title) {
-        this.title = title;
-    }
-
-    @Nullable
-    public String getTitleUrl() {
-        return titleUrl;
-    }
-
-    public void setTitleUrl(@Nullable String titleUrl) {
-        this.titleUrl = titleUrl;
-    }
-
-    public String getTwitter() {
-        return twitter;
-    }
-
-    public void setTwitter(String twitter) {
-        this.twitter = twitter;
-    }
-
-    public String getWebsite() {
-        return website;
-    }
-
-    public void setWebsite(String website) {
-        this.website = website;
-    }
-
-    public Country getCountry() {
-        return country;
-    }
-
-    public void setCountry(Country country) {
-        this.country = country;
-    }
-
-    public Cover getCover() {
-        return cover;
-    }
-
-    public void setCover(Cover cover) {
-        this.cover = cover;
-    }
-
-    public Kudosu getKudosu() {
-        return kudosu;
-    }
-
-    public void setKudosu(Kudosu kudosu) {
-        this.kudosu = kudosu;
-    }
-
-    public @Nullable List<UserAccountHistory> getAccountHistory() {
-        return accountHistory;
-    }
-
-    public void setAccountHistory(@Nullable List<UserAccountHistory> accountHistory) {
-        this.accountHistory = accountHistory;
-    }
-
-    public List<ProfileBanner> getProfileBanners() {
-        return profileBanners;
-    }
-
-    public void setProfileBanners(List<ProfileBanner> profileBanners) {
-        this.profileBanners = profileBanners;
-    }
-
-    public List<UserBadge> getBadges() {
-        return badges;
-    }
-
-    public void setBadges(List<UserBadge> badges) {
-        this.badges = badges;
-    }
-
-    public Integer getBeatmapPlaycount() {
-        return beatmapPlaycount;
-    }
-
-    public void setBeatmapPlaycount(Integer beatmapPlaycount) {
-        this.beatmapPlaycount = beatmapPlaycount;
-    }
-
-    public Integer getCommentsCount() {
-        return commentsCount;
-    }
-
-    public void setCommentsCount(Integer commentsCount) {
-        this.commentsCount = commentsCount;
-    }
-
-    public Integer getFavoriteCount() {
-        return favoriteCount;
-    }
-
-    public void setFavoriteCount(Integer favoriteCount) {
-        this.favoriteCount = favoriteCount;
-    }
-
-    public Integer getFollowerCount() {
-        return followerCount;
-    }
-
-    public void setFollowerCount(Integer followerCount) {
-        this.followerCount = followerCount;
-    }
-
-    public Integer getGraveyardCount() {
-        return graveyardCount;
-    }
-
-    public void setGraveyardCount(Integer graveyardCount) {
-        this.graveyardCount = graveyardCount;
-    }
-
-    public List<UserGroup> getGroups() {
-        return groups;
-    }
-
-    public void setGroups(List<UserGroup> groups) {
-        this.groups = groups;
-    }
-
-    public Integer getGuestCount() {
-        return guestCount;
-    }
-
-    public void setGuestCount(Integer guestCount) {
-        this.guestCount = guestCount;
-    }
-
-    public Integer getLovedCount() {
-        return lovedCount;
-    }
-
-    public void setLovedCount(Integer lovedCount) {
-        this.lovedCount = lovedCount;
-    }
-
-    public Integer getMappingFollowerCount() {
-        return mappingFollowerCount;
-    }
-
-    public void setMappingFollowerCount(Integer mappingFollowerCount) {
-        this.mappingFollowerCount = mappingFollowerCount;
-    }
-
-    public List<UserMonthly> getMonthlyPlaycounts() {
-        return monthlyPlaycounts;
-    }
-
-    public void setMonthlyPlaycounts(List<UserMonthly> monthlyPlaycounts) {
-        this.monthlyPlaycounts = monthlyPlaycounts;
-    }
-
-    public Integer getNominatedCount() {
-        return nominatedCount;
-    }
-
-    public void setNominatedCount(Integer nominatedCount) {
-        this.nominatedCount = nominatedCount;
-    }
-
-    public Page getPage() {
-        return page;
-    }
-
-    public void setPage(Page page) {
-        this.page = page;
-    }
-
-    public Integer getPendingCount() {
-        return pendingCount;
-    }
-
-    public void setPendingCount(Integer pendingCount) {
-        this.pendingCount = pendingCount;
-    }
-
-    public List<String> getPreviousNames() {
-        return previousNames;
-    }
-
-    public void setPreviousNames(List<String> previousNames) {
-        this.previousNames = previousNames;
-    }
-
-    @Nullable
-    public HighestRank getHighestRank() {
-        return highestRank;
-    }
-
-    public void setHighestRank(@Nullable HighestRank highestRank) {
-        this.highestRank = highestRank;
-    }
-
-    public Integer getRankedCount() {
-        return rankedCount;
-    }
-
-    public void setRankedCount(Integer rankedCount) {
-        this.rankedCount = rankedCount;
-    }
-
-    public List<UserMonthly> getReplaysWatchedCounts() {
-        return replaysWatchedCounts;
-    }
-
-    public void setReplaysWatchedCounts(List<UserMonthly> replaysWatchedCounts) {
-        this.replaysWatchedCounts = replaysWatchedCounts;
-    }
-
-    public Integer getScoreBestCount() {
-        return scoreBestCount;
-    }
-
-    public void setScoreBestCount(Integer scoreBestCount) {
-        this.scoreBestCount = scoreBestCount;
-    }
-
-    public Integer getScoreFirstCount() {
-        return scoreFirstCount;
-    }
-
-    public void setScoreFirstCount(Integer scoreFirstCount) {
-        this.scoreFirstCount = scoreFirstCount;
-    }
-
-    public Integer getScorePinnedCount() {
-        return scorePinnedCount;
-    }
-
-    public void setScorePinnedCount(Integer scorePinnedCount) {
-        this.scorePinnedCount = scorePinnedCount;
-    }
-
-    public Integer getScoreRecentCount() {
-        return scoreRecentCount;
-    }
-
-    public void setScoreRecentCount(Integer scoreRecentCount) {
-        this.scoreRecentCount = scoreRecentCount;
-    }
-
-    public Statistics getStatistics() {
-        return statistics;
-    }
-
-    public void setStatistics(Statistics statistics) {
-        this.statistics = statistics;
-    }
-
-    public Integer getSupportLevel() {
-        return supportLevel;
-    }
-
-    public void setSupportLevel(Integer supportLevel) {
-        this.supportLevel = supportLevel;
-    }
-
-    public List<UserAchievement> getUserAchievements() {
-        return userAchievements;
-    }
-
-    public void setUserAchievements(List<UserAchievement> userAchievements) {
-        this.userAchievements = userAchievements;
-    }
-
-    public RankHistory getRankHistory() {
-        return rankHistory;
-    }
-
-    public void setRankHistory(RankHistory rankHistory) {
-        this.rankHistory = rankHistory;
-    }
-
-    public Double getPP() {
-        if (PP == null && statistics != null) {
-            PP = statistics.getPP();
-        }
-        return PP;
-    }
-
-    public void setPP(Double PP) {
-        this.PP = PP;
-    }
-
-
-    public Double getAccuracy() {
-        if (statistics != null) {
-            return statistics.getAccuracy();
-        }
-        return null;
-    }
-
-    public Long getPlayCount() {
-        if (statistics != null) {
-            return statistics.getPlayCount();
-        }
-        return null;
-    }
-
-    public Long getPlayTime() {
-        if (statistics != null) {
-            return statistics.getPlayTime();
-        }
-        return null;
-    }
-
-    public Long getTotalHits() {
-        if (statistics != null) {
-            return statistics.getTotalHits();
-        }
-        return null;
-    }
-
-    public Integer getMaxCombo() {
-        if (statistics != null) {
-            return statistics.getMaxCombo();
-        }
-        return null;
-    }
-
-    public Long getGlobalRank() {
-        if (statistics != null) {
-            return statistics.getGlobalRank();
-        }
-        return null;
-    }
-
-    public Long getCountryRank() {
-        if (statistics != null) {
-            return statistics.getCountryRank();
-        }
-        return null;
-    }
-
-    public Integer getLevelCurrent() {
-        if (statistics != null) {
-            return statistics.getLevelCurrent();
-        }
-        return null;
-    }
-
-    public Integer getLevelProgress() {
-        if (statistics != null) {
-            return statistics.getLevelProgress();
-        }
-        return null;
-    }
-
-    public Boolean getRestricted() {
-        return isRestricted;
-    }
-
-    public void setRestricted(Boolean restricted) {
-        isRestricted = restricted;
-    }
-
-    public void setPmFriendsOnly(Boolean pmFriendsOnly) {
-        this.pmFriendsOnly = pmFriendsOnly;
-    }
-
-    /**
-     * 在查询其他模式时，这里会给出其他模式，而不是玩家的默认模式
-     */
-    public OsuMode getCurrentOsuMode() {
-        if (this.rankHistory != null) {
-            return OsuMode.getMode(this.rankHistory.mode, this.getDefaultOsuMode());
-        } else if (OsuMode.getMode(this.currentOsuMode) != OsuMode.DEFAULT) {
-            return OsuMode.getMode(this.currentOsuMode);
-        } else {
-            return this.getDefaultOsuMode();
-        }
-    }
-
-    public void setCurrentOsuMode(OsuMode mode) {
-        if (this.rankHistory == null) {
-            this.rankHistory = new RankHistory(mode.shortName, new ArrayList<>(0));
+    @get:Deprecated("") var osuMode: OsuMode
+        get() = currentOsuMode
+        set(mode) {
+            this.mode = mode.shortName
         }
 
-        this.currentOsuMode = mode.shortName;
-    }
-
-    @Override
-    public String toString() {
-        return STR."OsuUser{avatarUrl='\{avatarUrl}\{'\''}, countryCode='\{countryCode}\{'\''}, defaultGroup='\{defaultGroup}\{'\''}, id=\{id}, isActive=\{isActive}, isBot=\{isBot}, isDeleted=\{isDeleted}, isOnline=\{isOnline}, isSupporter=\{isSupporter}, lastVisit=\{lastVisit}, PMFriendsOnly=\{pmFriendsOnly}, profileColor='\{profileColor}\{'\''}, username='\{username}\{'\''}, coverUrl='\{coverUrl}\{'\''}, discord='\{discord}\{'\''}, hasSupported=\{hasSupported}, interests='\{interests}\{'\''}, joinDate=\{joinDate}, location='\{location}\{'\''}, maxBlocks=\{maxBlocks}, maxFriends=\{maxFriends}, occupation='\{occupation}\{'\''}, playMode='\{mode}\{'\''}, playStyle=\{playStyle}, postCount=\{postCount}, profileOrder=\{profileOrder}, title='\{title}\{'\''}, titleUrl='\{titleUrl}\{'\''}, twitter='\{twitter}\{'\''}, website='\{website}\{'\''}, country=\{country}, cover=\{cover}, kudosu=\{kudosu}, accountHistory=\{accountHistory}, profileBanners=\{profileBanners}, badges=\{badges}, beatmapPlaycount=\{beatmapPlaycount}, CommentsCount=\{commentsCount}, favoriteCount=\{favoriteCount}, followerCount=\{followerCount}, graveyardCount=\{graveyardCount}, groups=\{groups}, guestCount=\{guestCount}, lovedCount=\{lovedCount}, mappingFollowerCount=\{mappingFollowerCount}, monthlyPlaycounts=\{monthlyPlaycounts}, nominatedCount=\{nominatedCount}, page=\{page}, pendingCount=\{pendingCount}, previousNames=\{previousNames}, highestRank=\{highestRank}, rankedCount=\{rankedCount}, replaysWatchedCounts=\{replaysWatchedCounts}, scoreBestCount=\{scoreBestCount}, scoreFirstCount=\{scoreFirstCount}, scorePinnedCount=\{scorePinnedCount}, scoreRecentCount=\{scoreRecentCount}, statistics=\{statistics}, supportLevel=\{supportLevel}, userAchievements=\{userAchievements}, rankHistory=\{rankHistory}, PP=\{PP}\{'}'}";
-    }
-
-    public String toCSV() {
-        return STR."\{getUserName(
-                username)},\{id},\{statistics.getPP()},\{statistics.getPP4K()},\{statistics.getPP7K()},\{statistics.getAccuracy()},\{statistics.getRankedScore()},\{statistics.getTotalScore()},\{statistics.getPlayCount()},\{statistics.getPlayTime()},\{statistics.getTotalHits()},\{avatarUrl},\{countryCode},\{defaultGroup},\{isActive},\{isBot},\{isDeleted},\{isOnline},\{isSupporter},\{isRestricted},\{lastVisit},\{pmFriendsOnly},\{profileColor},\{coverUrl},\{replaceCommas(
-                discord)},\{hasSupported},\{replaceCommas(interests)},\{joinDate},\{replaceCommas(
-                location)},\{maxBlocks},\{maxFriends},\{replaceCommas(occupation)},\{mode},\{getFirst(
-                playStyle)},\{postCount},\{getFirst(
-                profileOrder)},\{title},\{titleUrl},\{twitter},\{website},\{country.name},\{cover.custom},\{kudosu.total},\{beatmapPlaycount},\{commentsCount},\{favoriteCount},\{followerCount},\{graveyardCount},\{guestCount},\{lovedCount},\{mappingFollowerCount},\{nominatedCount},\{pendingCount},\{getFirst(
-                previousNames)},\{getHighestRank(
-                highestRank)},\{rankedCount},\{replaysWatchedCounts.size()},\{scoreBestCount},\{scoreFirstCount},\{scorePinnedCount},\{scoreRecentCount},\{supportLevel},\{userAchievements.size()}";
-
-    }
-
-    @NonNull
-    private String getUserName(String username) {
-        if (username.startsWith("- ")) return '\'' + username;
-        else return username;
-    }
-
-    @NonNull
-    private int getHighestRank(HighestRank rank) {
-        if (Objects.nonNull(rank) && Objects.nonNull(rank.rank)) return rank.rank;
-        else return 0;
-    }
-
-    @Nullable
-    private <T> T getFirst(List<T> list) {
-        if (Objects.nonNull(list) && !list.isEmpty()) return list.getFirst();
-        else return null;
-    }
-
-    @NonNull
-    private String replaceCommas(@Nullable String str) {
-        if (Objects.isNull(str)) return "";
-        else return str.replaceAll(",", "/");
-    }
-
-    public record Team(
-            @JsonProperty("flag_url") String flag,
-            @JsonProperty("id") Integer id,
-            @JsonProperty("name") String name,
-            @JsonProperty("short_name") String short_name
-    ) {}
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof OsuUser osuUser)) return false;
-
-        return id.equals(osuUser.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
-    }
-
-    /**
-     * List<OsuUser> 去重方法
-     *
-     * @param to   要合并进去 List
-     * @param from 要用来合并的 List
-     * @return 合并好的 List
-     */
-
-    public static List<OsuUser> merge2OsuUserList(@Nullable List<OsuUser> to, @Nullable List<OsuUser> from) {
-        if (CollectionUtils.isEmpty(to)) {
-            return from;
+    var defaultOsuMode: OsuMode
+        get() = getMode(mode)
+        set(mode) {
+            this.mode = mode.shortName
         }
 
-        if (CollectionUtils.isEmpty(from)) {
-            return to;
+    val accuracy: Double
+        get() = statistics?.accuracy ?: 0.0
+
+    val playCount: Long
+        get() = statistics?.playCount ?: 0L
+
+    val playTime: Long
+        get() = statistics?.playTime ?: 0L
+
+    val totalHits: Long
+        get() = statistics?.totalHits ?: 0L
+
+    val maxCombo: Int
+        get() = statistics?.maxCombo ?: 0
+
+    val globalRank: Long
+        get() = statistics?.globalRank ?: 0L
+
+    val countryRank: Long
+        get() = statistics?.countryRank ?: 0L
+
+    val levelCurrent: Int
+        get() = statistics?.levelCurrent ?: 0
+
+    val levelProgress: Int
+        get() = statistics?.levelProgress ?: 0
+
+    override fun toString(): String {
+        return "OsuUser(avatarUrl=$avatarUrl, countryCode=$countryCode, id=$id, isActive=$isActive, isBot=$isBot, isDeleted=$isDeleted, isOnline=$isOnline, isSupporter=$isSupporter, isRestricted=$isRestricted, pmFriendsOnly=$pmFriendsOnly, username=$username, coverUrl=$coverUrl, discord=$discord, hasSupported=$hasSupported, interests=$interests, joinDate=$joinDate, location=$location, maxBlocks=$maxBlocks, maxFriends=$maxFriends, occupation=$occupation, mode=$mode, playStyle=$playStyle, postCount=$postCount, profileHue=$profileHue, profileOrder=$profileOrder, twitter=$twitter, website=$website, country=$country, cover=$cover, kudosu=$kudosu, profileBanners=$profileBanners, badges=$badges, beatmapPlaycount=$beatmapPlaycount, commentsCount=$commentsCount, dailyChallenge=$dailyChallenge, favoriteCount=$favoriteCount, followerCount=$followerCount, graveyardCount=$graveyardCount, groups=$groups, guestCount=$guestCount, lovedCount=$lovedCount, mappingFollowerCount=$mappingFollowerCount, monthlyPlaycounts=$monthlyPlaycounts, nominatedCount=$nominatedCount, page=$page, pendingCount=$pendingCount, previousNames=$previousNames, highestRank=$highestRank, rankedCount=$rankedCount, replaysWatchedCounts=$replaysWatchedCounts, scoreBestCount=$scoreBestCount, scoreFirstCount=$scoreFirstCount, scorePinnedCount=$scorePinnedCount, scoreRecentCount=$scoreRecentCount, statistics=$statistics, supportLevel=$supportLevel, userAchievements=$userAchievements, rankHistory=$rankHistory)"
+    }
+
+    fun toCSV(): String {
+        return "${getUserName(username)},${id},${statistics?.pp},${statistics?.pp4K},${statistics?.pp7K},${statistics?.accuracy},${statistics?.rankedScore},${statistics?.totalScore},${statistics?.playCount},${statistics?.playTime},${statistics?.totalHits},${avatarUrl},${countryCode},${defaultGroup},${isActive},${isBot},${isDeleted},${isOnline},${isSupporter},${isRestricted},${lastVisit},${pmFriendsOnly},${profileColor},${coverUrl},${replaceCommas(discord)},${hasSupported},${replaceCommas(interests)},${joinDate},${replaceCommas(location)},${maxBlocks},${maxFriends},${replaceCommas(occupation)},${mode},${playStyle?.joinToString(",")},${postCount},${profileOrder?.joinToString(",")},${title},${titleUrl},${twitter},${website},${country?.name},${cover?.custom},${kudosu?.total},${beatmapPlaycount},${commentsCount},${favoriteCount},${followerCount},${graveyardCount},${guestCount},${lovedCount},${mappingFollowerCount},${nominatedCount},${pendingCount},${previousNames?.joinToString(",")},${highestRank.rank},${rankedCount},${replaysWatchedCounts.size},${scoreBestCount},${scoreFirstCount},${scorePinnedCount},${scoreRecentCount},${supportLevel},${userAchievements?.size}"
+    }
+
+    private fun getUserName(username: String): String {
+        return if (username.startsWith("- ")) "'$username"
+        else username
+    }
+
+    private fun replaceCommas(@Nullable str: String?): String {
+        return str?.replace(",".toRegex(), "/") ?: ""
+    }
+
+    @JvmRecord
+    data class Team(
+        @JsonProperty("flag_url") val flag: String,
+        @JsonProperty("id") val id: Int,
+        @JsonProperty("name") val name: String,
+        @JsonProperty("short_name")val shortName: String
+    )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is OsuUser) return false
+
+        return id == other.id
+    }
+
+    override fun hashCode(): Int {
+        return id.hashCode()
+    }
+
+    companion object {
+        /**
+         * List<OsuUser> 去重方法
+         *
+         * @param to   要合并进去 List
+         * @param from 要用来合并的 List
+         * @return 合并好的 List
+        </OsuUser> */
+
+        @JvmStatic
+        fun merge2OsuUserList(to: List<OsuUser>, from: List<OsuUser>): List<OsuUser> {
+            if (to.isEmpty()) {
+                return from
+            }
+
+            if (from.isEmpty()) {
+                return to
+            }
+
+            val toSet = HashSet(to)
+            val fromSet = HashSet(from)
+
+            if (!(toSet.containsAll(fromSet) || fromSet.isEmpty())) {
+                toSet.addAll(fromSet)
+                return toSet.toList()
+            }
+
+            return to
         }
-
-        var toSet = new HashSet<>(to);
-        var fromSet = new HashSet<>(from);
-
-        if (!(toSet.containsAll(fromSet) || CollectionUtils.isEmpty(fromSet))) {
-            toSet.addAll(fromSet);
-            return new ArrayList<>(toSet);
-        }
-
-        return to;
     }
 }

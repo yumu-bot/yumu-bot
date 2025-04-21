@@ -55,32 +55,32 @@ public class OsuUserInfoDao {
 
     public static OsuUser fromArchive(OsuUserInfoArchiveLite archive) {
         OsuUser user = new OsuUser();
-        user.setMode(archive.getMode().shortName);
-        user.setUserID(archive.getOsuID());
+        user.mode = archive.getMode().shortName;
+        user.setId(archive.getOsuID());
 
         InfoLogStatistics statistics = new InfoLogStatistics();
-        statistics.setA(archive.getGrade_counts_a());
-        statistics.setS(archive.getGrade_counts_s());
-        statistics.setSS(archive.getGrade_counts_ss());
-        statistics.setSH(archive.getGrade_counts_sh());
-        statistics.setSSH(archive.getGrade_counts_ssh());
+        statistics.setCountA(archive.getGrade_counts_a());
+        statistics.setCountS(archive.getGrade_counts_s());
+        statistics.setCountSS(archive.getGrade_counts_ss());
+        statistics.setCountSH(archive.getGrade_counts_sh());
+        statistics.setCountSSH(archive.getGrade_counts_ssh());
 
-        statistics.setGlobalRank(archive.getGlobal_rank());
-        statistics.setCountryRank(archive.getCountry_rank());
-        statistics.setTotalScore(archive.getTotal_score());
-        statistics.setTotalHits(archive.getTotal_hits());
-        statistics.setRankedScore(archive.getRanked_score());
-        statistics.setAccuracy(archive.getHit_accuracy());
-        statistics.setPlayCount(archive.getPlay_count());
-        statistics.setPlayTime(archive.getPlay_time());
+        statistics.globalRank = archive.getGlobal_rank();
+        statistics.countryRank = archive.getCountry_rank();
+        statistics.totalScore = archive.getTotal_score();
+        statistics.totalHits = archive.getTotal_hits();
+        statistics.rankedScore = archive.getRanked_score();
+        statistics.accuracy = archive.getHit_accuracy();
+        statistics.playCount = archive.getPlay_count();
+        statistics.playTime = archive.getPlay_time();
         statistics.setLevelCurrent(archive.getLevel_current());
         statistics.setLevelProgress(archive.getLevel_progress());
-        statistics.setMaxCombo(archive.getMaximum_combo());
-        statistics.setPP(archive.getPP());
+        statistics.maxCombo = archive.getMaximum_combo();
+        statistics.setPp(archive.getPP());
 
         statistics.setLogTime(archive.getTime());
 
-        user.setStatistics(statistics);
+        user.statistics = statistics;
         return user;
     }
 
@@ -106,7 +106,7 @@ public class OsuUserInfoDao {
 
     public static OsuUserInfoArchiveLite fromModel(OsuUser data, OsuMode mode) {
         var archive = new OsuUserInfoArchiveLite();
-        var statistics = data.getStatistics();
+        var statistics = Objects.requireNonNull(data.statistics);
 
         archive.setOsuID(data.getUserID());
         setOut(archive, statistics);
@@ -124,30 +124,30 @@ public class OsuUserInfoDao {
     }
 
     private static void setOut(OsuUserInfoArchiveLite out, Statistics statistics) {
-        out.setGlobal_rank(statistics.getGlobalRank());
-        out.setCountry_rank(statistics.getCountryRank());
-        out.setTotal_score(statistics.getTotalScore());
-        out.setRanked_score(statistics.getRankedScore());
-        out.setGrade_counts_a(statistics.getA());
-        out.setGrade_counts_s(statistics.getS());
-        out.setGrade_counts_sh(statistics.getSH());
-        out.setGrade_counts_ss(statistics.getSS());
-        out.setGrade_counts_ssh(statistics.getSSH());
+        out.setGlobal_rank(statistics.globalRank);
+        out.setCountry_rank(statistics.countryRank);
+        out.setTotal_score(statistics.totalScore);
+        out.setRanked_score(statistics.rankedScore);
+        out.setGrade_counts_a(statistics.getCountA());
+        out.setGrade_counts_s(statistics.getCountS());
+        out.setGrade_counts_sh(statistics.getCountSH());
+        out.setGrade_counts_ss(statistics.getCountSS());
+        out.setGrade_counts_ssh(statistics.getCountSSH());
 
-        out.setHit_accuracy(statistics.getAccuracy());
-        out.setPP(statistics.getPP());
+        out.setHit_accuracy(statistics.accuracy);
+        out.setPP(statistics.getPp());
         out.setLevel_current(statistics.getLevelCurrent());
         out.setLevel_progress(statistics.getLevelProgress());
         out.setIs_ranked(statistics.getRanked());
-        out.setMaximum_combo(statistics.getMaxCombo());
-        out.setTotal_hits(statistics.getTotalHits());
+        out.setMaximum_combo(statistics.maxCombo);
+        out.setTotal_hits(statistics.totalHits);
     }
 
     private static OsuUserInfoArchiveLite fromStatistics(Statistics s, OsuMode mode){
         if (s == null) return null;
         var out = new OsuUserInfoArchiveLite();
-        out.setPlay_count(s.getPlayCount());
-        out.setPlay_time(s.getPlayTime());
+        out.setPlay_count(s.playCount);
+        out.setPlay_time(s.playTime);
         out.setMode(mode);
         out.setTime(LocalDateTime.now());
         setOut(out, s);

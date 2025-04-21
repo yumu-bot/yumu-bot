@@ -51,7 +51,7 @@ import kotlin.text.Charsets.UTF_8
         val b = MaimaiBestQQRequestBody(qq, true)
 
         return try {
-            base.divingFishApiWebClient!!.post().uri { uriBuilder: UriBuilder ->
+            base.divingFishApiWebClient.post().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/player").build()
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestQQRequestBody::class.java)
                 .headers { headers: HttpHeaders? -> base.insertJSONHeader(headers) }.retrieve()
@@ -66,7 +66,7 @@ import kotlin.text.Charsets.UTF_8
         val b = MaimaiBestNameRequestBody(username, true)
 
         return try {
-            base.divingFishApiWebClient!!.post().uri { uriBuilder: UriBuilder ->
+            base.divingFishApiWebClient.post().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/player").build()
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestNameRequestBody::class.java)
                 .retrieve().bodyToMono(MaiBestScore::class.java).block()!!
@@ -82,7 +82,7 @@ import kotlin.text.Charsets.UTF_8
         val b = MaimaiVersionNameRequestBody(username, getNameList(versions))
 
         return try {
-            base.divingFishApiWebClient!!.post().uri { uriBuilder: UriBuilder ->
+            base.divingFishApiWebClient.post().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/plate").build()
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiVersionNameRequestBody::class.java)
                 .headers { headers: HttpHeaders? -> base.insertJSONHeader(headers) }.retrieve()
@@ -99,7 +99,7 @@ import kotlin.text.Charsets.UTF_8
         val b = MaimaiVersionQQRequestBody(qq, getNameList(versions))
 
         return try {
-            base.divingFishApiWebClient!!.post().uri { uriBuilder: UriBuilder ->
+            base.divingFishApiWebClient.post().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/plate").build()
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiVersionQQRequestBody::class.java)
                 .headers { headers: HttpHeaders? -> base.insertJSONHeader(headers) }.retrieve()
@@ -141,11 +141,11 @@ import kotlin.text.Charsets.UTF_8
     override fun getMaimaiCoverFromAPI(songID: Long): ByteArray {
         val song = getStandardisedSongID(songID)
         val cover = try {
-            base.divingFishApiWebClient!!.get().uri { uriBuilder: UriBuilder ->
+            base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("covers/$song.png").build()
                 }.retrieve().bodyToMono(ByteArray::class.java).block()!!
         } catch (e: WebClientResponseException.NotFound) {
-            base.divingFishApiWebClient!!.get().uri { uriBuilder: UriBuilder ->
+            base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("covers/00000.png").build()
                 }.retrieve().bodyToMono(ByteArray::class.java).block()!!
         }
@@ -388,7 +388,7 @@ import kotlin.text.Charsets.UTF_8
         WebClientResponseException.Forbidden::class, WebClientResponseException.BadGateway::class
     ) override fun getMaimaiFullScores(qq: Long): MaiBestScore {
         return try {
-            base.divingFishApiWebClient!!.get().uri { uriBuilder: UriBuilder ->
+            base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/dev/player/records").queryParam("qq", qq).build()
                 }.headers { headers: HttpHeaders? -> base.insertDeveloperHeader(headers) }.retrieve()
                 .bodyToMono(MaiBestScore::class.java).block()!!
@@ -406,7 +406,7 @@ import kotlin.text.Charsets.UTF_8
         WebClientResponseException.Forbidden::class, WebClientResponseException.BadGateway::class
     ) override fun getMaimaiFullScores(username: String): MaiBestScore {
         return try {
-            base.divingFishApiWebClient!!.get().uri { uriBuilder: UriBuilder ->
+            base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/dev/player/records").queryParam("username", username).build()
                 }.headers { headers: HttpHeaders? -> base.insertDeveloperHeader(headers) }.retrieve()
                 .bodyToMono(MaiBestScore::class.java).block()!!
@@ -494,22 +494,22 @@ import kotlin.text.Charsets.UTF_8
     }
 
     private val maimaiSongLibraryFromAPI: String
-        get() = base.divingFishApiWebClient!!.get().uri { uriBuilder: UriBuilder ->
+        get() = base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
                 uriBuilder.path("api/maimaidxprober/music_data").build()
             }.retrieve().bodyToMono(String::class.java).block()!!
 
     private val maimaiRankLibraryFromAPI: String
-        get() = base.divingFishApiWebClient!!.get().uri { uriBuilder: UriBuilder ->
+        get() = base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
                 uriBuilder.path("api/maimaidxprober/rating_ranking").build()
             }.retrieve().bodyToMono(String::class.java).block()!!
 
     private val maimaiFitLibraryFromAPI: String
-        get() = base.divingFishApiWebClient!!.get().uri { uriBuilder: UriBuilder ->
+        get() = base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
                 uriBuilder.path("api/maimaidxprober/chart_stats").build()
             }.retrieve().bodyToMono(String::class.java).block()!!
 
     private val maimaiAliasLibraryFromAPI: String
-        get() = base.webClient!!.get().uri { uriBuilder: UriBuilder ->
+        get() = base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
                 uriBuilder.scheme("https").host("maimai.lxns.net").path("api/v0/maimai/alias/list").build()
             }.retrieve().bodyToMono(String::class.java).block()!!
 

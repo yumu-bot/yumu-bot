@@ -62,11 +62,11 @@ import kotlin.reflect.full.companionObjectInstance
                 largeTickHits = largeTickHit,
                 smallTickHits = smallTickHit,
                 sliderEndHits = sliderTailHit,
-                geki = state.countGeki,
-                katu = state.countKatu,
-                n300 = state.count300 + state.countMiss,
-                n100 = state.count100,
-                n50 = state.count50,
+                geki = state.countGeki!!,
+                katu = state.countKatu!!,
+                n300 = state.count300!! + state.countMiss!!,
+                n100 = state.count100!!,
+                n50 = state.count50!!,
             )
         }
 
@@ -97,12 +97,12 @@ import kotlin.reflect.full.companionObjectInstance
                 largeTickHits = largeTickHit,
                 smallTickHits = smallTickHit,
                 sliderEndHits = sliderTailHit,
-                geki = state.countGeki,
-                katu = state.countKatu,
-                n300 = state.count300,
-                n100 = state.count100,
-                n50 = state.count50,
-                misses = state.countMiss,
+                geki = state.countGeki!!,
+                katu = state.countKatu!!,
+                n300 = state.count300!!,
+                n100 = state.count100!!,
+                n50 = state.count50!!,
+                misses = state.countMiss!!,
             )
         }
         if (isNotPass) {
@@ -220,11 +220,11 @@ import kotlin.reflect.full.companionObjectInstance
                 largeTickHits = largeTickHit,
                 smallTickHits = smallTickHit,
                 sliderEndHits = sliderTailHit,
-                geki = statistics.countGeki,
-                katu = statistics.countKatu,
-                n300 = statistics.count300 + statistics.countMiss,
-                n100 = statistics.count100,
-                n50 = statistics.count50,
+                geki = statistics.countGeki!!,
+                katu = statistics.countKatu!!,
+                n300 = statistics.count300!! + statistics.countMiss!!,
+                n100 = statistics.count100!!,
+                n50 = statistics.count50!!,
                 misses = 0
             )
             state = JniScoreState.create(
@@ -232,12 +232,12 @@ import kotlin.reflect.full.companionObjectInstance
                 largeTickHits = largeTickHit,
                 smallTickHits = smallTickHit,
                 sliderEndHits = sliderTailHit,
-                geki = statistics.countGeki,
-                katu = statistics.countKatu,
-                n300 = statistics.count300,
-                n100 = statistics.count100,
-                n50 = statistics.count50,
-                misses = statistics.countMiss,
+                geki = statistics.countGeki!!,
+                katu = statistics.countKatu!!,
+                n300 = statistics.count300!!,
+                n100 = statistics.count100!!,
+                n50 = statistics.count50!!,
+                misses = statistics.countMiss!!,
             )
         }
 

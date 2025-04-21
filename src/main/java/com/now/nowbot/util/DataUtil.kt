@@ -169,7 +169,7 @@ object DataUtil {
         val bp = p >= 400f && score.pp >= (p - 400f) / 25f
         val miss =
             score.statistics.getCountAll(score.mode) > 0 &&
-                    score.statistics.countMiss <=
+                    score.statistics.countMiss!! <=
                     score.statistics.getCountAll(score.mode) * 0.01f
 
         val fail = score.rank == null || score.rank == "F"
@@ -193,11 +193,11 @@ object DataUtil {
         val is7K = score.beatMap.mode == MANIA && score.beatMap.CS == 7f
 
         if (is4K) {
-            pp = user.statistics.pP4K
+            pp = user.statistics!!.pp4K!!
         }
 
         if (is7K) {
-            pp = user.statistics.pP7K
+            pp = user.statistics!!.pp7K!!
         }
 
         return pp
@@ -341,12 +341,6 @@ object DataUtil {
     @JvmStatic
     fun accuracy2Statistics(accuracy: Double, total: Int, osuMode: OsuMode): Statistics {
         val stat = Statistics()
-        stat.setCount300(0)
-        stat.setCount100(0)
-        stat.setCount50(0)
-        stat.setCountMiss(0)
-        stat.setCountGeki(0)
-        stat.setCountKatu(0)
 
         var acc = accuracy
 
@@ -354,7 +348,7 @@ object DataUtil {
         if (total <= 0) return stat
         val weight = 1.0 / total
 
-        fun getTheoricalCount(value: Double): Int {
+        fun getTheoreticalCount(value: Double): Int {
             val count = floor(acc / value).roundToInt()
             acc -= (value * count)
             return count
@@ -363,47 +357,47 @@ object DataUtil {
         when (osuMode) {
             OSU,
             DEFAULT -> {
-                val n300 = min(getTheoricalCount(weight), max(total, 0))
-                val n100 = min(getTheoricalCount(weight / 3), max(total - n300, 0))
-                val n50 = min(getTheoricalCount(weight / 6), max(total - n300 - n100, 0))
+                val n300 = min(getTheoreticalCount(weight), max(total, 0))
+                val n100 = min(getTheoreticalCount(weight / 3), max(total - n300, 0))
+                val n50 = min(getTheoreticalCount(weight / 6), max(total - n300 - n100, 0))
                 val n0 = max(total - n300 - n100 - n50, 0)
 
-                stat.setCount300(n300)
-                stat.setCount100(n100)
-                stat.setCount50(n50)
-                stat.setCountMiss(n0)
+                stat.count300 = n300
+                stat.count100 = n100
+                stat.count50 = n50
+                stat.countMiss = n0
             }
 
             TAIKO -> {
-                val n300 = min(getTheoricalCount(weight), max(total, 0))
-                val n100 = min(getTheoricalCount(weight / 3), max(total - n300, 0))
+                val n300 = min(getTheoreticalCount(weight), max(total, 0))
+                val n100 = min(getTheoreticalCount(weight / 3), max(total - n300, 0))
                 val n0 = max(total - n300 - n100, 0)
 
-                stat.setCount300(n300)
-                stat.setCount100(n100)
-                stat.setCountMiss(n0)
+                stat.count300 = n300
+                stat.count100 = n100
+                stat.countMiss = n0
             }
 
             CATCH -> {
-                val n300 = min(getTheoricalCount(weight), max(total, 0))
+                val n300 = min(getTheoreticalCount(weight), max(total, 0))
                 val n0 = max(total - n300, 0)
 
-                stat.setCount300(n300)
-                stat.setCountMiss(n0)
+                stat.count300 = n300
+                stat.countMiss = n0
             }
 
             MANIA -> {
-                val n320 = min(getTheoricalCount(weight), max(total, 0))
-                val n200 = min(getTheoricalCount(weight / 1.5), max(total - n320, 0))
-                val n100 = min(getTheoricalCount(weight / 3), max(total - n320 - n200, 0))
-                val n50 = min(getTheoricalCount(weight / 6), max(total - n320 - n200 - n100, 0))
+                val n320 = min(getTheoreticalCount(weight), max(total, 0))
+                val n200 = min(getTheoreticalCount(weight / 1.5), max(total - n320, 0))
+                val n100 = min(getTheoreticalCount(weight / 3), max(total - n320 - n200, 0))
+                val n50 = min(getTheoreticalCount(weight / 6), max(total - n320 - n200 - n100, 0))
                 val n0 = max(total - n320 - n200 - n100 - n50, 0)
 
-                stat.setCountGeki(n320)
-                stat.setCountKatu(n200)
-                stat.setCount100(n100)
-                stat.setCount50(n50)
-                stat.setCountMiss(n0)
+                stat.countGeki = n320
+                stat.countKatu = n200
+                stat.count100 = n100
+                stat.count50 = n50
+                stat.countMiss = n0
             }
         }
 
@@ -432,12 +426,12 @@ object DataUtil {
         // geki, 300, katu, 100, 50, 0
         val list =
             mutableListOf(
-                stat.countGeki,
-                stat.count300,
-                stat.countKatu,
-                stat.count100,
-                stat.count50,
-                stat.countMiss
+                stat.countGeki ?: 0,
+                stat.count300 ?: 0,
+                stat.countKatu ?: 0,
+                stat.count100 ?: 0,
+                stat.count50 ?: 0,
+                stat.countMiss ?: 0
             )
 
         // 一个物件所占的 Acc 权重
@@ -446,8 +440,8 @@ object DataUtil {
 
         // 彩黄比
         val ratio =
-            if ((stat.count300 + stat.countGeki > 0))
-                stat.countGeki * 1.0 / (stat.count300 + stat.countGeki)
+            if ((stat.count300!! + stat.countGeki!! > 0))
+                stat.countGeki!! * 1.0 / (stat.count300!! + stat.countGeki!!)
             else 0.0
 
         var current = stat.getAccuracy(MANIA)
@@ -455,28 +449,28 @@ object DataUtil {
         if (current >= aiming) return stat
 
         // 交换评级
-        if (current < aiming && stat.countMiss > 0) {
+        if (current < aiming && stat.countMiss!! > 0) {
             val ex = exchangeJudge(list.first(), list.last(), 1.0, 0.0, current, aiming, weight)
             list[0] = ex.great
             list[5] = ex.bad
             current = ex.accuracy
         }
 
-        if (current < aiming && stat.count50 > 0) {
+        if (current < aiming && stat.count50!! > 0) {
             val ex = exchangeJudge(list.first(), list[4], 1.0, 1.0 / 6.0, current, aiming, weight)
             list[0] = ex.great
             list[4] = ex.bad
             current = ex.accuracy
         }
 
-        if (current < aiming && stat.count100 > 0) {
+        if (current < aiming && stat.count100!! > 0) {
             val ex = exchangeJudge(list.first(), list[3], 1.0, 1.0 / 3.0, current, aiming, weight)
             list[0] = ex.great
             list[3] = ex.bad
             current = ex.accuracy
         }
 
-        if (current < aiming && stat.countKatu > 0) {
+        if (current < aiming && stat.countKatu!! > 0) {
             val ex = exchangeJudge(list.first(), list[2], 1.0, 2.0 / 3.0, current, aiming, weight)
             list[0] = ex.great
             list[2] = ex.bad
@@ -488,12 +482,12 @@ object DataUtil {
         list[0] = floor(nGreat * ratio).toInt()
         list[1] = max((nGreat - list.first()).toDouble(), 0.0).toInt()
 
-        stat.setCountGeki(list.first())
-        stat.setCount300(list[1])
-        stat.setCountKatu(list[2])
-        stat.setCount100(list[3])
-        stat.setCount50(list[4])
-        stat.setCountMiss(list.last())
+        stat.countGeki = list.first()
+        stat.count300 = list[1]
+        stat.countKatu = list[2]
+        stat.count100 = list[3]
+        stat.count50 = list[4]
+        stat.countMiss = list.last()
 
         return stat
     }

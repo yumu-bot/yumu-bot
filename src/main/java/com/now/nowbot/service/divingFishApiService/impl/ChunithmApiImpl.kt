@@ -43,7 +43,7 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
     override fun getChunithmBest30Recent10(qq: Long): ChuBestScore {
         val b = ChunithmBestScoreQQBody(qq, true)
 
-        return base.divingFishApiWebClient!!.post()
+        return base.divingFishApiWebClient.post()
                 .uri { it.path("api/chunithmprober/query/player").build() }
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(b), ChunithmBestScoreQQBody::class.java)
@@ -56,7 +56,7 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
     override fun getChunithmBest30Recent10(probername: String): ChuBestScore {
         val b = ChunithmBestScoreNameBody(probername, true)
 
-        return base.divingFishApiWebClient!!.post()
+        return base.divingFishApiWebClient.post()
                 .uri { it.path("api/chunithmprober/query/player").build()}
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(b), ChunithmBestScoreNameBody::class.java)
@@ -95,7 +95,7 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
     override fun getChunithmCoverFromAPI(songID: Long): ByteArray {
         val song: String = songID.toString()
         val cover = try {
-            base.webClient!!.get()
+            base.webClient.get()
                 .uri { it.scheme("https").host("assets2.lxns.net").path("chunithm/jacket/${song}.png").build()}
                 .retrieve()
                 .bodyToMono(ByteArray::class.java)
@@ -242,14 +242,14 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
     }
 
     private val chunithmSongLibraryFromAPI: String
-        get() = base.divingFishApiWebClient!!.get()
+        get() = base.divingFishApiWebClient.get()
             .uri { it.path("api/chunithmprober/music_data").build()}
             .retrieve()
             .bodyToMono(String::class.java)
             .block() ?: ""
 
     private val chunithmAliasLibraryFromAPI: String
-        get() = base.webClient!!.get()
+        get() = base.webClient.get()
             .uri { it.scheme("https").host("maimai.lxns.net").path("api/v0/chunithm/alias/list").build()
         }.retrieve().bodyToMono(String::class.java).block()!!
 

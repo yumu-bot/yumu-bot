@@ -53,7 +53,7 @@ import kotlin.jvm.optionals.getOrNull
         if (isYmBot.not() && m.group("bind").isNullOrBlank()) { //!bind osu
             if (name.isNotBlank() && name.contains("osu")) {
                 if (userApiService.isPlayerExist(name)) {
-                    val user = userApiService.getPlayerInfo(name)
+                    val user = userApiService.getOsuUser(name)
                     name = user.username
                 } else {
                     log.info("绑定：退避成功：!bind osu <data>")
@@ -160,7 +160,7 @@ import kotlin.jvm.optionals.getOrNull
         val name = ev.rawMessage.trim()
 
         val userID: Long = try {
-            userApiService.getOsuId(name)
+            userApiService.getOsuID(name)
         } catch (e: HttpClientErrorException.Forbidden) {
             throw BindException(BindException.Type.BIND_Player_Banned)
         } catch (e: WebClientResponseException.Forbidden) {
@@ -203,7 +203,7 @@ import kotlin.jvm.optionals.getOrNull
             bindUser = qqBindLite.bindUser
             try {
                 try {
-                    osuUser = userApiService.getPlayerInfo(bindUser, OsuMode.DEFAULT)
+                    osuUser = userApiService.getOsuUser(bindUser, OsuMode.DEFAULT)
                     event.reply(
                         BindException(
                             BindException.Type.BIND_Progress_BindingRecoverInfo,
@@ -250,11 +250,11 @@ import kotlin.jvm.optionals.getOrNull
 
     fun bindUrl(event: MessageEvent?, qq: Long) { // 将当前毫秒时间戳作为 key
         val timeMillis = System.currentTimeMillis()
-        var state: String? = "${qq}+${timeMillis}"
+        val state = "${qq}+${timeMillis}"
 
         // 将消息回执作为 value
-        state = userApiService.getOauthUrl(state, qq == 1340691940L)
-        val send = MessageChainBuilder().addAt(qq).addText("\n").addText(state).build()
+        val text = userApiService.getOauthUrl(state, qq == 1340691940L)
+        val send = MessageChainBuilder().addAt(qq).addText("\n").addText(text).build()
 
         val receipt: MessageReceipt
         if (event != null) {
@@ -288,7 +288,7 @@ import kotlin.jvm.optionals.getOrNull
 
         val userID: Long
         try {
-            userID = userApiService.getOsuId(name)
+            userID = userApiService.getOsuID(name)
         } catch (e: HttpClientErrorException.Forbidden) {
             throw BindException(BindException.Type.BIND_Player_Banned)
         } catch (e: WebClientResponseException.Forbidden) {

@@ -41,7 +41,7 @@ object YumuServer : YumuService {
     }
 
     override suspend fun onQueryName(param: QueryName.Request): QueryName.Response {
-        val userID = userApiService.getOsuId(param.name) ?: -1
+        val userID = userApiService.getOsuID(param.name) ?: -1
         return QueryName.Response(param.name, userID)
     }
 

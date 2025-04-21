@@ -68,6 +68,9 @@ val REG_SPACE: String = "\\s"
 val REG_STAR: String = "[⁂☆✪★*⋆＊]"
 
 @Language("RegExp")
+val REG_UID: String = "u?id"
+
+@Language("RegExp")
 val REG_FULL_STOP: String = "[.։܂۔。﹒．｡︒・、]"
 
 @Language("RegExp")

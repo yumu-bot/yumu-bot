@@ -43,8 +43,8 @@ public class PPMinusOsu extends PPMinus {
             }
         }
         //bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
-        bonus = getBonusPP(user.getPP(), bpPPs);
-        rawpp = user.getPP() - bonus;
+        bonus = getBonusPP(user.getPp(), bpPPs);
+        rawpp = user.getPp() - bonus;
 
         ppv0 /= 10;
         ppv45 /= 10;
@@ -70,7 +70,7 @@ public class PPMinusOsu extends PPMinus {
             accv0 = 0;
             lengv0 = 0;
         }
-        double pp = user.getPP();
+        double pp = user.getPp();
         double acc = user.getAccuracy();
         double pc = user.getPlayCount();
         double pt = user.getPlayTime();

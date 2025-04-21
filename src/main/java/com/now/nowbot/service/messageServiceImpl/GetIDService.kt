@@ -42,7 +42,7 @@ class GetIDService(private val userApiService: OsuUserApiService) : MessageServi
         val actions = names.map {
             return@map AsyncMethodExecutor.Supplier<String> {
                 return@Supplier try {
-                    userApiService.getOsuId(it).toString()
+                    userApiService.getOsuID(it).toString()
                 } catch (e: Exception) {
                     "name=$it not found"
                 }

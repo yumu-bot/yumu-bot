@@ -47,7 +47,7 @@ class SetModeService (
         val user = try {
             bindDao.getBindUserFromOsuID(-event.sender.id)
         } catch (e: BindException) {
-            val osuUser = osuUserApiService.getPlayerInfo(-event.sender.id)
+            val osuUser = osuUserApiService.getOsuUser(-event.sender.id)
             val bindUser = BindUser()
             with(bindUser) {
                 osuID = osuUser.id

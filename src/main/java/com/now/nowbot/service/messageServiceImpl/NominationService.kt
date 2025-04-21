@@ -125,7 +125,7 @@ import kotlin.math.floor
             isSID: Boolean,
             beatmapApiService: OsuBeatmapApiService,
             discussionApiService: OsuDiscussionApiService,
-            userApiService: OsuUserApiService?,
+            userApiService: OsuUserApiService,
         ): Map<String, Any> {
             var id = sid
             var s: BeatMapSet

@@ -12,22 +12,13 @@ import com.now.nowbot.service.messageServiceImpl.PrivateMessageService.PMParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.JacksonUtil
-import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.regex.Pattern
 
 @Service("PRIVATE_MESSAGE")
-class PrivateMessageService : MessageService<PMParam> {
-    @Resource
-    var userApiService: OsuUserApiService? = null
-
-    @Resource
-    var imageService: ImageService? = null
-
-    @Resource
-    var bindDao: BindDao? = null
+class PrivateMessageService(private val userApiService: OsuUserApiService, private val imageService: ImageService, private val bindDao: BindDao) : MessageService<PMParam> {
     @Throws(Throwable::class) override fun isHandle(
         event: MessageEvent,
         messageText: String,
@@ -54,10 +45,9 @@ class PrivateMessageService : MessageService<PMParam> {
         event: MessageEvent,
         param: PMParam
     ) {
-        val bin = bindDao!!.getBindFromQQ(event.sender.id, true)
-        val json: JsonNode
-        try {
-            json = getJson(param, bin)
+        val bindUser = bindDao.getBindFromQQ(event.sender.id, true)
+        val json: JsonNode = try {
+            getJson(param, bindUser)
         } catch (e: WebClientResponseException.Forbidden) {
             throw TipsException("权限不足")
         }
@@ -65,30 +55,30 @@ class PrivateMessageService : MessageService<PMParam> {
     }
 
     enum class Type {
-        send, get, act
+        SEND, GET, ACT
     }
 
     @JvmRecord
     data class PMParam(val type: Type, val id: Long?, val message: String)
 
     @Throws(TipsException::class) private fun getJson(param: PMParam, bin: BindUser): JsonNode {
-        val hasParam = Objects.isNull(param.id) || Objects.isNull(param.message)
+        val noParam = param.id == null
         return when (param.type) {
-            Type.send -> {
-                if (hasParam) throw TipsException("参数缺失")
-                userApiService!!.sendPrivateMessage(bin, param.id, param.message)
+            Type.SEND -> {
+                if (noParam) throw TipsException("参数缺失")
+                userApiService.sendPrivateMessage(bin, param.id!!, param.message)
             }
 
-            Type.get -> {
-                if (hasParam) throw TipsException("参数缺失")
-                userApiService!!.getPrivateMessage(bin, param.id, param.message.toLong())
+            Type.GET -> {
+                if (noParam) throw TipsException("参数缺失")
+                userApiService.getPrivateMessage(bin, param.id!!, param.message.toLong())
             }
 
-            Type.act -> {
-                if (Objects.isNull(param.id)) {
-                    userApiService!!.acknowledgmentPrivateMessageAlive(bin)
+            Type.ACT -> {
+                if (noParam) {
+                    userApiService.acknowledgmentPrivateMessageAlive(bin)
                 } else {
-                    userApiService!!.acknowledgmentPrivateMessageAlive(bin, param.id)
+                    userApiService.acknowledgmentPrivateMessageAlive(bin, param.id)
                 }
             }
         }
@@ -101,7 +91,7 @@ class PrivateMessageService : MessageService<PMParam> {
                 $code
                 ```
             """.trimMargin()
-        return imageService!!.getPanelA6(codeStr, "NO NAME")
+        return imageService.getPanelA6(codeStr, "NO NAME")
     }
 
     companion object {

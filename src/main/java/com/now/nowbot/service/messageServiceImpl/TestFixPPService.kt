@@ -60,8 +60,8 @@ import java.util.regex.Matcher
             var playerPP: Double
 
             try {
-                user = userApiService.getPlayerInfo(name)
-                playerPP = user.pp ?: 0.0
+                user = userApiService.getOsuUser(name)
+                playerPP = user.pp
 
                 if (mode == OsuMode.DEFAULT) {
                     mode = user.currentOsuMode
@@ -87,7 +87,7 @@ import java.util.regex.Matcher
                 val max = bp.totalHit
                 val combo = bp.maxCombo
 
-                val miss = bp.statistics.miss ?: 0
+                val miss = bp.statistics.miss
 
                 // 断连击，mania 模式不参与此项筛选
                 val isChoke = (miss == 0) && (combo < Math.round(max * 0.98f)) && (bp.mode != OsuMode.MANIA)

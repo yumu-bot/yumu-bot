@@ -270,7 +270,7 @@ import kotlin.math.*
 
         if (isSearch && this.start == null) {
             offset = 0
-            limit = 100
+            limit = 200
         } else if (isMultiple) {
             offset = getOffset(0, true)
             limit = getLimit(20, true)
@@ -281,7 +281,11 @@ import kotlin.math.*
 
         val isDefault = offset == 0 && limit == 1
 
-        val scores = scoreApiService.getBestScores(data!!.userID, mode, offset, limit)
+        val scores = if (limit > 100) {
+            scoreApiService.getBestScores(data!!.userID, mode, offset, 100) + scoreApiService.getBestScores(data!!.userID, mode, offset + 100, limit - 100)
+        } else {
+            scoreApiService.getBestScores(data!!.userID, mode, offset, limit)
+        }
 
         calculateApiService.applyStarToScores(scores)
         calculateApiService.applyBeatMapChanges(scores)

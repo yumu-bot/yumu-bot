@@ -1,11 +1,12 @@
 package com.now.nowbot.model.mappool.old
 
+import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.json.BeatMap
 
-class ModPool(val modStr: String, val beatmaps: List<BeatMap>) {
+class ModPool(private val abbr: String, val beatmaps: List<BeatMap>) {
     val modColor: String
-        get() = Mod.getColor(modStr)
+        get() = "#000"
 
-    val mod: Mod
-        get() = Mod.getModFromAbbreviation(modStr)
+    val mod: LazerMod
+        get() = LazerMod.getModFromAcronym(abbr)
 }

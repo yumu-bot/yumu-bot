@@ -29,7 +29,7 @@ class OsuAvatarCardService(
         if (!matcher.find()) return false
 
         val u = bindDao.getBindFromQQ(event.sender.id) ?: throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-        data.value = UserAvatarCardParam(userApiService.getPlayerInfo(u))
+        data.value = UserAvatarCardParam(userApiService.getOsuUser(u))
         return true
     }
 
@@ -40,7 +40,7 @@ class OsuAvatarCardService(
     override fun accept(event: MessageEvent, messageText: String): UserAvatarCardParam? {
         if (!OfficialInstruction.OSU_AVATAR_CARD.matcher(messageText).find()) return null
         val u = bindDao.getBindFromQQ(event.sender.id) ?: throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-        return UserAvatarCardParam(userApiService.getPlayerInfo(u))
+        return UserAvatarCardParam(userApiService.getOsuUser(u))
     }
 
     override fun reply(event: MessageEvent, param: UserAvatarCardParam): MessageChain? {

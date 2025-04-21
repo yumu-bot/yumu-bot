@@ -43,8 +43,8 @@ public class PPMinusTaiko extends PPMinus {
             }
         }
         //bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
-        bonus = getBonusPP(user.getPP(), bpPPs);
-        rawpp = user.getPP() - bonus;
+        bonus = getBonusPP(user.getPp(), bpPPs);
+        rawpp = user.getPp() - bonus;
 
         ppv0 /= 10;
         ppv45 /= 10;
@@ -70,11 +70,11 @@ public class PPMinusTaiko extends PPMinus {
             accv0 = 0;
             lengv0 = 0;
         }
-        double pp = user.getStatistics().getPP();
-        double acc = user.getStatistics().getAccuracy();
-        double pc = user.getStatistics().getPlayCount();
-        double pt = user.getStatistics().getPlayTime();
-        double tth = user.getStatistics().getTotalHits();
+        double pp = user.statistics.getPp();
+        double acc = user.statistics.accuracy;
+        double pc = user.statistics.playCount;
+        double pt = user.statistics.playTime;
+        double tth = user.statistics.totalHits;
 
 
         // 1.1 准度fACC formulaic accuracy 0-1.2

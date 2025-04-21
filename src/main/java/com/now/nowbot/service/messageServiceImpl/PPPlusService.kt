@@ -136,15 +136,15 @@ class PPPlusService(
         var p2: OsuUser?
 
         try {
-            p1 = if (a1.isNullOrBlank().not()) userApiService.getPlayerInfo(a1, OsuMode.OSU)
-            else userApiService.getPlayerInfo(me, OsuMode.OSU)
+            p1 = if (a1.isNullOrBlank().not()) userApiService.getOsuUser(a1!!, OsuMode.OSU)
+            else userApiService.getOsuUser(me!!, OsuMode.OSU)
 
-            p2 = if (a2.isNullOrBlank().not()) userApiService.getPlayerInfo(a2, OsuMode.OSU)
+            p2 = if (a2.isNullOrBlank().not()) userApiService.getOsuUser(a2!!, OsuMode.OSU)
             else null
 
             if (isVs && p2 == null) {
                 p2 = p1
-                p1 = userApiService.getPlayerInfo(me, OsuMode.OSU)
+                p1 = userApiService.getOsuUser(me!!, OsuMode.OSU)
             }
         } catch (e: WebClientResponseException.NotFound) {
             throw PPPlusException(PPPlusException.Type.PL_User_NotFound)

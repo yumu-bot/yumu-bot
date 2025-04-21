@@ -77,7 +77,7 @@ class BPQueryService(
         val filters = getAllFilter(text)
         val bests = scoreApiService.getBestScores(bindUser, mode)
         var result = getBP(filters, bests)
-        val user = userApiService.getPlayerInfo(bindUser)
+        val user = userApiService.getOsuUser(bindUser)
 
         if (result.isEmpty()) {
             event.reply(GeneralTipsException(GeneralTipsException.Type.G_Null_FilterBP, user.username))

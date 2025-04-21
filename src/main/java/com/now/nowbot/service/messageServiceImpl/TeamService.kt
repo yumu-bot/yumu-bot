@@ -61,7 +61,7 @@ class TeamService(
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Team, param.teamID.toString())
             } else try {
                 userApiService.getTeamInfo(
-                    userApiService.getPlayerInfo(param.teamID.toLong()).team?.id ?:
+                    userApiService.getOsuUser(param.teamID.toLong()).team?.id ?:
                     throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerTeam, param.teamID.toString())
                 )
             } catch (ignored2: Exception) {
@@ -107,7 +107,7 @@ class TeamService(
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Team, param.teamID.toString())
             } else try {
                 userApiService.getTeamInfo(
-                    userApiService.getPlayerInfo(param.teamID.toLong()).team?.id ?:
+                    userApiService.getOsuUser(param.teamID.toLong()).team?.id ?:
                     throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerTeam, param.teamID.toString())
                 )
             } catch (ignored2: Exception) {

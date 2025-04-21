@@ -2,18 +2,13 @@ package com.now.nowbot.service.divingFishApiService.impl
 
 import com.now.nowbot.config.DivingFishConfig
 import io.github.oshai.kotlinlogging.KotlinLogging
-import jakarta.annotation.Resource
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import java.nio.file.Path
 
 @Service
-class DivingFishBaseService(fishConfig: DivingFishConfig) {
-    @Resource val divingFishApiWebClient: WebClient? = null
-
-    @Resource val webClient: WebClient? = null
-
+class DivingFishBaseService(val webClient: WebClient, val divingFishApiWebClient: WebClient, fishConfig: DivingFishConfig) {
     // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
     // /home/spring/work/img/ExportFileV3/Maimai
     final val maimaiPath: Path? = fishConfig.maimai

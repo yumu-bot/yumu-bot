@@ -60,9 +60,9 @@ class CsvPPMinusService(
             return@map AsyncMethodExecutor.Supplier<TestPPMData?> {
                 try {
                     val u = if (isOsuID) {
-                        userApiService.getPlayerInfo(name.toLongOrNull() ?: -1L, OsuMode.getMode(mode, inputMode))
+                        userApiService.getOsuUser(name.toLongOrNull() ?: -1L, OsuMode.getMode(mode, inputMode))
                     } else {
-                        userApiService.getPlayerInfo(name, OsuMode.getMode(mode, inputMode))
+                        userApiService.getOsuUser(name, OsuMode.getMode(mode, inputMode))
                     }
 
                     if (OsuMode.isDefaultOrNull(mode)) {
@@ -107,15 +107,15 @@ class CsvPPMinusService(
 
             sb.append(user.username)
                 .append(',')
-                .append(user.globalRank ?: 0L)
+                .append(user.globalRank)
                 .append(',')
-                .append(user.pp ?: 0.0)
+                .append(user.pp)
                 .append(',')
                 .append(user.accuracy)
                 .append(',')
                 .append(user.levelCurrent)
                 .append(',')
-                .append(user.statistics.maxCombo)
+                .append(user.statistics!!.maxCombo)
                 .append(',')
                 .append(user.totalHits)
                 .append(',')
@@ -163,7 +163,7 @@ class CsvPPMinusService(
                 .append(',')
                 .append(data.pgr90)
                 .append(',')
-                .append(user.statistics?.pP4K ?: 0.0)
+                .append(user.statistics?.pp4K ?: 0.0)
                 .append('\n')
         }
 

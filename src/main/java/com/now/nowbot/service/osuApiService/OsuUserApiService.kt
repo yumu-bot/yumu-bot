@@ -1,61 +1,55 @@
-package com.now.nowbot.service.osuApiService;
+package com.now.nowbot.service.osuApiService
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.now.nowbot.model.BindUser;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.json.*;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.databind.JsonNode
+import com.google.errorprone.annotations.CanIgnoreReturnValue
+import com.now.nowbot.model.BindUser
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.json.*
+import org.springframework.web.reactive.function.client.WebClientResponseException
 
-import java.util.Collection;
-import java.util.List;
+interface OsuUserApiService {
+    fun isPlayerExist(name: String): Boolean
 
-public interface OsuUserApiService {
-    boolean isPlayerExist(String name);
-
-    /**
-     * 拼合授权链接
-     *
-     * @param state QQ[+群号]
-     */
-    default String getOauthUrl(String state) throws WebClientResponseException {
-        return getOauthUrl(state, false);
+    @Throws(WebClientResponseException::class) fun getOauthUrl(state: String): String {
+        return getOauthUrl(state, false)
     }
 
-    String getOauthUrl(String state, boolean full) throws WebClientResponseException;
+    @Throws(WebClientResponseException::class) fun getOauthUrl(state: String, full: Boolean): String
 
-    @CanIgnoreReturnValue
-    String refreshUserToken(BindUser user) throws WebClientResponseException;
+    @CanIgnoreReturnValue @Throws(WebClientResponseException::class) fun refreshUserToken(user: BindUser): String?
 
-    void refreshUserTokenFirst(BindUser user) throws WebClientResponseException;
+    @Throws(WebClientResponseException::class) fun refreshUserTokenFirst(user: BindUser)
 
-    OsuUser getPlayerInfo(BindUser user, OsuMode mode) throws WebClientResponseException;
+    @Throws(WebClientResponseException::class) fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser
 
-    OsuUser getPlayerInfo(String name, OsuMode mode) throws WebClientResponseException;
+    @Throws(WebClientResponseException::class) fun getOsuUser(name: String, mode: OsuMode): OsuUser
 
-    OsuUser getPlayerInfo(Long id, OsuMode mode) throws WebClientResponseException;
+    @Throws(WebClientResponseException::class) fun getOsuUser(id: Long, mode: OsuMode): OsuUser
 
-    default OsuUser getPlayerInfo(BindUser user) throws WebClientResponseException {
-        return getPlayerInfo(user, user.getOsuMode());
+    @Throws(WebClientResponseException::class) fun getOsuUser(user: BindUser): OsuUser {
+        return getOsuUser(user, user.osuMode)
     }
 
-    default OsuUser getPlayerInfo(String name) throws WebClientResponseException {
-        return getPlayerInfo(name, OsuMode.DEFAULT);
+    @Throws(WebClientResponseException::class) fun getOsuUser(name: String): OsuUser {
+        return getOsuUser(name, OsuMode.DEFAULT)
     }
 
-    default OsuUser getPlayerInfo(Long UID) throws WebClientResponseException {
-        return getPlayerInfo(UID, OsuMode.DEFAULT);
+    @Throws(WebClientResponseException::class) fun getOsuUser(id: Long): OsuUser {
+        return getOsuUser(id, OsuMode.DEFAULT)
     }
 
-    Long getOsuId(String name);
+    fun getOsuID(name: String): Long
 
     /**
      * 批量获取用户信息
      *
      * @param users 注意, 单次请求数量必须小于50
      */
-    <T extends Number> List<MicroUser> getUsers(Collection<T> users, Boolean isVariant) throws WebClientResponseException;
+    @Throws(WebClientResponseException::class) fun <T : Number> getUsers(
+        users: Iterable<T>,
+        isVariant: Boolean
+    ): List<MicroUser>
 
 
     /**
@@ -63,48 +57,53 @@ public interface OsuUserApiService {
      *
      * @param users 注意, 单次请求数量必须小于50
      */
-    default <T extends Number> List<MicroUser> getUsers(Collection<T> users) {
-        return getUsers(users, false);
+    fun <U : Number> getUsers(users: Iterable<U>): List<MicroUser> {
+        return getUsers(users, false)
     }
 
-    List<LazerFriend> getFriendList(BindUser user) throws WebClientResponseException;
+    @Throws(WebClientResponseException::class) fun getFriendList(user: BindUser): List<LazerFriend>
 
-    List<ActivityEvent> getUserRecentActivity(long UID, int s, int e);
+    fun getUserRecentActivity(id: Long, offset: Int, limit: Int): List<ActivityEvent>
 
-    KudosuHistory getUserKudosu(BindUser user);
+    fun getUserKudosu(user: BindUser): KudosuHistory
 
-    JsonNode sendPrivateMessage(BindUser sender, Long target, String message);
+    fun sendPrivateMessage(sender: BindUser, target: Long, message: String): JsonNode
 
-    JsonNode acknowledgmentPrivateMessageAlive(BindUser user, Long since);
+    fun acknowledgmentPrivateMessageAlive(user: BindUser, since: Long?): JsonNode
 
-    default JsonNode acknowledgmentPrivateMessageAlive(BindUser user) {
-        return acknowledgmentPrivateMessageAlive(user, null);
+    fun acknowledgmentPrivateMessageAlive(user: BindUser): JsonNode {
+        return acknowledgmentPrivateMessageAlive(user, null)
     }
 
-    JsonNode getPrivateMessage(BindUser sender, Long channel, Long since);
+    fun getPrivateMessage(sender: BindUser, channel: Long, since: Long): JsonNode
 
-    TeamInfo getTeamInfo(int id);
+    fun getTeamInfo(id: Int): TeamInfo?
 
-    record TeamInfo(
-            Integer id,
-            String name,
-            String abbr,
-            String formed,
+    @JvmRecord
+    data class TeamInfo(
+        val id: Int,
+        val name: String,
+        val abbr: String,
+        val formed: String,
 
-            String banner,
-            String flag,
+        val banner: String,
+        val flag: String,
 
-            List<OsuUser> users,
-            OsuMode ruleset,
-            String application,
+        val users: List<OsuUser>,
+        val ruleset: OsuMode,
+        val application: String,
 
-            Integer rank,
-            Integer pp,
-            @JsonProperty("ranked_score") Long rankedScore,
-            @JsonProperty("play_count") Long playCount,
-            Integer members,
+        val rank: Int,
+        val pp: Int,
 
-            String description
-    ) {
-    }
+        @JsonProperty("ranked_score")
+        val rankedScore: Long,
+
+        @JsonProperty("play_count")
+        val playCount: Long,
+
+        val members: Int,
+
+        val description: String
+    )
 }

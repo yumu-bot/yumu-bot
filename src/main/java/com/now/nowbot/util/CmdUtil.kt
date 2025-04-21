@@ -61,7 +61,7 @@ object CmdUtil {
         } else if (me != null) {
             isMyself.set(true)
             setMode(mode, me.osuMode, event)
-            return getOsuUser(me.username, me.osuID) { userApiService.getPlayerInfo(me, mode.data) }
+            return getOsuUser(me.username, me.osuID) { userApiService.getOsuUser(me, mode.data!!) }
         } else {
             throw BindException(BindException.Type.BIND_Player_TokenExpired)
         }
@@ -458,7 +458,7 @@ object CmdUtil {
      * @param mode 指定模式
      */
     @Throws(TipsException::class) fun getOsuUser(user: BindUser, mode: OsuMode?): OsuUser {
-        return getOsuUser(user.osuName, user.osuID) { userApiService.getPlayerInfo(user, mode) }
+        return getOsuUser(user.osuName, user.osuID) { userApiService.getOsuUser(user, mode ?: OsuMode.DEFAULT) }
     }
 
     /**
@@ -468,7 +468,7 @@ object CmdUtil {
      * @param mode 指定模式
      */
     @Throws(TipsException::class) fun getOsuUser(name: String, mode: OsuMode?, isMyself: Boolean = false): OsuUser {
-        return getOsuUser(name, isMyself = isMyself) { userApiService.getPlayerInfo(name, mode) }
+        return getOsuUser(name, isMyself = isMyself) { userApiService.getOsuUser(name, mode ?: OsuMode.DEFAULT) }
     }
 
     /**
@@ -478,7 +478,7 @@ object CmdUtil {
      * @param mode 指定模式
      */
     @Throws(TipsException::class) fun getOsuUser(uid: Long, mode: OsuMode?): OsuUser {
-        return getOsuUser("玩家 $uid", uid) { userApiService.getPlayerInfo(uid, mode) }
+        return getOsuUser("玩家 $uid", uid) { userApiService.getOsuUser(uid, mode ?: OsuMode.DEFAULT) }
     }
 
     /** 内部方法 封装获取 user 的方法, 包装出现的异常 */

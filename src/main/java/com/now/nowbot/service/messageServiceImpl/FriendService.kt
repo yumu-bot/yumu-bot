@@ -111,7 +111,7 @@ class FriendService(
     fun getMutualInfo(
         bindUser: BindUser,
         param: FriendParam,
-        friendList: MutableList<LazerFriend>
+        friendList: List<LazerFriend>
     ): String {
         val uid = param.uid
         val name = param.user?.username ?: bindUser.username
@@ -167,7 +167,7 @@ class FriendService(
         }
 
         val osuUser = param.user ?: try {
-            userApiService.getPlayerInfo(bindUser)
+            userApiService.getOsuUser(bindUser)
         } catch (e: HttpClientErrorException.Unauthorized) {
             throw FriendException(FriendException.Type.FRIEND_Me_TokenExpired)
         } catch (e: WebClientResponseException.Unauthorized) {
@@ -194,12 +194,12 @@ class FriendService(
         val sorted =
             when (sortType) {
                 PERFORMANCE -> sequence
-                    .filter { it.statistics.pp > 0 }
-                    .sortedBy { it.statistics.pp }
+                    .filter { it.statistics.pp!! > 0 }
+                    .sortedBy { it.statistics.pp!! }
 
                 ACCURACY -> sequence
-                    .filter { it.statistics.accuracy > 0 }
-                    .sortedBy { it.statistics.accuracy }
+                    .filter { it.statistics.accuracy!! > 0 }
+                    .sortedBy { it.statistics.accuracy!! }
 
                 TIME -> sequence
                     .filter { it.lastTime != null }
@@ -212,8 +212,8 @@ class FriendService(
                 TOTAL_HITS -> sequence
                     .sortedBy { it.statistics.totalHits }
                 ONLINE -> sequence
-                    .filter { it.statistics.pp > 0 }
-                    .sortedByDescending { it.statistics.pp }
+                    .filter { it.statistics.pp!! > 0 }
+                    .sortedByDescending { it.statistics.pp!! }
                     .filter { it.isOnline }
 
                 MUTUAL -> sequence

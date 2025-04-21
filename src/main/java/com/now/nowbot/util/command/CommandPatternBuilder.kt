@@ -181,7 +181,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun appendUID() {
         appendGroup(MAYBE) {
-            append(FLAG_UID)
+            append(REG_UID)
             append(CHAR_EQUAL)
             appendCaptureGroup(FLAG_UID, REG_NUMBER, MORE, EXIST)
         }

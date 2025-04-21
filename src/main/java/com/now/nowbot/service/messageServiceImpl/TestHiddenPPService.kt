@@ -59,7 +59,7 @@ class TestHiddenPPService(
             var hiddenPP = 0.0
 
             try {
-                user = userApiService.getPlayerInfo(name)
+                user = userApiService.getOsuUser(name)
 
                 if (mode == OsuMode.DEFAULT) {
                     mode = user.currentOsuMode

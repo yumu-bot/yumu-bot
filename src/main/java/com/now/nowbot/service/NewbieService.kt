@@ -111,7 +111,7 @@ class NewbieService(
             return "" to 0f
         }
         val yesterdayUserInfo = yesterdayUserInfoOpt.get()
-        val nowUserInfo = osuUserApiService.getPlayerInfo(userId, OsuMode.OSU)
+        val nowUserInfo = osuUserApiService.getOsuUser(userId, OsuMode.OSU)
         return nowUserInfo.username to (nowUserInfo.pp - yesterdayUserInfo.pp).toFloat()
     }
 

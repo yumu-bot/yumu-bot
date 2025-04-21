@@ -75,7 +75,7 @@ import kotlin.math.min
         var ppm: PPMinus?
 
         try {
-            info = userApiService.getPlayerInfo(name.trim(), mode)
+            info = userApiService.getOsuUser(name.trim(), mode)
             bplist = scoreApiService.getBestScores(info.userID, mode)
             ppm = PPMinus.getInstance(mode, info, bplist)
         } catch (e: Exception) {
@@ -116,7 +116,7 @@ import kotlin.math.min
 
         val mode = getMode(playMode)
 
-        val info = userApiService.getPlayerInfo(name.trim(), mode)
+        val info = userApiService.getOsuUser(name.trim(), mode)
         val bplist = scoreApiService.getBestScores(info.userID, mode)
         val ppm = PPMinus.getInstance(mode, info, bplist)
         if (ppm == null) {
@@ -146,8 +146,8 @@ import kotlin.math.min
     ): ResponseEntity<ByteArray> {
         var mode = getMode(playMode)
 
-        val user1 = userApiService.getPlayerInfo(name.trim(), mode)
-        val user2 = userApiService.getPlayerInfo(name2.trim(), mode)
+        val user1 = userApiService.getOsuUser(name.trim(), mode)
+        val user2 = userApiService.getOsuUser(name2.trim(), mode)
 
         mode = getMode(playMode, user1.currentOsuMode)
 
@@ -276,7 +276,7 @@ import kotlin.math.min
     @PostMapping(value = ["match/getpool"]) @Throws(RuntimeException::class) fun getPool(
         @RequestParam("name") @Nullable name: String?,
         @RequestParam("mode") @Nullable modeStr: String?,
-        @RequestBody dataMap: Map<String?, List<Long?>?>?
+        @RequestBody dataMap: Map<String, List<Long>>
     ): ResponseEntity<ByteArray> {
         val mapPool = MapPoolDto(name, dataMap, beatmapApiService)
         if (mapPool.modPools.isEmpty()) throw RuntimeException(MapPoolException.Type.GP_Map_Empty.message)
@@ -314,7 +314,7 @@ import kotlin.math.min
     ): ResponseEntity<ByteArray> {
         val mode = getMode(playMode)
 
-        val osuUser = userApiService.getPlayerInfo(name.trim(), mode)
+        val osuUser = userApiService.getOsuUser(name.trim(), mode)
         val scores: List<LazerScore>
 
         val offset = parseRange2Offset(start, end)
@@ -595,7 +595,7 @@ import kotlin.math.min
      * @return image 谱面成绩图片
      */
     @GetMapping(value = ["score"]) @OpenResource(name = "s", desp = "查询玩家谱面成绩") fun getBeatMapScore(
-        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String?,
+        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
         @OpenResource(name = "bid", desp = "谱面编号", required = true) @RequestParam("bid") bid: Long,
         @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
         @OpenResource(name = "mods", desp = "模组") @Nullable @RequestParam("mods") mods: String?
@@ -614,7 +614,7 @@ import kotlin.math.min
         var score: LazerScore? = null
 
         try {
-            osuUser = userApiService.getPlayerInfo(name)
+            osuUser = userApiService.getOsuUser(name)
             uid = osuUser.userID
         } catch (e: WebClientResponseException.NotFound) {
             throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name))
@@ -674,8 +674,8 @@ import kotlin.math.min
 
         try {
             val mode = getMode(playMode)
-            val uid = userApiService.getOsuId(name.trim())
-            osuUser = userApiService.getPlayerInfo(uid, mode)
+            val uid = userApiService.getOsuID(name.trim())
+            osuUser = userApiService.getOsuUser(uid, mode)
             if (mode != OsuMode.DEFAULT) osuUser.currentOsuMode = mode
             scores = scoreApiService.getBestScores(uid, mode)
         } catch (e: Exception) {
@@ -960,11 +960,11 @@ import kotlin.math.min
     ): OsuUser {
         val mode = getMode(modeStr)
         return if (uid != null) {
-            userApiService.getPlayerInfo(uid, mode)
+            userApiService.getOsuUser(uid, mode)
         } else if (name.isNullOrBlank().not()) {
-            userApiService.getPlayerInfo(name, mode)
+            userApiService.getOsuUser(name!!, mode)
         } else {
-            userApiService.getPlayerInfo(17064371L, mode)
+            userApiService.getOsuUser(17064371L, mode)
         }
     }
 
@@ -1030,8 +1030,8 @@ import kotlin.math.min
 
         if (uid != null) {
             return scoreApiService.getBestScores(uid, mode, offset, limit)
-        } else if (name.isNullOrBlank()) {
-            val user = userApiService.getPlayerInfo(name, mode)
+        } else if (name.isNullOrBlank().not()) {
+            val user = userApiService.getOsuUser(name!!, mode)
             return scoreApiService.getBestScores(user, offset, limit)
         } else {
             return scoreApiService.getBestScores(7003013L, OsuMode.DEFAULT, offset, limit)
@@ -1065,7 +1065,7 @@ import kotlin.math.min
         if (uid != null) {
             return scoreApiService.getScore(uid, mode, offset, limit, isPass)
         } else if (name.isNullOrBlank().not()) {
-            val user = userApiService.getPlayerInfo(name, mode)
+            val user = userApiService.getOsuUser(name!!, mode)
             return scoreApiService.getScore(user.userID, mode, offset, limit, isPass)
         } else {
             return scoreApiService.getScore(7003013L, OsuMode.DEFAULT, offset, limit, isPass)
@@ -1081,7 +1081,7 @@ import kotlin.math.min
         val u = LoginService.LOGIN_USER_MAP.getOrDefault(code.uppercase(Locale.getDefault()), null)
         if (u != null) {
             LoginService.LOGIN_USER_MAP.remove(code.uppercase(Locale.getDefault()))
-            return userApiService.getPlayerInfo(u.uid)
+            return userApiService.getOsuUser(u.uid)
         }
         throw RuntimeException("已过期或者不存在")
     }

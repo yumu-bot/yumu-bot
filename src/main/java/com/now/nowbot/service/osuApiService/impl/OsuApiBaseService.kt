@@ -1,333 +1,343 @@
-package com.now.nowbot.service.osuApiService.impl;
+package com.now.nowbot.service.osuApiService.impl
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.config.OSUConfig;
-import com.now.nowbot.config.YumuConfig;
-import com.now.nowbot.dao.BindDao;
-import com.now.nowbot.model.BindUser;
-import com.now.nowbot.throwable.serviceException.BindException;
-import com.now.nowbot.util.ContextUtil;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientRequestException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Mono;
-
-import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.LockSupport;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
-import static com.now.nowbot.config.IocAllReadyRunner.APP_ALIVE;
+import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.config.IocAllReadyRunner
+import com.now.nowbot.config.OSUConfig
+import com.now.nowbot.config.YumuConfig
+import com.now.nowbot.dao.BindDao
+import com.now.nowbot.model.BindUser
+import com.now.nowbot.throwable.serviceException.BindException
+import com.now.nowbot.util.ContextUtil
+import jakarta.annotation.PostConstruct
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.context.annotation.Lazy
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
+import org.springframework.stereotype.Service
+import org.springframework.util.LinkedMultiValueMap
+import org.springframework.util.MultiValueMap
+import org.springframework.util.StringUtils
+import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.reactive.function.BodyInserters
+import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientRequestException
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import reactor.core.publisher.Mono
+import java.time.Duration
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.PriorityBlockingQueue
+import java.util.concurrent.Semaphore
+import java.util.concurrent.locks.LockSupport
+import java.util.function.Consumer
+import java.util.function.Function
+import kotlin.math.min
 
 @Service
-public class OsuApiBaseService {
-    private static final Logger log         = LoggerFactory.getLogger(OsuApiBaseService.class);
-    private static       String accessToken = null;
-    private static       long   time        = System.currentTimeMillis();
-    protected final      int    oauthId;
-    protected final      String redirectUrl;
-    protected final      String oauthToken;
+class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient: WebClient, osuConfig: OSUConfig, yumuConfig: YumuConfig) {
+    @JvmField final val oauthId: Int
+    @JvmField final val redirectUrl: String
+    @JvmField final val oauthToken: String
 
-    private static final String      THREAD_LOCAL_ENVIRONMENT = "osu-api-priority";
-    private static final int         DEFAULT_PRIORITY         = 5;
-    private static final int         MAX_RETRY                = 3;
-    private static final RateLimiter limiter                  = new RateLimiter(1, 20);
-
-    private static final PriorityBlockingQueue<RequestTask<?>> TASKS = new PriorityBlockingQueue<>();
-
-    @Lazy
-    @Resource
-    BindDao bindDao;
-
-    @Resource
-    WebClient osuApiWebClient;
-
-    public OsuApiBaseService(OSUConfig osuConfig, YumuConfig yumuConfig) {
-        String url;
-        oauthId = osuConfig.getId();
-        if (!StringUtils.hasText(url = osuConfig.getCallbackUrl())) {
-            url = yumuConfig.getPublicUrl() + osuConfig.getCallbackPath();
+    init {
+        var url: String
+        oauthId = osuConfig.id
+        if (!StringUtils.hasText(osuConfig.callbackUrl.also { url = it })) {
+            url = yumuConfig.publicUrl + osuConfig.callbackPath
         }
-        redirectUrl = url;
-        oauthToken = osuConfig.getToken();
+        redirectUrl = url
+        oauthToken = osuConfig.token
     }
 
-    public static boolean hasPriority() {
-        return ContextUtil.getContext(THREAD_LOCAL_ENVIRONMENT, Integer.class) != null;
+    private val isPassed: Boolean
+        get() = System.currentTimeMillis() > time
+
+    @PostConstruct fun init() {
+        Thread.startVirtualThread { this.runTask() }
     }
 
-    /**
-     * 借助线程变量设置后续请求的优先级, 如果使用线程池, 务必在请求结束后调用 {@link #clearPriority()} 方法
-     *
-     * @param priority 默认为 5, 越低越优先, 相同优先级先来后到
-     */
-    public static void setPriority(int priority) {
-        ContextUtil.setContext(THREAD_LOCAL_ENVIRONMENT, priority);
-    }
+    val botToken: String?
+        get() {
+            if (!isPassed) {
+                return accessToken
+            }
+            val body: MultiValueMap<String, String> = LinkedMultiValueMap()
+            body.add("client_id", oauthId.toString())
+            body.add("client_secret", oauthToken)
+            body.add("grant_type", "client_credentials")
+            body.add("scope", "public")
 
-    private boolean isPassed() {
-        return System.currentTimeMillis() > time;
-    }
+            setPriority(0)
+            val s = request { client: WebClient ->
+                client
+                    .post()
+                    .uri("https://osu.ppy.sh/oauth/token")
+                    .accept(MediaType.APPLICATION_JSON)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(BodyInserters.fromFormData(body)).retrieve()
+                    .bodyToMono(JsonNode::class.java)
+            }
+            clearPriority()
 
-    public static void clearPriority() {
-        ContextUtil.setContext(THREAD_LOCAL_ENVIRONMENT, null);
-    }
-
-    @PostConstruct
-    public void init() {
-        Thread.startVirtualThread(this::runTask);
-    }
-
-    protected String getBotToken() {
-        if (!isPassed()) {
-            return accessToken;
+            if (s != null) {
+                accessToken = s["access_token"].asText()
+                time = System.currentTimeMillis() + s["expires_in"].asLong() * 1000
+            } else {
+                throw RuntimeException("更新 Oauth 令牌 请求失败")
+            }
+            return accessToken
         }
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("client_id", String.valueOf(oauthId));
-        body.add("client_secret", oauthToken);
-        body.add("grant_type", "client_credentials");
-        body.add("scope", "public");
 
-        setPriority(0);
-        var s = request(client -> client
-                .post()
-                .uri("https://osu.ppy.sh/oauth/token")
-                .accept(MediaType.APPLICATION_JSON)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(BodyInserters.fromFormData(body)).retrieve().bodyToMono(JsonNode.class)
-        );
-        clearPriority();
-
-        if (s != null) {
-            accessToken = s.get("access_token").asText();
-            time = System.currentTimeMillis() + s.get("expires_in").asLong() * 1000;
-        } else {
-            throw new RuntimeException("更新 Oauth 令牌 请求失败");
-        }
-        return accessToken;
-    }
-
-    String refreshUserToken(BindUser user, boolean first) {
-        LinkedMultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("client_id", String.valueOf(oauthId));
-        body.add("client_secret", oauthToken);
-        body.add("redirect_uri", redirectUrl);
-        body.add("grant_type", first ? "authorization_code" : "refresh_token");
-        body.add(first ? "code" : "refresh_token", user.getRefreshToken());
+    fun refreshUserToken(user: BindUser, first: Boolean): String {
+        val body = LinkedMultiValueMap<String, String>()
+        body.add("client_id", oauthId.toString())
+        body.add("client_secret", oauthToken)
+        body.add("redirect_uri", redirectUrl)
+        body.add("grant_type", if (first) "authorization_code" else "refresh_token")
+        body.add(if (first) "code" else "refresh_token", user.refreshToken)
         if (!hasPriority()) {
-            setPriority(1);
+            setPriority(1)
         }
-        JsonNode s = request((client) -> client
+        val s = request { client: WebClient ->
+            client
                 .post()
                 .uri("https://osu.ppy.sh/oauth/token")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData(body))
-                .retrieve().bodyToMono(JsonNode.class)
-        );
-        clearPriority();
-        String accessToken;
-        String refreshToken;
-        long time;
+                .retrieve()
+                .bodyToMono(JsonNode::class.java)
+        }
+        clearPriority()
+        val accessToken: String
+        val refreshToken: String
+        val time: Long
         if (s != null) {
-            accessToken = s.get("access_token").asText();
-            user.setAccessToken(accessToken);
-            refreshToken = s.get("refresh_token").asText();
-            user.setRefreshToken(refreshToken);
-            time = user.setTimeToAfter(s.get("expires_in").asLong() * 1000);
+            accessToken = s["access_token"].asText()
+            user.accessToken = accessToken
+            refreshToken = s["refresh_token"].asText()
+            user.refreshToken = refreshToken
+            time = user.setTimeToAfter(s["expires_in"].asLong() * 1000)
         } else {
-            throw new RuntimeException("更新 Oauth 令牌, 接口格式错误");
+            throw RuntimeException("更新 Oauth 令牌, 接口格式错误")
         }
         if (!first) {
             // 第一次更新需要在外面更新去更新数据库
-            bindDao.updateToken(user.getOsuID(), accessToken, refreshToken, time);
+            bindDao.updateToken(user.osuID, accessToken, refreshToken, time)
         }
-        return accessToken;
+        return accessToken
     }
 
-    void insertHeader(HttpHeaders headers) {
+    fun insertHeader(headers: HttpHeaders) {
         headers.setAll(
-                Map.of("Authorization", "Bearer " + getBotToken(),
-                        "x-api-version", "20240529"
-                )
-        );
+            mapOf(
+                "Authorization" to "Bearer $botToken",
+                "x-api-version" to "20240529"
+            )
+        )
     }
 
-    Consumer<HttpHeaders> insertHeader(BindUser user) {
-        final String token;
-        if (!user.isAuthorized()) {
-            token = getBotToken();
-        } else if (user.isExpired()) {
+    fun insertHeader(user: BindUser): Consumer<HttpHeaders> {
+        val token = if (!user.isAuthorized) {
+            botToken
+        } else if (user.isExpired) {
             try {
-                token = refreshUserToken(user, false);
-            } catch (HttpClientErrorException.Unauthorized | WebClientResponseException.Unauthorized e) {
-                bindDao.backupBind(user.getOsuID());
-                log.info("令牌过期 绑定丢失: [{}], 已退回到 id 绑定", user.getOsuID(), e);
-                throw new BindException(BindException.Type.BIND_Me_TokenExpiredButBindID);
-            } catch (HttpClientErrorException.Forbidden | WebClientResponseException.Forbidden e) {
-                log.info("更新令牌失败：账号封禁", e);
-                throw new BindException(BindException.Type.BIND_Me_Banned);
-            } catch (HttpClientErrorException.NotFound | WebClientResponseException.NotFound e) {
-                log.info("更新令牌失败：找不到账号", e);
-                throw new BindException(BindException.Type.BIND_Player_NotFound);
-            } catch (HttpClientErrorException.TooManyRequests | WebClientResponseException.TooManyRequests e) {
-                log.info("更新令牌失败：API 访问太频繁", e);
-                throw new BindException(BindException.Type.BIND_API_TooManyRequests);
+                refreshUserToken(user, false)
+            } catch (e: HttpClientErrorException.Unauthorized) {
+                bindDao.backupBind(user.osuID)
+                log.info("令牌过期 绑定丢失: [{}], 已退回到 id 绑定", user.osuID, e)
+                throw BindException(BindException.Type.BIND_Me_TokenExpiredButBindID)
+            } catch (e: WebClientResponseException.Unauthorized) {
+                bindDao.backupBind(user.osuID)
+                log.info("令牌过期 绑定丢失: [{}], 已退回到 id 绑定", user.osuID, e)
+                throw BindException(BindException.Type.BIND_Me_TokenExpiredButBindID)
+            } catch (e: HttpClientErrorException.Forbidden) {
+                log.info("更新令牌失败：账号封禁", e)
+                throw BindException(BindException.Type.BIND_Me_Banned)
+            } catch (e: WebClientResponseException.Forbidden) {
+                log.info("更新令牌失败：账号封禁", e)
+                throw BindException(BindException.Type.BIND_Me_Banned)
+            } catch (e: HttpClientErrorException.NotFound) {
+                log.info("更新令牌失败：找不到账号", e)
+                throw BindException(BindException.Type.BIND_Player_NotFound)
+            } catch (e: WebClientResponseException.NotFound) {
+                log.info("更新令牌失败：找不到账号", e)
+                throw BindException(BindException.Type.BIND_Player_NotFound)
+            } catch (e: HttpClientErrorException.TooManyRequests) {
+                log.info("更新令牌失败：API 访问太频繁", e)
+                throw BindException(BindException.Type.BIND_API_TooManyRequests)
+            } catch (e: WebClientResponseException.TooManyRequests) {
+                log.info("更新令牌失败：API 访问太频繁", e)
+                throw BindException(BindException.Type.BIND_API_TooManyRequests)
             }
         } else {
-            token = user.getAccessToken();
+            user.accessToken
         }
 
-        return (headers) -> headers.setAll(
-                Map.of("Authorization", "Bearer " + token,
-                        "x-api-version", "20241101"
+        return Consumer { headers: HttpHeaders ->
+            headers.setAll(
+                mapOf(
+                    "Authorization" to "Bearer $token",
+                    "x-api-version" to "20241101"
                 )
-        );
+            )
+        }
     }
 
-    public <T> T request(Function<WebClient, Mono<T>> request) {
-        var future = new CompletableFuture<T>();
-        int priority = ContextUtil.getContext(THREAD_LOCAL_ENVIRONMENT, DEFAULT_PRIORITY, Integer.class);
-        var task = new RequestTask<>(priority, future, request);
-        TASKS.offer(task);
+    fun <T> request(request: Function<WebClient, Mono<T>>): T {
+        val future = CompletableFuture<T>()
+        val priority = ContextUtil.getContext(
+            THREAD_LOCAL_ENVIRONMENT, DEFAULT_PRIORITY,
+            Int::class.java
+        )
+        val task = RequestTask(priority, future, request)
+        TASKS.offer(task)
         try {
-            return future.get();
-        } catch (ExecutionException e) {
-            if (e.getCause() instanceof RuntimeException r) {
-                throw r;
+            return future.get()
+        } catch (e: ExecutionException) {
+            if (e.cause is RuntimeException) {
+                throw e
             }
-            throw new RuntimeException(e.getCause());
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            throw RuntimeException(e.cause)
+        } catch (e: InterruptedException) {
+            throw RuntimeException(e)
         }
     }
 
-    private void runTask() {
-        while (APP_ALIVE) {
+    private fun runTask() {
+        while (IocAllReadyRunner.APP_ALIVE) {
             try {
-                limiter.acquire();
-                var task = TASKS.take();
-                Thread.startVirtualThread(() -> task.run(osuApiWebClient));
-            } catch (InterruptedException e) {
-                log.error("请求队列异常", e);
+                limiter.acquire()
+                val task = TASKS.take()
+                Thread.startVirtualThread { task.run(osuApiWebClient) }
+            } catch (e: InterruptedException) {
+                log.error("请求队列异常", e)
             }
         }
     }
 
-    static class RequestTask<T> implements Comparable<RequestTask<?>> {
-        private static int TOO_MANY_REQUESTS_COUNT = 0;
-        int                          priority;
-        int                          time;
-        boolean                      toManyRequests;
-        short                        retry = 0;
-        CompletableFuture<T>         future;
-        Function<WebClient, Mono<T>> request;
+    internal class RequestTask<T>(
+        private var priority: Int,
+        private var future: CompletableFuture<T>,
+        var request: Function<WebClient, Mono<T>>
+    ) :
+        Comparable<RequestTask<*>> {
+        var time: Int = nowTime
+        private var toManyRequests: Boolean = false
+        private var retry: Short = 0
 
-        RequestTask(int priority, CompletableFuture<T> future, Function<WebClient, Mono<T>> request) {
-            this.priority = priority;
-            this.future = future;
-            this.request = request;
-            time = getNowTime();
-            toManyRequests = false;
+        fun run(client: WebClient) {
+            request.apply(client).subscribe(
+                Consumer { value: T -> future.complete(value) },
+                Consumer { e: Throwable -> this.onError(e) }
+            ) { this.onComplete() }
         }
 
-        private static int getNowTime() {
-            // seconds since 2025-01-01
-            return (int) (System.currentTimeMillis() / 1000 - 1735660800);
-        }
-
-        public void run(WebClient client) {
-            request.apply(client).subscribe(future::complete, this::onError, this::onComplete);
-        }
-
-        private void onError(Throwable e) {
+        private fun onError(e: Throwable) {
             if (retry >= MAX_RETRY) {
-                future.completeExceptionally(e);
+                future.completeExceptionally(e)
             }
 
-            if (e instanceof WebClientResponseException.TooManyRequests) {
-                log.info("出现 429 错误");
-                toManyRequests = true;
-                TASKS.add(this);
-            } else if (e instanceof WebClientRequestException) {
-                retry++;
-                TASKS.add(this);
+            if (e is WebClientResponseException.TooManyRequests) {
+                log.info("出现 429 错误")
+                toManyRequests = true
+                TASKS.add(this)
+            } else if (e is WebClientRequestException) {
+                retry++
+                TASKS.add(this)
             } else {
-                future.completeExceptionally(e);
+                future.completeExceptionally(e)
             }
         }
 
-        private void onComplete() {
+        private fun onComplete() {
             if (toManyRequests) {
-                log.info("请求过多, 触发退避");
-                limiter.onTooManyRequests(TOO_MANY_REQUESTS_COUNT++);
+                log.info("请求过多, 触发退避")
+                limiter.onTooManyRequests(TOO_MANY_REQUESTS_COUNT++)
             } else if (TOO_MANY_REQUESTS_COUNT > 0) {
-                TOO_MANY_REQUESTS_COUNT = 0;
+                TOO_MANY_REQUESTS_COUNT = 0
             }
         }
 
-        @Override
-        public int compareTo(@NotNull RequestTask<?> o) {
-            return getPriority() - o.getPriority();
+        override fun compareTo(other: RequestTask<*>): Int {
+            return getPriority() - other.getPriority()
         }
 
-        private int getPriority() {
+        private fun getPriority(): Int {
             // 用于对比, 优先级 * (一个大数 n + 时间), 这个数字大到不可能存在两个请求的时间超过 n 秒
-            return (3600 * priority) + time;
+            return (3600 * priority) + time
+        }
+
+        companion object {
+            private var TOO_MANY_REQUESTS_COUNT = 0
+            private val nowTime: Int
+                get() = // seconds since 2025-01-01
+                    (System.currentTimeMillis() / 1000 - 1735660800).toInt()
         }
     }
 
-    static class RateLimiter {
-        int       rate;
-        int       out = -1;
-        Semaphore semaphore;
+    internal class RateLimiter(var rate: Int, max: Int) {
+        var out: Int = -1
+        var semaphore: Semaphore = Semaphore(max)
 
-        RateLimiter(int rate, int max) {
-            this.rate = rate;
-            semaphore = new Semaphore(max);
-            Thread.startVirtualThread(this::run);
+        init {
+            Thread.startVirtualThread { this.run() }
         }
 
-        void run() {
-            while (APP_ALIVE) {
-                LockSupport.parkNanos(Duration.ofSeconds(1).toNanos());
-                semaphore.release(rate);
+        fun run() {
+            while (IocAllReadyRunner.APP_ALIVE) {
+                LockSupport.parkNanos(Duration.ofSeconds(1).toNanos())
+                semaphore.release(rate)
             }
         }
 
-        void acquire() throws InterruptedException {
+        @Throws(InterruptedException::class) fun acquire() {
             if (out >= 0) {
-                int seconds = Math.min(2 * out + 1, 10);
-                log.info("请求触发退避, 等待时间: {} 秒", seconds);
-                LockSupport.parkNanos(Duration.ofSeconds(seconds).toNanos());
-                out = -1;
-                int permits = semaphore.availablePermits();
-                if (permits > 1) semaphore.acquire(permits - 1);
+                val seconds = min(2 * out + 1, 10)
+                log.info("请求触发退避, 等待时间: {} 秒", seconds)
+                LockSupport.parkNanos(Duration.ofSeconds(seconds.toLong()).toNanos())
+                out = -1
+                val permits = semaphore.availablePermits()
+                if (permits > 1) semaphore.acquire(permits - 1)
             }
-            semaphore.acquire();
+            semaphore.acquire()
         }
 
-        public void onTooManyRequests(int n) {
-            out = n + 1;
+        fun onTooManyRequests(n: Int) {
+            out = n + 1
+        }
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(OsuApiBaseService::class.java)
+        private var accessToken: String? = null
+        private var time = System.currentTimeMillis()
+        private const val THREAD_LOCAL_ENVIRONMENT = "osu-api-priority"
+        private const val DEFAULT_PRIORITY = 5
+        private const val MAX_RETRY = 3
+        private val limiter = RateLimiter(1, 20)
+
+        private val TASKS = PriorityBlockingQueue<RequestTask<*>>()
+
+        fun hasPriority(): Boolean {
+            return ContextUtil.getContext(
+                THREAD_LOCAL_ENVIRONMENT,
+                Int::class.java
+            ) != null
+        }
+
+        /**
+         * 借助线程变量设置后续请求的优先级, 如果使用线程池, 务必在请求结束后调用 [.clearPriority] 方法
+         *
+         * @param priority 默认为 5, 越低越优先, 相同优先级先来后到
+         */
+        @JvmStatic fun setPriority(priority: Int) {
+            ContextUtil.setContext(THREAD_LOCAL_ENVIRONMENT, priority)
+        }
+
+        fun clearPriority() {
+            ContextUtil.setContext(THREAD_LOCAL_ENVIRONMENT, null)
         }
     }
 }

@@ -165,7 +165,7 @@ class MapStatisticsService(
 
         val user: OsuUser? = try {
             if (beatMap.mapperID > 0L) {
-                userApiService.getPlayerInfo(beatMap.mapperID, mode)
+                userApiService.getOsuUser(beatMap.mapperID, mode)
             } else {
                 null
             }

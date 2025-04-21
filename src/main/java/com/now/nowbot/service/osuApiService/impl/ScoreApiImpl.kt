@@ -68,7 +68,7 @@ class ScoreApiImpl(
                 .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                 .build(id)
             }
-            .headers { headers: HttpHeaders? -> base.insertHeader(headers) }
+            .headers { base.insertHeader(it) }
             .retrieve()
             .bodyToFlux(LazerScore::class.java)
             .collectList()
@@ -120,7 +120,7 @@ class ScoreApiImpl(
                     .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                     .build(bid, uid)
             },
-            { headers: HttpHeaders? -> base.insertHeader(headers) },
+            { base.insertHeader(it) },
             { uriBuilder: UriBuilder ->
                 uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}")
@@ -183,7 +183,7 @@ class ScoreApiImpl(
         }
         return retryOn404<BeatmapUserScore>(
             uri.apply(0),
-            { headers: HttpHeaders? -> base.insertHeader(headers) },
+            { base.insertHeader(it) },
             uri.apply(1),
         )
     }
@@ -248,7 +248,7 @@ class ScoreApiImpl(
                 .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                 .build(bid, uid)
             }
-            .headers { headers: HttpHeaders? -> base.insertHeader(headers) }
+            .headers { base.insertHeader(it) }
             .retrieve()
             .bodyToMono(JsonNode::class.java)
             .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
@@ -262,7 +262,7 @@ class ScoreApiImpl(
                 .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                 .build(bid)
             }
-            .headers { headers: HttpHeaders? -> base.insertHeader(headers) }
+            .headers { base.insertHeader(it) }
             .retrieve()
             .bodyToMono(JsonNode::class.java)
             .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
@@ -310,7 +310,7 @@ class ScoreApiImpl(
                             .bodyToMono(ByteArray::class.java)
                             .block()!!
                     } catch (e: Exception) {
-                        log.error("异步下载谱面图片：任务失败\n{}", e.message)
+                        log.error("异步下载谱面图片：任务失败\n", e)
                         return@Runnable
                     }
 
@@ -373,7 +373,7 @@ class ScoreApiImpl(
                     .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                     .build(uid)
             }
-            .headers { headers: HttpHeaders? -> base.insertHeader(headers) }
+            .headers { base.insertHeader(it) }
             .retrieve()
             .bodyToFlux(LazerScore::class.java)
             .collectList()

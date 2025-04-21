@@ -116,7 +116,7 @@ class TodayBPService(
         val todayMap = scores
 
         if (todayMap.isEmpty()) {
-            if (!user.active) {
+            if (!user.isActive) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerInactive, user.username)
             } else if (isToday) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Empty_TodayBP, user.username, mode)

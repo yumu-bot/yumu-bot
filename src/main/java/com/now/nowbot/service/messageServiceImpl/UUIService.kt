@@ -75,7 +75,7 @@ class UUIService(private val client: WebClient) : MessageService<UUIParam> {
         sb.append('#')
             .append(user.globalRank)
             .append(' ')
-            .append(user.country.code)
+            .append(user.country!!.code)
             .append('#')
             .append(user.countryRank)
             .append(' ')
@@ -87,52 +87,52 @@ class UUIService(private val client: WebClient) : MessageService<UUIParam> {
             .append('\n')
         // PC: 2.01w TTH: 743.52w
         sb.append("PC: ")
-        val PC = user.playCount
-        if (PC > 10000) {
-            sb.append(Math.round(PC / 100.0) / 100.0).append('w')
+        val pc = user.playCount
+        if (pc > 10000) {
+            sb.append(Math.round(pc / 100.0) / 100.0).append('w')
         } else {
-            sb.append(PC)
+            sb.append(pc)
         }
         sb.append(" TTH: ")
-        val TTH = user.totalHits
-        if (TTH > 10000) {
-            sb.append(Math.round(TTH / 100.0) / 100.0).append('w')
+        val tth = user.totalHits
+        if (tth > 10000) {
+            sb.append(Math.round(tth / 100.0) / 100.0).append('w')
         } else {
-            sb.append(TTH)
+            sb.append(tth)
         }
         sb.append('\n')
         // PT:24d2h7m ACC:98.16%
         sb.append("PT: ")
-        val PT = user.playTime
-        if (PT > 86400) {
-            sb.append(PT / 86400).append('d')
+        val pt = user.playTime
+        if (pt > 86400) {
+            sb.append(pt / 86400).append('d')
         }
-        if (PT > 3600) {
-            sb.append((PT % 86400) / 3600).append('h')
+        if (pt > 3600) {
+            sb.append((pt % 86400) / 3600).append('h')
         }
-        if (PT > 60) {
-            sb.append((PT % 3600) / 60).append('m')
+        if (pt > 60) {
+            sb.append((pt % 3600) / 60).append('m')
         }
         sb.append(" ACC: ").append(user.accuracy).append('%').append('\n')
         // ♡:320 kds:245 SVIP2
         sb.append("♡: ")
             .append(user.followerCount)
             .append(" kds: ")
-            .append(user.kudosu.total)
+            .append(user.kudosu?.total)
             .append('\n')
         // SS:26(107) S:157(844) A:1083
         sb.append("SS: ")
-            .append(user.statistics.ss)
+            .append(user.statistics!!.countSS)
             .append('(')
-            .append(user.statistics.ssh)
+            .append(user.statistics!!.countSSH)
             .append(')')
             .append(" S: ")
-            .append(user.statistics.s)
+            .append(user.statistics!!.countS)
             .append('(')
-            .append(user.statistics.sh)
+            .append(user.statistics!!.countSH)
             .append(')')
             .append(" A: ")
-            .append(user.statistics.a)
+            .append(user.statistics!!.countA)
             .append('\n')
         // uid:7003013
         sb.append('\n')
@@ -141,14 +141,14 @@ class UUIService(private val client: WebClient) : MessageService<UUIParam> {
         val occupation = user.occupation
         val discord = user.discord
         val interests = user.interests
-        if (Objects.nonNull(occupation)) {
-            sb.append("occupation: ").append(occupation.trim { it <= ' ' }).append('\n')
+        if (occupation != null) {
+            sb.append("occupation: ").append(occupation.trim()).append('\n')
         }
-        if (Objects.nonNull(discord)) {
-            sb.append("discord: ").append(discord.trim { it <= ' ' }).append('\n')
+        if (discord != null) {
+            sb.append("discord: ").append(discord.trim()).append('\n')
         }
-        if (Objects.nonNull(interests)) {
-            sb.append("interests: ").append(interests.trim { it <= ' ' })
+        if (interests != null) {
+            sb.append("interests: ").append(interests.trim())
         }
 
         return sb.toString()

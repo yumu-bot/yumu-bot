@@ -147,7 +147,7 @@ import java.util.*
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, user.username)
         }
 
-        if (user.statistics.playTime < 60 || user.statistics.playCount < 30) {
+        if (user.statistics!!.playTime!! < 60 || user.statistics!!.playCount!! < 30) {
             throw GeneralTipsException(
                 GeneralTipsException.Type.G_NotEnough_PlayTime,
                 user.currentOsuMode.fullName,

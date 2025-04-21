@@ -74,13 +74,13 @@ class OldAvatarService(
     override fun HandleMessage(event: MessageEvent, param: OAParam) {
         val user: OsuUser
 
-        if (Objects.nonNull(param.uid)) {
+        if (param.uid != null) {
             try {
-                user = userApiService.getPlayerInfo(param.uid)
+                user = userApiService.getOsuUser(param.uid)
             } catch (e: Exception) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, param.uid)
             }
-        } else if (Objects.nonNull(param.qq)) {
+        } else if (param.qq != null) {
             val bindUser: BindUser
             try {
                 bindUser = bindDao.getBindFromQQ(param.qq)
@@ -93,7 +93,7 @@ class OldAvatarService(
             }
 
             try {
-                user = userApiService.getPlayerInfo(bindUser)
+                user = userApiService.getOsuUser(bindUser)
             } catch (e: WebClientResponseException) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, bindUser.osuName)
             } catch (e: Exception) {
@@ -151,7 +151,7 @@ class OldAvatarService(
             if (s.isNullOrBlank()) continue
 
             try {
-                ids.add(userApiService.getOsuId(s))
+                ids.add(userApiService.getOsuID(s))
             } catch (e: WebClientResponseException) {
                 try {
                     ids.add(s.toLong())
@@ -163,10 +163,10 @@ class OldAvatarService(
 
         for (id in ids) {
             try {
-                users.add(userApiService.getPlayerInfo(id))
+                users.add(userApiService.getOsuUser(id))
             } catch (e: WebClientResponseException) {
                 try {
-                    users.add(userApiService.getPlayerInfo(id.toString()))
+                    users.add(userApiService.getOsuUser(id.toString()))
                 } catch (e1: WebClientResponseException) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, id)
                 }

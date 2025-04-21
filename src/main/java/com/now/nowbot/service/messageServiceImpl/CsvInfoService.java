@@ -52,7 +52,7 @@ public class CsvInfoService implements MessageService<CsvInfoService.CIParam> {
 
         for (var s : param.users) {
             try {
-                var o = userApiService.getPlayerInfo(s, param.mode);
+                var o = userApiService.getOsuUser(s, param.mode);
                 sb.append('\n').append(o.toCSV());
             } catch (HttpClientErrorException.TooManyRequests | WebClientResponseException.TooManyRequests e) {
                 fetchUserFail ++;

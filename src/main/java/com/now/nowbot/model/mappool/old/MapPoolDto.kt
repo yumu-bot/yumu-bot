@@ -1,89 +1,44 @@
-package com.now.nowbot.model.mappool.old;
+package com.now.nowbot.model.mappool.old
 
-import com.now.nowbot.model.json.BeatMap;
-import com.now.nowbot.model.mappool.now.Pool;
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
-import org.springframework.lang.Nullable;
+import com.now.nowbot.model.mappool.now.Pool
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 
-import java.util.*;
+class MapPoolDto(
+    val name: String? = "MapPool",
+    poolMap: Map<String, List<Long>?>,
+    private val osuBeatmapApiService: OsuBeatmapApiService
+) {
+    var id: Int = 0
 
-public class MapPoolDto {
-    Integer id = 0;
-    String name = "MapPool";
-    Long firstMapSID = 0L;
-    List<ModPool> modPools = new ArrayList<>();
+    val modPools: List<ModPool> = poolMap.map { pool ->
+        val beatMaps = (pool.value ?: listOf() ).map { osuBeatmapApiService.getBeatMap(it) }
 
-    public MapPoolDto(@Nullable String name, Map<String, List<Long>> modBIDMap, OsuBeatmapApiService osuBeatmapApiService) {
-        if (!(name == null || name.isBlank())) this.name = name;
+        ModPool(pool.key, beatMaps)
+    }
 
-        modBIDMap.forEach((key, value) -> {
-            List<BeatMap> beatmaps = new ArrayList<>();
+    private val firstMapSID: Long = if (modPools.isNotEmpty() && modPools.first().beatmaps.isNotEmpty()) {
+        modPools.first().beatmaps.first().beatMapSet!!.beatMapSetID
+    } else {
+        0L
+    }
 
-            for (var bid : value) {
-                var b = osuBeatmapApiService.getBeatMap(bid);
+    constructor(pool: Pool, beatmapApiService: OsuBeatmapApiService) : this(
+        pool.name,
+        getModMapFromPool(pool),
+        beatmapApiService
+    ) {
+        this.id = pool.id
+    }
 
-                beatmaps.add(b);
+    fun sortModPools() {
+        // modPools = modPools.stream().sorted(Comparator.comparingInt(s -> s.getMod().getPriority())).toList();
+    }
+
+    companion object {
+        private fun getModMapFromPool(pool: Pool): Map<String, List<Long>> {
+            return pool.categoryList.associate {
+                it.name to it.category.map { category -> category.bid }
             }
-
-            this.modPools.add(new ModPool(key, beatmaps));
-
-        });
-
-        if (! modPools.isEmpty() && ! modPools.getFirst().getBeatmaps().isEmpty()) {
-            firstMapSID = Objects.requireNonNull(
-                    modPools.getFirst().getBeatmaps()
-                            .getFirst().getBeatMapSet()).getBeatMapSetID();
         }
-    }
-
-    public MapPoolDto(Pool pool, OsuBeatmapApiService osuBeatmapApiService) {
-        this(pool.getName(), getModMapFromPool(pool), osuBeatmapApiService);
-        this.id = pool.getId();
-    }
-
-    private static Map<String, List<Long>> getModMapFromPool(Pool pool) {
-        Map<String, List<Long>> modBidMap = new LinkedHashMap<>();
-        pool.getCategoryList().forEach(group -> {
-            var mList = new ArrayList<Long>();
-            group.getCategory().forEach(category -> mList.add(category.bid()));
-            modBidMap.put(group.getName(), mList);
-        });
-        return modBidMap;
-    }
-
-    public void sortModPools() {
-        modPools = modPools.stream().sorted(Comparator.comparingInt(s -> s.getMod().getPriority())).toList();
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Long getFirstMapSID() {
-        return firstMapSID;
-    }
-
-    public void setFirstMapSID(Long firstMapSID) {
-        this.firstMapSID = firstMapSID;
-    }
-
-    public List<ModPool> getModPools() {
-        return modPools;
-    }
-
-    public void setModPools(List<ModPool> modPools) {
-        this.modPools = modPools;
     }
 }

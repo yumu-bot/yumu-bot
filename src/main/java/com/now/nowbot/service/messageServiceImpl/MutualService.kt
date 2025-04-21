@@ -73,7 +73,7 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
 
     private fun name2Mutual(name: String): MutualParam {
         try {
-            val id = userApiService.getOsuId(name)
+            val id = userApiService.getOsuID(name)
             return MutualParam(id, null, name)
         } catch (e: Exception) {
             return MutualParam(null, null, "$name : 找不到玩家或网络错误！")

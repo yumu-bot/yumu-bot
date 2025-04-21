@@ -105,7 +105,7 @@ class UUBAService(
             val name = param.user.name
             var id: Long = 0
             try {
-                id = userApiService.getOsuId(name)
+                id = userApiService.getOsuID(name)
                 bu = bindDao.getBindUserFromOsuID(id)
             } catch (e: BindException) {
                 // 构建只有 data + id 的对象, bindUser == null

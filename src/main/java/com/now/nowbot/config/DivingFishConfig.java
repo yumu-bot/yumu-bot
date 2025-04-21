@@ -12,6 +12,7 @@ public class DivingFishConfig {
      * 接口路径, 一般不用改
      */
     public static final String url   = "https://www.diving-fish.com/";
+
     public static final String token = "BMurCyOaA0cfist6VpNvb7ZXK5h1noSE";
 
     // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai

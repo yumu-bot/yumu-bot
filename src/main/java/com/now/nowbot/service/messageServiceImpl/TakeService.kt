@@ -53,7 +53,7 @@ import kotlin.math.floor
         val name = user.username
 
         // 提前跳出
-        if (user.badges?.isNotEmpty() == true) {
+        if (user.badges.isNotEmpty()) {
             if (user.rankedCount > 0) {
                 if (param.isMyself) {
                     event.reply("别人不能占据你的玩家名，因为你已经拥有上架 (ranked) 谱面，并且已经获取主页奖牌 (badges)。")
@@ -83,8 +83,8 @@ import kotlin.math.floor
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, user.username)
         }
 
-        val pc = (micro?.rulesets?.osu?.playCount ?: 0L) + (micro?.rulesets?.taiko?.playCount
-            ?: 0L) + (micro?.rulesets?.fruits?.playCount ?: 0L) + (micro?.rulesets?.mania?.playCount ?: 0L)
+        val pc = (micro.rulesets?.osu?.playCount ?: 0L) + (micro.rulesets?.taiko?.playCount
+            ?: 0L) + (micro.rulesets?.fruits?.playCount ?: 0L) + (micro.rulesets?.mania?.playCount ?: 0L)
 
         val plus = if (pc == 0L) {
             180L
@@ -100,7 +100,7 @@ import kotlin.math.floor
             val actions = rulesets.map {
                 return@map AsyncMethodExecutor.Supplier<Pair<Int, OffsetDateTime>> {
                     val lastMonth =
-                        userApiService.getPlayerInfo(user.userID, it).monthlyPlaycounts.lastOrNull()?.start_date
+                        userApiService.getOsuUser(user.userID, it).monthlyPlaycounts.lastOrNull()?.startDate
                             ?: OffsetDateTime.MIN.format(formatter2)
 
                     return@Supplier it.modeValue.toInt() to
