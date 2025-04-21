@@ -32,7 +32,7 @@ import java.util.function.Function
         configurer.defaultCodecs().maxInMemorySize(20 * 1024 * 1024)
     }
 
-    @Bean("divingFishApiWebClient") fun divingFishApiWebClient(builder: WebClient.Builder, config: DivingFishConfig): WebClient {
+    @Bean("divingFishApiWebClient") fun divingFishApiWebClient(builder: WebClient.Builder, divingFishConfig: DivingFishConfig): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider")
             .maxIdleTime(Duration.ofSeconds(30))
             .maxConnections(200)
@@ -58,7 +58,7 @@ import java.util.function.Function
             .defaultHeaders { headers: HttpHeaders ->
                 headers.contentType = MediaType.APPLICATION_JSON
                 headers.accept = listOf(MediaType.APPLICATION_JSON)
-            }.baseUrl(config.url)
+            }.baseUrl(divingFishConfig.url!!)
             .codecs { codecs: ClientCodecConfigurer -> codecs.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }
             .filter { request: ClientRequest, next: ExchangeFunction ->
                 this.doRetryFilter(
