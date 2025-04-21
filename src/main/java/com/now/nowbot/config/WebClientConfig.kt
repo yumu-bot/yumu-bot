@@ -11,7 +11,6 @@ import org.springframework.http.MediaType
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.http.codec.ClientCodecConfigurer
 import org.springframework.http.codec.ServerCodecConfigurer
-import org.springframework.http.codec.json.Jackson2JsonDecoder
 import org.springframework.http.codec.json.Jackson2JsonEncoder
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.config.WebFluxConfigurer
@@ -33,7 +32,7 @@ import java.util.function.Function
     }
 
     @Bean("divingFishApiWebClient") fun divingFishApiWebClient(builder: WebClient.Builder, divingFishConfig: DivingFishConfig): WebClient {
-        val connectionProvider = ConnectionProvider.builder("connectionProvider")
+        val connectionProvider = ConnectionProvider.builder("connectionProvider2")
             .maxIdleTime(Duration.ofSeconds(30))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
@@ -41,14 +40,9 @@ import java.util.function.Function
         val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
             .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
         val connector = ReactorClientHttpConnector(httpClient)
-        val strategies = ExchangeStrategies.builder().codecs { clientDefaultCodecsConfigurer: ClientCodecConfigurer ->
-                clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(
+        val strategies = ExchangeStrategies.builder().codecs {
+                it.defaultCodecs().jackson2JsonEncoder(
                     Jackson2JsonEncoder(
-                        JacksonUtil.mapper, MediaType.APPLICATION_JSON
-                    )
-                )
-                clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonDecoder(
-                    Jackson2JsonDecoder(
                         JacksonUtil.mapper, MediaType.APPLICATION_JSON
                     )
                 )
@@ -59,11 +53,8 @@ import java.util.function.Function
                 headers.contentType = MediaType.APPLICATION_JSON
                 headers.accept = listOf(MediaType.APPLICATION_JSON)
             }.baseUrl(divingFishConfig.url!!)
-            .codecs { codecs: ClientCodecConfigurer -> codecs.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }
-            .filter { request: ClientRequest, next: ExchangeFunction ->
-                this.doRetryFilter(
-                    request, next
-                )
+            .codecs { it.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }
+            .filter { request: ClientRequest, next: ExchangeFunction -> this.doRetryFilter(request, next)
             }.build()
     }
 
@@ -87,11 +78,6 @@ import java.util.function.Function
         val strategies = ExchangeStrategies.builder().codecs { clientDefaultCodecsConfigurer: ClientCodecConfigurer ->
                 clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(
                     Jackson2JsonEncoder(
-                        JacksonUtil.mapper, MediaType.APPLICATION_JSON
-                    )
-                )
-                clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonDecoder(
-                    Jackson2JsonDecoder(
                         JacksonUtil.mapper, MediaType.APPLICATION_JSON
                     )
                 )
@@ -149,20 +135,13 @@ import java.util.function.Function
             .build()
         val httpClient = HttpClient.create(connectionProvider).responseTimeout(Duration.ofSeconds(30))
         val connector = ReactorClientHttpConnector(httpClient)
-        val strategies = ExchangeStrategies.builder().codecs { clientDefaultCodecsConfigurer: ClientCodecConfigurer ->
-                clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(
-                    Jackson2JsonEncoder(
-                        JacksonUtil.mapper, MediaType.APPLICATION_JSON
-                    )
-                )
-                clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonDecoder(
-                    Jackson2JsonDecoder(
-                        JacksonUtil.mapper, MediaType.APPLICATION_JSON
-                    )
-                )
+        val strategies = ExchangeStrategies.builder().codecs {
+            it.defaultCodecs().jackson2JsonEncoder(
+                Jackson2JsonEncoder(JacksonUtil.mapper, MediaType.APPLICATION_JSON)
+            )
             }.build()
         return builder.clientConnector(connector).exchangeStrategies(strategies)
-            .codecs { codecs: ClientCodecConfigurer -> codecs.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }.build()
+            .codecs { it.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) } .build()
     }
 
     companion object {
