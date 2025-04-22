@@ -1,5 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.mikuac.shiro.core.BotContainer
+import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -11,14 +13,19 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl.CoverType
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
 import okhttp3.internal.toLongOrDefault
 import org.springframework.stereotype.Service
 import java.net.URI
 
-@Service("GET_COVER") class GetCoverService(private val beatmapApiService: OsuBeatmapApiService, private val beatmapMirrorApiService: OsuBeatmapMirrorApiService) :
-    MessageService<GetCoverService.CoverParam>, TencentMessageService<GetCoverService.CoverParam> {
+@Service("GET_COVER") class GetCoverService(
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val beatmapMirrorApiService: OsuBeatmapMirrorApiService,
+    private val botContainer: BotContainer,
+    private val newbieConfig: NewbieConfig
+) : MessageService<GetCoverService.CoverParam>, TencentMessageService<GetCoverService.CoverParam> {
     @JvmRecord data class CoverParam(val type: CoverType, val bids: List<Long>)
 
     @Throws(Throwable::class) override fun isHandle(
@@ -64,18 +71,56 @@ import java.net.URI
         val messageChains: List<MessageChain>
 
         if (param.type == CoverType.RAW) {
-            messageChains = listOf(MessageChainBuilder().addText("抱歉，应急运行时是没有 getBG 服务的呢...").build())
+            // messageChains = listOf(MessageChainBuilder().addText("抱歉，应急运行时是没有 getBG 服务的呢...").build())
 
-            //messageChains = getMessageChains(param.bids, beatmapMirrorApiService)
+            messageChains = getMessageChains(param.bids, beatmapMirrorApiService)
+
+            event.replyMessageChainsWithOfficialBot(messageChains, botContainer, newbieConfig)
         } else {
             val beatmaps = getBeatMaps(param.bids, beatmapApiService)
             messageChains = getMessageChains(param.type, beatmaps)
-        }
 
-        event.replyMessageChains(messageChains)
+            event.replyMessageChains(messageChains)
+        }
     }
 
     companion object {
+        private fun MessageEvent.replyMessageChainsWithOfficialBot(messages: List<MessageChain>, botContainer: BotContainer, newbieConfig: NewbieConfig) {
+            val groupID = this.subject.id
+
+            val yumu = botContainer.robots[newbieConfig.yumuBot]
+            val hydrant = botContainer.robots[newbieConfig.hydrantBot]
+
+            if (yumu != null && yumu.groupList.data.find { groupID == it.groupId } != null) {
+                if (messages.isEmpty()) return
+
+                else if (messages.size == 1) {
+                    yumu.sendGroupMsg(groupID, messages.first().rawMessage, true)
+                } else {
+                    for (msg in messages) {
+                        yumu.sendGroupMsg(groupID, msg.rawMessage, true)
+                        Thread.sleep(1000L)
+                    }
+                }
+
+            } else if (hydrant != null && hydrant.groupList.data.find { groupID == it.groupId } != null) {
+                if (messages.isEmpty()) return
+
+                else if (messages.size == 1) {
+                    hydrant.sendGroupMsg(groupID, messages.first().rawMessage, true)
+                } else {
+                    for (msg in messages) {
+                        hydrant.sendGroupMsg(groupID, msg.rawMessage, true)
+                        Thread.sleep(1000L)
+                    }
+                }
+            } else if (yumu == null && hydrant == null) {
+                throw TipsException("当前能发送原图的机器人账号都不在线呢...")
+            } else {
+                throw TipsException("这个群没有可以发送原图的机器人账号呢...")
+            }
+        }
+
         private fun MessageEvent.replyMessageChains(messages: List<MessageChain>) {
             if (messages.isEmpty()) return
             else if (messages.size == 1) {
