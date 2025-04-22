@@ -1,6 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.mikuac.shiro.core.BotContainer
+import com.mikuac.shiro.enums.MsgTypeEnum
+import com.mikuac.shiro.model.ArrayMsg
 import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.qq.event.MessageEvent
@@ -107,10 +109,10 @@ import java.net.URI
                 if (messages.isEmpty()) return
 
                 else if (messages.size == 1) {
-                    hydrant.sendGroupMsg(groupID, messages.first().rawMessage, true)
+                    hydrant.sendGroupMsg(groupID, messages.first().toArrayMsg(), true)
                 } else {
                     for (msg in messages) {
-                        hydrant.sendGroupMsg(groupID, msg.rawMessage, true)
+                        hydrant.sendGroupMsg(groupID, msg.toArrayMsg(), true)
                         Thread.sleep(1000L)
                     }
                 }
@@ -119,6 +121,15 @@ import java.net.URI
             } else {
                 throw TipsException("这个群没有可以发送原图的机器人账号呢...")
             }
+        }
+
+        private fun MessageChain.toArrayMsg(): List<ArrayMsg> {
+            val msg = ArrayMsg()
+
+            msg.type = MsgTypeEnum.image
+            msg.data = mapOf("url" to this.messageList.first.toString())
+
+            return listOf(msg)
         }
 
         private fun MessageEvent.replyMessageChains(messages: List<MessageChain>) {
