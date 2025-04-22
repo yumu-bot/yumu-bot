@@ -1,13 +1,13 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.mikuac.shiro.core.BotContainer
-import com.mikuac.shiro.enums.MsgTypeEnum
-import com.mikuac.shiro.model.ArrayMsg
 import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.ImageMessage
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
+import com.now.nowbot.qq.onebot.contact.Contact
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -70,75 +70,66 @@ import java.net.URI
     }
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: CoverParam) {
-        val messageChains: List<MessageChain>
+        val chain: MessageChain
 
         if (param.type == CoverType.RAW) {
             // messageChains = listOf(MessageChainBuilder().addText("抱歉，应急运行时是没有 getBG 服务的呢...").build())
 
-            messageChains = getMessageChains(param.bids, beatmapMirrorApiService)
+            chain = getMessageChain(param.bids, beatmapMirrorApiService)
 
-            event.replyMessageChainsWithOfficialBot(messageChains, botContainer, newbieConfig)
+            event.replyMessageChainsWithOfficialBot(chain, botContainer, newbieConfig)
         } else {
             val beatmaps = getBeatMaps(param.bids, beatmapApiService)
-            messageChains = getMessageChains(param.type, beatmaps)
+            chain = getMessageChain(param.type, beatmaps)
 
-            event.replyMessageChains(messageChains)
+            event.replyMessageChain(chain)
         }
     }
 
     companion object {
-        private fun MessageEvent.replyMessageChainsWithOfficialBot(messages: List<MessageChain>, botContainer: BotContainer, newbieConfig: NewbieConfig) {
+        private fun MessageEvent.replyMessageChainsWithOfficialBot(chain: MessageChain, botContainer: BotContainer, newbieConfig: NewbieConfig) {
             val groupID = this.subject.id
+            val messages = chain.messageList
 
             val yumu = botContainer.robots[newbieConfig.yumuBot]
             val hydrant = botContainer.robots[newbieConfig.hydrantBot]
 
-            if (yumu != null && yumu.groupList.data.find { groupID == it.groupId } != null) {
-                if (messages.isEmpty()) return
-
-                else if (messages.size == 1) {
-                    yumu.sendGroupMsg(groupID, messages.first().rawMessage, true)
-                } else {
-                    for (msg in messages) {
-                        yumu.sendGroupMsg(groupID, msg.rawMessage, true)
-                        Thread.sleep(1000L)
-                    }
-                }
-
+            val contact: Contact = if (yumu != null && yumu.groupList.data.find { groupID == it.groupId } != null) {
+                Contact(yumu, groupID)
             } else if (hydrant != null && hydrant.groupList.data.find { groupID == it.groupId } != null) {
-                if (messages.isEmpty()) return
-
-                else if (messages.size == 1) {
-                    hydrant.sendGroupMsg(groupID, messages.first().toArrayMsg(), true)
-                } else {
-                    for (msg in messages) {
-                        hydrant.sendGroupMsg(groupID, msg.toArrayMsg(), true)
-                        Thread.sleep(1000L)
-                    }
-                }
+                Contact(hydrant, groupID)
             } else if (yumu == null && hydrant == null) {
                 throw TipsException("当前能发送原图的机器人账号都不在线呢...")
             } else {
                 throw TipsException("这个群没有可以发送原图的机器人账号呢...")
             }
-        }
 
-        private fun MessageChain.toArrayMsg(): List<ArrayMsg> {
-            val msg = ArrayMsg()
-
-            msg.type = MsgTypeEnum.image
-            msg.data = mapOf("url" to this.messageList.first.toString())
-
-            return listOf(msg)
-        }
-
-        private fun MessageEvent.replyMessageChains(messages: List<MessageChain>) {
             if (messages.isEmpty()) return
-            else if (messages.size == 1) {
-                this.reply(messages.first())
+            else if (messages.size <= 20) {
+                contact.sendMessage(chain)
             } else {
-                for (msg in messages) {
-                    this.reply(msg)
+                for (msg in messages.chunked(20)) {
+                    val b = MessageChainBuilder()
+                    msg.filterIsInstance<ImageMessage>().forEach { b.addImage(it.data) }
+
+                    contact.sendMessage(b.build())
+                    Thread.sleep(1000L)
+                }
+            }
+        }
+
+        private fun MessageEvent.replyMessageChain(chain: MessageChain) {
+            val messages = chain.messageList
+
+            if (messages.isEmpty()) return
+            else if (messages.size <= 20) {
+                this.reply(chain)
+            } else {
+                for (msg in messages.chunked(20)) {
+                    val b = MessageChainBuilder()
+                    msg.filterIsInstance<ImageMessage>().forEach { b.addImage(it.data) }
+
+                    this.reply(b.build())
                     Thread.sleep(1000L)
                 }
             }
@@ -162,45 +153,29 @@ import java.net.URI
         }
 
         // 获取全幅
-        private fun getMessageChains(bids: List<Long>, beatmapMirrorApiService: OsuBeatmapMirrorApiService): List<MessageChain> {
-            val list = mutableListOf<MessageChain>()
-            var builder = MessageChainBuilder()
+        private fun getMessageChain(bids: List<Long>, beatmapMirrorApiService: OsuBeatmapMirrorApiService): MessageChain {
+            val builder = MessageChainBuilder()
 
-            for (i in bids.indices) {
-                val b = bids[i]
-
+            bids.forEach {
                 val path = try {
-                    beatmapMirrorApiService.getFullBackgroundPath(b)
+                    beatmapMirrorApiService.getFullBackgroundPath(it)
                 } catch (e: Exception) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "完整背景")
                 }
 
                 val imageStr = path?.toString() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "完整背景")
 
-                // qq 一次性只能发 20 张图
-                if ((i >= 20) && (i % 20 == 0)) {
-                    list.add(builder.build())
-                    builder = MessageChainBuilder()
-                }
-
                 builder.addImage(imageStr)
             }
 
-            if (builder.isNotEmpty) {
-                list.add(builder.build())
-            }
-
-            return list
+            return builder.build()
         }
 
-        private fun getMessageChains(type: CoverType, beatmaps: List<BeatMap>): List<MessageChain> {
-            val list = mutableListOf<MessageChain>()
-            var builder = MessageChainBuilder()
+        private fun getMessageChain(type: CoverType, beatmaps: List<BeatMap>): MessageChain {
+            val builder = MessageChainBuilder()
 
-            for (i in beatmaps.indices) {
-                val b = beatmaps[i]
-
-                val covers = b.beatMapSet!!.covers
+            beatmaps.forEach {
+                val covers = it.beatMapSet!!.covers
                 val url = when (type) {
                     CoverType.LIST -> covers.list
                     CoverType.LIST_2X -> covers.list2x
@@ -211,22 +186,11 @@ import java.net.URI
                     CoverType.COVER_2X -> covers.cover2x
                     else -> covers.cover
                 }
-                val imageUri = URI.create(url)
 
-                // qq 一次性只能发 20 张图
-                if ((i >= 20) && (i % 20 == 0)) {
-                    list.add(builder.build())
-                    builder = MessageChainBuilder()
-                }
-
-                builder.addImage(imageUri.toURL())
+                builder.addImage(URI.create(url).toURL())
             }
 
-            if (builder.isNotEmpty) {
-                list.add(builder.build())
-            }
-
-            return list
+            return builder.build()
         }
     }
 
@@ -235,15 +199,15 @@ import java.net.URI
     }
 
     override fun reply(event: MessageEvent, param: CoverParam): MessageChain {
-        val messageChains: List<MessageChain>
+        val chain: MessageChain
 
         if (param.type == CoverType.RAW) {
-            messageChains = getMessageChains(param.bids, beatmapMirrorApiService)
+            chain = getMessageChain(param.bids, beatmapMirrorApiService)
         } else {
             val beatmaps = getBeatMaps(param.bids, beatmapApiService)
-            messageChains = getMessageChains(param.type, beatmaps)
+            chain = getMessageChain(param.type, beatmaps)
         }
 
-        return messageChains.first()
+        return chain
     }
 }
