@@ -109,9 +109,7 @@ import java.net.URI
                 contact.sendMessage(chain)
             } else {
                 for (msg in messages.chunked(20)) {
-                    val b = MessageChainBuilder()
-                    msg.forEach{ b.addMessage(it) }
-                    contact.sendMessage(b.build())
+                    contact.sendMessage(MessageChain(msg))
                     Thread.sleep(1000L)
                 }
             }
