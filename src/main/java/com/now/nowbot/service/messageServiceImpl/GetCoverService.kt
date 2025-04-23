@@ -7,7 +7,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.ImageMessage
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
-import com.now.nowbot.qq.onebot.contact.Contact
+import com.now.nowbot.qq.onebot.contact.Group
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -94,10 +94,10 @@ import java.net.URI
             val yumu = botContainer.robots[newbieConfig.yumuBot]
             val hydrant = botContainer.robots[newbieConfig.hydrantBot]
 
-            val contact: Contact = if (yumu != null && yumu.groupList.data.find { groupID == it.groupId } != null) {
-                Contact(yumu, groupID)
-            } else if (hydrant != null && hydrant.groupList.data.find { groupID == it.groupId } != null) {
-                Contact(hydrant, groupID)
+            val contact: Group = if (yumu != null && yumu.groupList.data.any { groupID == it.groupId } ) {
+                Group(yumu, groupID, "yumu")
+            } else if (hydrant != null && hydrant.groupList.data.any { groupID == it.groupId } ) {
+                Group(hydrant, groupID, "yumu")
             } else if (yumu == null && hydrant == null) {
                 throw TipsException("当前能发送原图的机器人账号都不在线呢...")
             } else {
@@ -110,8 +110,7 @@ import java.net.URI
             } else {
                 for (msg in messages.chunked(20)) {
                     val b = MessageChainBuilder()
-                    msg.filterIsInstance<ImageMessage>().forEach { b.addImage(it.data) }
-
+                    msg.forEach{ b.addMessage(it) }
                     contact.sendMessage(b.build())
                     Thread.sleep(1000L)
                 }
