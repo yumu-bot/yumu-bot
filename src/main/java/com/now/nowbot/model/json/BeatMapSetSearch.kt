@@ -15,7 +15,7 @@ class BeatMapSetSearch {
 
     @JsonProperty("result_count") var resultCount: Int = 0
 
-    @JsonProperty("beatmapsets") var beatmapSets: MutableList<BeatMapSet> = mutableListOf()
+    @JsonProperty("beatmapsets") var beatmapSets: List<BeatMapSet> = listOf()
 
     @JsonProperty("total") var total: Int = 0
 

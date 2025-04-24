@@ -89,14 +89,13 @@ class BPFixService(
     override fun reply(event: MessageEvent, param: BPFixParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
 
     fun fix(playerPP: Double, bestsMap: Map<Int, LazerScore>): Map<String, Any>? {
-        val bpList = mutableListOf<LazerScore>()
         val beforeBpSumAtomic = AtomicReference(0.0)
 
-        bestsMap.forEach { (index: Int, score: LazerScore) ->
+        val fixedBests = bestsMap.map { (index, score) ->
             beforeBpSumAtomic.updateAndGet { it + (score.weight?.PP ?: 0.0) }
             beatmapApiService.applyBeatMapExtendFromDataBase(score)
 
-            val max = score.totalHit
+            val max = score.beatMap.maxCombo ?: 1
             val combo = score.maxCombo
             val stat = score.statistics
             val ok = stat.ok
@@ -115,15 +114,11 @@ class BPFixService(
 
             // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
             if (isChoke || has1pMiss) {
-                bpList.add(
-                    initFixScore(score, index)
-                )
+                initFixScore(score, index)
             } else {
-                bpList.add(score)
+                score
             }
-        }
-
-        bpList.sortByDescending {
+        }.sortedByDescending {
             val pp = if (it is LazerScoreWithFcPP && it.fcPP > 0) {
                 it.fcPP
             } else {
@@ -136,12 +131,12 @@ class BPFixService(
         val afterBpSumAtomic = AtomicReference(0.0)
 
         // 这里的 i 是重排过后的，从 0 开始
-        bpList.forEachIndexed { i, score ->
-            val weight: Double = 0.95.pow(i)
+        fixedBests.forEachIndexed { index, score ->
+            val weight: Double = 0.95.pow(index)
             val pp: Double
             if (score is LazerScoreWithFcPP) {
                 pp = score.fcPP
-                score.indexAfter = i + 1
+                score.indexAfter = index + 1
             } else {
                 pp = score.PP ?: 0.0
             }
@@ -152,7 +147,7 @@ class BPFixService(
         val afterBpSum = afterBpSumAtomic.get()
         val newPlayerPP = (playerPP + afterBpSum - beforeBpSum)
 
-        val scoreList = bpList.filterIsInstance<LazerScoreWithFcPP>()
+        val scoreList = fixedBests.filterIsInstance<LazerScoreWithFcPP>()
 
         if (scoreList.isEmpty()) return null
 

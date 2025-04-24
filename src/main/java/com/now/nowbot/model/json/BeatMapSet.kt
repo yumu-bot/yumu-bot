@@ -322,4 +322,14 @@ class BeatMapSet {
     val previewName: String
         get() = this.artist + " - " + this.title + " (" + this.creator + ") [" + this.beatMapSetID + "]"
 
+    override fun equals(other: Any?): Boolean {
+        if (other !is BeatMapSet) return false
+
+        return other.beatMapSetID == this.beatMapSetID
+    }
+
+    override fun hashCode(): Int {
+        return this.beatMapSetID.hashCode()
+    }
+
 }

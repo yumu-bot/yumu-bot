@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.max
 
 @Service("I_MAPPER") class IMapperService(
     private val userApiService: OsuUserApiService,
@@ -85,7 +86,7 @@ import java.util.concurrent.atomic.AtomicBoolean
             )
 
             val search = beatmapApiService.searchBeatMapSet(query, 10)
-            val result = search.beatmapSets
+            val result1 = search.beatmapSets
 
             // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
             val query2 = mapOf(
@@ -95,29 +96,27 @@ import java.util.concurrent.atomic.AtomicBoolean
             val search2 = beatmapApiService.searchBeatMapSet(query2, 10)
             val result2 = search2.beatmapSets
                 .filter { it.beatMapSetID != user.userID && (it.beatMaps?.all { that -> that.beatMapID != user.id } ?: true) }
-                .toMutableList()
 
-            result2.removeIf { that -> result.any { it.beatMapSetID == that.beatMapSetID } }
+            val result = (result1.toHashSet() + result2.toHashSet()).asSequence()
 
-            result.addAll(result2)
+            val activity: List<ActivityEvent> =
+                userApiService.getUserRecentActivity(user.userID, 0, 100).filter { it.isMapping }
 
-            val activity: List<ActivityEvent>
-            val mappingActivity: MutableList<ActivityEvent> = ArrayList()
+            val mappingActivity: List<ActivityEvent> = try {
+                activity.mapIndexed { i, it ->
+                    val before = activity[max(0, i - 1)]
 
-            try {
-                activity = userApiService.getUserRecentActivity(user.userID, 0, 100)
-
-                activity.filter { it.isMapping }.forEach {
-                    if (mappingActivity.isEmpty()) {
-                        mappingActivity += it
-                        return@forEach
+                    if (it != before || i == 0) {
+                        it
+                    } else {
+                        null
                     }
-                    if (it == mappingActivity.last()) return@forEach
-                    mappingActivity += it
-                }
+                }.filterNotNull()
             } catch (ignored: NoSuchElementException) {
+                listOf()
             } catch (e: Exception) {
                 log.error("谱师信息：筛选出错", e)
+                listOf()
             }
 
             val mostPopularBeatmap =
@@ -129,31 +128,19 @@ import java.util.concurrent.atomic.AtomicBoolean
             val mostRecentRankedBeatmap = result.sortedByDescending { it.rankedDate?.toEpochSecond() }
                 .find { it.hasLeaderBoard && user.userID == it.creatorID }
 
-            // 这个问题正好是上面引起的，就注释掉了
-            /*
-
-            if (mostRecentRankedBeatmap == null && user.rankedCount > 0) {
-                try {
-                    val queryAlt =
-                        mapOf("q" to user.userID.toString(), "sort" to "ranked_desc", "s" to "any", "page" to 1)
-                    val searchAlt = beatmapApiService.searchBeatMapSet(queryAlt)
-                    mostRecentRankedBeatmap = searchAlt.beatmapSets.find { it.hasLeaderBoard }
-                } catch (ignored: Exception) {
-                }
-            }
-             */
-
             val mostRecentRankedGuestDiff = result.sortedByDescending { it.rankedDate?.toEpochSecond() }
                 .find { it.hasLeaderBoard && user.userID != it.creatorID }
 
             val beatMaps = result.flatMap { it.beatMaps ?: emptyList() }
 
             val diffArr = IntArray(8)
+
             run {
-                val diffStar = beatMaps.filter { it.mapperID == user.userID }.map { it.starRating }.toDoubleArray()
+                val diffStar = beatMaps.filter { it.mapperID == user.userID }.map { it.starRating }
                 val starMaxBoundary = doubleArrayOf(2.0, 2.8, 4.0, 5.3, 6.5, 8.0, 10.0, Double.MAX_VALUE)
+
                 for (d in diffStar) {
-                    for (i in 0..7) {
+                    for (i in starMaxBoundary.indices) {
                         if (d <= starMaxBoundary[i]) {
                             diffArr[i]++
                             break
@@ -162,62 +149,55 @@ import java.util.concurrent.atomic.AtomicBoolean
                 }
             }
 
-            var genre: IntArray
+            val keywords = arrayOf(
+                "unspecified",
+                "video game",
+                "anime",
+                "rock",
+                "pop",
+                "other",
+                "novelty",
+                "hip hop",
+                "electronic",
+                "metal",
+                "classical",
+                "folk",
+                "jazz"
+            )
+
+            val genre = IntArray(keywords.size)
+
             run {
-                val keywords = arrayOf(
-                    "unspecified",
-                    "video game",
-                    "anime",
-                    "rock",
-                    "pop",
-                    "other",
-                    "novelty",
-                    "hip hop",
-                    "electronic",
-                    "metal",
-                    "classical",
-                    "folk",
-                    "jazz"
-                )
-                genre = IntArray(keywords.size)
                 val hasAnyGenre = AtomicBoolean(false)
 
                 //逻辑应该是先每张图然后再遍历12吧？
-                if (result.isNotEmpty()) {
-                    result.forEach {
-                        for (i in 1 until keywords.size) {
-                            val keyword = keywords[i]
+                result.forEach {
+                    for (i in 1 until keywords.size) {
+                        val keyword = keywords[i]
 
-                            if ((it.tags ?: "").lowercase(Locale.getDefault()).contains(keyword)) {
-                                genre[i]++
-                                hasAnyGenre.set(true)
-                            }
-                        } //0是实在找不到 tag 的时候所赋予的默认值
-                        if (!hasAnyGenre.get()) {
-                            genre[0]++
+                        if ((it.tags ?: "").lowercase(Locale.getDefault()).contains(keyword)) {
+                            genre[i]++
+                            hasAnyGenre.set(true)
                         }
-                        hasAnyGenre.set(false)
+                    } //0是实在找不到 tag 的时候所赋予的默认值
+                    if (!hasAnyGenre.get()) {
+                        genre[0]++
                     }
+                    hasAnyGenre.set(false)
                 }
             }
 
-            var favorite = 0
-            var playcount = 0
-            if (result.isNotEmpty()) {
-                for (v in result) {
-                    if (v.creatorID == user.userID) {
-                        favorite += v.favouriteCount
-                        playcount += v.playCount.toInt()
-                    }
-                }
-            }
+            val favorite = result.filter { it.creatorID == user.userID }.sumOf { it.favouriteCount }
+            val playcount = result.filter { it.creatorID == user.userID }.sumOf { it.playCount }
 
             val lengthArr = IntArray(8)
+
             run {
-                val lengthAll = beatMaps.filter { it.mapperID == user.userID }.map { it.totalLength }.toIntArray()
+                val lengthAll = beatMaps.filter { it.mapperID == user.userID }.map { it.totalLength }
                 val lengthMaxBoundary = intArrayOf(60, 100, 140, 180, 220, 260, 300, Int.MAX_VALUE)
+
                 for (f in lengthAll) {
-                    for (i in 0..7) {
+                    for (i in lengthMaxBoundary.indices) {
                         if (f <= lengthMaxBoundary[i]) {
                             lengthArr[i]++
                             break

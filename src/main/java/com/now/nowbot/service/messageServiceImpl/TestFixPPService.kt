@@ -84,7 +84,7 @@ import java.util.regex.Matcher
             for (bp in bps) {
                 beatmapApiService.applyBeatMapExtendFromDataBase(bp)
 
-                val max = bp.totalHit
+                val max = bp.beatMap.maxCombo ?: 1
                 val combo = bp.maxCombo
 
                 val miss = bp.statistics.miss
