@@ -92,7 +92,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
             do {
                 delta += 500
                 surrounding = ppMinusDao.getSurroundingPPMinus(user, bests, delta)
-            } while (delta < 3000 || surrounding.size >= 50)
+            } while (delta < 3000 && surrounding.size < 50)
 
             return@run surrounding
         }
