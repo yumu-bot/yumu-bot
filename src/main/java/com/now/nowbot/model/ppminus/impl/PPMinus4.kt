@@ -8,28 +8,35 @@ import com.now.nowbot.util.DataUtil
 import kotlin.math.*
 
 abstract class PPMinus4 {
-    abstract var values: List<Double>
+    abstract val values: List<Double>
+
+    abstract val count: Int
+
+    abstract val delta: Int
 
     companion object {
         fun getInstance(
             user: OsuUser,
             bests: List<LazerScore>,
             surrounding: List<PPMinusLite>,
+            delta: Int = 0,
             mode: OsuMode = OsuMode.DEFAULT
         ): PPMinus4? {
             return when (OsuMode.getMode(mode, user.currentOsuMode)) {
-                OsuMode.OSU -> PPMinus4Osu(user, bests, surrounding)
-                OsuMode.TAIKO -> PPMinus4Osu(user, bests, surrounding)
-                OsuMode.CATCH -> PPMinus4Osu(user, bests, surrounding)
-                OsuMode.MANIA -> PPMinus4Mania(user, bests, surrounding)
+                OsuMode.OSU -> PPMinus4Standard(user, bests, surrounding, delta)
+                OsuMode.TAIKO -> PPMinus4Standard(user, bests, surrounding, delta)
+                OsuMode.CATCH -> PPMinus4Standard(user, bests, surrounding, delta)
+                OsuMode.MANIA -> PPMinus4Mania(user, bests, surrounding, delta)
                 else -> null
             }
         }
     }
 }
 
-class PPMinus4Osu(user: OsuUser, bests: List<LazerScore>, surrounding: List<PPMinusLite>) : PPMinus4() {
-    override var values: List<Double>
+class PPMinus4Standard(user: OsuUser, bests: List<LazerScore>, surrounding: List<PPMinusLite>, override val delta: Int) : PPMinus4() {
+    override val values: List<Double>
+
+    override val count: Int = surrounding.size
 
     init {
         val me = PPMinusLite().toLite(user, bests)
@@ -116,8 +123,10 @@ class PPMinus4Osu(user: OsuUser, bests: List<LazerScore>, surrounding: List<PPMi
     }
 }
 
-class PPMinus4Mania(user: OsuUser, bests: List<LazerScore>, surrounding: List<PPMinusLite>) : PPMinus4() {
-    override var values: List<Double>
+class PPMinus4Mania(user: OsuUser, bests: List<LazerScore>, surrounding: List<PPMinusLite>, override val delta: Int) : PPMinus4() {
+    override val values: List<Double>
+
+    override val count: Int = surrounding.size
 
     init {
         val me = PPMinusLite().toLite(user, bests)

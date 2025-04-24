@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.PPMinusDao
+import com.now.nowbot.entity.PPMinusLite
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
@@ -84,10 +85,20 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
             log.error("PP-：数据保存失败", e)
         }
 
-        val surrounding = ppMinusDao.getSurroundingPPMinus(user, bests, 3000)
+        var delta = 0
+        val surrounding = run {
+            var surrounding: List<PPMinusLite>
+
+            do {
+                delta += 500
+                surrounding = ppMinusDao.getSurroundingPPMinus(user, bests, delta)
+            } while (delta < 3000 || surrounding.size >= 50)
+
+            return@run surrounding
+        }
 
         try {
-            return PPMinus4.getInstance(user, bests, surrounding, user.currentOsuMode)!!
+            return PPMinus4.getInstance(user, bests, surrounding, delta, user.currentOsuMode)!!
         } catch (e: Exception) {
             log.error("PP-：数据计算失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Calculate, "PPM")
@@ -109,7 +120,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
         val statistics: Map<String, Any> = mapOf("is_vs" to (other != null), "mode_int" to mode.modeValue)
 
         val body = mutableMapOf(
-            "users" to cardA1s, "my" to cardB1, "stat" to statistics, "panel" to "PM4"
+            "users" to cardA1s, "my" to cardB1, "stat" to statistics, "count" to my.count, "delta" to my.delta, "panel" to "PM4"
         )
 
         if (cardB2 != null) body["others"] = cardB2

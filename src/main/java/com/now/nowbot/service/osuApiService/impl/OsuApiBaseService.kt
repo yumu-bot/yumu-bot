@@ -17,7 +17,6 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
-import org.springframework.util.StringUtils
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
@@ -43,7 +42,7 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
     init {
         var url: String
         oauthId = osuConfig.id
-        if (!StringUtils.hasText(osuConfig.callbackUrl.also { url = it })) {
+        if ((osuConfig.callbackUrl.also { url = it }).isEmpty()) {
             url = yumuConfig.publicUrl + osuConfig.callbackPath
         }
         redirectUrl = url
@@ -239,15 +238,21 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
                 future.completeExceptionally(e)
             }
 
-            if (e is WebClientResponseException.TooManyRequests) {
-                log.info("出现 429 错误")
-                toManyRequests = true
-                TASKS.add(this)
-            } else if (e is WebClientRequestException) {
-                retry++
-                TASKS.add(this)
-            } else {
-                future.completeExceptionally(e)
+            when (e) {
+                is WebClientResponseException.TooManyRequests -> {
+                    log.info("出现 429 错误")
+                    toManyRequests = true
+                    TASKS.add(this)
+                }
+
+                is WebClientRequestException -> {
+                    retry++
+                    TASKS.add(this)
+                }
+
+                else -> {
+                    future.completeExceptionally(e)
+                }
             }
         }
 
@@ -279,7 +284,7 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
 
     internal class RateLimiter(var rate: Int, max: Int) {
         var out: Int = -1
-        var semaphore: Semaphore = Semaphore(max)
+        private var semaphore: Semaphore = Semaphore(max)
 
         init {
             Thread.startVirtualThread { this.run() }
