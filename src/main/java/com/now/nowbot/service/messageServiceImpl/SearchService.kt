@@ -45,19 +45,16 @@ import java.util.regex.Pattern
     override fun HandleMessage(event: MessageEvent, param: SearchParam) {
         val query = constructQuery(param)
 
-        var result: BeatMapSetSearch = try {
-            beatmapApiService.searchBeatMapSet(query)
+        val result: BeatMapSetSearch = try {
+            val res = beatmapApiService.searchBeatMapSet(query)
+            if (res.beatmapSets.isEmpty()) {
+                beatmapApiService.searchBeatMapSet(constructQueryAlternative(param))
+            } else {
+                res
+            }
         } catch (e: Exception) {
             try {
                 beatmapApiService.searchBeatMapSet(constructQueryAlternative(param))
-            } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Result)
-            }
-        }
-
-        if (result.beatmapSets.isEmpty()) {
-            try {
-                result = beatmapApiService.searchBeatMapSet(constructQueryAlternative(param))
             } catch (e: Exception) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Result)
             }
@@ -166,11 +163,7 @@ import java.util.regex.Pattern
             sb.apply {
                 append("可能的结果:")
 
-                if (result.beatmapSets.size > 10) {
-                    result.beatmapSets = result.beatmapSets.subList(0, 10)
-                }
-
-                result.beatmapSets.forEach {
+                result.beatmapSets.take(10).forEach {
                     append("\n")
                     append(it.previewName)
                 }
@@ -184,18 +177,18 @@ import java.util.regex.Pattern
                 result.beatmapSets = result.beatmapSets.subList(0, 12)
             }
 
-            result.beatmapSets.sortByDescending { it.playCount }
-            result.beatmapSets.sortByDescending {
-                when (it.status) {
-                    "ranked" -> 6
-                    "approved" -> 5
-                    "qualified" -> 4
-                    "loved" -> 3
-                    "pending" -> 2
-                    "wip" -> 1
-                    else -> 0
+            result.beatmapSets = result.beatmapSets.take(12)
+                .sortedByDescending { it.playCount }.sortedByDescending {
+                    when (it.status) {
+                        "ranked" -> 6
+                        "approved" -> 5
+                        "qualified" -> 4
+                        "loved" -> 3
+                        "pending" -> 2
+                        "wip" -> 1
+                        else -> 0
+                    }
                 }
-            }
 
             val data = imageService.getPanel(result, "A8")
 
