@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.LoggerContext
 import com.now.nowbot.aop.OpenResource
 import com.now.nowbot.dao.OsuUserInfoDao
+import com.now.nowbot.dao.PPMinusDao
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
@@ -50,7 +51,8 @@ import kotlin.math.min
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
     private val discussionApiService: OsuDiscussionApiService,
-    private val infoDao: OsuUserInfoDao
+    private val infoDao: OsuUserInfoDao,
+    private val ppMinusDao: PPMinusDao
 ) {
 
     /**
@@ -115,18 +117,19 @@ import kotlin.math.min
 
         val mode = getMode(playMode)
 
-        val info = userApiService.getOsuUser(name.trim(), mode)
-        val bplist = scoreApiService.getBestScores(info.userID, mode)
-        val ppm = PPMinus.getInstance(mode, info, bplist)
-        if (ppm == null) {
-            throw RuntimeException("PPM：API 异常")
-        } else {
-            val data = imageService.getPanelB1(info, mode, ppm)
+        val me = userApiService.getOsuUser(name.trim(), mode)
+
+        val ppm4 = PPMinusService.getPPMinus4(me, scoreApiService, ppMinusDao)
+
+        try {
+            val data = imageService.getPanel(PPMinusService.getPPM4Body(me, null, ppm4, null, mode), "B1")
             return ResponseEntity(
                 data, getImageHeader(
                     "${name.trim()}-pm.jpg", data.size
                 ), HttpStatus.OK
             )
+        } catch (e: Exception) {
+            throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PPM4").message)
         }
     }
 
@@ -150,21 +153,18 @@ import kotlin.math.min
 
         mode = getMode(playMode, user1.currentOsuMode)
 
-        val bplist1 = scoreApiService.getBestScores(user1.userID, mode)
-        val bplist2 = scoreApiService.getBestScores(user2.userID, mode)
+        val ppm1 = PPMinusService.getPPMinus4(user1, scoreApiService, ppMinusDao)
+        val ppm2 = PPMinusService.getPPMinus4(user2, scoreApiService, ppMinusDao)
 
-        val ppm1 = PPMinus.getInstance(mode, user1, bplist1)
-        val ppm2 = PPMinus.getInstance(mode, user2, bplist2)
-
-        if (ppm1 == null || ppm2 == null) {
-            throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PPM").message)
-        } else {
-            val data = imageService.getPanelB1(user1, user2, ppm1, ppm2, mode)
+        try {
+            val data = imageService.getPanel(PPMinusService.getPPM4Body(user1, user2, ppm1, ppm2, mode), "B1")
             return ResponseEntity(
                 data, getImageHeader(
                     "${name.trim()} vs ${name2.trim()}-pv.jpg", data.size
                 ), HttpStatus.OK
             )
+        } catch (e: Exception) {
+            throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PPM4").message)
         }
     }
 

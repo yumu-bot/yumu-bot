@@ -91,20 +91,23 @@ class PPPlusService(
         dataMap["me"] = u1
         dataMap["my"] = getUserPerformancePlus(u1.userID)
 
-        if (Objects.nonNull(param.other)) { // 包含另一个就是 vs, 直接判断了
-            val u2 = param.other as OsuUser
+        if (param.other is OsuUser) { // 包含另一个就是 vs, 直接判断了
+            val u2 = param.other
             val pp2 = getUserPerformancePlus(u2.userID)
 
             // beforePost(u2, pp2)
 
             dataMap["other"] = u2
             dataMap["others"] = pp2
+            dataMap["isVs"] = true
+        } else {
+            dataMap["isVs"] = false
         }
 
         val image: ByteArray
 
         try {
-            image = imageService.getPanelB3(dataMap)
+            image = imageService.getPanel(dataMap, "B3")
         } catch (e: Exception) {
             log.error("PP+ 渲染失败", e)
             throw PPPlusException(PPPlusException.Type.PL_Render_Error)

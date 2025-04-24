@@ -66,11 +66,14 @@ class PPPlusMapService(
         }
 
         map.addPPPlus(pp, data.mods)
-        val dataMap = mutableMapOf<String, Any>()
-        dataMap["isUser"] = false
-        dataMap["me"] = map
-        dataMap["my"] = pp
-        val image = imageService.getPanelB3(dataMap)
+        val dataMap = mapOf(
+            "isUser" to false,
+            "me" to map,
+            "my" to pp,
+            "isVs" to false
+        )
+
+        val image = imageService.getPanel(dataMap, "B3")
         event.reply(image)
     }
 

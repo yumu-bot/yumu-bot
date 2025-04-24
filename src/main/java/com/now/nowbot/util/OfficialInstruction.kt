@@ -155,6 +155,12 @@ enum class OfficialInstruction(val pattern: Pattern) {
         append2Name()
     }),
 
+    PP_MINUS_LEGACY(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("pl")
+        appendModeQQUID()
+        append2Name()
+    }),
+
     TEAM(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("tm", "team", "clan")
         appendQQUIDName()

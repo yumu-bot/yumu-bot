@@ -278,6 +278,12 @@ enum class Instruction(val pattern: Pattern) {
         append2Name()
     }),
 
+    PP_MINUS_LEGACY(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("(p?pl)", "(pp)?minus\\s*legacy")
+        appendModeQQUID()
+        append2Name()
+    }),
+
     TEAM(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("tm", "team", "clan")
         appendQQUIDName()
