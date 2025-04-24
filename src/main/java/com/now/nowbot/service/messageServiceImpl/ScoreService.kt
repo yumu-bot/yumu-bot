@@ -187,12 +187,12 @@ import java.util.regex.Matcher
         try {
             if (scores.size > 1) {
 
-                scoreApiService.asyncDownloadBackground(scores.first())
-                scoreApiService.asyncDownloadBackground(scores.first(), ScoreApiImpl.CoverType.LIST)
-
                 calculateApiService.applyStarToScores(scores)
                 calculateApiService.applyBeatMapChanges(scores)
                 beatmapApiService.applyBeatMapExtendForSameScore(scores, b)
+
+                scoreApiService.asyncDownloadBackground(scores.first())
+                scoreApiService.asyncDownloadBackground(scores.first(), ScoreApiImpl.CoverType.LIST)
 
                 val body = mapOf(
                     "user" to user,

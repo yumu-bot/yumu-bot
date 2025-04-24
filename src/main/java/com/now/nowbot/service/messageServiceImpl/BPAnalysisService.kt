@@ -12,6 +12,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -41,7 +42,8 @@ import kotlin.math.min
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
     private val uubaService: UUBAService,
-    private val calculateApiService: OsuCalculateApiService
+    private val calculateApiService: OsuCalculateApiService,
+    private val beatmapApiService: OsuBeatmapApiService
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
     data class BAParam(val user: OsuUser, val scores: List<LazerScore>, val isMyself: Boolean)
@@ -60,16 +62,15 @@ import kotlin.math.min
         val isMyself = AtomicBoolean(false)
         val mode = getMode(matcher)
         val user = getUserWithoutRange(event, matcher, mode, isMyself)
-        val bests = scoreApiService.getBestScores(user.userID, mode.data)
+        val bests = scoreApiService.getBestScores(user.userID, mode.data) + scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
 
-        scoreApiService.asyncDownloadBackground(bests.take(6), ScoreApiImpl.CoverType.LIST)
         data.value = BAParam(user, bests, isMyself.get())
 
         return true
     }
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: BAParam) {
-        val image = param.getImage(2, calculateApiService, userApiService, imageService, uubaService)
+        val image = param.getImage(2, calculateApiService, userApiService, imageService, uubaService, scoreApiService, beatmapApiService)
 
         try {
             event.reply(image)
@@ -95,7 +96,7 @@ import kotlin.math.min
     }
 
     override fun reply(event: MessageEvent, param: BAParam): MessageChain? = QQMsgUtil.getImage(
-        param.getImage(2, calculateApiService, userApiService, imageService, uubaService)
+        param.getImage(2, calculateApiService, userApiService, imageService, uubaService, scoreApiService, beatmapApiService)
     )
 
     companion object {
@@ -369,7 +370,9 @@ import kotlin.math.min
             calculateApiService: OsuCalculateApiService,
             userApiService: OsuUserApiService,
             imageService: ImageService,
-            uubaService: UUBAService
+            uubaService: UUBAService,
+            scoreApiService: OsuScoreApiService,
+            beatmapApiService: OsuBeatmapApiService
         ): ByteArray {
             val scores = scores
             val user = user
@@ -385,6 +388,9 @@ import kotlin.math.min
             // 提取星级变化的谱面 DT/HT 等
             calculateApiService.applyBeatMapChanges(scores)
             calculateApiService.applyStarToScores(scores)
+
+            beatmapApiService.applyBeatMapExtend(scores.take(6))
+            scoreApiService.asyncDownloadBackground(scores.take(6))
 
             val data = parseData(
                 user, scores, userApiService, version

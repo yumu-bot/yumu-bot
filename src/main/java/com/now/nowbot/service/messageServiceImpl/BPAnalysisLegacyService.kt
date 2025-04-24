@@ -5,6 +5,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.Companion.getImage
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -24,6 +25,7 @@ class BPAnalysisLegacyService (
     private val imageService: ImageService,
     private val uubaService: UUBAService,
     private val calculateApiService: OsuCalculateApiService,
+    private val beatmapApiService: OsuBeatmapApiService
 ) : MessageService<BAParam> {
 
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<BAParam>): Boolean {
@@ -43,7 +45,7 @@ class BPAnalysisLegacyService (
     }
 
     override fun HandleMessage(event: MessageEvent, param: BAParam) {
-        val image = param.getImage(1, calculateApiService, userApiService, imageService, uubaService)
+        val image = param.getImage(1, calculateApiService, userApiService, imageService, uubaService, scoreApiService, beatmapApiService)
 
         try {
             event.reply(image)

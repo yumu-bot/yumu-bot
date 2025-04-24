@@ -87,10 +87,13 @@ interface OsuBeatmapApiService {
     fun searchBeatMapSet(query: Map<String, Any?>, tries: Int): BeatMapSetSearch
 
     // 给同一张图的成绩添加完整的谱面
-    fun applyBeatMapExtendForSameScore(scoreList: List<LazerScore>, beatMap: BeatMap)
+    fun applyBeatMapExtendForSameScore(scores: List<LazerScore>, beatMap: BeatMap)
 
     // 给成绩添加完整的谱面
     fun applyBeatMapExtend(score: LazerScore)
+
+    // 给成绩添加完整的谱面
+    fun applyBeatMapExtend(scores: List<LazerScore>)
 
     fun applyBeatMapExtend(score: LazerScore, extended: BeatMap)
 

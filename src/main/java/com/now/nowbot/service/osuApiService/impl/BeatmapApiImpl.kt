@@ -587,10 +587,10 @@ class BeatmapApiImpl(
     }
 
     // 给同一张图的成绩添加完整的谱面
-    override fun applyBeatMapExtendForSameScore(scoreList: List<LazerScore>, beatMap: BeatMap) {
-        if (scoreList.isEmpty()) return
+    override fun applyBeatMapExtendForSameScore(scores: List<LazerScore>, beatMap: BeatMap) {
+        if (scores.isEmpty()) return
 
-        for (score in scoreList) {
+        for (score in scores) {
             val lite = score.beatMap
 
             score.beatMap = extend(lite, beatMap)!!
@@ -604,6 +604,14 @@ class BeatmapApiImpl(
         val extended = getBeatMap(score.beatMapID)
 
         applyBeatMapExtend(score, extended)
+    }
+
+    override fun applyBeatMapExtend(scores: List<LazerScore>) {
+        val actions = scores.map {
+            return@map AsyncMethodExecutor.Runnable { applyBeatMapExtend(it) }
+        }
+
+        AsyncMethodExecutor.awaitRunnableExecute(actions)
     }
 
     override fun applyBeatMapExtend(score: LazerScore, extended: BeatMap) {

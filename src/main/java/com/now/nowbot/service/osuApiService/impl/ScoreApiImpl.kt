@@ -294,8 +294,20 @@ class ScoreApiImpl(
                     else -> covers.cover
                 }
 
+                if (url.isNullOrBlank()) {
+                    log.info("异步下载谱面图片：成绩的谱面不完整")
+                    return@Runnable
+                }
+
                 val md = MessageDigest.getInstance("MD5")
-                md.update(url.toByteArray(Charsets.UTF_8))
+
+                try {
+                    md.update(url.toByteArray(Charsets.UTF_8))
+                } catch (e: Exception) {
+                    log.info("异步下载谱面图片：计算 MD5 失败")
+                    return@Runnable
+                }
+
                 val hex = md.digest().toHexString(HexFormat.Default)
 
                 if (Files.isRegularFile(path.resolve(hex))) {
