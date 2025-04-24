@@ -11,6 +11,7 @@ import com.now.nowbot.util.ContextUtil
 import jakarta.annotation.PostConstruct
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Lazy
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -34,7 +35,10 @@ import java.util.function.Function
 import kotlin.math.min
 
 @Service
-class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient: WebClient, osuConfig: OsuConfig, yumuConfig: YumuConfig) {
+class OsuApiBaseService(@Lazy private val bindDao: BindDao,
+                        @Qualifier("webClient") val webClient: WebClient,
+                        @Qualifier("osuApiWebClient") val osuApiWebClient: WebClient,
+                        osuConfig: OsuConfig, yumuConfig: YumuConfig) {
     @JvmField final val oauthId: Int = osuConfig.id
     @JvmField final val redirectUrl: String = if (osuConfig.callbackUrl.isNotBlank()) {
         yumuConfig.publicUrl + osuConfig.callbackPath
@@ -92,20 +96,20 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
         if (!hasPriority()) {
             setPriority(1)
         }
-        val s = request { client: WebClient ->
-            client
+        val s = webClient
                 .post()
                 .uri("https://osu.ppy.sh/oauth/token")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body(BodyInserters.fromFormData(body))
                 .retrieve()
-                .bodyToMono(JsonNode::class.java)
-        }
+                .bodyToMono(JsonNode::class.java).block()
         clearPriority()
+
         val accessToken: String
         val refreshToken: String
         val time: Long
+
         if (s != null) {
             accessToken = s["access_token"].asText()
             user.accessToken = accessToken
