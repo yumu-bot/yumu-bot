@@ -571,7 +571,7 @@ class BeatmapApiImpl(
                     queryAlt["page"] = page
                     val result = this.searchBeatMapSetFromAPI(queryAlt)
                     resultCount += result.beatmapSets.size
-                    search.beatmapSets.addAll(result.beatmapSets)
+                    search.beatmapSets += result.beatmapSets
                 }
             } while (resultCount < search.total && page < tries)
         }

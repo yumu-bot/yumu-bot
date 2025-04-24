@@ -2,7 +2,7 @@ package com.now.nowbot.service.osuApiService.impl
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.config.IocAllReadyRunner
-import com.now.nowbot.config.OSUConfig
+import com.now.nowbot.config.OsuConfig
 import com.now.nowbot.config.YumuConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
@@ -17,7 +17,6 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
-import org.springframework.util.StringUtils
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
@@ -35,20 +34,14 @@ import java.util.function.Function
 import kotlin.math.min
 
 @Service
-class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient: WebClient, osuConfig: OSUConfig, yumuConfig: YumuConfig) {
-    @JvmField final val oauthId: Int
-    @JvmField final val redirectUrl: String
-    @JvmField final val oauthToken: String
-
-    init {
-        var url: String
-        oauthId = osuConfig.id
-        if (!StringUtils.hasText(osuConfig.callbackUrl.also { url = it })) {
-            url = yumuConfig.publicUrl + osuConfig.callbackPath
-        }
-        redirectUrl = url
-        oauthToken = osuConfig.token
+class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient: WebClient, osuConfig: OsuConfig, yumuConfig: YumuConfig) {
+    @JvmField final val oauthId: Int = osuConfig.id
+    @JvmField final val redirectUrl: String = if (osuConfig.callbackUrl.isNotBlank()) {
+        yumuConfig.publicUrl + osuConfig.callbackPath
+    } else {
+        osuConfig.callbackUrl
     }
+    @JvmField final val oauthToken: String = osuConfig.token
 
     private val isPassed: Boolean
         get() = System.currentTimeMillis() > time
