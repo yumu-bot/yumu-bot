@@ -32,11 +32,11 @@ import java.util.regex.Matcher
 // Multiple Score也合并进来了
 @Service("SCORE_PR")
 class ScorePRService(
-        private val client: WebClient,
-        private val imageService: ImageService,
-        private val scoreApiService: OsuScoreApiService,
-        private val beatmapApiService: OsuBeatmapApiService,
-        private val calculateApiService: OsuCalculateApiService,
+    private val osuApiWebClient: WebClient,
+    private val imageService: ImageService,
+    private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService,
 ) : MessageService<ScorePRParam>, TencentMessageService<ScorePRParam> {
 
     @JvmRecord
@@ -193,7 +193,7 @@ class ScorePRService(
     private fun getTextOutput(score: LazerScore): MessageChain {
         val d = UUScore(score, calculateApiService)
 
-        val imgBytes = client.get()
+        val imgBytes = osuApiWebClient.get()
             .uri(d.url ?: "")
             .retrieve()
             .bodyToMono(ByteArray::class.java)

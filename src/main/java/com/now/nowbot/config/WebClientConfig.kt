@@ -3,6 +3,7 @@ package com.now.nowbot.config
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
@@ -31,34 +32,7 @@ import java.util.function.Function
         configurer.defaultCodecs().maxInMemorySize(20 * 1024 * 1024)
     }
 
-    @Bean("divingFishApiWebClient") fun divingFishApiWebClient(builder: WebClient.Builder, divingFishConfig: DivingFishConfig): WebClient {
-        val connectionProvider = ConnectionProvider.builder("connectionProvider2")
-            .maxIdleTime(Duration.ofSeconds(30))
-            .maxConnections(200)
-            .pendingAcquireMaxCount(-1)
-            .build()
-        val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
-            .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
-        val connector = ReactorClientHttpConnector(httpClient)
-        val strategies = ExchangeStrategies.builder().codecs {
-                it.defaultCodecs().jackson2JsonEncoder(
-                    Jackson2JsonEncoder(
-                        JacksonUtil.mapper, MediaType.APPLICATION_JSON
-                    )
-                )
-            }.build()
-
-        return builder.clientConnector(connector).exchangeStrategies(strategies)
-            .defaultHeaders { headers: HttpHeaders ->
-                headers.contentType = MediaType.APPLICATION_JSON
-                headers.accept = listOf(MediaType.APPLICATION_JSON)
-            }.baseUrl(divingFishConfig.url!!)
-            .codecs { it.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }
-            .filter { request: ClientRequest, next: ExchangeFunction -> this.doRetryFilter(request, next)
-            }.build()
-    }
-
-    @Bean("osuApiWebClient") @Primary fun osuApiWebClient(builder: WebClient.Builder): WebClient {/*
+    @Bean("osuApiWebClient") @Qualifier("osuApiWebClient") @Primary fun osuApiWebClient(builder: WebClient.Builder): WebClient {/*
          * Setting maxIdleTime as 30s, because servers usually have a keepAliveTimeout of 60s, after which the connection gets closed.
          * If the connection pool has any connection which has been idle for over 10s, it will be evicted from the pool.
          * Refer https://github.com/reactor/reactor-netty/issues/1318#issuecomment-702668918
@@ -91,6 +65,33 @@ import java.util.function.Function
             .codecs { codecs: ClientCodecConfigurer -> codecs.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }.build()
     }
 
+    @Bean("divingFishApiWebClient") @Qualifier("divingFishApiWebClient") fun divingFishApiWebClient(builder: WebClient.Builder, divingFishConfig: DivingFishConfig): WebClient {
+        val connectionProvider = ConnectionProvider.builder("connectionProvider2")
+            .maxIdleTime(Duration.ofSeconds(30))
+            .maxConnections(200)
+            .pendingAcquireMaxCount(-1)
+            .build()
+        val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
+            .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
+        val connector = ReactorClientHttpConnector(httpClient)
+        val strategies = ExchangeStrategies.builder().codecs {
+            it.defaultCodecs().jackson2JsonEncoder(
+                Jackson2JsonEncoder(
+                    JacksonUtil.mapper, MediaType.APPLICATION_JSON
+                )
+            )
+        }.build()
+
+        return builder.clientConnector(connector).exchangeStrategies(strategies)
+            .defaultHeaders { headers: HttpHeaders ->
+                headers.contentType = MediaType.APPLICATION_JSON
+                headers.accept = listOf(MediaType.APPLICATION_JSON)
+            }.baseUrl(divingFishConfig.url!!)
+            .codecs { it.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }
+            .filter { request: ClientRequest, next: ExchangeFunction -> this.doRetryFilter(request, next)
+            }.build()
+    }
+
     private fun doRetryFilter(request: ClientRequest, next: ExchangeFunction): Mono<ClientResponse?> {
         return next.exchange(request)
             .flatMap<ClientResponse?>(Function<ClientResponse, Mono<out ClientResponse?>> { response: ClientResponse ->
@@ -116,7 +117,7 @@ import java.util.function.Function
                 })
     }
 
-    @Bean("proxyClient") fun proxyClient(builder: WebClient.Builder, config: NowbotConfig): WebClient {
+    @Bean("proxyClient") @Qualifier("proxyClient") fun proxyClient(builder: WebClient.Builder, config: NowbotConfig): WebClient {
         val httpClient = HttpClient.newConnection().proxy(Consumer { proxy: ProxyProvider.TypeSpec ->
                 proxy.type(
                     if ("HTTP".equals(
@@ -127,8 +128,8 @@ import java.util.function.Function
         return builder.clientConnector(ReactorClientHttpConnector(httpClient)).build()
     }
 
-    @Bean("webClient") fun webClient(builder: WebClient.Builder): WebClient {
-        val connectionProvider = ConnectionProvider.builder("connectionProvider")
+    @Bean("webClient") @Qualifier("webClient") fun webClient(builder: WebClient.Builder): WebClient {
+        val connectionProvider = ConnectionProvider.builder("connectionProvider3")
             .maxIdleTime(Duration.ofSeconds(30))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)

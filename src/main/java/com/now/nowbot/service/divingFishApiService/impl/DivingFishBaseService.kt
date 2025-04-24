@@ -1,14 +1,14 @@
 package com.now.nowbot.service.divingFishApiService.impl
 
 import com.now.nowbot.config.DivingFishConfig
-import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import java.nio.file.Path
 
 @Service
-class DivingFishBaseService(val webClient: WebClient, val divingFishApiWebClient: WebClient, fishConfig: DivingFishConfig) {
+class DivingFishBaseService(val webClient: WebClient, @Qualifier("divingFishApiWebClient") val divingFishApiWebClient: WebClient, fishConfig: DivingFishConfig) {
     // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
     // /home/spring/work/img/ExportFileV3/Maimai
     final val maimaiPath: Path? = fishConfig.maimai
@@ -39,7 +39,6 @@ class DivingFishBaseService(val webClient: WebClient, val divingFishApiWebClient
     }
 
     companion object {
-        val log = KotlinLogging.logger { }
         private var accessToken: String? = null
 
     }

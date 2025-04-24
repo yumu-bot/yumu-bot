@@ -30,7 +30,7 @@ import java.util.*
 
 @Service("GROUP_STATISTICS")
 class GroupStatisticsService(
-    private val client: WebClient,
+    private val osuApiWebClient: WebClient,
     private val bots: BotContainer,
     private val userApiService: OsuUserApiService,
     private val newbieConfig: NewbieConfig,
@@ -42,7 +42,7 @@ class GroupStatisticsService(
         if (UserCache.containsKey(qq)) {
             return UserCache[qq]
         }
-        val id = client.get()
+        val id = osuApiWebClient.get()
             .uri(GET_BINDING, qq)
             .retrieve()
             .bodyToMono(JsonNode::class.java)
@@ -59,7 +59,7 @@ class GroupStatisticsService(
     }
 
     fun getOsuBp1(osuId: Long): Float {
-        return client.get()
+        return osuApiWebClient.get()
             .uri(GET_BP_URL, osuId)
             .retrieve()
             .bodyToMono(JsonNode::class.java)

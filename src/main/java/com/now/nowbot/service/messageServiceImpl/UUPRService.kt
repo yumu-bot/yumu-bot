@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @Service("UU_PR")
 class UUPRService(
-    private val client: WebClient,
+    private val osuApiWebClient: WebClient,
     private val scoreApiService: OsuScoreApiService,
     private val calculateApiService: OsuCalculateApiService
 ) : MessageService<UUPRParam> {
@@ -77,7 +77,7 @@ class UUPRService(
         val d = UUScore(score, calculateApiService)
 
         val imgBytes =
-            client.get()
+            osuApiWebClient.get()
                 .uri(d.url ?: "")
                 .retrieve()
                 .bodyToMono(ByteArray::class.java)

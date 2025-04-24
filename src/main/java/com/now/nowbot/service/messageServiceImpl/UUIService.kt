@@ -17,7 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import java.util.*
 
 @Service("UU_INFO")
-class UUIService(private val client: WebClient) : MessageService<UUIParam> {
+class UUIService(private val osuApiWebClient: WebClient) : MessageService<UUIParam> {
 
     @JvmRecord data class UUIParam(val user: OsuUser, val mode: OsuMode?)
 
@@ -42,7 +42,7 @@ class UUIService(private val client: WebClient) : MessageService<UUIParam> {
         val user = data.user
         val mode = data.mode
 
-        val avatar: ByteArray? = client.get()
+        val avatar: ByteArray? = osuApiWebClient.get()
                 .uri("https://a.ppy.sh/${user.userID}")
                 .retrieve()
                 .bodyToMono(ByteArray::class.java)
