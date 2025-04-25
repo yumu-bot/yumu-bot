@@ -697,17 +697,6 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup("round", REG_NUMBER, MORE)
     }),
 
-    DEPRECATED_BPHT(CommandPatternBuilder.create {
-        appendCommands("bpht")
-        append("(-i)")
-        appendMatchLevel(MAYBE)
-    }),
-
-    DEPRECATED_UUBA_I(CommandPatternBuilder.create {
-        appendCommands("u?uba", "ua")
-        append("(-?i)")
-    }),
-
     EASTER_AYACHI_NENE(CommandPatternBuilder.create {
         append("(?<nene>0d0(0)?)")
     }),

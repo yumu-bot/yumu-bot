@@ -40,7 +40,6 @@ import kotlin.math.min
     private val scoreApiService: OsuScoreApiService,
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
-    private val uubaService: UUBAService,
     private val calculateApiService: OsuCalculateApiService,
     private val beatmapApiService: OsuBeatmapApiService
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
@@ -48,9 +47,7 @@ import kotlin.math.min
     data class BAParam(val user: OsuUser, val scores: List<LazerScore>, val isMyself: Boolean)
 
     @Throws(Throwable::class) override fun isHandle(
-        event: MessageEvent,
-        messageText: String,
-        data: DataValue<BAParam>
+        event: MessageEvent, messageText: String, data: DataValue<BAParam>
     ): Boolean {
         val matcher = Instruction.BP_ANALYSIS.matcher(messageText)
 
@@ -61,7 +58,12 @@ import kotlin.math.min
         val isMyself = AtomicBoolean(false)
         val mode = getMode(matcher)
         val user = getUserWithoutRange(event, matcher, mode, isMyself)
-        val bests = scoreApiService.getBestScores(user.userID, mode.data) + scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
+        val bests = scoreApiService.getBestScores(user.userID, mode.data) + scoreApiService.getBestScores(
+            user.userID,
+            mode.data,
+            100,
+            100
+        )
 
         data.value = BAParam(user, bests, isMyself.get())
 
@@ -69,7 +71,14 @@ import kotlin.math.min
     }
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: BAParam) {
-        val image = param.getImage(2, calculateApiService, userApiService, imageService, uubaService, scoreApiService, beatmapApiService)
+        val image = param.getImage(
+            2,
+            calculateApiService,
+            userApiService,
+            imageService,
+            scoreApiService,
+            beatmapApiService
+        )
 
         try {
             event.reply(image)
@@ -95,7 +104,14 @@ import kotlin.math.min
     }
 
     override fun reply(event: MessageEvent, param: BAParam): MessageChain? = QQMsgUtil.getImage(
-        param.getImage(2, calculateApiService, userApiService, imageService, uubaService, scoreApiService, beatmapApiService)
+        param.getImage(
+            2,
+            calculateApiService,
+            userApiService,
+            imageService,
+            scoreApiService,
+            beatmapApiService
+        )
     )
 
     companion object {
@@ -103,10 +119,7 @@ import kotlin.math.min
         private val RANK_ARRAY = arrayOf("XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F")
 
         @JvmStatic fun parseData(
-            user: OsuUser,
-            bpList: List<LazerScore>?,
-            userApiService: OsuUserApiService,
-            version: Int = 1
+            user: OsuUser, bpList: List<LazerScore>?, userApiService: OsuUserApiService, version: Int = 1
         ): Map<String, Any> {
             if (bpList == null || bpList.size <= 5) return HashMap.newHashMap(1)
 
@@ -131,10 +144,8 @@ import kotlin.math.min
 
             data class Attr(
                 val index: String,
-                @JsonProperty("map_count")
-                val mapCount: Int,
-                @JsonProperty("pp_count")
-                val ppCount: Double,
+                @JsonProperty("map_count") val mapCount: Int,
+                @JsonProperty("pp_count") val ppCount: Double,
                 val percent: Double
             )
 
@@ -144,11 +155,10 @@ import kotlin.math.min
 
             var modsSum = 0
 
-            for (i in 0 until bpSize) {
-                val s = bests[i]
-                val b = s.beatMap
+            bests.forEachIndexed { i, best ->
+                val b = best.beatMap
 
-                val m = s.mods.filter {
+                val m = best.mods.filter {
                     if (it is ValueMod) {
                         it.value != 0
                     } else {
@@ -160,11 +170,11 @@ import kotlin.math.min
                     val ba = BeatMap4BA(
                         i + 1,
                         b.totalLength,
-                        s.maxCombo,
+                        best.maxCombo,
                         (b.BPM ?: 0.0).toFloat(),
                         b.starRating.toFloat(),
-                        s.rank,
-                        s.beatMapSet.covers.list,
+                        best.rank,
+                        best.beatMapSet.covers.list,
                         m
                     )
                     beatMapList.add(ba)
@@ -173,18 +183,18 @@ import kotlin.math.min
                 run { // 统计 mods / rank
                     if (m.isNotEmpty()) {
                         m.forEach {
-                            modsPPMap.add(it.acronym, s.weight!!.PP)
+                            modsPPMap.add(it.acronym, best.weight!!.PP)
                         }
                         modsSum += m.size
                     } else {
                         modsSum += 1
                     }
 
-                    if (s.fullCombo) {
-                        rankMap.add("FC", s.weight!!.PP)
+                    if (best.fullCombo) {
+                        rankMap.add("FC", best.weight!!.PP)
                     }
 
-                    rankMap.add(s.rank, s.weight!!.PP)
+                    rankMap.add(best.rank, best.weight!!.PP)
                 }
             }
 
@@ -213,8 +223,9 @@ import kotlin.math.min
             val modsList: List<List<String>> = beatMapList.map {
                 it.mods.map { mod -> mod.acronym }
             }
-            val timeList = bests.map { 1.0 * it.endedTime.plusHours(8).hour + (it.endedTime.plusHours(8).minute / 60.0) }
-            val timeDist = mutableListOf(0, 0, 0, 0, 0, 0, 0, 0)
+            val timeList =
+                bests.map { 1.0 * it.endedTime.plusHours(8).hour + (it.endedTime.plusHours(8).minute / 60.0) }
+            val timeDist = MutableList(8) { _ -> 0 }
 
             for (time in timeList) {
                 val position: Int = min(floor(time / 3.0).toInt(), 7)
@@ -224,37 +235,29 @@ import kotlin.math.min
             val rankSort = rankList.groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.map { it.key }
 
             data class Mapper(
-                @JsonProperty("avatar_url")
-                val avatarUrl: String,
+                @JsonProperty("avatar_url") val avatarUrl: String,
                 val username: String,
-                @JsonProperty("map_count")
-                val mapCount: Int,
-                @JsonProperty("pp_count")
-                val ppCount: Float
+                @JsonProperty("map_count") val mapCount: Int,
+                @JsonProperty("pp_count") val ppCount: Float
             )
 
-            val mapperMap = bests
-                .groupingBy { it.beatMap.mapperID }
-                .eachCount()
+            val mapperMap = bests.groupingBy { it.beatMap.mapperID }.eachCount()
 
             val mapperSize = mapperMap.size
             val mapperCount =
-                mapperMap.entries.sortedByDescending { it.value }.take(8)
-                    .associateBy({ it.key }, { it.value })
+                mapperMap.entries.sortedByDescending { it.value }.take(8).associateBy({ it.key }, { it.value })
                     .toMap(LinkedHashMap())
 
             val mapperInfo = userApiService.getUsers(mapperCount.keys)
             val mapperList =
-                bests.filter { mapperCount.containsKey(it.beatMap.mapperID) }
-                    .groupingBy { it.beatMap.mapperID }
-                    .aggregate<LazerScore, Long, Double>({ _, accumulator, element, _ ->
+                bests.filter { mapperCount.containsKey(it.beatMap.mapperID) }.groupingBy { it.beatMap.mapperID }
+                    .aggregate<LazerScore, Long, Double> { _, accumulator, element, _ ->
                         if (accumulator == null) {
                             element.PP ?: 0.0
                         } else {
                             accumulator + (element.PP ?: 0.0)
                         }
-                    }).entries.sortedByDescending { it.value }
-                    .map {
+                    }.entries.sortedByDescending { it.value }.map {
                         var name = ""
                         var avatar = ""
                         for (node in mapperInfo) {
@@ -276,11 +279,10 @@ import kotlin.math.min
 
             val modsAttr: List<Attr>
             run {
-                val m = modsSum
                 val modsAttrTmp: MutableList<Attr> = ArrayList(modsPPMap.size)
                 modsPPMap.forEach { (mod: String, value: MutableList<Double?>) ->
                     val attr = Attr(
-                        mod, value.count{ it != null }, value.filterNotNull().sum(), (value.size * 1.0 / m)
+                        mod, value.filterNotNull().count(), value.filterNotNull().sum(), (value.size * 1.0 / modsSum)
                     )
                     modsAttrTmp.add(attr)
                 }
@@ -296,7 +298,7 @@ import kotlin.math.min
                 } else {
                     val fcPPSum = fcList.sum()
 
-                    fc = Attr("FC", fcList.size, fcPPSum, (fcPPSum / bpPP) * (bpSize / 200.0))
+                    fc = Attr("FC", fcList.size, fcPPSum, (fcPPSum / bpPP))
                 }
                 rankAttr.add(fc)
                 for (rank in RANK_ARRAY) {
@@ -304,10 +306,10 @@ import kotlin.math.min
                         val value = rankMap[rank]
                         var rankPPSum: Double
                         var attr: Attr? = null
-                        if (! value.isNullOrEmpty()) {
+                        if (!value.isNullOrEmpty()) {
                             rankPPSum = value.sum()
                             attr = Attr(
-                                rank, value.count(), rankPPSum, (rankPPSum / bpPP) * (bpSize / 200.0)
+                                rank, value.count(), rankPPSum, (rankPPSum / bpPP)
                             )
                         }
                         rankAttr.add(attr)
@@ -317,48 +319,51 @@ import kotlin.math.min
 
             val clientCount = listOf(bests.count { !it.isLazer }, bests.count { it.isLazer })
 
-            val data = HashMap<String, Any>(18)
+            val data: Map<String, Any> = when(version) {
+                1 -> mapOf(
+                    "card_A1" to user,
+                    "bpTop5" to t6.dropLast(1),
+                    "bpLast5" to b5,
+                    "bpLength" to summary["length"]!!,
+                    "bpCombo" to summary["combo"]!!,
+                    "bpSR" to summary["star"]!!,
+                    "bpBpm" to summary["bpm"]!!,
+                    "favorite_mappers_count" to mapperSize,
+                    "favorite_mappers" to mapperList,
+                    "pp_raw_arr" to ppRawList,
+                    "rank_arr" to rankList,
+                    "rank_elect_arr" to rankSort,
+                    "bp_length_arr" to lengthList,
+                    "mods_attr" to modsAttr,
+                    "rank_attr" to rankAttr,
+                    "pp_raw" to rawPP,
+                    "pp" to userPP,
+                    "game_mode" to bests.first().mode,
+                )
 
-            if (version == 1) {
-                data["card_A1"] = user
-                data["bpTop5"] = t6.slice(0..4)
-                data["bpLast5"] = b5
-                data["bpLength"] = summary["length"]!!
-                data["bpCombo"] = summary["combo"]!!
-                data["bpSR"] = summary["star"]!!
-                data["bpBpm"] = summary["bpm"]!!
-                data["favorite_mappers_count"] = mapperSize
-                data["favorite_mappers"] = mapperList
-                data["pp_raw_arr"] = ppRawList
-                data["rank_arr"] = rankList
-                data["rank_elect_arr"] = rankSort
-                data["bp_length_arr"] = lengthList
-                data["mods_attr"] = modsAttr
-                data["rank_attr"] = rankAttr
-                data["pp_raw"] = rawPP
-                data["pp"] = userPP
-                data["game_mode"] = bests.first().mode
-            } else {
-                data["user"] = user
-                data["bests"] = t6
-                data["length_attr"] = summary["length"]!!
-                data["combo_attr"] = summary["combo"]!!
-                data["star_attr"] = summary["star"]!!
-                data["bpm_attr"] = summary["bpm"]!!
-                data["favorite_mappers"] = mapperList
-                data["pp_raw_arr"] = ppRawList
-                data["rank_arr"] = rankList
-                data["length_arr"] = lengthList
-                data["mods_arr"] = modsList
-                data["star_arr"] = starList
-                data["time_arr"] = timeList
-                data["time_dist_arr"] = timeDist
+                else ->
+                    mapOf(
+                        "user" to user,
+                        "bests" to t6,
+                        "length_attr" to summary["length"]!!,
+                        "combo_attr" to summary["combo"]!!,
+                        "star_attr" to summary["star"]!!,
+                        "bpm_attr" to summary["bpm"]!!,
+                        "favorite_mappers" to mapperList,
+                        "pp_raw_arr" to ppRawList,
+                        "rank_arr" to rankList,
+                        "length_arr" to lengthList,
+                        "mods_arr" to modsList,
+                        "star_arr" to starList,
+                        "time_arr" to timeList,
+                        "time_dist_arr" to timeDist,
 
-                data["mods_attr"] = modsAttr
-                data["rank_attr"] = rankAttr
+                        "mods_attr" to modsAttr,
+                        "rank_attr" to rankAttr,
 
-                data["pp_sum"] = ppSum
-                data["client_count"] = clientCount
+                        "pp_sum" to ppSum,
+                        "client_count" to clientCount,
+                    )
             }
 
             return data
@@ -369,7 +374,6 @@ import kotlin.math.min
             calculateApiService: OsuCalculateApiService,
             userApiService: OsuUserApiService,
             imageService: ImageService,
-            uubaService: UUBAService,
             scoreApiService: OsuScoreApiService,
             beatmapApiService: OsuBeatmapApiService
         ): ByteArray {
@@ -403,7 +407,7 @@ import kotlin.math.min
             } catch (e: WebClientResponseException) {
                 log.error("最好成绩分析：复杂面板生成失败", e)
                 try {
-                    val msg = uubaService.getTextPlus(scores, user.username, user.mode).split("\n".toRegex())
+                    val msg = UUBAService.getTextPlus(scores, user.username, user.mode, userApiService).split("\n".toRegex())
                         .dropLastWhile { it.isEmpty() }.toTypedArray()
                     imageService.getPanelAlpha(*msg)
                 } catch (e1: ResourceAccessException) {
@@ -413,7 +417,7 @@ import kotlin.math.min
                     log.error("最好成绩分析：渲染失败", e1)
                     throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩分析")
                 } catch (e1: Exception) {
-                    log.error("最好成绩分析：UUBA 转换失败", e1)
+                    log.error("最好成绩分析：文字版转换失败", e1)
                     throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩分析（文字版）")
                 }
             } catch (e: Exception) {

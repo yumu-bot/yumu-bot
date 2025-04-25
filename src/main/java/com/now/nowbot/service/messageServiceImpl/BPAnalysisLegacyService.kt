@@ -19,11 +19,10 @@ import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Service("BP_ANALYSIS_LEGACY")
-class BPAnalysisLegacyService (
+class BPAnalysisLegacyService(
     private val scoreApiService: OsuScoreApiService,
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
-    private val uubaService: UUBAService,
     private val calculateApiService: OsuCalculateApiService,
     private val beatmapApiService: OsuBeatmapApiService
 ) : MessageService<BAParam> {
@@ -45,7 +44,14 @@ class BPAnalysisLegacyService (
     }
 
     override fun HandleMessage(event: MessageEvent, param: BAParam) {
-        val image = param.getImage(1, calculateApiService, userApiService, imageService, uubaService, scoreApiService, beatmapApiService)
+        val image = param.getImage(
+            1,
+            calculateApiService,
+            userApiService,
+            imageService,
+            scoreApiService,
+            beatmapApiService
+        )
 
         try {
             event.reply(image)
