@@ -16,7 +16,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
@@ -297,7 +296,7 @@ import kotlin.math.min
                 } else {
                     val fcPPSum = fcList.sum()
 
-                    fc = Attr("FC", fcList.size, fcPPSum, (fcPPSum / bpPP) * (bpSize / 100.0))
+                    fc = Attr("FC", fcList.size, fcPPSum, (fcPPSum / bpPP) * (bpSize / 200.0))
                 }
                 rankAttr.add(fc)
                 for (rank in RANK_ARRAY) {
@@ -308,7 +307,7 @@ import kotlin.math.min
                         if (! value.isNullOrEmpty()) {
                             rankPPSum = value.sum()
                             attr = Attr(
-                                rank, value.count(), rankPPSum, (rankPPSum / bpPP) * (bpSize / 100.0)
+                                rank, value.count(), rankPPSum, (rankPPSum / bpPP) * (bpSize / 200.0)
                             )
                         }
                         rankAttr.add(attr)
