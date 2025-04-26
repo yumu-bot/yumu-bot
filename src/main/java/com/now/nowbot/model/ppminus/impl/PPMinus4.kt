@@ -97,9 +97,7 @@ class PPMinus4Standard(user: OsuUser, bests: List<LazerScore>, surrounding: List
                 if ((me.rawPP ?: 0.0) > 1000) 1.0 else ((me.rawPP ?: 0.0) / 1000.0).pow(0.5) // play count index PC因子
             val pcIndex: Double = ((me.topPP ?: 0.0) * 30 / ((me.playCount ?: 0L) + 100)).pow(0.8)
 
-            val rSAN: Double = (fa + ba) / 2 * (bir + bdr) / 2 * sqrt(
-                (me.topPP ?: 0.0).pow(2.0) / (((me.middlePP ?: 0.0) + 1.0) * ((me.bottomPP ?: 0.0) + 1.0))
-            ) * lowPPIndex * pcIndex // raw sanity 理智初值
+            val rSAN: Double = (fa + ba + 0.4) / 2 * (bir + bdr + 0.4) / 2 * lowPPIndex * pcIndex // raw sanity 理智初值
 
             return@run if (rSAN >= 5) {
                 3.0 / rSAN
@@ -187,9 +185,7 @@ class PPMinus4Mania(user: OsuUser, bests: List<LazerScore>, surrounding: List<PP
                 if ((me.rawPP ?: 0.0) > 1000) 1.0 else ((me.rawPP ?: 0.0) / 1000.0).pow(0.5) // play count index PC因子
             val pcIndex: Double = ((me.topPP ?: 0.0) * 30 / ((me.playCount ?: 0L) + 100)).pow(0.8)
 
-            val rSAN: Double = (fa + ba) / 2 * (bir + bdr) / 2 * sqrt(
-                (me.topPP ?: 0.0).pow(2.0) / (((me.middlePP ?: 0.0) + 1.0) * ((me.bottomPP ?: 0.0) + 1.0))
-            ) * lowPPIndex * pcIndex // raw sanity 理智初值
+            val rSAN: Double = (fa + ba + 0.4) / 2 * (bir + bdr + 0.4) / 2 * lowPPIndex * pcIndex // raw sanity 理智初值
 
             return@run if (rSAN >= 5) {
                 3.0 / rSAN
