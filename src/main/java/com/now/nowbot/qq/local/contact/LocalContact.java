@@ -35,11 +35,11 @@ public class LocalContact implements com.now.nowbot.qq.contact.Contact {
             case ImageMessage image -> {
                 String localPath;
                 if (image.isByteArray()) {
-                    localPath = saveFile(STR."\{System.currentTimeMillis()}.jpg", image.getData());
+                    localPath = saveFile(STR."\{System.currentTimeMillis()}.jpg", image.data);
                 } else if (image.isUrl()) {
-                    localPath = downloadFile(image.getPath());
+                    localPath = downloadFile(image.path);
                 } else {
-                    localPath = copyFile(Path.of(URI.create(image.getPath().replaceAll("\\\\", "/"))));
+                    localPath = copyFile(Path.of(URI.create(image.path.replaceAll("\\\\", "/"))));
                 }
                 yield STR."[图片: \{localPath}]";
             }

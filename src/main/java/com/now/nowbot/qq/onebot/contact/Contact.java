@@ -90,8 +90,8 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         for (var msg : messageChain.getMessageList()) {
             switch (msg) {
                 case ImageMessage img -> {
-                    if (img.isByteArray()) builder.img(STR."base64://\{QQMsgUtil.byte2str(img.getData())}");
-                    else builder.img(img.getPath());
+                    if (img.isByteArray()) builder.img(STR."base64://\{QQMsgUtil.byte2str(img.data)}");
+                    else builder.img(img.path);
                 }
                 case VoiceMessage voice -> builder.voice(STR."base64://\{QQMsgUtil.byte2str(voice.getData())}");
                 case AtMessage at -> {

@@ -277,12 +277,15 @@ import kotlin.math.min
         @RequestParam("mode") @Nullable modeStr: String?,
         @RequestBody dataMap: Map<String, List<Long>>
     ): ResponseEntity<ByteArray> {
-        val mapPool = MapPoolDto(name, dataMap, beatmapApiService)
+        val mode = getMode(modeStr)
+        val mapPool = MapPoolDto(name, mode, dataMap, beatmapApiService, calculateApiService)
         if (mapPool.modPools.isEmpty()) throw RuntimeException(MapPoolException.Type.GP_Map_Empty.message)
 
-        val mode = getMode(modeStr)
+        val body = mapOf(
+            "pool" to mapPool, "mode" to mode.shortName
+        )
 
-        val image = imageService.getPanelH(mapPool, mode)
+        val image = imageService.getPanel(body, "H")
         return ResponseEntity(
             image, getImageHeader(
                 "${mapPool.name}-pool.jpg", image.size

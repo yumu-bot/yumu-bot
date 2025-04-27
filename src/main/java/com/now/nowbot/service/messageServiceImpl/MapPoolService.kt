@@ -11,12 +11,16 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.MapPoolService.PoolParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.command.FLAG_NAME
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClient
@@ -27,7 +31,8 @@ import java.util.*
 
 @Service("MAP_POOL") class MapPoolService(
     private val imageService: ImageService,
-    private val osuBeatmapApiService: OsuBeatmapApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService,
     private val webClient: WebClient,
     beatmapMirrorConfig: BeatmapMirrorConfig
 ) : MessageService<PoolParam> {
@@ -63,15 +68,12 @@ import java.util.*
     }
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: PoolParam) {
-        val image: ByteArray
         if (param.name.isNullOrBlank().not()) {
             val result = searchByName(param.name!!)
             if (result.isEmpty()) throw TipsException("未找到名称包含 ${param.name} 的图池")
+
             if (result.size == 1) {
-                image = imageService.getPanelH(
-                    MapPoolDto(result.first(), osuBeatmapApiService),
-                    param.mode,
-                )
+                event.reply(MapPoolDto(result.first(), beatmapApiService, calculateApiService), param.mode)
             } else {
                 val sb = StringBuilder("查到了多个图池, 请确认结果:\n")
                 for (i in result.indices) {
@@ -84,25 +86,36 @@ import java.util.*
 
                 val lock = ASyncMessageUtil.getLock(event)
                 val newEvent = lock.get()
-                val n: Int
-                try {
-                    n = newEvent.rawMessage.toInt()
-                } catch (e: NumberFormatException) {
-                    throw TipsException("输入错误")
-                }
-                if (n < 1 || n > result.size) throw TipsException("输入错误")
 
-                image = imageService.getPanelH(
-                    MapPoolDto(result[n - 1], osuBeatmapApiService),
-                    param.mode,
-                )
+                val n: Int = newEvent.rawMessage.toIntOrNull() ?: throw TipsException("输入错误")
+
+                if (n !in 1..result.size) throw TipsException("输入错误")
+
+                event.reply(MapPoolDto(result[n - 1], beatmapApiService, calculateApiService), param.mode)
             }
         } else {
             val pool = searchByID(param.id) ?: throw TipsException("未找到id为 ${param.id} 的图池")
-            image = imageService.getPanelH(MapPoolDto(pool, osuBeatmapApiService), param.mode)
+
+            event.reply(MapPoolDto(pool, beatmapApiService, calculateApiService), param.mode)
+        }
+    }
+
+    private fun MessageEvent.reply(data: MapPoolDto, mode: OsuMode) {
+        val body = mapOf("pool" to data, "mode" to mode.shortName)
+
+        val image = try {
+            imageService.getPanel(body, "H")
+        } catch (e: Exception) {
+            log.error("获取图池：渲染失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "获取图池")
         }
 
-        event.reply(image)
+        try {
+            this.reply(image)
+        } catch (e: Exception) {
+            log.error("获取图池：发送失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "获取图池")
+        }
     }
 
     fun searchByName(name: String): List<Pool> {
@@ -138,5 +151,9 @@ import java.util.*
         } catch (e: WebClientResponseException.NotFound) {
             null
         }
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(MapPoolService::class.java)
     }
 }

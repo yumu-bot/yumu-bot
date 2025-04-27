@@ -112,6 +112,9 @@ sealed class LazerMod {
     @get:JsonProperty("settings")
     abstract val settings: Any?
 
+    @get:JsonProperty("color")
+    abstract val color: String
+
     class Easy(
         retries: Float? = null,
     ) : LazerMod() {
@@ -120,6 +123,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#22AC38"
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -158,6 +164,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#0068B7"
+
         companion object : Mod, ValueMod {
             override val type: String = "NF"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
@@ -175,6 +184,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#BDBDBD"
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -227,6 +239,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#DADADA"
+
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
             settings = node.json<Value>()
@@ -265,6 +280,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#D32F2F"
+
         companion object : Mod, ValueMod {
             override val type: String = "HR"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
@@ -281,6 +299,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#FF9800"
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -321,6 +342,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#FFF100"
+
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
             settings = node.json<Value>()
@@ -360,6 +384,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#00A0E9"
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -412,6 +439,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#9922EE"
+
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
             settings = node.json<Value>()
@@ -451,6 +481,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#F8B551"
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -493,6 +526,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#000000"
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -553,6 +589,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#EB6100"
+
         companion object : Mod {
             override val type: String = "BL"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
@@ -567,6 +606,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#D32F2F"
 
         companion object : Mod {
             override val type: String = "ST"
@@ -586,6 +628,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#9E040D"
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -649,6 +694,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#920783"
+
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
             settings = node.json<Value>()
@@ -705,6 +753,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#601986"
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -815,6 +866,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#920783"
+
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
             settings = node.json<Value>()
@@ -899,6 +953,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#009944"
+
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
             settings = node.json<Value>()
@@ -949,6 +1006,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#007130"
+
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
             settings = node.json<Value>()
@@ -986,6 +1046,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#F16DAA"
+
         companion object : Mod {
             override val type: String = "AL"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
@@ -1001,6 +1064,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#F59AC3"
+
         companion object : Mod {
             override val type: String = "SG"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO)
@@ -1015,6 +1081,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#00B7EE"
 
         companion object : Mod, ValueMod {
             override val type: String = "AT"
@@ -1032,6 +1101,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#00B7EE"
 
         companion object : Mod, ValueMod {
             override val type: String = "CN"
@@ -1064,6 +1136,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#BFC31F"
+
         companion object : Mod, ValueMod {
             override val type: String = "RX"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH)
@@ -1078,6 +1153,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#B3D465"
 
         companion object : Mod, ValueMod {
             override val type: String = "AP"
@@ -1095,6 +1173,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#B28850"
+
         companion object : Mod, ValueMod {
             override val type: String = "SO"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
@@ -1109,6 +1190,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
 
         companion object : Mod {
             override val type: String = "TR"
@@ -1126,6 +1210,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1164,6 +1251,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
+
         companion object : Mod {
             override val type: String = "SI"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
@@ -1180,6 +1270,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1219,6 +1312,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1260,6 +1356,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1325,6 +1424,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
+
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
             settings = node.json<Value>()
@@ -1384,6 +1486,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
+
         companion object : Mod {
             override val type: String = "TC"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
@@ -1401,6 +1506,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1452,6 +1560,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1505,6 +1616,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1578,6 +1692,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
+
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
             settings = node.json<Value>()
@@ -1616,6 +1733,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1657,6 +1777,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
+
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
             settings = node.json<Value>()
@@ -1697,6 +1820,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1747,6 +1873,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
+
         companion object : Mod {
             override val type: String = "FR"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
@@ -1762,6 +1891,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
+
         companion object : Mod {
             override val type: String = "BU"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
@@ -1776,6 +1908,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
 
         companion object : Mod {
             override val type: String = "SY"
@@ -1794,6 +1929,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1856,6 +1994,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#7ECEF4"
+
         companion object : Mod, ValueMod {
             override val type: String = "TD"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU)
@@ -1870,6 +2011,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#9E005E"
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -1914,6 +2058,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#000000"
+
         companion object : Mod, ValueMod {
             override val type: String = "SV2"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
@@ -1928,6 +2075,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#7B0046"
 
         companion object : Mod {
             override val type: String = "SW"
@@ -1944,6 +2094,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#A086BF"
+
         companion object : Mod {
             override val type: String = "CS"
             override val mode: Set<OsuMode> = setOf(OsuMode.TAIKO, OsuMode.MANIA)
@@ -1958,6 +2111,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
 
         companion object : Mod {
             override val type: String = "FF"
@@ -1974,6 +2130,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
+
         companion object : Mod {
             override val type: String = "NR"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
@@ -1988,6 +2147,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#F8B551"
 
         companion object : Mod, ValueMod {
             override val type: String = "FI"
@@ -2006,6 +2168,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#F8B551"
 
         @JsonProperty("settings")
         private fun setSettings(node: JsonNode) {
@@ -2055,6 +2220,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#9E005E"
+
         companion object : Mod {
             override val type: String = "DS"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
@@ -2069,6 +2237,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#5F5BA8"
 
         companion object : Mod {
             override val type: String = "IN"
@@ -2085,6 +2256,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#8781BE"
+
         companion object : Mod {
             override val type: String = "HO"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
@@ -2099,6 +2273,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = KEY_MOD_COLOR
 
         companion object : Mod, ValueMod {
             override val type: String = "1K"
@@ -2115,6 +2292,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = KEY_MOD_COLOR
+
         companion object : Mod, ValueMod {
             override val type: String = "2K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
@@ -2129,6 +2309,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = KEY_MOD_COLOR
 
         companion object : Mod, ValueMod {
             override val type: String = "3K"
@@ -2145,6 +2328,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = KEY_MOD_COLOR
+
         companion object : Mod, ValueMod {
             override val type: String = "4K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
@@ -2159,6 +2345,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = KEY_MOD_COLOR
 
         companion object : Mod, ValueMod {
             override val type: String = "5K"
@@ -2175,6 +2364,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = KEY_MOD_COLOR
+
         companion object : Mod, ValueMod {
             override val type: String = "6K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
@@ -2189,6 +2381,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = KEY_MOD_COLOR
 
         companion object : Mod, ValueMod {
             override val type: String = "7K"
@@ -2205,6 +2400,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = KEY_MOD_COLOR
+
         companion object : Mod, ValueMod {
             override val type: String = "8K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
@@ -2219,6 +2417,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = KEY_MOD_COLOR
 
         companion object : Mod, ValueMod {
             override val type: String = "9K"
@@ -2235,6 +2436,9 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = KEY_MOD_COLOR
+
         companion object : Mod {
             override val type: String = "10K"
             override val mode: Set<OsuMode> = setOf(OsuMode.MANIA)
@@ -2248,6 +2452,9 @@ sealed class LazerMod {
 
         @get:JsonProperty("settings")
         override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "none"
 
         companion object : Mod {
             override val type: String = ""
@@ -2264,17 +2471,58 @@ sealed class LazerMod {
         @get:JsonProperty("settings")
         override var settings: Any? = null
 
+        @get:JsonProperty("color")
+        override val color: String = "#22AC38"
+
         companion object : Mod {
             override val type: String = "NM"
+            override val mode: Set<OsuMode> = setOf()
+            override val incompatible: Set<Mod> = setOf(FreeMod)
+        }
+    }
+
+    class Extra : LazerMod() {
+        @get:JsonProperty("acronym")
+        override val acronym: String = type
+
+        @get:JsonProperty("settings")
+        override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#FF9800"
+
+        companion object : Mod {
+            override val type: String = "EX"
             override val mode: Set<OsuMode> = setOf()
             override val incompatible: Set<Mod> = setOf()
 
         }
     }
 
+    class FreeMod : LazerMod() {
+        @get:JsonProperty("acronym")
+        override val acronym: String = type
+
+        @get:JsonProperty("settings")
+        override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#9922EE"
+
+        companion object : Mod, ValueMod {
+            override val type: String = "FM"
+            override val mode: Set<OsuMode> = setOf()
+            override val incompatible: Set<Mod> = setOf(NoMod)
+            override val value: Int = 522171579
+        }
+    }
+
     override fun toString() = acronym
 
     companion object {
+        const val FUN_MOD_COLOR = "#EA68A2"
+        const val KEY_MOD_COLOR = "#616161"
+
         inline fun <reified T : Mod> hasMod(mods: List<LazerMod>, type: Collection<T>): Boolean {
             val set = type.map { it.type }.toSet()
             return mods.any {
@@ -2392,6 +2640,8 @@ sealed class LazerMod {
                 Key9.type -> Key9()
                 Key10.type -> Key10()
                 NoMod.type -> NoMod()
+                FreeMod.type -> FreeMod()
+                Extra.type -> Extra()
                 else -> None()
             }
         }

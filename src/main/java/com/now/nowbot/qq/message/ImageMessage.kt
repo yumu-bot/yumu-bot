@@ -1,66 +1,51 @@
-package com.now.nowbot.qq.message;
+package com.now.nowbot.qq.message
 
-import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.QQMsgUtil
+import java.net.URL
 
-import java.net.URL;
-import java.util.Map;
-
-public class ImageMessage extends Message {
-    private enum Type {
+class ImageMessage : Message {
+    private enum class Type {
         FILE, URL, BYTE_ARRAY
     }
 
-    private final Type   type;
-    final         String path;
-    final         byte[] data;
+    private val type: Type
+    @JvmField val path: String?
+    @JvmField val data: ByteArray?
 
-    public ImageMessage(byte[] img) {
-        data = img;
-        path = null;
-        type = Type.BYTE_ARRAY;
+    constructor(img: ByteArray?) {
+        data = img
+        path = null
+        type = Type.BYTE_ARRAY
     }
 
-    public ImageMessage(String path) {
-        data = null;
-        this.path = "file:///" + path;
-        type = Type.FILE;
+    constructor(path: String) {
+        data = null
+        this.path = "file:///$path"
+        type = Type.FILE
     }
 
-    public ImageMessage(URL url) {
-        data = null;
-        path = url.toExternalForm();
-        type = Type.URL;
+    constructor(url: URL) {
+        data = null
+        path = url.toExternalForm()
+        type = Type.URL
     }
 
-    public boolean isByteArray() {
-        return type == Type.BYTE_ARRAY;
+    val isByteArray: Boolean
+        get() = type == Type.BYTE_ARRAY
+
+    val isUrl: Boolean
+        get() = type == Type.URL
+
+    override fun toString(): String {
+        return "[图片]"
     }
 
-    public boolean isUrl() {
-        return type == Type.URL;
-    }
-
-    public byte[] getData() {
-        return data;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    @Override
-    public String toString() {
-        return "[图片]";
-    }
-
-    @Override
-    public JsonMessage toJson() {
-        Object img;
-        if (isByteArray()) {
-            img = "base64://" + QQMsgUtil.byte2str(getData());
+    override fun toJson(): JsonMessage {
+        val img: Any? = if (isByteArray) {
+            "base64://" + QQMsgUtil.byte2str(data)
         } else {
-            img = getPath();
+            path
         }
-        return new JsonMessage("image", Map.of("file", img));
+        return JsonMessage("image", mapOf("file" to img))
     }
 }

@@ -7,7 +7,6 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.ImageMessage
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
-import com.now.nowbot.qq.onebot.contact.Group
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -15,12 +14,12 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl.CoverType
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
 import okhttp3.internal.toLongOrDefault
 import org.springframework.stereotype.Service
 import java.net.URI
+import java.nio.file.Files
 
 @Service("GET_COVER") class GetCoverService(
     private val beatmapApiService: OsuBeatmapApiService,
@@ -75,18 +74,19 @@ import java.net.URI
         if (param.type == CoverType.RAW) {
             // messageChains = listOf(MessageChainBuilder().addText("抱歉，应急运行时是没有 getBG 服务的呢...").build())
 
-            chain = getMessageChain(param.bids, beatmapMirrorApiService)
+            chain = getRawBackground(param.bids, beatmapMirrorApiService)
 
-            event.replyMessageChainsWithOfficialBot(chain, botContainer, newbieConfig)
+            event.replyMessageChain(chain)
         } else {
             val beatmaps = getBeatMaps(param.bids, beatmapApiService)
-            chain = getMessageChain(param.type, beatmaps)
+            chain = getBackground(param.type, beatmaps)
 
             event.replyMessageChain(chain)
         }
     }
 
     companion object {
+        /*
         private fun MessageEvent.replyMessageChainsWithOfficialBot(chain: MessageChain, botContainer: BotContainer, newbieConfig: NewbieConfig) {
             val groupID = this.subject.id
             val messages = chain.messageList
@@ -114,6 +114,8 @@ import java.net.URI
                 }
             }
         }
+
+         */
 
         private fun MessageEvent.replyMessageChain(chain: MessageChain) {
             val messages = chain.messageList
@@ -149,8 +151,8 @@ import java.net.URI
             return bids.map { beatmapApiService.getBeatMapFromDataBase(it) }
         }
 
-        // 获取全幅
-        private fun getMessageChain(bids: List<Long>, beatmapMirrorApiService: OsuBeatmapMirrorApiService): MessageChain {
+
+        private fun getRawBackground(bids: List<Long>, beatmapMirrorApiService: OsuBeatmapMirrorApiService): MessageChain {
             val builder = MessageChainBuilder()
 
             bids.forEach {
@@ -160,15 +162,22 @@ import java.net.URI
                     throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "完整背景")
                 }
 
-                val imageStr = path?.toString() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "完整背景")
+                if (path == null) throw GeneralTipsException("抱歉，服务器暂时没有找到完整背景服务...")
 
-                builder.addImage(imageStr)
+                // TODO 超过 10M 的文件可能发不出
+                val file = try {
+                    Files.readAllBytes(path)
+                } catch (e: Exception) {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_IOException, "完整背景")
+                }
+
+                builder.addImage(file)
             }
 
             return builder.build()
         }
 
-        private fun getMessageChain(type: CoverType, beatmaps: List<BeatMap>): MessageChain {
+        private fun getBackground(type: CoverType, beatmaps: List<BeatMap>): MessageChain {
             val builder = MessageChainBuilder()
 
             beatmaps.forEach {
@@ -199,10 +208,10 @@ import java.net.URI
         val chain: MessageChain
 
         if (param.type == CoverType.RAW) {
-            chain = getMessageChain(param.bids, beatmapMirrorApiService)
+            chain = getRawBackground(param.bids, beatmapMirrorApiService)
         } else {
             val beatmaps = getBeatMaps(param.bids, beatmapApiService)
-            chain = getMessageChain(param.type, beatmaps)
+            chain = getBackground(param.type, beatmaps)
         }
 
         return chain

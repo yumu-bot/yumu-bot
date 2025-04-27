@@ -1,31 +1,51 @@
 package com.now.nowbot.model.mappool.old
 
+import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.mappool.now.Pool
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 
 class MapPoolDto(
-    val name: String? = "MapPool",
-    poolMap: Map<String, List<Long>?>,
-    private val osuBeatmapApiService: OsuBeatmapApiService
+    var name: String? = "MapPool",
+    var mode: OsuMode = OsuMode.DEFAULT,
+    poolMap: Map<String, List<Long>>?,
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService
 ) {
     var id: Int = 0
 
-    val modPools: List<ModPool> = poolMap.map { pool ->
-        val beatMaps = (pool.value ?: listOf() ).map { osuBeatmapApiService.getBeatMap(it) }
+    val modPools: List<ModPool> = poolMap?.map { pool ->
+        val beatMaps = pool.value.map { beatmapApiService.getBeatMap(it) }
 
         ModPool(pool.key, beatMaps)
-    }
+    } ?: listOf()
 
-    private val firstMapSID: Long = if (modPools.isNotEmpty() && modPools.first().beatmaps.isNotEmpty()) {
+    val firstMapSID: Long = if (modPools.isNotEmpty() && modPools.first().beatmaps.isNotEmpty()) {
         modPools.first().beatmaps.first().beatMapSet!!.beatMapSetID
     } else {
         0L
     }
 
-    constructor(pool: Pool, beatmapApiService: OsuBeatmapApiService) : this(
+    val averageStarRating : Double = if (modPools.isNotEmpty()) {
+        modPools.map {
+            if (LazerMod.hasStarRatingChange(listOf(it.mod))) {
+                it.beatmaps.forEach { b ->
+                    calculateApiService.applyBeatMapChanges(b, listOf(it.mod))
+                    calculateApiService.applyStarToBeatMap(b, mode, listOf(it.mod))
+                }
+            }
+
+            it.beatmaps.map { it.starRating }
+        }.flatten().average()
+    } else 0.0
+
+    constructor(pool: Pool, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService) : this(
         pool.name,
+        OsuMode.getMode(pool.mode),
         getModMapFromPool(pool),
-        beatmapApiService
+        beatmapApiService,
+        calculateApiService
     ) {
         this.id = pool.id
     }

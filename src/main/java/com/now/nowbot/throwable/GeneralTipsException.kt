@@ -67,6 +67,7 @@ class GeneralTipsException : TipsException {
         G_Wrong_Param("捞翔，恁发嘞是个啥玩应啊？"),
         G_Wrong_Instruction("指令错误。"),
         G_Wrong_S("%s错误。"),
+        G_Wrong_ParseMissingMap("看起来漏了一组谱面呢？\n这个参数之前缺失谱面：%s，错误位置：%s"),
         G_Wrong_ParamOnly("仅支持使用 %s 逻辑运算符。"),
         G_Wrong_Cabbage("如果你给他...传递一些完全看不懂的参数...你等于...你也等于...你也有泽任吧？"),
 
@@ -91,7 +92,7 @@ class GeneralTipsException : TipsException {
         G_Malfunction_Render("%s：渲染模块连接失败。"),
         G_Malfunction_RenderTooMany("%s：渲染模块连接超时（请求数据太多了）。\n如果你是第一次见到这条消息，再请求一次。通常来说会拿到结果。"),
         G_Malfunction_Send("%s：图片发送失败。"),
-        G_Malfunction_IOException("%s：遇到了文件读取异常，请重试。"), 
+        G_Malfunction_IOException("%s：文件读取失败。"),
         G_Malfunction_Classification("%s：分类失败。"), 
         
         G_Permission_Super("权限不足！只有开发者或超级管理员可以使用此功能！"),

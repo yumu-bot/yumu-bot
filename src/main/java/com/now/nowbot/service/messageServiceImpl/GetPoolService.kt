@@ -1,167 +1,155 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.mappool.old.MapPoolDto;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.ImageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService;
-import com.now.nowbot.throwable.serviceException.MapPoolException;
-import com.now.nowbot.util.CmdUtil;
-import com.now.nowbot.util.DataUtil;
-import com.now.nowbot.util.Instruction;
-import jakarta.annotation.Resource;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
-import java.util.*;
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.mappool.old.MapPoolDto
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.ImageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.messageServiceImpl.GetPoolService.GetPoolParam
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.serviceException.MapPoolException
+import com.now.nowbot.util.CmdUtil.getMode
+import com.now.nowbot.util.Instruction
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Service
 
 @Service("GET_POOL")
-public class GetPoolService implements MessageService<GetPoolService.GetPoolParam> {
-    private static final Logger log = LoggerFactory.getLogger(MapPoolService.class);
-    @Resource
-    ImageService imageService;
-    @Resource
-    OsuBeatmapApiService osuBeatmapApiService;
+class GetPoolService(
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val calculateApiService: OsuCalculateApiService,
+    private val imageService: ImageService
+) : MessageService<GetPoolParam> {
 
-    public record GetPoolParam(Map<String, List<Long>> map, String name, OsuMode mode) {}
+    @JvmRecord
+    data class GetPoolParam(val map: Map<String, List<Long>>?, val name: String?, val mode: OsuMode)
 
-    @Override
-    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<GetPoolParam> data) throws Throwable {
-        var matcher = Instruction.GET_POOL.matcher(messageText);
-        if (!matcher.find()) return false;
+    @Throws(Throwable::class) override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<GetPoolParam>
+    ): Boolean {
+        val matcher = Instruction.GET_POOL.matcher(messageText)
+        if (!matcher.find()) return false
 
-        var dataStr = matcher.group("data");
-        var nameStr = matcher.group("name");
+        val dataStr: String? = matcher.group("data")
+        val nameStr: String? = matcher.group("name")
 
-        if (! StringUtils.hasText(dataStr)) {
-            try {
-                var md = DataUtil.getMarkdownFile("Help/getpool.md");
-                var image = imageService.getPanelA6(md, "help");
-                event.reply(image);
-                return true;
-            } catch (Exception e) {
-                throw new MapPoolException(MapPoolException.Type.GP_Instructions);
-            }
+        if (dataStr.isNullOrBlank()) {
+            throw MapPoolException(MapPoolException.Type.GP_Instructions)
         }
 
-        var dataMap = parseDataString(dataStr);
-        var mode = CmdUtil.getMode(matcher, getFirstMapMode(dataStr)).getData();
+        val dataMap = parseDataString(dataStr)
+        val mode = getMode(matcher, getFirstMapMode(dataStr)).data!!
 
-        data.setValue(new GetPoolParam(dataMap, nameStr, mode));
-        return true;
+        data.value = GetPoolParam(dataMap, nameStr, mode)
+        return true
     }
 
-    @Override
-    public void HandleMessage(@NotNull MessageEvent event, @NotNull GetPoolParam param) throws Throwable {
-        var mapPool = new MapPoolDto(param.name(), param.map(), osuBeatmapApiService);
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: GetPoolParam) {
+        val mapPool = MapPoolDto(param.name, param.mode, param.map, beatmapApiService, calculateApiService)
 
-        if (mapPool.getModPools().isEmpty()) throw new MapPoolException(MapPoolException.Type.GP_Map_Empty);
+        if (mapPool.modPools.isEmpty()) throw MapPoolException(MapPoolException.Type.GP_Map_Empty)
+
+        val body = mapOf(
+            "pool" to mapPool, "mode" to param.mode.shortName
+        )
+
+        val image = try {
+            imageService.getPanel(body, "H")
+        } catch (e: Exception) {
+            log.error("生成图池：渲染失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "生成图池")
+        }
 
         try {
-            var image = imageService.getPanelH(mapPool, param.mode());
-            event.reply(image);
-        } catch (Exception e) {
-            log.error("GP 数据请求失败", e);
-            throw new MapPoolException(MapPoolException.Type.GP_Send_Error);
+            event.reply(image)
+        } catch (e: Exception) {
+            log.error("生成图池：发送失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "生成图池")
         }
     }
 
-    @NonNull
-    public OsuMode getFirstMapMode(String dataStr) {
-        String[] dataStrArray = dataStr.trim().split("[\"\\s,，\\-|:]+");
-        if (dataStr.isBlank() || dataStrArray.length == 0) return OsuMode.DEFAULT;
+    fun getFirstMapMode(dataStr: String): OsuMode {
+        val dataStrs = dataStr.trim().split("[\"\\s,，\\-|:]+".toRegex())
+        if (dataStrs.isEmpty()) return OsuMode.DEFAULT
 
-        long bid = 0L;
+        val bid = dataStrs.firstNotNullOfOrNull { it.toLongOrNull() } ?: return OsuMode.DEFAULT
 
-        for (var s : dataStrArray) {
-            if (s == null || s.isBlank()) continue;
-
-            try {
-                bid = Long.parseLong(s);
-                break;
-            } catch (NumberFormatException ignored) {
-
-            }
-        }
-
-        if (bid == 0L) {
-            return OsuMode.DEFAULT;
-        } else {
-            try {
-                var b = osuBeatmapApiService.getBeatMapFromDataBase(bid);
-                return b.getMode();
-            } catch (Exception e) {
-                return OsuMode.DEFAULT;
-            }
+        return try {
+            beatmapApiService.getBeatMapFromDataBase(bid).mode
+        } catch (e: Exception) {
+            OsuMode.DEFAULT
         }
 
     }
 
-    @Nullable
-    public Map<String, List<Long>> parseDataString(String dataStr) throws MapPoolException {
-        String[] dataStrArray = dataStr.trim().split("[\"\\s,，\\-|:]+");
-        if (dataStr.isBlank() || dataStrArray.length == 0) return null;
+    fun parseDataString(dataStr: String): Map<String, List<Long>>? {
+        val dataStrs = dataStr.trim().split("[\"\\s,，\\-|:]+".toRegex())
+        if (dataStrs.isEmpty()) return null
 
-        var output = new LinkedHashMap<String, List<Long>>();
+        val output = LinkedHashMap<String, List<Long>>()
 
-        String Mods = "";
-        List<Long> BIDs = new ArrayList<>();
+        var mods: String? = ""
+        val ids: MutableList<Long?> = ArrayList()
 
-        int status = 0; //0：收取 Mod 状态，1：收取 BID 状态，2：无需收取，直接输出。
+        var status = 0 //0：收取 Mod 状态，1：收取 BID 状态，2：无需收取，直接输出。
 
-        for (int i = 0; i < dataStrArray.length; i++) {
-            String s = dataStrArray[i];
-            if (s == null || s.isBlank()) continue;
+        for (i in dataStrs.indices) {
+            val s = dataStrs[i]
+            if (s.isBlank()) continue
 
-            String mod = null;
-            Long v = null;
+            var mod: String? = null
+            var v: Long? = s.toLongOrNull()
 
             try {
-                v = Long.parseLong(s);
-            } catch (NumberFormatException e) {
-                mod = s;
+                v = s.toLong()
+            } catch (e: NumberFormatException) {
+                mod = s
             }
 
-            switch (status) {
-                case 0 -> {
-                    if (Objects.nonNull(mod)) {
-                        Mods = mod;
-                        mod = null;
-                        status = 1;
-                    } else throw new MapPoolException(MapPoolException.Type.GP_Parse_MissingMap, s, String.valueOf(i));
+            when (status) {
+                0 -> {
+                    if (!mod.isNullOrBlank()) {
+                        mods = mod
+                        mod = null
+                        status = 1
+                    } else throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParseMissingMap, s, i.toString())
                 }
-                case 1 -> {
-                    if (Objects.nonNull(mod)) {
-                        if (BIDs.isEmpty()) {
-                            throw new MapPoolException(MapPoolException.Type.GP_Parse_MissingMap, s, String.valueOf(i));
+
+                1 -> {
+                    if (!mod.isNullOrBlank()) {
+                        if (ids.isEmpty()) {
+                            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParseMissingMap, s, i.toString())
                         } else {
-                            status = 2;
+                            status = 2
                         }
                     } else {
-                        BIDs.add(v);
+                        ids.add(v)
                     }
                 }
             }
 
-            if (status == 2 || i == dataStrArray.length - 1) {
-                output.put(Mods, List.copyOf(BIDs));
-                BIDs.clear();
-                Mods = null;
-                status = 0;
+            if (status == 2 || i == dataStrs.size - 1) {
+                output[mods!!] = ids.filterNotNull()
+                ids.clear()
+                mods = null
+                status = 0
 
-                if (Objects.nonNull(mod)) {
-                    Mods = mod;
-                    status = 1;
+                if (!mod.isNullOrBlank()) {
+                    mods = mod
+                    status = 1
                 }
             }
         }
 
-        return output;
+        return output
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(GetPoolService::class.java)
     }
 }
