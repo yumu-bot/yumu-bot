@@ -127,48 +127,38 @@ import org.springframework.stereotype.Service
     override fun HandleMessage(event: MessageEvent, param: MaiScoreParam) {
         val full = getFullScoreOrNull(param.qq, param.name, maimaiApiService)
 
-        /*
-        if (full.records.isEmpty())
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Play)
-
-         */
-
-        val result: MaiSong = if (param.title != null) { // 标题搜歌模式
+        val result: MaiSong = if (param.title != null) {
             val title = DataUtil.getStandardisedString(param.title)
 
-            // 外号模式
-            val s = maimaiApiService.getMaimaiAliasSong(title)
+            // 标题搜歌模式
+            val possibles = maimaiApiService.getMaimaiPossibleSongs(title)
 
-            if (s != null
-                && (DataUtil.getStringSimilarity(title, s.title) >= 0.4 ||
-                        (maimaiApiService.getMaimaiAlias(s.songID)?.alias?.maxOfOrNull {
-                            DataUtil.getStringSimilarity(title, it)
-                        } ?: 0.0) >= 0.4)) {
-                s
+            val r = possibles?.map {
+                it to DataUtil.getStringSimilarity(title, it.title)
+            }?.filter { it.second > 0.4 }?.maxBy { it.second }?.first
+
+            if (r != null) {
+                r
             } else {
-                // 实在走不通的保底模式
+                // 外号模式
+                val s = maimaiApiService.getMaimaiAliasSong(title)
 
-                val possibles = maimaiApiService.getMaimaiPossibleSongs(title) ?: throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Null_ResultNotAccurate
-                )
+                // id 也可能是外号
+                val i = if (s != null) {
+                    maimaiApiService.getMaimaiAlias(s.songID)?.alias
+                } else null
 
-                val r = mutableListOf<Pair<MaiSong, Double>>()
+                val sy = DataUtil.getStringSimilarity(title, s?.title) >= 0.4
 
-                for (p in possibles) {
-                    val y = DataUtil.getStringSimilarity(title, p.title)
+                val iy = (i?.maxOfOrNull { DataUtil.getStringSimilarity(title, it) } ?: 0.0) >= 0.4
 
-                    if (y >= 0.4) {
-                        r.add(Pair(p, y))
-                    }
+                if (s != null && (sy || iy)) {
+                    s
+                } else {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_ResultNotAccurate)
                 }
-
-                if (r.isEmpty()) throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Null_ResultNotAccurate
-                )
-
-                r.maxBy { it.second }.first
             }
-        } else if (param.id != null) { // 搜歌模式
+        } else if (param.id != null) { // ID 搜歌模式
             maimaiApiService.getMaimaiSong(param.id.toLong())
                 ?: maimaiApiService.getMaimaiAliasSong(param.id.toString()) // 有的歌曲外号叫 3333
                 ?: throw GeneralTipsException(
