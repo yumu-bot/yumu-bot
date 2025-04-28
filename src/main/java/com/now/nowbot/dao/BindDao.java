@@ -190,7 +190,9 @@ public class BindDao {
         OsuBindUserLite osuBind = user;
         if (user.getRefreshToken() != null) {
             var count = bindQQMapper.countByOsuId(user.getOsuID());
-            if (count > 0) bindUserMapper.deleteAllByOsuId(user.getOsuID());
+            if (count > 1) {
+                bindUserMapper.deleteAllByOsuId(user.getOsuID());
+            }
             osuBind = bindUserMapper.checkSave(osuBind);
         } else {
             Optional<OsuBindUserLite> buLiteOpt = bindUserMapper.getFirstByOsuId(user.getOsuID());
