@@ -2659,6 +2659,7 @@ sealed class LazerMod {
                 NoMod.type -> NoMod()
                 FreeMod.type -> FreeMod()
                 Extra.type -> Extra()
+                Tiebreaker.type -> Tiebreaker()
                 else -> None()
             }
         }
