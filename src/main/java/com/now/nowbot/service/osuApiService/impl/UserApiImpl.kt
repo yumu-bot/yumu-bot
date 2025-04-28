@@ -10,14 +10,20 @@ import com.now.nowbot.model.json.*
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService.TeamInfo
 import com.now.nowbot.throwable.TipsRuntimeException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
+import kotlinx.io.IOException
 import org.codehaus.plexus.util.StringUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.util.UriComponentsBuilder
+import java.nio.file.Files
+import java.nio.file.Path
+import java.security.MessageDigest
 import java.util.*
 import java.util.regex.Pattern
+import kotlin.text.HexFormat
 
 @Service class UserApiImpl(
     private val base: OsuApiBaseService, private val bindDao: BindDao, private val userInfoDao: OsuUserInfoDao
@@ -357,6 +363,118 @@ import java.util.regex.Pattern
         )
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
+    override fun asyncDownloadAvatar(users: List<MicroUser>) {
+        val path = Path.of(IMG_BUFFER_PATH)
+        if (Files.isDirectory(path).not() || Files.isWritable(path).not() ) return
+
+        val actions = users.map {
+            return@map AsyncMethodExecutor.Runnable {
+                val url = it.avatarUrl
+
+                if (url.isNullOrBlank()) {
+                    log.info("异步下载头像：头像不完整")
+                    return@Runnable
+                }
+
+                val md = MessageDigest.getInstance("MD5")
+
+                try {
+                    md.update(url.toByteArray(Charsets.UTF_8))
+                } catch (e: Exception) {
+                    log.info("异步下载谱面图片：计算 MD5 失败")
+                    return@Runnable
+                }
+
+                val hex = md.digest().toHexString(HexFormat.Default)
+
+                if (Files.isRegularFile(path.resolve(hex))) {
+                    return@Runnable
+                } else {
+                    val replacePath = url.replace("https://a.ppy.sh/", "")
+
+                    val image = try {
+                        base.osuApiWebClient.get()
+                            .uri { it.scheme("https").host("a.ppy.sh").replacePath(replacePath)
+                                .build() }
+                            .headers { base.insertHeader(it) }
+                            .retrieve()
+                            .bodyToMono(ByteArray::class.java)
+                            .block()!!
+                    } catch (e: Exception) {
+                        log.error("异步下载头像：任务失败\n", e)
+                        return@Runnable
+                    }
+
+                    try {
+                        Files.write(path.resolve(hex), image)
+                    } catch (e: IOException) {
+                        log.error("异步下载头像：保存失败\n{}", e.message)
+                        return@Runnable
+                    }
+                }
+            }
+        }
+
+        AsyncMethodExecutor.asyncRunnableExecute(actions)
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    override fun asyncDownloadBackground(users: List<MicroUser>) {
+        val path = Path.of(IMG_BUFFER_PATH)
+        if (Files.isDirectory(path).not() || Files.isWritable(path).not() ) return
+
+        val actions = users.map {
+            return@map AsyncMethodExecutor.Runnable {
+                val url = it.cover?.url ?: it.coverUrl
+
+                if (url.isNullOrBlank()) {
+                    log.info("异步下载背景：背景不完整")
+                    return@Runnable
+                }
+
+                val md = MessageDigest.getInstance("MD5")
+
+                try {
+                    md.update(url.toByteArray(Charsets.UTF_8))
+                } catch (e: Exception) {
+                    log.info("异步下载背景图片：计算 MD5 失败")
+                    return@Runnable
+                }
+
+                val hex = md.digest().toHexString(HexFormat.Default)
+
+                if (Files.isRegularFile(path.resolve(hex))) {
+                    return@Runnable
+                } else {
+                    val replacePath = url.replace("https://assets.ppy.sh/", "")
+
+                    val image = try {
+                        base.osuApiWebClient.get()
+                            .uri { it.scheme("https").host("assets.ppy.sh").replacePath(replacePath)
+                                .build() }
+                            .headers { base.insertHeader(it) }
+                            .retrieve()
+                            .bodyToMono(ByteArray::class.java)
+                            .block()!!
+                    } catch (e: Exception) {
+                        log.error("异步下载背景：任务失败\n", e)
+                        return@Runnable
+                    }
+
+                    try {
+                        Files.write(path.resolve(hex), image)
+                    } catch (e: IOException) {
+                        log.error("异步下载背景：保存失败\n{}", e.message)
+                        return@Runnable
+                    }
+                }
+            }
+        }
+
+        AsyncMethodExecutor.asyncRunnableExecute(actions)
+    }
+
     // 反转义字符
     private fun unescapeHTML(str: String): String {
         return str.replace("&amp;".toRegex(), "&").replace("&lt;".toRegex(), "<").replace("&gt;".toRegex(), ">")
@@ -368,5 +486,11 @@ import java.util.regex.Pattern
 
     companion object {
         private val log = LoggerFactory.getLogger(UserApiImpl::class.java)
+
+        private val IMG_BUFFER_PATH: String = if (System.getenv("BUFFER_PATH").isNullOrBlank().not()) {
+            System.getenv("BUFFER_PATH")
+        } else {
+            System.getProperty("java.io.tmpdir") + "/n-bot/buffer"
+        }
     }
 }

@@ -212,9 +212,11 @@ open class Statistics : Cloneable {
         return out
     }
 
+    @get:JsonIgnoreProperties
     val nonNull: Boolean
         get() = countGeki != null && count300 != null && countKatu != null && count100 != null && count50 != null && countMiss != null
 
+    @get:JsonIgnoreProperties
     val isNull: Boolean
         get() = this.nonNull.not()
 

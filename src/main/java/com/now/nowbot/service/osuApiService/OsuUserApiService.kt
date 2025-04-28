@@ -106,4 +106,8 @@ interface OsuUserApiService {
 
         val description: String
     )
+
+    fun asyncDownloadAvatar(users: List<MicroUser>)
+
+    fun asyncDownloadBackground(users: List<MicroUser>)
 }

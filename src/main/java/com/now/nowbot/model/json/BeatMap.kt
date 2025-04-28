@@ -127,10 +127,10 @@ open class BeatMap {
     var passCount: Int? = null
 
     @JsonProperty("playcount")
-    var playCount: Int? = null
+    var playCount: Int = 0
 
     @JsonProperty("ranked")
-    var ranked: Int? = null
+    var ranked: Int = 0
 
     @JsonProperty("url")
     var url: String? = null

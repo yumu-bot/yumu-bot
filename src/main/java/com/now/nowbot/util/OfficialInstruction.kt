@@ -207,6 +207,11 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendQQUIDName()
     }),
 
+    GUEST_DIFFICULTY(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("guest", "guest\\s*diff(er)?", "gd(er)?")
+        appendModeQQUIDNameRange()
+    }),
+
     // #4 osu! 谱面指令
     MAP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("m")

@@ -851,7 +851,7 @@ import kotlin.math.min
         @OpenResource(name = "name", desp = "玩家名称") @RequestParam("name") @Nullable name: String?
     ): ResponseEntity<ByteArray> {
         val osuUser = getPlayerInfoJson(uid, name, null)
-        val data = IMapperService.parseData(
+        val data = IMapperService.getIMapperV1(
             osuUser, userApiService, beatmapApiService
         )
         val image = imageService.getPanel(data, "M")

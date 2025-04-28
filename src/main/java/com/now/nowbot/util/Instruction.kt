@@ -330,6 +330,11 @@ enum class Instruction(val pattern: Pattern) {
         appendQQUIDName()
     }),
 
+    GUEST_DIFFICULTY(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("guest", "guest\\s*diff(er)?", "gd(er)?")
+        appendModeQQUIDNameRange()
+    }),
+
     GET_ID(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("getid", "gi")
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)

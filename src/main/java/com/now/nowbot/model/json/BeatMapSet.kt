@@ -155,7 +155,7 @@ class BeatMapSet {
 
     )
 
-    var ranked: Int? = null
+    var ranked: Int = 0
 
     @JsonProperty("ranked_date")
     var rankedDate: OffsetDateTime? = null
@@ -180,7 +180,49 @@ class BeatMapSet {
     )
 
     @JsonProperty("beatmaps")
+    // 这里的 beatMaps 类内的 BeatMapSet 是半残品，要什么属性自己写在下面
     var beatMaps: List<BeatMap>? = null
+        get() {
+            if (!field.isNullOrEmpty()) {
+
+                val s = BeatMapSet()
+
+                s.availability = this.availability
+                s.beatMapSetID = this.beatMapSetID
+                s.creator = this.creator
+                s.creatorID = this.creatorID
+                s.covers = this.covers
+
+                s.artist = this.artist
+                s.artistUnicode = this.artistUnicode
+                s.title = this.title
+                s.titleUnicode = this.titleUnicode
+
+                s.ranked = this.ranked
+                s.relatedUsers = this.relatedUsers
+                s.language = this.language
+                s.genre = this.genre
+                s.source = this.source
+                s.status = this.status
+                s.tags = this.tags
+
+                s.playCount = this.playCount
+                s.favouriteCount = this.favouriteCount
+
+                s.nsfw = this.nsfw
+
+                s.submittedDate = this.submittedDate
+                s.rankedDate = this.rankedDate
+
+                s.packTags = this.packTags
+
+                s.currentNominations = this.currentNominations
+
+                field!!.forEach { it.beatMapSet = s }
+            }
+
+            return field
+        }
 
     @JsonProperty("converts")
     var converts: List<BeatMap>? = null
@@ -221,6 +263,7 @@ class BeatMapSet {
     @JsonProperty("pack_tags")
     var packTags: List<String>? = null
 
+    @JsonProperty("ratings")
     var ratings: List<Int>? = null
 
     @JsonProperty("recent_favourites")
@@ -331,5 +374,4 @@ class BeatMapSet {
     override fun hashCode(): Int {
         return this.beatMapSetID.hashCode()
     }
-
 }

@@ -233,7 +233,7 @@ class FriendService(
             FALSE -> {
                 rawList
                     .asSequence()
-                    .filter { it.isBot != true }
+                    .filter { ! it.isBot }
                     .sortedBy { it.userName }
                     .filter { ! sorted.contains(it) }
                     .toList()
@@ -253,6 +253,9 @@ class FriendService(
                 throw FriendException(FriendException.Type.FRIEND_Client_NoMatch)
             }
         }
+
+        userApiService.asyncDownloadAvatar(friends)
+        userApiService.asyncDownloadBackground(friends)
 
         try {
             val type = param.sort.first.name.lowercase()

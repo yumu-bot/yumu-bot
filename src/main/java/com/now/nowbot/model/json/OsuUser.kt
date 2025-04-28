@@ -269,6 +269,8 @@ open class OsuUser {
     @JsonProperty("nominated_beatmapset_count")
     var nominatedCount: Int = 0
 
+    // 暂时不用这个类，字符太多了
+    @get:JsonIgnoreProperties
     var page: Page? = null
 
     @JvmRecord
