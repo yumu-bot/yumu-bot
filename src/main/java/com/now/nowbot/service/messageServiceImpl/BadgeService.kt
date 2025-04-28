@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
         val user = getUserWithoutRange(event, m, CmdObject(OsuMode.DEFAULT), isMyself = isMyself)
 
-        if (user.badges.isNullOrEmpty()) {
+        if (user.badges.isEmpty()) {
             if (isMyself.get()) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Badge, "你")
             } else {
@@ -68,7 +68,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
         val user = getUserWithoutRange(event, m, CmdObject(OsuMode.DEFAULT), isMyself = isMyself)
 
-        if (user.badges.isNullOrEmpty()) {
+        if (user.badges.isEmpty()) {
             if (isMyself.get()) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Badge, "你")
             } else {

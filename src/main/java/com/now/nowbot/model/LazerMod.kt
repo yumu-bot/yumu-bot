@@ -2477,7 +2477,7 @@ sealed class LazerMod {
         companion object : Mod {
             override val type: String = "NM"
             override val mode: Set<OsuMode> = setOf()
-            override val incompatible: Set<Mod> = setOf(FreeMod)
+            override val incompatible: Set<Mod> = setOf(FreeMod, Tiebreaker)
         }
     }
 
@@ -2512,8 +2512,25 @@ sealed class LazerMod {
         companion object : Mod, ValueMod {
             override val type: String = "FM"
             override val mode: Set<OsuMode> = setOf()
-            override val incompatible: Set<Mod> = setOf(NoMod)
+            override val incompatible: Set<Mod> = setOf(NoMod, Tiebreaker)
             override val value: Int = 522171579
+        }
+    }
+
+    class Tiebreaker : LazerMod() {
+        @get:JsonProperty("acronym")
+        override val acronym: String = type
+
+        @get:JsonProperty("settings")
+        override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#000000"
+
+        companion object : Mod {
+            override val type: String = "TB"
+            override val mode: Set<OsuMode> = setOf()
+            override val incompatible: Set<Mod> = setOf(NoMod, FreeMod)
         }
     }
 
