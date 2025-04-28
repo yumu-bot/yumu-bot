@@ -140,6 +140,9 @@ public class BindDao {
     }
 
     public BindUser saveBind(BindUser user) {
+        if (user == null) {
+            return null;
+        }
         OsuBindUserLite lite = new OsuBindUserLite(user);
         lite = bindUserMapper.save(lite);
         return fromLite(lite);

@@ -44,15 +44,15 @@ public class BindController {
         BindResponse result;
         try {
             userApiService.refreshUserTokenFirst(user);
-            user = bindDao.getBindUser(user.getOsuID());
-            if (user == null) {
+            var oldUser = bindDao.getBindUser(user.getOsuID());
+            if (oldUser == null) {
                 user = bindDao.saveBind(user);
             } else {
-                user.setOsuName(user.getOsuName());
-                user.setAccessToken(user.getAccessToken());
-                user.setRefreshToken(user.getRefreshToken());
-                user.setTime(user.getTime());
-                bindDao.saveBind(user);
+                oldUser.setOsuName(user.getOsuName());
+                oldUser.setAccessToken(user.getAccessToken());
+                oldUser.setRefreshToken(user.getRefreshToken());
+                oldUser.setTime(user.getTime());
+                user = bindDao.saveBind(oldUser);
             }
 
             result = new BindResponse(
