@@ -1,5 +1,7 @@
 package com.now.nowbot.dao;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.entity.OsuGroupConfigLite;
 import com.now.nowbot.entity.OsuNameToIdLite;
@@ -24,7 +26,9 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -40,6 +44,10 @@ public class BindDao {
     OsuFindNameMapper        osuFindNameMapper;
     OsuGroupConfigRepository osuGroupConfigRepository;
 
+    private final Cache<String, Long> CAPTCHA_CACHE;
+    private final Map<Long, String>   INDEX_CACHE = new ConcurrentHashMap<>();
+    private final Random              random      = new Random();
+
     @Autowired
     public BindDao(
             BindUserMapper mapper,
@@ -53,6 +61,47 @@ public class BindDao {
         bindQQMapper = QQMapper;
         bindDiscordMapper = discordMapper;
         this.osuGroupConfigRepository = osuGroupConfigRepository;
+
+        CAPTCHA_CACHE = Caffeine.newBuilder()
+                .expireAfterWrite(1, TimeUnit.MINUTES)
+                .removalListener((_, id, _) -> {
+                    INDEX_CACHE.remove(id);
+                })
+                .build();
+    }
+
+    public static BindUser fromLite(OsuBindUserLite buLite) {
+        if (buLite == null) return null;
+        var bu = new BindUser();
+        bu.setBaseId(buLite.getID());
+        bu.setOsuID(buLite.getOsuID());
+        bu.setOsuName(buLite.getOsuName());
+        bu.setAccessToken(buLite.getAccessToken());
+        bu.setRefreshToken(buLite.getRefreshToken());
+        bu.setTime(buLite.getTime());
+        bu.setOsuMode(buLite.getMainMode());
+        return bu;
+    }
+
+    private String generateRandomCode() {
+        int code = 100000 + random.nextInt(900000); // 6位数
+        return String.valueOf(code);
+    }
+
+    public String generateCaptcha(Long userId) {
+        String oldCode = INDEX_CACHE.remove(userId);
+        if (oldCode != null) {
+            CAPTCHA_CACHE.invalidate(oldCode);
+        }
+
+        String code;
+        do {
+            code = generateRandomCode();
+        } while (CAPTCHA_CACHE.getIfPresent(code) != null);
+
+        CAPTCHA_CACHE.put(code, userId);
+        INDEX_CACHE.put(userId, code);
+        return code;
     }
 
     public BindUser getBindFromQQ(Long qq) throws BindException {
@@ -92,9 +141,7 @@ public class BindDao {
 
     public BindUser saveBind(BindUser user) {
         OsuBindUserLite lite = new OsuBindUserLite(user);
-
         lite = bindUserMapper.save(lite);
-
         return fromLite(lite);
     }
 
@@ -126,8 +173,14 @@ public class BindDao {
         return bindQQMapper.findById(qq);
     }
 
-    public QQBindLite bindQQ(Long qq, BindUser user) {
-        return bindQQ(qq, fromModel(user));
+    public long verifyCaptcha(String code) {
+        Long cachedUserId = CAPTCHA_CACHE.getIfPresent(code);
+        if (cachedUserId != null) {
+            CAPTCHA_CACHE.invalidate(code);
+            INDEX_CACHE.remove(cachedUserId);
+            return cachedUserId;
+        }
+        return -1;
     }
 
     public QQBindLite bindQQ(Long qq, OsuBindUserLite user) {
@@ -174,6 +227,20 @@ public class BindDao {
         if (id == null) return null;
         var data = bindUserMapper.getByOsuId(id);
         return data.map(BindDao::fromLite).orElse(null);
+    }
+
+    public QQBindLite bindQQ(Long qq, BindUser user) {
+        var data = bindUserMapper.getByOsuId(user.getOsuID());
+        if (data.isEmpty()) {
+            return bindQQ(qq, fromModel(user));
+        } else {
+            var userLite = data.get();
+            userLite.setAccessToken(user.getAccessToken());
+            userLite.setRefreshToken(user.getRefreshToken());
+            userLite.setTime(user.getTime());
+            userLite.setOsuName(user.getOsuName());
+            return bindQQ(qq, userLite);
+        }
     }
 
     public void updateToken(Long uid, String accessToken, String refreshToken, Long time) {
@@ -263,16 +330,10 @@ public class BindDao {
         }
     }
 
-    public static BindUser fromLite(OsuBindUserLite buLite) {
-        if (buLite == null) return null;
-        var bu = new BindUser();
-        bu.setOsuID(buLite.getOsuID());
-        bu.setOsuName(buLite.getOsuName());
-        bu.setAccessToken(buLite.getAccessToken());
-        bu.setRefreshToken(buLite.getRefreshToken());
-        bu.setTime(buLite.getTime());
-        bu.setOsuMode(buLite.getMainMode());
-        return bu;
+    public BindUser getBindUserByDbId(Long id) {
+        if (id == null) return null;
+        var data = bindUserMapper.findById(id);
+        return data.map(BindDao::fromLite).orElse(null);
     }
 
     public static OsuBindUserLite fromModel(BindUser user) {

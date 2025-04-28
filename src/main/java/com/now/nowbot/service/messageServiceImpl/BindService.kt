@@ -25,6 +25,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
+import java.util.regex.Pattern
 import kotlin.jvm.optionals.getOrNull
 
 @Service("BIND") class BindService(
@@ -32,6 +33,7 @@ import kotlin.jvm.optionals.getOrNull
     private val bindDao: BindDao,
     private val taskExecutor: TaskExecutor
 ) : MessageService<BindService.BindParam> {
+    val CaptchaReg = Pattern.compile("\\d{6}")
 
     // full: 全绑定，只有 oauth 应用所有者可以这样做
     @JvmRecord data class BindParam(
@@ -196,9 +198,6 @@ import kotlin.jvm.optionals.getOrNull
 
         //检查是否已经绑定
         val qqBindLite = bindDao.getQQLiteFromQQ(qq).getOrNull()
-
-
-
         if (qqBindLite != null && qqBindLite.bindUser.isAuthorized) {
             bindUser = qqBindLite.bindUser
             try {
@@ -282,10 +281,22 @@ import kotlin.jvm.optionals.getOrNull
     }
 
     private fun bindQQName(event: MessageEvent, name: String, qq: Long) {
+        // 绑定先判断是否是传入验证码
+        val m = CaptchaReg.matcher(name.trim())
+        if (m.find()) {
+            val code = m.group(0)
+            val uid = bindDao.verifyCaptcha(code)
+            val bu = bindDao.getBindUser(uid)
+            if (bu != null && bu.isAuthorized) {
+                bindDao.bindQQ(qq, bu)
+                event.reply(BindException.Type.BIND_Response_Success.message)
+                return
+            }
+        }
+
         if (bindDao.getQQLiteFromQQ(qq).getOrNull() != null) {
             throw BindException(BindException.Type.BIND_Response_AlreadyBound)
         }
-
         val userID: Long
         try {
             userID = userApiService.getOsuID(name)

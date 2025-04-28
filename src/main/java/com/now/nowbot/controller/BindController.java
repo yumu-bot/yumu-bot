@@ -2,6 +2,7 @@ package com.now.nowbot.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.dao.BindDao;
+import com.now.nowbot.model.BindResponse;
 import com.now.nowbot.model.BindUser;
 import com.now.nowbot.service.messageServiceImpl.BindService;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
@@ -16,19 +17,77 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.util.Objects;
 
+@ResponseBody
 @RestController
 @RequestMapping(produces = "application/json;charset=UTF-8")
 @ConditionalOnProperty(value = "yumu.osu.callbackPath")
 public class BindController {
     public static final boolean DEBUG = false;
-    static final Logger log = LoggerFactory.getLogger(BindController.class);
+    static final        Logger  log   = LoggerFactory.getLogger(BindController.class);
     OsuUserApiService userApiService;
-    BindDao bindDao;
+    BindDao           bindDao;
 
     @Autowired
     public BindController(OsuUserApiService userApiService, BindDao dao) {
         this.userApiService = userApiService;
         bindDao = dao;
+    }
+
+    @GetMapping("bindUrl")
+    public String bindUrl() {
+        return userApiService.getOauthUrl("yumu");
+    }
+
+    @PostMapping("bindBack")
+    public BindResponse newBind(@RequestParam("code") String code) {
+        var user = BindUser.create(code);
+        BindResponse result;
+        try {
+            userApiService.refreshUserTokenFirst(user);
+            user = bindDao.getBindUser(user.getOsuID());
+            if (user == null) {
+                user = bindDao.saveBind(user);
+            } else {
+                user.setOsuName(user.getOsuName());
+                user.setAccessToken(user.getAccessToken());
+                user.setRefreshToken(user.getRefreshToken());
+                user.setTime(user.getTime());
+                bindDao.saveBind(user);
+            }
+
+            result = new BindResponse(
+                    user.getBaseId(),
+                    user.getOsuID(),
+                    user.getOsuName(),
+                    user.getOsuMode().shortName,
+                    "绑定成功!"
+            );
+        } catch (WebClientResponseException e) {
+            log.error("绑定时异常", e);
+            result = new BindResponse(
+                    -1,
+                    -1,
+                    "",
+                    "",
+                    "绑定失败, 请重试, 如果一直失败请联系开发者."
+            );
+        }
+        return result;
+    }
+
+    @GetMapping("bindCode")
+    public String bindCode(@RequestParam("id") Long id, @RequestParam("di") Long di) {
+        BindUser user;
+        try {
+            user = bindDao.getBindUserByDbId(id);
+            if (!user.getOsuID().equals(di)) {
+                return "114514";
+            }
+        } catch (Exception e) {
+            log.error("绑定查找出错: ",e);
+            return "人机不要来绑定!";
+        }
+        return bindDao.generateCaptcha(user.getOsuID());
     }
 
     @GetMapping("${yumu.osu.callbackPath}")
@@ -86,16 +145,16 @@ public class BindController {
             var u = bindDao.bindQQ(msg.qq, bd);
             BindService.removeBind(key);
             sb.append("成功绑定:\n<br/>")
-              .append(msg.qq)
-              .append(" -> ")
-              .append(bd.getOsuName())
-              .append("\n<br/>")
-              .append("您的默认游戏模式为：[")
-              .append(u.getOsuUser().getMainMode().shortName).append("]。")
-              .append("\n<br/>")
-              .append("如果您不是主模式 [osu] 玩家，请使用 `!ymmode [mode]` 来修改默认模式。否则可能会影响您查询成绩。")
-              .append("\n<br/>")
-              .append("[mode]：0 osu(standard)，1 taiko，2 catch，3 mania")
+                    .append(msg.qq)
+                    .append(" -> ")
+                    .append(bd.getOsuName())
+                    .append("\n<br/>")
+                    .append("您的默认游戏模式为：[")
+                    .append(u.getOsuUser().getMainMode().shortName).append("]。")
+                    .append("\n<br/>")
+                    .append("如果您不是主模式 [osu] 玩家，请使用 `!ymmode [mode]` 来修改默认模式。否则可能会影响您查询成绩。")
+                    .append("\n<br/>")
+                    .append("[mode]：0 osu(standard)，1 taiko，2 catch，3 mania")
             ;
         } catch (HttpClientErrorException.BadRequest | WebClientResponseException.BadRequest e) {
             log.error("绑定时异常：400", e);
@@ -121,22 +180,9 @@ public class BindController {
             if (Objects.nonNull(stat)) data = stat.split(" ");
             if (Objects.nonNull(body)) code = body.get("code").asText();
         } catch (NullPointerException e) {
-        return e.getMessage();
-    }
-
-        /*
-        try {
-            if (stat != null) {
-                data = stat.split(" ");
-            }
-            if (body != null) {
-                code = body.get("code").asText();
-            }
-        } catch (NullPointerException e) {
             return e.getMessage();
         }
 
-         */
 
         if (Objects.isNull(data) || data.length != 2) {
             return "蛤";

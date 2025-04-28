@@ -96,6 +96,10 @@ public class BindUser {
         return accessToken;
     }
 
+    public void setBaseId(Long baseId) {
+        this.baseId = baseId;
+    }
+
     // 是否绑定过
     public boolean isAuthorized() {
         boolean expired = true; // auth 的反
