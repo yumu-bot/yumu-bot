@@ -98,31 +98,31 @@ import kotlin.math.roundToInt
         }
 
         val actions = ids.map {
-            return@map AsyncMethodExecutor.Supplier<TestFixPPData?> {
+            return@map AsyncMethodExecutor.Supplier<Pair<Long, TestFixPPData>?> {
                 val user: OsuUser = try {
                     userApiService.getOsuUser(it, mode)
                 } catch (e: Exception) {
                     log.error("TP：获取玩家 $it 信息失败")
-                    return@Supplier TestFixPPData(OsuUser(it), listOf())
+                    return@Supplier it to TestFixPPData(OsuUser(it), listOf())
                 }
 
                 val bests: List<LazerScore> = try {
                     scoreApiService.getBestScores(user.userID, mode, 0, 100) + scoreApiService.getBestScores(user.userID, mode, 100, 100)
                 } catch (e: Exception) {
                     log.error("TP：获取玩家 $it 最好成绩失败")
-                    return@Supplier TestFixPPData(user, listOf())
+                    return@Supplier it to TestFixPPData(user, listOf())
                 }
 
-                TestFixPPData(user, bests)
+                it to TestFixPPData(user, bests)
             }
         }
 
-        val data = AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull()
+        val data = AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull().toMap()
 
         log.info("TP：获取玩家信息和最好成绩成功，耗时：${(System.currentTimeMillis() - time) / 1000} 秒")
         time = System.currentTimeMillis()
 
-        val actions2 = data.flatMap { it.bests }.map {
+        val actions2 = data.values.flatMap { it.bests }.map {
             return@map AsyncMethodExecutor.Runnable {
                 beatmapApiService.applyBeatMapExtendFromDataBase(it)
             }
@@ -133,7 +133,9 @@ import kotlin.math.roundToInt
         log.info("TP：玩家最好成绩添加谱面成功，耗时：${(System.currentTimeMillis() - time) / 1000} 秒")
         time = System.currentTimeMillis()
 
-        data.map { d ->
+        ids.map { id ->
+            val d = data[id]!!
+
             if (d.user == null) {
                 sb.append("0, ")
             } else {
