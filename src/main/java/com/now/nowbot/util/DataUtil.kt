@@ -137,7 +137,7 @@ object DataUtil {
      */
     fun splitString(str: String?, splitSpace: Boolean = false): List<String>? {
         if (str.isNullOrBlank()) return null
-        val regex = if (splitSpace) REG_SEPERATOR.toRegex() else REG_ANYTHING_BUT_NO_SPACE.toRegex()
+        val regex = if (splitSpace) REG_SEPERATOR.toRegex() else REG_SEPERATOR_NO_SPACE.toRegex()
 
         val strings = str.split(regex).map { it.trim() }.dropLastWhile { it.isBlank() }
         if (strings.isEmpty()) return null

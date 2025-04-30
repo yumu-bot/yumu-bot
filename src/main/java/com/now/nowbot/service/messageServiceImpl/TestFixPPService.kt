@@ -16,6 +16,7 @@ import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
+import kotlin.math.floor
 import kotlin.math.round
 
 @Service("TEST_FIX") class TestFixPPService(
@@ -110,7 +111,7 @@ import kotlin.math.round
             val fixedPP = fixed.sumOf { it.weight?.PP ?: 0.0 }
 
             val resultPP = playerPP - bpPP + fixedPP
-            sb.append(round(resultPP)).append(',').append(' ')
+            sb.append(floor(resultPP).toInt()).append(',').append(' ')
         }
 
         event.reply(sb.toString().removeSuffix(","))
