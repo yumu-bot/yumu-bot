@@ -40,16 +40,19 @@ class GetIDService(private val userApiService: OsuUserApiService) : MessageServi
         val sb = StringBuilder()
 
         val actions = names.map {
-            return@map AsyncMethodExecutor.Supplier<Pair<String, Long>?> {
+            return@map AsyncMethodExecutor.Supplier<Pair<String, Long>> {
                 return@Supplier try {
                     it to userApiService.getOsuID(it)
                 } catch (e: Exception) {
-                    null
+                    it to -1L
                 }
             }
         }
 
-        val ids = AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull().toMap()
+        val ids = AsyncMethodExecutor.awaitSupplierExecute(actions)
+            .filterNotNull()
+            .filter { it.second > 0L }
+            .toMap()
 
         names.forEach {
             val id = ids[it]

@@ -59,17 +59,20 @@ class CsvPPMinusService(
             strs.mapNotNull { it.toLongOrNull() }
         } else {
             val actions = strs.map {
-                return@map AsyncMethodExecutor.Supplier<Pair<String, Long>?> {
+                return@map AsyncMethodExecutor.Supplier<Pair<String, Long>> {
                     return@Supplier try {
                         it to userApiService.getOsuID(it)
                     } catch (e: Exception) {
                         log.error("CM：获取玩家 {} 编号失败", it)
-                        null
+                        it to -1L
                     }
                 }
             }
 
-            val result = AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull().toMap()
+            val result = AsyncMethodExecutor.awaitSupplierExecute(actions)
+                .filterNotNull()
+                .filter { it.second > 0L }
+                .toMap()
             strs.mapNotNull { result[it] }
         }
 
