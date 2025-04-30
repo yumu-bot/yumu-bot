@@ -32,7 +32,7 @@ class GetNameService(private val userApiService: OsuUserApiService) : MessageSer
             throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Group)
         }
 
-        val idStr: List<String>? = splitString(matcher.group("data"))
+        val idStr: List<String>? = splitString(matcher.group("data"), splitSpace = true)
         if (idStr.isNullOrEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
 
         val sb = StringBuilder()

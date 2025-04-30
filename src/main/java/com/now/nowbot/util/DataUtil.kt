@@ -128,23 +128,20 @@ object DataUtil {
     }
 
     /**
-     * 将按逗号或者 |、:：分隔的字符串分割 如果未含有分隔的字符，返回 null
+     * 将按逗号或者 |、:：分隔的字符串分割 如果未含有分割的字符，返回 null
      * 根据分隔符，分割玩家名
      *
-     * @param str 需要分析的字符串
+     * @param str 需要分割的字符串
+     * @param splitSpace 如果需要分割玩家名之类可能含有空格的字段，则为 false，默认 false
      * @return 玩家名列表
      */
-    @JvmStatic
-    @Nullable
-    fun splitString(@Nullable str: String?): List<String>? {
+    fun splitString(str: String?, splitSpace: Boolean = false): List<String>? {
         if (str.isNullOrBlank()) return null
-        val strings =
-            str.trim()
-                .split(REG_SEPERATOR.toRegex())
-                .dropLastWhile { it.isEmpty() }
-        // 空格和-_不能匹配
+        val regex = if (splitSpace) REG_SEPERATOR.toRegex() else REG_ANYTHING_BUT_NO_SPACE.toRegex()
+
+        val strings = str.split(regex).map { it.trim() }.dropLastWhile { it.isBlank() }
         if (strings.isEmpty()) return null
-        return strings.map { it.trim() }
+        return strings
     }
 
     /**

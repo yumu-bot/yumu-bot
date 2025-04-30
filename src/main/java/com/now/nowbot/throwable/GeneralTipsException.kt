@@ -90,6 +90,7 @@ class GeneralTipsException : TipsException {
         G_Malfunction_Calculate("%s：数据计算失败。"), 
         G_Malfunction_Fetch("%s：数据获取失败。"), 
         G_Malfunction_Render("%s：渲染模块连接失败。"),
+        G_Malfunction_APITooMany("%s：一次性输入的数据太多！获取信息的时候可能会遇到 API 瓶颈。"),
         G_Malfunction_RenderTooMany("%s：渲染模块连接超时（请求数据太多了）。\n如果你是第一次见到这条消息，再请求一次。通常来说会拿到结果。"),
         G_Malfunction_Send("%s：图片发送失败。"),
         G_Malfunction_IOException("%s：文件读取失败。"),
