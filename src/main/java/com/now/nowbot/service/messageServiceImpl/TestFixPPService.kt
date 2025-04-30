@@ -73,17 +73,22 @@ import kotlin.math.roundToInt
             param.names.mapNotNull { it.toLongOrNull() }
         } else {
             val actions = param.names.map {
-                return@map AsyncMethodExecutor.Supplier<Long?> {
+                return@map AsyncMethodExecutor.Supplier<Pair<String, Long>?> {
                     return@Supplier try {
-                        userApiService.getOsuID(it)
+                        it to userApiService.getOsuID(it)
                     } catch (e: Exception) {
-                        log.error("TP：获取玩家 {} 编号失败", it)
-                        null
+                        log.error("TF：获取玩家 {} 编号失败", it)
+                        it to -1L
                     }
                 }
             }
 
-            AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull()
+            val result = AsyncMethodExecutor.awaitSupplierExecute(actions)
+                .filterNotNull()
+                .filter { it.second > 0L }
+                .toMap()
+
+            param.names.mapNotNull { result[it] }
         }
 
         // 获取第一个玩家，来设定默认游戏模式
@@ -93,7 +98,7 @@ import kotlin.math.roundToInt
         }
 
         val actions = ids.map {
-            return@map AsyncMethodExecutor.Supplier<TestFixPPData> {
+            return@map AsyncMethodExecutor.Supplier<TestFixPPData?> {
                 val user: OsuUser = try {
                     userApiService.getOsuUser(it, mode)
                 } catch (e: Exception) {
