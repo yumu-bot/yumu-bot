@@ -463,6 +463,14 @@ open class OsuUser {
         return id.hashCode()
     }
 
+    constructor(id: Long) {
+        this.id = id
+    }
+
+    constructor(name: String) {
+        this.username = name
+    }
+
     companion object {
         /**
          * List<OsuUser> 去重方法

@@ -44,53 +44,86 @@ class CsvPPMinusService(
     @CheckPermission(test = true)
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
-        val names: List<String>? = splitString(matcher.group("data"))
+        val strs: List<String>? = splitString(matcher.group("data"))
         val inputMode = OsuMode.getMode(matcher.group("mode"))
 
-        if (names.isNullOrEmpty()) {
+        if (strs.isNullOrEmpty()) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Data)
         }
 
-        val isOsuID = names.first().matches("\\d+".toRegex())
+        val isOsuID = strs.first().matches("\\d+".toRegex())
 
         event.reply("正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。\n推荐一次输入的数据量小于 48，不然会出现很多特殊的问题。")
 
+        val ids = if (isOsuID) {
+            strs.mapNotNull { it.toLongOrNull() }
+        } else {
+            val actions = strs.map {
+                return@map AsyncMethodExecutor.Supplier<Long?> {
+                    return@Supplier try {
+                        userApiService.getOsuID(it)
+                    } catch (e: Exception) {
+                        log.error("CM：获取玩家 {} 编号失败", it)
+                        null
+                    }
+                }
+            }
+
+            AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull()
+        }
+
         var mode: OsuMode? = null
-        val actions = names.map { name ->
+
+        val actions = ids.map { id ->
             return@map AsyncMethodExecutor.Supplier<TestPPMData?> {
                 try {
-                    val u = if (isOsuID) {
-                        userApiService.getOsuUser(name.toLongOrNull() ?: -1L, OsuMode.getMode(mode, inputMode))
-                    } else {
-                        userApiService.getOsuUser(name, OsuMode.getMode(mode, inputMode))
-                    }
+                    val u = userApiService.getOsuUser(id, OsuMode.getMode(mode, inputMode))
 
                     if (OsuMode.isDefaultOrNull(mode)) {
                         mode = u.currentOsuMode
                     }
 
-                    val s = scoreApiService.getBestScores(u.id, mode)
+                    val s = scoreApiService.getBestScores(id, mode)
                     val ppmData = TestPPMData()
                     ppmData.init(u, s)
 
-                    log.info("testPPM get user [$name] OK")
+                    log.info("CM：获取玩家 $id 信息成功")
                     return@Supplier ppmData
                 } catch (e: Exception) {
-                    log.error("testPPM get user [$name] info error", e)
+                    log.error("CM：获取玩家 $id 信息失败", e)
                     return@Supplier null
                 }
             }
         }
 
-        val async: Map<Any, TestPPMData> = AsyncMethodExecutor.awaitSupplierExecute(actions)
+        val async: Map<Long, TestPPMData> = AsyncMethodExecutor.awaitSupplierExecute(actions)
             .filterNotNull()
             .filter { it.user != null }
-            .associateBy { if (isOsuID) it.user!!.userID else it.user!!.username.lowercase() }
+            .associateBy { it.user!!.userID }
 
-        val result = names.filter { it.isNotEmpty() }
-            .mapNotNull {
-                if (isOsuID) async[it.toLongOrNull() ?: -1L] else async[it.trim().lowercase()]
+        val result = ids.map { async[it] }.filterNotNull()
+
+        /*
+
+        val result = names.map { name ->
+            val u = if (isOsuID) {
+                userApiService.getOsuUser(name.toLongOrNull() ?: -1L, OsuMode.getMode(mode, inputMode))
+            } else {
+                userApiService.getOsuUser(name, OsuMode.getMode(mode, inputMode))
             }
+
+            if (OsuMode.isDefaultOrNull(mode)) {
+                mode = u.currentOsuMode
+            }
+
+            val s = scoreApiService.getBestScores(u.id, mode)
+            val ppmData = TestPPMData()
+            ppmData.init(u, s)
+
+            ppmData
+        }
+
+         */
 
         val sb = StringBuilder()
 
@@ -170,7 +203,7 @@ class CsvPPMinusService(
         val file = sb.toString().toByteArray(StandardCharsets.UTF_8)
 
         // 必须群聊
-        event.replyFileInGroup(file, names.first() + "...-testppm.csv")
+        event.replyFileInGroup(file, strs.first() + "...-testppm.csv")
     }
 
     internal class TestPPMData {
