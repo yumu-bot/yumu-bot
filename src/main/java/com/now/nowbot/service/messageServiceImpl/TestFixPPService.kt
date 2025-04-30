@@ -15,8 +15,8 @@ import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
-import java.util.*
 import java.util.regex.Matcher
+import kotlin.math.round
 
 @Service("TEST_FIX") class TestFixPPService(
     private val userApiService: OsuUserApiService,
@@ -42,8 +42,8 @@ import java.util.regex.Matcher
             throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Group)
         }
 
-        val names: List<String> =
-            splitString(matcher.group("data")) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_UserName)
+        val names: List<String> = splitString(matcher.group("data"))
+            ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_UserName)
         var mode = OsuMode.getMode(matcher.group("mode"))
 
         if (names.isEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
@@ -52,12 +52,12 @@ import java.util.regex.Matcher
 
         for (name in names) {
             if (name.isBlank()) {
-                break
+                continue
             }
 
-            var user: OsuUser
-            var bps: List<LazerScore>
-            var playerPP: Double
+            val user: OsuUser
+            val bests: List<LazerScore>
+            val playerPP: Double
 
             try {
                 user = userApiService.getOsuUser(name)
@@ -67,45 +67,38 @@ import java.util.regex.Matcher
                     mode = user.currentOsuMode
                 }
 
-                bps = scoreApiService.getBestScores(user.userID, mode)
+                bests = scoreApiService.getBestScores(user.userID, mode, 0, 100) + scoreApiService.getBestScores(user.userID, mode, 100, 100)
             } catch (e: Exception) {
                 sb.append("name=").append(name).append(" not found").append('\n')
-                break
+                continue
             }
 
-            if (bps.isEmpty()) {
+            if (bests.isEmpty()) {
                 sb.append("name=").append(name).append(" bp is empty").append('\n')
             }
 
-            var fixed: MutableList<LazerScore> = ArrayList(bps.size)
+            for (s in bests) {
+                beatmapApiService.applyBeatMapExtendFromDataBase(s)
 
-            var bpPP = 0f
+                val max = s.beatMap.maxCombo ?: 1
+                val combo = s.maxCombo
 
-            for (bp in bps) {
-                beatmapApiService.applyBeatMapExtendFromDataBase(bp)
-
-                val max = bp.beatMap.maxCombo ?: 1
-                val combo = bp.maxCombo
-
-                val miss = bp.statistics.miss
+                val miss = s.statistics.miss
 
                 // 断连击，mania 模式不参与此项筛选
-                val isChoke = (miss == 0) && (combo < Math.round(max * 0.98f)) && (bp.mode != OsuMode.MANIA)
+                val isChoke = (miss == 0) && (combo < Math.round(max * 0.98f)) && (s.mode != OsuMode.MANIA)
 
                 // 含有 <1% 的失误
                 val has1pMiss = (miss > 0) && ((1f * miss / max) <= 0.01f)
 
                 // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
                 if (isChoke || has1pMiss) {
-                    bp.PP = calculateApiService.getScoreFullComboPP(bp).pp
+                    s.PP = calculateApiService.getScoreFullComboPP(s).pp
                 }
-
-                fixed.add(bp)
-                bpPP += Objects.requireNonNull<LazerScore.Weight?>(bp.weight).PP.toFloat()
             }
 
-            fixed = fixed.stream().filter { score: LazerScore -> score.PP != null }
-                .sorted(Comparator.comparing<LazerScore, Double> { it.PP ?: 0.0 }.reversed()).toList()
+            val bpPP = bests.sumOf { it.weight?.PP ?: 0.0 }
+            val fixed = bests.sortedByDescending{ it.PP ?: 0.0 }
 
             var weight = 1.0 / 0.95
 
@@ -114,17 +107,10 @@ import java.util.regex.Matcher
                 f.weight = LazerScore.Weight(weight, (f.PP ?: 0.0) * weight)
             }
 
-            val fixedPP =
-                fixed.stream()
-                    .mapToDouble { s: LazerScore -> (s.weight?.PP ?: 0.0) }
-                    .reduce { a: Double, b: Double ->
-                    java.lang.Double.sum(
-                        a, b
-                    )
-                }.orElse(0.0)
+            val fixedPP = fixed.sumOf { it.weight?.PP ?: 0.0 }
 
             val resultPP = playerPP - bpPP + fixedPP
-            sb.append(Math.round(resultPP)).append(',').append(' ')
+            sb.append(round(resultPP)).append(',').append(' ')
         }
 
         event.reply(sb.substring(0, sb.length - 2))

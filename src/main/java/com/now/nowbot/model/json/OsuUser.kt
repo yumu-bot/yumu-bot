@@ -283,7 +283,7 @@ open class OsuUser {
     var previousNames: List<String>? = listOf()
 
     @JsonProperty("rank_highest")
-    var highestRank: HighestRank = HighestRank()
+    var highestRank: HighestRank? = HighestRank()
 
     @JvmRecord
     data class HighestRank(
@@ -432,7 +432,7 @@ open class OsuUser {
     }
 
     fun toCSV(): String {
-        return "${getUserName(username)},${id},${statistics?.pp},${statistics?.pp4K},${statistics?.pp7K},${statistics?.accuracy},${statistics?.rankedScore},${statistics?.totalScore},${statistics?.playCount},${statistics?.playTime},${statistics?.totalHits},${avatarUrl},${countryCode},${defaultGroup},${isActive},${isBot},${isDeleted},${isOnline},${isSupporter},${isRestricted},${lastVisit},${pmFriendsOnly},${profileColor},${coverUrl},${replaceCommas(discord)},${hasSupported},${replaceCommas(interests)},${joinDate},${replaceCommas(location)},${maxBlocks},${maxFriends},${replaceCommas(occupation)},${mode},${playStyle?.joinToString(",")},${postCount},${profileOrder?.joinToString(",")},${title},${titleUrl},${twitter},${website},${country?.name},${cover?.custom},${kudosu?.total},${beatmapPlaycount},${commentsCount},${favoriteCount},${followerCount},${graveyardCount},${guestCount},${lovedCount},${mappingFollowerCount},${nominatedCount},${pendingCount},${previousNames?.joinToString(",")},${highestRank.rank},${rankedCount},${replaysWatchedCounts.size},${scoreBestCount},${scoreFirstCount},${scorePinnedCount},${scoreRecentCount},${supportLevel},${userAchievements?.size}"
+        return "${getUserName(username)},${id},${statistics?.pp},${statistics?.pp4K},${statistics?.pp7K},${statistics?.accuracy},${statistics?.rankedScore},${statistics?.totalScore},${statistics?.playCount},${statistics?.playTime},${statistics?.totalHits},${avatarUrl},${countryCode},${defaultGroup},${isActive},${isBot},${isDeleted},${isOnline},${isSupporter},${isRestricted},${lastVisit},${pmFriendsOnly},${profileColor},${coverUrl},${replaceCommas(discord)},${hasSupported},${replaceCommas(interests)},${joinDate},${replaceCommas(location)},${maxBlocks},${maxFriends},${replaceCommas(occupation)},${mode},${playStyle?.joinToString(",")},${postCount},${profileOrder?.joinToString(",")},${title},${titleUrl},${twitter},${website},${country?.name},${cover?.custom},${kudosu?.total},${beatmapPlaycount},${commentsCount},${favoriteCount},${followerCount},${graveyardCount},${guestCount},${lovedCount},${mappingFollowerCount},${nominatedCount},${pendingCount},${previousNames?.joinToString(",")},${highestRank?.rank},${rankedCount},${replaysWatchedCounts.size},${scoreBestCount},${scoreFirstCount},${scorePinnedCount},${scoreRecentCount},${supportLevel},${userAchievements?.size}"
     }
 
     private fun getUserName(username: String): String {

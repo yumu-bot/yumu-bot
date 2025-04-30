@@ -250,6 +250,7 @@ class BeatMapSet {
         val description: String
     )
 
+    @JsonProperty("genre")
     var genre: Genre? = null
 
     data class Genre (val id: Int, val name: String)
