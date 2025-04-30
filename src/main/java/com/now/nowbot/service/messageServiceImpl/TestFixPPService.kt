@@ -41,8 +41,6 @@ import kotlin.math.roundToInt
     ): Boolean {
         val matcher = Instruction.TEST_FIX.matcher(messageText)
         if (matcher.find()) {
-
-
             val names: List<String> = splitString(matcher.group("data"))
                 ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_UserName)
             val mode = OsuMode.getMode(matcher.group("mode"))
@@ -69,7 +67,7 @@ import kotlin.math.roundToInt
 
         val isOsuID = param.names.first().matches("\\d+".toRegex())
 
-        event.reply("正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。\n推荐一次输入的数据量小于 48，不然会出现很多特殊的问题。")
+        event.reply("TF：正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。")
 
         val ids = if (isOsuID) {
             param.names.mapNotNull { it.toLongOrNull() }
@@ -89,7 +87,6 @@ import kotlin.math.roundToInt
         }
 
         // 获取第一个玩家，来设定默认游戏模式
-
         if (mode == OsuMode.DEFAULT) {
             val firstUser = userApiService.getOsuUser(ids.first(), mode)
             mode = firstUser.currentOsuMode

@@ -21,44 +21,46 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.util.*
-import java.util.regex.Matcher
 
 @Service("CSV_PPM")
 class CsvPPMinusService(
     private val userApiService: OsuUserApiService,
     private val scoreApiService: OsuScoreApiService,
-) : MessageService<Matcher> {
+) : MessageService<CsvPPMinusService.CSVPPMinusParam> {
+
+    data class CSVPPMinusParam(val names: List<String>, val mode: OsuMode)
 
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: DataValue<Matcher>,
+        data: DataValue<CSVPPMinusParam>,
     ): Boolean {
-        val m = Instruction.CSV_PPM.matcher(messageText)
-        if (m.find() && Permission.isGroupAdmin(event)) {
-            data.value = m
+        val matcher = Instruction.CSV_PPM.matcher(messageText)
+        if (matcher.find() && Permission.isGroupAdmin(event)) {
+            val names = splitString(matcher.group("data"))
+
+            if (names.isNullOrEmpty()) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Data)
+            }
+
+            val mode = OsuMode.getMode(matcher.group("mode"))
+
+            data.value = CSVPPMinusParam(names, mode)
             return true
         } else return false
     }
 
     @CheckPermission(test = true)
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
-        val strs: List<String>? = splitString(matcher.group("data"))
-        val inputMode = OsuMode.getMode(matcher.group("mode"))
+    override fun HandleMessage(event: MessageEvent, param: CSVPPMinusParam) {
+        val isOsuID = param.names.first().matches("\\d+".toRegex())
 
-        if (strs.isNullOrEmpty()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Data)
-        }
-
-        val isOsuID = strs.first().matches("\\d+".toRegex())
-
-        event.reply("正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。\n推荐一次输入的数据量小于 48，不然会出现很多特殊的问题。")
+        event.reply("CM：正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。")
 
         val ids = if (isOsuID) {
-            strs.mapNotNull { it.toLongOrNull() }
+            param.names.mapNotNull { it.toLongOrNull() }
         } else {
-            val actions = strs.map {
+            val actions = param.names.map {
                 return@map AsyncMethodExecutor.Supplier<Pair<String, Long>> {
                     return@Supplier try {
                         it to userApiService.getOsuID(it)
@@ -73,15 +75,22 @@ class CsvPPMinusService(
                 .filterNotNull()
                 .filter { it.second > 0L }
                 .toMap()
-            strs.mapNotNull { result[it] }
+
+            param.names.mapNotNull { result[it] }
         }
 
-        var mode: OsuMode? = null
+        var mode: OsuMode = param.mode
+
+        // 获取第一个玩家，来设定默认游戏模式
+        if (mode == OsuMode.DEFAULT) {
+            val firstUser = userApiService.getOsuUser(ids.first(), mode)
+            mode = firstUser.currentOsuMode
+        }
 
         val actions = ids.map { id ->
             return@map AsyncMethodExecutor.Supplier<TestPPMData?> {
                 try {
-                    val u = userApiService.getOsuUser(id, OsuMode.getMode(mode, inputMode))
+                    val u = userApiService.getOsuUser(id, mode)
 
                     if (OsuMode.isDefaultOrNull(mode)) {
                         mode = u.currentOsuMode
@@ -206,8 +215,14 @@ class CsvPPMinusService(
 
         val file = sb.toString().toByteArray(StandardCharsets.UTF_8)
 
+        val fileName = if (param.names.size == 1) {
+            param.names.first() + "-testppm.csv"
+        } else {
+            param.names.first() + "~" + param.names.last() + "-testppm.csv"
+        }
+
         // 必须群聊
-        event.replyFileInGroup(file, strs.first() + "...-testppm.csv")
+        event.replyFileInGroup(file, fileName)
     }
 
     internal class TestPPMData {
