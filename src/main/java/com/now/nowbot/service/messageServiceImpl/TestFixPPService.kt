@@ -86,7 +86,7 @@ import kotlin.math.round
                 val miss = s.statistics.miss
 
                 // 断连击，mania 模式不参与此项筛选
-                val isChoke = (miss == 0) && (combo < Math.round(max * 0.98f)) && (s.mode != OsuMode.MANIA)
+                val isChoke = (miss == 0) && (combo < round(max * 0.98f)) && (s.mode != OsuMode.MANIA)
 
                 // 含有 <1% 的失误
                 val has1pMiss = (miss > 0) && ((1f * miss / max) <= 0.01f)
@@ -113,6 +113,6 @@ import kotlin.math.round
             sb.append(round(resultPP)).append(',').append(' ')
         }
 
-        event.reply(sb.substring(0, sb.length - 2))
+        event.reply(sb.toString().removeSuffix(","))
     }
 }

@@ -140,7 +140,7 @@ object DataUtil {
         if (str.isNullOrBlank()) return null
         val strings =
             str.trim()
-                .split(REG_SEPERATOR)
+                .split(REG_SEPERATOR.toRegex())
                 .dropLastWhile { it.isEmpty() }
         // 空格和-_不能匹配
         if (strings.isEmpty()) return null
