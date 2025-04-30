@@ -88,6 +88,13 @@ import kotlin.math.roundToInt
             AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull()
         }
 
+        // 获取第一个玩家，来设定默认游戏模式
+
+        if (mode == OsuMode.DEFAULT) {
+            val firstUser = userApiService.getOsuUser(ids.first(), mode)
+            mode = firstUser.currentOsuMode
+        }
+
         val actions = ids.map {
             return@map AsyncMethodExecutor.Supplier<TestFixPPData> {
                 val user: OsuUser = try {
@@ -95,10 +102,6 @@ import kotlin.math.roundToInt
                 } catch (e: Exception) {
                     log.error("TP：获取玩家 $it 信息失败")
                     return@Supplier TestFixPPData(OsuUser(it), listOf())
-                }
-
-                if (mode == OsuMode.DEFAULT) {
-                    mode = user.currentOsuMode
                 }
 
                 val bests: List<LazerScore> = try {
