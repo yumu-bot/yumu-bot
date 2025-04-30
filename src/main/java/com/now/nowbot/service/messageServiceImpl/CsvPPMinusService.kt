@@ -101,7 +101,7 @@ class CsvPPMinusService(
             .filter { it.user != null }
             .associateBy { it.user!!.userID }
 
-        val result = ids.map { async[it] }.filterNotNull()
+        val result = ids.mapNotNull { async[it] }
 
         /*
 

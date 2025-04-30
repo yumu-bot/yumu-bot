@@ -131,11 +131,11 @@ import kotlin.math.roundToInt
         log.info("TP：玩家最好成绩添加谱面成功，耗时：${(System.currentTimeMillis() - time) / 1000} 秒")
         time = System.currentTimeMillis()
 
-        data.mapIndexed { i: Int, it: TestFixPPData ->
-            if (it.user == null) {
+        data.map { d ->
+            if (d.user == null) {
                 sb.append("0, ")
             } else {
-                val bests = it.bests
+                val bests = d.bests
 
                 for (s in bests) {
                     beatmapApiService.applyBeatMapExtendFromDataBase(s)
@@ -168,7 +168,7 @@ import kotlin.math.roundToInt
                 }
 
                 val fixedPP = fixed.sumOf { it.weight?.PP ?: 0.0 }
-                val playerPP = it.user.pp
+                val playerPP = d.user.pp
 
                 val resultPP = playerPP - bpPP + fixedPP
                 sb.append(resultPP.roundToInt()).append(", ")
