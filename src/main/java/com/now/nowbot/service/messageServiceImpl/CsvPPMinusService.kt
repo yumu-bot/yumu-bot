@@ -59,9 +59,9 @@ class CsvPPMinusService(
             strs.mapNotNull { it.toLongOrNull() }
         } else {
             val actions = strs.map {
-                return@map AsyncMethodExecutor.Supplier<Long?> {
+                return@map AsyncMethodExecutor.Supplier<Pair<String, Long>?> {
                     return@Supplier try {
-                        userApiService.getOsuID(it)
+                        it to userApiService.getOsuID(it)
                     } catch (e: Exception) {
                         log.error("CM：获取玩家 {} 编号失败", it)
                         null
@@ -69,7 +69,8 @@ class CsvPPMinusService(
                 }
             }
 
-            AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull()
+            val result = AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull().toMap()
+            strs.mapNotNull { result[it] }
         }
 
         var mode: OsuMode? = null
