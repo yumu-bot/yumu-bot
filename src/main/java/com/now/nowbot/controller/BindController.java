@@ -81,7 +81,7 @@ public class BindController {
         try {
             user = bindDao.getBindUserByDbId(id);
             if (!user.getOsuID().equals(di)) {
-                return "114514";
+                return "你不许绑定";
             }
         } catch (Exception e) {
             log.error("绑定查找出错: ",e);
