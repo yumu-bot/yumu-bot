@@ -93,6 +93,8 @@ import kotlin.jvm.optionals.getOrNull
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: BindParam) {
         val me = event.sender.id
 
+        event.reply("船新绑定方式, 复制右侧链接到浏览器中打开 -> https://bot.osuxrq.com/")
+
         if (me == param.qq) {
             if (param.unbind) {
                 unbindQQ(me)

@@ -15,6 +15,7 @@ import java.util.Optional;
 
 public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, JpaSpecificationExecutor<OsuBindUserLite> {
 
+    @Query("select u from OsuBindUserLite u where u.osuId = :osuId order by u.id limit 1")
     Optional<OsuBindUserLite> getByOsuId(Long osuId);
 
     @Query("""
