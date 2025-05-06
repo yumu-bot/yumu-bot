@@ -6,7 +6,6 @@ import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
 import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -18,7 +17,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.core.task.TaskExecutor
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -31,7 +29,6 @@ import kotlin.jvm.optionals.getOrNull
 @Service("BIND") class BindService(
     private val userApiService: OsuUserApiService,
     private val bindDao: BindDao,
-    private val taskExecutor: TaskExecutor
 ) : MessageService<BindService.BindParam> {
     val CaptchaReg = Pattern.compile("\\d{6}")
 
@@ -241,43 +238,11 @@ import kotlin.jvm.optionals.getOrNull
         }
 
         // 需要绑定
-        // bindUrl(event, qq);
-
-        // TODO 紧急运行，临时禁用 URL 绑定
-        bindQQAt(event, qq, false)
+         bindUrl(event, qq)
     }
 
-    fun bindUrl(event: MessageEvent?, qq: Long) { // 将当前毫秒时间戳作为 key
-        val timeMillis = System.currentTimeMillis()
-        val state = "${qq}+${timeMillis}"
-
-        // 将消息回执作为 value
-        val text = userApiService.getOauthUrl(state, qq == 1340691940L)
-        val send = MessageChainBuilder().addAt(qq).addText("\n").addText(text).build()
-
-        val receipt: MessageReceipt
-        if (event != null) {
-            receipt = event.reply(send)
-
-            receipt.recallIn((110 * 1000).toLong()) //此处在 controller.msgController 处理
-            putBind(timeMillis, BindData(timeMillis, receipt, qq))
-        }
-    }
-
-    private fun putBind(t: Long, b: BindData) {
-        removeOldBind()
-        if (BIND_MSG_MAP.size > 20 && !CLEAR) {
-            CLEAR = true
-            taskExecutor.execute {
-                try {
-                    Thread.sleep((1000 * 5).toLong())
-                } catch (ignored: InterruptedException) {}
-
-                removeOldBind()
-                CLEAR = false
-            }
-        }
-        BIND_MSG_MAP[t] = b
+    fun bindUrl(event: MessageEvent, qq: Long) { // 将当前毫秒时间戳作为 key
+        event.reply("复制到浏览器打开 -> https://bot.osuxrq.com/")
     }
 
     private fun bindQQName(event: MessageEvent, name: String, qq: Long) {
