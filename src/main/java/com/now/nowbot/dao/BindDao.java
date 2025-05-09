@@ -73,13 +73,13 @@ public class BindDao {
     public static BindUser fromLite(OsuBindUserLite buLite) {
         if (buLite == null) return null;
         var bu = new BindUser();
-        bu.setBaseId(buLite.getID());
-        bu.setOsuID(buLite.getOsuID());
-        bu.setOsuName(buLite.getOsuName());
-        bu.setAccessToken(buLite.getAccessToken());
+        bu.baseID = buLite.getID();
+        bu.userID = buLite.getOsuID();
+        bu.username = buLite.getOsuName();
+        bu.accessToken = buLite.getAccessToken();
         bu.setRefreshToken(buLite.getRefreshToken());
-        bu.setTime(buLite.getTime());
-        bu.setOsuMode(buLite.getMainMode());
+        bu.time = buLite.getTime();
+        bu.setMode(buLite.getMainMode());
         return bu;
     }
 
@@ -88,8 +88,8 @@ public class BindDao {
         return String.valueOf(code);
     }
 
-    public String generateCaptcha(Long userId) {
-        String oldCode = INDEX_CACHE.remove(userId);
+    public String generateCaptcha(Long userID) {
+        String oldCode = INDEX_CACHE.remove(userID);
         if (oldCode != null) {
             CAPTCHA_CACHE.invalidate(oldCode);
         }
@@ -99,8 +99,8 @@ public class BindDao {
             code = generateRandomCode();
         } while (CAPTCHA_CACHE.getIfPresent(code) != null);
 
-        CAPTCHA_CACHE.put(code, userId);
-        INDEX_CACHE.put(userId, code);
+        CAPTCHA_CACHE.put(code, userID);
+        INDEX_CACHE.put(userID, code);
         return code;
     }
 
@@ -148,15 +148,15 @@ public class BindDao {
         return fromLite(lite);
     }
 
-    public BindUser getBindUserFromOsuID(Long osuId) throws BindException {
-        if (Objects.isNull(osuId)) throw new BindException(BindException.Type.BIND_Receive_NoName);
+    public BindUser getBindUserFromOsuID(Long userID) throws BindException {
+        if (Objects.isNull(userID)) throw new BindException(BindException.Type.BIND_Receive_NoName);
 
         Optional<OsuBindUserLite> liteData;
         try {
-            liteData = bindUserMapper.getByOsuId(osuId);
+            liteData = bindUserMapper.getByOsuId(userID);
         } catch (IncorrectResultSizeDataAccessException e) {
-            bindUserMapper.deleteOldByOsuId(osuId);
-            liteData = bindUserMapper.getByOsuId(osuId);
+            bindUserMapper.deleteOldByOsuId(userID);
+            liteData = bindUserMapper.getByOsuId(userID);
         }
 
         if (liteData.isEmpty()) throw new BindException(BindException.Type.BIND_Player_NoBind);
@@ -235,15 +235,15 @@ public class BindDao {
     }
 
     public QQBindLite bindQQ(Long qq, BindUser user) {
-        var data = bindUserMapper.getByOsuId(user.getOsuID());
+        var data = bindUserMapper.getByOsuId(user.userID);
         if (data.isEmpty()) {
             return bindQQ(qq, fromModel(user));
         } else {
             var userLite = data.get();
-            userLite.setAccessToken(user.getAccessToken());
+            userLite.setAccessToken(user.accessToken);
             userLite.setRefreshToken(user.getRefreshToken());
-            userLite.setTime(user.getTime());
-            userLite.setOsuName(user.getOsuName());
+            userLite.setTime(user.time);
+            userLite.setOsuName(user.username);
             return bindQQ(qq, userLite);
         }
     }
@@ -261,7 +261,7 @@ public class BindDao {
 
     public boolean unBindQQ(BindUser user) {
         try {
-            bindQQMapper.unBind(user.getOsuID());
+            bindQQMapper.unBind(user.userID);
             return true;
         } catch (Exception e) {
             return false;
@@ -275,7 +275,7 @@ public class BindDao {
      * @return qq
      */
     public Long getQQ(BindUser user) {
-        return getQQ(user.getOsuID());
+        return getQQ(user.userID);
     }
 
     public Long getQQ(Long osuID) {
@@ -290,7 +290,7 @@ public class BindDao {
 
     @Nullable
     public QQBindLite getQQBindInfo(BindUser user) {
-        return getQQBindInfo(user.getOsuID());
+        return getQQBindInfo(user.userID);
     }
 
     @Nullable

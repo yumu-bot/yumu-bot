@@ -189,7 +189,7 @@ class CustomService(
             }
         }
 
-        data.value = CustomParam(u.osuID, type, imgPath)
+        data.value = CustomParam(u.userID, type, imgPath)
 
         return true
     }

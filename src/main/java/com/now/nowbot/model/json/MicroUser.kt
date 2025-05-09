@@ -1,6 +1,7 @@
 package com.now.nowbot.model.json
 
 import com.fasterxml.jackson.annotation.*
+import com.now.nowbot.model.json.OsuUser.Team
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
@@ -53,6 +54,9 @@ class MicroUser : Comparable<MicroUser> {
     @JsonProperty("pm_friends_only")
     var pmFriendsOnly: Boolean? = false
 
+    @JsonProperty("profile_color")
+    var profileColor: String? = null
+
     @JsonProperty("username")
     var userName: String = ""
 
@@ -67,6 +71,9 @@ class MicroUser : Comparable<MicroUser> {
     // 通过 LazerFriend 设置
     @JsonProperty("is_mutual")
     var isMutual: Boolean = false
+
+    @JsonProperty("team")
+    var team: Team? = null
 
     @JsonProperty("country") fun setCountry(country: Map<String, String>?) {
         if (country != null) this.country = OsuUser.Country(

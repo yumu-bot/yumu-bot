@@ -409,6 +409,15 @@ enum class Instruction(val pattern: Pattern) {
 
     LEADER_BOARD(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("leaderboard", "leader", "list", "l")
+        appendCaptureGroup("type", "bid|b|sid|s")
+        appendMode()
+        appendBID()
+        appendRange()
+    }),
+
+    LEGACY_LEADER_BOARD(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("legacy\\s*leaderboard", "legacy\\s*leader", "legacy\\s*list", "ll")
+        appendCaptureGroup("type", "bid|b|sid|s")
         appendMode()
         appendBID()
         appendRange()

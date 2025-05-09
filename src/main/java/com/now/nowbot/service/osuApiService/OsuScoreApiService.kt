@@ -2,6 +2,7 @@ package com.now.nowbot.service.osuApiService
 
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.Replay
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatmapUserScore
 import com.now.nowbot.model.json.LazerScore
@@ -115,11 +116,12 @@ interface OsuScoreApiService {
 
     fun getBeatMapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore>
 
-    fun getLeaderBoardScore(bid: Long, mode: OsuMode?): List<LazerScore>
+    fun getLeaderBoardScore(bid: Long, mode: OsuMode?, legacy: Boolean = false): List<LazerScore>
 
     fun asyncDownloadBackground(score: LazerScore, type: ScoreApiImpl.CoverType? = ScoreApiImpl.CoverType.COVER) {
         asyncDownloadBackground(listOf(score), type)
     }
 
     fun asyncDownloadBackground(scores: Iterable<LazerScore>, type: ScoreApiImpl.CoverType? = ScoreApiImpl.CoverType.COVER)
+    fun getReplay(score: LazerScore): Replay?
 }

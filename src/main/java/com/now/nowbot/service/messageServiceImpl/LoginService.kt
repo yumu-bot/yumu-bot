@@ -46,7 +46,7 @@ class LoginService(private val bindDao: BindDao) : MessageService<String> {
         while (LOGIN_USER_MAP.containsKey(
                 (getRoStr().also { code = it }).uppercase(Locale.getDefault()))) {}
         event.reply("您的登录验证码: $code")
-        LOGIN_USER_MAP[code!!.uppercase(Locale.getDefault())] = LoginUser(u.osuID, u.osuName, System.currentTimeMillis())
+        LOGIN_USER_MAP[code!!.uppercase(Locale.getDefault())] = LoginUser(u.userID, u.username, System.currentTimeMillis())
     }
 
     @JvmRecord data class LoginUser(val uid: Long, val name: String, val time: Long)

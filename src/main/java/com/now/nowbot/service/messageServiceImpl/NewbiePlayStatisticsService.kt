@@ -87,18 +87,18 @@ class NewbiePlayStatisticsService(
     }
 
     private fun handleDay(bind: BindUser): String {
-        val userId = bind.osuID
+        val userId = bind.userID
         val result = newbieService.getToday(userId)
 
-        return getToday(result.name ?: bind.osuName, result.playCount, result.totalHit, result.pp ?: 0f)
+        return getToday(result.name ?: bind.username, result.playCount, result.totalHit, result.pp ?: 0f)
     }
 
     private fun handleHistory(bind: BindUser): String {
-        val userId = bind.osuID
+        val userId = bind.userID
         val result = newbieService.getHistory(userId) ?: return "暂无历史数据, 统计数据会有一天的延迟"
 
         return getHistory(
-            bind.osuName,
+            bind.username,
             result.playCount,
             result.totalHit,
             result.pp ?: 0f
@@ -106,13 +106,13 @@ class NewbiePlayStatisticsService(
     }
 
     private fun handleRank(bind: BindUser): String {
-        val userId = bind.osuID
+        val userId = bind.userID
         val result = newbieService.getRank(userId)
         val pc = getRankString(result[0])
         val tth = getRankString(result[1])
         val pp = getRankString(result[2])
         return getRank(
-            bind.osuName,
+            bind.username,
             pc, tth, pp
         )
     }

@@ -152,14 +152,10 @@ open class BeatMap {
     //自己算
     @get:JsonProperty("has_leader_board")
     val hasLeaderBoard: Boolean
-        get(){
-            return if (status.isNotBlank()) {
-                when (status) {
-                    "ranked", "qualified", "loved", "approved" -> true
-                    else -> false
-                }
-            } else {
-                when (ranked) {
+        get() {
+            return when (status.trim()) {
+                "ranked", "qualified", "loved", "approved" -> true
+                else -> when (ranked) {
                     1, 2, 3, 4 -> true
                     else -> false
                 }

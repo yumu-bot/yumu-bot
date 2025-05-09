@@ -1,265 +1,162 @@
-package com.now.nowbot.model;
+package com.now.nowbot.model
 
-import com.now.nowbot.util.lzma.LZMAInputStream;
+import com.now.nowbot.util.lzma.LZMAInputStream
+import java.io.ByteArrayInputStream
+import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.file.Files
+import java.nio.file.Path
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-public class Replay {
+class Replay constructor(bf: ByteBuffer) {
     // 0 = osu!, 1 = osu!taiko, 2 = osu!catch, 3 = osu!mania
-    byte      mode;
+    var mode: Byte
+
     //创建该回放文件的游戏版本 例如：20131216
-    int       version;
-    String    MapHash;
-    String    username;
+    var version: Int
+    var beatmapHash: String
+    var username: String
+
     // 回放文件的 MD5 hash
-    String    RepHash;
-    short     n_300;
-    short     n_100;
-    short     n_50;
-    short     n_geki;
-    short     n_katu;
-    short     n_miss;
-    int       score;
-    short     combo;
+    var hash: String
+    var n_300: Short
+    var n_100: Short
+    var n_50: Short
+    var n_geki: Short
+    var n_katu: Short
+    var n_miss: Short
+    var score: Int
+    var combo: Short
+
     // full combo（1 = 没有Miss和断滑条，并且没有提前完成的滑条）
-    boolean   perfect;
-    int       mods;
-    Map<Integer, Float> HPList;
+    var isPerfect: Boolean
+    var mods: Int
+    var healthPoint: Map<Int, Float>? = null
+
     // 时间戳 注意这个是以公元0年开始, 不是1970年的时间戳
-    long      date;
-    int       dataLength;
-    List<Hit> hitList;
+    var date: Long
+    var dataLength: Int
+    var hits: List<Hit>
+
     // 与 url 中的末尾数字不是同一个
-    long      scoreId;
-    double    tp;
+    var scoreID: Long
+    var targetPractice: Double = 0.0
 
-    private Replay(ByteBuffer bf) {
+    init {
         if (bf.order() == ByteOrder.BIG_ENDIAN) {
-            bf.order(ByteOrder.LITTLE_ENDIAN);
+            bf.order(ByteOrder.LITTLE_ENDIAN)
         }
-        mode = bf.get();
-        version = bf.getInt();
-        MapHash = readString(bf);
-        username = readString(bf);
-        RepHash = readString(bf);
-        n_300 = bf.getShort();
-        n_100 = bf.getShort();
-        n_50 = bf.getShort();
-        n_geki = bf.getShort();
-        n_katu = bf.getShort();
-        n_miss = bf.getShort();
-        score = bf.getInt();
-        combo = bf.getShort();
-        perfect = bf.get() == 1;
-        mods = bf.getInt();
-        var Hp = readString(bf);
-        date = bf.getLong();
-        dataLength = bf.getInt();
-        var data = new byte[dataLength];
-        bf.get(data, 0, dataLength);
-        hitList = hitList(data);
-        scoreId = bf.getLong();
+        mode = bf.get()
+        version = bf.getInt()
+        beatmapHash = readString(bf)
+        username = readString(bf)
+        hash = readString(bf)
+        n_300 = bf.getShort()
+        n_100 = bf.getShort()
+        n_50 = bf.getShort()
+        n_geki = bf.getShort()
+        n_katu = bf.getShort()
+        n_miss = bf.getShort()
+        score = bf.getInt()
+        combo = bf.getShort()
+        isPerfect = bf.get().toInt() == 1
+        mods = bf.getInt()
+        val Hp = readString(bf)
+        date = bf.getLong()
+        dataLength = bf.getInt()
+        val data = ByteArray(dataLength)
+        bf[data, 0, dataLength]
+        hits = parseHits(data)
+        scoreID = bf.getLong()
         if (bf.limit() >= 8 + bf.position()) {
-            tp = bf.getDouble();
+            targetPractice = bf.getDouble()
         }
-        if (! Hp.isBlank()) {
-            HPList = readHp(Hp);
-        }
-    }
-
-    private static String readString(ByteBuffer bf) {
-//        int p = (0xFF & e[offset]) |
-//                (0xFF & e[offset+1])<<8 |
-//                (0xFF & e[offset+2])<<16 |
-//                (0xFF & e[offset+3])<<24 ;
-        if (bf.get() == 11) {
-            // 读取第二位 可变长int 值string byte长度
-            int strLength = readLength(bf);
-            //得到长度 读取string byte
-            byte[] strData = new byte[strLength];
-            bf.get(strData, 0, strLength);
-            //转换string
-            return new String(strData);
-        } else {
-            return "";
+        if (Hp.isNotBlank()) {
+            healthPoint = readHp(Hp)
         }
     }
 
-    private static List<Hit> hitList(byte[] data) {
-        List<Hit> hitList = null;
-        try {
-            String s = new String(new LZMAInputStream(new ByteArrayInputStream(data)).readAllBytes());
-            var lines = s.split(",");
-            hitList = new ArrayList<>(lines.length);
-            for (var line : lines) {
-                var split = line.split("\\|");
-                hitList.add(new Hit(
-                        Long.parseLong(split[0]),
-                        Float.parseFloat(split[1]),
-                        Float.parseFloat(split[2]),
-                        Integer.parseInt(split[3])
-                ));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return hitList;
-    }
-
-    private static Map<Integer, Float> readHp(String data) {
-        Map<Integer, Float> map;
-        var lines = data.split(",");
-        map = new LinkedHashMap<Integer, Float>(lines.length);
-        for (var line : lines) {
-            var k = line.split("\\|");
-            Integer time = Integer.parseInt(k[0]);
-            Float hp = Float.parseFloat(k[1]);
-
-        }
-        return map;
-    }
-
-    private static int readLength(ByteBuffer bf) {
-        int result = 0;
-        int shift = 0;
-        byte b;
-        do {
-            b = bf.get();
-            result |= (b & 0x7F) << shift;
-            shift += 7;
-        } while ((0x80 & b) != 0);
-        return result;
-    }
-
-    public static Replay readByteToRep(ByteBuffer buffer) {
-        return new Replay(buffer);
-    }
-
-    public static Replay readByteToRep(byte[] buffer) {
-        return new Replay(ByteBuffer.wrap(buffer));
-    }
-
-    public List<Hit> getHitList() {
-        return hitList;
-    }
-
-    public byte getMode() {
-        return mode;
-    }
-
-    public int getVersion() {
-        return version;
-    }
-
-    public String getMapHash() {
-        return MapHash;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getRepHash() {
-        return RepHash;
-    }
-
-    public short getN_300() {
-        return n_300;
-    }
-
-    public short getN_100() {
-        return n_100;
-    }
-
-    public short getN_50() {
-        return n_50;
-    }
-
-    public short getN_geki() {
-        return n_geki;
-    }
-
-    public short getN_katu() {
-        return n_katu;
-    }
-
-    public short getN_miss() {
-        return n_miss;
-    }
-
-    public int getScore() {
-        return score;
-    }
-
-    public short getCombo() {
-        return combo;
-    }
-
-    public boolean isPerfect() {
-        return perfect;
-    }
-
-    public int getMods() {
-        return mods;
-    }
-
-    public Map<Integer, Float> getHPList() {
-        return HPList;
-    }
-
-    public long getDate() {
-        return date;
-    }
-
-    public int getDataLength() {
-        return dataLength;
-    }
-
-    static class Hit {
-        long  befTime;
+    class Hit(
+        var offset: Long,
         //        鼠标的X坐标（从0到512）
-        float x;
+        var x: Float,
         //        鼠标的Y坐标（从0到384）
-        float y;
+        var y: Float,
         //鼠标、键盘按键的组合（M1 = 1, M2 = 2, K1 = 4, K2 = 8, 烟雾 = 16）（K1 总是与 M1 一起使用，K2 总是与 M2 一起使用。所以 1+4=5 2+8=10。）
-        int   ket;
+        var hit: Int
+    )
 
-        public Hit(long befTime, float x, float y, int ket) {
-            this.befTime = befTime;
-            this.x = x;
-            this.y = y;
-            this.ket = ket;
+    companion object {
+
+        private fun readString(bf: ByteBuffer): String {
+            //        int p = (0xFF & e[offset]) |
+            //                (0xFF & e[offset+1])<<8 |
+            //                (0xFF & e[offset+2])<<16 |
+            //                (0xFF & e[offset+3])<<24 ;
+            if (bf.get().toInt() == 11) {
+                // 读取第二位 可变长int 值string byte长度
+                val strLength = readLength(bf)
+                //得到长度 读取string byte
+                val strData = ByteArray(strLength)
+                bf[strData, 0, strLength]
+                //转换string
+                return String(strData)
+            } else {
+                return ""
+            }
         }
 
-        public long getBefTime() {
-            return befTime;
+        private fun parseHits(byteArray: ByteArray): List<Hit> {
+            return try {
+                val s = String(LZMAInputStream(ByteArrayInputStream(byteArray)).readAllBytes())
+
+                if (s.isNullOrBlank()) return emptyList()
+
+                val lines = s.split(",".toRegex()).dropLastWhile { it.isEmpty() }
+
+                val hits = mutableListOf<Hit>()
+
+                for (line in lines) {
+                    val split = line.split("\\|".toRegex())
+                    hits.add(Hit(split[0].toLong(), split[1].toFloat(), split[2].toFloat(), split[3].toInt()))
+                }
+
+                hits.toList()
+            } catch (e: IOException) {
+                e.printStackTrace()
+
+                emptyList()
+            }
         }
 
-        public float getX() {
-            return x;
+        private fun readHp(data: String): Map<Int, Float> {
+            val lines = data.split(",".toRegex()).map { it.trim() }
+
+            return  lines.map {
+                val k = it.split("\\|".toRegex()).map { it.trim() }
+
+                k[0].toInt() to k[1].toFloat()
+            }.toMap()
         }
 
-        public float getY() {
-            return y;
+        private fun readLength(bf: ByteBuffer): Int {
+            var result = 0
+            var shift = 0
+            var b: Byte
+            do {
+                b = bf.get()
+                result = result or ((b.toInt() and 0x7F) shl shift)
+                shift += 7
+            } while ((0x80 and b.toInt()) != 0)
+            return result
         }
 
-        public int getKet() {
-            return ket;
+        fun readByteToRep(buffer: ByteBuffer): Replay {
+            return Replay(buffer)
         }
-    }
 
-    public long getScoreId() {
-        return scoreId;
-    }
-
-    public double getTp() {
-        return tp;
+        fun readByteToRep(buffer: ByteArray): Replay {
+            return Replay(ByteBuffer.wrap(buffer))
+        }
     }
 }

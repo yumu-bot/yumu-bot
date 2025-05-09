@@ -97,7 +97,7 @@ class FriendService(
     }
 
     fun checkMultiFriend(bindUser: BindUser, param: FriendParam): MessageChain {
-        if (param.uid == bindUser.osuID) {
+        if (param.uid == bindUser.userID) {
             return MessageChain("你自己与你自己就是最好的朋友。")
         }
 
@@ -140,7 +140,7 @@ class FriendService(
         val isFollowed = try {
             userApiService
                 .getFriendList(other)
-                .find { it.target.userID == bindUser.osuID }
+                .find { it.target.userID == bindUser.userID }
                 .isNotNull()
         } catch (ignored: Exception) {
             false

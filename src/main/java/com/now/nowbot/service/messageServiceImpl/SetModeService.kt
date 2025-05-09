@@ -50,9 +50,9 @@ class SetModeService (
             val osuUser = osuUserApiService.getOsuUser(-event.sender.id)
             val bindUser = BindUser()
             with(bindUser) {
-                osuID = osuUser.id
-                osuName = osuUser.username
-                osuMode = osuUser.defaultOsuMode
+                userID = osuUser.id
+                username = osuUser.username
+                mode = osuUser.defaultOsuMode
             }
             bindDao.saveBind(bindUser)
         }
@@ -64,17 +64,17 @@ class SetModeService (
         val predeterminedMode = bindDao.getGroupModeConfig(event)
 
         val info = if (mode == OsuMode.DEFAULT) {
-            if (user.osuMode.isDefault()) {
+            if (user.mode.isDefault()) {
                 throw TipsException("你没有已绑定的游戏模式。\n请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) 来修改绑定的游戏模式。")
             } else {
                 if (predeterminedMode.isDefault()) {
-                    "已移除绑定的游戏模式 ${user.osuMode.fullName}。"
+                    "已移除绑定的游戏模式 ${user.mode.fullName}。"
                 } else {
-                    "已移除绑定的游戏模式 ${user.osuMode.fullName}。\n当前群聊绑定的游戏模式为：${predeterminedMode.fullName}。"
+                    "已移除绑定的游戏模式 ${user.mode.fullName}。\n当前群聊绑定的游戏模式为：${predeterminedMode.fullName}。"
                 }
             }
             // return MessageChain("未知的游戏模式。请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania)")
-        } else if (mode.isEqualOrDefault(user.osuMode)) {
+        } else if (mode.isEqualOrDefault(user.mode)) {
             if (predeterminedMode.isDefault()) {
                 "已将绑定的游戏模式修改为：${mode.fullName}。"
             } else {
@@ -82,14 +82,14 @@ class SetModeService (
             }
         } else {
             if (predeterminedMode.isDefault()) {
-                "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为：${mode.fullName}。"
+                "已将绑定的游戏模式 ${user.mode.fullName} 修改为：${mode.fullName}。"
             } else {
-                "已将绑定的游戏模式 ${user.osuMode.fullName} 修改为：${mode.fullName}。\n当前群聊绑定的游戏模式为：${predeterminedMode.fullName}。"
+                "已将绑定的游戏模式 ${user.mode.fullName} 修改为：${mode.fullName}。\n当前群聊绑定的游戏模式为：${predeterminedMode.fullName}。"
             }
         }
 
-        user.osuMode = mode
-        bindDao.updateMode(user.osuID, mode)
+        user.mode = mode
+        bindDao.updateMode(user.userID, mode)
 
         return MessageChain(info)
     }

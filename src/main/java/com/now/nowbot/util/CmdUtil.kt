@@ -56,12 +56,12 @@ object CmdUtil {
             null
         }
         if (user != null) {
-            isMyself.set(me?.osuID == user.userID)
+            isMyself.set(me?.userID == user.userID)
             return user
         } else if (me != null) {
             isMyself.set(true)
-            setMode(mode, me.osuMode, event)
-            return getOsuUser(me.username, me.osuID) { userApiService.getOsuUser(me, mode.data!!) }
+            setMode(mode, me.mode, event)
+            return getOsuUser(me.username, me.userID) { userApiService.getOsuUser(me, mode.data!!) }
         } else {
             throw BindException(BindException.Type.BIND_Player_TokenExpired)
         }
@@ -139,7 +139,7 @@ object CmdUtil {
                     val name = range[0].toString()
 
                     val bindMode = try {
-                        bindDao.getBindUser(name).osuMode
+                        bindDao.getBindUser(name).mode
                     } catch (e: Exception) {
                         OsuMode.DEFAULT
                     }
@@ -170,7 +170,7 @@ object CmdUtil {
                 }
 
                 val bindMode = try {
-                    bindDao.getBindUser(range.data).osuMode
+                    bindDao.getBindUser(range.data).mode
                 } catch (e: Exception) {
                     OsuMode.DEFAULT
                 }
@@ -222,7 +222,7 @@ object CmdUtil {
             null
         }
 
-        setMode(mode, myBind?.osuMode ?: OsuMode.DEFAULT, event)
+        setMode(mode, myBind?.mode ?: OsuMode.DEFAULT, event)
 
         /**
          * @param qq 如果是负数，则认为是 UID
@@ -237,7 +237,7 @@ object CmdUtil {
             setMode(mode, you.currentOsuMode)
 
             if (isVS && myBind != null) {
-                val me = getOsuUser(myBind.osuName, mode.data)
+                val me = getOsuUser(myBind.username, mode.data)
 
                 return listOf(me, you)
             } else {
@@ -266,7 +266,7 @@ object CmdUtil {
                 throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
             }
 
-            setMode(mode, myBind.osuMode, event)
+            setMode(mode, myBind.mode, event)
             return listOf(getOsuUser(myBind, mode.data))
         }
 
@@ -278,7 +278,7 @@ object CmdUtil {
             setMode(mode, you.currentOsuMode)
 
             if (isVS && myBind != null) {
-                val me = getOsuUser(myBind.osuName, mode.data)
+                val me = getOsuUser(myBind.username, mode.data)
 
                 return listOf(me, you)
             } else {
@@ -296,7 +296,7 @@ object CmdUtil {
         } else {
             val bind = bindDao.getBindFromQQ(event.sender.id, true)
 
-            setMode(mode, bind.osuMode, event)
+            setMode(mode, bind.mode, event)
             return listOf(getOsuUser(bind, mode.data))
         }
     }
@@ -426,7 +426,7 @@ object CmdUtil {
         if (qq != 0L) {
             val bind = bindDao.getBindFromQQ(qq, isMyself.get())
 
-            setMode(mode, bind.osuMode, event)
+            setMode(mode, bind.mode, event)
             return getOsuUser(bind, mode.data)
         } else {
             setMode(mode, event)
@@ -458,7 +458,7 @@ object CmdUtil {
      * @param mode 指定模式
      */
     @Throws(TipsException::class) fun getOsuUser(user: BindUser, mode: OsuMode?): OsuUser {
-        return getOsuUser(user.osuName, user.osuID) { userApiService.getOsuUser(user, mode ?: OsuMode.DEFAULT) }
+        return getOsuUser(user.username, user.userID) { userApiService.getOsuUser(user, mode ?: OsuMode.DEFAULT) }
     }
 
     /**

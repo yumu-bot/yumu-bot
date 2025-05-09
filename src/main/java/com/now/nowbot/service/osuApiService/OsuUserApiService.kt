@@ -28,7 +28,7 @@ interface OsuUserApiService {
     @Throws(WebClientResponseException::class) fun getOsuUser(id: Long, mode: OsuMode): OsuUser
 
     @Throws(WebClientResponseException::class) fun getOsuUser(user: BindUser): OsuUser {
-        return getOsuUser(user, user.osuMode)
+        return getOsuUser(user, user.mode)
     }
 
     @Throws(WebClientResponseException::class) fun getOsuUser(name: String): OsuUser {

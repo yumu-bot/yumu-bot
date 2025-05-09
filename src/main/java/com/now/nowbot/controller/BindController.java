@@ -44,22 +44,22 @@ public class BindController {
         BindResponse result;
         try {
             userApiService.refreshUserTokenFirst(user);
-            var oldUser = bindDao.getBindUser(user.getOsuID());
+            var oldUser = bindDao.getBindUser(user.userID);
             if (oldUser == null) {
                 user = bindDao.saveBind(user);
             } else {
-                oldUser.setOsuName(user.getOsuName());
-                oldUser.setAccessToken(user.getAccessToken());
+                oldUser.username = user.username;
+                oldUser.accessToken = user.accessToken;
                 oldUser.setRefreshToken(user.getRefreshToken());
-                oldUser.setTime(user.getTime());
+                oldUser.time = user.time;
                 user = bindDao.saveBind(oldUser);
             }
 
             result = new BindResponse(
-                    user.getBaseId(),
-                    user.getOsuID(),
-                    user.getOsuName(),
-                    user.getOsuMode().shortName,
+                    user.baseID,
+                    user.userID,
+                    user.username,
+                    user.getMode().shortName,
                     "绑定成功!"
             );
         } catch (WebClientResponseException e) {
@@ -80,14 +80,14 @@ public class BindController {
         BindUser user;
         try {
             user = bindDao.getBindUserByDbId(id);
-            if (!user.getOsuID().equals(di)) {
+            if (di != user.userID) {
                 return "你不许绑定";
             }
         } catch (Exception e) {
             log.error("绑定查找出错: ",e);
             return "人机不要来绑定!";
         }
-        return bindDao.generateCaptcha(user.getOsuID());
+        return bindDao.generateCaptcha(user.userID);
     }
 
     @GetMapping("${yumu.osu.callbackPath}")
@@ -147,7 +147,7 @@ public class BindController {
             sb.append("成功绑定:\n<br/>")
                     .append(msg.qq)
                     .append(" -> ")
-                    .append(bd.getOsuName())
+                    .append(bd.username)
                     .append("\n<br/>")
                     .append("您的默认游戏模式为：[")
                     .append(u.getOsuUser().getMainMode().shortName).append("]。")

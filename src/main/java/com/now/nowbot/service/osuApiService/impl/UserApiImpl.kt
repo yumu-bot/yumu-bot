@@ -57,20 +57,20 @@ import kotlin.text.HexFormat
         base.refreshUserToken(user, true)
         val osuInfo = getOsuUser(user)
         val uid = osuInfo.userID
-        user.osuID = uid
-        user.osuName = user.osuName
-        user.osuMode = user.osuMode
+        user.userID = uid
+        user.username = user.username
+        user.mode = user.mode
     }
 
     override fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser {
-        if (!user.isAuthorized) return getOsuUser(user.osuID, mode)
+        if (!user.isAuthorized) return getOsuUser(user.userID, mode)
 
         return base.osuApiWebClient.get().uri("me/{mode}", mode.shortName).headers(base.insertHeader(user)).retrieve()
             .bodyToMono(OsuUser::class.java).map { data ->
                 userInfoDao.saveUser(data, mode)
-                user.osuID = data.userID
-                user.osuName = data.username
-                user.osuMode = mode
+                user.userID = data.userID
+                user.username = data.username
+                user.mode = mode
                 data.currentOsuMode = getMode(mode, data.defaultOsuMode)
                 data
             }.block()!!

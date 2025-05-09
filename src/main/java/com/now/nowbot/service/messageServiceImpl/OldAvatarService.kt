@@ -95,7 +95,7 @@ class OldAvatarService(
             try {
                 user = userApiService.getOsuUser(bindUser)
             } catch (e: WebClientResponseException) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, bindUser.osuName)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, bindUser.username)
             } catch (e: Exception) {
                 log.error("旧头像：获取玩家信息失败: ", e)
                 throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_PlayerInfo)

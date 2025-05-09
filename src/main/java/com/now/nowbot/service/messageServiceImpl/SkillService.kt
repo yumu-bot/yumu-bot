@@ -95,7 +95,7 @@ import kotlin.math.sqrt
                 vs = CmdUtil.getOsuUser(m2.group("vs"), mode)
             } else {
                 val maybe = CmdUtil.getUserWithoutRange(event, m2, CmdObject(mode))
-                if (me == null || maybe.id == me.osuID) {
+                if (me == null || maybe.id == me.userID) {
                     user = maybe
                     vs = null
                 } else {

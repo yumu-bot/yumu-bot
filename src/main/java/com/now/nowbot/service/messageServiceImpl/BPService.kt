@@ -352,7 +352,7 @@ import kotlin.math.*
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            val body = PanelE5Param(user, score, null, density, progress, original, attributes, "B").toMap()
+            val body = PanelE5Param(user, score, null, density, progress, original, attributes, "B", null).toMap()
 
             imageService.getPanel(body, "E5")
 

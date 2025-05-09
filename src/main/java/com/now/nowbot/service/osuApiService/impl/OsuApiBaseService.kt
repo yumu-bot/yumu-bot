@@ -123,7 +123,7 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
         }
         if (!first) {
             // 第一次更新需要在外面更新去更新数据库
-            bindDao.updateToken(user.osuID, accessToken, refreshToken, time)
+            bindDao.updateToken(user.userID, accessToken, refreshToken, time)
         }
         return accessToken
     }
@@ -144,12 +144,12 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
             try {
                 refreshUserToken(user, false)
             } catch (e: HttpClientErrorException.Unauthorized) {
-                bindDao.backupBind(user.osuID)
-                log.info("令牌过期 绑定丢失: [{}], 已退回到 id 绑定", user.osuID, e)
+                bindDao.backupBind(user.userID)
+                log.info("令牌过期 绑定丢失: [{}], 已退回到 id 绑定", user.userID, e)
                 throw BindException(BindException.Type.BIND_Me_TokenExpiredButBindID)
             } catch (e: WebClientResponseException.Unauthorized) {
-                bindDao.backupBind(user.osuID)
-                log.info("令牌过期 绑定丢失: [{}], 已退回到 id 绑定", user.osuID, e)
+                bindDao.backupBind(user.userID)
+                log.info("令牌过期 绑定丢失: [{}], 已退回到 id 绑定", user.userID, e)
                 throw BindException(BindException.Type.BIND_Me_TokenExpiredButBindID)
             } catch (e: HttpClientErrorException.Forbidden) {
                 log.info("更新令牌失败：账号封禁", e)

@@ -245,7 +245,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
-     * (#?(?<range>0-100))范围。**默认没有或者一个 (?)。注意！**
+     * (#?(?<range>0-200))范围。**默认没有或者一个 (?)。注意！**
      * @param hashMust '#' 是否必须
      */
     fun appendRange(hashMust: Boolean = false) {

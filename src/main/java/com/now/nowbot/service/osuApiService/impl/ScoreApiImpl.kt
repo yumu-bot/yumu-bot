@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.Replay
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatmapUserScore
 import com.now.nowbot.model.json.LazerScore
@@ -15,10 +16,12 @@ import okio.IOException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import java.net.URI
+import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -37,14 +40,14 @@ class ScoreApiImpl(
         offset: Int,
         limit: Int,
     ): List<LazerScore> {
-        if (!user.isAuthorized) return getBestScores(user.osuID, mode, offset, limit)
+        if (!user.isAuthorized) return getBestScores(user.userID, mode, offset, limit)
         return base.osuApiWebClient.get()
             .uri { it.path("users/{uid}/scores/best")
                 .queryParam("legacy_only", 0)
                 .queryParam("offset", offset)
                 .queryParam("limit", limit)
                 .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                .build(user.osuID)
+                .build(user.userID)
             }
             .headers(base.insertHeader(user))
             .retrieve()
@@ -141,7 +144,7 @@ class ScoreApiImpl(
         user: BindUser,
         mode: OsuMode?,
     ): BeatmapUserScore? {
-        if (!user.isAuthorized) return getBeatMapScore(bid, user.osuID, mode)
+        if (!user.isAuthorized) return getBeatMapScore(bid, user.userID, mode)
         return retryOn404<BeatmapUserScore>(
             {
                 it.path("beatmaps/{bid}/scores/users/{uid}").queryParam("legacy_only", 0)
@@ -150,7 +153,7 @@ class ScoreApiImpl(
                     it.queryParam("mode", OsuMode.getQueryName(mode))
                 }
 
-                it.build(bid, user.osuID)
+                it.build(bid, user.userID)
             },
             base.insertHeader(user),
             {
@@ -161,7 +164,7 @@ class ScoreApiImpl(
                     it.queryParam("mode", OsuMode.getQueryName(mode))
                 }
 
-                it.build(bid, user.osuID)
+                it.build(bid, user.userID)
             },
         )
     }
@@ -200,7 +203,7 @@ class ScoreApiImpl(
         mods: Iterable<LazerMod?>,
     ): BeatmapUserScore? {
         if (!user.isAuthorized) {
-            return getBeatMapScore(bid, user.osuID, mode, mods)
+            return getBeatMapScore(bid, user.userID, mode, mods)
         }
         val uri = Function { n: Int? ->
             Function { uriBuilder: UriBuilder ->
@@ -209,7 +212,7 @@ class ScoreApiImpl(
                     .queryParam("legacy_only", n)
                     .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                 setMods(uriBuilder, mods)
-                uriBuilder.build(bid, user.osuID)
+                uriBuilder.build(bid, user.userID)
             }
         }
         return retryOn404<BeatmapUserScore>(
@@ -231,13 +234,13 @@ class ScoreApiImpl(
     }
 
     override fun getBeatMapScores(bid: Long, user: BindUser, mode: OsuMode?): List<LazerScore> {
-        if (!user.isAuthorized) getBeatMapScores(bid, user.osuID, mode)
+        if (!user.isAuthorized) getBeatMapScores(bid, user.userID, mode)
 
         return base.osuApiWebClient.get()
             .uri { it.path("beatmaps/{bid}/scores/users/{uid}/all")
                 .queryParam("legacy_only", 0)
                 .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                .build(bid, user.osuID)
+                .build(bid, user.userID)
             }
             .headers(base.insertHeader(user))
             .retrieve()
@@ -260,10 +263,10 @@ class ScoreApiImpl(
             .block()!!
     }
 
-    override fun getLeaderBoardScore(bid: Long, mode: OsuMode?): List<LazerScore> {
+    override fun getLeaderBoardScore(bid: Long, mode: OsuMode?, legacy: Boolean): List<LazerScore> {
         return base.osuApiWebClient.get()
             .uri { it.path("beatmaps/{bid}/scores")
-                .queryParam("legacy_only", 0)
+                .queryParam("legacy_only", if (legacy) 1 else 0)
                 .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                 .build(bid)
             }
@@ -344,6 +347,31 @@ class ScoreApiImpl(
         AsyncMethodExecutor.asyncRunnableExecute(actions)
     }
 
+    override fun getReplay(score: LazerScore): Replay? {
+        if (score.replay && score.scoreID > 0L) {
+            try {
+                return base.osuApiWebClient.get()
+                    .uri { it.path("scores/{score}/download")
+                        .build(score.scoreID)
+                    }
+                    .headers { base.insertHeader(it) }
+                    .retrieve()
+                    .bodyToMono(ByteBuffer::class.java)
+                    .map { Replay(it) }
+                    /*
+                    .bodyToMono(JsonNode::class.java)
+                    .map { JacksonUtil.parseObject(it, Replay::class.java) }
+
+                     */
+                    .block()!!
+            } catch (e: Exception) {
+                throw e
+            }
+
+
+        } else return null
+    }
+
     private fun getRecent(
         user: BindUser,
         mode: OsuMode?,
@@ -361,7 +389,7 @@ class ScoreApiImpl(
                     .queryParam("offset", offset)
                     .queryParam("limit", limit)
                     .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                    .build(user.osuID)
+                    .build(user.userID)
             }
             .headers(base.insertHeader(user))
             .retrieve()
@@ -371,7 +399,7 @@ class ScoreApiImpl(
         }
     }
 
-    fun getRecent(
+    private fun getRecent(
         uid: Long,
         mode: OsuMode?,
         includeFails: Boolean,

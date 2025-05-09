@@ -1,197 +1,117 @@
-package com.now.nowbot.model;
+package com.now.nowbot.model
 
-import com.now.nowbot.model.enums.OsuMode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import com.now.nowbot.model.enums.OsuMode
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-import java.util.Objects;
-
-public class BindUser {
-    private static final Logger log = LoggerFactory.getLogger(BindUser.class);
-
-    /**
-     * 看起来这个 ID 没用到，只有 BindQQ 那边的一个 User 才是真正的存储
-     */
-    Long baseId;
-    /**
-     * osu data
-     */
-    String osuName;
-    /**
-     * 个人主页后面那串数
-     */
-    Long osuID;
-    /**
-     * 当前令牌
-     */
-    String accessToken;
-    /**
-     * 刷新令牌
-     */
-    String refreshToken;
-    /**
-     * 过期时间戳
-     */
-    Long time;
-    /**
-     * 主模式
-     */
-    OsuMode mode;
-
-    public BindUser() {
-        setTimeToNow();
-    }
-
-    public BindUser(long base) {
-        this();
-        baseId = base;
-    }
-    public BindUser(long osuID, String name) {
-        this.osuID = osuID;
-        this.osuName = name;
-        mode = OsuMode.DEFAULT;
-        time = 0L;
-        setTimeToNow();
-    }
-
-    public static BindUser create(String refreshToken) {
-        var user = new BindUser();
-        user.refreshToken = refreshToken;
-        user.setTimeToNow();
-        return user;
-    }
-
-    public String getOsuName() {
-        return osuName;
-    }
-
-    public void setOsuName(String osuName) {
-        this.osuName = osuName;
-    }
-
-    public Long getOsuID() {
-        return osuID;
-    }
-
-    public void setOsuID(Long osuID) {
-        this.osuID = osuID;
-    }
-
-    public void setOsuID(int osuID) {
-        this.osuID = (long) osuID;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    public String getAccessToken() throws WebClientResponseException.Unauthorized {
-        return accessToken;
-    }
-
-    public void setBaseId(Long baseId) {
-        this.baseId = baseId;
-    }
-
-    // 是否绑定过
-    public boolean isAuthorized() {
-        boolean expired = true; // auth 的反
-        try {
-            // 请求 token ，如果过期会报 Unauthorized
-            expired = time == null || time <= 0 || accessToken == null;
-        } catch (Exception ignored) {
-            log.info("玩家 {} 已掉绑", osuName);
-        }
-        return ! expired;
-    }
-
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
-    }
-
-    @Nullable
-    public Long getTime() {
-        return time;
-    }
-
-    public void setTime(Long time) {
-        this.time = time;
-    }
-
-    public void setTimeToNow() {
-        time = System.currentTimeMillis();
-    }
-
-    public Long setTimeToAfter(Long millis) {
-        time = System.currentTimeMillis() + millis;
-        return time;
-    }
-
-    /**
-     * 已过期
-     * @return true = 过期
-     */
-    public boolean isExpired() {
-        return ! isNotExpired();
-    }
-
-    public boolean isNotExpired() {
-        return time != null && System.currentTimeMillis() < time;
-    }
-
-    @NonNull
-    public OsuMode getOsuMode() {
-        return mode != null ? mode : OsuMode.DEFAULT;
-    }
-
-    public void setOsuMode(OsuMode mode) {
-        this.mode = mode;
-    }
-
+class BindUser {
     /**
      * 记录在数据库中的 id, 非 uid
      *
      * @return base
      */
-    public Long getBaseId() {
-        return baseId;
+    @JvmField var baseID: Long? = null
+
+    @JvmField var username: String = ""
+
+    @JvmField var userID: Long = 0
+
+    /**
+     * 当前令牌
+     */
+    @JvmField var accessToken: String? = null
+
+    /**
+     * 刷新令牌
+     */
+    var refreshToken: String? = null
+
+    /**
+     * 过期时间戳
+     */
+    @JvmField var time: Long? = null
+
+    /**
+     * 主模式
+     */
+    var mode: OsuMode = OsuMode.DEFAULT
+
+    constructor() {
+        setTimeToNow()
     }
 
-    @Override
-    public String toString() {
-        return baseId +
-               "," + osuName +
-               "," + osuID +
-               "," + accessToken +
-               "," + refreshToken +
-               "," + time +
-               "," + mode;
+    constructor(base: Long) : this() {
+        baseID = base
+    }
+
+    constructor(osuID: Long, name: String) {
+        this.userID = osuID
+        this.username = name
+        mode = OsuMode.DEFAULT
+        time = 0L
+        setTimeToNow()
+    }
+
+    val isAuthorized: Boolean
+        // 是否绑定过
+        get() {
+            var expired = true // auth 的反
+            try {
+                // 请求 token ，如果过期会报 Unauthorized
+                expired = time == null || time!! <= 0 || accessToken == null
+            } catch (ignored: Exception) {
+                log.info("玩家 {} 已掉绑", username)
+            }
+            return !expired
+        }
+
+    fun setTimeToNow() {
+        time = System.currentTimeMillis()
+    }
+
+    fun setTimeToAfter(millis: Long): Long {
+        time = System.currentTimeMillis() + millis
+        return time!!
+    }
+
+    val isExpired: Boolean
+        get() = !isNotExpired
+
+    val isNotExpired: Boolean
+        get() = time != null && System.currentTimeMillis() < time!!
+
+    override fun toString(): String {
+        return baseID.toString() +
+                "," + username +
+                "," + userID +
+                "," + accessToken +
+                "," + refreshToken +
+                "," + time +
+                "," + mode
     }
 
     // 重写 equals 必须要重写 hashCode, 如果别的地方使用 HashSet/HashMap 会炸
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof BindUser bindUser)) return false;
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is BindUser) return false
 
-        return osuName.equalsIgnoreCase(bindUser.osuName) || osuID.equals(bindUser.osuID);
+        return username.equals(other.username, ignoreCase = true) || userID == other.userID
     }
 
-    @Override
-    public int hashCode() {
-        int result = Objects.hashCode(osuName);
-        result = 31 * result + Objects.hashCode(osuID);
-        return result;
+    override fun hashCode(): Int {
+        var result = username.hashCode()
+        result = 31 * result + userID.hashCode()
+        return result
     }
 
-    public String getUsername() {
-        return getOsuName();
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(BindUser::class.java)
+
+        @JvmStatic fun create(refreshToken: String?): BindUser {
+            val user = BindUser()
+            user.refreshToken = refreshToken
+            user.setTimeToNow()
+            return user
+        }
     }
 }

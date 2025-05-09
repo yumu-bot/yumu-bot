@@ -60,7 +60,7 @@ class PPPlusService(
                 "px", "ppx", "ppv", "ppvs", "pppvs", "ppplusvs", "plusvs" -> { // user vs
                     if (event.isAt) {
                         setUser(
-                            null, bindDao.getBindFromQQ(event.target).osuName, me, true, data
+                            null, bindDao.getBindFromQQ(event.target).username, me, true, data
                         )
                     } else {
                         setUser(a1, a2, me, true, data)

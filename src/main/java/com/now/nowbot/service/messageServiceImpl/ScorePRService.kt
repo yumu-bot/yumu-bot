@@ -39,25 +39,24 @@ class ScorePRService(
     private val calculateApiService: OsuCalculateApiService,
 ) : MessageService<ScorePRParam>, TencentMessageService<ScorePRParam> {
 
-    @JvmRecord
     data class ScorePRParam(
-            val user: OsuUser?,
-            val offset: Int,
-            val limit: Int,
-            val isRecent: Boolean,
-            val mode: OsuMode?
+        val user: OsuUser?,
+        val offset: Int,
+        val limit: Int,
+        val isRecent: Boolean,
+        val mode: OsuMode?
     )
 
-    @JvmRecord
     data class PanelE5Param(
-            @JvmField val user: OsuUser,
-            @JvmField val score: LazerScore,
-            @JvmField val position: Int?,
-            @JvmField val density: IntArray,
-            @JvmField val progress: Double,
-            @JvmField val original: Map<String, Any>,
-            @JvmField val attributes:Any,
-            @JvmField val panel: String
+        val user: OsuUser,
+        val score: LazerScore,
+        val position: Int?,
+        val density: IntArray,
+        val progress: Double,
+        val original: Map<String, Any>,
+        val attributes: Any,
+        val panel: String,
+        val health: Map<Int, Double>?
     ) {
         fun toMap(): Map<String, Any> {
 
@@ -73,6 +72,13 @@ class ScorePRService(
 
             if (position != null) {
                 out["position"] = position
+            }
+
+            if (health != null) {
+                out["health"] = mapOf(
+                    "time" to health.map { it.key },
+                    "percent" to health.map { it.value }
+                )
             }
 
             return out
@@ -361,7 +367,7 @@ class ScorePRService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            return PanelE5Param(user, score, position, density, progress, original, attributes, panel)
+            return PanelE5Param(user, score, position, density, progress, original, attributes, panel, null)
         }
     }
 }

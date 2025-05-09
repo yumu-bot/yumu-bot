@@ -65,13 +65,13 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
         val join = qb?.osuUser?.joinDate?.format(formatter) ?: "未知"
 
         val result = """
-            玩家 ${param.osuName} 的绑定信息：
+            玩家 ${param.username} 的绑定信息：
             
-            游戏 ID：${param.osuID}
+            游戏 ID：${param.userID}
             基础 ID：${baseID}
             绑定 QQ：${qq}
             绑定时间：${join}
-            游戏模式：${param.osuMode.fullName}
+            游戏模式：${param.mode.fullName}
             
             Oauth2 验证历史：${if (param.isAuthorized) "已验证" else "未验证"}过
             令牌状态：${if (param.isNotExpired) "有效" else "无效"}

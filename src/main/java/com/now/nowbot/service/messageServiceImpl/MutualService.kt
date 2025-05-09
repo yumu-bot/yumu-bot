@@ -65,7 +65,7 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
     private fun qq2Mutual(qq: Long): MutualParam {
         try {
             val u = bindDao.getBindFromQQ(qq)
-            return MutualParam(u.osuID, qq, u.osuName)
+            return MutualParam(u.userID, qq, u.username)
         } catch (e: BindException) {
             return MutualParam(null, qq, "$qq : 未绑定或绑定状态失效！")
         }

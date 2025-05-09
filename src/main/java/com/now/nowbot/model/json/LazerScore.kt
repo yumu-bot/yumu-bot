@@ -174,8 +174,6 @@ open class LazerScore {
             return formatter.format(endedTime)
         }
 
-    // @JsonProperty("has_replay") var replay: Boolean = false
-
     @JsonProperty("is_perfect_combo")
     var perfectCombo: Boolean = false
 

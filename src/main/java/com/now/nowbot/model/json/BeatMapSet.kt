@@ -1,12 +1,12 @@
 package com.now.nowbot.model.json
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.yumu.core.extensions.isNotNull
 import org.springframework.lang.Nullable
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatterBuilder
-import java.util.*
 import kotlin.math.max
 
 class BeatMapSet {
@@ -49,17 +49,6 @@ class BeatMapSet {
 
     var status: String = ""
 
-    val statusByte: Byte
-        get() = when(status) {
-            "wip" -> -1
-            "pending" -> 0
-            "ranked" -> 1
-            "approved" -> 2
-            "qualified" -> 3
-            "loved" -> 4
-            else -> -2
-        }
-
     @JsonProperty("spotlight")
     var spotlight: Boolean = false
 
@@ -77,7 +66,7 @@ class BeatMapSet {
     var video: Boolean = false
 
     @JsonProperty("bpm")
-    var BPM: Double? = null
+    var bpm: Double? = null
 
     @JsonProperty("can_be_hyped")
     var canBeHyped: Boolean? = null
@@ -338,7 +327,7 @@ class BeatMapSet {
     @get:JsonProperty("has_leader_board")
     val hasLeaderBoard: Boolean
          get() {
-             return if (Objects.nonNull(status)) {
+             return if (status.isNotBlank()) {
                  (status == "ranked" || status == "qualified" || status == "loved" || status == "approved")
              } else {
                  when (ranked) {
@@ -349,18 +338,6 @@ class BeatMapSet {
          }
 
     var fromDatabase: Boolean? = null
-    //获取最高难度
-    @get:JsonProperty("top_diff")
-    val topDiff: BeatMap?
-        get() {
-            if (beatMaps.isNullOrEmpty()) return null
-            if (beatMaps!!.size == 1) return beatMaps!!.first()
-
-            val starComparator =
-                Comparator { o1: BeatMap?, o2: BeatMap? -> (o1!!.starRating * 100f - o2!!.starRating * 100f).toInt() }
-
-            return Collections.max(beatMaps!!, starComparator)
-        }
 
     @get:JsonProperty("preview_name")
     val previewName: String
@@ -374,5 +351,11 @@ class BeatMapSet {
 
     override fun hashCode(): Int {
         return this.beatMapSetID.hashCode()
+    }
+
+    //获取最高难度
+    @JsonIgnoreProperties
+    fun getTopDiff(last: Int = 1): BeatMap? {
+        return beatMaps?.sortedByDescending { it.starRating }?.getOrNull(last - 1)
     }
 }

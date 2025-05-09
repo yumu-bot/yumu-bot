@@ -50,13 +50,13 @@ open class OsuUser {
     @JsonProperty("is_restricted")
     var isRestricted: Boolean = false
 
-    @get:Nullable @JsonProperty("last_visit") @Nullable
+    @JsonProperty("last_visit")
     var lastVisit: OffsetDateTime? = null
 
     @JsonProperty("pm_friends_only")
     var pmFriendsOnly: Boolean = false
 
-    @get:Nullable @JsonProperty("profile_colour") @Nullable
+    @JsonProperty("profile_colour")
     var profileColor: String? = null
 
     var username: String = ""
@@ -321,7 +321,7 @@ open class OsuUser {
     @JsonProperty("support_level")
     var supportLevel: Int = 0
 
-    @get:Nullable @JsonProperty("team") @Nullable
+    @JsonProperty("team")
     var team: Team? = null
 
     @JsonProperty("user_achievements")
@@ -368,6 +368,16 @@ open class OsuUser {
     constructor(username: String, pp: Double) {
         this.username = username
         this.pp = pp
+    }
+
+    constructor(user: MicroUser) {
+        this.username = user.userName
+        this.id = user.userID
+        user.avatarUrl?.let { this.avatarUrl = it }
+        this.countryCode = user.countryCode
+        this.country = user.country
+        this.cover = user.cover
+        this.profileColor = user.profileColor
     }
 
     //这个是把基础 OsuUser 转换成完整 OsuUser 的方法

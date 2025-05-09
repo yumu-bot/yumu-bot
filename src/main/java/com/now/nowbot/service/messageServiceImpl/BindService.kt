@@ -205,21 +205,21 @@ import kotlin.jvm.optionals.getOrNull
                     event.reply(
                         BindException(
                             BindException.Type.BIND_Progress_BindingRecoverInfo,
-                            bindUser.osuID,
-                            bindUser.osuName
+                            bindUser.userID,
+                            bindUser.username
                         ).message
                     )
                 } catch (e: WebClientResponseException.Unauthorized) {
                     event.reply(
                         BindException(
                             BindException.Type.BIND_Progress_NeedToReBindInfo,
-                            bindUser.osuID,
-                            bindUser.osuName
+                            bindUser.userID,
+                            bindUser.username
                         ).message
                     )
                 }
 
-                if (osuUser != null && osuUser.userID != bindUser.osuID) {
+                if (osuUser != null && osuUser.userID != bindUser.userID) {
                     throw RuntimeException()
                 }
 

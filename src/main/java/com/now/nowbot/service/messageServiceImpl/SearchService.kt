@@ -173,12 +173,9 @@ import java.util.regex.Pattern
         }
 
         private fun MessageEvent.replyImage(result: BeatMapSetSearch, imageService: ImageService) {
-            if (result.beatmapSets.size > 12) {
-                result.beatmapSets = result.beatmapSets.subList(0, 12)
-            }
-
             result.beatmapSets = result.beatmapSets.take(12)
-                .sortedByDescending { it.playCount }.sortedByDescending {
+                .sortedByDescending { it.playCount }
+                .sortedByDescending {
                     when (it.status) {
                         "ranked" -> 6
                         "approved" -> 5

@@ -71,7 +71,7 @@ class BPQueryService(
             throw BindException(BindException.Type.BIND_Me_NotBind)
         }
 
-        val mode = OsuMode.getMode(param.mode, bindUser.osuMode, bindDao.getGroupModeConfig(event))
+        val mode = OsuMode.getMode(param.mode, bindUser.mode, bindDao.getGroupModeConfig(event))
 
         val (order, text) = getOrder(param.filter)
         val filters = getAllFilter(text)
@@ -581,7 +581,7 @@ class BPQueryService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            return PanelE5Param(user, score, null, density, progress, original, attributes, "BQ")
+            return PanelE5Param(user, score, null, density, progress, original, attributes, "BQ", null)
         }
     }
 }
