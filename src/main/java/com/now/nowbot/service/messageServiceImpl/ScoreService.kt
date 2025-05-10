@@ -100,7 +100,7 @@ import java.util.regex.Matcher
             }
 
             val score = try {
-                scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 100).first()
+                scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 1).first()
             } catch (e: Exception) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
             }
