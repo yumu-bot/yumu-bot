@@ -1095,6 +1095,7 @@ import kotlin.math.min
      * @return file
      */
     @GetMapping("file/{key}") fun downloadFile(@PathVariable("key") key: String?): ResponseEntity<ByteArray> {
+        if (key.isNullOrBlank()) throw RuntimeException("链接不存在")
         val data = QQMsgUtil.getFileData(key) ?: throw RuntimeException("文件不存在")
 
         val headers = HttpHeaders()

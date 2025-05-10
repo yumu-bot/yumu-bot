@@ -29,7 +29,7 @@ object QQMsgUtil {
     }
 
     @Deprecated("") fun <T : Message> getType(msg: MessageChain, clazz: Class<T>): T? {
-        return msg.messageList.filter { m: Message -> clazz.isAssignableFrom(m.javaClass) }.map { it as T }.firstOrNull()
+        return msg.messageList.filter { clazz.isAssignableFrom(it.javaClass) }.map { it as T }.firstOrNull()
     }
 
     fun getImage(image: ByteArray?): MessageChain {
@@ -73,7 +73,7 @@ object QQMsgUtil {
      */
 
     fun <T : Message> getTypeAll(msg: MessageChain, clazz: Class<T>): List<T> {
-        return msg.messageList.filter { m: Message -> clazz.isAssignableFrom(m.javaClass) }.map { it as T }
+        return msg.messageList.filter { clazz.isAssignableFrom(it.javaClass) }.map { it as T }
     }
 
     @Deprecated("") fun sendImageAndText(event: MessageEvent, image: ByteArray?, text: String?) {
