@@ -1,132 +1,130 @@
-package com.now.nowbot.util;
+package com.now.nowbot.util
 
-import com.now.nowbot.config.YumuConfig;
-import com.now.nowbot.qq.contact.Contact;
-import com.now.nowbot.qq.contact.Group;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.Message;
-import com.now.nowbot.qq.message.MessageChain;
-import org.jetbrains.annotations.Nullable;
+import com.now.nowbot.config.YumuConfig
+import com.now.nowbot.qq.contact.Contact
+import com.now.nowbot.qq.contact.Group
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.Message
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
+import java.nio.ByteBuffer
+import java.util.*
 
-import java.nio.ByteBuffer;
-import java.util.*;
+object QQMsgUtil {
+    private val base64Util: Base64.Encoder = Base64.getEncoder()
+    private val FILE_DATA: MutableMap<String, FileData> = HashMap()
+    private var LocalBotList: List<Long>? = null
+    private var LocalUrl: String? = null
+    private var PublicUrl: String? = null
 
-public class QQMsgUtil {
-    private static final Base64.Encoder base64Util = Base64.getEncoder();
-    private static final Map<String, FileData> FILE_DATA = new HashMap<>();
-    private static List<Long>   LocalBotList;
-    private static String       LocalUrl;
-    private static String       PublicUrl;
-
-    public record FileData(String name, ByteBuffer bytes) {}
-
-    public static void init(YumuConfig yumuConfig) {
-        LocalBotList = yumuConfig.getPrivateDevice();
-        LocalUrl = STR."\{yumuConfig.getPrivateUrl()}/pub/file/%s";
-        PublicUrl = STR."\{yumuConfig.getPublicUrl()}/pub/file/%s";
+    @JvmStatic fun init(yumuConfig: YumuConfig) {
+        LocalBotList = yumuConfig.privateDevice
+        LocalUrl = "${yumuConfig.privateUrl}/pub/file/%s"
+        PublicUrl = "${yumuConfig.publicUrl}/pub/file/%s"
     }
 
-    public static String byte2str(byte[] data) {
-        if (Objects.isNull(data)) return "";
-        return base64Util.encodeToString(data);
+    @JvmStatic fun byte2str(data: ByteArray?): String {
+        if (Objects.isNull(data)) return ""
+        return base64Util.encodeToString(data)
     }
 
-    @Nullable
-    @SuppressWarnings("unchecked")
-    @Deprecated
-    public static <T extends Message> T getType(MessageChain msg, Class<T> T) {
-        return (T) msg.getMessageList().stream().filter(m -> T.isAssignableFrom(m.getClass())).findFirst().orElse(null);
+    @Deprecated("") fun <T : Message> getType(msg: MessageChain, clazz: Class<T>): T? {
+        return msg.messageList.filter { m: Message -> clazz.isAssignableFrom(m.javaClass) }.map { it as T }.firstOrNull()
     }
 
-    public static MessageChain getImage(byte[] image) {
-        return new MessageChain.MessageChainBuilder().addImage(image).build();
+    fun getImage(image: ByteArray?): MessageChain {
+        return MessageChainBuilder().addImage(image).build()
     }
 
-    public static MessageChain getTextAndImage(String text,byte[] image) {
-        return new MessageChain.MessageChainBuilder().addText(text).addImage(image).build();
+    fun getTextAndImage(text: String?, image: ByteArray?): MessageChain {
+        return MessageChainBuilder().addText(text).addImage(image).build()
     }
 
+    @Throws(InterruptedException::class)
+    fun sendImages(event: MessageEvent, images: List<ByteArray?>) {
+        var builder = MessageChainBuilder()
+        val bs = ArrayList<MessageChain>()
 
-    public static void sendImages(MessageEvent event, List<byte[]> images) throws InterruptedException {
-        var builder = new MessageChain.MessageChainBuilder();
-        var bs = new ArrayList<MessageChain>();
-
-        for (int i = 0; i < images.size(); i++) {
-            var image = images.get(i);
+        for (i in images.indices) {
+            val image = images[i]
 
             // qq 一次性只能发 20 张图
             if (i >= 20 && i % 20 == 0) {
-                bs.add(builder.build());
-                builder = new MessageChain.MessageChainBuilder();
+                bs.add(builder.build())
+                builder = MessageChainBuilder()
             }
 
-            builder.addImage(image);
+            builder.addImage(image)
         }
 
-        bs.add(builder.build());
+        bs.add(builder.build())
 
-        for (var b: bs) {
-            event.reply(b);
-            Thread.sleep(1000L);
-        }
-    }
-
-    private static void beforeContact(Contact from) {
-        //from.sendMessage("正在处理图片请稍候...");
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T extends com.now.nowbot.qq.message.Message> List<T> getTypeAll(MessageChain msg, Class<T> T) {
-        return msg.getMessageList().stream().filter(m ->T.isAssignableFrom(m.getClass())).map(it -> (T) it).toList();
-    }
-
-    @Deprecated
-    public static void sendImageAndText(MessageEvent event, byte[] image, String text) {
-        var from = event.getSubject();
-        sendImageAndText(from, image, text);
-    }
-
-    @Deprecated
-    public static void sendImageAndText(Contact from, byte[] image, String text) {
-        beforeContact(from);
-        from.sendMessage(new MessageChain.MessageChainBuilder().addImage(image).addText(text).build());
-    }
-
-    @Deprecated
-    public static void sendGroupFile(MessageEvent event, String name, byte[] data) {
-        var from = event.getSubject();
-
-        if (from instanceof Group group) {
-            group.sendFile(data, Optional.ofNullable(name).orElse("Yumu-file"));
+        for (b in bs) {
+            event.reply(b)
+            Thread.sleep(1000L)
         }
     }
 
-    @Deprecated
-    public static void sendGroupFile(Group group, String name, byte[] data) {
-        group.sendFile(data, name);
+    /*
+    private fun beforeContact(from: Contact) {
+        from.sendMessage("正在处理图片请稍候...");
     }
 
-    public static String getFileUrl(byte[] data, String name) {
-        var key = UUID.randomUUID().toString();
-        FILE_DATA.put(key, new FileData(name, ByteBuffer.wrap(data)));
-        return String.format(LocalUrl, key);
-    }
-    public static String getFilePubUrl(byte[] data, String name) {
-        var key = UUID.randomUUID().toString();
-        FILE_DATA.put(key, new FileData(name, ByteBuffer.wrap(data)));
-        return String.format(PublicUrl, key);
-    }
-    public static FileData getFileData(String key) {
-        return FILE_DATA.get(key);
-    }
-    public static void  removeFileUrl(String url) {
-        var index = url.lastIndexOf("/pub/file") + 10;
-        var key = url.substring(index);
-        System.out.println(key);
-        FILE_DATA.remove(key);
+     */
+
+    fun <T : Message> getTypeAll(msg: MessageChain, clazz: Class<T>): List<T> {
+        return msg.messageList.filter { m: Message -> clazz.isAssignableFrom(m.javaClass) }.map { it as T }
     }
 
-    public static boolean botInLocal(Long botQQ){
-        return LocalBotList.contains(botQQ);
+    @Deprecated("") fun sendImageAndText(event: MessageEvent, image: ByteArray?, text: String?) {
+        val from = event.subject
+        sendImageAndText(from, image, text)
     }
+
+    @JvmStatic @Deprecated("") fun sendImageAndText(from: Contact, image: ByteArray?, text: String?) {
+        // beforeContact(from)
+        from.sendMessage(MessageChainBuilder().addImage(image).addText(text).build())
+    }
+
+    @Deprecated("") fun sendGroupFile(event: MessageEvent, name: String?, data: ByteArray?) {
+        val from = event.subject
+
+        if (from is Group) {
+            from.sendFile(data, Optional.ofNullable(name).orElse("Yumu-file"))
+        }
+    }
+
+    @Deprecated("") fun sendGroupFile(group: Group, name: String?, data: ByteArray?) {
+        group.sendFile(data, name)
+    }
+
+    @JvmStatic fun getFileUrl(data: ByteArray, name: String?): String {
+        val key = UUID.randomUUID().toString()
+        FILE_DATA[key] = FileData(name, ByteBuffer.wrap(data))
+        return String.format(LocalUrl!!, key)
+    }
+
+    @JvmStatic fun getFilePubUrl(data: ByteArray, name: String?): String {
+        val key = UUID.randomUUID().toString()
+        FILE_DATA[key] = FileData(name, ByteBuffer.wrap(data))
+        return String.format(PublicUrl!!, key)
+    }
+
+    fun getFileData(key: String): FileData? {
+        return FILE_DATA[key]
+    }
+
+    @JvmStatic fun removeFileUrl(url: String) {
+        val index = url.lastIndexOf("/pub/file") + 10
+        val key = url.substring(index)
+        println(key)
+        FILE_DATA.remove(key)
+    }
+
+    @JvmStatic fun botInLocal(botQQ: Long): Boolean {
+        return LocalBotList!!.contains(botQQ)
+    }
+
+    @JvmRecord
+    data class FileData(val name: String?, val bytes: ByteBuffer)
 }

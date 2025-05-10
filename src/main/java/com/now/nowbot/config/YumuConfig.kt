@@ -1,107 +1,59 @@
-package com.now.nowbot.config;
+package com.now.nowbot.config
 
-import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Primary;
-import org.springframework.util.StringUtils;
-
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.annotation.PostConstruct
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.context.annotation.Primary
+import org.springframework.validation.annotation.Validated
 
 @Primary
+@Validated
 @ConfigurationProperties(prefix = "yumu")
-public class YumuConfig {
+class YumuConfig {
     /**
      * 访问是否需要加端口, 默认不加, 如果对外访问需要则端口则填写
      */
-    Integer publicPort = 0;
+    var publicPort: Int = 0
 
     /**
      * 访问内网的端口, 默认与server端口保持一致
      */
-    @Value("${server.port}")
-    Integer privatePort;
+    @Value("\${server.port}")
+    var privatePort: Int? = null
 
     /**
      * 公网可以访问到的路径
      */
-    String publicDomain  = "";
+    private var publicDomain: String = ""
+
     /**
      * 内网设备可以访问到的路径
      */
-    String privateDomain = "http://localhost";
+    private var privateDomain: String = "http://localhost"
+
+    var bindDomain: String = ""
 
     /**
      * 私域设备的qq号
      */
+    var privateDevice: List<Long> = ArrayList(0)
 
-    List<Long> privateDevice = new ArrayList<>(0);
+    val publicUrl: String
+        get() = "${publicDomain}${if (privatePort == null || privatePort == 0) "" else ":${privatePort}"}"
 
-
-    public String getPrivateDomain() {
-        return privateDomain;
+    private fun getRawDomain(s: String): String {
+        return if (s.contains(':')) {
+            s.substring(0, s.indexOf(':', 7))
+        } else s
     }
 
-    public void setPrivateDomain(String privateDomain) {
-        this.privateDomain = privateDomain;
-    }
+    val privateUrl: String
+        get() = "${privateDomain}${if (privatePort == null || privatePort == 0) "" else ":${privatePort}"}"
 
-    public List<Long> getPrivateDevice() {
-        return privateDevice;
-    }
-
-    public void setPrivateDevice(List<Long> privateDevice) {
-        this.privateDevice = privateDevice;
-    }
-
-    public String getPublicUrl() {
-        return STR."\{publicDomain}\{
-                publicPort == 0 ? "" : STR.":\{publicPort}"}";
-    }
-
-    private String getRowDomain(String s) {
-        int n;
-        if ((n = s.indexOf(':', 7)) >= 0) {
-            return s.substring(0, n);
-        }
-        return s;
-    }
-
-    public String getPublicDomain() {
-        return publicDomain;
-    }
-
-    public Integer getPublicPort() {
-        return publicPort;
-    }
-
-    public void setPublicPort(Integer publicPort) {
-        this.publicPort = publicPort;
-    }
-
-    public void setPublicDomain(String publicDomain) {
-        this.publicDomain = publicDomain;
-    }
-
-    public String getPrivateUrl() {
-        return STR."\{privateDomain}\{
-                privatePort == 0 ? "" : STR.":\{privatePort}"}";
-    }
-
-    public Integer getPrivatePort() {
-        return privatePort;
-    }
-
-    public void setPrivatePort(Integer privatePort) {
-        this.privatePort = privatePort;
-    }
-
-    @PostConstruct
-    public void init() {
-        publicDomain = getRowDomain(publicDomain);
-        privateDomain = getRowDomain(privateDomain);
-        if (! StringUtils.hasText(publicDomain)) publicDomain = privateDomain;
-        if (publicDomain.equals(privateDomain) && publicPort == 0) publicPort = privatePort;
+    @PostConstruct fun init() {
+        publicDomain = getRawDomain(publicDomain)
+        privateDomain = getRawDomain(privateDomain)
+        if (publicDomain.isEmpty()) publicDomain = privateDomain
+        if (publicDomain == privateDomain && publicPort == 0) publicPort = privatePort!!
     }
 }

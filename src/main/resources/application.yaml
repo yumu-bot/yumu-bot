@@ -1,6 +1,8 @@
 yumu:
   #domain 带 http/https 但是不要带端口号, 要指定端口用 private-port / public-port
   private-domain: "http://localhost"
+  #绑定域名。如果没有绑定域名，则不能使用链接绑定。也不能使用 friend 功能
+  bind-domain: ""
   #如果无法通过公网访问则保持与私网一致
   public-domain: ${yumu.private-domain}
   private-device: [ ]
