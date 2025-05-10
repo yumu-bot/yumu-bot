@@ -21,7 +21,7 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
 
         if (!Permission.isSuperAdmin(event)) return false
 
-        data.value = run {
+        val bindUser = run {
             try {
                 val qq = if (event.isAt) {
                     event.target
@@ -37,15 +37,17 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
                     matcher.group("name")
                 } else null
 
-                if (name != null) {
+                if (name.isNullOrEmpty()) {
+                    return@run bindDao.getBindFromQQ(event.sender.id)
+                } else {
                     return@run bindDao.getBindUser(name)
                 }
-
-                return@run bindDao.getBindFromQQ(event.sender.id)
             } catch (e: Exception) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_NotBind_Player)
             }
         }
+
+        data.value = bindUser ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player)
 
         return true
     }
