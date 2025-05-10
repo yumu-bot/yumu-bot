@@ -456,7 +456,7 @@ open class OsuUser {
 
     @JvmRecord
     data class Team(
-        @JsonProperty("flag_url") val flag: String,
+        @JsonProperty("flag_url") val flag: String?,
         @JsonProperty("id") val id: Int,
         @JsonProperty("name") val name: String,
         @JsonProperty("short_name")val shortName: String
