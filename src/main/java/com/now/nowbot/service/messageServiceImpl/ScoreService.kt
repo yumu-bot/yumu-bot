@@ -77,17 +77,48 @@ import java.util.regex.Matcher
         val isMyself = AtomicBoolean(false)
 
         val bid = getBid(matcher)
-        if (bid == 0L) throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
-        val map = beatmapApiService.getBeatMap(bid)
-        if (map.hasLeaderBoard.not()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_LeaderBoard, map.previewName)
+
+        val map = if (bid != 0L) {
+            beatmapApiService.getBeatMap(bid)
+        } else {
+            // 备用方法
+            val currentMode = CmdObject(OsuMode.DEFAULT)
+
+            val user: OsuUser = try {
+                getUserWithoutRange(event, matcher, currentMode, isMyself)
+            } catch (e: BindException) {
+                if (isMyself.get() && messageText.lowercase().contains("score")) {
+                    log.info("成绩：Score 退避成功（副分支）")
+                    return false
+                }
+
+                throw if (isMyself.get()) {
+                    GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
+                } else {
+                    GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
+                }
+            }
+
+            val score = try {
+                scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 100).first()
+            } catch (e: Exception) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
+            }
+
+            beatmapApiService.getBeatMap(score.beatMapID)
+        }
+
+        if (!map.hasLeaderBoard) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_LeaderBoard, map.previewName)
+        }
 
         val mode = OsuMode.correctConvert(inputMode.data, map.mode)
 
         val user: OsuUser = try {
             getUserWithoutRange(event, matcher, CmdObject(mode), isMyself)
         } catch (e: BindException) {
-            if (isMyself.get() && messageText.lowercase(Locale.getDefault()).contains("score")) {
-                log.info("score 退避")
+            if (isMyself.get() && messageText.lowercase().contains("score")) {
+                log.info("成绩：Score 退避成功")
                 return false
             }
             throw if (isMyself.get()) {

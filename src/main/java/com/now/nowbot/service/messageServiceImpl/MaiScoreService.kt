@@ -77,7 +77,7 @@ import org.springframework.stereotype.Service
             if (nameOrTitleStr.contains(Regex(REG_SPACE))) {
                 val s = nameOrTitleStr.split(Regex(REG_SPACE))
 
-                if (s.size == 2) {
+                if (s.size >= 2) {
                     if (s.first().matches(Regex(REG_NUMBER_15))) {
                         data.value = MaiScoreParam(
                             s.first().toInt(),
