@@ -28,8 +28,8 @@ object QQMsgUtil {
         return base64Util.encodeToString(data)
     }
 
-    @Deprecated("") fun <T : Message> getType(msg: MessageChain, clazz: Class<T>): T? {
-        return msg.messageList.filter { clazz.isAssignableFrom(it.javaClass) }.map { it as T }.firstOrNull()
+    inline fun <reified T : Message> getType(msg: MessageChain, clazz: Class<T>): T? {
+        return msg.messageList.filter { clazz.isAssignableFrom(it.javaClass) }.filterIsInstance<T>().firstOrNull()
     }
 
     fun getImage(image: ByteArray?): MessageChain {
@@ -40,7 +40,6 @@ object QQMsgUtil {
         return MessageChainBuilder().addText(text).addImage(image).build()
     }
 
-    @Throws(InterruptedException::class)
     fun sendImages(event: MessageEvent, images: List<ByteArray?>) {
         var builder = MessageChainBuilder()
         val bs = ArrayList<MessageChain>()
@@ -69,32 +68,31 @@ object QQMsgUtil {
     private fun beforeContact(from: Contact) {
         from.sendMessage("正在处理图片请稍候...");
     }
-
      */
 
-    fun <T : Message> getTypeAll(msg: MessageChain, clazz: Class<T>): List<T> {
-        return msg.messageList.filter { clazz.isAssignableFrom(it.javaClass) }.map { it as T }
+    inline fun <reified T : Message> getTypeAll(msg: MessageChain, clazz: Class<T>): List<T> {
+        return msg.messageList.filter { clazz.isAssignableFrom(it.javaClass) }.filterIsInstance<T>()
     }
 
-    @Deprecated("") fun sendImageAndText(event: MessageEvent, image: ByteArray?, text: String?) {
+    @JvmStatic fun sendImageAndText(event: MessageEvent, image: ByteArray?, text: String?) {
         val from = event.subject
         sendImageAndText(from, image, text)
     }
 
-    @JvmStatic @Deprecated("") fun sendImageAndText(from: Contact, image: ByteArray?, text: String?) {
+    @JvmStatic fun sendImageAndText(from: Contact, image: ByteArray?, text: String?) {
         // beforeContact(from)
         from.sendMessage(MessageChainBuilder().addImage(image).addText(text).build())
     }
 
-    @Deprecated("") fun sendGroupFile(event: MessageEvent, name: String?, data: ByteArray?) {
+    @JvmStatic fun sendGroupFile(event: MessageEvent, name: String?, data: ByteArray?) {
         val from = event.subject
 
         if (from is Group) {
-            from.sendFile(data, Optional.ofNullable(name).orElse("Yumu-file"))
+            from.sendFile(data, name ?: "Yumu-file")
         }
     }
 
-    @Deprecated("") fun sendGroupFile(group: Group, name: String?, data: ByteArray?) {
+    @JvmStatic fun sendGroupFile(group: Group, name: String?, data: ByteArray?) {
         group.sendFile(data, name)
     }
 
@@ -110,7 +108,7 @@ object QQMsgUtil {
         return String.format(PublicUrl!!, key)
     }
 
-    fun getFileData(key: String): FileData? {
+    @JvmStatic fun getFileData(key: String): FileData? {
         return FILE_DATA[key]
     }
 
@@ -125,6 +123,5 @@ object QQMsgUtil {
         return LocalBotList!!.contains(botQQ)
     }
 
-    @JvmRecord
-    data class FileData(val name: String?, val bytes: ByteBuffer)
+    @JvmRecord data class FileData(val name: String?, val bytes: ByteBuffer)
 }

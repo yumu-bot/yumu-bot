@@ -4,22 +4,20 @@ import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Primary
-import org.springframework.validation.annotation.Validated
 
 @Primary
-@Validated
 @ConfigurationProperties(prefix = "yumu")
 class YumuConfig {
     /**
      * 访问是否需要加端口, 默认不加, 如果对外访问需要则端口则填写
      */
-    var publicPort: Int = 0
+    private var publicPort: Int = 0
 
     /**
      * 访问内网的端口, 默认与server端口保持一致
      */
     @Value("\${server.port}")
-    var privatePort: Int? = null
+    private var privatePort: Int? = null
 
     /**
      * 公网可以访问到的路径
