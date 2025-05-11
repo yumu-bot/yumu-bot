@@ -117,7 +117,7 @@ class RunTimeService(
         chunithmApiService.updateChunithmAliasLibraryDatabase()
     }
 
-    @Scheduled(cron = "0 2 61 * * *")
+    @Scheduled(cron = "0 2 6 * * *")
     fun updateBeatMapTagsLibrary() {
         log.info("开始执行更新谱面玩家标签库任务")
         beatmapApiService.updateBeatMapTagLibraryDatabase()
