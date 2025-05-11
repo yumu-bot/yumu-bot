@@ -676,6 +676,39 @@ class BeatmapApiImpl(
         }
     }
 
+    private val beatMapTagLibraryFromAPI: JsonNode
+        get() = base.osuApiWebClient.get()
+            .uri {
+                it.path("tags").build()
+            }.headers {
+                base.insertHeader(it)
+            }
+            .retrieve()
+            .bodyToMono(JsonNode::class.java)
+            .block()!!
+
+                /*
+            .map { JacksonUtil.parseObjectList(it["tags"], Tag::class.java) }
+            .flatten()
+
+                 */
+
+    override fun updateBeatMapTagLibraryDatabase() {
+        val tags = JacksonUtil.parseObjectList(beatMapTagLibraryFromAPI["tags"], Tag::class.java)
+
+        beatMapDao.saveTag(tags)
+
+        log.info("谱面: 玩家标签已更新")
+    }
+
+    override fun extendBeatMapTag(beatMap: BeatMap) {
+        val ids = beatMap.tagIDs
+
+        if (ids.isNullOrEmpty()) return
+
+        beatMap.tags = ids.mapNotNull { beatMapDao.getTag(it.id) }
+    }
+
     private fun getBeatMapSetWithRankedTimeLibrary(): List<BeatMapSetWithRankTime> {
         return proxyClient.get()
             .uri("https://mapranktimes.vercel.app/api/beatmapsets")
@@ -702,7 +735,6 @@ class BeatmapApiImpl(
              */
             .block()!!
     }
-
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BeatmapApiImpl::class.java)

@@ -107,4 +107,8 @@ interface OsuBeatmapApiService {
     fun getBeatMapSetRankedTimeMap(): Map<Long, String>
 
     fun applyBeatMapSetRankedTime(beatMapSets: List<BeatMapSet>)
+
+    fun updateBeatMapTagLibraryDatabase()
+
+    fun extendBeatMapTag(beatMap: BeatMap)
 }

@@ -1,6 +1,7 @@
 package com.now.nowbot.model.json
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
@@ -72,6 +73,20 @@ open class BeatMap {
 
     @JsonProperty("max_combo")
     var maxCombo: Int? = 0
+
+    @set:JsonProperty("top_tag_ids")
+    @get:JsonIgnoreProperties
+    var tagIDs: List<TagData>? = null
+
+    data class TagData(
+        @JsonProperty("tag_id") val id: Int,
+        @JsonProperty("count") val count: Int,
+    )
+
+    // 自己设
+    @set:JsonIgnoreProperties
+    @get:JsonProperty("tags")
+    var tags: List<Tag>? = null
 
     // Extend!
 

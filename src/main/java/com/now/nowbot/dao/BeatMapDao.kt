@@ -1,151 +1,155 @@
-package com.now.nowbot.dao;
+package com.now.nowbot.dao
 
-import com.now.nowbot.entity.BeatmapLite;
-import com.now.nowbot.entity.MapSetLite;
-import com.now.nowbot.mapper.BeatMapMapper;
-import com.now.nowbot.mapper.MapSetMapper;
-import com.now.nowbot.model.json.BeatMap;
-import com.now.nowbot.model.json.BeatMapSet;
-import com.now.nowbot.model.json.Covers;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import com.now.nowbot.entity.BeatmapLite
+import com.now.nowbot.entity.BeatmapLite.BeatmapHitLengthResult
+import com.now.nowbot.entity.MapSetLite
+import com.now.nowbot.entity.TagLite
+import com.now.nowbot.mapper.BeatMapRepository
+import com.now.nowbot.mapper.BeatMapSetRepository
+import com.now.nowbot.mapper.TagRepository
+import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.json.BeatMapSet
+import com.now.nowbot.model.json.Covers
+import com.now.nowbot.model.json.Tag
+import org.springframework.stereotype.Component
+import java.util.*
 
 @Component
-public class BeatMapDao {
-    MapSetMapper mapSetMapper;
-    BeatMapMapper beatMapMapper;
-    @Autowired
-    public BeatMapDao(MapSetMapper mapSetMapper, BeatMapMapper beatMapMapper){
-        this.beatMapMapper = beatMapMapper;
-        this.mapSetMapper = mapSetMapper;
-    }
-
-    public BeatmapLite saveMap(BeatMap beatMap){
-        var mapSet = beatMap.getBeatMapSet();
+class BeatMapDao(
+    private val beatMapSetRepository: BeatMapSetRepository,
+    private val beatMapRepository: BeatMapRepository,
+    private val tagRepository: TagRepository
+) {
+    fun saveMap(beatMap: BeatMap): BeatmapLite {
+        val mapSet = beatMap.beatMapSet
         if (mapSet != null) {
-            mapSetMapper.save(fromMapSetModel(mapSet));
+            beatMapSetRepository.save(fromMapSetModel(mapSet))
         }
-        return beatMapMapper.save(fromBeatmapModel(beatMap));
+        return beatMapRepository.save(fromBeatmapModel(beatMap))
     }
 
-    public void saveAllMapSet(List<BeatMapSet> beatMapSet){
-        var s = beatMapSet.stream().map(BeatMapDao::fromMapSetModel).toList();
-        mapSetMapper.saveAll(s);
+    fun saveAllMapSet(beatMapSet: List<BeatMapSet>) {
+        val s = beatMapSet.map { fromMapSetModel(it) }
+        beatMapSetRepository.saveAll(s)
     }
 
-    public void saveAllMap(List<BeatMap> beatMap){
-        var s = beatMap.stream().map(BeatMapDao::fromBeatmapModel).toList();
-        beatMapMapper.saveAll(s);
+    fun saveAllMap(beatMap: List<BeatMap>) {
+        val s = beatMap.map { fromBeatmapModel(it) }
+        beatMapRepository.saveAll(s)
     }
 
-    public MapSetLite saveMapSet(BeatMapSet beatMapSet){
-        return mapSetMapper.save(fromMapSetModel(beatMapSet));
+    fun saveMapSet(beatMapSet: BeatMapSet): MapSetLite {
+        return beatMapSetRepository.save(fromMapSetModel(beatMapSet))
     }
 
-    public BeatmapLite getBeatMapLite(int id){
-        return getBeatMapLite((long) id);
+    fun getBeatMapLite(id: Int): BeatmapLite {
+        return getBeatMapLite(id.toLong())
     }
-    public BeatmapLite getBeatMapLite(long id){
-        var lite = beatMapMapper.findById(id);
-        if (lite.isEmpty()) {
-            throw new NullPointerException("not found");
+
+    fun getBeatMapLite(id: Long): BeatmapLite {
+        val lite = beatMapRepository.findById(id)
+        if (lite.isEmpty) {
+            throw NullPointerException("not found")
         }
-        return lite.get();
+        return lite.get()
     }
 
-    public Optional<MapSetLite> getMapSetLite(long id){
-        return beatMapMapper.getMapSetByBid(id);
+    fun getMapSetLite(id: Long): Optional<MapSetLite> {
+        return beatMapRepository.getMapSetByBid(id)
     }
 
-    public Optional<MapSetLite> getMapSetLite(int id){
-        return getMapSetLite((long)id);
+    fun getMapSetLite(id: Int): Optional<MapSetLite> {
+        return getMapSetLite(id.toLong())
     }
 
-    public List<BeatmapLite.BeatmapHitLengthResult> getAllBeatmapHitLength(Collection<Long> ids){
-        return beatMapMapper.getBeatmapHitLength(ids);
+    fun getAllBeatmapHitLength(ids: Collection<Long>): List<BeatmapHitLengthResult> {
+        return beatMapRepository.getBeatmapHitLength(ids)
     }
 
-    public static BeatMap fromBeatmapLite(BeatmapLite bl){
-        var b = bl.toBeatMap();
-        b.setBeatMapSet(fromMapsetLite(bl.getMapSet()));
-        return b;
+    fun saveTag(tags: Collection<Tag>) {
+        tagRepository.saveAll(tags.map { TagLite.from(it) })
     }
 
-    public static BeatmapLite fromBeatmapModel(BeatMap b){
-        var s = new BeatmapLite(b);
-        MapSetLite mapSet = null;
-        if (b.getBeatMapSet() != null) {
-            mapSet = fromMapSetModel(b.getBeatMapSet());
+    fun getTag(id: Int): Tag? {
+        return tagRepository.findById(id).get().toModel()
+    }
+
+    companion object {
+        fun fromBeatmapLite(bl: BeatmapLite): BeatMap {
+            val b = bl.toBeatMap()
+            b.beatMapSet = fromMapsetLite(bl.mapSet)
+            return b
         }
-        s.setMapSet(mapSet);
-        return s;
-    }
 
-
-
-    public static BeatMapSet fromMapsetLite(MapSetLite mapSet){
-        var s = new BeatMapSet();
-        s.setBeatMapSetID(Long.valueOf(mapSet.getId()));
-        s.setCreatorID(Long.valueOf(mapSet.getMapperId()));
-        s.setCreator(mapSet.getCreator());
-        var cover = new Covers();
-        cover.setCover(mapSet.getCover());
-        cover.setCover2x(mapSet.getCover());
-        cover.setCard(mapSet.getCard());
-        cover.setCard2x(mapSet.getCard());
-        cover.setList(mapSet.getList());
-        cover.setList2x(mapSet.getList());
-        cover.setSlimcover(mapSet.getSlimcover());
-        cover.setSlimcover2x(mapSet.getSlimcover());
-        s.setCovers(cover);
-
-        s.setNsfw(mapSet.getNsfw());
-        s.setStoryboard(mapSet.getStoryboard());
-        s.setSource(mapSet.getSource());
-        s.setStatus(mapSet.getStatus());
-        s.setPlayCount(mapSet.getPlayCount());
-        s.setFavouriteCount(mapSet.getFavourite());
-        s.setTitle(mapSet.getTitle());
-        s.setTitleUnicode(mapSet.getTitleUTF());
-        s.setArtist(mapSet.getArtist());
-        s.setArtistUnicode(mapSet.getArtistUTF());
-        s.setLegacyThreadUrl(mapSet.getLegacyUrl());
-
-        s.setFromDatabase(false);
-        return s;
-    }
-
-    public static MapSetLite fromMapSetModel(BeatMapSet mapSet){
-        var s = new MapSetLite();
-        s.setId(Math.toIntExact(mapSet.getBeatMapSetID()));
-        s.setCard(mapSet.getCovers().getCard2x());
-        s.setCover(mapSet.getCovers().getCover2x());
-        s.setList(mapSet.getCovers().getList2x());
-        s.setSlimcover(mapSet.getCovers().getSlimcover2x());
-
-        if (mapSet.getAvailability() != null) {
-            s.setAvailabilityDownloadDisable(mapSet.getAvailability().downloadDisabled());
+        fun fromBeatmapModel(b: BeatMap): BeatmapLite {
+            val s = BeatmapLite(b)
+            var mapSet: MapSetLite? = null
+            if (b.beatMapSet != null) {
+                mapSet = fromMapSetModel(b.beatMapSet!!)
+            }
+            s.mapSet = mapSet
+            return s
         }
-        s.setNsfw(mapSet.getNsfw());
-        s.setStoryboard(mapSet.getStoryboard());
-        s.setLegacyUrl(mapSet.getLegacyThreadUrl());
 
-        s.setMapperId(Math.toIntExact(mapSet.getCreatorID()));
-        s.setCreator(mapSet.getCreator());
-        s.setSource(mapSet.getSource());
-        s.setStatus(mapSet.getStatus());
-        s.setPlayCount(mapSet.getPlayCount());
-        s.setFavourite(mapSet.getFavouriteCount());
-        s.setTitle(mapSet.getTitle());
-        s.setTitleUTF(mapSet.getTitleUnicode());
-        s.setArtist(mapSet.getArtist());
-        s.setArtistUTF(mapSet.getArtistUnicode());
+        fun fromMapsetLite(mapSet: MapSetLite): BeatMapSet {
+            val s = BeatMapSet()
+            s.beatMapSetID = mapSet.id.toLong()
+            s.creatorID = mapSet.mapperId.toLong()
+            s.creator = mapSet.creator
+            val cover = Covers()
+            cover.cover = mapSet.cover
+            cover.cover2x = mapSet.cover
+            cover.card = mapSet.card
+            cover.card2x = mapSet.card
+            cover.list = mapSet.list
+            cover.list2x = mapSet.list
+            cover.slimcover = mapSet.slimcover
+            cover.slimcover2x = mapSet.slimcover
+            s.covers = cover
 
-        return s;
+            s.nsfw = mapSet.nsfw
+            s.storyboard = mapSet.storyboard
+            s.source = mapSet.source
+            s.status = mapSet.status
+            s.playCount = mapSet.playCount
+            s.favouriteCount = mapSet.favourite
+            s.title = mapSet.title
+            s.titleUnicode = mapSet.titleUTF
+            s.artist = mapSet.artist
+            s.artistUnicode = mapSet.artistUTF
+            s.legacyThreadUrl = mapSet.legacyUrl
+
+            s.fromDatabase = false
+            return s
+        }
+
+        fun fromMapSetModel(mapSet: BeatMapSet): MapSetLite {
+            val s = MapSetLite()
+            s.id = Math.toIntExact(mapSet.beatMapSetID)
+            s.card = mapSet.covers.card2x
+            s.cover = mapSet.covers.cover2x
+            s.list = mapSet.covers.list2x
+            s.slimcover = mapSet.covers.slimcover2x
+
+            if (mapSet.availability != null) {
+                s.availabilityDownloadDisable = mapSet.availability!!.downloadDisabled
+            }
+            s.nsfw = mapSet.nsfw
+            s.storyboard = mapSet.storyboard
+            s.legacyUrl = mapSet.legacyThreadUrl
+
+            s.mapperId = mapSet.creatorID.toInt()
+            s.creator = mapSet.creator
+            s.source = mapSet.source
+            s.status = mapSet.status
+            s.playCount = mapSet.playCount
+            s.favourite = mapSet.favouriteCount
+            s.title = mapSet.title
+            s.titleUTF = mapSet.titleUnicode
+            s.artist = mapSet.artist
+            s.artistUTF = mapSet.artistUnicode
+
+            return s
+        }
     }
-
 }

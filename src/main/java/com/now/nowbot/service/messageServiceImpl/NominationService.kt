@@ -185,8 +185,11 @@ import kotlin.math.floor
                 throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_Discussion)
             }
 
-            // 插入难度名
             if (!s.beatMaps.isNullOrEmpty()) {
+                // 插入标签
+                s.beatMaps!!.forEach { beatmapApiService.extendBeatMapTag(it) }
+
+                // 插入难度名
                 val diffs = s.beatMaps!!.associate { it.beatMapID to it.difficultyName }
 
                 d.addDifficulty4DiscussionDetails(diffs)

@@ -5,11 +5,11 @@ import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.context.ApplicationContext
 import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.scheduling.annotation.SchedulingConfigurer
@@ -29,9 +29,9 @@ class RunTimeService(
     private val maimaiApiService: MaimaiApiService,
     private val chunithmApiService: ChunithmApiService,
     private val userApiService: OsuUserApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
     @Qualifier("kotlinTaskExecutor")
     private val taskExecutor: TaskExecutor,
-    private val applicationContext: ApplicationContext,
     private val botContainer: BotContainer,
     private val newbieConfig: NewbieConfig
 ) : SchedulingConfigurer {
@@ -115,6 +115,12 @@ class RunTimeService(
         log.info("开始执行更新 chunithm 外号库任务")
         //chunithmApiService.updateChunithmAliasLibraryFile()
         chunithmApiService.updateChunithmAliasLibraryDatabase()
+    }
+
+    @Scheduled(cron = "0 2 61 * * *")
+    fun updateBeatMapTagsLibrary() {
+        log.info("开始执行更新谱面玩家标签库任务")
+        beatmapApiService.updateBeatMapTagLibraryDatabase()
     }
 
 
