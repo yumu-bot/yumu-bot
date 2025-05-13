@@ -18,6 +18,7 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 import kotlin.math.*
+import kotlin.random.Random
 
 @Service("DICE") class DiceService : MessageService<DiceParam> {
     // dice：骰子次数，默认为 1
@@ -45,7 +46,7 @@ import kotlin.math.*
             if (dice.isNullOrBlank().not() && (dice.toLongOrNull() ?: return false) > 1L) {
                 return false
             } else if (number.isNullOrBlank().not()) {
-                data.value = DiceParam(null, null, (number + text).trim { it <= ' ' })
+                data.value = DiceParam(null, null, (number + text).trim())
                 return true
             } else if ("[0-9]+.?[0-9]*".toRegex().matches(text.trim())) {
                 // !roll 4
@@ -54,7 +55,7 @@ import kotlin.math.*
             } else if (DataUtil.isHelp(text)) {
                 throw DiceException(DiceException.Type.DICE_Instruction)
             } else {
-                data.value = DiceParam(null, null, text.trim { it <= ' ' })
+                data.value = DiceParam(null, null, text.trim())
                 return true
             }
         } else if (dice.isNullOrBlank().not()) {
@@ -80,16 +81,11 @@ import kotlin.math.*
             data.value = DiceParam(d, n, null)
             return true
         } else if (number.isNullOrBlank().not()) {
-            val n: Long
 
-            if (number.contains("-")) {
+            val n = number.toLongOrNull() ?: throw DiceException(DiceException.Type.DICE_Number_ParseFailed)
+
+            if (n < 0L) {
                 throw DiceException(DiceException.Type.DICE_Number_NotSupportNegative)
-            }
-
-            try {
-                n = number.toLong()
-            } catch (e: NumberFormatException) {
-                throw DiceException(DiceException.Type.DICE_Number_ParseFailed)
             }
 
             data.value = DiceParam(1L, n, null)
@@ -131,7 +127,7 @@ import kotlin.math.*
                     val sb = StringBuilder()
 
                     for (i in 1L..param.dice!!) {
-                        val r = getRandomInstantly<Long?>(param.number)
+                        val r = getRandom(param.number)
                         val format = if ((r < 1f)) "%.2f" else "%.0f"
 
                         sb.append(format(format, r))
@@ -149,7 +145,7 @@ import kotlin.math.*
                 val message = compare(param.text)
 
                 // 用于匹配是否被和谐
-                val h = Pattern.compile("○|(\\[和谐])")
+                val h = "○|(\\[和谐])".toPattern()
                 if (h.matcher(message).find()) { // 被和谐就撤回
                     receipt = event.reply(message)
                     receipt.recallIn((60 * 1000).toLong())
@@ -239,7 +235,7 @@ import kotlin.math.*
         // A是。A不是。
         WHETHER(
             Pattern.compile(
-                "\\s*(?<m1>[\\S\\s]*(?<!爱))?\\s*(?<c2>[\\S\\s])(?<m3>[不没])(?<c3>[\\S\\s])[人个件位条匹颗根辆]?\\s*(?<m2>[\\S\\s]*)?"
+                "\\s*(?<m1>[^不]*(?<!爱))?\\s*(?<c2>[\\S\\s])(?<m3>[不没])(?<c3>[\\S\\s])[人个件位条匹颗根辆]?\\s*(?<m2>[\\S\\s]*)?"
             ), onlyC3 = true
         ),
 
@@ -405,7 +401,7 @@ import kotlin.math.*
         @JvmStatic @Throws(DiceException::class) fun compare(str: String?): String {
             val s = transferApostrophe(str)
 
-            val result = getRandom(0)
+            val result = getRandom()
             val boundary: Double
             var left = ""
             var right = ""
@@ -449,7 +445,7 @@ import kotlin.math.*
 
                         AMOUNT, AGE -> num = getRandom(120)
                         TIME -> {
-                            val c3 = matcher.group("c3").trim { it <= ' ' }
+                            val c3 = matcher.group("c3").trim()
 
                             // 4% 触发彩蛋。
                             val cannot = arrayOf(
@@ -458,8 +454,8 @@ import kotlin.math.*
                                 "等鸡啄完了米，狗舔完了面，火烧断了锁..."
                             )
 
-                            if (getRandomInstantly(100) <= 4f) {
-                                return cannot[getRandomInstantly(cannot.size).toInt() - 1]
+                            if (getRandom(100) <= 4f) {
+                                return cannot[getRandom(cannot.size).toInt() - 1]
                             }
 
                             if (c3.contains("年")) {
@@ -516,8 +512,8 @@ import kotlin.math.*
                                     "过不了多久。",
                                 )
 
-                                if (getRandomInstantly(100) <= 4f) {
-                                    return soon[getRandomInstantly(soon.size).toInt() - 1]
+                                if (getRandom(100) <= 4f) {
+                                    return soon[getRandom(soon.size).toInt() - 1]
                                 }
 
                                 val timeList = arrayOf("年", "个月", "周", "天", "小时", "分钟", "秒")
@@ -527,20 +523,20 @@ import kotlin.math.*
                         }
 
                         RANK -> { // 缩放结果，让给出的排名更靠前（小
-                            num = floor(16.0 * (randomInstantly.pow(2.0))) + 1.0
+                            num = floor(16.0 * (getRandom().pow(2.0))) + 1.0
 
-                            val i = randomInstantly
+                            val i = getRandom()
                             if (i > 0.98) num = 4294967295.0 else if (i > 0.95) num = 114514.0
 
                             iis = "第"
                         }
 
                         TIMES -> {
-                            val c3 = matcher.group("c3").trim { it <= ' ' }
+                            val c3 = matcher.group("c3").trim()
 
                             num = getRandom(100)
 
-                            val i = randomInstantly
+                            val i = getRandom()
 
                             if (i > 0.98) num = 2147483647.0 else if (i > 0.95) num = 114514.0
 
@@ -590,8 +586,8 @@ import kotlin.math.*
                         }
 
                         ACCURACY -> { // 做点手脚，让 90%-100% 和 100% 更容易出现 90 ~ 104
-                            num = if (randomInstantly < 0.9) {
-                                Math.round(getRandom(1) * 1400.0) / 100.0 + 90.0
+                            num = if (getRandom() < 0.9) {
+                                round(getRandom(1) * 1400.0) / 100.0 + 90.0
                             } else {
                                 sqrt(getRandom(1)) * 9000.0 / 100.0
                             }
@@ -629,7 +625,7 @@ import kotlin.math.*
                         }
 
                         if (isSame) {
-                            if (getRandomInstantly(100) < 30) {
+                            if (getRandom(100) < 30) {
                                 throw DiceException(DiceException.Type.DICE_Compare_NoDifference_Everyday, left.trim(), right.trim())
                             } else {
                                 throw DiceException(DiceException.Type.DICE_Compare_NoDifference)
@@ -868,7 +864,7 @@ import kotlin.math.*
             }
 
             if (same == strings.size) { // 只有多个全部一样才抛错
-                if (getRandomInstantly(100) < 30) {
+                if (getRandom(100) < 30) {
                     throw DiceException(DiceException.Type.DICE_Compare_NoDifference_Everyday, stringSet.first(), stringSet.first())
                 } else {
                     throw DiceException(DiceException.Type.DICE_Compare_NoDifference)
@@ -901,68 +897,26 @@ import kotlin.math.*
             return m1 && m2
         }
 
-        private val randomInstantly: Double
-            get() = getRandomInstantly(0)
-
-        /**
-         * 获取短时间内的多个随机数
-         *
-         * @param range 范围
-         * @param <T> 数字的子类 </T>
-         * @return 如果范围是 1，返回 1。如果范围大于 1，返回 1-范围内的数（Double 的整数），其他则返回 0-1。
-         */
-        fun <T : Number?> getRandomInstantly(range: T?): Double {
-            val random = Math.random()
-
-            val r = try {
-                range.toString().toInt()
-            } catch (e: NumberFormatException) {
-                try {
-                    if (range != null) {
-                        round(range.toDouble()).toInt()
-                    } else {
-                        100
-                    }
-                } catch (e1: NumberFormatException) {
-                    return random
-                }
-            }
-
-            return if (r > 1) {
-                (random * (r - 1)).roundToInt() + 1.0
-            } else {
-                random
-            }
+        @JvmStatic fun getRandom() : Double {
+            return getRandom(0)
         }
 
         /**
-         * 获取随机数。注意，随机数的来源是系统毫秒，因此不能短时间内多次获取，如果要多次获取请使用 getRandomInstantly 提供的伪随机数
+         * 获取随机数。
          *
          * @param range 范围
          * @param <T> 数字的子类 </T>
          * @return 如果范围是 1，返回 1。如果范围大于 1，返回 1-范围内的数（Double 的整数），其他则返回 0-1。
          */
         @JvmStatic fun <T : Number?> getRandom(range: T): Double {
-            val millis = System.currentTimeMillis() % 1000
-
-            val r = try {
-                range.toString().toInt()
-            } catch (e: NumberFormatException) {
-                try {
-                    if (range != null) {
-                        round(range.toDouble()).toInt()
-                    } else {
-                        100
-                    }
-                } catch (e1: NumberFormatException) {
-                    return millis / 1000.0
-                }
+            val r = range.toString().toIntOrNull() ?: run {
+                round(range?.toDouble() ?: 1.0).toInt()
             }
 
             return if (r > 1) {
-                floor(millis / 1000.0 * r) + 1.0
+                Random.nextInt(1, r).toDouble()
             } else {
-                millis / 1000.0
+                Random.nextDouble()
             }
         }
 
@@ -976,7 +930,7 @@ import kotlin.math.*
             var s = str ?: ""
             s = recoveryApostrophe(s)
 
-            return s.trim { it <= ' ' } // 换人称
+            return s.trim() // 换人称
                 .replace("你们?".toRegex(), "雨沐").replace("(?i)\\syours?\\s".toRegex(), " yumu's ")
                 .replace("(?i)\\syou\\s".toRegex(), " yumu ").replace("我们".toRegex(), "你们")
                 .replace("我".toRegex(), "你").replace("(?i)\\s([Ii]|me)\\s".toRegex(), " you ")
@@ -994,12 +948,12 @@ import kotlin.math.*
 
         // 避免撇号影响结果，比如 It's time to go bed
         private fun transferApostrophe(s: String?): String {
-            return (s ?: "").trim { it <= ' ' }.replace("'".toRegex(), "\\" + "'").replace("\"".toRegex(), "\\" + "\"")
+            return (s ?: "").trim().replace("'".toRegex(), "\\" + "'").replace("\"".toRegex(), "\\" + "\"")
         }
 
         // 把撇号影响的结果转换回去，比如 It's time to go bed
         private fun recoveryApostrophe(s: String?): String {
-            return (s ?: "").trim { it <= ' ' }.replace(("\\" + "'").toRegex(), "'")
+            return (s ?: "").trim().replace(("\\" + "'").toRegex(), "'")
                 .replace(("\\" + "\"").toRegex(), "\"")
         }
     }
