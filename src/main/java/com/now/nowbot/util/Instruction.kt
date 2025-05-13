@@ -77,6 +77,7 @@ enum class Instruction(val pattern: Pattern) {
             appendCaptureGroup("days", REG_NUMBER, MORE)
             append('d')
         }
+        appendSpace()
         appendGroup(MAYBE) {
             appendCaptureGroup("hours", REG_NUMBER, MORE)
             append('h')
@@ -833,7 +834,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i.name != "BP") continue
+        if (i != Instruction.SERVICE_COUNT) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

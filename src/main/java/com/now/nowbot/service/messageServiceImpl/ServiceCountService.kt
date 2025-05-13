@@ -29,15 +29,15 @@ import java.util.*
             throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Super)
         }
 
-        val d = matcher.group("days")
-        val h = matcher.group("hours")
+        val d: String? = matcher.group("days")
+        val h: String? = matcher.group("hours")
 
         val hours = if (d.isNullOrEmpty() && h.isNullOrEmpty()) {
             24
         } else if (d.isNullOrEmpty().not()) {
-            24 * (d.toIntOrNull() ?: 0) + (h.toIntOrNull() ?: 0)
+            24 * (d?.toIntOrNull() ?: 0) + (h?.toIntOrNull() ?: 0)
         } else {
-            h.toIntOrNull() ?: 24
+            h?.toIntOrNull() ?: 24
         }
 
         data.value = hours
