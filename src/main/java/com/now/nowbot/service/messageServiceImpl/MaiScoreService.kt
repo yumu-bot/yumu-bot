@@ -59,7 +59,7 @@ import org.springframework.stereotype.Service
             MaiDifficulty.DEFAULT
         }
 
-        val version = getVersion(matcher.group(FLAG_VERSION))
+        val version = Version.getVersion(matcher.group(FLAG_VERSION))
 
         val nameOrTitleStr = (matcher.group(FLAG_NAME) ?: "").trim()
 
@@ -67,10 +67,8 @@ import org.springframework.stereotype.Service
 
         val qq = if (event.isAt) {
             event.target
-        } else if (qqStr.isNotBlank()) {
-            qqStr.toLong()
         } else {
-            event.sender.id
+            qqStr.toLongOrNull() ?: event.sender.id
         }
 
         if (nameOrTitleStr.isNotBlank()) {
@@ -133,9 +131,11 @@ import org.springframework.stereotype.Service
             // 标题搜歌模式
             val possibles = maimaiApiService.getMaimaiPossibleSongs(title)
 
-            val r = possibles?.map {
-                it to DataUtil.getStringSimilarity(title, it.title)
-            }?.filter { it.second > 0.4 }?.maxBy { it.second }?.first
+            val r = if (!possibles.isNullOrEmpty()) {
+                possibles.associateBy { it.title.getSimilarity(title) }.filter { it.key > 0.4 }.maxByOrNull { it.key }?.value
+            } else {
+                null
+            }
 
             if (r != null) {
                 r
@@ -148,9 +148,9 @@ import org.springframework.stereotype.Service
                     maimaiApiService.getMaimaiAlias(s.songID)?.alias
                 } else null
 
-                val sy = DataUtil.getStringSimilarity(title, s?.title) >= 0.4
+                val sy = s?.title.getSimilarity(title) >= 0.4
 
-                val iy = (i?.maxOfOrNull { DataUtil.getStringSimilarity(title, it) } ?: 0.0) >= 0.4
+                val iy = (i?.maxOfOrNull { it.getSimilarity(title) } ?: 0.0) >= 0.4
 
                 if (s != null && (sy || iy)) {
                     s
@@ -225,7 +225,7 @@ import org.springframework.stereotype.Service
     }
 
     companion object {
-        @JvmStatic fun getFullScoreOrNull(
+        private fun getFullScoreOrNull(
             qq: Long?,
             name: String?,
             maimaiApiService: MaimaiApiService,
@@ -253,7 +253,7 @@ import org.springframework.stereotype.Service
             val result = mutableMapOf<Double, MaiSong>()
 
             for (s in songs.values) {
-                val similarity = DataUtil.getStringSimilarity(text, s.title)
+                val similarity = s.title.getSimilarity(text)
 
                 if (similarity >= 0.4) {
                     maimaiApiService.insertMaimaiAlias(s)
@@ -335,19 +335,24 @@ import org.springframework.stereotype.Service
             }
         }
 
-
         enum class Version {
             DX, SD, ANY;
+
+            companion object {
+                fun getVersion(string: String?): Version {
+                    if (string.isNullOrBlank()) return ANY
+
+                    return when(string.lowercase()) {
+                        "sd", "标准", "standard" -> SD
+                        "dx", "豪华", "deluxe" -> DX
+                        else -> ANY
+                    }
+                }
+            }
         }
 
-        private fun getVersion(string: String?): Version {
-            if (string.isNullOrBlank()) return ANY
-
-            return when(string.lowercase()) {
-                "sd", "标准", "standard" -> SD
-                "dx", "豪华", "deluxe" -> DX
-                else -> ANY
-            }
+        private fun String?.getSimilarity(other: String?): Double {
+            return DataUtil.getStringSimilarity(other, this)
         }
     }
 }
