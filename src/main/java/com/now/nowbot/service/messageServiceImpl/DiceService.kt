@@ -909,12 +909,10 @@ import kotlin.random.Random
          * @return 如果范围是 1，返回 1。如果范围大于 1，返回 1-范围内的数（Double 的整数），其他则返回 0-1。
          */
         @JvmStatic fun <T : Number?> getRandom(range: T): Double {
-            val r = range.toString().toIntOrNull() ?: run {
-                round(range?.toDouble() ?: 1.0).toInt()
-            }
+            val r = range.toString().toIntOrNull() ?: (range?.toDouble() ?: 1.0).roundToInt()
 
             return if (r > 1) {
-                Random.nextInt(1, r).toDouble()
+                Random.nextInt(1, r + 1).toDouble()
             } else {
                 Random.nextDouble()
             }
