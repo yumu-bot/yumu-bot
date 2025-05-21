@@ -8,7 +8,6 @@ import java.time.OffsetDateTime
 
 @JsonIgnoreProperties(ignoreUnknown = true) @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 class ActivityEvent {
-    @JvmRecord
     data class Achievement(
         @JsonProperty("icon_url") val url: String,
         @JsonProperty("id") val achievementID: Int,
@@ -17,25 +16,44 @@ class ActivityEvent {
         val ordering: String,
         val slug: String,
         val description: String,
-        val mode: String,
+        val mode: String?,
         val instructions: String
     )
 
-    @JvmRecord
-    data class EventBeatMap(val title: String, val url: String)
+    data class EventBeatMap(
+        val title: String,
+        @JsonProperty("url")
+        val url: String?
+    ) {
+        @get:JsonProperty("id")
+        val id: Long
+            get() = url?.replace("/b/", "")?.toLongOrNull() ?: 0L
+    }
 
-    @JvmRecord
-    data class EventBeatMapSet(val title: String, val url: String)
+    data class EventBeatMapSet(
+        val title: String,
 
-    @JvmRecord
+        @JsonProperty("url")
+        val url: String?
+    ) {
+        @get:JsonProperty("id")
+        val id: Long
+            get() = url?.replace("/s/", "")?.toLongOrNull() ?: 0L
+    }
+
     data class EventUser(
         @JsonProperty("username")
         val name: String,
+
         @JsonProperty("url")
-        val url: String,
+        val url: String?,
         @JsonProperty("previous_username")
         val previousUsername: String?
-    )
+    ) {
+        @get:JsonProperty("id")
+        val id: Long
+            get() = url?.replace("/u/", "")?.toLongOrNull() ?: 0L
+    }
 
     enum class EventType(vararg f: String) {
         Achievement("achievement", "user"),
