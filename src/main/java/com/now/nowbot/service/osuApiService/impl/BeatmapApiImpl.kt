@@ -743,22 +743,44 @@ class BeatmapApiImpl(
             }
 
             // 深拷贝
-            val deepL = try {
-                JacksonUtil.parseObject(JacksonUtil.toJson(extended), BeatMap::class.java)
-            } catch (e: Exception) {
-                log.error("扩展谱面：深拷贝失败", e)
-                return extended
-            }
+            val deepL = BeatMap().apply {
+                beatMapSetID = extended.beatMapSetID
+                beatMapID = extended.beatMapID
+                modeStr = extended.modeStr
+                status = extended.status
+                totalLength = extended.totalLength
+                mapperID = extended.mapperID
+                difficultyName = extended.difficultyName
+                beatMapSet = extended.beatMapSet
+                md5 = extended.md5
+                failTimes = extended.failTimes
+                maxCombo = extended.maxCombo
+                tagIDs = extended.tagIDs
+                tags = extended.tags
 
-            deepL.starRating = lite.starRating
-            deepL.CS = lite.CS
-            deepL.AR = lite.AR
-            deepL.OD = lite.OD
-            deepL.HP = lite.HP
-            deepL.totalLength = lite.totalLength
-            deepL.hitLength = lite.hitLength
-            deepL.BPM = lite.BPM
-            deepL.convert = lite.convert
+                starRating = lite.starRating
+                CS = lite.CS
+                AR = lite.AR
+                OD = lite.OD
+                HP = lite.HP
+                totalLength = lite.totalLength
+                hitLength = lite.hitLength
+                BPM = lite.BPM
+                convert = lite.convert
+
+                circles = extended.circles
+                sliders = extended.sliders
+                spinners = extended.spinners
+                deletedAt = extended.deletedAt
+                scoreAble = extended.scoreAble
+                lastUpdated = extended.lastUpdated
+                owners = extended.owners
+                modeInt = extended.modeInt
+                passCount = extended.passCount
+                playCount = extended.playCount
+                ranked = extended.ranked
+                url = extended.url
+            }
 
             return deepL
         }

@@ -69,7 +69,7 @@ class BeatMap {
 
     //retry == fail, fail == exit
     @JsonProperty("failtimes")
-    val failTimes: JsonNode? = null
+    var failTimes: JsonNode? = null
 
     @JsonProperty("max_combo")
     var maxCombo: Int? = 0
