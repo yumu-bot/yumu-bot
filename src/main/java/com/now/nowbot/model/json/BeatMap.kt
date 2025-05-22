@@ -9,7 +9,7 @@ import jakarta.persistence.Column
 import java.time.OffsetDateTime
 import java.util.stream.StreamSupport
 
-open class BeatMap {
+class BeatMap {
     @JsonProperty("beatmapset_id")
     var beatMapSetID: Long = 0
 

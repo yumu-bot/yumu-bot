@@ -56,6 +56,7 @@ class TodayBPService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: TodayBPParam) {
+        param.asyncImage()
         val image = param.getImage()
         try {
             event.reply(image)
@@ -75,6 +76,7 @@ class TodayBPService(
     }
 
     override fun reply(event: MessageEvent, param: TodayBPParam): MessageChain? {
+        param.asyncImage()
         return QQMsgUtil.getImage(param.getImage())
     }
 
@@ -115,6 +117,11 @@ class TodayBPService(
         return TodayBPParam(user, mode.data!!, dataMap, isMyself.get(), isToday)
     }
 
+    fun TodayBPParam.asyncImage() {
+        scoreApiService.asyncDownloadBackground(scores.values, CoverType.COVER)
+        scoreApiService.asyncDownloadBackground(scores.values, CoverType.LIST)
+    }
+
     fun TodayBPParam.getImage(): ByteArray {
         val todayMap = scores
 
@@ -133,8 +140,6 @@ class TodayBPService(
             val ranks = todayMap.map { it.key }
             val scores = todayMap.map { it.value }
 
-            scoreApiService.asyncDownloadBackground(scores)
-
             calculateApiService.applyBeatMapChanges(scores)
             calculateApiService.applyStarToScores(scores)
 
@@ -148,9 +153,6 @@ class TodayBPService(
             imageService.getPanel(body, "A4")
         } else {
             val score: LazerScore = scores.toList().first().second
-
-            scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
-            scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
 
             val body = ScorePRService.getE5Param(user, score, "T", beatmapApiService, calculateApiService)
 

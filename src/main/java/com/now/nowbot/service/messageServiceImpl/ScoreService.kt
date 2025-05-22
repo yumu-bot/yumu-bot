@@ -236,7 +236,7 @@ import java.util.regex.Matcher
             scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
             scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
 
-            val e5Param = ScorePRService.getE5ParamAfterExtended(user, score, b, null, "S", beatmapApiService, calculateApiService)
+            val e5Param = ScorePRService.getE5Param(user, score, b, null, "S", beatmapApiService, calculateApiService)
 
             imageService.getPanel(e5Param.toMap(), "E5")
         }
@@ -277,7 +277,7 @@ import java.util.regex.Matcher
         scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
         scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
 
-        val e5Param = ScorePRService.getE5ParamAfterExtended(user, score, b, position, "S", beatmapApiService, calculateApiService)
+        val e5Param = ScorePRService.getE5Param(user, score, b, position, "S", beatmapApiService, calculateApiService)
 
         val image: ByteArray = imageService.getPanel(e5Param.toMap(), "E5")
 

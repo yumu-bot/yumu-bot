@@ -347,7 +347,7 @@ import kotlin.math.min
                     suffix = "-bps.jpg"
                 } else {
                     try {
-                        val e5Param = ScorePRService.getE5ParamAfterExtended(
+                        val e5Param = ScorePRService.getE5Param(
                             osuUser, scores.first(), "B", beatmapApiService, calculateApiService
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
@@ -380,7 +380,7 @@ import kotlin.math.min
                     suffix = "-passes.jpg"
                 } else {
                     try {
-                        val e5Param = ScorePRService.getE5ParamAfterExtended(
+                        val e5Param = ScorePRService.getE5Param(
                             osuUser, scores.first(), "P", beatmapApiService, calculateApiService
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
@@ -413,7 +413,7 @@ import kotlin.math.min
                     suffix = "-recents.jpg"
                 } else {
                     try {
-                        val e5Param = ScorePRService.getE5ParamAfterExtended(
+                        val e5Param = ScorePRService.getE5Param(
                             osuUser, scores.first(), "R", beatmapApiService, calculateApiService
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
@@ -645,7 +645,7 @@ import kotlin.math.min
         val image: ByteArray
 
         try {
-            val e5Param = ScorePRService.getE5ParamAfterExtended(
+            val e5Param = ScorePRService.getE5Param(
                 osuUser, score, "S", beatmapApiService, calculateApiService
             )
             image = imageService.getPanel(e5Param.toMap(), "E5")

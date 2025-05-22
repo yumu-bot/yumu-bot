@@ -345,7 +345,7 @@ class ScorePRService(
                 scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
                 scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
 
-                val e5 = getE5Param(user, score, (if (isPass) "P" else "R"), beatmapApiService, calculateApiService)
+                val e5 = getE5ParamForFilteredScore(user, score, (if (isPass) "P" else "R"), beatmapApiService, calculateApiService)
 
                 return QQMsgUtil.getImage(imageService.getPanel(e5.toMap(), "E5"))
             }
@@ -372,25 +372,26 @@ class ScorePRService(
         private val log: Logger = LoggerFactory.getLogger(ScorePRService::class.java)
 
         // 用于已筛选过的成绩。此时成绩内的谱面是已经计算过的，无需再次计算
-        fun getE5Param(user: OsuUser, filteredScore: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {
-            val originalBeatMap = beatmapApiService.getBeatMap(filteredScore.beatMapID)
+        fun getE5ParamForFilteredScore(user: OsuUser, score: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {
+            val originalBeatMap = beatmapApiService.getBeatMap(score.beatMapID)
 
-            beatmapApiService.applyBeatMapExtend(filteredScore, originalBeatMap)
+            beatmapApiService.applyBeatMapExtend(score, originalBeatMap)
 
             val original = DataUtil.getOriginal(originalBeatMap)
 
-            calculateApiService.applyPPToScore(filteredScore)
+            calculateApiService.applyPPToScore(score)
 
-            val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(filteredScore)
+            val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
 
             val density = beatmapApiService.getBeatmapObjectGrouping26(originalBeatMap)
-            val progress = beatmapApiService.getPlayPercentage(filteredScore)
+            val progress = beatmapApiService.getPlayPercentage(score)
 
-            return PanelE5Param(user, filteredScore, null, density, progress, original, attributes, panel, null)
+            return PanelE5Param(user, score, null, density, progress, original, attributes, panel, null)
 
         }
 
-        fun getE5ParamAfterExtended(
+        // 用于未筛选过的成绩。此时成绩的谱面还需要重新计算
+        fun getE5Param(
             user: OsuUser,
             score: LazerScore,
             panel: String,
@@ -401,7 +402,7 @@ class ScorePRService(
             return getScore4PanelE5AfterExtended(user, score, position = null, panel, beatmapApiService, calculateApiService)
         }
 
-        fun getE5ParamAfterExtended(
+        fun getE5Param(
             user: OsuUser,
             score: LazerScore,
             beatMap: BeatMap,

@@ -736,27 +736,31 @@ class BeatmapApiImpl(
         private val log: Logger = LoggerFactory.getLogger(BeatmapApiImpl::class.java)
 
         private fun extend(lite: BeatMap?, extended: BeatMap?): BeatMap? {
-            var liteMap = lite
-
             if (extended == null) {
-                return liteMap
-            } else if (liteMap?.CS == null) {
-                liteMap = extended
-                return liteMap
+                return lite
+            } else if (lite?.CS == null) {
+                return extended
             }
 
-            extended.starRating = liteMap.starRating
-            extended.CS = liteMap.CS
-            extended.AR = liteMap.AR
-            extended.OD = liteMap.OD
-            extended.HP = liteMap.HP
-            extended.totalLength = liteMap.totalLength
-            extended.hitLength = liteMap.hitLength
-            extended.BPM = liteMap.BPM
-            extended.convert = liteMap.convert
+            // 深拷贝
+            val deepL = try {
+                JacksonUtil.parseObject(JacksonUtil.toJson(extended), BeatMap::class.java)
+            } catch (e: Exception) {
+                log.error("扩展谱面：深拷贝失败", e)
+                return extended
+            }
 
-            liteMap = extended
-            return liteMap
+            deepL.starRating = lite.starRating
+            deepL.CS = lite.CS
+            deepL.AR = lite.AR
+            deepL.OD = lite.OD
+            deepL.HP = lite.HP
+            deepL.totalLength = lite.totalLength
+            deepL.hitLength = lite.hitLength
+            deepL.BPM = lite.BPM
+            deepL.convert = lite.convert
+
+            return deepL
         }
 
         /*

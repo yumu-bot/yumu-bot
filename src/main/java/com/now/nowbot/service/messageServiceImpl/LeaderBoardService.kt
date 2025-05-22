@@ -138,7 +138,7 @@ class LeaderBoardService(
                 OsuUser(score.user)
             }
 
-            val e5Param = ScorePRService.getE5ParamAfterExtended(user, score, beatMap, start, "L", beatmapApiService, calculateApiService)
+            val e5Param = ScorePRService.getE5Param(user, score, beatMap, start, "L", beatmapApiService, calculateApiService)
 
             imageService.getPanel(e5Param.toMap(), "E5")
         } else {

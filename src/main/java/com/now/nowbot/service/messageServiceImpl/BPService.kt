@@ -237,7 +237,7 @@ import kotlin.math.*
 
             imageService.getPanel(body, "A4")
         } else {
-            val e5Param = ScorePRService.getE5Param(user, scores.toList().first().second, "B", beatmapApiService, calculateApiService)
+            val e5Param = ScorePRService.getE5ParamForFilteredScore(user, scores.toList().first().second, "B", beatmapApiService, calculateApiService)
 
             imageService.getPanel(e5Param.toMap(), "E5")
         }
