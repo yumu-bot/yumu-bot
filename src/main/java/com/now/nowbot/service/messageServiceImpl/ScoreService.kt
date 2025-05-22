@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.LazerScore
@@ -15,7 +16,6 @@ import com.now.nowbot.service.messageServiceImpl.ScoreService.ScoreParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.serviceException.BindException
@@ -213,40 +213,35 @@ import java.util.regex.Matcher
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, b.previewName)
         }
 
-        val image: ByteArray
+        val image: ByteArray = if (scores.size > 1) {
+            scoreApiService.asyncDownloadBackground(scores.first(), CoverType.COVER)
+            scoreApiService.asyncDownloadBackground(scores.first(), CoverType.LIST)
 
-        try {
-            if (scores.size > 1) {
+            calculateApiService.applyStarToScores(scores)
+            calculateApiService.applyBeatMapChanges(scores)
+            beatmapApiService.applyBeatMapExtendForSameScore(scores, b)
 
-                calculateApiService.applyStarToScores(scores)
-                calculateApiService.applyBeatMapChanges(scores)
-                beatmapApiService.applyBeatMapExtendForSameScore(scores, b)
+            val body = mapOf(
+                "user" to user,
 
-                scoreApiService.asyncDownloadBackground(scores.first())
-                scoreApiService.asyncDownloadBackground(scores.first(), ScoreApiImpl.CoverType.LIST)
+                "rank" to (1..(scores.size)).toList(),
+                "score" to scores,
+                "panel" to "SS"
+            )
 
-                val body = mapOf(
-                    "user" to user,
+            imageService.getPanel(body, "A5")
+        } else {
+            val score = scores.first()
 
-                    "rank" to (1..(scores.size)).toList(),
-                    "score" to scores,
-                    "panel" to "SS"
-                )
+            scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
+            scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
 
-                image = imageService.getPanel(body, "A5")
-            } else {
-                val score = scores.first()
-                val e5Param =
-                    ScorePRService.getScore4PanelE5(user, score, b, null, "S", beatmapApiService, calculateApiService)
+            val e5Param = ScorePRService.getScore4PanelE5(user, score, b, null, "S", beatmapApiService, calculateApiService)
 
-                image = imageService.getPanel(e5Param.toMap(), "E5")
-            }
-
-            return QQMsgUtil.getImage(image)
-        } catch (e: Exception) {
-            log.error("成绩：渲染失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "成绩")
+            imageService.getPanel(e5Param.toMap(), "E5")
         }
+
+        return QQMsgUtil.getImage(image)
     }
 
     private fun getSingleScore(param: ScoreParam): MessageChain {
@@ -279,18 +274,12 @@ import java.util.regex.Matcher
             position = beatMapScore.position
         }
 
-        scoreApiService.asyncDownloadBackground(score)
-        scoreApiService.asyncDownloadBackground(score, ScoreApiImpl.CoverType.LIST)
+        scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
+        scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
 
-        val e5Param =
-            ScorePRService.getScore4PanelE5(user, score, b, position, "S", beatmapApiService, calculateApiService)
+        val e5Param = ScorePRService.getScore4PanelE5(user, score, b, position, "S", beatmapApiService, calculateApiService)
 
-        val image: ByteArray = try {
-            imageService.getPanel(e5Param.toMap(), "E5")
-        } catch (e: Exception) {
-            log.error("成绩：渲染失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "成绩")
-        }
+        val image: ByteArray = imageService.getPanel(e5Param.toMap(), "E5")
 
         return QQMsgUtil.getImage(image)
     }

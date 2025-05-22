@@ -76,13 +76,7 @@ import java.util.regex.Matcher
                 throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "木斗力")
             }
         } else {
-            val image: ByteArray
-            try {
-                image = imageService.getPanel(mr, "C")
-            } catch (e: Exception) {
-                log.error("木斗力：渲染失败", e)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "木斗力")
-            }
+            val image: ByteArray = imageService.getPanel(mr, "C")
 
             try {
                 event.reply(image)

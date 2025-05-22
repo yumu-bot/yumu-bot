@@ -115,13 +115,9 @@ import kotlin.math.min
             it.chart.fit > 0.0
         }
 
-        val image = try {
-            val body = PanelMDParam(best.getUser(), deluxe, standard, rating, count, size)
+        val body = PanelMDParam(best.getUser(), deluxe, standard, rating, count, size)
 
-            imageService.getPanel(body.toMap(), "MD")
-        } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "舞萌拟合")
-        }
+        val image = imageService.getPanel(body.toMap(), "MD")
 
         try {
             event.reply(image)

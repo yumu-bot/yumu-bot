@@ -1,95 +1,44 @@
-package com.now.nowbot.model.json;
+package com.now.nowbot.model.json
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Covers {
+@JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
+class Covers {
+    @JvmField
     @JsonProperty("cover")
-    String cover;
+    var cover: String? = ""
+
+    @JvmField
     @JsonProperty("cover@2x")
-    String cover2x;
+    var cover2x: String? = ""
+
+    @JvmField
     @JsonProperty("card")
-    String card;
+    var card: String? = ""
+
+    @JvmField
     @JsonProperty("card@2x")
-    String card2x;
+    var card2x: String? = ""
+
+    @JvmField
     @JsonProperty("list")
-    String list;
+    var list: String? = ""
+
+    @JvmField
     @JsonProperty("list@2x")
-    String list2x;
+    var list2x: String? = ""
+
+    @JvmField
     @JsonProperty("slimcover")
-    String slimcover;
+    var slimcover: String? = ""
+
+    @JvmField
     @JsonProperty("slimcover@2x")
-    String slimcover2x;
-
-    public String getCover() {
-        return cover;
-    }
-
-    public void setCover(String cover) {
-        this.cover = cover;
-    }
-
-    public String getCover2x() {
-        return cover2x;
-    }
-
-    public void setCover2x(String cover2x) {
-        this.cover2x = cover2x;
-    }
-
-    public String getCard() {
-        return card;
-    }
-
-    public void setCard(String card) {
-        this.card = card;
-    }
-
-    public String getCard2x() {
-        return card2x;
-    }
-
-    public void setCard2x(String card2x) {
-        this.card2x = card2x;
-    }
-
-    public String getList() {
-        return list;
-    }
-
-    public void setList(String list) {
-        this.list = list;
-    }
-
-    public String getList2x() {
-        return list2x;
-    }
-
-    public void setList2x(String list2x) {
-        this.list2x = list2x;
-    }
-
-    public String getSlimcover() {
-        return slimcover;
-    }
-
-    public void setSlimcover(String slimcover) {
-        this.slimcover = slimcover;
-    }
-
-    public String getSlimcover2x() {
-        return slimcover2x;
-    }
-
-    public void setSlimcover2x(String slimcover2x) {
-        this.slimcover2x = slimcover2x;
-    }
-
-    @Override
-    public String toString() {
-        return STR."Covers{cover='\{cover}\{'\''}, cover2x='\{cover2x}\{'\''}, card='\{card}\{'\''}, card2x='\{card2x}\{'\''}, list='\{list}\{'\''}, list2x='\{list2x}\{'\''}, slimcover='\{slimcover}\{'\''}, slimcover2x='\{slimcover2x}\{'\''}\{'}'}";
+    var slimcover2x: String? = ""
+    
+    override fun toString(): String {
+        return "Covers(cover=$cover, cover2x=$cover2x, card=$card, card2x=$card2x, list=$list, list2x=$list2x, slimcover=$slimcover, slimcover2x=$slimcover2x)"
     }
 }

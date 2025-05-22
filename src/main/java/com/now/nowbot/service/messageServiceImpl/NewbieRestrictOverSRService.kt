@@ -7,13 +7,12 @@ import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.NewbieDao
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.ScoreFilter
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.messageServiceImpl.BPService.Companion.filterScores
-import com.now.nowbot.service.messageServiceImpl.BPService.Filter
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
@@ -146,7 +145,7 @@ class NewbieRestrictOverSRService(
                 val range = getUserAndRangeWithBackoff(event, b, mode, isMyself, messageText, "bp")
                 range.setZeroToRange100()
 
-                val conditions = DataUtil.paramMatcher(any, Filter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
+                val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
                 val rangeInConditions = conditions.lastOrNull()
@@ -191,7 +190,7 @@ class NewbieRestrictOverSRService(
                     bss.mapIndexed { index: Int, score: LazerScore -> (index + 1) to score }.toMap()
                 }
 
-                val filteredScores = filterScores(bs, conditions)
+                val filteredScores = ScoreFilter.filterScores(bs, conditions)
 
                 if (filteredScores.isEmpty()) return false
 

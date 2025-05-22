@@ -58,18 +58,13 @@ class GetPoolService(
             "pool" to mapPool, "mode" to param.mode.shortName
         )
 
-        val image = try {
-            imageService.getPanel(body, "H")
-        } catch (e: Exception) {
-            log.error("生成图池：渲染失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "生成图池")
-        }
+        val image = imageService.getPanel(body, "H")
 
         try {
             event.reply(image)
         } catch (e: Exception) {
             log.error("生成图池：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "生成图池")
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "生成图池")
         }
     }
 

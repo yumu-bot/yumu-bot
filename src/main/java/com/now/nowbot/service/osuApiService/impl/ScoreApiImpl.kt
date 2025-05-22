@@ -5,10 +5,11 @@ import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.Replay
+import com.now.nowbot.model.enums.CoverType
+import com.now.nowbot.model.enums.CoverType.*
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.BeatmapUserScore
 import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl.CoverType.*
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
@@ -16,7 +17,6 @@ import okio.IOException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
-import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
@@ -459,9 +459,5 @@ class ScoreApiImpl(
         } else {
             System.getProperty("java.io.tmpdir") + "/n-bot/buffer"
         }
-    }
-
-    enum class CoverType {
-        RAW, CARD, CARD_2X, COVER, COVER_2X, LIST, LIST_2X, SLIM_COVER, SLIM_COVER_2X
     }
 }

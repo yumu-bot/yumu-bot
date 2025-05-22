@@ -17,7 +17,6 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.PPMinusService.PPMinusParam
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.Instruction
@@ -88,19 +87,10 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
     }
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: PPMinusParam) {
-        val image: ByteArray
-
-        try {
-            image = if (!param.isVs && event.subject.id == killerGroup) {
-                param.getPPMSpecialImage()
-            } else {
-                param.getPPMImage()
-            }
-        } catch (e: TipsException) {
-            throw e
-        } catch (e: Exception) {
-            log.error("PP-：渲染失败：", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "PPM")
+        val image = if (!param.isVs && event.subject.id == killerGroup) {
+            param.getPPMSpecialImage()
+        } else {
+            param.getPPMImage()
         }
 
         try {
@@ -158,8 +148,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
                 val my = getPPMinus2(me, scoreApiService, ppMinusDao)
                 var others: PPMinus? = null
 
-                if (isVs) {
-                    others = getPPMinus2(other!!, scoreApiService, ppMinusDao)
+                if (isVs && other != null) {
+                    others = getPPMinus2(other, scoreApiService, ppMinusDao)
                 }
                 return imageService.getPanel(getPPM2Body(me, other, my, others, mode), "B1")
             }
@@ -168,8 +158,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
                 val my = getPPMinus4(me, scoreApiService, ppMinusDao)
                 var others: PPMinus4? = null
 
-                if (isVs) {
-                    others = getPPMinus4(other!!, scoreApiService, ppMinusDao)
+                if (isVs && other != null) {
+                    others = getPPMinus4(other, scoreApiService, ppMinusDao)
                 }
                 return imageService.getPanel(getPPM4Body(me, other, my, others, mode), "B1")
             }

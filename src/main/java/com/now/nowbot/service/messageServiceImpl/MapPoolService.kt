@@ -12,7 +12,6 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.MapPoolService.PoolParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.CmdUtil.getMode
@@ -103,19 +102,9 @@ import java.util.*
     private fun MessageEvent.reply(data: MapPoolDto, mode: OsuMode) {
         val body = mapOf("pool" to data, "mode" to mode.shortName)
 
-        val image = try {
-            imageService.getPanel(body, "H")
-        } catch (e: Exception) {
-            log.error("获取图池：渲染失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "获取图池")
-        }
+        val image = imageService.getPanel(body, "H")
 
-        try {
-            this.reply(image)
-        } catch (e: Exception) {
-            log.error("获取图池：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "获取图池")
-        }
+        this.reply(image)
     }
 
     fun searchByName(name: String): List<Pool> {

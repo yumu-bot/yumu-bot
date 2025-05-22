@@ -112,12 +112,7 @@ import kotlin.math.floor
                 osuUserApiService,
             )
 
-            return try {
-                imageService.getPanel(data, "N")
-            } catch (e: Exception) {
-                log.error("提名信息：渲染失败", e)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "提名信息")
-            }
+            return imageService.getPanel(data, "N")
         }
 
         @JvmStatic @Throws(GeneralTipsException::class) fun parseData(

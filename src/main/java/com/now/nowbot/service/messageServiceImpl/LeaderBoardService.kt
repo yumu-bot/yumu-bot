@@ -145,21 +145,16 @@ class LeaderBoardService(
             // 多成绩模式
             calculateApiService.applyPPToScores(ss)
 
-            try {
-                ss.forEach { it.beatMap = beatMap }
+            ss.forEach { it.beatMap = beatMap }
 
-                val body = mapOf(
-                    "beatmap" to beatMap,
-                    "scores" to ss,
-                    "start" to start,
-                    "is_legacy" to param.isLegacy
-                )
+            val body = mapOf(
+                "beatmap" to beatMap,
+                "scores" to ss,
+                "start" to start,
+                "is_legacy" to param.isLegacy
+            )
 
-                imageService.getPanel(body, "A3")
-            } catch (e: Exception) {
-                log.error("谱面排行：渲染失败", e)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "谱面排行")
-            }
+            imageService.getPanel(body, "A3")
         }
 
         try {

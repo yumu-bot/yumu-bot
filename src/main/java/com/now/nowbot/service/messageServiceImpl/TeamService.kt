@@ -69,11 +69,7 @@ class TeamService(
             }
         }
 
-        val image = try {
-            imageService.getPanel(team, "A9")
-        } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "战队信息")
-        }
+        val image = imageService.getPanel(team, "A9")
 
         try {
             event.reply(image)
@@ -115,11 +111,7 @@ class TeamService(
             }
         }
 
-        val image = try {
-            imageService.getPanel(team, "A9")
-        } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "战队信息")
-        }
+        val image = imageService.getPanel(team, "A9")
 
         return QQMsgUtil.getImage(image)
     }

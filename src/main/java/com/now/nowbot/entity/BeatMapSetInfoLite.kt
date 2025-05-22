@@ -1,216 +1,105 @@
-package com.now.nowbot.entity;
+package com.now.nowbot.entity
 
-import com.now.nowbot.model.json.BeatMapSet;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.now.nowbot.model.json.BeatMapSet
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.Id
+import jakarta.persistence.Table
 
-@Entity
-@Table(name = "beat_map_set_info")
-public class BeatMapSetInfoLite {
-    @Id
-    @Column(name = "id", nullable = false)
-    private Integer sid;
+@Entity @Table(name = "beat_map_set_info")
+class BeatMapSetInfoLite {
+    @Id @Column(name = "id", nullable = false)
+    private var sid: Int? = null
 
     //@Lob
     @Column(columnDefinition = "TEXT")
-    private String artistUnicode;
-    //@Lob
-    @Column(columnDefinition = "TEXT")
-    private String artist;
+    private var artistUnicode: String? = null
 
     //@Lob
     @Column(columnDefinition = "TEXT")
-    private String titleUnicode;
-    //@Lob
-    @Column(columnDefinition = "TEXT")
-    private String title;
+    private var artist: String? = null
 
     //@Lob
-    @Column(columnDefinition = "TEXT")
-    private String mapper;
-
-    Integer mapperId;
+    @Column(columnDefinition = "TEXT") var titleUnicode: String? = null
 
     //@Lob
     @Column(columnDefinition = "TEXT")
-    private String status;
-
-    Boolean video;
-
-    Boolean nsfw;
+    private var title: String? = null
 
     //@Lob
     @Column(columnDefinition = "TEXT")
-    private String cover;
+    private var mapper: String? = null
+
+    var mapperId: Int? = null
 
     //@Lob
     @Column(columnDefinition = "TEXT")
-    String card;
+    private var status: String? = null
+
+    var video: Boolean? = null
+
+    var nsfw: Boolean? = null
 
     //@Lob
     @Column(columnDefinition = "TEXT")
-    String list;
+    private var cover: String? = null
 
     //@Lob
     @Column(columnDefinition = "TEXT")
-    String slimcover;
+    var card: String? = null
 
-    public Integer getSid() {
-        return sid;
-    }
+    //@Lob
+    @Column(columnDefinition = "TEXT")
+    var list: String? = null
 
-    public void setSid(Integer id) {
-        this.sid = id;
-    }
+    //@Lob
+    @Column(columnDefinition = "TEXT")
+    var slimcover: String? = null
 
-    public String getArtistUnicode() {
-        return artistUnicode;
-    }
+    companion object {
+        fun from(s: BeatMapSet): BeatMapSetInfoLite {
+            val t = BeatMapSetInfoLite()
+            t.sid = Math.toIntExact(s.beatMapSetID)
 
-    public void setArtistUnicode(String artistUnicode) {
-        this.artistUnicode = artistUnicode;
-    }
+            t.artistUnicode = s.artistUnicode
+            t.artist = s.artist
+            t.title = s.title
 
-    public String getTitleUnicode() {
-        return titleUnicode;
-    }
+            t.mapper = s.creator
+            t.mapperId = Math.toIntExact(s.creatorID)
 
-    public void setTitleUnicode(String titleUnicode) {
-        this.titleUnicode = titleUnicode;
-    }
+            t.nsfw = s.nsfw
+            t.video = s.video
+            t.status = s.status
 
-    public String getMapper() {
-        return mapper;
-    }
+            var url = s.covers.cover2x
+            if (!url.isNullOrBlank()) {
+                t.cover = url
+            } else {
+                t.cover = s.covers.cover
+            }
 
-    public void setMapper(String mapper) {
-        this.mapper = mapper;
-    }
+            url = s.covers.card2x
+            if (!url.isNullOrBlank()) {
+                t.card = url
+            } else {
+                t.card = s.covers.card
+            }
 
-    public Integer getMapperId() {
-        return mapperId;
-    }
+            url = s.covers.list2x
+            if (!url.isNullOrBlank()) {
+                t.list = url
+            } else {
+                t.list = s.covers.list
+            }
 
-    public void setMapperId(Integer mapperId) {
-        this.mapperId = mapperId;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Boolean getVideo() {
-        return video;
-    }
-
-    public void setVideo(Boolean video) {
-        this.video = video;
-    }
-
-    public Boolean getNsfw() {
-        return nsfw;
-    }
-
-    public void setNsfw(Boolean nsfw) {
-        this.nsfw = nsfw;
-    }
-
-    public String getCover() {
-        return cover;
-    }
-
-    public void setCover(String cover) {
-        this.cover = cover;
-    }
-
-    public String getCard() {
-        return card;
-    }
-
-    public void setCard(String card) {
-        this.card = card;
-    }
-
-    public String getList() {
-        return list;
-    }
-
-    public void setList(String list) {
-        this.list = list;
-    }
-
-    public String getSlimcover() {
-        return slimcover;
-    }
-
-    public void setSlimcover(String slimcover) {
-        this.slimcover = slimcover;
-    }
-
-    public String getArtist() {
-        return artist;
-    }
-
-    public void setArtist(String artist) {
-        this.artist = artist;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public static BeatMapSetInfoLite from(BeatMapSet s) {
-        var t = new BeatMapSetInfoLite();
-        t.sid = Math.toIntExact(s.getBeatMapSetID());
-
-        t.artistUnicode = s.getArtistUnicode();
-        t.artist = s.getArtist();
-        t.title = s.getTitle();
-
-        t.mapper = s.getCreator();
-        t.mapperId = Math.toIntExact(s.getCreatorID());
-
-        t.nsfw = s.getNsfw();
-        t.video = s.getVideo();
-        t.status = s.getStatus();
-
-        String url = s.getCovers().getCover2x();
-        if (url != null && !url.isEmpty()) {
-            t.cover = url;
-        } else {
-            t.cover = s.getCovers().getCover();
+            url = s.covers.slimcover2x
+            if (!url.isNullOrBlank()) {
+                t.slimcover = url
+            } else {
+                t.slimcover = s.covers.slimcover
+            }
+            return t
         }
-
-        url = s.getCovers().getCard2x();
-        if (url != null && !url.isEmpty()) {
-            t.card = url;
-        } else {
-            t.card = s.getCovers().getCard();
-        }
-
-        url = s.getCovers().getList2x();
-        if (url != null && !url.isEmpty()) {
-            t.list = url;
-        } else {
-            t.list = s.getCovers().getList();
-        }
-
-        url = s.getCovers().getSlimcover2x();
-        if (url != null && !url.isEmpty()) {
-            t.slimcover = url;
-        } else {
-            t.slimcover = s.getCovers().getSlimcover();
-        }
-        return t;
     }
 }

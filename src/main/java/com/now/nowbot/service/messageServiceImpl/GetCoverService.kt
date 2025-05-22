@@ -2,6 +2,8 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.config.NewbieConfig
+import com.now.nowbot.model.enums.CoverType
+import com.now.nowbot.model.enums.CoverType.*
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.ImageMessage
@@ -12,7 +14,6 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
-import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl.CoverType
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
@@ -37,16 +38,16 @@ import java.nio.file.Files
 
         if (matcher.find()) {
             val type = when (matcher.group("type")) {
-                "raw", "r", "full", "f", "background", "b" -> CoverType.RAW
-                "list", "l", "l1" -> CoverType.LIST
-                "list2", "list2x", "list@2x", "l2" -> CoverType.LIST_2X
-                "c", "card", "c1" -> CoverType.CARD
-                "card2", "card2x", "card@2x", "c2" -> CoverType.CARD_2X
-                "slim", "slimcover", "s", "s1" -> CoverType.SLIM_COVER
-                "slim2", "slim2x", "slim@2x", "slimcover2", "slimcover2x", "slimcover@2x", "s2" -> CoverType.SLIM_COVER_2X
-                "2", "cover2", "cover2x", "cover@2x", "o2" -> CoverType.COVER_2X
-                null -> CoverType.COVER
-                else -> CoverType.COVER
+                "raw", "r", "full", "f", "background", "b" -> RAW
+                "list", "l", "l1" -> LIST
+                "list2", "list2x", "list@2x", "l2" -> LIST_2X
+                "c", "card", "c1" -> CARD
+                "card2", "card2x", "card@2x", "c2" -> CARD_2X
+                "slim", "slimcover", "s", "s1" -> SLIM_COVER
+                "slim2", "slim2x", "slim@2x", "slimcover2", "slimcover2x", "slimcover@2x", "s2" -> SLIM_COVER_2X
+                "2", "cover2", "cover2x", "cover@2x", "o2" -> COVER_2X
+                null -> COVER
+                else -> COVER
             }
 
             val dataStr: String? = matcher.group("data")
@@ -61,7 +62,7 @@ import java.nio.file.Files
             if (dataStr.isNullOrBlank()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
             val bids = parseDataString(dataStr)
 
-            data.value = CoverParam(CoverType.RAW, bids)
+            data.value = CoverParam(RAW, bids)
             return true
         } else {
             return false
@@ -71,7 +72,7 @@ import java.nio.file.Files
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: CoverParam) {
         val chain: MessageChain
 
-        if (param.type == CoverType.RAW) {
+        if (param.type == RAW) {
             // messageChains = listOf(MessageChainBuilder().addText("抱歉，应急运行时是没有 getBG 服务的呢...").build())
 
             chain = getRawBackground(param.bids, beatmapMirrorApiService)
@@ -183,17 +184,17 @@ import java.nio.file.Files
             beatmaps.forEach {
                 val covers = it.beatMapSet!!.covers
                 val url = when (type) {
-                    CoverType.LIST -> covers.list
-                    CoverType.LIST_2X -> covers.list2x
-                    CoverType.CARD -> covers.card
-                    CoverType.CARD_2X -> covers.card2x
-                    CoverType.SLIM_COVER -> covers.slimcover
-                    CoverType.SLIM_COVER_2X -> covers.slimcover2x
-                    CoverType.COVER_2X -> covers.cover2x
+                    LIST -> covers.list
+                    LIST_2X -> covers.list2x
+                    CARD -> covers.card
+                    CARD_2X -> covers.card2x
+                    SLIM_COVER -> covers.slimcover
+                    SLIM_COVER_2X -> covers.slimcover2x
+                    COVER_2X -> covers.cover2x
                     else -> covers.cover
                 }
 
-                builder.addImage(URI.create(url).toURL())
+                builder.addImage(URI.create(url!!).toURL())
             }
 
             return builder.build()
@@ -207,7 +208,7 @@ import java.nio.file.Files
     override fun reply(event: MessageEvent, param: CoverParam): MessageChain {
         val chain: MessageChain
 
-        if (param.type == CoverType.RAW) {
+        if (param.type == RAW) {
             chain = getRawBackground(param.bids, beatmapMirrorApiService)
         } else {
             val beatmaps = getBeatMaps(param.bids, beatmapApiService)

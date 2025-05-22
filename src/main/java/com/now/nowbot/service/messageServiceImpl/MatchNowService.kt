@@ -46,13 +46,7 @@ import org.springframework.stereotype.Service
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: MuRatingPanelParam) {
         val data = calculate(param, beatmapApiService, calculateApiService)
 
-        val image: ByteArray
-        try {
-            image = imageService.getPanel(data, "F")
-        } catch (e: Exception) {
-            log.error("比赛结果：渲染失败")
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "比赛结果")
-        }
+        val image: ByteArray = imageService.getPanel(data, "F")
 
         try {
             event.reply(image)

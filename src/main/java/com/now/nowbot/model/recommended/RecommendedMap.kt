@@ -1,136 +1,72 @@
-package com.now.nowbot.model.recommended;
+package com.now.nowbot.model.recommended
 
-import com.now.nowbot.model.json.BeatMap;
+import com.now.nowbot.model.json.BeatMap
 
-public class RecommendedMap {
-    Long bid;
-    String bgUrl;
-    Double Star;
-    Float OD;
-    Float AR;
-    Float HP;
-    Float CS;
-    Float bpm;
+class RecommendedMap private constructor() {
+    var bid: Long? = null
+    var bgUrl: String? = null
+    var star: Double? = null
+    var oD: Float? = null
+    var aR: Float? = null
+    var hP: Float? = null
+    var cS: Float? = null
+    var bpm: Float? = null
 
-    Integer Objects;
-    Integer length;
+    var objects: Int? = null
+    var length: Int? = null
 
-    String title;
-    String version;
+    var title: String? = null
+    var version: String? = null
 
-    String introduction;
+    var introduction: String? = null
 
-    Float minPlayerPP;
-    Float maxPlayerPP;
-    private RecommendedMap(){}
-
-    public static RecommendedMap getMap(BeatMap b){
-        var data = new RecommendedMap();
-        data.bid = b.getBeatMapID();
-        if (b.getBeatMapSet() != null) {
-            data.bgUrl = b.getBeatMapSet().getCovers().getCover2x();
-        }
-        data.Star = b.getStarRating();
-        data.OD = b.getOD();
-        data.AR = b.getAR();
-        data.HP = b.getHP();
-        data.CS = b.getCS();
-        data.bpm = b.getBPM();
-        data.Objects = b.getSpinners() + b.getCircles() + b.getSliders();
-        data.length = b.getTotalLength();
-        data.title = b.getBeatMapSet().getTitleUnicode();
-        data.version = b.getDifficultyName();
-        data.setPlayerPP();
-        return data;
-    }
-
-    void setPlayerPP(){
-        if (Star < 1.5) {
-            minPlayerPP = 0f;
-            maxPlayerPP = 500f;
-        } else if (Star < 3) {
-            minPlayerPP = 300f;
-            maxPlayerPP = 800f;
-        } else if (Star < 4.5) {
-            minPlayerPP = 300f;
-            maxPlayerPP = 1000f;
-        } else if (Star < 5.3) {
-            minPlayerPP = 1000f;
-            maxPlayerPP = 2500f;
-        } else if (Star < 5.9) {
-            minPlayerPP = 2000f;
-            maxPlayerPP = 3000f;
-        } else if (Star < 6.4) {
-            minPlayerPP = 2500f;
-            maxPlayerPP = 5000f;
-        } else  {
-            minPlayerPP = 3500f;
-            maxPlayerPP = -1f;
+    var minPlayerPP: Float? = null
+    var maxPlayerPP: Float? = null
+    fun setPlayerPP() {
+        if (star!! < 1.5) {
+            minPlayerPP = 0f
+            maxPlayerPP = 500f
+        } else if (star!! < 3) {
+            minPlayerPP = 300f
+            maxPlayerPP = 800f
+        } else if (star!! < 4.5) {
+            minPlayerPP = 300f
+            maxPlayerPP = 1000f
+        } else if (star!! < 5.3) {
+            minPlayerPP = 1000f
+            maxPlayerPP = 2500f
+        } else if (star!! < 5.9) {
+            minPlayerPP = 2000f
+            maxPlayerPP = 3000f
+        } else if (star!! < 6.4) {
+            minPlayerPP = 2500f
+            maxPlayerPP = 5000f
+        } else {
+            minPlayerPP = 3500f
+            maxPlayerPP = -1f
         }
     }
 
-    public void setIntroduction(String introduction) {
-        this.introduction = introduction;
-    }
-
-    public Long getBid() {
-        return bid;
-    }
-
-    public String getBgUrl() {
-        return bgUrl;
-    }
-
-    public Double getStar() {
-        return Star;
-    }
-
-    public Float getOD() {
-        return OD;
-    }
-
-    public Float getAR() {
-        return AR;
-    }
-
-    public Float getHP() {
-        return HP;
-    }
-
-    public Float getCS() {
-        return CS;
-    }
-
-    public Float getBpm() {
-        return bpm;
-    }
-
-    public Integer getObjects() {
-        return Objects;
-    }
-
-    public Integer getLength() {
-        return length;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public String getIntroduction() {
-        return introduction;
-    }
-
-    public Float getMinPlayerPP() {
-        return minPlayerPP;
-    }
-
-    public Float getMaxPlayerPP() {
-        return maxPlayerPP;
+    companion object {
+        fun getMap(b: BeatMap): RecommendedMap {
+            val data = RecommendedMap()
+            data.bid = b.beatMapID
+            if (b.beatMapSet != null) {
+                data.bgUrl = b.beatMapSet!!.covers.cover2x
+            }
+            data.star = b.starRating
+            data.oD = b.OD
+            data.aR = b.AR
+            data.hP = b.HP
+            data.cS = b.CS
+            data.bpm = b.BPM
+            data.objects = b.spinners!! + b.circles!! + b.sliders!!
+            data.length = b.totalLength
+            data.title = b.beatMapSet!!.titleUnicode
+            data.version = b.difficultyName
+            data.setPlayerPP()
+            return data
+        }
     }
 }
 

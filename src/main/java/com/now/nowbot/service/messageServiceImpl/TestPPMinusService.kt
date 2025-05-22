@@ -47,12 +47,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
             getPPMinus4(param.other!!)
         } else null
 
-        val image = try {
-            getPanelB1(param.me, param.other, my, others, param.mode)
-        } catch (e: Exception) {
-            log.error("PP-：渲染失败：", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "PPM")
-        }
+        val image = getPanelB1(param.me, param.other, my, others, param.mode)
 
         try {
             event.reply(image)

@@ -179,16 +179,6 @@ class BPFixService(
 
         val fixData = fix(user.pp, bpMap) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP)
 
-        return try {
-            imageService.getPanelA7(user, fixData)
-        } catch (e: Exception) {
-            log.error("理论最好成绩：渲染失败", e)
-
-            if (bpMap.size >= 80) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderTooMany, "理论最好成绩")
-            } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "理论最好成绩")
-            }
-        }
+        return imageService.getPanelA7(user, fixData)
     }
 }

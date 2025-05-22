@@ -84,10 +84,6 @@ import java.util.concurrent.atomic.AtomicBoolean
     }
 
     private fun getImage(user: OsuUser): ByteArray {
-        return try {
-            imageService.getPanel(mapOf("user" to user), "A10")
-        } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "奖牌信息")
-        }
+        return imageService.getPanel(mapOf("user" to user), "A10")
     }
 }

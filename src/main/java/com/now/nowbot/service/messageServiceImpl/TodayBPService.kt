@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
@@ -10,6 +11,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.TodayBPService.TodayBPParam
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
@@ -29,6 +31,7 @@ import java.util.regex.Matcher
 class TodayBPService(
     private val imageService: ImageService,
     private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
 ) : MessageService<TodayBPParam>, TencentMessageService<TodayBPParam> {
 
@@ -125,15 +128,16 @@ class TodayBPService(
             }
         }
 
-        val ranks = todayMap.map { it.key }
-        val scores = todayMap.map { it.value }
+        return if (todayMap.size > 1) {
 
-        scoreApiService.asyncDownloadBackground(scores)
+            val ranks = todayMap.map { it.key }
+            val scores = todayMap.map { it.value }
 
-        calculateApiService.applyBeatMapChanges(scores)
-        calculateApiService.applyStarToScores(scores)
+            scoreApiService.asyncDownloadBackground(scores)
 
-        return try {
+            calculateApiService.applyBeatMapChanges(scores)
+            calculateApiService.applyStarToScores(scores)
+
             val body = mapOf(
                 "user" to user,
                 "scores" to scores,
@@ -142,9 +146,15 @@ class TodayBPService(
             )
 
             imageService.getPanel(body, "A4")
-        } catch (e: Exception) {
-            log.error("今日最好成绩：图片渲染失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "今日最好成绩")
+        } else {
+            val score: LazerScore = scores.toList().first().second
+
+            scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
+            scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
+
+            val body = ScorePRService.getScore4PanelE5(user, score, "T", beatmapApiService, calculateApiService)
+
+            imageService.getPanel(body, "E5")
         }
     }
 

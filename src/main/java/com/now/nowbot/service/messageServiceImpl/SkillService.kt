@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
+import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
@@ -16,7 +17,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.*
 import org.springframework.stereotype.Service
@@ -159,7 +159,7 @@ import kotlin.math.sqrt
                 imageService.getPanel(me + mapOf("panel" to "K"), "K")
             }
         } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_RenderTooMany, "技巧分析")
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_OverTime, "技巧分析")
         }
 
         return image
@@ -219,7 +219,7 @@ import kotlin.math.sqrt
         val scores: List<SkillScore> = if (isShowScores) {
             val s10 = bests.take(10)
 
-            scoreApiService.asyncDownloadBackground(s10, ScoreApiImpl.CoverType.LIST)
+            scoreApiService.asyncDownloadBackground(s10, CoverType.LIST)
 
             calculateApiService.applyBeatMapChanges(s10)
             calculateApiService.applyStarToScores(s10)

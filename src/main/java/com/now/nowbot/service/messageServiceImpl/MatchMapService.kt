@@ -87,17 +87,7 @@ class MatchMapService(
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: MatchMapParam) {
         val e7Param = getPanelE7Param(param, beatmapApiService, calculateApiService)
-        var image = byteArrayOf()
-
-        try {
-            image = imageService.getPanel(e7Param, "E7")
-        } catch (e: Exception) {
-            log.error("比赛谱面信息：渲染失败: ", e)
-            event.reply(
-                GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "比赛谱面信息")
-                    .message
-            )
-        }
+        val image = imageService.getPanel(e7Param, "E7")
 
         try {
             event.reply(image)

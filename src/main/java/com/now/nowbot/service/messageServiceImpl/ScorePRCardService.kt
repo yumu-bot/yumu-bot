@@ -139,14 +139,7 @@ class ScorePRCardService(
             throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_BeatMap)
         }
 
-        val image: ByteArray
-
-        try {
-            image = imageService.getPanelGamma(score)
-        } catch (e: Exception) {
-            log.error("迷你成绩面板：渲染失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "迷你")
-        }
+        val image = imageService.getPanelGamma(score)
 
         return QQMsgUtil.getImage(image)
     }

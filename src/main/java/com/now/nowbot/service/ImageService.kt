@@ -5,23 +5,32 @@ import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
+import com.now.nowbot.throwable.GeneralTipsException
+import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
-import org.springframework.web.client.RestClientException
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
+import org.springframework.web.reactive.function.client.WebClientResponseException.InternalServerError
+import java.net.ConnectException
 
 @Service("NOWBOT_IMAGE") class ImageService(private val webClient: WebClient) {
-    // 2024+ 统一获取方法
+    /**
+     * @param name 面板的内部编号，并非功能编号
+     */
     fun getPanel(body: Map<String, Any>, name: String): ByteArray {
         val headers = defaultHeader
         val httpEntity = HttpEntity(body, headers)
         return doPost("panel_$name", httpEntity)
     }
 
+    /**
+     * @param name 面板的内部编号，并非功能编号
+     */
     fun getPanel(any: Any?, name: String): ByteArray {
         val headers = defaultHeader
         val httpEntity = HttpEntity(any, headers)
@@ -161,7 +170,7 @@ import org.springframework.web.reactive.function.client.WebClient
         val headers = defaultHeader
         val body: MutableMap<String, Any> = HashMap()
         body["user"] = osuUser
-        body["panel"] = "info"
+        body["panel"] = "info2"
         val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
         return doPost("panel_Gamma", httpEntity)
     }
@@ -212,13 +221,28 @@ import org.springframework.web.reactive.function.client.WebClient
             return headers
         }
 
-    @Throws(RestClientException::class) private fun doPost(path: String, entity: HttpEntity<*>): ByteArray {
-        val request = webClient.post().uri(IMAGE_PATH + path).headers { h: HttpHeaders -> h.addAll(entity.headers) }
+    @Throws(GeneralTipsException::class) private fun doPost(path: String, entity: HttpEntity<*>): ByteArray {
+        val request = webClient.post().uri(IMAGE_PATH + path).headers { it.addAll(entity.headers) }
         if (entity.hasBody()) {
             request.bodyValue(entity.body!!)
         }
-        return request.retrieve().bodyToMono(ByteArray::class.java)
-            .doOnError { e: Throwable? -> log.error("post image error", e) }.block()!!
+
+        // 在这里封好可能出现的（已知原因的）错误，确保错误不会传递下去
+        return try {
+            request.retrieve().bodyToMono(ByteArray::class.java).block()!!
+        } catch (e: Throwable) {
+            when(e.cause) {
+                is BadRequest -> throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_400)
+                is ReadTimeoutException -> throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_408)
+                is InternalServerError -> throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_500)
+                is ConnectException -> throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_503)
+
+                else -> {
+                    log.error("渲染模块：未识别的错误", e)
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_000)
+                }
+            }
+        }
     }
 
     companion object {

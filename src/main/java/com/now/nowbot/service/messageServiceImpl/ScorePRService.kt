@@ -1,7 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.UUScore
+import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.ScoreFilter
 import com.now.nowbot.model.json.BeatMap
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
@@ -15,21 +17,22 @@ import com.now.nowbot.service.messageServiceImpl.ScorePRService.ScorePRParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.service.osuApiService.impl.ScoreApiImpl
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
+import com.now.nowbot.util.command.FLAG_RANGE
+import com.now.nowbot.util.command.REG_EQUAL
+import com.now.nowbot.util.command.REG_HYPHEN
+import com.now.nowbot.util.command.REG_RANGE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 
-// Multiple Score也合并进来了
 @Service("SCORE_PR")
 class ScorePRService(
     private val osuApiWebClient: WebClient,
@@ -39,13 +42,7 @@ class ScorePRService(
     private val calculateApiService: OsuCalculateApiService,
 ) : MessageService<ScorePRParam>, TencentMessageService<ScorePRParam> {
 
-    data class ScorePRParam(
-        val user: OsuUser?,
-        val offset: Int,
-        val limit: Int,
-        val isRecent: Boolean,
-        val mode: OsuMode?
-    )
+    data class ScorePRParam(val user: OsuUser, val scores: Map<Int, LazerScore>, val isPass: Boolean = false)
 
     data class PanelE5Param(
         val user: OsuUser,
@@ -59,16 +56,15 @@ class ScorePRService(
         val health: Map<Int, Double>?
     ) {
         fun toMap(): Map<String, Any> {
-
-            val out = mutableMapOf<String, Any>()
-
-            out["user"] = user
-            out["score"] = score
-            out["density"] = density
-            out["progress"] = progress
-            out["original"] = original
-            out["attributes"] = attributes
-            out["panel"] = panel
+            val out = mutableMapOf(
+                "user" to user,
+                "score" to score,
+                "density" to density,
+                "progress" to progress,
+                "original" to original,
+                "attributes" to attributes,
+                "panel" to panel,
+            )
 
             if (position != null) {
                 out["position"] = position
@@ -94,16 +90,16 @@ class ScorePRService(
         val matcher = Instruction.SCORE_PR.matcher(messageText)
         if (!matcher.find()) return false
 
-        val isMulti = (matcher.group("s").isNullOrBlank().not() || matcher.group("es").isNullOrBlank().not())
+        val any: String? = matcher.group("any")
 
-        val offset: Int
-        val limit: Int
+        // 避免指令冲突
+        if (any?.contains("&sb", ignoreCase = true) == true) return false
 
-        val isRecent =
+        val isPass =
                 if (matcher.group("recent") != null) {
-                    true
-                } else if (matcher.group("pass") != null) {
                     false
+                } else if (matcher.group("pass") != null) {
+                    true
                 } else {
                     log.error("成绩分类失败：")
                     throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "成绩")
@@ -116,87 +112,251 @@ class ScorePRService(
 
         range.setZeroToRange100()
 
-        if (range.data == null) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-        }
-        if (isMulti) {
-            offset = range.getOffset(0, true)
-            limit = range.getLimit(20, true)
-        } else {
-            offset = range.getOffset(0, false)
-            limit = range.getLimit(1, false)
+        val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
+
+        // 如果不加井号，则有时候范围会被匹配到这里来
+        val rangeInConditions = conditions.lastOrNull()
+        val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
+        val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
+
+        if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_Cabbage)
         }
 
-        data.value = ScorePRParam(range.data, offset, limit, isRecent, mode.data)
+        val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
+
+        val range2 = if (range.start != null) {
+            range
+        } else {
+            val start = ranges?.firstOrNull()?.toIntOrNull()
+            val end = if (ranges?.size == 2) ranges.last().toIntOrNull() else null
+
+            CmdRange(range.data!!, start, end)
+        }
+
+        val isMultiple = (matcher.group("s").isNullOrBlank().not() || matcher.group("es").isNullOrBlank().not())
+
+        val isAvoidance: Boolean = CmdUtil.isAvoidance(messageText, "recent")
+
+        val scores = range2.getRecentScores(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass, isAvoidance)
+
+        if (scores.isEmpty() && isAvoidance) {
+            return false
+        }
+
+        val filteredScores = ScoreFilter.filterScores(scores, conditions)
+
+        if (filteredScores.isEmpty()) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_FilterRecent, range.data!!.username)
+        }
+
+        data.value = ScorePRParam(range.data!!, filteredScores, isPass)
         return true
     }
 
-    @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: ScorePRParam) {
-        getMessageChain(param, event)?.let { event.reply(it) }
+        param.asyncImage()
+        val messageChain: MessageChain = param.getMessageChain()
+
+        try {
+            event.reply(messageChain)
+        } catch (e: Exception) {
+            log.error("最好成绩：发送失败", e)
+            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "最好成绩")
+        }
     }
 
     override fun accept(event: MessageEvent, messageText: String): ScorePRParam? {
         var matcher: Matcher
-        val isRecent: Boolean
-        val isMultiInput: Boolean
+
+        val isPass: Boolean
+        val isMultiple: Boolean
+
         when {
             OfficialInstruction.SCORE_PASS.matcher(messageText)
                 .apply { matcher = this }.find() -> {
-                isRecent = false
-                isMultiInput = false
+                isPass = true
+                isMultiple = false
             }
 
             OfficialInstruction.SCORE_PASSES.matcher(messageText)
                     .apply { matcher = this }.find() -> {
-                isRecent = false
-                isMultiInput = true
+                isPass = true
+                isMultiple = true
             }
 
             OfficialInstruction.SCORE_RECENT.matcher(messageText)
                     .apply { matcher = this }.find() -> {
-                isRecent = true
-                isMultiInput = false
+                isPass = false
+                isMultiple = false
             }
 
             OfficialInstruction.SCORE_RECENTS.matcher(messageText)
                     .apply { matcher = this }.find() -> {
-                isRecent = true
-                isMultiInput = true
+                isPass = false
+                isMultiple = true
             }
 
             else -> return null
         }
 
-        val offset: Int
-        val limit: Int
+        val any: String? = matcher.group("any")
 
         val isMyself = AtomicBoolean()
         val mode = getMode(matcher)
+
         val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent")
 
-        if (range.data == null) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Param)
+        range.setZeroToRange100()
+
+        val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
+
+        // 如果不加井号，则有时候范围会被匹配到这里来
+        val rangeInConditions = conditions.lastOrNull()
+        val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
+        val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
+
+        if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_Cabbage)
         }
 
-        if (isMultiInput) {
-            offset = range.getOffset(0, true)
-            limit = range.getLimit(20, true)
+        val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
+
+        val range2 = if (range.start != null) {
+            range
         } else {
-            offset = range.getOffset(0, false)
-            limit = range.getLimit(1, false)
+            val start = ranges?.firstOrNull()?.toIntOrNull()
+            val end = if (ranges?.size == 2) ranges.last().toIntOrNull() else null
+
+            CmdRange(range.data!!, start, end)
         }
 
-        return ScorePRParam(range.data, offset, limit, isRecent, mode.data)
+        val scores = range2.getRecentScores(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass, false)
+
+        if (scores.isEmpty()) {
+            return null
+        }
+
+        val filteredScores = ScoreFilter.filterScores(scores, conditions)
+
+        if (filteredScores.isEmpty()) {
+            throw GeneralTipsException(GeneralTipsException.Type.G_Null_FilterRecent, range.data!!.username)
+        }
+
+        return ScorePRParam(range.data!!, filteredScores, isPass)
     }
 
-    @Throws(Throwable::class)
     override fun reply(event: MessageEvent, param: ScorePRParam): MessageChain? {
-        return getMessageChain(param)
+        return param.getMessageChain()
     }
 
-    @Throws(GeneralTipsException::class)
-    private fun getTextOutput(score: LazerScore): MessageChain {
+    private fun CmdRange<OsuUser>.getRecentScores(
+        mode: OsuMode,
+        isMultiple: Boolean,
+        isSearch: Boolean = false,
+        isPass: Boolean = false,
+        isAvoidance: Boolean = false,
+    ): Map<Int, LazerScore> {
+
+        val offset: Int
+        val limit: Int
+
+        if (isSearch && this.start == null) {
+            offset = 0
+            limit = 100
+        } else if (isMultiple) {
+            offset = getOffset(0, true)
+            limit = getLimit(20, true)
+        } else {
+            offset = getOffset(0, false)
+            limit = getLimit(1, false)
+        }
+
+        val isDefault = offset == 0 && limit == 1
+
+        val scores = try {
+            scoreApiService.getScore(data!!.userID, mode, offset, limit, isPass)
+        } catch (e: Exception) {
+            if (isAvoidance) {
+                log.info("最近成绩：退避成功。请求者：{}", data?.username)
+                return emptyMap()
+            } else {
+                throw e
+            }
+        }
+
+        calculateApiService.applyStarToScores(scores)
+        calculateApiService.applyBeatMapChanges(scores)
+
+        val modeStr = if (mode.isDefault()) {
+            scores.firstOrNull()?.mode?.fullName ?: this.data?.currentOsuMode?.fullName ?: "默认"
+        } else {
+            mode.fullName
+        }
+
+        // 检查查到的数据是否为空
+        if (scores.isEmpty()) {
+            if (isDefault) {
+                throw GeneralTipsException(
+                    GeneralTipsException.Type.G_Null_PlayerRecord,
+                    modeStr,
+                )
+            } else {
+                throw GeneralTipsException(
+                    GeneralTipsException.Type.G_Null_ModeBP,
+                    data!!.username,
+                    modeStr,
+                )
+            }
+        }
+
+        return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
+    }
+
+    private fun ScorePRParam.asyncImage() = run {
+        scoreApiService.asyncDownloadBackground(scores.values)
+        scoreApiService.asyncDownloadBackground(scores.values, CoverType.LIST)
+    }
+
+    private fun ScorePRParam.getMessageChain(): MessageChain {
+        try {
+            if (scores.size > 1) {
+                val ranks = scores.map{it.key}.toList()
+                val scores = scores.map{it.value}.toList()
+
+                scoreApiService.asyncDownloadBackground(scores, CoverType.LIST)
+                scoreApiService.asyncDownloadBackground(scores, CoverType.COVER)
+
+                val body = mapOf(
+                    "user" to user,
+                    "score" to scores,
+                    "rank" to ranks,
+                    "panel" to if (isPass) "PS" else "RS"
+                )
+
+                calculateApiService.applyPPToScores(scores)
+
+                val image = imageService.getPanel(body, "A5")
+                return QQMsgUtil.getImage(image)
+            } else {
+                // 单成绩发送
+                val score = scores.values.first()
+
+                scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
+                scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
+
+                val e5 = getScore4PanelE5(user, score, (if (isPass) "P" else "R"), beatmapApiService, calculateApiService)
+
+                return QQMsgUtil.getImage(imageService.getPanel(e5.toMap(), "E5"))
+            }
+        } catch (e: Exception) {
+            return getUUMessage()
+        }
+    }
+
+    private fun ScorePRParam.getUUMessage(): MessageChain {
+        val score = scores.values.first()
+
         val d = UUScore(score, calculateApiService)
 
         val imgBytes = osuApiWebClient.get()
@@ -205,113 +365,7 @@ class ScorePRService(
             .bodyToMono(ByteArray::class.java)
             .block()
 
-
         return QQMsgUtil.getTextAndImage(d.scoreLegacyOutput, imgBytes)
-    }
-
-    private fun getMessageChain(param: ScorePRParam, event: MessageEvent? = null): MessageChain? {
-        val offset = param.offset
-        val limit = param.limit
-        val isRecent = param.isRecent
-
-        val user = param.user
-
-        val scoreMap: Map<Int, LazerScore>
-
-        try {
-            scoreMap = scoreApiService.getScore(user!!.userID, param.mode, offset, limit, !isRecent)
-                .mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
-        } catch (e: WebClientResponseException) {
-            // 退避 !recent
-            if (event != null &&
-                    event.rawMessage.lowercase(Locale.getDefault()).contains("recent")) {
-                log.info("recent 退避成功")
-                return null
-            }
-
-            throw when (e) {
-                is WebClientResponseException.Unauthorized ->
-                        GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-                is WebClientResponseException.Forbidden ->
-                        GeneralTipsException(
-                                GeneralTipsException.Type.G_Banned_Player, user!!.username)
-                is WebClientResponseException.NotFound ->
-                        GeneralTipsException(
-                                GeneralTipsException.Type.G_Null_RecentScore,
-                                user!!.username,
-                                user.currentOsuMode.fullName)
-
-                else -> e
-            }
-        } catch (e: Exception) {
-            log.error("成绩：列表获取失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "成绩")
-        }
-
-        if (scoreMap.isEmpty()) {
-            throw GeneralTipsException(
-                GeneralTipsException.Type.G_Null_RecentScore,
-                user.username,
-                user.currentOsuMode.fullName)
-        }
-
-        // 成绩发送
-        val image: ByteArray
-
-        if (scoreMap.size > 1) {
-            val ranks = scoreMap.map{it.key}.toList()
-            val scores = scoreMap.map{it.value}.toList()
-
-            scoreApiService.asyncDownloadBackground(scores)
-            scoreApiService.asyncDownloadBackground(scores, ScoreApiImpl.CoverType.LIST)
-
-            calculateApiService.applyPPToScores(scores)
-            calculateApiService.applyBeatMapChanges(scores)
-            calculateApiService.applyStarToScores(scores)
-
-            try {
-                val body = mapOf(
-                    "user" to user,
-                    "score" to scores,
-                    "rank" to ranks,
-                    "panel" to if (isRecent) "RS" else "PS"
-                )
-
-                image = imageService.getPanel(body, "A5")
-                return QQMsgUtil.getImage(image)
-            } catch (e: Exception) {
-                log.error("成绩发送失败：", e)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "成绩")
-            }
-        } else {
-            // 单成绩发送
-            val score = scoreMap.map { it.value }.first()
-
-            scoreApiService.asyncDownloadBackground(score)
-            scoreApiService.asyncDownloadBackground(score, ScoreApiImpl.CoverType.LIST)
-
-            val e5Param = getScore4PanelE5(user, score, (if (isRecent) "R" else "P"), beatmapApiService, calculateApiService)
-            try {
-                /*
-                val st = OffsetDateTime.of(2025, 4, 1, 0, 0, 0, 0, ZoneOffset.ofHours(8))
-                val ed = OffsetDateTime.of(2025, 4, 2, 0, 0, 0, 0, ZoneOffset.ofHours(8))
-
-                image = if (OffsetDateTime.now().isAfter(st) && OffsetDateTime.now().isBefore(ed)) {
-                    imageService.getPanel(e5Param.toMap(), "Eta" +
-                            (floor((System.currentTimeMillis() % 1000) / 1000.0 * 4) + 1).toInt())
-                } else {
-                }
-
-                 */
-
-                image = imageService.getPanel(e5Param.toMap(), "E5")
-                return QQMsgUtil.getImage(image)
-            } catch (e: Exception) {
-                log.error("成绩：绘图出错, 成绩信息:\n {}",
-                    JacksonUtil.objectToJsonPretty(e5Param.score), e)
-                return getTextOutput(e5Param.score)
-            }
-        }
     }
 
     companion object {

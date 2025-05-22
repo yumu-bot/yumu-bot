@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientException
+import org.springframework.web.reactive.function.client.WebClientRequestException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
@@ -56,7 +56,7 @@ import kotlin.text.Charsets.UTF_8
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestQQRequestBody::class.java)
                 .headers { headers: HttpHeaders? -> base.insertJSONHeader(headers) }.retrieve()
                 .bodyToMono(MaiBestScore::class.java).block()!!
-        } catch (e: WebClientException) {
+        } catch (e: WebClientRequestException) {
             log.error("水鱼查分器：获取失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
         }
@@ -70,7 +70,7 @@ import kotlin.text.Charsets.UTF_8
                     uriBuilder.path("api/maimaidxprober/query/player").build()
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestNameRequestBody::class.java)
                 .retrieve().bodyToMono(MaiBestScore::class.java).block()!!
-        } catch (e: WebClientException) {
+        } catch (e: WebClientRequestException) {
             log.error("水鱼查分器：获取失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
         }
@@ -87,7 +87,7 @@ import kotlin.text.Charsets.UTF_8
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiVersionNameRequestBody::class.java)
                 .headers { headers: HttpHeaders? -> base.insertJSONHeader(headers) }.retrieve()
                 .bodyToMono(MaiVersionScore::class.java).block()!!
-        } catch (e: WebClientException) {
+        } catch (e: WebClientRequestException) {
             log.error("水鱼查分器：获取失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
         }
@@ -104,7 +104,7 @@ import kotlin.text.Charsets.UTF_8
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiVersionQQRequestBody::class.java)
                 .headers { headers: HttpHeaders? -> base.insertJSONHeader(headers) }.retrieve()
                 .bodyToMono(MaiVersionScore::class.java).block()!!
-        } catch (e: WebClientException) {
+        } catch (e: WebClientRequestException) {
             log.error("水鱼查分器：获取失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
         }
@@ -396,7 +396,7 @@ import kotlin.text.Charsets.UTF_8
             throw e
         } catch (e: WebClientResponseException.BadRequest) {
             throw e
-        } catch (e: WebClientException) {
+        } catch (e: WebClientRequestException) {
             log.error("水鱼查分器：获取失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
         }
@@ -414,7 +414,7 @@ import kotlin.text.Charsets.UTF_8
             throw e
         } catch (e: WebClientResponseException.BadRequest) {
             throw e
-        } catch (e: WebClientException) {
+        } catch (e: WebClientRequestException) {
             log.error("水鱼查分器：获取失败", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
         }

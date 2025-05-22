@@ -118,6 +118,17 @@ enum class Instruction(val pattern: Pattern) {
     SCORE_PR(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))(?<s>s)?")
         appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup("any",
+                REG_ANYTHING_BUT_NO_HASH_STARS,
+                MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
     }),
 
     PR_CARD(CommandPatternBuilder.create {
@@ -353,33 +364,9 @@ enum class Instruction(val pattern: Pattern) {
         appendMode()
         appendBID()
         appendGroup()
-
         appendSpace()
+
         appendCaptureGroup("any", REG_ANYTHING_BUT_NO_PLUS, MORE)
-
-        /*
-
-        appendGroup(MAYBE) {
-            append("[a%％]?")
-            appendIgnore("[\\-mcx×]", forward = true)
-            appendCaptureGroup("accuracy", REG_NUMBER_DECIMAL)
-            append("[a%％]?")
-        }
-        appendSpace()
-        appendGroup(MAYBE) {
-            append("[cx×]?")
-            appendIgnore("[\\-m]", forward = true)
-            appendCaptureGroup("combo", REG_NUMBER_DECIMAL)
-            append("[cx×]?")
-        }
-        appendSpace()
-        appendGroup(MAYBE) {
-            append("[\\-m]?")
-            appendCaptureGroup("miss", REG_NUMBER, MORE)
-            append("[\\-m]?")
-        }
-
-         */
         appendSpace()
 
         appendMod()

@@ -68,12 +68,7 @@ class GuestDifficultyService(
     override fun HandleMessage(event: MessageEvent, param: GuestDifferParam) {
         val body = param.getBody()
 
-        val image = try {
-            imageService.getPanel(body, "A11")
-        } catch (e: Exception) {
-            log.error("客串谱师：渲染失败")
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "客串谱师")
-        }
+        val image = imageService.getPanel(body, "A11")
 
         try {
             event.reply(image)

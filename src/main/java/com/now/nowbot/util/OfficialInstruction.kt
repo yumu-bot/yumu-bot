@@ -26,21 +26,65 @@ enum class OfficialInstruction(val pattern: Pattern) {
     SCORE_PASS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("p")
         appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup("any",
+                REG_ANYTHING_BUT_NO_HASH_STARS,
+                MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
     }),
 
     SCORE_PASSES(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("ps")
         appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup("any",
+                REG_ANYTHING_BUT_NO_HASH_STARS,
+                MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
     }),
 
     SCORE_RECENT(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("r")
         appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup("any",
+                REG_ANYTHING_BUT_NO_HASH_STARS,
+                MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
     }),
 
     SCORE_RECENTS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("rs")
         appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup("any",
+                REG_ANYTHING_BUT_NO_HASH_STARS,
+                MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
     }),
 
     PR_CARD(CommandPatternBuilder.create {
@@ -112,15 +156,6 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendOfficialCommandsIgnoreAll("ua")
         appendModeQQUIDName()
     }),
-
-    /*
-    UU_BAI(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("uuba-i", "uai")
-        appendModeQQUIDName()
-    }),
-
-    */
-
 
     // #3 osu! 玩家指令
     INFO(CommandPatternBuilder.create {
@@ -218,24 +253,10 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
         appendMode()
         appendBID()
+        appendGroup()
+        appendSpace()
 
-        appendGroup(MAYBE) {
-            append("[a%]?")
-            appendCaptureGroup("accuracy", REG_NUMBER_DECIMAL)
-            append("[a%]?")
-        }
-        appendSpace()
-        appendGroup(MAYBE) {
-            append("[cx]?")
-            appendCaptureGroup("combo", REG_NUMBER_DECIMAL)
-            append("[cx]?")
-        }
-        appendSpace()
-        appendGroup(MAYBE) {
-            append("[\\-m]?")
-            appendCaptureGroup("miss", REG_NUMBER, MORE)
-            append("[\\-m]?")
-        }
+        appendCaptureGroup("any", REG_ANYTHING_BUT_NO_PLUS, MORE)
         appendSpace()
 
         appendMod()

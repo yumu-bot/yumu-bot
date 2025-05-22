@@ -28,8 +28,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
-import org.springframework.web.client.ResourceAccessException
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.floor
@@ -174,7 +172,7 @@ import kotlin.math.min
                         (b.BPM ?: 0.0).toFloat(),
                         b.starRating.toFloat(),
                         best.rank,
-                        best.beatMapSet.covers.list,
+                        best.beatMapSet.covers.list ?: "",
                         m
                     )
                     beatMapList.add(ba)
@@ -404,25 +402,18 @@ import kotlin.math.min
                     1 -> imageService.getPanel(data, "J")
                     else -> imageService.getPanel(data, "J2")
                 }
-            } catch (e: WebClientResponseException) {
+            } catch (e: Exception) {
                 log.error("最好成绩分析：复杂面板生成失败", e)
                 try {
-                    val msg = UUBAService.getTextPlus(scores, user.username, user.mode, userApiService).split("\n".toRegex())
-                        .dropLastWhile { it.isEmpty() }.toTypedArray()
+                    val msg = UUBAService.getTextPlus(scores, user.username, user.mode, userApiService)
+                        .split("\n".toRegex())
+                        .dropLastWhile { it.isEmpty() }
+                        .toTypedArray()
                     imageService.getPanelAlpha(*msg)
-                } catch (e1: ResourceAccessException) {
-                    log.error("最好成绩分析：渲染失败", e1)
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩分析")
-                } catch (e1: WebClientResponseException) {
-                    log.error("最好成绩分析：渲染失败", e1)
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩分析")
                 } catch (e1: Exception) {
                     log.error("最好成绩分析：文字版转换失败", e1)
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩分析（文字版）")
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "最好成绩分析（文字版）")
                 }
-            } catch (e: Exception) {
-                log.error("最好成绩分析：渲染失败", e)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "最好成绩分析")
             }
         }
     }

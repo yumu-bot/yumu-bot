@@ -183,18 +183,11 @@ class InfoService(
                 LocalDate.now().minusDays(day.toLong())
             ).map { OsuUserInfoDao.fromArchive(it) }
 
-        return try {
-            val panelDParam = PanelDParam(user, historyUser.getOrNull(), bests, mode)
+        val panelDParam = PanelDParam(user, historyUser.getOrNull(), bests, mode)
 
-            when(this.version) {
-                2 -> imageService.getPanel(panelDParam.toD2Map(), "D2")
-                else -> imageService.getPanel(panelDParam.toMap(), "D")
-            }
-
-
-        } catch (e: Exception) {
-            log.error("玩家信息：图片渲染失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "玩家信息")
+        return when(this.version) {
+            2 -> imageService.getPanel(panelDParam.toD2Map(), "D2")
+            else -> imageService.getPanel(panelDParam.toMap(), "D")
         }
     }
 

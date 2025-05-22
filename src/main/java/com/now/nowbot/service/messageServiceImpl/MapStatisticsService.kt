@@ -89,16 +89,7 @@ class MapStatisticsService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: MapParam) {
-        val image =
-            try {
-                param.getImage()
-            } catch (e: Exception) {
-                log.error("谱面信息：渲染失败", e)
-                throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Malfunction_Render,
-                    "谱面信息",
-                )
-            }
+        val image = param.getImage()
 
         try {
             event.reply(image)
@@ -118,16 +109,7 @@ class MapStatisticsService(
     }
 
     override fun reply(event: MessageEvent, param: MapParam): MessageChain? {
-        val image =
-            try {
-                param.getImage()
-            } catch (e: Exception) {
-                log.error("谱面信息：渲染失败", e)
-                throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Malfunction_Render,
-                    "谱面信息",
-                )
-            }
+        val image = param.getImage()
 
         try {
             return QQMsgUtil.getImage(image)
