@@ -3,20 +3,22 @@ package com.now.nowbot.model
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.LazerStatistics
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import kotlin.math.floor
 import kotlin.math.round
 
-class UUScore(score: LazerScore, calculateApiService: OsuCalculateApiService) {
+class UUScore(score: LazerScore, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService) {
+    private val isLazer: Boolean = score.isLazer
     var name: String
     var mode: OsuMode
-    var country: String
+    private var country: String
     var totalLength: Int
     var titleUnicode: String? = ""
-    var difficultyName: String
+    private var difficultyName: String
     var artist: String? = ""
     var starRating: Double
-    var starStr: String
+    private var starStr: String
     var rank: String
     var mods: Array<String?>
     var score: Int
@@ -35,6 +37,8 @@ class UUScore(score: LazerScore, calculateApiService: OsuCalculateApiService) {
     init {
         val user = score.user
         bid = score.beatMap.beatMapID
+
+        beatmapApiService.applyBeatMapExtend(score)
 
         calculateApiService.applyPPToScore(score)
         calculateApiService.applyBeatMapChanges(score)
@@ -76,7 +80,11 @@ class UUScore(score: LazerScore, calculateApiService: OsuCalculateApiService) {
         starStr = srStr.toString()
         
         rank = score.rank
-        this.score = score.score.toInt()
+        this.score = if (isLazer) {
+            score.score.toInt()
+        } else {
+            score.legacyScore?.toInt() ?: score.score.toInt()
+        }
         acc = ((round(score.accuracy * 10000.0)) / 100.0)
         
         pp = score.PP ?: 0.0

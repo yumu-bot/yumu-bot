@@ -8,6 +8,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.UUPRService.UUPRParam
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
@@ -25,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class UUPRService(
     private val osuApiWebClient: WebClient,
     private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService
 ) : MessageService<UUPRParam> {
 
@@ -74,7 +76,7 @@ class UUPRService(
 
     @Throws(GeneralTipsException::class)
     private fun getTextOutput(score: LazerScore, event: MessageEvent) {
-        val d = UUScore(score, calculateApiService)
+        val d = UUScore(score, beatmapApiService, calculateApiService)
 
         val imgBytes =
             osuApiWebClient.get()

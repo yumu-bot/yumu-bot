@@ -357,7 +357,7 @@ class ScorePRService(
     private fun ScorePRParam.getUUMessage(): MessageChain {
         val score = scores.values.first()
 
-        val d = UUScore(score, calculateApiService)
+        val d = UUScore(score, beatmapApiService, calculateApiService)
 
         val imgBytes = osuApiWebClient.get()
             .uri(d.url ?: "")
