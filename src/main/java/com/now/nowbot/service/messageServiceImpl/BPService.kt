@@ -219,7 +219,7 @@ import kotlin.math.*
     }
 
     private fun BPParam.asyncImage() = run {
-        scoreApiService.asyncDownloadBackground(scores.values)
+        scoreApiService.asyncDownloadBackground(scores.values, CoverType.COVER)
         scoreApiService.asyncDownloadBackground(scores.values, CoverType.LIST)
     }
 
@@ -227,9 +227,6 @@ import kotlin.math.*
         if (scores.size > 1) {
             val ranks = scores.map{it.key}.toList()
             val scores = scores.map{it.value}.toList()
-
-            scoreApiService.asyncDownloadBackground(scores, CoverType.LIST)
-            scoreApiService.asyncDownloadBackground(scores, CoverType.COVER)
 
             val body = mapOf(
                 "user" to user,
@@ -241,30 +238,20 @@ import kotlin.math.*
             imageService.getPanel(body, "A4")
         } else {
             val score: LazerScore = scores.toList().first().second
-
-            scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
-            scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
-
-            val body = ScorePRService.getScore4PanelE5(user, score, "B", beatmapApiService, calculateApiService)
-
-            /*
-            // 无需 applyExtend
             val beatmap = beatmapApiService.getBeatMap(score.beatMapID)
             score.beatMap = beatmap
 
             val original = DataUtil.getOriginal(beatmap)
 
-            calculateApiService.applyBeatMapChanges(score)
-            calculateApiService.applyStarToScore(score)
+            // calculateApiService.applyBeatMapChanges(score)
+            // calculateApiService.applyStarToScore(score)
 
             val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
 
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            val body = PanelE5Param(user, score, null, density, progress, original, attributes, "B", null).toMap()
-
-             */
+            val body = ScorePRService.PanelE5Param(user, score, null, density, progress, original, attributes, "B", null).toMap()
 
             imageService.getPanel(body, "E5")
         }
