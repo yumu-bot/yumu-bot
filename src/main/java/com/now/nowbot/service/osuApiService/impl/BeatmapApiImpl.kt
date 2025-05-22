@@ -62,12 +62,8 @@ class BeatmapApiImpl(
     }
 
     private fun getBeatMapFileFromLocalService(bid: Long): String? {
-        return try {
-            osuBeatmapMirrorApiService.getOsuFile(bid)
-        } catch (e: Exception) {
-            log.error("download beatmap form mirror error", e)
-            getBeatMapFileFromOfficialWebsite(bid)
-        }
+        return osuBeatmapMirrorApiService.getOsuFile(bid) ?: getBeatMapFileFromOfficialWebsite(bid)
+
     }
 
     fun getBeatMapFileFromOfficialWebsite(bid: Long): String? {

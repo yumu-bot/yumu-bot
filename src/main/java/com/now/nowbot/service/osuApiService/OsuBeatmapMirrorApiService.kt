@@ -1,13 +1,11 @@
 package com.now.nowbot.service.osuApiService
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.config.BeatmapMirrorConfig
 import jakarta.annotation.Nullable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientRequestException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -22,23 +20,21 @@ import java.nio.file.Path
         if (url.isNullOrEmpty()) return null
 
         try {
-            return webClient.get().uri(url) { it.path("/api/file/map/osufile/{bid}").build(bid) }.retrieve()
-                .bodyToMono(String::class.java).map { s: String ->
-                    if (s.trim().startsWith("osu file format")) {
-                        return@map s
-                    }
-                    throw IllegalStateException("not beatmap file")
-                }.block()
+            val str = webClient.get().uri(url) {
+                it.path("/api/file/map/osufile/{bid}").build(bid)}
+                .retrieve()
+                .bodyToMono(String::class.java).block()!!
+
+            return if (str.trim().startsWith("osu file format")) {
+                str
+            } else {
+                log.error("谱面镜像站：谱面 $bid 文件损坏！")
+                null
+            }
         } catch (e: Exception) {
-            if (e is WebClientResponseException) {
-                log.error("谱面镜像站：返回谱面 {} 失败：{}", bid, e.statusCode)
-                log.error(e.responseBodyAsString)
-            }
-            if (e is WebClientRequestException) {
-                log.error("谱面镜像站：请求谱面 {} 失败!", bid)
-                log.error(e.message)
-            }
-            throw e
+            log.error("谱面镜像站：请求谱面 $bid 失败：", e)
+
+            return null
         }
     }
 
@@ -53,15 +49,10 @@ import java.nio.file.Path
                 return path
             }
 
-            log.error("获取谱面 {} 背景失败: 文件 [{}] 不存在, 大概率被版权然后移出了资源", bid, localPath)
+            log.error("获取谱面 $bid 背景失败: 文件 [$localPath] 不存在, 大概率被版权然后移出了资源")
             return null
         } catch (e: WebClientResponseException) {
-            val json = e.getResponseBodyAs(
-                JsonNode::class.java
-            )
-            if (json != null) log.error(
-                "获取谱面 {} 背景失败: {}", bid, json["message"]
-            )
+            log.error("获取谱面 $bid 背景失败：", e)
             return null
         }
     }
