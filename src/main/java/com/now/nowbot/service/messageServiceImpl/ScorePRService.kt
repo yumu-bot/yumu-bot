@@ -375,6 +375,8 @@ class ScorePRService(
         fun getE5Param(user: OsuUser, filteredScore: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {
             val originalBeatMap = beatmapApiService.getBeatMap(filteredScore.beatMapID)
 
+            beatmapApiService.applyBeatMapExtend(filteredScore, originalBeatMap)
+
             val original = DataUtil.getOriginal(originalBeatMap)
 
             calculateApiService.applyPPToScore(filteredScore)
