@@ -152,7 +152,7 @@ class TodayBPService(
             scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
             scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
 
-            val body = ScorePRService.getScore4PanelE5(user, score, "T", beatmapApiService, calculateApiService)
+            val body = ScorePRService.getE5Param(user, score, "T", beatmapApiService, calculateApiService)
 
             imageService.getPanel(body, "E5")
         }

@@ -138,9 +138,9 @@ class LeaderBoardService(
                 OsuUser(score.user)
             }
 
-            val body = ScorePRService.getScore4PanelE5(user, score, beatMap, start, "L", beatmapApiService, calculateApiService)
+            val e5Param = ScorePRService.getE5ParamAfterExtended(user, score, beatMap, start, "L", beatmapApiService, calculateApiService)
 
-            imageService.getPanel(body.toMap(), "E5")
+            imageService.getPanel(e5Param.toMap(), "E5")
         } else {
             // 多成绩模式
             calculateApiService.applyPPToScores(ss)

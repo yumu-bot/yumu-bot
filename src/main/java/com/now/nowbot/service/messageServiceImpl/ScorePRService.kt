@@ -345,7 +345,7 @@ class ScorePRService(
                 scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
                 scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
 
-                val e5 = getScore4PanelE5(user, score, (if (isPass) "P" else "R"), beatmapApiService, calculateApiService)
+                val e5 = getE5Param(user, score, (if (isPass) "P" else "R"), beatmapApiService, calculateApiService)
 
                 return QQMsgUtil.getImage(imageService.getPanel(e5.toMap(), "E5"))
             }
@@ -371,9 +371,24 @@ class ScorePRService(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ScorePRService::class.java)
 
-        @JvmStatic
-        @Throws(Exception::class)
-        fun getScore4PanelE5(
+        // 用于已筛选过的成绩。此时成绩内的谱面是已经计算过的，无需再次计算
+        fun getE5Param(user: OsuUser, filteredScore: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {
+            val originalBeatMap = beatmapApiService.getBeatMap(filteredScore.beatMapID)
+
+            val original = DataUtil.getOriginal(originalBeatMap)
+
+            calculateApiService.applyPPToScore(filteredScore)
+
+            val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(filteredScore)
+
+            val density = beatmapApiService.getBeatmapObjectGrouping26(originalBeatMap)
+            val progress = beatmapApiService.getPlayPercentage(filteredScore)
+
+            return PanelE5Param(user, filteredScore, null, density, progress, original, attributes, panel, null)
+
+        }
+
+        fun getE5ParamAfterExtended(
             user: OsuUser,
             score: LazerScore,
             panel: String,
@@ -384,9 +399,7 @@ class ScorePRService(
             return getScore4PanelE5AfterExtended(user, score, position = null, panel, beatmapApiService, calculateApiService)
         }
 
-        @JvmStatic
-        @Throws(Exception::class)
-        fun getScore4PanelE5(
+        fun getE5ParamAfterExtended(
             user: OsuUser,
             score: LazerScore,
             beatMap: BeatMap,
@@ -399,9 +412,7 @@ class ScorePRService(
             return getScore4PanelE5AfterExtended(user, score, position, panel, beatmapApiService, calculateApiService)
         }
 
-        @JvmStatic
-        @Throws(Exception::class)
-        fun getScore4PanelE5AfterExtended(
+        private fun getScore4PanelE5AfterExtended(
             user: OsuUser,
             score: LazerScore,
             position: Int? = null,
