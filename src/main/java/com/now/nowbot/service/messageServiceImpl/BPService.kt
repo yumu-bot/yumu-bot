@@ -237,23 +237,9 @@ import kotlin.math.*
 
             imageService.getPanel(body, "A4")
         } else {
-            val score: LazerScore = scores.toList().first().second
-            val beatmap = beatmapApiService.getBeatMap(score.beatMapID)
-            score.beatMap = beatmap
+            val e5Param = ScorePRService.getE5Param(user, scores.toList().first().second, "B", beatmapApiService, calculateApiService)
 
-            val original = DataUtil.getOriginal(beatmap)
-
-            // calculateApiService.applyBeatMapChanges(score)
-            // calculateApiService.applyStarToScore(score)
-
-            val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
-
-            val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
-            val progress = beatmapApiService.getPlayPercentage(score)
-
-            val body = ScorePRService.PanelE5Param(user, score, null, density, progress, original, attributes, "B", null).toMap()
-
-            imageService.getPanel(body, "E5")
+            imageService.getPanel(e5Param.toMap(), "E5")
         }
 
     companion object {
