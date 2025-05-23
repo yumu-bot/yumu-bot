@@ -6,6 +6,7 @@ import com.now.nowbot.config.OsuConfig
 import com.now.nowbot.config.YumuConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.ContextUtil
 import jakarta.annotation.PostConstruct
@@ -195,10 +196,16 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
         try {
             return future.get()
         } catch (e: ExecutionException) {
-            if (e.cause is RuntimeException) {
-                throw e
+            when (e.cause) {
+                is WebClientResponseException.Unauthorized -> throw RuntimeException(GeneralTipsException.Type.G_Malfunction_Response_401.message)
+                is WebClientResponseException.Forbidden -> throw RuntimeException(GeneralTipsException.Type.G_Malfunction_Response_403.message)
+                is WebClientResponseException.NotFound -> throw RuntimeException(GeneralTipsException.Type.G_Malfunction_Response_404.message)
+                is WebClientResponseException.TooManyRequests -> throw RuntimeException(GeneralTipsException.Type.G_Malfunction_Response_429.message)
+                is WebClientResponseException.ServiceUnavailable -> throw RuntimeException(GeneralTipsException.Type.G_Malfunction_Response_503.message)
+
+                is RuntimeException -> throw e
+                else -> throw RuntimeException(e.cause)
             }
-            throw RuntimeException(e.cause)
         } catch (e: InterruptedException) {
             throw RuntimeException(e)
         }

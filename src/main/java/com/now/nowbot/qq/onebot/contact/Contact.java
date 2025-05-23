@@ -77,7 +77,12 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
         if (d != null && d.getData() != null && d.getData().getMessageId() != null) {
             return OneBotMessageReceipt.create(bot, d.getData().getMessageId(), this);
         } else {
-            log.error("发送消息时获取回执失败, [{}]发送到[{}] 内容:[{}]", bot.getSelfId(), id, getMsg4Chain(msg));
+            if (msg.getMessageList().getFirst() instanceof ImageMessage) {
+                log.error("发送消息：账号 {} 在 {} 发送图片时获取回执失败。发送图片能力：{}", bot.getSelfId(), id, bot.canSendImage());
+            } else {
+                log.error("发送消息：账号 {} 在 {} 发送 {} 时获取回执失败。", bot.getSelfId(), id, getMsg4Chain(msg));
+            }
+
             return OneBotMessageReceipt.create();
         }
     }

@@ -192,9 +192,9 @@ object CmdUtil {
         }
 
         if (result.data == null) {
-            if (text.matches("$REG_RANGE\\s*.*".toRegex())) {
+            if (text.matches("$REG_RANGE\\s+\\S+".toRegex())) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerReverse, text)
-            } else if (text.matches("\\S+\\s+(\\d+)".toRegex()))
+            } else if (text.matches("\\S+\\s+\\d+".toRegex()))
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_BIDReverse, text)
 
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, text)

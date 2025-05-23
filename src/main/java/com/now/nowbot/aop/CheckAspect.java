@@ -76,8 +76,8 @@ public class CheckAspect {
     public Object userSaveLogger(JoinPoint point) {
         Object[] args = point.getArgs();
         if (args.length > 0 && args[0] instanceof OsuBindUserLite u) {
-            var dobj = point.getSignature();
-            log.info("--*-**- 保存用户[{}] ({}), 调用者: {}", u.getOsuID(), u.getOsuName(), dobj.toString());
+            // var dobj = point.getSignature();
+            log.info("新增用户：[{}] ({})", u.getOsuID(), u.getOsuName());
         }
         return args;
     }

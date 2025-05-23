@@ -100,10 +100,16 @@ class GeneralTipsException : TipsException {
         G_Malfunction_Classification("%s：分类失败。"),
 
         G_Malfunction_Render_000("渲染模块出现未识别的错误。"),
-        G_Malfunction_Render_400("400 Bad Request \n渲染模块请求错误。"),
+        G_Malfunction_Render_400("400 Bad Request\n渲染模块请求错误。"),
         G_Malfunction_Render_408("408 Request Timeout\n渲染模块连接超时，有可能是需要绘制的数据太多了。"),
         G_Malfunction_Render_500("500 Internal Server Error\n渲染模块逻辑错误。"),
         G_Malfunction_Render_503("503 Service Unavailable\n渲染模块未上线。"),
+
+        G_Malfunction_Response_401("401 Unauthorized\n未授权。"),
+        G_Malfunction_Response_403("403 Forbidden\n已被禁止访问。"),
+        G_Malfunction_Response_404("404 Not Found\n未找到结果。"),
+        G_Malfunction_Response_429("429 Too Many Requests\n请求数已达上限。"),
+        G_Malfunction_Response_503("503 Service Unavailable\n请求服务未上线。"),
         
         G_Permission_Super("权限不足！只有开发者或超级管理员可以使用此功能！"),
         G_Permission_Group("权限不足！只有群聊管理员或群主（或开发者）可以使用此功能！"),
