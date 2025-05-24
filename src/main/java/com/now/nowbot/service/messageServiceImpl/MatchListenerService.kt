@@ -326,7 +326,7 @@ class MatchListenerService(
             messageEvent.reply(message)
         }
 
-        override fun onError(e: Exception) {
+        override fun onError(e: Throwable) {
             if (e is WebClientResponseException) {
                 // 网络错误, 忽略
                 log.error(e) { "比赛监听：网络错误" }

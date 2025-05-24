@@ -48,6 +48,8 @@ public class Contact implements com.now.nowbot.qq.contact.Contact {
             getIfNewBot();
         } catch (NullPointerException e) {
             log.error("获取bot信息为空, 可能为返回数据超时, 但是仍然尝试发送");
+        } catch (LogException e) {
+            log.error("无法获取bot, 放弃发送消息:{}", msg.getRawMessage(), e);
         }
         long id;
         ActionData<MsgId> d;

@@ -19,7 +19,7 @@ interface MatchAdapter {
 
     fun onMatchEnd(type: MatchListener.StopType)
 
-    fun onError(e: Exception)
+    fun onError(e: Throwable)
 
     data class GameStartEvent(
         // 游戏 id, 用来确认是否是同一场游戏, 用于处理 abort 的情况

@@ -184,7 +184,7 @@ class MatchListener(
         }
     }
 
-    private fun onError(e: Exception) {
+    private fun onError(e: Throwable) {
         eventListener.forEach { it.onError(e) }
     }
 
