@@ -350,7 +350,8 @@ public class BindDao {
         UPDATE_USERS.clear();
         try {
             refreshOldUserTokenOne(osuGetService);
-//            refreshOldUserTokenPack(osuGetService);
+        } catch (RuntimeException ignored) {
+            // 已经 log
         } catch (Exception e) {
             if (!(e instanceof WebClientResponseException.Unauthorized)) {
                 log.error("更新用户出现异常", e);
