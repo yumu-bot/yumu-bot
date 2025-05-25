@@ -64,9 +64,7 @@ public class BindDao {
 
         CAPTCHA_CACHE = Caffeine.newBuilder()
                 .expireAfterWrite(1, TimeUnit.MINUTES)
-                .removalListener((_, id, _) -> {
-                    INDEX_CACHE.remove(id);
-                })
+                .removalListener((_, id, _) -> INDEX_CACHE.remove(id))
                 .build();
     }
 
@@ -475,8 +473,10 @@ public class BindDao {
                 } catch (Exception e) {
                     if (e instanceof WebClientResponseException) {
                         throw e;
-                    } else {
+                    } else if (e.getCause() != null) {
                         throw e.getCause();
+                    } else {
+                        throw e;
                     }
                 }
                 return;
