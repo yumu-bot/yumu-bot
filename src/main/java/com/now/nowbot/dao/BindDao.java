@@ -345,11 +345,11 @@ public class BindDao {
     }
 
     @Async
-    public void refreshOldUserToken(OsuUserApiService osuGetService) {
+    public void refreshOldUserToken(OsuUserApiService userApiService) {
         NOW_UPDATE.set(true);
         UPDATE_USERS.clear();
         try {
-            refreshOldUserTokenOne(osuGetService);
+            refreshOldUserTokenOne(userApiService);
         } catch (RuntimeException ignored) {
             // 已经 log
         } catch (Exception e) {
@@ -362,7 +362,7 @@ public class BindDao {
         }
     }
 
-    private void refreshOldUserTokenOne(OsuUserApiService osuGetService) {
+    private void refreshOldUserTokenOne(OsuUserApiService userApiService) {
         long now = System.currentTimeMillis();
         var user = bindUserMapper.getOneOldBindUser(now);
         if (user.isPresent()) {
@@ -375,7 +375,7 @@ public class BindDao {
             }
 
             log.info("更新用户: [{}]", u.getOsuName());
-            refreshOldUserToken(u, osuGetService);
+            refreshOldUserToken(u, userApiService);
             return;
         }
 
@@ -393,7 +393,7 @@ public class BindDao {
             }
 
             log.info("更新用户: [{}]", u.getOsuName());
-            refreshOldUserToken(u, osuGetService);
+            refreshOldUserToken(u, userApiService);
         }
     }
 
@@ -465,36 +465,31 @@ public class BindDao {
         return succeedCount;
     }
 
-    private void refreshOldUserToken(OsuBindUserLite u, OsuUserApiService osuGetService) {
+    private void refreshOldUserToken(OsuBindUserLite u, OsuUserApiService userApiService) {
         int badRequest = 0;
+
         while (true) {
             try {
-                try {
-                    osuGetService.refreshUserToken(fromLite(u));
-                } catch (Exception e) {
-                    if (e instanceof WebClientResponseException) {
-                        throw e;
-                    } else if (e.getCause() != null) {
-                        throw e.getCause();
+                userApiService.refreshUserToken(fromLite(u));
+                return;
+            } catch (RuntimeException e) {
+                var m = e.getMessage();
+
+                if (m != null && m.contains("401")) {
+                    log.info("更新 [{}] 令牌失败, token 失效, 绑定取消", u.getOsuName());
+                    bindUserMapper.backupBindByOsuId(u.getOsuID());
+                } else {
+                    badRequest++;
+                    if (badRequest < 3) {
+                        log.error("更新 [{}] 令牌失败, 第 {} 次重试", u.getOsuName(), badRequest);
                     } else {
+                        log.error("更新 [{}] 令牌失败, 第 {} 次重试失败, 放弃更新", u.getOsuName(), badRequest);
                         throw e;
                     }
                 }
-                return;
-            } catch (WebClientResponseException.Unauthorized e) {
-                log.info("更新 [{}] 令牌失败, refresh token 失效, 绑定被取消", u.getOsuName());
-                bindUserMapper.backupBindByOsuId(u.getOsuID());
-                throw e;
-            } catch (WebClientResponseException.BadRequest e) {
-                badRequest++;
-                if (badRequest < 3) {
-                    log.error("更新 [{}] 令牌失败, api 服务器异常, 正在重试 {}", u.getOsuName(), badRequest);
-                } else {
-                    log.error("更新 [{}] 令牌失败, 重试 {} 次失败, 放弃更新", u.getOsuName(), badRequest);
-                    throw e;
-                }
             } catch (Throwable e) {
                 log.error("神秘错误: ", e);
+                throw e;
             }
         }
     }
