@@ -298,12 +298,12 @@ class ScorePRService(
         if (scores.isEmpty()) {
             if (isDefault) {
                 throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Null_PlayerRecord,
+                    GeneralTipsException.Type.G_Null_Recent,
                     modeStr,
                 )
             } else {
                 throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Null_ModeBP,
+                    GeneralTipsException.Type.G_Null_ModeRecent,
                     data!!.username,
                     modeStr,
                 )

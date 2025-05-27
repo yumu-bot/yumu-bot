@@ -173,7 +173,7 @@ class BPFixService(
 
     private fun BPFixParam.getImage(): ByteArray {
         if (bpMap.isEmpty()) throw GeneralTipsException(
-            GeneralTipsException.Type.G_Null_PlayerRecord,
+            GeneralTipsException.Type.G_Null_ModePlay,
             mode.fullName
         )
 

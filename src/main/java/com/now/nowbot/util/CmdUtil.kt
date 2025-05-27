@@ -492,7 +492,7 @@ object CmdUtil {
         try {
             return consumer.get()
         } catch (e: WebClientResponseException.NotFound) {
-            if (name.matches("$REG_RANGE\\s*.*".toRegex())) {
+            if (name.matches("$REG_RANGE\\s+\\S+".toRegex())) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerReverse, name)
             }
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name)

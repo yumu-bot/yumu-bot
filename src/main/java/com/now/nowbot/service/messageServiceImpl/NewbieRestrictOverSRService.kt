@@ -183,7 +183,7 @@ class NewbieRestrictOverSRService(
                     if (pss.isEmpty()) {
                         if (isDefault) {
                             throw GeneralTipsException(
-                                GeneralTipsException.Type.G_Null_PlayerRecord,
+                                GeneralTipsException.Type.G_Null_ModePlay,
                                 modeStr,
                             )
                         } else {
