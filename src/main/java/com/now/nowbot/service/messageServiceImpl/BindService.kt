@@ -253,7 +253,10 @@ import kotlin.jvm.optionals.getOrNull
 
     private fun bindUrl(event: MessageEvent, qq: Long) { // 将当前毫秒时间戳作为 key
         if (yumuConfig.bindDomain.contains("http")) {
-            event.reply("复制到浏览器打开 -> ${yumuConfig.bindDomain}")
+            event.reply("""
+                ${yumuConfig.bindDomain}
+                请 ctrl+c 并 ctrl+v 到其他 browser 完成绑定。
+            """.trimMargin())
         } else {
             bindQQAt(event, qq, isFull = false)
         }
