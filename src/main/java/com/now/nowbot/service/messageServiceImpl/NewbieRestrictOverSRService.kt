@@ -208,8 +208,7 @@ class NewbieRestrictOverSRService(
                     throw GeneralTipsException(GeneralTipsException.Type.G_Null_FilterRecent, range.data!!.username)
                 }
 
-                data.value = filteredScores.map { it.value }
-                return true
+                scores = filteredScores.map { it.value }
             } else if (b.find()) {
                 val any: String? = b.group("any")
 
