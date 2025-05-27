@@ -13,20 +13,17 @@ import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.messageServiceImpl.ScorePRService.ScorePRParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.util.CmdObject
-import com.now.nowbot.util.CmdRange
+import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.getMod
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.CmdUtil.getUserWithRange
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
-import com.now.nowbot.util.DataUtil
-import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_EQUAL
 import com.now.nowbot.util.command.REG_HYPHEN
@@ -46,8 +43,7 @@ class NewbieRestrictOverSRService(
     private val newbieDao: NewbieDao,
     private val botContainer: BotContainer,
     config: NewbieConfig,
-    private val scorePRService: ScorePRService
-): MessageService<List<LazerScore>> {
+): MessageService<Collection<LazerScore>> {
     // 这里放幻数
 
     // 新人群、杀手群、执行机器人
@@ -61,7 +57,7 @@ class NewbieRestrictOverSRService(
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: MessageService.DataValue<List<LazerScore>>
+        data: MessageService.DataValue<Collection<LazerScore>>
     ): Boolean {
         // TODO 测试的时候记得别忘了取消注释这个
         if (event.subject !is Group || event.subject.id != newbieGroupID) return false
@@ -104,10 +100,116 @@ class NewbieRestrictOverSRService(
                 scores = listOf(scoreApiService.getBeatMapScore(map.beatMapID, user.userID, mode, mods)?.score ?: return false)
                 calculateApiService.applyStarToScores(scores, local = true)
             } else if (pr.find()) {
-                val prDataValue = MessageService.DataValue<ScorePRParam>()
-                val isHandle = scorePRService.isHandle(event, messageText, prDataValue)
-                data.value = prDataValue.value.scores.values.toList()
-                return isHandle
+                val any: String? = pr.group("any")
+
+                // 避免指令冲突
+                if (any?.contains("&sb", ignoreCase = true) == true) return false
+
+                val isPass =
+                    if (pr.group("recent") != null) {
+                        false
+                    } else if (pr.group("pass") != null) {
+                        true
+                    } else {
+                        return false
+                    }
+
+                val isMyself = AtomicBoolean()
+                val mode = getMode(pr)
+
+                val range = getUserAndRangeWithBackoff(event, pr, mode, isMyself, messageText, "recent")
+
+                range.setZeroToRange100()
+
+                val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
+
+                // 如果不加井号，则有时候范围会被匹配到这里来
+                val rangeInConditions = conditions.lastOrNull()
+                val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
+                val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
+
+                if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_Cabbage)
+                }
+
+                val ranges = if (hasRangeInConditions) rangeInConditions else pr.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
+
+                val range2 = if (range.start != null) {
+                    range
+                } else {
+                    val start = ranges?.firstOrNull()?.toIntOrNull()
+                    val end = if (ranges?.size == 2) ranges.last().toIntOrNull() else null
+
+                    CmdRange(range.data!!, start, end)
+                }
+
+                val isMultiple = (pr.group("s").isNullOrBlank().not() || pr.group("es").isNullOrBlank().not())
+
+                val isAvoidance: Boolean = CmdUtil.isAvoidance(messageText, "recent")
+
+                val ps = range2.run {
+                    val offset: Int
+                    val limit: Int
+
+                    if (hasCondition && this.start == null) {
+                        offset = 0
+                        limit = 100
+                    } else if (isMultiple) {
+                        offset = getOffset(0, true)
+                        limit = getLimit(20, true)
+                    } else {
+                        offset = getOffset(0, false)
+                        limit = getLimit(1, false)
+                    }
+
+                    val isDefault = offset == 0 && limit == 1
+
+                    val pss = try {
+                        scoreApiService.getScore(this.data!!.userID, mode.data, offset, limit, isPass)
+                    } catch (e: Exception) {
+                        return false
+                    }
+
+                    calculateApiService.applyStarToScores(pss)
+                    calculateApiService.applyBeatMapChanges(pss)
+
+                    val modeStr = if (mode.data!!.isDefault()) {
+                        pss.firstOrNull()?.mode?.fullName ?: this.data?.currentOsuMode?.fullName ?: "默认"
+                    } else {
+                        mode.data!!.fullName
+                    }
+
+                    // 检查查到的数据是否为空
+                    if (pss.isEmpty()) {
+                        if (isDefault) {
+                            throw GeneralTipsException(
+                                GeneralTipsException.Type.G_Null_PlayerRecord,
+                                modeStr,
+                            )
+                        } else {
+                            throw GeneralTipsException(
+                                GeneralTipsException.Type.G_Null_ModeBP,
+                                this.data!!.username,
+                                modeStr,
+                            )
+                        }
+                    }
+
+                    pss.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
+                }
+
+                if (ps.isEmpty() && isAvoidance) {
+                    return false
+                }
+
+                val filteredScores = ScoreFilter.filterScores(ps, conditions)
+
+                if (filteredScores.isEmpty()) {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_FilterRecent, range.data!!.username)
+                }
+
+                data.value = filteredScores.map { it.value }
+                return true
             } else if (b.find()) {
                 val any: String? = b.group("any")
 
@@ -227,7 +329,7 @@ class NewbieRestrictOverSRService(
         return data.value.isNotEmpty()
     }
 
-    override fun HandleMessage(event: MessageEvent, param: List<LazerScore>) {
+    override fun HandleMessage(event: MessageEvent, param: Collection<LazerScore>) {
         val sr = param.maxOf { it.beatMap.starRating }
         val silence = getSilence(sr)
         if (silence <= 0) return
@@ -243,24 +345,22 @@ class NewbieRestrictOverSRService(
         try {
             newbieDao.saveRestricted(criminal.id, sr, System.currentTimeMillis(), min(silence * 60000L, 7L * 24 * 60 * 60 * 1000))
         } catch (e: Throwable) {
-            log.error(
-                """
-                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
-                    七天之内超星次数：${count}。
-                    七天之内总计禁言时间：${duration}。
-                    但是保存记录失败了。
+            log.error("""
+                检测到 ${criminal.name}(${playerName}) 超星 ($message)。
+                七天之内超星次数：${count}。
+                七天之内总计禁言时间：${duration}。
+                但是保存记录失败了。
                 """.trimIndent(), e)
         }
 
         val executorBot = botContainer.robots[executorBotID]
             ?: run {
-                log.info(
-                    """
+                log.info("""
                     检测到 ${criminal.name}(${playerName}) 超星 ($message)。
                     七天之内超星次数：${count}。
                     七天之内总计禁言时间：${duration}。
                     但是执行机器人并未上线。无法执行禁言任务。
-                """.trimIndent())
+                    """.trimIndent())
                 return
             }
 

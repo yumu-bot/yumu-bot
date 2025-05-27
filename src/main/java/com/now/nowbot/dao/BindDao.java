@@ -476,21 +476,21 @@ public class BindDao {
                 var m = e.getMessage();
 
                 if (m != null && m.contains("401")) {
-                    log.info("更新 [{}] 令牌失败, token 失效, 绑定取消", u.getOsuName());
+                    log.info("刷新用户令牌：更新 [{}] 令牌失败, token 失效, 绑定取消", u.getOsuName());
                     bindUserMapper.backupBindByOsuId(u.getOsuID());
                     return;
                 } else {
                     badRequest++;
 
                     if (badRequest < 3) {
-                        log.error("更新 [{}] 令牌失败, 第 {} 次重试", u.getOsuName(), badRequest);
+                        log.error("刷新用户令牌：更新 [{}] 令牌失败, 第 {} 次重试", u.getOsuName(), badRequest);
                     } else {
-                        log.error("更新 [{}] 令牌失败, 第 {} 次重试失败, 放弃更新。错误原因：", u.getOsuName(), badRequest, e);
+                        log.error("刷新用户令牌：更新 [{}] 令牌失败, 第 {} 次重试失败, 放弃更新。错误原因：", u.getOsuName(), badRequest, e);
                         return;
                     }
                 }
             } catch (Throwable e) {
-                log.error("神秘错误: ", e);
+                log.error("刷新用户令牌：神秘错误: ", e);
                 return;
             }
         }
