@@ -13,6 +13,7 @@ import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.messageServiceImpl.ScorePRService.ScorePRParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
@@ -44,7 +45,8 @@ class NewbieRestrictOverSRService(
     private val calculateApiService: OsuCalculateApiService,
     private val newbieDao: NewbieDao,
     private val botContainer: BotContainer,
-    config: NewbieConfig
+    config: NewbieConfig,
+    private val scorePRService: ScorePRService
 ): MessageService<List<LazerScore>> {
     // 这里放幻数
 
@@ -102,37 +104,10 @@ class NewbieRestrictOverSRService(
                 scores = listOf(scoreApiService.getBeatMapScore(map.beatMapID, user.userID, mode, mods)?.score ?: return false)
                 calculateApiService.applyStarToScores(scores, local = true)
             } else if (pr.find()) {
-                val isMulti = (pr.group("s").isNullOrBlank().not() || pr.group("es").isNullOrBlank().not())
-
-                val offset: Int
-                val limit: Int
-
-                val isPass =
-                    if (pr.group("recent") != null) {
-                        false
-                    } else if (pr.group("pass") != null) {
-                        true
-                    } else {
-                        return false
-                    }
-
-                val mode = getMode(pr)
-
-                val range = getUserAndRangeWithBackoff(event, pr, mode, AtomicBoolean(), messageText, "recent")
-                range.setZeroToRange100()
-
-                if (range.data == null) return false
-
-                if (isMulti) {
-                    offset = range.getOffset(0, true)
-                    limit = range.getLimit(20, true)
-                } else {
-                    offset = range.getOffset(0, false)
-                    limit = range.getLimit(1, false)
-                }
-
-                scores = scoreApiService.getScore(range.data!!.userID, mode.data, offset, limit, isPass)
-                calculateApiService.applyStarToScores(scores, local = true)
+                val prDataValue = MessageService.DataValue<ScorePRParam>()
+                val isHandle = scorePRService.isHandle(event, messageText, prDataValue)
+                data.value = prDataValue.value.scores.values.toList()
+                return isHandle
             } else if (b.find()) {
                 val any: String? = b.group("any")
 
@@ -264,13 +239,13 @@ class NewbieRestrictOverSRService(
         val duration = getSilenceMessage(
             (newbieDao.getRestrictedDurationWithin(criminal.id, 7L * 24 * 60 * 60 * 1000) / 60000).toInt()
         )
-
+        val playerName = param.first().user.userName
         try {
             newbieDao.saveRestricted(criminal.id, sr, System.currentTimeMillis(), min(silence * 60000L, 7L * 24 * 60 * 60 * 1000))
         } catch (e: Throwable) {
             log.error(
                 """
-                    检测到 ${criminal.name} 超星 ($message)。
+                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
                     七天之内超星次数：${count}。
                     七天之内总计禁言时间：${duration}。
                     但是保存记录失败了。
@@ -281,7 +256,7 @@ class NewbieRestrictOverSRService(
             ?: run {
                 log.info(
                     """
-                    检测到 ${criminal.name} 超星 ($message)。
+                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
                     七天之内超星次数：${count}。
                     七天之内总计禁言时间：${duration}。
                     但是执行机器人并未上线。无法执行禁言任务。
@@ -294,7 +269,7 @@ class NewbieRestrictOverSRService(
         if (Permission.isGroupAdmin(event)) {
             report(isReportable, executorBot,
                 """
-                    检测到 ${criminal.name} 超星 ($message)。
+                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
                     七天之内超星次数：${count}。
                     七天之内总计禁言时间：${duration}。
                     但是对方是管理员或群主，无法执行禁言任务。
@@ -306,7 +281,7 @@ class NewbieRestrictOverSRService(
         if (silence >= 30 * 24 * 60 - 1) {
             report(isReportable, executorBot,
                 """
-                    检测到 ${criminal.name} 超星 ($message)。
+                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
                     七天之内超星次数：${count}。
                     七天之内总计禁言时间：${duration}。
                     情节严重，已按最大时间禁言。
@@ -314,7 +289,7 @@ class NewbieRestrictOverSRService(
 
             executorBot.setGroupBan(newbieGroupID, event.sender.id, (30 * 24 * 60 - 1) * 60)
                 ?: report(isReportable, executorBot, """
-                    检测到 ${criminal.name} 超星 ($message)。
+                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
                     七天之内超星次数：${count}。
                     七天之内总计禁言时间：${duration}。
                     但是机器人执行禁言任务失败了。
@@ -322,7 +297,7 @@ class NewbieRestrictOverSRService(
         } else {
             report(isReportable, executorBot,
                 """
-                    检测到 ${criminal.name} 超星 ($message)。
+                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
                     七天之内超星次数：${count}。
                     七天之内总计禁言时间：${duration}。
                     正在执行禁言任务。
@@ -331,7 +306,7 @@ class NewbieRestrictOverSRService(
             executorBot.setGroupBan(newbieGroupID, event.sender.id, silence * 60)
                 ?: report(isReportable, executorBot,
                     """
-                    检测到 ${criminal.name} 超星 ($message)。
+                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
                     七天之内超星次数：${count}。
                     七天之内总计禁言时间：${duration}。
                     但是机器人执行禁言任务失败了。
