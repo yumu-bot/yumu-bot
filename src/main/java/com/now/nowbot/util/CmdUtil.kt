@@ -29,7 +29,7 @@ import kotlin.math.min
 object CmdUtil {
 
     /** 获取玩家信息, 末尾没有 range。在未找到匹配的玩家时，抛错 */
-    @JvmStatic @Throws(TipsException::class) fun getUserWithoutRange(
+    fun getUserWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
@@ -37,12 +37,28 @@ object CmdUtil {
         return getUserWithoutRange(event, matcher, mode, AtomicBoolean(false))
     }
 
+    fun getUserWithoutRangeWithBackoff(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
+        messageText: String,
+        vararg ignores: String,
+    ): OsuUser {
+        try {
+            return getUserWithoutRange(event, matcher, mode, isMyself)
+        } catch (e: BindException) {
+            if (isAvoidance(messageText, *ignores)) throw LogException("退避指令 $ignores")
+            throw e
+        }
+    }
+
     /**
      * 获取玩家信息, 末尾没有 range
      *
      * @param isMyself: 作为返回值使用, 如果是自己则结果为 true
      */
-    @JvmStatic @Throws(TipsException::class) fun getUserWithoutRange(
+    fun getUserWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
@@ -74,7 +90,7 @@ object CmdUtil {
      * @param isMyself 传入一个 [AtomicBoolean] 作为返回值使用, 如果是自己则结果为 true (注意, 当包含 qq= 或 uid= 时,
      *   即使是发送者本身也是 false)
      */
-    @JvmStatic @Throws(TipsException::class) fun getUserWithRange(
+    fun getUserWithRange(
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
@@ -91,21 +107,21 @@ object CmdUtil {
     /**
      * 前四个参数同 [getUserWithRange]
      *
-     * @param text 命令消息文本
+     * @param messageText 命令消息文本
      * @param ignores 需要避免的指令
      */
-    @JvmStatic fun getUserAndRangeWithBackoff(
+    fun getUserAndRangeWithBackoff(
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
         isMyself: AtomicBoolean,
-        text: String,
+        messageText: String,
         vararg ignores: String,
     ): CmdRange<OsuUser> {
         try {
             return getUserWithRange(event, matcher, mode, isMyself)
         } catch (e: BindException) {
-            if (isMyself.get() && isAvoidance(text, *ignores)) throw LogException("退避指令 $ignores")
+            if (isMyself.get() && isAvoidance(messageText, *ignores)) throw LogException("退避指令 $ignores")
             throw e
         }
     }

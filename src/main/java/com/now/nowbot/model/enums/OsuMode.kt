@@ -61,7 +61,7 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
         /**
          * 当 mode 为 Default 或者 mode == mode2 时，返回 true
          */
-        @JvmStatic fun equalOrDefault(mode: OsuMode, mode2: Any?) : Boolean {
+        fun equalOrDefault(mode: OsuMode, mode2: Any?) : Boolean {
             if (mode2 is OsuMode) {
                 return mode == mode2 || mode == DEFAULT
             }
@@ -69,13 +69,13 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
             return false
         }
 
-        @JvmStatic fun getMode(str: String?, default: String?): OsuMode {
+        fun getMode(str: String?, default: String?): OsuMode {
             val mode = getMode(default)
             if (DEFAULT != mode) return getMode(str, mode)
             return getMode(str)
         }
 
-        @JvmStatic fun getMode(str: String?, default: OsuMode?): OsuMode {
+        fun getMode(str: String?, default: OsuMode?): OsuMode {
             val mode = getMode(str)
             if (DEFAULT == mode) return default ?: DEFAULT
             return mode
@@ -129,15 +129,15 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
         /**
          * 修正无法转换的模式：只有可转换的谱面才能赋予模式
          */
-        @JvmStatic fun correctConvert(@Nullable convert: OsuMode?, @Nullable map: OsuMode?): OsuMode {
-            return if (map != OSU && map != null && map != DEFAULT) {
-                map
+        fun getConvertableMode(convert: OsuMode?, map: OsuMode?): OsuMode {
+            return if (isDefaultOrNull(convert) || (map != null && map != OSU && map != DEFAULT)) {
+                map ?: DEFAULT
             } else {
                 convert ?: DEFAULT
             }
         }
 
-        @JvmStatic fun getQueryName(@Nullable mode: OsuMode?): Optional<String> {
+        fun getQueryName(mode: OsuMode?): Optional<String> {
             if (mode == null) {
                 return Optional.empty()
             }

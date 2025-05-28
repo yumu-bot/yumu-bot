@@ -82,7 +82,7 @@ class NewbieRestrictOverSRService(
                 val inputMode = getMode(ss)
 
                 val map = beatmapApiService.getBeatMap(bid)
-                val mode = OsuMode.correctConvert(inputMode.data, map.mode)
+                val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
                 user = getUserWithoutRange(event, ss, CmdObject(mode))
                 scores = scoreApiService.getBeatMapScores(map.beatMapID, user.userID, mode)
@@ -94,7 +94,7 @@ class NewbieRestrictOverSRService(
                 val mods = getMod(s)
 
                 val map = beatmapApiService.getBeatMap(bid)
-                val mode = OsuMode.correctConvert(inputMode.data, map.mode)
+                val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
                 user = getUserWithoutRange(event, s, CmdObject(mode))
                 scores = listOf(scoreApiService.getBeatMapScore(map.beatMapID, user.userID, mode, mods)?.score ?: return false)

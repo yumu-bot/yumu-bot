@@ -139,7 +139,7 @@ class MatchMapService(
 
             val beatmap = beatmapApiService.getBeatMap(round.beatMapID)
 
-            val mode = OsuMode.correctConvert(round.mode, beatmap.mode)
+            val mode = OsuMode.getConvertableMode(round.mode, beatmap.mode)
 
             val original = DataUtil.getOriginal(beatmap)
 

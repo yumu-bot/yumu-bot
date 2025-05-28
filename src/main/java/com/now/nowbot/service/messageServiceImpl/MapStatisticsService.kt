@@ -214,7 +214,7 @@ class MapStatisticsService(
 
         val mods = LazerMod.getModsList(matcher.group("mod"))
 
-        val expected = Expected(OsuMode.correctConvert(mode, beatMap.mode), accuracy, combo, miss, mods)
+        val expected = Expected(OsuMode.getConvertableMode(mode, beatMap.mode), accuracy, combo, miss, mods)
         return MapParam(user, beatMap, expected)
     }
 
