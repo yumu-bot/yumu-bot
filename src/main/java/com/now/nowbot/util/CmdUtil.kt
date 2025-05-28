@@ -380,8 +380,14 @@ object CmdUtil {
         val rangeInt = arrayOf<Int?>(null, null)
 
         try {
-            val range = text.removePrefix(CHAR_HASH.toString()).removePrefix(CHAR_HASH_FULL.toString()).trim()
-                .split(SPLIT_RANGE).dropLastWhile { it.isEmpty() }.map { it.toInt() }.toTypedArray()
+            val range = text
+                .removePrefix(CHAR_HASH.toString())
+                .removePrefix(CHAR_HASH_FULL.toString())
+                .trim()
+                .split(REG_HYPHEN.toRegex())
+                .dropLastWhile { it.isEmpty() }
+                .map { it.toInt() }
+                .toTypedArray()
             if (range.size >= 2) {
                 rangeInt[0] = range[0]
                 rangeInt[1] = range[1]
@@ -579,8 +585,7 @@ object CmdUtil {
 
     private const val OSU_MIN_INDEX = 2
 
-    private val SPLIT_RANGE = "[\\-－ ]".toRegex()
-    private val JUST_RANGE: Pattern = "^\\s*$REG_HASH?\\s*(\\d{1,3}[\\-－ ]+)?\\d{1,3}\\s*$".toPattern()
+    private val JUST_RANGE: Pattern = "^\\s*$REG_HASH?\\s*(\\d{1,3}$REG_HYPHEN+)?\\d{1,3}\\s*$".toPattern()
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
     private lateinit var bindDao: BindDao
     private lateinit var userApiService: OsuUserApiService

@@ -18,7 +18,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import org.springframework.web.reactive.function.client.WebClientResponseException.InternalServerError
 import java.net.ConnectException
 
-@Service("NOWBOT_IMAGE") class ImageService(private val webClient: WebClient) {
+@Service("NOWBOT_IMAGE")
+class ImageService(private val webClient: WebClient) {
     /**
      * @param name 面板的内部编号，并非功能编号
      */
@@ -118,27 +119,6 @@ import java.net.ConnectException
         return doPost("panel_A6", httpEntity)
     }
 
-    fun getPanelA7(user: OsuUser, fixes: Map<String, Any>): ByteArray {
-        val headers = defaultHeader
-        val body: Map<String, Any> = mapOf(
-            "user" to user, "scores" to fixes["scores"]!!, "pp" to fixes["pp"]!!
-        )
-
-        val httpEntity = HttpEntity(body, headers)
-        return doPost("panel_A7", httpEntity)
-    }
-
-    fun getPanelH(mapPool: Any, mode: OsuMode): ByteArray { // log.debug(JacksonUtil.objectToJsonPretty(mapPool));
-        val headers = defaultHeader
-
-        val body = mapOf(
-            "pool" to mapPool, "mode" to mode.shortName
-        )
-
-        val httpEntity = HttpEntity(body, headers)
-        return doPost("panel_H", httpEntity)
-    }
-
     fun getPanelAlpha(vararg lines: String?): ByteArray {
         val headers = defaultHeader
         val body: MutableMap<String, Any> = HashMap()
@@ -170,7 +150,7 @@ import java.net.ConnectException
         val headers = defaultHeader
         val body: MutableMap<String, Any> = HashMap()
         body["user"] = osuUser
-        body["panel"] = "info2"
+        body["panel"] = "info"
         val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
         return doPost("panel_Gamma", httpEntity)
     }

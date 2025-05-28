@@ -177,8 +177,14 @@ class BPFixService(
             mode.fullName
         )
 
-        val fixData = fix(user.pp, bpMap) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP)
+        val fixes = fix(user.pp, bpMap) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP)
 
-        return imageService.getPanelA7(user, fixData)
+        val body = mapOf(
+            "user" to user,
+            "scores" to fixes["scores"]!!,
+            "pp" to fixes["pp"]!!
+        )
+
+        return imageService.getPanel(body, "A7")
     }
 }
