@@ -21,6 +21,7 @@ import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
+import com.now.nowbot.util.CmdUtil.getUserWithRange
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_EQUAL
 import com.now.nowbot.util.command.REG_HYPHEN
@@ -167,37 +168,34 @@ class ScorePRService(
     }
 
     override fun accept(event: MessageEvent, messageText: String): ScorePRParam? {
-        var matcher: Matcher
+        val m1 = OfficialInstruction.SCORE_PASS.matcher(messageText)
+        val m2 = OfficialInstruction.SCORE_PASSES.matcher(messageText)
+        val m3 = OfficialInstruction.SCORE_RECENT.matcher(messageText)
+        val m4 = OfficialInstruction.SCORE_RECENTS.matcher(messageText)
+
+        val matcher: Matcher
 
         val isPass: Boolean
         val isMultiple: Boolean
 
-        when {
-            OfficialInstruction.SCORE_PASS.matcher(messageText)
-                .apply { matcher = this }.find() -> {
-                isPass = true
-                isMultiple = false
-            }
-
-            OfficialInstruction.SCORE_PASSES.matcher(messageText)
-                    .apply { matcher = this }.find() -> {
-                isPass = true
-                isMultiple = true
-            }
-
-            OfficialInstruction.SCORE_RECENT.matcher(messageText)
-                    .apply { matcher = this }.find() -> {
-                isPass = false
-                isMultiple = false
-            }
-
-            OfficialInstruction.SCORE_RECENTS.matcher(messageText)
-                    .apply { matcher = this }.find() -> {
-                isPass = false
-                isMultiple = true
-            }
-
-            else -> return null
+        if (m1.find()) {
+            matcher = m1
+            isPass = true
+            isMultiple = false
+        } else if (m2.find()) {
+            matcher = m2
+            isPass = true
+            isMultiple = true
+        } else if (m3.find()) {
+            matcher = m3
+            isPass = false
+            isMultiple = false
+        } else if (m4.find()) {
+            matcher = m4
+            isPass = false
+            isMultiple = true
+        } else {
+            return null
         }
 
         val any: String? = matcher.group("any")
@@ -205,7 +203,7 @@ class ScorePRService(
         val isMyself = AtomicBoolean()
         val mode = getMode(matcher)
 
-        val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent")
+        val range = getUserWithRange(event, matcher, mode, isMyself)
 
         range.setZeroToRange100()
 
@@ -232,10 +230,6 @@ class ScorePRService(
         }
 
         val scores = range2.getRecentScores(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass, false)
-
-        if (scores.isEmpty()) {
-            return null
-        }
 
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 

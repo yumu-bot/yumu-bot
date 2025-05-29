@@ -36,7 +36,7 @@ class ScorePRCardService(
 
 
     @Throws(Throwable::class)
-    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<PRCardParam?>): Boolean {
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<PRCardParam>): Boolean {
         val matcher = Instruction.PR_CARD.matcher(messageText)
         if (!matcher.find()) return false
         val score: LazerScore?

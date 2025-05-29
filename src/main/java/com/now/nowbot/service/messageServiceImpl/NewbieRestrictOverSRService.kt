@@ -325,7 +325,7 @@ class NewbieRestrictOverSRService(
             remitBIDs.contains(it.beatMap.beatMapID) && LazerMod.noStarRatingChange(it.mods)
         }
 
-        return data.value.isNotEmpty()
+        return data.value.isNullOrEmpty().not()
     }
 
     override fun HandleMessage(event: MessageEvent, param: Collection<LazerScore>) {

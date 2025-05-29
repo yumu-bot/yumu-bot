@@ -1,23 +1,18 @@
-package com.now.nowbot.service;
+package com.now.nowbot.service
 
-import com.now.nowbot.qq.event.MessageEvent;
-import org.springframework.lang.NonNull;
+import com.now.nowbot.qq.event.MessageEvent
+import org.springframework.lang.NonNull
 
-public interface MessageService<T> {
+interface MessageService<T> {
+    @Throws(Throwable::class) fun isHandle(
+        @NonNull event: MessageEvent,
+        @NonNull messageText: String,
+        @NonNull data: DataValue<T>
+    ): Boolean
 
-    boolean isHandle(@NonNull MessageEvent event, @NonNull String messageText, @NonNull DataValue<T> data) throws Throwable;
-
-    void HandleMessage(@NonNull MessageEvent event, @NonNull T param) throws Throwable;
+    @Throws(Throwable::class) fun HandleMessage(@NonNull event: MessageEvent, @NonNull param: T)
 
     class DataValue<T> {
-        T value;
-
-        public T getValue() {
-            return value;
-        }
-
-        public void setValue(T value) {
-            this.value = value;
-        }
+        var value: T? = null
     }
 }

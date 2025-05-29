@@ -18,17 +18,17 @@ class TransService : MessageService<Matcher> {
     ): Boolean {
         val m = Instruction.TRANS.matcher(messageText)
         if (m.find()) {
-            data.setValue(m)
+            data.value = m
             return true
         } else return false
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
-        val d_index = d1.indexOf(matcher.group("a"))
+    override fun HandleMessage(event: MessageEvent, param: Matcher) {
+        val d_index = d1.indexOf(param.group("a"))
         if (d_index <= 0) throw TipsException("输入错误")
 
-        val x = matcher.group("b").toInt()
+        val x = param.group("b").toInt()
         val sb = StringBuilder()
 
         if (d_index == 2 || d_index == 4 || d_index == 7 || d_index == 9 || d_index == 11) {
@@ -40,9 +40,9 @@ class TransService : MessageService<Matcher> {
         sb.append("大调").append('\n')
         for (j in c1) {
             if (12 < d_index + j) {
-                sb.append(d1.get(d_index + j - 12)).append(x + 1).append(' ')
+                sb.append(d1[d_index + j - 12]).append(x + 1).append(' ')
             } else {
-                sb.append(d1.get(d_index + j)).append(x).append(' ')
+                sb.append(d1[d_index + j]).append(x).append(' ')
             }
         }
 
@@ -52,7 +52,7 @@ class TransService : MessageService<Matcher> {
     companion object {
         var c1 = intArrayOf(0, 2, 4, 5, 7, 9, 11)
         var d1 =
-            mutableListOf<String>(
+            mutableListOf(
                 "null",
                 "C",
                 "C#",

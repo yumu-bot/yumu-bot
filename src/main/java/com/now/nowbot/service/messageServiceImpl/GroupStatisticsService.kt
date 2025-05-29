@@ -85,9 +85,9 @@ class GroupStatisticsService(
         val m = Instruction.GROUP_STATISTICS.matcher(messageText)
         if (m.find()) {
             when (m.group("group")) {
-                "a", "进阶群" -> data.setValue(newbieConfig.advancedGroup)
-                "h", "高阶群" -> data.setValue(newbieConfig.hyperGroup)
-                "n", "新人群" -> data.setValue(newbieConfig.newbieGroup)
+                "a", "进阶群" -> data.value = newbieConfig.advancedGroup
+                "h", "高阶群" -> data.value = newbieConfig.hyperGroup
+                "n", "新人群" -> data.value = newbieConfig.newbieGroup
                 null -> {
                     return false
                 }
@@ -99,7 +99,7 @@ class GroupStatisticsService(
         return false
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, group: Long) {
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Long) {
         // init 搬到这里来，别每次启动都要存个文件到那里
         try {
             if (Files.isRegularFile(cachePath)) {
@@ -122,7 +122,7 @@ class GroupStatisticsService(
         val from = event.subject
         if (from is Group) {
             try {
-                work(from, group)
+                work(from, param)
             } catch (e: Exception) {
                 log.error("出现错误:", e)
             } finally {

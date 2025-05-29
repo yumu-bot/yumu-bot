@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 @Service("ECHO")
 class EchoService : MessageService<String> {
     @Throws(Throwable::class)
-    override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<String?>): Boolean {
+    override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<String>): Boolean {
         val m = Instruction.ECHO.matcher(messageText)
         if (!m.find()) {
             return false
@@ -22,7 +22,7 @@ class EchoService : MessageService<String> {
     @ServiceLimit(limit = 15000)
     @CheckPermission(isSuperAdmin = true)
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, data: String) {
-        event.subject.sendMessage(data)
+    override fun HandleMessage(event: MessageEvent, param: String) {
+        event.reply(param)
     }
 }

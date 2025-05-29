@@ -1,15 +1,18 @@
-package com.now.nowbot.throwable.serviceException;
+package com.now.nowbot.throwable.serviceException
 
-import com.now.nowbot.throwable.TipsException;
+import com.now.nowbot.throwable.TipsException
 
-public class MatchListenerException extends TipsException {
-    public enum Type {
-        ML_Instructions("""
+class MatchListenerException : TipsException {
+    enum class Type(val message: String) {
+        ML_Instructions(
+            """
                 欢迎使用 Yumu Match Listener 功能！食用方法：
                 !ymmatchlistener / !ymml [matchid] (operate)
                 matchid：这场比赛的房间号。
                 operate：操作。可输入 start，s，stop，p。默认开始监听（start）。
-                """),//参数_无参数
+                
+                """.trimIndent()
+        ),  //参数_无参数
         ML_MatchID_Null("请输入正确的房间号！"),
         ML_MatchID_NotFound("小沐找不到这场比赛..."),
 
@@ -23,8 +26,8 @@ public class MatchListenerException extends TipsException {
         ML_Listen_AlreadyInListeningGroup("这个群正在监听 %s 这场比赛！如果想停止监听可输入 !ml [matchid] stop。"),
         ML_Listen_AlreadyInListeningOthers("其他人正在监听 %s 这场比赛！如果想停止监听可输入 !ml [matchid] stop。"),
         ML_Listen_Aborted("上一场对局被强制结束了。"),
-        ML_Listen_StopRequest("收到停止监听 %s 的请求"),
-        ML_Listen_Stop("停止监听 %s：%s。"), //标准停止输出
+        ML_Listen_Stop("停止监听 %s：%s。"),  //标准停止输出
+        ML_Listen_StopGroup("已完全停止当前群聊的对局监听实例！"),
         ML_Listen_StopAll("已完全停止所有对局监听实例！"),
 
         ML_Info_NoListener("本群没有监听实例。"),
@@ -32,17 +35,8 @@ public class MatchListenerException extends TipsException {
 
         ML_Send_NotGroup("请在群聊中使用这个功能！"),
         ML_Send_Error("对局监听图片发送失败。\n请耐心等待问题修复。"),
+    }
 
-        ;
-        public final String message;
-        Type(String message) {
-            this.message = message;
-        }
-    }
-    public MatchListenerException(MatchListenerException.Type type){
-        super(type.message);
-    }
-    public MatchListenerException(MatchListenerException.Type type, Object... args){
-        super(String.format(type.message, args));
-    }
+    constructor(type: Type) : super(type.message)
+    constructor(type: Type, vararg args: Any?) : super(String.format(type.message, *args))
 }

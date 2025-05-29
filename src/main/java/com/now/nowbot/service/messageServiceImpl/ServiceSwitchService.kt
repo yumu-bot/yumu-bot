@@ -54,20 +54,17 @@ class ServiceSwitchService(
         if (service.isNotBlank()) {
             if (operate.isNotBlank()) {
                 if (groupStr.isNotBlank()) {
-                    data.setValue(
-                        SwitchParam(
-                            groupStr.toLong(),
-                            service.uppercase(Locale.getDefault()),
-                            getOperation(operate)
-                        )
+                    data.value = SwitchParam(
+                        groupStr.toLong(),
+                        service.uppercase(Locale.getDefault()),
+                        getOperation(operate)
                     )
+
                 } else {
-                    data.setValue(
-                        SwitchParam(
-                            -1L,
-                            service.uppercase(Locale.getDefault()),
-                            getOperation(operate)
-                        )
+                    data.value = SwitchParam(
+                        -1L,
+                        service.uppercase(Locale.getDefault()),
+                        getOperation(operate)
                     )
                 }
             } else {
@@ -78,14 +75,14 @@ class ServiceSwitchService(
                     if (op != Operation.REVIEW) {
                         throw ServiceSwitchException(ServiceSwitchException.Type.SW_Service_Missing)
                     }
-                    data.setValue(SwitchParam(-1L, null, Operation.REVIEW))
+                    data.value = SwitchParam(-1L, null, Operation.REVIEW)
                 }
             }
         } else {
             if (groupStr.isNotBlank()) {
                 throw ServiceSwitchException(ServiceSwitchException.Type.SW_Parameter_OnlyGroup)
             } else {
-                data.setValue(SwitchParam(-1L, null, Operation.REVIEW))
+                data.value = SwitchParam(-1L, null, Operation.REVIEW)
                 // throw ServiceSwitchException(ServiceSwitchException.Type.SW_Instructions)
             }
         }

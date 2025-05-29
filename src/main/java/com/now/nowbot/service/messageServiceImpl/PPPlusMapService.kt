@@ -29,7 +29,7 @@ class PPPlusMapService(
         val mods: List<LazerMod>,
     )
 
-    override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<PPPlusParam?>): Boolean {
+    override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<PPPlusParam>): Boolean {
         val matcher = Instruction.PP_PLUS_MAP.matcher(messageText)
         if (!matcher.find()) return false
 
@@ -44,9 +44,9 @@ class PPPlusMapService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, data: PPPlusParam) {
+    override fun HandleMessage(event: MessageEvent, param: PPPlusParam) {
         val map = try {
-            beatmapApiService.getBeatMapFromDataBase(data.bid)
+            beatmapApiService.getBeatMapFromDataBase(param.bid)
         } catch (e: Exception) {
             throw PPPlusException(PPPlusException.Type.PL_Map_NotFound)
         }
@@ -55,7 +55,7 @@ class PPPlusMapService(
             throw PPPlusException(PPPlusException.Type.PL_Function_NotSupported)
         }
         val pp = try {
-            performancePlusService.getMapPerformancePlus(data.bid, data.mods)!!
+            performancePlusService.getMapPerformancePlus(param.bid, param.mods)!!
         } catch (e: Exception) {
             if (e is WebClientResponseException) {
                 log.error { e.responseBodyAsString }
@@ -65,7 +65,7 @@ class PPPlusMapService(
             throw PPPlusException(PPPlusException.Type.PL_Fetch_APIConnectFailed)
         }
 
-        map.addPPPlus(pp, data.mods)
+        map.addPPPlus(pp, param.mods)
         val dataMap = mapOf(
             "isUser" to false,
             "me" to map,

@@ -47,7 +47,7 @@ class NewbiePlayStatisticsService(
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: MessageService.DataValue<SearchType?>
+        data: MessageService.DataValue<SearchType>
     ): Boolean {
         val type = SearchType.fromString(messageText) ?: return false
 
@@ -66,13 +66,13 @@ class NewbiePlayStatisticsService(
     }
 
     //    @CheckPermission(isSuperAdmin = true)
-    override fun HandleMessage(event: MessageEvent, data: SearchType) {
+    override fun HandleMessage(event: MessageEvent, param: SearchType) {
         if (event !is GroupMessageEvent) return
         val gid = event.group.id
         if (gid != newbieConfig.newbieGroup && gid != newbieConfig.killerGroup) return
 
         val bind = bindDao.getBindFromQQ(event.sender.id, true)
-        val message = when (data) {
+        val message = when (param) {
             SearchType.DAY -> handleDay(bind)
             SearchType.HISTORY -> handleHistory(bind)
             SearchType.RANK -> handleRank(bind)

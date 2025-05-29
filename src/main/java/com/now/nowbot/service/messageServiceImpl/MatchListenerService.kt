@@ -38,42 +38,51 @@ class MatchListenerService(
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: MessageService.DataValue<ListenerParam?>,
+        data: MessageService.DataValue<ListenerParam>,
     ): Boolean {
         val matcher = Instruction.MATCH_LISTENER.matcher(messageText)
         if (!matcher.find()) return false
 
         val operate = getStatus(matcher.group("operate"))
 
-        try {
-            if (matcher.group("matchid").isNullOrBlank().not()) {
-                val id = matcher.group("matchid").toLong()
+        val id = matcher.group("matchid").toLongOrNull()
+        val isSuper = Permission.isSuperAdmin(event.sender.id)
 
-                data.value = ListenerParam(id, operate)
-                return true
-            } else if (operate == Operation.STOP && Permission.isSuperAdmin(event.sender.id)) {
-                stopAllListenerFromSuperAdmin()
-                event.reply(MatchListenerException.Type.ML_Listen_StopAll.message)
-                return false
+        if (operate == Operation.STOP) {
+            if (id == null) {
+                if (isSuper) {
+                    stopAllListener(true)
+                    event.reply(MatchListenerException(MatchListenerException.Type.ML_Listen_StopAll))
+                    return false
+                } else {
+                    stopGroupListener(event.subject.id, false)
+                    event.reply(MatchListenerException(MatchListenerException.Type.ML_Listen_StopGroup))
+                    return false
+                }
             } else {
-                throw MatchListenerException(MatchListenerException.Type.ML_Instructions)
+                data.value = ListenerParam(id, Operation.STOP)
+                return true
             }
-        } catch (e: Exception) {
-            log.error { "比赛监听：无法确定对局编号！" }
+        } else if (id != null) {
+            data.value = ListenerParam(id, operate)
+            return true
+        } else if (matcher.group("matchid").isNullOrBlank().not()) {
             throw MatchListenerException(MatchListenerException.Type.ML_MatchID_Null)
+        } else {
+            throw MatchListenerException(MatchListenerException.Type.ML_Instructions)
         }
     }
 
-    override fun HandleMessage(event: MessageEvent, data: ListenerParam) {
+    override fun HandleMessage(event: MessageEvent, param: ListenerParam) {
         val match: Match
 
         if (event !is GroupMessageEvent) {
             throw TipsException(MatchListenerException.Type.ML_Send_NotGroup.message)
         }
 
-        when (data.operate) {
+        when (param.operate) {
             Operation.INFO -> {
-                val list = senderSet.filter { it.first == event.group.id }.map { it.third.matchID }
+                val list = listenerData.filter { it.groupID == event.group.id }.map { it.listener.matchID }
                 val message =
                     if (list.isEmpty()) {
                         MatchListenerException.Type.ML_Info_NoListener.message
@@ -88,7 +97,7 @@ class MatchListenerService(
             Operation.START -> {
                 match =
                     try {
-                        matchApiService.getMonitoredMatchInfo(data.id)
+                        matchApiService.getMonitoredMatchInfo(param.id)
                     } catch (e: Exception) {
                         throw MatchListenerException(
                             MatchListenerException.Type.ML_MatchID_NotFound
@@ -101,18 +110,18 @@ class MatchListenerService(
                 }
 
                 event.reply(
-                    String.format(MatchListenerException.Type.ML_Listen_Start.message, data.id)
+                    String.format(MatchListenerException.Type.ML_Listen_Start.message, param.id)
                 )
             }
 
             Operation.STOP -> {
-                consoleListener(event.group.id, Permission.isSuperAdmin(event.sender.id), data.id)
+                cancelListener(event.group.id, param.id, Permission.isSuperAdmin(event.sender.id))
             }
 
             else -> {}
         }
 
-        regentListener(
+        registerListener(
             event.group.id,
             event.sender.id,
             MatchListenerImplement(
@@ -121,7 +130,7 @@ class MatchListenerService(
                 calculateApiService,
                 imageService,
                 event,
-                data.id
+                param.id
             ),
             matchApiService,
             this,
@@ -197,7 +206,7 @@ class MatchListenerService(
         override fun onGameStart(event: MatchAdapter.GameStartEvent) =
             with(event) {
                 if (!isTeamVS && !hasNext()) {
-                    consoleListener(messageEvent.subject.id, false, matchID)
+                    cancelListener(messageEvent.subject.id, matchID, false)
                 }
 
                 val mr = MatchRating(
@@ -243,39 +252,6 @@ class MatchListenerService(
 
         override fun onGameEnd(event: MatchAdapter.GameEndEvent) =
             with(event) {
-
-                /*
-                game.scores = game.scores.filter { s -> s.score >= 1000 }
-
-                val userMap =
-                    match.players
-                        .distinct()
-                        .associateBy { it.userID }
-
-                for (s in game.scores) {
-                    val u = userMap[s.userID]
-
-                    if (u != null && u.id != 0L) {
-                        s.user = u
-                    }
-                }
-
-                val index = 1 + match.events.count { it.round != null }
-
-                // 手动调位置和赋值
-                if (game.scores.size > 2) {
-                    game.scores = game.scores.sortedByDescending { it.score }
-                }
-
-                for (i in game.scores.indices) {
-                    game.scores[i].ranking = (i + 1)
-                }
-
-                calculateApiService.applyBeatMapChanges(game.beatMap, LazerMod.getModsList(game.mods))
-                calculateApiService.applyStarToBeatMap(game.beatMap, game.mode, LazerMod.getModsList(game.mods))
-
-                 */
-
                 val mr = MatchRating(match, beatmapApiService, calculateApiService)
 
                 // 其实这个就是 game
@@ -311,12 +287,10 @@ class MatchListenerService(
             }
 
         override fun onMatchEnd(type: MatchListener.StopType) {
-            if (
-                type == MatchListener.StopType.SERVER_REBOOT ||
-                type == MatchListener.StopType.USER_STOP
-            )
-                return
-            consoleListener(messageEvent.subject.id, false, matchID)
+            if (type == MatchListener.StopType.SERVER_REBOOT || type == MatchListener.StopType.USER_STOP) return
+
+            cancelListener(messageEvent.subject.id, matchID, false)
+
             val message =
                 String.format(
                     MatchListenerException.Type.ML_Listen_Stop.message,
@@ -362,37 +336,58 @@ class MatchListenerService(
 
     data class ListenerParam(val id: Long, val operate: Operation = Operation.END)
 
+    data class ListenerData(val groupID: Long, val userID: Long, val listener: MatchListenerImplement) {
+        override fun hashCode(): Int {
+            return ((groupID shl 11) + userID).hashCode()
+        }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as ListenerData
+
+            if (groupID != other.groupID) return false
+            if (userID != other.userID) return false
+
+            return true
+        }
+    }
+
     companion object {
         val log = KotlinLogging.logger {}
         const val BREAK_ROUND: Int = 16
         private const val USER_MAX = 3
         private const val GROUP_MAX = 3
 
+        /**
+         * matchID : listener
+         */
         private val listeners = mutableMapOf<Long, MatchListener>()
 
         // group user listener
-        val senderSet = mutableSetOf<Triple<Long, Long, MatchListenerImplement>>()
+        val listenerData = mutableSetOf<ListenerData>()
 
-        fun regentListener(
+        fun registerListener(
             group: Long,
             user: Long,
             listener: MatchListenerImplement,
             matchApiService: OsuMatchApiService,
             self: MatchListenerService,
         ) {
-            if (countByGroup(group) >= GROUP_MAX) {
+            if (countByGroupID(group) >= GROUP_MAX) {
                 throw TipsRuntimeException(
                     MatchListenerException.Type.ML_Listen_MaxInstanceGroup.message
                 )
             }
-            if (countByUser(user) >= USER_MAX) {
+            if (countByUserID(user) >= USER_MAX) {
                 throw TipsRuntimeException(
                     MatchListenerException.Type.ML_Listen_MaxInstance.message
                 )
             }
 
-            val key = Triple(group, user, listener)
-            senderSet.add(key)
+            val key = ListenerData(group, user, listener)
+            listenerData.add(key)
             val l =
                 listeners.computeIfAbsent(listener.matchID) {
                     val match = matchApiService.getMonitoredMatchInfo(it)
@@ -405,16 +400,16 @@ class MatchListenerService(
             l.addListener(listener)
         }
 
-        fun consoleListener(group: Long, isSuper: Boolean, matchID: Long) {
-            val triples =
-                senderSet.filter {
-                    it.third.matchID == matchID && (isSuper || it.first == group)
-                }
-            if (triples.isEmpty()) {
+        fun cancelListener(groupID: Long, matchID: Long, isSuper: Boolean) {
+            val filteredSet = listenerData.filter {
+                it.listener.matchID == matchID && (isSuper || it.groupID == groupID)
+            }
+
+            if (filteredSet.isEmpty()) {
                 return
             }
 
-            senderSet.removeIf { it.first == group }
+            listenerData.removeIf { it.groupID == groupID }
 
             val stopType =
                 if (isSuper) {
@@ -423,7 +418,9 @@ class MatchListenerService(
                     MatchListener.StopType.USER_STOP
                 }
 
-            triples.forEach { (_, _, l) ->
+            filteredSet.forEach {
+                val l = it.listener
+
                 l.onMatchEnd(stopType)
                 val removable = listeners[l.matchID]?.removeListener(l) == true
                 if (removable) {
@@ -432,27 +429,33 @@ class MatchListenerService(
             }
         }
 
-        fun stopAllListenerFromSuperAdmin() {
-            senderSet.clear()
-            listeners.forEach { (_, u) -> u.stop(MatchListener.StopType.SUPER_STOP) }
+        fun stopAllListener(isSuper: Boolean = false) {
+            val type = if (isSuper) MatchListener.StopType.SUPER_STOP else MatchListener.StopType.USER_STOP
+
+            listenerData.clear()
+            listeners.forEach { (_, u) -> u.stop(type) }
         }
 
-        // TODO 按群移除监听实例
-        fun stopGroupListenerFromSuperAdmin() {
-            listeners.forEach { (_, u) -> u.stop(MatchListener.StopType.SUPER_STOP) }
+        fun stopGroupListener(groupID: Long, isSuper: Boolean = false) {
+            val matches = listenerData.filter { it.groupID == groupID }.map { it.listener.matchID }
+            val type = if (isSuper) MatchListener.StopType.SUPER_STOP else MatchListener.StopType.USER_STOP
+
+            listenerData.removeIf { it.groupID == groupID }
+            listeners.filter { matches.contains(it.key) }.forEach { it.value.stop(type) }
         }
 
+        @JvmStatic
         fun stopAllListenerFromReboot() {
-            senderSet.clear()
-            listeners.forEach { (_, u) -> u.stop(MatchListener.StopType.SERVER_REBOOT) }
+            listenerData.clear()
+            listeners.forEach { it.value.stop(MatchListener.StopType.SERVER_REBOOT) }
         }
 
-        private fun countByGroup(group: Long): Int {
-            return senderSet.count { it.first == group }
+        private fun countByGroupID(groupID: Long): Int {
+            return listenerData.count { it.groupID == groupID }
         }
 
-        private fun countByUser(user: Long): Int {
-            return senderSet.count { it.second == user }
+        private fun countByUserID(userID: Long): Int {
+            return listenerData.count { it.userID == userID }
         }
 
         private fun getStatus(str: String?): Operation {

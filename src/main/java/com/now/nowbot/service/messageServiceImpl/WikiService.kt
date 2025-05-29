@@ -1,78 +1,84 @@
-package com.now.nowbot.service.messageServiceImpl;
+package com.now.nowbot.service.messageServiceImpl
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.config.NowbotConfig
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.throwable.LogException
+import com.now.nowbot.util.JacksonUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.now.nowbot.config.NowbotConfig;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.throwable.LogException;
-import com.now.nowbot.util.JacksonUtil;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+class WikiService internal constructor() : MessageService<Matcher> {
+    var log: Logger = LoggerFactory.getLogger(WikiService::class.java)
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-public class WikiService implements MessageService<Matcher> {
-    Logger log = LoggerFactory.getLogger(WikiService.class);
-    static JsonNode WIKI;
-    WikiService(){
-        String datestr = "";
+    init {
+        var datestr = ""
         try {
-            datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH,"wiki.json"));
-        } catch (IOException e) {
-            log.info("未找到wiki文件路径, 加载失败");
+            datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH, "wiki.json"))
+        } catch (e: IOException) {
+            log.info("未找到wiki文件路径, 加载失败")
         }
-        WIKI = JacksonUtil.jsonToObject(datestr, JsonNode.class);
+        WIKI = JacksonUtil.jsonToObject(
+            datestr,
+            JsonNode::class.java
+        )
     }
 
-    @Override
-    public boolean isHandle(@NotNull MessageEvent event, @NotNull String messageText, @NotNull DataValue<Matcher> data) {
-        var m = Pattern.compile("^[!！]\\s*(?i)(ym)?(wiki)\\s*(?<key>\\s*)?").matcher(messageText);
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Matcher>): Boolean {
+        val m = Pattern.compile("^[!！]\\s*(?i)(ym)?(wiki)\\s*(?<key>\\s*)?").matcher(messageText)
         if (m.find()) {
-            data.setValue(m);
-            return true;
-        } else return false;
+            data.value = m
+            return true
+        } else return false
     }
 
-    @Override
-    public void HandleMessage(@NotNull MessageEvent event, @NotNull Matcher matcher) throws Throwable {
-        String key = matcher.group("key");
-        var msg = event.getSubject().sendMessage(getWiki(key));
-        event.getSubject().recallIn(msg, 60*1000);
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
+        val key = param.group("key")
+        val msg = event.reply(getWiki(key))
+        msg.recallIn((60 * 1000).toLong())
     }
-    String getWiki(String key) throws IOException, LogException {
-        StringBuilder sb = new StringBuilder();
-        if (null == key || "null".equals(key) || key.trim().isEmpty() || "index".equals(key)) {
-            if (WIKI == null){
-                String datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH +"wiki.json"));
-                WIKI = JacksonUtil.jsonToObject(datestr, JsonNode.class);
+
+    @Throws(IOException::class, LogException::class) fun getWiki(key: String?): String {
+        val sb = StringBuilder()
+        if (null == key || "null" == key || key.trim().isEmpty() || "index" == key) {
+            if (WIKI == null) {
+                val datestr = Files.readString(Path.of(NowbotConfig.RUN_PATH + "wiki.json"))
+                WIKI = JacksonUtil.jsonToObject(
+                    datestr,
+                    JsonNode::class.java
+                )
             }
-            var dates = WIKI.get("index");
-            for (Iterator<Map.Entry<String, JsonNode>> it = dates.fields(); it.hasNext(); ) {
-                var m = it.next();
-                sb.append(m.getKey()).append(':').append('\n');
-                if (m.getValue().isArray()){
-                    for (int i = 0; i < m.getValue().size(); i++) {
-                        sb.append(" ")
-                                .append(m.getValue().get(i).asText());
+
+            val dates = WIKI!!["index"]
+            val it = dates.fields()
+            while (it.hasNext()) {
+                val m = it.next()
+                sb.append(m.key).append(':').append('\n')
+                if (m.value.isArray) {
+                    for (i in 0..<m.value.size()) {
+                        sb.append(" ").append(m.value[i].asText())
                     }
                 }
-                sb.append('\n');
+                sb.append('\n')
             }
-        }else {
-            key = key.toUpperCase();
-            String r = WIKI.findValue(key).asText();
-            if (r == null) throw new LogException(STR."没有找到\{key}");
-            sb.append(key).append(':').append('\n');
-            sb.append(r);
+        } else {
+            val uk = key.uppercase()
+            val r = WIKI?.findValue(uk)?.asText() ?: throw LogException("没有找到${key}")
+            sb.append(uk).append(':').append('\n')
+            sb.append(r)
         }
-        return sb.toString();
+        return sb.toString()
+    }
+
+    companion object {
+        var WIKI: JsonNode? = null
     }
 }

@@ -58,9 +58,9 @@ import java.util.*
         val id = name.toIntOrNull()
 
         if (id != null) {
-            data.setValue(PoolParam(id, null, mode))
+            data.value = PoolParam(id, null, mode)
         } else {
-            data.setValue(PoolParam(0, name, mode))
+            data.value = PoolParam(0, name, mode)
         }
 
         return true

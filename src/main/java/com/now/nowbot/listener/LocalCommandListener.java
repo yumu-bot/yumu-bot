@@ -33,9 +33,7 @@ public class LocalCommandListener {
             String cmd;
             while (StringUtils.hasText((cmd = sc.nextLine()))) {
                 String finalCmd = cmd;
-                Thread.startVirtualThread(() -> {
-                    listener.onMessage(finalCmd);
-                });
+                Thread.startVirtualThread(() -> listener.onMessage(finalCmd));
             }
         });
     }
@@ -44,7 +42,7 @@ public class LocalCommandListener {
         var group = new LocalGroup();
         var event = new Event.GroupMessageEvent(bot, group, message);
         try {
-            PermissionImplement.onMessage(event, ((ev, throwable) -> {
+            PermissionImplement.onMessage(event, ((_, throwable) -> {
                 if (throwable instanceof TipsException) {
                     log.info("捕捉到提示：{}", throwable.getMessage());
                     log.debug("异常详细信息: ", throwable);
@@ -52,8 +50,16 @@ public class LocalCommandListener {
                     log.info("捕捉到异常：", throwable);
                 }
             }));
+
         } catch (Exception e) {
             log.info("捕捉到未知异常：{}", e.getMessage());
+            log.debug("异常详细信息:", e);
+        }
+
+        try {
+            PermissionImplement.onTencentMessage(event, (event::reply));
+        } catch (Exception e) {
+            log.info("捕捉到腾讯异常：{}", e.getMessage());
             log.debug("异常详细信息:", e);
         }
     }
