@@ -291,16 +291,9 @@ class ScorePRService(
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
             if (isDefault) {
-                throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Null_Recent,
-                    modeStr,
-                )
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Recent, data!!.username, modeStr)
             } else {
-                throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Null_ModeRecent,
-                    data!!.username,
-                    modeStr,
-                )
+                throw GeneralTipsException(GeneralTipsException.Type.G_Null_SelectedRecent, data!!.username, modeStr)
             }
         }
 
