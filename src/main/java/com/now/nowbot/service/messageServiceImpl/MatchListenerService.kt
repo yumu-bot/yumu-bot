@@ -45,7 +45,7 @@ class MatchListenerService(
 
         val operate = getStatus(matcher.group("operate"))
 
-        val id = matcher.group("matchid").toLongOrNull()
+        val id = matcher.group("matchid")?.toLongOrNull()
         val isSuper = Permission.isSuperAdmin(event.sender.id)
 
         if (operate == Operation.STOP) {
