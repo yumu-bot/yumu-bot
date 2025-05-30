@@ -97,7 +97,7 @@ class MatchListenerService(
             Operation.START -> {
                 match =
                     try {
-                        matchApiService.getMonitoredMatchInfo(param.id)
+                        matchApiService.getMatch(param.id)
                     } catch (e: Exception) {
                         throw MatchListenerException(
                             MatchListenerException.Type.ML_MatchID_NotFound
@@ -195,7 +195,7 @@ class MatchListenerService(
             for (i in 0..5) {
                 val firstEvent = match.events.first()
                 if (firstEvent.type == Match.EventType.MatchCreated) return
-                match += matchApiService.getMatchInfoBefore(matchID, firstEvent.eventID)
+                match += matchApiService.getMatchBefore(matchID, firstEvent.eventID)
             }
         }
 
@@ -263,7 +263,7 @@ class MatchListenerService(
                 if (round.scores.size > 2) {
                     round.scores = round.scores.sortedByDescending { it.score }
                 } else {
-                    round.scores = round.scores.sortedBy { it.playerStat.slot }
+                    round.scores = round.scores.sortedBy { it.playerStat!!.slot }
                 }
 
                 val index = mr.rounds.map { it.roundID }.indexOf(round.roundID)
@@ -390,7 +390,7 @@ class MatchListenerService(
             listenerData.add(key)
             val l =
                 listeners.computeIfAbsent(listener.matchID) {
-                    val match = matchApiService.getMonitoredMatchInfo(it)
+                    val match = matchApiService.getMatch(it)
                     val monitoredMatchListener =
                         MatchListener(match, matchApiService, listener)
                     monitoredMatchListener.beforeGame = self::initBeatmapAndUser

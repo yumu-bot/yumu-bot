@@ -15,7 +15,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.serviceException.MatchNowException
+import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
@@ -74,14 +74,14 @@ import org.springframework.stereotype.Service
     companion object {
         private val log: Logger = LoggerFactory.getLogger(MatchNowService::class.java)
 
-        @JvmStatic @Throws(MatchNowException::class) fun calculate(
+        fun calculate(
             panel: MuRatingPanelParam,
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService,
         ): MatchRating {
 
             if (panel.match.events.size - panel.param.ignore - panel.param.skip <= 0) {
-                throw MatchNowException(MatchNowException.Type.MN_Match_OutOfBoundsError)
+                throw TipsException("输入的参数已经过滤掉了所有对局！")
             }
 
             val mr: MatchRating
@@ -103,7 +103,7 @@ import org.springframework.stereotype.Service
                     if (isSize2p) {
                         ro.scores = ro.scores.sortedByDescending { it.score }
                     } else {
-                        ro.scores = ro.scores.sortedBy { it.playerStat.slot }
+                        ro.scores = ro.scores.sortedBy { it.playerStat!!.slot }
                     }
                 }
             } catch (e: Exception) {

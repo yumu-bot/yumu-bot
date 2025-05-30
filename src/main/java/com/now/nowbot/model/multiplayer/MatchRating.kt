@@ -3,13 +3,14 @@ package com.now.nowbot.model.multiplayer
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.MicroUser
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.exp
 import kotlin.math.min
-import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 // 原来的 MatchCalculate
 class MatchRating(
@@ -18,49 +19,48 @@ class MatchRating(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService
 ) {
-    @JsonIgnore
-    val rounds: List<Match.MatchRound>
-            = run {
-        val r: MutableList<Match.MatchRound> = match.events
-            .asSequence()
-            .filter { it.round != null}
-            .map { it.round!! }
-            .filter { it.scores.isNotEmpty() }
-            .filter { it.endTime != null }
-            .toMutableList()
+    @get:JsonIgnore
+    val filteredRounds = match.events
+        .asSequence()
+        .mapNotNull { it.round }
+        .filter { it.scores.isNotEmpty() }
+        .filter { it.endTime != null }
+        .toList()
 
-        return@run r.applyParams(ratingParam)
-    }
+    @get:JsonIgnore
+    val rounds: List<Match.MatchRound>
+        get() = applyParams(filteredRounds, ratingParam)
 
     @get:JsonProperty("round_count")
     val roundCount: Int
         get() = this.rounds.size
 
-    @JsonIgnore
-    val scores: List<Match.MatchScore> = run {
-        return@run rounds.flatMap{ it.scores }
-    }
+    @get:JsonIgnore
+    val scores: List<LazerScore>
+        get() = this.filteredRounds.flatMap{ it.scores }
 
     @get:JsonProperty("score_count")
     val scoreCount: Int
         get() = this.scores.size
 
-    @JsonIgnore
-    val players: Map<Long, MicroUser> = run {
-        // 有可用成绩的才能进这个分组
-        val playersHasScoreSet = scores.map { it.userID }.toSet()
+    @get:JsonIgnore
+    val players: Map<Long, MicroUser>
+        get() {
+            // 有可用成绩的才能进这个分组
+            val playersHasScoreSet = scores.map { it.userID }.toSet()
 
-        return@run match.players.distinctBy { it.userID }
-            .filter { it.userID in playersHasScoreSet }
-            .associateBy { it.userID }
-    }
+            return match.players
+                .distinctBy { it.userID }
+                .filter { it.userID in playersHasScoreSet }
+                .associateBy { it.userID }
+        }
 
     @get:JsonProperty("player_count")
     val playerCount: Int
         get() = this.players.size
 
-    private fun MutableList<Match.MatchRound>.applyParams(param: RatingParam): List<Match.MatchRound> {
-        var rs = this
+    private fun applyParams(rounds: List<Match.MatchRound>, param: RatingParam): List<Match.MatchRound> {
+        var rs = rounds.toMutableList()
 
         if (param.delete) {
             rs.forEach {
@@ -112,8 +112,8 @@ class MatchRating(
         if (param.easy != 1.0) {
             rs.forEach {
                 for (s in it.scores) {
-                    if (LazerMod.hasModByString(s.mods, LazerMod.Easy)) {
-                        s.score = (s.score * param.easy).roundToInt()
+                    if (LazerMod.hasMod(s.mods, LazerMod.Easy)) {
+                        s.score = (s.score * param.easy).roundToLong()
                     }
                 }
             }
@@ -131,11 +131,7 @@ class MatchRating(
         }
 
         // add user
-        rs.forEach {
-            it.scores.stream().peek {
-                    s -> s.user = players[s.userID]
-            }
-        }
+        rs.flatMap { it.scores }.forEach { players[it.userID]?.let { user -> it.user = user } }
 
         // apply sr change
         rs.forEach {
@@ -151,7 +147,7 @@ class MatchRating(
         return rs.toList()
     }
 
-    @JvmRecord data class RatingParam(
+    data class RatingParam(
         val skip: Int = 0,
         val ignore: Int = 0,
         val remove: List<Int>? = null,
@@ -290,17 +286,17 @@ class MatchRating(
             val roundScoreSum = r.scores.sumOf { it.score }
             val roundScoreCount = r.scores.size
 
-            if (roundScoreSum == 0 || roundScoreCount == 0) continue
+            if (roundScoreSum == 0L || roundScoreCount == 0) continue
 
             for (s in r.scores) {
                 val data = playerDataMap[s.userID]
-                if (data == null || s.score == 0) continue
+                if (data == null || s.score == 0L) continue
 
                 data.rawRatings.add(1.0 * s.score * roundScoreCount / roundScoreSum)
                 data.scores.add(s.score)
 
                 if (data.team == null) {
-                    data.team = s.playerStat.team
+                    data.team = s.playerStat!!.team
                 }
             }
         }
@@ -313,7 +309,7 @@ class MatchRating(
 
             for (s in r.scores) {
                 val data = playerDataMap[s.userID]
-                if (data == null || s.score == 0) continue
+                if (data == null || s.score == 0L) continue
 
                 val rws: Double
 
@@ -420,7 +416,7 @@ class MatchRating(
         var team: String? = null
 
         @JsonIgnore
-        var scores: MutableList<Int> = mutableListOf()
+        var scores: MutableList<Long> = mutableListOf()
 
         @JsonIgnore
         var roundWinShares: MutableList<Double> = mutableListOf()
@@ -497,7 +493,7 @@ class MatchRating(
         var associatedRoundCount: Int = 0
 
         fun calculateTotalScore() {
-            total = scores.sumOf { it.toLong() }
+            total = scores.sum()
         }
 
         // 注意。Series 中，不需要再次统计 TMG。
@@ -544,7 +540,7 @@ class MatchRating(
             this.match.events
                 .filter { it.round != null }
                 .flatMap { it.round!!.scores }
-                .forEach { s -> s.user = this.players[s.userID] }
+                .forEach { s -> s.user = this.players[s.userID] ?: MicroUser() }
         }
 
         @JvmStatic

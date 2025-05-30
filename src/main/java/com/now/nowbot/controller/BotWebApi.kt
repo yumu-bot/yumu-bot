@@ -191,7 +191,7 @@ import kotlin.math.min
         val match: Match
 
         try {
-            match = matchApiService.getMatchInfo(matchID.toLong(), 10)
+            match = matchApiService.getMatch(matchID.toLong(), 10)
         } catch (ex: WebClientResponseException) {
             throw RuntimeException(GeneralTipsException.Type.G_Null_MatchID.message)
         }
@@ -241,7 +241,7 @@ import kotlin.math.min
         val match: Match
 
         try {
-            match = matchApiService.getMatchInfo(matchID.toLong(), 10)
+            match = matchApiService.getMatch(matchID.toLong(), 10)
         } catch (ex: WebClientResponseException) {
             throw RuntimeException(GeneralTipsException.Type.G_Null_MatchID.message)
         }

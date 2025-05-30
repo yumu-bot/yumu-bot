@@ -39,9 +39,9 @@ import java.util.regex.Matcher
         } else return false
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
         val matchID: Int
-        val matchIDStr = matcher.group("matchid")
+        val matchIDStr = param.group("matchid")
 
         if (matchIDStr == null || matchIDStr.isBlank()) {
             try {
@@ -60,11 +60,11 @@ import java.util.regex.Matcher
             throw MatchRoundException(MatchRoundException.Type.MR_MatchID_RangeError)
         }
 
-        var keyword = matcher.group("keyword")
+        var keyword = param.group("keyword")
         val hasKeyword = keyword.isNullOrBlank().not()
 
         val round: Int
-        var roundStr = matcher.group("round")
+        var roundStr = param.group("round")
         val hasRound = roundStr.isNullOrBlank().not()
 
         if (hasRound) {
@@ -113,13 +113,13 @@ import java.util.regex.Matcher
 
         val match: Match
         try {
-            match = matchApiService.getMatchInfo(matchID.toLong(), 10)
+            match = matchApiService.getMatch(matchID.toLong(), 10)
         } catch (e: WebClientResponseException) {
             throw MatchRoundException(MatchRoundException.Type.MR_MatchID_NotFound)
         }
 
         while (match.firstEventID != match.events.first().eventID) {
-            val events: List<Match.MatchEvent> = matchApiService.getMatchInfo(matchID.toLong(), 10).events
+            val events: List<Match.MatchEvent> = matchApiService.getMatch(matchID.toLong(), 10).events
             if (events.isEmpty()) throw MatchRoundException(MatchRoundException.Type.MR_Round_Empty)
             match.events.addAll(0, events)
         }

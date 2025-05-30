@@ -3,9 +3,7 @@ package com.now.nowbot.model.multiplayer
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.MicroUser
-import com.now.nowbot.model.json.Statistics
+import com.now.nowbot.model.json.*
 import java.time.OffsetDateTime
 import kotlin.math.max
 
@@ -70,7 +68,7 @@ data class Match(
         @JsonProperty("end_time") val endTime: OffsetDateTime?,
         val modeInt: Int,
         val mods: List<String>,
-        var scores: List<MatchScore>,
+        var scores: List<LazerScore>,
         val teamType: String,
         val scoringType: String,
     ) {
@@ -123,16 +121,18 @@ data class Match(
         private fun getTeamScore(teamType: String? = null): Long {
             return when(teamType) {
                 "red" -> scores
-                    .filter { it.playerStat.team == "red" }
-                    .sumOf { it.score }.toLong()
+                    .filter { it.playerStat?.team == "red" }
+                    .sumOf { it.score }
                 "blue" -> scores
-                    .filter { it.playerStat.team == "blue" }
-                    .sumOf { it.score }.toLong()
-                else -> scores.sumOf { it.score }.toLong()
+                    .filter { it.playerStat?.team == "blue" }
+                    .sumOf { it.score }
+                else -> scores.sumOf { it.score }
             }
         }
     }
 
+    // 2025 05 30 这个类被归并了
+    /*
     data class MatchScore(
         @JsonProperty("match") val playerStat: MatchScorePlayerStat,
         @JsonProperty("best_id") val bestID: Long,
@@ -142,7 +142,7 @@ data class Match(
         @JsonProperty("max_combo") val maxCombo: Int,
         @JsonProperty("mode") val mode: String,
         @JsonProperty("mode_int") val modeInt: Int,
-        val mods: List<String>,
+        val mods: List<LazerMod>,
         val passed: Boolean,
         val perfect: Boolean,
         val replay: Boolean,
@@ -157,7 +157,7 @@ data class Match(
         var ranking: Int? = null
     }
 
-    data class MatchScorePlayerStat(val slot: Int, val team: String, val pass: Boolean)
+     */
 
     enum class EventType(val value: String) {
         PlayerJoined("player-joined"),

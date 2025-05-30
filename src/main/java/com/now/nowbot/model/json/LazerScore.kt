@@ -119,9 +119,7 @@ open class LazerScore {
     @get:JsonIgnore
     @get:JvmName("getRankString")
     val rank: String
-        get() {
-            return getRank()
-        }
+        get() = getRank()
 
     // 傻逼 Lazer
     @JsonIgnore
@@ -174,6 +172,9 @@ open class LazerScore {
             return formatter.format(endedTime)
         }
 
+    @JsonProperty("has_replay")
+    var hasReplay: Boolean = false
+
     @JsonProperty("is_perfect_combo")
     var perfectCombo: Boolean = false
 
@@ -183,7 +184,6 @@ open class LazerScore {
     @JsonProperty("legacy_score_id")
     var legacyScoreID: Long = 0L
 
-    @JvmField
     @JsonProperty("legacy_total_score")
     var legacyScore: Long? = 0L
 
@@ -249,6 +249,14 @@ open class LazerScore {
     @JsonProperty("user")
     var user: MicroUser = MicroUser()
 
+    // MatchScore 继承：自己设
+    var ranking: Int? = null
+
+    @JsonProperty("match")
+    var playerStat: MatchScorePlayerStat? = null
+
+    data class MatchScorePlayerStat(val slot: Byte, val team: String, val pass: Boolean)
+
     @JsonProperty("weight")
     var weight: Weight? = Weight() // 只在 BP 里有
         get() {
@@ -293,6 +301,9 @@ open class LazerScore {
 
             val m = score.maximumStatistics
             val s = score.statistics
+
+            // matchScore 无法计算
+            if (m.great == 0) return score.lazerRank
 
             val accuracy = score.accuracy
             val p300 = 1.0 * s.great / m.great

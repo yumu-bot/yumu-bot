@@ -46,7 +46,7 @@ class MatchListener(
 
     private fun listen() {
         val newMatch = try {
-            matchApiService.getMonitoredMatchInfo(matchId, after = nowEventID)
+            matchApiService.getMatchAfter(matchId, nowEventID)
         } catch (e: Exception) {
             log.error("ml: $matchId 查询失败: ", e)
             return
@@ -200,11 +200,9 @@ class MatchListener(
 
     private fun addUsers(events: List<Match.MatchEvent>) {
         events
-            .map { it.round?.scores }
-            .filter { !it.isNullOrEmpty() }
-            .forEach {
-                scores -> scores!!.forEach { s -> s.user = userMap[s.userID] }
-            }
+            .filter { it.round != null }
+            .flatMap { it.round!!.scores }
+            .forEach { userMap[it.userID]?.let { user -> it.user = user } }
     }
 
     private fun parseUsers(events: List<Match.MatchEvent>, users: List<MicroUser>) {

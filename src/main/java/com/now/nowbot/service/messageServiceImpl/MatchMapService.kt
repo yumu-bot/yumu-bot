@@ -69,7 +69,7 @@ class MatchMapService(
                     it.toLong()
                 }
             }
-        val match = matchApiService.getMatchInfo(matchID, 10)
+        val match = matchApiService.getMatch(matchID, 10)
         val position =
             matcher.group("round").let {
                 if (it.isNullOrEmpty()) {

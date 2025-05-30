@@ -46,9 +46,9 @@ class SeriesRatingService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
-        val dataStr = matcher.group("data")
-        val nameStr = matcher.group("name")
+    override fun HandleMessage(event: MessageEvent, param: Matcher) {
+        val dataStr = param.group("data")
+        val nameStr = param.group("name")
 
         if (dataStr.isNullOrBlank()) {
             try {
@@ -62,17 +62,17 @@ class SeriesRatingService(
         }
 
         val rematch =
-            matcher.group("rematch") == null ||
-                !matcher.group("rematch").equals("r", ignoreCase = true)
+            param.group("rematch") == null ||
+                !param.group("rematch").equals("r", ignoreCase = true)
         val failed =
-            matcher.group("failed") == null ||
-                !matcher.group("failed").equals("f", ignoreCase = true)
-        val easy = getEasyMultiplier(matcher)
+            param.group("failed") == null ||
+                !param.group("failed").equals("f", ignoreCase = true)
+        val easy = getEasyMultiplier(param)
 
         val params = parseDataString(dataStr, easy, failed, rematch)
         val matchIDs = params!!.matchIDs
 
-        if (matcher.group("csv") != null) {
+        if (param.group("csv") != null) {
             event.reply(MRAException.Type.RATING_Series_Progressing.message)
         }
 
@@ -103,7 +103,7 @@ class SeriesRatingService(
             throw MRAException(MRAException.Type.RATING_Rating_CalculatingFailed)
         }
 
-        if (matcher.group("main") != null) {
+        if (param.group("main") != null) {
             val image: ByteArray
             try {
                 image = imageService.getPanel(sr, "C2")
@@ -112,7 +112,7 @@ class SeriesRatingService(
                 log.error("系列比赛评分：数据请求失败", e)
                 throw MRAException(MRAException.Type.RATING_Send_SRAFailed)
             }
-        } else if (matcher.group("uu") != null) {
+        } else if (param.group("uu") != null) {
             val str = parseUSA(sr)
             try {
                 event.reply(str).recallIn(60000)
@@ -120,7 +120,7 @@ class SeriesRatingService(
                 log.error("系列比赛评分文字：发送失败", e)
                 throw MRAException(MRAException.Type.RATING_Send_USAFailed)
             }
-        } else if (matcher.group("csv") != null) {
+        } else if (param.group("csv") != null) {
             // 必须群聊
             event.replyFileInGroup(parseCSA(sr).toByteArray(StandardCharsets.UTF_8), "${sr.statistics.matchID}-results.csv")
         }
@@ -272,8 +272,7 @@ class SeriesRatingService(
         val ignores: MutableList<Int> = ArrayList()
         val removes: MutableList<List<Int>> = ArrayList()
 
-        var status =
-            Status.ID // 0：收取 matchID 状态，1：收取 skip 状态，2：收取 ignore 状态。3：收取 remove 状态。 4：无需收取，直接输出。
+        var status = Status.ID // 0：收取 matchID 状态，1：收取 skip 状态，2：收取 ignore 状态。3：收取 remove 状态。 4：无需收取，直接输出。
         var matchID = 0
         var skip = 0
         var ignore = 0
@@ -294,11 +293,7 @@ class SeriesRatingService(
                 s = s.replace("]".toRegex(), "")
             }
 
-            try {
-                v = s.toInt()
-            } catch (e: NumberFormatException) {
-                throw MRAException(MRAException.Type.RATING_Parse_ParameterError, s, i.toString())
-            }
+            v = s.toIntOrNull() ?: throw MRAException(MRAException.Type.RATING_Parse_ParameterError, s, i.toString())
 
             if (status == Status.REMOVE_RECEIVED) {
                 remove.add(v)
@@ -428,11 +423,10 @@ class SeriesRatingService(
             }
         }
 
-        val params: MutableList<MatchRating.RatingParam> = ArrayList(matchIDs.size)
-
-        for (i in matchIDs.indices) {
-            params.add(MatchRating.RatingParam(skips[i], ignores[i], removes[i], easy, failed, rematch))
-        }
+        val params: List<MatchRating.RatingParam> =
+            List(matchIDs.size) { i ->
+                MatchRating.RatingParam(skips[i], ignores[i], removes[i], easy, failed, rematch)
+            }
 
         return SRAPanelParam(matchIDs.map { it.toLong() }, params)
     }
@@ -446,7 +440,7 @@ class SeriesRatingService(
         var failTimes = 0
         for (m in matchIDs) {
             try {
-                matches.add(matchApiService.getMatchInfo(m, 10))
+                matches.add(matchApiService.getMatch(m, 10))
             } catch (e: HttpClientErrorException.TooManyRequests) {
                 failTimes++
                 if (failTimes > 3) {

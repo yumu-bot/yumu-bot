@@ -2,9 +2,9 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.Match.MatchRound
-import com.now.nowbot.model.multiplayer.Match.MatchScore
 import com.now.nowbot.model.multiplayer.MatchRating
 import com.now.nowbot.model.multiplayer.MatchRating.Companion.insertMicroUserToScores
 import com.now.nowbot.model.multiplayer.MatchRating.RatingParam
@@ -44,17 +44,17 @@ import java.util.regex.Matcher
     }
 
     @CheckPermission(isGroupAdmin = true) @Throws(Throwable::class) override fun HandleMessage(
-        event: MessageEvent, matcher: Matcher
+        event: MessageEvent, param: Matcher
     ) {
 
-        val isMultiple = matcher.group("x") != null
+        val isMultiple = param.group("x") != null
         var id = 0L
         var ids: List<Long>? = null
         val sb = StringBuilder()
 
         if (isMultiple) {
             try {
-                ids = parseDataString(matcher.group("data"))
+                ids = parseDataString(param.group("data"))
                 event.reply("正在处理系列赛")
                 parseCRAs(sb, ids, matchApiService, beatmapApiService, calculateApiService)
             } catch (e: MRAException) {
@@ -65,7 +65,7 @@ import java.util.regex.Matcher
             }
         } else {
             try {
-                id = matcher.group("data").toLong()
+                id = param.group("data").toLong()
                 event.reply("正在处理$id")
                 parseCRA(sb, id, matchApiService, beatmapApiService, calculateApiService)
             } catch (e: NullPointerException) {
@@ -98,7 +98,7 @@ import java.util.regex.Matcher
                 val match: Match
 
                 try {
-                    match = matchApiService.getMatchInfo(matchID, 10)
+                    match = matchApiService.getMatch(matchID, 10)
                 } catch (e: Exception) {
                     throw MRAException(MRAException.Type.RATING_Series_NotFound, matchID.toString())
                 }
@@ -130,7 +130,7 @@ import java.util.regex.Matcher
             val match: Match
 
             try {
-                match = matchApiService.getMatchInfo(matchID, 10)
+                match = matchApiService.getMatch(matchID, 10)
             } catch (e: Exception) {
                 throw MRAException(MRAException.Type.RATING_Match_NotFound)
             }
@@ -214,22 +214,22 @@ import java.util.regex.Matcher
             }
         }
 
-        private fun appendScoreStrings(sb: StringBuilder, score: MatchScore) {
+        private fun appendScoreStrings(sb: StringBuilder, score: LazerScore) {
             try {
                 sb.append(score.userID).append(',').append(String.format("%4.4f", score.accuracy)).append(',')
-                    .append(score.mods.join()).append(',').append(score.score).append(',')
-                    .append(score.maxCombo).append(',').append(score.passed).append(',').append(score.perfect).append(',')
-                    .append(score.playerStat.slot).append(',').append(score.playerStat.team).append(',')
-                    .append(score.playerStat.pass).append("\n")
+                    .append(score.mods.joinToString { it.acronym }).append(',').append(score.score).append(',')
+                    .append(score.maxCombo).append(',').append(score.passed).append(',').append(score.perfectCombo).append(',')
+                    .append(score.playerStat!!.slot).append(',').append(score.playerStat!!.team).append(',')
+                    .append(score.playerStat!!.pass).append("\n")
             } catch (e: Exception) {
                 sb.append("<----MP ABORTED---->").append(e.message).append('\n')
             }
         }
 
-        private fun appendScoreStringsLite(sb: StringBuilder, score: MatchScore) {
+        private fun appendScoreStringsLite(sb: StringBuilder, score: LazerScore) {
             try {
-                sb.append(score.playerStat.team).append(',').append(score.userID).append(',').append(score.user?.userName)
-                    .append(',').append(score.score).append(',').append(score.mods.join())
+                sb.append(score.playerStat!!.team).append(',').append(score.userID).append(',').append(score.user.userName)
+                    .append(',').append(score.score).append(',').append(score.mods.joinToString { it.acronym })
                     .append(',').append(score.maxCombo).append(',').append(String.format("%4.4f", score.accuracy))
                     .append(',').append("\n")
             } catch (e: Exception) {

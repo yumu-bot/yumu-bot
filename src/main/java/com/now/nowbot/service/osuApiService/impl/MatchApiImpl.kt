@@ -2,7 +2,7 @@ package com.now.nowbot.service.osuApiService.impl
 
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.Match.Companion.append
-import com.now.nowbot.model.multiplayer.MatchQuery
+import com.now.nowbot.model.multiplayer.MatchLobby
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -13,50 +13,62 @@ class MatchApiImpl(
     private val base: OsuApiBaseService,
 ) : OsuMatchApiService {
     @Throws(WebClientResponseException::class)
-    override fun queryMatch(limit: Int, sort: String, cursor: String?): MatchQuery {
+    override fun getMatchLobby(limit: Int, descending: Boolean, cursor: String?): MatchLobby {
         return base.request { client ->
             client.get()
                 .uri {
                     it.path("matches")
                     it.queryParam("limit", limit)
-                    it.queryParam("sort", sort)
+                    it.queryParam("sort", if (descending) "id_desc" else "id_asc")
                     if (cursor != null) it.queryParam("cursor_string", cursor)
                     it.build()
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(MatchQuery::class.java)
+                .bodyToMono(MatchLobby::class.java)
         }
     }
 
-    override fun getMonitoredMatchInfo(mid: Long, before: Long?, after: Long?, limit: Int): Match {
-        return base.request { client ->
-            client.get()
-                .uri {
-                    it.path("matches/{mid}")
-                    if (before != null) it.queryParam("before", before)
-                    if (after != null) it.queryParam("after", after)
-                    it.queryParam("limit", limit)
-                    it.build(mid)
-                }
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToMono(Match::class.java)
-                .timeout(Duration.ofSeconds(5))
-        }
+    override fun getMatch(matchID: Long, times: Int): Match {
+        var l = times
+        var eventId: Long
+        val match: Match = getMatch(matchID)
+        do {
+            val newMatch = getMatchBefore(matchID, match.events.first().eventID)
+            match.append(newMatch)
+            eventId = match.events.first().eventID
+        } while (match.firstEventID != eventId && --l >= 0)
+        return match
     }
 
-    private fun getMatchInfo(mid: Long): Match {
+    override fun getMatchBefore(matchID: Long, eventID: Long): Match {
+        return getMatch(matchID, eventID, 0)
+    }
+
+    override fun getMatchAfter(matchID: Long, eventID: Long): Match {
+        return getMatch(matchID, 0, eventID)
+    }
+
+    private fun getMatch(mid: Long): Match {
         return base.request { client ->
             client.get()
                 .uri("matches/{mid}", mid)
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(Match::class.java)
+
+                /*
+                .bodyToMono(JsonNode::class.java)
+                .map {
+                    println(it)
+                    JacksonUtil.parseObject(it, Match::class.java)
+                }
+
+                 */
         }
     }
 
-    private fun getMatchInfo(mid: Long, before: Long, after: Long): Match {
+    private fun getMatch(mid: Long, before: Long, after: Long): Match {
         return base.request { client ->
             client.get()
                 .uri {
@@ -71,33 +83,5 @@ class MatchApiImpl(
                 .bodyToMono(Match::class.java)
                 .timeout(Duration.ofSeconds(5))
         }
-    }
-
-    @Throws(WebClientResponseException::class)
-    override fun getMatchInfo(mid: Long, limit: Int): Match {
-        var l = limit
-        var eventId: Long
-        val match: Match = getMatchInfo(mid)
-        do {
-            val newMatch = getMatchInfoBefore(mid, match.events.first().eventID)
-            match.append(newMatch)
-            eventId = match.events.first().eventID
-        } while (match.firstEventID != eventId && --l >= 0)
-        return match
-    }
-
-    @Throws(WebClientResponseException::class)
-    override fun getMatchInfoFirst(mid: Long): Match {
-        return getMatchInfo(mid)
-    }
-
-    @Throws(WebClientResponseException::class)
-    override fun getMatchInfoBefore(mid: Long, id: Long): Match {
-        return getMatchInfo(mid, id, 0)
-    }
-
-    @Throws(WebClientResponseException::class)
-    override fun getMatchInfoAfter(mid: Long, id: Long): Match {
-        return getMatchInfo(mid, 0, id)
     }
 }

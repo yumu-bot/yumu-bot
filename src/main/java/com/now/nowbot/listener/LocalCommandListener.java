@@ -56,11 +56,13 @@ public class LocalCommandListener {
             log.debug("异常详细信息:", e);
         }
 
-        try {
-            PermissionImplement.onTencentMessage(event, (event::reply));
-        } catch (Exception e) {
-            log.info("捕捉到腾讯异常：{}", e.getMessage());
-            log.debug("异常详细信息:", e);
+        if (event.getRawMessage().startsWith("/")) {
+            try {
+                PermissionImplement.onTencentMessage(event, (event::reply));
+            } catch (Exception e) {
+                log.info("捕捉到腾讯异常：{}", e.getMessage());
+                log.debug("异常详细信息:", e);
+            }
         }
     }
 }

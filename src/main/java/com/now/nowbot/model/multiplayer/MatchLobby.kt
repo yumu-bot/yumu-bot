@@ -3,7 +3,7 @@ package com.now.nowbot.model.multiplayer
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 
-data class MatchQuery(
+data class MatchLobby(
     @JsonProperty("cursor_string")
     val cursor: String?,
     val matches: List<Match.MatchStat>,

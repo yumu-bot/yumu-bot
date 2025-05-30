@@ -186,18 +186,13 @@ import java.util.regex.Matcher
         @Throws(MRAException::class)
         @JvmStatic
         fun getMuRatingParam(matcher: Matcher, matchApiService: OsuMatchApiService): MuRatingPanelParam {
-            val matchID: Long
             val matchIDStr = matcher.group("matchid")
 
             if (matchIDStr.isNullOrBlank()) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_MatchID)
             }
 
-            try {
-                matchID = matchIDStr.toLong()
-            } catch (e: NumberFormatException) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param)
-            }
+            val matchID: Long = matchIDStr.toLongOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param)
 
             val skipStr = matcher.group("skip")
             val ignoreStr = matcher.group("ignore")
@@ -213,13 +208,15 @@ import java.util.regex.Matcher
 
             val match: Match
             try {
-                match = matchApiService.getMatchInfo(matchID, 10)
+                match = matchApiService.getMatch(matchID, 10)
             } catch (e: Exception) {
+                log.error("查询比赛 $matchID 错误", e)
+
                 throw MRAException(MRAException.Type.RATING_Match_NotFound)
             }
 
             while (match.firstEventID != match.events.first().eventID) {
-                val events = matchApiService.getMatchInfo(matchID, 10).events
+                val events = matchApiService.getMatch(matchID, 10).events
                 if (events.isEmpty()) throw MRAException(MRAException.Type.RATING_Round_Empty)
                 match.events.addAll(0, events)
             }
@@ -241,13 +238,13 @@ import java.util.regex.Matcher
         ): MatchRating {
             val match: Match
             try {
-                match = matchApiService.getMatchInfo(matchID, 10)
+                match = matchApiService.getMatch(matchID, 10)
             } catch (e: Exception) {
                 throw MRAException(MRAException.Type.RATING_Match_NotFound)
             }
 
             while (match.firstEventID != match.events.first().eventID) {
-                val events = matchApiService.getMatchInfo(matchID, 10).events
+                val events = matchApiService.getMatch(matchID, 10).events
                 if (events.isEmpty()) throw MRAException(MRAException.Type.RATING_Round_Empty)
                 match.events.addAll(0, events)
             }

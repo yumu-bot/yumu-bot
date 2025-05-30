@@ -16,50 +16,35 @@ class SeriesRating(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService
 ) {
-    @JsonIgnore
-    private val ratings: List<MatchRating> = run {
-        val rs = mutableListOf<MatchRating>()
-
-        for (i in matches.indices) {
-            val m = matches[i]
-            val p = ratingParams[i]
-
-            val mr = MatchRating(m, p, beatmapApiService, calculateApiService)
-
-            //  mr.calculate() 无需计算
-            rs.add(mr)
+    @get:JsonIgnore
+    private val ratings: List<MatchRating>
+        get() = matches.mapIndexed { i, it ->
+            MatchRating(it, ratingParams[i], beatmapApiService, calculateApiService)
         }
-
-        return@run rs
-    }
 
     @get:JsonProperty("match_count")
     val matchCount: Int
         get() = this.matches.size
 
-    @JsonIgnore
-    val players = run {
-        return@run ratings.flatMap { it.players.entries }
-            .associate { (k, v) -> k to v }
-    }
+    @get:JsonIgnore
+    val players
+        get() = ratings.map { it.players }.flatMap { it.toList() }
 
     @get:JsonProperty("player_count")
     val playerCount: Int
         get() = this.players.size
 
-    @JsonIgnore
-    val rounds = run {
-        return@run ratings.flatMap { it.rounds }.toList()
-    }
+    @get:JsonIgnore
+    val rounds
+        get() = ratings.flatMap { it.rounds }.toList()
 
     @get:JsonProperty("round_count")
     val roundCount: Int
         get() = this.rounds.size
 
-    @JsonIgnore
-    val scores = run {
-        return@run ratings.flatMap { it.scores }.toList()
-    }
+    @get:JsonIgnore
+    val scores
+        get() = ratings.flatMap { it.scores }.toList()
 
     @JsonIgnore
     var name: String? = null
@@ -190,17 +175,17 @@ class SeriesRating(
             val roundScoreSum = r.scores.sumOf { it.score }
             val roundScoreCount = r.scores.size
 
-            if (roundScoreSum == 0 || roundScoreCount == 0) continue
+            if (roundScoreSum == 0L || roundScoreCount == 0) continue
 
             for (s in r.scores) {
                 val data = playerDataMap[s.userID]
-                if (data == null || s.score == 0) continue
+                if (data == null || s.score == 0L) continue
 
                 data.rawRatings.add(1.0 * s.score * roundScoreCount / roundScoreSum)
                 data.scores.add(s.score)
 
                 if (data.team == null) {
-                    data.team = s.playerStat.team
+                    data.team = s.playerStat!!.team
                 }
             }
         }
@@ -213,7 +198,7 @@ class SeriesRating(
 
             for (s in r.scores) {
                 val data = playerDataMap[s.userID]
-                if (data == null || s.score == 0) continue
+                if (data == null || s.score == 0L) continue
 
                 val rws: Double
 
