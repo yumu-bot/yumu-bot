@@ -37,7 +37,7 @@ class MatchRating(
 
     @get:JsonIgnore
     val scores: List<LazerScore>
-        get() = this.filteredRounds.flatMap{ it.scores }
+        get() = rounds.flatMap { it.scores }
 
     @get:JsonProperty("score_count")
     val scoreCount: Int
@@ -47,7 +47,12 @@ class MatchRating(
     val players: Map<Long, MicroUser>
         get() {
             // 有可用成绩的才能进这个分组
-            val playersHasScoreSet = scores.map { it.userID }.toSet()
+            val playersHasScoreSet =
+                if (ratingParam.delete) {
+                    this.filteredRounds.flatMap { it.scores }.filter { it.score > 10000L }
+                } else {
+                    this.filteredRounds.flatMap { it.scores }
+                }.map { it.userID }.toSet()
 
             return match.players
                 .distinctBy { it.userID }
@@ -65,7 +70,7 @@ class MatchRating(
         if (param.delete) {
             rs.forEach {
                 if (it.scores.isNotEmpty()) {
-                    it.scores = it.scores.filter { s -> s.score > 10000 }
+                    it.scores = it.scores.filter { s -> s.score > 10000L }
                 }
             }
         }
@@ -368,7 +373,7 @@ class MatchRating(
     private fun calculateMuRating() {
         playerDataMap.values.forEach{
             it.calculateERA(minMQ, scalingFactor)
-            it.calculateDRA(players.size, scores.size)
+            it.calculateDRA(playerCount, scoreCount)
             it.calculateMRA()
         }
     }
