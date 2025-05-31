@@ -176,10 +176,10 @@ class GroupStatisticsService(
                 val bp1 = getOsuBp1(id)
                 nowOsuId[id] = qq
                 usersBP1[qq] = bp1
-                log.debug("统计 [{}] 信息获取成功. bp1 {}pp", qq, bp1)
+                log.debug("统计 {} 信息获取成功. bp1 {}pp", qq, bp1)
             } catch (err: WebClientResponseException.NotFound) {
                 //这个err不需要记录下来 修改了日志等级, 默认不记录
-                log.debug("统计 [{}] 未找到: {}", qq, err.message)
+                log.debug("统计 {} 未找到: {}", qq, err.message)
                 if (err.message.contains("bleatingsheep.org")) {
                     errMap[qq] = "未绑定"
                 } else {

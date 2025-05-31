@@ -84,7 +84,7 @@ public class LocalContact implements com.now.nowbot.qq.contact.Contact {
             Files.write(nPath, data);
             return nPath.toAbsolutePath().toString();
         } catch (IOException e) {
-            log.info("创建文件夹 [{}] 失败", path.toAbsolutePath());
+            log.info("创建文件夹 {} 失败", path.toAbsolutePath());
             return "err";
         }
     }
@@ -100,7 +100,7 @@ public class LocalContact implements com.now.nowbot.qq.contact.Contact {
             Files.write(nPath, data);
             return nPath.toAbsolutePath().toString();
         } catch (IOException e) {
-            log.info("创建文件夹 [{}] 失败", path.toAbsolutePath());
+            log.info("创建文件夹 {} 失败", path.toAbsolutePath());
             return "err";
         }
     }
@@ -113,7 +113,7 @@ public class LocalContact implements com.now.nowbot.qq.contact.Contact {
             Files.copy(source, nPath);
             return nPath.toAbsolutePath().toString();
         } catch (IOException e) {
-            log.info("创建文件夹 [{}] 失败", path.toAbsolutePath());
+            log.info("创建文件夹 {} 失败", path.toAbsolutePath());
             return "err";
         }
     }

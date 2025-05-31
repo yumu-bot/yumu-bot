@@ -77,7 +77,7 @@ public class CheckAspect {
         Object[] args = point.getArgs();
         if (args.length > 0 && args[0] instanceof OsuBindUserLite u) {
             // var dobj = point.getSignature();
-            log.info("新增用户：[{}] ({})", u.getOsuID(), u.getOsuName());
+            log.info("新增用户：{} ({})", u.getOsuID(), u.getOsuName());
         }
         return args;
     }
@@ -233,7 +233,7 @@ public class CheckAspect {
             if (e.getSubject().getId() < 0) {
                 log.debug("官方bot [uid {}] 调用 -> {}", - e.getSender().getId(), name);
             } else {
-                log.debug("[{}] 调用 -> {}", e.getSender().getId(), name);
+                log.debug("{} 调用 -> {}", e.getSender().getId(), name);
             }
         }
         try {

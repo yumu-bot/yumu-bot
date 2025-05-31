@@ -31,7 +31,7 @@ public class OsuFile {
     public static BeatMapFileLite parseInfo(BufferedReader read) throws IOException {
         var versionStr = read.readLine();
         if (versionStr == null || !versionStr.trim().startsWith("osu file format v")) {
-            log.error("解析错误,文件无效 第一行为:[{}]", versionStr);
+            log.error("解析错误,文件无效 第一行为:{}", versionStr);
             throw new RuntimeException("解析错误,文件无效");
         }
         if (versionStr.endsWith("v3")) {
@@ -157,7 +157,7 @@ public class OsuFile {
         this.reader = read;
         String line;
         // 逐行
-        while ((line = read.readLine()) != null && line.equals("")) ;
+        while ((line = read.readLine()) != null && line.isBlank()) ;
         if (line != null && line.startsWith("[General]")) {
             // 读取 General 块
             parseGeneral(read);
@@ -169,7 +169,7 @@ public class OsuFile {
 
     void parseGeneral(BufferedReader reader) throws IOException {
         String line;
-        while ((line = reader.readLine()) != null && !line.equals("")) {
+        while ((line = reader.readLine()) != null && !line.isBlank()) {
             var entity = line.split(":");
             if (entity.length != 2) {
                 continue;
@@ -187,7 +187,7 @@ public class OsuFile {
 
     private static void parseAny(BufferedReader reader, Map<String, String> parseMap) throws IOException {
         String line;
-        while ((line = reader.readLine()) != null && !line.equals("")) {
+        while ((line = reader.readLine()) != null && !line.isBlank()) {
             var entity = line.split(":");
             if (entity.length != 2) {
                 continue;

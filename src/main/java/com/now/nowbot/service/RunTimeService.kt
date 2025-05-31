@@ -215,7 +215,7 @@ class RunTimeService(
                 var bean = applicationContext.getBean(entry.getKey());
                 args.add(bean);
             } catch (BeansException e) {
-                log.error("获取 [{}] 类型的bean出错", entry.getKey().getSimpleName());
+                log.error("获取 {} 类型的bean出错", entry.getKey().getSimpleName());
                 args.add(null);
             }
         }

@@ -206,12 +206,10 @@ open class LazerScore {
 
     @get:JsonProperty("started_at")
     val startedTimeString: String
-        get() {
-            return if (startedTime != null) {
-                formatter.format(startedTime)
-            } else {
-                ""
-            }
+        get() = if (startedTime != null) {
+            formatter.format(startedTime)
+        } else {
+            ""
         }
 
     @JsonProperty("total_score")
@@ -261,6 +259,10 @@ open class LazerScore {
                 return i.roundToInt()
             }
     }
+
+    @get:JsonIgnore
+    val previewName: String
+        get() = "${beatMapSet.artist} - beatMapSet.title (${beatMapSet.creator}) [${beatMap.difficultyName}]"
 
     companion object {
         private val formatter: DateTimeFormatter =

@@ -62,14 +62,14 @@ public class PermissionImplement implements PermissionController {
                     // 是否再黑名单内
                     if (isBlock(serviceName, event)) {
                         // 被黑名单禁止
-                        log.debug("黑名单禁止, 请求功能:[{}] ,请求人: {}", serviceName, event.getSender().getId());
+                        log.debug("黑名单禁止, 请求功能:{} ,请求人: {}", serviceName, event.getSender().getId());
                         return;
                     }
                 }
 
                 var data = new MessageService.DataValue<>();
                 if (service.isHandle(event, textMessage, data)) {
-                    service.HandleMessage(event, data.getValue());
+                    service.HandleMessage(event, Objects.requireNonNull(data.getValue()));
                 }
             } catch (Throwable e) {
                 errorHandle.accept(event, e);
@@ -136,7 +136,7 @@ public class PermissionImplement implements PermissionController {
                 return PermissionRecord.fromEntry(entry);
             }
         }
-        log.debug("未找到对应的服务 [{}], {}", name, permissionMap.size());
+        log.debug("未找到对应的服务 {}, {}", name, permissionMap.size());
         throw new RuntimeException("未找到对应的服务");
     }
 

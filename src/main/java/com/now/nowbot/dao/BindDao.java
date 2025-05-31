@@ -374,7 +374,7 @@ public class BindDao {
                 return;
             }
 
-            log.info("更新用户: [{}]", u.getOsuName());
+            // log.info("更新用户: {}", u.getOsuName());
             refreshOldUserToken(u, userApiService);
             return;
         }
@@ -392,7 +392,7 @@ public class BindDao {
                 bindUserMapper.backupBindByOsuId(u.getID());
             }
 
-            log.info("更新用户: [{}]", u.getOsuName());
+            // log.info("更新用户: {}", u.getOsuName());
             refreshOldUserToken(u, userApiService);
         }
     }
@@ -409,7 +409,7 @@ public class BindDao {
                 succeedCount += refreshOldUserList(osuGetService, users);
             } catch (RefreshException e) {
                 succeedCount += e.successCount;
-                log.error("连续失败, 停止更新, 更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
+                log.error("连续失败, 停止更新, 更新用户数量: {}, 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
                 return;
             }
         }
@@ -419,11 +419,11 @@ public class BindDao {
                 succeedCount += refreshOldUserList(osuGetService, users);
             } catch (RefreshException e) {
                 succeedCount += e.successCount;
-                log.error("停止更新, 更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
+                log.error("停止更新, 更新用户数量: {}, 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
                 return;
             }
         }
-        log.info("更新用户数量: [{}], 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
+        log.info("更新用户数量: {}, 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
     }
 
     private int refreshOldUserList(OsuUserApiService osuGetService, List<OsuBindUserLite> users) {
@@ -442,18 +442,18 @@ public class BindDao {
                 // 回退到用户名绑定
                 bindUserMapper.backupBindByOsuId(u.getID());
             }
-            log.info("更新用户 [{}]", u.getOsuName());
+            // log.info("更新用户 {}", u.getOsuName());
             try {
                 refreshOldUserToken(u, osuGetService);
                 if (u.getUpdateCount() > 0) bindUserMapper.clearUpdateCount(u.getID());
                 errCount = 0;
             } catch (WebClientResponseException.Unauthorized e) {
                 // 绑定被取消或者过期, 不再尝试
-                log.info("{} 取消绑定", u.getOsuName());
+                log.info("绑定 {} 失败：取消绑定", u.getOsuName());
                 bindUserMapper.backupBindByOsuId(u.getID());
             } catch (Exception e) {
                 bindUserMapper.addUpdateCount(u.getID());
-                log.error("出现异常 [{}]: ", errCount, e);
+                log.error("绑定 {} 第 {} 次失败：出现异常: ", u.getOsuName(), errCount, e);
                 errCount++;
             }
             if (errCount > 5) {
@@ -476,16 +476,16 @@ public class BindDao {
                 var m = e.getMessage();
 
                 if (m != null && m.contains("401")) {
-                    log.info("刷新用户令牌：更新 [{}] 令牌失败, token 失效, 绑定取消", u.getOsuName());
+                    log.info("刷新用户令牌：更新 {} 令牌失败, token 失效, 绑定取消", u.getOsuName());
                     bindUserMapper.backupBindByOsuId(u.getOsuID());
                     return;
                 } else {
                     badRequest++;
 
                     if (badRequest < 3) {
-                        log.error("刷新用户令牌：更新 [{}] 令牌失败, 第 {} 次重试", u.getOsuName(), badRequest);
+                        log.error("刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试", u.getOsuName(), badRequest);
                     } else {
-                        log.error("刷新用户令牌：更新 [{}] 令牌失败, 第 {} 次重试失败, 放弃更新。错误原因：", u.getOsuName(), badRequest, e);
+                        log.error("刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试失败, 放弃更新。错误原因：", u.getOsuName(), badRequest, e);
                         return;
                     }
                 }

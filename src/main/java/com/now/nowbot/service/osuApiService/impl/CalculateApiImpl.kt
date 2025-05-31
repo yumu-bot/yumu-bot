@@ -1,7 +1,6 @@
 package com.now.nowbot.service.osuApiService.impl
 
-import com.now.nowbot.entity.BeatmapStartCache
-import com.now.nowbot.mapper.BeatmapStarCacheRepository
+import com.now.nowbot.mapper.BeatmapStarRatingCacheRepository
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.Mod
 import com.now.nowbot.model.ValueMod
@@ -26,7 +25,7 @@ import kotlin.reflect.full.companionObjectInstance
 
 @Service class CalculateApiImpl(
     private val beatmapApiService: OsuBeatmapApiService,
-    private val beatmapStarCacheRepository: BeatmapStarCacheRepository,
+    private val beatmapStarRatingCacheRepository: BeatmapStarRatingCacheRepository,
 ) : OsuCalculateApiService {
 
     override fun getScorePerfectPP(score: LazerScore): RosuPerformance {
@@ -436,7 +435,7 @@ import kotlin.reflect.full.companionObjectInstance
 
         if (isAllLegacy) { // 如果是全部为 legacy mod 且 没有自定义属性的话，就从缓存里面取
             // 目前来看没有任何自定义 mod 计入 pp
-            val star = beatmapStarCacheRepository.findByKey(beatMapID, modsValue)
+            val star = beatmapStarRatingCacheRepository.findByKey(beatMapID, modsValue)
             if (star.isPresent) {
                 return star.get()
             }
@@ -451,9 +450,8 @@ import kotlin.reflect.full.companionObjectInstance
                 if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
             }.calculate(beatmap).getStarRating().apply {
                 if (isAllLegacy) {
-                    val cache = BeatmapStartCache(beatMapID, mode, modsValue, this)
                     try {
-                        beatmapStarCacheRepository.save(cache)
+                        beatmapStarRatingCacheRepository.saveAndUpdate(beatMapID, mode.modeValue, modsValue, this)
                     } catch (e: Exception) {
                         log.error("保存星级缓存失败", e)
                     }

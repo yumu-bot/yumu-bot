@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
-import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 @Service("NEWBIE_RESTRICT")
 class NewbieRestrictOverSRService(
@@ -329,25 +329,41 @@ class NewbieRestrictOverSRService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: Collection<LazerScore>) {
-        val sr = param.maxOf { it.beatMap.starRating }
+        val score = param.maxByOrNull { it.beatMap.starRating } ?: return
+
+        val sr = score.beatMap.starRating
         val silence = getSilence(sr)
         if (silence <= 0) return
 
         val criminal = event.sender
-        val message = String.format("%.2f", sr) + " -> " + getSilenceMessage(silence)
+        val playerName = score.user.userName
 
-        val count = newbieDao.getRestrictedCountWithin(criminal.id, 7L * 24 * 60 * 60 * 1000)
-        val duration = getSilenceMessage(
-            (newbieDao.getRestrictedDurationWithin(criminal.id, 7L * 24 * 60 * 60 * 1000) / 60000).toInt()
-        )
-        val playerName = param.first().user.userName
+        val count7 = newbieDao.getRestrictedCountWithin(criminal.id, 7L * 24 * 60 * 60 * 1000)
+        val duration7 = getTime(newbieDao.getRestrictedDurationWithin(criminal.id, 7L * 24 * 60 * 60 * 1000) / 60000)
+
+        val t = newbieDao.getRestricted(criminal.id)
+        val count = t.size
+        val duration = getTime(t.sumOf { it.duration ?: 0L } / 60000)
+
+        val last5 = t.mapNotNull { it.star }.takeLast(5).joinToString(", ")
+
+        val timeMessage = String.format("%.2f", sr) + " -> " + getTime(silence)
+        val message = """
+             检测到 ${criminal.name} (${playerName}) 超星。
+             ($timeMessage)
+             超星谱面：${score.previewName}
+             七天之内超星次数：${count7}。
+             七天之内禁言时间：${duration7}。
+             总计超星次数：${count}。
+             总计禁言时间：${duration}。
+             最近五次超星的星数：[${last5}]。
+        """.trimIndent()
+
         try {
             newbieDao.saveRestricted(criminal.id, sr, System.currentTimeMillis(), min(silence * 60000L, 7L * 24 * 60 * 60 * 1000))
         } catch (e: Throwable) {
             log.error("""
-                检测到 ${criminal.name}(${playerName}) 超星 ($message)。
-                七天之内超星次数：${count}。
-                七天之内总计禁言时间：${duration}。
+                $message
                 但是保存记录失败了。
                 """.trimIndent(), e)
         }
@@ -355,9 +371,7 @@ class NewbieRestrictOverSRService(
         val executorBot = botContainer.robots[executorBotID]
             ?: run {
                 log.info("""
-                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
-                    七天之内超星次数：${count}。
-                    七天之内总计禁言时间：${duration}。
+                    $message
                     但是执行机器人并未上线。无法执行禁言任务。
                     """.trimIndent())
                 return
@@ -368,9 +382,7 @@ class NewbieRestrictOverSRService(
         if (Permission.isGroupAdmin(event)) {
             report(isReportable, executorBot,
                 """
-                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
-                    七天之内超星次数：${count}。
-                    七天之内总计禁言时间：${duration}。
+                    $message
                     但是对方是管理员或群主，无法执行禁言任务。
                 """.trimIndent())
             return
@@ -380,36 +392,26 @@ class NewbieRestrictOverSRService(
         if (silence >= 30 * 24 * 60 - 1) {
             report(isReportable, executorBot,
                 """
-                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
-                    七天之内超星次数：${count}。
-                    七天之内总计禁言时间：${duration}。
+                    $message
                     情节严重，已按最大时间禁言。
                 """.trimIndent())
 
             executorBot.setGroupBan(newbieGroupID, event.sender.id, (30 * 24 * 60 - 1) * 60)
                 ?: report(isReportable, executorBot, """
-                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
-                    七天之内超星次数：${count}。
-                    七天之内总计禁言时间：${duration}。
+                    $message
                     但是机器人执行禁言任务失败了。
                 """.trimIndent())
         } else {
-            report(isReportable, executorBot,
-                """
-                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
-                    七天之内超星次数：${count}。
-                    七天之内总计禁言时间：${duration}。
+            report(isReportable, executorBot, """
+                    $message
                     正在执行禁言任务。
                 """.trimIndent())
 
-            executorBot.setGroupBan(newbieGroupID, event.sender.id, silence * 60)
-                ?: report(isReportable, executorBot,
-                    """
-                    检测到 ${criminal.name}(${playerName}) 超星 ($message)。
-                    七天之内超星次数：${count}。
-                    七天之内总计禁言时间：${duration}。
+            executorBot.setGroupBan(newbieGroupID, event.sender.id, (silence * 60).toInt())
+                ?: report(isReportable, executorBot, """
+                    $message
                     但是机器人执行禁言任务失败了。
-                """.trimIndent())
+                    """.trimIndent())
         }
     }
 
@@ -429,31 +431,31 @@ class NewbieRestrictOverSRService(
         /**
          * 获取禁言时长（分钟）
          */
-        private fun getSilence(star: Double): Int {
+        private fun getSilence(star: Double): Long {
             return if (star <= 5.7) {
                 // 未超星
-                0
+                0L
             } else if (star < 6.0) {
-                ((star - 5.7) * 1000).roundToInt()
+                ((star - 5.7) * 1000).roundToLong()
             } else {
-                ((star - 5.7) * 2000).roundToInt()
+                ((star - 5.7) * 2000).roundToLong()
             }
         }
 
-        private fun getSilenceMessage(silence: Int): String {
-            return if (silence >= 1440) {
-                val day = silence / 1440
-                val hour = (silence - (day * 1440)) / 60
-                val minute = silence - (day * 1440) - (hour * 60)
+        private fun getTime(minutes: Long): String {
+            return if (minutes >= 1440) {
+                val day = minutes / 1440
+                val hour = (minutes - (day * 1440)) / 60
+                val minute = minutes - (day * 1440) - (hour * 60)
 
                 "${day}天${hour}时${minute}分"
-            } else if (silence >= 60.0) {
-                val hour = silence / 60
-                val minute = silence - (hour * 60)
+            } else if (minutes >= 60.0) {
+                val hour = minutes / 60
+                val minute = minutes - (hour * 60)
 
                 "${hour}时${minute}分"
             } else {
-                "${silence}分"
+                "${minutes}分"
             }
         }
     }

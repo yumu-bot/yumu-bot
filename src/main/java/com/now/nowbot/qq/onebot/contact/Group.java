@@ -29,7 +29,7 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
             var data = bot.getGroupInfo(getId(), false).getData();
             return data.getGroupName();
         } catch (Exception e) {
-            log.error("获取群名[{}]失败", getId());
+            log.error("获取群名{}失败", getId());
             return "unknown group";
         }
     }

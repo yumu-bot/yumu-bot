@@ -8,9 +8,9 @@ import jakarta.persistence.Table
 import java.io.Serializable
 
 @Entity
-@Table(name = "osu_beatmap_start_cache")
-@IdClass(BeatmapStartCache.BeatmapStartKey::class)
-class BeatmapStartCache(
+@Table(name = "osu_beatmap_star_rating_cache")
+@IdClass(BeatmapStarRatingCache.BeatmapStarRatingKey::class)
+class BeatmapStarRatingCache(
     @Id
     var id: Long,
 
@@ -23,7 +23,7 @@ class BeatmapStartCache(
     var star: Double
 ) {
     constructor(bid:Long, mode: OsuMode, mods: Int, star:Double): this(bid, mode.modeValue, mods, star)
-    data class BeatmapStartKey(
+    data class BeatmapStarRatingKey(
         var id: Long,
         var mode: Short,
         var mods: Int,

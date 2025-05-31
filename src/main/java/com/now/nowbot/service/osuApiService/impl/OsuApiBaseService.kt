@@ -146,11 +146,11 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
                 refreshUserToken(user, false)
             } catch (e: HttpClientErrorException.Unauthorized) {
                 bindDao.backupBind(user.userID)
-                log.info("令牌过期 绑定丢失: [{}], 已退回到 id 绑定", user.userID, e)
+                log.info("令牌过期 绑定丢失: {}, 已退回到 id 绑定", user.userID, e)
                 throw BindException(BindException.Type.BIND_Me_TokenExpiredButBindID)
             } catch (e: WebClientResponseException.Unauthorized) {
                 bindDao.backupBind(user.userID)
-                log.info("令牌过期 绑定丢失: [{}], 已退回到 id 绑定", user.userID, e)
+                log.info("令牌过期 绑定丢失: {}, 已退回到 id 绑定", user.userID, e)
                 throw BindException(BindException.Type.BIND_Me_TokenExpiredButBindID)
             } catch (e: HttpClientErrorException.Forbidden) {
                 log.info("更新令牌失败：账号封禁", e)

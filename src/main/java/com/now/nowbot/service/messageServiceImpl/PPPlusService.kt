@@ -68,7 +68,7 @@ class PPPlusService(
                 }
 
                 else -> {
-                    log.error("PP+ 指令解析失败: [{}]", cmd)
+                    log.error("PP+ 指令解析失败: {}", cmd)
                     return false
                 }
             }

@@ -180,12 +180,10 @@ class BeatMap {
     //自己取
     @get:JsonProperty("preview_name")
     val previewName: String
-        get() {
-            return if (beatMapSet != null) {
-                beatMapSet!!.artist + " - " + beatMapSet!!.title + " (" + beatMapSet!!.creator + ") [" + difficultyName + "]"
-            } else {
-                difficultyName
-            }
+        get() = if (beatMapSet != null) {
+            beatMapSet!!.artist + " - " + beatMapSet!!.title + " (" + beatMapSet!!.creator + ") [" + difficultyName + "]"
+        } else {
+            difficultyName
         }
 
 
