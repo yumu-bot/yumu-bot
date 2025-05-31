@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query
 import java.util.*
 
 interface BeatmapStarRatingCacheRepository : JpaRepository<BeatmapStarRatingCache, BeatmapStarRatingCache.BeatmapStarRatingKey> {
-    @Query("select s.star from BeatmapStartCache s where s.id = :id and s.mods = :mods")
+    @Query("select s.star from BeatmapStarRatingCache s where s.id = :id and s.mods = :mods")
     fun findByKey(id: Long, mods: Int): Optional<Double>
 
     @Transactional
