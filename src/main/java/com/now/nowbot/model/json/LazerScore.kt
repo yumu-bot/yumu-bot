@@ -12,11 +12,10 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 import kotlin.math.ln
-import kotlin.math.pow
 import kotlin.math.roundToInt
 
 @JsonNaming(PropertyNamingStrategies.UpperSnakeCaseStrategy::class)
-// 这是 API v2 version header is 20220705 or higher 会返回的成绩数据。这并不支持老版本的比赛数据（stable 比赛依旧是原来那个 score
+// 这是 API v2 version header is 20240529 or higher 会返回的成绩数据。
 @JsonIgnoreProperties(ignoreUnknown = true)
 open class LazerScore {
     @JsonProperty("classic_total_score")
@@ -105,7 +104,6 @@ open class LazerScore {
     @JsonProperty("beatmap_id")
     var beatMapID: Long = 0L
 
-    @JvmField
     @JsonProperty("best_id")
     var bestID: Long? = 0L
 
@@ -116,24 +114,16 @@ open class LazerScore {
     @JsonProperty("rank")
     var lazerRank: String = "F"
 
-    @get:JsonIgnore
-    @get:JvmName("getRankString")
-    val rank: String
-        get() = getRank()
+    @get:JsonProperty("legacy_rank")
+    var rank: String
+        get() = _rank ?: getStableRank(this)
+        set(value) {
+            _rank = value
+        }
 
     // 傻逼 Lazer
     @JsonIgnore
     private var _rank: String? = null
-
-    @JsonIgnore
-    fun setRank(rankStr: String) {
-        _rank = rankStr
-    }
-
-    @JsonProperty("legacy_rank")
-    fun getRank(): String {
-        return _rank ?: getStableRank(this)
-    }
 
     @JsonProperty("type")
     var type: String = "solo_score" // solo_score 不区分是否是新老客户端
@@ -148,18 +138,14 @@ open class LazerScore {
     // 傻逼 Lazer
     @get:JsonProperty("legacy_accuracy")
     val accuracy: Double
-        get() {
-            return getStableAccuracy(this)
-        }
+        get() = getStableAccuracy(this)
 
     @JsonProperty("build_id")
     var buildID: Long? = 0L
 
     @get:JsonProperty("is_lazer")
     val isLazer: Boolean
-        get() {
-            return buildID != null && buildID!! > 0
-        }
+        get() = buildID != null && buildID!! > 0
 
     @set:JsonProperty("ended_at")
     @get:JsonIgnore
@@ -193,7 +179,6 @@ open class LazerScore {
     @JsonProperty("passed")
     var passed: Boolean = false
 
-    @JvmField
     @JsonProperty("pp")
     var PP: Double? = 0.0
 
@@ -215,8 +200,8 @@ open class LazerScore {
             }
         }
 
-    @JvmField
-    //@set:JsonProperty("started_at") @get:JsonIgnore
+    @get:JsonIgnore
+    @set:JsonProperty("started_at")
     var startedTime: OffsetDateTime? = null
 
     @get:JsonProperty("started_at")
@@ -277,24 +262,11 @@ open class LazerScore {
             }
     }
 
-    fun getPP(): Double {
-        return PP!!
-    }
-
-    fun setPP(pp: Double?) {
-        PP = pp ?: PP
-    }
-
     companion object {
         private val formatter: DateTimeFormatter =
             DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd").appendLiteral("T").appendPattern("HH:mm:ss")
                 .toFormatter()
 
-        fun getWeightPP(score: LazerScore, position: Int = 0): Double {
-            return score.weight?.PP ?: ((score.PP ?: 0.0) * (0.95).pow(position.toDouble()))
-        }
-
-        @JvmStatic
         private fun getStableRank(score: LazerScore): String {
             if (!score.passed) return "F"
             if (score.isLazer) return score.lazerRank
@@ -303,7 +275,9 @@ open class LazerScore {
             val s = score.statistics
 
             // matchScore 无法计算
-            if (m.great == 0) return score.lazerRank
+            if (m.great == 0 && m.perfect == 0) {
+                return score.lazerRank
+            }
 
             val accuracy = score.accuracy
             val p300 = 1.0 * s.great / m.great
@@ -358,7 +332,6 @@ open class LazerScore {
             return rank
         }
 
-        @JvmStatic
         private fun getStableAccuracy(score: LazerScore): Double {
             if (score.isLazer) return score.lazerAccuracy
 
