@@ -10,7 +10,7 @@ import java.nio.file.Path
 
 open class LocalContact : Contact {
     override fun getId(): Long {
-        return 1340691940// -17064371
+        return -17064371
     }
 
     override fun getName(): String? {
