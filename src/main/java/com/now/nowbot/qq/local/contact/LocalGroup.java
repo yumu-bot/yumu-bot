@@ -29,7 +29,7 @@ public class LocalGroup extends LocalContact implements com.now.nowbot.qq.contac
         log.info("bot: 发送文件 {}", path);
     }
 
-    class GroupContact extends LocalContact implements com.now.nowbot.qq.contact.GroupContact {
+    static class GroupContact extends LocalContact implements com.now.nowbot.qq.contact.GroupContact {
 
         @Override
         public Role getRole() {

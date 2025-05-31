@@ -101,11 +101,11 @@ public class OneBotListener {
 
     public void errorHandle(com.now.nowbot.qq.event.MessageEvent event, Throwable e) {
         var from = event.getSubject();
-        // 网络请求异常都在服务里处理掉了, 即使未处理也不应该直接发送出来
+
         if (e instanceof BotException botException) {
+            // 有些网络请求异常被包装在这里
             if (botException.hasImage()) {
-                event.reply(((BotException) e).getImage());
-                //QQMsgUtil.sendImage(from, ((BotException) e).getImage());
+                event.reply(botException.getImage());
             } else {
                 event.reply(e.getMessage()).recallIn(RECALL_TIME);
             }
@@ -119,7 +119,9 @@ public class OneBotListener {
         } else if (e instanceof PermissionException) {
             log.error(e.getMessage());
         } else {
-            if (Permission.isSuperAdmin(event.getSender().getId())) event.reply(e.getMessage());
+            if (Permission.isSuperAdmin(event.getSender().getId())) {
+                event.reply(e.getMessage()).recallIn(RECALL_TIME);
+            }
             log.error("捕捉其他异常", e);
         }
     }

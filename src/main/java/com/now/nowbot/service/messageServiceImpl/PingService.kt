@@ -29,7 +29,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
         event.reply(image).recallIn(5000)
     }
 

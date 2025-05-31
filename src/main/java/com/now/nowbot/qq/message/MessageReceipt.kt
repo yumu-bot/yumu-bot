@@ -1,11 +1,10 @@
-package com.now.nowbot.qq.message;
+package com.now.nowbot.qq.message
 
-import com.now.nowbot.qq.contact.Contact;
+import com.now.nowbot.qq.contact.Contact
 
-public abstract class MessageReceipt {
-    public abstract void recall();
-    public abstract void recallIn(long time);
-
-    public abstract Contact getTarget();
-    public abstract ReplyMessage reply();
+abstract class MessageReceipt {
+    abstract fun recall()
+    abstract fun recallIn(time: Long)
+    abstract fun reply(): ReplyMessage?
+    abstract fun getTarget(): Contact?
 }

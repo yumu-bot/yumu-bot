@@ -1,35 +1,24 @@
-package com.now.nowbot.qq.message;
+package com.now.nowbot.qq.message
 
-import java.util.Map;
+class ReplyMessage : Message {
+    val id: Long
+    val text: String?
 
-public class ReplyMessage extends Message {
-    final long id;
-    String text;
-
-    public ReplyMessage(long messageId) {
-        id = messageId;
+    constructor(messageId: Long) {
+        id = messageId
+        this.text = null
     }
 
-    public ReplyMessage(long messageId, String text) {
-        id = messageId;
-        this.text = text;
+    constructor(messageId: Long, text: String?) {
+        id = messageId
+        this.text = text
     }
 
-    public long getId() {
-        return id;
+    override fun toJson(): JsonMessage {
+        return JsonMessage("reply", mapOf("id" to id))
     }
 
-    public String getText() {
-        return text;
-    }
-
-    @Override
-    public JsonMessage toJson() {
-        return new JsonMessage("reply", Map.of("id", id));
-    }
-
-    @Override
-    public String toString() {
-        return STR."[reply:\{id}]";
+    override fun toString(): String {
+        return "[reply:${id}]"
     }
 }

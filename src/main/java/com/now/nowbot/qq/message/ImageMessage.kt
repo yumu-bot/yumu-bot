@@ -41,11 +41,11 @@ class ImageMessage : Message {
     }
 
     override fun toJson(): JsonMessage {
-        val img: Any? = if (isByteArray) {
+        val img: String? = if (isByteArray) {
             "base64://" + QQMsgUtil.byte2str(data)
         } else {
             path
         }
-        return JsonMessage("image", mapOf("file" to img))
+        return JsonMessage("image", mapOf("file" to (img ?: "null")))
     }
 }

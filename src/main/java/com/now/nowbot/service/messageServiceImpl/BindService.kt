@@ -256,7 +256,7 @@ import kotlin.jvm.optionals.getOrNull
             event.reply("""
                 ${yumuConfig.bindDomain}
                 请 ctrl+c 并 ctrl+v 到其他 browser 完成绑定。
-            """.trimMargin())
+            """.trimIndent())
         } else {
             bindQQAt(event, qq, isFull = false)
         }

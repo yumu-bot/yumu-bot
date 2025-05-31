@@ -1,92 +1,90 @@
-package com.now.nowbot.qq.message;
+package com.now.nowbot.qq.message
 
-import java.net.URL;
-import java.util.LinkedList;
-import java.util.List;
+import java.net.URL
+import java.util.*
 
-public class MessageChain {
-    public static class MessageChainBuilder {
-        private final MessageChain msgChain = new MessageChain();
+class MessageChain {
+    class MessageChainBuilder {
+        private val msgChain = MessageChain()
 
-        public MessageChainBuilder addImage(URL url) {
-            msgChain.addMessage(new ImageMessage(url));
-            return this;
+        fun addImage(url: URL): MessageChainBuilder {
+            msgChain.addMessage(ImageMessage(url))
+            return this
         }
 
-        public MessageChainBuilder addImage(byte[] data) {
-            msgChain.addMessage(new ImageMessage(data));
-            return this;
+        fun addImage(data: ByteArray?): MessageChainBuilder {
+            msgChain.addMessage(ImageMessage(data))
+            return this
         }
 
-        public MessageChainBuilder addImage(String pathStr) {
-            msgChain.addMessage(new ImageMessage(pathStr));
-            return this;
+        fun addImage(pathStr: String): MessageChainBuilder {
+            msgChain.addMessage(ImageMessage(pathStr))
+            return this
         }
 
-        public MessageChainBuilder addVoice(byte[] data) {
-            msgChain.addMessage(new VoiceMessage(data));
-            return this;
-        }
-        public MessageChainBuilder addText(String msg) {
-            msgChain.addMessage(new TextMessage(msg));
-            return this;
-        }
-        public MessageChainBuilder addAt(long qq) {
-            msgChain.addMessage(new AtMessage(qq));
-            return this;
-        }
-        public MessageChainBuilder addAtAll() {
-            msgChain.addMessage(new AtMessage());
-            return this;
+        fun addVoice(data: ByteArray): MessageChainBuilder {
+            msgChain.addMessage(VoiceMessage(data))
+            return this
         }
 
-        public boolean isEmpty() {
-            return msgChain.isEmpty();
+        fun addText(msg: String): MessageChainBuilder {
+            msgChain.addMessage(TextMessage(msg))
+            return this
         }
 
-        public boolean isNotEmpty() {
-            return !isEmpty();
+        fun addAt(qq: Long): MessageChainBuilder {
+            msgChain.addMessage(AtMessage(qq))
+            return this
         }
 
-        public MessageChain build() {
-            return msgChain;
+        fun addAtAll(): MessageChainBuilder {
+            msgChain.addMessage(AtMessage())
+            return this
+        }
+
+        val isEmpty: Boolean
+            get() = msgChain.isEmpty
+
+        val isNotEmpty: Boolean
+            get() = !isEmpty
+
+        fun build(): MessageChain {
+            return msgChain
         }
     }
 
-    MessageChain() {
-        messageList = new LinkedList<>();
+    internal constructor() {
+        messageList = LinkedList()
     }
 
-    public MessageChain(List<Message> messages) {
-        messageList = new LinkedList<>(messages);
+    constructor(messages: List<Message>) {
+        messageList = LinkedList(messages)
     }
 
-    protected LinkedList<Message> messageList;
+    var messageList: LinkedList<Message>
+        private set
 
-    public MessageChain(String msg) {
-        messageList = new LinkedList<>();
-        addMessage(new TextMessage(msg));
-    }
-
-    MessageChain addMessage(Message msg) {
-        this.messageList.add(msg);
-        return this;
+    constructor(msg: String) {
+        messageList = LinkedList()
+        addMessage(TextMessage(msg))
     }
 
-    public boolean isEmpty() {
-        return messageList.isEmpty();
+    fun addMessage(msg: Message): MessageChain {
+        messageList.add(msg)
+        return this
     }
 
-    public boolean isNotEmpty() {
-        return !isEmpty();
-    }
-    public String getRawMessage() {
-        var sb = new StringBuilder();
-        messageList.forEach(m -> sb.append(m.toString()));
-        return sb.toString();
-    }
+    val isEmpty: Boolean
+        get() = messageList.isEmpty()
 
-    public LinkedList<Message> getMessageList() {
-        return messageList;
-    }
+    val isNotEmpty: Boolean
+        get() = !isEmpty
+    val rawMessage: String
+        get() {
+            val sb = StringBuilder()
+            messageList.forEach {
+                sb.append(it.toString())
+            }
+            return sb.toString()
+        }
 }

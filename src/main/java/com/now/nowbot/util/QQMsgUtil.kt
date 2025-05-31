@@ -32,11 +32,11 @@ object QQMsgUtil {
         return msg.messageList.filter { clazz.isAssignableFrom(it.javaClass) }.filterIsInstance<T>().firstOrNull()
     }
 
-    fun getImage(image: ByteArray?): MessageChain {
+    fun getImage(image: ByteArray): MessageChain {
         return MessageChainBuilder().addImage(image).build()
     }
 
-    fun getTextAndImage(text: String?, image: ByteArray?): MessageChain {
+    fun getTextAndImage(text: String, image: ByteArray): MessageChain {
         return MessageChainBuilder().addText(text).addImage(image).build()
     }
 
@@ -74,12 +74,12 @@ object QQMsgUtil {
         return msg.messageList.filter { clazz.isAssignableFrom(it.javaClass) }.filterIsInstance<T>()
     }
 
-    @JvmStatic fun sendImageAndText(event: MessageEvent, image: ByteArray?, text: String?) {
+    @JvmStatic fun sendImageAndText(event: MessageEvent, image: ByteArray, text: String) {
         val from = event.subject
         sendImageAndText(from, image, text)
     }
 
-    @JvmStatic fun sendImageAndText(from: Contact, image: ByteArray?, text: String?) {
+    @JvmStatic fun sendImageAndText(from: Contact, image: ByteArray, text: String) {
         // beforeContact(from)
         from.sendMessage(MessageChainBuilder().addImage(image).addText(text).build())
     }

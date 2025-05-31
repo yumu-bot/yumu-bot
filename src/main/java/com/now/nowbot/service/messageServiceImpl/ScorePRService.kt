@@ -350,7 +350,7 @@ class ScorePRService(
             .uri(d.url ?: "")
             .retrieve()
             .bodyToMono(ByteArray::class.java)
-            .block()
+            .block()!!
 
         return QQMsgUtil.getTextAndImage(d.scoreLegacyOutput, imgBytes)
     }

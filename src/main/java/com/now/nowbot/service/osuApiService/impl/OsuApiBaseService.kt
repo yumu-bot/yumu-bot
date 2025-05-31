@@ -197,11 +197,29 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
             return future.get()
         } catch (e: ExecutionException) {
             when (e.cause) {
-                is WebClientResponseException.Unauthorized -> throw RuntimeException(GeneralTipsException.Type.G_Malfunction_Response_401.message)
-                is WebClientResponseException.Forbidden -> throw RuntimeException(GeneralTipsException.Type.G_Malfunction_Response_403.message)
-                is WebClientResponseException.NotFound -> throw RuntimeException(GeneralTipsException.Type.G_Malfunction_Response_404.message)
-                is WebClientResponseException.TooManyRequests -> throw RuntimeException(GeneralTipsException.Type.G_Malfunction_Response_429.message)
-                is WebClientResponseException.ServiceUnavailable -> throw RuntimeException(GeneralTipsException.Type.G_Malfunction_Response_503.message)
+                is WebClientResponseException.Unauthorized -> {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Response_401)
+                }
+
+                is WebClientResponseException.Forbidden -> {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Response_403)
+                }
+
+                is WebClientResponseException.NotFound -> {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Response_404)
+                }
+
+                is WebClientResponseException.TooManyRequests -> {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Response_429)
+                }
+
+                is WebClientResponseException.ServiceUnavailable -> {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Response_503)
+                }
+
+                is WebClientResponseException -> {
+                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
+                }
 
                 is RuntimeException -> throw e
                 else -> throw RuntimeException(e.cause)

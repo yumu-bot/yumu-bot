@@ -1,51 +1,20 @@
-package com.now.nowbot.qq.message;
+package com.now.nowbot.qq.message
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude
 
-import java.util.Map;
-
-public class Message {
-    public String toString() {
-        return "";
+open class Message {
+    override fun toString(): String {
+        return ""
     }
 
-    public String getCQ() {
-        return "";
+    open fun getCQ(): String {
+        return ""
     }
 
-    public JsonMessage toJson() {
-        return null;
+    open fun toJson(): JsonMessage? {
+        return null
     }
 
     @JsonInclude(value = JsonInclude.Include.NON_EMPTY, content = JsonInclude.Include.NON_EMPTY)
-    public class JsonMessage {
-        public String              type;
-        public Map<String, Object> data;
-
-        public JsonMessage(String type, Map<String, Object> data) {
-            this.type = type;
-            this.data = data;
-        }
-
-        public JsonMessage() {
-            this.type = null;
-            this.data = null;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public void setType(String type) {
-            this.type = type;
-        }
-
-        public Map<String, Object> getData() {
-            return data;
-        }
-
-        public void setData(Map<String, Object> data) {
-            this.data = data;
-        }
-    }
+    inner class JsonMessage(var type: String?, var data: Map<String, Any>?)
 }

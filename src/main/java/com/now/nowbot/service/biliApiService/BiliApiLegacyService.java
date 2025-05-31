@@ -1,4 +1,4 @@
-package com.now.nowbot.service;
+package com.now.nowbot.service.biliApiService;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.now.nowbot.model.live.LiveRoom;
@@ -17,8 +17,8 @@ import java.io.IOException;
 import java.util.*;
 
 @Service
-public class BiliApiService {
-    Logger log = LoggerFactory.getLogger(BiliApiService.class);
+public class BiliApiLegacyService {
+    Logger log = LoggerFactory.getLogger(BiliApiLegacyService.class);
     private static final String ROOM_API         = "http://api.live.bilibili.com/room/v1/Room/room_init?id=";
     private static final String USER_API         = "http://api.live.bilibili.com/live_user/v1/Master/info?uid=";
     private static final String USER_ALLINFO_API = "https://api.bilibili.com/x/space/acc/info?mid=";

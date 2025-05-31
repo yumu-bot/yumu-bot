@@ -1,52 +1,34 @@
-package com.now.nowbot.qq.message;
+package com.now.nowbot.qq.message
 
-import com.mikuac.shiro.common.utils.MsgUtils;
+import com.mikuac.shiro.common.utils.MsgUtils
+class AtMessage : Message {
+    val target: Long
 
-import java.util.Map;
-
-public class AtMessage extends Message {
-    private final long qq;
-
-    public AtMessage(long qq) {
-        this.qq = qq;
+    constructor(qq: Long) {
+        this.target = qq
     }
 
-    /***
-     * 创建 &#064;全体成员 消息,但是只能 bot 为管理员使用
-     */
-    public AtMessage() {
-        this.qq = -1L;
+    constructor() {
+        this.target = -1L
     }
 
-    public boolean isAll() {
-        return qq == -1L;
+    val isAll: Boolean
+        get() = target == -1L
+
+    override fun toString(): String {
+        return "[@${target}]"
     }
 
-    public long getQQ() {
-        return qq;
-    }
-    public long getTarget() {
-        return getQQ();
+    override fun getCQ(): String {
+        return MsgUtils().at(target).build()
     }
 
-    @Override
-    public String toString() {
-        return STR."[@\{qq}]";
-    }
-
-    @Override
-    public String getCQ() {
-        return new MsgUtils().at(qq).build();
-    }
-
-    @Override
-    public JsonMessage toJson() {
-        Object qq;
-        if (isAll()) {
-            qq = "all";
+    override fun toJson(): JsonMessage {
+        val qq: Any = if (isAll) {
+            "all"
         } else {
-            qq = this.qq;
+            target
         }
-        return new JsonMessage("at", Map.of("qq", qq));
+        return JsonMessage("at", mapOf("qq" to qq))
     }
 }

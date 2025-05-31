@@ -1,21 +1,11 @@
-package com.now.nowbot.qq.message;
+package com.now.nowbot.qq.message
 
-import java.util.Map;
-
-public class TextMessage extends Message {
-    String message;
-
-    public TextMessage(String msg) {
-        message = msg;
+class TextMessage(var message: String) : Message() {
+    override fun toString(): String {
+        return message
     }
 
-    @Override
-    public String toString() {
-        return message;
-    }
-
-    @Override
-    public JsonMessage toJson() {
-        return new JsonMessage("text", Map.of("text", message));
+    override fun toJson(): JsonMessage {
+        return JsonMessage("text", mapOf("text" to message))
     }
 }
