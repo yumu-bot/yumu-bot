@@ -349,15 +349,15 @@ class NewbieRestrictOverSRService(
 
         val timeMessage = String.format("%.2f", sr) + " -> " + getTime(silence)
         val message = """
-             检测到 ${criminal.name} (${playerName}) 超星。
-             ($timeMessage)
-             超星谱面：${score.previewName}
-             七天之内超星次数：${count7}。
-             七天之内禁言时间：${duration7}。
-             总计超星次数：${count}。
-             总计禁言时间：${duration}。
-             最近五次超星的星数：[${last5}]。
-        """.trimIndent()
+            检测到 ${criminal.name} (${playerName}) 超星。
+            ($timeMessage)
+            超星谱面：${score.previewName}
+            七天之内超星次数：${count7}。
+            七天之内禁言时间：${duration7}。
+            总计超星次数：${count}。
+            总计禁言时间：${duration}。
+            最近五次超星的星数：[${last5}]。
+            """.trimMargin()
 
         try {
             newbieDao.saveRestricted(criminal.id, sr, System.currentTimeMillis(), min(silence * 60000L, 7L * 24 * 60 * 60 * 1000))
@@ -365,7 +365,7 @@ class NewbieRestrictOverSRService(
             log.error("""
                 $message
                 但是保存记录失败了。
-                """.trimIndent(), e)
+                """.trimMargin(), e)
         }
 
         val executorBot = botContainer.robots[executorBotID]
@@ -373,45 +373,44 @@ class NewbieRestrictOverSRService(
                 log.info("""
                     $message
                     但是执行机器人并未上线。无法执行禁言任务。
-                    """.trimIndent())
+                    """.trimMargin())
                 return
             }
 
         val isReportable = executorBot.groupList.data?.map { it.groupId }?.contains(killerGroupID) == true
 
         if (Permission.isGroupAdmin(event)) {
-            report(isReportable, executorBot,
-                """
-                    $message
-                    但是对方是管理员或群主，无法执行禁言任务。
-                """.trimIndent())
+            report(isReportable, executorBot, """
+                $message
+                但是对方是管理员或群主，无法执行禁言任务。
+                """.trimMargin())
             return
         }
 
         // 情节严重
         if (silence >= 30 * 24 * 60 - 1) {
-            report(isReportable, executorBot,
-                """
-                    $message
-                    情节严重，已按最大时间禁言。
-                """.trimIndent())
+            report(isReportable, executorBot, """
+                $message
+                情节严重，已按最大时间禁言。
+                """.trimMargin())
 
             executorBot.setGroupBan(newbieGroupID, event.sender.id, (30 * 24 * 60 - 1) * 60)
                 ?: report(isReportable, executorBot, """
                     $message
                     但是机器人执行禁言任务失败了。
-                """.trimIndent())
+                """.trimMargin())
         } else {
-            report(isReportable, executorBot, """
+            report(isReportable, executorBot,
+                """
                     $message
                     正在执行禁言任务。
-                """.trimIndent())
+                """.trimMargin())
 
             executorBot.setGroupBan(newbieGroupID, event.sender.id, (silence * 60).toInt())
                 ?: report(isReportable, executorBot, """
                     $message
                     但是机器人执行禁言任务失败了。
-                    """.trimIndent())
+                    """.trimMargin())
         }
     }
 

@@ -6,7 +6,6 @@ import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.throwable.GeneralTipsException
-import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
@@ -211,16 +210,17 @@ class ImageService(private val webClient: WebClient) {
         return try {
             request.retrieve().bodyToMono(ByteArray::class.java).block()!!
         } catch (e: Throwable) {
-            when(e.cause) {
-                is BadRequest -> throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_400)
-                is ReadTimeoutException -> throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_408)
-                is InternalServerError -> throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_500)
-                is ConnectException -> throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_503)
-
-                else -> {
-                    log.error("渲染模块：未识别的错误", e)
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_000)
-                }
+            if (e is BadRequest || e.cause is BadRequest) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_400)
+            } else if (e is InternalServerError || e.cause is InternalServerError) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_408)
+            } else if (e is ConnectException || e.cause is ConnectException) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_503)
+            } else if (e is GeneralTipsException) {
+                throw e
+            } else {
+                log.error("渲染模块：未识别的错误", e)
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_000)
             }
         }
     }
