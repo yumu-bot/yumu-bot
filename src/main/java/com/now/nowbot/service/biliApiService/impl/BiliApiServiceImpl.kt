@@ -7,6 +7,8 @@ import com.now.nowbot.model.bili.BiliUser
 import com.now.nowbot.service.biliApiService.BiliApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.JacksonUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -14,7 +16,7 @@ class BiliApiServiceImpl(
     private val base: BiliApiBaseService,
 ): BiliApiService {
     override fun getStreamer(id: Long): BiliStreamer {
-        val biliStreamer = base.biliApiWebClient.get().uri { it
+        val node = base.biliApiWebClient.get().uri { it
             .scheme("https")
             .host("api.live.bilibili.com")
             .path("live_user/v1/Master/info")
@@ -23,21 +25,14 @@ class BiliApiServiceImpl(
         }
             .headers { base.insertJSONHeader(it) }
             .retrieve()
-            .bodyToMono(BiliStreamer::class.java).block()!!
+            .bodyToMono(JsonNode::class.java).block()!!
 
-        if (biliStreamer.data == null) {
-            if (biliStreamer.code == -400) {
-                throw TipsException("找不到 $id 对应的直播主。")
-            }
-
-            throw TipsException("获取直播主信息失败。失败代码：${biliStreamer.code}，失败原因：${biliStreamer.message}")
-        }
-
-        return biliStreamer
+        return parse(node, id, "直播主")
     }
 
+
     override fun getUser(id: Long): BiliUser {
-        val biliUser = base.biliApiWebClient.get().uri { it
+        val node = base.biliApiWebClient.get().uri { it
             .scheme("https")
             .path("x/space/acc/info")
             .queryParam("mid", id)
@@ -46,23 +41,13 @@ class BiliApiServiceImpl(
             .headers { base.insertJSONHeader(it) }
             .retrieve()
             .bodyToMono(JsonNode::class.java)
-            .map { println(it)
-                JacksonUtil.parseObject(it, BiliUser::class.java) }.block()!!
-            //.bodyToMono(BiliUser::class.java).block()!!
+            .block()!!
 
-        if (biliUser.data == null) {
-            if (biliUser.code == -400) {
-                throw TipsException("找不到 $id 对应的用户。")
-            }
-
-            throw TipsException("获取账号信息失败。失败代码：${biliUser.code}，失败原因：${biliUser.message}")
-        }
-
-        return biliUser
+        return parse(node, id, "账号信息")
     }
 
     override fun getDanmaku(roomID: Long): BiliDanmaku {
-        val biliDanmaku = base.biliApiWebClient.get().uri { it
+        val node = base.biliApiWebClient.get().uri { it
             .scheme("https")
             .host("api.live.bilibili.com")
             .path("xlive/web-room/v1/dM/gethistory")
@@ -71,13 +56,9 @@ class BiliApiServiceImpl(
         }
             .headers { base.insertJSONHeader(it) }
             .retrieve()
-            .bodyToMono(BiliDanmaku::class.java).block()!!
+            .bodyToMono(JsonNode::class.java).block()!!
 
-        if (biliDanmaku.data == null) {
-            throw TipsException("获取直播间最近弹幕失败。失败代码：${biliDanmaku.code}，失败原因：${biliDanmaku.message}")
-        }
-
-        return biliDanmaku
+        return parse(node, roomID, "直播间最近弹幕")
     }
 
     override fun getImage(url: String): ByteArray {
@@ -88,5 +69,25 @@ class BiliApiServiceImpl(
             .block()
 
         return avatar ?: throw TipsException("获取图片失败。")
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(BiliApiService::class.java)
+
+        private inline fun <reified T> parse(node: JsonNode, param: Any?, name: String): T {
+            val code = node.get("code").asInt(-1)
+            val message = node.get("message").asText("未知")
+
+            if (code == -400) {
+                throw TipsException("找不到${if (param != null) " $param " else ""}对应的${name}。")
+            } else if (code != 0) {
+                throw TipsException("获取${name}信息失败。失败代码：${code}，失败原因：${message}")
+            } else try {
+                return JacksonUtil.parseObject(node, T::class.java)
+            } catch (e : Exception) {
+                log.error("生成${name}失败。", e)
+                return T::class.objectInstance!!
+            }
+        }
     }
 }

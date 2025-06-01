@@ -6,6 +6,7 @@ import com.now.nowbot.model.json.LazerScore
 import com.now.nowbot.model.json.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.throwable.GeneralTipsException
+import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
@@ -13,6 +14,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientRequestException
 import org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
 import org.springframework.web.reactive.function.client.WebClientResponseException.InternalServerError
 import java.net.ConnectException
@@ -212,10 +214,14 @@ class ImageService(private val webClient: WebClient) {
         } catch (e: Throwable) {
             if (e is BadRequest || e.cause is BadRequest) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_400)
-            } else if (e is InternalServerError || e.cause is InternalServerError) {
+            } else if (e is ReadTimeoutException || e.cause is ReadTimeoutException) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_408)
+            } else if (e is InternalServerError || e.cause is InternalServerError) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_500)
             } else if (e is ConnectException || e.cause is ConnectException) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_503)
+            } else if (e is WebClientRequestException) {
+                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_502)
             } else if (e is GeneralTipsException) {
                 throw e
             } else {

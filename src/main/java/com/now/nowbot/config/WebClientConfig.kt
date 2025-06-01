@@ -95,7 +95,7 @@ import java.util.function.Function
     @Bean("biliApiWebClient") @Qualifier("biliApiWebClient") fun biliApiWebClient(builder: WebClient.Builder): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider3")
             .maxIdleTime(Duration.ofSeconds(30))
-            .maxConnections(5)
+            .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
         val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
@@ -123,7 +123,7 @@ import java.util.function.Function
         return next.exchange(request)
             .flatMap<ClientResponse?>(Function<ClientResponse, Mono<out ClientResponse?>> { response: ClientResponse ->
                 when (response.statusCode().value()) {
-                    504, 503, 502, 429, 408 -> response.createException().flatMap<ClientResponse>(
+                    504, 503, 502, 429, 408 -> response.createException().flatMap (
                         Function<WebClientResponseException, Mono<out ClientResponse>> { error: WebClientResponseException? ->
                             Mono.error(
                                 error!!

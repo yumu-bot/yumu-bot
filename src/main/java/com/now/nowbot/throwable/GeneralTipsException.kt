@@ -105,6 +105,7 @@ class GeneralTipsException : TipsException {
         G_Malfunction_Render_400("400 Bad Request\n渲染模块请求错误。"),
         G_Malfunction_Render_408("408 Request Timeout\n渲染模块连接超时，有可能是需要绘制的数据太多了。"),
         G_Malfunction_Render_500("500 Internal Server Error\n渲染模块逻辑错误。"),
+        G_Malfunction_Render_502("502 Bad Gateway\n与渲染模块的连接出现了问题。"),
         G_Malfunction_Render_503("503 Service Unavailable\n渲染模块未上线。"),
 
         G_Malfunction_Response_401("401 Unauthorized\n未授权。"),
