@@ -14,6 +14,7 @@ import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService;
+import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.serviceException.BindException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -472,7 +473,7 @@ public class BindDao {
             try {
                 userApiService.refreshUserToken(fromLite(u));
                 return;
-            } catch (RuntimeException e) {
+            } catch (GeneralTipsException e) {
                 var m = e.getMessage();
 
                 if (m != null && m.contains("401")) {
