@@ -92,6 +92,33 @@ import java.util.function.Function
             }.build()
     }
 
+    @Bean("biliApiWebClient") @Qualifier("biliApiWebClient") fun biliApiWebClient(builder: WebClient.Builder): WebClient {
+        val connectionProvider = ConnectionProvider.builder("connectionProvider3")
+            .maxIdleTime(Duration.ofSeconds(30))
+            .maxConnections(5)
+            .pendingAcquireMaxCount(-1)
+            .build()
+        val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
+            .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
+        val connector = ReactorClientHttpConnector(httpClient)
+        val strategies = ExchangeStrategies.builder().codecs {
+            it.defaultCodecs().jackson2JsonEncoder(
+                Jackson2JsonEncoder(
+                    JacksonUtil.mapper, MediaType.APPLICATION_JSON
+                )
+            )
+        }.build()
+
+        return builder.clientConnector(connector).exchangeStrategies(strategies)
+            .defaultHeaders { headers: HttpHeaders ->
+                headers.contentType = MediaType.APPLICATION_JSON
+                headers.accept = listOf(MediaType.APPLICATION_JSON)
+            }.baseUrl("http://api.bilibili.com/")
+            .codecs { it.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }
+            .filter { request: ClientRequest, next: ExchangeFunction -> this.doRetryFilter(request, next)
+            }.build()
+    }
+
     private fun doRetryFilter(request: ClientRequest, next: ExchangeFunction): Mono<ClientResponse?> {
         return next.exchange(request)
             .flatMap<ClientResponse?>(Function<ClientResponse, Mono<out ClientResponse?>> { response: ClientResponse ->

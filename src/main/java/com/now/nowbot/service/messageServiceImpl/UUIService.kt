@@ -38,12 +38,12 @@ class UUIService(private val osuApiWebClient: WebClient) : MessageService<UUIPar
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, data: UUIParam) {
-        val user = data.user
-        val mode = data.mode
+    override fun HandleMessage(event: MessageEvent, param: UUIParam) {
+        val user = param.user
+        val mode = param.mode
 
         val avatar: ByteArray? = osuApiWebClient.get()
-                .uri("https://a.ppy.sh/${user.userID}")
+                .uri(user.avatarUrl)
                 .retrieve()
                 .bodyToMono(ByteArray::class.java)
                 .block()

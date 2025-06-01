@@ -95,6 +95,10 @@ object DataUtil {
             return field
         }
 
+    fun int2hex(color: Int): String {
+        return "#" + color.toString(16).padStart(6, '0')
+    }
+
     /**
      * @param h 0..360
      * @param s 0..100

@@ -560,6 +560,12 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     // #6 聊天指令
+
+    BILI_USER(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("bili\\s*user", "bu")
+        appendID()
+    }),
+
     // ...
     // #7 娱乐指令
 

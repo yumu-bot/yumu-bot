@@ -87,7 +87,7 @@ open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
                     "发送消息：账号 {} 在 {} 发送图片时获取回执失败。发送图片状态：{}",
                     bot!!.selfId,
                     id,
-                    bot!!.canSendImage().status
+                    bot!!.canSendImage()?.status ?: "无法获取"
                 )
             } else {
                 Contact.log.error("发送消息：账号 {} 在 {} 发送 {} 时获取回执失败。", bot!!.selfId, id, getMsg4Chain(msg))
