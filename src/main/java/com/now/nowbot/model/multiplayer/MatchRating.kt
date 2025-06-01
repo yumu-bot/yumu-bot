@@ -20,7 +20,7 @@ class MatchRating(
     private val calculateApiService: OsuCalculateApiService
 ) {
     @get:JsonIgnore
-    val filteredRounds = match.events
+    val filteredRounds: List<Match.MatchRound> = match.events
         .asSequence()
         .mapNotNull { it.round }
         .filter { it.scores.isNotEmpty() }
@@ -29,40 +29,39 @@ class MatchRating(
 
     @get:JsonIgnore
     val rounds: List<Match.MatchRound>
-        get() = applyParams(filteredRounds, ratingParam)
-
-    @get:JsonProperty("round_count")
-    val roundCount: Int
-        get() = this.rounds.size
 
     @get:JsonIgnore
     val scores: List<LazerScore>
-        get() = rounds.flatMap { it.scores }
-
-    @get:JsonProperty("score_count")
-    val scoreCount: Int
-        get() = this.scores.size
 
     @get:JsonIgnore
     val players: Map<Long, MicroUser>
-        get() {
-            // 有可用成绩的才能进这个分组
-            val playersHasScoreSet =
-                if (ratingParam.delete) {
-                    this.filteredRounds.flatMap { it.scores }.filter { it.score > 10000L }
-                } else {
-                    this.filteredRounds.flatMap { it.scores }
-                }.map { it.userID }.toSet()
 
-            return match.players
-                .distinctBy { it.userID }
-                .filter { it.userID in playersHasScoreSet }
-                .associateBy { it.userID }
-        }
+    init {
+        // 有可用成绩的才能进这个分组
+        val hasScoreSet =
+            if (ratingParam.delete) {
+                this.filteredRounds.flatMap { it.scores }.filter { it.score > 10000L }
+            } else {
+                this.filteredRounds.flatMap { it.scores }
+            }.map { it.userID }.toSet()
+
+        players = match.players
+            .distinctBy { it.userID }
+            .filter { it.userID in hasScoreSet }
+            .associateBy { it.userID }
+
+        rounds = applyParams(filteredRounds, ratingParam)
+        scores = rounds.flatMap { it.scores }
+    }
+
+    @get:JsonProperty("round_count")
+    val roundCount: Int = this.rounds.size
+
+    @get:JsonProperty("score_count")
+    val scoreCount: Int = this.scores.size
 
     @get:JsonProperty("player_count")
-    val playerCount: Int
-        get() = this.players.size
+    val playerCount: Int = this.players.size
 
     private fun applyParams(rounds: List<Match.MatchRound>, param: RatingParam): List<Match.MatchRound> {
         var rs = rounds.toMutableList()

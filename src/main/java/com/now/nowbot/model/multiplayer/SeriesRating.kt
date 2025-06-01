@@ -16,42 +16,35 @@ class SeriesRating(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService
 ) {
-    @get:JsonIgnore
-    private val ratings: List<MatchRating>
-        get() = matches.mapIndexed { i, it ->
-            MatchRating(it, ratingParams[i], beatmapApiService, calculateApiService)
-        }
+    @JsonIgnore
+    private val ratings: List<MatchRating> = matches.mapIndexed { i, it ->
+        MatchRating(it, ratingParams[i], beatmapApiService, calculateApiService)
+    }
 
     @get:JsonProperty("match_count")
     val matchCount: Int
         get() = this.matches.size
 
     @get:JsonIgnore
-    val players
-        get() = ratings.map { it.players }.flatMap { it.toList() }
+    val players = ratings.map { it.players }.flatMap { it.toList() }
 
     @get:JsonProperty("player_count")
-    val playerCount: Int
-        get() = this.players.size
+    val playerCount: Int = this.players.size
 
     @get:JsonIgnore
-    val rounds
-        get() = ratings.flatMap { it.rounds }.toList()
+    val rounds = ratings.flatMap { it.rounds }.toList()
 
     @get:JsonProperty("round_count")
-    val roundCount: Int
-        get() = this.rounds.size
+    val roundCount: Int = this.rounds.size
 
     @get:JsonIgnore
-    val scores
-        get() = ratings.flatMap { it.scores }.toList()
+    val scores = ratings.flatMap { it.scores }.toList()
 
     @JsonIgnore
     var name: String? = null
 
     @get:JsonProperty("score_count")
-    val scoreCount: Int
-        get() = this.scores.size
+    val scoreCount: Int = this.scores.size
 
     /*
     @JsonIgnore
