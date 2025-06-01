@@ -55,16 +55,14 @@ class MatchApiImpl(
                 .uri("matches/{mid}", mid)
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(Match::class.java)
+            .bodyToMono(Match::class.java)
+            /*
+            .bodyToMono(JsonNode::class.java)
+            .map {
+                JacksonUtil.parseObject(it, Match::class.java)
+            }
 
-                /*
-                .bodyToMono(JsonNode::class.java)
-                .map {
-                    println(it)
-                    JacksonUtil.parseObject(it, Match::class.java)
-                }
-
-                 */
+             */
         }
     }
 

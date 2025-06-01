@@ -35,7 +35,7 @@ open class LocalContact : Contact {
                     } else if (it.isUrl) {
                         downloadFile(it.path!!)
                     } else {
-                        copyFile(Path.of(URI.create(it.path!!.replace("\\\\".toRegex(), "/")).path))
+                        copyFile(Path.of(URI.create(it.path!!.replace("\\\\".toRegex(), "/"))))
                     }
 
                     "[图片: ${localPath}]"

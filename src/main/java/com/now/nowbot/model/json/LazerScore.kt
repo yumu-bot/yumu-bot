@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatterBuilder
 import kotlin.math.ln
 import kotlin.math.roundToInt
 
-@JsonNaming(PropertyNamingStrategies.UpperSnakeCaseStrategy::class)
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 // 这是 API v2 version header is 20240529 or higher 会返回的成绩数据。
 @JsonIgnoreProperties(ignoreUnknown = true)
 open class LazerScore {
@@ -33,45 +33,14 @@ open class LazerScore {
     @JsonProperty("maximum_statistics")
     var maximumStatistics: LazerStatistics = LazerStatistics()
 
-    @get:JsonProperty("total_hit")
-    val totalHit: Int
-        get() {
-            val m = this.maximumStatistics
+    @JsonProperty("beatmap")
+    var beatMap: BeatMap = BeatMap()
 
-            if (this.isLazer || this.beatMap.circles == null) {
-                return when (this.mode) {
-                    OSU -> m.great
-                    TAIKO -> m.great
-                    CATCH -> m.great + m.largeTickHit
-                    MANIA -> m.perfect
-                    else -> 0
-                }
-            } else { // 稳定版内，maximumStatistics 拿到的数据只是当前成绩的完美值（特别是中途退出的成绩），并不是总数
-                val b = this.beatMap
+    @JsonProperty("beatmapset")
+    var beatMapSet: BeatMapSet = BeatMapSet()
 
-                return when (this.mode) {
-                    OSU -> (b.circles ?: 0) + (b.sliders ?: 0)
-                    TAIKO -> (b.circles ?: 0)
-                    CATCH -> m.great + m.largeTickHit + m.legacyComboIncrease
-                    MANIA -> (b.circles ?: 0) + (b.sliders ?: 0)
-                    else -> 0
-                }
-            }
-        }
-
-    @get:JsonProperty("total_combo")
-    val totalCombo: Int
-        get() {
-            val m = this.maximumStatistics
-
-            return when (this.mode) {
-                OSU -> m.great + m.legacyComboIncrease
-                TAIKO -> m.great + m.legacyComboIncrease
-                CATCH -> m.great + m.largeTickHit + m.legacyComboIncrease
-                MANIA -> m.perfect + m.ignoreHit + m.legacyComboIncrease
-                else -> 0
-            }
-        }
+    @JsonProperty("user")
+    var user: MicroUser = MicroUser()
 
     @JsonProperty("mods")
     var mods: List<LazerMod> = listOf()
@@ -81,22 +50,6 @@ open class LazerScore {
 
     @JsonProperty("statistics")
     var statistics: LazerStatistics = LazerStatistics()
-
-    @get:JsonProperty("score_hit") // 获取目前成绩进度（部分未通过成绩，这里并不是总和）
-    val scoreHit: Int
-        get() {
-            val s = this.statistics
-
-            return when (this.mode) {
-                OSU -> s.great + s.ok + s.meh + s.miss
-                TAIKO -> s.great + s.ok + s.miss
-                CATCH -> s.great + s.miss + s.largeTickHit + s.largeTickMiss
-
-                MANIA -> s.perfect + s.great + s.good + s.ok + s.meh + s.miss
-
-                else -> 0
-            }
-        }
 
     @JsonProperty("total_score_without_mods")
     var rawScore: Long = 0L
@@ -144,8 +97,7 @@ open class LazerScore {
     var buildID: Long? = 0L
 
     @get:JsonProperty("is_lazer")
-    val isLazer: Boolean
-        get() = buildID != null && buildID!! > 0
+    val isLazer: Boolean = buildID != null && buildID!! > 0
 
     @set:JsonProperty("ended_at")
     @get:JsonIgnore
@@ -153,10 +105,7 @@ open class LazerScore {
 
     // 给 js 用
     @get:JsonProperty("ended_at")
-    val endedTimeString: String
-        get() {
-            return formatter.format(endedTime)
-        }
+    val endedTimeString: String = formatter.format(endedTime)
 
     @JsonProperty("has_replay")
     var hasReplay: Boolean = false
@@ -189,28 +138,24 @@ open class LazerScore {
      * 如果要设置，请设置 ruleset
      */
     @get:JsonProperty("mode")
-    val mode: OsuMode
-        get() {
-            return when (this.ruleset.toInt()) {
-                0 -> OSU
-                1 -> TAIKO
-                2 -> CATCH
-                3 -> MANIA
-                else -> DEFAULT
-            }
-        }
+    val mode: OsuMode = when (this.ruleset.toInt()) {
+        0 -> OSU
+        1 -> TAIKO
+        2 -> CATCH
+        3 -> MANIA
+        else -> DEFAULT
+    }
 
     @get:JsonIgnore
     @set:JsonProperty("started_at")
     var startedTime: OffsetDateTime? = null
 
     @get:JsonProperty("started_at")
-    val startedTimeString: String
-        get() = if (startedTime != null) {
-            formatter.format(startedTime)
-        } else {
-            ""
-        }
+    val startedTimeString: String = if (startedTime != null) {
+        formatter.format(startedTime)
+    } else {
+        ""
+    }
 
     @JsonProperty("total_score")
     var score: Long = 0L
@@ -223,16 +168,8 @@ open class LazerScore {
     // TODO 这个有问题
     // data class UserAttributes(@JsonProperty("pin") var pin: String? = null)
 
-    @JsonProperty("beatmap")
-    var beatMap: BeatMap = BeatMap()
-
-    @JsonProperty("beatmapset")
-    var beatMapSet: BeatMapSet = BeatMapSet()
-
-    @JsonProperty("user")
-    var user: MicroUser = MicroUser()
-
     // MatchScore 继承：自己设
+    @JsonProperty("ranking")
     var ranking: Int? = null
 
     @JsonProperty("match")
@@ -241,10 +178,8 @@ open class LazerScore {
     data class MatchScorePlayerStat(val slot: Byte, val team: String, val pass: Boolean)
 
     @JsonProperty("weight")
-    var weight: Weight? = Weight() // 只在 BP 里有
-        get() {
-            return field ?: Weight()
-        }
+    var weight: Weight? = null // 只在 BP 里有
+        get() = field ?: Weight()
         set(value) {
             field = value ?: Weight()
         }
@@ -253,16 +188,68 @@ open class LazerScore {
         @JsonProperty("percentage") var percentage: Double = 0.0,
         @JsonProperty("pp") var PP: Double = 0.0,
     ) {
-        val index: Int
-            get() {
-                val i = ln((percentage / 100)) / ln(0.95)
-                return i.roundToInt()
-            }
+        val index: Int = (ln((percentage / 100)) / ln(0.95)).roundToInt()
     }
 
     @get:JsonIgnore
-    val previewName: String
-        get() = "${beatMapSet.artist} - beatMapSet.title (${beatMapSet.creator}) [${beatMap.difficultyName}]"
+    val previewName: String = if (beatMapSet.previewName.isNotBlank()) {
+        "${beatMapSet.artist} - ${beatMapSet.title} (${beatMapSet.creator}) [${beatMap.difficultyName}]"
+    } else {
+        ""
+    }
+
+    @get:JsonProperty("score_hit") // 获取目前成绩进度（部分未通过成绩，这里并不是总和）
+    val scoreHit: Int = run {
+        val s = this.statistics
+
+        when (this.mode) {
+            OSU -> s.great + s.ok + s.meh + s.miss
+            TAIKO -> s.great + s.ok + s.miss
+            CATCH -> s.great + s.miss + s.largeTickHit + s.largeTickMiss
+
+            MANIA -> s.perfect + s.great + s.good + s.ok + s.meh + s.miss
+
+            else -> 0
+        }
+    }
+
+    @get:JsonProperty("total_hit")
+    val totalHit: Int = run {
+        val m = this.maximumStatistics
+
+        if (this.isLazer || this.beatMap.circles == null) {
+            return@run when (this.mode) {
+                OSU -> m.great
+                TAIKO -> m.great
+                CATCH -> m.great + m.largeTickHit
+                MANIA -> m.perfect
+                else -> 0
+            }
+        } else { // 稳定版内，maximumStatistics 拿到的数据只是当前成绩的完美值（特别是中途退出的成绩），并不是总数
+            val b = this.beatMap
+
+            return@run when (this.mode) {
+                OSU -> (b.circles ?: 0) + (b.sliders ?: 0)
+                TAIKO -> (b.circles ?: 0)
+                CATCH -> m.great + m.largeTickHit + m.legacyComboIncrease
+                MANIA -> (b.circles ?: 0) + (b.sliders ?: 0)
+                else -> 0
+            }
+        }
+    }
+
+    @get:JsonProperty("total_combo")
+    val totalCombo: Int = run {
+        val m = this.maximumStatistics
+
+        when (this.mode) {
+            OSU -> m.great + m.legacyComboIncrease
+            TAIKO -> m.great + m.legacyComboIncrease
+            CATCH -> m.great + m.largeTickHit + m.legacyComboIncrease
+            MANIA -> m.perfect + m.ignoreHit + m.legacyComboIncrease
+            else -> 0
+        }
+    }
 
     companion object {
         private val formatter: DateTimeFormatter =

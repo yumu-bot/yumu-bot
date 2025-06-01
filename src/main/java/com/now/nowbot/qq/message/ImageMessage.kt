@@ -8,9 +8,9 @@ class ImageMessage : Message {
         FILE, URL, BYTE_ARRAY
     }
 
-    private val type: Type
-    @JvmField val path: String?
-    @JvmField val data: ByteArray?
+    private var type: Type
+    val path: String?
+    val data: ByteArray?
 
     constructor(img: ByteArray?) {
         data = img
