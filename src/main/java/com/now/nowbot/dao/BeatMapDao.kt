@@ -54,15 +54,15 @@ class BeatMapDao(
         return lite.get()
     }
 
-    fun getMapSetLite(id: Long): Optional<MapSetLite> {
+    fun getBeatMapSetLite(id: Long): Optional<MapSetLite> {
         return beatMapRepository.getMapSetByBid(id)
     }
 
-    fun getMapSetLite(id: Int): Optional<MapSetLite> {
-        return getMapSetLite(id.toLong())
+    fun getBeatMapSetLite(id: Int): Optional<MapSetLite> {
+        return getBeatMapSetLite(id.toLong())
     }
 
-    fun getAllBeatmapHitLength(ids: Collection<Long>): List<BeatmapHitLengthResult> {
+    fun getBeatMapsHitLength(ids: Collection<Long>): List<BeatmapHitLengthResult> {
         return beatMapRepository.getBeatmapHitLength(ids)
     }
 
@@ -77,7 +77,7 @@ class BeatMapDao(
     companion object {
         fun fromBeatmapLite(bl: BeatmapLite): BeatMap {
             val b = bl.toBeatMap()
-            b.beatMapSet = fromMapsetLite(bl.mapSet)
+            b.beatMapSet = fromBeatMapSetLite(bl.mapSet)
             return b
         }
 
@@ -91,33 +91,24 @@ class BeatMapDao(
             return s
         }
 
-        fun fromMapsetLite(mapSet: MapSetLite): BeatMapSet {
+        private fun fromBeatMapSetLite(set: MapSetLite): BeatMapSet {
             val s = BeatMapSet()
-            s.beatMapSetID = mapSet.id.toLong()
-            s.creatorID = mapSet.mapperId.toLong()
-            s.creator = mapSet.creator
-            val cover = Covers()
-            cover.cover = mapSet.cover
-            cover.cover2x = mapSet.cover
-            cover.card = mapSet.card
-            cover.card2x = mapSet.card
-            cover.list = mapSet.list
-            cover.list2x = mapSet.list
-            cover.slimcover = mapSet.slimcover
-            cover.slimcover2x = mapSet.slimcover
-            s.covers = cover
+            s.beatMapSetID = set.id.toLong()
+            s.creatorID = set.mapperId.toLong()
+            s.creator = set.creator
+            s.covers = Covers(set.cover, set.cover, set.card, set.card, set.list, set.list, set.slimcover, set.slimcover)
 
-            s.nsfw = mapSet.nsfw
-            s.storyboard = mapSet.storyboard
-            s.source = mapSet.source
-            s.status = mapSet.status
-            s.playCount = mapSet.playCount
-            s.favouriteCount = mapSet.favourite
-            s.title = mapSet.title
-            s.titleUnicode = mapSet.titleUTF
-            s.artist = mapSet.artist
-            s.artistUnicode = mapSet.artistUTF
-            s.legacyThreadUrl = mapSet.legacyUrl
+            s.nsfw = set.nsfw
+            s.storyboard = set.storyboard
+            s.source = set.source
+            s.status = set.status
+            s.playCount = set.playCount
+            s.favouriteCount = set.favourite
+            s.title = set.title
+            s.titleUnicode = set.titleUTF
+            s.artist = set.artist
+            s.artistUnicode = set.artistUTF
+            s.legacyThreadUrl = set.legacyUrl
 
             s.fromDatabase = false
             return s

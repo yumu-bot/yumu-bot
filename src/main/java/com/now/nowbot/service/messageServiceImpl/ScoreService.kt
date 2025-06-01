@@ -202,12 +202,12 @@ import java.util.regex.Matcher
         }
 
         val image: ByteArray = if (scores.size > 1) {
-            scoreApiService.asyncDownloadBackground(scores.first(), CoverType.COVER)
-            scoreApiService.asyncDownloadBackground(scores.first(), CoverType.LIST)
-
             calculateApiService.applyStarToScores(scores)
             calculateApiService.applyBeatMapChanges(scores)
             beatmapApiService.applyBeatMapExtendForSameScore(scores, b)
+
+            scoreApiService.asyncDownloadBackground(scores.first(), CoverType.COVER)
+            scoreApiService.asyncDownloadBackground(scores.first(), CoverType.LIST)
 
             val body = mapOf(
                 "user" to user,
@@ -221,10 +221,10 @@ import java.util.regex.Matcher
         } else {
             val score = scores.first()
 
+            val e5Param = ScorePRService.getE5Param(user, score, b, null, "S", beatmapApiService, calculateApiService)
+
             scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
             scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
-
-            val e5Param = ScorePRService.getE5Param(user, score, b, null, "S", beatmapApiService, calculateApiService)
 
             imageService.getPanel(e5Param.toMap(), "E5")
         }
@@ -239,7 +239,7 @@ import java.util.regex.Matcher
         val bid = b.beatMapID
         val mode = param.mode
 
-        val score: LazerScore?
+        val score: LazerScore
         val position: Int?
 
         if (param.mods.isNotEmpty()) {
@@ -247,9 +247,9 @@ import java.util.regex.Matcher
                 scoreApiService.getBeatMapScore(bid, user.userID, mode, param.mods)?.score
             } catch (e: WebClientResponseException) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, b.previewName)
-            }
+            }!!
 
-            beatmapApiService.applyBeatMapExtend(score!!, b)
+            // beatmapApiService.applyBeatMapExtend(score!!, b)
             position = null
         } else {
             val beatMapScore = try {
@@ -262,10 +262,10 @@ import java.util.regex.Matcher
             position = beatMapScore.position
         }
 
+        val e5Param = ScorePRService.getE5Param(user, score, b, position, "S", beatmapApiService, calculateApiService)
+
         scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
         scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
-
-        val e5Param = ScorePRService.getE5Param(user, score, b, position, "S", beatmapApiService, calculateApiService)
 
         val image: ByteArray = imageService.getPanel(e5Param.toMap(), "E5")
 

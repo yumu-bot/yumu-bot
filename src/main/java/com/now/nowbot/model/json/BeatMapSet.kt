@@ -32,7 +32,7 @@ class BeatMapSet {
     data class Hype(val current: Int, val required: Int)
 
     @JsonProperty("id")
-    var beatMapSetID: Long = 0
+    var beatMapSetID: Long = 0L
 
     @JsonProperty("nsfw")
     var nsfw: Boolean = false

@@ -331,6 +331,9 @@ class NewbieRestrictOverSRService(
     override fun HandleMessage(event: MessageEvent, param: Collection<LazerScore>) {
         val score = param.maxByOrNull { it.beatMap.starRating } ?: return
 
+        val beatMap = beatmapApiService.getBeatMap(score.beatMapID)
+        beatmapApiService.applyBeatMapExtend(score, beatMap)
+
         val sr = score.beatMap.starRating
         val silence = getSilence(sr)
         if (silence <= 0) return
@@ -345,72 +348,56 @@ class NewbieRestrictOverSRService(
         val count = t.size
         val duration = getTime(t.sumOf { it.duration ?: 0L } / 60000)
 
-        val last5 = t.mapNotNull { it.star }.takeLast(5).joinToString(", ")
+        val last5 = t.asSequence()
+            .filter { it.time != null && it.star != null }
+            .sortedByDescending { it.time!! }
+            .mapNotNull { it.star }
+            .take(5)
+            .joinToString(", ")
 
-        val timeMessage = String.format("%.2f", sr) + " -> " + getTime(silence)
-        val message = """
-            检测到 ${criminal.name} (${playerName}) 超星。
-            ($timeMessage)
-            超星谱面：${score.previewName}
-            七天之内超星次数：${count7}。
-            七天之内禁言时间：${duration7}。
-            总计超星次数：${count}。
-            总计禁言时间：${duration}。
-            最近五次超星的星数：[${last5}]。
-            """.trimMargin()
+        val index = String.format("%.2f", sr) + " -> " + getTime(silence)
+
+        val sb = StringBuilder()
+
+        sb.append("检测到 ${criminal.name} (${playerName}) 超星。").append('\n')
+            .append("($index)").append('\n')
+            .append("超星谱面：${score.previewName}").append('\n')
+            .append("七天之内超星次数：${count7}。").append('\n')
+            .append("七天之内禁言时间：${duration7}。").append('\n')
+            .append("总计超星次数：${count}。").append('\n')
+            .append("总计禁言时间：${duration}。").append('\n')
+            .append("最近五次超星的星数：[${last5}]。").append('\n').append('\n')
 
         try {
             newbieDao.saveRestricted(criminal.id, sr, System.currentTimeMillis(), min(silence * 60000L, 7L * 24 * 60 * 60 * 1000))
         } catch (e: Throwable) {
-            log.error("""
-                $message
-                但是保存记录失败了。
-                """.trimMargin(), e)
+            log.error(sb.append("但是保存记录失败了。").toString(), e)
         }
 
         val executorBot = botContainer.robots[executorBotID]
             ?: run {
-                log.info("""
-                    $message
-                    但是执行机器人并未上线。无法执行禁言任务。
-                    """.trimMargin())
+                log.info(sb.append("但是执行机器人并未上线。无法执行禁言任务。").toString())
                 return
             }
 
         val isReportable = executorBot.groupList.data?.map { it.groupId }?.contains(killerGroupID) == true
 
         if (Permission.isGroupAdmin(event)) {
-            report(isReportable, executorBot, """
-                $message
-                但是对方是管理员或群主，无法执行禁言任务。
-                """.trimMargin())
+            report(isReportable, executorBot, sb.append("但是对方是管理员或群主，无法执行禁言任务。").toString())
             return
         }
 
         // 情节严重
         if (silence >= 30 * 24 * 60 - 1) {
-            report(isReportable, executorBot, """
-                $message
-                情节严重，已按最大时间禁言。
-                """.trimMargin())
+            report(isReportable, executorBot, sb.append("情节严重，已按最大时间禁言。").toString())
 
             executorBot.setGroupBan(newbieGroupID, event.sender.id, (30 * 24 * 60 - 1) * 60)
-                ?: report(isReportable, executorBot, """
-                    $message
-                    但是机器人执行禁言任务失败了。
-                """.trimMargin())
+                ?: report(isReportable, executorBot, sb.append("但是机器人执行禁言任务失败了。").toString())
         } else {
-            report(isReportable, executorBot,
-                """
-                    $message
-                    正在执行禁言任务。
-                """.trimMargin())
+            report(isReportable, executorBot, sb.append("正在执行禁言任务。").toString())
 
             executorBot.setGroupBan(newbieGroupID, event.sender.id, (silence * 60).toInt())
-                ?: report(isReportable, executorBot, """
-                    $message
-                    但是机器人执行禁言任务失败了。
-                    """.trimMargin())
+                ?: report(isReportable, executorBot, sb.append("但是机器人执行禁言任务失败了。").toString())
         }
     }
 

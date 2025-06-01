@@ -297,7 +297,7 @@ class ScoreApiImpl(
                     else -> covers.cover
                 }
 
-                if (url.isNullOrBlank()) {
+                if (url.isBlank()) {
                     log.info("异步下载谱面图片：成绩的谱面不完整")
                     return@Runnable
                 }

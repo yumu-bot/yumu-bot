@@ -417,7 +417,7 @@ class BeatmapApiImpl(
 
     override fun getAllBeatmapHitLength(bid: Collection<Long>): List<Pair<Long, Int>> {
         if (bid.isEmpty()) return emptyList()
-        val timeMap = beatMapDao.getAllBeatmapHitLength(bid)
+        val timeMap = beatMapDao.getBeatMapsHitLength(bid)
             .map { it.id to it.length }
             .toMap()
 

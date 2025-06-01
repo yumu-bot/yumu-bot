@@ -33,15 +33,6 @@ open class LazerScore {
     @JsonProperty("maximum_statistics")
     var maximumStatistics: LazerStatistics = LazerStatistics()
 
-    @JsonProperty("beatmap")
-    var beatMap: BeatMap = BeatMap()
-
-    @JsonProperty("beatmapset")
-    var beatMapSet: BeatMapSet = BeatMapSet()
-
-    @JsonProperty("user")
-    var user: MicroUser = MicroUser()
-
     @JsonProperty("mods")
     var mods: List<LazerMod> = listOf()
         get() { // 如果是 stable 成绩，则这里的 Classic 模组应该去掉
@@ -194,12 +185,22 @@ open class LazerScore {
         val index: Int = (ln((percentage / 100)) / ln(0.95)).roundToInt()
     }
 
-    @get:JsonIgnore
-    val previewName: String = if (beatMapSet.previewName.isNotBlank()) {
-        "${beatMapSet.artist} - ${beatMapSet.title} (${beatMapSet.creator}) [${beatMap.difficultyName}]"
-    } else {
-        ""
-    }
+    @JsonProperty("beatmap")
+    var beatMap: BeatMap = BeatMap()
+
+    @JsonProperty("beatmapset")
+    var beatMapSet: BeatMapSet = BeatMapSet()
+
+    @JsonProperty("user")
+    var user: MicroUser = MicroUser()
+
+    @get:JsonProperty("preview_name")
+    val previewName: String
+        get() = if (beatMapSet.artist.isNotBlank() || beatMapSet.title.isNotBlank() || beatMapSet.creator.isNotBlank()) {
+            "${beatMapSet.artist} - ${beatMapSet.title} (${beatMapSet.creator}) [${beatMap.difficultyName}]"
+        } else {
+            ""
+        }
 
     @get:JsonProperty("score_hit") // 获取目前成绩进度（部分未通过成绩，这里并不是总和）
     val scoreHit: Int

@@ -5,39 +5,31 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
-class Covers {
-    @JvmField
+data class Covers (
     @JsonProperty("cover")
-    var cover: String? = ""
+    val cover: String = "",
 
-    @JvmField
     @JsonProperty("cover@2x")
-    var cover2x: String? = ""
+    val cover2x: String = "",
 
-    @JvmField
     @JsonProperty("card")
-    var card: String? = ""
+    val card: String = "",
 
-    @JvmField
     @JsonProperty("card@2x")
-    var card2x: String? = ""
+    val card2x: String = "",
 
-    @JvmField
     @JsonProperty("list")
-    var list: String? = ""
+    val list: String = "",
 
-    @JvmField
     @JsonProperty("list@2x")
-    var list2x: String? = ""
+    val list2x: String = "",
 
-    @JvmField
     @JsonProperty("slimcover")
-    var slimcover: String? = ""
+    val slimcover: String = "",
 
-    @JvmField
     @JsonProperty("slimcover@2x")
-    var slimcover2x: String? = ""
-    
+    val slimcover2x: String = "",
+) {
     override fun toString(): String {
         return "Covers(cover=$cover, cover2x=$cover2x, card=$card, card2x=$card2x, list=$list, list2x=$list2x, slimcover=$slimcover, slimcover2x=$slimcover2x)"
     }
