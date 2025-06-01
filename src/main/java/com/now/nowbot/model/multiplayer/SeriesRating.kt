@@ -110,9 +110,7 @@ class SeriesRating(
         }
 
     @JsonIgnore
-    private var playerDataMap: Map<Long, PlayerData> = players
-        .map { (k, v) -> k to PlayerData(v)}
-        .toMap()
+    private var playerDataMap: Map<Long, PlayerData> = players.associate { (k, v) -> k to PlayerData(v) }
 
     @JsonProperty("player_data_list")
     var playerDataList: List<PlayerData> = listOf()
