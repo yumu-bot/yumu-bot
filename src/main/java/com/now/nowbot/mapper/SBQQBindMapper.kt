@@ -10,20 +10,20 @@ import org.springframework.transaction.annotation.Transactional
 
 interface SBQQBindMapper: JpaRepository<SBQQBindLite, Long>, JpaSpecificationExecutor<SBQQBindLite> {
 
-    @Query("select qq from QQBindLite qq where qq.bindUserLite.userID = :userID")
+    @Query("select qq from SBQQBindLite qq where qq.bindUserLite.userID = :userID")
     fun findByUserID(userID: Long?): SBQQBindLite?
 
-    @Query("select count(o) from OsuBindUserLite o where o.userID = :userID") fun countByUserID(userID: Long?): Int
+    @Query("select count(o) from SBBindUserLite o where o.userID = :userID") fun countByUserID(userID: Long?): Int
 
-    @Modifying @Transactional @Query("delete from QQBindLite qb where qb.bindUserLite.userID = :userID and qb.qq != :qq")
+    @Modifying @Transactional @Query("delete from SBQQBindLite qb where qb.bindUserLite.userID = :userID and qb.qq != :qq")
     fun deleteOtherBind(userID: Long, qq: Long): Int
 
-    @Modifying @Transactional @Query("delete from QQBindLite qb where qb.qq = :qq")
+    @Modifying @Transactional @Query("delete from SBQQBindLite qb where qb.qq = :qq")
     fun deleteBind(qq: Long?)
     
-    @Modifying @Transactional @Query("delete from QQBindLite qq where qq.bindUserLite.userID = :userID")
+    @Modifying @Transactional @Query("delete from SBQQBindLite qq where qq.bindUserLite.userID = :userID")
     fun unBind(userID: Long)
 
-    @Query("select qq.qq as qid, qq.bindUserLite.userID as uid, qq.bindUserLite.username as name from QQBindLite qq where qq.qq in (:qq)")
+    @Query("select qq.qq as qid, qq.bindUserLite.userID as uid, qq.bindUserLite.username as name from SBQQBindLite qq where qq.qq in (:qq)")
     fun findAllUserByQQ(qq: Collection<Long>?): List<QQUser>
 }

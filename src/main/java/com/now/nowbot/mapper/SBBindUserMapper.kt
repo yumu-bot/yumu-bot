@@ -34,17 +34,8 @@ interface SBBindUserMapper: JpaRepository<SBBindUserLite, Long>, JpaSpecificatio
                 where user_id = :userID
             )
             delete from sb_bind_user using del where sb_bind_user.id = del.id and del.row_num >1;
-            
-            """, nativeQuery = true
-    ) fun deleteOutdatedBind(userID: Long?)
+            """, nativeQuery = true)
+    fun deleteOutdatedBind(userID: Long?)
 
     fun countAllByUserID(userID: Long): Int
-
-    @Transactional fun <S : SBBindUserLite> freshAndSave(entity: S): S {
-        if (entity.id == null && countAllByUserID(entity.userID) > 0) {
-            deleteOutdatedBind(entity.userID)
-        }
-
-        return save<S>(entity)
-    }
 }

@@ -301,7 +301,12 @@ public class BindDao {
         SBBindUserLite bind;
 
         if (sbLite == null) {
-            bind = sbBindUserMapper.freshAndSave(user);
+            // 就是 checkSave
+            if (user.getId() == null && sbBindUserMapper.countAllByUserID(user.getUserID()) > 0) {
+                sbBindUserMapper.deleteOutdatedBind(user.getUserID());
+            }
+
+            bind = sbBindUserMapper.save(user);
         } else {
             bind = user;
         }
