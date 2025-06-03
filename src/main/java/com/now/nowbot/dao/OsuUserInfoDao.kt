@@ -4,10 +4,10 @@ import com.now.nowbot.entity.OsuUserInfoArchiveLite
 import com.now.nowbot.entity.OsuUserInfoArchiveLite.InfoArchive
 import com.now.nowbot.mapper.OsuUserInfoMapper
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.InfoLogStatistics
-import com.now.nowbot.model.json.MicroUser
-import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.Statistics
+import com.now.nowbot.model.osu.InfoLogStatistics
+import com.now.nowbot.model.osu.MicroUser
+import com.now.nowbot.model.osu.OsuUser
+import com.now.nowbot.model.osu.Statistics
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.LocalDateTime

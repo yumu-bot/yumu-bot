@@ -1,239 +1,80 @@
-package com.now.nowbot.model.json;
+package com.now.nowbot.model.osu
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.lang.Nullable;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
+import org.springframework.lang.Nullable
+import java.time.OffsetDateTime
 
-import java.time.OffsetDateTime;
-import java.util.Objects;
-
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class DiscussionDetails {
+@JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
+class DiscussionDetails {
     @JsonProperty("id")
-    Long DID;
+    var discussionID: Long = 0
 
     @JsonProperty("beatmapset_id")
-    Long SID;
+    var beatmapsetID: Long = 0
 
     @JsonProperty("beatmap_id")
-    @Nullable
-    Long BID;
+    var beatmapID: Long? = null
 
     @JsonProperty("user_id")
-    Long UID;
+    var userID: Long = 0
 
     @JsonProperty("deleted_by_id")
-    @Nullable
-    Long deletedByUID;
+    var deletedBy: Long? = null
 
-    //hype, mapper_note, problem, suggestion, praise, review. Blank defaults to all types
+    /**
+     * hype, mapper_note, problem, suggestion, praise, review. Blank defaults to all types
+     */
     @JsonProperty("message_type")
-    MessageType messageType;
+    var messageType: String = ""
 
     @JsonProperty("parent_id")
-    Long parentDID;
+    var parentDiscussionID: Long? = 0
 
-    Long timeStamp;
+    @JsonProperty("time_stamp")
+    var timeStamp: Long = 0
 
-    Boolean resolved;
+    @JvmField @JsonProperty("resolved")
+    var resolved: Boolean = false
 
-    @JsonProperty("can_be_resolved")
-    Boolean canBeResolved;
+    @JvmField @JsonProperty("can_be_resolved")
+    var canBeResolved: Boolean = true
 
     @JsonProperty("can_grant_kudosu")
-    Boolean canGrantKudosu;
+    var canGrantKudosu: Boolean = true
 
     @JsonProperty("created_at")
-    OffsetDateTime createdAt;
+    var createdAt: OffsetDateTime = OffsetDateTime.now()
 
     @JsonProperty("updated_at")
-    OffsetDateTime updatedAt;
+    var updatedAt: OffsetDateTime = OffsetDateTime.now()
 
     @JsonProperty("deleted_at")
-    OffsetDateTime deletedAt;
+    var deletedAt: OffsetDateTime? = null
 
     @JsonProperty("last_post_at")
-    OffsetDateTime lastPostAt;
+    var lastPostAt: OffsetDateTime = OffsetDateTime.now()
 
     @JsonProperty("kudosu_denied")
-    Boolean kudosuDenied;
+    var kudosuDenied: Boolean = false
 
     @JsonProperty("starting_post")
-    BeatMapSetDiscussionPost post;
+    var post: BeatmapsetDiscussionPost? = null
 
     //自己算
-    @Nullable
-    String difficulty;
+    @JvmField @Nullable
+    var difficulty: String? = null
 
-    public Long getDID() {
-        return DID;
-    }
-
-    public void setDID(Long DID) {
-        this.DID = DID;
-    }
-
-    public Long getSID() {
-        return SID;
-    }
-
-    public void setSID(Long SID) {
-        this.SID = SID;
-    }
-
-    @Nullable
-    public Long getBID() {
-        return BID;
-    }
-
-    public void setBID(@Nullable Long BID) {
-        this.BID = BID;
-    }
-
-    public Long getUID() {
-        return UID;
-    }
-
-    public void setUID(Long UID) {
-        this.UID = UID;
-    }
-
-    @Nullable
-    public Long getDeletedByUID() {
-        return deletedByUID;
-    }
-
-    public void setDeletedByUID(@Nullable Long deletedByUID) {
-        this.deletedByUID = deletedByUID;
-    }
-
-    public MessageType getMessageType() {
-        return messageType;
-    }
-
-    public void setMessageType(MessageType messageType) {
-        this.messageType = messageType;
-    }
-
-    public Long getParentDID() {
-        return parentDID;
-    }
-
-    public void setParentDID(Long parentDID) {
-        this.parentDID = parentDID;
-    }
-
-    public Long getTimeStamp() {
-        return timeStamp;
-    }
-
-    public void setTimeStamp(Long timeStamp) {
-        this.timeStamp = timeStamp;
-    }
-
-    public Boolean getResolved() {
-        return resolved;
-    }
-
-    public void setResolved(Boolean resolved) {
-        this.resolved = resolved;
-    }
-
-    public Boolean getCanBeResolved() {
-        return canBeResolved;
-    }
-
-    public void setCanBeResolved(Boolean canBeResolved) {
-        this.canBeResolved = canBeResolved;
-    }
-
-    public Boolean getCanGrantKudosu() {
-        return canGrantKudosu;
-    }
-
-    public void setCanGrantKudosu(Boolean canGrantKudosu) {
-        this.canGrantKudosu = canGrantKudosu;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public OffsetDateTime getDeletedAt() {
-        return deletedAt;
-    }
-
-    public void setDeletedAt(OffsetDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
-
-    public OffsetDateTime getLastPostAt() {
-        return lastPostAt;
-    }
-
-    public void setLastPostAt(OffsetDateTime lastPostAt) {
-        this.lastPostAt = lastPostAt;
-    }
-
-    public Boolean getKudosuDenied() {
-        return kudosuDenied;
-    }
-
-    public void setKudosuDenied(Boolean kudosuDenied) {
-        this.kudosuDenied = kudosuDenied;
-    }
-
-    public BeatMapSetDiscussionPost getPost() {
-        return post;
-    }
-
-    public void setPost(BeatMapSetDiscussionPost post) {
-        this.post = post;
-    }
-
-    @Nullable
-    public String getDifficulty() {
-        return difficulty;
-    }
-
-    public void setDifficulty(@Nullable String difficulty) {
-        this.difficulty = difficulty;
-    }
-
-    public enum MessageType {
-        hype,
-        mapper_note,
-        problem,
-        suggestion,
-        praise,
-        review,
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof DiscussionDetails d) {
-            return Objects.equals(d.DID, this.DID);
+    override fun equals(other: Any?): Boolean {
+        return if (other is DiscussionDetails) {
+            other.discussionID == this.discussionID
         } else {
-            return false;
+            false
         }
     }
 
-    @Override
-    public int hashCode() {
-        return DID.hashCode();
+    override fun hashCode(): Int {
+        return discussionID.hashCode()
     }
 }

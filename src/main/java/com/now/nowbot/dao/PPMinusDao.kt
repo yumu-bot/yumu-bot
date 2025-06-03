@@ -2,8 +2,8 @@ package com.now.nowbot.dao
 
 import com.now.nowbot.entity.PPMinusLite
 import com.now.nowbot.mapper.PPMinusRepository
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.util.DataUtil
 import org.springframework.stereotype.Component
 

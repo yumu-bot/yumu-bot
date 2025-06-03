@@ -5,8 +5,8 @@ import com.now.nowbot.model.enums.GreekChar
 import com.now.nowbot.model.enums.JaChar
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
-import com.now.nowbot.model.json.*
-import com.now.nowbot.model.multiplayer.Match
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.Statistics
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.command.*
 import io.github.humbleui.skija.Typeface
@@ -17,7 +17,6 @@ import org.springframework.lang.Nullable
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import kotlin.math.*
 
 object DataUtil {
@@ -148,6 +147,7 @@ object DataUtil {
         return strings
     }
 
+    /*
     /**
      * 判定优秀成绩。用于临时区分 panel E 和 panel E5
      *
@@ -161,11 +161,11 @@ object DataUtil {
         var r = 0
         val p = getPP(score, user)
 
-        val ultra = score.beatMap.starRating >= 8f
-        val extreme = score.beatMap.starRating >= 6.5f
+        val ultra = score.beatmap.starRating >= 8f
+        val extreme = score.beatmap.starRating >= 6.5f
         val acc = score.accuracy >= 0.9f
         val combo =
-            1f * score.maxCombo / (score.beatMap.maxCombo ?: Int.MAX_VALUE) >= 0.98f
+            1f * score.maxCombo / (score.beatmap.maxCombo ?: Int.MAX_VALUE) >= 0.98f
         val pp = score.pp >= 300f
         val bp = p >= 400f && score.pp >= (p - 400f) / 25f
         val miss =
@@ -186,12 +186,15 @@ object DataUtil {
         return r >= 3 && !fail
     }
 
+     */
+
     // 获取优秀成绩的私有方法
+    /*
     private fun getPP(score: Score, user: OsuUser): Double {
         var pp = user.pp
 
-        val is4K = score.beatMap.mode == MANIA && score.beatMap.CS == 4f
-        val is7K = score.beatMap.mode == MANIA && score.beatMap.CS == 7f
+        val is4K = score.beatmap.mode == MANIA && score.beatmap.CS == 4f
+        val is7K = score.beatmap.mode == MANIA && score.beatmap.CS == 7f
 
         if (is4K) {
             pp = user.statistics!!.pp4K!!
@@ -203,6 +206,8 @@ object DataUtil {
 
         return pp
     }
+
+     */
 
     /**
      * 将 !bp 45-55 转成 score API 能看懂的 offset-limit 对
@@ -271,59 +276,11 @@ object DataUtil {
         return Range(offset, limit)
     }
 
-    @JvmStatic
-    // 获取比赛的某个 event 之前所有玩家
-    fun getPlayersBeforeRoundStart(@NonNull match: Match, eventID: Long): MutableList<MicroUser> {
-        val players = mutableListOf<MicroUser>()
-        val idList = getPlayerListBeforeRoundStart(match, eventID)
 
-        for (id in idList) {
-            for (u in match.players) {
-                if (u.id.equals(id)) {
-                    players.add(u)
-                    break
-                }
-            }
-        }
-
-        return players
-    }
-
-    @JvmStatic
-    // 获取比赛的某个 event 之前所有玩家
-    fun getPlayerListBeforeRoundStart(@NonNull match: Match, eventID: Long): MutableList<Long> {
-        val playerSet: MutableSet<Long> = HashSet()
-
-        for (e in match.events) {
-            if (e.eventID == eventID) {
-                // 跳出
-                return playerSet.toMutableList()
-            } else {
-                when (e.detail.type) {
-                    "player-joined" -> {
-                        try {
-                            playerSet.add(e.userID!!)
-                        } catch (ignored: java.lang.Exception) {
-                        }
-                    }
-
-                    "player-left" -> {
-                        try {
-                            playerSet.remove(e.userID)
-                        } catch (ignored: java.lang.Exception) {
-                        }
-                    }
-                }
-            }
-        }
-
-        // 如果遍历完了还没跳出，则返回空
-        return mutableListOf()
-    }
 
     // 获取谱面的原信息，方便成绩面板使用。请在 applyBeatMapExtend 和 applySRAndPP 之前用。
     @JvmStatic
-    fun getOriginal(beatmap: BeatMap): Map<String, Any> {
+    fun getOriginal(beatmap: Beatmap): Map<String, Any> {
         if (beatmap.CS == null) return mapOf()
 
         return mapOf(
@@ -738,12 +695,14 @@ object DataUtil {
         return max(min(bonusPP, 413.894179759), 0.0)
     }
 
-    private fun getV3ScoreProgress(score: Score): Double { // 下下策
+    // 下下策
+    /*
+    private fun getV3ScoreProgress(score: Score): Double {
         val mode = score.mode
 
         val progress =
             if (!score.passed) {
-                1.0 * score.statistics.getCountAll(mode) / (score.beatMap.maxCombo ?: Int.MAX_VALUE)
+                1.0 * score.statistics.getCountAll(mode) / (score.beatmap.maxCombo ?: Int.MAX_VALUE)
             } else {
                 1.0
             }
@@ -761,7 +720,7 @@ object DataUtil {
         val i = getV3ModsMultiplier(mods, mode)
         val p = getV3ScoreProgress(score) // 下下策
         val c = score.maxCombo
-        val m = score.beatMap.maxCombo!!
+        val m = score.beatmap.maxCombo!!
         val ap8: Double = score.accuracy.pow(8.0)
         val v3 =
             when (score.mode) {
@@ -777,7 +736,7 @@ object DataUtil {
         return String.format("%07d", round(v3)) // 补 7 位达到 v3 分数的要求
     }
 
-    fun getV3ModsMultiplier(mod: List<String?>, mode: OsuMode?): Double {
+    private fun getV3ModsMultiplier(mod: List<String?>, mode: OsuMode?): Double {
         var index = 1.00
 
         if (mod.contains("EZ")) index *= 0.50
@@ -821,6 +780,8 @@ object DataUtil {
         }
         return index
     }
+
+     */
 
     /**
      * 缩短字符 220924

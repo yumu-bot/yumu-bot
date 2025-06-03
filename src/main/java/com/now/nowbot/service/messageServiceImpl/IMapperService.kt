@@ -1,7 +1,11 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.*
+import com.now.nowbot.model.osu.*
+import com.now.nowbot.model.osu.ActivityEvent
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.MicroUser
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
@@ -39,8 +43,8 @@ import kotlin.math.max
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, osuUser: OsuUser) {
-        val map = getIMapperV1(osuUser, userApiService, beatmapApiService)
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: OsuUser) {
+        val map = getIMapperV1(param, userApiService, beatmapApiService)
 
         val image: ByteArray = try {
             imageService.getPanel(map, "M")
@@ -94,7 +98,7 @@ import kotlin.math.max
 
             val search2 = beatmapApiService.searchBeatMapSet(query2, 10)
             val result2 = search2.beatmapSets
-                .filter { it.beatMapSetID != user.userID && (it.beatMaps?.all { that -> that.beatMapID != user.id } ?: true) }
+                .filter { it.beatmapsetID != user.userID && (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true) }
 
             val relatedSets = (result1.toHashSet() + result2.toHashSet()).asSequence()
 
@@ -118,14 +122,14 @@ import kotlin.math.max
                 listOf()
             }
 
-            val relatedDiffs = relatedSets.map { it.beatMaps!! }.flatten()
+            val relatedDiffs = relatedSets.map { it.beatmaps!! }.flatten()
 
             val mySets = relatedSets.filter { it.creatorID == user.userID }
             val otherSets = relatedSets.filter { it.creatorID != user.userID }
 
             val myDiffs = relatedDiffs.filter { it.mapperID == user.userID } // 包括了别人 Set 里的
-            val myGuestDiffs = relatedDiffs.filter { it.mapperID == user.userID && it.beatMapSet?.creatorID != user.userID }
-            val guestDiffs = relatedDiffs.filter { it.mapperID != user.userID && it.beatMapSet?.creatorID == user.userID }
+            val myGuestDiffs = relatedDiffs.filter { it.mapperID == user.userID && it.beatmapset?.creatorID != user.userID }
+            val guestDiffs = relatedDiffs.filter { it.mapperID != user.userID && it.beatmapset?.creatorID == user.userID }
 
             val relatedUsers = run {
                 val idChunk = relatedSets.filter { it.creatorID != user.userID }.map { it.creatorID }.toSet().chunked(50)
@@ -145,7 +149,7 @@ import kotlin.math.max
                 val received: Int = re.count()
                 val receivedRanked: Int = re.count { it.ranked > 0 }
 
-                val se = myGuestDiffs.filter { it.beatMapSet?.creatorID == u.userID }
+                val se = myGuestDiffs.filter { it.beatmapset?.creatorID == u.userID }
 
                 val sent: Int = se.count()
 
@@ -283,7 +287,7 @@ import kotlin.math.max
 
             val search2 = beatmapApiService.searchBeatMapSet(query2, 10)
             val result2 = search2.beatmapSets
-                .filter { it.beatMapSetID != user.userID && (it.beatMaps?.all { that -> that.beatMapID != user.id } ?: true) }
+                .filter { it.beatmapsetID != user.userID && (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true) }
 
             val result = (result1.toHashSet() + result2.toHashSet()).asSequence()
 
@@ -319,12 +323,12 @@ import kotlin.math.max
             val mostRecentRankedGuestDiff = result.sortedByDescending { it.rankedDate?.toEpochSecond() }
                 .find { it.hasLeaderBoard && user.userID != it.creatorID }
 
-            val beatMaps = result.flatMap { it.beatMaps ?: emptyList() }
+            val beatmaps = result.flatMap { it.beatmaps ?: emptyList() }
 
             val diffArr = IntArray(8)
 
             run {
-                val diffStar = beatMaps.filter { it.mapperID == user.userID }.map { it.starRating }
+                val diffStar = beatmaps.filter { it.mapperID == user.userID }.map { it.starRating }
                 val starMaxBoundary = doubleArrayOf(2.0, 2.8, 4.0, 5.3, 6.5, 8.0, 10.0, Double.MAX_VALUE)
 
                 for (d in diffStar) {
@@ -381,7 +385,7 @@ import kotlin.math.max
             val lengthArr = IntArray(8)
 
             run {
-                val lengthAll = beatMaps.filter { it.mapperID == user.userID }.map { it.totalLength }
+                val lengthAll = beatmaps.filter { it.mapperID == user.userID }.map { it.totalLength }
                 val lengthMaxBoundary = intArrayOf(60, 100, 140, 180, 220, 260, 300, Int.MAX_VALUE)
 
                 for (f in lengthAll) {
@@ -408,13 +412,13 @@ import kotlin.math.max
             )
         }
 
-        private fun findKey(keys: Array<String>, maps: Sequence<BeatMap>): IntArray {
+        private fun findKey(keys: Array<String>, maps: Sequence<Beatmap>): IntArray {
             val result = IntArray(keys.size)
             val hasAnyGenre = AtomicBoolean(false)
 
             //逻辑应该是先每张图然后再遍历12吧？
             maps.forEach {
-                val str = it.beatMapSet?.tags?.lowercase() ?: ""
+                val str = it.beatmapset?.tags?.lowercase() ?: ""
 
                 keys.forEachIndexed { i, keyword ->
                     if (str.contains(keyword, ignoreCase = true)) {

@@ -1,7 +1,7 @@
 package com.now.nowbot.service;
 
-import com.now.nowbot.model.json.OsuUser;
-import com.now.nowbot.model.json.Score;
+import com.now.nowbot.model.osu.OsuUser;
+import com.now.nowbot.model.osu.Score;
 import com.now.nowbot.service.score.ScoreChecker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -28,8 +28,8 @@ public class ScoreCheckService {
             return null;
         } else if (dlist.size() > 1) {
             dlist = dlist.stream().sorted((r1, r2) -> {
-                if (score.getBeatMap() == null) return 0;
-                var bid = score.getBeatMap().getBeatMapID();
+                if (score.getBeatmap() == null) return 0;
+                var bid = score.getBeatmap().getBeatmapID();
                 return r1.getWeight(bid) - r2.getWeight(bid);
             }).toList();
         }

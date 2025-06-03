@@ -1,8 +1,8 @@
 package com.now.nowbot.model.ppminus;
 
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.json.LazerScore;
-import com.now.nowbot.model.json.OsuUser;
+import com.now.nowbot.model.osu.LazerScore;
+import com.now.nowbot.model.osu.OsuUser;
 import com.now.nowbot.model.ppminus.impl.PPMinusCatch;
 import com.now.nowbot.model.ppminus.impl.PPMinusMania;
 import com.now.nowbot.model.ppminus.impl.PPMinusOsu;

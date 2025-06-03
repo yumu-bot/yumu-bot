@@ -2,8 +2,8 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.PPPlus
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.PPPlus
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -78,7 +78,7 @@ class PPPlusMapService(
     }
 
 
-    private fun BeatMap.addPPPlus(pp: PPPlus, mods: List<LazerMod>) {
+    private fun Beatmap.addPPPlus(pp: PPPlus, mods: List<LazerMod>) {
         starRating = pp.difficulty.total ?: 0.0
         if (mods.isNotEmpty()) {
             CS = CalculateApiImpl.applyCS(CS!!, mods)

@@ -2,7 +2,7 @@ package com.now.nowbot.model
 
 import com.now.nowbot.entity.OsuCourseLite
 import com.now.nowbot.entity.OsuCourseSingleLite
-import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.osu.Beatmap
 
 data class Course(
     // id 在数据库中生成, 初始为空
@@ -12,7 +12,7 @@ data class Course(
     var danBid: List<Long>,
     var danCount: List<Int>,
     var dan: List<CourseSingle>,
-    var beatmaps: Map<Long, BeatMap>?,
+    var beatmaps: Map<Long, Beatmap>?,
     var criteria: Criteria,
 ) {
     data class CourseSingle(

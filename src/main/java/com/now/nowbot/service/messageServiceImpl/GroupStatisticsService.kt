@@ -6,7 +6,7 @@ import com.mikuac.shiro.core.BotContainer
 import com.mikuac.shiro.dto.action.response.GroupMemberInfoResp
 import com.now.nowbot.config.FileConfig
 import com.now.nowbot.config.NewbieConfig
-import com.now.nowbot.model.json.MicroUser
+import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -217,7 +217,7 @@ class GroupStatisticsService(
                 }
                 sb.append(entry.value!!.userID).append(',')
                 sb.append(entry.value!!.userName).append(',')
-                sb.append(entry.value!!.rulesets!!.osu.pp).append(',')
+                sb.append(entry.value!!.rulesets!!.osu!!.pp).append(',')
                 sb.append(usersBP1[entry.key]).append('\n')
             }
         group.sendFile(sb.toString().toByteArray(StandardCharsets.UTF_8), "$groupId.csv")

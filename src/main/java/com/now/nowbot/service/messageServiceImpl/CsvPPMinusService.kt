@@ -3,8 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.config.Permission
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -277,15 +277,15 @@ class CsvPPMinusService(
                 if (i < 10) {
                     ppv0 += bp.PP!!.toFloat()
                     accv0 += bp.accuracy.toFloat()
-                    lengv0 += bp.beatMap.totalLength.toLong()
+                    lengv0 += bp.beatmap.totalLength.toLong()
                 } else if (i in 45..54) {
                     ppv45 += bp.PP!!.toFloat()
                     accv45 += bp.accuracy.toFloat()
-                    lengv45 += bp.beatMap.totalLength.toLong()
+                    lengv45 += bp.beatmap.totalLength.toLong()
                 } else if (i >= 90) {
                     ppv90 += bp.PP!!.toFloat()
                     accv90 += bp.accuracy.toFloat()
-                    lengv90 += bp.beatMap.totalLength.toLong()
+                    lengv90 += bp.beatmap.totalLength.toLong()
                 }
             }
             // bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());

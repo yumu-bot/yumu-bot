@@ -3,10 +3,10 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.model.enums.MaiDifficulty
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.Companion.listToString
-import com.now.nowbot.model.json.MaiBestScore
-import com.now.nowbot.model.json.MaiScore
-import com.now.nowbot.model.json.MaiScoreSimplified
-import com.now.nowbot.model.json.MaiVersionScore
+import com.now.nowbot.model.maimai.MaiBestScore
+import com.now.nowbot.model.maimai.MaiScore
+import com.now.nowbot.model.maimai.MaiScoreSimplified
+import com.now.nowbot.model.maimai.MaiVersionScore
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -39,9 +39,9 @@ class MaiVersionScoreService(
 
     @JvmRecord
     data class PanelMA2Param(
-            val user: MaiBestScore.User,
-            val scores: List<MaiScore>,
-            val versions: List<String>,
+        val user: MaiBestScore.User,
+        val scores: List<MaiScore>,
+        val versions: List<String>,
     ) {
         fun toMap(): Map<String, Any> {
             return mapOf(

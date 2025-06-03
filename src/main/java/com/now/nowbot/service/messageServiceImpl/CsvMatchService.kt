@@ -1,8 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.LazerScore
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.Match.MatchRound
 import com.now.nowbot.model.multiplayer.MatchRating
@@ -192,22 +192,22 @@ import java.util.regex.Matcher
 
         private fun appendRoundStrings(sb: StringBuilder, round: MatchRound) {
             try {
-                val b: BeatMap?
+                val b: Beatmap?
 
-                if (round.beatMap != null) {
-                    b = round.beatMap
+                if (round.beatmap != null) {
+                    b = round.beatmap
                 } else {
-                    b = BeatMap()
+                    b = Beatmap()
                     b.starRating = 0.0
                     b.totalLength = 0
-                    b.beatMapID = -1L
+                    b.beatmapID = -1L
                     b.maxCombo = 0
                 }
 
                 sb.append(round.startTime.format(Date1)).append(',').append(round.startTime.format(Date2)).append(',')
                     .append(round.mode).append(',').append(round.scoringType).append(',').append(round.teamType).append(',')
                     .append(b!!.starRating).append(',').append(b.totalLength).append(',')
-                    .append(round.mods.join()).append(',').append(b.beatMapID).append(',')
+                    .append(round.mods.join()).append(',').append(b.beatmapID).append(',')
                     .append(b.maxCombo).append('\n')
             } catch (e: Exception) {
                 sb.append(e.message).append('\n') //.append("  error---->")

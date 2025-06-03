@@ -6,6 +6,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import java.util.*
@@ -24,18 +25,18 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
         } else return false
     }
     
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
-        val bid = matcher.group("id").toInt()
-        val mod = matcher.group("mod")
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
+        val bid = param.group("id").toIntOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
+        val mod = param.group("mod")
         
         val b = beatmapApiService.getBeatMap(bid)
         val sb = StringBuilder()
         
         sb.append(bid).append(',')
-        if (b.beatMapSet != null) {
-            sb.append(b.beatMapSet!!.artistUnicode).append(' ').append('-').append(' ')
-            sb.append(b.beatMapSet!!.titleUnicode).append(' ')
-            sb.append('(').append(b.beatMapSet!!.creator).append(')').append(' ')
+        if (b.beatmapset != null) {
+            sb.append(b.beatmapset!!.artistUnicode).append(' ').append('-').append(' ')
+            sb.append(b.beatmapset!!.titleUnicode).append(' ')
+            sb.append('(').append(b.beatmapset!!.creator).append(')').append(' ')
         }
         sb.append('[').append(b.difficultyName).append(']').append(',')
         

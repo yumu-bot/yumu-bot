@@ -2,7 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.MatchAdapter
 import com.now.nowbot.model.multiplayer.MatchListener
@@ -140,14 +140,14 @@ class MatchListenerService(
     private fun initBeatmapAndUser(event: Match.MatchEvent, listener: MatchListener) {
         val game = event.round ?: return
         with(game) {
-            if (beatMap != null) {
-                beatMap = beatmapApiService.getBeatMap(beatMapID)
-                calculateApiService.applyStarToBeatMap(beatMap!!, mode, LazerMod.getModsList(mods))
+            if (beatmap != null) {
+                beatmap = beatmapApiService.getBeatMap(beatmapID)
+                calculateApiService.applyStarToBeatMap(beatmap!!, mode, LazerMod.getModsList(mods))
             } else {
-                val b = BeatMap()
-                b.beatMapID = beatMapID
+                val b = Beatmap()
+                b.beatmapID = beatmapID
 
-                beatMap = b
+                beatmap = b
             }
         }
 
@@ -242,7 +242,7 @@ class MatchListenerService(
                             String.format(
                                 MatchListenerException.Type.ML_Match_Start.message,
                                 matchID,
-                                beatmap.beatMapID,
+                                beatmap.beatmapID,
                             )
                         )
                     }
@@ -257,7 +257,7 @@ class MatchListenerService(
                 // 其实这个就是 game
                 val round = mr.rounds.last { it.roundID == game.roundID }
 
-                calculateApiService.applyBeatMapChanges(round.beatMap, LazerMod.getModsList(round.mods))
+                calculateApiService.applyBeatMapChanges(round.beatmap, LazerMod.getModsList(round.mods))
 
                 // 手动调位置
                 if (round.scores.size > 2) {

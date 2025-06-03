@@ -8,8 +8,8 @@ import com.now.nowbot.model.Replay
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.CoverType.*
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatmapUserScore
-import com.now.nowbot.model.json.LazerScore
+import com.now.nowbot.model.osu.BeatmapUserScore
+import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
@@ -284,7 +284,7 @@ class ScoreApiImpl(
 
         val actions = scores.map { score ->
             return@map AsyncMethodExecutor.Runnable {
-                val covers = score.beatMapSet.covers
+                val covers = score.beatmapset.covers
 
                 val url = when(type) {
                     CARD -> covers.card

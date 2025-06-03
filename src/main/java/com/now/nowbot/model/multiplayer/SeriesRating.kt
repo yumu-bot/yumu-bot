@@ -83,7 +83,7 @@ class SeriesRating(
     val averageStarRating: Double
         get() {
             return if (rounds.isNotEmpty()) {
-                1.0 * rounds.sumOf { it.beatMap?.starRating ?: 0.0 } / rounds.size
+                1.0 * rounds.sumOf { it.beatmap?.starRating ?: 0.0 } / rounds.size
             } else {
                 0.0
             }
@@ -93,7 +93,7 @@ class SeriesRating(
     val firstMapBID: Long
         get() {
             return if (rounds.isNotEmpty()) {
-                rounds.first().beatMapID
+                rounds.first().beatmapID
             } else {
                 0L
             }
@@ -103,7 +103,7 @@ class SeriesRating(
     val firstMapSID: Long
         get() {
             return if (rounds.isNotEmpty()) {
-                rounds.first().beatMap?.beatMapSetID ?: 0L
+                rounds.first().beatmap?.beatmapsetID ?: 0L
             } else {
                 0L
             }

@@ -3,8 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.config.Permission
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.MicroUser
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.MatchRating
 import com.now.nowbot.qq.event.MessageEvent
@@ -23,6 +23,7 @@ import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.HashSet
 
 @Service("MATCH_MAP")
 class MatchMapService(
@@ -32,17 +33,16 @@ class MatchMapService(
     private val calculateApiService: OsuCalculateApiService
 ) : MessageService<MatchMapParam>, TencentMessageService<MatchMapParam> {
 
-    @JvmRecord data class MatchMapParam(val match: Match, val position: Int)
+    data class MatchMapParam(val match: Match, val position: Int)
 
-    @JvmRecord
     data class PanelE7Param(
-        @JvmField val match: MatchRating,
-        @JvmField val mode: OsuMode,
-        @JvmField val mods: List<String>,
-        @JvmField val players: List<MicroUser>,
-        @JvmField val beatmap: BeatMap,
-        @JvmField val density: IntArray,
-        @JvmField val original: Map<String, Any>,
+        val match: MatchRating,
+        val mode: OsuMode,
+        val mods: List<String>,
+        val players: List<MicroUser>,
+        val beatmap: Beatmap,
+        val density: IntArray,
+        val original: Map<String, Any>,
     )
 
     @Throws(Throwable::class)
@@ -137,7 +137,7 @@ class MatchMapService(
                 }
             }
 
-            val beatmap = beatmapApiService.getBeatMap(round.beatMapID)
+            val beatmap = beatmapApiService.getBeatMap(round.beatmapID)
 
             val mode = OsuMode.getConvertableMode(round.mode, beatmap.mode)
 
@@ -151,9 +151,46 @@ class MatchMapService(
 
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
 
-            val players = DataUtil.getPlayersBeforeRoundStart(param.match, eventID)
+            val players = getPlayersBeforeRoundStart(param.match, eventID)
 
             return PanelE7Param(mr, mode, round.mods, players, beatmap, density, original)
+        }
+
+
+        // 获取比赛的某个 event 之前所有玩家
+        private fun getPlayersBeforeRoundStart(match: Match, eventID: Long): List<MicroUser> {
+            val ids = getPlayerListBeforeRoundStart(match, eventID)
+
+            return match.players.filter { ids.contains(it.userID) }
+        }
+
+        // 获取比赛的某个 event 之前所有玩家
+        private fun getPlayerListBeforeRoundStart(match: Match, eventID: Long): List<Long> {
+            val playerSet: MutableSet<Long> = HashSet()
+
+            for (e in match.events) {
+                if (e.eventID == eventID) {
+                    // 跳出
+                    return playerSet.toList()
+                } else if (e.userID != null) {
+                    when (e.detail.type) {
+                        "player-joined" -> {
+                            try {
+                                playerSet.add(e.userID)
+                            } catch (ignored: Exception) {}
+                        }
+
+                        "player-left" -> {
+                            try {
+                                playerSet.remove(e.userID)
+                            } catch (ignored: Exception) {}
+                        }
+                    }
+                }
+            }
+
+            // 如果遍历完了还没跳出，则返回空
+            return listOf()
         }
     }
 }

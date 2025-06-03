@@ -1,9 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.LazerScoreWithFcPP
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.LazerScoreWithFcPP
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -95,7 +95,7 @@ class BPFixService(
             beforeBpSumAtomic.updateAndGet { it + (score.weight?.PP ?: 0.0) }
             beatmapApiService.applyBeatMapExtendFromDataBase(score)
 
-            val max = score.beatMap.maxCombo ?: 1
+            val max = score.beatmap.maxCombo ?: 1
             val combo = score.maxCombo
             val stat = score.statistics
             val ok = stat.ok

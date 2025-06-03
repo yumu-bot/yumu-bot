@@ -3,8 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.PPMinusDao
 import com.now.nowbot.entity.PPMinusLite
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppminus.impl.PPMinus4
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService

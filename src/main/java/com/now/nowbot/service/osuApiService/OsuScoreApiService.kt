@@ -5,9 +5,9 @@ import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.Replay
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatmapUserScore
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.BeatmapUserScore
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 
 interface OsuScoreApiService {
 

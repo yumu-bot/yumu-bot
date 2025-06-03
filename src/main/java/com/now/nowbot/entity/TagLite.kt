@@ -1,6 +1,6 @@
 package com.now.nowbot.entity
 
-import com.now.nowbot.model.json.Tag
+import com.now.nowbot.model.osu.Tag
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id

@@ -1,7 +1,7 @@
 package com.now.nowbot.model.ppminus.impl;
 
-import com.now.nowbot.model.json.LazerScore;
-import com.now.nowbot.model.json.OsuUser;
+import com.now.nowbot.model.osu.LazerScore;
+import com.now.nowbot.model.osu.OsuUser;
 import com.now.nowbot.model.ppminus.PPMinus;
 
 import java.util.List;
@@ -32,17 +32,17 @@ public class PPMinusMania extends PPMinus {
             if (i < 10){
                 ppv0 += bp.getPP();
                 accv0 += bp.getAccuracy();
-                lengv0 += bp.getBeatMap().getTotalLength();
+                lengv0 += bp.getBeatmap().getTotalLength();
                 pgr0 += 1.0f * Optional.of(bp.getStatistics().getPerfect()).orElse(0) / Optional.of(bp.getStatistics().getGreat()).orElse(1);
             }else if(i>=45 && i<55){
                 ppv45 += bp.getPP();
                 accv45 += bp.getAccuracy();
-                lengv45 += bp.getBeatMap().getTotalLength();
+                lengv45 += bp.getBeatmap().getTotalLength();
                 pgr45 += 1.0f * Optional.of(bp.getStatistics().getPerfect()).orElse(0) / Optional.of(bp.getStatistics().getGreat()).orElse(1);
             }else if(i>=90){
                 ppv90 += bp.getPP();
                 accv90 += bp.getAccuracy();
-                lengv90 += bp.getBeatMap().getTotalLength();
+                lengv90 += bp.getBeatmap().getTotalLength();
                 pgr90 += 1.0f * Optional.of(bp.getStatistics().getPerfect()).orElse(0) / Optional.of(bp.getStatistics().getGreat()).orElse(1);
             }
         }

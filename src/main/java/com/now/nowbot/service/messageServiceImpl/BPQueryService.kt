@@ -3,9 +3,9 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.MicroUser
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.MicroUser
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -111,13 +111,13 @@ class BPQueryService(
         val p: Param = support.firstOrNull { it.key == key } ?: throw UnsupportedOrderKey(key)
         fun sort(score: LazerScore): Int {
             return when (p) {
-                Param.Star -> score.beatMap.starRating * 100
-                Param.Bpm -> 100 * (score.beatMap.BPM ?: 0f)
-                Param.Length -> score.beatMap.hitLength ?: 0
-                Param.AR -> 100 * (score.beatMap.AR ?: 0f)
-                Param.OD -> 100 * (score.beatMap.OD ?: 0f)
-                Param.CS -> 100 * (score.beatMap.CS ?: 0f)
-                Param.HP -> 100 * (score.beatMap.HP ?: 0f)
+                Param.Star -> score.beatmap.starRating * 100
+                Param.Bpm -> 100 * (score.beatmap.BPM ?: 0f)
+                Param.Length -> score.beatmap.hitLength ?: 0
+                Param.AR -> 100 * (score.beatmap.AR ?: 0f)
+                Param.OD -> 100 * (score.beatmap.OD ?: 0f)
+                Param.CS -> 100 * (score.beatmap.CS ?: 0f)
+                Param.HP -> 100 * (score.beatmap.HP ?: 0f)
                 Param.PerformancePoint -> score.PP ?: 0.0
                 Param.Combo -> score.totalCombo
                 Param.Accuracy -> 10000 * score.accuracy
@@ -188,14 +188,14 @@ class BPQueryService(
             // 对字符串的 == / != 操作转为 包含 / 不包含
             val name = v.replace("$", " ")
             if (op == EQ) {
-                s.beatMapSet.creator.contains(name, true)
+                s.beatmapset.creator.contains(name, true)
             } else {
-                !s.beatMapSet.creator.contains(name, true)
+                !s.beatmapset.creator.contains(name, true)
             }
         }, EQ, NE),
         Name("name", { (op, v, s) ->
             val name = v.replace("$", " ")
-            val hasName = s.beatMapSet.title.contains(name, true) || s.beatMapSet.titleUnicode.contains(name, true)
+            val hasName = s.beatmapset.title.contains(name, true) || s.beatmapset.titleUnicode.contains(name, true)
             if (op == EQ) {
                 hasName
             } else {
@@ -205,7 +205,7 @@ class BPQueryService(
         Artist("artist", { (op, v, s) ->
             val artist = v.replace("$", " ")
             val hasArtist =
-                s.beatMapSet.artist.contains(artist, true) || s.beatMapSet.artistUnicode.contains(artist, true)
+                s.beatmapset.artist.contains(artist, true) || s.beatmapset.artistUnicode.contains(artist, true)
             if (op == EQ) {
                 hasArtist
             } else {
@@ -213,7 +213,7 @@ class BPQueryService(
             }
         }, EQ, NE),
         Star("star", { (op, v, s) ->
-            compare(s.beatMap.starRating, v, op)
+            compare(s.beatmap.starRating, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         ScoreID("score", { (op, v, s) ->
             val score = try {
@@ -234,16 +234,16 @@ class BPQueryService(
             compare(s.weight!!.index, index, op)
         }, EQ, NE, GT, GE, LT, LE),
         AR("ar", { (op, v, s) ->
-            compare(s.beatMap.AR!!, v, op)
+            compare(s.beatmap.AR!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         OD("od", { (op, v, s) ->
-            compare(s.beatMap.OD!!, v, op)
+            compare(s.beatmap.OD!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         CS("cs", { (op, v, s) ->
-            compare(s.beatMap.CS!!, v, op)
+            compare(s.beatmap.CS!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         HP("hp", { (op, v, s) ->
-            compare(s.beatMap.HP!!, v, op)
+            compare(s.beatmap.HP!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         PerformancePoint("pp", { (op, v, s) ->
             compare(s.PP ?: 0.0, v, op)
@@ -262,13 +262,13 @@ class BPQueryService(
             compare(s.accuracy, acc, op)
         }, EQ, NE, GT, GE, LT, LE),
         Bpm("bpm", { (op, v, s) ->
-            compare(s.beatMap.BPM!!, v, op)
+            compare(s.beatmap.BPM!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Combo("combo", { (op, v, s) ->
             compare(s.maxCombo, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Length("length", { (op, v, s) ->
-            compare(s.beatMap.hitLength!!, v, op)
+            compare(s.beatmap.hitLength!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Perfect("perfect", { (op, v, s) ->
             val perfect = s.statistics.perfect
@@ -347,8 +347,8 @@ class BPQueryService(
         // 处理麻婆, 与 set 主不一致
         val mapperMap = mutableMapOf<Int, Long>()
         scores.forEachIndexed { index, score ->
-            if (score.beatMap.mapperID != score.beatMapSet.creatorID) {
-                mapperMap[index] = score.beatMap.mapperID
+            if (score.beatmap.mapperID != score.beatmapset.creatorID) {
+                mapperMap[index] = score.beatmap.mapperID
             }
         }
         if (mapperMap.isNotEmpty()) {
@@ -362,8 +362,8 @@ class BPQueryService(
             mapperMap.forEach { (index, mapperID) ->
                 val score = scores[index]
                 val mapper = rawMapperMap[mapperID] ?: return@forEach
-                score.beatMapSet.creator = mapper.userName
-                score.beatMapSet.creatorID = mapperID
+                score.beatmapset.creator = mapper.userName
+                score.beatmapset.creatorID = mapperID
             }
         }
         return scores.filter { s -> filters.all { it(s) } }
@@ -569,7 +569,7 @@ class BPQueryService(
         ): PanelE5Param {
             beatmapApiService.applyBeatMapExtend(score)
 
-            val beatmap = score.beatMap
+            val beatmap = score.beatmap
             val original = DataUtil.getOriginal(beatmap)
 
             calculateApiService.applyPPToScore(score)

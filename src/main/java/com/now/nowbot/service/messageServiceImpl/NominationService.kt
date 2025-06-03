@@ -1,10 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.BeatMapSet
-import com.now.nowbot.model.json.Discussion
-import com.now.nowbot.model.json.DiscussionDetails
-import com.now.nowbot.model.json.DiscussionDetails.MessageType.*
+import com.now.nowbot.model.osu.Beatmapset
+import com.now.nowbot.model.osu.Discussion
+import com.now.nowbot.model.osu.DiscussionDetails
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
@@ -46,9 +44,9 @@ import kotlin.math.floor
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
         val image: ByteArray = getNominationImage(
-            matcher,
+            param,
             osuBeatmapApiService,
             osuDiscussionApiService,
             osuUserApiService,
@@ -123,7 +121,7 @@ import kotlin.math.floor
             userApiService: OsuUserApiService,
         ): Map<String, Any> {
             var id = sid
-            var s: BeatMapSet
+            var s: Beatmapset
             val d: Discussion
             val details: List<DiscussionDetails>
             val discussions: List<DiscussionDetails>
@@ -136,7 +134,7 @@ import kotlin.math.floor
                 } catch (e: WebClientResponseException.NotFound) {
                     try {
                         val b = beatmapApiService.getBeatMapFromDataBase(id)
-                        id = b.beatMapSetID
+                        id = b.beatmapsetID
                         s = beatmapApiService.getBeatMapSet(id)
                     } catch (e1: WebClientResponseException.NotFound) {
                         throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
@@ -155,7 +153,7 @@ import kotlin.math.floor
             } else {
                 try {
                     val b = beatmapApiService.getBeatMapFromDataBase(id)
-                    id = b.beatMapSetID
+                    id = b.beatmapsetID
                     s = beatmapApiService.getBeatMapSet(id)
                 } catch (e: WebClientResponseException.NotFound) {
                     throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
@@ -180,12 +178,12 @@ import kotlin.math.floor
                 throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_Discussion)
             }
 
-            if (!s.beatMaps.isNullOrEmpty()) {
+            if (!s.beatmaps.isNullOrEmpty()) {
                 // 插入标签
-                s.beatMaps!!.forEach { beatmapApiService.extendBeatMapTag(it) }
+                s.beatmaps!!.forEach { beatmapApiService.extendBeatMapTag(it) }
 
                 // 插入难度名
-                val diffs = s.beatMaps!!.associate { it.beatMapID to it.difficultyName }
+                val diffs = s.beatmaps!!.associate { it.beatmapID to it.difficultyName }
 
                 d.addDifficulty4DiscussionDetails(diffs)
             }
@@ -193,39 +191,33 @@ import kotlin.math.floor
             // 获取 hypes 和 discussions 列表
             // 这两个list需要合并起来
             run {
-                details = (d.discussions + (d.includedDiscussions ?: emptyList())).distinct()
+                details = (d.discussions + d.includedDiscussions).distinct()
                 hypes = details.filter { i: DiscussionDetails ->
                     val t = i.messageType
-                    t == hype || t == praise
+                    t == "hype" || t == "praise"
                 }
 
                 val dis = details.filter { i: DiscussionDetails ->
                     val t = i.messageType
-                    t == problem || t == suggestion
+                    t == "problem" || t == "suggestion"
                 }
                 discussions = Discussion.toppingUnsolvedDiscussionDetails(dis)
             }
 
             // 这一部分提供额外信息
             run {
-                var hostCount = 0
-                var guestCount = 0
                 var problemCount = 0
                 var suggestCount = 0
                 var notSolvedCount = 0
                 var hypeCount = 0
                 var praiseCount = 0
-                var maxSR = ""
-                var minSR = ""
-                var totalLength = 0
-                val SRList: MutableList<Double> = mutableListOf()
 
                 for (i in details) {
                     when (i.messageType) {
-                        problem -> problemCount++
-                        suggestion -> suggestCount++
-                        hype -> hypeCount++
-                        praise -> praiseCount++
+                        "problem" -> problemCount++
+                        "suggestion" -> suggestCount++
+                        "hype" -> hypeCount++
+                        "praise" -> praiseCount++
                         else -> {}
                     }
 
@@ -234,46 +226,19 @@ import kotlin.math.floor
                     }
                 }
 
-                val bs = s.beatMaps
+                val bs = s.beatmaps ?: listOf()
 
-                // 初始化星数
-                var maxStarRating = 0.0
-                var minStarRating = 0.0
+                val stars = bs.map { it.starRating }
 
-                if (!bs.isNullOrEmpty()) {
-                    val f: BeatMap = bs.first()
-                    totalLength = f.totalLength
-                    maxStarRating = f.starRating
-                    minStarRating = maxStarRating
-                }
+                val maxStar = stars.max()
+                val minStar = stars.min()
+                val totalLength = bs.sumOf { it.totalLength }
 
-                if (!bs.isNullOrEmpty()) {
-                    for (b in bs) {
-                        if (s.creatorID == b.mapperID) {
-                            hostCount++
-                        } else {
-                            guestCount++
-                        }
+                val hostCount = bs.count { it.mapperID == s.creatorID }
+                val guestCount = bs.size - hostCount
 
-                        if (b.starRating > maxStarRating) maxStarRating = b.starRating
-                        if (b.starRating < minStarRating) minStarRating = b.starRating
-
-                        SRList.add(b.starRating)
-                    }
-
-                    val maxStarRatingInt = floor(maxStarRating).toInt()
-                    val minStarRatingInt = floor(minStarRating).toInt()
-
-                    maxSR = maxStarRatingInt.toString()
-                    minSR = minStarRatingInt.toString()
-
-                    if (maxStarRating - maxStarRatingInt >= 0.5) maxSR += '+'
-
-                    // if (minStarRating - minStarRatingInt >= 0.5) minSR += '+';
-
-                    // 单难度
-                    if (bs.size <= 1) minSR = ""
-                }
+                val maxSR = floor(maxStar).toString() + if (maxStar - floor(maxStar) >= 0.5) "+" else ""
+                val minSR = if (bs.size <= 1) "" else floor(minStar).toString()
 
                 // 其他
                 val tags = (s.tags ?: "").split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
@@ -284,7 +249,7 @@ import kotlin.math.floor
                     "total_count" to (hostCount + guestCount),
                     "max_star" to maxSR,
                     "min_star" to minSR,
-                    "stars" to SRList.sortedDescending(),
+                    "stars" to stars.sortedDescending(),
                     "total_length" to totalLength,
                     "tags" to tags,
                     "problem_count" to problemCount,

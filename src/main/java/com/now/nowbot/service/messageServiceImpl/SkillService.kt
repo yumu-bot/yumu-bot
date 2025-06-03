@@ -5,8 +5,8 @@ import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.skill.Skill
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -169,11 +169,11 @@ import kotlin.math.sqrt
         if (bests.isNullOrEmpty()) return mapOf()
 
         val actions = bests.map {
-            val id = it.beatMapID
+            val id = it.beatmapID
 
             return@map AsyncMethodExecutor.Supplier<Pair<Long, Skill?>> {
                 try {
-                    val file = OsuFile.getInstance(beatmapApiService.getBeatMapFileString(it.beatMapID))
+                    val file = OsuFile.getInstance(beatmapApiService.getBeatMapFileString(it.beatmapID))
 
                     return@Supplier id to Skill.getInstance(
                         file,
@@ -189,7 +189,7 @@ import kotlin.math.sqrt
         val result = AsyncMethodExecutor.awaitSupplierExecute(actions)
             .filterNotNull().toMap()
 
-        return bests.associate { it.beatMapID to result[it.beatMapID] }
+        return bests.associate { it.beatmapID to result[it.beatmapID] }
     }
 
     private fun getBody(
@@ -202,7 +202,7 @@ import kotlin.math.sqrt
         val skills = List(8) { mutableListOf<Double>() }
 
         bests.forEach {
-            val values = skillMap[it.beatMapID]?.values ?: listOf()
+            val values = skillMap[it.beatmapID]?.values ?: listOf()
 
             for (i in values.indices) {
                 skills[i].add(values[i] * nerfByAccuracy(it))
@@ -224,7 +224,7 @@ import kotlin.math.sqrt
             calculateApiService.applyBeatMapChanges(s10)
             calculateApiService.applyStarToScores(s10)
 
-            s10.map { SkillScore(it, skillMap[it.beatMapID]?.values ?: listOf()) }
+            s10.map { SkillScore(it, skillMap[it.beatmapID]?.values ?: listOf()) }
         } else {
             listOf()
         }
@@ -240,7 +240,7 @@ import kotlin.math.sqrt
             val percent: Double = (0.95).pow(i)
             val b = bests[i]
 
-            val skills = skillMap[b.beatMapID]?.values ?: listOf()
+            val skills = skillMap[b.beatmapID]?.values ?: listOf()
 
             for (j in 0..< min(sum.size, skills.size)) {
                 sum[j] += (skills[j] * nerfByAccuracy(b) * percent)
@@ -250,7 +250,7 @@ import kotlin.math.sqrt
         val skill = sum.map { it / DIVISOR }.toList()
 
         val scores: List<SkillScore> = bests
-            .map { SkillScore(it, skillMap[it.beatMapID]?.values ?: listOf()) }
+            .map { SkillScore(it, skillMap[it.beatmapID]?.values ?: listOf()) }
 
         val total = run {
             var star = 0.0

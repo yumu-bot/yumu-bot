@@ -6,8 +6,8 @@ import com.now.nowbot.config.FileConfig
 import com.now.nowbot.entity.PerformancePlusLite
 import com.now.nowbot.mapper.PerformancePlusLiteRepository
 import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.PPPlus
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.PPPlus
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
@@ -131,14 +131,14 @@ import java.util.concurrent.ConcurrentHashMap
                 continue
             }
             postDataID.add(score.scoreID)
-            checkFile(score.beatMap.beatMapID)
+            checkFile(score.beatmap.beatmapID)
             val combo = score.maxCombo
             val misses = score.statistics.miss
             val meh = score.statistics.meh
             val oks = score.statistics.ok
             body.add(
                 ScorePerformancePlus(
-                    score.beatMap.beatMapID.toString() + "", score.mods, combo, misses, meh, oks
+                    score.beatmap.beatmapID.toString() + "", score.mods, combo, misses, meh, oks
                 )
             )
         }

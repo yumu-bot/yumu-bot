@@ -3,7 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
+import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.service.UserParam
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -302,11 +302,11 @@ class UUBAService(
             val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
 
             val BP1: LazerScore = bests.first()
-            val BP1BPM = BP1.beatMap.BPM!!
-            val BP1Length = BP1.beatMap.totalLength.toFloat()
+            val BP1BPM = BP1.beatmap.BPM!!
+            val BP1Length = BP1.beatmap.totalLength.toFloat()
 
             var star: Double
-            var maxStar = BP1.beatMap.starRating
+            var maxStar = BP1.beatmap.starRating
             var minStar = maxStar
             var maxBPM = BP1BPM
             var minBPM = maxBPM
@@ -336,7 +336,7 @@ class UUBAService(
 
 
             bests.forEachIndexed { i, best ->
-                val b = best.beatMap
+                val b = best.beatmap
                 val length = b.totalLength.toFloat()
                 val bpm = b.BPM!!
 
@@ -349,7 +349,7 @@ class UUBAService(
                 }
 
                 avgLength += length
-                star = best.beatMap.starRating
+                star = best.beatmap.starRating
                 avgStar += star
 
                 if (bpm < minBPM) {

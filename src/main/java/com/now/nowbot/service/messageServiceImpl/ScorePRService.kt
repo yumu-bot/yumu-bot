@@ -4,9 +4,9 @@ import com.now.nowbot.model.UUScore
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.ScoreFilter
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -360,7 +360,7 @@ class ScorePRService(
 
         // 用于已筛选过的成绩。此时成绩内的谱面是已经计算过的，无需再次计算
         fun getE5ParamForFilteredScore(user: OsuUser, score: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {
-            val originalBeatMap = beatmapApiService.getBeatMap(score.beatMapID)
+            val originalBeatMap = beatmapApiService.getBeatMap(score.beatmapID)
 
             beatmapApiService.applyBeatMapExtend(score, originalBeatMap)
 
@@ -392,13 +392,13 @@ class ScorePRService(
         fun getE5Param(
             user: OsuUser,
             score: LazerScore,
-            beatMap: BeatMap,
+            beatmap: Beatmap,
             position: Int? = null,
             panel: String,
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService,
         ): PanelE5Param {
-            beatmapApiService.applyBeatMapExtend(score, beatMap)
+            beatmapApiService.applyBeatMapExtend(score, beatmap)
             return getScore4PanelE5AfterExtended(user, score, position, panel, beatmapApiService, calculateApiService)
         }
 
@@ -410,7 +410,7 @@ class ScorePRService(
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService,
         ): PanelE5Param {
-            val beatmap = score.beatMap
+            val beatmap = score.beatmap
             val original = DataUtil.getOriginal(beatmap)
 
             calculateApiService.applyPPToScore(score)

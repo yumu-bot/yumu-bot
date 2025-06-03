@@ -3,7 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.skill.SkillType
 import com.now.nowbot.model.skill.Skill
 import com.now.nowbot.qq.event.MessageEvent
@@ -61,7 +61,7 @@ import org.springframework.stereotype.Service
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: MapTypeParam) {
         val fileStr: String
-        val map: BeatMap
+        val map: Beatmap
 
         val isChangedRating = LazerMod.hasStarRatingChange(param.mods)
 

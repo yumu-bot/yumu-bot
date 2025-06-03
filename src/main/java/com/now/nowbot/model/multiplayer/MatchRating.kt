@@ -3,8 +3,8 @@ package com.now.nowbot.model.multiplayer
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.MicroUser
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import java.util.concurrent.atomic.AtomicInteger
@@ -76,7 +76,7 @@ class MatchRating(
 
         if (! param.rematch) {
             // 保留最后出现的元素
-            rs = rs.reversed().distinctBy { it.beatMapID }.reversed().toMutableList()
+            rs = rs.reversed().distinctBy { it.beatmapID }.reversed().toMutableList()
         }
 
 
@@ -139,12 +139,12 @@ class MatchRating(
 
         // apply sr change
         rs.forEach {
-            if (it.beatMap != null) {
-                val b = beatmapApiService.getBeatMapFromDataBase(it.beatMapID)
+            if (it.beatmap != null) {
+                val b = beatmapApiService.getBeatMapFromDataBase(it.beatmapID)
 
                 calculateApiService.applyStarToBeatMap(b, it.mode, LazerMod.getModsList(it.mods))
 
-                it.beatMap = b
+                it.beatmap = b
             }
         }
 
@@ -180,7 +180,7 @@ class MatchRating(
     val averageStarRating: Double
         get() {
             return if (rounds.isNotEmpty()) {
-                1.0 * rounds.sumOf { it.beatMap?.starRating ?: 0.0 } / rounds.size
+                1.0 * rounds.sumOf { it.beatmap?.starRating ?: 0.0 } / rounds.size
             } else {
                 0.0
             }
@@ -190,7 +190,7 @@ class MatchRating(
     val firstMapBID: Long
         get() {
             return if (rounds.isNotEmpty()) {
-                rounds.first().beatMapID
+                rounds.first().beatmapID
             } else {
                 0L
             }
@@ -200,7 +200,7 @@ class MatchRating(
     val firstMapSID: Long
         get() {
             return if (rounds.isNotEmpty()) {
-                rounds.first().beatMap?.beatMapSetID ?: 0L
+                rounds.first().beatmap?.beatmapsetID ?: 0L
             } else {
                 0L
             }
@@ -550,11 +550,11 @@ class MatchRating(
         @JvmStatic
         fun MatchRating.applyDTMod() {
             this.match.events
-                .filter { it.round?.beatMap != null }
+                .filter { it.round?.beatmap != null }
                 .map { it.round!! }
                 .forEach {
-                    calculateApiService.applyBeatMapChanges(it.beatMap, LazerMod.getModsList(it.mods))
-                    calculateApiService.applyStarToBeatMap(it.beatMap, it.mode, LazerMod.getModsList(it.mods))
+                    calculateApiService.applyBeatMapChanges(it.beatmap, LazerMod.getModsList(it.mods))
+                    calculateApiService.applyStarToBeatMap(it.beatmap, it.mode, LazerMod.getModsList(it.mods))
                 }
         }
     }

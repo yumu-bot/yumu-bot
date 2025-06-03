@@ -1,9 +1,9 @@
 package com.now.nowbot.service
 
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.throwable.GeneralTipsException
 import io.netty.handler.timeout.ReadTimeoutException
@@ -182,10 +182,10 @@ class ImageService(private val webClient: WebClient) {
         return doPost("panel_Gamma", httpEntity)
     }
 
-    fun getPanelDelta(beatMap: BeatMap, round: String, mod: String, position: Short, hasBG: Boolean): ByteArray {
+    fun getPanelDelta(beatmap: Beatmap, round: String, mod: String, position: Short, hasBG: Boolean): ByteArray {
         val headers = defaultHeader
         val body = mapOf(
-            "beatmap" to beatMap, "round" to round, "mod" to mod, "position" to position, "hasBG" to hasBG
+            "beatmap" to beatmap, "round" to round, "mod" to mod, "position" to position, "hasBG" to hasBG
         )
         val httpEntity = HttpEntity<Map<String, Any>>(body, headers)
         return doPost("panel_Delta", httpEntity)

@@ -16,13 +16,13 @@ class MapPoolDto(
     var id: Int = 0
 
     val modPools: List<ModPool> = poolMap?.map { pool ->
-        val beatMaps = pool.value.map { beatmapApiService.getBeatMap(it) }
+        val beatmaps = pool.value.map { beatmapApiService.getBeatMap(it) }
 
-        ModPool(pool.key, beatMaps)
+        ModPool(pool.key, beatmaps)
     } ?: listOf()
 
     val firstMapSID: Long = if (modPools.isNotEmpty() && modPools.first().beatmaps.isNotEmpty()) {
-        modPools.first().beatmaps.first().beatMapSet!!.beatMapSetID
+        modPools.first().beatmaps.first().beatmapset!!.beatmapsetID
     } else {
         0L
     }

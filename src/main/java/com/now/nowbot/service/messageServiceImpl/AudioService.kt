@@ -103,12 +103,12 @@ class AudioService(
                 return null
             }
 
-        if (b.beatMapSet?.nsfw == true) {
+        if (b.beatmapset?.nsfw == true) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Restricted_NSFW)
         }
 
         return try {
-            getVoice(b.beatMapSetID)
+            getVoice(b.beatmapsetID)
         } catch (e: WebClientException) {
             null
         }

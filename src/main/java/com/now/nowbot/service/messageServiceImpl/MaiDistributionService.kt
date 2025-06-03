@@ -1,9 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.now.nowbot.model.json.MaiBestScore
-import com.now.nowbot.model.json.MaiFit.ChartData
-import com.now.nowbot.model.json.MaiScore
+import com.now.nowbot.model.maimai.MaiBestScore
+import com.now.nowbot.model.maimai.MaiFit.ChartData
+import com.now.nowbot.model.maimai.MaiScore
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -156,7 +156,7 @@ import kotlin.math.min
         }
 
         // 计算对应成绩的对应 DX 评分
-        private fun getDistsRating(score: MaiScore , chart: ChartData): Int {
+        private fun getDistsRating(score: MaiScore, chart: ChartData): Int {
             val star = if (chart.fit > 0.0) {
                 chart.fit
             } else {

@@ -1,7 +1,7 @@
 package com.now.nowbot.service.score;
 
-import com.now.nowbot.model.json.OsuUser;
-import com.now.nowbot.model.json.Score;
+import com.now.nowbot.model.osu.OsuUser;
+import com.now.nowbot.model.osu.Score;
 
 public class JumpFarCheck implements ScoreChecker{
     @Override
@@ -12,7 +12,7 @@ public class JumpFarCheck implements ScoreChecker{
     @Override
     public boolean canHandle(OsuUser user, Score score) {
         double pp = user.getPp();
-        return !(pp < 3000 || pp > 4500 || score.getBeatMap().getBeatMapID() != 2459394);
+        return !(pp < 3000 || pp > 4500 || score.getBeatmap().getBeatmapID() != 2459394);
     }
 
     @Override

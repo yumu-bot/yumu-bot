@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.Match.MatchRound
 import com.now.nowbot.model.multiplayer.MatchRating
@@ -153,8 +153,8 @@ import java.util.regex.Matcher
 
         val round = rounds[i]
 
-        calculateApiService.applyBeatMapChanges(round.beatMap, LazerMod.getModsList(round.mods))
-        calculateApiService.applyStarToBeatMap(round.beatMap, round.mode, LazerMod.getModsList(round.mods))
+        calculateApiService.applyBeatMapChanges(round.beatmap, LazerMod.getModsList(round.mods))
+        calculateApiService.applyStarToBeatMap(round.beatmap, round.mode, LazerMod.getModsList(round.mods))
 
         if (round.scores.size > 2) {
             round.scores = round.scores.sortedByDescending { it.score }
@@ -191,22 +191,22 @@ import java.util.regex.Matcher
             }
 
             for (i in 0..<size) {
-                val beatMap: BeatMap?
+                val beatmap: Beatmap?
 
                 try {
-                    beatMap = infoList[i].beatMap
-                    if (beatMap == null) continue
+                    beatmap = infoList[i].beatmap
+                    if (beatmap == null) continue
                 } catch (ignored: NullPointerException) {
                     continue
                 }
 
                 try {
-                    if (beatMap.beatMapSet != null && (beatMap.beatMapSet!!.title.lowercase()
-                            .contains(word) || beatMap.beatMapSet!!.artist.lowercase()
-                            .contains(word) || beatMap.beatMapSet!!.titleUnicode.lowercase()
-                            .contains(word) || beatMap.beatMapSet!!.artistUnicode.lowercase()
-                            .contains(word) || beatMap.beatMapSet!!.creator.lowercase()
-                            .contains(word) || beatMap.difficultyName.lowercase().contains(word))) {
+                    if (beatmap.beatmapset != null && (beatmap.beatmapset!!.title.lowercase()
+                            .contains(word) || beatmap.beatmapset!!.artist.lowercase()
+                            .contains(word) || beatmap.beatmapset!!.titleUnicode.lowercase()
+                            .contains(word) || beatmap.beatmapset!!.artistUnicode.lowercase()
+                            .contains(word) || beatmap.beatmapset!!.creator.lowercase()
+                            .contains(word) || beatmap.difficultyName.lowercase().contains(word))) {
                         return i
                     }
                 } catch (ignored: Exception) { //continue;

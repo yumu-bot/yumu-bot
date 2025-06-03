@@ -3,9 +3,9 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.InfoLogStatistics
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.InfoLogStatistics
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService

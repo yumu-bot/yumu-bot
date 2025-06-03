@@ -2,8 +2,8 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -144,7 +144,7 @@ import kotlin.math.roundToInt
                 for (s in bests) {
                     beatmapApiService.applyBeatMapExtendFromDataBase(s)
 
-                    val max = s.beatMap.maxCombo ?: 1
+                    val max = s.beatmap.maxCombo ?: 1
                     val combo = s.maxCombo
 
                     val miss = s.statistics.miss
@@ -217,7 +217,7 @@ import kotlin.math.roundToInt
             for (s in bests) {
                 beatmapApiService.applyBeatMapExtendFromDataBase(s)
 
-                val max = s.beatMap.maxCombo ?: 1
+                val max = s.beatmap.maxCombo ?: 1
                 val combo = s.maxCombo
 
                 val miss = s.statistics.miss

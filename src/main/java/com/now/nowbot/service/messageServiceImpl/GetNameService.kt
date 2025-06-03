@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
-import com.now.nowbot.model.json.MicroUser
+import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -27,12 +27,12 @@ class GetNameService(private val userApiService: OsuUserApiService) : MessageSer
         } else return false
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
         if (Permission.isCommonUser(event)) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Group)
         }
 
-        val idStr: List<String>? = splitString(matcher.group("data"), splitSpace = true)
+        val idStr: List<String>? = splitString(param.group("data"), splitSpace = true)
         if (idStr.isNullOrEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
 
         val sb = StringBuilder()

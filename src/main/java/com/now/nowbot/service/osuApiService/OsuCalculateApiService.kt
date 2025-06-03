@@ -2,9 +2,9 @@ package com.now.nowbot.service.osuApiService
 
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.RosuPerformance
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.RosuPerformance
 
 interface OsuCalculateApiService {
     fun getScorePerfectPP(score: LazerScore): RosuPerformance
@@ -17,7 +17,7 @@ interface OsuCalculateApiService {
 
     fun applyBeatMapChanges(scores: List<LazerScore>)
 
-    fun applyBeatMapChanges(beatMap: BeatMap?, mods: List<LazerMod>)
+    fun applyBeatMapChanges(beatmap: Beatmap?, mods: List<LazerMod>)
 
     fun applyStarToScore(score: LazerScore) {
         applyStarToScore(score, local = true)
@@ -31,11 +31,11 @@ interface OsuCalculateApiService {
 
     fun applyStarToScores(scores: List<LazerScore>, local: Boolean = true)
 
-    fun applyStarToBeatMap(beatMap: BeatMap?, mode: OsuMode, mods: List<LazerMod>) {
-        applyStarToBeatMap(beatMap, mode, mods, local = true)
+    fun applyStarToBeatMap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>) {
+        applyStarToBeatMap(beatmap, mode, mods, local = true)
     }
 
-    fun applyStarToBeatMap(beatMap: BeatMap?, mode: OsuMode, mods: List<LazerMod>, local: Boolean = true)
+    fun applyStarToBeatMap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>, local: Boolean = true)
 
     fun applyPPToScore(score: LazerScore)
 
@@ -61,5 +61,5 @@ interface OsuCalculateApiService {
         accuracy: Double
     ): RosuPerformance
 
-    fun getBeatMapStarRating(beatMapID: Long, mode: OsuMode, mods: List<LazerMod>): Double
+    fun getBeatMapStarRating(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>): Double
 }

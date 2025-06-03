@@ -2,7 +2,10 @@ package com.now.nowbot.service.divingFishApiService.impl
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.MaiDao
-import com.now.nowbot.model.json.*
+import com.now.nowbot.model.maimai.ChuAlias
+import com.now.nowbot.model.maimai.ChuBestScore
+import com.now.nowbot.model.maimai.ChuScore
+import com.now.nowbot.model.maimai.ChuSong
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil

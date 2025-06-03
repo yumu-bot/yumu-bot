@@ -1,7 +1,7 @@
 package com.now.nowbot.model.mappool.now;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.now.nowbot.model.json.BeatMap;
+import com.now.nowbot.model.osu.Beatmap;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ public class Pool {
 
     PoolStatus            status = PoolStatus.OPEN;
     List<CategoryGroupVo> categoryList;
-    List<BeatMap>         mapinfo;
+    List<Beatmap>         mapinfo;
 
     public Integer getId() {
         return id;
@@ -73,11 +73,11 @@ public class Pool {
         this.categoryList = categoryList;
     }
 
-    public List<BeatMap> getMapinfo() {
+    public List<Beatmap> getMapinfo() {
         return mapinfo;
     }
 
-    public void setMapinfo(List<BeatMap> mapinfo) {
+    public void setMapinfo(List<Beatmap> mapinfo) {
         this.mapinfo = mapinfo;
     }
 }

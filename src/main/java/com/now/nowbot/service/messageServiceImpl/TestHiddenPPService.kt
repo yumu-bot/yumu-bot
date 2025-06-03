@@ -3,8 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.config.Permission
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -36,13 +36,13 @@ class TestHiddenPPService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
+    override fun HandleMessage(event: MessageEvent, param: Matcher) {
         if (Permission.isCommonUser(event)) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Group)
         }
 
-        val names: List<String>? = splitString(matcher.group("data"))
-        var mode = OsuMode.getMode(matcher.group("mode"))
+        val names: List<String>? = splitString(param.group("data"))
+        var mode = OsuMode.getMode(param.group("mode"))
 
         if (names.isNullOrEmpty())
             throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)

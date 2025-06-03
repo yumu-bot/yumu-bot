@@ -1,6 +1,6 @@
 package com.now.nowbot.model.service
 
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.OsuUser
 
 
 data class UserAvatarCardParam(
@@ -12,7 +12,7 @@ data class UserAvatarCardParam(
     constructor(user: OsuUser): this(
         user.coverUrl,
         user.avatarUrl,
-        "hsl(${user.profileHue ?: 333},60%,50%)",
+        "hsl(${user.profileHue},60%,50%)",
         user.username,
     )
 }

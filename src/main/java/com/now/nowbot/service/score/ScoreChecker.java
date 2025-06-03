@@ -1,7 +1,7 @@
 package com.now.nowbot.service.score;
 
-import com.now.nowbot.model.json.OsuUser;
-import com.now.nowbot.model.json.Score;
+import com.now.nowbot.model.osu.OsuUser;
+import com.now.nowbot.model.osu.Score;
 
 public interface ScoreChecker {
     int getWeight(long bid);

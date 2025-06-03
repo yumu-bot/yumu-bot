@@ -2,9 +2,9 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.RosuPerformance
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.OsuUser
+import com.now.nowbot.model.osu.RosuPerformance
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -40,7 +40,7 @@ class MapStatisticsService(
     private val imageService: ImageService,
 ) : MessageService<MapParam>, TencentMessageService<MapParam> {
 
-    data class MapParam(val user: OsuUser?, val beatmap: BeatMap, val expected: Expected)
+    data class MapParam(val user: OsuUser?, val beatmap: Beatmap, val expected: Expected)
 
     data class Expected(
         @JvmField val mode: OsuMode,
@@ -53,7 +53,7 @@ class MapStatisticsService(
 
     data class PanelE6Param(
         val user: OsuUser?,
-        val beatmap: BeatMap,
+        val beatmap: Beatmap,
         val density: IntArray,
         val original: Map<String, Any>,
         val attributes: RosuPerformance,
@@ -130,13 +130,13 @@ class MapStatisticsService(
         val bid = getBid(matcher)
         val conditions = DataUtil.paramMatcher(matcher.group("any"), Filter.entries.map { it.regex })
 
-        var beatMap: BeatMap? = null
+        var beatmap: Beatmap? = null
 
         if (bid != 0L) {
-            beatMap = beatmapApiService.getBeatMap(bid)
+            beatmap = beatmapApiService.getBeatMap(bid)
         }
 
-        if (beatMap == null) {
+        if (beatmap == null) {
             if (isAvoidance(messageText, "！m", "!m")) {
                 log.debug("指令退避：M 退避成功")
             }
@@ -146,8 +146,8 @@ class MapStatisticsService(
         val mode = OsuMode.getMode(matcher.group("mode"))
 
         val user: OsuUser? = try {
-            if (beatMap.mapperID > 0L) {
-                userApiService.getOsuUser(beatMap.mapperID, mode)
+            if (beatmap.mapperID > 0L) {
+                userApiService.getOsuUser(beatmap.mapperID, mode)
             } else {
                 null
             }
@@ -202,10 +202,10 @@ class MapStatisticsService(
 
         val combo = if ((comboStr.toDoubleOrNull() ?: -1.0) in (0.0 - 1e-6)..1.0) {
             val rate = comboStr.toDouble()
-            round(beatMap.maxCombo!! * rate).toInt()
+            round(beatmap.maxCombo!! * rate).toInt()
         } else {
-            val max = beatMap.maxCombo ?: Int.MAX_VALUE
-            val maxCombo = beatMap.maxCombo ?: 0
+            val max = beatmap.maxCombo ?: Int.MAX_VALUE
+            val maxCombo = beatmap.maxCombo ?: 0
 
             min(max(comboStr.toIntOrNull() ?: maxCombo, 0), max)
         }
@@ -214,8 +214,8 @@ class MapStatisticsService(
 
         val mods = LazerMod.getModsList(matcher.group("mod"))
 
-        val expected = Expected(OsuMode.getConvertableMode(mode, beatMap.mode), accuracy, combo, miss, mods)
-        return MapParam(user, beatMap, expected)
+        val expected = Expected(OsuMode.getConvertableMode(mode, beatmap.mode), accuracy, combo, miss, mods)
+        return MapParam(user, beatmap, expected)
     }
 
     private fun MapParam.getImage(): ByteArray {
@@ -228,7 +228,7 @@ class MapStatisticsService(
         @JvmStatic
         fun getPanelE6Image(
             user: OsuUser?,
-            beatmap: BeatMap,
+            beatmap: Beatmap,
             expected: Expected,
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService,
@@ -252,7 +252,7 @@ class MapStatisticsService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
 
             val attributes = calculateApiService.getAccPP(
-                beatmap.beatMapID,
+                beatmap.beatmapID,
                 expected.mode,
                 expected.mods,
                 expected.combo,
@@ -275,7 +275,7 @@ class MapStatisticsService(
         // 等于绘图模块的 calcMap
         // 注意，0 是 if fc，1-6是 fc，7-12是 nc，acc 分别是100 99 98 96 94 92
         private fun getPPList(
-            beatmap: BeatMap,
+            beatmap: Beatmap,
             expected: Expected,
             calculateApiService: OsuCalculateApiService,
         ): List<Double> {
@@ -289,7 +289,7 @@ class MapStatisticsService(
 
             result.add(
                 calculateApiService.getAccPP(
-                    beatmapID = beatmap.beatMapID,
+                    beatmapID = beatmap.beatmapID,
                     mode = mode,
                     mods = mods,
                     maxCombo = maxCombo,
@@ -301,7 +301,7 @@ class MapStatisticsService(
 
 
             val fcPP = calculateApiService.getAccPPList(
-                beatmapID = beatmap.beatMapID,
+                beatmapID = beatmap.beatmapID,
                 mode = mode,
                 mods = mods,
                 maxCombo = maxCombo,
@@ -313,7 +313,7 @@ class MapStatisticsService(
             if (expected.misses > 0) {
                 result.addAll(
                     calculateApiService.getAccPPList(
-                        beatmapID = beatmap.beatMapID,
+                        beatmapID = beatmap.beatmapID,
                         mode = mode,
                         mods = mods,
                         maxCombo = maxCombo,

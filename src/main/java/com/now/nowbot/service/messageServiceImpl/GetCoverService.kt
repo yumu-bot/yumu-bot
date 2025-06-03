@@ -4,7 +4,7 @@ import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.CoverType.*
-import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.ImageMessage
 import com.now.nowbot.qq.message.MessageChain
@@ -147,7 +147,7 @@ import java.nio.file.Files
 
         private fun getBeatMaps(
             bids: List<Long>, beatmapApiService: OsuBeatmapApiService
-        ): List<BeatMap> {
+        ): List<Beatmap> {
             if (bids.isEmpty()) return listOf()
             return bids.map { beatmapApiService.getBeatMapFromDataBase(it) }
         }
@@ -178,11 +178,11 @@ import java.nio.file.Files
             return builder.build()
         }
 
-        private fun getBackground(type: CoverType, beatmaps: List<BeatMap>): MessageChain {
+        private fun getBackground(type: CoverType, beatmaps: List<Beatmap>): MessageChain {
             val builder = MessageChainBuilder()
 
             beatmaps.forEach {
-                val covers = it.beatMapSet!!.covers
+                val covers = it.beatmapset!!.covers
                 val url = when (type) {
                     LIST -> covers.list
                     LIST_2X -> covers.list2x
@@ -194,7 +194,7 @@ import java.nio.file.Files
                     else -> covers.cover
                 }
 
-                builder.addImage(URI.create(url!!).toURL())
+                builder.addImage(URI.create(url).toURL())
             }
 
             return builder.build()

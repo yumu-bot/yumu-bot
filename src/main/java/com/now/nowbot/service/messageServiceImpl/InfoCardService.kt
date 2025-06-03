@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -33,11 +33,11 @@ class InfoCardService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, osuUser: OsuUser) {
+    override fun HandleMessage(event: MessageEvent, param: OsuUser) {
         val image: ByteArray
 
         try {
-            image = imageService.getPanelGamma(osuUser)
+            image = imageService.getPanelGamma(param)
         } catch (e: Exception) {
             log.error("迷你信息面板：渲染失败", e)
             throw MiniCardException(MiniCardException.Type.MINI_Render_Error)

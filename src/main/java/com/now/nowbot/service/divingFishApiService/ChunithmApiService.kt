@@ -1,6 +1,9 @@
 package com.now.nowbot.service.divingFishApiService
 
-import com.now.nowbot.model.json.*
+import com.now.nowbot.model.maimai.ChuAlias
+import com.now.nowbot.model.maimai.ChuBestScore
+import com.now.nowbot.model.maimai.ChuScore
+import com.now.nowbot.model.maimai.ChuSong
 
 interface ChunithmApiService {
 

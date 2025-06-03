@@ -1,8 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.ChuBestScore
-import com.now.nowbot.model.json.ChuScore
-import com.now.nowbot.model.json.ChuSong
+import com.now.nowbot.model.maimai.ChuBestScore
+import com.now.nowbot.model.maimai.ChuScore
+import com.now.nowbot.model.maimai.ChuSong
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService

@@ -1,9 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -96,7 +96,7 @@ class LeaderBoardService(
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: LeaderBoardParam) {
 
-        val beatMap: BeatMap = try {
+        val beatmap: Beatmap = try {
             if (param.isBID) {
                 beatmapApiService.getBeatMap(param.bid)
             } else {
@@ -108,7 +108,7 @@ class LeaderBoardService(
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "谱面排行：谱面")
         }
 
-        if (!beatMap.hasLeaderBoard) {
+        if (!beatmap.hasLeaderBoard) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_MapLeaderBoard)
         }
 
@@ -138,17 +138,17 @@ class LeaderBoardService(
                 OsuUser(score.user)
             }
 
-            val e5Param = ScorePRService.getE5Param(user, score, beatMap, start, "L", beatmapApiService, calculateApiService)
+            val e5Param = ScorePRService.getE5Param(user, score, beatmap, start, "L", beatmapApiService, calculateApiService)
 
             imageService.getPanel(e5Param.toMap(), "E5")
         } else {
             // 多成绩模式
             calculateApiService.applyPPToScores(ss)
 
-            ss.forEach { it.beatMap = beatMap }
+            ss.forEach { it.beatmap = beatmap }
 
             val body = mapOf(
-                "beatmap" to beatMap,
+                "beatmap" to beatmap,
                 "scores" to ss,
                 "start" to start,
                 "is_legacy" to param.isLegacy

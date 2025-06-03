@@ -2,8 +2,8 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.MicroUser
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.MicroUser
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -115,7 +115,7 @@ class GuestDifficultyService(
 
         val search2 = beatmapApiService.searchBeatMapSet(query2, 10)
         val result2 = search2.beatmapSets
-            .filter { it.beatMapSetID != user.userID && (it.beatMaps?.all { that -> that.beatMapID != user.id } ?: true) }
+            .filter { it.beatmapsetID != user.userID && (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true) }
 
         val relatedSets = (result1.toHashSet() + result2.toHashSet()).asSequence()
 
@@ -131,10 +131,10 @@ class GuestDifficultyService(
             AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull().flatten()
         }
 
-        val relatedDiffs = relatedSets.map { it.beatMaps!! }.flatten()
+        val relatedDiffs = relatedSets.map { it.beatmaps!! }.flatten()
 
-        val myGuestDiffs = relatedDiffs.filter { it.mapperID == user.userID && it.beatMapSet?.creatorID != user.userID }
-        val guestDiffs = relatedDiffs.filter { it.mapperID != user.userID && it.beatMapSet?.creatorID == user.userID }
+        val myGuestDiffs = relatedDiffs.filter { it.mapperID == user.userID && it.beatmapset?.creatorID != user.userID }
+        val guestDiffs = relatedDiffs.filter { it.mapperID != user.userID && it.beatmapset?.creatorID == user.userID }
 
         val guestDifficultyOwners = relatedUsers.map { u ->
             val re = guestDiffs.filter { it.mapperID == u.userID }
@@ -142,7 +142,7 @@ class GuestDifficultyService(
             val received: Int = re.count()
             val receivedRanked: Int = re.count { it.ranked > 0 }
 
-            val se = myGuestDiffs.filter { it.beatMapSet?.creatorID == u.userID }
+            val se = myGuestDiffs.filter { it.beatmapset?.creatorID == u.userID }
 
             val sent: Int = se.count()
 

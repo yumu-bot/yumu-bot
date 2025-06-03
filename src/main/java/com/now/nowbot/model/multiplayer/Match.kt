@@ -3,7 +3,9 @@ package com.now.nowbot.model.multiplayer
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.*
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.MicroUser
 import java.time.OffsetDateTime
 import kotlin.math.max
 
@@ -62,8 +64,8 @@ data class Match(
 
     data class MatchRound(
         @JsonProperty("id") val roundID: Long,
-        @JsonProperty("beatmap") var beatMap: BeatMap?,
-        @JsonProperty("beatmap_id") val beatMapID: Long,
+        @JsonProperty("beatmap") var beatmap: Beatmap?,
+        @JsonProperty("beatmap_id") val beatmapID: Long,
         @JsonProperty("start_time") val startTime: OffsetDateTime,
         @JsonProperty("end_time") val endTime: OffsetDateTime?,
         val modeInt: Int,
@@ -240,8 +242,8 @@ data class Match(
                 r.mode = g.mode.shortname
                 r.startTime = g.startTime
                 r.endTime = g.endTime
-                r.beatMap = g.beatMap
-                r.beatMapID = g.beatMapID
+                r.beatmap = g.beatmap
+                r.beatmapID = g.beatmapID
                 r.modInt = OsuMod.getModsValueFromAcronyms(g.mods)
                 r.scoringType = g.scoringType
                 r.teamType = g.teamType

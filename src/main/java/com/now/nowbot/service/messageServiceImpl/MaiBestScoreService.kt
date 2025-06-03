@@ -1,10 +1,10 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.json.MaiBestScore
-import com.now.nowbot.model.json.MaiFit.ChartData
-import com.now.nowbot.model.json.MaiFit.DiffData
-import com.now.nowbot.model.json.MaiScore
-import com.now.nowbot.model.json.MaiSong
+import com.now.nowbot.model.maimai.MaiBestScore
+import com.now.nowbot.model.maimai.MaiFit.ChartData
+import com.now.nowbot.model.maimai.MaiFit.DiffData
+import com.now.nowbot.model.maimai.MaiScore
+import com.now.nowbot.model.maimai.MaiSong
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService

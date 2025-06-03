@@ -5,7 +5,7 @@ import com.now.nowbot.entity.ScoreStatisticLite
 import com.now.nowbot.mapper.LazerScoreRepository
 import com.now.nowbot.mapper.LazerScoreStatisticRepository
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
+import com.now.nowbot.model.osu.LazerScore
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
@@ -17,7 +17,7 @@ import java.time.ZonedDateTime
 
 @Component
 class ScoreDao(
-    val beatMapDao: BeatMapDao,
+    val beatmap1Dao: BeatmapDao,
     val scoreRepository: LazerScoreRepository,
     val scoreStatisticRepository: LazerScoreStatisticRepository,
 ) {
@@ -50,15 +50,15 @@ class ScoreDao(
             return
         }
         try {
-            beatMapDao.saveMapSet(score.beatMapSet)
-            beatMapDao.saveMap(score.beatMap)
+            beatmap1Dao.saveMapSet(score.beatmapset)
+            beatmap1Dao.saveMap(score.beatmap)
         } catch (e: Exception) {
             log.error("统计成绩中存储 beatmap 异常", e)
         }
         val data = LazerScoreLite(score)
         val statisticList: List<ScoreStatisticLite>
         val statistic = ScoreStatisticLite.createByScore(score)
-        statisticList = if (scoreStatisticRepository.checkIdExists(score.beatMapID).isEmpty) {
+        statisticList = if (scoreStatisticRepository.checkIdExists(score.beatmapID).isEmpty) {
             listOf(statistic, ScoreStatisticLite.createByBeatmap(score))
         } else {
             listOf(statistic)
@@ -70,14 +70,14 @@ class ScoreDao(
     private fun saveScore(scoreList: List<LazerScore>, mode: OsuMode) {
         if (scoreList.isEmpty()) return
         try {
-            val set = scoreList.map { it.beatMapSet }
-            beatMapDao.saveAllMapSet(set)
-            val map = scoreList.map { it.beatMap }
-            beatMapDao.saveAllMap(map)
+            val set = scoreList.map { it.beatmapset }
+            beatmap1Dao.saveAllMapSet(set)
+            val map = scoreList.map { it.beatmap }
+            beatmap1Dao.saveAllMap(map)
         } catch (e: Exception) {
             log.error("统计成绩中存储 beatmap 异常", e)
         }
-        val (scoreIdList, beatmapIdList) = scoreList.map { it.scoreID to it.beatMapID }.unzip()
+        val (scoreIdList, beatmapIdList) = scoreList.map { it.scoreID to it.beatmapID }.unzip()
         val alreadySaveScoreId = scoreRepository.getRecordId(scoreIdList)
 
         val (scoreLiteList, scoreStatisticList) = scoreList
@@ -90,7 +90,7 @@ class ScoreDao(
         val alreadySaveBeatmapId = scoreStatisticRepository.getRecordBeatmapId(beatmapIdList, mode.modeValue.toInt())
 
         val mapStatisticList = scoreList
-            .filterNot { alreadySaveBeatmapId.contains(it.beatMapID) }
+            .filterNot { alreadySaveBeatmapId.contains(it.beatmapID) }
             .map { ScoreStatisticLite.createByBeatmap(it) }
 
         scoreStatisticRepository.saveAll(mapStatisticList)

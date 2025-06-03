@@ -1,7 +1,7 @@
 package com.now.nowbot.model.multiplayer
 
 import com.now.nowbot.model.enums.OsuMod
-import com.now.nowbot.model.json.MicroUser
+import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.multiplayer.Match.EventType
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import org.slf4j.LoggerFactory
@@ -140,7 +140,7 @@ class MatchListener(
                 if (game.endTime != null) { // 正常结束但是中间没有获取到 (因为请求延迟导致)
                     onEvent(it)
                 } else { // abort
-                    eventListener.forEach { l -> l.onGameAbort(game.beatMapID) }
+                    eventListener.forEach { l -> l.onGameAbort(game.beatmapID) }
                 }
             }
         }
@@ -170,8 +170,8 @@ class MatchListener(
                 MatchAdapter.GameStartEvent(
                     event.eventID,
                     match.name,
-                    beatMapID,
-                    beatMap!!,
+                    beatmapID,
+                    beatmap!!,
                     startTime,
                     mode,
                     mods.map { OsuMod.getModFromAcronym(it) },

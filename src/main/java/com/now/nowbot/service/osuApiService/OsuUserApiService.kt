@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.google.errorprone.annotations.CanIgnoreReturnValue
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.*
+import com.now.nowbot.model.osu.*
 import com.now.nowbot.throwable.GeneralTipsException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 

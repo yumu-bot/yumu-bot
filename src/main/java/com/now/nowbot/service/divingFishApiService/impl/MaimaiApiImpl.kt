@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.Companion.getNameList
-import com.now.nowbot.model.json.*
+import com.now.nowbot.model.maimai.*
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.AsyncMethodExecutor

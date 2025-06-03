@@ -3,9 +3,9 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.OsuUser
-import com.now.nowbot.model.json.PPPlus
-import com.now.nowbot.model.json.PPPlus.AdvancedStats
+import com.now.nowbot.model.osu.OsuUser
+import com.now.nowbot.model.osu.PPPlus
+import com.now.nowbot.model.osu.PPPlus.AdvancedStats
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService

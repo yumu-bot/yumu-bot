@@ -30,7 +30,7 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
     override fun HandleMessage(event: MessageEvent, param: Long) {
         val sid =
             try {
-                osuBeatmapApiService.getBeatMapFromDataBase(param).beatMapSetID
+                osuBeatmapApiService.getBeatMapFromDataBase(param).beatmapsetID
             } catch (e: Exception) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
             }
@@ -43,8 +43,8 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
             }
         var count = 0
 
-        for (b in s.beatMaps!!) try {
-            if (osuBeatmapApiService.refreshBeatMapFileFromDirectory(b.beatMapID)) {
+        for (b in s.beatmaps!!) try {
+            if (osuBeatmapApiService.refreshBeatMapFileFromDirectory(b.beatmapID)) {
                 count++
             }
         } catch (e: IOException) {

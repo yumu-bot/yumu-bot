@@ -1,7 +1,7 @@
 package com.now.nowbot.entity;
 
 import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.model.json.BeatMap;
+import com.now.nowbot.model.osu.Beatmap;
 import jakarta.persistence.*;
 @Entity
 @Table(name = "osu_beatmap",indexes = {
@@ -65,29 +65,29 @@ public class BeatmapLite {
     public BeatmapLite() {
     }
 
-    public BeatmapLite(BeatMap beatMap) {
-        setId(beatMap.getBeatMapID());
-        setBeatmapsetId((int) beatMap.getBeatMapSetID());
-        setConvert(beatMap.getConvert());
-        setVersion(beatMap.getDifficultyName());
-        setPlaycount(beatMap.getPlayCount());
-        setPasscount(beatMap.getPassCount());
-        setOD(beatMap.getOD());
-        setCS(beatMap.getCS());
-        setAR(beatMap.getAR());
-        setHP(beatMap.getHP());
-        setDifficultyRating((float) beatMap.getStarRating());
-        setBpm(beatMap.getBPM());
-        setMaxCombo(beatMap.getMaxCombo());
-        setStatus(beatMap.getStatus());
-        setCircles(beatMap.getCircles());
-        setSliders(beatMap.getSliders());
-        setSpinners(beatMap.getSpinners());
-        setTotalLength(beatMap.getTotalLength());
-        setHitLength(beatMap.getHitLength());
-        setModeInt(beatMap.getModeInt());
-        setUserId(beatMap.getMapperID());
-        setMd5(beatMap.getMd5());
+    public BeatmapLite(Beatmap beatmap) {
+        setId(beatmap.getBeatmapID());
+        setBeatmapsetId((int) beatmap.getBeatmapsetID());
+        setConvert(beatmap.getConvert());
+        setVersion(beatmap.getDifficultyName());
+        setPlaycount(beatmap.getPlayCount());
+        setPasscount(beatmap.getPassCount());
+        setOD(beatmap.getOD());
+        setCS(beatmap.getCS());
+        setAR(beatmap.getAR());
+        setHP(beatmap.getHP());
+        setDifficultyRating((float) beatmap.getStarRating());
+        setBpm(beatmap.getBPM());
+        setMaxCombo(beatmap.getMaxCombo());
+        setStatus(beatmap.getStatus());
+        setCircles(beatmap.getCircles());
+        setSliders(beatmap.getSliders());
+        setSpinners(beatmap.getSpinners());
+        setTotalLength(beatmap.getTotalLength());
+        setHitLength(beatmap.getHitLength());
+        setModeInt(beatmap.getModeInt());
+        setUserId(beatmap.getMapperID());
+        setMd5(beatmap.getMd5());
     }
 
     public Long getId() {
@@ -293,10 +293,10 @@ public class BeatmapLite {
         this.md5 = md5;
     }
 
-    public BeatMap toBeatMap(){
-        var b = new BeatMap();
-        b.setBeatMapID(getId());
-        b.setBeatMapSetID(getBeatmapsetId());
+    public Beatmap toBeatMap(){
+        var b = new Beatmap();
+        b.setBeatmapID(getId());
+        b.setBeatmapsetID(getBeatmapsetId());
         b.setConvert(getConvert());
         b.setDifficultyName(getVersion());
         b.setPlayCount(getPlaycount());

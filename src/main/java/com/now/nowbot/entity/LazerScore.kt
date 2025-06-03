@@ -1,7 +1,7 @@
 package com.now.nowbot.entity
 
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
+import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.util.JacksonUtil
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
@@ -63,7 +63,7 @@ class LazerScoreLite(
         score.scoreID,
         score.legacyScoreID,
         score.userID,
-        score.beatMapID,
+        score.beatmapID,
         JacksonUtil.objectToJson(score.mods),
         (score.PP ?: 0).toFloat(),
         score.lazerAccuracy.toFloat(),
@@ -135,7 +135,7 @@ class ScoreStatisticLite(
 
     companion object {
         fun createByBeatmap(score: LazerScore) = ScoreStatisticLite(
-            score.beatMapID,
+            score.beatmapID,
             score.mode.modeValue.toInt(),
             score.maximumStatistics.toShortJson()
         )

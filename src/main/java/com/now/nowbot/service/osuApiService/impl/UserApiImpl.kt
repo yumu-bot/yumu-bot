@@ -6,7 +6,7 @@ import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
-import com.now.nowbot.model.json.*
+import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService.TeamInfo
 import com.now.nowbot.throwable.TipsRuntimeException

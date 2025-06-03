@@ -3,8 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.ValueMod
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -147,14 +147,14 @@ import kotlin.math.min
                 val percent: Double
             )
 
-            val beatMapList: MutableList<BeatMap4BA> = ArrayList(bpSize)
+            val beatmapList: MutableList<BeatMap4BA> = ArrayList(bpSize)
             val modsPPMap: MultiValueMap<String, Double> = LinkedMultiValueMap()
             val rankMap: MultiValueMap<String, Double> = LinkedMultiValueMap()
 
             var modsSum = 0
 
             bests.forEachIndexed { i, best ->
-                val b = best.beatMap
+                val b = best.beatmap
 
                 val m = best.mods.filter {
                     if (it is ValueMod) {
@@ -172,10 +172,10 @@ import kotlin.math.min
                         (b.BPM ?: 0.0).toFloat(),
                         b.starRating.toFloat(),
                         best.rank,
-                        best.beatMapSet.covers.list ?: "",
+                        best.beatmapset.covers.list,
                         m
                     )
-                    beatMapList.add(ba)
+                    beatmapList.add(ba)
                 }
 
                 run { // 统计 mods / rank
@@ -200,7 +200,7 @@ import kotlin.math.min
             val summary: HashMap<String, List<BeatMap4BA>> = HashMap(4)
 
             fun <T : Comparable<T>> sortCount(name: String, sortedBy: (BeatMap4BA) -> T) {
-                val sortList: List<BeatMap4BA> = beatMapList.sortedByDescending(sortedBy)
+                val sortList: List<BeatMap4BA> = beatmapList.sortedByDescending(sortedBy)
                 val stat: ArrayList<BeatMap4BA> = ArrayList(3)
                 stat.add(sortList.first())
                 stat.add(sortList[bpSize / 2])
@@ -216,9 +216,9 @@ import kotlin.math.min
             val ppRawList = bests.map { it.PP!! }
             val ppSum = bests.sumOf { it.weight?.PP ?: 0.0 }
             val rankList = bests.map { it.rank }
-            val lengthList = beatMapList.map { it.length }
-            val starList = beatMapList.map { it.star }
-            val modsList: List<List<String>> = beatMapList.map {
+            val lengthList = beatmapList.map { it.length }
+            val starList = beatmapList.map { it.star }
+            val modsList: List<List<String>> = beatmapList.map {
                 it.mods.map { mod -> mod.acronym }
             }
             val timeList =
@@ -239,7 +239,7 @@ import kotlin.math.min
                 @JsonProperty("pp_count") val ppCount: Float
             )
 
-            val mapperMap = bests.groupingBy { it.beatMap.mapperID }.eachCount()
+            val mapperMap = bests.groupingBy { it.beatmap.mapperID }.eachCount()
 
             val mapperSize = mapperMap.size
             val mapperCount =
@@ -248,7 +248,7 @@ import kotlin.math.min
 
             val mapperInfo = userApiService.getUsers(mapperCount.keys)
             val mapperList =
-                bests.filter { mapperCount.containsKey(it.beatMap.mapperID) }.groupingBy { it.beatMap.mapperID }
+                bests.filter { mapperCount.containsKey(it.beatmap.mapperID) }.groupingBy { it.beatmap.mapperID }
                     .aggregate<LazerScore, Long, Double> { _, accumulator, element, _ ->
                         if (accumulator == null) {
                             element.PP ?: 0.0

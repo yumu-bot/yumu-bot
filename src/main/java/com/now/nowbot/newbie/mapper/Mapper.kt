@@ -137,9 +137,9 @@ class NewbieDao(
         uid.chunked(50) { i ->
             Thread.sleep(3000)
             osuUserService.getUsers(i)
-                .filter { it.rulesets != null && it.rulesets!!.osu != null && it.rulesets!!.osu.pp!! < 3600 }
+                .filter { it.rulesets != null && it.rulesets!!.osu != null && it.rulesets!!.osu!!.pp!! < 3600 }
                 .map {
-                    userPP[it.id] = it.rulesets!!.osu.pp!!.toFloat()
+                    userPP[it.id] = it.rulesets!!.osu!!.pp!!.toFloat()
                     it.id
                 }.forEach { under3K.add(it) }
         }

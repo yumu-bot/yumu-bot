@@ -2,8 +2,8 @@ package com.now.nowbot.model.ppminus.impl
 
 import com.now.nowbot.entity.PPMinusLite
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.util.DataUtil
 import kotlin.math.*
 

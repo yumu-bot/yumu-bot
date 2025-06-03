@@ -1,7 +1,7 @@
 package com.now.nowbot.model.enums
 
 import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.json.LazerScore
+import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.command.*
@@ -161,39 +161,39 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
             return when (filter) {
                 MAPPER ->
-                    if (it.beatMap.owners != null) {
-                        for (o in it.beatMap.owners!!) {
+                    if (it.beatmap.owners != null) {
+                        for (o in it.beatmap.owners!!) {
                             if (fit(operator, o.userName, condition)) return true
                         }
                         false
                     } else {
-                        fit(operator, it.beatMapSet.creator, condition)
+                        fit(operator, it.beatmapset.creator, condition)
                     }
 
-                BID -> fit(operator, it.beatMapID, long)
-                SID -> fit(operator, it.beatMapSet.beatMapSetID, long)
-                TITLE -> (fit(operator, it.beatMapSet.title, condition)
-                        || fit(operator, it.beatMapSet.titleUnicode, condition))
-                ARTIST -> (fit(operator, it.beatMapSet.artist, condition)
-                        || fit(operator, it.beatMapSet.artistUnicode, condition))
-                SOURCE -> fit(operator, it.beatMapSet.source, condition)
+                BID -> fit(operator, it.beatmapID, long)
+                SID -> fit(operator, it.beatmapset.beatmapsetID, long)
+                TITLE -> (fit(operator, it.beatmapset.title, condition)
+                        || fit(operator, it.beatmapset.titleUnicode, condition))
+                ARTIST -> (fit(operator, it.beatmapset.artist, condition)
+                        || fit(operator, it.beatmapset.artistUnicode, condition))
+                SOURCE -> fit(operator, it.beatmapset.source, condition)
                 TAG -> run {
-                    if (it.beatMapSet.tags == null) return false
+                    if (it.beatmapset.tags == null) return false
 
-                    for (t in it.beatMapSet.tags!!.split("\\s+".toRegex())) {
-                        if (fit(operator, it.beatMapSet.source, condition)) return true
+                    for (t in it.beatmapset.tags!!.split("\\s+".toRegex())) {
+                        if (fit(operator, it.beatmapset.source, condition)) return true
                     }
 
                     return false
                 }
-                DIFFICULTY -> fit(operator, it.beatMap.difficultyName, condition)
+                DIFFICULTY -> fit(operator, it.beatmap.difficultyName, condition)
 
-                STAR -> fit(operator, it.beatMap.starRating, double)
+                STAR -> fit(operator, it.beatmap.starRating, double)
 
-                AR -> fit(operator, it.beatMap.AR?.toDouble() ?: 0.0, double)
-                CS -> fit(operator, it.beatMap.CS?.toDouble() ?: 0.0, double)
-                OD -> fit(operator, it.beatMap.OD?.toDouble() ?: 0.0, double)
-                HP -> fit(operator, it.beatMap.HP?.toDouble() ?: 0.0, double)
+                AR -> fit(operator, it.beatmap.AR?.toDouble() ?: 0.0, double)
+                CS -> fit(operator, it.beatmap.CS?.toDouble() ?: 0.0, double)
+                OD -> fit(operator, it.beatmap.OD?.toDouble() ?: 0.0, double)
+                HP -> fit(operator, it.beatmap.HP?.toDouble() ?: 0.0, double)
                 PERFORMANCE -> fit(operator, it.PP ?: 0.0, double)
                 RANK -> run {
                     val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
@@ -236,10 +236,10 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                         seconds = condition.toLong()
                     }
 
-                    fit(operator, it.beatMap.totalLength.toLong(), seconds)
+                    fit(operator, it.beatmap.totalLength.toLong(), seconds)
                 }
 
-                BPM -> fit(operator, it.beatMap.BPM?.toDouble() ?: 0.0, double, isPlus = true)
+                BPM -> fit(operator, it.beatmap.BPM?.toDouble() ?: 0.0, double, isPlus = true)
                 ACCURACY -> run {
                     val acc = when {
                         double > 10000.0 -> throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_Param)
@@ -252,7 +252,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 }
                 COMBO -> run {
                     val combo = when {
-                        double <= 1.0 && double > 0.0 -> it.beatMap.maxCombo?.times(double)?.roundToLong() ?: long
+                        double <= 1.0 && double > 0.0 -> it.beatmap.maxCombo?.times(double)?.roundToLong() ?: long
                         else -> long
                     }
 
@@ -304,15 +304,15 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     fit(operator, rate, input, isPlus = true)
                 }
 
-                CIRCLE -> fit(operator, it.beatMap.circles?.toLong() ?: -1L, long)
-                SLIDER -> fit(operator, it.beatMap.sliders?.toLong() ?: -1L, long)
-                SPINNER -> fit(operator, it.beatMap.spinners?.toLong() ?: -1L, long)
-                TOTAL -> fit(operator, (it.beatMap.circles?.toLong() ?: -1L) + (it.beatMap.sliders?.toLong() ?: -1L) + (it.beatMap.spinners?.toLong() ?: -1L), long)
+                CIRCLE -> fit(operator, it.beatmap.circles?.toLong() ?: -1L, long)
+                SLIDER -> fit(operator, it.beatmap.sliders?.toLong() ?: -1L, long)
+                SPINNER -> fit(operator, it.beatmap.spinners?.toLong() ?: -1L, long)
+                TOTAL -> fit(operator, (it.beatmap.circles?.toLong() ?: -1L) + (it.beatmap.sliders?.toLong() ?: -1L) + (it.beatmap.spinners?.toLong() ?: -1L), long)
 
                 CONVERT -> when (condition.trim().lowercase()) {
-                    "true", "t", "yes", "y" -> it.beatMap.convert == true
-                    "false", "f", "no", "not", "n" -> it.beatMap.convert != true
-                    else -> it.beatMap.convert != true
+                    "true", "t", "yes", "y" -> it.beatmap.convert == true
+                    "false", "f", "no", "not", "n" -> it.beatmap.convert != true
+                    else -> it.beatmap.convert != true
                 }
 
                 CLIENT -> when (condition.trim().lowercase()) {

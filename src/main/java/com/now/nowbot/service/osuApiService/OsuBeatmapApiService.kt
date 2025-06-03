@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.LazerMod.Companion.getModsValue
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.*
+import com.now.nowbot.model.osu.*
 import java.io.IOException
 import java.util.*
 
@@ -18,35 +18,35 @@ interface OsuBeatmapApiService {
     fun refreshBeatMapFileFromDirectory(bid: Long): Boolean
 
     // 查一下文件是否跟 checksum 是否对得上
-    @Throws(IOException::class) fun checkBeatMap(beatMap: BeatMap?): Boolean
+    @Throws(IOException::class) fun checkBeatMap(beatmap: Beatmap?): Boolean
 
     @Throws(IOException::class) fun checkBeatMap(bid: Long, checkStr: String?): Boolean
 
-    @Throws(IOException::class) fun checkBeatMap(beatMap: BeatMap, fileStr: String): Boolean
+    @Throws(IOException::class) fun checkBeatMap(beatmap: Beatmap, fileStr: String): Boolean
 
     // 尽量用 FromDataBase，这样可以节省 API 开支
-    fun getBeatMap(bid: Long): BeatMap
+    fun getBeatMap(bid: Long): Beatmap
 
-    fun getBeatMap(bid: Int): BeatMap {
+    fun getBeatMap(bid: Int): Beatmap {
         return getBeatMap(bid.toLong())
     }
 
-    fun getBeatMapSet(sid: Long): BeatMapSet
+    fun getBeatMapSet(sid: Long): Beatmapset
 
-    fun getBeatMapSet(sid: Int): BeatMapSet {
+    fun getBeatMapSet(sid: Int): Beatmapset {
         return getBeatMapSet(sid.toLong())
     }
 
-    fun getBeatMapFromDataBase(bid: Int): BeatMap {
+    fun getBeatMapFromDataBase(bid: Int): Beatmap {
         return getBeatMapFromDataBase(bid.toLong())
     }
 
     // TODO database 存的谱面缺太多东西，比如甚至谱面状态都没有。。。
-    fun getBeatMapFromDataBase(bid: Long): BeatMap
+    fun getBeatMapFromDataBase(bid: Long): Beatmap
 
     fun isNotOverRating(bid: Long): Boolean
 
-    @Throws(Exception::class) fun getBeatmapObjectGrouping26(beatMap: BeatMap): IntArray
+    @Throws(Exception::class) fun getBeatmapObjectGrouping26(beatmap: Beatmap): IntArray
 
     fun getFailTime(bid: Long, passObj: Int): Int
 
@@ -87,7 +87,7 @@ interface OsuBeatmapApiService {
     fun searchBeatMapSet(query: Map<String, Any?>, tries: Int): BeatMapSetSearch
 
     // 给同一张图的成绩添加完整的谱面
-    fun applyBeatMapExtendForSameScore(scores: List<LazerScore>, beatMap: BeatMap)
+    fun applyBeatMapExtendForSameScore(scores: List<LazerScore>, beatmap: Beatmap)
 
     // 给成绩添加完整的谱面
     fun applyBeatMapExtend(score: LazerScore)
@@ -95,20 +95,20 @@ interface OsuBeatmapApiService {
     // 给成绩添加完整的谱面
     fun applyBeatMapExtend(scores: List<LazerScore>)
 
-    fun applyBeatMapExtend(score: LazerScore, extended: BeatMap)
+    fun applyBeatMapExtend(score: LazerScore, extended: Beatmap)
 
     // 给成绩添加完整的谱面
     fun applyBeatMapExtendFromDataBase(score: LazerScore)
 
     // 获取Q区谱面大致的上架时间
-    fun getBeatMapSetRankedTime(beatMap: BeatMap): String
+    fun getBeatMapSetRankedTime(beatmap: Beatmap): String
 
     // 获取谱面大致的上架时间
     fun getBeatMapSetRankedTimeMap(): Map<Long, String>
 
-    fun applyBeatMapSetRankedTime(beatMapSets: List<BeatMapSet>)
+    fun applyBeatMapSetRankedTime(beatmapsets: List<Beatmapset>)
 
     fun updateBeatMapTagLibraryDatabase()
 
-    fun extendBeatMapTag(beatMap: BeatMap)
+    fun extendBeatMapTag(beatmap: Beatmap)
 }

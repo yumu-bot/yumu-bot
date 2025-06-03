@@ -1,8 +1,8 @@
 package com.now.nowbot.model
 
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.LazerStatistics
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import kotlin.math.floor
@@ -36,7 +36,7 @@ class UUScore(score: LazerScore, beatmapApiService: OsuBeatmapApiService, calcul
 
     init {
         val user = score.user
-        bid = score.beatMap.beatMapID
+        bid = score.beatmap.beatmapID
 
         beatmapApiService.applyBeatMapExtend(score)
 
@@ -54,15 +54,15 @@ class UUScore(score: LazerScore, beatmapApiService: OsuBeatmapApiService, calcul
             mods[i] = modsList[i].acronym
         }
 
-        titleUnicode = score.beatMapSet.titleUnicode
-        artist = score.beatMapSet.artistUnicode
-        url = score.beatMapSet.covers.card
+        titleUnicode = score.beatmapset.titleUnicode
+        artist = score.beatmapset.artistUnicode
+        url = score.beatmapset.covers.card
 
-        maxCombo = score.beatMap.maxCombo!!
-        difficultyName = score.beatMap.difficultyName
+        maxCombo = score.beatmap.maxCombo!!
+        difficultyName = score.beatmap.difficultyName
         
-        starRating = score.beatMap.starRating
-        totalLength = score.beatMap.totalLength
+        starRating = score.beatmap.starRating
+        totalLength = score.beatmap.totalLength
         
         val starInteger = floor(starRating).toInt()
         val srStr = StringBuilder()
@@ -91,7 +91,7 @@ class UUScore(score: LazerScore, beatmapApiService: OsuBeatmapApiService, calcul
         
         combo = score.maxCombo
         passed = score.passed
-        key = score.beatMap.CS!!.toInt()
+        key = score.beatmap.CS!!.toInt()
         playTime = score.endedTimeString
 
         statistics = score.statistics

@@ -8,8 +8,8 @@ import com.now.nowbot.dao.NewbieDao
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.ScoreFilter
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -85,7 +85,7 @@ class NewbieRestrictOverSRService(
                 val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
                 user = getUserWithoutRange(event, ss, CmdObject(mode))
-                scores = scoreApiService.getBeatMapScores(map.beatMapID, user.userID, mode)
+                scores = scoreApiService.getBeatMapScores(map.beatmapID, user.userID, mode)
             } else if (s.find()) {
                 val bid = getBid(s)
                 if (bid == 0L) return false
@@ -97,7 +97,7 @@ class NewbieRestrictOverSRService(
                 val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
                 user = getUserWithoutRange(event, s, CmdObject(mode))
-                scores = listOf(scoreApiService.getBeatMapScore(map.beatMapID, user.userID, mode, mods)?.score ?: return false)
+                scores = listOf(scoreApiService.getBeatMapScore(map.beatmapID, user.userID, mode, mods)?.score ?: return false)
                 calculateApiService.applyStarToScores(scores, local = true)
             } else if (pr.find()) {
                 val any: String? = pr.group("any")
@@ -274,7 +274,7 @@ class NewbieRestrictOverSRService(
             } else if (m.find()) {
                 val bid = getBid(m)
 
-                val beatMap = if (bid != 0L) {
+                val beatmap = if (bid != 0L) {
                     beatmapApiService.getBeatMap(bid)
                 } else return false
 
@@ -284,8 +284,8 @@ class NewbieRestrictOverSRService(
                 // 自己构建成绩
                 val constructScore = LazerScore()
 
-                constructScore.beatMap = beatMap
-                constructScore.beatMapSet = beatMap.beatMapSet!!
+                constructScore.beatmap = beatmap
+                constructScore.beatmapset = beatmap.beatmapset!!
                 constructScore.ruleset = mode.modeValue.toByte()
                 constructScore.mods = mods
 
@@ -322,19 +322,19 @@ class NewbieRestrictOverSRService(
         }
 
         data.value = scores.filterNot {
-            remitBIDs.contains(it.beatMap.beatMapID) && LazerMod.noStarRatingChange(it.mods)
+            remitBIDs.contains(it.beatmap.beatmapID) && LazerMod.noStarRatingChange(it.mods)
         }
 
         return data.value.isNullOrEmpty().not()
     }
 
     override fun HandleMessage(event: MessageEvent, param: Collection<LazerScore>) {
-        val score = param.maxByOrNull { it.beatMap.starRating } ?: return
+        val score = param.maxByOrNull { it.beatmap.starRating } ?: return
 
-        val beatMap = beatmapApiService.getBeatMap(score.beatMapID)
-        beatmapApiService.applyBeatMapExtend(score, beatMap)
+        val beatmap = beatmapApiService.getBeatMap(score.beatmapID)
+        beatmapApiService.applyBeatMapExtend(score, beatmap)
 
-        val sr = score.beatMap.starRating
+        val sr = score.beatmap.starRating
         val silence = getSilence(sr)
         if (silence <= 0) return
 

@@ -1,7 +1,7 @@
 package com.now.nowbot.model.ppminus.impl;
 
-import com.now.nowbot.model.json.LazerScore;
-import com.now.nowbot.model.json.OsuUser;
+import com.now.nowbot.model.osu.LazerScore;
+import com.now.nowbot.model.osu.OsuUser;
 import com.now.nowbot.model.ppminus.PPMinus;
 
 import java.util.List;
@@ -31,15 +31,15 @@ public class PPMinusCatch extends PPMinus {
             if(i < 10){
                 ppv0 += bp.getPP();
                 accv0 += bp.getAccuracy();
-                lengv0 += bp.getBeatMap().getTotalLength();
+                lengv0 += bp.getBeatmap().getTotalLength();
             }else if(i>=45 && i<55){
                 ppv45 += bp.getPP();
                 accv45 += bp.getAccuracy();
-                lengv45 += bp.getBeatMap().getTotalLength();
+                lengv45 += bp.getBeatmap().getTotalLength();
             }else if(i>=90){
                 ppv90 += bp.getPP();
                 accv90 += bp.getAccuracy();
-                lengv90 += bp.getBeatMap().getTotalLength();
+                lengv90 += bp.getBeatmap().getTotalLength();
             }
         }
         //bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());

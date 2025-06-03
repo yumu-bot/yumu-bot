@@ -1,6 +1,6 @@
 package com.now.nowbot.model.recommended
 
-import com.now.nowbot.model.json.BeatMap
+import com.now.nowbot.model.osu.Beatmap
 
 class RecommendedMap private constructor() {
     var bid: Long? = null
@@ -48,11 +48,11 @@ class RecommendedMap private constructor() {
     }
 
     companion object {
-        fun getMap(b: BeatMap): RecommendedMap {
+        fun getMap(b: Beatmap): RecommendedMap {
             val data = RecommendedMap()
-            data.bid = b.beatMapID
-            if (b.beatMapSet != null) {
-                data.bgUrl = b.beatMapSet!!.covers.cover2x
+            data.bid = b.beatmapID
+            if (b.beatmapset != null) {
+                data.bgUrl = b.beatmapset!!.covers.cover2x
             }
             data.star = b.starRating
             data.oD = b.OD
@@ -62,7 +62,7 @@ class RecommendedMap private constructor() {
             data.bpm = b.BPM
             data.objects = b.spinners!! + b.circles!! + b.sliders!!
             data.length = b.totalLength
-            data.title = b.beatMapSet!!.titleUnicode
+            data.title = b.beatmapset!!.titleUnicode
             data.version = b.difficultyName
             data.setPlayerPP()
             return data

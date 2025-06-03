@@ -5,9 +5,9 @@ import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.Mod
 import com.now.nowbot.model.ValueMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.RosuPerformance
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.RosuPerformance
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.AsyncMethodExecutor
@@ -31,7 +31,7 @@ import kotlin.reflect.full.companionObjectInstance
     override fun getScorePerfectPP(score: LazerScore): RosuPerformance {
         val mode = score.mode.toRosuMode()
         val mods = score.mods
-        val beatmapID = score.beatMapID
+        val beatmapID = score.beatmapID
         val lazer = score.isLazer
 
         val closable = ArrayList<AutoCloseable>(1)
@@ -69,7 +69,7 @@ import kotlin.reflect.full.companionObjectInstance
             )
         }
 
-        val beatmapID = score.beatMapID
+        val beatmapID = score.beatmapID
         val lazer = score.isLazer
 
         val closable = ArrayList<AutoCloseable>(1)
@@ -108,7 +108,7 @@ import kotlin.reflect.full.companionObjectInstance
             state.n300 = 0
         }
 
-        val beatmapID = score.beatMapID
+        val beatmapID = score.beatmapID
         val lazer = score.isLazer
 
         val closable = ArrayList<AutoCloseable>(1)
@@ -244,7 +244,7 @@ import kotlin.reflect.full.companionObjectInstance
             state.n300 = 0
         }
 
-        val beatmapID = score.beatMapID
+        val beatmapID = score.beatmapID
         val lazer = score.isLazer
 
         val closable = ArrayList<AutoCloseable>(1)
@@ -287,52 +287,52 @@ import kotlin.reflect.full.companionObjectInstance
     }
 
     override fun applyStarToScore(score: LazerScore, local: Boolean) {
-        if (score.beatMapID == 0L || (LazerMod.noStarRatingChange(score.mods)) && score.beatMap.mode.isEqualOrDefault(score.mode)) {
+        if (score.beatmapID == 0L || (LazerMod.noStarRatingChange(score.mods)) && score.beatmap.mode.isEqualOrDefault(score.mode)) {
             return
         }
 
         if (local) {
             applyStarToScoreFromLocal(score)
 
-            if (score.beatMap.starRating < 0.15) {
+            if (score.beatmap.starRating < 0.15) {
                 applyStarToScoreFromOfficial(score)
             }
         } else {
             applyStarToScoreFromOfficial(score)
 
-            if (score.beatMap.starRating < 0.15) {
+            if (score.beatmap.starRating < 0.15) {
                 applyStarToScoreFromLocal(score)
             }
         }
     }
 
-    override fun applyStarToBeatMap(beatMap: BeatMap?, mode: OsuMode, mods: List<LazerMod>, local: Boolean) {
-        if (beatMap == null || beatMap.mode.isNotConvertAble(mode)) return
+    override fun applyStarToBeatMap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>, local: Boolean) {
+        if (beatmap == null || beatmap.mode.isNotConvertAble(mode)) return
 
-        if (beatMap.mode.isConvertAble(mode)) {
+        if (beatmap.mode.isConvertAble(mode)) {
             // TODO Local 无法计算转谱星级
-            applyStarToBeatMapFromOfficial(beatMap, mode, mods)
+            applyStarToBeatMapFromOfficial(beatmap, mode, mods)
             return
         }
 
         if (LazerMod.noStarRatingChange(mods)) return
 
         if (local) {
-            applyStarToBeatMapFromLocal(beatMap, mode, mods)
+            applyStarToBeatMapFromLocal(beatmap, mode, mods)
 
-            if (beatMap.starRating < 0.15) {
-                applyStarToBeatMapFromOfficial(beatMap, mode, mods)
+            if (beatmap.starRating < 0.15) {
+                applyStarToBeatMapFromOfficial(beatmap, mode, mods)
             }
         } else {
-            applyStarToBeatMapFromOfficial(beatMap, mode, mods)
+            applyStarToBeatMapFromOfficial(beatmap, mode, mods)
 
-            if (beatMap.starRating < 0.15) {
-                applyStarToBeatMapFromLocal(beatMap, mode, mods)
+            if (beatmap.starRating < 0.15) {
+                applyStarToBeatMapFromLocal(beatmap, mode, mods)
             }
         }
         /*
 
-        getBeatMapStarRating(beatMap.beatMapID, mode, mods).let { beatMap.starRating = it }
+        getBeatMapStarRating(beatmap.beatmapID, mode, mods).let { beatmap.starRating = it }
 
          */
     }
@@ -349,29 +349,29 @@ import kotlin.reflect.full.companionObjectInstance
 
     private fun applyStarToScoreFromOfficial(score: LazerScore) {
         try {
-            val attr = beatmapApiService.getAttributes(score.beatMapID, score.mode, LazerMod.getModsValue(score.mods))
+            val attr = beatmapApiService.getAttributes(score.beatmapID, score.mode, LazerMod.getModsValue(score.mods))
 
             if (attr.starRating > 0.0) {
-                score.beatMap.starRating = attr.starRating
+                score.beatmap.starRating = attr.starRating
             } else {
-                log.error("给成绩应用星级：无法获取谱面 {}，无法应用 API 提供的星数！", score.beatMapID)
+                log.error("给成绩应用星级：无法获取谱面 {}，无法应用 API 提供的星数！", score.beatmapID)
             }
         } catch (e: Exception) {
-            log.error("给成绩应用星级：无法获取谱面 {}，无法获取 API 提供的星数！", score.beatMapID, e)
+            log.error("给成绩应用星级：无法获取谱面 {}，无法获取 API 提供的星数！", score.beatmapID, e)
         }
     }
 
-    private fun applyStarToBeatMapFromOfficial(beatMap: BeatMap, mode: OsuMode, mods: List<LazerMod>) {
+    private fun applyStarToBeatMapFromOfficial(beatmap: Beatmap, mode: OsuMode, mods: List<LazerMod>) {
         try {
-            val attr = beatmapApiService.getAttributes(beatMap.beatMapID, mode, LazerMod.getModsValue(mods))
+            val attr = beatmapApiService.getAttributes(beatmap.beatmapID, mode, LazerMod.getModsValue(mods))
 
             if (attr.starRating > 0.0) {
-                beatMap.starRating = attr.starRating
+                beatmap.starRating = attr.starRating
             } else {
-                log.error("给谱面应用星级：无法获取谱面 {}，无法应用 API 提供的星数！", beatMap.beatMapID)
+                log.error("给谱面应用星级：无法获取谱面 {}，无法应用 API 提供的星数！", beatmap.beatmapID)
             }
         } catch (e: Exception) {
-            log.error("给谱面应用星级：无法获取谱面 {}，无法获取 API 提供的星数！", beatMap.beatMapID, e)
+            log.error("给谱面应用星级：无法获取谱面 {}，无法获取 API 提供的星数！", beatmap.beatmapID, e)
         }
     }
 
@@ -386,23 +386,23 @@ import kotlin.reflect.full.companionObjectInstance
     }
 
     override fun applyBeatMapChanges(score: LazerScore) {
-        applyBeatMapChanges(score.beatMap, score.mods)
+        applyBeatMapChanges(score.beatmap, score.mods)
     }
 
     // 应用四维的变化 4 dimensions
-    override fun applyBeatMapChanges(beatMap: BeatMap?, mods: List<LazerMod>) {
-        if (beatMap == null || beatMap.beatMapID == 0L) return
+    override fun applyBeatMapChanges(beatmap: Beatmap?, mods: List<LazerMod>) {
+        if (beatmap == null || beatmap.beatmapID == 0L) return
 
-        val mode = beatMap.mode
+        val mode = beatmap.mode
 
         if (LazerMod.hasStarRatingChange(mods)) {
-            beatMap.BPM = applyBPM(beatMap.BPM ?: 0f, mods)
-            beatMap.AR = applyAR(beatMap.AR ?: 0f, mods)
-            beatMap.CS = applyCS(beatMap.CS ?: 0f, mods)
-            beatMap.OD = applyOD(beatMap.OD ?: 0f, mods, mode)
-            beatMap.HP = applyHP(beatMap.HP ?: 0f, mods)
-            beatMap.totalLength = applyLength(beatMap.totalLength, mods)
-            beatMap.hitLength = applyLength(beatMap.hitLength, mods)
+            beatmap.BPM = applyBPM(beatmap.BPM ?: 0f, mods)
+            beatmap.AR = applyAR(beatmap.AR ?: 0f, mods)
+            beatmap.CS = applyCS(beatmap.CS ?: 0f, mods)
+            beatmap.OD = applyOD(beatmap.OD ?: 0f, mods, mode)
+            beatmap.HP = applyHP(beatmap.HP ?: 0f, mods)
+            beatmap.totalLength = applyLength(beatmap.totalLength, mods)
+            beatmap.hitLength = applyLength(beatmap.hitLength, mods)
         }
     }
 
@@ -417,14 +417,14 @@ import kotlin.reflect.full.companionObjectInstance
     }
 
     private fun applyStarToScoreFromLocal(score: LazerScore) {
-        applyStarToBeatMapFromLocal(score.beatMap, score.mode, score.mods)
+        applyStarToBeatMapFromLocal(score.beatmap, score.mode, score.mods)
     }
 
-    private fun applyStarToBeatMapFromLocal(beatMap: BeatMap, mode: OsuMode, mods: List<LazerMod>) {
-        beatMap.starRating = getBeatMapStarRating(beatMap.beatMapID, mode, mods)
+    private fun applyStarToBeatMapFromLocal(beatmap: Beatmap, mode: OsuMode, mods: List<LazerMod>) {
+        beatmap.starRating = getBeatMapStarRating(beatmap.beatmapID, mode, mods)
     }
 
-    override fun getBeatMapStarRating(beatMapID: Long, mode: OsuMode, mods: List<LazerMod>): Double {
+    override fun getBeatMapStarRating(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>): Double {
         val isAllLegacy = mods.any { it.settings == null && it::class.companionObjectInstance is ValueMod }
 
         val modsValue: Int = if (isAllLegacy) {
@@ -435,7 +435,7 @@ import kotlin.reflect.full.companionObjectInstance
 
         if (isAllLegacy) { // 如果是全部为 legacy mod 且 没有自定义属性的话，就从缓存里面取
             // 目前来看没有任何自定义 mod 计入 pp
-            val star = beatmapStarRatingCacheRepository.findByKey(beatMapID, modsValue)
+            val star = beatmapStarRatingCacheRepository.findByKey(beatmapID, modsValue)
             if (star.isPresent) {
                 return star.get()
             }
@@ -444,14 +444,14 @@ import kotlin.reflect.full.companionObjectInstance
         val closeables = ArrayList<AutoCloseable>(2)
 
         return try {
-            val (beatmap, _) = getBeatmap(beatMapID, mode.toRosuMode()) { closeables.add(it) }
+            val (beatmap, _) = getBeatmap(beatmapID, mode.toRosuMode()) { closeables.add(it) }
             beatmap.createDifficulty().apply {
                 closeables.add(this)
                 if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
             }.calculate(beatmap).getStarRating().apply {
                 if (isAllLegacy) {
                     try {
-                        beatmapStarRatingCacheRepository.saveAndUpdate(beatMapID, mode.modeValue, modsValue, this)
+                        beatmapStarRatingCacheRepository.saveAndUpdate(beatmapID, mode.modeValue, modsValue, this)
                     } catch (e: Exception) {
                         log.error("保存星级缓存失败", e)
                     }

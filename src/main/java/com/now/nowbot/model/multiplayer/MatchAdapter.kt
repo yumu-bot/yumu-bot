@@ -2,8 +2,8 @@ package com.now.nowbot.model.multiplayer
 
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.MicroUser
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.MicroUser
 import java.time.OffsetDateTime
 
 interface MatchAdapter {
@@ -26,7 +26,7 @@ interface MatchAdapter {
         val id: Long,
         val matchName: String,
         val beatmapID: Long,
-        var beatmap: BeatMap,
+        var beatmap: Beatmap,
         val start: OffsetDateTime,
         val mode: OsuMode,
         val mods: List<OsuMod>,

@@ -9,10 +9,10 @@ import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.BeatmapDifficultyAttributes
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.BeatmapDifficultyAttributes
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.mappool.old.MapPoolDto
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.MatchRating
@@ -784,7 +784,7 @@ import kotlin.math.min
 
         try {
             val mode = getMode(modeStr, OsuMode.OSU)
-            val beatMap = beatmapApiService.getBeatMap(bid)
+            val beatmap = beatmapApiService.getBeatMap(bid)
             val mods = LazerMod.getModsList(modStr ?: "")
 
             val expected = MapStatisticsService.Expected(
@@ -792,7 +792,7 @@ import kotlin.math.min
             )
 
             val image = MapStatisticsService.getPanelE6Image(
-                null, beatMap, expected, beatmapApiService, calculateApiService, imageService
+                null, beatmap, expected, beatmapApiService, calculateApiService, imageService
             )
 
             return ResponseEntity(
@@ -978,11 +978,11 @@ import kotlin.math.min
      */
     @GetMapping(value = ["map/json"]) fun getBeatMapInfoJson(
         @RequestParam("bid") @Nullable bid: Long?
-    ): BeatMap {
+    ): Beatmap {
         return if (bid != null) {
             beatmapApiService.getBeatMap(bid)
         } else {
-            BeatMap()
+            Beatmap()
         }
     }
 

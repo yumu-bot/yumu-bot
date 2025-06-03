@@ -5,7 +5,7 @@ import com.now.nowbot.config.YumuConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.service.MessageService
@@ -338,40 +338,5 @@ import kotlin.jvm.optionals.getOrNull
             BIND_MSG_MAP.keys.removeIf { k: Long -> (k + 120 * 1000) < System.currentTimeMillis() }
         }
 
-        private fun find(map: Array<IntArray>, size: Int, start: Int, end: Int): Int {
-            val toMin = IntArray(size)
-            val find = IntArray(size)
-            find[start] = 1
-            Arrays.fill(toMin, Int.MAX_VALUE)
-            var point = start
-            var pointBef = start
-            for (n in 0..<size - 1) {
-                var minIndex = -1
-                var min = Int.MAX_VALUE
-                for (i in 0..<size) {
-                    if (find[i] == 1) continue
-                    if (map[pointBef][point] + map[point][i] >= toMin[i]) continue
-                    toMin[i] = map[pointBef][point] + map[point][i]
-                    if (min > toMin[i]) {
-                        min = toMin[i]
-                        minIndex = i
-                    }
-                }
-                if (minIndex == end) return toMin[minIndex]
-                if (minIndex < 0) {
-                    for (i in 0..<size) {
-                        if (find[i] == 1) continue
-                        if (min > toMin[i]) {
-                            min = toMin[i]
-                            minIndex = i
-                        }
-                    }
-                }
-                find[minIndex] = 1
-                pointBef = point
-                point = minIndex
-            }
-            return toMin[end]
-        }
     }
 }

@@ -3,9 +3,9 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.BeatMap
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -40,7 +40,7 @@ import java.util.regex.Matcher
     data class ScoreParam(
         val user: OsuUser,
         val mode: OsuMode,
-        val beatMap: BeatMap,
+        val beatmap: Beatmap,
         val mods: List<LazerMod>,
         val isMyself: Boolean,
         val isMultipleScore: Boolean,
@@ -87,7 +87,7 @@ import java.util.regex.Matcher
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
             }
 
-            beatmapApiService.getBeatMap(score.beatMapID)
+            beatmapApiService.getBeatMap(score.beatmapID)
         }
 
         if (!map.hasLeaderBoard) {
@@ -155,7 +155,7 @@ import java.util.regex.Matcher
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
             }
 
-            beatmapApiService.getBeatMap(score.beatMapID)
+            beatmapApiService.getBeatMap(score.beatmapID)
         }
 
         if (!map.hasLeaderBoard) {
@@ -182,8 +182,8 @@ import java.util.regex.Matcher
     private fun getMultipleScore(param: ScoreParam): MessageChain {
         val mode = param.mode
         val user = param.user
-        val b = param.beatMap
-        val bid = b.beatMapID
+        val b = param.beatmap
+        val bid = b.beatmapID
 
         val scores: List<LazerScore> = try {
             scoreApiService.getBeatMapScores(bid, user.userID, mode).sortedByDescending { it.PP }
@@ -235,8 +235,8 @@ import java.util.regex.Matcher
     private fun getSingleScore(param: ScoreParam): MessageChain {
         val user = param.user
 
-        val b = param.beatMap
-        val bid = b.beatMapID
+        val b = param.beatmap
+        val bid = b.beatmapID
         val mode = param.mode
 
         val score: LazerScore
@@ -252,14 +252,14 @@ import java.util.regex.Matcher
             // beatmapApiService.applyBeatMapExtend(score!!, b)
             position = null
         } else {
-            val beatMapScore = try {
+            val beatmapScore = try {
                 scoreApiService.getBeatMapScore(bid, user.userID, mode)!!
             } catch (e: WebClientResponseException.NotFound) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, b.previewName)
             }
 
-            score = beatMapScore.score!!
-            position = beatMapScore.position
+            score = beatmapScore.score!!
+            position = beatmapScore.position
         }
 
         val e5Param = ScorePRService.getE5Param(user, score, b, position, "S", beatmapApiService, calculateApiService)

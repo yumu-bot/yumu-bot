@@ -1,8 +1,8 @@
 package com.now.nowbot.entity
 
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.json.LazerScore
-import com.now.nowbot.model.json.OsuUser
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.util.DataUtil
 import jakarta.persistence.*
 
@@ -119,9 +119,9 @@ class PPMinusLite(
         lite.middleAccuracy = middle.map { it.accuracy }.average()
         lite.bottomAccuracy = bottom.map { it.accuracy }.average()
 
-        lite.topLength = top.map { it.beatMap.hitLength ?: 0 }.average().toInt()
-        lite.middleLength = middle.map { it.beatMap.hitLength ?: 0 }.average().toInt()
-        lite.bottomLength = bottom.map { it.beatMap.hitLength ?: 0 }.average().toInt()
+        lite.topLength = top.map { it.beatmap.hitLength ?: 0 }.average().toInt()
+        lite.middleLength = middle.map { it.beatmap.hitLength ?: 0 }.average().toInt()
+        lite.bottomLength = bottom.map { it.beatmap.hitLength ?: 0 }.average().toInt()
 
         lite.topPGRate = if (mode == OsuMode.MANIA) {
             top.map { it.statistics.perfect * 1.0 / it.statistics.great }.average()

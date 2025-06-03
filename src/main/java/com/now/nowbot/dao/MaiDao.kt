@@ -2,7 +2,7 @@ package com.now.nowbot.dao
 
 import com.now.nowbot.entity.*
 import com.now.nowbot.mapper.*
-import com.now.nowbot.model.json.*
+import com.now.nowbot.model.maimai.*
 import com.now.nowbot.util.AsyncMethodExecutor
 import jakarta.persistence.Transient
 import org.springframework.stereotype.Component

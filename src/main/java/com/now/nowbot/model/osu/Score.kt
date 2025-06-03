@@ -1,303 +1,127 @@
-package com.now.nowbot.model.json;
+package com.now.nowbot.model.osu
 
-import com.fasterxml.jackson.annotation.*;
-import com.now.nowbot.model.enums.OsuMode;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.util.List;
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.*
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.getMode
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
+import kotlin.math.ln
+import kotlin.math.roundToInt
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true, allowSetters = true, allowGetters = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class Score {
-    static final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-    .appendPattern("yyyy-MM-dd")
-    .appendLiteral("T")
-    .appendPattern("HH:mm:ss")
-    .appendZoneId().toFormatter();
-
-    //    @JsonProperty("statistics")
-    Double accuracy;
+class Score {
+    @JsonProperty("accuracy")
+    var accuracy: Double? = null
 
     @JsonProperty("best_id")
-    Long bestID;
+    var bestID: Long? = null
 
     @JsonProperty("max_combo")
-    Integer maxCombo;
+    var maxCombo: Int? = null
 
     @JsonProperty("user_id")
-    Long UID;
+    var userID: Long? = null
 
+    @get:JsonProperty("create_at_str")
     @JsonAlias("created_at")
-    String createTime;
+    var createTime: String? = null
 
     @JsonProperty("id")
-    Long scoreID;
+    var scoreID: Long? = null
 
     @JsonIgnoreProperties
-    OsuMode mode;
+    var mode: OsuMode? = null
 
     @JsonProperty("mode_int")
-    Integer modeInt;
+    var modeInt: Int? = null
 
-    List<String> osuMods;
+    var mods: List<String>? = null
 
-    Boolean passed;
+    var passed: Boolean? = null
 
-    Boolean perfect;
+    var perfect: Boolean? = null
 
     @JsonProperty("pp")
-    Float PP;
+    var pp: Float? = null
+        get() {
+            if (field != null) {
+                return field!!
+            }
 
-    String rank;
+            // PPY PP 有时候是 null
+            if (weight != null && weight!!.percentage > 0) {
+                return weight!!.weightedPP / (weight!!.percentage / 100f)
+            }
 
-    Boolean replay;
+            return 0f
+        }
 
-    Integer score;
+    var rank: String? = null
 
-    Statistics statistics;
+    var replay: Boolean? = null
 
-    String type;
+    var score: Int? = null
 
-    @JsonIgnoreProperties
-    boolean legacy;
+    var statistics: Statistics? = null
+
+    var type: String? = null
+
+    @get:JsonIgnoreProperties
+    val legacy: Boolean
+        get() = type != null && type != "solo_score" //目前只看见有这个类别，mp 房也是这个类别
 
     // 仅查询bp时存在
     @JsonProperty("weight")
-    Weight weight;
+    var weight: Weight? = null
 
-    public record Weight(
-    @JsonProperty("percentage") Float percentage,
-    @JsonProperty("pp") Float weightedPP) {
-        public int getIndex() {
-            var i = Math.log(percentage / 100) / Math.log(0.95);
-            return (int) Math.round(i);
-        }
+    data class Weight(
+        @JsonProperty("percentage") val percentage: Float,
+        @JsonProperty("pp") val weightedPP: Float
+    ) {
+        val index: Int
+            get() = (ln((percentage / 100).toDouble()) / ln(0.95)).roundToInt()
     }
 
     @JsonProperty("beatmap")
-    BeatMap beatMap;
+    var beatmap: Beatmap? = null
 
     @JsonProperty("beatmapset")
-    BeatMapSet beatMapSet;
+    var beatmapset: Beatmapset? = null
 
-    MicroUser user;
+    var user: MicroUser? = null
 
-    @JsonProperty("mode")
-    public void setMode(String mode){
-        this.mode = OsuMode.getMode(mode);
+    @JsonProperty("mode") fun setMode(mode: String?) {
+        this.mode = getMode(mode)
     }
 
-    public Double getAccuracy() {
-        return accuracy;
-    }
-
-    public void setAccuracy(Double accuracy) {
-        this.accuracy = accuracy;
-    }
-
-    public Long getBestID() {
-        return bestID;
-    }
-
-    public void setBestID(Long bestID) {
-        this.bestID = bestID;
-    }
-
-    public Long getUID() {
-        return UID;
-    }
-
-    public void setUID(Long UID) {
-        this.UID = UID;
-    }
-
-    public LocalDateTime getCreateTimePretty() {
-        if (createTime != null) return LocalDateTime.parse(createTime, formatter).plusHours(8L);
-        return LocalDateTime.now();
-    }
-
-    @JsonProperty("create_at_str")
-    public String getCreateTime() {
-        return createTime;
-    }
-
-    public void setCreateTime(String createTime) {
-        this.createTime = createTime;
-    }
-
-    public Long getScoreID() {
-        return scoreID;
-    }
-
-    public void setScoreID(Long scoreID) {
-        this.scoreID = scoreID;
-    }
-
-    public OsuMode getMode() {
-        return mode;
-    }
-
-    public void setMode(OsuMode mode) {
-        this.mode = mode;
-    }
-
-    public Integer getModeInt() {
-        return modeInt;
-    }
-
-    public void setModeInt(Integer modeInt) {
-        this.modeInt = modeInt;
-    }
-
-    public List<String> getMods() {
-        return osuMods;
-    }
-
-    public void setMods(List<String> osuMods) {
-        this.osuMods = osuMods;
-    }
-
-    public Boolean getPassed() {
-        return passed;
-    }
-
-    public void setPassed(Boolean passed) {
-        this.passed = passed;
-    }
-
-    public Boolean getPerfect() {
-        return perfect;
-    }
-
-    public void setPerfect(Boolean perfect) {
-        this.perfect = perfect;
-    }
-
-    public Float getPP() {
-        if (Objects.nonNull(PP)) {
-            return PP;
+    private val createTimePretty: LocalDateTime
+        get() {
+            if (createTime != null) return LocalDateTime.parse(
+                createTime!!,
+                formatter
+            ).plusHours(8L)
+            return LocalDateTime.now()
         }
 
-        // PPY PP 有时候是 null
-        if (Objects.nonNull(weight) && Objects.nonNull(weight.percentage) && Objects.nonNull(weight.weightedPP) && weight.percentage > 0) {
-            return weight.weightedPP / (weight.percentage / 100f);
+    private val weightedPP: Float
+        get() = if (weight != null) {
+            weight!!.weightedPP
+        } else {
+            0f
         }
 
-        return 0f;
+    override fun toString(): String {
+        return "Score(createTime=$createTime, accuracy=$accuracy, bestID=$bestID, maxCombo=$maxCombo, uID=$userID, scoreID=$scoreID, mode=$mode, modeInt=$modeInt, mods=$mods, passed=$passed, perfect=$perfect, pp=$pp, rank=$rank, replay=$replay, score=$score, statistics=$statistics, type=$type, legacy=$legacy, weight=$weight, beatmap=$beatmap, beatmapset=$beatmapset, user=$user, createTimePretty=$createTimePretty, weightedPP=$weightedPP)"
     }
 
-    public void setPP(Float pp) {
-        this.PP = pp;
-    }
-
-    public Float getWeightedPP() {
-        if (Objects.nonNull(weight) && Objects.nonNull(weight.weightedPP)) {
-            return weight.weightedPP;
-        }
-
-        return 0f;
-    }
-
-    public String getRank() {
-        return rank;
-    }
-
-    public void setRank(String rank) {
-        this.rank = rank;
-    }
-
-    public Boolean getReplay() {
-        return replay;
-    }
-
-    public void setReplay(Boolean replay) {
-        this.replay = replay;
-    }
-
-    public Integer getScore() {
-        return score;
-    }
-
-    public void setScore(Integer score) {
-        this.score = score;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public boolean isLegacy() {
-        legacy = Objects.nonNull(type) && !Objects.equals(type, "solo_score"); //目前只看见有这个类别，mp 房也是这个类别
-        return legacy;
-    }
-
-    public void setLegacy(boolean legacy) {
-        this.legacy = legacy;
-    }
-
-    public Statistics getStatistics() {
-        return statistics;
-    }
-
-    public void setStatistics(Statistics statistics) {
-        this.statistics = statistics;
-    }
-
-    public BeatMap getBeatMap() {
-        return beatMap;
-    }
-
-    public void setBeatMap(BeatMap beatMap) {
-        this.beatMap = beatMap;
-    }
-
-    public BeatMapSet getBeatMapSet() {
-        return beatMapSet;
-    }
-
-    public void setBeatMapSet(BeatMapSet beatMapSet) {
-        this.beatMapSet = beatMapSet;
-    }
-
-    public MicroUser getUser() {
-        return user;
-    }
-
-    public void setUser(MicroUser user) {
-        this.user = user;
-    }
-
-    public Integer getMaxCombo() {
-        return maxCombo;
-    }
-
-    public void setMaxCombo(Integer maxCombo) {
-        this.maxCombo = maxCombo;
-    }
-
-    public Boolean isPerfect() {
-        return perfect;
-    }
-
-    public Weight getWeight() {
-        return weight;
-    }
-
-    public void setWeight(Weight weight) {
-        this.weight = weight;
-    }
-
-
-    @Override
-    public String toString() {
-        return STR."Score{accuracy=\{accuracy}, bestID=\{bestID}, maxCombo=\{maxCombo}, UID=\{UID}, createTime='\{createTime}\{'\''}, scoreID=\{scoreID}, mode=\{mode}, modeInt=\{modeInt}, osuMods=\{osuMods}, passed=\{passed}, perfect=\{perfect}, PP=\{PP}, rank='\{rank}\{'\''}, replay=\{replay}, score=\{score}, statistics=\{statistics}, type='\{type}\{'\''}, legacy=\{legacy}, weight=\{weight}, beatMap=\{beatMap}, beatMapSet=\{beatMapSet}, user=\{user}\{'}'}";
+    companion object {
+        val formatter: DateTimeFormatter = DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd")
+            .appendLiteral("T")
+            .appendPattern("HH:mm:ss")
+            .appendZoneId().toFormatter()
     }
 }
