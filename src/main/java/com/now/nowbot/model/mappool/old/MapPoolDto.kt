@@ -1,6 +1,6 @@
 package com.now.nowbot.model.mappool.old
 
-import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.mappool.now.Pool
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService

@@ -3,8 +3,8 @@ package com.now.nowbot.service.osuApiService.impl
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.BindUser
-import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.Replay
+import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.Replay
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.CoverType.*
 import com.now.nowbot.model.enums.OsuMode

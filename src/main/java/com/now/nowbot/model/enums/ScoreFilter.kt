@@ -1,6 +1,6 @@
 package com.now.nowbot.model.enums
 
-import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.DataUtil

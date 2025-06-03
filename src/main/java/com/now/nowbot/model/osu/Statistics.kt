@@ -149,9 +149,9 @@ open class Statistics : Cloneable {
         val c0 = countMiss ?: 0
 
         return when (mode) {
-            OsuMode.OSU, OsuMode.DEFAULT -> c300 + c100 + c50 + c0
-            OsuMode.TAIKO -> c300 + c100 + c0
-            OsuMode.CATCH -> c300 + c100 + c50 + c0 + cK
+            OsuMode.OSU, OsuMode.DEFAULT, OsuMode.OSU_RELAX, OsuMode.OSU_AUTOPILOT  -> c300 + c100 + c50 + c0
+            OsuMode.TAIKO, OsuMode.TAIKO_RELAX -> c300 + c100 + c0
+            OsuMode.CATCH, OsuMode.CATCH_RELAX -> c300 + c100 + c50 + c0 + cK
             OsuMode.MANIA -> cG + c300 + cK + c100 + c50 + c0
             null -> cG + c300 + cK + c100 + c50 + c0
         }
@@ -166,15 +166,15 @@ open class Statistics : Cloneable {
         // val c0 = countMiss ?: 0
         
         return when (mode) {
-            OsuMode.OSU, OsuMode.DEFAULT -> {
+            OsuMode.OSU, OsuMode.DEFAULT, OsuMode.OSU_RELAX, OsuMode.OSU_AUTOPILOT -> {
                 (c50 / 6.0 + c100 / 3.0 + c300) / getCountAll(OsuMode.OSU)
             }
 
-            OsuMode.TAIKO -> {
+            OsuMode.TAIKO, OsuMode.TAIKO_RELAX -> {
                 (c100 / 2.0 + c300) / getCountAll(OsuMode.TAIKO)
             }
 
-            OsuMode.CATCH -> {
+            OsuMode.CATCH, OsuMode.CATCH_RELAX -> {
                 (c50 + c100 + c300) * 1.0 / getCountAll(OsuMode.CATCH)
             }
 

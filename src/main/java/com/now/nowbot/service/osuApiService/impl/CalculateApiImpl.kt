@@ -1,9 +1,9 @@
 package com.now.nowbot.service.osuApiService.impl
 
 import com.now.nowbot.mapper.BeatmapStarRatingCacheRepository
-import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.Mod
-import com.now.nowbot.model.ValueMod
+import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.Mod
+import com.now.nowbot.model.osu.ValueMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore

@@ -1,6 +1,7 @@
 package com.now.nowbot.model.ppysb
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.model.enums.OsuMode
 
 data class SBUser(
     @JsonProperty("id") val userID: Long,
@@ -21,5 +22,9 @@ data class SBUser(
     @JsonProperty("custom_badge_name") val customBadgeName: String?,
     @JsonProperty("custom_badge_icon") val customBadgeIcon: String?,
     @JsonProperty("userpage_content") val userpageContent: String?,
+) {
 
-)
+    @get:JsonProperty("mode") val mode: OsuMode
+        get() = OsuMode.getMode(preferredMode.toInt())
+
+}

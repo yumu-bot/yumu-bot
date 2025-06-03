@@ -4,7 +4,6 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.service.UserParam
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -37,6 +36,8 @@ class UUBAService(
     private val bindDao: BindDao,
     private val imageService: ImageService,
 ) : MessageService<BPHeadTailParam>, TencentMessageService<BPHeadTailParam> {
+
+    data class UserParam(val qq: Long?, val name: String?, val mode: OsuMode, val at: Boolean )
 
     // bpht 的全称大概是 BP Head / Tail
     data class BPHeadTailParam(val user: UserParam, val info: Boolean)
@@ -99,7 +100,7 @@ class UUBAService(
             }
         } else {
             // 查询其他人 [data]
-            val name = param.user.name
+            val name = param.user.name!!
             var id: Long = 0
             try {
                 id = userApiService.getOsuID(name)
@@ -169,15 +170,14 @@ class UUBAService(
         val mode = CmdUtil.getMode(matcher)
         val user = CmdUtil.getUserWithoutRange(event, matcher, mode)
 
-        return BPHeadTailParam(UserParam(user.userID, user.username, mode.data, false), info = true)
+        return BPHeadTailParam(UserParam(user.userID, user.username, mode.data!!, false), info = true)
     }
 
     override fun reply(event: MessageEvent, param: BPHeadTailParam): MessageChain? {
         val mode = param.user.mode
-        val bu = BindUser()
-        with(bu) {
-            userID = param.user.qq
-            username = param.user.name
+        val bu = BindUser().apply {
+            param.user.qq?.let { userID = it }
+            param.user.name?.let { username = it }
             this.mode = mode
         }
 
@@ -186,7 +186,7 @@ class UUBAService(
         calculateApiService.applyBeatMapChanges(bests)
         calculateApiService.applyStarToScores(bests)
 
-        val modeStr = mode?.fullName ?: ""
+        val modeStr = mode.fullName
         val lines = getTextPlus(bests, bu.username, modeStr, userApiService)
         return MessageChain(lines)
     }
@@ -301,18 +301,18 @@ class UUBAService(
             if (bests.isEmpty()) return ""
             val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
 
-            val BP1: LazerScore = bests.first()
-            val BP1BPM = BP1.beatmap.BPM!!
-            val BP1Length = BP1.beatmap.totalLength.toFloat()
+            val best: LazerScore = bests.first()
+            val bestBPM = best.beatmap.BPM!!
+            val bestLength = best.beatmap.totalLength.toFloat()
 
             var star: Double
-            var maxStar = BP1.beatmap.starRating
+            var maxStar = best.beatmap.starRating
             var minStar = maxStar
-            var maxBPM = BP1BPM
+            var maxBPM = bestBPM
             var minBPM = maxBPM
-            var maxCombo = BP1.maxCombo
+            var maxCombo = best.maxCombo
             var minCombo = maxCombo
-            var maxLength = BP1Length
+            var maxLength = bestLength
             var minLength = maxLength
 
             var maxComboBP = 0
@@ -335,21 +335,21 @@ class UUBAService(
             val decimalFormat = DecimalFormat("0.00") // acc格式
 
 
-            bests.forEachIndexed { i, best ->
-                val b = best.beatmap
+            bests.forEachIndexed { i, score ->
+                val b = score.beatmap
                 val length = b.totalLength.toFloat()
                 val bpm = b.BPM!!
 
-                best.mods.forEach {
+                score.mods.forEach {
                     if (modSum.containsKey(it.acronym)) {
-                        modSum[it.acronym]!!.add(best.weight?.PP ?: 0.0)
+                        modSum[it.acronym]!!.add(score.weight?.PP ?: 0.0)
                     } else {
-                        modSum[it.acronym] = ModData(best.weight?.PP ?: 0.0)
+                        modSum[it.acronym] = ModData(score.weight?.PP ?: 0.0)
                     }
                 }
 
                 avgLength += length
-                star = best.beatmap.starRating
+                star = score.beatmap.starRating
                 avgStar += star
 
                 if (bpm < minBPM) {
@@ -374,27 +374,27 @@ class UUBAService(
                     maxLength = length
                 }
 
-                if (best.maxCombo < minCombo) {
+                if (score.maxCombo < minCombo) {
                     minComboBP = i
-                    minCombo = best.maxCombo
-                } else if (best.maxCombo > maxCombo) {
+                    minCombo = score.maxCombo
+                } else if (score.maxCombo > maxCombo) {
                     maxComboBP = i
-                    maxCombo = best.maxCombo
+                    maxCombo = score.maxCombo
                 }
-                avgCombo += best.maxCombo
+                avgCombo += score.maxCombo
 
-                val tthToPp = (best.PP!!) / max((b.sliders!! + b.spinners!! + b.circles!!), 1)
+                val tthToPp = (score.PP!!) / max((b.sliders!! + b.spinners!! + b.circles!!), 1)
                 if (maxTTHPP < tthToPp) {
                     maxTTHPPBP = i
                     maxTTHPP = tthToPp
                 }
 
                 if (mapperSum.containsKey(b.mapperID)) {
-                    mapperSum[b.mapperID]!!.add(best.PP!!)
+                    mapperSum[b.mapperID]!!.add(score.PP!!)
                 } else {
-                    mapperSum[b.mapperID] = FavoriteMapperData(best.PP!!, b.mapperID)
+                    mapperSum[b.mapperID] = FavoriteMapperData(score.PP!!, b.mapperID)
                 }
-                nowPP += best.weight!!.PP
+                nowPP += score.weight!!.PP
             }
             avgCombo /= bests.size
             avgLength /= bests.size.toFloat()

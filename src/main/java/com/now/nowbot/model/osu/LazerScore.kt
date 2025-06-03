@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
-import com.now.nowbot.model.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import java.time.OffsetDateTime
@@ -281,7 +280,7 @@ open class LazerScore {
 
             // 浮点数比较使用 `==` 容易出bug, 一般5-7位小数就够了
             var rank = when (score.mode) {
-                OSU -> {
+                OSU, OSU_RELAX, OSU_AUTOPILOT -> {
                     val is50Over1P = s.meh / m.great > 0.01
                     when {
                         p300 > 1.0 - 1e-6 -> "X"
@@ -293,7 +292,7 @@ open class LazerScore {
                     }
                 }
 
-                TAIKO -> when {
+                TAIKO, TAIKO_RELAX -> when {
                     p300 > 1.0 - 1e-6 -> "X"
                     p300 >= 0.9 -> if (hasMiss) "A" else "S"
                     p300 >= 0.8 -> if (hasMiss) "B" else "A"
@@ -302,7 +301,7 @@ open class LazerScore {
                     else -> "D"
                 }
 
-                CATCH -> when {
+                CATCH, CATCH_RELAX -> when {
                     accuracy > 1.0 - 1e-6 -> "X"
                     accuracy > 0.98 -> "S"
                     accuracy > 0.94 -> "A"
@@ -320,7 +319,7 @@ open class LazerScore {
                     else -> "D"
                 }
 
-                DEFAULT -> "F"
+                else -> "F"
             }
 
             if (LazerMod.containsHidden(score.mods) && (rank == "S" || rank == "X")) rank += "H"
@@ -336,19 +335,19 @@ open class LazerScore {
 
             var total = m.great
 
-            if (total <= 0) return score.lazerAccuracy
+            if (m.great == 0 && m.perfect == 0) return score.lazerAccuracy
 
             return when (score.mode) {
-                OSU -> {
+                OSU, OSU_RELAX, OSU_AUTOPILOT -> {
                     val hit = s.great + 1.0 / 3 * s.ok + 1.0 / 6 * s.meh
                     hit / total
                 }
 
-                TAIKO -> {
+                TAIKO, TAIKO_RELAX -> {
                     (s.great + 1.0 / 2 * s.ok) / total
                 }
 
-                CATCH -> {
+                CATCH, CATCH_RELAX -> {
                     val hit = s.great + s.largeTickHit + s.smallTickHit
                     total = m.great + m.largeTickHit + m.smallTickHit
 
@@ -361,7 +360,7 @@ open class LazerScore {
                     hit / total
                 }
 
-                DEFAULT -> 0.0
+                else -> 0.0
             }
         }
     }

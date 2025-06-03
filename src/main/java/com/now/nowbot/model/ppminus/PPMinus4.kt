@@ -1,4 +1,4 @@
-package com.now.nowbot.model.ppminus.impl
+package com.now.nowbot.model.ppminus
 
 import com.now.nowbot.entity.PPMinusLite
 import com.now.nowbot.model.enums.OsuMode

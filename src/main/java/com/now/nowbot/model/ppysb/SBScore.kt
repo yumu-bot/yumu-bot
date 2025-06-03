@@ -1,8 +1,9 @@
 package com.now.nowbot.model.ppysb
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
@@ -14,9 +15,15 @@ import java.time.format.DateTimeFormatterBuilder
 data class SBScore(
     @JsonProperty("id") val scoreID: Long,
 
-    @JsonProperty("map_md5") val md5: String,
+    /**
+     * 在有 beatmap 的 sbscore 里这个就是空的
+     */
+    @JsonProperty("map_md5") val md5: String?,
 
-    @JsonProperty("userid") val userID: Long,
+    /**
+     * 在有 beatmap 的 sbscore 里这个就是空的
+     */
+    @JsonProperty("userid") val userID: Long?,
 
     @JsonProperty("score") val score: Long,
 
@@ -40,7 +47,7 @@ data class SBScore(
 
     @JsonProperty("nkatu") val countKatu: Int,
 
-    @JsonProperty("grade") val rank: String,
+    @set:JsonProperty("grade") @get:JsonAlias("rank") var rank: String,
 
     @set:JsonProperty("status") @get:JsonIgnoreProperties var statusByte: Byte,
 
@@ -51,6 +58,44 @@ data class SBScore(
     @JsonProperty("time_elapsed") val timeElapsed: Long,
 
     @JsonProperty("perfect") val perfect: Boolean,
+
+    @JsonProperty("beatmap") val beatmap: SBBeatmap?,
+
+    /**
+     * 仅在获取谱面上的成绩的时候才会存在
+     */
+    @JsonProperty("player_name") val username: String?,
+
+    /**
+     * 仅在获取谱面上的成绩的时候才会存在
+     */
+    @JsonProperty("player_country") val country: String?,
+
+    /**
+     * 仅在获取谱面上的成绩的时候才会存在
+     */
+    @JsonProperty("clan_id") val clanID: Long?,
+
+    /**
+     * 仅在获取谱面上的成绩的时候才会存在
+     */
+    @JsonProperty("clan_name") val clanName: String?,
+
+    /**
+     * 仅在获取谱面上的成绩的时候才会存在
+     */
+    @JsonProperty("clan_tag") val clanTag: String?,
+
+    /**
+     * 仅在获取成绩详情的时候才会存在
+     */
+    @JsonProperty("client_flags") val clientFlags: String?,
+
+    /**
+     * 仅在获取成绩详情的时候才会存在
+     */
+    @JsonProperty("online_checksum") val onlineChecksum: String?,
+
 
     ) {
 
@@ -80,18 +125,18 @@ data class SBScore(
 
     @get:JsonProperty("statistics") val statistics: LazerStatistics
         get() = when(mode) {
-            OSU -> LazerStatistics(
+            OSU, OSU_RELAX, OSU_AUTOPILOT -> LazerStatistics(
                 great = count300,
                 ok = count100,
                 meh = count50,
                 miss = countMiss,
             )
-            TAIKO -> LazerStatistics(
+            TAIKO, TAIKO_RELAX -> LazerStatistics(
                 great = count300,
                 ok = count100,
                 miss = countMiss,
                 )
-            CATCH -> LazerStatistics(
+            CATCH, CATCH_RELAX -> LazerStatistics(
                 great = count300,
                 largeTickHit = count100,
                 smallTickHit = count50,
@@ -106,7 +151,7 @@ data class SBScore(
                 meh = count50,
                 miss = countMiss,
                 )
-            DEFAULT -> LazerStatistics()
+            else -> LazerStatistics()
         }
 
     @get:JsonProperty("status") val status: String
@@ -130,7 +175,9 @@ data class SBScore(
         return LazerScore().apply {
             this.scoreID = sb.scoreID
             this.beatmap.md5 = sb.md5
-            this.userID = sb.userID
+
+            if (sb.userID != null) this.userID = sb.userID
+
             this.score = sb.score
             this.PP = sb.pp
             this.lazerAccuracy = sb.accuracy
@@ -149,6 +196,19 @@ data class SBScore(
             this.endedTime = sb.endedTime
             this.fullCombo = sb.perfect
         }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SBScore
+
+        return scoreID == other.scoreID
+    }
+
+    override fun hashCode(): Int {
+        return scoreID.hashCode()
     }
 
     companion object {

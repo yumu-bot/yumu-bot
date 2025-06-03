@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.model.service.UserAvatarCardParam
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -18,8 +18,24 @@ class OsuAvatarCardService(
     private val userApiService: OsuUserApiService,
     private val bindDao: BindDao,
     private val imageService: ImageService,
-) : MessageService<UserAvatarCardParam>,
-    TencentMessageService<UserAvatarCardParam> {
+) : MessageService<OsuAvatarCardService.UserAvatarCardParam>,
+    TencentMessageService<OsuAvatarCardService.UserAvatarCardParam> {
+
+    data class UserAvatarCardParam(
+        var banner: String? = null,
+        var avatar: String? = null,
+        var color: String? = null,
+        var name: String? = null,
+    ) {
+        constructor(user: OsuUser): this(
+            user.coverUrl,
+            user.avatarUrl,
+            "hsl(${user.profileHue},60%,50%)",
+            user.username,
+        )
+    }
+
+
     override fun isHandle(
         event: MessageEvent,
         messageText: String,

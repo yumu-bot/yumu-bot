@@ -5,7 +5,7 @@ import com.now.nowbot.entity.PPMinusLite
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
-import com.now.nowbot.model.ppminus.impl.PPMinus4
+import com.now.nowbot.model.ppminus.PPMinus4
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService

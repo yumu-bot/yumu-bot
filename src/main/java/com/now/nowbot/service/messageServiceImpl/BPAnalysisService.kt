@@ -1,8 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.ValueMod
+import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.ValueMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent

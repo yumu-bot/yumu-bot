@@ -1,8 +1,6 @@
-package com.now.nowbot.model
+package com.now.nowbot.model.osu
 
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import kotlin.math.floor

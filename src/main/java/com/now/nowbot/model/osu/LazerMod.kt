@@ -1,4 +1,4 @@
-package com.now.nowbot.model
+package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.JsonNode

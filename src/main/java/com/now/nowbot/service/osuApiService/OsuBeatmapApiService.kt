@@ -1,8 +1,8 @@
 package com.now.nowbot.service.osuApiService
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.now.nowbot.model.LazerMod
-import com.now.nowbot.model.LazerMod.Companion.getModsValue
+import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.getModsValue
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import java.io.IOException

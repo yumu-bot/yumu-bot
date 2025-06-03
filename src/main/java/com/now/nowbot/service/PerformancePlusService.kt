@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.config.FileConfig
 import com.now.nowbot.entity.PerformancePlusLite
 import com.now.nowbot.mapper.PerformancePlusLiteRepository
-import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.PPPlus
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService

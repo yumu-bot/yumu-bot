@@ -5,10 +5,13 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.entity.OsuGroupConfigLite;
 import com.now.nowbot.entity.OsuNameToIdLite;
+import com.now.nowbot.entity.SBBindUserLite;
 import com.now.nowbot.entity.bind.DiscordBindLite;
 import com.now.nowbot.entity.bind.QQBindLite;
+import com.now.nowbot.entity.bind.SBQQBindLite;
 import com.now.nowbot.mapper.*;
 import com.now.nowbot.model.BindUser;
+import com.now.nowbot.model.SBBindUser;
 import com.now.nowbot.model.enums.OsuMode;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
@@ -40,8 +43,10 @@ public class BindDao {
 
     Logger                   log = LoggerFactory.getLogger(BindDao.class);
     BindUserMapper           bindUserMapper;
-    BindQQMapper             bindQQMapper;
-    BindDiscordMapper        bindDiscordMapper;
+    SBBindUserMapper         sbBindUserMapper;
+    BindQQMapper      bindQQMapper;
+    SBQQBindMapper    sbQQBindMapper;
+    BindDiscordMapper bindDiscordMapper;
     OsuFindNameMapper        osuFindNameMapper;
     OsuGroupConfigRepository osuGroupConfigRepository;
 
@@ -51,15 +56,19 @@ public class BindDao {
 
     @Autowired
     public BindDao(
-            BindUserMapper mapper,
+            BindUserMapper bindUserMapper,
+            SBBindUserMapper sbBindUserMapper,
             OsuFindNameMapper nameMapper,
             BindQQMapper QQMapper,
+            SBQQBindMapper sbQQBindMapper,
             BindDiscordMapper discordMapper,
             OsuGroupConfigRepository osuGroupConfigRepository
     ) {
-        bindUserMapper = mapper;
+        this.bindUserMapper = bindUserMapper;
+        this.sbBindUserMapper = sbBindUserMapper;
         osuFindNameMapper = nameMapper;
         bindQQMapper = QQMapper;
+        this.sbQQBindMapper = sbQQBindMapper;
         bindDiscordMapper = discordMapper;
         this.osuGroupConfigRepository = osuGroupConfigRepository;
 
@@ -132,10 +141,6 @@ public class BindDao {
         }
         var u = liteData.get().getOsuUser();
         return fromLite(u);
-    }
-
-    public BindUser getBindFromQQ(int qq) throws BindException {
-        return getBindFromQQ((long) qq);
     }
 
     public BindUser saveBind(BindUser user) {
@@ -231,6 +236,92 @@ public class BindDao {
         if (id == null) return null;
         var data = bindUserMapper.getByOsuId(id);
         return data.map(BindDao::fromLite).orElse(null);
+    }
+
+    public SBBindUser getSBBindUserFromUserID(Long userID) throws BindException {
+        if (Objects.isNull(userID)) throw new BindException(BindException.Type.BIND_Receive_NoName);
+
+        SBBindUserLite liteData;
+
+        try {
+            liteData = sbBindUserMapper.getUser(userID);
+        } catch (IncorrectResultSizeDataAccessException e) {
+            sbBindUserMapper.deleteOutdatedBind(userID);
+            liteData = sbBindUserMapper.getUser(userID);
+        }
+
+        if (liteData == null) throw new BindException(BindException.Type.BIND_Player_NoBind);
+        return liteData.toSBBindUser();
+    }
+
+    public SBBindUser getSBBindFromQQ(Long qq, boolean isMyself) throws BindException {
+        if (qq < 0) {
+            try {
+                return getSBBindUserFromUserID(-qq);
+            } catch (BindException e) {
+                return new SBBindUser(-qq, "unknown");
+            }
+        }
+        var liteData = sbQQBindMapper.findById(qq);
+        if (liteData.isEmpty()) {
+            if (isMyself) {
+                throw new BindException(BindException.Type.BIND_Me_NotBind);
+            } else {
+                throw new BindException(BindException.Type.BIND_Player_HadNotBind);
+            }
+        }
+
+        return liteData.get().getBindUser();
+    }
+
+    public SBBindUser saveBind(SBBindUser user) {
+        if (user == null) {
+            return null;
+        }
+
+        SBBindUserLite lite = user.toSBBindUserLite();
+        lite = sbBindUserMapper.save(lite);
+        return lite.toSBBindUser();
+    }
+
+    public SBQQBindLite bindSBQQ(Long qq, SBBindUser user) {
+        var data = sbBindUserMapper.getUser(user.getUserID());
+        if (data == null) {
+            return bindSBQQ(qq, user.toSBBindUserLite());
+        } else {
+            var data2 = new SBBindUser(null, data.getUserID(), data.getUsername(), data.getMainMode());
+
+            return bindSBQQ(qq, data2.toSBBindUserLite());
+        }
+    }
+
+    public SBQQBindLite bindSBQQ(Long qq, SBBindUserLite user) {
+        var sbLite = sbBindUserMapper.getFirstByUserID(user.getUserID());
+
+        SBBindUserLite bind;
+
+        if (sbLite == null) {
+            bind = sbBindUserMapper.freshAndSave(user);
+        } else {
+            bind = user;
+        }
+
+        var qqBind = new SBQQBindLite(qq, bind);
+
+        return sbQQBindMapper.save(qqBind);
+    }
+
+    public void updateSBMode(Long userID, OsuMode mode) {
+        sbBindUserMapper.updateMode(userID, mode);
+    }
+
+    public boolean unBindSBQQ(SBBindUser user) {
+        try {
+            sbBindUserMapper.deleteUser(user.getUserID());
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public QQBindLite bindQQ(Long qq, BindUser user) {

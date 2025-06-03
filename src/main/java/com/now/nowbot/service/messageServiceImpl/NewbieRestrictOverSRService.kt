@@ -5,7 +5,7 @@ import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.NewbieDao
-import com.now.nowbot.model.LazerMod
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore

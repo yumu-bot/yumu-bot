@@ -1,12 +1,10 @@
-package com.now.nowbot.model
+package com.now.nowbot.model.osu
 
 import com.now.nowbot.util.lzma.LZMAInputStream
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.file.Files
-import java.nio.file.Path
 
 class Replay constructor(bf: ByteBuffer) {
     // 0 = osu!, 1 = osu!taiko, 2 = osu!catch, 3 = osu!mania

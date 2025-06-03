@@ -313,7 +313,7 @@ object DataUtil {
         }
 
         when (osuMode) {
-            OSU,
+            OSU, OSU_RELAX, OSU_AUTOPILOT,
             DEFAULT -> {
                 val n300 = min(getTheoreticalCount(weight), max(total, 0))
                 val n100 = min(getTheoreticalCount(weight / 3), max(total - n300, 0))
@@ -326,7 +326,7 @@ object DataUtil {
                 stat.countMiss = n0
             }
 
-            TAIKO -> {
+            TAIKO, TAIKO_RELAX -> {
                 val n300 = min(getTheoreticalCount(weight), max(total, 0))
                 val n100 = min(getTheoreticalCount(weight / 3), max(total - n300, 0))
                 val n0 = max(total - n300 - n100, 0)
@@ -336,7 +336,7 @@ object DataUtil {
                 stat.countMiss = n0
             }
 
-            CATCH -> {
+            CATCH, CATCH_RELAX -> {
                 val n300 = min(getTheoreticalCount(weight), max(total, 0))
                 val n0 = max(total - n300, 0)
 

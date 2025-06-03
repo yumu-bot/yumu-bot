@@ -8,6 +8,10 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
     TAIKO("osu!taiko", "taiko", 1),
     CATCH("osu!catch", "fruits", 2),
     MANIA("osu!mania", "mania", 3),
+    OSU_RELAX("osu!standard relax", "osu", 4),
+    TAIKO_RELAX("osu!taiko relax", "taiko", 5),
+    CATCH_RELAX("osu!catch relax", "fruits", 6),
+    OSU_AUTOPILOT("osu!standard autopilot", "osu", 8),
     DEFAULT("default", "", -1);
 
     val modeByte
@@ -114,6 +118,10 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
                 1 -> TAIKO
                 2 -> CATCH
                 3 -> MANIA
+                4 -> OSU_RELAX
+                5 -> TAIKO_RELAX
+                6 -> CATCH_RELAX
+                8 -> OSU_AUTOPILOT
                 else -> DEFAULT
             }
         }
