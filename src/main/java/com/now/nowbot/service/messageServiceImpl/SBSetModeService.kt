@@ -11,8 +11,6 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.serviceException.BindException
-import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.command.FLAG_MODE
 import org.springframework.stereotype.Service
 
 @Service("SB_SET_MODE")
@@ -40,8 +38,11 @@ class SBSetModeService (
     }
 
     override fun accept(event: MessageEvent, messageText: String): OsuMode? {
+        /*
         val m = OfficialInstruction.SET_MODE.matcher(messageText)
         if (m.find()) return OsuMode.getMode(m.group(FLAG_MODE))
+
+         */
         return null
     }
 
