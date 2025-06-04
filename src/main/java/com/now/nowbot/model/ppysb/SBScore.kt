@@ -179,7 +179,7 @@ data class SBScore(
             if (sb.userID != null) this.userID = sb.userID
 
             this.score = sb.score
-            this.PP = sb.pp
+            this.pp = sb.pp
             this.lazerAccuracy = sb.accuracy
             this.maxCombo = sb.maxCombo
             this.mods = sb.mods

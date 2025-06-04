@@ -224,7 +224,7 @@ class InfoService(
 
         private fun getBonus(bests: List<LazerScore>, user: OsuUser): Double {
             return if (bests.isNotEmpty()) {
-                DataUtil.getBonusPP(user.pp, bests.map { it.PP!! })
+                DataUtil.getBonusPP(user.pp, bests.map { it.pp })
             } else {
                 0.0
             }

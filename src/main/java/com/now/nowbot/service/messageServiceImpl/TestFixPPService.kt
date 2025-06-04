@@ -157,21 +157,21 @@ import kotlin.math.roundToInt
 
                     // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
                     if (isChoke || has1pMiss) {
-                        s.PP = calculateApiService.getScoreFullComboPP(s).pp
+                        s.pp = calculateApiService.getScoreFullComboPP(s).pp
                     }
                 }
 
-                val bpPP = bests.sumOf { it.weight?.PP ?: 0.0 }
-                val fixed = bests.sortedByDescending{ it.PP ?: 0.0 }
+                val bpPP = bests.sumOf { it.weight?.pp ?: 0.0 }
+                val fixed = bests.sortedByDescending{ it.pp }
 
                 var weight = 1.0 / 0.95
 
                 for (f in fixed) {
                     weight *= 0.95
-                    f.weight = LazerScore.Weight(weight, (f.PP ?: 0.0) * weight)
+                    f.weight = LazerScore.Weight(weight, (f.pp) * weight)
                 }
 
-                val fixedPP = fixed.sumOf { it.weight?.PP ?: 0.0 }
+                val fixedPP = fixed.sumOf { it.weight?.pp ?: 0.0 }
                 val playerPP = d.user.pp
 
                 val resultPP = playerPP - bpPP + fixedPP

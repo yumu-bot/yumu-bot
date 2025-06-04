@@ -14,7 +14,7 @@ public class PPMinusOsu extends PPMinus {
         double[] bpPPs = new double[bps.size()];
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
-            var bpiPP = Objects.requireNonNull(bp.getWeight()).getPP();
+            var bpiPP = Objects.requireNonNull(bp.getWeight()).getPp();
             var bprPP = bp.getPP();
             bpPP += bpiPP;
             bpPPs[i] = bprPP; // Math.log10(bp.getWeight().getPP()) / 2; //这个lg /2 是从哪来的？

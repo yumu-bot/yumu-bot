@@ -181,7 +181,7 @@ import kotlin.math.min
                 run { // 统计 mods / rank
                     if (m.isNotEmpty()) {
                         m.forEach {
-                            modsPPMap.add(it.acronym, best.weight!!.PP)
+                            modsPPMap.add(it.acronym, best.weight!!.pp)
                         }
                         modsSum += m.size
                     } else {
@@ -189,10 +189,10 @@ import kotlin.math.min
                     }
 
                     if (best.fullCombo) {
-                        rankMap.add("FC", best.weight!!.PP)
+                        rankMap.add("FC", best.weight!!.pp)
                     }
 
-                    rankMap.add(best.rank, best.weight!!.PP)
+                    rankMap.add(best.rank, best.weight!!.pp)
                 }
             }
 
@@ -213,8 +213,8 @@ import kotlin.math.min
             sortCount("star") { it.star }
             sortCount("bpm") { it.bpm }
 
-            val ppRawList = bests.map { it.PP!! }
-            val ppSum = bests.sumOf { it.weight?.PP ?: 0.0 }
+            val ppRawList = bests.map { it.pp }
+            val ppSum = bests.sumOf { it.weight?.pp ?: 0.0 }
             val rankList = bests.map { it.rank }
             val lengthList = beatmapList.map { it.length }
             val starList = beatmapList.map { it.star }
@@ -251,9 +251,9 @@ import kotlin.math.min
                 bests.filter { mapperCount.containsKey(it.beatmap.mapperID) }.groupingBy { it.beatmap.mapperID }
                     .aggregate<LazerScore, Long, Double> { _, accumulator, element, _ ->
                         if (accumulator == null) {
-                            element.PP ?: 0.0
+                            element.pp
                         } else {
-                            accumulator + (element.PP ?: 0.0)
+                            accumulator + (element.pp)
                         }
                     }.entries.sortedByDescending { it.value }.map {
                         var name = ""
@@ -269,10 +269,10 @@ import kotlin.math.min
                     }.toList()
 
             val userPP = user.pp
-            val bonusPP = getBonusPP(userPP, bests.map { it.PP ?: 0.0 }.toDoubleArray())
+            val bonusPP = getBonusPP(userPP, bests.map { it.pp }.toDoubleArray())
 
             //bpPP + remainPP (bp100之后的) = rawPP
-            val bpPP = bests.sumOf { it.weight!!.PP }
+            val bpPP = bests.sumOf { it.weight!!.pp }
             val rawPP = (userPP - bonusPP)
 
             val modsAttr: List<Attr>

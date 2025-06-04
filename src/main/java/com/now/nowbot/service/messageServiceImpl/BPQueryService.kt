@@ -118,7 +118,7 @@ class BPQueryService(
                 Param.OD -> 100 * (score.beatmap.OD ?: 0f)
                 Param.CS -> 100 * (score.beatmap.CS ?: 0f)
                 Param.HP -> 100 * (score.beatmap.HP ?: 0f)
-                Param.PerformancePoint -> score.PP ?: 0.0
+                Param.PerformancePoint -> score.pp
                 Param.Combo -> score.totalCombo
                 Param.Accuracy -> 10000 * score.accuracy
                 Param.Perfect -> score.statistics.perfect
@@ -246,7 +246,7 @@ class BPQueryService(
             compare(s.beatmap.HP!!, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         PerformancePoint("pp", { (op, v, s) ->
-            compare(s.PP ?: 0.0, v, op)
+            compare(s.pp, v, op)
         }, EQ, NE, GT, GE, LT, LE),
         Rank("rank", { (op, v, s) ->
             val scoreRank = getRankNumber(s.rank)

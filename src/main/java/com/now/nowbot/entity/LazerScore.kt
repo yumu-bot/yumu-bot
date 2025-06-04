@@ -65,7 +65,7 @@ class LazerScoreLite(
         score.userID,
         score.beatmapID,
         JacksonUtil.objectToJson(score.mods),
-        (score.PP ?: 0).toFloat(),
+        (score.pp).toFloat(),
         score.lazerAccuracy.toFloat(),
         score.maxCombo,
         score.endedTime,

@@ -92,7 +92,7 @@ class BPFixService(
         val beforeBpSumAtomic = AtomicReference(0.0)
 
         val fixedBests = bestsMap.map { (index, score) ->
-            beforeBpSumAtomic.updateAndGet { it + (score.weight?.PP ?: 0.0) }
+            beforeBpSumAtomic.updateAndGet { it + (score.weight?.pp ?: 0.0) }
             beatmapApiService.applyBeatMapExtendFromDataBase(score)
 
             val max = score.beatmap.maxCombo ?: 1
@@ -122,7 +122,7 @@ class BPFixService(
             val pp = if (it is LazerScoreWithFcPP && it.fcPP > 0) {
                 it.fcPP
             } else {
-                it.PP ?: 0.0
+                it.pp
             }
 
             pp * 100.0
@@ -138,7 +138,7 @@ class BPFixService(
                 pp = score.fcPP
                 score.indexAfter = index + 1
             } else {
-                pp = score.PP ?: 0.0
+                pp = score.pp
             }
             afterBpSumAtomic.updateAndGet { it + (weight * pp) }
         }

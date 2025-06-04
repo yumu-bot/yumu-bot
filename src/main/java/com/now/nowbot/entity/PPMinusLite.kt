@@ -92,7 +92,7 @@ class PPMinusLite(
 
         lite.userID = user.userID
         lite.userPP = user.pp
-        lite.rawPP = user.pp - DataUtil.getBonusPP(user.pp, bests.map { it.PP ?: 0.0 })
+        lite.rawPP = user.pp - DataUtil.getBonusPP(user.pp, bests.map { it.pp })
 
         lite.accuracy = user.accuracy / 100.0
         lite.totalHits = user.totalHits
@@ -111,9 +111,9 @@ class PPMinusLite(
             bests.takeLast(10)
         } else emptyList()
 
-        lite.topPP = top.map { it.PP ?: 0.0 }.average()
-        lite.middlePP = middle.map { it.PP ?: 0.0 }.average()
-        lite.bottomPP = bottom.map { it.PP ?: 0.0 }.average()
+        lite.topPP = top.map { it.pp }.average()
+        lite.middlePP = middle.map { it.pp }.average()
+        lite.bottomPP = bottom.map { it.pp }.average()
 
         lite.topAccuracy = top.map { it.accuracy }.average()
         lite.middleAccuracy = middle.map { it.accuracy }.average()

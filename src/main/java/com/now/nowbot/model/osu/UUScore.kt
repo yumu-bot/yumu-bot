@@ -85,7 +85,7 @@ class UUScore(score: LazerScore, beatmapApiService: OsuBeatmapApiService, calcul
         }
         acc = ((round(score.accuracy * 10000.0)) / 100.0)
         
-        pp = score.PP ?: 0.0
+        pp = score.pp
         
         combo = score.maxCombo
         passed = score.passed

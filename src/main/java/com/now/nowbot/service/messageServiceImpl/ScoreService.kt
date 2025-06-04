@@ -186,7 +186,7 @@ import java.util.regex.Matcher
         val bid = b.beatmapID
 
         val scores: List<LazerScore> = try {
-            scoreApiService.getBeatMapScores(bid, user.userID, mode).sortedByDescending { it.PP }
+            scoreApiService.getBeatMapScores(bid, user.userID, mode).sortedByDescending { it.pp }
         } catch (e: WebClientResponseException.NotFound) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, b.previewName)
         } catch (e: WebClientResponseException.Unauthorized) {

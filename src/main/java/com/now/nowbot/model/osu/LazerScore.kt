@@ -3,8 +3,6 @@ package com.now.nowbot.model.osu
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import java.time.OffsetDateTime
@@ -13,153 +11,127 @@ import java.time.format.DateTimeFormatterBuilder
 import kotlin.math.ln
 import kotlin.math.roundToInt
 
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 // 这是 API v2 version header is 20240529 or higher 会返回的成绩数据。
-@JsonIgnoreProperties(ignoreUnknown = true)
-open class LazerScore {
+open class LazerScore(
     @JsonProperty("classic_total_score")
-    var classicScore: Long = 0L
+    var classicScore: Long = 0L,
 
     @JsonProperty("preserve")
-    var preserve: Boolean = false
+    var preserve: Boolean = false,
 
     @JsonProperty("processed")
-    var processed: Boolean = false
+    var processed: Boolean = false,
 
     @JsonProperty("ranked")
-    var ranked: Boolean = false
+    var ranked: Boolean = false,
 
     @JsonProperty("maximum_statistics")
-    var maximumStatistics: LazerStatistics = LazerStatistics()
-
-    @JsonProperty("mods")
-    var mods: List<LazerMod> = listOf()
-        get() { // 如果是 stable 成绩，则这里的 Classic 模组应该去掉
-            return field.filterNot { it is LazerMod.Classic && !this.isLazer }
-        }
+    var maximumStatistics: LazerStatistics = LazerStatistics(),
 
     @JsonProperty("statistics")
-    var statistics: LazerStatistics = LazerStatistics()
+    var statistics: LazerStatistics = LazerStatistics(),
 
     @JsonProperty("total_score_without_mods")
-    var rawScore: Long = 0L
+    var rawScore: Long = 0L,
 
     @JsonProperty("beatmap_id")
-    var beatmapID: Long = 0L
+    var beatmapID: Long = 0L,
 
     @JsonProperty("best_id")
-    var bestID: Long? = 0L
+    var bestID: Long? = 0L,
 
     @JsonProperty("id")
-    var scoreID: Long = 0L
+    var scoreID: Long = 0L,
 
     /** 注意，这个 rank 是 lazer 计分方式计算出来的，stable 成绩放在这里会有问题 */
     @JsonProperty("rank")
-    var lazerRank: String = "F"
+    var lazerRank: String = "F",
 
-    @get:JsonProperty("legacy_rank")
-    var rank: String
-        get() = _rank ?: getStableRank(this)
-        set(value) {
-            _rank = value
-        }
-
-    // 傻逼 Lazer
-    @JsonIgnore
-    private var _rank: String? = null
-
+    // solo_score 不区分是否是新老客户端
     @JsonProperty("type")
-    var type: String = "solo_score" // solo_score 不区分是否是新老客户端
+    var type: String = "solo_score",
 
     @JsonProperty("user_id")
-    var userID: Long = 0L
+    var userID: Long = 0L,
 
     /** 注意，这个 accuracy 是 lazer 计分方式计算出来的，stable 成绩放在这里会有问题 */
     @JsonProperty("accuracy")
-    var lazerAccuracy: Double = 0.0
-
-    // 傻逼 Lazer
-    @get:JsonProperty("legacy_accuracy")
-    val accuracy: Double
-        get() = getStableAccuracy(this)
+    var lazerAccuracy: Double = 0.0,
 
     @JsonProperty("build_id")
-    var buildID: Long? = 0L
-
-    @get:JsonProperty("is_lazer")
-    val isLazer: Boolean
-        get() = buildID != null && buildID!! > 0L
+    val buildID: Long? = 0L,
 
     @set:JsonProperty("ended_at")
     @get:JsonIgnore
-    var endedTime: OffsetDateTime = OffsetDateTime.now()
-
-    // 给 js 用
-    @get:JsonProperty("ended_at")
-    val endedTimeString: String
-        get() = formatter.format(endedTime)
+    var endedTime: OffsetDateTime = OffsetDateTime.now(),
 
     @JsonProperty("has_replay")
-    var hasReplay: Boolean = false
+    var hasReplay: Boolean = false,
 
     @JsonProperty("is_perfect_combo")
-    var perfectCombo: Boolean = false
+    var perfectCombo: Boolean = false,
 
     @JsonProperty("legacy_perfect")
-    var fullCombo: Boolean = false
+    var fullCombo: Boolean = false,
 
     @JsonProperty("legacy_score_id")
-    var legacyScoreID: Long = 0L
+    var legacyScoreID: Long = 0L,
 
     @JsonProperty("legacy_total_score")
-    var legacyScore: Long? = 0L
+    var legacyScore: Long? = 0L,
 
     @JsonProperty("max_combo")
-    var maxCombo: Int = 0
+    var maxCombo: Int = 0,
 
     @JsonProperty("passed")
-    var passed: Boolean = false
+    var passed: Boolean = false,
 
-    @JsonProperty("pp")
-    var PP: Double? = 0.0
+    @set:JsonProperty("pp")
+    @get:JsonIgnoreProperties
+    var ppDouble: Double? = 0.0,
 
     @JsonProperty("ruleset_id")
-    var ruleset: Byte = 0
-
-    /**
-     * 如果要设置，请设置 ruleset
-     */
-    @get:JsonProperty("mode")
-    val mode: OsuMode
-        get() = when (this.ruleset.toInt()) {
-            0 -> OSU
-            1 -> TAIKO
-            2 -> CATCH
-            3 -> MANIA
-            else -> DEFAULT
-        }
+    var ruleset: Byte = 0,
 
     @get:JsonIgnore
     @set:JsonProperty("started_at")
-    var startedTime: OffsetDateTime? = null
-
-    @get:JsonProperty("started_at")
-    val startedTimeString: String = if (startedTime != null) {
-        formatter.format(startedTime)
-    } else {
-        ""
-    }
+    var startedTime: OffsetDateTime? = null,
 
     @JsonProperty("total_score")
-    var score: Long = 0L
+    var score: Long = 0L,
 
     @JsonProperty("replay")
-    var replay: Boolean = false
+    var replay: Boolean = false,
+
+    ) {
+
+    @get:JsonProperty("pp")
+    @set:JsonIgnoreProperties
+    var pp: Double = 0.0
+        get() = ppDouble ?: 0.0
+        set(value) {
+            field = value
+            ppDouble = value
+        }
+
+    @JsonIgnoreProperties
+    fun getPP(): Double {
+        return this.pp
+    }
 
     // @JsonProperty("current_user_attributes") var userAttributes: UserAttributes =
     // UserAttributes()
     // TODO 这个有问题
     // data class UserAttributes(@JsonProperty("pin") var pin: String? = null)
+
+    @JsonProperty("beatmap")
+    var beatmap: Beatmap = Beatmap()
+
+    @JsonProperty("beatmapset")
+    var beatmapset: Beatmapset = Beatmapset()
+
+    @JsonProperty("user")
+    var user: MicroUser = MicroUser()
 
     // MatchScore 继承：自己设
     @JsonProperty("ranking")
@@ -172,26 +144,62 @@ open class LazerScore {
 
     @JsonProperty("weight")
     var weight: Weight? = null // 只在 BP 里有
-        get() = field ?: Weight()
-        set(value) {
-            field = value ?: Weight()
-        }
 
     data class Weight(
         @JsonProperty("percentage") var percentage: Double = 0.0,
-        @JsonProperty("pp") var PP: Double = 0.0,
+        @JsonProperty("pp") var pp: Double = 0.0,
     ) {
         val index: Int = (ln((percentage / 100)) / ln(0.95)).roundToInt()
     }
 
-    @JsonProperty("beatmap")
-    var beatmap: Beatmap = Beatmap()
+    @get:JsonProperty("is_lazer")
+    val isLazer: Boolean
+        get() = buildID != null && buildID > 0L
 
-    @JsonProperty("beatmapset")
-    var beatmapset: Beatmapset = Beatmapset()
+    @JsonProperty("mods")
+    var mods: List<LazerMod> = listOf()
+        get() { // 如果是 stable 成绩，则这里的 Classic 模组应该去掉
+            return field.filterNot { it is LazerMod.Classic && !this.isLazer }
+        }
 
-    @JsonProperty("user")
-    var user: MicroUser = MicroUser()
+    @get:JsonProperty("legacy_rank")
+    var rank: String = ""
+        get() = field.ifBlank { getStableRank(this) }
+
+    // 傻逼 Lazer
+    @get:JsonProperty("legacy_accuracy")
+    val accuracy: Double
+        get() = getStableAccuracy(this)
+
+    // 给 js 用
+    @get:JsonProperty("ended_at")
+    val endedTimeString: String
+        get() = formatter.format(endedTime)
+
+    /**
+     * 如果要设置，请设置 ruleset
+     */
+    @get:JsonProperty("mode")
+    var mode: OsuMode = DEFAULT
+        get() = when (this.ruleset.toInt()) {
+            0 -> OSU
+            1 -> TAIKO
+            2 -> CATCH
+            3 -> MANIA
+            else -> DEFAULT
+        }
+        set(value) {
+            field = value
+            this.ruleset = value.modeByte
+        }
+
+    @get:JsonProperty("started_at")
+    val startedTimeString: String = if (startedTime != null) {
+        formatter.format(startedTime)
+    } else {
+        ""
+    }
+
 
     @get:JsonProperty("preview_name")
     val previewName: String
@@ -258,6 +266,7 @@ open class LazerScore {
         }
 
     companion object {
+
         private val formatter: DateTimeFormatter =
             DateTimeFormatterBuilder().appendPattern("yyyy-MM-dd").appendLiteral("T").appendPattern("HH:mm:ss")
                 .toFormatter()

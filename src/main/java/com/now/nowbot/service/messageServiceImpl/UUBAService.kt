@@ -234,7 +234,7 @@ class UUBAService(
                     sb.append("#")
                         .append(i + 1)
                         .append(' ')
-                        .append(String.format("%.2f", bp.PP))
+                        .append(String.format("%.2f", bp.pp))
                         .append(' ')
                         .append(String.format("%.2f", 100 * bp.accuracy))
                         .append('%')
@@ -250,7 +250,7 @@ class UUBAService(
                 } else if (i == 5) {
                     sb.append("...").append('\n')
                 }
-                allPP += bp.PP!!  // 统计总数
+                allPP += bp.pp  // 统计总数
                 if (bp.mods.isNotEmpty()) {
                     for (j in bp.mods.indices) {
                         val mod = bp.mods[j].acronym
@@ -291,7 +291,7 @@ class UUBAService(
                 .append("PP")
                 .append('\n')
                 .append("差值: ")
-                .append(String.format("%.2f", bests.first().PP!! - bests.last().PP!!))
+                .append(String.format("%.2f", bests.first().pp - bests.last().pp))
                 .append("PP")
 
             return sb.toString()
@@ -342,9 +342,9 @@ class UUBAService(
 
                 score.mods.forEach {
                     if (modSum.containsKey(it.acronym)) {
-                        modSum[it.acronym]!!.add(score.weight?.PP ?: 0.0)
+                        modSum[it.acronym]!!.add(score.weight?.pp ?: 0.0)
                     } else {
-                        modSum[it.acronym] = ModData(score.weight?.PP ?: 0.0)
+                        modSum[it.acronym] = ModData(score.weight?.pp ?: 0.0)
                     }
                 }
 
@@ -383,18 +383,18 @@ class UUBAService(
                 }
                 avgCombo += score.maxCombo
 
-                val tthToPp = (score.PP!!) / max((b.sliders!! + b.spinners!! + b.circles!!), 1)
+                val tthToPp = (score.pp) / max((b.sliders!! + b.spinners!! + b.circles!!), 1)
                 if (maxTTHPP < tthToPp) {
                     maxTTHPPBP = i
                     maxTTHPP = tthToPp
                 }
 
                 if (mapperSum.containsKey(b.mapperID)) {
-                    mapperSum[b.mapperID]!!.add(score.PP!!)
+                    mapperSum[b.mapperID]!!.add(score.pp)
                 } else {
-                    mapperSum[b.mapperID] = FavoriteMapperData(score.PP!!, b.mapperID)
+                    mapperSum[b.mapperID] = FavoriteMapperData(score.pp, b.mapperID)
                 }
-                nowPP += score.weight!!.PP
+                nowPP += score.weight!!.pp
             }
             avgCombo /= bests.size
             avgLength /= bests.size.toFloat()

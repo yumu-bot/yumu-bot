@@ -77,7 +77,7 @@ class TestHiddenPPService(
 
             for (bp in bps) {
                 if (LazerMod.hasMod(bp.mods, LazerMod.Hidden)) {
-                    hiddenPP += (bp.weight?.PP ?: 0.0)
+                    hiddenPP += (bp.weight?.pp ?: 0.0)
                 }
             }
 

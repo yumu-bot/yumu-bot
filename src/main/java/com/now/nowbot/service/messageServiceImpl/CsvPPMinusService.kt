@@ -255,8 +255,8 @@ class CsvPPMinusService(
             val bpPPs = DoubleArray(bps.size)
             for (i in bps.indices) {
                 val bp = bps[i]
-                val bpiPP = bp.weight?.PP ?: 0.0
-                val bprPP = bp.PP ?: 0.0
+                val bpiPP = bp.weight?.pp ?: 0.0
+                val bprPP = bp.pp
 
                 bpPP += bpiPP
                 bpPPs[i] = bprPP
@@ -275,15 +275,15 @@ class CsvPPMinusService(
                 }
                 if (!bp.fullCombo) notfc++
                 if (i < 10) {
-                    ppv0 += bp.PP!!.toFloat()
+                    ppv0 += bp.pp.toFloat()
                     accv0 += bp.accuracy.toFloat()
                     lengv0 += bp.beatmap.totalLength.toLong()
                 } else if (i in 45..54) {
-                    ppv45 += bp.PP!!.toFloat()
+                    ppv45 += bp.pp.toFloat()
                     accv45 += bp.accuracy.toFloat()
                     lengv45 += bp.beatmap.totalLength.toLong()
                 } else if (i >= 90) {
-                    ppv90 += bp.PP!!.toFloat()
+                    ppv90 += bp.pp.toFloat()
                     accv90 += bp.accuracy.toFloat()
                     lengv90 += bp.beatmap.totalLength.toLong()
                 }

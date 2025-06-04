@@ -194,7 +194,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 CS -> fit(operator, it.beatmap.CS?.toDouble() ?: 0.0, double)
                 OD -> fit(operator, it.beatmap.OD?.toDouble() ?: 0.0, double)
                 HP -> fit(operator, it.beatmap.HP?.toDouble() ?: 0.0, double)
-                PERFORMANCE -> fit(operator, it.PP ?: 0.0, double)
+                PERFORMANCE -> fit(operator, it.pp, double)
                 RANK -> run {
                     val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
 

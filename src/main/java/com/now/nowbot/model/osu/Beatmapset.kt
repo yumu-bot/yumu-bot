@@ -234,7 +234,6 @@ class Beatmapset {
 
     var description: Description? = null
 
-    @JvmRecord
     data class Description (
         val description: String
     )
@@ -247,7 +246,6 @@ class Beatmapset {
     @JsonProperty("language")
     var language: Language? = null
 
-    @JvmRecord
     data class Language (val id: Int, val name: String)
 
     @JsonProperty("pack_tags")
