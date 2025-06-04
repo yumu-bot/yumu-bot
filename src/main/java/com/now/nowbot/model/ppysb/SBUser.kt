@@ -2,6 +2,11 @@ package com.now.nowbot.model.ppysb
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.OsuUser
+import com.now.nowbot.model.osu.Statistics
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.util.Date
 
 data class SBUser(
     @JsonProperty("id") val userID: Long = 0,
@@ -24,7 +29,71 @@ data class SBUser(
     @JsonProperty("userpage_content") val userpageContent: String? = null,
 ) {
 
-    @get:JsonProperty("mode") val mode: OsuMode
+    @get:JsonProperty("mode")
+    val mode: OsuMode
         get() = OsuMode.getMode(preferredMode.toInt())
 
+    @get:JsonProperty("clan")
+    var clan: SBClan = SBClan()
+
+    @get:JsonProperty("statistics")
+    var statistics: List<SBStatistics> = listOf()
+
+    fun toOsuUser(mode: OsuMode?): OsuUser {
+        val sb = this
+
+        val user = OsuUser().apply {
+            id = sb.userID
+            username = sb.username
+            countryCode = sb.country
+            country = OsuUser.Country(sb.country, sb.country)
+            isRestricted = sb.silenceEnd > 0L
+            isSupporter = sb.donorEnd > 0L
+            joinDate = Date(sb.joinDate).toInstant().atOffset(ZoneOffset.ofHours(8))
+            lastVisit = Date(sb.lastVisitTime).toInstant().atOffset(ZoneOffset.ofHours(8))
+
+            if (clan.clanID > 0L) {
+                team = OsuUser.Team(null, sb.clan.clanID.toInt(), sb.clan.clanName, sb.clan.clanTag)
+            }
+
+            val currentOsuMode = if (OsuMode.isDefaultOrNull(mode)) sb.mode else mode!!
+
+            this.defaultOsuMode = sb.mode
+            this.currentOsuMode = currentOsuMode
+
+            if (sb.customBadgeName != null && sb.customBadgeIcon != null) {
+                badges = listOf(
+                    OsuUser.UserBadge(
+                        OffsetDateTime.MIN,
+                        sb.customBadgeName,
+                        sb.customBadgeIcon,
+                        sb.customBadgeIcon,
+                        null
+                ))
+            }
+
+            val bt = sb.statistics.firstOrNull { it.modeByte == currentOsuMode.modeByte } ?: SBStatistics()
+
+            pp = bt.pp.toDouble()
+
+            val stat = Statistics().apply {
+                totalScore = bt.totalScore
+                rankedScore = bt.rankedScore
+                playCount = bt.playCount
+                playTime = bt.playTime
+                accuracy = bt.accuracy
+                countSSH = bt.countSSH
+                countSS = bt.countSS
+                countSH = bt.countSH
+                countS = bt.countS
+                countA = bt.countA
+                globalRank = bt.rank.toLong()
+                countryRank = bt.countryRank.toLong()
+            }
+
+            statistics = stat
+        }
+
+        return user
+    }
 }

@@ -28,6 +28,21 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendSpace()
     }
 
+    /**
+     * 加命令, 后面自带 space, 展开后为 (?ym(p|pr))\s*
+     * @param commands 连续的命令 ("p", "pr")
+     */
+    fun appendSBCommandsIgnoreAll(@Language("RegExp") vararg commands: String) {
+        appendGroup {
+            append(REG_QUESTION)
+            appendSpace()
+            appendGroup(MAYBE, "ym")
+            appendGroup(*commands)
+        }
+        appendIgnore()
+        appendSpace()
+    }
+
     private fun __appendCommands(@Language("RegExp") vararg commands: String) {
         appendGroup {
             append(REG_EXCLAMATION)

@@ -9,6 +9,7 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.sbApiService.SBUserApiService
+import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.serviceException.BindException
 import org.springframework.stereotype.Service
@@ -51,7 +52,7 @@ class SBSetModeService (
         val user = try {
             bindDao.getSBBindUserFromUserID(-event.sender.id)
         } catch (e: BindException) {
-            val sbUser = userApiService.getUser(-event.sender.id)
+            val sbUser = userApiService.getUser(-event.sender.id) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
             val bindUser = SBBindUser(sbUser)
 
             bindDao.saveBind(bindUser)

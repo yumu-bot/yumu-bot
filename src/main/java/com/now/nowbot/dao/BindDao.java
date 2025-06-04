@@ -238,6 +238,14 @@ public class BindDao {
         return data.map(BindDao::fromLite).orElse(null);
     }
 
+    public SBQQBindLite getSBQQLiteFromUserID(Long userID) {
+        return sbQQBindMapper.findByUserID(userID);
+    }
+
+    public Optional<SBQQBindLite> getSBQQLiteFromQQ(Long qq) {
+        return sbQQBindMapper.findById(qq);
+    }
+
     public SBBindUser getSBBindUserFromUserID(Long userID) throws BindException {
         if (Objects.isNull(userID)) throw new BindException(BindException.Type.BIND_Receive_NoName);
 
@@ -322,9 +330,10 @@ public class BindDao {
 
     public boolean unBindSBQQ(SBBindUser user) {
         try {
-            sbBindUserMapper.deleteUser(user.getUserID());
+            bindQQMapper.unBind(user.getUserID());
             return true;
         } catch (Exception e) {
+            log.error("e: ", e);
             return false;
         }
     }

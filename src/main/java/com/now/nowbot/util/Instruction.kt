@@ -40,6 +40,12 @@ enum class Instruction(val pattern: Pattern) {
         appendName()
     }),
 
+    SB_BIND(CommandPatternBuilder.create {
+        appendSBCommandsIgnoreAll("(?<ub>ub)", "(?<bi>bi)", "(?<un>un)?(?<bind>bind)")
+        appendQQID()
+        appendName()
+    }),
+
     BAN(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("super", "sp", "operate", "op")
         appendColonCaptureGroup(

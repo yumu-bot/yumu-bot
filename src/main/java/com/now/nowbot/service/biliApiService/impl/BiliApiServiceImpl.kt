@@ -83,7 +83,7 @@ class BiliApiServiceImpl(
             } else if (code != 0) {
                 throw TipsException("获取${name}信息失败。失败代码：${code}，失败原因：${message}")
             } else try {
-                return JacksonUtil.parseObject(node, T::class.java)
+                return JacksonUtil.parseObject(node["data"], T::class.java)
             } catch (e : Exception) {
                 log.error("生成${name}失败。", e)
                 return T::class.objectInstance!!

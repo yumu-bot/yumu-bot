@@ -23,7 +23,7 @@ interface SBBindUserMapper: JpaRepository<SBBindUserLite, Long>, JpaSpecificatio
     @Modifying @Transactional @Query("update SBBindUserLite u set u.mainMode = :mode where u.userID = :userID ")
     fun updateMode(userID: Long, mode: OsuMode)
 
-    @Modifying @Transactional @Query("delete SBBindUserLite u where u.userID = :userID ")
+    @Modifying @Transactional @Query("delete from SBBindUserLite u where u.userID = :userID ")
     fun deleteUser(userID: Long)
 
     @Modifying @Transactional @Query(

@@ -21,7 +21,7 @@ interface SBQQBindMapper: JpaRepository<SBQQBindLite, Long>, JpaSpecificationExe
     @Modifying @Transactional @Query("delete from SBQQBindLite qb where qb.qq = :qq")
     fun deleteBind(qq: Long?)
     
-    @Modifying @Transactional @Query("delete from SBQQBindLite qq where qq.bindUserLite.userID = :userID")
+    @Modifying @Transactional @Query("delete from SBQQBindLite qb where qb.bindUserLite.userID = :userID")
     fun unBind(userID: Long)
 
     @Query("select qq.qq as qid, qq.bindUserLite.userID as uid, qq.bindUserLite.username as name from SBQQBindLite qq where qq.qq in (:qq)")

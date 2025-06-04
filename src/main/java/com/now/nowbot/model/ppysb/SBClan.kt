@@ -1,18 +1,20 @@
 package com.now.nowbot.model.ppysb
 
 import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class SBClan(
-    @JsonProperty("id") val clanID: Long,
+    @JsonProperty("id") val clanID: Long = 0,
 
-    @JsonProperty("name") val clanName: String,
+    @JsonProperty("name") val clanName: String = "",
 
-    @JsonProperty("tag") val clanTag: String,
+    @JsonProperty("tag") val clanTag: String = "",
 
-    @JsonProperty("members") val members: List<SBClanMember>,
+    @JsonProperty("members") val members: List<SBClanMember> = listOf(),
 
-) {
+    ) {
     data class SBClanMember(
         @JsonProperty("id") val userID: Long,
 
