@@ -11,6 +11,7 @@ import com.now.nowbot.model.enums.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.onebot.contact.Group
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
@@ -59,7 +60,7 @@ class NewbieRestrictOverSRService(
         data: MessageService.DataValue<Collection<LazerScore>>
     ): Boolean {
         // TODO 测试的时候记得别忘了取消注释这个
-        // if (event.subject !is Group || event.subject.id != newbieGroupID) return false
+        if (event.subject !is Group || event.subject.id != newbieGroupID) return false
 
         val ss = Instruction.SCORES.matcher(messageText)
         val s = Instruction.SCORE.matcher(messageText)
