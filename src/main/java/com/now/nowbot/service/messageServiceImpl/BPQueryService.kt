@@ -17,9 +17,8 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
-import com.now.nowbot.throwable.serviceException.BPQueryException
-import com.now.nowbot.throwable.serviceException.BPQueryException.*
-import com.now.nowbot.throwable.serviceException.BindException
+import com.now.nowbot.throwable.botException.BPQueryException
+import com.now.nowbot.throwable.botException.BPQueryException.*
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_QUOTATION
@@ -65,11 +64,7 @@ class BPQueryService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: BPQueryParam) {
-        val bindUser = try {
-            bindDao.getBindFromQQ(event.sender.id)
-        } catch (e: BindException) {
-            throw BindException(BindException.Type.BIND_Me_NotBind)
-        }
+        val bindUser = bindDao.getBindFromQQ(event.sender.id, true)
 
         val mode = OsuMode.getMode(param.mode, bindUser.mode, bindDao.getGroupModeConfig(event))
 

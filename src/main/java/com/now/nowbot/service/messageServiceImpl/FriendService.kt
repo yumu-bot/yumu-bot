@@ -13,7 +13,7 @@ import com.now.nowbot.service.messageServiceImpl.FriendService.Companion.SortDir
 import com.now.nowbot.service.messageServiceImpl.FriendService.Companion.SortType.*
 import com.now.nowbot.service.messageServiceImpl.FriendService.FriendParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.serviceException.FriendException
+import com.now.nowbot.throwable.botException.FriendException
 import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
@@ -127,7 +127,7 @@ class FriendService(
         }
 
         val other = try {
-            bindDao.getBindUser(uid) ?: null
+            bindDao.getBindUser(uid)
         } catch (ignored: Exception) {
             null
         }

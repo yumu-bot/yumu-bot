@@ -3,7 +3,7 @@ package com.now.nowbot.model.osu
 import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.throwable.ModsException
+import com.now.nowbot.throwable.botRuntimeException.ModsException
 import org.spring.core.json
 import kotlin.reflect.full.companionObjectInstance
 

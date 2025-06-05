@@ -8,7 +8,7 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.CsvInfoService.CsvInfoParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.serviceException.CsvInfoException
+import com.now.nowbot.throwable.botException.CsvInfoException
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger

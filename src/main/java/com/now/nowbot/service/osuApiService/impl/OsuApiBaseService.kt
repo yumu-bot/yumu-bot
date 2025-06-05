@@ -7,7 +7,7 @@ import com.now.nowbot.config.YumuConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.serviceException.BindException
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.ContextUtil
 import jakarta.annotation.PostConstruct
 import org.slf4j.Logger
@@ -18,7 +18,6 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
-import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientRequestException
@@ -144,32 +143,20 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
         } else if (user.isExpired) {
             try {
                 refreshUserToken(user, false)
-            } catch (e: HttpClientErrorException.Unauthorized) {
-                bindDao.backupBind(user.userID)
-                log.info("令牌过期 绑定丢失: {}, 已退回到 id 绑定", user.userID, e)
-                throw BindException(BindException.Type.BIND_Me_TokenExpiredButBindID)
             } catch (e: WebClientResponseException.Unauthorized) {
                 bindDao.backupBind(user.userID)
-                log.info("令牌过期 绑定丢失: {}, 已退回到 id 绑定", user.userID, e)
-                throw BindException(BindException.Type.BIND_Me_TokenExpiredButBindID)
-            } catch (e: HttpClientErrorException.Forbidden) {
-                log.info("更新令牌失败：账号封禁", e)
-                throw BindException(BindException.Type.BIND_Me_Banned)
+                log.info("令牌过期 绑定丢失: {}, 已退回到 ID 绑定", user.userID, e)
+                botToken
+                throw BindException.BindIllegalArgumentException.IllegalUserStateException()
             } catch (e: WebClientResponseException.Forbidden) {
                 log.info("更新令牌失败：账号封禁", e)
-                throw BindException(BindException.Type.BIND_Me_Banned)
-            } catch (e: HttpClientErrorException.NotFound) {
-                log.info("更新令牌失败：找不到账号", e)
-                throw BindException(BindException.Type.BIND_Player_NotFound)
+                throw BindException.BindIllegalArgumentException.IllegalUserStateException()
             } catch (e: WebClientResponseException.NotFound) {
                 log.info("更新令牌失败：找不到账号", e)
-                throw BindException(BindException.Type.BIND_Player_NotFound)
-            } catch (e: HttpClientErrorException.TooManyRequests) {
-                log.info("更新令牌失败：API 访问太频繁", e)
-                throw BindException(BindException.Type.BIND_API_TooManyRequests)
+                throw BindException.BindIllegalArgumentException.IllegalUserException()
             } catch (e: WebClientResponseException.TooManyRequests) {
                 log.info("更新令牌失败：API 访问太频繁", e)
-                throw BindException(BindException.Type.BIND_API_TooManyRequests)
+                throw BindException.BindNetworkException()
             }
         } else {
             user.accessToken

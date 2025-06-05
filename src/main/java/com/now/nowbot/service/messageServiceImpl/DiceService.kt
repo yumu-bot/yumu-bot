@@ -6,7 +6,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.DiceService.DiceParam
 import com.now.nowbot.service.messageServiceImpl.DiceService.Split.*
-import com.now.nowbot.throwable.serviceException.DiceException
+import com.now.nowbot.throwable.botException.DiceException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import okhttp3.internal.format

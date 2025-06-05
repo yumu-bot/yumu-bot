@@ -1,7 +1,7 @@
 package com.now.nowbot.model.enums
 
 import com.now.nowbot.model.osu.LazerMod
-import com.now.nowbot.throwable.ModsException
+import com.now.nowbot.throwable.botRuntimeException.ModsException
 import java.util.*
 
 enum class OsuMod(
@@ -253,7 +253,10 @@ enum class OsuMod(
             if (acronyms.isNullOrEmpty()) return
 
             if (acronyms.contains(None.acronym) && acronyms.size > 1) {
-                throw ModsException(ModsException.Type.MOD_Receive_Conflict, None.acronym)
+                throw ModsException(
+                    ModsException.Type.MOD_Receive_Conflict,
+                    None.acronym
+                )
             }
             if (acronyms.contains(DoubleTime.acronym) && acronyms.contains(HalfTime.acronym)) {
                 throw ModsException(

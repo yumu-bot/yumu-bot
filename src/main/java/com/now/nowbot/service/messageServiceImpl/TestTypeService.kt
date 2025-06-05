@@ -13,7 +13,7 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.TestTypeService.MapTypeParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
-import com.now.nowbot.throwable.serviceException.MapMinusException
+import com.now.nowbot.throwable.botException.MapMinusException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MOD
 import org.springframework.stereotype.Service

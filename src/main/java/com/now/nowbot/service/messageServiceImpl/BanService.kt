@@ -8,7 +8,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BanService.BanParam
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.serviceException.BanException
+import com.now.nowbot.throwable.botException.BanException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_GROUP

@@ -5,7 +5,7 @@ import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.throwable.LogException
+import com.now.nowbot.throwable.botRuntimeException.LogException
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -71,7 +71,9 @@ class WikiService internal constructor() : MessageService<Matcher> {
             }
         } else {
             val uk = key.uppercase()
-            val r = WIKI?.findValue(uk)?.asText() ?: throw LogException("没有找到${key}")
+            val r = WIKI?.findValue(uk)?.asText() ?: throw LogException(
+                "没有找到${key}"
+            )
             sb.append(uk).append(':').append('\n')
             sb.append(r)
         }

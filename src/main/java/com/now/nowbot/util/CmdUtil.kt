@@ -10,9 +10,9 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.LogException
+import com.now.nowbot.throwable.botRuntimeException.LogException
 import com.now.nowbot.throwable.TipsException
-import com.now.nowbot.throwable.serviceException.BindException
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -48,7 +48,9 @@ object CmdUtil {
         try {
             return getUserWithoutRange(event, matcher, mode, isMyself)
         } catch (e: BindException) {
-            if (isAvoidance(messageText, *ignores)) throw LogException("退避指令 $ignores")
+            if (isAvoidance(messageText, *ignores)) throw LogException(
+                "退避指令 $ignores"
+            )
             throw e
         }
     }
@@ -79,7 +81,7 @@ object CmdUtil {
             setMode(mode, me.mode, event)
             return getOsuUser(me.username, me.userID) { userApiService.getOsuUser(me, mode.data!!) }
         } else {
-            throw BindException(BindException.Type.BIND_Player_TokenExpired)
+            throw BindException.TokenExpiredException.UserTokenExpiredException()
         }
     }
 
@@ -121,7 +123,9 @@ object CmdUtil {
         try {
             return getUserWithRange(event, matcher, mode, isMyself)
         } catch (e: BindException) {
-            if (isMyself.get() && isAvoidance(messageText, *ignores)) throw LogException("退避指令 $ignores")
+            if (isMyself.get() && isAvoidance(messageText, *ignores)) throw LogException(
+                "退避指令 $ignores"
+            )
             throw e
         }
     }

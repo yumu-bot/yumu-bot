@@ -18,7 +18,7 @@ import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService;
 import com.now.nowbot.throwable.GeneralTipsException;
-import com.now.nowbot.throwable.serviceException.BindException;
+import com.now.nowbot.throwable.botRuntimeException.BindException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,9 +135,9 @@ public class BindDao {
         var liteData = bindQQMapper.findById(qq);
         if (liteData.isEmpty()) {
             if (isMyself) {
-                throw new BindException(BindException.Type.BIND_Me_NotBind);
+                throw new BindException.NotBindException.YouNotBindException();
             } else {
-                throw new BindException(BindException.Type.BIND_Player_HadNotBind);
+                throw new BindException.NotBindException.UserNotBindException();
             }
         }
         var u = liteData.get().getOsuUser();
@@ -154,7 +154,7 @@ public class BindDao {
     }
 
     public BindUser getBindUserFromOsuID(Long userID) throws BindException {
-        if (Objects.isNull(userID)) throw new BindException(BindException.Type.BIND_Receive_NoName);
+        if (Objects.isNull(userID)) throw new BindException.BindIllegalArgumentException.IllegalQQException();
 
         Optional<OsuBindUserLite> liteData;
         try {
@@ -164,7 +164,7 @@ public class BindDao {
             liteData = bindUserMapper.getByOsuID(userID);
         }
 
-        if (liteData.isEmpty()) throw new BindException(BindException.Type.BIND_Player_NoBind);
+        if (liteData.isEmpty()) throw new BindException.NotBindException.UserNotBindException();
         var u = liteData.get();
         return fromLite(u);
     }
@@ -241,18 +241,18 @@ public class BindDao {
     }
 
     @Nullable
-    public SBQQBindLite getSBQQLiteFromUserID(Long userID) {
+    public SBQQBindLite getSBQQLiteFromUserID(@NonNull Long userID) {
         return sbQQBindMapper.findByUserID(userID);
     }
 
     @Nullable
-    public SBQQBindLite getSBQQLiteFromQQ(Long qq) {
+    public SBQQBindLite getSBQQLiteFromQQ(@NonNull Long qq) {
         return sbQQBindMapper.findById(qq).orElse(null);
     }
 
     @NonNull
-    public SBBindUser getSBBindUserFromUserID(Long userID) throws BindException {
-        if (Objects.isNull(userID)) throw new BindException(BindException.Type.BIND_Receive_NoName);
+    public SBBindUser getSBBindUserFromUserID(@Nullable Long userID) throws BindException {
+        if (Objects.isNull(userID)) throw new BindException.BindIllegalArgumentException.IllegalQQException();
 
         SBBindUserLite liteData;
 
@@ -263,7 +263,7 @@ public class BindDao {
             liteData = sbBindUserMapper.getUser(userID);
         }
 
-        if (liteData == null) throw new BindException(BindException.Type.BIND_Player_NoBind);
+        if (liteData == null) throw new BindException.NotBindException.UserNotBindException();
         return liteData.toSBBindUser();
     }
 
@@ -279,9 +279,9 @@ public class BindDao {
         var liteData = sbQQBindMapper.findById(qq);
         if (liteData.isEmpty()) {
             if (isMyself) {
-                throw new BindException(BindException.Type.BIND_Me_NotBind);
+                throw new BindException.NotBindException.YouNotBindException();
             } else {
-                throw new BindException(BindException.Type.BIND_Player_HadNotBind);
+                throw new BindException.NotBindException.UserNotBindException();
             }
         }
 

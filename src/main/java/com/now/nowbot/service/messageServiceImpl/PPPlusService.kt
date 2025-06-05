@@ -15,8 +15,8 @@ import com.now.nowbot.service.messageServiceImpl.PPPlusService.PPPlusParam
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
-import com.now.nowbot.throwable.serviceException.BindException
-import com.now.nowbot.throwable.serviceException.PPPlusException
+import com.now.nowbot.throwable.botRuntimeException.BindException
+import com.now.nowbot.throwable.botException.PPPlusException
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

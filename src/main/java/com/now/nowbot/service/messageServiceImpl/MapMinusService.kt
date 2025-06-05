@@ -15,7 +15,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
-import com.now.nowbot.throwable.serviceException.MapMinusException
+import com.now.nowbot.throwable.botException.MapMinusException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_MOD

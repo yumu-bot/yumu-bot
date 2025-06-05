@@ -14,7 +14,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.serviceException.MRAException
+import com.now.nowbot.throwable.botException.MRAException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger

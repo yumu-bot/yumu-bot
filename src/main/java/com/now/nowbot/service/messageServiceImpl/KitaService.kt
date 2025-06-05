@@ -7,7 +7,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.throwable.serviceException.KitaException
+import com.now.nowbot.throwable.botException.KitaException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD

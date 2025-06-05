@@ -18,8 +18,8 @@ import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.TipsRuntimeException
-import com.now.nowbot.throwable.serviceException.MatchListenerException
-import com.now.nowbot.throwable.serviceException.MatchRoundException
+import com.now.nowbot.throwable.botException.MatchListenerException
+import com.now.nowbot.throwable.botException.MatchRoundException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.DataUtil.getOriginal
 import com.now.nowbot.util.Instruction

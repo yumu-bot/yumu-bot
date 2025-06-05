@@ -1,6 +1,8 @@
-package com.now.nowbot.throwable;
+package com.now.nowbot.throwable.botRuntimeException;
 
-public class ModsException extends TipsRuntimeException{
+import com.now.nowbot.throwable.TipsRuntimeException;
+
+public class ModsException extends TipsRuntimeException {
     public enum Type {
         MOD_Receive_CharNotPaired("模组输入异常：字符数量非偶数"),
         MOD_Receive_Conflict("模组输入异常：以下模组冲突：\n%s"),

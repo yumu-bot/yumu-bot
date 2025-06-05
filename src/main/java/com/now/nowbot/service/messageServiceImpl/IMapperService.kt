@@ -15,7 +15,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.serviceException.IMapperException
+import com.now.nowbot.throwable.botException.IMapperException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange

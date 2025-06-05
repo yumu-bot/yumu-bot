@@ -13,7 +13,7 @@ import com.now.nowbot.qq.enums.Role;
 import com.now.nowbot.qq.event.GroupMessageEvent;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.qq.onebot.contact.GroupContact;
-import com.now.nowbot.throwable.PermissionException;
+import com.now.nowbot.throwable.botRuntimeException.PermissionException;
 import com.now.nowbot.util.ContextUtil;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;

@@ -13,7 +13,7 @@ import com.now.nowbot.qq.contact.Contact
 import com.now.nowbot.qq.message.*
 import com.now.nowbot.qq.message.Message.JsonMessage
 import com.now.nowbot.qq.onebot.OneBotMessageReceipt
-import com.now.nowbot.throwable.LogException
+import com.now.nowbot.throwable.botRuntimeException.LogException
 import com.now.nowbot.util.QQMsgUtil
 
 open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {

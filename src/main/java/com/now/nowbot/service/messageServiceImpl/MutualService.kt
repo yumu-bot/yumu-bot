@@ -9,7 +9,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.MutualService.MutualParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.serviceException.BindException
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
@@ -50,9 +50,9 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, users: List<MutualParam>) {
+    override fun HandleMessage(event: MessageEvent, param: List<MutualParam>) {
         try {
-            event.reply(mutual2MessageChain(users)).recallIn((60 * 1000).toLong())
+            event.reply(mutual2MessageChain(param)).recallIn((60 * 1000).toLong())
         } catch (e: Exception) {
             log.error("添加好友：发送失败！", e)
         }

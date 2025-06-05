@@ -6,7 +6,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.throwable.serviceException.BindException
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import java.time.LocalTime
@@ -29,7 +29,7 @@ class UserPlayStatisticService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: Long) {
-        val user = bindDao.getBindFromQQ(param, true) ?: throw BindException(BindException.Type.BIND_Me_NotBind)
+        val user = bindDao.getBindFromQQ(param, true) ?: throw BindException.NotBindException.YouNotBindException()
         scoreApi.getRecentScore(user, OsuMode.DEFAULT, 0, 999)
         val time = scoreDao.getUserAllScoreTime(user.userID)
         val intervalCount = IntArray(5) { 0 }

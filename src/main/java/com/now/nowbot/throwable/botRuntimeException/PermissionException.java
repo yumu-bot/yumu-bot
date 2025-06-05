@@ -1,4 +1,4 @@
-package com.now.nowbot.throwable;
+package com.now.nowbot.throwable.botRuntimeException;
 
 public class PermissionException extends RuntimeException{
     public PermissionException(String s){

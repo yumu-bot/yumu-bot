@@ -7,7 +7,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.serviceException.BindException
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
@@ -29,7 +29,7 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
             val str: String? = m.group("data")
 
             val names = if (event.isAt) {
-                val b = bindDao.getQQLiteFromQQ(event.target).getOrNull() ?: throw BindException(BindException.Type.BIND_Player_NoBind)
+                val b = bindDao.getQQLiteFromQQ(event.target).getOrNull() ?: throw BindException.NotBindException.UserNotBindException()
 
                 event.reply(b.osuUser.osuID.toString())
                 return false

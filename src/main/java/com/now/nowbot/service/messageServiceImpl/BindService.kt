@@ -12,15 +12,13 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.serviceException.BindException
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
@@ -75,7 +73,7 @@ import kotlin.jvm.optionals.getOrNull
 
         if (needConfirm) {
             // 提问
-            val receipt = event.reply(BindException.Type.BIND_Question_BindRetreat.message)
+            val receipt = event.reply(BindException.BindConfirmException.ConfirmThisException())
 
             val lock = ASyncMessageUtil.getLock(event, (30 * 1000).toLong())
             val ev = lock.get()
@@ -127,7 +125,7 @@ import kotlin.jvm.optionals.getOrNull
             } else if (param.name.isNotBlank()) {
                 bindQQName(event, param.name, param.qq)
             } else if (param.at) {
-                bindQQAt(event, param.qq, param.isFull)
+                bindQQAt(event, param.qq)
             }
             return
         }
@@ -137,64 +135,58 @@ import kotlin.jvm.optionals.getOrNull
     }
 
     private fun unbindName(name: String) {
-        val uid = bindDao.getOsuID(name) ?: throw BindException(BindException.Type.BIND_Player_HadNotBind)
+        val uid = bindDao.getOsuID(name) ?: throw BindException.NotBindException.UserNotBindException()
         val qq = bindDao.getQQ(uid)
 
-        if (qq < 0L) throw BindException(BindException.Type.BIND_Player_HadNotBind)
+        if (qq < 0L) throw BindException.NotBindException.UserNotBindException()
 
         unbindQQ(qq)
     }
 
     private fun unbindQQ(qq: Long?) {
-        if (qq == null) throw BindException(BindException.Type.BIND_Player_NoQQ)
-        val bind = bindDao.getQQLiteFromQQ(qq).getOrNull() ?: throw BindException(BindException.Type.BIND_Player_NoBind)
+        if (qq == null) throw BindException.BindIllegalArgumentException.IllegalQQException()
+        val bind = bindDao.getQQLiteFromQQ(qq).getOrNull() ?: throw BindException.NotBindException.UserNotBindException()
 
         if (bindDao.unBindQQ(bind.bindUser)) {
-            throw BindException(BindException.Type.BIND_UnBind_Successes, qq)
+            throw BindException.UnBindException.UnbindSuccessException()
         } else {
-            throw BindException(BindException.Type.BIND_UnBind_Failed)
+            throw BindException.UnBindException.UnbindFailedException()
         }
     }
 
-    private fun bindQQAt(event: MessageEvent, qq: Long, isFull: Boolean) {
-        if (isFull) {
-            bindUrl(event, qq)
-            return
-        } // 只有管理才有权力@人绑定,提示就不改了
+    private fun bindQQAt(event: MessageEvent, qq: Long) {
 
-        event.reply(BindException(BindException.Type.BIND_Receive_NoName))
+        event.reply(BindException.BindReceiveException.ReceiveNameException())
 
         val lock = ASyncMessageUtil.getLock(event)
-        var ev: MessageEvent = lock.get() ?: throw BindException(BindException.Type.BIND_Receive_Overtime)
+        var ev: MessageEvent = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTimeException()
 
         val name = ev.rawMessage.trim()
 
-        val ou: OsuUser = try {
-            userApiService.getOsuUser(name)
-        } catch (e: HttpClientErrorException.Forbidden) {
-            throw BindException(BindException.Type.BIND_Player_Banned)
-        } catch (e: WebClientResponseException.Forbidden) {
-            throw BindException(BindException.Type.BIND_Player_Banned)
-        } catch (e: Exception) {
-            throw BindException(BindException.Type.BIND_Player_NotFound)
-        }
+        val ou: OsuUser = userApiService.getOsuUser(name)
 
-        val qb = bindDao.getQQLiteFromOsuId(ou.userID).getOrNull() ?: run {
+        val qb = bindDao.getQQLiteFromOsuId(ou.userID).getOrNull()
+
+        if (qb == null) {
             bindDao.bindQQ(qq, BindUser(ou.userID, name))
             bindDao.updateMode(ou.userID, ou.defaultOsuMode)
-            event.reply(BindException(BindException.Type.BIND_Progress_Binding, qq, ou.userID, name))
+            event.reply(BindException.BindResultException.BindSuccessException(qq, ou.userID, ou.username))
             return
         }
 
-        event.reply(BindException(BindException.Type.BIND_Progress_BindingRecover, qb.osuUser.osuName, qq))
+        event.reply(BindException.BindConfirmException.RecoverBindException(ou.username, qq))
 
-        ev = lock.get() ?: throw BindException(BindException.Type.BIND_Receive_Overtime)
+        ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTimeException()
 
         if (ev.rawMessage.uppercase().startsWith("OK")) {
-            bindDao.bindQQ(qq, qb.osuUser)
-            event.reply(BindException.Type.BIND_Response_Success.message)
+            val result = bindDao.bindQQ(qq, qb.osuUser)
+            if (result != null) {
+                event.reply(BindException.BindResultException.BindSuccessException(qq, ou.userID, ou.username))
+            } else {
+                event.reply(BindException.BindResultException.BindFailedException())
+            }
         } else {
-            event.reply(BindException(BindException.Type.BIND_Receive_Refused))
+            event.reply(BindException.BindReceiveException.ReceiveRefusedException())
         }
     }
 
@@ -203,7 +195,7 @@ import kotlin.jvm.optionals.getOrNull
     //默认绑定路径
     @Throws(BindException::class) private fun bindQQ(event: MessageEvent, qq: Long) {
         val bindUser: BindUser
-        var osuUser: OsuUser? = null
+        val osuUser: OsuUser?
 
         //检查是否已经绑定
         val qqBindLite = bindDao.getQQLiteFromQQ(qq).getOrNull()
@@ -213,37 +205,24 @@ import kotlin.jvm.optionals.getOrNull
 
             try {
                 osuUser = userApiService.getOsuUser(bindUser, OsuMode.DEFAULT)
-            } catch (e: WebClientResponseException.Unauthorized) {
-                event.reply(
-                    BindException(
-                        BindException.Type.BIND_Progress_NeedToReBindInfo,
-                        bindUser.userID,
-                        bindUser.username
-                    ).message
-                )
-            }
 
-            if (osuUser != null && osuUser.userID != bindUser.userID) {
-                throw RuntimeException()
-            }
+                if (osuUser.userID != bindUser.userID) {
+                    throw RuntimeException()
+                }
 
-            event.reply(
-                BindException(
-                    BindException.Type.BIND_Progress_BindingRecoverInfo,
-                    bindUser.userID,
-                    bindUser.username
-                ).message
-            )
+                event.reply(BindException.BindConfirmException.NoNeedReBindException(bindUser.userID, bindUser.username))
+            } catch (e: GeneralTipsException) {
+                if (e.message?.contains("403") == true)
+                event.reply(BindException.BindConfirmException.NeedReBindException(bindUser.userID, bindUser.username))
+            }
 
             try {
                 val lock = ASyncMessageUtil.getLock(event)
-                val ev = lock.get() ?: throw BindException(BindException.Type.BIND_Receive_Overtime)
+                val ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTimeException()
                 if (ev.rawMessage.uppercase().contains("OK").not()) {
-                    event.reply(BindException.Type.BIND_Receive_Refused.message)
+                    event.reply(BindException.BindReceiveException.ReceiveRefusedException())
                     return
                 }
-            } catch (e: WebClientResponseException.Unauthorized) {
-                throw e
             } catch (ignored: Exception) { // 如果符合，直接允许绑定
             }
         }
@@ -254,12 +233,9 @@ import kotlin.jvm.optionals.getOrNull
 
     private fun bindUrl(event: MessageEvent, qq: Long) { // 将当前毫秒时间戳作为 key
         if (yumuConfig.bindDomain.contains("http")) {
-            event.reply("""
-                ${yumuConfig.bindDomain}
-                请 ctrl+c 并 ctrl+v 到其他 browser 完成绑定。
-            """.trimIndent())
+            event.reply(BindException.BindResultException.BindUrlException(yumuConfig.bindDomain))
         } else {
-            bindQQAt(event, qq, isFull = false)
+            bindQQAt(event, qq)
         }
     }
 
@@ -272,33 +248,35 @@ import kotlin.jvm.optionals.getOrNull
             val bu = bindDao.getBindUser(uid)
             if (bu != null && bu.isAuthorized) {
                 bindDao.bindQQ(qq, bu)
-                event.reply(BindException.Type.BIND_Response_Success.message)
+                event.reply(BindException.BindResultException.BindSuccessWithModeException(bu.mode))
                 return
             }
         }
 
-        if (bindDao.getQQLiteFromQQ(qq).getOrNull() != null) {
-            throw BindException(BindException.Type.BIND_Response_AlreadyBound)
+        val ql = bindDao.getQQLiteFromQQ(qq).getOrNull()
+
+        if (ql != null) {
+            if (ql.qq == event.sender.id) {
+                throw BindException.BoundException.YouBoundException()
+            } else {
+                throw BindException.BoundException.UserBoundException(name, ql.qq)
+            }
         }
 
-        val ou = try {
-            userApiService.getOsuUser(name)
-        } catch (e: HttpClientErrorException.Forbidden) {
-            throw BindException(BindException.Type.BIND_Player_Banned)
-        } catch (e: WebClientResponseException.Forbidden) {
-            throw BindException(BindException.Type.BIND_Player_Banned)
-        } catch (e: Exception) {
-            throw BindException(BindException.Type.BIND_Player_NotFound)
-        }
+        val ou = userApiService.getOsuUser(name)
 
         val qb = bindDao.getQQLiteFromOsuId(ou.userID).getOrNull()
 
         if (qb != null) {
-            event.reply(BindException(BindException.Type.BIND_Response_AlreadyBoundInfo, qb.qq, name))
+            if (qb.qq == event.sender.id) {
+                throw BindException.BoundException.YouBoundException()
+            } else {
+                throw BindException.BoundException.UserBoundException(name, qb.qq)
+            }
         } else {
             bindDao.bindQQ(qq, BindUser(ou.userID, name))
             bindDao.updateMode(ou.userID, ou.defaultOsuMode)
-            event.reply(BindException(BindException.Type.BIND_Progress_Binding, qq, ou.userID, name).message)
+            event.reply(BindException.BindResultException.BindSuccessException(qq, ou.userID, name))
         }
     }
 

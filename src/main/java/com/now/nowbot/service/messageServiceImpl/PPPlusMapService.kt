@@ -10,7 +10,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.PerformancePlusService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
-import com.now.nowbot.throwable.serviceException.PPPlusException
+import com.now.nowbot.throwable.botException.PPPlusException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD

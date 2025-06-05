@@ -21,9 +21,9 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.messageServiceImpl.*
 import com.now.nowbot.service.osuApiService.*
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.serviceException.DiceException
-import com.now.nowbot.throwable.serviceException.MRAException
-import com.now.nowbot.throwable.serviceException.MapPoolException
+import com.now.nowbot.throwable.botException.DiceException
+import com.now.nowbot.throwable.botException.MRAException
+import com.now.nowbot.throwable.botException.MapPoolException
 import com.now.nowbot.util.DataUtil.parseRange2Limit
 import com.now.nowbot.util.DataUtil.parseRange2Offset
 import com.now.nowbot.util.QQMsgUtil

@@ -7,7 +7,7 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.throwable.serviceException.MiniCardException
+import com.now.nowbot.throwable.botException.MiniCardException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
