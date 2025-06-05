@@ -1,45 +1,55 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.serviceException.BindException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
 import io.ktor.util.collections.*
 import org.springframework.stereotype.Service
-import java.util.regex.Matcher
+import kotlin.jvm.optionals.getOrNull
 
 @Service("GET_ID")
-class GetIDService(private val userApiService: OsuUserApiService) : MessageService<Matcher> {
+class GetIDService(private val userApiService: OsuUserApiService, private val bindDao: BindDao) : MessageService<List<String>> {
 
     @Throws(Throwable::class) override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: DataValue<Matcher>
+        data: DataValue<List<String>>
     ): Boolean {
         val m = Instruction.GET_ID.matcher(messageText)
         if (m.find()) {
-            data.value = m
+
+            val str: String? = m.group("data")
+
+            val names = if (event.isAt) {
+                val b = bindDao.getQQLiteFromQQ(event.target).getOrNull() ?: throw BindException(BindException.Type.BIND_Player_NoBind)
+
+                event.reply(b.osuUser.osuID.toString())
+                return false
+            } else {
+                splitString(str)
+            }
+
+            data.value = names ?: throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
             return true
         } else return false
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: List<String>) {
         if (Permission.isCommonUser(event)) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Group)
         }
 
-        val names: List<String>? = splitString(matcher.group("data"))
-
-        if (names.isNullOrEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
-
         val sb = StringBuilder()
 
-        val actions = names.map {
+        val actions = param.map {
             return@map AsyncMethodExecutor.Supplier<Pair<String, Long>> {
                 return@Supplier try {
                     it to userApiService.getOsuID(it)
@@ -54,7 +64,7 @@ class GetIDService(private val userApiService: OsuUserApiService) : MessageServi
             .filter { it.second > 0L }
             .toMap()
 
-        names.forEach {
+        param.forEach {
             val id = ids[it]
 
             sb.append(id).append(',')

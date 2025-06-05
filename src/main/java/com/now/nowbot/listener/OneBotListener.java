@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.codec.DecodingException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.UnknownHttpStatusCodeException;
@@ -116,6 +117,8 @@ public class OneBotListener {
             log.info(e.getMessage(), ((LogException) e).getThrowable());
         } else if (e instanceof IllegalArgumentException) {
             log.error("正则异常", e);
+        } else if (e instanceof DecodingException) {
+            log.error("JSON 解码异常", e);
         } else if (e instanceof PermissionException) {
             log.error(e.getMessage());
         } else {

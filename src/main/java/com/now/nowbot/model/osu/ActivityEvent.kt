@@ -17,7 +17,7 @@ class ActivityEvent {
         val slug: String,
         val description: String,
         val mode: String?,
-        val instructions: String
+        val instructions: String?
     )
 
     data class EventBeatMap(
