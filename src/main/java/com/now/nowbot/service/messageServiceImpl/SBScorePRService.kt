@@ -46,7 +46,7 @@ class SBScorePRService(
             }
 
         val mode = getMode(matcher).data!!
-        val sb = bindDao.getSBBindFromQQ(event.subject.id, true)
+        val sb = bindDao.getSBBindFromQQ(event.sender.id, true)
 
         val user = userApiService.getUser(sb.userID) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, sb.username)
         val scores = if (isPass) {
