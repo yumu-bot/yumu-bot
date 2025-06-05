@@ -190,7 +190,7 @@ open class LazerScore(
         }
         set(value) {
             field = value
-            this.ruleset = value.modeByte
+            this.ruleset = value.modeValue
         }
 
     @get:JsonProperty("started_at")

@@ -3,19 +3,18 @@ package com.now.nowbot.model.enums
 import org.springframework.lang.Nullable
 import java.util.*
 
-enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: String, @JvmField val modeValue: Short) {
+enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: String, @JvmField val modeValue: Byte) {
     OSU("osu!standard", "osu", 0),
     TAIKO("osu!taiko", "taiko", 1),
     CATCH("osu!catch", "fruits", 2),
     MANIA("osu!mania", "mania", 3),
+    DEFAULT("default", "", -1),
     OSU_RELAX("osu!standard relax", "osu", 4),
     TAIKO_RELAX("osu!taiko relax", "taiko", 5),
     CATCH_RELAX("osu!catch relax", "fruits", 6),
     OSU_AUTOPILOT("osu!standard autopilot", "osu", 8),
-    DEFAULT("default", "", -1);
 
-    val modeByte
-        get() = this.modeValue.toByte()
+    ;
 
     override fun toString(): String {
         return fullName
@@ -108,12 +107,17 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
                 "catch", "c", "fruits", "f", "2", "osu!catch" -> CATCH
                 "mania", "m", "3", "osu!mania" -> MANIA
                 "osu", "o", "0", "osu!" -> OSU
+                "osu relax", "osurelax", "std relax", "stdrelax", "osurx", "osu rx", "4" -> OSU_RELAX
+                "taiko relax", "taikorelax", "taikorx", "taiko rx", "tr", "5" -> TAIKO_RELAX
+                "catch relax", "catchrelax", "catchrx", "catch rx", "cr", "6" -> CATCH_RELAX
+                "osu autopilot", "autopilot", "stdap", "std ap", "osu ap", "osuap", "oa", "8" -> OSU_AUTOPILOT
+
                 else -> DEFAULT
             }
         }
 
-        @JvmStatic fun getMode(@Nullable int: Int?): OsuMode {
-            return when (int) {
+        @JvmStatic fun getMode(@Nullable num: Number?): OsuMode {
+            return when (num?.toInt()) {
                 0 -> OSU
                 1 -> TAIKO
                 2 -> CATCH

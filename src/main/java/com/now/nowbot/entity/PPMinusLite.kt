@@ -88,7 +88,7 @@ class PPMinusLite(
         val mode = user.currentOsuMode
 
         lite.time = System.currentTimeMillis()
-        lite.mode = mode.modeByte
+        lite.mode = mode.modeValue
 
         lite.userID = user.userID
         lite.userPP = user.pp

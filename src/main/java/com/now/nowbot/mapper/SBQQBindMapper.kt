@@ -10,16 +10,16 @@ import org.springframework.transaction.annotation.Transactional
 
 interface SBQQBindMapper: JpaRepository<SBQQBindLite, Long>, JpaSpecificationExecutor<SBQQBindLite> {
 
-    @Query("select qq from SBQQBindLite qq where qq.bindUserLite.userID = :userID")
+    @Query("select qq from SBQQBindLite qb where qb.bindUserLite.userID = :userID")
     fun findByUserID(userID: Long?): SBQQBindLite?
 
     @Query("select count(o) from SBBindUserLite o where o.userID = :userID") fun countByUserID(userID: Long?): Int
 
     @Modifying @Transactional @Query("delete from SBQQBindLite qb where qb.bindUserLite.userID = :userID and qb.qq != :qq")
-    fun deleteOtherBind(userID: Long, qq: Long): Int
+    fun deleteOtherBind(userID: Long, qq: Long)
 
     @Modifying @Transactional @Query("delete from SBQQBindLite qb where qb.qq = :qq")
-    fun deleteBind(qq: Long?)
+    fun unBindQQ(qq: Long?)
     
     @Modifying @Transactional @Query("delete from SBQQBindLite qb where qb.bindUserLite.userID = :userID")
     fun unBind(userID: Long)

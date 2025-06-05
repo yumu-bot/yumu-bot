@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -81,13 +82,13 @@ public class BindDao {
     public static BindUser fromLite(OsuBindUserLite buLite) {
         if (buLite == null) return null;
         var bu = new BindUser();
-        bu.baseID = buLite.getID();
+        bu.baseID = buLite.getId();
         bu.userID = buLite.getOsuID();
         bu.username = buLite.getOsuName();
         bu.accessToken = buLite.getAccessToken();
-        bu.setRefreshToken(buLite.getRefreshToken());
+        bu.refreshToken = buLite.getRefreshToken();
         bu.time = buLite.getTime();
-        bu.setMode(buLite.getMainMode());
+        bu.setMode(buLite.getMode());
         return bu;
     }
 
@@ -157,10 +158,10 @@ public class BindDao {
 
         Optional<OsuBindUserLite> liteData;
         try {
-            liteData = bindUserMapper.getByOsuId(userID);
+            liteData = bindUserMapper.getByOsuID(userID);
         } catch (IncorrectResultSizeDataAccessException e) {
-            bindUserMapper.deleteOldByOsuId(userID);
-            liteData = bindUserMapper.getByOsuId(userID);
+            bindUserMapper.deleteOutdatedByOsuID(userID);
+            liteData = bindUserMapper.getByOsuID(userID);
         }
 
         if (liteData.isEmpty()) throw new BindException(BindException.Type.BIND_Player_NoBind);
@@ -169,11 +170,11 @@ public class BindDao {
     }
 
     public List<OsuBindUserLite> getAllBindUser(Collection<Long> osuId) {
-        return bindUserMapper.getAllByOsuId(osuId);
+        return bindUserMapper.getAllByOsuID(osuId);
     }
 
     public Optional<QQBindLite> getQQLiteFromOsuId(Long osuId) {
-        return bindQQMapper.findByOsuId(osuId);
+        return bindQQMapper.findByOsuID(osuId);
     }
 
     public Optional<QQBindLite> getQQLiteFromQQ(Long qq) {
@@ -193,13 +194,13 @@ public class BindDao {
     public QQBindLite bindQQ(Long qq, OsuBindUserLite user) {
         OsuBindUserLite osuBind = user;
         if (user.getRefreshToken() != null) {
-            var count = bindQQMapper.countByOsuId(user.getOsuID());
+            var count = bindQQMapper.countByOsuID(user.getOsuID());
             if (count > 1) {
-                bindUserMapper.deleteAllByOsuId(user.getOsuID());
+                bindUserMapper.deleteAllByOsuID(user.getOsuID());
             }
             osuBind = bindUserMapper.checkSave(osuBind);
         } else {
-            Optional<OsuBindUserLite> buLiteOpt = bindUserMapper.getFirstByOsuId(user.getOsuID());
+            Optional<OsuBindUserLite> buLiteOpt = bindUserMapper.getFirstByOsuID(user.getOsuID());
             if (buLiteOpt.isPresent()) {
                 osuBind = buLiteOpt.get();
             } else {
@@ -228,24 +229,28 @@ public class BindDao {
     public BindUser getBindUser(String name) {
         var id = getOsuID(name);
         if (id == null) return null;
-        var data = bindUserMapper.getByOsuId(id);
+        var data = bindUserMapper.getByOsuID(id);
         return data.map(BindDao::fromLite).orElse(null);
     }
 
+    @Nullable
     public BindUser getBindUser(Long id) {
         if (id == null) return null;
-        var data = bindUserMapper.getByOsuId(id);
+        var data = bindUserMapper.getByOsuID(id);
         return data.map(BindDao::fromLite).orElse(null);
     }
 
+    @Nullable
     public SBQQBindLite getSBQQLiteFromUserID(Long userID) {
         return sbQQBindMapper.findByUserID(userID);
     }
 
-    public Optional<SBQQBindLite> getSBQQLiteFromQQ(Long qq) {
-        return sbQQBindMapper.findById(qq);
+    @Nullable
+    public SBQQBindLite getSBQQLiteFromQQ(Long qq) {
+        return sbQQBindMapper.findById(qq).orElse(null);
     }
 
+    @NonNull
     public SBBindUser getSBBindUserFromUserID(Long userID) throws BindException {
         if (Objects.isNull(userID)) throw new BindException(BindException.Type.BIND_Receive_NoName);
 
@@ -262,6 +267,7 @@ public class BindDao {
         return liteData.toSBBindUser();
     }
 
+    @NonNull
     public SBBindUser getSBBindFromQQ(Long qq, boolean isMyself) throws BindException {
         if (qq < 0) {
             try {
@@ -282,6 +288,7 @@ public class BindDao {
         return liteData.get().getBindUser();
     }
 
+    @Nullable
     public SBBindUser saveBind(SBBindUser user) {
         if (user == null) {
             return null;
@@ -297,7 +304,7 @@ public class BindDao {
         if (data == null) {
             return bindSBQQ(qq, user.toSBBindUserLite());
         } else {
-            var data2 = new SBBindUser(null, data.getUserID(), data.getUsername(), data.getMainMode());
+            var data2 = new SBBindUser(null, data.getUserID(), data.getUsername(), data.getMode());
 
             return bindSBQQ(qq, data2.toSBBindUserLite());
         }
@@ -325,12 +332,12 @@ public class BindDao {
     }
 
     public void updateSBMode(Long userID, OsuMode mode) {
-        sbBindUserMapper.updateMode(userID, mode);
+        sbBindUserMapper.updateMode(userID, mode.modeValue);
     }
 
     public boolean unBindSBQQ(SBBindUser user) {
         try {
-            bindQQMapper.unBind(user.getUserID());
+            sbQQBindMapper.unBind(user.getUserID());
             return true;
         } catch (Exception e) {
             log.error("e: ", e);
@@ -339,13 +346,13 @@ public class BindDao {
     }
 
     public QQBindLite bindQQ(Long qq, BindUser user) {
-        var data = bindUserMapper.getByOsuId(user.userID);
+        var data = bindUserMapper.getByOsuID(user.userID);
         if (data.isEmpty()) {
             return bindQQ(qq, fromModel(user));
         } else {
             var userLite = data.get();
             userLite.setAccessToken(user.accessToken);
-            userLite.setRefreshToken(user.getRefreshToken());
+            userLite.setRefreshToken(user.refreshToken);
             userLite.setTime(user.time);
             userLite.setOsuName(user.username);
             return bindQQ(qq, userLite);
@@ -360,7 +367,7 @@ public class BindDao {
     }
 
     public void updateMode(Long uid, OsuMode mode) {
-        bindUserMapper.updateMode(uid, mode);
+        bindUserMapper.updateMode(uid, mode.modeValue);
     }
 
     public boolean unBindQQ(BindUser user) {
@@ -383,7 +390,7 @@ public class BindDao {
     }
 
     public Long getQQ(Long osuID) {
-        var qqBind = bindQQMapper.findByOsuId(osuID);
+        var qqBind = bindQQMapper.findByOsuID(osuID);
 
         if (qqBind.isPresent()) {
             return qqBind.get().getQq();
@@ -399,18 +406,18 @@ public class BindDao {
 
     @Nullable
     public QQBindLite getQQBindInfo(Long osuID) {
-        var qqBind = bindQQMapper.findByOsuId(osuID);
+        var qqBind = bindQQMapper.findByOsuID(osuID);
 
         return qqBind.orElse(null);
     }
 
 
     public void removeBind(long uid) {
-        bindUserMapper.deleteAllByOsuId(uid);
+        bindUserMapper.deleteAllByOsuID(uid);
     }
 
     public void backupBind(long uid) {
-        bindUserMapper.backupBindByOsuId(uid);
+        bindUserMapper.backupBindByOsuID(uid);
     }
 
     public Long getOsuID(String name) {
@@ -473,10 +480,10 @@ public class BindDao {
         var user = bindUserMapper.getOneOldBindUser(now);
         if (user.isPresent()) {
             var u = user.get();
-            if (UPDATE_USERS.remove(u.getID())) return;
+            if (UPDATE_USERS.remove(u.getId())) return;
 
             if (ObjectUtils.isEmpty(u.getRefreshToken())) {
-                bindUserMapper.backupBindByOsuId(u.getOsuID());
+                bindUserMapper.backupBindByOsuID(u.getOsuID());
                 return;
             }
 
@@ -488,14 +495,14 @@ public class BindDao {
         user = bindUserMapper.getOneOldBindUserHasWrong(now);
         if (user.isPresent()) {
             var u = user.get();
-            if (UPDATE_USERS.remove(u.getID())) return;
+            if (UPDATE_USERS.remove(u.getId())) return;
             if (ObjectUtils.isEmpty(u.getRefreshToken())) {
-                bindUserMapper.backupBindByOsuId(u.getOsuID());
+                bindUserMapper.backupBindByOsuID(u.getOsuID());
                 return;
             }
             // 出错超 5 次默认无法再次更新了
             if (u.getUpdateCount() > 5) {
-                bindUserMapper.backupBindByOsuId(u.getID());
+                bindUserMapper.backupBindByOsuID(u.getId());
             }
 
             // log.info("更新用户: {}", u.getOsuName());
@@ -538,27 +545,27 @@ public class BindDao {
         while (!users.isEmpty()) {
             var u = users.removeLast();
 
-            if (UPDATE_USERS.remove(u.getID())) continue;
+            if (UPDATE_USERS.remove(u.getId())) continue;
             if (ObjectUtils.isEmpty(u.getRefreshToken())) {
-                bindUserMapper.backupBindByOsuId(u.getOsuID());
+                bindUserMapper.backupBindByOsuID(u.getOsuID());
                 continue;
             }
             // 出错超 5 次默认无法再次更新了
             if (u.getUpdateCount() > 5) {
                 // 回退到用户名绑定
-                bindUserMapper.backupBindByOsuId(u.getID());
+                bindUserMapper.backupBindByOsuID(u.getId());
             }
             // log.info("更新用户 {}", u.getOsuName());
             try {
                 refreshOldUserToken(u, osuGetService);
-                if (u.getUpdateCount() > 0) bindUserMapper.clearUpdateCount(u.getID());
+                if (u.getUpdateCount() > 0) bindUserMapper.clearUpdateCount(u.getId());
                 errCount = 0;
             } catch (WebClientResponseException.Unauthorized e) {
                 // 绑定被取消或者过期, 不再尝试
                 log.info("绑定 {} 失败：取消绑定", u.getOsuName());
-                bindUserMapper.backupBindByOsuId(u.getID());
+                bindUserMapper.backupBindByOsuID(u.getId());
             } catch (Exception e) {
-                bindUserMapper.addUpdateCount(u.getID());
+                bindUserMapper.addUpdateCount(u.getId());
                 log.error("绑定 {} 第 {} 次失败：出现异常: ", u.getOsuName(), errCount, e);
                 errCount++;
             }
@@ -583,7 +590,7 @@ public class BindDao {
 
                 if (m != null && m.contains("401")) {
                     log.info("刷新用户令牌：更新 {} 令牌失败, token 失效, 绑定取消", u.getOsuName());
-                    bindUserMapper.backupBindByOsuId(u.getOsuID());
+                    bindUserMapper.backupBindByOsuID(u.getOsuID());
                     return;
                 } else {
                     badRequest++;

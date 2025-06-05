@@ -13,23 +13,22 @@ import java.util.Optional;
 
 public interface BindQQMapper extends JpaRepository<QQBindLite, Long>, JpaSpecificationExecutor<QQBindLite> {
 
-    @Query("select qq from QQBindLite qq where qq.osuUser.osuId = :osuId")
-    Optional<QQBindLite> findByOsuId(Long osuId);
+    @Query("select qq from QQBindLite qb where qb.osuUser.osuID = :osuID")
+    Optional<QQBindLite> findByOsuID(Long osuID);
 
-    @Query("select count(o) from OsuBindUserLite o where o.osuId = :osuId")
-    int countByOsuId(Long osuId);
+    @Query("select count(o) from OsuBindUserLite o where o.osuID = :osuID")
+    int countByOsuID(Long osuID);
 
     @Modifying
     @Transactional
-    @Query("delete from QQBindLite qq where qq.osuUser.osuId=:osuId and qq.qq != :saveQQ")
-    int deleteOtherBind(Long osuId, Long saveQQ);
+    @Query("delete from QQBindLite qb where qb.osuUser.osuID = :osuID and qb.qq != :qq")
+    int deleteOtherBind(Long osuID, Long qq);
 
-    void deleteByQq(Long qq);
     @Modifying
     @Transactional
-    @Query("delete from QQBindLite qq where qq.osuUser.osuId=:osuId")
-    void unBind(Long osuId);
+    @Query("delete from QQBindLite qb where qb.osuUser.osuID = :osuID")
+    void unBind(Long osuID);
 
-    @Query("select qq.qq as qid, qq.osuUser.osuId as uid, qq.osuUser.osuName as name from QQBindLite qq where qq.qq in (:qq)")
+    @Query("select qb.qq as qid, qb.osuUser.osuID as uid, qb.osuUser.osuName as name from QQBindLite qb where qb.qq in (:qq)")
     List<QQBindLite.QQUser> findAllUserByQQ(Collection<Long> qq);
 }

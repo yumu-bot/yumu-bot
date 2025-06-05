@@ -25,7 +25,7 @@ interface LazerScoreRepository : JpaRepository<LazerScoreLite, Long> {
         and s.mode = :mode
         and s.beatmap_id in (select bid from osu_ranked_beatmap_id)
         """, nativeQuery = true)
-    fun getUserRankedScore(id: Long, mode:Short, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite>
+    fun getUserRankedScore(id: Long, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite>
 }
 
 interface LazerScoreStatisticRepository : JpaRepository<ScoreStatisticLite, ScoreStatisticLite.ScoreStatisticKey> {

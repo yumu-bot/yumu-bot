@@ -14,6 +14,7 @@ const val CHAR_COMMAS: Char = ','
 const val CHAR_GROUP_START: Char = '('
 const val CHAR_GROUP_END: Char = ')'
 const val CHAR_SLASH: Char = '/'
+const val CHAR_BACK_SLASH: Char = '\\'
 
 const val LEVEL_MAYBE: Char = '?'
 const val LEVEL_ANY: Char = '*'
@@ -162,7 +163,7 @@ val REG_USERNAME: String = "[0-9a-zA-Z\\[\\]\\-\\s_]"
 val REG_MOD: String = "([1-9a-zA-Z][a-zA-Z])"
 
 @Language("RegExp")
-val REG_MODE: String = "(osu|taiko|ctb|fruits?|mania|std|0|1|2|3|o|m|c|f|t)"
+val REG_MODE: String = "((osu|taiko|ctb|fruits?|mania|std)\\s*(relax|rx|autopilot|ap)|[01234568]|o|m|c|f|t|[ocf]r|oa)"
 
 @Language("RegExp")
 val REG_DIFF: String = "([0-4baemr]|bsc|adv|exp|mas|rem|rms|ba|ad|ex|ma|re|basic|advanced|expert|master|re[:：]?\\s*master)"

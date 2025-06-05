@@ -1,7 +1,6 @@
 package com.now.nowbot.mapper;
 
 import com.now.nowbot.entity.OsuBindUserLite;
-import com.now.nowbot.model.enums.OsuMode;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -15,15 +14,15 @@ import java.util.Optional;
 
 public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, JpaSpecificationExecutor<OsuBindUserLite> {
 
-    @Query("select u from OsuBindUserLite u where u.osuId = :osuId order by u.id limit 1")
-    Optional<OsuBindUserLite> getByOsuId(Long osuId);
+    @Query("select u from OsuBindUserLite u where u.osuID = :osuID order by u.id limit 1")
+    Optional<OsuBindUserLite> getByOsuID(Long osuID);
 
     @Query("""
         select u from OsuBindUserLite u
-        where u.osuId = :osuId and u.refreshToken is not null
+        where u.osuID = :osuID and u.refreshToken is not null
         order by u.id desc limit 1
         """)
-    Optional<OsuBindUserLite> getFirstByOsuId(Long osuId);
+    Optional<OsuBindUserLite> getFirstByOsuID(Long osuID);
 
     Optional<OsuBindUserLite> getByOsuNameLike(String osuName);
 
@@ -31,34 +30,33 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
     @Transactional
     @Query(value = """
             with del as (
-                select id, row_number() over (partition by osu_id=:uid order by id desc ) as row_num
+                select id, row_number() over (partition by osu_id=:osuID order by id desc ) as row_num
                 from osu_bind_user
-                where osu_id=:uid
+                where osu_id=:osuID
             )
             delete from osu_bind_user using del where osu_bind_user.id = del.id and del.row_num >1;
             """, nativeQuery = true)
-    void deleteOldByOsuId(Long uid);
+    void deleteOutdatedByOsuID(Long osuID);
 
     @Modifying
     @Transactional
-    @Query("update OsuBindUserLite o set o.accessToken = :accessToken,o.refreshToken = :refreshToken, o.time = :time where o.osuId=:uid")
-    void updateToken(Long uid, String accessToken, String refreshToken, Long time);
+    @Query("update OsuBindUserLite o set o.accessToken = :accessToken,o.refreshToken = :refreshToken, o.time = :time where o.osuID=:osuID")
+    void updateToken(Long osuID, String accessToken, String refreshToken, Long time);
 
     @Modifying
     @Transactional
-    @Query("update OsuBindUserLite o set o.mainMode = :mode where o.osuId = :uid ")
-    void updateMode(Long uid, OsuMode mode);
-
-
-    @Modifying
-    @Transactional
-    @Query("delete OsuBindUserLite o where o.osuId = :uid ")
-    void deleteByOsuId(Long uid);
+    @Query("update OsuBindUserLite o set o.modeValue = :modeValue where o.osuID = :osuID ")
+    void updateMode(Long osuID, Byte modeValue);
 
     @Modifying
     @Transactional
-    @Query("update OsuBindUserLite o set o.accessToken = null , o.refreshToken = null , o.time = null, o.updateCount = 0 where o.osuId = :uid ")
-    void backupBindByOsuId(Long uid);
+    @Query("delete OsuBindUserLite o where o.osuID = :osuID ")
+    void deleteByOsuID(Long osuID);
+
+    @Modifying
+    @Transactional
+    @Query("update OsuBindUserLite o set o.accessToken = null , o.refreshToken = null , o.time = null, o.updateCount = 0 where o.osuID = :osuID ")
+    void backupBindByOsuID(Long osuID);
 
     @Modifying
     @Transactional
@@ -71,18 +69,18 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
     @Query(value = "update osu_bind_user set update_count = 0 where id=:id", nativeQuery = true)
     void clearUpdateCount(Long id);
 
-    @Query("select u from OsuBindUserLite u where u.osuId in (:uid)")
-    List<OsuBindUserLite> getAllByOsuId(Collection<Long> uid);
+    @Query("select u from OsuBindUserLite u where u.osuID in (:osuID)")
+    List<OsuBindUserLite> getAllByOsuID(Collection<Long> osuID);
 
     @Modifying
     @Transactional
-    @Query("delete QQBindLite q where q.osuUser.osuId = :uid ")
-    void deleteQQByOsuId(Long uid);
+    @Query("delete QQBindLite q where q.osuUser.osuID = :osuID ")
+    void deleteQQByOsuID(Long osuID);
 
     @Modifying
     @Transactional
-    @Query("delete DiscordBindLite d where d.osuUser.osuId = :uid ")
-    void deleteDCByOsuId(Long uid);
+    @Query("delete DiscordBindLite d where d.osuUser.osuID = :osuID ")
+    void deleteDCByOsuID(Long osuID);
 
     @Query("select u from OsuBindUserLite u where u.time > 5000 and u.time < :now and u.updateCount = 0 order by u.time limit 50")
     List<OsuBindUserLite> getOldBindUser(Long now);
@@ -97,23 +95,23 @@ public interface BindUserMapper extends JpaRepository<OsuBindUserLite, Long>, Jp
     Optional<OsuBindUserLite> getOneOldBindUserHasWrong(Long now);
 
     @Transactional
-    default void deleteAllByOsuId(Long uid){
-        deleteQQByOsuId(uid);
-        deleteDCByOsuId(uid);
-        deleteByOsuId(uid);
+    default void deleteAllByOsuID(Long osuID){
+        deleteQQByOsuID(osuID);
+        deleteDCByOsuID(osuID);
+        deleteByOsuID(osuID);
     }
 
-    int countAllByOsuId(long osuId);
+    int countAllByOsuID(long osuID);
 
     @Transactional
     default <S extends OsuBindUserLite> S checkSave(S entity) {
-        if (entity.getID() == null && countAllByOsuId(entity.getOsuID()) > 0) {
-            deleteOldByOsuId(entity.getOsuID());
+        if (entity.getId() == null && countAllByOsuID(entity.getOsuID()) > 0) {
+            deleteOutdatedByOsuID(entity.getOsuID());
         }
 
         return save(entity);
     }
 
-    @Query("select u.osuId from OsuBindUserLite u order by u.osuId limit 50 offset :offset")
+    @Query("select u.osuID from OsuBindUserLite u order by u.osuID limit 50 offset :offset")
     List<Long> getAllBindUserIdLimit50(int offset);
 }

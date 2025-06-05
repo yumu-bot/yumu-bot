@@ -23,6 +23,11 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
     }),
 
+    SB_SET_MODE(CommandPatternBuilder.create {
+        appendOfficialSBCommandsIgnoreAll("mode", "mo")
+        appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
+    }),
+
     SCORE_PASS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("p")
         appendModeQQUIDNameRange()

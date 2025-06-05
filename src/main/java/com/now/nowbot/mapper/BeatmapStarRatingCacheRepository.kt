@@ -19,5 +19,5 @@ interface BeatmapStarRatingCacheRepository : JpaRepository<BeatmapStarRatingCach
         ON CONFLICT (id, mode, mods)
         DO UPDATE SET star = :star;
         """, nativeQuery = true)
-    fun saveAndUpdate(id: Long, mode: Short, mods: Int, star: Double)
+    fun saveAndUpdate(id: Long, mode: Byte, mods: Int, star: Double)
 }

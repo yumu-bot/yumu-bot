@@ -24,7 +24,7 @@ class BindUser {
     /**
      * 刷新令牌
      */
-    var refreshToken: String? = null
+    @JvmField var refreshToken: String? = null
 
     /**
      * 过期时间戳

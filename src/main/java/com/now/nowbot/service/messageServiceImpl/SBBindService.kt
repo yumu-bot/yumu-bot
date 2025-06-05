@@ -15,7 +15,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import org.springframework.stereotype.Service
-import kotlin.jvm.optionals.getOrNull
 
 @Service("SB_BIND")
 class SBBindService(
@@ -94,7 +93,7 @@ class SBBindService(
     private fun bindQQ(event: MessageEvent, param: BindParam) {
         val user = getSBUser(event, param)
 
-        val qb: SBQQBindLite? = bindDao.getSBQQLiteFromUserID(user.userID)
+        val qb: SBQQBindLite? = bindDao.getSBQQLiteFromQQ(param.qq)
 
         if (qb == null) {
             bindDao.bindSBQQ(param.qq, SBBindUser(user))
@@ -126,7 +125,7 @@ class SBBindService(
     }
 
     private fun unbindQQ(qq: Long) {
-        val bind = bindDao.getSBQQLiteFromQQ(qq).getOrNull() ?: throw BindException(BindException.Type.BIND_Player_NoBind)
+        val bind = bindDao.getSBQQLiteFromQQ(qq) ?: throw BindException(BindException.Type.BIND_Player_NoBind)
 
         if (bindDao.unBindSBQQ(bind.bindUser)) {
             throw BindException(BindException.Type.BIND_UnBind_Successes, qq)
@@ -141,6 +140,8 @@ class SBBindService(
         val id: Long?
 
         if (param.name.isNullOrEmpty() && param.id == null) {
+            event.reply(BindException(BindException.Type.BIND_Receive_NoName))
+
             val lock = ASyncMessageUtil.getLock(event)
             val ev: MessageEvent = lock.get() ?: throw BindException(BindException.Type.BIND_Receive_Overtime)
 

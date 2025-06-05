@@ -22,7 +22,7 @@ class BeatmapStarRatingCache(
 
     var star: Double
 ) {
-    constructor(bid:Long, mode: OsuMode, mods: Int, star:Double): this(bid, mode.modeValue, mods, star)
+    constructor(bid:Long, mode: OsuMode, mods: Int, star:Double): this(bid, mode.modeValue.toShort(), mods, star)
     data class BeatmapStarRatingKey(
         var id: Long,
         var mode: Short,

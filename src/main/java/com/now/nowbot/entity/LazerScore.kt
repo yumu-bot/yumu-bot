@@ -74,7 +74,7 @@ class LazerScoreLite(
         score.classicScore.toInt(),
         score.legacyScore?.toInt() ?: 0,
         score.score.toInt(),
-        score.mode.modeValue,
+        score.mode.modeValue.toShort(),
         Rank.fromString(score.lazerRank)
     )
 

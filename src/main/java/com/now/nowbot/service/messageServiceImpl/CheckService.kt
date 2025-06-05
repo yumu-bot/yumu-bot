@@ -63,7 +63,7 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
 
         val qb = bindDao.getQQBindInfo(param)
         val qq = if (qb != null && qb.qq!! > 0L) qb.qq.toString() else "未知"
-        val baseID = qb?.osuUser?.getID() ?: "未知"
+        val baseID = qb?.osuUser?.osuID ?: "未知"
         val join = qb?.osuUser?.joinDate?.format(formatter) ?: "未知"
 
         val result = """

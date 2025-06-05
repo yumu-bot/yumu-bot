@@ -101,6 +101,12 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendSpace()
     }
 
+    fun appendOfficialSBCommandsIgnoreAll(@Language("RegExp") vararg commands: String) {
+        __appendOfficialSBCommands(*commands)
+        appendIgnore()
+        appendSpace()
+    }
+
     fun appendOfficialCommandsIgnore(@Language("RegExp") ignore: String?, @Language("RegExp") vararg commands: String) {
         __appendOfficialCommands(*commands)
         appendIgnore(ignore)
@@ -110,6 +116,15 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     private fun __appendOfficialCommands(@Language("RegExp") vararg commands: String) {
         appendGroup(EXIST) {
             append(CHAR_SLASH)
+            appendSpace()
+            appendGroup(MAYBE, "ym")
+            appendGroup(*commands)
+        }
+    }
+
+    private fun __appendOfficialSBCommands(@Language("RegExp") vararg commands: String) {
+        appendGroup(EXIST) {
+            append(CHAR_BACK_SLASH)
             appendSpace()
             appendGroup(MAYBE, "ym")
             appendGroup(*commands)

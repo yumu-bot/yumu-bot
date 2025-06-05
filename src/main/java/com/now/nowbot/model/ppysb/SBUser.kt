@@ -72,7 +72,7 @@ data class SBUser(
                 ))
             }
 
-            val bt = sb.statistics.firstOrNull { it.modeByte == currentOsuMode.modeByte } ?: SBStatistics()
+            val bt = sb.statistics.firstOrNull { it.modeByte == currentOsuMode.modeValue } ?: SBStatistics()
 
             pp = bt.pp.toDouble()
 

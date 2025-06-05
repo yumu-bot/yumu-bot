@@ -24,12 +24,24 @@ data class SBBindUserLite(
     @Column(name = "join_date")
     var joinDate: OffsetDateTime = OffsetDateTime.now(),
 
+    @Transient
+    private var currentOsuMode: OsuMode? = null
+) {
+
+    @get:Transient
+    val mode: OsuMode
+        get() = currentOsuMode ?: OsuMode.getMode(modeValue.toInt())
+
     //主模式
     @Column(name = "main_mode")
-    var mainMode: OsuMode = OsuMode.DEFAULT
+    private var modeValue: Byte = -1
+        get() = currentOsuMode?.modeValue ?: field
+        set(value) {
+            field = value
+            currentOsuMode = OsuMode.getMode(value.toInt())
+        }
 
-) {
     fun toSBBindUser(): SBBindUser {
-        return SBBindUser(this.id, this.userID, this.username, this.mainMode, this.time, this.joinDate)
+        return SBBindUser(this.id, this.userID, this.username, this.mode, this.time, this.joinDate)
     }
 }

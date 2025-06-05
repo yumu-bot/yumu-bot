@@ -106,6 +106,11 @@ enum class Instruction(val pattern: Pattern) {
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
     }),
 
+    SB_SET_MODE(CommandPatternBuilder.create {
+        appendSBCommandsIgnoreAll("setmode", "mode", "sm", "mo")
+        appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
+    }),
+
     SET_GROUP_MODE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(set)?group\\s*mode", "gm")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)

@@ -12,6 +12,9 @@ import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.serviceException.BindException
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.command.FLAG_MODE
 import org.springframework.stereotype.Service
 
 @Service("SB_SET_MODE")
@@ -21,15 +24,11 @@ class SBSetModeService (
 ): MessageService<OsuMode>, TencentMessageService<OsuMode> {
 
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<OsuMode>): Boolean {
-        return false
-        /*
-        val m = Instruction.SET_MODE.matcher(messageText)
+        val m = Instruction.SB_SET_MODE.matcher(messageText)
         if (m.find()) {
             data.value = OsuMode.getMode(m.group(FLAG_MODE))
             return true
         } else return false
-
-         */
     }
 
     @Throws(Throwable::class)
@@ -39,23 +38,21 @@ class SBSetModeService (
     }
 
     override fun accept(event: MessageEvent, messageText: String): OsuMode? {
-        /*
-        val m = OfficialInstruction.SET_MODE.matcher(messageText)
+        val m = OfficialInstruction.SB_SET_MODE.matcher(messageText)
         if (m.find()) return OsuMode.getMode(m.group(FLAG_MODE))
 
-         */
         return null
     }
 
     @Throws(Throwable::class)
     override fun reply(event: MessageEvent, param: OsuMode): MessageChain? {
         val user = try {
-            bindDao.getSBBindUserFromUserID(-event.sender.id)
+            bindDao.getSBBindFromQQ(-event.sender.id, true)
         } catch (e: BindException) {
             val sbUser = userApiService.getUser(-event.sender.id) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
             val bindUser = SBBindUser(sbUser)
 
-            bindDao.saveBind(bindUser)
+            bindDao.saveBind(bindUser)!!
         }
 
         return getReply(param, event, user)

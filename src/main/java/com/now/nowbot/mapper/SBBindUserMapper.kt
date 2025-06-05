@@ -1,7 +1,6 @@
 package com.now.nowbot.mapper
 
 import com.now.nowbot.entity.SBBindUserLite
-import com.now.nowbot.model.enums.OsuMode
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Modifying
@@ -20,8 +19,8 @@ interface SBBindUserMapper: JpaRepository<SBBindUserLite, Long>, JpaSpecificatio
         """
     ) fun getFirstByUserID(userID: Long?): SBBindUserLite?
 
-    @Modifying @Transactional @Query("update SBBindUserLite u set u.mainMode = :mode where u.userID = :userID ")
-    fun updateMode(userID: Long, mode: OsuMode)
+    @Modifying @Transactional @Query("update SBBindUserLite u set u.modeValue = :modeValue where u.userID = :userID ")
+    fun updateMode(userID: Long, modeValue: Byte)
 
     @Modifying @Transactional @Query("delete from SBBindUserLite u where u.userID = :userID ")
     fun deleteUser(userID: Long)
