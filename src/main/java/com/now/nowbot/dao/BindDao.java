@@ -304,26 +304,28 @@ public class BindDao {
         if (data == null) {
             return bindSBQQ(qq, user.toSBBindUserLite());
         } else {
-            var data2 = new SBBindUser(null, data.getUserID(), data.getUsername(), data.getMode());
+            data.setUserID(user.getUserID());
+            data.setUsername(user.getUsername());
+            data.setTime(user.getTime());
 
-            return bindSBQQ(qq, data2.toSBBindUserLite());
+            return bindSBQQ(qq, data);
         }
     }
 
-    public SBQQBindLite bindSBQQ(Long qq, SBBindUserLite user) {
-        var sbLite = sbBindUserMapper.getFirstByUserID(user.getUserID());
+    public SBQQBindLite bindSBQQ(Long qq, SBBindUserLite sbBind) {
+        var sbLite = sbBindUserMapper.getFirstByUserID(sbBind.getUserID());
 
         SBBindUserLite bind;
 
         if (sbLite == null) {
             // 就是 checkSave
-            if (user.getId() == null && sbBindUserMapper.countAllByUserID(user.getUserID()) > 0) {
-                sbBindUserMapper.deleteOutdatedBind(user.getUserID());
+            if (sbBind.getId() == null && sbBindUserMapper.countAllByUserID(sbBind.getUserID()) > 0) {
+                sbBindUserMapper.deleteOutdatedBind(sbBind.getUserID());
             }
 
-            bind = sbBindUserMapper.save(user);
+            bind = sbBindUserMapper.save(sbBind);
         } else {
-            bind = user;
+            bind = sbBind;
         }
 
         var qqBind = new SBQQBindLite(qq, bind);

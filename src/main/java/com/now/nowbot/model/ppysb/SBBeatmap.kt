@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.Beatmapset
 
 data class SBBeatmap(
     @JsonProperty("md5") val md5: String,
@@ -16,7 +18,7 @@ data class SBBeatmap(
 
     @JsonProperty("title") val title: String,
 
-    @JsonProperty("version") val version: String,
+    @JsonProperty("version") val difficultyName: String,
 
     @JsonProperty("last_update") val lastUpdated: String,
 
@@ -65,4 +67,40 @@ data class SBBeatmap(
             3 -> MANIA
             else -> DEFAULT
         }
+
+    fun toBeatmapset(): Beatmapset {
+        val sb = this
+
+        return Beatmapset().apply {
+            artist = sb.artist
+            title = sb.title
+            beatmapsetID = sb.beatmapID
+        }
+    }
+
+    fun toBeatmap(): Beatmap {
+        val sb = this
+
+        return Beatmap().apply {
+            md5 = sb.md5
+            beatmapID = sb.beatmapID
+            beatmapsetID = sb.beatmapsetID
+
+            difficultyName = sb.difficultyName
+            lastUpdated = sb.lastUpdated
+            totalLength = sb.totalLength
+            hitLength = sb.totalLength // TODO 这里的数据不正确
+            maxCombo = sb.maxCombo
+            status = sb.status
+            playCount = sb.playCount.toInt()
+            passCount = sb.passCount.toInt()
+            mode = sb.mode
+            BPM = sb.bpm.toFloat()
+            CS = sb.cs
+            AR = sb.ar
+            OD = sb.od
+            HP = sb.hp
+            starRating = sb.starRating
+        }
+    }
 }

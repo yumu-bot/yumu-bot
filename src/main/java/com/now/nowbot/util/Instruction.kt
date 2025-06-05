@@ -142,6 +142,11 @@ enum class Instruction(val pattern: Pattern) {
         appendRange()
     }),
 
+    SB_SCORE_PR(CommandPatternBuilder.create {
+        appendSBCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))(?<s>s)?")
+        appendModeQQUIDNameRange()
+    }),
+
     PR_CARD(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(?<pass>(passcard|pc))", "(?<recent>(recentcard|rc))")
         appendModeQQUIDNameRange()

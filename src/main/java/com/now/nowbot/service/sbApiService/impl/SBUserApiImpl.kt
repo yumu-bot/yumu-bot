@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class UserApiServiceImpl(private val base: SBBaseService): SBUserApiService {
+class SBUserApiImpl(private val base: SBBaseService): SBUserApiService {
     override fun getUserID(username: String): Long? {
         data class Result(
             @JsonProperty("id")

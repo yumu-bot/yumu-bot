@@ -9,7 +9,9 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerStatistics
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatterBuilder
 
 data class SBScore(
@@ -53,7 +55,7 @@ data class SBScore(
 
     @set:JsonProperty("mode") @get:JsonIgnoreProperties var modeByte: Byte,
 
-    @set:JsonProperty("play_time") @get:JsonIgnoreProperties var endedTime: OffsetDateTime,
+    @JsonProperty("play_time") var endedTimeString: String,
 
     @JsonProperty("time_elapsed") val timeElapsed: Long,
 
@@ -100,7 +102,7 @@ data class SBScore(
     ) {
 
     @get:JsonProperty("mods") val mods: List<LazerMod>
-        get() = LazerMod.getModsList(OsuMod.getModsList(modInt).map { it.acronym })
+        get() = LazerMod.getModsList(OsuMod.getModsList(modInt).map { it.acronym }.filter { it != "NK" && it != "FM" && it != "IM" })
 
     @get:JsonProperty("mode") val mode: OsuMode
         get() = when(modeByte.toInt()) {
@@ -154,6 +156,31 @@ data class SBScore(
             else -> LazerStatistics()
         }
 
+    /**
+     * 这个是用于成绩显示的，部分值有差错
+     */
+    @get:JsonProperty("maximum_statistics") val maximumStatistics: LazerStatistics
+        get() = when(mode) {
+            OSU, OSU_RELAX, OSU_AUTOPILOT -> LazerStatistics(
+                great = count300 + count100 + count50 + countMiss,
+            )
+            TAIKO, TAIKO_RELAX -> LazerStatistics(
+                great = count300 + count100 + countMiss,
+            )
+            /*
+            这里的 great 实际上是大果、中果的和
+
+             */
+            CATCH, CATCH_RELAX -> LazerStatistics(
+                great = count300 + count100 + countMiss,
+                smallTickHit = count50 + countKatu,
+            )
+            MANIA -> LazerStatistics(
+                perfect = countGeki + count300 + countKatu + count100 + count50 + countMiss,
+            )
+            else -> LazerStatistics()
+        }
+
     @get:JsonProperty("status") val status: String
         get() = when(statusByte.toInt()) {
             -2 -> "graveyard"
@@ -166,24 +193,29 @@ data class SBScore(
             else -> "graveyard"
         }
 
-    @get:JsonProperty("play_time") val endedTimeString: String
-        get() = formatter.format(endedTime)
+    @get:JsonIgnoreProperties val endedTime: OffsetDateTime
+        get() = LocalDateTime.parse(endedTimeString, formatter).atOffset(ZoneOffset.ofHours(8))
 
     fun toLazerScore(): LazerScore {
         val sb = this
 
         return LazerScore().apply {
             this.scoreID = sb.scoreID
-            this.beatmap.md5 = sb.md5
+            this.beatmapID = sb.beatmap?.beatmapID ?: 0L
 
             if (sb.userID != null) this.userID = sb.userID
 
+            this.type = "sb_score"
+            this.passed = sb.rank != "F"
+
+            this.legacyScore = sb.score
             this.score = sb.score
             this.pp = sb.pp
-            this.lazerAccuracy = sb.accuracy
+            this.lazerAccuracy = sb.accuracy / 100.0
             this.maxCombo = sb.maxCombo
             this.mods = sb.mods
             this.statistics = sb.statistics
+            this.maximumStatistics = sb.maximumStatistics
             this.rank = sb.rank
             this.beatmap.status = sb.status
             this.ruleset = when(sb.modeByte.toInt()) {
@@ -195,6 +227,12 @@ data class SBScore(
             }
             this.endedTime = sb.endedTime
             this.fullCombo = sb.perfect
+
+            if (sb.beatmap != null) {
+                this.beatmap = sb.beatmap.toBeatmap()
+                this.beatmapset = sb.beatmap.toBeatmapset()
+            }
+            this.beatmap.md5 = sb.md5
         }
     }
 

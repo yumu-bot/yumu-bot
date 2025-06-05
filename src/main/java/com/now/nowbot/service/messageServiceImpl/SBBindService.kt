@@ -97,6 +97,7 @@ class SBBindService(
 
         if (qb == null) {
             bindDao.bindSBQQ(param.qq, SBBindUser(user))
+            bindDao.updateSBMode(user.userID, user.mode)
             event.reply(BindException(BindException.Type.BIND_Progress_Binding, param.qq, user.userID, user.username))
             return
         }

@@ -169,8 +169,8 @@ import kotlin.jvm.optionals.getOrNull
 
         val name = ev.rawMessage.trim()
 
-        val userID: Long = try {
-            userApiService.getOsuID(name)
+        val ou: OsuUser = try {
+            userApiService.getOsuUser(name)
         } catch (e: HttpClientErrorException.Forbidden) {
             throw BindException(BindException.Type.BIND_Player_Banned)
         } catch (e: WebClientResponseException.Forbidden) {
@@ -179,9 +179,10 @@ import kotlin.jvm.optionals.getOrNull
             throw BindException(BindException.Type.BIND_Player_NotFound)
         }
 
-        val qb = bindDao.getQQLiteFromOsuId(userID).getOrNull() ?: run {
-            event.reply(BindException(BindException.Type.BIND_Progress_Binding, qq, userID, name))
-            bindDao.bindQQ(qq, BindUser(userID, name))
+        val qb = bindDao.getQQLiteFromOsuId(ou.userID).getOrNull() ?: run {
+            bindDao.bindQQ(qq, BindUser(ou.userID, name))
+            bindDao.updateMode(ou.userID, ou.defaultOsuMode)
+            event.reply(BindException(BindException.Type.BIND_Progress_Binding, qq, ou.userID, name))
             return
         }
 
@@ -279,9 +280,9 @@ import kotlin.jvm.optionals.getOrNull
         if (bindDao.getQQLiteFromQQ(qq).getOrNull() != null) {
             throw BindException(BindException.Type.BIND_Response_AlreadyBound)
         }
-        val userID: Long
-        try {
-            userID = userApiService.getOsuID(name)
+
+        val ou = try {
+            userApiService.getOsuUser(name)
         } catch (e: HttpClientErrorException.Forbidden) {
             throw BindException(BindException.Type.BIND_Player_Banned)
         } catch (e: WebClientResponseException.Forbidden) {
@@ -290,13 +291,14 @@ import kotlin.jvm.optionals.getOrNull
             throw BindException(BindException.Type.BIND_Player_NotFound)
         }
 
-        val qb = bindDao.getQQLiteFromOsuId(userID).getOrNull()
+        val qb = bindDao.getQQLiteFromOsuId(ou.userID).getOrNull()
 
         if (qb != null) {
             event.reply(BindException(BindException.Type.BIND_Response_AlreadyBoundInfo, qb.qq, name))
         } else {
-            bindDao.bindQQ(qq, BindUser(userID, name))
-            event.reply(BindException(BindException.Type.BIND_Progress_Binding, qq, userID, name).message)
+            bindDao.bindQQ(qq, BindUser(ou.userID, name))
+            bindDao.updateMode(ou.userID, ou.defaultOsuMode)
+            event.reply(BindException(BindException.Type.BIND_Progress_Binding, qq, ou.userID, name).message)
         }
     }
 

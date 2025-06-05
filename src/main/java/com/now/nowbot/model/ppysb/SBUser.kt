@@ -42,11 +42,14 @@ data class SBUser(
     fun toOsuUser(mode: OsuMode?): OsuUser {
         val sb = this
 
+        val code = sb.country.uppercase()
+
         val user = OsuUser().apply {
             id = sb.userID
+            avatarUrl = "https://a.ppy.sb/" + sb.userID
             username = sb.username
-            countryCode = sb.country
-            country = OsuUser.Country(sb.country, sb.country)
+            countryCode = code
+            country = OsuUser.Country(code, code)
             isRestricted = sb.silenceEnd > 0L
             isSupporter = sb.donorEnd > 0L
             joinDate = Date(sb.joinDate).toInstant().atOffset(ZoneOffset.ofHours(8))

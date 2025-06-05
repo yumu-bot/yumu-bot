@@ -142,7 +142,7 @@ enum class OsuMod(
          */
         @JvmStatic
         fun getModsList(value: Int): List<OsuMod> {
-            val modList = entries.filter { it.value and value != 0 }.distinct().toList()
+            val modList = entries.filter { it.value > 0 && (it.value and value != 0) }.distinct().toList()
             checkMods(modList)
             return modList
         }
@@ -329,7 +329,7 @@ enum class OsuMod(
          */
         @JvmStatic
         fun getModSpeed(value: Int): Double {
-            return getModSpeed(entries.filter { it.value and value != 0 }.distinct().toList())
+            return getModSpeed(entries.filter { it.value > 0 && (it.value and value != 0) }.distinct().toList())
         }
 
         @JvmStatic
@@ -436,7 +436,7 @@ enum class OsuMod(
         @JvmStatic
         fun hasMod(modInt: Int?, mod: OsuMod?): Boolean {
             if (modInt == null || mod == null) return false
-            return (mod.value and modInt) != 0
+            return mod.value > 0 && (mod.value and modInt != 0)
         }
 
         @JvmStatic
