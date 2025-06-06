@@ -14,7 +14,7 @@ class BeatmapsetDiscussionPost(
     val createdAt: OffsetDateTime,
 
     @JsonProperty("deleted_at")
-    val deletedAt: OffsetDateTime,
+    val deletedAt: OffsetDateTime?,
 
     @JsonProperty("deleted_by_id")
     val deletedBy: Long,
