@@ -20,7 +20,7 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
         mods: List<LazerMod>?,
         mode: OsuMode?,
         limit: Int?,
-        includedLoved: Boolean,
+        includeLoved: Boolean,
         includeFailed: Boolean,
         scope: String
     ): List<SBScore> {
@@ -34,8 +34,8 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
             .queryParamIfPresent("mods[]", Optional.ofNullable(mods?.map { m -> m.acronym }?.toTypedArray()))
             .queryParamIfPresent("mode", Optional.ofNullable(modeValue))
             .queryParamIfPresent("limit", Optional.ofNullable(limit))
-            .queryParamIfPresent("included_loved", Optional.ofNullable(includedLoved))
-            .queryParamIfPresent("included_failed", Optional.ofNullable(includeFailed))
+            .queryParamIfPresent("include_loved", Optional.ofNullable(includeLoved))
+            .queryParamIfPresent("include_failed", Optional.ofNullable(includeFailed))
             .build()
         }.retrieve()
             .bodyToMono(JsonNode::class.java)

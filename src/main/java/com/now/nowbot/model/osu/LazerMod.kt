@@ -81,7 +81,7 @@ sealed interface ValueMod {
     JsonSubTypes.Type(value = LazerMod.Depth::class, name = "DP"),
     JsonSubTypes.Type(value = LazerMod.TouchDevice::class, name = "TD"),
     JsonSubTypes.Type(value = LazerMod.Bloom::class, name = "BM"),
-    JsonSubTypes.Type(value = LazerMod.ScoreV2::class, name = "SV2"),
+    JsonSubTypes.Type(value = LazerMod.ScoreV2::class, names = arrayOf("V2", "SV2")),
     JsonSubTypes.Type(value = LazerMod.Swap::class, name = "SW"),
     JsonSubTypes.Type(value = LazerMod.ConstantSpeed::class, name = "CS"),
     JsonSubTypes.Type(value = LazerMod.FloatingFruits::class, name = "FF"),
@@ -2062,7 +2062,7 @@ sealed class LazerMod {
         override val color: String = "#000000"
 
         companion object : Mod, ValueMod {
-            override val type: String = "SV2"
+            override val type: String = "V2"
             override val mode: Set<OsuMode> = setOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
             override val incompatible: Set<Mod> = setOf()
             override val value: Int = 536870912
