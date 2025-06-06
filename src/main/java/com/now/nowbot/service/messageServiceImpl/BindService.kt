@@ -169,18 +169,18 @@ import kotlin.jvm.optionals.getOrNull
         val qb = bindDao.getQQLiteFromOsuId(ou.userID)
 
         if (qb == null) {
-            bindDao.bindQQ(qq, BindUser(ou.userID, name))
+            bindDao.bindQQ(qq, BindUser(ou))
             bindDao.updateMode(ou.userID, ou.defaultOsuMode)
             event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username))
             return
         }
 
-        event.reply(BindException.BindConfirmException.RecoverBind(ou.username, qq))
+        event.reply(BindException.BindConfirmException.RecoverBind(ou.username, qb.bindUser.username, qq))
 
         ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
 
         if (ev.rawMessage.uppercase().startsWith("OK")) {
-            val result = bindDao.bindQQ(qq, qb.osuUser)
+            val result = bindDao.bindQQ(qq, BindUser(ou))
             if (result != null) {
                 event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username))
             } else {
@@ -275,7 +275,7 @@ import kotlin.jvm.optionals.getOrNull
                 throw BindException.BoundException.UserBound(name, qb.qq)
             }
         } else {
-            bindDao.bindQQ(qq, BindUser(ou.userID, name))
+            bindDao.bindQQ(qq, BindUser(ou))
             bindDao.updateMode(ou.userID, ou.defaultOsuMode)
             event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, name))
         }

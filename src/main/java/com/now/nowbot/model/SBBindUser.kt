@@ -12,7 +12,7 @@ data class SBBindUser(
 
     val username: String,
 
-    val mode: OsuMode = OsuMode.DEFAULT,
+    val mode: OsuMode,
 
     val time: Long = 0L,
 
@@ -25,4 +25,18 @@ data class SBBindUser(
     fun toSBBindUserLite(): SBBindUserLite {
         return SBBindUserLite(null, this.userID, this.username, System.currentTimeMillis(), OffsetDateTime.now(), mode)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SBBindUser
+
+        return userID == other.userID
+    }
+
+    override fun hashCode(): Int {
+        return userID.hashCode()
+    }
+
 }

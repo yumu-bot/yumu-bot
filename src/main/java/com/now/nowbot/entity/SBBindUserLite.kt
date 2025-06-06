@@ -44,4 +44,17 @@ data class SBBindUserLite(
     fun toSBBindUser(): SBBindUser {
         return SBBindUser(this.id, this.userID, this.username, this.mode, this.time, this.joinDate)
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SBBindUserLite
+
+        return userID == other.userID
+    }
+
+    override fun hashCode(): Int {
+        return userID.hashCode()
+    }
 }

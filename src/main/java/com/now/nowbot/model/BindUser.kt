@@ -1,6 +1,7 @@
 package com.now.nowbot.model
 
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.OsuUser
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -48,6 +49,14 @@ class BindUser {
         this.userID = osuID
         this.username = name
         mode = OsuMode.DEFAULT
+        time = 0L
+        setTimeToNow()
+    }
+
+    constructor(user: OsuUser) {
+        this.userID = user.userID
+        this.username = user.username
+        this.mode = user.defaultOsuMode
         time = 0L
         setTimeToNow()
     }

@@ -53,7 +53,7 @@ class SBBindService(
         data.value = if (event.isAt) {
             BindParam(event.target, id, name, true, isUnbind, isSuper)
         } else {
-            BindParam(qq, id, name, true, isUnbind, isSuper)
+            BindParam(qq, id, name, false, isUnbind, isSuper)
         }
 
         return true
@@ -98,6 +98,7 @@ class SBBindService(
 
         if (qb == null) {
             val result = bindDao.bindSBQQ(param.qq, SBBindUser(user))
+            bindDao.updateSBMode(user.userID, user.mode)
 
             if (result != null) {
                 event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username))
@@ -105,18 +106,18 @@ class SBBindService(
                 event.reply(BindException.BindResultException.BindFailed())
             }
 
-            bindDao.updateSBMode(user.userID, user.mode)
             return
         }
 
         // 已有绑定：覆盖绑定
-        event.reply(BindException.BindConfirmException.RecoverBind(user.username, param.qq))
+        event.reply(BindException.BindConfirmException.RecoverBind(user.username, qb.bindUser.username, param.qq))
 
         val lock = ASyncMessageUtil.getLock(event)
         val ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
 
         if (ev.rawMessage.uppercase().startsWith("OK")) {
-            val result = bindDao.bindSBQQ(param.qq, qb.bindUser)
+            val result = bindDao.bindSBQQ(param.qq, SBBindUser(user))
+            bindDao.updateSBMode(user.userID, user.mode)
 
             if (result != null) {
                 event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username))

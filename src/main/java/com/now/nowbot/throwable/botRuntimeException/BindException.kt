@@ -73,9 +73,9 @@ open class BindException(message: String) : TipsRuntimeException(message) {
             如果要改绑，请回复 OK。
             """.trimIndent())
 
-        class RecoverBind(name: String, qq: Long):
+        class RecoverBind(name: String, name2: String, qq: Long):
             BindConfirmException("""
-            正在将 $name 绑定在 QQ $qq 上，是否覆盖？
+            正在将 $name 替代 $name2 绑定在 $qq 上，是否覆盖？
             如果要覆盖，请回复 OK。
             """.trimIndent())
     }
