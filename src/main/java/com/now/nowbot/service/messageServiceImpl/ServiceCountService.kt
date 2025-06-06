@@ -8,7 +8,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.Instruction
 import org.springframework.lang.Nullable
 import org.springframework.stereotype.Service
@@ -26,7 +26,7 @@ import java.util.*
         if (!matcher.find()) return false
 
         if (!Permission.isSuperAdmin(event.sender.id)) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Super)
+            throw PermissionException.DeniedException.BelowSuperAdministrator()
         }
 
         val d: String? = matcher.group("days")

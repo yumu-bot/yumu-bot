@@ -6,6 +6,7 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -213,20 +214,18 @@ class ImageService(private val webClient: WebClient) {
             request.retrieve().bodyToMono(ByteArray::class.java).block()!!
         } catch (e: Throwable) {
             if (e is BadRequest || e.cause is BadRequest) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_400)
+                throw NetworkException.RenderModuleException.BadRequest()
             } else if (e is ReadTimeoutException || e.cause is ReadTimeoutException) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_408)
+                throw NetworkException.RenderModuleException.RequestTimeout()
             } else if (e is InternalServerError || e.cause is InternalServerError) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_500)
+                throw NetworkException.RenderModuleException.InternalServerError()
             } else if (e is ConnectException || e.cause is ConnectException) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_503)
+                throw NetworkException.RenderModuleException.ServiceUnavailable()
             } else if (e is WebClientRequestException) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_502)
-            } else if (e is GeneralTipsException) {
-                throw e
+                throw NetworkException.RenderModuleException.BadGateway()
             } else {
                 log.error("渲染模块：未识别的错误", e)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render_000)
+                throw NetworkException.RenderModuleException.Undefined(e)
             }
         }
     }

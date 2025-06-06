@@ -2588,6 +2588,30 @@ sealed class LazerMod {
         }
 
         @JvmStatic
+        fun getModsListFromModInt(modInt: Int): List<LazerMod> {
+            val list = List(31) { it }
+
+            return list.mapNotNull {
+                val value = 1 shl it
+
+                if (modInt and value != 0) {
+                    getModFromIndex(it)
+                } else {
+                    null
+                }
+            }
+        }
+
+        private fun getModFromIndex(index: Int): LazerMod {
+            // TODO Key 10 本来是 keyMode
+            val list = listOf(
+                NoFail(), Easy(), TouchDevice(), Hidden(), HardRock(), SuddenDeath(), DoubleTime(), Relax(), HalfTime(), Nightcore(), Flashlight(), Autoplay(), SpunOut(), Autopilot(), Perfect(), Key4(), Key5(), Key6(), Key7(), Key8(), FadeIn(), Random(), Cinema(), TargetPractice(), Key9(), Key10(), Key1(), Key3(), Key2(), ScoreV2(), Mirror()
+            )
+
+            return list[index]
+        }
+
+        @JvmStatic
         fun getModFromAcronym(acronym: String?): LazerMod {
             return when (acronym?.uppercase()) {
                 Easy.type -> Easy()
@@ -2671,7 +2695,7 @@ sealed class LazerMod {
             val newStr = acronyms.uppercase()
                 .replace(spaceRegex, "")
             if (newStr.length % 2 != 0) {
-                throw ModsException(ModsException.Type.MOD_Receive_CharNotPaired)
+                throw ModsException.CharNotPaired()
             }
             val list = newStr.chunked(2)
             return list

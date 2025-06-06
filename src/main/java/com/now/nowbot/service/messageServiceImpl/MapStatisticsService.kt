@@ -16,6 +16,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.isAvoidance
 import com.now.nowbot.util.DataUtil
@@ -195,7 +196,7 @@ class MapStatisticsService(
                 in 1.0..100.0 -> acc / 100.0
                 in 100.0..10000.0 -> acc / 10000.0
                 else -> {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_S, "准确率参数")
+                    throw IllegalArgumentException.WrongException.Accuracy()
                 }
             }
         }

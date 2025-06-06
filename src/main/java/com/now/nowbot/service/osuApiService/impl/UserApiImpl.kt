@@ -10,6 +10,7 @@ import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService.TeamInfo
 import com.now.nowbot.throwable.TipsRuntimeException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import kotlinx.io.IOException
@@ -17,11 +18,15 @@ import org.codehaus.plexus.util.StringUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriComponentsBuilder
+import reactor.core.publisher.Mono
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
+import java.util.concurrent.ExecutionException
+import java.util.function.Function
 import java.util.regex.Pattern
 import kotlin.text.HexFormat
 
@@ -31,10 +36,14 @@ import kotlin.text.HexFormat
     // 用来确认玩家是否存在于服务器，而无需使用 API 请求。
     override fun isPlayerExist(name: String): Boolean {
         val response =
-            base.osuApiWebClient.get().uri("https://osu.ppy.sh/users/{name}", name)
-                .headers {
-                base.insertHeader(it!!)
-            }.retrieve().bodyToMono(String::class.java).onErrorReturn("").block()
+            request { client ->
+                client.get()
+                    .uri("https://osu.ppy.sh/users/{name}", name)
+                    .headers(base::insertHeader)
+                    .retrieve()
+                    .bodyToMono(String::class.java)
+                    .onErrorReturn("")
+            }
 
         return StringUtils.isNotEmpty(response)
     }
@@ -65,42 +74,50 @@ import kotlin.text.HexFormat
     override fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser {
         if (!user.isAuthorized) return getOsuUser(user.userID, mode)
 
-        return base.osuApiWebClient.get().uri("me/{mode}", mode.shortName).headers(base.insertHeader(user)).retrieve()
-            .bodyToMono(OsuUser::class.java).map { data ->
-                userInfoDao.saveUser(data, mode)
-                user.userID = data.userID
-                user.username = data.username
-                user.mode = mode
-                data.currentOsuMode = getMode(mode, data.defaultOsuMode)
-                data
-            }.block()!!
+        return request { client ->
+            client.get()
+                .uri("me/{mode}", mode.shortName).headers(base.insertHeader(user)).retrieve()
+                .bodyToMono(OsuUser::class.java).map { data ->
+                    userInfoDao.saveUser(data, mode)
+                    user.userID = data.userID
+                    user.username = data.username
+                    user.mode = mode
+                    data.currentOsuMode = getMode(mode, data.defaultOsuMode)
+                    data
+                }
+        }
     }
 
     override fun getOsuUser(name: String, mode: OsuMode): OsuUser {
-        return base.osuApiWebClient.get().uri {
-            it.path("users/{data}/{mode}").build("@$name", mode.shortName)
-        }.headers { base.insertHeader(it) }.retrieve().bodyToMono(OsuUser::class.java).map { data ->
-            userInfoDao.saveUser(data, mode)
-            data.currentOsuMode = getMode(mode, data.defaultOsuMode)
-            data
-        }.block()!!
+        return request { client ->
+            client.get()
+                .uri {
+                    it.path("users/{data}/{mode}").build("@$name", mode.shortName)
+                }.headers(base::insertHeader).retrieve().bodyToMono(OsuUser::class.java)
+                .map { data ->
+                    userInfoDao.saveUser(data, mode)
+                    data.currentOsuMode = getMode(mode, data.defaultOsuMode)
+                    data
+                }
+        }
     }
 
     override fun getOsuUser(id: Long, mode: OsuMode): OsuUser {
-        return base.osuApiWebClient.get().uri {
-            it.path("users/{id}/{mode}").build(id, mode.shortName)
-        }.headers {
-            base.insertHeader(it)
-        }.retrieve()
-            /*
+        return request { client ->
+            client.get()
+                .uri {
+                    it.path("users/{id}/{mode}").build(id, mode.shortName)
+                }.headers(base::insertHeader).retrieve()
+                /*
             .bodyToMono(JsonNode::class.java).map { JacksonUtil.parseObject(it, OsuUser::class.java) }.block()!!
             */
-        .bodyToMono(OsuUser::class.java)
-        .map { data: OsuUser ->
-            userInfoDao.saveUser(data, mode)
-                data.currentOsuMode = getMode(mode, data.defaultOsuMode)
-                data
-        }.block()!!
+                .bodyToMono(OsuUser::class.java)
+                .map { data: OsuUser ->
+                    userInfoDao.saveUser(data, mode)
+                    data.currentOsuMode = getMode(mode, data.defaultOsuMode)
+                    data
+                }
+        }
     }
 
     override fun getOsuID(name: String): Long {
@@ -126,85 +143,130 @@ import kotlin.text.HexFormat
      * @param isVariant 是否获取玩家的多模式信息
      */
     override fun <T : Number> getUsers(users: Iterable<T>, isVariant: Boolean): List<MicroUser> {
-        return base.osuApiWebClient.get()
-            .uri { it.path("users")
-                .queryParam("ids[]", users.toList())
-                .queryParam("include_variant_statistics", isVariant)
-                .build()
-            }.headers { base.insertHeader(it)
-            }.retrieve().bodyToMono(JsonNode::class.java)
-            .map {
-                val userList = JacksonUtil.parseObjectList(
-                    it["users"], MicroUser::class.java
-                )
-                userInfoDao.saveUsers(userList)
-                userList
-            }.block()!!
+        return request { client ->
+            client.get()
+                .uri {
+                    it.path("users")
+                        .queryParam("ids[]", users.toList())
+                        .queryParam("include_variant_statistics", isVariant)
+                        .build()
+                }.headers(base::insertHeader).retrieve().bodyToMono(JsonNode::class.java)
+                .map {
+                    val userList = JacksonUtil.parseObjectList(
+                        it["users"], MicroUser::class.java
+                    )
+                    userInfoDao.saveUsers(userList)
+                    userList
+                }
+        }
     }
 
     override fun getFriendList(user: BindUser): List<LazerFriend> {
         if (!user.isAuthorized) throw TipsRuntimeException("无权限")
 
-        return base.osuApiWebClient.get()
-            .uri("friends")
-            .headers(base.insertHeader(user))
-            .retrieve()
-            .bodyToFlux(LazerFriend::class.java)
-            .collectList()
-            .block()!!
+        return request { client ->
+            client.get()
+                .uri("friends")
+                .headers(base.insertHeader(user))
+                .retrieve()
+                .bodyToFlux(LazerFriend::class.java)
+                .collectList()
+        }
     }
 
     override fun getUserRecentActivity(id: Long, offset: Int, limit: Int): List<ActivityEvent> {
-        return base.osuApiWebClient.get()
-            .uri { it.path("users/{userId}/recent_activity")
-                .queryParam("offset", offset).queryParam("limit", limit)
-                .build(id)
-            }.headers { base.insertHeader(it)
-            }.retrieve()
-            .bodyToFlux(ActivityEvent::class.java)
-            .collectList()
-            .block()!!
+        return request { client ->
+            client.get()
+                .uri {
+                    it.path("users/{userId}/recent_activity")
+                        .queryParam("offset", offset).queryParam("limit", limit)
+                        .build(id)
+                }.headers(base::insertHeader).retrieve()
+                .bodyToFlux(ActivityEvent::class.java)
+                .collectList()
+        }
     }
 
     override fun getUserKudosu(user: BindUser): KudosuHistory {
-        return base.osuApiWebClient.get()
-            .uri("users/{uid}/kudosu")
-            .headers(base.insertHeader(user))
-            .retrieve()
-            .bodyToMono(KudosuHistory::class.java)
-            .block()!!
+        return request { client ->
+            client.get()
+                .uri("users/{uid}/kudosu")
+                .headers(base.insertHeader(user))
+                .retrieve()
+                .bodyToMono(KudosuHistory::class.java)
+        }
     }
 
     override fun sendPrivateMessage(sender: BindUser, target: Long, message: String): JsonNode {
         val body: Map<String, Any> =
             mapOf("target_id" to target, "message" to message, "is_action" to false)
-        return base.osuApiWebClient.post()
-            .uri("chat/new")
-            .headers(base.insertHeader(sender))
-            .bodyValue(body)
-            .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .block()!!
+        return request { client ->
+            client.post()
+                .uri("chat/new")
+                .headers(base.insertHeader(sender))
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(JsonNode::class.java)
+        }
     }
 
     override fun acknowledgmentPrivateMessageAlive(user: BindUser, since: Long?): JsonNode {
-        return base.osuApiWebClient.post()
-            .uri {
-                it.path("chat/ack").queryParamIfPresent("since", Optional.ofNullable(since)).build()
-            }
-            .headers(base.insertHeader(user))
-            .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .block()!!
+        return request { client ->
+            client.post()
+                .uri {
+                    it.path("chat/ack").queryParamIfPresent("since", Optional.ofNullable(since)).build()
+                }
+                .headers(base.insertHeader(user))
+                .retrieve()
+                .bodyToMono(JsonNode::class.java)
+        }
     }
 
     override fun getPrivateMessage(sender: BindUser, channel: Long, since: Long): JsonNode {
-        return base.osuApiWebClient.get()
+        return request { client -> client
+            .get()
             .uri("chat/channels/{channel}/messages?since={since}", channel, since)
             .headers(base.insertHeader(sender))
             .retrieve()
             .bodyToMono(JsonNode::class.java)
-            .block()!!
+        }
+    }
+
+    /**
+     * 错误包装
+     */
+    private fun <T> request(request: Function<WebClient, Mono<T>>): T {
+        return try {
+            base.request(request)
+        } catch (e: ExecutionException) {
+            when (e.cause) {
+                is WebClientResponseException.BadRequest -> {
+                    throw NetworkException.UserException.BadRequest()
+                }
+
+                is WebClientResponseException.Unauthorized -> {
+                    throw NetworkException.UserException.Unauthorized()
+                }
+
+                is WebClientResponseException.Forbidden -> {
+                    throw NetworkException.UserException.Forbidden()
+                }
+
+                is WebClientResponseException.NotFound -> {
+                    throw NetworkException.UserException.NotFound()
+                }
+
+                is WebClientResponseException.TooManyRequests -> {
+                    throw NetworkException.UserException.TooManyRequests()
+                }
+
+                is WebClientResponseException.ServiceUnavailable -> {
+                    throw NetworkException.UserException.ServiceUnavailable()
+                }
+
+                else -> throw NetworkException.UserException(e.message)
+            }
+        }
     }
 
     private val teamFormedPattern: Pattern = Pattern.compile(
@@ -397,7 +459,7 @@ import kotlin.text.HexFormat
                         base.osuApiWebClient.get()
                             .uri { it.scheme("https").host("a.ppy.sh").replacePath(replacePath)
                                 .build() }
-                            .headers { base.insertHeader(it) }
+                            .headers(base::insertHeader)
                             .retrieve()
                             .bodyToMono(ByteArray::class.java)
                             .block()!!
@@ -453,7 +515,7 @@ import kotlin.text.HexFormat
                         base.osuApiWebClient.get()
                             .uri { it.scheme("https").host("assets.ppy.sh").replacePath(replacePath)
                                 .build() }
-                            .headers { base.insertHeader(it) }
+                            .headers(base::insertHeader)
                             .retrieve()
                             .bodyToMono(ByteArray::class.java)
                             .block()!!

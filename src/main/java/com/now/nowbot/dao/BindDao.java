@@ -19,6 +19,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService;
 import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.botRuntimeException.BindException;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,9 +136,9 @@ public class BindDao {
         var liteData = bindQQMapper.findById(qq);
         if (liteData.isEmpty()) {
             if (isMyself) {
-                throw new BindException.NotBindException.YouNotBindException();
+                throw new BindException.NotBindException.YouNotBind();
             } else {
-                throw new BindException.NotBindException.UserNotBindException();
+                throw new BindException.NotBindException.UserNotBind();
             }
         }
         var u = liteData.get().getOsuUser();
@@ -154,7 +155,7 @@ public class BindDao {
     }
 
     public BindUser getBindUserFromOsuID(Long userID) throws BindException {
-        if (Objects.isNull(userID)) throw new BindException.BindIllegalArgumentException.IllegalQQException();
+        if (Objects.isNull(userID)) throw new BindException.BindIllegalArgumentException.IllegalQQ();
 
         Optional<OsuBindUserLite> liteData;
         try {
@@ -164,17 +165,18 @@ public class BindDao {
             liteData = bindUserMapper.getByOsuID(userID);
         }
 
-        if (liteData.isEmpty()) throw new BindException.NotBindException.UserNotBindException();
+        if (liteData.isEmpty()) throw new BindException.NotBindException.UserNotBind();
         var u = liteData.get();
         return fromLite(u);
     }
 
-    public List<OsuBindUserLite> getAllBindUser(Collection<Long> osuId) {
-        return bindUserMapper.getAllByOsuID(osuId);
+    public List<OsuBindUserLite> getAllBindUser(Collection<Long> userIDs) {
+        return bindUserMapper.getAllByOsuID(userIDs);
     }
 
-    public Optional<QQBindLite> getQQLiteFromOsuId(Long osuId) {
-        return bindQQMapper.findByOsuID(osuId);
+    @Nullable
+    public QQBindLite getQQLiteFromOsuId(Long userID) {
+        return bindQQMapper.findByOsuID(userID);
     }
 
     public Optional<QQBindLite> getQQLiteFromQQ(Long qq) {
@@ -194,7 +196,7 @@ public class BindDao {
     public QQBindLite bindQQ(Long qq, OsuBindUserLite user) {
         OsuBindUserLite osuBind = user;
         if (user.getRefreshToken() != null) {
-            var count = bindQQMapper.countByOsuID(user.getOsuID());
+            var count = bindQQMapper.countByUserID(user.getOsuID());
             if (count > 1) {
                 bindUserMapper.deleteAllByOsuID(user.getOsuID());
             }
@@ -252,7 +254,7 @@ public class BindDao {
 
     @NonNull
     public SBBindUser getSBBindUserFromUserID(@Nullable Long userID) throws BindException {
-        if (Objects.isNull(userID)) throw new BindException.BindIllegalArgumentException.IllegalQQException();
+        if (Objects.isNull(userID)) throw new BindException.BindIllegalArgumentException.IllegalQQ();
 
         SBBindUserLite liteData;
 
@@ -263,7 +265,7 @@ public class BindDao {
             liteData = sbBindUserMapper.getUser(userID);
         }
 
-        if (liteData == null) throw new BindException.NotBindException.UserNotBindException();
+        if (liteData == null) throw new BindException.NotBindException.UserNotBind();
         return liteData.toSBBindUser();
     }
 
@@ -279,9 +281,9 @@ public class BindDao {
         var liteData = sbQQBindMapper.findById(qq);
         if (liteData.isEmpty()) {
             if (isMyself) {
-                throw new BindException.NotBindException.YouNotBindException();
+                throw new BindException.NotBindException.YouNotBind();
             } else {
-                throw new BindException.NotBindException.UserNotBindException();
+                throw new BindException.NotBindException.UserNotBind();
             }
         }
 
@@ -387,30 +389,30 @@ public class BindDao {
      * @param user 绑定
      * @return qq
      */
-    public Long getQQ(BindUser user) {
+    @NonNull
+    public Long getQQ(@NotNull BindUser user) {
         return getQQ(user.userID);
     }
 
+    @NonNull
     public Long getQQ(Long osuID) {
         var qqBind = bindQQMapper.findByOsuID(osuID);
 
-        if (qqBind.isPresent()) {
-            return qqBind.get().getQq();
+        if (qqBind != null) {
+            return qqBind.getQq();
         } else {
             return -1L;
         }
     }
 
     @Nullable
-    public QQBindLite getQQBindInfo(BindUser user) {
+    public QQBindLite getQQBindInfo(@NotNull BindUser user) {
         return getQQBindInfo(user.userID);
     }
 
     @Nullable
-    public QQBindLite getQQBindInfo(Long osuID) {
-        var qqBind = bindQQMapper.findByOsuID(osuID);
-
-        return qqBind.orElse(null);
+    public QQBindLite getQQBindInfo(@NotNull Long userID) {
+        return bindQQMapper.findByOsuID(userID);
     }
 
 

@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -10,8 +11,8 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.sbApiService.SBScoreApiService
 import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.FLAG_MODE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -45,10 +46,10 @@ class SBScorePRService(
                 throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "成绩")
             }
 
-        val mode = getMode(matcher).data!!
         val sb = bindDao.getSBBindFromQQ(event.sender.id, true)
 
         val user = userApiService.getUser(sb.userID) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, sb.username)
+        val mode = OsuMode.getMode(matcher.group(FLAG_MODE), user.mode)
         val scores = if (isPass) {
             scoreApiService.getPassedScore(id = sb.userID, mode = mode, limit = 1)
         } else {

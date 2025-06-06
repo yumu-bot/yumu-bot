@@ -10,6 +10,7 @@ import com.now.nowbot.service.messageServiceImpl.ServiceSwitchService.SwitchPara
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botException.ServiceSwitchException
+import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import org.springframework.stereotype.Service
@@ -42,7 +43,7 @@ class ServiceSwitchService(
         }
 
         if (!Permission.isSuperAdmin(event.sender.id)) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Super)
+            throw PermissionException.DeniedException.BelowSuperAdministrator()
         }
 
         val service = m.group("service") ?: ""

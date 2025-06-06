@@ -152,15 +152,12 @@ import kotlin.math.sqrt
             vs = null
         }
 
-        val image = try {
+        val image =
             if (vs != null) {
                 imageService.getPanel(vs + me + mapOf("panel" to "KV"), "K")
             } else {
                 imageService.getPanel(me + mapOf("panel" to "K"), "K")
             }
-        } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_OverTime, "技巧分析")
-        }
 
         return image
     }

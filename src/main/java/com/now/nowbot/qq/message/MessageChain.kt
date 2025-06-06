@@ -69,6 +69,11 @@ class MessageChain {
         addMessage(TextMessage(msg))
     }
 
+    constructor(e: Throwable) {
+        messageList = LinkedList()
+        addMessage(TextMessage(e.message ?: ""))
+    }
+
     fun addMessage(msg: Message): MessageChain {
         messageList.add(msg)
         return this

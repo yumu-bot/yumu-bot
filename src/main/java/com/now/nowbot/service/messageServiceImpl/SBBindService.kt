@@ -10,6 +10,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.botRuntimeException.BindException
+import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
@@ -86,7 +87,7 @@ class SBBindService(
         }
 
         // bi ub 但是不是自己, 也不是超管
-        throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Super)
+        throw PermissionException.DeniedException.BelowSuperAdministrator()
     }
 
 
@@ -99,9 +100,9 @@ class SBBindService(
             val result = bindDao.bindSBQQ(param.qq, SBBindUser(user))
 
             if (result != null) {
-                event.reply(BindException.BindResultException.BindSuccessException(param.qq, user.userID, user.username))
+                event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username))
             } else {
-                event.reply(BindException.BindResultException.BindFailedException())
+                event.reply(BindException.BindResultException.BindFailed())
             }
 
             bindDao.updateSBMode(user.userID, user.mode)
@@ -109,22 +110,21 @@ class SBBindService(
         }
 
         // 已有绑定：覆盖绑定
-
-        event.reply(BindException.BindConfirmException.RecoverBindException(user.username, param.qq))
+        event.reply(BindException.BindConfirmException.RecoverBind(user.username, param.qq))
 
         val lock = ASyncMessageUtil.getLock(event)
-        val ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTimeException()
+        val ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
 
         if (ev.rawMessage.uppercase().startsWith("OK")) {
             val result = bindDao.bindSBQQ(param.qq, qb.bindUser)
 
             if (result != null) {
-                event.reply(BindException.BindResultException.BindSuccessException(param.qq, user.userID, user.username))
+                event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username))
             } else {
-                event.reply(BindException.BindResultException.BindFailedException())
+                event.reply(BindException.BindResultException.BindFailed())
             }
         } else {
-            event.reply(BindException.BindReceiveException.ReceiveRefusedException())
+            event.reply(BindException.BindReceiveException.ReceiveRefused())
         }
     }
 
@@ -132,22 +132,22 @@ class SBBindService(
     private fun unbindName(name: String) {
         val userID = userApiService.getUserID(name) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name)
 
-        val qb = bindDao.getSBQQLiteFromUserID(userID) ?: throw BindException.NotBindException.YouNotBindException()
+        val qb = bindDao.getSBQQLiteFromUserID(userID) ?: throw BindException.NotBindException.YouNotBind()
 
         unbindQQ(qb.qq)
     }
 
     private fun unbindQQ(qq: Long, isMyself: Boolean = true) {
         val bind = bindDao.getSBQQLiteFromQQ(qq) ?: if (isMyself) {
-            throw BindException.NotBindException.YouNotBindException()
+            throw BindException.NotBindException.YouNotBind()
         } else {
-            throw BindException.NotBindException.UserNotBindException()
+            throw BindException.NotBindException.UserNotBind()
         }
 
         if (bindDao.unBindSBQQ(bind.bindUser)) {
-            throw BindException.UnBindException.UnbindSuccessException()
+            throw BindException.UnBindException.UnbindSuccess()
         } else {
-            throw BindException.UnBindException.UnbindFailedException()
+            throw BindException.UnBindException.UnbindFailed()
         }
     }
 
@@ -157,10 +157,10 @@ class SBBindService(
         val id: Long?
 
         if (param.name.isNullOrEmpty() && param.id == null) {
-            event.reply(BindException.BindReceiveException.ReceiveNameException())
+            event.reply(BindException.BindReceiveException.ReceiveNoName())
 
             val lock = ASyncMessageUtil.getLock(event)
-            val ev: MessageEvent = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTimeException()
+            val ev: MessageEvent = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
 
             val maybeID = ev.rawMessage.trim().toLongOrNull()
 

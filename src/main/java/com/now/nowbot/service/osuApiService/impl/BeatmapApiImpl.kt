@@ -10,6 +10,7 @@ import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
@@ -20,12 +21,15 @@ import org.springframework.stereotype.Service
 import org.springframework.util.DigestUtils
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import reactor.core.publisher.Mono
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.OffsetDateTime
 import java.util.*
+import java.util.concurrent.ExecutionException
+import java.util.function.Function
 import java.util.regex.Pattern
 import kotlin.math.min
 
@@ -39,6 +43,7 @@ class BeatmapApiImpl(
 
     @Qualifier("proxyClient") private val proxyClient: WebClient,
 ) : OsuBeatmapApiService {
+
     private val osuDir: Path = Path.of(config.osuFilePath)
 
     override fun hasBeatMapFileFromDirectory(bid: Long): Boolean {
@@ -68,7 +73,7 @@ class BeatmapApiImpl(
 
     fun getBeatMapFileFromOfficialWebsite(bid: Long): String? {
         try {
-            return base.request { client ->
+            return request { client ->
                 client.get()
                     .uri("https://osu.ppy.sh/osu/{bid}", bid)
                     .retrieve()
@@ -201,9 +206,9 @@ class BeatmapApiImpl(
         if (OsuMode.isNotDefaultOrNull(mode)) {
             body["ruleset_id"] = mode!!.modeValue
         }
-        return base.request { client ->
+        return request { client ->
             client.post().uri("beatmaps/{id}/attributes", id)
-                .headers { base.insertHeader(it) }
+                .headers(base::insertHeader)
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(JsonNode::class.java)
@@ -215,10 +220,10 @@ class BeatmapApiImpl(
     }
 
     override fun getBeatMap(bid: Long): Beatmap {
-        return base.request { client ->
+        return request { client ->
             client.get()
                 .uri("beatmaps/{bid}", bid)
-                .headers { base.insertHeader(it) }
+                .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(Beatmap::class.java)
                 .doOnNext(beatmap1Dao::saveMap)
@@ -226,10 +231,10 @@ class BeatmapApiImpl(
     }
 
     override fun getBeatMapSet(sid: Long): Beatmapset {
-        return base.request { client ->
+        return request { client ->
             client.get()
                 .uri("beatmapsets/{sid}", sid)
-                .headers { base.insertHeader(it) }
+                .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(Beatmapset::class.java)
                 .doOnNext(beatmap1Dao::saveMapSet)
@@ -476,10 +481,10 @@ class BeatmapApiImpl(
             body["mods"] = modsInt
         }
 
-        return base.request { client ->
+        return request { client ->
             client.post()
                 .uri("beatmaps/{id}/attributes", id)
-                .headers { base.insertHeader(it) }
+                .headers(base::insertHeader)
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(AttributesResponse::class.java)
@@ -497,21 +502,21 @@ class BeatmapApiImpl(
     }
 
     override fun lookupBeatmap(checksum: String?, filename: String?, id: Long?): JsonNode? {
-        return base.request { client ->
+        return request { client ->
             client.get().uri {
                 it.path("beatmapsets/lookup")
                     .queryParamIfPresent("checksum", Optional.ofNullable(checksum))
                     .queryParamIfPresent("filename", Optional.ofNullable(filename))
                     .queryParamIfPresent("id", Optional.ofNullable(id)).build()
             }
-                .headers { base.insertHeader(it) }
+                .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(JsonNode::class.java)
         }
     }
 
     private fun searchBeatMapSetFromAPI(query: Map<String, Any?>): BeatMapSetSearch {
-        return base.request { client ->
+        return request { client ->
             client.get().uri {
                 it.path("beatmapsets/search")
                 query.forEach { (k: String, v: Any?) ->
@@ -523,7 +528,7 @@ class BeatmapApiImpl(
                 }
                 it.build()
             }
-                .headers { base.insertHeader(it) }
+                .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(BeatMapSetSearch::class.java)
         }
@@ -644,16 +649,13 @@ class BeatmapApiImpl(
     }
 
     override fun getBeatMapSetRankedTimeMap(): Map<Long, String> {
-        return getBeatMapSetWithRankedTimeLibrary()
-            .associate {
-                it.beatmapID to (
-                    if (it.isEarly) {
-                        it.rankDateEarly.replace(".000Z", "Z")
-                    } else {
-                        it.rankDate.replace(".000Z", "Z")
-                    }
-            )
+        return getBeatMapSetWithRankedTimeLibrary().associate {
+            it.beatmapID to if (it.isEarly) {
+                it.rankDateEarly.replace(".000Z", "Z")
+            } else {
+                it.rankDate.replace(".000Z", "Z")
             }
+        }
     }
 
     override fun applyBeatMapSetRankedTime(beatmapsets: List<Beatmapset>) {
@@ -669,15 +671,13 @@ class BeatmapApiImpl(
     }
 
     private val beatmapTagLibraryFromAPI: JsonNode
-        get() = base.osuApiWebClient.get()
+        get() = request { it.get()
             .uri {
                 it.path("tags").build()
-            }.headers {
-                base.insertHeader(it)
-            }
+            }.headers(base::insertHeader)
             .retrieve()
             .bodyToMono(JsonNode::class.java)
-            .block()!!
+        }
 
                 /*
             .map { JacksonUtil.parseObjectList(it["tags"], Tag::class.java) }
@@ -726,6 +726,43 @@ class BeatmapApiImpl(
 
              */
             .block()!!
+    }
+
+    /**
+     * 错误包装
+     */
+    private fun <T> request(request: Function<WebClient, Mono<T>>): T {
+        return try {
+            base.request(request)
+        } catch (e: ExecutionException) {
+            when (e.cause) {
+                is WebClientResponseException.BadRequest -> {
+                    throw NetworkException.BeatmapException.BadRequest()
+                }
+
+                is WebClientResponseException.Unauthorized -> {
+                    throw NetworkException.BeatmapException.Unauthorized()
+                }
+
+                is WebClientResponseException.Forbidden -> {
+                    throw NetworkException.BeatmapException.Forbidden()
+                }
+
+                is WebClientResponseException.NotFound -> {
+                    throw NetworkException.BeatmapException.NotFound()
+                }
+
+                is WebClientResponseException.TooManyRequests -> {
+                    throw NetworkException.BeatmapException.TooManyRequests()
+                }
+
+                is WebClientResponseException.ServiceUnavailable -> {
+                    throw NetworkException.BeatmapException.ServiceUnavailable()
+                }
+
+                else -> throw NetworkException.BeatmapException(e.message)
+            }
+        }
     }
 
     companion object {
@@ -780,27 +817,5 @@ class BeatmapApiImpl(
 
             return deepL
         }
-
-        /*
-        private fun getScoreJudgeCount(score: Score): Int {
-            val mode = score.mode
-
-            val s = score.statistics
-            val n320 = s.countGeki
-            val n300 = s.count300
-            val n200 = s.countKatu
-            val n100 = s.count100
-            val n50 = s.count50
-            val n0 = s.countMiss
-
-            return when (mode) {
-                OsuMode.OSU -> n300 + n100 + n50 + n0
-                OsuMode.TAIKO -> n300 + n100 + n0
-                OsuMode.CATCH -> n300 + n0
-                else -> n320 + n300 + n200 + n100 + n50 + n0
-            }
-        }
-
-         */
     }
 }

@@ -11,7 +11,6 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.lang.NonNull
 import org.springframework.stereotype.Service
@@ -50,7 +49,7 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
                 .uri { it.path("api/chunithmprober/query/player").build() }
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(b), ChunithmBestScoreQQBody::class.java)
-                .headers { headers: HttpHeaders -> base.insertJSONHeader(headers) }
+                .headers(base::insertJSONHeader)
                 .retrieve()
                 .bodyToMono(ChuBestScore::class.java)
                 .block() ?: ChuBestScore()
@@ -63,7 +62,7 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
                 .uri { it.path("api/chunithmprober/query/player").build()}
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(b), ChunithmBestScoreNameBody::class.java)
-                .headers { headers: HttpHeaders -> base.insertJSONHeader(headers) }
+                .headers(base::insertJSONHeader)
                 .retrieve()
                 .bodyToMono(ChuBestScore::class.java)
                 .block() ?: ChuBestScore()

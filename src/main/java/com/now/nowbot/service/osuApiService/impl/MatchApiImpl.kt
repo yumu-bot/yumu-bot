@@ -4,9 +4,14 @@ import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.Match.Companion.append
 import com.now.nowbot.model.multiplayer.MatchLobby
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import reactor.core.publisher.Mono
 import java.time.Duration
+import java.util.concurrent.ExecutionException
+import java.util.function.Function
 
 @Service
 class MatchApiImpl(
@@ -14,7 +19,7 @@ class MatchApiImpl(
 ) : OsuMatchApiService {
     @Throws(WebClientResponseException::class)
     override fun getMatchLobby(limit: Int, descending: Boolean, cursor: String?): MatchLobby {
-        return base.request { client ->
+        return request { client ->
             client.get()
                 .uri {
                     it.path("matches")
@@ -50,7 +55,7 @@ class MatchApiImpl(
     }
 
     private fun getMatch(mid: Long): Match {
-        return base.request { client ->
+        return request { client ->
             client.get()
                 .uri("matches/{mid}", mid)
                 .headers(base::insertHeader)
@@ -67,7 +72,7 @@ class MatchApiImpl(
     }
 
     private fun getMatch(mid: Long, before: Long, after: Long): Match {
-        return base.request { client ->
+        return request { client ->
             client.get()
                 .uri {
                     it.path("matches/{mid}")
@@ -80,6 +85,39 @@ class MatchApiImpl(
                 .retrieve()
                 .bodyToMono(Match::class.java)
                 .timeout(Duration.ofSeconds(5))
+        }
+    }
+
+    /**
+     * 错误包装
+     */
+    private fun <T> request(request: Function<WebClient, Mono<T>>): T {
+        return try {
+            base.request(request)
+        } catch (e: ExecutionException) {
+            when (e.cause) {
+                is WebClientResponseException.BadRequest -> {
+                    throw NetworkException.MatchException.BadRequest()
+                }
+
+                is WebClientResponseException.Unauthorized -> {
+                    throw NetworkException.MatchException.Unauthorized()
+                }
+
+                is WebClientResponseException.NotFound -> {
+                    throw NetworkException.MatchException.NotFound()
+                }
+
+                is WebClientResponseException.TooManyRequests -> {
+                    throw NetworkException.MatchException.TooManyRequests()
+                }
+
+                is WebClientResponseException.ServiceUnavailable -> {
+                    throw NetworkException.MatchException.ServiceUnavailable()
+                }
+
+                else -> throw NetworkException.MatchException(e.message)
+            }
         }
     }
 }

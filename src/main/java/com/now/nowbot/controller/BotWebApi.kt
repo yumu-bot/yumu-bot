@@ -205,11 +205,7 @@ import kotlin.math.min
             image = imageService.getPanel(data, "F")
         } catch (err: Exception) {
             log.error("比赛结果：API 异常", err)
-            throw RuntimeException(
-                GeneralTipsException(
-                    GeneralTipsException.Type.G_Malfunction_Render, "比赛结果"
-                ).message
-            )
+            throw RuntimeException("比赛结果：API 异常")
         }
 
         return ResponseEntity(

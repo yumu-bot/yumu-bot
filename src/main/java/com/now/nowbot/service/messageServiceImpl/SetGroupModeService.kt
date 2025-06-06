@@ -9,6 +9,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MODE
@@ -75,7 +76,7 @@ class SetGroupModeService (
             if (isSuperAdmin || param.group == event.subject.id) {
                 param.group
             } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Super)
+                throw PermissionException.DeniedException.BelowSuperAdministrator()
             }
         } else if (event.subject is Group) {
             event.subject.id

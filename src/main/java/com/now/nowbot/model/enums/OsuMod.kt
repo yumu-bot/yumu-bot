@@ -227,7 +227,7 @@ enum class OsuMod(
 
             val newStr = acronyms.uppercase(Locale.getDefault()).replace("\\s+".toRegex(), "")
             if (newStr.length % 2 != 0) {
-                throw ModsException(ModsException.Type.MOD_Receive_CharNotPaired)
+                throw ModsException.CharNotPaired()
             }
             val list = newStr.split("(?<=\\w)(?=(\\w{2})+$)".toRegex()).dropLastWhile { it.isEmpty() }
             checkAcronyms(list)
@@ -253,37 +253,35 @@ enum class OsuMod(
             if (acronyms.isNullOrEmpty()) return
 
             if (acronyms.contains(None.acronym) && acronyms.size > 1) {
-                throw ModsException(
-                    ModsException.Type.MOD_Receive_Conflict,
+                throw ModsException.ModConflict(
                     None.acronym
                 )
             }
             if (acronyms.contains(DoubleTime.acronym) && acronyms.contains(HalfTime.acronym)) {
-                throw ModsException(
-                    ModsException.Type.MOD_Receive_Conflict,
-                    "${DoubleTime.acronym} ${HalfTime.acronym}",
+                throw ModsException.ModConflict(
+                    DoubleTime.acronym,
+                    HalfTime.acronym
                 )
             }
             if (acronyms.contains(HardRock.acronym) && acronyms.contains(Easy.acronym)) {
-                throw ModsException(
-                    ModsException.Type.MOD_Receive_Conflict,
-                    "${HardRock.acronym} ${Easy.acronym}",
+                throw ModsException.ModConflict(
+                    HardRock.acronym,
+                    Easy.acronym
                 )
             }
             if (
-                acronyms.contains(NoFail.acronym) &&
-                (acronyms.contains(SuddenDeath.acronym) ||
-                        acronyms.contains(Perfect.acronym))
+                acronyms.contains(NoFail.acronym) && (acronyms.contains(SuddenDeath.acronym) || acronyms.contains(Perfect.acronym))
             ) {
-                throw ModsException(
-                    ModsException.Type.MOD_Receive_Conflict,
-                    "${NoFail.acronym} ${SuddenDeath.acronym} ${Perfect.acronym}",
+                throw ModsException.ModConflict(
+                    NoFail.acronym,
+                    SuddenDeath.acronym,
+                    Perfect.acronym,
                 )
             }
             if (acronyms.contains(DoubleTime.acronym) && acronyms.contains(Nightcore.acronym)) {
-                throw ModsException(
-                    ModsException.Type.MOD_Receive_Conflict,
-                    "${DoubleTime.acronym} ${Nightcore.acronym}",
+                throw ModsException.ModConflict(
+                    DoubleTime.acronym,
+                    Nightcore.acronym
                 )
             }
         }
@@ -299,27 +297,28 @@ enum class OsuMod(
 
              */
             if (mods.contains(DoubleTime) && mods.contains(HalfTime)) {
-                throw ModsException(
-                    ModsException.Type.MOD_Receive_Conflict,
-                    "${DoubleTime.acronym} ${HalfTime.acronym}",
+                throw ModsException.ModConflict(
+                    DoubleTime.acronym,
+                    HalfTime.acronym
                 )
             }
             if (mods.contains(HardRock) && mods.contains(Easy)) {
-                throw ModsException(
-                    ModsException.Type.MOD_Receive_Conflict,
-                    "${HardRock.acronym} ${Easy.acronym}",
+                throw ModsException.ModConflict(
+                    HardRock.acronym,
+                    Easy.acronym
                 )
             }
             if (mods.contains(NoFail) && (mods.contains(SuddenDeath) || mods.contains(Perfect))) {
-                throw ModsException(
-                    ModsException.Type.MOD_Receive_Conflict,
-                    "${NoFail.acronym} ${SuddenDeath.acronym} ${Perfect.acronym}",
+                throw ModsException.ModConflict(
+                    NoFail.acronym,
+                    SuddenDeath.acronym,
+                    Perfect.acronym,
                 )
             }
             if (mods.contains(DoubleTime) && mods.contains(Nightcore)) {
-                throw ModsException(
-                    ModsException.Type.MOD_Receive_Conflict,
-                    "${DoubleTime.acronym} ${Nightcore.acronym}",
+                throw ModsException.ModConflict(
+                    DoubleTime.acronym,
+                    Nightcore.acronym
                 )
             }
         }

@@ -23,7 +23,7 @@ class BiliApiServiceImpl(
             .queryParam("uid", id)
             .build()
         }
-            .headers { base.insertJSONHeader(it) }
+            .headers(base::insertJSONHeader)
             .retrieve()
             .bodyToMono(JsonNode::class.java).block()!!
 
@@ -38,7 +38,7 @@ class BiliApiServiceImpl(
             .queryParam("mid", id)
             .build()
         }
-            .headers { base.insertJSONHeader(it) }
+            .headers(base::insertJSONHeader)
             .retrieve()
             .bodyToMono(JsonNode::class.java)
             .block()!!
@@ -54,7 +54,7 @@ class BiliApiServiceImpl(
             .queryParam("roomID", roomID)
             .build()
         }
-            .headers { base.insertJSONHeader(it) }
+            .headers(base::insertJSONHeader)
             .retrieve()
             .bodyToMono(JsonNode::class.java).block()!!
 

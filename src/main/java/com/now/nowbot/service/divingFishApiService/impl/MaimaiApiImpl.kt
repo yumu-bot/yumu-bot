@@ -12,7 +12,6 @@ import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientRequestException
@@ -54,7 +53,7 @@ import kotlin.text.Charsets.UTF_8
             base.divingFishApiWebClient.post().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/player").build()
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestQQRequestBody::class.java)
-                .headers { headers: HttpHeaders? -> base.insertJSONHeader(headers) }.retrieve()
+                .headers(base::insertJSONHeader).retrieve()
                 .bodyToMono(MaiBestScore::class.java).block()!!
         } catch (e: WebClientRequestException) {
             log.error("水鱼查分器：获取失败", e)
@@ -85,7 +84,7 @@ import kotlin.text.Charsets.UTF_8
             base.divingFishApiWebClient.post().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/plate").build()
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiVersionNameRequestBody::class.java)
-                .headers { headers: HttpHeaders? -> base.insertJSONHeader(headers) }.retrieve()
+                .headers(base::insertJSONHeader).retrieve()
                 .bodyToMono(MaiVersionScore::class.java).block()!!
         } catch (e: WebClientRequestException) {
             log.error("水鱼查分器：获取失败", e)
@@ -102,7 +101,7 @@ import kotlin.text.Charsets.UTF_8
             base.divingFishApiWebClient.post().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/plate").build()
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiVersionQQRequestBody::class.java)
-                .headers { headers: HttpHeaders? -> base.insertJSONHeader(headers) }.retrieve()
+                .headers(base::insertJSONHeader).retrieve()
                 .bodyToMono(MaiVersionScore::class.java).block()!!
         } catch (e: WebClientRequestException) {
             log.error("水鱼查分器：获取失败", e)
@@ -390,7 +389,7 @@ import kotlin.text.Charsets.UTF_8
         return try {
             base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/dev/player/records").queryParam("qq", qq).build()
-                }.headers { headers: HttpHeaders? -> base.insertDeveloperHeader(headers) }.retrieve()
+                }.headers(base::insertDeveloperHeader).retrieve()
                 .bodyToMono(MaiBestScore::class.java).block()!!
         } catch (e: WebClientResponseException.Forbidden) {
             throw e
@@ -408,7 +407,7 @@ import kotlin.text.Charsets.UTF_8
         return try {
             base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/dev/player/records").queryParam("username", username).build()
-                }.headers { headers: HttpHeaders? -> base.insertDeveloperHeader(headers) }.retrieve()
+                }.headers(base::insertDeveloperHeader).retrieve()
                 .bodyToMono(MaiBestScore::class.java).block()!!
         } catch (e: WebClientResponseException.Forbidden) {
             throw e

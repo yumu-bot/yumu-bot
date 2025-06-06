@@ -8,6 +8,7 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.botRuntimeException.BindException
+import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
@@ -29,7 +30,7 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
             val str: String? = m.group("data")
 
             val names = if (event.isAt) {
-                val b = bindDao.getQQLiteFromQQ(event.target).getOrNull() ?: throw BindException.NotBindException.UserNotBindException()
+                val b = bindDao.getQQLiteFromQQ(event.target).getOrNull() ?: throw BindException.NotBindException.UserNotBind()
 
                 event.reply(b.osuUser.osuID.toString())
                 return false
@@ -44,7 +45,7 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: List<String>) {
         if (Permission.isCommonUser(event)) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Group)
+            throw PermissionException.DeniedException.BelowGroupAdministrator()
         }
 
         val sb = StringBuilder()

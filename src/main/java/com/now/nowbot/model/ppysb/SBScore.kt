@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.LazerMod
-import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.osu.LazerScore
@@ -102,7 +101,7 @@ data class SBScore(
     ) {
 
     @get:JsonProperty("mods") val mods: List<LazerMod>
-        get() = LazerMod.getModsList(OsuMod.getModsList(modInt).map { it.acronym }.filter { it != "NK" && it != "FM" && it != "IM" })
+        get() = LazerMod.getModsListFromModInt(modInt)
 
     @get:JsonProperty("mode") val mode: OsuMode
         get() = when(modeByte.toInt()) {

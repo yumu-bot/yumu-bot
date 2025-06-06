@@ -1,6 +1,6 @@
 package com.now.nowbot.model.enums
 
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.command.REG_EQUAL
 import com.now.nowbot.util.command.REG_EXCLAMATION
 import com.now.nowbot.util.command.REG_GREATER
@@ -37,7 +37,7 @@ enum class Operator(@Language("RegExp") val regex: Regex) {
                 }
             }
 
-            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_S, "逻辑运算符")
+            throw IllegalArgumentException.WrongException.Operator()
         }
     }
 }

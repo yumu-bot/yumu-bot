@@ -132,7 +132,7 @@ class NewbieRestrictOverSRService(
                 val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
                 if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_Cabbage)
+                    return false
                 }
 
                 val ranges = if (hasRangeInConditions) rangeInConditions else pr.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
@@ -289,7 +289,7 @@ class NewbieRestrictOverSRService(
 
                 constructScore.beatmap = beatmap
                 constructScore.beatmapset = beatmap.beatmapset!!
-                constructScore.ruleset = mode.modeValue.toByte()
+                constructScore.ruleset = mode.modeValue
                 constructScore.mods = mods
 
                 scores = listOf(constructScore)

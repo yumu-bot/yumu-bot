@@ -6,7 +6,6 @@ import com.now.nowbot.config.OsuConfig
 import com.now.nowbot.config.YumuConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.ContextUtil
 import jakarta.annotation.PostConstruct
@@ -145,15 +144,15 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
                 refreshUserToken(user, false)
             } catch (e: WebClientResponseException.Unauthorized) {
                 bindDao.backupBind(user.userID)
-                log.info("令牌过期 绑定丢失: {}, 已退回到 ID 绑定", user.userID, e)
+                log.info("更新令牌失败：令牌过期，退回到名称绑定：${user.userID}", e)
                 botToken
-                throw BindException.BindIllegalArgumentException.IllegalUserStateException()
+                throw BindException.BindIllegalArgumentException.IllegalUserState()
             } catch (e: WebClientResponseException.Forbidden) {
                 log.info("更新令牌失败：账号封禁", e)
-                throw BindException.BindIllegalArgumentException.IllegalUserStateException()
+                throw BindException.BindIllegalArgumentException.IllegalUserState()
             } catch (e: WebClientResponseException.NotFound) {
                 log.info("更新令牌失败：找不到账号", e)
-                throw BindException.BindIllegalArgumentException.IllegalUserException()
+                throw BindException.BindIllegalArgumentException.IllegalUser()
             } catch (e: WebClientResponseException.TooManyRequests) {
                 log.info("更新令牌失败：API 访问太频繁", e)
                 throw BindException.BindNetworkException()
@@ -172,6 +171,7 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
         }
     }
 
+    @Throws(ExecutionException::class)
     fun <T> request(request: Function<WebClient, Mono<T>>): T {
         val future = CompletableFuture<T>()
         val priority = ContextUtil.getContext(
@@ -182,35 +182,6 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
         TASKS.offer(task)
         try {
             return future.get()
-        } catch (e: ExecutionException) {
-            when (e.cause) {
-                is WebClientResponseException.Unauthorized -> {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Response_401)
-                }
-
-                is WebClientResponseException.Forbidden -> {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Response_403)
-                }
-
-                is WebClientResponseException.NotFound -> {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Response_404)
-                }
-
-                is WebClientResponseException.TooManyRequests -> {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Response_429)
-                }
-
-                is WebClientResponseException.ServiceUnavailable -> {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Response_503)
-                }
-
-                is WebClientResponseException -> {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
-                }
-
-                is RuntimeException -> throw e
-                else -> throw RuntimeException(e.cause)
-            }
         } catch (e: InterruptedException) {
             throw RuntimeException(e)
         }

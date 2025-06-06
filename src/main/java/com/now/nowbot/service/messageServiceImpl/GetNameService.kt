@@ -7,6 +7,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
@@ -29,7 +30,7 @@ class GetNameService(private val userApiService: OsuUserApiService) : MessageSer
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
         if (Permission.isCommonUser(event)) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Group)
+            throw PermissionException.DeniedException.BelowGroupAdministrator()
         }
 
         val idStr: List<String>? = splitString(param.group("data"), splitSpace = true)

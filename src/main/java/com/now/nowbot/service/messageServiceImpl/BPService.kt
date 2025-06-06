@@ -16,6 +16,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
@@ -64,7 +65,7 @@ import kotlin.math.*
         val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
         if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_Cabbage)
+            throw IllegalArgumentException.WrongException.Cabbage()
         }
 
         val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())

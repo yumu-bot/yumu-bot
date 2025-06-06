@@ -7,8 +7,8 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BanService.BanParam
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.botException.BanException
+import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
@@ -63,7 +63,7 @@ class BanService(private val permission: Permission, private val imageService: I
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: BanParam) {
         if (!Permission.isSuperAdmin(event.sender.id)) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Super)
+            throw PermissionException.DeniedException.BelowSuperAdministrator()
         }
 
         when (param.operate) {

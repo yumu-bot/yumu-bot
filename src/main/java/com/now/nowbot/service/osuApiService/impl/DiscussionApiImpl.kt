@@ -2,7 +2,6 @@ package com.now.nowbot.service.osuApiService.impl
 
 import com.now.nowbot.model.osu.Discussion
 import com.now.nowbot.service.osuApiService.OsuDiscussionApiService
-import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.util.UriBuilder
@@ -65,11 +64,7 @@ class DiscussionApiImpl(var base: OsuApiBaseService) : OsuDiscussionApiService {
                         .queryParamIfPresent("cursor_string", Optional.ofNullable(cursor))
                         .build()
                 }
-                .headers { headers: HttpHeaders? ->
-                    base.insertHeader(
-                        headers!!
-                    )
-                }
+                .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(Discussion::class.java)
         }

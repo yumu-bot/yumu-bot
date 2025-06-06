@@ -12,6 +12,7 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
@@ -46,7 +47,7 @@ import kotlin.math.roundToInt
             val mode = OsuMode.getMode(matcher.group("mode"))
 
             if (Permission.isCommonUser(event)) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Group)
+                throw PermissionException.DeniedException.BelowGroupAdministrator()
             }
 
             if (names.isEmpty()) {

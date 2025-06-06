@@ -18,6 +18,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
@@ -58,7 +59,7 @@ class MatchMapService(
         if (!matcher.find()) return false
 
         if (!Permission.isSuperAdmin(event.sender.id)) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Permission_Super)
+            throw PermissionException.DeniedException.BelowSuperAdministrator()
         }
 
         val matchID =

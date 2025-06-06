@@ -11,6 +11,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.BeatmapUserScore
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import okio.IOException
@@ -18,13 +19,16 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
+import reactor.core.publisher.Mono
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
+import java.util.concurrent.ExecutionException
 import java.util.function.Consumer
 import java.util.function.Function
 
@@ -41,7 +45,7 @@ class ScoreApiImpl(
         limit: Int,
     ): List<LazerScore> {
         if (!user.isAuthorized) return getBestScores(user.userID, mode, offset, limit)
-        return base.osuApiWebClient.get()
+        return request { client -> client.get()
             .uri { it.path("users/{uid}/scores/best")
                 .queryParam("legacy_only", 0)
                 .queryParam("offset", offset)
@@ -53,7 +57,7 @@ class ScoreApiImpl(
             .retrieve()
             .bodyToFlux(LazerScore::class.java)
             .collectList()
-            .block()!!
+        }
     }
 
     override fun getBestScores(
@@ -62,18 +66,20 @@ class ScoreApiImpl(
         offset: Int,
         limit: Int,
     ): List<LazerScore> {
-        return base.osuApiWebClient.get()
-            .uri { it.path("users/{uid}/scores/best")
-                .queryParam("legacy_only", 0)
-                .queryParam("offset", offset)
-                .queryParam("limit", limit)
-                .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                .build(id)
+        return request { client -> client.get()
+            .uri {
+                it.path("users/{uid}/scores/best")
+                    .queryParam("legacy_only", 0)
+                    .queryParam("offset", offset)
+                    .queryParam("limit", limit)
+                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                    .build(id)
             }
-            .headers { base.insertHeader(it) }
+            .headers(base::insertHeader)
             .retrieve()
             .bodyToMono(JsonNode::class.java)
-            .map { JacksonUtil.parseObjectList(it, LazerScore::class.java) }.block()!!
+            .map { JacksonUtil.parseObjectList(it, LazerScore::class.java) }
+        }
 
             /*
             .bodyToFlux(LazerScore::class.java)
@@ -236,7 +242,7 @@ class ScoreApiImpl(
     override fun getBeatMapScores(bid: Long, user: BindUser, mode: OsuMode?): List<LazerScore> {
         if (!user.isAuthorized) getBeatMapScores(bid, user.userID, mode)
 
-        return base.osuApiWebClient.get()
+        return request { client -> client.get()
             .uri { it.path("beatmaps/{bid}/scores/users/{uid}/all")
                 .queryParam("legacy_only", 0)
                 .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
@@ -246,35 +252,36 @@ class ScoreApiImpl(
             .retrieve()
             .bodyToMono(JsonNode::class.java)
             .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
-            .block()!!
+            }
     }
 
     override fun getBeatMapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore> {
-        return base.osuApiWebClient.get()
-            .uri { it.path("beatmaps/{bid}/scores/users/{uid}/all")
-                .queryParam("legacy_only", 0)
-                .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                .build(bid, uid)
+        return request { client -> client.get()
+            .uri {
+                it.path("beatmaps/{bid}/scores/users/{uid}/all")
+                    .queryParam("legacy_only", 0)
+                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                    .build(bid, uid)
             }
-            .headers { base.insertHeader(it) }
+            .headers(base::insertHeader)
             .retrieve()
             .bodyToMono(JsonNode::class.java)
             .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
-            .block()!!
+        }
     }
 
     override fun getLeaderBoardScore(bid: Long, mode: OsuMode?, legacy: Boolean): List<LazerScore> {
-        return base.osuApiWebClient.get()
+        return request { client -> client.get()
             .uri { it.path("beatmaps/{bid}/scores")
                 .queryParam("legacy_only", if (legacy) 1 else 0)
                 .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                 .build(bid)
             }
-            .headers { base.insertHeader(it) }
+            .headers(base::insertHeader)
             .retrieve()
             .bodyToMono(JsonNode::class.java)
             .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
-            .block()!!
+        }
     }
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -321,14 +328,16 @@ class ScoreApiImpl(
                     val replacePath = split.first().replace("https://assets.ppy.sh/", "")
 
                     val image = try {
-                        base.osuApiWebClient.get()
-                            .uri { it.scheme("https").host("assets.ppy.sh").replacePath(replacePath)
-                                .query(query.toString())
-                                .build() }
-                            .headers { base.insertHeader(it) }
+                        request { client -> client.get()
+                            .uri {
+                                it.scheme("https").host("assets.ppy.sh").replacePath(replacePath)
+                                    .query(query.toString())
+                                    .build()
+                            }
+                            .headers(base::insertHeader)
                             .retrieve()
                             .bodyToMono(ByteArray::class.java)
-                            .block()!!
+                        }
                     } catch (e: Exception) {
                         log.error("异步下载谱面图片：任务失败\n", e)
                         return@Runnable
@@ -349,28 +358,31 @@ class ScoreApiImpl(
 
     override fun getReplay(score: LazerScore): Replay? {
         if (score.replay && score.scoreID > 0L) {
-            try {
-                return base.osuApiWebClient.get()
-                    .uri { it.path("scores/{score}/download")
-                        .build(score.scoreID)
-                    }
-                    .headers { base.insertHeader(it) }
-                    .retrieve()
-                    .bodyToMono(ByteBuffer::class.java)
-                    .map { Replay(it) }
+            return try {
+                request { client ->
+                    client.get()
+                        .uri {
+                            it.path("scores/{score}/download")
+                                .build(score.scoreID)
+                        }
+                        .headers(base::insertHeader)
+                        .retrieve()
+                        .bodyToMono(ByteBuffer::class.java)
+                        .map { Replay(it) }
                     /*
                     .bodyToMono(JsonNode::class.java)
                     .map { JacksonUtil.parseObject(it, Replay::class.java) }
 
                      */
-                    .block()!!
+                }
             } catch (e: Exception) {
-                throw e
+                return null
             }
+        }
 
-
-        } else return null
+        return null
     }
+
 
     private fun getRecent(
         user: BindUser,
@@ -379,23 +391,23 @@ class ScoreApiImpl(
         offset: Int,
         limit: Int,
     ): List<LazerScore> {
-        return base.request { client ->
+        return request { client ->
             client.get()
-            .uri { uriBuilder: UriBuilder ->
-                uriBuilder
-                    .path("users/{uid}/scores/recent")
-                    .queryParam("legacy_only", 0)
-                    .queryParam("include_fails", if (includeFails) 1 else 0)
-                    .queryParam("offset", offset)
-                    .queryParam("limit", limit)
-                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                    .build(user.userID)
-            }
-            .headers(base.insertHeader(user))
-            .retrieve()
-            .bodyToFlux(LazerScore::class.java)
-            .collectList()
-            .doOnNext(scoreDao::saveScoreAsync)
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                        .path("users/{uid}/scores/recent")
+                        .queryParam("legacy_only", 0)
+                        .queryParam("include_fails", if (includeFails) 1 else 0)
+                        .queryParam("offset", offset)
+                        .queryParam("limit", limit)
+                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                        .build(user.userID)
+                }
+                .headers(base.insertHeader(user))
+                .retrieve()
+                .bodyToFlux(LazerScore::class.java)
+                .collectList()
+                .doOnNext(scoreDao::saveScoreAsync)
         }
     }
 
@@ -406,25 +418,61 @@ class ScoreApiImpl(
         offset: Int,
         limit: Int,
     ): List<LazerScore>? {
-        return base.request { client ->
+        return request { client ->
             client.get()
-            .uri { uriBuilder: UriBuilder ->
-                uriBuilder
-                    .path("users/{uid}/scores/recent")
-                    .queryParam("legacy_only", 0)
-                    .queryParam("include_fails", if (includeFails) 1 else 0)
-                    .queryParam("offset", offset)
-                    .queryParam("limit", limit)
-                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                    .build(uid)
-            }
-            .headers { base.insertHeader(it) }
-            .retrieve()
-            .bodyToFlux(LazerScore::class.java)
-            .collectList()
-            .doOnNext(scoreDao::saveScoreAsync)
+                .uri { uriBuilder: UriBuilder ->
+                    uriBuilder
+                        .path("users/{uid}/scores/recent")
+                        .queryParam("legacy_only", 0)
+                        .queryParam("include_fails", if (includeFails) 1 else 0)
+                        .queryParam("offset", offset)
+                        .queryParam("limit", limit)
+                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                        .build(uid)
+                }
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToFlux(LazerScore::class.java)
+                .collectList()
+                .doOnNext(scoreDao::saveScoreAsync)
         }
+    }
 
+    /**
+     * 错误包装
+     */
+    private fun <T> request(request: Function<WebClient, Mono<T>>): T {
+        return try {
+            base.request(request)
+        } catch (e: ExecutionException) {
+            when (e.cause) {
+                is WebClientResponseException.BadRequest -> {
+                    throw NetworkException.ScoreException.BadRequest()
+                }
+
+                is WebClientResponseException.Unauthorized -> {
+                    throw NetworkException.ScoreException.Unauthorized()
+                }
+
+                is WebClientResponseException.Forbidden -> {
+                    throw NetworkException.ScoreException.Forbidden()
+                }
+
+                is WebClientResponseException.NotFound -> {
+                    throw NetworkException.ScoreException.NotFound()
+                }
+
+                is WebClientResponseException.TooManyRequests -> {
+                    throw NetworkException.ScoreException.TooManyRequests()
+                }
+
+                is WebClientResponseException.ServiceUnavailable -> {
+                    throw NetworkException.ScoreException.ServiceUnavailable()
+                }
+
+                else -> throw NetworkException.ScoreException(e.message)
+            }
+        }
     }
 
     private inline fun <reified T> retryOn404(
@@ -433,16 +481,14 @@ class ScoreApiImpl(
         retry: Function<UriBuilder, URI>,
     ): T {
         return try {
-            base.request {
-                it.get()
+            request { client -> client.get()
                 .uri(uri)
                 .headers(headers)
                 .retrieve()
                 .bodyToMono(T::class.java)
             }
-        } catch (e: WebClientResponseException.NotFound) {
-            base.request {
-                it.get()
+        } catch (e: NetworkException.ScoreException.NotFound) {
+            request { client -> client.get()
                 .uri(retry)
                 .headers(headers)
                 .retrieve()

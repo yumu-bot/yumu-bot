@@ -3,6 +3,7 @@ package com.now.nowbot.model.enums
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
@@ -209,7 +210,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     val ir = rankArray.indexOf(it.rank.uppercase())
 
                     if (cr == -1) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_S, "评级")
+                        throw IllegalArgumentException.WrongException.Rank()
                     }
 
                     fit(operator, ir.toLong(), cr.toLong())
@@ -269,17 +270,13 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                         when (operator) {
                             Operator.XQ, Operator.EQ -> it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")
                             Operator.NE -> (it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")).not()
-                            else -> throw GeneralTipsException(
-                                GeneralTipsException.Type.G_Wrong_ParamOnly, "==, =, !="
-                            )
+                            else -> throw IllegalArgumentException.WrongException.OperatorOnly("==", "=", "!=")
                         }
                     } else if (condition.contains("FM", ignoreCase = true)) {
                         when (operator) {
                             Operator.XQ, Operator.EQ -> it.mods.isNotEmpty() && (it.mods.size == 1 && it.mods.first().acronym == "CL").not()
                             Operator.NE -> it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")
-                            else -> throw GeneralTipsException(
-                                GeneralTipsException.Type.G_Wrong_ParamOnly, "==, =, !="
-                            )
+                            else -> throw IllegalArgumentException.WrongException.OperatorOnly("==", "=", "!=")
                         }
                     } else {
                         val mods = LazerMod.getModsList(condition)
@@ -288,15 +285,13 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                             Operator.XQ -> LazerMod.hasMod(mods, it.mods) && (mods.size == it.mods.size)
                             Operator.EQ -> LazerMod.hasMod(mods, it.mods)
                             Operator.NE -> LazerMod.hasMod(mods, it.mods).not()
-                            else -> throw GeneralTipsException(
-                                GeneralTipsException.Type.G_Wrong_ParamOnly, "==, =, !="
-                            )
+                            else -> throw IllegalArgumentException.WrongException.OperatorOnly("==", "=", "!=")
                         }
                     }
                 }
 
                 RATE -> run {
-                    if (it.mode != OsuMode.MANIA) throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_S, "游戏模式")
+                    if (it.mode != OsuMode.MANIA) throw IllegalArgumentException.WrongException.Mode()
 
                     val rate = min((it.statistics.perfect * 1.0 / it.statistics.great), 100.0)
                     val input = if (double > 0.0) min(double, 100.0) else double

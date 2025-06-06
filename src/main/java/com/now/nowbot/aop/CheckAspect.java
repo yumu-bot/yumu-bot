@@ -105,63 +105,66 @@ public class CheckAspect {
      * 加了@CheckPermission注解的
      */
 //    @Before(value = "@annotation(CheckPermission) && @target(Service)", argNames = "point,CheckPermission,Service")
-    public Object checkPermission(JoinPoint point, CheckPermission CheckPermission, Service Service) throws Exception {
+    public Object checkPermission(JoinPoint point, CheckPermission CheckPermission, Service Service) {
         if (ContextUtil.isBreakAop()) {
             return point.getArgs();
         }
         var args = point.getArgs();
         var event = (MessageEvent) args[0];
-        var servicename = Service.value();
+        var name = Service.value();
 
-        if (Permission.isSuperAdmin(event.getSender().getId())) {
+        var qq = event.getSender().getId();
+
+        if (Permission.isSuperAdmin(qq)) {
             //超管无视任何限制
             return args;
         }
         //超管权限判断
         if (CheckPermission.isGroupAdmin()) {
             if (event.getSender() instanceof GroupContact groupUser && ! (groupUser.getRole().equals(Role.ADMIN) || groupUser.getRole().equals(Role.OWNER))) {
-                throw new PermissionException(STR."\{servicename}非管理员使用管理功能", STR."\{event.getSender().getId()} -> \{servicename}");
+                throw new PermissionException.RoleException.NormalUserUseAdminService(name, qq);
             }
         }
         if (CheckPermission.isSuperAdmin()) {
-            throw new PermissionException(STR."\{servicename}使用超管功能", STR."\{event.getSender().getId()} -> \{servicename}");
+            throw new PermissionException.RoleException.AdminUseAdminService(name, qq);
         }
         // test 功能
-        if (CheckPermission.test() && ! Permission.isTester(event.getSender().getId())) {
-            throw new PermissionException(STR."\{servicename}有人使用测试功能 ", STR."\{event.getSender().getId()} -> \{servicename}");
+        if (CheckPermission.test() && ! Permission.isTester(qq)) {
+            throw new PermissionException.RoleException.SomebodyUseTestService(name, qq);
         }
         //服务权限判断
         //白/黑名单
         if (CheckPermission.isWhite()) {
-            if (CheckPermission.friend() && ! permission.hasUser(servicename, event.getSender().getId())) {
-                throw new PermissionException(STR."\{servicename} 白名单过滤(个人)", STR."\{event.getSender().getId()} -> \{servicename}");
+            if (CheckPermission.friend() && ! permission.hasUser(name, qq)) {
+                throw new PermissionException.WhiteListException.UserFilter(name, qq);
             }
-            if (CheckPermission.group() && event instanceof GroupMessageEvent g && ! permission.hasGroup(servicename, g.getGroup().getId())) {
-                throw new PermissionException(STR."\{servicename} 白名单过滤(群聊)", STR."\{event.getSender().getId()} -> \{servicename}");
+            if (CheckPermission.group() && event instanceof GroupMessageEvent g && ! permission.hasGroup(name, g.getGroup().getId())) {
+                throw new PermissionException.WhiteListException.GroupFilter(name, qq);
             }
         } else {
-            if (CheckPermission.friend() && permission.hasUser(servicename, event.getSender().getId())) {
-                throw new PermissionException(STR."\{servicename} 黑名单过滤(个人)", STR."\{event.getSender().getId()} -> \{servicename}");
+            if (CheckPermission.friend() && permission.hasUser(name, qq)) {
+                throw new PermissionException.BlackListException.UserFilter(name, qq);
             }
-            if (CheckPermission.group() && event instanceof GroupMessageEvent g && permission.hasGroup(servicename, g.getGroup().getId())) {
-                throw new PermissionException(STR."\{servicename} 黑名单过滤(群聊)", STR."\{event.getSender().getId()} -> \{servicename}");
+            if (CheckPermission.group() && event instanceof GroupMessageEvent g && permission.hasGroup(name, g.getGroup().getId())) {
+                throw new PermissionException.BlackListException.GroupFilter(name, qq);
             }
         }
         return args;
     }
 
     //    @Before("servicePoint() && @target(Service)")
-    public Object[] checkRepeat(JoinPoint point, Service Service) throws Exception {
+    public Object[] checkRepeat(JoinPoint point, Service Service) {
         if (ContextUtil.isBreakAop()) {
             return point.getArgs();
         }
         var args = point.getArgs();
         var event = (MessageEvent) args[0];
 
-        var servicename = Service.value();
-//        var servicename = AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
+        var name = Service.value();
+        var qq = event.getSender().getId();
+//        var name = AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
         try {
-            if (Permission.isSuperAdmin(event.getSender().getId())) {
+            if (Permission.isSuperAdmin(qq)) {
                 //超管无视任何限制
                 return args;
             }
@@ -169,10 +172,10 @@ public class CheckAspect {
                 return args;
             }
             // 群跟人的id进行全局黑名单校验
-            else if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null, event.getSender().getId())) {
+            else if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null, qq)) {
                 return args;
             }
-            throw new PermissionException("权限禁止", STR."禁止的权限,请求功能: \{servicename} ,请求人: \{event.getSender().getId()}");
+            throw new PermissionException.BlackListException.Blocked(name, qq);
         } finally {
 //            workList.add(event);
         }

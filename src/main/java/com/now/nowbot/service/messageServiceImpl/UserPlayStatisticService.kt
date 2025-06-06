@@ -29,7 +29,7 @@ class UserPlayStatisticService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: Long) {
-        val user = bindDao.getBindFromQQ(param, true) ?: throw BindException.NotBindException.YouNotBindException()
+        val user = bindDao.getBindFromQQ(param, true) ?: throw BindException.NotBindException.YouNotBind()
         scoreApi.getRecentScore(user, OsuMode.DEFAULT, 0, 999)
         val time = scoreDao.getUserAllScoreTime(user.userID)
         val intervalCount = IntArray(5) { 0 }
