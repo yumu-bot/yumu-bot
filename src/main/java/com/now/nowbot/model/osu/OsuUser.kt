@@ -248,7 +248,7 @@ open class OsuUser {
 
     data class UserGroup(
         @JsonProperty("colour")
-        val color: String = "",
+        val color: String? = "",
 
         @JsonProperty("has_listing")
         val hasListing: Boolean = false,
