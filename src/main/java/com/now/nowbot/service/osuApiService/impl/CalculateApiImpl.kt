@@ -213,13 +213,7 @@ import kotlin.reflect.full.companionObjectInstance
          * 如果是 sb_score，则过滤掉 RX 的 mod，确保最大 pp 符合预期
          */
         val mods = if (score.type == "sb_score") {
-            val e = score.mode.modeValue.toInt()
-
-            when (e) {
-                in 4..7 -> score.mods.filterNot { it is LazerMod.Relax }
-                8 -> score.mods.filterNot { it is LazerMod.Autopilot }
-                else -> score.mods
-            }
+            score.mods.filterNot { it is LazerMod.Relax || it is LazerMod.Autopilot }
         } else {
             score.mods
         }
