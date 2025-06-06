@@ -31,7 +31,7 @@ class DiscussionApiImpl(var base: OsuApiBaseService) : OsuDiscussionApiService {
             )
 
             discussion.cursorString = other.cursorString
-            discussion.mergeDiscussion(other, sort!!)
+            discussion.mergeDiscussion(other, sort)
         }
         return discussion
     }

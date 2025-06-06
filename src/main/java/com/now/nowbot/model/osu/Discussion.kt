@@ -52,7 +52,7 @@ data class Discussion(
         @JsonProperty("limit") val limit: Int,
     )
 
-    fun mergeDiscussion(that: Discussion, sort: String) {
+    fun mergeDiscussion(that: Discussion, sort: String?) {
         this.cursorString = that.cursorString
         this.cursor = that.cursor
 
