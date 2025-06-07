@@ -159,7 +159,7 @@ object CmdUtil {
                     val name = range[0].toString()
 
                     val bindMode = try {
-                        bindDao.getBindUser(name).mode
+                        bindDao.getBindUser(name)!!.mode
                     } catch (e: Exception) {
                         OsuMode.DEFAULT
                     }
@@ -190,7 +190,7 @@ object CmdUtil {
                 }
 
                 val bindMode = try {
-                    bindDao.getBindUser(range.data).mode
+                    bindDao.getBindUser(range.data)!!.mode
                 } catch (e: Exception) {
                     OsuMode.DEFAULT
                 }
