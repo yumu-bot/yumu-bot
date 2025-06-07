@@ -228,6 +228,7 @@ public class BindDao {
         return bindDiscordMapper.save(discordBind);
     }
 
+    @Nullable
     public BindUser getBindUser(String name) {
         var id = getOsuID(name);
         if (id == null) return null;

@@ -87,7 +87,7 @@ import kotlin.jvm.optionals.getOrNull
         }
 
         val isUnbind = m.group("un") != null || m.group("ub") != null
-        val isSuper = Permission.isSuperAdmin(qq)
+        val isSuper = Permission.isSuperAdmin(event.sender.id)
         val isFull = m.group("full") != null
 
         val param = if (event.isAt) { // bi/ub @

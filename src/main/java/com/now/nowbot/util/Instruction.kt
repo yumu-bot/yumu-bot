@@ -104,11 +104,15 @@ enum class Instruction(val pattern: Pattern) {
     SET_MODE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("setmode", "mode", "sm", "mo")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
+        appendSpace()
+        appendQQUIDName()
     }),
 
     SB_SET_MODE(CommandPatternBuilder.create {
         appendSBCommandsIgnoreAll("setmode", "mode", "sm", "mo")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
+        appendSpace()
+        appendQQUIDName()
     }),
 
     SET_GROUP_MODE(CommandPatternBuilder.create {
@@ -843,7 +847,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.SERVICE_COUNT) continue
+        if (i != Instruction.SB_SET_MODE) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }
