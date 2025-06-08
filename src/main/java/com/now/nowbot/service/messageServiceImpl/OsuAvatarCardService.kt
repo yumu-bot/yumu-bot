@@ -8,7 +8,6 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import org.springframework.stereotype.Service
@@ -44,7 +43,7 @@ class OsuAvatarCardService(
         val matcher = Instruction.OSU_AVATAR_CARD.matcher(messageText)
         if (!matcher.find()) return false
 
-        val u = bindDao.getBindFromQQ(event.sender.id) ?: throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
+        val u = bindDao.getBindFromQQ(event.sender.id)
         data.value = UserAvatarCardParam(userApiService.getOsuUser(u))
         return true
     }
@@ -55,7 +54,7 @@ class OsuAvatarCardService(
 
     override fun accept(event: MessageEvent, messageText: String): UserAvatarCardParam? {
         if (!OfficialInstruction.OSU_AVATAR_CARD.matcher(messageText).find()) return null
-        val u = bindDao.getBindFromQQ(event.sender.id) ?: throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
+        val u = bindDao.getBindFromQQ(event.sender.id)
         return UserAvatarCardParam(userApiService.getOsuUser(u))
     }
 

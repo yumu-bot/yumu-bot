@@ -31,6 +31,7 @@ import com.now.nowbot.util.command.REG_RANGE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.text.DecimalFormat
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
 import kotlin.math.roundToLong
@@ -351,11 +352,14 @@ class NewbieRestrictOverSRService(
         val count = t.size
         val duration = getTime(t.sumOf { it.duration ?: 0L } / 60000)
 
+        val formatter = DecimalFormat("#.##")
+
         val last5 = t.asSequence()
             .filter { it.time != null && it.star != null }
             .sortedByDescending { it.time!! }
             .mapNotNull { it.star }
             .take(5)
+            .map { formatter.format(it) }
             .joinToString(", ")
 
         val index = String.format("%.2f", sr) + " -> " + getTime(silence)

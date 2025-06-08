@@ -17,10 +17,8 @@ import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.Supplier
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import kotlin.math.max
@@ -79,7 +77,7 @@ object CmdUtil {
         } else if (me != null) {
             isMyself.set(true)
             setMode(mode, me.mode, event)
-            return getOsuUser(me.username, me.userID) { userApiService.getOsuUser(me, mode.data!!) }
+            return userApiService.getOsuUser(me, mode.data!!)
         } else {
             throw BindException.TokenExpiredException.UserTokenExpiredException()
         }
@@ -284,7 +282,7 @@ object CmdUtil {
 
         if (g.isNullOrEmpty()) {
             if (myBind == null) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
+                throw BindException.TokenExpiredException.YouTokenExpiredException()
             }
 
             setMode(mode, myBind.mode, event)
@@ -294,7 +292,7 @@ object CmdUtil {
         val gs = g.split(REG_SEPERATOR_NO_SPACE.toRegex())
 
         if (gs.size == 1) {
-            val you = getOsuUser(gs.first().trim(), mode.data, false)
+            val you = getOsuUser(gs.first().trim(), mode.data)
 
             setMode(mode, you.currentOsuMode)
 
@@ -485,7 +483,7 @@ object CmdUtil {
      * @param mode 指定模式
      */
     @Throws(TipsException::class) fun getOsuUser(user: BindUser, mode: OsuMode?): OsuUser {
-        return getOsuUser(user.username, user.userID) { userApiService.getOsuUser(user, mode ?: OsuMode.DEFAULT) }
+        return userApiService.getOsuUser(user, mode ?: OsuMode.DEFAULT)
     }
 
     /**
@@ -494,8 +492,8 @@ object CmdUtil {
      * @param name 用户名
      * @param mode 指定模式
      */
-    @Throws(TipsException::class) fun getOsuUser(name: String, mode: OsuMode?, isMyself: Boolean = false): OsuUser {
-        return getOsuUser(name, isMyself = isMyself) { userApiService.getOsuUser(name, mode ?: OsuMode.DEFAULT) }
+    @Throws(TipsException::class) fun getOsuUser(name: String, mode: OsuMode?): OsuUser {
+        return userApiService.getOsuUser(name, mode ?: OsuMode.DEFAULT)
     }
 
     /**
@@ -505,42 +503,7 @@ object CmdUtil {
      * @param mode 指定模式
      */
     @Throws(TipsException::class) fun getOsuUser(uid: Long, mode: OsuMode?): OsuUser {
-        return getOsuUser("玩家 $uid", uid) { userApiService.getOsuUser(uid, mode ?: OsuMode.DEFAULT) }
-    }
-
-    /** 内部方法 封装获取 user 的方法, 包装出现的异常 */
-    @Throws(TipsException::class) private fun <T> getOsuUser(
-        name: String,
-        uid: Long? = null,
-        isMyself: Boolean = false,
-        consumer: Supplier<T>
-    ): T {
-        try {
-            return consumer.get()
-        } catch (e: WebClientResponseException.NotFound) {
-            if (name.matches("$REG_RANGE\\s+\\S+".toRegex())) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerReverse, name)
-            }
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name)
-        } catch (e: WebClientResponseException.Forbidden) {
-            throw if (isMyself) {
-                GeneralTipsException(GeneralTipsException.Type.G_Banned_Me)
-            } else {
-                GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, name)
-            }
-        } catch (e: WebClientResponseException.Unauthorized) {
-            uid?.let(bindDao::backupBind)
-            throw if (isMyself) {
-                GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-            } else {
-                GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
-            }
-        } catch (e: WebClientResponseException) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
-        } catch (e: Exception) {
-            log.error("HandleUtil：玩家信息获取失败！", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_PlayerInfo)
-        }
+        return userApiService.getOsuUser(uid, mode ?: OsuMode.DEFAULT)
     }
 
     /** 判断是否包含避讳指令 */

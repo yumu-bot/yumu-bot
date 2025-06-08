@@ -114,6 +114,7 @@ public class BindDao {
         return code;
     }
 
+    @NonNull
     public BindUser getBindFromQQ(Long qq) throws BindException {
         return getBindFromQQ(qq, false);
     }
@@ -125,6 +126,7 @@ public class BindDao {
      * @param isMyself 仅影响报错信息，不影响结果
      * @return 绑定的玩家
      */
+    @NonNull
     public BindUser getBindFromQQ(Long qq, boolean isMyself) throws BindException {
         if (qq < 0) {
             try {

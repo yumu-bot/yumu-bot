@@ -12,6 +12,8 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.messageServiceImpl.MaiScoreService.Companion.Version.*
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
@@ -104,7 +106,7 @@ import org.springframework.stereotype.Service
                         data.value = MaiScoreParam(null, nameOrTitleStr, null, qq, version, difficulty)
                     }
                 } else {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
+                    throw IllegalArgumentException.WrongException.BeatmapID()
                 }
             } else {
                 if (nameOrTitleStr.matches(Regex(REG_NUMBER_15))) {
@@ -116,7 +118,7 @@ import org.springframework.stereotype.Service
                 }
             }
         } else {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
+            throw IllegalArgumentException.WrongException.BeatmapID()
         }
 
         return true
@@ -262,7 +264,7 @@ import org.springframework.stereotype.Service
             }
 
             if (result.isEmpty()) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Result)
+                throw NoSuchElementException.Result()
             }
 
             val sort = result.toSortedMap().reversed()

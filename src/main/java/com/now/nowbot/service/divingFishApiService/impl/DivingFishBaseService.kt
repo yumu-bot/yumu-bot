@@ -1,11 +1,15 @@
 package com.now.nowbot.service.divingFishApiService.impl
 
 import com.now.nowbot.config.DivingFishConfig
+import com.now.nowbot.service.RequestService
+import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import reactor.core.publisher.Mono
 import java.nio.file.Path
+import java.util.concurrent.ExecutionException
 
 @Service
 class DivingFishBaseService(val webClient: WebClient, @Qualifier("divingFishApiWebClient") val divingFishApiWebClient: WebClient, fishConfig: DivingFishConfig) {
@@ -23,6 +27,23 @@ class DivingFishBaseService(val webClient: WebClient, @Qualifier("divingFishApiW
             accessToken = fishConfig.token
         }
     }
+    /*
+
+    private lateinit var requestService: RequestService
+
+    @PostConstruct fun init() {
+        requestService = RequestService(divingFishApiWebClient, "diving-api-priority")
+        Thread.startVirtualThread {
+            requestService.runTask()
+        }
+    }
+
+    @Throws(ExecutionException::class)
+    fun <T> request(request: (WebClient) -> Mono<T>): T {
+        return requestService.request(request)
+    }
+
+     */
 
     fun hasToken(): Boolean {
         return accessToken.isNullOrBlank().not()
@@ -37,6 +58,9 @@ class DivingFishBaseService(val webClient: WebClient, @Qualifier("divingFishApiW
         if (headers == null) return
         headers["Content-Type"] = "application/json"
     }
+
+
+
 
     companion object {
         private var accessToken: String? = null

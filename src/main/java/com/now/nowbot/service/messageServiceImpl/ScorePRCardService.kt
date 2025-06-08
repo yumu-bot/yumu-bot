@@ -12,6 +12,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithRange
 import com.now.nowbot.util.Instruction
@@ -58,7 +59,7 @@ class ScorePRCardService(
         score = if (scores.isNotEmpty()) {
             scores.first()
         } else {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.fullName?: "默认")
+            throw NoSuchElementException.RecentScore(range.data!!.username, mode.data!!)
         }
 
         calculateApiService.applyPPToScore(score)
@@ -85,47 +86,41 @@ class ScorePRCardService(
 
     override fun accept(event: MessageEvent, messageText: String): PRCardParam? {
         var matcher: Matcher
-        val isRecentAll: Boolean
+        val isRecent: Boolean
         when {
             OfficialInstruction.PR_CARD
                 .matcher(messageText)
                 .apply { matcher = this }
                 .find() -> {
-                isRecentAll = false
+                isRecent = false
             }
 
             OfficialInstruction.RE_CARD
                 .matcher(messageText)
                 .apply { matcher = this }
                 .find() -> {
-                isRecentAll = true
+                isRecent = true
             }
 
             else -> return null
         }
-
-        val score: LazerScore
 
         val mode = getMode(matcher)
         val range = getUserWithRange(event, matcher, mode, AtomicBoolean())
 
         val offset = range.getOffset(0, false)
 
-        val scores = if (isRecentAll) {
+        val scores = if (isRecent) {
             scoreApiService.getRecentScore(range.data!!.userID, mode.data, offset, 1)
         } else {
             scoreApiService.getPassedScore(range.data!!.userID, mode.data, offset, 1)
         }
 
-        if (range.data == null) throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
-
-        if (scores.isNotEmpty()) {
-            score = scores.first()
-        } else {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.fullName ?: "默认")
+        if (scores.isEmpty()) {
+            throw NoSuchElementException.RecentScore(range.data!!.username, mode.data!!)
         }
 
-        return PRCardParam(score)
+        return PRCardParam(scores.first())
     }
 
     override fun reply(event: MessageEvent, param: PRCardParam): MessageChain? {

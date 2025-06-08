@@ -4,6 +4,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
 import org.springframework.stereotype.Service
@@ -16,10 +17,10 @@ import kotlin.math.roundToInt
             val starStr = m.group("SR")
 
             if (starStr.matches(REG_NUMBER_DECIMAL.toRegex()).not()) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_Param)
+                throw IllegalArgumentException.WrongException.Henan()
             }
-            val star =
-                starStr.toDoubleOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_StarRating)
+            val star = starStr.toDoubleOrNull()
+                ?: throw IllegalArgumentException.WrongException.StarRating()
 
             data.value = star
             return true
@@ -43,7 +44,7 @@ import kotlin.math.roundToInt
                 ((star - 5.7) * 2000).roundToInt()
             }
         } else {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_StarRating)
+            throw IllegalArgumentException.ExceedException.StarRating()
         }
 
         message.append("已超星，预计禁言：")

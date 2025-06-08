@@ -15,6 +15,7 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
 import okhttp3.internal.toLongOrDefault
@@ -51,7 +52,7 @@ import java.nio.file.Files
             }
 
             val dataStr: String? = matcher.group("data")
-            if (dataStr.isNullOrBlank()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
+            if (dataStr.isNullOrBlank()) throw IllegalArgumentException.WrongException.BeatmapID()
             val bids = parseDataString(dataStr)
 
             data.value = CoverParam(type, bids)
@@ -59,7 +60,7 @@ import java.nio.file.Files
         } else if (matcher2.find()) {
 
             val dataStr: String? = matcher2.group("data")
-            if (dataStr.isNullOrBlank()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
+            if (dataStr.isNullOrBlank()) throw IllegalArgumentException.WrongException.BeatmapID()
             val bids = parseDataString(dataStr)
 
             data.value = CoverParam(RAW, bids)

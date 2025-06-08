@@ -21,7 +21,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_MODE
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.text.DecimalFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -89,15 +88,7 @@ class UUBAService(
 
         // 是否为绑定用户
         if (param.user.qq != null) {
-            try {
-                bu = bindDao.getBindFromQQ(param.user.qq)
-            } catch (e: BindException) {
-                if (!param.user.at) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-                } else {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
-                }
-            }
+            bu = bindDao.getBindFromQQ(param.user.qq)
         } else {
             // 查询其他人 [data]
             val name = param.user.name!!
@@ -106,32 +97,15 @@ class UUBAService(
                 id = userApiService.getOsuID(name)
                 bu = bindDao.getBindUserFromOsuID(id)
             } catch (e: BindException) {
-                // 构建只有 data + id 的对象, bindUser == null
-                bu = BindUser()
-                bu.userID = id
-                bu.username = name
+                bu = BindUser(id, name)
             } catch (e: Exception) {
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name)
             }
         }
 
-        val bests: List<LazerScore>?
-
         val mode = OsuMode.getMode(param.user.mode, bu.mode, bindDao.getGroupModeConfig(event))
 
-        try {
-            bests = scoreApiService.getBestScores(bu, mode)
-        } catch (e: WebClientResponseException.BadRequest) {
-            // 请求失败 超时/断网
-            if (param.user.qq == event.sender.id) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-            } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
-            }
-        } catch (e: WebClientResponseException.Unauthorized) {
-            // 未绑定
-            throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-        }
+        val bests: List<LazerScore> = scoreApiService.getBestScores(bu, mode)
 
         if (bests.size <= 10) {
             if (!param.user.at && param.user.name.isNullOrBlank()) {

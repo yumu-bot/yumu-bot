@@ -11,6 +11,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_HYPHEN
@@ -252,7 +253,7 @@ class MaiBestScoreService(
                 // sd + dx
 
                 if (isStandardEmpty && isDeluxeEmpty) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Score)
+                    throw throw NoSuchElementException.BestScore(bp.name)
                 } else if (isDeluxeEmpty) {
                     maimaiApiService.insertSongData(c.standard)
                     maimaiApiService.insertPosition(c.standard, true)

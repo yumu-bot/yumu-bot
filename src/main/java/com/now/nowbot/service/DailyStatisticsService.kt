@@ -11,9 +11,9 @@ import org.springframework.stereotype.Service
 
 @Service
 class DailyStatisticsService(
-    private val osuUserApiService: OsuUserApiService,
-    private val osuScoreApiService: OsuScoreApiService,
-    private val osuUserInfoDao: OsuUserInfoDao,
+    private val userApiService: OsuUserApiService,
+    private val scoreApiService: OsuScoreApiService,
+    private val userInfoDao: OsuUserInfoDao,
     private val bindDao: BindDao,
 ) {
 
@@ -60,8 +60,8 @@ class DailyStatisticsService(
     }
 
     private fun saveUserInfo(uidList: List<Long>, needSearch: MutableList<Pair<Long, OsuMode>>) {
-        val userInfoList = osuUserApiService.getUsers(uidList)
-        val yesterdayInfo = osuUserInfoDao.getYesterdayInfo(uidList)
+        val userInfoList = userApiService.getUsers(uidList)
+        val yesterdayInfo = userInfoDao.getYesterdayInfo(uidList)
         val userMap = userInfoList.associateBy { it.userID }
         for (user in yesterdayInfo) {
             val mode = user.mode
@@ -86,7 +86,7 @@ class DailyStatisticsService(
     private fun savePlayData(data: MutableList<Pair<Long, OsuMode>>) {
         for ((uid, mode) in data) {
             log.info("save $uid $mode")
-            osuScoreApiService.getRecentScore(uid, mode, 0, 999)
+            scoreApiService.getRecentScore(uid, mode, 0, 999)
         }
     }
 

@@ -6,6 +6,8 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.AudioService.AudioParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -33,10 +35,10 @@ class AudioService(
         if (!matcher.find()) {
             return false
         }
-        val idStr: String = matcher.group("id") ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Audio)
+        val idStr: String? = matcher.group("id")
         val type: String? = matcher.group("type")
 
-        val id = idStr.toLongOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
+        val id = idStr?.toLongOrNull() ?: throw IllegalArgumentException.WrongException.Audio()
 
         val isBID = !(type != null && (type == "s" || type == "sid"))
 
@@ -58,7 +60,7 @@ class AudioService(
         if (voice == null) {
             val type = if (param.isBid) 'B' else 'S'
             log.info("谱面试听：无法获取 ${type}${param.id} 的音频")
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_AudioDownload)
+            throw NoSuchElementException.Audio()
         }
 
         try {

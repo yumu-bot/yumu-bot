@@ -14,6 +14,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuDiscussionApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_SID
@@ -94,13 +95,12 @@ import kotlin.math.floor
             val mode = matcher.group("mode")
             val isSID = !(mode != null && (mode == "b" || mode == "bid"))
 
-            if (sidStr.isNullOrBlank()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_SID)
-
-            val sid = try {
-                sidStr.toLong()
-            } catch (e: NumberFormatException) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_SID)
-            }
+            val sid = sidStr?.toLongOrNull()
+                ?: if (isSID) {
+                    throw IllegalArgumentException.WrongException.BeatmapsetID()
+                } else {
+                    throw IllegalArgumentException.WrongException.BeatmapID()
+                }
 
             val data = parseData(
                 sid,

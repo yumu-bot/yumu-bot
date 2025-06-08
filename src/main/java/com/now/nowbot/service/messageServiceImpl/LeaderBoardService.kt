@@ -14,6 +14,7 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
@@ -60,7 +61,7 @@ class LeaderBoardService(
             isLegacy = true
         } else return false
 
-        val bid = matcher.group(FLAG_BID)?.toLongOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
+        val bid = matcher.group(FLAG_BID)?.toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
         val type: String? = matcher.group("type")
         val isBID = !(type != null && (type == "s" || type == "sid"))

@@ -10,7 +10,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.getBonusPP
 import com.now.nowbot.util.DataUtil.splitString
@@ -40,7 +40,7 @@ class CsvPPMinusService(
             val names = splitString(matcher.group("data"))
 
             if (names.isNullOrEmpty()) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Data)
+                throw NoSuchElementException.Data()
             }
 
             val mode = OsuMode.getMode(matcher.group("mode"))

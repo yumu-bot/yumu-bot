@@ -441,7 +441,7 @@ class ScoreApiImpl(
     /**
      * 错误包装
      */
-    private fun <T> request(request: Function<WebClient, Mono<T>>): T {
+    private fun <T> request(request: (WebClient) -> Mono<T>): T {
         return try {
             base.request(request)
         } catch (e: ExecutionException) {

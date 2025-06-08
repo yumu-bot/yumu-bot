@@ -9,6 +9,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
@@ -83,7 +84,7 @@ import kotlin.math.min
         val best = MaiBestScoreService.getBestScores(param.qq, param.name, param.isMySelf, maimaiApiService)
 
         if (best.charts.standard.isEmpty() && best.charts.deluxe.isEmpty()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Score)
+            throw NoSuchElementException.BestScore(best.name)
         }
 
         maimaiApiService.insertPosition(best.charts.deluxe, false)

@@ -6,7 +6,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import org.intellij.lang.annotations.Language
@@ -56,7 +56,7 @@ import java.util.regex.Pattern
             try {
                 beatmapApiService.searchBeatMapSet(constructQueryAlternative(param))
             } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Result)
+                throw NoSuchElementException.Result()
             }
         }
 

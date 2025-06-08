@@ -15,6 +15,7 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.botException.MRAException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
@@ -189,10 +190,10 @@ import java.util.regex.Matcher
             val matchIDStr = matcher.group("matchid")
 
             if (matchIDStr.isNullOrBlank()) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_MatchID)
+                throw IllegalArgumentException.WrongException.MatchID()
             }
 
-            val matchID: Long = matchIDStr.toLongOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param)
+            val matchID: Long = matchIDStr.toLongOrNull() ?: throw IllegalArgumentException.WrongException.MatchID()
 
             val skipStr = matcher.group("skip")
             val ignoreStr = matcher.group("ignore")

@@ -11,6 +11,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.botException.MapPoolException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
@@ -112,13 +113,13 @@ class GetPoolService(
                         mods = mod
                         mod = null
                         status = 1
-                    } else throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParseMissingMap, s, i.toString())
+                    } else throw IllegalArgumentException.WrongException.ParseMap(s, i)
                 }
 
                 1 -> {
                     if (!mod.isNullOrBlank()) {
                         if (ids.isEmpty()) {
-                            throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_ParseMissingMap, s, i.toString())
+                            throw throw IllegalArgumentException.WrongException.ParseMap(s, i)
                         } else {
                             status = 2
                         }

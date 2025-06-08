@@ -5,7 +5,7 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import java.time.Instant
@@ -22,32 +22,28 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
         if (!Permission.isSuperAdmin(event)) return false
 
         val bindUser = run {
-            try {
-                val qq = if (event.isAt) {
-                    event.target
-                } else if (matcher.namedGroups().containsKey("qq")) {
-                    matcher.group("qq")?.toLongOrNull()
-                } else null
+            val qq = if (event.isAt) {
+                event.target
+            } else if (matcher.namedGroups().containsKey("qq")) {
+                matcher.group("qq")?.toLongOrNull()
+            } else null
 
-                if (qq != null) {
-                    return@run bindDao.getBindFromQQ(qq)
-                }
+            if (qq != null) {
+                return@run bindDao.getBindFromQQ(qq)
+            }
 
-                val name = if (matcher.namedGroups().containsKey("name")) {
-                    matcher.group("name")
-                } else null
+            val name = if (matcher.namedGroups().containsKey("name")) {
+                matcher.group("name")
+            } else null
 
-                if (name.isNullOrEmpty()) {
-                    return@run bindDao.getBindFromQQ(event.sender.id)
-                } else {
-                    return@run bindDao.getBindUser(name)
-                }
-            } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_NotBind_Player)
+            if (name.isNullOrEmpty()) {
+                return@run bindDao.getBindFromQQ(event.sender.id)
+            } else {
+                return@run bindDao.getBindUser(name)
             }
         }
 
-        data.value = bindUser ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player)
+        data.value = bindUser ?: throw BindException.NotBindException.UserNotBind()
 
         return true
     }

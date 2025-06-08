@@ -9,6 +9,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
@@ -259,7 +260,7 @@ class ChuBestScoreService(
                 // sd + dx
 
                 if (isStandardEmpty && isDeluxeEmpty) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Score)
+                    throw NoSuchElementException.BestScore(bp.name)
                 } else if (isDeluxeEmpty) {
                     chunithmApiService.insertSongData(c.best30)
                     chunithmApiService.insertPosition(c.best30, true)

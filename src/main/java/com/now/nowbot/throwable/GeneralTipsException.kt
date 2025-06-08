@@ -3,13 +3,6 @@ package com.now.nowbot.throwable
 // 这个类存放一些公用的 Tips，比如图片发送失败，或是图片渲染失败，或是连不上渲染模块
 class GeneralTipsException : TipsException {
     enum class Type (val message: String) {
-        G_TokenExpired_Me("令牌失效，请重新授权。(!ymbind)"),
-        G_TokenExpired_Player("玩家令牌失效，请提醒他重新授权。(!ymbind)"),
-        G_TokenExpired_Official("令牌失效，请重新授权。(/bind [your name])"),
-        G_NotBind_Player("该玩家没有绑定。"),
-
-        G_Banned_Me("你被办了。"),
-        G_Banned_Player("%s 被办了。"),
 
         G_Restricted_NSFW("这种歌曲，还是有点唱不出口呢。"),
         G_Restricted_Group("请在群聊中使用这个功能！"),
@@ -22,20 +15,15 @@ class GeneralTipsException : TipsException {
 
         G_Exceed_StarRating("对方真的糊了那么高星的图吗？还是说你在滥用功能..."),
         G_Exceed_Param("请输入正确的编号或范围！"),
-        G_Exceed_Score("符合筛选要求的成绩太多了！请缩小查询范围。"),
         G_Exceed_Score_Count("符合筛选要求的成绩太多了 (%s 个)！请缩小查询范围。"),
         G_Exceed_Version("符合筛选版本的成绩太多了！请减少版本，缩小查询范围。"), 
         G_Exceed_Version_Default("符合筛选版本的成绩太多了！请指定难度（\":\" + \"b、a、e、m、r\"），缩小查询范围。"),
 
         G_Null_StarRating("请输入正确的星数！"),
-        G_Null_Result("没有找到结果！"), 
-        G_Null_ResultNotAccurate("没有找到可能的结果...试试输入更常见的外号或准确的歌曲编号吧。"), 
-        G_Null_Param("请输入正确的参数！"), 
+        G_Null_ResultNotAccurate("没有找到可能的结果...试试输入更常见的外号或准确的歌曲编号吧。"),
         G_Null_UserName("请输入正确的玩家名！"), 
         G_Null_BID_Quotation("您在使用引号包括住玩家名时，也需要输入谱面的曲名或是编号！"),
         G_Null_Audio("请输入想要试听的谱面编号！\n(!a <bid> / !a:s <sid>)"),
-        G_Null_BID("请输入正确的谱面编号 (BID)！"),
-        G_Null_SID("请输入正确的谱面编号 (SID)！"),
         G_Null_AudioDownload("试听音频下载失败。\n也许是谱面输入错误，或者谱面被版权限制了。\n自己去官网听算了。"),
         G_Null_Song("没有找到歌曲 %s。"),
         G_Null_PlayerTeam("没有找到玩家 %s 所属的战队。"),
@@ -69,13 +57,6 @@ class GeneralTipsException : TipsException {
         G_NotEnoughBP_Me("您在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
         G_NotEnoughBP_Player("对方在 %s 模式上的最好成绩数量不够呢...\n灼热分析 EX"),
 
-        G_Wrong_Param("捞翔，恁发嘞是个啥玩应啊？"),
-        G_Wrong_Instruction("指令错误。"),
-        G_Wrong_ParseMissingMap("看起来漏了一组谱面呢？\n这个参数之前缺失谱面：%s，错误位置：%s"),
-
-        G_Empty_Data("数据是空的！"),
-        G_Empty_Result("结果是空的！"),
-        G_Empty_Score("您的成绩是空的！"),
         G_Empty_TodayBP("玩家 %s 今天之内没有新增的 BP 呢...\n尝试修改范围，或尝试扩大搜索天数吧。"), 
         G_Empty_PeriodBP("玩家 %s 这段时间之内，在 %s 模式里都没有新增的 BP 呢...\n尝试修改范围，或扩大搜索天数吧。"), 
         

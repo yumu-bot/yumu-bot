@@ -1,16 +1,17 @@
 package com.now.nowbot.service.osuApiService.impl
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.now.nowbot.config.IocAllReadyRunner
 import com.now.nowbot.config.OsuConfig
 import com.now.nowbot.config.YumuConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
+import com.now.nowbot.service.RequestService
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.ContextUtil
 import jakarta.annotation.PostConstruct
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Lazy
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
@@ -19,21 +20,13 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientRequestException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
-import java.time.Duration
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
-import java.util.concurrent.PriorityBlockingQueue
-import java.util.concurrent.Semaphore
-import java.util.concurrent.locks.LockSupport
 import java.util.function.Consumer
-import java.util.function.Function
-import kotlin.math.min
 
 @Service
-class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient: WebClient, osuConfig: OsuConfig, yumuConfig: YumuConfig) {
+class OsuApiBaseService(@Lazy private val bindDao: BindDao, @Qualifier("osuApiWebClient") val osuApiWebClient: WebClient, osuConfig: OsuConfig, yumuConfig: YumuConfig) {
     @JvmField final val oauthId: Int
     @JvmField final val redirectUrl: String
     @JvmField final val oauthToken: String
@@ -51,8 +44,18 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
     private val isPassed: Boolean
         get() = System.currentTimeMillis() > time
 
+    private lateinit var requestService: RequestService
+
     @PostConstruct fun init() {
-        Thread.startVirtualThread { this.runTask() }
+        requestService = RequestService(osuApiWebClient, "osu-api-priority")
+        Thread.startVirtualThread {
+            requestService.runTask()
+        }
+    }
+
+    @Throws(ExecutionException::class)
+    fun <T> request(request: (WebClient) -> Mono<T>): T {
+        return requestService.request(request)
     }
 
     val botToken: String?
@@ -66,7 +69,7 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
             body.add("grant_type", "client_credentials")
             body.add("scope", "public")
 
-            setPriority(0)
+            requestService.setPriority(0)
             val s = request { client: WebClient ->
                 client
                     .post()
@@ -76,7 +79,7 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
                     .body(BodyInserters.fromFormData(body)).retrieve()
                     .bodyToMono(JsonNode::class.java)
             }
-            clearPriority()
+            requestService.clearPriority()
 
             if (s != null) {
                 accessToken = s["access_token"].asText()
@@ -94,8 +97,8 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
         body.add("redirect_uri", redirectUrl)
         body.add("grant_type", if (first) "authorization_code" else "refresh_token")
         body.add(if (first) "code" else "refresh_token", user.refreshToken)
-        if (!hasPriority()) {
-            setPriority(1)
+        if (!requestService.hasPriority()) {
+            requestService.setPriority(1)
         }
         val s = request { client: WebClient ->
             client
@@ -107,7 +110,7 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
                 .retrieve()
                 .bodyToMono(JsonNode::class.java)
         }
-        clearPriority()
+        requestService.clearPriority()
         val accessToken: String
         val refreshToken: String
         val time: Long
@@ -171,6 +174,7 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
         }
     }
 
+    /*
     @Throws(ExecutionException::class)
     fun <T> request(request: Function<WebClient, Mono<T>>): T {
         val future = CompletableFuture<T>()
@@ -297,20 +301,24 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
         }
     }
 
+     */
+
     companion object {
         private val log: Logger = LoggerFactory.getLogger(OsuApiBaseService::class.java)
         private var accessToken: String? = null
         private var time = System.currentTimeMillis()
-        private const val THREAD_LOCAL_ENVIRONMENT = "osu-api-priority"
+        /*
         private const val DEFAULT_PRIORITY = 5
         private const val MAX_RETRY = 3
         private val limiter = RateLimiter(1, 20)
 
         private val TASKS = PriorityBlockingQueue<RequestTask<*>>()
 
+         */
+
         fun hasPriority(): Boolean {
             return ContextUtil.getContext(
-                THREAD_LOCAL_ENVIRONMENT,
+                "osu-api-priority",
                 Int::class.java
             ) != null
         }
@@ -321,11 +329,11 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, val osuApiWebClient:
          * @param priority 默认为 5, 越低越优先, 相同优先级先来后到
          */
         @JvmStatic fun setPriority(priority: Int) {
-            ContextUtil.setContext(THREAD_LOCAL_ENVIRONMENT, priority)
+            ContextUtil.setContext("osu-api-priority", priority)
         }
 
         fun clearPriority() {
-            ContextUtil.setContext(THREAD_LOCAL_ENVIRONMENT, null)
+            ContextUtil.setContext("osu-api-priority", null)
         }
     }
 }

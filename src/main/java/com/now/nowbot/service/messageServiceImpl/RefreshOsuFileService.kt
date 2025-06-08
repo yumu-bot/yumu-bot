@@ -4,6 +4,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
 import okio.IOException
 import org.slf4j.Logger
@@ -20,7 +21,7 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
     ): Boolean {
         val matcher = Instruction.REFRESH_FILE.matcher(messageText)
         return if (matcher.find()) {
-            data.value = matcher.group("bid")?.toLong() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
+            data.value = matcher.group("bid")?.toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
             true
         } else {
             false

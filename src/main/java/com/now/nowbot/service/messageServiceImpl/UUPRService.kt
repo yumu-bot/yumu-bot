@@ -12,6 +12,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithRange
@@ -53,7 +54,7 @@ class UUPRService(
 
         val list = scoreApiService.getScore(uid, mode.data, offset, 1, includeFail)
         if (list.isEmpty()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_RecentScore, range.data!!.username, mode.data?.fullName ?: "默认")
+            throw NoSuchElementException.RecentScore(range.data!!.username, mode.data!!)
         }
         data.value = UUPRParam(range.data, list.first(), mode.data)
         return true

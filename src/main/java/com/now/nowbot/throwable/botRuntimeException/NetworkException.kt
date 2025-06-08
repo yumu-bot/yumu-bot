@@ -259,5 +259,73 @@ open class NetworkException(message: String?
             override val code = 503
         }
     }
+    open class DivingFishException(message: String?): NetworkException(message) {
+        override val code: Int = 0
+
+        class BadRequest:
+            DivingFishException("""
+                400 Bad Request
+                渲染模块请求格式错误。
+            """.trimIndent()) {
+            override val code = 400
+        }
+
+        class Unauthorized:
+            MatchException("""
+                401 Unauthorized
+                请求端的公用授权已过期。
+            """.trimIndent()) {
+            override val code = 401
+        }
+
+        class Forbidden:
+            DivingFishException("""
+                403 Forbidden
+                水鱼用户未授权或是禁止第三方获取数据。
+            """.trimIndent()) {
+            override val code = 403
+        }
+
+        class NotFound:
+            MatchException("""
+                404 Not Found
+                找不到水鱼用户。
+            """.trimIndent()) {
+            override val code = 404
+        }
+
+
+        class RequestTimeout:
+            DivingFishException("""
+                408 Request Timeout
+                水鱼连接超时。
+            """.trimIndent()) {
+            override val code = 408
+        }
+
+        class InternalServerError:
+            DivingFishException("""
+                500 Internal Server Error
+                水鱼内部逻辑错误。
+            """.trimIndent()) {
+            override val code = 500
+        }
+
+        class BadGateway:
+            DivingFishException("""
+                502 Bad Gateway
+                和水鱼之间的连接出现了问题。
+            """.trimIndent()) {
+            override val code = 502
+        }
+
+        class Undefined(e: Throwable):
+            DivingFishException("""
+                和水鱼之间的连接出现未识别的错误。
+                信息如下：${e.message}
+            """.trimIndent()) {
+            override val code = -1
+        }
+    }
 
 }

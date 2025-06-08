@@ -305,6 +305,48 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
         return Files.isRegularFile(path.resolve(fileName))
     }
 
+
+    /**
+     * 错误包装
+     */
+
+    /*
+    private fun <T> request(request: (WebClient) -> Mono<T>): T {
+        return try {
+            base.request(request)
+        } catch (e: ExecutionException) {
+            when (e.cause) {
+                is WebClientResponseException.BadRequest -> {
+                    throw NetworkException.DivingFishException.BadRequest()
+                }
+
+                is WebClientResponseException.Unauthorized -> {
+                    throw NetworkException.DivingFishException.Unauthorized()
+                }
+
+                is WebClientResponseException.NotFound -> {
+                    throw NetworkException.DivingFishException.NotFound()
+                }
+
+                is ReadTimeoutException -> {
+                    throw NetworkException.DivingFishException.RequestTimeout()
+                }
+
+                is WebClientResponseException.InternalServerError -> {
+                    throw NetworkException.DivingFishException.InternalServerError()
+                }
+
+                is WebClientResponseException.BadGateway -> {
+                    throw NetworkException.DivingFishException.BadGateway()
+                }
+
+                else -> throw NetworkException.DivingFishException(e.message)
+            }
+        }
+    }
+
+     */
+
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ChunithmApiImpl::class.java)
 

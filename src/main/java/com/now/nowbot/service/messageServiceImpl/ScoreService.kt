@@ -81,11 +81,7 @@ import java.util.regex.Matcher
 
             val user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, currentMode, isMyself, messageText, "score")
 
-            val score = try {
-                scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 1).first()
-            } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
-            }
+            val score = scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 1).first()
 
             beatmapApiService.getBeatMap(score.beatmapID)
         }
@@ -149,11 +145,7 @@ import java.util.regex.Matcher
             val currentMode = CmdObject(OsuMode.DEFAULT)
             val user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, currentMode, isMyself, messageText, "score")
 
-            val score = try {
-                scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 1).first()
-            } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID)
-            }
+            val score = scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 1).first()
 
             beatmapApiService.getBeatMap(score.beatmapID)
         }
@@ -185,17 +177,8 @@ import java.util.regex.Matcher
         val b = param.beatmap
         val bid = b.beatmapID
 
-        val scores: List<LazerScore> = try {
+        val scores: List<LazerScore> =
             scoreApiService.getBeatMapScores(bid, user.userID, mode).sortedByDescending { it.pp }
-        } catch (e: WebClientResponseException.NotFound) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, b.previewName)
-        } catch (e: WebClientResponseException.Unauthorized) {
-            if (param.isMyself) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-            } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
-            }
-        }
 
         if (scores.isEmpty()) {
             throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, b.previewName)

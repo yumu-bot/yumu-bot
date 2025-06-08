@@ -1,7 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -81,16 +80,7 @@ class OldAvatarService(
                 throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, param.uid)
             }
         } else if (param.qq != null) {
-            val bindUser: BindUser
-            try {
-                bindUser = bindDao.getBindFromQQ(param.qq)
-            } catch (e: Exception) {
-                if (param.isMyself) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Me)
-                } else {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_TokenExpired_Player)
-                }
-            }
+            val bindUser = bindDao.getBindFromQQ(param.qq)
 
             try {
                 user = userApiService.getOsuUser(bindUser)

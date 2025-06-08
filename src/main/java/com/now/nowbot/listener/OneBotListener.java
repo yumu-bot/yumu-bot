@@ -11,7 +11,6 @@ import com.now.nowbot.service.IdempotentService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.BotException;
 import com.now.nowbot.throwable.botRuntimeException.LogException;
-import com.now.nowbot.throwable.botRuntimeException.PermissionException;
 import com.now.nowbot.util.ContextUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
@@ -119,8 +118,6 @@ public class OneBotListener {
             log.error("正则异常", e);
         } else if (e instanceof DecodingException) {
             log.error("JSON 解码异常", e);
-        } else if (e instanceof PermissionException) {
-            log.error(e.getMessage());
         } else {
             if (Permission.isSuperAdmin(event.getSender().getId())) {
                 event.reply(e.getMessage()).recallIn(RECALL_TIME);

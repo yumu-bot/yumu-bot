@@ -4,6 +4,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
@@ -31,9 +32,9 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, input: String) {
-        if (input.matches("\\s*$REG_NUMBER$LEVEL_MORE\\s*".toRegex())) {
-            val rating = input.toIntOrNull() ?: 0
+    override fun HandleMessage(event: MessageEvent, param: String) {
+        if (param.matches("\\s*$REG_NUMBER$LEVEL_MORE\\s*".toRegex())) {
+            val rating = param.toIntOrNull() ?: 0
             
             val surrounding = maimaiApiService.getMaimaiSurroundingRank(rating)
             
@@ -68,7 +69,7 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
         val similarities = mutableListOf<Pair<String, Double>>()
 
         for (std in nameMap.keys) {
-            val y = DataUtil.getStringSimilarityStandardised(input, std)
+            val y = DataUtil.getStringSimilarityStandardised(param, std)
 
             if (y >= 0.4) {
                 similarities.add(Pair(std, y))
@@ -76,7 +77,7 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
         }
 
         if (similarities.isEmpty()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Result)
+            throw NoSuchElementException.Result()
         }
         val sort = similarities.sortedByDescending { it.second }
             //.stream().sorted(Comparator.comparingDouble<Pair<String, Double>?> { it.second }.reversed()).toList()

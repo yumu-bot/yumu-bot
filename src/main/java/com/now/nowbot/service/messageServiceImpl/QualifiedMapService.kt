@@ -8,6 +8,7 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MODE
@@ -38,17 +39,17 @@ import kotlin.math.roundToInt
         } else return false
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, matcher: Matcher) { // 获取参数
-        val statusStr = matcher.group("status") ?: "q"
-        val sortStr = matcher.group("sort") ?: "ranked_asc"
-        val rangeStr = matcher.group("range") ?: "12"
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) { // 获取参数
+        val statusStr = param.group("status") ?: "q"
+        val sortStr = param.group("sort") ?: "ranked_asc"
+        val rangeStr = param.group("range") ?: "12"
 
-        val mode = OsuMode.getMode(OsuMode.getMode(matcher.group(FLAG_MODE)), null, bindDao.getGroupModeConfig(event))
+        val mode = OsuMode.getMode(OsuMode.getMode(param.group(FLAG_MODE)), null, bindDao.getGroupModeConfig(event))
 
-        val range = rangeStr.toIntOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Wrong_Param)
+        val range = rangeStr.toIntOrNull() ?: throw IllegalArgumentException.WrongException.Henan()
 
         if (range < 1 || range > 999) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param)
+            throw IllegalArgumentException.WrongException.Range()
         }
 
         val tries = max(floor(range / 50.0).roundToInt() + 1, 10)

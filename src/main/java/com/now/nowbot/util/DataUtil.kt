@@ -7,7 +7,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.Statistics
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.command.*
 import io.github.humbleui.skija.Typeface
 import org.slf4j.Logger
@@ -1188,7 +1188,7 @@ object DataUtil {
                 | :-- | :-: |
                 """.trimIndent(), maxPerPage: Int = 50): String {
 
-        if (list.isEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Empty_Result)
+        if (list.isEmpty()) throw NoSuchElementException.Result()
 
         val sb = StringBuilder()
         sb.append(heading).append('\n') // 导入表头

@@ -15,13 +15,14 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithRange
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -93,12 +94,8 @@ class TodayBPService(
         val bests: List<LazerScore> = try {
             scoreApiService.getBestScores(user.userID, mode.data, 0, 100) +
                     scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
-        } catch (e: WebClientResponseException.Forbidden) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Banned_Player, user.username)
-        } catch (e: WebClientResponseException.NotFound) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, user.username)
-        } catch (e: WebClientResponseException) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
+        } catch (e: NetworkException) {
+            throw e
         } catch (e: Exception) {
             log.error("今日最好成绩：获取失败！", e)
             throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "今日最好成绩")
@@ -127,11 +124,11 @@ class TodayBPService(
 
         if (todayMap.isEmpty()) {
             if (!user.isActive) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerInactive, user.username)
+                throw NoSuchElementException.PlayerInactive(user.username)
             } else if (isToday) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Empty_TodayBP, user.username, mode)
+                throw NoSuchElementException.TodayBestScore(user.username)
             } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Empty_PeriodBP, user.username, mode)
+                throw NoSuchElementException.PeriodBestScore(user.username)
             }
         }
 
