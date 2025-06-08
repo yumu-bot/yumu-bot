@@ -26,19 +26,19 @@ class SeriesRating(
         get() = this.matches.size
 
     @get:JsonIgnore
-    val players = ratings.flatMap { it.players.toList() }
+    val players = ratings.flatMap { it.players.toList() }.toMap()
 
     @get:JsonProperty("player_count")
     val playerCount: Int = this.players.size
 
     @get:JsonIgnore
-    val rounds = ratings.flatMap { it.rounds }.toList()
+    val rounds = ratings.flatMap { it.rounds }
 
     @get:JsonProperty("round_count")
     val roundCount: Int = this.rounds.size
 
     @get:JsonIgnore
-    val scores = ratings.flatMap { it.scores }.toList()
+    val scores = ratings.flatMap { it.scores }
 
     @JsonIgnore
     var name: String? = null
@@ -110,7 +110,7 @@ class SeriesRating(
         }
 
     @JsonIgnore
-    private var playerDataMap: Map<Long, PlayerData> = players.associate { (k, v) -> k to PlayerData(v) }
+    private var playerDataMap: Map<Long, PlayerData> = players.mapValues { PlayerData(it.value) }
 
     @JsonProperty("player_data_list")
     var playerDataList: List<PlayerData> = listOf()
