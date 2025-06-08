@@ -26,7 +26,7 @@ class SeriesRating(
         get() = this.matches.size
 
     @get:JsonIgnore
-    val players = ratings.map { it.players }.flatMap { it.toList() }
+    val players = ratings.flatMap { it.players.toList() }
 
     @get:JsonProperty("player_count")
     val playerCount: Int = this.players.size

@@ -19,8 +19,8 @@ class MatchRating(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService
 ) {
-    @get:JsonIgnore
-    val filteredRounds: List<Match.MatchRound> = match.events
+    @JsonIgnore
+    private val fullRounds: List<Match.MatchRound> = match.events
         .asSequence()
         .mapNotNull { it.round }
         .filter { it.scores.isNotEmpty() }
@@ -36,22 +36,16 @@ class MatchRating(
     @get:JsonIgnore
     val players: Map<Long, MicroUser>
 
+    @JsonIgnore
+    private val fullPlayers: Map<Long, MicroUser> = match.players.distinctBy { it.userID }.associateBy { it.userID }
+
     init {
-        // 有可用成绩的才能进这个分组
-        val hasScoreSet =
-            if (ratingParam.delete) {
-                this.filteredRounds.flatMap { it.scores }.filter { it.score > 10000L }
-            } else {
-                this.filteredRounds.flatMap { it.scores }
-            }.map { it.userID }.toSet()
-
-        players = match.players
-            .distinctBy { it.userID }
-            .filter { it.userID in hasScoreSet }
-            .associateBy { it.userID }
-
-        rounds = applyParams(filteredRounds, ratingParam)
+        rounds = applyParams(fullRounds, ratingParam)
         scores = rounds.flatMap { it.scores }
+
+        // 有可用成绩的才能进这个分组
+        val hasScoreSet = scores.map { it.userID }.toSet()
+        players = fullPlayers.filter { hasScoreSet.contains(it.key) }
     }
 
     @get:JsonProperty("round_count")
@@ -135,7 +129,7 @@ class MatchRating(
         }
 
         // add user
-        rs.flatMap { it.scores }.forEach { players[it.userID]?.let { user -> it.user = user } }
+        rs.flatMap { it.scores }.forEach { fullPlayers[it.userID]?.let { user -> it.user = user } }
 
         // apply sr change
         rs.forEach {
