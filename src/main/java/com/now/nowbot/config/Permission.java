@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 @Component()
 public class Permission {
     private static final Logger    log                 = LoggerFactory.getLogger(Permission.class);
-    private static       Set<Long> superList;
+    private static       Set<Long> superSet;
     private static       Set<Long> testerList;
     private static final String    PERMISSION_ALL      = "PERMISSION_ALL";
 
@@ -259,7 +259,7 @@ public class Permission {
 
 
         //初始化暗杀名单(-17064371L 作为本地测试用户
-        superList = Set.of(-17064371L, 732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
+        superSet = Set.of(-17064371L, 732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
         testerList = Set.of(-17064371L, 732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L);
 
         log.info("名单初始化完成");
@@ -357,11 +357,11 @@ public class Permission {
     }
 
     public static boolean isSuperAdmin(Long id) {
-        return superList.contains(id);
+        return superSet.contains(id);
     }
 
     public static boolean isSuperAdmin(MessageEvent event) {
-        return superList.contains(event.getSender().getId());
+        return superSet.contains(event.getSender().getId());
     }
 
     /**

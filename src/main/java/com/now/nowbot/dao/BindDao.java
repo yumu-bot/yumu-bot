@@ -17,7 +17,6 @@ import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService;
-import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.botRuntimeException.BindException;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -592,10 +591,8 @@ public class BindDao {
             try {
                 userApiService.refreshUserToken(fromLite(u));
                 return;
-            } catch (GeneralTipsException e) {
-                var m = e.getMessage();
-
-                if (m != null && m.contains("401")) {
+            } catch (WebClientResponseException e) {
+                if (e instanceof WebClientResponseException.Unauthorized) {
                     log.info("刷新用户令牌：更新 {} 令牌失败, token 失效, 绑定取消", u.getOsuName());
                     bindUserMapper.backupBindByOsuID(u.getOsuID());
                     return;
@@ -609,8 +606,8 @@ public class BindDao {
                         return;
                     }
                 }
-            } catch (Throwable e) {
-                log.error("刷新用户令牌：神秘错误: ", e);
+            } catch (Throwable e1) {
+                log.error("刷新用户令牌：神秘错误: ", e1);
                 return;
             }
         }
