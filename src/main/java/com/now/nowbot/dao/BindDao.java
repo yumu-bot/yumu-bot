@@ -33,6 +33,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -591,8 +592,8 @@ public class BindDao {
             try {
                 userApiService.refreshUserToken(fromLite(u));
                 return;
-            } catch (WebClientResponseException e) {
-                if (e instanceof WebClientResponseException.Unauthorized) {
+            } catch (ExecutionException e) {
+                if (e.getCause() instanceof WebClientResponseException.Unauthorized) {
                     log.info("刷新用户令牌：更新 {} 令牌失败, token 失效, 绑定取消", u.getOsuName());
                     bindUserMapper.backupBindByOsuID(u.getOsuID());
                     return;

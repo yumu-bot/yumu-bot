@@ -149,7 +149,6 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @Qualifier("osuApiWe
                 bindDao.backupBind(user.userID)
                 log.info("更新令牌失败：令牌过期，退回到名称绑定：${user.userID}", e)
                 botToken
-                throw BindException.BindIllegalArgumentException.IllegalUserState()
             } catch (e: WebClientResponseException.Forbidden) {
                 log.info("更新令牌失败：账号封禁", e)
                 throw BindException.BindIllegalArgumentException.IllegalUserState()

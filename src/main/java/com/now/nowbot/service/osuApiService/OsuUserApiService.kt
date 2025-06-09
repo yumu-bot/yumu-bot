@@ -6,8 +6,8 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
-import com.now.nowbot.throwable.GeneralTipsException
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.concurrent.ExecutionException
 
 interface OsuUserApiService {
     fun isPlayerExist(name: String): Boolean
@@ -18,7 +18,7 @@ interface OsuUserApiService {
 
     @Throws(WebClientResponseException::class) fun getOauthUrl(state: String, full: Boolean): String
 
-    @CanIgnoreReturnValue @Throws(GeneralTipsException::class) fun refreshUserToken(user: BindUser): String?
+    @CanIgnoreReturnValue @Throws(ExecutionException::class) fun refreshUserToken(user: BindUser): String?
 
     @Throws(WebClientResponseException::class) fun refreshUserTokenFirst(user: BindUser)
 
