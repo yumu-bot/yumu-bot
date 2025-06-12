@@ -374,7 +374,7 @@ class BindDao(
     }
 
     fun getQQBindInfo(userID: Long): QQBindLite? {
-        return bindQQMapper.findByID(userID)
+        return bindQQMapper.findByOsuID(userID)
     }
 
     fun removeBind(uid: Long) {

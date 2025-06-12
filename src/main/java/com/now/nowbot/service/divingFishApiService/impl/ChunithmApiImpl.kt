@@ -252,7 +252,7 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
 
     private val chunithmAliasLibraryFromAPI: String
         get() = base.webClient.get()
-            .uri { it.scheme("https").host("maimai.lxns.net").path("api/v0/chunithm/alias/list").build()
+            .uri { it.scheme("https").host("maimai.lxns.net").replacePath("api/v0/chunithm/alias/list").build()
         }.retrieve().bodyToMono(String::class.java).block()!!
 
     private fun <T> parseFile(fileName: String, clazz: Class<T>): T? {
