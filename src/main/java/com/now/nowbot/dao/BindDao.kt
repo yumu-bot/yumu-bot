@@ -1,122 +1,90 @@
-package com.now.nowbot.dao;
+package com.now.nowbot.dao
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.now.nowbot.entity.OsuBindUserLite;
-import com.now.nowbot.entity.OsuGroupConfigLite;
-import com.now.nowbot.entity.OsuNameToIdLite;
-import com.now.nowbot.entity.SBBindUserLite;
-import com.now.nowbot.entity.bind.DiscordBindLite;
-import com.now.nowbot.entity.bind.QQBindLite;
-import com.now.nowbot.entity.bind.SBQQBindLite;
-import com.now.nowbot.mapper.*;
-import com.now.nowbot.model.BindUser;
-import com.now.nowbot.model.SBBindUser;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.qq.contact.Group;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.service.osuApiService.OsuUserApiService;
-import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService;
-import com.now.nowbot.throwable.botRuntimeException.BindException;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.IncorrectResultSizeDataAccessException;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.RemovalCause
+import com.now.nowbot.entity.OsuBindUserLite
+import com.now.nowbot.entity.OsuGroupConfigLite
+import com.now.nowbot.entity.OsuNameToIdLite
+import com.now.nowbot.entity.SBBindUserLite
+import com.now.nowbot.entity.bind.DiscordBindLite
+import com.now.nowbot.entity.bind.QQBindLite
+import com.now.nowbot.entity.bind.SBQQBindLite
+import com.now.nowbot.mapper.*
+import com.now.nowbot.model.BindUser
+import com.now.nowbot.model.SBBindUser
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.Companion.isDefaultOrNull
+import com.now.nowbot.qq.contact.Group
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService.Companion.setPriority
+import com.now.nowbot.throwable.botRuntimeException.BindException
+import com.now.nowbot.throwable.botRuntimeException.BindException.BindIllegalArgumentException.IllegalQQ
+import com.now.nowbot.throwable.botRuntimeException.BindException.NotBindException.UserNotBind
+import com.now.nowbot.throwable.botRuntimeException.BindException.NotBindException.YouNotBind
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.dao.IncorrectResultSizeDataAccessException
+import org.springframework.scheduling.annotation.Async
+import org.springframework.stereotype.Component
+import org.springframework.util.ObjectUtils
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Function
+import java.util.stream.Collectors
+import kotlin.jvm.optionals.getOrNull
 
 @Component
-public class BindDao {
-    private final Set<Long>     UPDATE_USERS = new CopyOnWriteArraySet<>();
-    private final AtomicBoolean NOW_UPDATE   = new AtomicBoolean(false);
+class BindDao(
+    private val bindUserMapper: BindUserMapper,
+    private val sbBindUserMapper: SBBindUserMapper,
+    private val osuFindNameMapper: OsuFindNameMapper,
+    private val bindQQMapper: BindQQMapper,
+    private val sbQQBindMapper: SBQQBindMapper,
+    private val bindDiscordMapper: BindDiscordMapper,
+    private val osuGroupConfigRepository: OsuGroupConfigRepository
+) {
+    private val updateUserSet: MutableSet<Long?> = CopyOnWriteArraySet()
+    private val nowUpdate = AtomicBoolean(false)
 
-    Logger                   log = LoggerFactory.getLogger(BindDao.class);
-    BindUserMapper           bindUserMapper;
-    SBBindUserMapper         sbBindUserMapper;
-    BindQQMapper      bindQQMapper;
-    SBQQBindMapper    sbQQBindMapper;
-    BindDiscordMapper bindDiscordMapper;
-    OsuFindNameMapper        osuFindNameMapper;
-    OsuGroupConfigRepository osuGroupConfigRepository;
+    var log: Logger = LoggerFactory.getLogger(BindDao::class.java)
 
-    private final Cache<String, Long> CAPTCHA_CACHE;
-    private final Map<Long, String>   INDEX_CACHE = new ConcurrentHashMap<>();
-    private final Random              random      = new Random();
+    private val indexCache: MutableMap<Long, String> = ConcurrentHashMap()
+    private val captchaCache: Cache<String, Long?> = Caffeine.newBuilder()
+        .expireAfterWrite(2, TimeUnit.MINUTES)
+        .removalListener { _: Any?, id: Any?, _: RemovalCause? -> indexCache.remove(id) }
+        .build()
+    private val random = Random()
 
-    @Autowired
-    public BindDao(
-            BindUserMapper bindUserMapper,
-            SBBindUserMapper sbBindUserMapper,
-            OsuFindNameMapper nameMapper,
-            BindQQMapper QQMapper,
-            SBQQBindMapper sbQQBindMapper,
-            BindDiscordMapper discordMapper,
-            OsuGroupConfigRepository osuGroupConfigRepository
-    ) {
-        this.bindUserMapper = bindUserMapper;
-        this.sbBindUserMapper = sbBindUserMapper;
-        osuFindNameMapper = nameMapper;
-        bindQQMapper = QQMapper;
-        this.sbQQBindMapper = sbQQBindMapper;
-        bindDiscordMapper = discordMapper;
-        this.osuGroupConfigRepository = osuGroupConfigRepository;
-
-        CAPTCHA_CACHE = Caffeine.newBuilder()
-                .expireAfterWrite(1, TimeUnit.MINUTES)
-                .removalListener((_, id, _) -> INDEX_CACHE.remove(id))
-                .build();
+    private fun generateRandomCode(): String {
+        val code = 100000 + random.nextInt(900000) // 6位数
+        return code.toString()
     }
 
-    public static BindUser fromLite(OsuBindUserLite buLite) {
-        if (buLite == null) return null;
-        var bu = new BindUser();
-        bu.baseID = buLite.getId();
-        bu.userID = buLite.getOsuID();
-        bu.username = buLite.getOsuName();
-        bu.accessToken = buLite.getAccessToken();
-        bu.refreshToken = buLite.getRefreshToken();
-        bu.time = buLite.getTime();
-        bu.setMode(buLite.getMode());
-        return bu;
-    }
-
-    private String generateRandomCode() {
-        int code = 100000 + random.nextInt(900000); // 6位数
-        return String.valueOf(code);
-    }
-
-    public String generateCaptcha(Long userID) {
-        String oldCode = INDEX_CACHE.remove(userID);
+    fun generateCaptcha(userID: Long): String {
+        val oldCode = indexCache.remove(userID)
         if (oldCode != null) {
-            CAPTCHA_CACHE.invalidate(oldCode);
+            captchaCache.invalidate(oldCode)
         }
 
-        String code;
+        var code: String
         do {
-            code = generateRandomCode();
-        } while (CAPTCHA_CACHE.getIfPresent(code) != null);
+            code = generateRandomCode()
+        } while (captchaCache.getIfPresent(code) != null)
 
-        CAPTCHA_CACHE.put(code, userID);
-        INDEX_CACHE.put(userID, code);
-        return code;
+        captchaCache.put(code, userID)
+        indexCache[userID] = code
+        return code
     }
 
-    @NonNull
-    public BindUser getBindFromQQ(Long qq) throws BindException {
-        return getBindFromQQ(qq, false);
+    fun getBindFromQQ(qq: Long): BindUser {
+        return getBindFromQQ(qq, false)
     }
 
     /**
@@ -126,263 +94,258 @@ public class BindDao {
      * @param isMyself 仅影响报错信息，不影响结果
      * @return 绑定的玩家
      */
-    @NonNull
-    public BindUser getBindFromQQ(Long qq, boolean isMyself) throws BindException {
+    fun getBindFromQQ(qq: Long, isMyself: Boolean): BindUser {
         if (qq < 0) {
-            try {
-                return getBindUserFromOsuID(-qq);
-            } catch (BindException e) {
-                return new BindUser(-qq, "unknown");
+            return try {
+                getBindUserFromOsuID(-qq)
+            } catch (e: BindException) {
+                BindUser(-qq, "unknown")
             }
         }
-        var liteData = bindQQMapper.findById(qq);
-        if (liteData.isEmpty()) {
-            if (isMyself) {
-                throw new BindException.NotBindException.YouNotBind();
+        val liteData = bindQQMapper.findById(qq).getOrNull()
+            ?: if (isMyself) {
+                throw YouNotBind()
             } else {
-                throw new BindException.NotBindException.UserNotBind();
+                throw UserNotBind()
             }
-        }
-        var u = liteData.get().getOsuUser();
-        return fromLite(u);
+
+        val u = liteData.osuUser
+        return fromLite(u)!!
     }
 
-    public BindUser saveBind(BindUser user) {
-        if (user == null) {
-            return null;
-        }
-        OsuBindUserLite lite = new OsuBindUserLite(user);
-        lite = bindUserMapper.save(lite);
-        return fromLite(lite);
+    fun saveBind(user: BindUser): BindUser {
+        var lite = OsuBindUserLite(user)
+        lite = bindUserMapper.save(lite)
+        return fromLite(lite)!!
     }
 
-    public BindUser getBindUserFromOsuID(Long userID) throws BindException {
-        if (Objects.isNull(userID)) throw new BindException.BindIllegalArgumentException.IllegalQQ();
+    fun getBindUserFromOsuID(userID: Long?): BindUser {
+        if (userID == null) throw IllegalQQ()
 
-        Optional<OsuBindUserLite> liteData;
+        var liteData: OsuBindUserLite?
         try {
-            liteData = bindUserMapper.getByOsuID(userID);
-        } catch (IncorrectResultSizeDataAccessException e) {
-            bindUserMapper.deleteOutdatedByOsuID(userID);
-            liteData = bindUserMapper.getByOsuID(userID);
+            liteData = bindUserMapper.getByOsuID(userID)
+        } catch (e: IncorrectResultSizeDataAccessException) {
+            bindUserMapper.deleteOutdatedByOsuID(userID)
+            liteData = bindUserMapper.getByOsuID(userID)
         }
 
-        if (liteData.isEmpty()) throw new BindException.NotBindException.UserNotBind();
-        var u = liteData.get();
-        return fromLite(u);
+        if (liteData == null) throw UserNotBind()
+        return fromLite(liteData)!!
     }
 
-    public List<OsuBindUserLite> getAllBindUser(Collection<Long> userIDs) {
-        return bindUserMapper.getAllByOsuID(userIDs);
+    fun getAllBindUser(userIDs: Collection<Long>): List<OsuBindUserLite> {
+        return bindUserMapper.getAllByOsuID(userIDs)
     }
 
-    @Nullable
-    public QQBindLite getQQLiteFromOsuId(Long userID) {
-        return bindQQMapper.findByOsuID(userID);
+    fun getQQLiteFromUserID(userID: Long): QQBindLite? {
+        return bindQQMapper.findByOsuID(userID)
     }
 
-    public Optional<QQBindLite> getQQLiteFromQQ(Long qq) {
-        return bindQQMapper.findById(qq);
+    fun getQQLiteFromQQ(qq: Long): QQBindLite? {
+        return bindQQMapper.findById(qq).getOrNull()
     }
 
-    public long verifyCaptcha(String code) {
-        Long cachedUserId = CAPTCHA_CACHE.getIfPresent(code);
+    fun verifyCaptcha(code: String): Long {
+        val cachedUserId = captchaCache.getIfPresent(code)
         if (cachedUserId != null) {
-            CAPTCHA_CACHE.invalidate(code);
-            INDEX_CACHE.remove(cachedUserId);
-            return cachedUserId;
+            captchaCache.invalidate(code)
+            indexCache.remove(cachedUserId)
+            return cachedUserId
         }
-        return -1;
+        return -1
     }
 
-    public QQBindLite bindQQ(Long qq, OsuBindUserLite user) {
-        OsuBindUserLite osuBind = user;
-        if (user.getRefreshToken() != null) {
-            var count = bindQQMapper.countByUserID(user.getOsuID());
+    fun bindQQ(qq: Long?, user: OsuBindUserLite): QQBindLite {
+        val bindUserLite: OsuBindUserLite
+
+        if (user.refreshToken != null) {
+            val count = bindQQMapper.countByUserID(user.osuID)
             if (count > 1) {
-                bindUserMapper.deleteAllByOsuID(user.getOsuID());
+                bindUserMapper.deleteAllByOsuID(user.osuID)
             }
-            osuBind = bindUserMapper.checkSave(osuBind);
+
+            // checkSave
+            if (user.id == null && bindUserMapper.countAllByOsuID(user.osuID) > 0) {
+                bindUserMapper.deleteOutdatedByOsuID(user.osuID)
+            }
+
+            bindUserLite = bindUserMapper.save(user)
         } else {
-            Optional<OsuBindUserLite> buLiteOpt = bindUserMapper.getFirstByOsuID(user.getOsuID());
-            if (buLiteOpt.isPresent()) {
-                osuBind = buLiteOpt.get();
+            val userLite = bindUserMapper.getFirstByOsuID(user.osuID)
+
+            // checkSave
+            if (userLite == null) {
+                if (user.id == null && bindUserMapper.countAllByOsuID(user.osuID) > 0) {
+                    bindUserMapper.deleteOutdatedByOsuID(user.osuID)
+                }
+
+                bindUserLite = bindUserMapper.save(user)
             } else {
-                osuBind = bindUserMapper.checkSave(osuBind);
+                bindUserLite = userLite
             }
         }
 
-        var qqBind = new QQBindLite();
-        qqBind.setQq(qq);
+        val qqBind = QQBindLite()
 
-        qqBind.setOsuUser(osuBind);
-        return bindQQMapper.save(qqBind);
+        qqBind.qq = qq
+        qqBind.osuUser = bindUserLite
+        return bindQQMapper.save(qqBind)
     }
 
-    public DiscordBindLite bindDiscord(String discordId, BindUser user) {
-        return bindDiscord(discordId, fromModel(user));
+    fun bindDiscord(discordId: String?, user: BindUser?): DiscordBindLite {
+        return bindDiscord(discordId, fromModel(user))
     }
 
-    public DiscordBindLite bindDiscord(String discordId, OsuBindUserLite user) {
-        var discordBind = new DiscordBindLite();
-        discordBind.setId(discordId);
-        discordBind.setOsuUser(user);
-        return bindDiscordMapper.save(discordBind);
+    fun bindDiscord(discordId: String?, user: OsuBindUserLite?): DiscordBindLite {
+        val discordBind = DiscordBindLite()
+        discordBind.id = discordId
+        discordBind.osuUser = user
+        return bindDiscordMapper.save(discordBind)
     }
 
-    @Nullable
-    public BindUser getBindUser(String name) {
-        var id = getOsuID(name);
-        if (id == null) return null;
-        var data = bindUserMapper.getByOsuID(id);
-        return data.map(BindDao::fromLite).orElse(null);
+    fun getBindUser(name: String): BindUser? {
+        val id = getOsuID(name) ?: return null
+        return fromLite(bindUserMapper.getByOsuID(id))
     }
 
-    @Nullable
-    public BindUser getBindUser(Long id) {
-        if (id == null) return null;
-        var data = bindUserMapper.getByOsuID(id);
-        return data.map(BindDao::fromLite).orElse(null);
+    fun getBindUser(id: Long?): BindUser? {
+        if (id == null) return null
+        return fromLite(bindUserMapper.getByOsuID(id))
     }
 
-    @Nullable
-    public SBQQBindLite getSBQQLiteFromUserID(@NonNull Long userID) {
-        return sbQQBindMapper.findByUserID(userID);
+    fun getSBQQLiteFromUserID(userID: Long): SBQQBindLite? {
+        return sbQQBindMapper.findByUserID(userID)
     }
 
-    @Nullable
-    public SBQQBindLite getSBQQLiteFromQQ(@NonNull Long qq) {
-        return sbQQBindMapper.findById(qq).orElse(null);
+    fun getSBQQLiteFromQQ(qq: Long): SBQQBindLite? {
+        return sbQQBindMapper.findById(qq).getOrNull()
     }
 
-    @NonNull
-    public SBBindUser getSBBindUserFromUserID(@Nullable Long userID) throws BindException {
-        if (Objects.isNull(userID)) throw new BindException.BindIllegalArgumentException.IllegalQQ();
+    fun getSBBindUserFromUserID(userID: Long?): SBBindUser {
+        if (userID == null) throw IllegalQQ()
 
-        SBBindUserLite liteData;
+        var liteData: SBBindUserLite?
 
         try {
-            liteData = sbBindUserMapper.getUser(userID);
-        } catch (IncorrectResultSizeDataAccessException e) {
-            sbBindUserMapper.deleteOutdatedBind(userID);
-            liteData = sbBindUserMapper.getUser(userID);
+            liteData = sbBindUserMapper.getUser(userID)
+        } catch (e: IncorrectResultSizeDataAccessException) {
+            sbBindUserMapper.deleteOutdatedBind(userID)
+            liteData = sbBindUserMapper.getUser(userID)
         }
 
-        if (liteData == null) throw new BindException.NotBindException.UserNotBind();
-        return liteData.toSBBindUser();
+        if (liteData == null) throw UserNotBind()
+        return liteData.toSBBindUser()
     }
 
-    @NonNull
-    public SBBindUser getSBBindFromQQ(Long qq, boolean isMyself) throws BindException {
+    fun getSBBindFromQQ(qq: Long, isMyself: Boolean): SBBindUser {
         if (qq < 0) {
-            try {
-                return getSBBindUserFromUserID(-qq);
-            } catch (BindException e) {
-                return new SBBindUser(-qq, "unknown");
+            return try {
+                getSBBindUserFromUserID(-qq)
+            } catch (e: BindException) {
+                SBBindUser(-qq, "unknown")
             }
         }
-        var liteData = sbQQBindMapper.findById(qq);
-        if (liteData.isEmpty()) {
+        val liteData = sbQQBindMapper.findById(qq)
+        if (liteData.isEmpty) {
             if (isMyself) {
-                throw new BindException.NotBindException.YouNotBind();
+                throw YouNotBind()
             } else {
-                throw new BindException.NotBindException.UserNotBind();
+                throw UserNotBind()
             }
         }
 
-        return liteData.get().getBindUser();
+        return liteData.get().bindUser
     }
 
-    @Nullable
-    public SBBindUser saveBind(SBBindUser user) {
-        if (user == null) {
-            return null;
-        }
+    fun saveBind(user: SBBindUser?): SBBindUser? {
+        if (user == null) return null
 
-        SBBindUserLite lite = user.toSBBindUserLite();
-        lite = sbBindUserMapper.save(lite);
-        return lite.toSBBindUser();
+
+        var lite = user.toSBBindUserLite()
+        lite = sbBindUserMapper.save(lite)
+        return lite.toSBBindUser()
     }
 
-    public SBQQBindLite bindSBQQ(Long qq, SBBindUser user) {
-        var data = sbBindUserMapper.getUser(user.getUserID());
+    fun bindSBQQ(qq: Long, user: SBBindUser): SBQQBindLite {
+        val data = sbBindUserMapper.getUser(user.userID)
         if (data == null) {
-            return bindSBQQ(qq, user.toSBBindUserLite());
+            return bindSBQQ(qq, user.toSBBindUserLite())
         } else {
-            data.setUserID(user.getUserID());
-            data.setUsername(user.getUsername());
-            data.setTime(user.getTime());
+            data.userID = user.userID
+            data.username = user.username
+            data.time = user.time
 
-            return bindSBQQ(qq, data);
+            return bindSBQQ(qq, data)
         }
     }
 
-    public SBQQBindLite bindSBQQ(Long qq, SBBindUserLite sbBind) {
-        var sbLite = sbBindUserMapper.getFirstByUserID(sbBind.getUserID());
+    fun bindSBQQ(qq: Long, sbBind: SBBindUserLite): SBQQBindLite {
+        val sbLite = sbBindUserMapper.getFirstByUserID(sbBind.userID)
 
-        SBBindUserLite bind;
+        val bind: SBBindUserLite
 
         if (sbLite == null) {
             // 就是 checkSave
-            if (sbBind.getId() == null && sbBindUserMapper.countAllByUserID(sbBind.getUserID()) > 0) {
-                sbBindUserMapper.deleteOutdatedBind(sbBind.getUserID());
+            if (sbBind.id == null && sbBindUserMapper.countAllByUserID(sbBind.userID) > 0) {
+                sbBindUserMapper.deleteOutdatedBind(sbBind.userID)
             }
 
-            bind = sbBindUserMapper.save(sbBind);
+            bind = sbBindUserMapper.save(sbBind)
         } else {
-            bind = sbBind;
+            bind = sbBind
         }
 
-        var qqBind = new SBQQBindLite(qq, bind);
+        val qqBind = SBQQBindLite(qq, bind)
 
-        return sbQQBindMapper.save(qqBind);
+        return sbQQBindMapper.save(qqBind)
     }
 
-    public void updateSBMode(Long userID, OsuMode mode) {
-        sbBindUserMapper.updateMode(userID, mode.modeValue);
+    fun updateSBMode(userID: Long, mode: OsuMode) {
+        sbBindUserMapper.updateMode(userID, mode.modeValue)
     }
 
-    public boolean unBindSBQQ(SBBindUser user) {
+    fun unBindSBQQ(user: SBBindUser): Boolean {
         try {
-            sbQQBindMapper.unBind(user.getUserID());
-            return true;
-        } catch (Exception e) {
-            log.error("e: ", e);
-            return false;
+            sbQQBindMapper.unBind(user.userID)
+            return true
+        } catch (e: Exception) {
+            log.error("e: ", e)
+            return false
         }
     }
 
-    public QQBindLite bindQQ(Long qq, BindUser user) {
-        var data = bindUserMapper.getByOsuID(user.userID);
-        if (data.isEmpty()) {
-            return bindQQ(qq, fromModel(user));
+    fun bindQQ(qq: Long?, user: BindUser): QQBindLite {
+        val bindUserLite = bindUserMapper.getByOsuID(user.userID)
+
+        if (bindUserLite == null) {
+            return bindQQ(qq, fromModel(user)!!)
         } else {
-            var userLite = data.get();
-            userLite.setAccessToken(user.accessToken);
-            userLite.setRefreshToken(user.refreshToken);
-            userLite.setTime(user.time);
-            userLite.setOsuName(user.username);
-            return bindQQ(qq, userLite);
+            bindUserLite.accessToken = user.accessToken
+            bindUserLite.refreshToken = user.refreshToken
+            bindUserLite.time = user.time
+            bindUserLite.osuName = user.username
+            return bindQQ(qq, bindUserLite)
         }
     }
 
-    public void updateToken(Long uid, String accessToken, String refreshToken, Long time) {
-        if (NOW_UPDATE.get()) {
-            UPDATE_USERS.add(uid);
+    fun updateToken(uid: Long?, accessToken: String?, refreshToken: String?, time: Long?) {
+        if (nowUpdate.get()) {
+            updateUserSet.add(uid)
         }
-        bindUserMapper.updateToken(uid, accessToken, refreshToken, time);
+        bindUserMapper.updateToken(uid, accessToken, refreshToken, time)
     }
 
-    public void updateMode(Long uid, OsuMode mode) {
-        bindUserMapper.updateMode(uid, mode.modeValue);
+    fun updateMode(uid: Long?, mode: OsuMode) {
+        bindUserMapper.updateMode(uid, mode.modeValue)
     }
 
-    public boolean unBindQQ(BindUser user) {
+    fun unBindQQ(user: BindUser): Boolean {
         try {
-            bindQQMapper.unBind(user.userID);
-            return true;
-        } catch (Exception e) {
-            return false;
+            bindQQMapper.unBind(user.userID)
+            return true
+        } catch (e: Exception) {
+            return false
         }
     }
 
@@ -392,265 +355,282 @@ public class BindDao {
      * @param user 绑定
      * @return qq
      */
-    @NonNull
-    public Long getQQ(@NotNull BindUser user) {
-        return getQQ(user.userID);
+    fun getQQ(user: BindUser): Long {
+        return getQQ(user.userID)
     }
 
-    @NonNull
-    public Long getQQ(Long osuID) {
-        var qqBind = bindQQMapper.findByOsuID(osuID);
+    fun getQQ(osuID: Long): Long {
+        val qqBind = bindQQMapper.findByOsuID(osuID)
 
-        if (qqBind != null) {
-            return qqBind.getQq();
+        return if (qqBind?.qq != null) {
+            qqBind.qq!!
         } else {
-            return -1L;
+            -1L
         }
     }
 
-    @Nullable
-    public QQBindLite getQQBindInfo(@NotNull BindUser user) {
-        return getQQBindInfo(user.userID);
+    fun getQQBindInfo(user: BindUser): QQBindLite? {
+        return getQQBindInfo(user.userID)
     }
 
-    @Nullable
-    public QQBindLite getQQBindInfo(@NotNull Long userID) {
-        return bindQQMapper.findByOsuID(userID);
+    fun getQQBindInfo(userID: Long): QQBindLite? {
+        return bindQQMapper.findByID(userID)
     }
 
-
-    public void removeBind(long uid) {
-        bindUserMapper.deleteAllByOsuID(uid);
+    fun removeBind(uid: Long) {
+        bindUserMapper.deleteAllByOsuID(uid)
     }
 
-    public void backupBind(long uid) {
-        bindUserMapper.backupBindByOsuID(uid);
+    fun backupBind(uid: Long) {
+        bindUserMapper.backupBindByOsuID(uid)
     }
 
-    public Long getOsuID(String name) {
-        Long uid;
+    fun getOsuID(name: String): Long? {
+        val uid: Long
         try {
-            uid = osuFindNameMapper.getFirstByNameOrderByIndex(name.toUpperCase()).getUid();
-        } catch (Exception e) {
-            if (!(e instanceof NullPointerException)) {
-                log.error("get data Error", e);
+            uid = osuFindNameMapper.getFirstByNameOrderByIndex(name.uppercase(Locale.getDefault())).uid
+        } catch (e: Exception) {
+            if (e !is NullPointerException) {
+                log.error("get data Error", e)
             }
-            return null;
+            return null
         }
-        return uid;
+        return uid
     }
 
-
-    public void removeOsuNameToId(Long osuId) {
-        osuFindNameMapper.deleteByUid(osuId);
+    fun removeOsuNameToId(osuId: Long?) {
+        osuFindNameMapper.deleteByUid(osuId)
     }
 
-    public void saveOsuNameToId(Long id, String... name) {
-        if (name.length == 0) return;
-        for (int i = 0; i < name.length; i++) {
-            var x = new OsuNameToIdLite(id, name[i], i);
-            osuFindNameMapper.save(x);
+    fun saveOsuNameToId(id: Long?, vararg name: String?) {
+        if (name.isEmpty()) return
+        for (i in name.indices) {
+            val x = OsuNameToIdLite(id, name[i], i)
+            osuFindNameMapper.save(x)
         }
     }
 
-    public BindUser getBindUserByDbId(Long id) {
-        if (id == null) return null;
-        var data = bindUserMapper.findById(id);
-        return data.map(BindDao::fromLite).orElse(null);
+    fun getBindUserByDbId(id: Long?): BindUser? {
+        if (id == null) return null
+        val data = bindUserMapper.findById(id)
+        return data.map(Function { buLite: OsuBindUserLite? -> fromLite(buLite) }).orElse(null)
     }
 
-    public static OsuBindUserLite fromModel(BindUser user) {
-        if (user == null) return null;
-        return new OsuBindUserLite(user);
-    }
-
-    @Async
-    public void refreshOldUserToken(OsuUserApiService userApiService) {
-        NOW_UPDATE.set(true);
-        UPDATE_USERS.clear();
+    @Async fun refreshOldUserToken(userApiService: OsuUserApiService) {
+        nowUpdate.set(true)
+        updateUserSet.clear()
         try {
-            refreshOldUserTokenOne(userApiService);
-        } catch (RuntimeException ignored) {
+            refreshOldUserTokenOne(userApiService)
+        } catch (e: RuntimeException) {
+            if (e !is WebClientResponseException.Unauthorized) {
+                log.error("更新用户出现异常", e)
+            }
             // 已经 log
-        } catch (Exception e) {
-            if (!(e instanceof WebClientResponseException.Unauthorized)) {
-                log.error("更新用户出现异常", e);
-            }
         } finally {
-            UPDATE_USERS.clear();
-            NOW_UPDATE.set(false);
+            updateUserSet.clear()
+            nowUpdate.set(false)
         }
     }
 
-    private void refreshOldUserTokenOne(OsuUserApiService userApiService) {
-        long now = System.currentTimeMillis();
-        var user = bindUserMapper.getOneOldBindUser(now);
-        if (user.isPresent()) {
-            var u = user.get();
-            if (UPDATE_USERS.remove(u.getId())) return;
+    private fun refreshOldUserTokenOne(userApiService: OsuUserApiService) {
+        val now = System.currentTimeMillis()
+        var user = bindUserMapper.getOneOldBindUser(now)
+        if (user != null) {
+            val u = user
+            if (updateUserSet.remove(u.id)) return
 
-            if (ObjectUtils.isEmpty(u.getRefreshToken())) {
-                bindUserMapper.backupBindByOsuID(u.getOsuID());
-                return;
+            if (ObjectUtils.isEmpty(u.refreshToken)) {
+                bindUserMapper.backupBindByOsuID(u.osuID)
+                return
             }
 
             // log.info("更新用户: {}", u.getOsuName());
-            refreshOldUserToken(u, userApiService);
-            return;
+            refreshOldUserToken(u, userApiService)
+            return
         }
 
-        user = bindUserMapper.getOneOldBindUserHasWrong(now);
-        if (user.isPresent()) {
-            var u = user.get();
-            if (UPDATE_USERS.remove(u.getId())) return;
-            if (ObjectUtils.isEmpty(u.getRefreshToken())) {
-                bindUserMapper.backupBindByOsuID(u.getOsuID());
-                return;
+        user = bindUserMapper.getOneOldBindUserHasWrong(now)
+        if (user != null) {
+            val u = user
+            if (updateUserSet.remove(u.id)) return
+            if (ObjectUtils.isEmpty(u.refreshToken)) {
+                bindUserMapper.backupBindByOsuID(u.osuID)
+                return
             }
             // 出错超 5 次默认无法再次更新了
-            if (u.getUpdateCount() > 5) {
-                bindUserMapper.backupBindByOsuID(u.getId());
+            if (u.updateCount > 5) {
+                bindUserMapper.backupBindByOsuID(u.id)
             }
 
             // log.info("更新用户: {}", u.getOsuName());
-            refreshOldUserToken(u, userApiService);
+            refreshOldUserToken(u, userApiService)
         }
     }
 
-    private void refreshOldUserTokenPack(OsuUserApiService osuGetService) {
-        long now = System.currentTimeMillis();
-        int succeedCount = 0;
-        List<OsuBindUserLite> users;
+    private fun refreshOldUserTokenPack(osuGetService: OsuUserApiService) {
+        val now = System.currentTimeMillis()
+        var succeedCount = 0
+        var users: MutableList<OsuBindUserLite>
         // 降低更新 token 时的优先级
-        OsuApiBaseService.setPriority(10);
+        setPriority(10)
         // 更新暂时没失败过的
-        while (!(users = bindUserMapper.getOldBindUser(now)).isEmpty()) {
+        while ((bindUserMapper.getOldBindUser(now).also { users = it.toMutableList() }).isNotEmpty()) {
             try {
-                succeedCount += refreshOldUserList(osuGetService, users);
-            } catch (RefreshException e) {
-                succeedCount += e.successCount;
-                log.error("连续失败, 停止更新, 更新用户数量: {}, 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
-                return;
+                succeedCount += refreshOldUserList(osuGetService, users)
+            } catch (e: RefreshException) {
+                succeedCount += e.successCount
+                log.error(
+                    "连续失败, 停止更新, 更新用户数量: {}, 累计用时: {}s",
+                    succeedCount,
+                    (System.currentTimeMillis() - now) / 1000
+                )
+                return
             }
         }
         // 重新尝试失败的
-        while (!(users = bindUserMapper.getOldBindUserHasWrong(now)).isEmpty()) {
+        while ((bindUserMapper.getOldBindUserHasWrong(now).also { users = it.toMutableList() }).isNotEmpty()) {
             try {
-                succeedCount += refreshOldUserList(osuGetService, users);
-            } catch (RefreshException e) {
-                succeedCount += e.successCount;
-                log.error("停止更新, 更新用户数量: {}, 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
-                return;
+                succeedCount += refreshOldUserList(osuGetService, users)
+            } catch (e: RefreshException) {
+                succeedCount += e.successCount
+                log.error(
+                    "停止更新, 更新用户数量: {}, 累计用时: {}s",
+                    succeedCount,
+                    (System.currentTimeMillis() - now) / 1000
+                )
+                return
             }
         }
-        log.info("更新用户数量: {}, 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000);
+        log.info("更新用户数量: {}, 累计用时: {}s", succeedCount, (System.currentTimeMillis() - now) / 1000)
     }
 
-    private int refreshOldUserList(OsuUserApiService osuGetService, List<OsuBindUserLite> users) {
-        int errCount = 0;
-        int succeedCount = 0;
-        while (!users.isEmpty()) {
-            var u = users.removeLast();
+    private fun refreshOldUserList(osuGetService: OsuUserApiService, users: MutableList<OsuBindUserLite>): Int {
+        var errCount = 0
+        var succeedCount = 0
+        while (users.isNotEmpty()) {
+            val u = users.removeLast()
 
-            if (UPDATE_USERS.remove(u.getId())) continue;
-            if (ObjectUtils.isEmpty(u.getRefreshToken())) {
-                bindUserMapper.backupBindByOsuID(u.getOsuID());
-                continue;
+            if (updateUserSet.remove(u.id)) continue
+            if (ObjectUtils.isEmpty(u.refreshToken)) {
+                bindUserMapper.backupBindByOsuID(u.osuID)
+                continue
             }
             // 出错超 5 次默认无法再次更新了
-            if (u.getUpdateCount() > 5) {
+            if (u.updateCount > 5) {
                 // 回退到用户名绑定
-                bindUserMapper.backupBindByOsuID(u.getId());
+                bindUserMapper.backupBindByOsuID(u.id)
             }
             // log.info("更新用户 {}", u.getOsuName());
             try {
-                refreshOldUserToken(u, osuGetService);
-                if (u.getUpdateCount() > 0) bindUserMapper.clearUpdateCount(u.getId());
-                errCount = 0;
-            } catch (WebClientResponseException.Unauthorized e) {
+                refreshOldUserToken(u, osuGetService)
+                if (u.updateCount > 0) bindUserMapper.clearUpdateCount(u.id)
+                errCount = 0
+            } catch (e: WebClientResponseException.Unauthorized) {
                 // 绑定被取消或者过期, 不再尝试
-                log.info("绑定 {} 失败：取消绑定", u.getOsuName());
-                bindUserMapper.backupBindByOsuID(u.getId());
-            } catch (Exception e) {
-                bindUserMapper.addUpdateCount(u.getId());
-                log.error("绑定 {} 第 {} 次失败：出现异常: ", u.getOsuName(), errCount, e);
-                errCount++;
+                log.info("绑定 {} 失败：取消绑定", u.osuName)
+                bindUserMapper.backupBindByOsuID(u.id)
+            } catch (e: Exception) {
+                bindUserMapper.addUpdateCount(u.id)
+                log.error("绑定 {} 第 {} 次失败：出现异常: ", u.osuName, errCount, e)
+                errCount++
             }
             if (errCount > 5) {
                 // 一般连续错误意味着网络寄了
-                throw new RefreshException(succeedCount);
+                throw RefreshException(succeedCount)
             }
-            succeedCount++;
+            succeedCount++
         }
-        return succeedCount;
+        return succeedCount
     }
 
-    private void refreshOldUserToken(OsuBindUserLite u, OsuUserApiService userApiService) {
-        int badRequest = 0;
+    private fun refreshOldUserToken(u: OsuBindUserLite, userApiService: OsuUserApiService) {
+        var badRequest = 0
 
         while (true) {
             try {
-                userApiService.refreshUserToken(fromLite(u));
-                return;
-            } catch (ExecutionException e) {
-                if (e.getCause() instanceof WebClientResponseException.Unauthorized) {
-                    log.info("刷新用户令牌：更新 {} 令牌失败, token 失效, 绑定取消", u.getOsuName());
-                    bindUserMapper.backupBindByOsuID(u.getOsuID());
-                    return;
+                userApiService.refreshUserToken(fromLite(u)!!)
+                return
+            } catch (e: ExecutionException) {
+                if (e.cause is WebClientResponseException.Unauthorized) {
+                    log.info("刷新用户令牌：更新 {} 令牌失败, token 失效, 绑定取消", u.osuName)
+                    bindUserMapper.backupBindByOsuID(u.osuID)
+                    return
                 } else {
-                    badRequest++;
+                    badRequest++
 
                     if (badRequest < 3) {
-                        log.error("刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试", u.getOsuName(), badRequest);
+                        log.error("刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试", u.osuName, badRequest)
                     } else {
-                        log.error("刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试失败, 放弃更新。错误原因：", u.getOsuName(), badRequest, e);
-                        return;
+                        log.error(
+                            "刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试失败, 放弃更新。错误原因：",
+                            u.osuName,
+                            badRequest,
+                            e
+                        )
+                        return
                     }
                 }
-            } catch (Throwable e1) {
-                log.error("刷新用户令牌：神秘错误: ", e1);
-                return;
+            } catch (e1: Throwable) {
+                log.error("刷新用户令牌：神秘错误: ", e1)
+                return
             }
         }
     }
 
-    public Map<Long, OsuMode> getAllGroupMode() {
-        return osuGroupConfigRepository
-                .findAll()
-                .stream()
-                .collect(Collectors.toMap(OsuGroupConfigLite::getGroupId, it -> Optional.ofNullable(it.getMainMode()).orElse(OsuMode.DEFAULT)));
-    }
+    val allGroupMode: Map<Long, OsuMode>
+        get() = osuGroupConfigRepository
+            .findAll()
+            .stream()
+            .collect(
+                Collectors.toMap(
+                    OsuGroupConfigLite::groupId,
+                    Function { it: OsuGroupConfigLite -> Optional.ofNullable(it.mainMode).orElse(OsuMode.DEFAULT) })
+            )
 
-    public OsuMode getGroupModeConfig(@Nullable MessageEvent event) {
-        if (event == null || !(event.getSubject() instanceof Group group)) {
-            return OsuMode.DEFAULT;
+    fun getGroupModeConfig(event: MessageEvent?): OsuMode {
+        if (event == null || event.subject !is Group) {
+            return OsuMode.DEFAULT
         }
 
-        var config = osuGroupConfigRepository.findById(group.getId());
-        return config.map(OsuGroupConfigLite::getMainMode).orElse(OsuMode.DEFAULT);
+        return osuGroupConfigRepository.findById(event.subject.id).getOrNull()?.mainMode ?: OsuMode.DEFAULT
     }
 
-    public List<Long> getAllUserIdLimit50(int start) {
-        return bindUserMapper.getAllBindUserIdLimit50(start);
+    fun getAllUserIdLimit50(start: Int): List<Long> {
+        return bindUserMapper.getAllBindUserIdLimit50(start)
     }
 
-    public List<QQBindLite.QQUser> getAllQQBindUser(Collection<Long> qqId) {
-        return bindQQMapper.findAllUserByQQ(qqId);
+    fun getAllQQBindUser(qqs: Collection<Long>): List<QQBindLite.QQUser> {
+        return bindQQMapper.findAllUserByQQ(qqs)
     }
 
-    public void saveGroupModeConfig(long groupId, OsuMode mode) {
-        if (OsuMode.isDefaultOrNull(mode)) {
-            osuGroupConfigRepository.deleteById(groupId);
+    fun saveGroupModeConfig(groupId: Long, mode: OsuMode?) {
+        if (isDefaultOrNull(mode)) {
+            osuGroupConfigRepository.deleteById(groupId)
         } else {
-            osuGroupConfigRepository.save(new OsuGroupConfigLite(groupId, mode));
+            osuGroupConfigRepository.save(OsuGroupConfigLite(groupId, mode))
         }
     }
 
-    private static class RefreshException extends RuntimeException {
-        int successCount;
+    private class RefreshException(var successCount: Int) : RuntimeException()
+    companion object {
+        @JvmStatic
+        fun fromLite(buLite: OsuBindUserLite?): BindUser? {
+            if (buLite == null) return null
 
-        RefreshException(int i) {
-            successCount = i;
+            val bu = BindUser()
+            bu.baseID = buLite.id
+            bu.userID = buLite.osuID
+            bu.username = buLite.osuName
+            bu.accessToken = buLite.accessToken
+            bu.refreshToken = buLite.refreshToken
+            bu.time = buLite.time
+            bu.mode = buLite.mode
+            return bu
+        }
+
+        fun fromModel(user: BindUser?): OsuBindUserLite? {
+            if (user == null) return null
+            return OsuBindUserLite(user)
         }
     }
 }

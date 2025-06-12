@@ -5,7 +5,7 @@ import com.now.nowbot.game.entity.Weapon;
 import java.util.List;
 
 public class User {
-    List skills; // todo: 技能咋写咋写咋写咋写
+    List<String> skills; // todo: 技能咋写咋写咋写咋写
     List<Weapon> weapons;
     float hp;
     float power;

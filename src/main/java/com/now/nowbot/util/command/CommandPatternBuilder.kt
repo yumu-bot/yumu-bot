@@ -77,7 +77,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     private fun __appendUU(@Language("RegExp") vararg commands: String) {
-        appendGroup() {
+        appendGroup {
             append(REG_EXCLAMATION)
             appendSpace()
             append("uu?")

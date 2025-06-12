@@ -80,7 +80,7 @@ public class BindController {
         BindUser user;
         try {
             user = bindDao.getBindUserByDbId(id);
-            if (di != user.userID) {
+            if (user == null || di != user.userID) {
                 return "你不许绑定";
             }
         } catch (Exception e) {
@@ -150,7 +150,7 @@ public class BindController {
               .append(bd.username)
               .append("\n<br/>")
               .append("您的默认游戏模式为：[")
-              .append(u.getOsuUser().getMode().shortName).append("]。")
+              .append(Objects.requireNonNull(u.getOsuUser()).getMode().shortName).append("]。")
               .append("\n<br/>")
               .append("如果您不是主模式 [osu] 玩家，请使用 `!ymmode [mode]` 来修改默认模式。否则可能会影响您查询成绩。")
               .append("\n<br/>")

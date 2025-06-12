@@ -24,7 +24,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 import java.util.regex.Pattern
-import kotlin.jvm.optionals.getOrNull
 
 @Service("BIND") class BindService(
     private val userApiService: OsuUserApiService,
@@ -146,9 +145,9 @@ import kotlin.jvm.optionals.getOrNull
 
     private fun unbindQQ(qq: Long?) {
         if (qq == null) throw BindException.BindIllegalArgumentException.IllegalQQ()
-        val bind = bindDao.getQQLiteFromQQ(qq).getOrNull() ?: throw BindException.NotBindException.UserNotBind()
+        val bind = bindDao.getQQLiteFromQQ(qq) ?: throw BindException.NotBindException.UserNotBind()
 
-        if (bindDao.unBindQQ(bind.bindUser)) {
+        if (bindDao.unBindQQ(bind.bindUser!!)) {
             throw BindException.UnBindException.UnbindSuccess()
         } else {
             throw BindException.UnBindException.UnbindFailed()
@@ -166,7 +165,7 @@ import kotlin.jvm.optionals.getOrNull
 
         val ou: OsuUser = userApiService.getOsuUser(name)
 
-        val qb = bindDao.getQQLiteFromOsuId(ou.userID)
+        val qb = bindDao.getQQLiteFromUserID(ou.userID)
 
         if (qb == null) {
             bindDao.bindQQ(qq, BindUser(ou))
@@ -175,17 +174,14 @@ import kotlin.jvm.optionals.getOrNull
             return
         }
 
-        event.reply(BindException.BindConfirmException.RecoverBind(ou.username, qb.bindUser.username, qq))
+        event.reply(BindException.BindConfirmException.RecoverBind(ou.username, qb.bindUser!!.username, qq))
 
         ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
 
         if (ev.rawMessage.uppercase().startsWith("OK")) {
-            val result = bindDao.bindQQ(qq, BindUser(ou))
-            if (result != null) {
-                event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username))
-            } else {
-                event.reply(BindException.BindResultException.BindFailed())
-            }
+            bindDao.bindQQ(qq, BindUser(ou))
+
+            event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username))
         } else {
             event.reply(BindException.BindReceiveException.ReceiveRefused())
         }
@@ -199,10 +195,10 @@ import kotlin.jvm.optionals.getOrNull
         val osuUser: OsuUser?
 
         //检查是否已经绑定
-        val qqBindLite = bindDao.getQQLiteFromQQ(qq).getOrNull()
+        val qqBindLite = bindDao.getQQLiteFromQQ(qq)
 
-        if (qqBindLite != null && qqBindLite.bindUser.isAuthorized) {
-            bindUser = qqBindLite.bindUser
+        if (qqBindLite != null && qqBindLite.bindUser!!.isAuthorized) {
+            bindUser = qqBindLite.bindUser!!
 
             try {
                 osuUser = userApiService.getOsuUser(bindUser, OsuMode.DEFAULT)
@@ -254,25 +250,25 @@ import kotlin.jvm.optionals.getOrNull
             }
         }
 
-        val ql = bindDao.getQQLiteFromQQ(qq).getOrNull()
+        val ql = bindDao.getQQLiteFromQQ(qq)
 
         if (ql != null) {
             if (ql.qq == event.sender.id) {
                 throw BindException.BoundException.YouBound()
             } else {
-                throw BindException.BoundException.UserBound(name, ql.qq)
+                throw BindException.BoundException.UserBound(name, ql.qq!!)
             }
         }
 
         val ou = userApiService.getOsuUser(name)
 
-        val qb = bindDao.getQQLiteFromOsuId(ou.userID)
+        val qb = bindDao.getQQLiteFromUserID(ou.userID)
 
         if (qb != null) {
             if (qb.qq == event.sender.id) {
                 throw BindException.BoundException.YouBound()
             } else {
-                throw BindException.BoundException.UserBound(name, qb.qq)
+                throw BindException.BoundException.UserBound(name, qb.qq!!)
             }
         } else {
             bindDao.bindQQ(qq, BindUser(ou))

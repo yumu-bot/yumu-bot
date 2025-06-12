@@ -31,9 +31,9 @@ class HelpService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, module: String) {
+    override fun HandleMessage(event: MessageEvent, param: String) {
         try {
-            val image = getHelpPicture(module, imageService)
+            val image = getHelpPicture(param, imageService)
 
             if (Objects.nonNull(image)) {
                 event.reply(image)
@@ -41,8 +41,8 @@ class HelpService(
                 throw TipsException("窝趣，找不到文件")
             }
         } catch (e: TipsException) {
-            val imgLegacy = getHelpImageLegacy(module)
-            val msgLegacy = getHelpLinkLegacy(module)
+            val imgLegacy = getHelpImageLegacy(param)
+            val msgLegacy = getHelpLinkLegacy(param)
 
             if (Objects.nonNull(imgLegacy)) {
                 event.reply(imgLegacy)
@@ -52,8 +52,8 @@ class HelpService(
                 event.reply(msgLegacy).recallIn((110 * 1000).toLong())
             }
         } catch (e: NullPointerException) {
-            val imgLegacy = getHelpImageLegacy(module)
-            val msgLegacy = getHelpLinkLegacy(module)
+            val imgLegacy = getHelpImageLegacy(param)
+            val msgLegacy = getHelpLinkLegacy(param)
 
             if (imgLegacy != null) {
                 event.reply(imgLegacy)
@@ -236,10 +236,10 @@ class HelpService(
     }
 
     override fun accept(event: MessageEvent, messageText: String): String? {
-        if (OfficialInstruction.HELP.matcher(messageText).find()) {
-            return "OFFICIAL"
+        return if (OfficialInstruction.HELP.matcher(messageText).find()) {
+            "OFFICIAL"
         } else {
-            return null
+            null
         }
     }
 

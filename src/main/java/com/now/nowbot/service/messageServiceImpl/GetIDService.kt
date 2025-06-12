@@ -14,7 +14,6 @@ import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
 import io.ktor.util.collections.*
 import org.springframework.stereotype.Service
-import kotlin.jvm.optionals.getOrNull
 
 @Service("GET_ID")
 class GetIDService(private val userApiService: OsuUserApiService, private val bindDao: BindDao) : MessageService<List<String>> {
@@ -30,9 +29,9 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
             val str: String? = m.group("data")
 
             val names = if (event.isAt) {
-                val b = bindDao.getQQLiteFromQQ(event.target).getOrNull() ?: throw BindException.NotBindException.UserNotBind()
+                val b = bindDao.getQQLiteFromQQ(event.target) ?: throw BindException.NotBindException.UserNotBind()
 
-                event.reply(b.osuUser.osuID.toString())
+                event.reply(b.osuUser!!.osuID.toString())
                 return false
             } else {
                 splitString(str)

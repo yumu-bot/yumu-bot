@@ -84,7 +84,7 @@ class KitaService(
 
         if (hasBG) {
             try {
-                val image = imageService.getPanelDelta(beatmap, round, mod, position, hasBG)
+                val image = imageService.getPanelDelta(beatmap, round, mod, position, true)
                 event.reply(image)
             } catch (e: Exception) {
                 log.error("KITA", e)
@@ -94,7 +94,7 @@ class KitaService(
             val group = event.subject
             if (group is Group) {
                 try {
-                    val image = imageService.getPanelDelta(beatmap, round, mod, position, hasBG)
+                    val image = imageService.getPanelDelta(beatmap, round, mod, position, false)
                     group.sendFile(image, "${param.group("bid")}${' '}${mod}${position}.png")
                 } catch (e: Exception) {
                     log.error("KITA-X", e)

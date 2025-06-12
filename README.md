@@ -13,9 +13,9 @@ _连接 osu! 并处理数据的 bot 后端_
 <p align="center">
     <a href="https://docs.365246692.xyz">使用文档</a>
     ·
-    <a href="#run">部署文档</a>
+    <a href="#运行">部署文档</a>
     ·
-    <a href="#thanks">相关项目</a>
+    <a href="#相关项目">相关项目</a>
 </p>
 
 <div align="center">
@@ -24,7 +24,7 @@ _连接 osu! 并处理数据的 bot 后端_
 
 </div>
 
-# 运行 {#run}
+# 运行
 
 ## 下载 jar 包
 
@@ -47,13 +47,13 @@ _连接 osu! 并处理数据的 bot 后端_
 
 ## 必需
 
-- [yumu-image](https://github.com/yumu-bot/yumu-image) 绘图模块, 用于将获取的数据绘制成可视化图片。**目前必需搭配主程序运行**。
+- [yumu-image](https://github.com/yumu-bot/yumu-image) 绘图模块, 用于将获取的数据绘制成可视化图片。**目前必须搭配主程序运行**。
 
 ## 可选
 
 - [yumu-docs](https://docs.365246692.xyz/) 帮助文档
 
-# 相关项目 {#thanks}
+# 相关项目
 
 本项目参考以下项目，或是使用了以下项目的 API：
 

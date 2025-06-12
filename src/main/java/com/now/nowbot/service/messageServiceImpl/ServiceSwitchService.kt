@@ -7,7 +7,6 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.ServiceSwitchService.SwitchParam
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botException.ServiceSwitchException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException

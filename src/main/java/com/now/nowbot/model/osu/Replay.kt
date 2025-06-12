@@ -6,7 +6,7 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
-class Replay constructor(bf: ByteBuffer) {
+class Replay(bf: ByteBuffer) {
     // 0 = osu!, 1 = osu!taiko, 2 = osu!catch, 3 = osu!mania
     var mode: Byte
 
@@ -108,7 +108,7 @@ class Replay constructor(bf: ByteBuffer) {
             return try {
                 val s = String(LZMAInputStream(ByteArrayInputStream(byteArray)).readAllBytes())
 
-                if (s.isNullOrBlank()) return emptyList()
+                if (s.isBlank()) return emptyList()
 
                 val lines = s.split(",".toRegex()).dropLastWhile { it.isEmpty() }
 

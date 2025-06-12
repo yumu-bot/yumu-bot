@@ -3,7 +3,6 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
-import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 
 @Service("TEST")
@@ -37,7 +36,7 @@ class TestService(private val maimaiApiService: MaimaiApiService) :
 
     }
 
-    override fun HandleMessage(event: MessageEvent, text: String) {
+    override fun HandleMessage(event: MessageEvent, param: String) {
         val l = maimaiApiService.getMaimaiSongLibrary()
 
         for (e in l.values) {

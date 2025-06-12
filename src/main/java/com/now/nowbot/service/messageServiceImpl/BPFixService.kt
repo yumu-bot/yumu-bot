@@ -15,6 +15,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
@@ -23,6 +24,7 @@ import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.Duration
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.pow
@@ -91,6 +93,57 @@ class BPFixService(
     fun fix(playerPP: Double, bestsMap: Map<Int, LazerScore>): Map<String, Any>? {
         val beforeBpSumAtomic = AtomicReference(0.0)
 
+        val actions = (bestsMap.toList()).map { pair ->
+            return@map AsyncMethodExecutor.Supplier<LazerScore?> {
+                val index = pair.first
+                val score = pair.second
+
+                beforeBpSumAtomic.updateAndGet { it + (score.weight?.pp ?: 0.0) }
+                beatmapApiService.applyBeatMapExtendFromDataBase(score)
+
+                val max = score.beatmap.maxCombo ?: 1
+                val combo = score.maxCombo
+                val stat = score.statistics
+                val ok = stat.ok
+                val meh = stat.meh
+                val miss = stat.miss
+
+                // 断连击，mania 模式现在也可以参与此项筛选
+                val isChoke = if (score.mode == OsuMode.MANIA) {
+                    (ok + meh + miss) / max <= 0.03
+                } else {
+                    (miss == 0) && (combo < (max * 0.98).roundToInt())
+                }
+
+                // 含有 <1% 的失误
+                val has1pMiss = (miss > 0) && ((1.0 * miss / max) <= 0.01)
+
+                // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
+                return@Supplier if (isChoke || has1pMiss) {
+                    initFixScore(score, index)
+                } else {
+                    score
+                }
+            }
+        }
+
+        val a = AsyncMethodExecutor.awaitSupplierExecute(actions, Duration.ofMinutes(10))
+        Thread.sleep(60 * 1000)
+
+        val fixedBests =
+            a
+                .filterNotNull()
+                .sortedByDescending {
+                val pp = if (it is LazerScoreWithFcPP && it.fcPP > 0) {
+                    it.fcPP
+                } else {
+                    it.pp
+                }
+
+                pp
+            }
+
+        /*
         val fixedBests = bestsMap.map { (index, score) ->
             beforeBpSumAtomic.updateAndGet { it + (score.weight?.pp ?: 0.0) }
             beatmapApiService.applyBeatMapExtendFromDataBase(score)
@@ -127,6 +180,8 @@ class BPFixService(
 
             pp * 100.0
         }
+
+         */
 
         val afterBpSumAtomic = AtomicReference(0.0)
 

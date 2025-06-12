@@ -85,6 +85,7 @@ sealed interface ValueMod {
     JsonSubTypes.Type(value = LazerMod.Swap::class, name = "SW"),
     JsonSubTypes.Type(value = LazerMod.ConstantSpeed::class, name = "CS"),
     JsonSubTypes.Type(value = LazerMod.FloatingFruits::class, name = "FF"),
+    JsonSubTypes.Type(value = LazerMod.SimplifiedRhythm::class, name = "SR"),
     JsonSubTypes.Type(value = LazerMod.NoRelease::class, name = "NR"),
     JsonSubTypes.Type(value = LazerMod.FadeIn::class, name = "FI"),
     JsonSubTypes.Type(value = LazerMod.Cover::class, name = "CO"),
@@ -2123,7 +2124,11 @@ sealed class LazerMod {
         }
     }
 
-    class NoRelease : LazerMod() {
+    class SimplifiedRhythm(
+        oneThird: Boolean = false,
+        oneSixth: Boolean = true,
+        oneEighth: Boolean = false,
+    ) : LazerMod() {
         @get:JsonProperty("acronym")
         override val acronym: String = type
 
@@ -2132,6 +2137,68 @@ sealed class LazerMod {
 
         @get:JsonProperty("color")
         override val color: String = FUN_MOD_COLOR
+
+        @JsonProperty("settings")
+        private fun setSettings(node: JsonNode) {
+            settings = node.json<Value>()
+        }
+
+        private data class Value(
+            @JsonProperty("one_third_conversion") var oneThirdConversion: Boolean = false,
+            @JsonProperty("one_sixth_conversion") var oneSixthConversion: Boolean = true,
+            @JsonProperty("one_eighth_conversion") var oneEighthConversion: Boolean = false,
+        )
+
+        @get:JsonIgnore
+        @set:JsonIgnore
+        var oneThird: Boolean
+            get() = settings?.let { (it as Value).oneThirdConversion } ?: false
+            set(v) {
+                if (settings == null) settings = Value(oneThirdConversion = true)
+                else (settings as Value).oneThirdConversion = v
+            }
+
+        @get:JsonIgnore
+        @set:JsonIgnore
+        var oneSixth: Boolean
+            get() = settings?.let { (it as Value).oneSixthConversion } ?: false
+            set(v) {
+                if (settings == null) settings = Value(oneSixthConversion = true)
+                else (settings as Value).oneSixthConversion = v
+            }
+
+        @get:JsonIgnore
+        @set:JsonIgnore
+        var oneEighth: Boolean
+            get() = settings?.let { (it as Value).oneEighthConversion } ?: false
+            set(v) {
+                if (settings == null) settings = Value(oneEighthConversion = true)
+                else (settings as Value).oneEighthConversion = v
+            }
+
+        init {
+            oneThird.let { this.oneThird = it }
+            oneSixth.let { this.oneSixth = it }
+            oneEighth.let { this.oneEighth = it }
+        }
+
+        companion object : Mod {
+            override val type: String = "SR"
+            override val mode: Set<OsuMode> = setOf(OsuMode.TAIKO)
+            override val incompatible: Set<Mod> = setOf()
+
+        }
+    }
+
+    class NoRelease : LazerMod() {
+        @get:JsonProperty("acronym")
+        override val acronym: String = type
+
+        @get:JsonProperty("settings")
+        override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = "#68BE8D"
 
         companion object : Mod {
             override val type: String = "NR"
@@ -2664,6 +2731,7 @@ sealed class LazerMod {
                 Swap.type -> Swap()
                 ConstantSpeed.type -> ConstantSpeed()
                 FloatingFruits.type -> FloatingFruits()
+                SimplifiedRhythm.type -> SimplifiedRhythm()
                 NoRelease.type -> NoRelease()
                 FadeIn.type -> FadeIn()
                 Cover.type -> Cover()

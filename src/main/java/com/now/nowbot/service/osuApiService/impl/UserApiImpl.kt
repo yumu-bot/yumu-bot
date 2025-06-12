@@ -269,7 +269,7 @@ import kotlin.text.HexFormat
     }
 
     private val teamFormedPattern: Pattern = Pattern.compile(
-        "Formed</div>\\s+<div class=\"team-info-entry__value\">\\s+(.+)\\s+</div>"
+        "Formed</div>\\s+<div class=\"team-info-entry__value\">\\s+<time class=\"js-tooltip-time\"\\s+data-tooltip-position=\"bottom center\"\\s+data-orig-title=\"(.+)\""
     )
     private val teamUserPattern: Pattern = Pattern.compile("data-user=\"(?<json>.+)\"")
     private val teamModePattern: Pattern =

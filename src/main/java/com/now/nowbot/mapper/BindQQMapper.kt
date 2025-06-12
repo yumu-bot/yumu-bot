@@ -8,10 +8,14 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.transaction.annotation.Transactional
 
 interface BindQQMapper : JpaRepository<QQBindLite, Long>, JpaSpecificationExecutor<QQBindLite> {
+    @Query("select qq from QQBindLite qb where qb.osuUser.id = :id")
+    fun findByID(id: Long): QQBindLite?
+
     @Query("select qq from QQBindLite qb where qb.osuUser.osuID = :userID")
     fun findByOsuID(userID: Long): QQBindLite?
 
-    @Query("select count(o) from OsuBindUserLite o where o.osuID = :userID") fun countByUserID(osuID: Long): Int
+    @Query("select count(o) from OsuBindUserLite o where o.osuID = :userID")
+    fun countByUserID(userID: Long): Int
 
     @Modifying @Transactional @Query("delete from QQBindLite qb where qb.osuUser.osuID = :userID and qb.qq != :qq")
     fun deleteOutdatedBind(userID: Long, qq: Long): Int

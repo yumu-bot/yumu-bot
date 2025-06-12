@@ -97,14 +97,10 @@ class SBBindService(
         val qb: SBQQBindLite? = bindDao.getSBQQLiteFromQQ(param.qq)
 
         if (qb == null) {
-            val result = bindDao.bindSBQQ(param.qq, SBBindUser(user))
+            bindDao.bindSBQQ(param.qq, SBBindUser(user))
             bindDao.updateSBMode(user.userID, user.mode)
 
-            if (result != null) {
-                event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username))
-            } else {
-                event.reply(BindException.BindResultException.BindFailed())
-            }
+            event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username))
 
             return
         }
@@ -116,14 +112,10 @@ class SBBindService(
         val ev = lock.get() ?: throw BindException.BindReceiveException.ReceiveOverTime()
 
         if (ev.rawMessage.uppercase().startsWith("OK")) {
-            val result = bindDao.bindSBQQ(param.qq, SBBindUser(user))
+            bindDao.bindSBQQ(param.qq, SBBindUser(user))
             bindDao.updateSBMode(user.userID, user.mode)
 
-            if (result != null) {
-                event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username))
-            } else {
-                event.reply(BindException.BindResultException.BindFailed())
-            }
+            event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username))
         } else {
             event.reply(BindException.BindReceiveException.ReceiveRefused())
         }

@@ -1,15 +1,11 @@
 package com.now.nowbot.service.divingFishApiService.impl
 
 import com.now.nowbot.config.DivingFishConfig
-import com.now.nowbot.service.RequestService
-import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
-import reactor.core.publisher.Mono
 import java.nio.file.Path
-import java.util.concurrent.ExecutionException
 
 @Service
 class DivingFishBaseService(val webClient: WebClient, @Qualifier("divingFishApiWebClient") val divingFishApiWebClient: WebClient, fishConfig: DivingFishConfig) {

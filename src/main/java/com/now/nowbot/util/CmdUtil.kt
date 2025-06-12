@@ -188,7 +188,7 @@ object CmdUtil {
                 }
 
                 val bindMode = try {
-                    bindDao.getBindUser(range.data)!!.mode
+                    bindDao.getBindUser(range.data!!)!!.mode
                 } catch (e: Exception) {
                     OsuMode.DEFAULT
                 }

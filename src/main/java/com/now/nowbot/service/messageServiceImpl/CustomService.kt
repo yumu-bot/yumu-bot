@@ -16,7 +16,6 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.CustomService.CustomParam
 import com.now.nowbot.service.messageServiceImpl.CustomService.Operate.*
-import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botException.CustomException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.DataUtil.getMarkdownFile
@@ -55,28 +54,23 @@ class CustomService(
 
     @Throws(Throwable::class)
     override fun isHandle(
-        ev: MessageEvent,
+        event: MessageEvent,
         messageText: String,
         data: DataValue<CustomParam>,
     ): Boolean {
-        var event: MessageEvent? = ev
-        val from = event!!.subject
+        var ev: MessageEvent? = event
+        val from = ev!!.subject
 
         val matcher = Instruction.CUSTOM.matcher(messageText)
         if (!matcher.find()) {
             return false
         }
 
-        val u: BindUser
-        try {
-            u = bindDao.getBindFromQQ(event.sender.id, true)
-        } catch (e: BindException) {
-            throw CustomException(CustomException.Type.CUSTOM_Me_TokenExpired)
-        }
+        val u: BindUser = bindDao.getBindFromQQ(ev.sender.id, true)
 
-        val firstMessage = event.message.messageList.first()
+        val firstMessage = ev.message.messageList.first()
 
-        var imgPath: String? = null
+        val imgPath: String?
 
         val operateStr = matcher.group("operate")
         val typeStr = matcher.group("type")
@@ -141,23 +135,23 @@ class CustomService(
         when (operate) {
             ADD -> {
                 // 正常
-                if (event.bot == null) {
+                if (ev.bot == null) {
                     throw CustomException(CustomException.Type.CUSTOM_Receive_NoBot)
                 }
 
-                val msg = event.bot.getMessage(reply!!.id)
+                val msg = ev.bot.getMessage(reply!!.id)
 
-                if (msg == null || !event.isImage) {
+                if (msg == null || !ev.isImage) {
                     // 消息为空，并且不是回复的图片。询问是否删除
                     val receipt =
                         from.sendMessage(CustomException.Type.CUSTOM_Question_Clear.message)
 
-                    val lock = ASyncMessageUtil.getLock(event, (30 * 1000).toLong())
-                    event = lock.get()
+                    val lock = ASyncMessageUtil.getLock(ev, (30 * 1000).toLong())
+                    ev = lock.get()
 
                     if (
-                        event == null ||
-                        !event.rawMessage.uppercase(Locale.getDefault()).contains("OK")
+                        ev == null ||
+                        !ev.rawMessage.uppercase(Locale.getDefault()).contains("OK")
                     ) {
                         // 不删除。失败撤回
                         from.recall(receipt)
@@ -165,10 +159,11 @@ class CustomService(
                     } else {
                         // 确定删除
                         from.recall(receipt)
+                        imgPath = null
                     }
                 } else {
                     // 成功
-                    imgPath = event.image!!.path // img = QQMsgUtil.getType(msg, ImageMessage.class)
+                    imgPath = ev.image!!.path // img = QQMsgUtil.getType(msg, ImageMessage.class)
                 }
             }
 
@@ -177,7 +172,7 @@ class CustomService(
                 try {
                     val md = getMarkdownFile("Help/custom.md")
                     val image = imageService.getPanelA6(md, "help")
-                    event.reply(image)
+                    ev.reply(image)
                     return false
                 } catch (e: Exception) {
                     throw CustomException(CustomException.Type.CUSTOM_Instructions)

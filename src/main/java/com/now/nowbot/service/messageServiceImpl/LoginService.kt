@@ -38,13 +38,13 @@ class LoginService(private val bindDao: BindDao) : MessageService<String> {
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, data: String) {
-        val qq = event.getSender().getId()
+    override fun HandleMessage(event: MessageEvent, param: String) {
+        val qq = event.sender.id
         val u = bindDao.getBindFromQQ(qq)
         var code: String?
         // 防止key重复, 循环构造随机字符串
         while (LOGIN_USER_MAP.containsKey(
-                (getRoStr().also { code = it }).uppercase(Locale.getDefault()))) {}
+                (getRoStr().also { code = it }).uppercase())) {}
         event.reply("您的登录验证码: $code")
         LOGIN_USER_MAP[code!!.uppercase(Locale.getDefault())] = LoginUser(u.userID, u.username, System.currentTimeMillis())
     }
@@ -67,10 +67,10 @@ class LoginService(private val bindDao: BindDao) : MessageService<String> {
                 } else {
                     // 防止 'l' 与 'I', 0 与 'O' 混淆
                     if (temp == 'o'.code - 'a'.code) temp += 3
-                    if (temp != 18 && (temp == 21 || random.nextBoolean())) {
-                        temp -= 10
+                    temp -= if (temp != 18 && (temp == 21 || random.nextBoolean())) {
+                        10
                     } else {
-                        temp -= 42
+                        42
                     }
                     t[i] = ('a'.code + temp).toChar()
                 }

@@ -1,6 +1,7 @@
 package com.now.nowbot.mapper;
 
 import com.now.nowbot.entity.OsuNameToIdLite;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -11,7 +12,7 @@ import java.util.List;
 
 public interface OsuFindNameMapper extends JpaRepository<OsuNameToIdLite, Long>, JpaSpecificationExecutor<OsuNameToIdLite> {
     @Override
-    <S extends OsuNameToIdLite> List<S> saveAll(Iterable<S> iterable);
+    <S extends OsuNameToIdLite> @NotNull List<S> saveAll(@NotNull Iterable<S> iterable);
 
     @Modifying
     @Transactional

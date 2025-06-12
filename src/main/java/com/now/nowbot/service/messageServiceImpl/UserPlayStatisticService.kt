@@ -6,7 +6,6 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import java.time.LocalTime
@@ -29,7 +28,7 @@ class UserPlayStatisticService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: Long) {
-        val user = bindDao.getBindFromQQ(param, true) ?: throw BindException.NotBindException.YouNotBind()
+        val user = bindDao.getBindFromQQ(param, true)
         scoreApi.getRecentScore(user, OsuMode.DEFAULT, 0, 999)
         val time = scoreDao.getUserAllScoreTime(user.userID)
         val intervalCount = IntArray(5) { 0 }
@@ -66,11 +65,11 @@ class UserPlayStatisticService(
     }
 
     companion object {
-        val time1 = LocalTime.of(2, 0)
-        val time2 = LocalTime.of(7, 0)
-        val time3 = LocalTime.of(11, 0)
-        val time4 = LocalTime.of(16, 0)
-        val time5 = LocalTime.of(20, 0)
+        private val time1: LocalTime = LocalTime.of(2, 0)
+        private val time2: LocalTime = LocalTime.of(7, 0)
+        private val time3: LocalTime = LocalTime.of(11, 0)
+        private val time4: LocalTime = LocalTime.of(16, 0)
+        private val time5: LocalTime = LocalTime.of(20, 0)
 
         enum class PlayTimeInterval {
             Early, Morning, Afternoon, Evening, Night
