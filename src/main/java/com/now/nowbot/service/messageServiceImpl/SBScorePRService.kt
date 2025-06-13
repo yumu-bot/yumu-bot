@@ -51,7 +51,7 @@ class SBScorePRService(
         val sb = bindDao.getSBBindFromQQ(event.sender.id, true)
 
         val user = userApiService.getUser(sb.userID) ?: throw NoSuchElementException.Player(sb.userID.toString())
-        val mode = OsuMode.getMode(matcher.group(FLAG_MODE), user.mode)
+        val mode = OsuMode.getMode(matcher.group(FLAG_MODE), sb.mode)
         val scores = if (isPass) {
             scoreApiService.getPassedScore(id = sb.userID, mode = mode, limit = 1)
         } else {
