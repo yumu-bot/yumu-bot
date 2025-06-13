@@ -8,7 +8,8 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.Instruction
@@ -123,7 +124,7 @@ import kotlin.math.min
         try {
             event.reply(image)
         } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "舞萌拟合")
+            throw IllegalStateException.Send("舞萌拟合")
         }
     }
 

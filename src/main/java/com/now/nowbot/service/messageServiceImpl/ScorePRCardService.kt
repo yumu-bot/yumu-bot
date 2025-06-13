@@ -11,7 +11,8 @@ import com.now.nowbot.service.messageServiceImpl.ScorePRCardService.PRCardParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithRange
@@ -52,9 +53,9 @@ class ScorePRCardService(
         } else if (matcher.group("pass").isNullOrBlank().not()) {
             scoreApiService.getRecentScore(range.data!!.userID, mode.data, offset, 1)
         } else {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Classification, "迷你")
+            throw IllegalStateException.ClassCast("迷你")
         }
-        if (range.data == null) throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
+        if (range.data == null) throw NoSuchElementException.Player()
 
         score = if (scores.isNotEmpty()) {
             scores.first()
@@ -80,7 +81,7 @@ class ScorePRCardService(
             event.reply(message)
         } catch (e: Exception) {
             log.error("迷你成绩面板：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "迷你")
+            throw IllegalStateException.Send("迷你")
         }
     }
 
@@ -131,7 +132,7 @@ class ScorePRCardService(
         try {
             beatmapApiService.applyBeatMapExtend(score)
         } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_BeatMap)
+            throw IllegalStateException.Fetch("谱面")
         }
 
         val image = imageService.getPanelGamma(score)

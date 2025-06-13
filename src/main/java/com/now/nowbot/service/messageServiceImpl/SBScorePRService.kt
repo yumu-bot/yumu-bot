@@ -10,7 +10,9 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.sbApiService.SBScoreApiService
 import com.now.nowbot.service.sbApiService.SBUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MODE
 import org.slf4j.Logger
@@ -43,12 +45,12 @@ class SBScorePRService(
                 true
             } else {
                 log.error("成绩分类失败：")
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "成绩")
+                throw IllegalStateException.ClassCast("成绩")
             }
 
         val sb = bindDao.getSBBindFromQQ(event.sender.id, true)
 
-        val user = userApiService.getUser(sb.userID) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, sb.username)
+        val user = userApiService.getUser(sb.userID) ?: throw NoSuchElementException.Player(sb.userID.toString())
         val mode = OsuMode.getMode(matcher.group(FLAG_MODE), user.mode)
         val scores = if (isPass) {
             scoreApiService.getPassedScore(id = sb.userID, mode = mode, limit = 1)

@@ -3,7 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
@@ -31,12 +31,12 @@ import kotlin.math.roundToInt
         event.reply(getMessage(param))
     }
 
-    @Throws(GeneralTipsException::class) private fun getMessage(star: Double): String {
+     private fun getMessage(star: Double): String {
         val message = StringBuilder()
         val silence: Int
 
         if (star < 5.7) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Success_NotOverRating)
+            throw IllegalArgumentException("未超星。")
         } else if (star < 20.0) { // 超 0.01 星加 10 分钟，6星 以上所有乘以二
             silence = if (star < 6.0) {
                 ((star - 5.7) * 1000).roundToInt()

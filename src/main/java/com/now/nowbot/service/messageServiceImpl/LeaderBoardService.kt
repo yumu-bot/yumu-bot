@@ -13,14 +13,14 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.regex.Matcher
 import kotlin.math.max
 import kotlin.math.min
@@ -84,7 +84,7 @@ class LeaderBoardService(
         }
 
         if (range.isEmpty()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param)
+            throw IllegalArgumentException.WrongException.Range()
         }
 
         val mode = OsuMode.getMode(matcher.group(FLAG_MODE))
@@ -97,30 +97,25 @@ class LeaderBoardService(
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: LeaderBoardParam) {
 
-        val beatmap: Beatmap = try {
+        val beatmap: Beatmap =
             if (param.isBID) {
                 beatmapApiService.getBeatMap(param.bid)
             } else {
                 beatmapApiService.getBeatMapSet(param.bid).getTopDiff()!!
             }
-        } catch (e: WebClientResponseException.NotFound) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
-        } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "谱面排行：谱面")
-        }
 
         if (!beatmap.hasLeaderBoard) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_MapLeaderBoard)
+            throw NoSuchElementException.Leaderboard()
         }
 
         val scores: List<LazerScore> = try {
             scoreApiService.getLeaderBoardScore(param.bid, param.mode, param.isLegacy)
         } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "谱面排行：榜单")
+            throw IllegalStateException.Fetch("谱面排行榜")
         }
 
         if (scores.isEmpty())
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score)
+            throw NoSuchElementException.LeaderboardScore()
 
         val start = param.range.start.clamp(max = scores.size)
         val end = param.range.endInclusive.clamp(max = scores.size)
@@ -128,7 +123,7 @@ class LeaderBoardService(
         val ss = scores.take(end).drop(start - 1)
 
         val image = if (ss.isEmpty()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param)
+            throw IllegalArgumentException.WrongException.Range()
         } else if (ss.size == 1) {
             // 单成绩模式
             val score: LazerScore = ss.first()
@@ -162,7 +157,7 @@ class LeaderBoardService(
             event.reply(image)
         } catch (e: Exception) {
             log.error("谱面排行：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "谱面排行")
+            throw IllegalStateException.Send("谱面排行")
         }
     }
 

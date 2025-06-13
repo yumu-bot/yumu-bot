@@ -17,7 +17,9 @@ import com.now.nowbot.service.messageServiceImpl.MatchMapService.MatchMapParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
@@ -46,7 +48,6 @@ class MatchMapService(
         val original: Map<String, Any>,
     )
 
-    @Throws(Throwable::class)
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
@@ -85,7 +86,6 @@ class MatchMapService(
         return true
     }
 
-    @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: MatchMapParam) {
         val e7Param = getPanelE7Param(param, beatmapApiService, calculateApiService)
         val image = imageService.getPanel(e7Param, "E7")
@@ -94,9 +94,7 @@ class MatchMapService(
             event.reply(image)
         } catch (e: Exception) {
             log.error("比赛谱面信息：发送失败: ", e)
-            event.reply(
-                GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "比赛谱面信息").message
-            )
+            event.reply(IllegalStateException.Send("比赛谱面信息"))
         }
     }
 
@@ -127,7 +125,7 @@ class MatchMapService(
             mr.calculate()
 
             if (mr.rounds.isEmpty() || param.position > mr.rounds.size)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_MatchRound)
+                throw NoSuchElementException.MatchRound()
 
             val round = mr.rounds[param.position - 1]
 

@@ -11,7 +11,9 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.splitString
@@ -42,8 +44,12 @@ import kotlin.math.roundToInt
     ): Boolean {
         val matcher = Instruction.TEST_FIX.matcher(messageText)
         if (matcher.find()) {
-            val names: List<String> = splitString(matcher.group("data"))
-                ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_UserName)
+            val names: List<String>? = splitString(matcher.group("data"))
+
+            if (names.isNullOrEmpty()) {
+                throw IllegalArgumentException.WrongException.PlayerName()
+            }
+
             val mode = OsuMode.getMode(matcher.group("mode"))
 
             if (Permission.isCommonUser(event)) {
@@ -51,7 +57,7 @@ import kotlin.math.roundToInt
             }
 
             if (names.isEmpty()) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
+                throw throw IllegalStateException.Fetch("玩家名")
             }
 
             data.value = TestFixPPParam(names, mode)

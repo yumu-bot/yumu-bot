@@ -5,9 +5,11 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.AudioService.AudioParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -67,7 +69,7 @@ class AudioService(
             event.replyVoice(voice)
         } catch (e: Exception) {
             log.error("谱面试听：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "谱面试听")
+            throw IllegalStateException.Send("谱面试听")
         }
     }
 
@@ -87,7 +89,7 @@ class AudioService(
             }
 
         if (s.nsfw) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Restricted_NSFW)
+            throw UnsupportedOperationException.AudioNotSafeForWork()
         }
 
         return try {
@@ -106,7 +108,7 @@ class AudioService(
             }
 
         if (b.beatmapset?.nsfw == true) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Restricted_NSFW)
+            throw UnsupportedOperationException.AudioNotSafeForWork()
         }
 
         return try {

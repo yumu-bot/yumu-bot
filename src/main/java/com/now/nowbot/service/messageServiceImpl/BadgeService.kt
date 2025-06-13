@@ -7,7 +7,9 @@ import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
@@ -38,9 +40,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 
         if (user.badges.isEmpty()) {
             if (isMyself.get()) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Badge, "你")
+                throw NoSuchElementException.PlayerBadge()
             } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Badge, "对方")
+                throw NoSuchElementException.PlayerBadge(user.username)
             }
         }
 
@@ -54,7 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean
         try {
             event.reply(image)
         } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "奖牌信息")
+            throw IllegalStateException.Send("奖牌信息")
         }
     }
 
@@ -70,9 +72,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 
         if (user.badges.isEmpty()) {
             if (isMyself.get()) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Badge, "你")
+                throw NoSuchElementException.PlayerBadge()
             } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Badge, "对方")
+                throw NoSuchElementException.PlayerBadge(user.username)
             }
         }
 

@@ -5,7 +5,7 @@ import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil
@@ -41,7 +41,7 @@ import kotlin.math.floor
         val user = try {
             CmdUtil.getUserWithoutRange(event, m, CmdObject(OsuMode.DEFAULT), isMyself)
         } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
+            throw NoSuchElementException.Player()
         }
 
         data.value = TakeParam(user, isMyself.get())
@@ -80,7 +80,7 @@ import kotlin.math.floor
         val micro = try {
             userApiService.getUsers(listOf(user.userID), true).first()
         } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, user.username)
+            throw NoSuchElementException.Player(user.username)
         }
 
         val pc = (micro.rulesets?.osu?.playCount ?: 0L) + (micro.rulesets?.taiko?.playCount
@@ -111,12 +111,10 @@ import kotlin.math.floor
             val result = AsyncMethodExecutor.awaitSupplierExecute(actions)
                 .filterNotNull().toMap()
 
-            val most = result.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value ?: throw GeneralTipsException(
-                GeneralTipsException.Type.G_Null_Play
-            )
+            val most = result.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value ?: throw NoSuchElementException.PlayerPlay(user.username)
 
             if (most.format(formatter2) == OffsetDateTime.MIN.format(formatter2)) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Play)
+                throw NoSuchElementException.PlayerPlay(user.username)
             }
 
             most
@@ -180,13 +178,13 @@ import kotlin.math.floor
                     """
                     别人现在就可以变成 $name，之后你会变成 ${name}_old。赶快回坑开一把！
                     你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
-                    玩家的游戏次数：${pc}
+                    你的游戏次数：${pc}
                     你的玩家名可被占用的时间：${takeTimeFormat}
                     """.trimIndent()
                 )
             } else {
                 event.reply("""
-                    您现在就可以变成玩家 $name。
+                    你现在就可以变成玩家 $name。
                     玩家上次在线时间：${lastVisitFormat}（${visitTimeFormat}）
                     玩家的游戏次数：${pc}
                     玩家名可被占用的时间：${takeTimeFormat}
@@ -200,7 +198,7 @@ import kotlin.math.floor
             event.reply("""
                     别人${soon}可以占据你的玩家名。
                     你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
-                    玩家的游戏次数：${pc}
+                    你的游戏次数：${pc}
                     你的玩家名可被占用的时间：${takeTimeFormat}（${takeTime}）
                     """.trimIndent()
             )

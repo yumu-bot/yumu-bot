@@ -44,14 +44,14 @@ public class PerformancePlusLite {
 
     public PerformancePlusLite(Long id, PPPlus.Stats score, short type) {
         this.id = id;
-        this.aim = score.aim();
-        this.jumpAim = score.jumpAim();
-        this.flowAim = score.flowAim();
-        this.precision = score.precision();
-        this.speed = score.speed();
-        this.stamina = score.stamina();
-        this.accuracy = score.accuracy();
-        this.total = score.total();
+        this.aim = score.aim;
+        this.jumpAim = score.jumpAim;
+        this.flowAim = score.flowAim;
+        this.precision = score.precision;
+        this.speed = score.speed;
+        this.stamina = score.stamina;
+        this.accuracy = score.accuracy;
+        this.total = score.total;
         this.type = type;
     }
 

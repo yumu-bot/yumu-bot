@@ -15,8 +15,9 @@ import com.now.nowbot.service.messageServiceImpl.MapStatisticsService.MapParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.isAvoidance
 import com.now.nowbot.util.DataUtil
@@ -96,7 +97,7 @@ class MapStatisticsService(
             event.reply(image)
         } catch (e: Exception) {
             log.error("谱面信息：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "谱面信息")
+            throw IllegalStateException.Send("谱面信息")
         }
     }
 
@@ -116,7 +117,7 @@ class MapStatisticsService(
             return QQMsgUtil.getImage(image)
         } catch (e: Exception) {
             log.error("谱面信息：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "谱面信息")
+            throw IllegalStateException.Send("谱面信息")
         }
     }
 

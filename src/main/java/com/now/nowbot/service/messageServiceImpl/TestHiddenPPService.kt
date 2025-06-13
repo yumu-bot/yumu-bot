@@ -10,7 +10,8 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
@@ -46,7 +47,7 @@ class TestHiddenPPService(
         var mode = OsuMode.getMode(param.group("mode"))
 
         if (names.isNullOrEmpty())
-            throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
+            throw throw IllegalStateException.Fetch("玩家名")
 
         val sb = StringBuilder()
 

@@ -9,7 +9,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.CmdRange
@@ -153,7 +153,7 @@ class MaiBestScoreService(
                     }
 
                 val song = maimaiApiService.getMaimaiSong(score.songID)
-                    ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Song, score.songID)
+                    ?: throw NoSuchElementException.Song(score.songID)
 
                 val chart = maimaiApiService.getMaimaiChartData(score.songID).getOrNull(score.index) ?: ChartData()
                 val diff = maimaiApiService.getMaimaiDiffData(score.difficulty)

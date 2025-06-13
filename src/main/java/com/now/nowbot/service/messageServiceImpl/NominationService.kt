@@ -13,15 +13,16 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuDiscussionApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_SID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.regex.Matcher
 import kotlin.math.floor
@@ -58,7 +59,7 @@ import kotlin.math.floor
             event.reply(image)
         } catch (e: Exception) {
             log.error("提名信息：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "提名信息")
+            throw IllegalStateException.Send("提名信息")
         }
     }
 
@@ -113,7 +114,7 @@ import kotlin.math.floor
             return imageService.getPanel(data, "N")
         }
 
-        @JvmStatic @Throws(GeneralTipsException::class) fun parseData(
+        @JvmStatic  fun parseData(
             sid: Long,
             isSID: Boolean,
             beatmapApiService: OsuBeatmapApiService,
@@ -131,40 +132,15 @@ import kotlin.math.floor
             if (isSID) {
                 try {
                     s = beatmapApiService.getBeatMapSet(id)
-                } catch (e: WebClientResponseException.NotFound) {
-                    try {
-                        val b = beatmapApiService.getBeatMapFromDataBase(id)
-                        id = b.beatmapsetID
-                        s = beatmapApiService.getBeatMapSet(id)
-                    } catch (e1: WebClientResponseException.NotFound) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
-                    } catch (e1: Exception) {
-                        log.error("提名信息：谱面获取失败", e1)
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_BeatMap)
-                    }
-                } catch (e: WebClientResponseException.BadGateway) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
-                } catch (e: WebClientResponseException.ServiceUnavailable) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
-                } catch (e: Exception) {
-                    log.error("提名信息：谱面获取失败", e)
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_BeatMap)
-                }
-            } else {
-                try {
+                } catch (e: NetworkException.BeatmapException.NotFound) {
                     val b = beatmapApiService.getBeatMapFromDataBase(id)
                     id = b.beatmapsetID
                     s = beatmapApiService.getBeatMapSet(id)
-                } catch (e: WebClientResponseException.NotFound) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
-                } catch (e: WebClientResponseException.BadGateway) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
-                } catch (e: WebClientResponseException.ServiceUnavailable) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_ppyAPI)
-                } catch (e: Exception) {
-                    log.error("提名信息：谱面获取失败", e)
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_BeatMap)
                 }
+            } else {
+                val b = beatmapApiService.getBeatMapFromDataBase(id)
+                id = b.beatmapsetID
+                s = beatmapApiService.getBeatMapSet(id)
             }
 
             if (s.creatorData != null) {
@@ -175,7 +151,7 @@ import kotlin.math.floor
                 d = discussionApiService.getBeatMapSetDiscussion(id)
             } catch (e: Exception) {
                 log.error("提名信息：讨论区获取失败", e)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_Discussion)
+                throw IllegalStateException.Fetch("讨论区")
             }
 
             if (!s.beatmaps.isNullOrEmpty()) {

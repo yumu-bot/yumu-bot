@@ -6,7 +6,8 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
@@ -34,7 +35,7 @@ class GetNameService(private val userApiService: OsuUserApiService) : MessageSer
         }
 
         val idStr: List<String>? = splitString(param.group("data"), splitSpace = true)
-        if (idStr.isNullOrEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
+        if (idStr.isNullOrEmpty()) throw IllegalStateException.Fetch("玩家编号")
 
         val sb = StringBuilder()
 

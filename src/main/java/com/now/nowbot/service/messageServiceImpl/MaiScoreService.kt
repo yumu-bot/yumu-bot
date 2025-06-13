@@ -11,8 +11,8 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.messageServiceImpl.MaiScoreService.Companion.Version.*
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
@@ -101,7 +101,7 @@ import org.springframework.stereotype.Service
                     if (s.first().matches(Regex(REG_NUMBER_15))) {
                         data.value = MaiScoreParam(s.first().toInt(), null, null, qq, version, difficulty)
                     } else if (s.first().contains(Regex(REG_QUOTATION))) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID_Quotation)
+                        throw IllegalArgumentException.WrongException.Quotation()
                     } else {
                         data.value = MaiScoreParam(null, nameOrTitleStr, null, qq, version, difficulty)
                     }
@@ -112,7 +112,7 @@ import org.springframework.stereotype.Service
                 if (nameOrTitleStr.matches(Regex(REG_NUMBER_15))) {
                     data.value = MaiScoreParam(nameOrTitleStr.toInt(), null, null, qq, version, difficulty)
                 } else if (nameOrTitleStr.contains(Regex(REG_QUOTATION))) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_BID_Quotation)
+                    throw IllegalArgumentException.WrongException.Quotation()
                 } else {
                     data.value = MaiScoreParam(null, nameOrTitleStr, null, qq, version, difficulty)
                 }
@@ -157,21 +157,15 @@ import org.springframework.stereotype.Service
                 if (s != null && (sy || iy)) {
                     s
                 } else {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_ResultNotAccurate)
+                    throw NoSuchElementException.ResultNotAccurate()
                 }
             }
         } else if (param.id != null) { // ID 搜歌模式
             maimaiApiService.getMaimaiSong(param.id.toLong())
                 ?: maimaiApiService.getMaimaiAliasSong(param.id.toString()) // 有的歌曲外号叫 3333
-                ?: throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Null_Song,
-                    param.id,
-                )
+                ?: throw NoSuchElementException.Song(param.id)
         } else {
-            throw GeneralTipsException(
-                GeneralTipsException.Type.G_Malfunction_Classification,
-                "舞萌成绩",
-            )
+            throw IllegalStateException.ClassCast("舞萌成绩")
         }
 
 
@@ -245,7 +239,7 @@ import org.springframework.stereotype.Service
                     return null
                 }
             } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
+                throw NoSuchElementException.Player()
             }
         }
 

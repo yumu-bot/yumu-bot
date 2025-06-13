@@ -42,15 +42,11 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
         class MatchID:
             WrongException("请输入正确的比赛编号 (MID)！")
 
+        class Mod:
+            WrongException("请输入正确的模组！")
+
         class Mode:
             WrongException("请输入正确的游戏模式！")
-
-        class ParseMap(param: Any, position: Any):
-                WrongException("""
-                    看起来漏了一组谱面呢？
-                    这个参数之前缺失谱面：$param，错误位置：$position
-                    """.trimIndent()
-                )
 
         class Operator:
             WrongException("请输入正确的逻辑运算符！")
@@ -58,8 +54,21 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
         class OperatorOnly(vararg operator: String):
             WrongException("仅支持使用 ${operator.joinToString(", ")} 逻辑运算符。")
 
+        class ParseMap(param: Any, position: Any):
+            WrongException("""
+                    看起来漏了一组谱面呢？
+                    这个参数之前缺失谱面：$param，错误位置：$position
+                    """.trimIndent()
+            )
+
         class PlayerName:
             WrongException("请输入正确的玩家名！")
+
+        class PlayerID:
+            WrongException("请输入正确的玩家编号！")
+
+        class Quotation:
+            WrongException("请使用成对的引号！")
 
         class Range:
             WrongException("请输入正确的编号或范围！")
@@ -69,6 +78,9 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
 
         class StarRating:
             WrongException("请输入正确的星数！")
+
+        class TeamID:
+            WrongException("请输入正确的战队编号！")
 
 
 

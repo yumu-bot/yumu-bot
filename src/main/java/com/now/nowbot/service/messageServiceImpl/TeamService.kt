@@ -9,7 +9,10 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.FriendService.Companion.SortDirection.*
 import com.now.nowbot.service.messageServiceImpl.FriendService.Companion.SortType.*
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
@@ -38,15 +41,15 @@ class TeamService(
 
         if (m.group("team")?.matches("\\d+".toRegex()) == true) {
             data.value = TeamParam(
-                m.group("team")?.toIntOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param), true) // 因为是确信用户输入的是战队的编号
+                m.group("team")?.toIntOrNull() ?: throw IllegalArgumentException.WrongException.TeamID(), true) // 因为是确信用户输入的是战队的编号
         } else if (m.group("name")?.matches("\\d+".toRegex()) == true) {
             data.value = TeamParam(
-                m.group("name")?.toIntOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param), false)
+                m.group("name")?.toIntOrNull() ?: throw IllegalArgumentException.WrongException.TeamID(), false)
         } else {
             val user = getUserWithoutRange(event, m, CmdObject(OsuMode.DEFAULT))
 
             data.value = TeamParam(
-                user.team?.id ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerTeam, user.username), true)
+                user.team?.id ?: throw NoSuchElementException.PlayerTeam(user.username), true)
         }
 
         return true
@@ -58,14 +61,14 @@ class TeamService(
             userApiService.getTeamInfo(param.teamID)
         } catch (ignored: Exception) {
             if (param.isInputTeam) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Team, param.teamID.toString())
+                throw NoSuchElementException.TeamID(param.teamID)
             } else try {
                 userApiService.getTeamInfo(
                     userApiService.getOsuUser(param.teamID.toLong()).team?.id ?:
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerTeam, param.teamID.toString())
+                    throw NoSuchElementException.TeamID(param.teamID)
                 )
             } catch (ignored2: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerTeam, param.teamID.toString())
+                throw NoSuchElementException.TeamID(param.teamID)
             }
         }
 
@@ -74,7 +77,7 @@ class TeamService(
         try {
             event.reply(image)
         } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "战队信息")
+            throw IllegalStateException.Send("战队信息")
         }
     }
 
@@ -87,11 +90,11 @@ class TeamService(
         val user = getUserWithoutRange(event, m, CmdObject(OsuMode.DEFAULT))
 
         return if (m.group("team")?.matches("\\d+".toRegex()) == true) {
-            TeamParam(m.group("team")?.toIntOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param), true) // 因为是确信用户输入的是战队的编号
+            TeamParam(m.group("team")?.toIntOrNull() ?: throw IllegalArgumentException.WrongException.Range(), true) // 因为是确信用户输入的是战队的编号
         } else if (m.group("name")?.matches("\\d+".toRegex()) == true) {
-            TeamParam(m.group("name")?.toIntOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Param), false)
+            TeamParam(m.group("name")?.toIntOrNull() ?: throw IllegalArgumentException.WrongException.Range(), false)
         } else {
-            TeamParam(user.team?.id ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerTeam, user.username), true)
+            TeamParam(user.team?.id ?: throw NoSuchElementException.PlayerTeam(user.username), true)
         }
     }
 
@@ -100,14 +103,17 @@ class TeamService(
             userApiService.getTeamInfo(param.teamID)
         } catch (ignored: Exception) {
             if (param.isInputTeam) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Team, param.teamID.toString())
+                throw NoSuchElementException.TeamID(param.teamID)
             } else try {
-                userApiService.getTeamInfo(
-                    userApiService.getOsuUser(param.teamID.toLong()).team?.id ?:
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerTeam, param.teamID.toString())
-                )
+                val u = userApiService.getOsuUser(param.teamID.toLong())
+
+                if (u.team == null) {
+                    throw NoSuchElementException.PlayerTeam(u.username)
+                }
+
+                userApiService.getTeamInfo(u.team!!.id)
             } catch (ignored2: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerTeam, param.teamID.toString())
+                throw NoSuchElementException.TeamID(param.teamID)
             }
         }
 

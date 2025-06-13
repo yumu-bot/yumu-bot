@@ -11,10 +11,11 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.SBSetModeService.SBSetModeParam
 import com.now.nowbot.service.sbApiService.SBUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_MODE
@@ -67,7 +68,7 @@ class SBSetModeService (
         val user = try {
             bindDao.getSBBindFromQQ(-event.sender.id, true)
         } catch (e: BindException) {
-            val sbUser = userApiService.getUser(-event.sender.id) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
+            val sbUser = userApiService.getUser(-event.sender.id) ?: throw NoSuchElementException.Player()
             val bindUser = SBBindUser(sbUser)
 
             bindDao.saveBind(bindUser)!!

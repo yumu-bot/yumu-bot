@@ -3,8 +3,10 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
 import okio.IOException
 import org.slf4j.Logger
@@ -33,15 +35,16 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
             try {
                 osuBeatmapApiService.getBeatMapFromDataBase(param).beatmapsetID
             } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
+                throw NoSuchElementException.Beatmap(param)
             }
 
         val s =
             try {
                 osuBeatmapApiService.getBeatMapSet(sid)
             } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
+                throw NoSuchElementException.Beatmap(sid)
             }
+
         var count = 0
 
         for (b in s.beatmaps!!) try {
@@ -50,13 +53,13 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
             }
         } catch (e: IOException) {
             log.error("刷新文件：IO 异常", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_IOException, "刷新文件")
+            throw IllegalStateException.ReadFile("刷新文件")
         }
 
         if (count == 0) {
-            event.reply(GeneralTipsException(GeneralTipsException.Type.G_Null_MapFile))
+            event.reply(NoSuchElementException.BeatmapCache(s.previewName))
         } else {
-            event.reply(GeneralTipsException(GeneralTipsException.Type.G_Success_RefreshFile, param, count))
+            event.reply("已成功刷新谱面 ${s.previewName} 的所有相关联的 $count 个缓存文件。")
         }
     }
 

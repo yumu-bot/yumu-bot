@@ -16,7 +16,8 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.getMod
@@ -166,8 +167,6 @@ class NewbieRestrictOverSRService(
                         limit = getLimit(1, false)
                     }
 
-                    val isDefault = offset == 0 && limit == 1
-
                     val pss = try {
                         scoreApiService.getScore(this.data!!.userID, mode.data, offset, limit, isPass)
                     } catch (e: Exception) {
@@ -177,26 +176,9 @@ class NewbieRestrictOverSRService(
                     calculateApiService.applyStarToScores(pss)
                     calculateApiService.applyBeatMapChanges(pss)
 
-                    val modeStr = if (mode.data!!.isDefault()) {
-                        pss.firstOrNull()?.mode?.fullName ?: this.data?.currentOsuMode?.fullName ?: "默认"
-                    } else {
-                        mode.data!!.fullName
-                    }
-
                     // 检查查到的数据是否为空
                     if (pss.isEmpty()) {
-                        if (isDefault) {
-                            throw GeneralTipsException(
-                                GeneralTipsException.Type.G_Null_ModePlay,
-                                modeStr,
-                            )
-                        } else {
-                            throw GeneralTipsException(
-                                GeneralTipsException.Type.G_Null_ModeBP,
-                                this.data!!.username,
-                                modeStr,
-                            )
-                        }
+                        throw NoSuchElementException.BestScoreWithMode(this.data!!.username, mode.data ?: OsuMode.DEFAULT)
                     }
 
                     pss.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
@@ -209,7 +191,7 @@ class NewbieRestrictOverSRService(
                 val filteredScores = ScoreFilter.filterScores(ps, conditions)
 
                 if (filteredScores.isEmpty()) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_FilterRecent, range.data!!.username)
+                    return false
                 }
 
                 scores = filteredScores.map { it.value }

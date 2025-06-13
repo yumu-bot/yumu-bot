@@ -2,8 +2,9 @@ package com.now.nowbot.model.enums
 
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
@@ -152,7 +153,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     Operator.LE -> c.contains(t, ignoreCase = true) && t.length <= c.length
                 }
             } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Calculate, "成绩筛选")
+                throw IllegalStateException.Calculate("成绩筛选")
             }
         }
 

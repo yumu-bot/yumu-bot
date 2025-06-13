@@ -5,7 +5,6 @@ import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
@@ -203,7 +202,8 @@ class ImageService(private val webClient: WebClient) {
             return headers
         }
 
-    @Throws(GeneralTipsException::class) private fun doPost(path: String, entity: HttpEntity<*>): ByteArray {
+    private fun doPost(path: String, entity: HttpEntity<*>): ByteArray {
+
         val request = webClient.post().uri(IMAGE_PATH + path).headers { it.addAll(entity.headers) }
         if (entity.hasBody()) {
             request.bodyValue(entity.body!!)

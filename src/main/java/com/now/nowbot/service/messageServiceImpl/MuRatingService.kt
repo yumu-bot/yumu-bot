@@ -13,9 +13,10 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botException.MRAException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
@@ -63,7 +64,7 @@ import java.util.regex.Matcher
             throw e
         } catch (e: Exception) {
             log.error("木斗力：数据计算失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Calculate, "木斗力")
+            throw IllegalStateException.Calculate("木斗力")
         }
 
         if (param.isUU) {
@@ -74,7 +75,7 @@ import java.util.regex.Matcher
                 event.reply(str).recallIn(60000)
             } catch (e: Exception) {
                 log.error("木斗力文字版：发送失败", e)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "木斗力")
+                throw IllegalStateException.Send("木斗力")
             }
         } else {
             val image: ByteArray = imageService.getPanel(mr, "C")
@@ -83,7 +84,7 @@ import java.util.regex.Matcher
                 event.reply(image)
             } catch (e: Exception) {
                 log.error("木斗力：发送失败", e)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "木斗力")
+                throw IllegalStateException.Send("木斗力")
             }
         }
     }

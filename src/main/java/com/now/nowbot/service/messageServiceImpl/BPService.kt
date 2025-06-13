@@ -15,8 +15,10 @@ import com.now.nowbot.service.messageServiceImpl.BPService.BPParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
@@ -86,7 +88,7 @@ import kotlin.math.*
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
         if (filteredScores.isEmpty()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_FilterBP, range.data!!.username)
+            throw NoSuchElementException.BestScoreFiltered(range.data!!.username)
         }
 
         data.value = BPParam(range.data!!, filteredScores)
@@ -102,7 +104,7 @@ import kotlin.math.*
             event.reply(image)
         } catch (e: Exception) {
             log.error("最好成绩：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "最好成绩")
+            throw IllegalStateException.Send("最好成绩")
         }
     }
 
@@ -153,7 +155,7 @@ import kotlin.math.*
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
         if (filteredScores.isEmpty()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_FilterBP, range.data!!.username)
+            throw NoSuchElementException.BestScoreFiltered(range.data!!.username)
         }
 
         return BPParam(range.data!!, filteredScores)
@@ -183,8 +185,6 @@ import kotlin.math.*
             limit = getLimit(1, false)
         }
 
-        val isDefault = offset == 0 && limit == 1
-
         val scores = if (limit > 100) {
             scoreApiService.getBestScores(data!!.userID, mode, offset, 100) + scoreApiService.getBestScores(data!!.userID, mode, offset + 100, limit - 100)
         } else {
@@ -194,26 +194,9 @@ import kotlin.math.*
         calculateApiService.applyStarToScores(scores)
         calculateApiService.applyBeatMapChanges(scores)
 
-        val modeStr = if (mode.isDefault()) {
-            scores.firstOrNull()?.mode?.fullName ?: this.data?.currentOsuMode?.fullName ?: "默认"
-        } else {
-            mode.fullName
-        }
-
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
-            if (isDefault) {
-                throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Null_ModePlay,
-                    modeStr,
-                )
-            } else {
-                throw GeneralTipsException(
-                    GeneralTipsException.Type.G_Null_ModeBP,
-                    data!!.username,
-                    modeStr,
-                )
-            }
+            throw NoSuchElementException.BestScoreWithMode(this.data!!.username, mode)
         }
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()

@@ -1,9 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.OsuUserInfoDao
-import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.InfoLogStatistics
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -15,8 +15,8 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.InfoService.InfoParam
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.DataUtil
@@ -27,7 +27,6 @@ import com.now.nowbot.util.command.FLAG_DAY
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
@@ -136,7 +135,7 @@ class InfoService(
             event.reply(image)
         } catch (e: Exception) {
             log.error("玩家信息：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "玩家信息")
+            throw IllegalStateException.Send("玩家信息")
         }
     }
 
@@ -150,7 +149,7 @@ class InfoService(
     override fun reply(event: MessageEvent, param: InfoParam): MessageChain = QQMsgUtil.getImage(param.getImage())
 
     private fun InfoParam.getImage(): ByteArray {
-        val bests: List<LazerScore> = try {
+        val bests: List<LazerScore> = run {
             val bests = scoreApiService.getBestScores(user.userID, mode)
 
             if (this.version == 2) {
@@ -168,12 +167,7 @@ class InfoService(
                 }
             }
 
-            bests
-        } catch (e: WebClientResponseException.NotFound) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, mode)
-        } catch (e: Exception) {
-            log.error("玩家信息：无法获取玩家的最好成绩", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "最好成绩")
+            return@run bests
         }
 
         val historyUser =

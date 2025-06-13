@@ -8,8 +8,9 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MODE
@@ -82,7 +83,7 @@ class SetGroupModeService (
             event.subject.id
         } else {
             // 必须群聊
-            throw GeneralTipsException(GeneralTipsException.Type.G_Restricted_Group)
+            throw UnsupportedOperationException.NotGroup()
         }
 
         val text = if (OsuMode.isNotDefaultOrNull(predeterminedMode)) {

@@ -7,7 +7,7 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.throwable.botException.MiniCardException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
@@ -40,14 +40,14 @@ class InfoCardService(
             image = imageService.getPanelGamma(param)
         } catch (e: Exception) {
             log.error("迷你信息面板：渲染失败", e)
-            throw MiniCardException(MiniCardException.Type.MINI_Render_Error)
+            throw IllegalStateException.Render("迷你信息")
         }
 
         try {
             event.reply(image)
         } catch (e: Exception) {
             log.error("迷你信息面板：发送失败", e)
-            throw MiniCardException(MiniCardException.Type.MINI_Send_Error)
+            throw IllegalStateException.Send("迷你信息")
         }
     }
 

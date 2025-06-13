@@ -14,8 +14,9 @@ import com.now.nowbot.service.messageServiceImpl.UUBAService.BPHeadTailParam
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.botRuntimeException.BindException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
@@ -99,7 +100,7 @@ class UUBAService(
             } catch (e: BindException) {
                 bu = BindUser(id, name)
             } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name)
+                throw NoSuchElementException.Player(name)
             }
         }
 
@@ -108,11 +109,7 @@ class UUBAService(
         val bests: List<LazerScore> = scoreApiService.getBestScores(bu, mode)
 
         if (bests.size <= 10) {
-            if (!param.user.at && param.user.name.isNullOrBlank()) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Me, mode.fullName)
-            } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Player, mode.fullName)
-            }
+            throw NoSuchElementException.PlayerBestScore(bu.username, mode)
         }
 
         calculateApiService.applyBeatMapChanges(bests)
@@ -124,13 +121,13 @@ class UUBAService(
                     getTextPlus(bests, bu.username, mode.fullName, userApiService)
                 }
 
+        val panelParam = lines.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val image = imageService.getPanelAlpha(*panelParam)
+
         try {
-            val panelParam =
-                    lines.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            val image = imageService.getPanelAlpha(*panelParam)
             event.reply(image)
         } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "最好成绩分析（文字版）")
+            throw IllegalStateException.Send("最好成绩分析（文字版）")
         }
     }
 

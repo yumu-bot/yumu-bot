@@ -102,20 +102,13 @@ class ServiceSwitchService(
                     when (group) {
                         -1L -> {
                             controller.serviceSwitch(service, true)
-                            //                        Permission.openService(service);
                             event.reply("已启动 $service 服务")
                         }
                         0L -> {
-                            // 这里要放对所有群聊的操作
-                            // 貌似没这功能
-                            //                        permission.removeGroupAll(service, true);
-                            //                        event.reply(STR."已全面清除 \{service} 服务的禁止状态");
                             event.reply("已全面解禁 $service 服务（并未修好）")
                         }
                         else -> {
                             controller.unblockGroup(service, group)
-                            //                        permission.removeGroup(service, group, true,
-                            // false);
                             event.reply("已解禁群聊 $group 的 $service 服务")
                         }
                     }
@@ -138,8 +131,6 @@ class ServiceSwitchService(
                             event.reply("已关闭 $service 服务")
                         }
                         0L -> {
-                            //                        permission.removeGroupAll(service, true);
-                            //                        event.reply(STR."已全面清除 \{service} 服务的禁止状态");
                             event.reply("已全面禁止 $service 服务（并未修好）")
                         }
                         else -> {

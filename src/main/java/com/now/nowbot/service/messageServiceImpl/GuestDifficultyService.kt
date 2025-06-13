@@ -12,7 +12,9 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.GuestDifficultyService.GuestDifferParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -74,7 +76,7 @@ class GuestDifficultyService(
             event.reply(image)
         } catch (e: Exception) {
             log.error("客串谱师：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "客串谱师")
+            throw IllegalStateException.Send("客串谱师")
         }
     }
 
@@ -155,7 +157,7 @@ class GuestDifficultyService(
             it.sentRanked + it.receivedRanked
         }
 
-        if (guestDifficultyOwners.isEmpty()) throw GeneralTipsException("你没有做过客串难度谱面，别人也没有给你赠送过客串难度谱面。")
+        if (guestDifficultyOwners.isEmpty()) throw NoSuchElementException.GuestDiff()
 
         // 分页
         val page = this.page

@@ -17,7 +17,9 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
@@ -56,7 +58,7 @@ import kotlin.math.sqrt
         try {
             event.reply(image)
         } catch (e: Exception) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "技巧分析")
+            throw IllegalStateException.Send("技巧分析")
         }
     }
 
@@ -123,7 +125,7 @@ import kotlin.math.sqrt
             val bests = try {
                 scoreApiService.getBestScores(this.user, this.mode)
             } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, this.user.username)
+                throw NoSuchElementException.BestScore(this.user.username)
             }
 
             val skillMap = getSkillMap(bests, beatmapApiService)
@@ -133,7 +135,7 @@ import kotlin.math.sqrt
             val vsBests = try {
                 scoreApiService.getBestScores(this.vs, this.mode)
             } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, this.vs.username)
+                throw NoSuchElementException.BestScore(this.user.username)
             }
 
             val vsSkillMap = getSkillMap(vsBests, beatmapApiService)
@@ -143,7 +145,7 @@ import kotlin.math.sqrt
             val bests = try {
                 scoreApiService.getBestScores(this.user, this.mode)
             } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, this.user.username)
+                throw NoSuchElementException.BestScore(this.user.username)
             }
 
             val skillMap = getSkillMap(bests, beatmapApiService)

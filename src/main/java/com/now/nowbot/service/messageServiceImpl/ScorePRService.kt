@@ -17,8 +17,10 @@ import com.now.nowbot.service.messageServiceImpl.ScorePRService.ScorePRParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
@@ -104,7 +106,7 @@ class ScorePRService(
                     true
                 } else {
                     log.error("成绩分类失败：")
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "成绩")
+                    throw IllegalStateException.ClassCast("成绩")
                 }
 
         val isMyself = AtomicBoolean()
@@ -149,7 +151,7 @@ class ScorePRService(
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
         if (filteredScores.isEmpty()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_FilterRecent, range.data!!.username)
+            throw NoSuchElementException.RecentScoreFiltered(range.data!!.username, range.data!!.currentOsuMode)
         }
 
         data.value = ScorePRParam(range.data!!, filteredScores, isPass)
@@ -164,7 +166,7 @@ class ScorePRService(
             event.reply(messageChain)
         } catch (e: Exception) {
             log.error("最好成绩：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "最好成绩")
+            throw IllegalStateException.Send("最好成绩")
         }
     }
 
@@ -235,7 +237,7 @@ class ScorePRService(
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
         if (filteredScores.isEmpty()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_FilterRecent, range.data!!.username)
+            throw NoSuchElementException.RecentScoreFiltered(range.data!!.username, range.data!!.currentOsuMode)
         }
 
         return ScorePRParam(range.data!!, filteredScores, isPass)
@@ -267,8 +269,6 @@ class ScorePRService(
             limit = getLimit(1, false)
         }
 
-        val isDefault = offset == 0 && limit == 1
-
         val scores = try {
             scoreApiService.getScore(data!!.userID, mode, offset, limit, isPass)
         } catch (e: Exception) {
@@ -283,19 +283,9 @@ class ScorePRService(
         calculateApiService.applyStarToScores(scores)
         calculateApiService.applyBeatMapChanges(scores)
 
-        val modeStr = if (mode.isDefault()) {
-            scores.firstOrNull()?.mode?.fullName ?: this.data?.currentOsuMode?.fullName ?: "默认"
-        } else {
-            mode.fullName
-        }
-
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
-            if (isDefault) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Recent, data!!.username, modeStr)
-            } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_SelectedRecent, data!!.username, modeStr)
-            }
+            throw NoSuchElementException.RecentScore(data!!.username, data!!.currentOsuMode)
         }
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()

@@ -20,10 +20,13 @@ import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.messageServiceImpl.*
 import com.now.nowbot.service.osuApiService.*
-import com.now.nowbot.throwable.GeneralTipsException
-import com.now.nowbot.throwable.botException.DiceException
+import com.now.nowbot.throwable.botRuntimeException.DiceException
 import com.now.nowbot.throwable.botException.MRAException
 import com.now.nowbot.throwable.botException.MapPoolException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil.parseRange2Limit
 import com.now.nowbot.util.DataUtil.parseRange2Offset
 import com.now.nowbot.util.QQMsgUtil
@@ -129,7 +132,7 @@ import kotlin.math.min
                 ), HttpStatus.OK
             )
         } catch (e: Exception) {
-            throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PPM4").message)
+            throw RuntimeException(IllegalStateException.Fetch("PPM4").message)
         }
     }
 
@@ -164,7 +167,7 @@ import kotlin.math.min
                 ), HttpStatus.OK
             )
         } catch (e: Exception) {
-            throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PPM4").message)
+            throw RuntimeException(IllegalStateException.Fetch("PPM4").message)
         }
     }
 
@@ -192,8 +195,8 @@ import kotlin.math.min
 
         try {
             match = matchApiService.getMatch(matchID.toLong(), 10)
-        } catch (ex: WebClientResponseException) {
-            throw RuntimeException(GeneralTipsException.Type.G_Null_MatchID.message)
+        } catch (ex: NetworkException) {
+            throw RuntimeException(IllegalArgumentException.WrongException.MatchID())
         }
 
         try {
@@ -239,7 +242,7 @@ import kotlin.math.min
         try {
             match = matchApiService.getMatch(matchID.toLong(), 10)
         } catch (ex: WebClientResponseException) {
-            throw RuntimeException(GeneralTipsException.Type.G_Null_MatchID.message)
+            throw RuntimeException(IllegalArgumentException.WrongException.MatchID())
         }
 
         try {
@@ -349,9 +352,7 @@ import kotlin.math.min
                         data = imageService.getPanel(e5Param.toMap(), "E5")
                     } catch (e: Exception) {
                         throw RuntimeException(
-                            GeneralTipsException(
-                                GeneralTipsException.Type.G_Malfunction_Render, "最好成绩"
-                            )
+                            IllegalStateException.Render("最好成绩")
                         )
                     }
                     suffix = "-bp.jpg"
@@ -381,10 +382,7 @@ import kotlin.math.min
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
                     } catch (e: Exception) {
-                        throw RuntimeException(
-                            GeneralTipsException(
-                                GeneralTipsException.Type.G_Malfunction_Render, "通过成绩"
-                            )
+                        throw RuntimeException(IllegalStateException.Render("通过成绩")
                         )
                     }
                     suffix = "-pass.jpg"
@@ -414,10 +412,7 @@ import kotlin.math.min
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
                     } catch (e: Exception) {
-                        throw RuntimeException(
-                            GeneralTipsException(
-                                GeneralTipsException.Type.G_Malfunction_Render, "最近成绩"
-                            )
+                        throw RuntimeException(IllegalStateException.Render("最近成绩")
                         )
                     }
                     suffix = "-recent.jpg"
@@ -615,7 +610,7 @@ import kotlin.math.min
             osuUser = userApiService.getOsuUser(name)
             uid = osuUser.userID
         } catch (e: WebClientResponseException.NotFound) {
-            throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name))
+            throw RuntimeException(NoSuchElementException.Player(name))
         }
 
         if (mods.isNullOrBlank()) {
@@ -630,12 +625,12 @@ import kotlin.math.min
                     }
                 }
             } catch (e: WebClientResponseException.NotFound) {
-                throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "成绩列表"))
+                throw RuntimeException(IllegalStateException.Fetch("成绩列表"))
             }
         }
 
         if (score == null) {
-            throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Null_Score, bid.toString()))
+            throw RuntimeException(NoSuchElementException.BeatmapScore(bid))
         }
 
         val image: ByteArray
@@ -646,7 +641,7 @@ import kotlin.math.min
             )
             image = imageService.getPanel(e5Param.toMap(), "E5")
         } catch (e: Exception) {
-            throw RuntimeException(GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Render, "成绩列表"))
+            throw RuntimeException(IllegalStateException.Render("成绩列表"))
         }
         return ResponseEntity(
             image, getImageHeader(
@@ -677,15 +672,10 @@ import kotlin.math.min
             if (mode != OsuMode.DEFAULT) osuUser.currentOsuMode = mode
             scores = scoreApiService.getBestScores(uid, mode)
         } catch (e: Exception) {
-            throw RuntimeException(GeneralTipsException.Type.G_Fetch_List.message)
+            throw RuntimeException(IllegalStateException.Fetch("最好成绩分析"))
         }
 
-        val data: Map<String, Any>
-        try {
-            data = BPAnalysisService.parseData(osuUser, scores, userApiService, 2)
-        } catch (e: Exception) {
-            throw RuntimeException(GeneralTipsException.Type.G_Fetch_BeatMapAttr.message)
-        }
+        val data: Map<String, Any> = BPAnalysisService.parseData(osuUser, scores, userApiService, 2)
 
         val image = imageService.getPanel(data, "J2")
         return ResponseEntity(
@@ -876,7 +866,7 @@ import kotlin.math.min
         try {
             data = if (sid == null) {
                 if (bid == null) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
+                    throw IllegalArgumentException.WrongException.BeatmapID()
                 } else {
                     NominationService.parseData(
                         bid.toLong(), false, beatmapApiService, discussionApiService, userApiService
@@ -887,7 +877,7 @@ import kotlin.math.min
                     sid.toLong(), true, beatmapApiService, discussionApiService, userApiService
                 )
             }
-        } catch (e: GeneralTipsException) {
+        } catch (e: Throwable) {
             throw RuntimeException(e.message)
         }
 

@@ -14,8 +14,10 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
 import okhttp3.internal.toLongOrDefault
@@ -161,16 +163,16 @@ import java.nio.file.Files
                 val path = try {
                     beatmapMirrorApiService.getFullBackgroundPath(it)
                 } catch (e: Exception) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "完整背景")
+                    throw IllegalStateException.Fetch("完整背景")
                 }
 
-                if (path == null) throw GeneralTipsException("抱歉，服务器暂时没有找到完整背景服务...")
+                if (path == null) throw UnsupportedOperationException("抱歉，服务器暂时没有找到完整背景服务...")
 
                 // TODO 超过 10M 的文件可能发不出
                 val file = try {
                     Files.readAllBytes(path)
                 } catch (e: Exception) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_IOException, "完整背景")
+                    throw IllegalStateException.ReadFile("完整背景")
                 }
 
                 builder.addImage(file)

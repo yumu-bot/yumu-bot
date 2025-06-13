@@ -13,8 +13,8 @@ import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.qq.tencent.TencentMessageService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.BotException;
-import com.now.nowbot.throwable.GeneralTipsException;
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException;
+import com.now.nowbot.throwable.botRuntimeException.NetworkException;
 import com.now.nowbot.util.ASyncMessageUtil;
 import com.now.nowbot.util.ContextUtil;
 import jakarta.annotation.Resource;
@@ -98,7 +98,7 @@ public class PermissionImplement implements PermissionController {
             }
 
             if (reply == null) {
-                reply = new MessageChain(GeneralTipsException.Type.G_Malfunction_Response.getMessage());
+                reply = new MessageChain(new NetworkException.ComponentException.NoResponse());
             }
             onMessage.accept(reply);
             return;
@@ -230,7 +230,9 @@ public class PermissionImplement implements PermissionController {
      * @param time    撤销时间
      */
     private void blockService(String name, PermissionService perm, Long id, boolean isGroup, Long time) {
-        var key = STR."\{name}:\{isGroup ? 'g' : 'u'}\{id}";
+        var index = isGroup ? "g" : "u";
+
+        var key = name + ":" + index + id;
         if (time != null) {
             futureMap.put(key, EXECUTOR.schedule(() -> unblockService(name, perm, id, isGroup, null), time, TimeUnit.MILLISECONDS));
         } else {
@@ -261,7 +263,8 @@ public class PermissionImplement implements PermissionController {
      * @param time    撤销时间
      */
     private void unblockService(String name, PermissionService perm, Long id, boolean isGroup, Long time) {
-        var key = STR."\{name}:\{isGroup ? 'g' : 'u'}\{id}";
+        var index = isGroup ? "g" : "u";
+        var key = name + ":" + index + id;
         if (time != null && time > 0) {
             futureMap.put(key, EXECUTOR.schedule(() -> blockService(name, perm, id, isGroup, null), time, TimeUnit.MILLISECONDS));
         } else {
@@ -286,7 +289,7 @@ public class PermissionImplement implements PermissionController {
     }
 
     private void blockServiceSelf(String name, PermissionService perm, Long id, Long time) {
-        var key = STR."\{name}:sg\{id}";
+        var key = name + ":sg" + id;
         if (time != null) {
             futureMap.put(key, EXECUTOR.schedule(() -> unblockServiceSelf(name, perm, id, null), time, TimeUnit.MILLISECONDS));
         } else {
@@ -297,7 +300,7 @@ public class PermissionImplement implements PermissionController {
     }
 
     private void unblockServiceSelf(String name, PermissionService perm, Long id, Long time) {
-        var key = STR."\{name}:sg\{id}";
+        var key = name + ":sg" + id;
         if (time != null) {
             futureMap.put(key, EXECUTOR.schedule(() -> blockServiceSelf(name, perm, id, null), time, TimeUnit.MILLISECONDS));
         } else {

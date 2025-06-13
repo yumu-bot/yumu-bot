@@ -9,8 +9,8 @@ import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.PPPlus
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.AsyncMethodExecutor.awaitSupplierExecute
 import com.now.nowbot.util.JacksonUtil
@@ -159,7 +159,7 @@ import java.util.concurrent.ConcurrentHashMap
             getMapPerformancePlus(n.toLong(), listOf<LazerMod>())
             beatmapApiService.refreshBeatMapFileFromDirectory(n.toLong())
             Thread.startVirtualThread { this.clearCache(n) }
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "PP+：谱面编号 $n")
+            throw IllegalStateException.Fetch("PP+：谱面编号 $n")
         }
 
         var i = 0
@@ -257,7 +257,7 @@ import java.util.concurrent.ConcurrentHashMap
         key: String, ppPlusMap: MutableMap<String, List<Double>>, list: List<PPPlus>, function: (PPPlus.Stats) -> Double
     ): AsyncMethodExecutor.Supplier<String> {
         return AsyncMethodExecutor.Supplier {
-            ppPlusMap[key] = list.map { it.performance }.map { function(it) }.sortedDescending().toList()
+            ppPlusMap[key] = list.map { it.performance }.map { function(it!!) }.sortedDescending().toList()
 
             return@Supplier key
         }

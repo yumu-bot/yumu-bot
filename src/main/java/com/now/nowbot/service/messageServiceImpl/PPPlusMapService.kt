@@ -79,7 +79,7 @@ class PPPlusMapService(
 
 
     private fun Beatmap.addPPPlus(pp: PPPlus, mods: List<LazerMod>) {
-        starRating = pp.difficulty.total ?: 0.0
+        starRating = pp.difficulty?.total ?: 0.0
         if (mods.isNotEmpty()) {
             CS = CalculateApiImpl.applyCS(CS!!, mods)
             AR = CalculateApiImpl.applyAR(AR!!, mods)

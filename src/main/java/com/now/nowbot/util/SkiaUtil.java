@@ -192,7 +192,7 @@ public class SkiaUtil {
         char x2 = ct.charAt(1);
         int s1 = A + x1 - 'A';
         int s2 = A + x2 - 'A';
-        return STR."https://osu.ppy.sh/assets/images/flags/\{Integer.toHexString(s1)}-\{Integer.toHexString(s2)}.svg";
+        return "https://osu.ppy.sh/assets/images/flags/" + Integer.toHexString(s1) + "-" + Integer.toHexString(s2) + ".svg";
     }
 
     /***

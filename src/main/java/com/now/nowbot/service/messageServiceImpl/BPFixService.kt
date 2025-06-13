@@ -14,7 +14,9 @@ import com.now.nowbot.service.messageServiceImpl.BPFixService.BPFixParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
@@ -69,7 +71,7 @@ class BPFixService(
             event.reply(image)
         } catch (e: java.lang.Exception) {
             log.error("理论最好成绩：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "理论最好成绩")
+            throw IllegalStateException.Send("理论最好成绩")
         }
     }
 
@@ -227,12 +229,11 @@ class BPFixService(
     }
 
     private fun BPFixParam.getImage(): ByteArray {
-        if (bpMap.isEmpty()) throw GeneralTipsException(
-            GeneralTipsException.Type.G_Null_ModePlay,
-            mode.fullName
-        )
+        if (bpMap.isEmpty()) {
+            throw NoSuchElementException.BestScoreWithMode(this.user.username, this.mode)
+        }
 
-        val fixes = fix(user.pp, bpMap) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_TheoreticalBP)
+        val fixes = fix(user.pp, bpMap) ?: throw NoSuchElementException.BestScoreTheoretical()
 
         val body = mapOf(
             "user" to user,

@@ -14,7 +14,7 @@ import com.now.nowbot.service.messageServiceImpl.TodayBPService.TodayBPParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
@@ -63,7 +63,7 @@ class TodayBPService(
             event.reply(image)
         } catch (e: Exception) {
             log.error("今日最好成绩：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "今日最好成绩")
+            throw IllegalStateException.Send("今日最好成绩")
         }
     }
 
@@ -86,7 +86,7 @@ class TodayBPService(
         val isMyself = AtomicBoolean()
         val range = getUserWithRange(event, matcher, mode, isMyself)
         range.setZeroDay()
-        val user = range.data ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
+        val user = range.data ?: throw NoSuchElementException.Player()
         val dayStart = range.getDayStart()
         val dayEnd = range.getDayEnd()
         val isToday = (dayStart == 0 && dayEnd == 1)
@@ -98,7 +98,7 @@ class TodayBPService(
             throw e
         } catch (e: Exception) {
             log.error("今日最好成绩：获取失败！", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "今日最好成绩")
+            throw IllegalStateException.Fetch("今日最好成绩")
         }
 
         val laterDay = OffsetDateTime.now().minusDays(dayStart.toLong())

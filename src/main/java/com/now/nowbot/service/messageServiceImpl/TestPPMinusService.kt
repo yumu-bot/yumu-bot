@@ -11,13 +11,13 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.PPMinusService.PPMinusParam
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 
 @Service("TEST_PPM") class TestPPMinusService(
     private val scoreApiService: OsuScoreApiService,
@@ -53,25 +53,15 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
             event.reply(image)
         } catch (e: Exception) {
             log.error("PP-：发送失败：", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "PPM")
+            throw IllegalStateException.Send("PPM")
         }
     }
 
     private fun getPPMinus4(user: OsuUser): PPMinus4 {
-        val bests: List<LazerScore>
-
-        try {
-            bests = scoreApiService.getBestScores(user)
-        } catch (e: WebClientResponseException) {
-            log.error("PP-：最好成绩获取失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_BP, user.username)
-        }
+        val bests: List<LazerScore> = scoreApiService.getBestScores(user)
 
         if (user.statistics!!.playTime!! < 60 || user.statistics!!.playCount!! < 30) {
-            throw GeneralTipsException(
-                GeneralTipsException.Type.G_NotEnough_PlayTime,
-                user.currentOsuMode.fullName,
-            )
+            throw NoSuchElementException.PlayerPlayWithMode(user.username, user.currentOsuMode)
         }
 
         try {
@@ -96,7 +86,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
             return PPMinus4.getInstance(user, bests, surrounding, delta, user.currentOsuMode)!!
         } catch (e: Exception) {
             log.error("PP-：数据计算失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Calculate, "PPM")
+            throw IllegalStateException.Calculate("PPM")
         }
     }
 

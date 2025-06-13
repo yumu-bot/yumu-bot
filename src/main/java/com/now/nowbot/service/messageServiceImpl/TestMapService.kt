@@ -6,7 +6,8 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import java.util.*
@@ -26,7 +27,7 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
     }
     
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
-        val bid = param.group("id").toIntOrNull() ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Map)
+        val bid = param.group("id").toIntOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
         val mod = param.group("mod")
         
         val b = beatmapApiService.getBeatMap(bid)

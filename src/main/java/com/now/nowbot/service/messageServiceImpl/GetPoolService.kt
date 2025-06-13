@@ -9,9 +9,10 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.GetPoolService.GetPoolParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botException.MapPoolException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
@@ -65,7 +66,7 @@ class GetPoolService(
             event.reply(image)
         } catch (e: Exception) {
             log.error("生成图池：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "生成图池")
+            throw IllegalStateException.Send("生成图池")
         }
     }
 

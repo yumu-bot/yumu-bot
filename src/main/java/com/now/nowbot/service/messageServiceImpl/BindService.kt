@@ -11,7 +11,7 @@ import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.ASyncMessageUtil
@@ -208,7 +208,7 @@ import java.util.regex.Pattern
                 }
 
                 event.reply(BindException.BindConfirmException.NoNeedReBind(bindUser.userID, bindUser.username))
-            } catch (e: GeneralTipsException) {
+            } catch (e: Exception) {
                 if (e.message?.contains("403") == true)
                 event.reply(BindException.BindConfirmException.NeedReBind(bindUser.userID, bindUser.username))
             }

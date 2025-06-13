@@ -6,10 +6,8 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.DiceService.DiceParam
 import com.now.nowbot.service.messageServiceImpl.DiceService.Split.*
-import com.now.nowbot.throwable.botException.DiceException
-import com.now.nowbot.util.DataUtil
+import com.now.nowbot.throwable.botRuntimeException.DiceException
 import com.now.nowbot.util.Instruction
-import okhttp3.internal.format
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -30,10 +28,14 @@ import kotlin.random.Random
         data: DataValue<DiceParam>,
     ): Boolean {
         val m3 = Instruction.EASTER_WHAT.matcher(messageText)
-        if (m3.find()) throw DiceException(DiceException.Type.DICE_EasterEgg_What)
+        if (m3.find()) {
+            throw DiceException.ForWhat()
+        }
 
         val m2 = Instruction.EASTER_AYACHI_NENE.matcher(messageText)
-        if (m2.find()) throw DiceException(DiceException.Type.DICE_EasterEgg_0d00)
+        if (m2.find()) {
+            throw DiceException.JerkOff()
+        }
 
         val m = Instruction.DICE.matcher(messageText)
         if (!m.find()) return false
@@ -52,28 +54,26 @@ import kotlin.random.Random
                 // !roll 4
                 data.value = DiceParam(1L, text.toLongOrNull() ?: 100L, null)
                 return true
-            } else if (DataUtil.isHelp(text)) {
-                throw DiceException(DiceException.Type.DICE_Instruction)
             } else {
                 data.value = DiceParam(null, null, text.trim())
                 return true
             }
         } else if (dice.isNullOrBlank().not()) {
-            val d: Long = dice.toLongOrNull() ?: throw DiceException(DiceException.Type.DICE_Number_ParseFailed)
+            val d: Long = dice.toLongOrNull() ?: throw DiceException.Exceed()
 
             // 如果 dice 有符合，但是是 0，选择主动忽视（0d2）
             if (d < 1) {
-                throw DiceException(DiceException.Type.DICE_Number_TooSmall)
+                throw DiceException.TooSmall()
             } else if (d > 100L) {
-                throw DiceException(DiceException.Type.DICE_Dice_TooMany, d)
+                throw DiceException.DiceTooMany(d)
             }
 
             val n = if (number.isNullOrBlank().not()) {
                 if (number.contains("-")) {
-                    throw DiceException(DiceException.Type.DICE_Number_NotSupportNegative)
+                    throw DiceException.Negative()
                 }
 
-                number.toLongOrNull() ?: throw DiceException(DiceException.Type.DICE_Number_ParseFailed)
+                number.toLongOrNull() ?: throw DiceException.Exceed()
             } else {
                 100L
             }
@@ -82,10 +82,10 @@ import kotlin.random.Random
             return true
         } else if (number.isNullOrBlank().not()) {
 
-            val n = number.toLongOrNull() ?: throw DiceException(DiceException.Type.DICE_Number_ParseFailed)
+            val n = number.toLongOrNull() ?: throw DiceException.Exceed()
 
             if (n < 0L) {
-                throw DiceException(DiceException.Type.DICE_Number_NotSupportNegative)
+                throw DiceException.Negative()
             }
 
             data.value = DiceParam(1L, n, null)
@@ -104,11 +104,11 @@ import kotlin.random.Random
         try {
             if (param.number != null) {
                 if (param.number >= Int.MAX_VALUE) {
-                    throw DiceException(DiceException.Type.DICE_Number_TooLarge)
+                    throw DiceException.TooLarge()
                 }
 
                 if (param.number < 1L) {
-                    throw DiceException(DiceException.Type.DICE_Number_TooSmall)
+                    throw DiceException.TooSmall()
                 }
 
                 // 单次匹配 !d, 1d100 和多次匹配 20d100
@@ -116,7 +116,7 @@ import kotlin.random.Random
                     val r = getRandom<Long?>(param.number)
                     val format = if ((r < 1f)) "%.2f" else "%.0f"
 
-                    receipt = event.reply(format(format, r))
+                    receipt = event.reply(String.format(format, r))
 
                     // 容易被识别成 QQ
                     if (r >= 1000000f && r < 1000000000f) {
@@ -130,7 +130,7 @@ import kotlin.random.Random
                         val r = getRandom(param.number)
                         val format = if ((r < 1f)) "%.2f" else "%.0f"
 
-                        sb.append(format(format, r))
+                        sb.append(String.format(format, r))
 
                         if (i != param.dice) {
                             sb.append(", ")
@@ -157,7 +157,7 @@ import kotlin.random.Random
             throw e
         } catch (e: Exception) {
             log.error("扔骰子：处理失败", e)
-            throw DiceException(DiceException.Type.DICE_Send_Error)
+            throw DiceException.Unexpected()
         }
     }
 
@@ -431,7 +431,7 @@ import kotlin.random.Random
                             }
 
                             num = if (range <= 0) {
-                                throw DiceException(DiceException.Type.DICE_Number_TooSmall)
+                                throw DiceException.TooSmall()
                             } else if (range <= 100) {
                                 getRandom(100)
                             } else if (range <= 10000) {
@@ -439,7 +439,7 @@ import kotlin.random.Random
                             } else if (range <= 1000000) {
                                 getRandom(1000000)
                             } else {
-                                throw DiceException(DiceException.Type.DICE_Number_TooLarge)
+                                throw DiceException.TooLarge()
                             }
                         }
 
@@ -626,9 +626,9 @@ import kotlin.random.Random
 
                         if (isSame) {
                             if (getRandom(100) < 30) {
-                                throw DiceException(DiceException.Type.DICE_Compare_NoDifference_Everyday, left.trim(), right.trim())
+                                throw DiceException.NoDifferenceEveryday(left.trim(), right.trim())
                             } else {
-                                throw DiceException(DiceException.Type.DICE_Compare_NoDifference)
+                                throw DiceException.NoDifference()
                             }
                         }
                     }
@@ -695,8 +695,8 @@ import kotlin.random.Random
                 } catch (e: DiceException) {
                     throw e
                 } catch (e: Exception) {
-                    log.info("扔骰子：${s} 匹配失败。")
-                    throw DiceException(DiceException.Type.DICE_Compare_NotMatch)
+                    log.info("扔骰子：$s 匹配失败。")
+                    throw DiceException.NotMatched()
                 }
             }
 
@@ -745,38 +745,38 @@ import kotlin.random.Random
                     }
 
                     RANGE, AMOUNT, AGE -> {
-                        return format(leftFormat, num)
+                        return String.format(leftFormat, num)
                     }
 
                     TIME, TIMES, POSSIBILITY, ACCURACY -> {
-                        return format(leftFormat, num, iis)
+                        return String.format(leftFormat, num, iis)
                     }
 
                     RANK -> {
-                        return format(leftFormat, iis, num)
+                        return String.format(leftFormat, iis, num)
                     }
 
                     BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, QUESTION, MULTIPLE -> {
-                        return format(leftFormat, left)
+                        return String.format(leftFormat, left)
                     }
 
                     ASSUME, EVEN -> {
-                        return format(leftFormat, right)
+                        return String.format(leftFormat, right)
                     }
 
                     COULD, WHETHER -> {
-                        return format(leftFormat, left, iis, right)
+                        return String.format(leftFormat, left, iis, right)
                     }
 
                     LIKE, IS -> {
-                        return format(leftFormat, iis)
+                        return String.format(leftFormat, iis)
                     }
 
                     OR -> {
                         if (left.contains("是")) {
                             leftFormat = "我觉得，%s。"
                         }
-                        return format(leftFormat, left)
+                        return String.format(leftFormat, left)
                     }
                 }
             } else if (result > boundary + 0.002f) { // 选第二个
@@ -786,41 +786,41 @@ import kotlin.random.Random
                     }
 
                     RANGE, AMOUNT, AGE -> {
-                        return format(rightFormat, num)
+                        return String.format(rightFormat, num)
                     }
 
                     TIME, TIMES, POSSIBILITY, ACCURACY -> {
-                        return format(rightFormat, num, iis)
+                        return String.format(rightFormat, num, iis)
                     }
 
                     RANK -> {
-                        return format(rightFormat, iis, num)
+                        return String.format(rightFormat, iis, num)
                     }
 
                     BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, EVEN, MULTIPLE -> {
-                        return format(rightFormat, right)
+                        return String.format(rightFormat, right)
                     }
 
                     OR -> {
                         if (right.contains("是")) {
                             rightFormat = "我觉得，%s。"
                         }
-                        return format(rightFormat, right)
+                        return String.format(rightFormat, right)
                     }
 
                     COULD, WHETHER -> {
-                        return format(rightFormat, left, not, iis, right)
+                        return String.format(rightFormat, left, not, iis, right)
                     }
 
                     LIKE, IS -> {
-                        return format(rightFormat, iis)
+                        return String.format(rightFormat, iis)
                     }
                 }
             } else { // 打平机会千分之四。彩蛋？
                 if (result > boundary + 0.001f) {
-                    throw DiceException(DiceException.Type.DICE_Compare_All)
+                    throw DiceException.All()
                 } else {
-                    throw DiceException(DiceException.Type.DICE_Compare_Tie)
+                    throw DiceException.Tie()
                 }
             }
 
@@ -850,7 +850,7 @@ import kotlin.random.Random
             ).dropLastWhile { it.isEmpty() }.filter { it.isNotBlank() }
 
             if (strings.isEmpty() || strings.size == 1) {
-                throw DiceException(DiceException.Type.DICE_Compare_NotMatch)
+                throw DiceException.NotMatched()
             }
 
             // 多选择模式的去重
@@ -865,14 +865,14 @@ import kotlin.random.Random
 
             if (same == strings.size) { // 只有多个全部一样才抛错
                 if (getRandom(100) < 30) {
-                    throw DiceException(DiceException.Type.DICE_Compare_NoDifference_Everyday, stringSet.first(), stringSet.first())
+                    throw DiceException.NoDifferenceEveryday(stringSet.first(), stringSet.first())
                 } else {
-                    throw DiceException(DiceException.Type.DICE_Compare_NoDifference)
+                    throw DiceException.NoDifference()
                 }
             }
 
             val r = round(getRandom(strings.size) - 1.0).toInt()
-            return format("当然%s啦！", changeCase(strings[r])) // lr format一样的
+            return String.format("当然%s啦！", changeCase(strings[r])) // lr format一样的
         }
 
         /**

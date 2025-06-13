@@ -8,8 +8,9 @@ import com.now.nowbot.model.ppysb.SBUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.sbApiService.SBUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.BindException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.Instruction
@@ -123,7 +124,7 @@ class SBBindService(
 
     // TODO 这里应该查本地表并更新的
     private fun unbindName(name: String) {
-        val userID = userApiService.getUserID(name) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name)
+        val userID = userApiService.getUserID(name) ?: throw NoSuchElementException.Player(name)
 
         val qb = bindDao.getSBQQLiteFromUserID(userID) ?: throw BindException.NotBindException.YouNotBind()
 
@@ -174,7 +175,7 @@ class SBBindService(
             userApiService.getUser(username = name)
         } else {
             userApiService.getUser(id = id)
-        } ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, name)
+        } ?: throw NoSuchElementException.Player(name)
 
         return user
     }

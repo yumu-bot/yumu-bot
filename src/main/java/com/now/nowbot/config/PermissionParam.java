@@ -77,7 +77,7 @@ public class PermissionParam {
 
     String getMessage(String name){
         if (isAdminOnly()){
-            return STR."\{name}为管理员专用";
+            return name +" 为管理员专用";
         }
         StringBuilder sb = new StringBuilder(name);
         sb.append("->").append(isWhite?"白":"黑").append("名单模式\n")

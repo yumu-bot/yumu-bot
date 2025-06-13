@@ -11,6 +11,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botException.MRAException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
@@ -99,8 +100,8 @@ class SeriesRatingService(
         } catch (e: MRAException) {
             throw e
         } catch (e: Exception) {
-            log.error("系列比赛评分：数据计算失败", e)
-            throw MRAException(MRAException.Type.RATING_Rating_CalculatingFailed)
+            log.error("系列斗力：数据计算失败", e)
+            throw IllegalStateException.Calculate("系列斗力")
         }
 
         if (param.group("main") != null) {
@@ -109,16 +110,16 @@ class SeriesRatingService(
                 image = imageService.getPanel(sr, "C2")
                 event.reply(image)
             } catch (e: Exception) {
-                log.error("系列比赛评分：数据请求失败", e)
-                throw MRAException(MRAException.Type.RATING_Send_SRAFailed)
+                log.error("系列斗力：数据请求失败", e)
+                throw IllegalStateException.Send("系列斗力")
             }
         } else if (param.group("uu") != null) {
             val str = parseUSA(sr)
             try {
                 event.reply(str).recallIn(60000)
             } catch (e: Exception) {
-                log.error("系列比赛评分文字：发送失败", e)
-                throw MRAException(MRAException.Type.RATING_Send_USAFailed)
+                log.error("系列斗力文字：发送失败", e)
+                throw IllegalStateException.Send("系列斗力文字版")
             }
         } else if (param.group("csv") != null) {
             // 必须群聊

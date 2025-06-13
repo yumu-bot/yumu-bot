@@ -11,7 +11,7 @@ import com.now.nowbot.service.messageServiceImpl.UUPRService.UUPRParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
@@ -20,6 +20,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -67,25 +70,30 @@ class UUPRService(
         // 单成绩发送
         try {
             getTextOutput(score, event)
-        } catch (e: GeneralTipsException) {
-            throw e
         } catch (e: Exception) {
             log.error("最近成绩文字：发送失败", e)
             event.reply("最近成绩文字：发送失败，请重试。")
         }
     }
 
-    @Throws(GeneralTipsException::class)
+    
     private fun getTextOutput(score: LazerScore, event: MessageEvent) {
         val d = UUScore(score, beatmapApiService, calculateApiService)
 
-        val imgBytes =
+        val img = try {
             osuApiWebClient.get()
                 .uri(d.url ?: "")
                 .retrieve()
                 .bodyToMono(ByteArray::class.java)
                 .block()
-        event.reply(imgBytes, d.scoreLegacyOutput)
+        } catch (e: Exception) {
+            try {
+                Files.readAllBytes(Path.of(System.getenv("EXPORT_FILE_V3") + "avatar_guest.jpg"))
+            } catch (e2: IOException) {
+                throw NoSuchElementException.Avatar()
+            }
+        }
+        event.reply(img, d.scoreLegacyOutput)
     }
 
     companion object {

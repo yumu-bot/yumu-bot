@@ -7,8 +7,9 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MODE
@@ -73,7 +74,7 @@ import kotlin.math.roundToInt
             event.reply(img)
         } catch (e: Exception) {
             log.error("过审谱面：", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "过审谱面")
+            throw IllegalStateException.Send("过审谱面")
         }
     }
 

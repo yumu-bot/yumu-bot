@@ -5,7 +5,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.biliApiService.BiliApiService
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_ID
 import org.springframework.stereotype.Service
@@ -17,7 +17,7 @@ class BiliUserService(private val biliApiService: BiliApiService): MessageServic
 
         if (! matcher.find()) return false
 
-        val userID: Long = matcher.group(FLAG_ID)?.toLongOrNull() ?: throw GeneralTipsException("请输入正确的 ID！")
+        val userID: Long = matcher.group(FLAG_ID)?.toLongOrNull() ?: throw IllegalArgumentException.WrongException.PlayerID()
 
         data.value = userID
 

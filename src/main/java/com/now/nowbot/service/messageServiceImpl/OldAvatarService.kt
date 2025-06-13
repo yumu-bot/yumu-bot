@@ -8,7 +8,10 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.OldAvatarService.OAParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.QQMsgUtil
 import com.now.nowbot.util.command.FLAG_DATA
@@ -18,7 +21,6 @@ import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 
 @Service("OLD_AVATAR")
@@ -77,24 +79,15 @@ class OldAvatarService(
             try {
                 user = userApiService.getOsuUser(param.uid)
             } catch (e: Exception) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, param.uid)
+                throw throw NoSuchElementException.Player(param.uid.toString())
             }
         } else if (param.qq != null) {
-            val bindUser = bindDao.getBindFromQQ(param.qq)
-
-            try {
-                user = userApiService.getOsuUser(bindUser)
-            } catch (e: WebClientResponseException) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, bindUser.username)
-            } catch (e: Exception) {
-                log.error("旧头像：获取玩家信息失败: ", e)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_PlayerInfo)
-            }
+            user = userApiService.getOsuUser(bindDao.getBindFromQQ(param.qq))
         } else {
             val users = parseDataString(param.name)
 
             if (users.isNullOrEmpty())
-                throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
+                throw throw IllegalStateException.Fetch("玩家名")
 
             val images = ArrayList<ByteArray>(users.size)
 
@@ -107,7 +100,7 @@ class OldAvatarService(
                 return
             } catch (e: Exception) {
                 log.error("旧头像：发送失败", e)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "官网头像")
+                throw IllegalStateException.Send("官网头像")
             }
         }
 
@@ -116,11 +109,11 @@ class OldAvatarService(
             event.reply(image)
         } catch (e: Exception) {
             log.error("旧头像：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "官网头像")
+            throw IllegalStateException.Send("官网头像")
         }
     }
 
-    @Throws(GeneralTipsException::class)
+    
     private fun parseDataString(dataStr: String?): List<OsuUser?>? {
         if (dataStr.isNullOrBlank()) return null
 
@@ -142,23 +135,19 @@ class OldAvatarService(
 
             try {
                 ids.add(userApiService.getOsuID(s))
-            } catch (e: WebClientResponseException) {
-                try {
-                    ids.add(s.toLong())
-                } catch (e1: NumberFormatException) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_UserName)
-                }
+            } catch (e: NetworkException) {
+                ids.add(s.toLongOrNull() ?: throw IllegalArgumentException.WrongException.PlayerName())
             }
         }
 
         for (id in ids) {
             try {
                 users.add(userApiService.getOsuUser(id))
-            } catch (e: WebClientResponseException) {
+            } catch (e: NetworkException) {
                 try {
                     users.add(userApiService.getOsuUser(id.toString()))
-                } catch (e1: WebClientResponseException) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, id)
+                } catch (e1: NetworkException) {
+                    throw NoSuchElementException.Player(id.toString())
                 }
             }
         }

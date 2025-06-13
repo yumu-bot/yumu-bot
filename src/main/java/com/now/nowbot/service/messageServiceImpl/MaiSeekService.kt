@@ -3,7 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
@@ -26,7 +27,9 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
         
         val str: String? = matcher.group(FLAG_NAME)
 
-        if (str.isNullOrEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_UserName)
+        if (str.isNullOrEmpty()) {
+            throw IllegalArgumentException.WrongException.PlayerName()
+        }
 
         data.value = str
         return true

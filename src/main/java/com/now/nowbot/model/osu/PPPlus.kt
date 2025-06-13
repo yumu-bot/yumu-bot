@@ -1,115 +1,75 @@
-package com.now.nowbot.model.osu;
+package com.now.nowbot.model.osu
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
+import kotlin.math.pow
 
-import java.util.List;
+@JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
+class PPPlus {
+    @JvmRecord
+    data class Stats(
+        @JvmField val aim: Double = 0.0,
+        @JvmField @JsonProperty("jumpAim") val jumpAim: Double = 0.0,
+        @JvmField @JsonProperty("flowAim") val flowAim: Double = 0.0,
+        @JvmField val precision: Double = 0.0,
+        @JvmField val speed: Double = 0.0,
+        @JvmField val stamina: Double = 0.0,
+        @JvmField val accuracy: Double = 0.0,
+        @JvmField val total: Double = 0.0
+    )
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class PPPlus {
+    @JvmRecord
+    data class AdvancedStats(
+        val index: List<Double>,
+        val general: Double,
+        val advanced: Double,
+        val sum: Double,
+        val approval: Double
+    )
 
-    public record Stats(
-            Double aim,
-            @JsonProperty("jumpAim")
-            Double jumpAim,
-            @JsonProperty("flowAim")
-            Double flowAim,
-            Double precision,
-            Double speed,
-            Double stamina,
-            Double accuracy,
-            Double total
-    ) {}
+    var accuracy: Double? = null
+    var combo: Int? = null
+    var difficulty: Stats? = null
+    var performance: Stats? = null
+    var skill: Stats? = null
+        get() = if (field == null && difficulty != null) {
+            field = Stats(
+                calculateSkillValue(difficulty!!.aim),
+                calculateSkillValue(difficulty!!.jumpAim),
+                calculateSkillValue(difficulty!!.flowAim),
+                calculateSkillValue(difficulty!!.precision),
+                calculateSkillValue(difficulty!!.speed),
+                calculateSkillValue(difficulty!!.stamina),
+                calculateSkillValue(difficulty!!.accuracy),
+                calculateSkillValue(difficulty!!.total)
+            )
 
-    public record AdvancedStats(
-            List<Double> index,
-            Double general,
-            Double advanced,
-            Double sum,
-            Double approval
-    ) {}
+            field
+        } else Stats()
 
-    Double accuracy;
-    Integer combo;
-    Stats difficulty;
-    Stats performance;
-    Stats skill;
-    AdvancedStats advancedStats;
+    var advancedStats: AdvancedStats? = null
 
-    public Double getAccuracy() {
-        return accuracy;
+    override fun toString(): String {
+        return "PPPlus(accuracy=$accuracy, combo=$combo, difficulty=$difficulty, performance=$performance, skill=$skill, advancedStats=$advancedStats)"
     }
 
-    public void setAccuracy(Double accuracy) {
-        this.accuracy = accuracy;
-    }
+    companion object {
+        // 计算出 legacy PP+ 显示的接近 1000 的值
+        fun calculateSkillValue(difficultyValue: Double): Double {
+            return difficultyValue.pow(3.0) * 3.9
+        }
 
-    public Integer getCombo() {
-        return combo;
-    }
-
-    public void setCombo(Integer combo) {
-        this.combo = combo;
-    }
-
-    public Stats getDifficulty() {
-        return difficulty;
-    }
-
-    public void setDifficulty(Stats difficulty) {
-        this.difficulty = difficulty;
-    }
-
-    public Stats getPerformance() {
-        return performance;
-    }
-
-    public void setPerformance(Stats performance) {
-        this.performance = performance;
-    }
-
-    // 计算出 legacy PP+ 显示的接近 1000 的值
-    public static double calculateSkillValue(double difficultyValue) {
-        return Math.pow(difficultyValue, 3d) * 3.9d;
-    }
-
-    public Stats getSkill() {
-        if (skill == null && difficulty != null) {
-            skill = new Stats(
-                    calculateSkillValue(difficulty.aim),
-                    calculateSkillValue(difficulty.jumpAim),
-                    calculateSkillValue(difficulty.flowAim),
-                    calculateSkillValue(difficulty.precision),
-                    calculateSkillValue(difficulty.speed),
-                    calculateSkillValue(difficulty.stamina),
-                    calculateSkillValue(difficulty.accuracy),
-                    calculateSkillValue(difficulty.total)
-            );
-            return skill;
-        } else return null;
-    }
-
-    public void setSkill(Stats skill) {
-        this.skill = skill;
-    }
-
-    public AdvancedStats getAdvancedStats() {
-        return advancedStats;
-    }
-
-    public void setAdvancedStats(AdvancedStats advancedStats) {
-        this.advancedStats = advancedStats;
-    }
-
-
-    @Override
-    public String toString() {
-        return STR."PPPlus{accuracy=\{accuracy}, combo=\{combo}, difficulty=\{difficulty}, performance=\{performance}, skill=\{skill}\{'}'}";
-    }
-
-    public static Stats getMaxStats() {
-        return new PPPlus.Stats(99999d, 99999d, 99999d, 99999d, 99999d, 99999d, 99999d, 99999d);
+        val maxStats: Stats
+            get() = Stats(
+                99999.0,
+                99999.0,
+                99999.0,
+                99999.0,
+                99999.0,
+                99999.0,
+                99999.0,
+                99999.0
+            )
     }
 }

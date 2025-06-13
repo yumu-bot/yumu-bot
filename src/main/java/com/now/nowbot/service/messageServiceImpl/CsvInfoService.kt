@@ -7,8 +7,9 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.CsvInfoService.CsvInfoParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.botException.CsvInfoException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
@@ -27,21 +28,27 @@ class CsvInfoService(private val userApiService: OsuUserApiService) : MessageSer
     @Throws(Throwable::class) override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        param: DataValue<CsvInfoParam>
+        data: DataValue<CsvInfoParam>
     ): Boolean {
         val matcher = Instruction.CSV_INFO.matcher(messageText)
         if (!matcher.find()) return false
 
         val mode = getMode(matcher.group("mode"))
-        val names = splitString(matcher.group("data")) ?: throw GeneralTipsException(GeneralTipsException.Type.G_Null_UserName)
-        val name = if (names.isEmpty()) throw GeneralTipsException(GeneralTipsException.Type.G_Null_UserName) else "CI-" + names.first() + ".csv"
+        val names = splitString(matcher.group("data"))
 
-        param.value = CsvInfoParam(mode, names, name)
+        val name = if (names.isNullOrEmpty()) {
+            throw IllegalArgumentException.WrongException.PlayerName()
+        } else {
+            "CI-" + names.first() + ".csv"
+        }
+
+        data.value = CsvInfoParam(mode, names, name)
         return true
     }
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: CsvInfoParam) {
-        if (param.users.size >= 50) event.reply(GeneralTipsException(GeneralTipsException.Type.G_Malfunction_APITooMany))
+        if (param.users.size >= 50) event.reply(
+            IllegalStateException.TooManyRequest("CSV"))
 
         //主获取
         val sb = StringBuilder("username,id,PP,4KPP,7KPP,accuracy,rankedScore,totalScore,playCount,playTime,totalHits,avatarUrl,countryCode,defaultGroup,isActive,isBot,isDeleted,isOnline,isSupporter,isRestricted,lastVisit,pmFriendsOnly,profileColor,coverUrl,discord,hasSupported,interests,joinDate,location,maxBlocks,maxFriends,occupation,playMode,playStyle,postCount,profileOrder,title,titleUrl,twitter,website,country.data,cover.custom,kudosu.total,beatmapPlaycount,CommentsCount,favoriteCount,followerCount,graveyardCount,guestCount,lovedCount,mappingFollowerCount,nominatedCount,pendingCount,previousNames,highestRank,rankedCount,replaysWatchedCounts,scoreBestCount,scoreFirstCount,scorePinnedCount,scoreRecentCount,supportLevel,userAchievements")

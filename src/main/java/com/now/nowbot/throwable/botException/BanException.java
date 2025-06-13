@@ -11,7 +11,8 @@ public class BanException extends TipsException {
                 add：添加用户至白名单
                 remove：移除用户出白名单
                 ban：添加用户至黑名单
-                unban：移除用户出黑名单"""),
+                unban：移除用户出黑名单
+                """),
         SUPER_Receive_NoQQ("%s 操作必须输入 qq！\n格式：!sp %s qq=114514 / group=1919810"),
         ;//逗号分隔
         public final String message;

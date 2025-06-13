@@ -15,10 +15,11 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botException.BPQueryException
 import com.now.nowbot.throwable.botException.BPQueryException.*
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_QUOTATION
@@ -75,8 +76,7 @@ class BPQueryService(
         val user = userApiService.getOsuUser(bindUser)
 
         if (result.isEmpty()) {
-            event.reply(GeneralTipsException(GeneralTipsException.Type.G_Null_FilterBP, user.username))
-            return
+            throw NoSuchElementException.BestScoreFiltered(user.username)
         }
 
         order?.let {

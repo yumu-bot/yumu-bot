@@ -6,8 +6,9 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.BindException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.splitString
@@ -37,7 +38,7 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
                 splitString(str)
             }
 
-            data.value = names ?: throw GeneralTipsException(GeneralTipsException.Type.G_Fetch_List)
+            data.value = names ?: throw IllegalStateException.Fetch("玩家名")
             return true
         } else return false
     }

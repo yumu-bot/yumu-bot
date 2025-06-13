@@ -276,7 +276,7 @@ class PPPlusService(
     
     private fun beforePost(user: OsuUser, plus: PPPlus) {
         if (user.id == 17064371L) {
-            plus.performance = PPPlus.getMaxStats()
+            plus.performance = PPPlus.maxStats
         }
     }
 

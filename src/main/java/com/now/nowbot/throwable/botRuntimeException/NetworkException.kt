@@ -7,6 +7,19 @@ open class NetworkException(message: String?
 
     open val code: Int = 0
 
+
+    open class ComponentException(message: String?): NetworkException(message) {
+        override val code: Int = 0
+
+        class NoResponse:
+            ComponentException("""
+                444 No Response
+                没有响应。
+            """.trimIndent()) {
+            override val code = 444
+        }
+    }
+
     open class RenderModuleException(message: String): NetworkException(message) {
         override val code: Int = 0
 

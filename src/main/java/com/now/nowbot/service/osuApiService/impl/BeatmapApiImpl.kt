@@ -9,7 +9,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
@@ -550,7 +550,7 @@ class BeatmapApiImpl(
      * 依据QualifiedMapService 的逻辑来多次获取
      * tries 一般可以设为 10（500 个结果）
      */
-    @Throws(GeneralTipsException::class)
+    
     override fun searchBeatMapSet(query: Map<String, Any?>, tries: Int): BeatMapSetSearch {
         var search = BeatMapSetSearch()
         var page = 1

@@ -7,7 +7,9 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.throwable.botException.KitaException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD
@@ -38,49 +40,31 @@ class KitaService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: Matcher) {
-        val bid: Long
         val mod: String
         val position: Short
         val beatmap: Beatmap
         val hasBG = param.group("noBG") == null
-        val BIDstr: String =
-            param.group(FLAG_BID) ?: throw KitaException(KitaException.Type.KITA_Parameter_NoBid)
+        val bidStr: String? = param.group(FLAG_BID)
 
-        try {
-            bid = BIDstr.toLong()
-        } catch (e: NumberFormatException) {
-            throw KitaException(KitaException.Type.KITA_Parameter_BidError)
-        }
+        val bid: Long = bidStr?.toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
         if (param.group(FLAG_MOD) == null) {
             mod = "NM"
             position = 1
         } else {
-            try {
-                val modStr = param.group("mod").uppercase(Locale.getDefault())
-                mod = modStr.substring(0, 2)
-                position = modStr.substring(2).toShort()
-            } catch (e: NumberFormatException) {
-                throw KitaException(KitaException.Type.KITA_Parameter_ModError)
-            }
+            val modStr = param.group("mod")?.uppercase()?.substring(0, 2) ?: throw IllegalArgumentException.WrongException.Mod()
+            mod = modStr.substring(0, 2)
+            position = modStr.substring(2).toShortOrNull() ?: throw IllegalArgumentException.WrongException("请输入正确的位置！")
         }
 
         val round =
             if (param.group("round") == null) {
                 "Unknown"
             } else {
-                try {
-                    param.group("round")
-                } catch (e: NumberFormatException) {
-                    throw KitaException(KitaException.Type.KITA_Parameter_RoundError)
-                }
+                param.group("round")
             }
 
-        try {
-            beatmap = beatmapApiService.getBeatMapFromDataBase(bid)
-        } catch (e: Exception) {
-            throw KitaException(KitaException.Type.KITA_Map_FetchFailed)
-        }
+        beatmap = beatmapApiService.getBeatMapFromDataBase(bid)
 
         if (hasBG) {
             try {
@@ -88,20 +72,20 @@ class KitaService(
                 event.reply(image)
             } catch (e: Exception) {
                 log.error("KITA", e)
-                throw KitaException(KitaException.Type.KITA_Send_Error)
+                throw IllegalStateException.Send("喜多面板")
             }
         } else {
             val group = event.subject
             if (group is Group) {
                 try {
                     val image = imageService.getPanelDelta(beatmap, round, mod, position, false)
-                    group.sendFile(image, "${param.group("bid")}${' '}${mod}${position}.png")
+                    group.sendFile(image, "${param.group("bid")} ${mod}${position}.png")
                 } catch (e: Exception) {
                     log.error("KITA-X", e)
-                    throw KitaException(KitaException.Type.KITA_Send_Error)
+                    throw IllegalStateException.Send("喜多面板")
                 }
             } else {
-                throw KitaException(KitaException.Type.KITA_Send_NotGroup)
+                throw UnsupportedOperationException.NotGroup()
             }
         }
     }

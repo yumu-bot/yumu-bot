@@ -14,8 +14,9 @@ import com.now.nowbot.service.messageServiceImpl.MuRatingService.MuRatingPanelPa
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
@@ -52,7 +53,7 @@ import org.springframework.stereotype.Service
             event.reply(image)
         } catch (e: Exception) {
             log.error("比赛结果：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "比赛结果")
+            throw IllegalStateException.Send("比赛结果")
         }
     }
 
@@ -108,7 +109,7 @@ import org.springframework.stereotype.Service
                 }
             } catch (e: Exception) {
                 log.error("比赛结果：获取失败", e)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "比赛结果")
+                throw IllegalStateException.Fetch("比赛结果")
             }
             return mr
         }

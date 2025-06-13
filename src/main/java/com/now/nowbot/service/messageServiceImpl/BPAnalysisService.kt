@@ -16,7 +16,9 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
+
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.DataUtil.getBonusPP
@@ -82,7 +84,7 @@ import kotlin.math.min
             event.reply(image)
         } catch (e: Exception) {
             log.error("最好成绩分析：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "最好成绩分析")
+            throw IllegalStateException.Send("最好成绩分析")
         }
     }
 
@@ -379,11 +381,7 @@ import kotlin.math.min
             val user = user
 
             if (scores.isEmpty() || scores.size <= 5) {
-                if (isMyself) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Me, user.currentOsuMode)
-                } else {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_NotEnoughBP_Player, user.currentOsuMode)
-                }
+                throw NoSuchElementException.PlayerBestScore(user.username, user.currentOsuMode)
             }
 
             // 提取星级变化的谱面 DT/HT 等
@@ -412,7 +410,7 @@ import kotlin.math.min
                     imageService.getPanelAlpha(*msg)
                 } catch (e1: Exception) {
                     log.error("最好成绩分析：文字版转换失败", e1)
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "最好成绩分析（文字版）")
+                    throw IllegalStateException.Fetch("最好成绩分析（文字版）")
                 }
             }
         }

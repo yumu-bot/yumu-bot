@@ -9,10 +9,9 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.botRuntimeException.LogException
-import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.BindException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -133,9 +132,8 @@ object CmdUtil {
      *
      * @param matcher 正则
      * @param mode 包装的模式, 如果给的 mode 非默认则返回对应 mode 的 user 信息
-     * @throws [GeneralTipsException.Type.G_Null_Player] 当输入字符串包含用户名, 并且查找后无此人时抛出
      */
-    @Throws(GeneralTipsException::class) private fun getUserAndRange(
+    private fun getUserAndRange(
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>
@@ -211,11 +209,11 @@ object CmdUtil {
 
         if (result.data == null) {
             if (text.matches("$REG_RANGE\\s+\\S+".toRegex())) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerReverse, text)
+                throw NoSuchElementException.PlayerWithRange(text)
             } else if (text.matches("\\S+\\s+\\d+".toRegex()))
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_BIDReverse, text)
-
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Player, text)
+                throw NoSuchElementException.PlayerWithBeatmapID(text)
+            
+            throw NoSuchElementException.Player(text)
         }
 
         return result
@@ -227,7 +225,7 @@ object CmdUtil {
      *
      * @param isVS 是否采用 VS 匹配方式。正常匹配方式和 VS 方式的不同体现在请求者本身之上。
      */
-    @JvmStatic @Throws(TipsException::class) fun get2User(
+    fun get2User(
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
@@ -429,7 +427,7 @@ object CmdUtil {
      *
      * @param mode 玩家查询时输入的模式
      */
-    @Throws(TipsException::class) private fun getOsuUser(
+    private fun getOsuUser(
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
@@ -482,7 +480,7 @@ object CmdUtil {
      * @param user 绑定
      * @param mode 指定模式
      */
-    @Throws(TipsException::class) fun getOsuUser(user: BindUser, mode: OsuMode?): OsuUser {
+    fun getOsuUser(user: BindUser, mode: OsuMode?): OsuUser {
         return userApiService.getOsuUser(user, mode ?: OsuMode.DEFAULT)
     }
 
@@ -492,7 +490,7 @@ object CmdUtil {
      * @param name 用户名
      * @param mode 指定模式
      */
-    @Throws(TipsException::class) fun getOsuUser(name: String, mode: OsuMode?): OsuUser {
+    fun getOsuUser(name: String, mode: OsuMode?): OsuUser {
         return userApiService.getOsuUser(name, mode ?: OsuMode.DEFAULT)
     }
 
@@ -502,7 +500,7 @@ object CmdUtil {
      * @param uid 用户ID
      * @param mode 指定模式
      */
-    @Throws(TipsException::class) fun getOsuUser(uid: Long, mode: OsuMode?): OsuUser {
+    fun getOsuUser(uid: Long, mode: OsuMode?): OsuUser {
         return userApiService.getOsuUser(uid, mode ?: OsuMode.DEFAULT)
     }
 

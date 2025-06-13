@@ -16,8 +16,9 @@ import com.now.nowbot.service.messageServiceImpl.ScoreService.ScoreParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.getMod
@@ -87,7 +88,7 @@ import java.util.regex.Matcher
         }
 
         if (!map.hasLeaderBoard) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_LeaderBoard, map.previewName)
+            throw NoSuchElementException.Leaderboard()
         }
 
         val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
@@ -112,7 +113,7 @@ import java.util.regex.Matcher
             event.reply(message)
         } catch (e: Exception) {
             log.error("谱面成绩：发送失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Send, "谱面成绩")
+            throw IllegalStateException.Send("谱面成绩")
         }
     }
 
@@ -151,7 +152,7 @@ import java.util.regex.Matcher
         }
 
         if (!map.hasLeaderBoard) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_LeaderBoard, map.previewName)
+            throw NoSuchElementException.Leaderboard()
         }
 
         val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
@@ -181,7 +182,7 @@ import java.util.regex.Matcher
             scoreApiService.getBeatMapScores(bid, user.userID, mode).sortedByDescending { it.pp }
 
         if (scores.isEmpty()) {
-            throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, b.previewName)
+            throw NoSuchElementException.BeatmapScore(b.previewName)
         }
 
         val image: ByteArray = if (scores.size > 1) {
@@ -229,7 +230,8 @@ import java.util.regex.Matcher
             score = try {
                 scoreApiService.getBeatMapScore(bid, user.userID, mode, param.mods)?.score
             } catch (e: WebClientResponseException) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, b.previewName)
+                
+            throw NoSuchElementException.BeatmapScore(b.previewName)
             }!!
 
             // beatmapApiService.applyBeatMapExtend(score!!, b)
@@ -238,7 +240,8 @@ import java.util.regex.Matcher
             val beatmapScore = try {
                 scoreApiService.getBeatMapScore(bid, user.userID, mode)!!
             } catch (e: WebClientResponseException.NotFound) {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_Score, b.previewName)
+                
+            throw NoSuchElementException.BeatmapScore(b.previewName)
             }
 
             score = beatmapScore.score!!
