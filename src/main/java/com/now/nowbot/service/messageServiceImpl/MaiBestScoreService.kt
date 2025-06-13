@@ -16,7 +16,6 @@ import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_HYPHEN
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import kotlin.math.max
 import kotlin.math.min
 
@@ -136,7 +135,7 @@ class MaiBestScoreService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: MaiBestScoreParam) {
-        val scores = getBestScores(param.qq, param.name, param.isMyself, maimaiApiService)
+        val scores = getBestScores(param.qq, param.name, maimaiApiService)
         val charts = implementScore(param.range, scores, maimaiApiService = maimaiApiService)
         val isMultipleScore = charts.deluxe.size + charts.standard.size > 1
 
@@ -169,35 +168,14 @@ class MaiBestScoreService(
         fun getBestScores(
             qq: Long?,
             name: String?,
-            isMyself: Boolean,
             maimaiApiService: MaimaiApiService,
         ): MaiBestScore {
             return if (qq != null) {
-                try {
-                    maimaiApiService.getMaimaiBest50(qq)
-                } catch (e: WebClientResponseException.BadRequest) {
-                    if (isMyself) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouBadRequest)
-                    } else {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_QQBadRequest)
-                    }
-                } catch (e: WebClientResponseException.Forbidden) {
-                    if (isMyself) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouForbidden)
-                    } else {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_PlayerForbidden)
-                    }
-                }
-            } else if (name != null) {
-                try {
-                    maimaiApiService.getMaimaiBest50(name)
-                } catch (e: WebClientResponseException.BadRequest) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_NameBadRequest)
-                } catch (e: WebClientResponseException.Forbidden) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_PlayerForbidden)
-                }
+                maimaiApiService.getMaimaiBest50(qq)
+            } else if (!name.isNullOrBlank()) {
+                maimaiApiService.getMaimaiBest50(name)
             } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
+                throw NoSuchElementException.Player()
             }
         }
 

@@ -7,13 +7,15 @@ import com.now.nowbot.model.maimai.ChuBestScore
 import com.now.nowbot.model.maimai.ChuScore
 import com.now.nowbot.model.maimai.ChuSong
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
+import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
-import org.springframework.lang.NonNull
 import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import java.io.IOException
@@ -24,20 +26,17 @@ import kotlin.text.Charsets.UTF_8
 class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDao: MaiDao) : ChunithmApiService {
     private val path = base.chunithmPath!!
 
-    @JvmRecord private data class ChunithmBestScoreQQBody(val qq: Long, val b50: Boolean)
+    private data class ChunithmBestScoreQQBody(val qq: Long, val b50: Boolean)
 
-    @JvmRecord private data class ChunithmBestScoreNameBody(val username: String, val b50: Boolean)
+    private data class ChunithmBestScoreNameBody(val username: String, val b50: Boolean)
 
-    @JvmRecord
-    private data class ChunithmByVersionQQBody(val qq: Long, @NonNull val version: List<String>)
+    private data class ChunithmByVersionQQBody(val qq: Long, val version: List<String>)
 
-    @JvmRecord
     private data class ChunithmByVersionNameBody(
             val username: String,
-            @NonNull val version: List<String>
+            val version: List<String>
     )
 
-    @JvmRecord
     private data class ChunithmAliasResponseBody(
         @JsonProperty("aliases") val aliases: List<ChuAlias>
     )
@@ -45,27 +44,27 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
     override fun getChunithmBest30Recent10(qq: Long): ChuBestScore {
         val b = ChunithmBestScoreQQBody(qq, true)
 
-        return base.divingFishApiWebClient.post()
-                .uri { it.path("api/chunithmprober/query/player").build() }
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(b), ChunithmBestScoreQQBody::class.java)
-                .headers(base::insertJSONHeader)
-                .retrieve()
-                .bodyToMono(ChuBestScore::class.java)
-                .block() ?: ChuBestScore()
+        return request { client -> client.post()
+            .uri { it.path("api/chunithmprober/query/player").build() }
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(Mono.just(b), ChunithmBestScoreQQBody::class.java)
+            .headers(base::insertJSONHeader)
+            .retrieve()
+            .bodyToMono(ChuBestScore::class.java)
+        }
     }
 
     override fun getChunithmBest30Recent10(probername: String): ChuBestScore {
         val b = ChunithmBestScoreNameBody(probername, true)
 
-        return base.divingFishApiWebClient.post()
-                .uri { it.path("api/chunithmprober/query/player").build()}
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(b), ChunithmBestScoreNameBody::class.java)
-                .headers(base::insertJSONHeader)
-                .retrieve()
-                .bodyToMono(ChuBestScore::class.java)
-                .block() ?: ChuBestScore()
+        return request { client -> client.post()
+            .uri { it.path("api/chunithmprober/query/player").build() }
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(Mono.just(b), ChunithmBestScoreNameBody::class.java)
+            .headers(base::insertJSONHeader)
+            .retrieve()
+            .bodyToMono(ChuBestScore::class.java)
+        }
     }
 
     override fun downloadChunithmCover(songID: Long) {
@@ -97,12 +96,12 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
     override fun getChunithmCoverFromAPI(songID: Long): ByteArray {
         val song: String = songID.toString()
         val cover = try {
-            base.webClient.get()
-                .uri { it.scheme("https").host("assets2.lxns.net").path("chunithm/jacket/${song}.png").build()}
-                .retrieve()
-                .bodyToMono(ByteArray::class.java)
-                .block()
-        } catch (e: WebClientResponseException.NotFound) {
+            request { client ->
+                client.get().uri {
+                    it.scheme("https").host("assets2.lxns.net").path("chunithm/jacket/${song}.png").build()
+                }.retrieve().bodyToMono(ByteArray::class.java)
+            }
+        } catch (e: NetworkException.DivingFishException.NotFound) {
             val path = path.resolve("Cover").resolve("0.png")
 
             try {
@@ -244,16 +243,19 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
     }
 
     private val chunithmSongLibraryFromAPI: String
-        get() = base.divingFishApiWebClient.get()
-            .uri { it.path("api/chunithmprober/music_data").build()}
-            .retrieve()
-            .bodyToMono(String::class.java)
-            .block() ?: ""
+        get() = request { client ->
+            client.get().uri {
+                it.path("api/chunithmprober/music_data").build()
+            }
+                .retrieve()
+                .bodyToMono(String::class.java)
+        }
 
     private val chunithmAliasLibraryFromAPI: String
-        get() = base.webClient.get()
-            .uri { it.scheme("https").host("maimai.lxns.net").replacePath("api/v0/chunithm/alias/list").build()
-        }.retrieve().bodyToMono(String::class.java).block()!!
+        get() = request { client -> client.get().uri {
+                it.scheme("https").host("maimai.lxns.net").replacePath("api/v0/chunithm/alias/list").build()
+            }.retrieve().bodyToMono(String::class.java)
+        }
 
     private fun <T> parseFile(fileName: String, clazz: Class<T>): T? {
         val file = path.resolve(fileName)
@@ -310,42 +312,29 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
      * 错误包装
      */
 
-    /*
+
+    /**
+     * 错误包装
+     */
+    @Throws(NetworkException::class)
     private fun <T> request(request: (WebClient) -> Mono<T>): T {
         return try {
-            base.request(request)
-        } catch (e: ExecutionException) {
-            when (e.cause) {
-                is WebClientResponseException.BadRequest -> {
-                    throw NetworkException.DivingFishException.BadRequest()
-                }
-
-                is WebClientResponseException.Unauthorized -> {
-                    throw NetworkException.DivingFishException.Unauthorized()
-                }
-
-                is WebClientResponseException.NotFound -> {
-                    throw NetworkException.DivingFishException.NotFound()
-                }
-
-                is ReadTimeoutException -> {
-                    throw NetworkException.DivingFishException.RequestTimeout()
-                }
-
-                is WebClientResponseException.InternalServerError -> {
-                    throw NetworkException.DivingFishException.InternalServerError()
-                }
-
-                is WebClientResponseException.BadGateway -> {
-                    throw NetworkException.DivingFishException.BadGateway()
-                }
-
-                else -> throw NetworkException.DivingFishException(e.message)
-            }
+            request(base.divingFishApiWebClient).block()!!
+        } catch (e: WebClientResponseException.BadGateway) {
+            throw NetworkException.DivingFishException.BadGateway()
+        } catch (e: WebClientResponseException.Unauthorized) {
+            throw NetworkException.DivingFishException.Unauthorized()
+        } catch (e: WebClientResponseException.Forbidden) {
+            throw NetworkException.DivingFishException.Forbidden()
+        } catch (e: ReadTimeoutException) {
+            throw NetworkException.DivingFishException.RequestTimeout()
+        } catch (e: WebClientResponseException.InternalServerError) {
+            throw NetworkException.DivingFishException.InternalServerError()
+        } catch (e: Exception) {
+            log.error("水鱼查分器：获取失败", e)
+            throw NetworkException.DivingFishException.Undefined(e)
         }
     }
-
-     */
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ChunithmApiImpl::class.java)

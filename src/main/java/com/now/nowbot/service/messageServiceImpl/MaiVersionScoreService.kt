@@ -11,7 +11,8 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_DIFF
 import com.now.nowbot.util.command.FLAG_NAME
@@ -19,7 +20,6 @@ import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.FLAG_VERSION
 import com.yumu.core.extensions.isNotNull
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 
 @Service("MAI_VERSION")
 class MaiVersionScoreService(
@@ -27,7 +27,7 @@ class MaiVersionScoreService(
         val imageService: ImageService
 ) : MessageService<MaiVersionScoreService.MaiVersionParam> {
 
-    private val newest = MaiVersion.BUDDIES // 当前最新版本
+    private val newest = MaiVersion.PRISM // 当前最新版本
 
     data class MaiVersionParam(
             val name: String?,
@@ -75,73 +75,58 @@ class MaiVersionScoreService(
                 if (matcher.group(FLAG_VERSION).isNotNull()) {
                     MaiVersion.getVersionList(matcher.group(FLAG_VERSION))
                 } else {
-                    mutableListOf(newest)
+                    listOf(newest)
                 }
 
         if (versions.first() == MaiVersion.DEFAULT) {
-            versions = mutableListOf(newest)
+            versions = listOf(newest)
         }
 
         if (matcher.group(FLAG_NAME).isNotNull()) {
             val versionInName = MaiVersion.getVersion(matcher.group(FLAG_NAME))
 
             if (versionInName == MaiVersion.DEFAULT) {
-                data.value =
-                        MaiVersionParam(
-                                matcher.group(FLAG_NAME).trim(), null, difficulty, versions, false)
-                return true
+                data.value = MaiVersionParam(matcher.group(FLAG_NAME).trim(), null, difficulty, versions, false)
             } else {
-                data.value =
-                        MaiVersionParam(
-                                null,
-                                event.sender.id,
-                                difficulty,
-                                mutableListOf(versionInName),
-                                true)
-                return true
+                data.value = MaiVersionParam(null, event.sender.id, difficulty, listOf(versionInName), true)
             }
         } else if (matcher.group(FLAG_QQ_ID).isNotNull()) {
-            data.value =
-                    MaiVersionParam(
-                            null, matcher.group(FLAG_QQ_ID).toLong(), difficulty, versions, false)
-            return true
+            data.value = MaiVersionParam(null, matcher.group(FLAG_QQ_ID).toLong(), difficulty, versions, false)
         } else if (event.isAt) {
             data.value = MaiVersionParam(null, event.target, difficulty, versions, false)
-            return true
         } else {
             data.value = MaiVersionParam(null, event.sender.id, difficulty, versions, true)
-            return true
         }
+
+        return true
     }
 
     override fun HandleMessage(event: MessageEvent, param: MaiVersionParam) {
-        val vs =
-                getVersionScores(
-                        param.qq, param.name, param.versions, param.isMyself, maimaiApiService)
-        if (vs.scores.isEmpty())
-                throw GeneralTipsException(
-                        GeneralTipsException.Type.G_Null_Version, param.versions.listToString())
-        if (vs.scores.size > 240 && param.versions.size > 1)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Version)
-        else if (vs.scores.size > 300 && param.difficulty == MaiDifficulty.DEFAULT)
-                throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Version_Default)
+        val vs = getVersionScores(param.qq, param.name, param.versions, maimaiApiService)
 
-        val full = getFullScore(param.qq, param.name, param.isMyself, maimaiApiService)
+        if (vs.scores.isEmpty()) {
+            throw NoSuchElementException.VersionScore(param.versions.listToString())
+        }
+
+        if (vs.scores.size > 240 && param.versions.size > 1) {
+            throw IllegalArgumentException.ExceedException.Version()
+        } else if (vs.scores.size > 300 && param.difficulty == MaiDifficulty.DEFAULT) {
+            throw IllegalArgumentException.ExceedException.VersionDifficulty()
+        }
+
+        val full = getFullScore(param.qq, param.name, maimaiApiService)
 
         val user = full.getUser()
-        val scores = MaiScoreSimplified.parseMaiScoreList(full.records, vs.scores)
-            .filter {
-                MaiDifficulty.getIndex(it.index).equalDefault(param.difficulty)
-            }.toMutableList()
+        val scores = MaiScoreSimplified.parseMaiScoreList(full.records, vs.scores).filter {
+            MaiDifficulty.getIndex(it.index).equalDefault(param.difficulty)
+        }
 
         maimaiApiService.insertSongData(scores)
         maimaiApiService.insertMaimaiAliasForScore(scores)
         maimaiApiService.insertPosition(scores, true)
 
-        val image =
-                imageService.getPanel(
-                        PanelMA2Param(user, scores, MaiVersion.getNameList(param.versions)).toMap(),
-                        "MA")
+        val image = imageService.getPanel(
+            PanelMA2Param(user, scores, MaiVersion.getNameList(param.versions)).toMap(), "MA")
 
         event.reply(image)
     }
@@ -150,75 +135,31 @@ class MaiVersionScoreService(
 
         @JvmStatic
         fun getFullScore(
-                qq: Long?,
-                name: String?,
-                isMyself: Boolean,
-                maimaiApiService: MaimaiApiService,
+            qq: Long?,
+            name: String?,
+            maimaiApiService: MaimaiApiService,
         ): MaiBestScore {
-            return if (qq.isNotNull()) {
-                try {
-                    maimaiApiService.getMaimaiFullScores(qq!!)
-                } catch (e: WebClientResponseException.BadRequest) {
-                    if (isMyself) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouBadRequest)
-                    } else {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_QQBadRequest)
-                    }
-                } catch (e: WebClientResponseException.Forbidden) {
-                    if (isMyself) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouForbidden)
-                    } else {
-                        throw GeneralTipsException(
-                                GeneralTipsException.Type.G_Maimai_PlayerForbidden)
-                    }
-                }
-            } else if (name.isNotNull()) {
-                try {
-                    maimaiApiService.getMaimaiFullScores(name!!)
-                } catch (e: WebClientResponseException.BadRequest) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_NameBadRequest)
-                } catch (e: WebClientResponseException.Forbidden) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_PlayerForbidden)
-                }
+            return if (qq != null) {
+                maimaiApiService.getMaimaiFullScores(qq)
+            } else if (!name.isNullOrBlank()) {
+                maimaiApiService.getMaimaiFullScores(name)
             } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
+                throw NoSuchElementException.Player()
             }
         }
 
         fun getVersionScores(
-                qq: Long?,
-                name: String?,
-                version: List<MaiVersion>,
-                isMyself: Boolean,
-                maimaiApiService: MaimaiApiService,
+            qq: Long?,
+            name: String?,
+            version: List<MaiVersion>,
+            maimaiApiService: MaimaiApiService,
         ): MaiVersionScore {
-            return if (qq.isNotNull()) {
-                try {
-                    maimaiApiService.getMaimaiScoreByVersion(qq!!, version)
-                } catch (e: WebClientResponseException.BadRequest) {
-                    if (isMyself) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouBadRequest)
-                    } else {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_QQBadRequest)
-                    }
-                } catch (e: WebClientResponseException.Forbidden) {
-                    if (isMyself) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouForbidden)
-                    } else {
-                        throw GeneralTipsException(
-                                GeneralTipsException.Type.G_Maimai_PlayerForbidden)
-                    }
-                }
-            } else if (name.isNotNull()) {
-                try {
-                    maimaiApiService.getMaimaiScoreByVersion(name!!, version)
-                } catch (e: WebClientResponseException.BadRequest) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_NameBadRequest)
-                } catch (e: WebClientResponseException.Forbidden) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_PlayerForbidden)
-                }
+            return if (qq != null) {
+                maimaiApiService.getMaimaiScoreByVersion(qq, version)
+            } else if (!name.isNullOrBlank()) {
+                maimaiApiService.getMaimaiScoreByVersion(name, version)
             } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
+                throw NoSuchElementException.Player()
             }
         }
     }

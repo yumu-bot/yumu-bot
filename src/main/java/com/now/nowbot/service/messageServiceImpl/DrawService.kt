@@ -36,13 +36,13 @@ class DrawService : MessageService<Matcher> {
 
     @CheckPermission(test = true) @Throws(Throwable::class) override fun HandleMessage(
         event: MessageEvent,
-        matcher: Matcher
+        param: Matcher
     ) {
         val bindUser = bindDao!!.getBindFromQQ(event.sender.id, true)
 
         var times = 1
-        if (matcher.group("d") != null) {
-            times = matcher.group("d").toInt()
+        if (param.group("d") != null) {
+            times = param.group("d").toInt()
         }
 
         val tenTimes = times / 10

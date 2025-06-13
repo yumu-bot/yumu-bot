@@ -6,15 +6,16 @@ import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.Companion.getNameList
 import com.now.nowbot.model.maimai.*
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.JacksonUtil
+import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientRequestException
+import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
@@ -49,29 +50,21 @@ import kotlin.text.Charsets.UTF_8
     override fun getMaimaiBest50(qq: Long): MaiBestScore {
         val b = MaimaiBestQQRequestBody(qq, true)
 
-        return try {
-            base.divingFishApiWebClient.post().uri { uriBuilder: UriBuilder ->
+        return request { client -> client.post().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/player").build()
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestQQRequestBody::class.java)
                 .headers(base::insertJSONHeader).retrieve()
-                .bodyToMono(MaiBestScore::class.java).block()!!
-        } catch (e: WebClientRequestException) {
-            log.error("水鱼查分器：获取失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
+                .bodyToMono(MaiBestScore::class.java)
         }
     }
 
     override fun getMaimaiBest50(username: String): MaiBestScore {
         val b = MaimaiBestNameRequestBody(username, true)
 
-        return try {
-            base.divingFishApiWebClient.post().uri { uriBuilder: UriBuilder ->
+        return request { client -> client.post().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/player").build()
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestNameRequestBody::class.java)
-                .retrieve().bodyToMono(MaiBestScore::class.java).block()!!
-        } catch (e: WebClientRequestException) {
-            log.error("水鱼查分器：获取失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
+                .retrieve().bodyToMono(MaiBestScore::class.java)
         }
     }
 
@@ -80,15 +73,12 @@ import kotlin.text.Charsets.UTF_8
     ): MaiVersionScore {
         val b = MaimaiVersionNameRequestBody(username, getNameList(versions))
 
-        return try {
-            base.divingFishApiWebClient.post().uri { uriBuilder: UriBuilder ->
+        return request { client -> client.post().uri { uriBuilder: UriBuilder ->
                     uriBuilder.path("api/maimaidxprober/query/plate").build()
                 }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiVersionNameRequestBody::class.java)
-                .headers(base::insertJSONHeader).retrieve()
-                .bodyToMono(MaiVersionScore::class.java).block()!!
-        } catch (e: WebClientRequestException) {
-            log.error("水鱼查分器：获取失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
+                .headers(base::insertJSONHeader)
+                .retrieve()
+                .bodyToMono(MaiVersionScore::class.java)
         }
     }
 
@@ -97,15 +87,16 @@ import kotlin.text.Charsets.UTF_8
     ): MaiVersionScore {
         val b = MaimaiVersionQQRequestBody(qq, getNameList(versions))
 
-        return try {
-            base.divingFishApiWebClient.post().uri { uriBuilder: UriBuilder ->
-                    uriBuilder.path("api/maimaidxprober/query/plate").build()
-                }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiVersionQQRequestBody::class.java)
-                .headers(base::insertJSONHeader).retrieve()
-                .bodyToMono(MaiVersionScore::class.java).block()!!
-        } catch (e: WebClientRequestException) {
-            log.error("水鱼查分器：获取失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
+        return request { client -> client
+            .post().uri { it
+                .path("api/maimaidxprober/query/plate")
+                .build()
+            }
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(Mono.just(b), MaimaiVersionQQRequestBody::class.java)
+            .headers(base::insertJSONHeader)
+            .retrieve()
+            .bodyToMono(MaiVersionScore::class.java)
         }
     }
 
@@ -115,8 +106,7 @@ import kotlin.text.Charsets.UTF_8
 
         if (Files.isRegularFile(f)) try {
             return Files.readAllBytes(f)
-        } catch (ignored: IOException) {
-        }
+        } catch (ignored: IOException) {}
 
         return getMaimaiCoverFromAPI(songID)
     }
@@ -129,7 +119,7 @@ import kotlin.text.Charsets.UTF_8
         } else if (songID in 10001..10999) {
             songID - 10000L
         } else if (songID >= 100000L) {
-            songID - 100000L
+            songID % 10000L + 10000L
         } else {
             songID
         }
@@ -140,13 +130,15 @@ import kotlin.text.Charsets.UTF_8
     override fun getMaimaiCoverFromAPI(songID: Long): ByteArray {
         val song = getStandardisedSongID(songID)
         val cover = try {
-            base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
-                    uriBuilder.path("covers/$song.png").build()
-                }.retrieve().bodyToMono(ByteArray::class.java).block()!!
+            request { client -> client.get().uri {
+                it.path("covers/$song.png").build()
+            }.retrieve().bodyToMono(ByteArray::class.java)
+            }
         } catch (e: WebClientResponseException.NotFound) {
-            base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
-                    uriBuilder.path("covers/00000.png").build()
-                }.retrieve().bodyToMono(ByteArray::class.java).block()!!
+            request { client -> client.get().uri {
+                it.path("covers/00000.png").build()
+            }.retrieve().bodyToMono(ByteArray::class.java)
+            }
         }
 
         return cover
@@ -386,36 +378,24 @@ import kotlin.text.Charsets.UTF_8
     @Throws(
         WebClientResponseException.Forbidden::class, WebClientResponseException.BadGateway::class
     ) override fun getMaimaiFullScores(qq: Long): MaiBestScore {
-        return try {
-            base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
-                    uriBuilder.path("api/maimaidxprober/dev/player/records").queryParam("qq", qq).build()
-                }.headers(base::insertDeveloperHeader).retrieve()
-                .bodyToMono(MaiBestScore::class.java).block()!!
-        } catch (e: WebClientResponseException.Forbidden) {
-            throw e
-        } catch (e: WebClientResponseException.BadRequest) {
-            throw e
-        } catch (e: WebClientRequestException) {
-            log.error("水鱼查分器：获取失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
+        return request { client -> client
+            .get().uri { it
+                .path("api/maimaidxprober/dev/player/records")
+                .queryParam("qq", qq)
+                .build()
+            }.headers(base::insertDeveloperHeader)
+            .retrieve()
+            .bodyToMono(MaiBestScore::class.java)
         }
     }
 
     @Throws(
         WebClientResponseException.Forbidden::class, WebClientResponseException.BadGateway::class
     ) override fun getMaimaiFullScores(username: String): MaiBestScore {
-        return try {
-            base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
-                    uriBuilder.path("api/maimaidxprober/dev/player/records").queryParam("username", username).build()
-                }.headers(base::insertDeveloperHeader).retrieve()
-                .bodyToMono(MaiBestScore::class.java).block()!!
-        } catch (e: WebClientResponseException.Forbidden) {
-            throw e
-        } catch (e: WebClientResponseException.BadRequest) {
-            throw e
-        } catch (e: WebClientRequestException) {
-            log.error("水鱼查分器：获取失败", e)
-            throw GeneralTipsException(GeneralTipsException.Type.G_Malfunction_Fetch, "水鱼查分器")
+        return request { client -> client
+            .get().uri { it.path("api/maimaidxprober/dev/player/records").queryParam("username", username).build()
+            }.headers(base::insertDeveloperHeader).retrieve()
+            .bodyToMono(MaiBestScore::class.java)
         }
     }
 
@@ -432,27 +412,6 @@ import kotlin.text.Charsets.UTF_8
         val o = maiDao.findMaiSongByTitle(text)
         insertMaimaiAlias(o)
         return o
-
-        /*
-        val songs = getMaimaiSongLibrary()
-
-        val result = mutableMapOf<Double, MaiSong>()
-
-        for (s in songs) {
-            val similarity = DataUtil.getStringSimilarity(text, s.value.title)
-
-            if (similarity >= 0.5) {
-                result[similarity] = s.value
-            }
-        }
-
-        if (result.isEmpty()) {
-            return null
-        }
-
-        return result.toSortedMap().reversed()
-
-         */
     }
 
     override fun getMaimaiAliasSong(text: String): MaiSong? {
@@ -485,32 +444,36 @@ import kotlin.text.Charsets.UTF_8
         return if (result.isEmpty()) {
             null
         } else {
-            result
-                .sortedBy { it.second }
-                .sortedByDescending { it.third }
-                .map { it.first }
+            result.sortBy { it.second }
+            result.sortByDescending { it.third }
+
+            result.map { it.first }
         }
     }
 
     private val maimaiSongLibraryFromAPI: String
-        get() = base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
-                uriBuilder.path("api/maimaidxprober/music_data").build()
-            }.retrieve().bodyToMono(String::class.java).block()!!
+        get() = request { client -> client.get()
+            .uri { it.path("api/maimaidxprober/music_data").build()
+            }.retrieve().bodyToMono(String::class.java)
+        }
 
     private val maimaiRankLibraryFromAPI: String
-        get() = base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
-                uriBuilder.path("api/maimaidxprober/rating_ranking").build()
-            }.retrieve().bodyToMono(String::class.java).block()!!
+        get() = request { client -> client.get()
+            .uri { it.path("api/maimaidxprober/rating_ranking").build()
+            }.retrieve().bodyToMono(String::class.java)
+        }
 
     private val maimaiFitLibraryFromAPI: String
-        get() = base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
-                uriBuilder.path("api/maimaidxprober/chart_stats").build()
-            }.retrieve().bodyToMono(String::class.java).block()!!
+        get() = request { client -> client.get()
+            .uri { it.path("api/maimaidxprober/chart_stats").build()
+            }.retrieve().bodyToMono(String::class.java)
+        }
 
     private val maimaiAliasLibraryFromAPI: String
-        get() = base.divingFishApiWebClient.get().uri { uriBuilder: UriBuilder ->
-                uriBuilder.scheme("https").host("maimai.lxns.net").path("api/v0/maimai/alias/list").build()
-            }.retrieve().bodyToMono(String::class.java).block()!!
+        get() = request { client -> client.get()
+            .uri { it.scheme("https").host("maimai.lxns.net").replacePath("api/v0/maimai/alias/list").build()
+            }.retrieve().bodyToMono(String::class.java)
+        }
 
     private fun <T> parseFile(fileName: String, clazz: Class<T>): T? {
         val file = path.resolve(fileName)
@@ -520,7 +483,7 @@ import kotlin.text.Charsets.UTF_8
             if (Files.isRegularFile(file)) {
                 return JacksonUtil.parseObject(s, clazz)
             } else {
-                log.info("舞萌: 文件{}不存在", fileName)
+                log.info("舞萌: 文件${fileName}不存在", )
                 return null
             }
 
@@ -555,12 +518,37 @@ import kotlin.text.Charsets.UTF_8
                 log.info("舞萌: 未保存{}库", dictionaryName)
             }
         } catch (e: IOException) {
-            log.error(String.format("舞萌: %s库保存失败", dictionaryName), e)
+            log.error("舞萌: ${dictionaryName}库保存失败", e)
         }
     }
 
     private fun isRegularFile(fileName: String): Boolean {
         return Files.isRegularFile(path.resolve(fileName))
+    }
+
+    /**
+     * 错误包装
+     */
+    @Throws(NetworkException::class)
+    private fun <T> request(request: (WebClient) -> Mono<T>): T {
+        return try {
+            request(base.divingFishApiWebClient).block()!!
+        } catch (e: WebClientResponseException.BadRequest) {
+            throw NetworkException.DivingFishException.BadRequest()
+        } catch (e: WebClientResponseException.Unauthorized) {
+            throw NetworkException.DivingFishException.Unauthorized()
+        } catch (e: WebClientResponseException.Forbidden) {
+            throw NetworkException.DivingFishException.Forbidden()
+        } catch (e: ReadTimeoutException) {
+            throw NetworkException.DivingFishException.RequestTimeout()
+        } catch (e: WebClientResponseException.InternalServerError) {
+            throw NetworkException.DivingFishException.InternalServerError()
+        } catch (e: WebClientResponseException.BadGateway) {
+            throw NetworkException.DivingFishException.BadGateway()
+        } catch (e: Exception) {
+            log.error("水鱼查分器：获取失败", e)
+            throw NetworkException.DivingFishException.Undefined(e)
+        }
     }
 
     companion object {

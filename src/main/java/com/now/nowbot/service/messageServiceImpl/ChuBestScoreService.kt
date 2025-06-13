@@ -7,16 +7,13 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
-import com.now.nowbot.throwable.GeneralTipsException
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_HYPHEN
-import com.yumu.core.extensions.isNotNull
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import kotlin.math.max
 import kotlin.math.min
 
@@ -129,7 +126,7 @@ class ChuBestScoreService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: ChuBestScoreParam) {
-        val scores = getBestScores(param.qq, param.name, param.isMyself, chunithmApiService)
+        val scores = getBestScores(param.qq, param.name, chunithmApiService)
         val charts = implementScore(param.range, scores, chunithmApiService)
         val isMultipleScore = charts.recent10.size + charts.best30.size > 1
 
@@ -165,35 +162,14 @@ class ChuBestScoreService(
         fun getBestScores(
             qq: Long?,
             name: String?,
-            isMyself: Boolean,
             chunithmApiService: ChunithmApiService,
         ): ChuBestScore {
-            return if (qq.isNotNull()) {
-                try {
-                    chunithmApiService.getChunithmBest30Recent10(qq!!)
-                } catch (e: WebClientResponseException.BadRequest) {
-                    if (isMyself) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouBadRequest)
-                    } else {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_QQBadRequest)
-                    }
-                } catch (e: WebClientResponseException.Forbidden) {
-                    if (isMyself) {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_YouForbidden)
-                    } else {
-                        throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_PlayerForbidden)
-                    }
-                }
-            } else if (name.isNotNull()) {
-                try {
-                    chunithmApiService.getChunithmBest30Recent10(name!!)
-                } catch (e: WebClientResponseException.BadRequest) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_NameBadRequest)
-                } catch (e: WebClientResponseException.Forbidden) {
-                    throw GeneralTipsException(GeneralTipsException.Type.G_Maimai_PlayerForbidden)
-                }
+            return if (qq != null) {
+                chunithmApiService.getChunithmBest30Recent10(qq)
+            } else if (!name.isNullOrBlank()) {
+                chunithmApiService.getChunithmBest30Recent10(name)
             } else {
-                throw GeneralTipsException(GeneralTipsException.Type.G_Null_PlayerUnknown)
+                throw NoSuchElementException.Player()
             }
         }
 

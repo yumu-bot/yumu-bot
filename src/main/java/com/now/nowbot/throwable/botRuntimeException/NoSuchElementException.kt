@@ -51,7 +51,7 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class PlayerInactive(name: String):
         NoSuchElementException("玩家 $name 最近不活跃...")
 
-    class Player(name: String?):
+    class Player(name: String? = null):
         NoSuchElementException("没有找到玩家${
             if (name.isNullOrBlank()) { 
                 "" 

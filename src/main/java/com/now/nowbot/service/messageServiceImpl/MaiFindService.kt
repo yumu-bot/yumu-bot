@@ -9,7 +9,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.messageServiceImpl.MaiFindService.MaiFindParam
-import com.now.nowbot.throwable.GeneralTipsException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
@@ -129,7 +129,7 @@ import kotlin.math.floor
         }
 
         if (songs.isEmpty()) throw NoSuchElementException.Result()
-        if (songs.size > 200) throw GeneralTipsException(GeneralTipsException.Type.G_Exceed_Score_Count, songs.size)
+        if (songs.size > 200) throw IllegalArgumentException.ExceedException.FilteredScore(songs.size)
 
         val user = try {
             maimaiApiService.getMaimaiBest50(event.sender.id).getUser()

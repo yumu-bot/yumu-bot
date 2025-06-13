@@ -4,35 +4,15 @@ import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.maimai.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.web.reactive.function.client.WebClientResponseException
 
 interface MaimaiApiService {
-    @Throws(
-            WebClientResponseException.Forbidden::class,
-            WebClientResponseException.BadGateway::class,
-    )
     fun getMaimaiBest50(qq: Long): MaiBestScore
 
-    @Throws(
-            WebClientResponseException.Forbidden::class,
-            WebClientResponseException.BadGateway::class,
-    )
     fun getMaimaiBest50(username: String): MaiBestScore
 
-    @Throws(
-            WebClientResponseException.Forbidden::class,
-            WebClientResponseException.BadGateway::class,
-    )
     fun getMaimaiScoreByVersion(qq: Long, versions: List<MaiVersion>): MaiVersionScore
 
-    @Throws(
-            WebClientResponseException.Forbidden::class,
-            WebClientResponseException.BadGateway::class,
-    )
-    fun getMaimaiScoreByVersion(
-            username: String,
-            versions: List<MaiVersion>,
-    ): MaiVersionScore
+    fun getMaimaiScoreByVersion(username: String, versions: List<MaiVersion>, ): MaiVersionScore
 
     fun getMaimaiCover(songID: Long): ByteArray
 
@@ -93,40 +73,16 @@ interface MaimaiApiService {
     fun insertSongData(score: MaiScore, song: MaiSong)
 
     // 以下需要从水鱼那里拿 DeveloperToken
-    @Throws(
-            WebClientResponseException.Forbidden::class,
-            WebClientResponseException.BadGateway::class,
-    )
     fun getMaimaiSongScore(qq: Long, songID: Int): MaiScore
 
-    @Throws(
-            WebClientResponseException.Forbidden::class,
-            WebClientResponseException.BadGateway::class,
-    )
     fun getMaimaiSongsScore(qq: Long, songIDs: List<Int>): List<MaiScore>
 
-    @Throws(
-            WebClientResponseException.Forbidden::class,
-            WebClientResponseException.BadGateway::class,
-    )
     fun getMaimaiSongScore(username: String, songID: Int): MaiScore
 
-    @Throws(
-            WebClientResponseException.Forbidden::class,
-            WebClientResponseException.BadGateway::class,
-    )
     fun getMaimaiSongsScore(username: String, songIDs: List<Int>): List<MaiScore>
 
-    @Throws(
-            WebClientResponseException.Forbidden::class,
-            WebClientResponseException.BadGateway::class,
-    )
     fun getMaimaiFullScores(qq: Long): MaiBestScore
 
-    @Throws(
-            WebClientResponseException.Forbidden::class,
-            WebClientResponseException.BadGateway::class,
-    )
     fun getMaimaiFullScores(username: String): MaiBestScore
 
     companion object {

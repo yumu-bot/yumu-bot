@@ -11,6 +11,12 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
         class StarRating:
             WrongException("对方真的糊了那么高星的图吗？还是说你在滥用功能...")
 
+        class Version:
+            ExceedException("符合筛选版本的成绩太多了！请减少版本，缩小查询范围。")
+
+        class VersionDifficulty:
+            ExceedException("符合筛选版本的成绩太多了！请指定难度（\":\" + \"b、a、e、m、r\"），缩小查询范围。")
+
     }
 
     open class WrongException(message: String?): IllegalArgumentException(message) {

@@ -265,7 +265,7 @@ open class NetworkException(message: String?
         class BadRequest:
             DivingFishException("""
                 400 Bad Request
-                渲染模块请求格式错误。
+                水鱼请求格式错误。
             """.trimIndent()) {
             override val code = 400
         }
