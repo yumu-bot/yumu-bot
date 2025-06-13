@@ -185,19 +185,24 @@ import kotlin.math.*
             limit = getLimit(1, false)
         }
 
+        val scores = scoreApiService.getBestScores(data!!.userID, mode, offset, limit)
+
+        /*
         val scores = if (limit > 100) {
             scoreApiService.getBestScores(data!!.userID, mode, offset, 100) + scoreApiService.getBestScores(data!!.userID, mode, offset + 100, limit - 100)
         } else {
             scoreApiService.getBestScores(data!!.userID, mode, offset, limit)
         }
 
-        calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyBeatMapChanges(scores)
+         */
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
             throw NoSuchElementException.BestScoreWithMode(this.data!!.username, mode)
         }
+
+        calculateApiService.applyStarToScores(scores)
+        calculateApiService.applyBeatMapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
@@ -228,5 +233,6 @@ import kotlin.math.*
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BPService::class.java)
+
     }
 }

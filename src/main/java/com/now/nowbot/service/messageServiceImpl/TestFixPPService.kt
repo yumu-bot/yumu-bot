@@ -114,7 +114,7 @@ import kotlin.math.roundToInt
                 }
 
                 val bests: List<LazerScore> = try {
-                    scoreApiService.getBestScores(user.userID, mode, 0, 100) + scoreApiService.getBestScores(user.userID, mode, 100, 100)
+                    scoreApiService.getBestScores(user.userID, mode, 0, 200)
                 } catch (e: Exception) {
                     log.error("TP：获取玩家 $it 最好成绩失败")
                     return@Supplier it to TestFixPPData(user, listOf())

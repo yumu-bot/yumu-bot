@@ -38,29 +38,7 @@ class ScoreApiImpl(
     val scoreDao: ScoreDao,
 ) : OsuScoreApiService {
 
-    override fun getBestScores(
-        user: BindUser,
-        mode: OsuMode?,
-        offset: Int,
-        limit: Int,
-    ): List<LazerScore> {
-        if (!user.isAuthorized) return getBestScores(user.userID, mode, offset, limit)
-        return request { client -> client.get()
-            .uri { it.path("users/{uid}/scores/best")
-                .queryParam("legacy_only", 0)
-                .queryParam("offset", offset)
-                .queryParam("limit", limit)
-                .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                .build(user.userID)
-            }
-            .headers(base.insertHeader(user))
-            .retrieve()
-            .bodyToFlux(LazerScore::class.java)
-            .collectList()
-        }
-    }
-
-    override fun getBestScores(
+    private fun getBests(
         id: Long,
         mode: OsuMode?,
         offset: Int,
@@ -77,16 +55,40 @@ class ScoreApiImpl(
             }
             .headers(base::insertHeader)
             .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .map { JacksonUtil.parseObjectList(it, LazerScore::class.java) }
-        }
-
-            /*
             .bodyToFlux(LazerScore::class.java)
             .collectList()
-            .block()!!
+        }
+    }
+
+    override fun getBestScores(
+        id: Long,
+        mode: OsuMode?,
+        offset: Int,
+        limit: Int,
+    ): List<LazerScore> {
+        return if (offset - limit <= 100) {
+            getBests(id, mode, offset, limit)
+        } else {
+            val bests: List<LazerScore> = getBests(id, mode, offset, 100) + getBests(id, mode, offset + 100, limit - 100)
+
+            /*
+            runBlocking {
+                val deferred1 = scope.async {
+                    getBests(id, mode, offset, 100)
+                }
+
+                val deferred2 = scope.async {
+                    getBests(id, mode, offset + 100, limit - 100)
+                }
+
+                bests = deferred1.await() + deferred2.await()
+            }
 
              */
+
+
+            return bests
+        }
     }
 
     override fun getPassedScore(
@@ -499,6 +501,8 @@ class ScoreApiImpl(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ScoreApiImpl::class.java)
+
+        // private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(2))
 
         private val IMG_BUFFER_PATH: String = if (System.getenv("BUFFER_PATH").isNullOrBlank().not()) {
             System.getenv("BUFFER_PATH")

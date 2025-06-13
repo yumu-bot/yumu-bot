@@ -68,7 +68,7 @@ interface MaimaiApiService {
 
     fun insertSongData(scores: List<MaiScore>)
 
-    fun insertPosition(scores: List<MaiScore>, isBest35: Boolean)
+    fun insertPosition(scores: List<MaiScore>, isBest35: Boolean = true)
 
     fun insertSongData(score: MaiScore, song: MaiSong)
 

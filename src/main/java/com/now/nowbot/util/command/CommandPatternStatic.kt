@@ -39,6 +39,7 @@ const val FLAG_RANGE: String = "range"
 const val FLAG_QQ_ID: String = "qq"
 const val FLAG_QQ_GROUP: String = "group"
 const val FLAG_VERSION: String = "version"
+const val FLAG_PAGE: String = "page"
 const val FLAG_DIFF: String = "diff"
 
 @Language("RegExp")
@@ -79,6 +80,9 @@ val REG_NUMBER_12: String = "\\d{1,2}"
 
 @Language("RegExp")
 val REG_NUMBER_13: String = "\\d{1,3}"
+
+@Language("RegExp")
+val REG_NUMBER_1_100: String = "(\\d{1,2}|100)"
 
 @Language("RegExp")
 val REG_NUMBER_15: String = "\\d{1,5}"

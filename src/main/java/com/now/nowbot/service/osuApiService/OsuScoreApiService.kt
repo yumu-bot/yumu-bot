@@ -12,9 +12,11 @@ import com.now.nowbot.model.osu.OsuUser
 interface OsuScoreApiService {
 
     // 获取最好成绩
-    fun getBestScores(user: BindUser, mode: OsuMode?, offset: Int, limit: Int): List<LazerScore>
-
     fun getBestScores(id: Long, mode: OsuMode?, offset: Int, limit: Int): List<LazerScore>
+
+    fun getBestScores(user: BindUser, mode: OsuMode?, offset: Int, limit: Int): List<LazerScore> {
+        return getBestScores(user.userID, mode, offset, limit)
+    }
 
     fun getBestScores(user: OsuUser): List<LazerScore> {
         return getBestScores(user.userID, user.currentOsuMode, 0, 100)
@@ -49,15 +51,6 @@ interface OsuScoreApiService {
         } else {
             getRecentScore(uid, mode, offset, limit)
         }
-    }
-
-    // 默认获取成绩的接口，不用区分 pass 或 recent，默认拿 recent
-    fun getScore(
-        uid: Long,
-        mode: OsuMode?,
-        isPass: Boolean?,
-    ): List<LazerScore> {
-        return getScore(uid = uid, mode = mode, offset = 0, limit = 100, isPass = isPass ?: false)
     }
 
     /**
@@ -123,5 +116,6 @@ interface OsuScoreApiService {
     }
 
     fun asyncDownloadBackground(scores: Iterable<LazerScore>, type: CoverType? = CoverType.COVER)
+
     fun getReplay(score: LazerScore): Replay?
 }

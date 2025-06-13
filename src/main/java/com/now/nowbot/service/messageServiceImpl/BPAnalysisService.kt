@@ -58,12 +58,7 @@ import kotlin.math.min
         val isMyself = AtomicBoolean(false)
         val mode = getMode(matcher)
         val user = getUserWithoutRange(event, matcher, mode, isMyself)
-        val bests = scoreApiService.getBestScores(user.userID, mode.data) + scoreApiService.getBestScores(
-            user.userID,
-            mode.data,
-            100,
-            100
-        )
+        val bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 200)
 
         data.value = BAParam(user, bests, isMyself.get())
 

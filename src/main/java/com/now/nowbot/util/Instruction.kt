@@ -823,6 +823,31 @@ enum class Instruction(val pattern: Pattern) {
         }
     }),
 
+    MAI_AP(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("mai(mai)?\\s*(allperfect|ap)", "mp", "xp")
+        appendQQID()
+        appendNameAnyButNoHash()
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendMatchLevel(MAYBE)
+            appendSpace()
+            appendCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, EXIST)
+        }
+    }),
+
+    MAI_FC(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("mai(mai)?\\s*(fullcombo|fc)", "mc", "xc")
+        appendQQID()
+        appendNameAnyButNoHash()
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendMatchLevel(MAYBE)
+            appendSpace()
+            appendCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, EXIST)
+        }
+    }),
+
+    // 必须放在其他 mai 指令后面
     MAI_BP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mai(mai)?\\s*(best|best50|b50)?", "mb", "x")
         appendQQID()
