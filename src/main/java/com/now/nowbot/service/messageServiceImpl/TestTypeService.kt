@@ -66,8 +66,8 @@ import org.springframework.stereotype.Service
         val isChangedRating = LazerMod.hasStarRatingChange(param.mods)
 
         try {
-            map = beatmapApiService.getBeatMapFromDataBase(param.bid)
-            fileStr = beatmapApiService.getBeatMapFileString(param.bid)!!
+            map = beatmapApiService.getBeatmapFromDatabase(param.bid)
+            fileStr = beatmapApiService.getBeatmapFileString(param.bid)!!
         } catch (e: Exception) {
             throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
         }

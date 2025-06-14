@@ -92,8 +92,7 @@ class TodayBPService(
         val isToday = (dayStart == 0 && dayEnd == 1)
 
         val bests: List<LazerScore> = try {
-            scoreApiService.getBestScores(user.userID, mode.data, 0, 100) +
-                    scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
+            scoreApiService.getBestScores(user.userID, mode.data, 0, 200)
         } catch (e: NetworkException) {
             throw e
         } catch (e: Exception) {

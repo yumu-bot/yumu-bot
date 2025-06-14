@@ -134,7 +134,7 @@ class MatchRating(
         // apply sr change
         rs.forEach {
             if (it.beatmap != null) {
-                val b = beatmapApiService.getBeatMapFromDataBase(it.beatmapID)
+                val b = beatmapApiService.getBeatmapFromDatabase(it.beatmapID)
 
                 calculateApiService.applyStarToBeatMap(b, it.mode, LazerMod.getModsList(it.mods))
 

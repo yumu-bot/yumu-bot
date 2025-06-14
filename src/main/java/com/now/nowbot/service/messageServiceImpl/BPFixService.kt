@@ -23,6 +23,8 @@ import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -49,8 +51,7 @@ class BPFixService(
 
         val user = getUserWithoutRange(event, matcher, mode)
 
-        val bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 100) +
-                scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
+        val bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 200)
         val bestsMap = bests.mapIndexed { i, it -> (i + 1) to it }.toMap()
 
         data.value = BPFixParam(user, bestsMap, mode.data!!)
@@ -76,8 +77,7 @@ class BPFixService(
         val mode = getMode(matcher)
         val user = getUserWithoutRange(event, matcher, mode)
 
-        val bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 100) +
-                scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
+        val bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 200)
         val bestsMap = bests.mapIndexed { i, it -> (i + 1) to it }.toMap()
 
         return BPFixParam(user, bestsMap, mode.data!!)
@@ -87,6 +87,53 @@ class BPFixService(
 
     fun fix(playerPP: Double, bestsMap: Map<Int, LazerScore>): Map<String, Any>? {
         val beforeBpSumAtomic = AtomicReference(0.0)
+
+        val deferredList = bestsMap.map { entry ->
+            val index = entry.key
+            val score = entry.value
+
+            beforeBpSumAtomic.updateAndGet { it + (score.weight?.pp ?: 0.0) }
+
+            scope.async {
+                beatmapApiService.applyBeatmapExtendFromDatabase(score)
+
+                val max = score.beatmap.maxCombo ?: 1
+                val combo = score.maxCombo
+                val stat = score.statistics
+                val ok = stat.ok
+                val meh = stat.meh
+                val miss = stat.miss
+
+                // 断连击，mania 模式现在也可以参与此项筛选
+                val isChoke = if (score.mode == OsuMode.MANIA) {
+                    (ok + meh + miss) / max <= 0.03
+                } else {
+                    (miss == 0) && (combo < (max * 0.98).roundToInt())
+                }
+
+                // 含有 <1% 的失误
+                val has1pMiss = (miss > 0) && ((1.0 * miss / max) <= 0.01)
+
+                // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
+                if (isChoke || has1pMiss) {
+                    initFixScore(score, index)
+                } else {
+                    score
+                }
+            }
+        }
+
+        val fixedBests = runBlocking {
+            deferredList.map { it.await() }
+        }.sortedByDescending {
+            if (it is LazerScoreWithFcPP && it.fcPP > 0) {
+                it.fcPP
+            } else {
+                it.pp
+            }
+        }
+
+
 
         /*
         val actions = (bestsMap.toList()).map { pair ->
@@ -140,9 +187,10 @@ class BPFixService(
 
             */
 
+        /*
         val fixedBests = bestsMap.map { (index, score) ->
             beforeBpSumAtomic.updateAndGet { it + (score.weight?.pp ?: 0.0) }
-            beatmapApiService.applyBeatMapExtendFromDataBase(score)
+            beatmapApiService.applyBeatmapExtendFromDatabase(score)
 
             val max = score.beatmap.maxCombo ?: 1
             val combo = score.maxCombo
@@ -176,6 +224,8 @@ class BPFixService(
 
             pp * 100.0
         }
+
+         */
 
         val afterBpSumAtomic = AtomicReference(0.0)
 
@@ -238,7 +288,7 @@ class BPFixService(
 
     companion object {
         val log: Logger = LoggerFactory.getLogger(BPFixService::class.java)
-        val scope = CoroutineScope(Dispatchers.Default)
+        val scope = CoroutineScope(Dispatchers.Default.limitedParallelism(8))
 
     }
 }

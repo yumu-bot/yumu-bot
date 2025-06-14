@@ -16,7 +16,7 @@ class MapPoolDto(
     var id: Int = 0
 
     val modPools: List<ModPool> = poolMap?.map { pool ->
-        val beatmaps = pool.value.map { beatmapApiService.getBeatMap(it) }
+        val beatmaps = pool.value.map { beatmapApiService.getBeatmap(it) }
 
         ModPool(pool.key, beatmaps)
     } ?: listOf()

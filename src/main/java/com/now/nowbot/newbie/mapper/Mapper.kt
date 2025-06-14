@@ -107,7 +107,7 @@ class NewbieDao(
 
         val passTime = pass.sumOf {
             with(it) {
-                val b = osuMapService.getBeatMapFromDataBase(beatmapId.toLong())
+                val b = osuMapService.getBeatmapFromDatabase(beatmapId.toLong())
                 b.hitLength!!
             }
         }

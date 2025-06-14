@@ -66,9 +66,9 @@ import kotlin.math.roundToInt
         )
 
         try {
-            val search = beatmapApiService.searchBeatMapSet(query, tries)
+            val search = beatmapApiService.searchBeatmapset(query, tries)
 
-            beatmapApiService.applyBeatMapSetRankedTime(search.beatmapSets)
+            beatmapApiService.applyBeatmapsetRankedTime(search.beatmapSets)
 
             val img = imageService.getPanel(search, "A2")
             event.reply(img)

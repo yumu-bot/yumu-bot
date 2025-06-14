@@ -157,7 +157,7 @@ import java.util.concurrent.ConcurrentHashMap
         } catch (e: WebClientResponseException) {
             val n = findErrorBid(body)
             getMapPerformancePlus(n.toLong(), listOf<LazerMod>())
-            beatmapApiService.refreshBeatMapFileFromDirectory(n.toLong())
+            beatmapApiService.refreshBeatmapFileFromDirectory(n.toLong())
             Thread.startVirtualThread { this.clearCache(n) }
             throw IllegalStateException.Fetch("PP+：谱面编号 $n")
         }
@@ -213,7 +213,7 @@ import java.util.concurrent.ConcurrentHashMap
         val beatmapFiles = osuPath.resolve("$beatmapId.osu")
         if (!Files.isRegularFile(beatmapFiles)) {
             try {
-                val fileStr = beatmapApiService.getBeatMapFileString(beatmapId) ?: throw RuntimeException()
+                val fileStr = beatmapApiService.getBeatmapFileString(beatmapId) ?: throw RuntimeException()
 
                 Files.writeString(beatmapFiles, fileStr)
             } catch (e: Throwable) {

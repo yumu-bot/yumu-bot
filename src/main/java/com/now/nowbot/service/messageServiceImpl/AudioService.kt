@@ -83,7 +83,7 @@ class AudioService(
     private fun getVoiceFromSID(sid: Long): ByteArray? {
         val s =
             try {
-                beatmapApiService.getBeatMapSet(sid)
+                beatmapApiService.getBeatmapset(sid)
             } catch (e: Exception) {
                 return null
             }
@@ -102,7 +102,7 @@ class AudioService(
     private fun getVoiceFromBID(bid: Long): ByteArray? {
         val b =
             try {
-                beatmapApiService.getBeatMap(bid)
+                beatmapApiService.getBeatmap(bid)
             } catch (e: Exception) {
                 return null
             }

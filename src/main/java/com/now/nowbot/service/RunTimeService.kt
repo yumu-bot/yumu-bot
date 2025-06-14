@@ -120,7 +120,7 @@ class RunTimeService(
     @Scheduled(cron = "0 2 6 * * *")
     fun updateBeatMapTagsLibrary() {
         log.info("开始执行更新谱面玩家标签库任务")
-        beatmapApiService.updateBeatMapTagLibraryDatabase()
+        beatmapApiService.updateBeatmapTagLibraryDatabase()
     }
 
 
@@ -151,32 +151,28 @@ class RunTimeService(
      */
     @Scheduled(cron = "0 0/30 8-18 * * *")
     fun alive() {
+        fun Long.toMega(): Long {
+            return this / 1024 / 1024
+        }
+
         val m = ManagementFactory.getMemoryMXBean()
         val nm = m.nonHeapMemoryUsage
         val t = ManagementFactory.getThreadMXBean()
         val z = ManagementFactory.getMemoryPoolMXBeans()
-        log.info(
-            "方法区 已申请 {}M 已使用 {}M ",
-            nm.committed / 1024 / 1024,
-            nm.used / 1024 / 1024
-        )
-        log.info(
-            "堆内存上限{}M,当前内存占用{}M, 已使用{}M\n当前线程数 {} ,守护线程 {} ,峰值线程 {}",
-            m.heapMemoryUsage.max / 1024 / 1024,
-            m.heapMemoryUsage.committed / 1024 / 1024,
-            m.heapMemoryUsage.used / 1024 / 1024,
-            t.threadCount,
-            t.daemonThreadCount,
-            t.peakThreadCount
-        )
+
+        log.info("""
+            非堆内存：已使用 ${nm.used.toMega()} MB，已分配 ${nm.committed.toMega()} MB
+            堆内存：已使用 ${m.heapMemoryUsage.used.toMega()} MB，已分配 ${m.heapMemoryUsage.committed.toMega()} MB，最大可用 ${m.heapMemoryUsage.max.toMega()} MB
+            线程：当前 ${t.threadCount} 个 (守护 ${t.daemonThreadCount}，最大 ${t.peakThreadCount})
+        """.trimIndent())
+
+        val sb = StringBuilder("虚拟机内存池：")
+
         for (pool in z) {
-            log.info(
-                "vm内存 {} 已申请 {}M 已使用 {}M ",
-                pool.name,
-                pool.usage.committed / 1024 / 1024,
-                pool.usage.used / 1024 / 1024
-            )
+            sb.append("\n已使用 ${pool.usage.used.toMega()} MB，已分配 ${pool.usage.committed.toMega()} MB (${pool.name})")
         }
+
+        log.info(sb.toString())
     }
 
 

@@ -130,7 +130,7 @@ class ScorePRCardService(
 
     private fun getMessageChain(score: LazerScore): MessageChain {
         try {
-            beatmapApiService.applyBeatMapExtend(score)
+            beatmapApiService.applyBeatmapExtend(score)
         } catch (e: Exception) {
             throw IllegalStateException.Fetch("谱面")
         }

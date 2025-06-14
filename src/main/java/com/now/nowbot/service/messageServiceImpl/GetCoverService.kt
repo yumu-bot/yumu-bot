@@ -152,7 +152,7 @@ import java.nio.file.Files
             bids: List<Long>, beatmapApiService: OsuBeatmapApiService
         ): List<Beatmap> {
             if (bids.isEmpty()) return listOf()
-            return bids.map { beatmapApiService.getBeatMapFromDataBase(it) }
+            return bids.map { beatmapApiService.getBeatmapFromDatabase(it) }
         }
 
 

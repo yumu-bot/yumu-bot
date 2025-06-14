@@ -141,7 +141,7 @@ class MatchListenerService(
         val game = event.round ?: return
         with(game) {
             if (beatmap != null) {
-                beatmap = beatmapApiService.getBeatMap(beatmapID)
+                beatmap = beatmapApiService.getBeatmap(beatmapID)
                 calculateApiService.applyStarToBeatMap(beatmap!!, mode, LazerMod.getModsList(mods))
             } else {
                 val b = Beatmap()
@@ -217,7 +217,7 @@ class MatchListenerService(
                 mr.calculate()
 
                 // 需要拓展
-                if (beatmap.CS == null) beatmap = beatmapApiService.getBeatMap(beatmapID)
+                if (beatmap.CS == null) beatmap = beatmapApiService.getBeatmap(beatmapID)
 
                 calculateApiService.applyBeatMapChanges(beatmap, LazerMod.getModsList(event.mods.map { it.acronym }))
 

@@ -131,16 +131,16 @@ import kotlin.math.floor
 
             if (isSID) {
                 try {
-                    s = beatmapApiService.getBeatMapSet(id)
+                    s = beatmapApiService.getBeatmapset(id)
                 } catch (e: NetworkException.BeatmapException.NotFound) {
-                    val b = beatmapApiService.getBeatMapFromDataBase(id)
+                    val b = beatmapApiService.getBeatmapFromDatabase(id)
                     id = b.beatmapsetID
-                    s = beatmapApiService.getBeatMapSet(id)
+                    s = beatmapApiService.getBeatmapset(id)
                 }
             } else {
-                val b = beatmapApiService.getBeatMapFromDataBase(id)
+                val b = beatmapApiService.getBeatmapFromDatabase(id)
                 id = b.beatmapsetID
-                s = beatmapApiService.getBeatMapSet(id)
+                s = beatmapApiService.getBeatmapset(id)
             }
 
             if (s.creatorData != null) {
@@ -156,7 +156,7 @@ import kotlin.math.floor
 
             if (!s.beatmaps.isNullOrEmpty()) {
                 // 插入标签
-                s.beatmaps!!.forEach { beatmapApiService.extendBeatMapTag(it) }
+                s.beatmaps!!.forEach { beatmapApiService.extendBeatmapTag(it) }
 
                 // 插入难度名
                 val diffs = s.beatmaps!!.associate { it.beatmapID to it.difficultyName }

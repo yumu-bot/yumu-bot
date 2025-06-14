@@ -77,7 +77,7 @@ class GetPoolService(
         val bid = dataStrs.firstNotNullOfOrNull { it.toLongOrNull() } ?: return OsuMode.DEFAULT
 
         return try {
-            beatmapApiService.getBeatMapFromDataBase(bid).mode
+            beatmapApiService.getBeatmapFromDatabase(bid).mode
         } catch (e: Exception) {
             OsuMode.DEFAULT
         }

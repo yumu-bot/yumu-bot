@@ -128,7 +128,7 @@ import kotlin.reflect.full.companionObjectInstance
     private fun getBeatmap(
         beatmapID: Long, mode: org.spring.osu.OsuMode, set: (JniBeatmap) -> Unit
     ): Pair<JniBeatmap, Boolean> {
-        val map = beatmapApiService.getBeatMapFileByte(beatmapID) ?: throw Exception("无法获取谱面文件, 请稍后再试")
+        val map = beatmapApiService.getBeatmapFileByte(beatmapID) ?: throw Exception("无法获取谱面文件, 请稍后再试")
         val beatmap = JniBeatmap(map)
         set(beatmap)
         val isConvert = if (beatmap.mode != mode && beatmap.mode == org.spring.osu.OsuMode.Osu) {

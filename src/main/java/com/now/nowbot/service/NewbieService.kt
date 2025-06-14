@@ -53,7 +53,7 @@ class NewbieService(
 
     fun getStarRating(bid: Long, modsString: String): Float {
         if (modsString == "[]") {
-            return beatmapApiService.getBeatMapFromDataBase(bid).starRating.toFloat()
+            return beatmapApiService.getBeatmapFromDatabase(bid).starRating.toFloat()
         }
         val mods = JacksonUtil.parseObjectList(modsString, LazerMod::class.java)
         if (mods.any { !allowedMods.contains(it::class) || it.settings != null }) {

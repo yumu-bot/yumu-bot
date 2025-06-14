@@ -770,7 +770,7 @@ import kotlin.math.min
 
         try {
             val mode = getMode(modeStr, OsuMode.OSU)
-            val beatmap = beatmapApiService.getBeatMap(bid)
+            val beatmap = beatmapApiService.getBeatmap(bid)
             val mods = LazerMod.getModsList(modStr ?: "")
 
             val expected = MapStatisticsService.Expected(
@@ -966,7 +966,7 @@ import kotlin.math.min
         @RequestParam("bid") @Nullable bid: Long?
     ): Beatmap {
         return if (bid != null) {
-            beatmapApiService.getBeatMap(bid)
+            beatmapApiService.getBeatmap(bid)
         } else {
             Beatmap()
         }

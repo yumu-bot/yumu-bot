@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-class BeatMapSetSearch {
+class BeatmapsetSearch {
     @JsonProperty("rule") var rule: String? = null
 
     @JsonProperty("recommended_difficulty") var recommendedDifficulty: Double? = 0.0

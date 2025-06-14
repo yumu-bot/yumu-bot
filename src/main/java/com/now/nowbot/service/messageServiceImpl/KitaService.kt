@@ -64,7 +64,7 @@ class KitaService(
                 param.group("round")
             }
 
-        beatmap = beatmapApiService.getBeatMapFromDataBase(bid)
+        beatmap = beatmapApiService.getBeatmapFromDatabase(bid)
 
         if (hasBG) {
             try {

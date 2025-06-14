@@ -351,9 +351,9 @@ class ScorePRService(
 
         // 用于已筛选过的成绩。此时成绩内的谱面是已经计算过的，无需再次计算
         fun getE5ParamForFilteredScore(user: OsuUser, score: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {
-            val originalBeatMap = beatmapApiService.getBeatMap(score.beatmapID)
+            val originalBeatMap = beatmapApiService.getBeatmap(score.beatmapID)
 
-            beatmapApiService.applyBeatMapExtend(score, originalBeatMap)
+            beatmapApiService.applyBeatmapExtend(score, originalBeatMap)
 
             val original = DataUtil.getOriginal(originalBeatMap)
 
@@ -376,7 +376,7 @@ class ScorePRService(
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService
         ): PanelE5Param {
-            beatmapApiService.applyBeatMapExtend(score)
+            beatmapApiService.applyBeatmapExtend(score)
             return getScore4PanelE5AfterExtended(user, score, position = null, panel, beatmapApiService, calculateApiService)
         }
 
@@ -389,7 +389,7 @@ class ScorePRService(
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService,
         ): PanelE5Param {
-            beatmapApiService.applyBeatMapExtend(score, beatmap)
+            beatmapApiService.applyBeatmapExtend(score, beatmap)
             return getScore4PanelE5AfterExtended(user, score, position, panel, beatmapApiService, calculateApiService)
         }
 

@@ -101,11 +101,11 @@ class MaiFilterService(private val maimaiApiService: MaimaiApiService, private v
             }
         }.sortedByDescending { it.rating }
 
-        runBlocking {
-            val deferred = scope.async { maimaiApiService.insertSongData(scores) }
-            val deferred2 = scope.async { maimaiApiService.insertMaimaiAliasForScore(scores) }
-            val deferred3 = scope.async { maimaiApiService.insertPosition(scores) }
+        val deferred = scope.async { maimaiApiService.insertSongData(scores) }
+        val deferred2 = scope.async { maimaiApiService.insertMaimaiAliasForScore(scores) }
+        val deferred3 = scope.async { maimaiApiService.insertPosition(scores) }
 
+        runBlocking {
             deferred.await()
             deferred2.await()
             deferred3.await()

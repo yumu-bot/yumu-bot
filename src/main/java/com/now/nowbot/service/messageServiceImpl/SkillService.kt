@@ -172,7 +172,7 @@ import kotlin.math.sqrt
 
             return@map AsyncMethodExecutor.Supplier<Pair<Long, Skill?>> {
                 try {
-                    val file = OsuFile.getInstance(beatmapApiService.getBeatMapFileString(it.beatmapID))
+                    val file = OsuFile.getInstance(beatmapApiService.getBeatmapFileString(it.beatmapID))
 
                     return@Supplier id to Skill.getInstance(
                         file,

@@ -83,13 +83,13 @@ class NewbieRestrictOverSRService(
 
                 val inputMode = getMode(ss)
 
-                val map = beatmapApiService.getBeatMap(bid)
+                val map = beatmapApiService.getBeatmap(bid)
                 val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
                 user = getUserWithoutRange(event, ss, CmdObject(mode))
                 scores = scoreApiService.getBeatMapScores(map.beatmapID, user.userID, mode)
 
-                beatmapApiService.applyBeatMapExtendForSameScore(scores, map)
+                beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
                 calculateApiService.applyStarToScores(scores, local = true)
             } else if (s.find()) {
                 val bid = getBid(s)
@@ -98,7 +98,7 @@ class NewbieRestrictOverSRService(
                 val inputMode = getMode(s)
                 val mods = getMod(s)
 
-                val map = beatmapApiService.getBeatMap(bid)
+                val map = beatmapApiService.getBeatmap(bid)
                 val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
                 user = getUserWithoutRange(event, s, CmdObject(mode))
@@ -261,7 +261,7 @@ class NewbieRestrictOverSRService(
                 val bid = getBid(m)
 
                 val beatmap = if (bid != 0L) {
-                    beatmapApiService.getBeatMap(bid)
+                    beatmapApiService.getBeatmap(bid)
                 } else return false
 
                 val mode = OsuMode.getMode(m.group("mode"))
@@ -317,8 +317,8 @@ class NewbieRestrictOverSRService(
     override fun HandleMessage(event: MessageEvent, param: Collection<LazerScore>) {
         val score = param.maxByOrNull { it.beatmap.starRating } ?: return
 
-        val beatmap = beatmapApiService.getBeatMap(score.beatmapID)
-        beatmapApiService.applyBeatMapExtend(score, beatmap)
+        val beatmap = beatmapApiService.getBeatmap(score.beatmapID)
+        beatmapApiService.applyBeatmapExtend(score, beatmap)
 
         val sr = score.beatmap.starRating
         val silence = getSilence(sr)

@@ -36,7 +36,7 @@ class UUScore(score: LazerScore, beatmapApiService: OsuBeatmapApiService, calcul
         val user = score.user
         bid = score.beatmap.beatmapID
 
-        beatmapApiService.applyBeatMapExtend(score)
+        beatmapApiService.applyBeatmapExtend(score)
 
         calculateApiService.applyPPToScore(score)
         calculateApiService.applyBeatMapChanges(score)

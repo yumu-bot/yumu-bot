@@ -136,7 +136,7 @@ class MatchMapService(
                 }
             }
 
-            val beatmap = beatmapApiService.getBeatMap(round.beatmapID)
+            val beatmap = beatmapApiService.getBeatmap(round.beatmapID)
 
             val mode = OsuMode.getConvertableMode(round.mode, beatmap.mode)
 

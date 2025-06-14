@@ -99,9 +99,9 @@ class LeaderBoardService(
 
         val beatmap: Beatmap =
             if (param.isBID) {
-                beatmapApiService.getBeatMap(param.bid)
+                beatmapApiService.getBeatmap(param.bid)
             } else {
-                beatmapApiService.getBeatMapSet(param.bid).getTopDiff()!!
+                beatmapApiService.getBeatmapset(param.bid).getTopDiff()!!
             }
 
         if (!beatmap.hasLeaderBoard) {

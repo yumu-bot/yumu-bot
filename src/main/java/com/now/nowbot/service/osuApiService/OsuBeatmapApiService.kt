@@ -9,40 +9,43 @@ import java.io.IOException
 import java.util.*
 
 interface OsuBeatmapApiService {
-    fun getBeatMapFileString(bid: Long): String?
+    fun getBeatmapFileString(bid: Long): String?
 
-    fun getBeatMapFileByte(bid: Long): ByteArray?
+    fun getBeatmapFileByte(bid: Long): ByteArray?
 
-    fun hasBeatMapFileFromDirectory(bid: Long): Boolean
+    fun hasBeatmapFileFromDirectory(bid: Long): Boolean
 
-    fun refreshBeatMapFileFromDirectory(bid: Long): Boolean
+    fun refreshBeatmapFileFromDirectory(bid: Long): Boolean
 
     // 查一下文件是否跟 checksum 是否对得上
-    @Throws(IOException::class) fun checkBeatMap(beatmap: Beatmap?): Boolean
+    @Throws(IOException::class) fun checkBeatmap(beatmap: Beatmap?): Boolean
 
-    @Throws(IOException::class) fun checkBeatMap(bid: Long, checkStr: String?): Boolean
+    @Throws(IOException::class) fun checkBeatmap(bid: Long, checkStr: String?): Boolean
 
-    @Throws(IOException::class) fun checkBeatMap(beatmap: Beatmap, fileStr: String): Boolean
+    @Throws(IOException::class) fun checkBeatmap(beatmap: Beatmap, fileStr: String): Boolean
 
-    // 尽量用 FromDataBase，这样可以节省 API 开支
-    fun getBeatMap(bid: Long): Beatmap
+    fun getBeatmap(bid: Long): Beatmap
 
-    fun getBeatMap(bid: Int): Beatmap {
-        return getBeatMap(bid.toLong())
-    }
+    /**
+     * @param type favourite, graveyard, guest, loved, nominated, pending, ranked
+     * 注意，是英式英文的 favourite，有个 u
+     */
+    fun getUserBeatmapset(id: Long, type: String = "favourite", offset: Int = 0, limit: Int = 100): List<Beatmapset>
 
-    fun getBeatMapSet(sid: Long): Beatmapset
+    fun getUserMostPlayedBeatmaps(id: Long, offset: Int = 0, limit: Int = 100): Map<Int, Beatmap>
+
+    fun getBeatmapset(sid: Long): Beatmapset
 
     fun getBeatMapSet(sid: Int): Beatmapset {
-        return getBeatMapSet(sid.toLong())
+        return getBeatmapset(sid.toLong())
     }
 
-    fun getBeatMapFromDataBase(bid: Int): Beatmap {
-        return getBeatMapFromDataBase(bid.toLong())
+    fun getBeatmapFromDatabase(bid: Int): Beatmap {
+        return getBeatmapFromDatabase(bid.toLong())
     }
 
     // TODO database 存的谱面缺太多东西，比如甚至谱面状态都没有。。。
-    fun getBeatMapFromDataBase(bid: Long): Beatmap
+    fun getBeatmapFromDatabase(bid: Long): Beatmap
 
     fun isNotOverRating(bid: Long): Boolean
 
@@ -79,36 +82,36 @@ interface OsuBeatmapApiService {
     /**
      * 单次获取搜索结果
      */
-    fun searchBeatMapSet(query: Map<String, Any?>): BeatMapSetSearch
+    fun searchBeatmapset(query: Map<String, Any?>): BeatmapsetSearch
 
     /**
      * 多次获取搜索结果
      */
-    fun searchBeatMapSet(query: Map<String, Any?>, tries: Int): BeatMapSetSearch
+    fun searchBeatmapset(query: Map<String, Any?>, tries: Int): BeatmapsetSearch
 
     // 给同一张图的成绩添加完整的谱面
-    fun applyBeatMapExtendForSameScore(scores: List<LazerScore>, beatmap: Beatmap)
+    fun applyBeatmapExtendForSameScore(scores: List<LazerScore>, beatmap: Beatmap)
 
     // 给成绩添加完整的谱面
-    fun applyBeatMapExtend(score: LazerScore)
+    fun applyBeatmapExtend(score: LazerScore)
 
     // 给成绩添加完整的谱面
-    fun applyBeatMapExtend(scores: List<LazerScore>)
+    fun applyBeatmapExtend(scores: List<LazerScore>)
 
-    fun applyBeatMapExtend(score: LazerScore, extended: Beatmap)
+    fun applyBeatmapExtend(score: LazerScore, extended: Beatmap)
 
     // 给成绩添加完整的谱面
-    fun applyBeatMapExtendFromDataBase(score: LazerScore)
+    fun applyBeatmapExtendFromDatabase(score: LazerScore)
 
     // 获取Q区谱面大致的上架时间
-    fun getBeatMapSetRankedTime(beatmap: Beatmap): String
+    fun getBeatmapsetRankedTime(beatmap: Beatmap): String
 
     // 获取谱面大致的上架时间
-    fun getBeatMapSetRankedTimeMap(): Map<Long, String>
+    fun getBeatmapsetRankedTimeMap(): Map<Long, String>
 
-    fun applyBeatMapSetRankedTime(beatmapsets: List<Beatmapset>)
+    fun applyBeatmapsetRankedTime(beatmapsets: List<Beatmapset>)
 
-    fun updateBeatMapTagLibraryDatabase()
+    fun updateBeatmapTagLibraryDatabase()
 
-    fun extendBeatMapTag(beatmap: Beatmap)
+    fun extendBeatmapTag(beatmap: Beatmap)
 }

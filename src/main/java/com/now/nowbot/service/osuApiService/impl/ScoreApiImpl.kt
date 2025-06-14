@@ -14,6 +14,10 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import okio.IOException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -66,26 +70,22 @@ class ScoreApiImpl(
         offset: Int,
         limit: Int,
     ): List<LazerScore> {
-        return if (offset - limit <= 100) {
+        return if (limit <= 100) {
             getBests(id, mode, offset, limit)
         } else {
-            val bests: List<LazerScore> = getBests(id, mode, offset, 100) + getBests(id, mode, offset + 100, limit - 100)
-
-            /*
-            runBlocking {
-                val deferred1 = scope.async {
-                    getBests(id, mode, offset, 100)
-                }
-
-                val deferred2 = scope.async {
-                    getBests(id, mode, offset + 100, limit - 100)
-                }
-
-                bests = deferred1.await() + deferred2.await()
+            val deferred1 = scope.async {
+                getBests(id, mode, offset, 100)
             }
 
-             */
+            val deferred2 = scope.async {
+                getBests(id, mode, offset + 100, limit - 100)
+            }
 
+            val bests: List<LazerScore>
+
+            runBlocking {
+                bests = deferred1.await() + deferred2.await()
+            }
 
             return bests
         }
@@ -502,7 +502,7 @@ class ScoreApiImpl(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ScoreApiImpl::class.java)
 
-        // private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(2))
+        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(2))
 
         private val IMG_BUFFER_PATH: String = if (System.getenv("BUFFER_PATH").isNullOrBlank().not()) {
             System.getenv("BUFFER_PATH")

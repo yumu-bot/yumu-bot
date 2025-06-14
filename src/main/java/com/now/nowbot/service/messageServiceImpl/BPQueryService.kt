@@ -562,7 +562,7 @@ class BPQueryService(
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService,
         ): PanelE5Param {
-            beatmapApiService.applyBeatMapExtend(score)
+            beatmapApiService.applyBeatmapExtend(score)
 
             val beatmap = score.beatmap
             val original = DataUtil.getOriginal(beatmap)

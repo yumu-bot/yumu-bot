@@ -135,7 +135,7 @@ class MapStatisticsService(
         var beatmap: Beatmap? = null
 
         if (bid != 0L) {
-            beatmap = beatmapApiService.getBeatMap(bid)
+            beatmap = beatmapApiService.getBeatmap(bid)
         }
 
         if (beatmap == null) {

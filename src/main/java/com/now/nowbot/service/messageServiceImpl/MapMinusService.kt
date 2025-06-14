@@ -113,12 +113,12 @@ import java.util.regex.Matcher
 
             try {
 
-                map = beatmapApiService.getBeatMap(param.bid)
+                map = beatmapApiService.getBeatmap(param.bid)
 
                 if (isChangedRating) {
                     map.starRating = calculateApiService.getBeatMapStarRating(map.beatmapID, map.mode, param.mods)
                 }
-                fileStr = beatmapApiService.getBeatMapFileString(param.bid)!!
+                fileStr = beatmapApiService.getBeatmapFileString(param.bid)!!
             } catch (e: Exception) {
                 throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
             }

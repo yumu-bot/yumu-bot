@@ -383,7 +383,7 @@ import kotlin.math.min
             calculateApiService.applyBeatMapChanges(scores)
             calculateApiService.applyStarToScores(scores)
 
-            beatmapApiService.applyBeatMapExtend(scores.take(6))
+            beatmapApiService.applyBeatmapExtend(scores.take(6))
             scoreApiService.asyncDownloadBackground(scores.take(6))
 
             val data = parseData(

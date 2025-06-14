@@ -27,10 +27,10 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
     }
     
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
-        val bid = param.group("id").toIntOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
+        val bid = param.group("id").toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
         val mod = param.group("mod")
         
-        val b = beatmapApiService.getBeatMap(bid)
+        val b = beatmapApiService.getBeatmap(bid)
         val sb = StringBuilder()
         
         sb.append(bid).append(',')
@@ -61,7 +61,7 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
         val mods = LazerMod.getModsList(Stream.of(*mod.split("[\"\\s,，\\-|:]+".toRegex()).dropLastWhile {it.isEmpty()} .toTypedArray()).map { obj: String -> obj.uppercase(Locale.getDefault())} .toList())
 
         
-        val a = beatmapApiService.getAttributes(bid.toLong(), LazerMod.getModsValue(mods))
+        val a = beatmapApiService.getAttributes(bid, LazerMod.getModsValue(mods))
         val newTotalLength = CalculateApiImpl.applyLength(b.totalLength, mods).toFloat()
         
         sb.append(String.format("%.2f", a.starRating)).append(',')

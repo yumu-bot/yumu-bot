@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.osu.BeatMapSetSearch
+import com.now.nowbot.model.osu.BeatmapsetSearch
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -45,16 +45,16 @@ import java.util.regex.Pattern
     override fun HandleMessage(event: MessageEvent, param: SearchParam) {
         val query = constructQuery(param)
 
-        val result: BeatMapSetSearch = try {
-            val res = beatmapApiService.searchBeatMapSet(query)
+        val result: BeatmapsetSearch = try {
+            val res = beatmapApiService.searchBeatmapset(query)
             if (res.beatmapSets.isEmpty()) {
-                beatmapApiService.searchBeatMapSet(constructQueryAlternative(param))
+                beatmapApiService.searchBeatmapset(constructQueryAlternative(param))
             } else {
                 res
             }
         } catch (e: Exception) {
             try {
-                beatmapApiService.searchBeatMapSet(constructQueryAlternative(param))
+                beatmapApiService.searchBeatmapset(constructQueryAlternative(param))
             } catch (e: Exception) {
                 throw NoSuchElementException.Result()
             }
@@ -157,7 +157,7 @@ import java.util.regex.Pattern
         }
 
         // 临时的输出
-        private fun MessageEvent.replyText(result: BeatMapSetSearch) {
+        private fun MessageEvent.replyText(result: BeatmapsetSearch) {
             val sb = StringBuilder()
 
             sb.apply {
@@ -172,7 +172,7 @@ import java.util.regex.Pattern
             this.reply(sb.toString())
         }
 
-        private fun MessageEvent.replyImage(result: BeatMapSetSearch, imageService: ImageService) {
+        private fun MessageEvent.replyImage(result: BeatmapsetSearch, imageService: ImageService) {
             result.beatmapSets = result.beatmapSets.take(12)
                 .sortedByDescending { it.playCount }
                 .sortedByDescending {

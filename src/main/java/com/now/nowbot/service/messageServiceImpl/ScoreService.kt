@@ -75,7 +75,7 @@ import java.util.regex.Matcher
         val bid = getBid(matcher)
 
         val map = if (bid != 0L) {
-            beatmapApiService.getBeatMap(bid)
+            beatmapApiService.getBeatmap(bid)
         } else {
             // 备用方法
             val currentMode = CmdObject(OsuMode.DEFAULT)
@@ -84,7 +84,7 @@ import java.util.regex.Matcher
 
             val score = scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 1).first()
 
-            beatmapApiService.getBeatMap(score.beatmapID)
+            beatmapApiService.getBeatmap(score.beatmapID)
         }
 
         if (!map.hasLeaderBoard) {
@@ -140,7 +140,7 @@ import java.util.regex.Matcher
         val bid = getBid(matcher)
 
         val map = if (bid != 0L) {
-            beatmapApiService.getBeatMap(bid)
+            beatmapApiService.getBeatmap(bid)
         } else {
             // 备用方法
             val currentMode = CmdObject(OsuMode.DEFAULT)
@@ -148,7 +148,7 @@ import java.util.regex.Matcher
 
             val score = scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 1).first()
 
-            beatmapApiService.getBeatMap(score.beatmapID)
+            beatmapApiService.getBeatmap(score.beatmapID)
         }
 
         if (!map.hasLeaderBoard) {
@@ -188,7 +188,7 @@ import java.util.regex.Matcher
         val image: ByteArray = if (scores.size > 1) {
             calculateApiService.applyStarToScores(scores)
             calculateApiService.applyBeatMapChanges(scores)
-            beatmapApiService.applyBeatMapExtendForSameScore(scores, b)
+            beatmapApiService.applyBeatmapExtendForSameScore(scores, b)
 
             scoreApiService.asyncDownloadBackground(scores.first(), CoverType.COVER)
             scoreApiService.asyncDownloadBackground(scores.first(), CoverType.LIST)
