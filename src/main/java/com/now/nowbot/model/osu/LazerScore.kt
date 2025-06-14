@@ -234,7 +234,7 @@ open class LazerScore(
                 return when (this.mode) {
                     OSU -> m.great
                     TAIKO -> m.great
-                    CATCH -> m.great + m.largeTickHit
+                    CATCH -> m.great + m.largeTickHit + m.smallTickHit
                     MANIA -> m.perfect
                     else -> 0
                 }
@@ -244,7 +244,7 @@ open class LazerScore(
                 return when (this.mode) {
                     OSU -> (b.circles ?: 0) + (b.sliders ?: 0)
                     TAIKO -> (b.circles ?: 0)
-                    CATCH -> m.great + m.largeTickHit + m.legacyComboIncrease
+                    CATCH -> m.great + m.largeTickHit + m.smallTickHit + m.legacyComboIncrease
                     MANIA -> (b.circles ?: 0) + (b.sliders ?: 0)
                     else -> 0
                 }
