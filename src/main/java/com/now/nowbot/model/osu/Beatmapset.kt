@@ -25,6 +25,9 @@ class Beatmapset {
     @JsonProperty("favourite_count")
     var favouriteCount: Int = 0
 
+    @JsonProperty("genre_id")
+    var genreID: Int = 0
+
     @Nullable
     var hype: Hype? = null
 
@@ -33,6 +36,9 @@ class Beatmapset {
 
     @JsonProperty("id")
     var beatmapsetID: Long = 0L
+
+    @JsonProperty("language_id")
+    var languageID: Int = 0
 
     @JsonProperty("nsfw")
     var nsfw: Boolean = false

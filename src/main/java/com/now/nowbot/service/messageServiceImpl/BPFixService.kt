@@ -14,19 +14,18 @@ import com.now.nowbot.service.messageServiceImpl.BPFixService.BPFixParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.Duration
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.pow
@@ -42,10 +41,6 @@ class BPFixService(
 
     data class BPFixParam(val user: OsuUser, val bpMap: Map<Int, LazerScore>, val mode: OsuMode)
 
-    companion object {
-        val log: Logger = LoggerFactory.getLogger(BPFixService::class.java)
-    }
-
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<BPFixParam>): Boolean {
         val matcher = Instruction.BP_FIX.matcher(messageText)
         if (!matcher.find()) return false
@@ -54,10 +49,9 @@ class BPFixService(
 
         val user = getUserWithoutRange(event, matcher, mode)
 
-        val bests100 = scoreApiService.getBestScores(user.userID, mode.data)
-        val bests200 = scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
-        val bestsMap = listOf(bests100, bests200).flatten()
-            .mapIndexed { i, it -> (i + 1) to it }.toMap()
+        val bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 100) +
+                scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
+        val bestsMap = bests.mapIndexed { i, it -> (i + 1) to it }.toMap()
 
         data.value = BPFixParam(user, bestsMap, mode.data!!)
 
@@ -69,7 +63,7 @@ class BPFixService(
         val image = param.getImage()
         try {
             event.reply(image)
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             log.error("理论最好成绩：发送失败", e)
             throw IllegalStateException.Send("理论最好成绩")
         }
@@ -82,10 +76,9 @@ class BPFixService(
         val mode = getMode(matcher)
         val user = getUserWithoutRange(event, matcher, mode)
 
-        val bests100 = scoreApiService.getBestScores(user.userID, mode.data)
-        val bests200 = scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
-        val bestsMap = listOf(bests100, bests200).flatten()
-            .mapIndexed { i, it -> (i + 1) to it }.toMap()
+        val bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 100) +
+                scoreApiService.getBestScores(user.userID, mode.data, 100, 100)
+        val bestsMap = bests.mapIndexed { i, it -> (i + 1) to it }.toMap()
 
         return BPFixParam(user, bestsMap, mode.data!!)
     }
@@ -95,6 +88,7 @@ class BPFixService(
     fun fix(playerPP: Double, bestsMap: Map<Int, LazerScore>): Map<String, Any>? {
         val beforeBpSumAtomic = AtomicReference(0.0)
 
+        /*
         val actions = (bestsMap.toList()).map { pair ->
             return@map AsyncMethodExecutor.Supplier<LazerScore?> {
                 val index = pair.first
@@ -130,7 +124,6 @@ class BPFixService(
         }
 
         val a = AsyncMethodExecutor.awaitSupplierExecute(actions, Duration.ofMinutes(10))
-        Thread.sleep(60 * 1000)
 
         val fixedBests =
             a
@@ -145,7 +138,8 @@ class BPFixService(
                 pp
             }
 
-        /*
+            */
+
         val fixedBests = bestsMap.map { (index, score) ->
             beforeBpSumAtomic.updateAndGet { it + (score.weight?.pp ?: 0.0) }
             beatmapApiService.applyBeatMapExtendFromDataBase(score)
@@ -182,8 +176,6 @@ class BPFixService(
 
             pp * 100.0
         }
-
-         */
 
         val afterBpSumAtomic = AtomicReference(0.0)
 
@@ -242,5 +234,11 @@ class BPFixService(
         )
 
         return imageService.getPanel(body, "A7")
+    }
+
+    companion object {
+        val log: Logger = LoggerFactory.getLogger(BPFixService::class.java)
+        val scope = CoroutineScope(Dispatchers.Default)
+
     }
 }
