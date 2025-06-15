@@ -23,10 +23,7 @@ import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.getMod
 import com.now.nowbot.util.CmdUtil.getMode
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -142,6 +139,8 @@ import java.util.regex.Matcher
                     user = deferred.await()
                     scores = deferred2.await()
                 }
+
+                scope.cancel()
             } else {
                 user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score")
 
@@ -171,6 +170,8 @@ import java.util.regex.Matcher
                     recent = deferred2.await().firstOrNull()
                         ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
                 }
+
+                scope.cancel()
             } else {
                 user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score")
 

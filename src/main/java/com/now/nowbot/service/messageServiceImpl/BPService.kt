@@ -23,10 +23,7 @@ import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.command.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -164,6 +161,8 @@ import kotlin.math.*
                 user = deferred.await()
                 scores = deferred2.await()
             }
+
+            scope.cancel()
         } else {
             // 经典的获取方式
 

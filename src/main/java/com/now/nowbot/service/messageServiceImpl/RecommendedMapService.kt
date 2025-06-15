@@ -10,10 +10,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 
 //@Service("RECOMMEND_MAP")
 class RecommendedMapService(
@@ -92,6 +89,8 @@ class RecommendedMapService(
             bests = b.await()
             favorite = d.await() + d2.await() + d3.await()
         }
+
+        scope.cancel()
 
         return UserPrefer(bests, favorite)
     }

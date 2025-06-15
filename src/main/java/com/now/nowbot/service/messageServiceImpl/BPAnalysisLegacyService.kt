@@ -15,10 +15,7 @@ import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.UserIDUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -65,6 +62,8 @@ class BPAnalysisLegacyService(
                 user = deferred.await()
                 bests = deferred2.await()
             }
+
+            scope.cancel()
         } else {
             user = getUserWithoutRange(event, matcher, mode, isMyself)
             bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 200)

@@ -14,10 +14,7 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import okio.IOException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -86,6 +83,8 @@ class ScoreApiImpl(
             runBlocking {
                 bests = deferred1.await() + deferred2.await()
             }
+
+            scope.cancel()
 
             return bests
         }

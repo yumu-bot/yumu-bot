@@ -111,6 +111,8 @@ class MaiFilterService(private val maimaiApiService: MaimaiApiService, private v
             deferred3.await()
         }
 
+        scope.cancel()
+
         if (scores.isEmpty()) throw NoSuchElementException.BestScoreFiltered(user.name!!)
 
         data.value = MaiFilterParam(user, scores, page, type)

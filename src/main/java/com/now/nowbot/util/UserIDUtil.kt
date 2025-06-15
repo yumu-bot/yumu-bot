@@ -11,10 +11,7 @@ import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.CmdUtil.parseNameAndRangeHasHash
 import com.now.nowbot.util.CmdUtil.parseNameAndRangeWithoutHash
 import com.now.nowbot.util.command.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.springframework.context.ApplicationContext
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
@@ -71,7 +68,11 @@ object UserIDUtil {
         runBlocking {
             userID = deferred.await()
             me = deferred2.await()
+
+            deferred2.start()
         }
+
+        scope.cancel()
 
         val myID = me?.userID
 

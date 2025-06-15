@@ -20,10 +20,7 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithRange
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -109,6 +106,7 @@ class TodayBPService(
                 scoreApiService.getBestScores(id.data!!, mode.data ?: OsuMode.DEFAULT, 0, 200)
             }
 
+            scope.cancel()
             runBlocking {
                 user = deferred.await()
                 bests = deferred2.await()
