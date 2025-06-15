@@ -304,7 +304,7 @@ class ScorePRService(
         val offset: Int = o.first
         val limit: Int = o.second
 
-        val scores = scoreApiService.getRecentScore(this.data!!, mode, offset, limit)
+        val scores = scoreApiService.getScore(this.data!!, mode, offset, limit, isPass)
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
