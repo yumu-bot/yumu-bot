@@ -16,11 +16,8 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botException.IMapperException
-import com.now.nowbot.util.AsyncMethodExecutor
-import com.now.nowbot.util.CmdObject
+import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
-import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -35,11 +32,19 @@ import kotlin.math.max
 ) : MessageService<OsuUser>, TencentMessageService<OsuUser> {
 
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<OsuUser>): Boolean {
-        val m = Instruction.I_MAPPER.matcher(messageText)
-        if (!m.find()) return false
+        val matcher = Instruction.I_MAPPER.matcher(messageText)
+        if (!matcher.find()) return false
+
         val mode = CmdObject(OsuMode.DEFAULT)
-        val osuUser = getUserWithoutRange(event, m, mode)
-        data.value = osuUser
+        val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
+
+        val user: OsuUser = if (id != null) {
+            userApiService.getOsuUser(id, mode.data!!)
+        } else {
+            getUserWithoutRange(event, matcher, mode)
+        }
+
+        data.value = user
         return true
     }
 
@@ -64,8 +69,17 @@ import kotlin.math.max
     override fun accept(event: MessageEvent, messageText: String): OsuUser? {
         val matcher = OfficialInstruction.I_MAPPER.matcher(messageText)
         if (!matcher.find()) return null
+
         val mode = CmdObject(OsuMode.DEFAULT)
-        return getUserWithoutRange(event, matcher, mode)
+        val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
+
+        val user: OsuUser = if (id != null) {
+            userApiService.getOsuUser(id, mode.data!!)
+        } else {
+            getUserWithoutRange(event, matcher, mode)
+        }
+
+        return user
     }
 
     override fun reply(event: MessageEvent, param: OsuUser): MessageChain? {

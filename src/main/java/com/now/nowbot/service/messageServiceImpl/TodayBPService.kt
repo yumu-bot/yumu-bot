@@ -14,12 +14,16 @@ import com.now.nowbot.service.messageServiceImpl.TodayBPService.TodayBPParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
+import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithRange
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -33,6 +37,7 @@ class TodayBPService(
     private val imageService: ImageService,
     private val scoreApiService: OsuScoreApiService,
     private val beatmapApiService: OsuBeatmapApiService,
+    private val userApiService: OsuUserApiService,
     private val calculateApiService: OsuCalculateApiService,
 ) : MessageService<TodayBPParam>, TencentMessageService<TodayBPParam> {
 
@@ -40,7 +45,6 @@ class TodayBPService(
         val user: OsuUser,
         val mode: OsuMode,
         val scores: Map<Int, LazerScore>,
-        val isMyself: Boolean,
         val isToday: Boolean
     )
 
@@ -84,21 +88,44 @@ class TodayBPService(
     private fun getParam(matcher: Matcher, event: MessageEvent): TodayBPParam {
         val mode = getMode(matcher)
         val isMyself = AtomicBoolean()
-        val range = getUserWithRange(event, matcher, mode, isMyself)
-        range.setZeroDay()
-        val user = range.data ?: throw NoSuchElementException.Player()
-        val dayStart = range.getDayStart()
-        val dayEnd = range.getDayEnd()
-        val isToday = (dayStart == 0 && dayEnd == 1)
 
-        val bests: List<LazerScore> = try {
-            scoreApiService.getBestScores(user.userID, mode.data, 0, 200)
-        } catch (e: NetworkException) {
-            throw e
-        } catch (e: Exception) {
-            log.error("今日最好成绩：获取失败！", e)
-            throw IllegalStateException.Fetch("今日最好成绩")
+        val id = UserIDUtil.getUserIDWithRange(event, matcher, mode, isMyself)
+        id.setZeroDay()
+
+        val user: OsuUser
+        val bests: List<LazerScore>
+        val dayStart: Int
+        val dayEnd: Int
+
+        if (id.data != null) {
+            dayStart = id.getDayStart()
+            dayEnd = id.getDayEnd()
+
+            val deferred = scope.async {
+                userApiService.getOsuUser(id.data!!, mode.data!!)
+            }
+
+            val deferred2 = scope.async {
+                scoreApiService.getBestScores(id.data!!, mode.data ?: OsuMode.DEFAULT, 0, 200)
+            }
+
+            runBlocking {
+                user = deferred.await()
+                bests = deferred2.await()
+            }
+        } else {
+            val range = getUserWithRange(event, matcher, mode, isMyself)
+            range.setZeroDay()
+
+            user = range.data ?: throw NoSuchElementException.Player()
+
+            dayStart = range.getDayStart()
+            dayEnd = range.getDayEnd()
+
+            bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 200)
         }
+
+        val isToday = (dayStart == 0 && dayEnd == 1)
 
         val laterDay = OffsetDateTime.now().minusDays(dayStart.toLong())
         val earlierDay = OffsetDateTime.now().minusDays(dayEnd.toLong())
@@ -110,18 +137,7 @@ class TodayBPService(
             }
         }.filterNotNull().toMap()
 
-        return TodayBPParam(user, mode.data!!, dataMap, isMyself.get(), isToday)
-    }
-
-    fun TodayBPParam.asyncImage() {
-        scoreApiService.asyncDownloadBackground(scores.values, CoverType.COVER)
-        scoreApiService.asyncDownloadBackground(scores.values, CoverType.LIST)
-    }
-
-    fun TodayBPParam.getImage(): ByteArray {
-        val todayMap = scores
-
-        if (todayMap.isEmpty()) {
+        if (dataMap.isEmpty()) {
             if (!user.isActive) {
                 throw NoSuchElementException.PlayerInactive(user.username)
             } else if (isToday) {
@@ -130,6 +146,16 @@ class TodayBPService(
                 throw NoSuchElementException.PeriodBestScore(user.username)
             }
         }
+
+        return TodayBPParam(user, mode.data!!, dataMap, isToday)
+    }
+
+    fun TodayBPParam.asyncImage() {
+        scoreApiService.asyncDownloadBackground(scores.values, listOf(CoverType.COVER, CoverType.LIST))
+    }
+
+    fun TodayBPParam.getImage(): ByteArray {
+        val todayMap = scores
 
         return if (todayMap.size > 1) {
 
@@ -158,5 +184,7 @@ class TodayBPService(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(TodayBPService::class.java)
+
+        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(4))
     }
 }

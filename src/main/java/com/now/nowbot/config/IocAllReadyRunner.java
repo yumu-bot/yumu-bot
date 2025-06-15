@@ -13,6 +13,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService;
 import com.now.nowbot.util.CmdUtil;
 import com.now.nowbot.util.JacksonUtil;
 import com.now.nowbot.util.QQMsgUtil;
+import com.now.nowbot.util.UserIDUtil;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +57,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
         var services = applicationContext.getBeansOfType(MessageService.class);
         YumuServer.userApiService = applicationContext.getBean(OsuUserApiService.class);
         CmdUtil.init(applicationContext);
+        UserIDUtil.init(applicationContext);
         LocalCommandListener.setHandler(services);
         this.check = check;
         this.permission = permission;

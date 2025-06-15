@@ -1,10 +1,10 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
-import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.skill.Skill
@@ -17,7 +17,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
@@ -168,16 +167,24 @@ import kotlin.math.sqrt
         if (bests.isNullOrEmpty()) return mapOf()
 
         val actions = bests.map {
-            val id = it.beatmapID
+            return@map AsyncMethodExecutor.Supplier<Pair<LazerScore, String?>> {
+                return@Supplier it to beatmapApiService.getBeatmapFileString(it.beatmapID)
+            }
+        }
+
+        val files: List<Pair<LazerScore, String?>> = AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull()
+
+        val actions2 = files.map {
+            val id = it.first.beatmapID
 
             return@map AsyncMethodExecutor.Supplier<Pair<Long, Skill?>> {
                 try {
-                    val file = OsuFile.getInstance(beatmapApiService.getBeatmapFileString(it.beatmapID))
+                    val file = OsuFile.getInstance(it.second)
 
                     return@Supplier id to Skill.getInstance(
                         file,
                         OsuMode.MANIA,
-                        LazerMod.getModSpeedForStarCalculate(it.mods).toDouble()
+                        LazerMod.getModSpeedForStarCalculate(it.first.mods).toDouble()
                     )
                 } catch (_: Exception) {
                     return@Supplier id to null
@@ -185,7 +192,7 @@ import kotlin.math.sqrt
             }
         }
 
-        val result = AsyncMethodExecutor.awaitSupplierExecute(actions)
+        val result = AsyncMethodExecutor.awaitSupplierExecute(actions2)
             .filterNotNull().toMap()
 
         return bests.associate { it.beatmapID to result[it.beatmapID] }

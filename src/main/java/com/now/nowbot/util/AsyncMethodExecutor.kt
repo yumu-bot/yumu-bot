@@ -109,7 +109,7 @@ object AsyncMethodExecutor {
         } finally {
             reentrantLock.lock()
             val locksSum = Util.getAndRemove(lock)
-            log.info("sum : {}", locksSum)
+            log.info("异步操作：${supplier.javaClass.simpleName} 剩余锁数量：${locksSum}")
             val count = countDownLocks.computeIfAbsent(key) { k: Any? -> CountDownLatch(locksSum) }
             lock.signalAll()
             reentrantLock.unlock()

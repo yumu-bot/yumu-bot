@@ -52,14 +52,15 @@ interface OsuUserApiService {
         isVariant: Boolean
     ): List<MicroUser>
 
-
     /**
      * 批量获取用户信息
      *
      * @param users 注意, 单次请求数量必须小于50
      */
     fun <U : Number> getUsers(users: Iterable<U>): List<MicroUser> {
-        return getUsers(users, false)
+        return users.chunked(50).map {
+            getUsers(users, false)
+        }.flatten()
     }
 
     @Throws(WebClientResponseException::class) fun getFriendList(user: BindUser): List<LazerFriend>

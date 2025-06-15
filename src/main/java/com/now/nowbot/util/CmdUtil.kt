@@ -57,6 +57,7 @@ object CmdUtil {
      *
      * @param isMyself: 作为返回值使用, 如果是自己则结果为 true
      */
+    @Throws(BindException::class)
     fun getUserWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
@@ -70,6 +71,7 @@ object CmdUtil {
         } catch (ignored: Exception) {
             null
         }
+
         if (user != null) {
             isMyself.set(me?.userID == user.userID)
             return user
@@ -78,7 +80,11 @@ object CmdUtil {
             setMode(mode, me.mode, event)
             return userApiService.getOsuUser(me, mode.data!!)
         } else {
-            throw BindException.TokenExpiredException.UserTokenExpiredException()
+            if (isMyself.get()) {
+                throw BindException.TokenExpiredException.YouTokenExpiredException()
+            } else {
+                throw BindException.TokenExpiredException.UserTokenExpiredException()
+            }
         }
     }
 
@@ -95,7 +101,6 @@ object CmdUtil {
         mode: CmdObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): CmdRange<OsuUser> {
-        isMyself.set(false)
         val range = getUserAndRange(event, matcher, mode)
         if (range.data == null) {
             range.data = getUserWithoutRange(event, matcher, mode, isMyself)
@@ -120,10 +125,13 @@ object CmdUtil {
         try {
             return getUserWithRange(event, matcher, mode, isMyself)
         } catch (e: BindException) {
-            if (isMyself.get() && isAvoidance(messageText, *ignores)) throw LogException(
-                "退避指令 $ignores"
-            )
-            throw e
+            if (isMyself.get() && isAvoidance(messageText, *ignores)) {
+                throw LogException(
+                    "${event.sender.id} 触发了退避指令：${ignores.joinToString(", ")}"
+                )
+            } else {
+                throw e
+            }
         }
     }
 
@@ -207,16 +215,17 @@ object CmdUtil {
             result.end = temp
         }
 
-        if (result.data == null) {
-            if (text.matches("$REG_RANGE\\s+\\S+".toRegex())) {
-                throw NoSuchElementException.PlayerWithRange(text)
-            } else if (text.matches("\\S+\\s+\\d+".toRegex()))
-                throw NoSuchElementException.PlayerWithBeatmapID(text)
-            
-            throw NoSuchElementException.Player(text)
+        if (result.data != null) {
+            return result
         }
 
-        return result
+        if (text.matches("$REG_RANGE\\s+\\S+".toRegex())) {
+            throw NoSuchElementException.PlayerWithRange(text)
+        } else if (text.matches("\\S+\\s+\\d+".toRegex())) {
+            throw NoSuchElementException.PlayerWithBeatmapID(text)
+        } else {
+            throw NoSuchElementException.Player(text)
+        }
     }
 
 
@@ -319,10 +328,12 @@ object CmdUtil {
     }
 
     /** 内部方法, 解析'#'后的 range */
-    private fun parseNameAndRangeHasHash(text: String): LinkedList<CmdRange<String>> {
+    fun parseNameAndRangeHasHash(text: String): LinkedList<CmdRange<String>> {
         val ranges = LinkedList<CmdRange<String>>()
         var hashIndex: Int = text.indexOf(CHAR_HASH)
-        if (hashIndex < 0) hashIndex = text.indexOf(CHAR_HASH_FULL)
+        if (hashIndex < 0) {
+            hashIndex = text.indexOf(CHAR_HASH_FULL)
+        }
         var nameStr: String? = text.substring(0, hashIndex).trim()
         if (nameStr.isNullOrBlank()) nameStr = null
         val rangeStr = text.substring(hashIndex + 1).trim()
@@ -332,7 +343,7 @@ object CmdUtil {
     }
 
     /** 内部方法, 解析 name 与 range */
-    private fun parseNameAndRangeWithoutHash(text: String): LinkedList<CmdRange<String>> {
+    fun parseNameAndRangeWithoutHash(text: String): LinkedList<CmdRange<String>> {
         val ranges = LinkedList<CmdRange<String>>()
         var tempRange = CmdRange(text, null, null) // 保底 只有名字
         ranges.push(tempRange)
@@ -392,7 +403,7 @@ object CmdUtil {
     }
 
     /** 内部方法 */
-    @JvmStatic private fun parseRange(text: String): Array<Int?> {
+    private fun parseRange(text: String): Array<Int?> {
         val rangeInt = arrayOf<Int?>(null, null)
 
         try {
@@ -438,7 +449,7 @@ object CmdUtil {
             event.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
             try {
-                matcher.group(FLAG_QQ_ID)?.toLong() ?: 0L
+                matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: 0L
             } catch (ignore: RuntimeException) {
                 0L
             }
@@ -457,7 +468,7 @@ object CmdUtil {
 
         if (matcher.namedGroups().containsKey(FLAG_UID)) {
             try {
-                val uid = matcher.group(FLAG_UID)?.toLong() ?: 0L
+                val uid = matcher.group(FLAG_UID)?.toLongOrNull() ?: 0L
                 if (uid != 0L) {
                     return getOsuUser(uid, mode.data)
                 }

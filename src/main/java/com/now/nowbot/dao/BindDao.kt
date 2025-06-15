@@ -15,6 +15,7 @@ import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.isDefaultOrNull
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -386,27 +387,42 @@ class BindDao(
     }
 
     fun getOsuID(name: String): Long? {
-        val uid: Long
-        try {
-            uid = osuFindNameMapper.getFirstByNameOrderByIndex(name.uppercase(Locale.getDefault())).uid
+        return try {
+            osuFindNameMapper.getFirstByNameOrderByIndex(name.uppercase())?.uid
         } catch (e: Exception) {
-            if (e !is NullPointerException) {
-                log.error("get data Error", e)
-            }
+            log.error("get data Error", e)
             return null
         }
-        return uid
     }
 
-    fun removeOsuNameToId(osuId: Long?) {
-        osuFindNameMapper.deleteByUid(osuId)
+    fun removeNameToID(userID: Long) {
+        osuFindNameMapper.deleteByUserID(userID)
     }
 
-    fun saveOsuNameToId(id: Long?, vararg name: String?) {
+    fun saveNameToID(id: Long, vararg name: String) {
         if (name.isEmpty()) return
         for (i in name.indices) {
             val x = OsuNameToIdLite(id, name[i], i)
             osuFindNameMapper.save(x)
+        }
+    }
+
+    fun countNameToID(userID: Long): Int {
+        return osuFindNameMapper.countByUserID(userID)
+    }
+
+    fun updateNameToID(user: OsuUser) {
+        val names = if (user.previousNames.isNullOrEmpty()) {
+            listOf(user.username.uppercase())
+        } else {
+            listOf(user.username.uppercase()) + user.previousNames!!.map { it.uppercase() }
+        }
+
+        val count = countNameToID(user.userID)
+
+        if (count == 0 || count != names.size) {
+            removeNameToID(user.userID)
+            saveNameToID(user.userID, *names.toTypedArray())
         }
     }
 

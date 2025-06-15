@@ -111,11 +111,26 @@ interface OsuScoreApiService {
 
     fun getLeaderBoardScore(bid: Long, mode: OsuMode?, legacy: Boolean = false): List<LazerScore>
 
+
+    fun asyncDownloadBackground(scores: Iterable<LazerScore>, type: Iterable<CoverType>) {
+        type.forEach {
+            asyncDownloadBackground(scores, it)
+        }
+    }
+
+
+    fun asyncDownloadBackground(score: LazerScore, type: Iterable<CoverType>) {
+        type.forEach {
+            asyncDownloadBackground(listOf(score), it)
+        }
+    }
+
+    fun asyncDownloadBackground(scores: Iterable<LazerScore>, type: CoverType? = CoverType.COVER)
+
     fun asyncDownloadBackground(score: LazerScore, type: CoverType? = CoverType.COVER) {
         asyncDownloadBackground(listOf(score), type)
     }
 
-    fun asyncDownloadBackground(scores: Iterable<LazerScore>, type: CoverType? = CoverType.COVER)
 
     fun getReplay(score: LazerScore): Replay?
 }

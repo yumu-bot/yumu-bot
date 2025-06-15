@@ -63,8 +63,8 @@ import kotlin.text.HexFormat
 
     override fun refreshUserTokenFirst(user: BindUser) {
         base.refreshUserToken(user, true)
-        val osuInfo = getOsuUser(user)
-        val uid = osuInfo.userID
+        val o = getOsuUser(user)
+        val uid = o.userID
         user.userID = uid
         user.username = user.username
         user.mode = user.mode
@@ -82,6 +82,11 @@ import kotlin.text.HexFormat
                     user.username = data.username
                     user.mode = mode
                     data.currentOsuMode = getMode(mode, data.defaultOsuMode)
+
+                    Thread.startVirtualThread {
+                        bindDao.updateNameToID(data)
+                    }
+
                     data
                 }
         }
@@ -96,6 +101,11 @@ import kotlin.text.HexFormat
                 .map { data ->
                     userInfoDao.saveUser(data, mode)
                     data.currentOsuMode = getMode(mode, data.defaultOsuMode)
+
+                    Thread.startVirtualThread {
+                        bindDao.updateNameToID(data)
+                    }
+
                     data
                 }
         }
@@ -114,6 +124,11 @@ import kotlin.text.HexFormat
                 .map { data: OsuUser ->
                     userInfoDao.saveUser(data, mode)
                     data.currentOsuMode = getMode(mode, data.defaultOsuMode)
+
+                    Thread.startVirtualThread {
+                        bindDao.updateNameToID(data)
+                    }
+
                     data
                 }
         }
@@ -124,12 +139,11 @@ import kotlin.text.HexFormat
         if (id != null) {
             return id
         }
-        val user = getOsuUser(name)
-        bindDao.removeOsuNameToId(user.userID)
 
-        if (user.previousNames.isNullOrEmpty().not()) {
-            val names = arrayOf(user.username.uppercase()) + user.previousNames!!.map { it.uppercase() }.toTypedArray()
-            bindDao.saveOsuNameToId(user.userID, *names)
+        val user = getOsuUser(name)
+
+        Thread.startVirtualThread {
+            bindDao.updateNameToID(user)
         }
 
         return user.userID

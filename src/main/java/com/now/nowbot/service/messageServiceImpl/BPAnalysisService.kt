@@ -1,10 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.now.nowbot.model.osu.LazerMod
-import com.now.nowbot.model.osu.ValueMod
-import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.osu.OsuUser
+import com.now.nowbot.model.osu.*
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -12,11 +9,9 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.CmdUtil.getMode
@@ -25,6 +20,11 @@ import com.now.nowbot.util.DataUtil.getBonusPP
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
+import com.now.nowbot.util.UserIDUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -32,6 +32,7 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.regex.Matcher
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
@@ -41,84 +42,13 @@ import kotlin.math.min
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
     private val calculateApiService: OsuCalculateApiService,
-    private val beatmapApiService: OsuBeatmapApiService
 ) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
-    data class BAParam(val user: OsuUser, val scores: List<LazerScore>, val isMyself: Boolean)
-
-    @Throws(Throwable::class) override fun isHandle(
-        event: MessageEvent, messageText: String, data: DataValue<BAParam>
-    ): Boolean {
-        val matcher = Instruction.BP_ANALYSIS.matcher(messageText)
-
-        if (!matcher.find()) {
-            return false
-        }
-
-        val isMyself = AtomicBoolean(false)
-        val mode = getMode(matcher)
-        val user = getUserWithoutRange(event, matcher, mode, isMyself)
-        val bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 200)
-
-        data.value = BAParam(user, bests, isMyself.get())
-
-        return true
-    }
-
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: BAParam) {
-        val image = param.getImage(
-            2,
-            calculateApiService,
-            userApiService,
-            imageService,
-            scoreApiService,
-            beatmapApiService
-        )
-
-        try {
-            event.reply(image)
-        } catch (e: Exception) {
-            log.error("最好成绩分析：发送失败", e)
-            throw IllegalStateException.Send("最好成绩分析")
-        }
-    }
-
-    override fun accept(event: MessageEvent, messageText: String): BAParam? {
-        val matcher = OfficialInstruction.BP_ANALYSIS.matcher(messageText)
-
-        if (!matcher.find()) {
-            return null
-        }
-
-        val isMyself = AtomicBoolean(false)
-        val mode = getMode(matcher)
-        val user = getUserWithoutRange(event, matcher, mode, isMyself)
-        val bpList = scoreApiService.getBestScores(user.userID, mode.data)
-
-        return BAParam(user, bpList, isMyself.get())
-    }
-
-    override fun reply(event: MessageEvent, param: BAParam): MessageChain? = QQMsgUtil.getImage(
-        param.getImage(
-            2,
-            calculateApiService,
-            userApiService,
-            imageService,
-            scoreApiService,
-            beatmapApiService
-        )
-    )
-
-    companion object {
-        private val log: Logger = LoggerFactory.getLogger(BPAnalysisService::class.java)
-        private val RANK_ARRAY = arrayOf("XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F")
-
-        @JvmStatic fun parseData(
-            user: OsuUser, bpList: List<LazerScore>?, userApiService: OsuUserApiService, version: Int = 1
-        ): Map<String, Any> {
-            if (bpList == null || bpList.size <= 5) return HashMap.newHashMap(1)
-
-            val bests: List<LazerScore> = ArrayList(bpList)
+    data class BAParam(val user: OsuUser, val bests: List<LazerScore>, val isMyself: Boolean, val mappers: List<MicroUser>, val version: Int) {
+        fun toMap() : Map<String, Any> {
+            if (bests.size <= 5) {
+                throw NoSuchElementException.PlayerBestScore(user.username, user.currentOsuMode)
+            }
 
             val bpSize = bests.size
 
@@ -243,7 +173,7 @@ import kotlin.math.min
                 mapperMap.entries.sortedByDescending { it.value }.take(8).associateBy({ it.key }, { it.value })
                     .toMap(LinkedHashMap())
 
-            val mapperInfo = userApiService.getUsers(mapperCount.keys)
+            val mapperInfo = mappers
             val mapperList =
                 bests.filter { mapperCount.containsKey(it.beatmap.mapperID) }.groupingBy { it.beatmap.mapperID }
                     .aggregate<LazerScore, Long, Double> { _, accumulator, element, _ ->
@@ -255,10 +185,10 @@ import kotlin.math.min
                     }.entries.sortedByDescending { it.value }.map {
                         var name = ""
                         var avatar = ""
-                        for (node in mapperInfo) {
-                            if (it.key == node.userID) {
-                                name = node.userName
-                                avatar = node.avatarUrl!!
+                        for (m in mapperInfo) {
+                            if (it.key == m.userID) {
+                                name = m.userName
+                                avatar = m.avatarUrl!!
                                 break
                             }
                         }
@@ -314,7 +244,7 @@ import kotlin.math.min
 
             val clientCount = listOf(bests.count { !it.isLazer }, bests.count { it.isLazer })
 
-            val data: Map<String, Any> = when(version) {
+            val map: Map<String, Any> = when(version) {
                 1 -> mapOf(
                     "card_A1" to user,
                     "bpTop5" to t6.dropLast(1),
@@ -361,53 +291,115 @@ import kotlin.math.min
                     )
             }
 
-            return data
+            return map
+        }
+    }
+
+    @Throws(Throwable::class) override fun isHandle(
+        event: MessageEvent, messageText: String, data: DataValue<BAParam>
+    ): Boolean {
+        val matcher = Instruction.BP_ANALYSIS.matcher(messageText)
+
+        if (!matcher.find()) {
+            return false
         }
 
-        @JvmStatic fun BAParam.getImage(
-            version: Int = 1,
-            calculateApiService: OsuCalculateApiService,
-            userApiService: OsuUserApiService,
-            imageService: ImageService,
-            scoreApiService: OsuScoreApiService,
-            beatmapApiService: OsuBeatmapApiService
-        ): ByteArray {
-            val scores = scores
-            val user = user
+        data.value = getParam(event, matcher)
 
-            if (scores.isEmpty() || scores.size <= 5) {
-                throw NoSuchElementException.PlayerBestScore(user.username, user.currentOsuMode)
+        return true
+    }
+
+    override fun HandleMessage(event: MessageEvent, param: BAParam) {
+        val image = param.getImage()
+
+        try {
+            event.reply(image)
+        } catch (e: Exception) {
+            log.error("最好成绩分析：发送失败", e)
+            throw IllegalStateException.Send("最好成绩分析")
+        }
+    }
+
+    override fun accept(event: MessageEvent, messageText: String): BAParam? {
+        val matcher = OfficialInstruction.BP_ANALYSIS.matcher(messageText)
+
+        if (!matcher.find()) {
+            return null
+        }
+
+        return getParam(event, matcher)
+    }
+
+    override fun reply(event: MessageEvent, param: BAParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
+
+    private fun getParam(event: MessageEvent, matcher: Matcher): BAParam {
+        val isMyself = AtomicBoolean(false)
+        val mode = getMode(matcher)
+
+        val user: OsuUser
+        val bests: List<LazerScore>
+
+        val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode, isMyself)
+
+        if (id != null) {
+            val deferred = scope.async {
+                userApiService.getOsuUser(id, mode.data!!)
             }
 
-            // 提取星级变化的谱面 DT/HT 等
-            calculateApiService.applyBeatMapChanges(scores)
-            calculateApiService.applyStarToScores(scores)
+            val deferred2 = scope.async {
+                val ss = scoreApiService.getBestScores(id, mode.data!!, 0, 200)
 
-            beatmapApiService.applyBeatmapExtend(scores.take(6))
-            scoreApiService.asyncDownloadBackground(scores.take(6))
+                calculateApiService.applyBeatMapChanges(ss)
+                calculateApiService.applyStarToScores(ss)
 
-            val data = parseData(
-                user, scores, userApiService, version
-            )
+                ss
+            }
 
-            return try {
-                when (version) {
-                    1 -> imageService.getPanel(data, "J")
-                    else -> imageService.getPanel(data, "J2")
-                }
-            } catch (e: Exception) {
-                log.error("最好成绩分析：复杂面板生成失败", e)
-                try {
-                    val msg = UUBAService.getTextPlus(scores, user.username, user.mode, userApiService)
-                        .split("\n".toRegex())
-                        .dropLastWhile { it.isEmpty() }
-                        .toTypedArray()
-                    imageService.getPanelAlpha(*msg)
-                } catch (e1: Exception) {
-                    log.error("最好成绩分析：文字版转换失败", e1)
-                    throw IllegalStateException.Fetch("最好成绩分析（文字版）")
-                }
+            runBlocking {
+                user = deferred.await()
+                bests = deferred2.await()
+            }
+        } else {
+            user = getUserWithoutRange(event, matcher, mode, isMyself)
+            bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 200)
+
+            calculateApiService.applyBeatMapChanges(bests)
+            calculateApiService.applyStarToScores(bests)
+        }
+
+        val mappers = userApiService.getUsers(bests.map { it.beatmap.mapperID }.toSet())
+
+        return BAParam(user, bests, isMyself.get(), mappers, 2)
+
+    }
+
+    private fun BAParam.getImage(): ByteArray {
+        val scores = bests
+        val user = user
+
+        return try {
+            when (version) {
+                1 -> imageService.getPanel(this.toMap(), "J")
+                else -> imageService.getPanel(this.toMap(), "J2")
+            }
+        } catch (e: Exception) {
+            log.error("最好成绩分析：复杂面板生成失败", e)
+            try {
+                val msg = UUBAService.getTextPlus(scores, user.username, user.mode, userApiService)
+                    .split("\n".toRegex())
+                    .dropLastWhile { it.isEmpty() }
+                    .toTypedArray()
+                imageService.getPanelAlpha(*msg)
+            } catch (e1: Exception) {
+                log.error("最好成绩分析：文字版转换失败", e1)
+                throw IllegalStateException.Fetch("最好成绩分析（文字版）")
             }
         }
+    }
+
+    companion object {
+        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(4))
+        private val log: Logger = LoggerFactory.getLogger(BPAnalysisService::class.java)
+        private val RANK_ARRAY = arrayOf("XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F")
     }
 }

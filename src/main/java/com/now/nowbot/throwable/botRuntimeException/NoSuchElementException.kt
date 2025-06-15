@@ -27,6 +27,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class BeatmapScore(name: Any):
         NoSuchElementException("没有找到您在谱面 $name 内的成绩。")
 
+    class BeatmapScoreFiltered(name: Any):
+        NoSuchElementException("没有找到您在谱面 $name 内符合条件的成绩。")
+
     class BestScore(name: String):
         NoSuchElementException("无法获取玩家 $name 的最好成绩...")
 
@@ -53,6 +56,12 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
 
     class MatchRound:
         NoSuchElementException("没有找到这场对局。")
+
+    class PassedScore(name: String, mode: OsuMode):
+        NoSuchElementException("没有找到玩家 $name 在 ${mode.fullName} 模式内的最近通过成绩。")
+
+    class PassedScoreFiltered(name: String, mode: OsuMode):
+        NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 模式内符合条件的最近通过成绩...")
 
     class PeriodBestScore(name: String):
         NoSuchElementException("""
@@ -88,7 +97,6 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class PlayerPlay(name: String):
         NoSuchElementException("玩家 $name 的游戏时长太短了，快去多玩几局吧！")
 
-
     class PlayerPlayWithMode(name: String, mode: OsuMode):
         NoSuchElementException("玩家 $name 在 ${mode.fullName} 模式上的游戏时长太短了，快去多玩几局吧！")
 
@@ -113,7 +121,7 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
         NoSuchElementException("没有找到玩家 $name 在 ${mode.fullName} 模式内的最近成绩。")
 
     class RecentScoreFiltered(name: String, mode: OsuMode):
-        NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 模式内符合条件的最好成绩...")
+        NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 模式内符合条件的最近成绩...")
 
     class Result:
         NoSuchElementException("没有找到结果！")

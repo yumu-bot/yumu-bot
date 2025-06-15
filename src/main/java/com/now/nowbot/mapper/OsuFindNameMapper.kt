@@ -1,29 +1,23 @@
-package com.now.nowbot.mapper;
+package com.now.nowbot.mapper
 
-import com.now.nowbot.entity.OsuNameToIdLite;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.transaction.annotation.Transactional;
+import com.now.nowbot.entity.OsuNameToIdLite
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.transaction.annotation.Transactional
 
-import java.util.List;
+interface OsuFindNameMapper : JpaRepository<OsuNameToIdLite?, Long?>, JpaSpecificationExecutor<OsuNameToIdLite?> {
+    override fun <S : OsuNameToIdLite?> saveAll(iterable: Iterable<S>): List<S>
 
-public interface OsuFindNameMapper extends JpaRepository<OsuNameToIdLite, Long>, JpaSpecificationExecutor<OsuNameToIdLite> {
-    @Override
-    <S extends OsuNameToIdLite> @NotNull List<S> saveAll(@NotNull Iterable<S> iterable);
+    @Modifying @Transactional @Query("delete from OsuNameToIdLite o where o.name = :name")
+    fun deleteByName(name: String?)
 
-    @Modifying
-    @Transactional
-    @Query("delete from OsuNameToIdLite o where o.name = :name")
-    void deleteByName(String name);
+    @Modifying @Transactional @Query("delete from OsuNameToIdLite o where o.uid = :userID")
+    fun deleteByUserID(userID: Long?)
 
-    @Modifying
-    @Transactional
-    @Query("delete from OsuNameToIdLite o where o.uid = :uid")
-    void deleteByUid(Long uid);
+    @Query("select count(*) from OsuNameToIdLite o where o.uid = :userID")
+    fun countByUserID(userID: Long?): Int
 
-
-    OsuNameToIdLite getFirstByNameOrderByIndex(String name);
+    fun getFirstByNameOrderByIndex(name: String?): OsuNameToIdLite?
 }

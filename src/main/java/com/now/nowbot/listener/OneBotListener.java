@@ -113,7 +113,7 @@ public class OneBotListener {
             log.info("连接超时:", e);
             event.reply("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。").recallIn(RECALL_TIME);
         } else if (e instanceof LogException) {
-            log.info(e.getMessage(), ((LogException) e).getThrowable());
+            log.info(e.getMessage());
         } else if (e instanceof IllegalArgumentException) {
             log.error("正则异常", e);
         } else if (e instanceof DecodingException) {

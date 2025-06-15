@@ -1,12 +1,12 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.osu.UUScore
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
+import com.now.nowbot.model.osu.UUScore
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -17,18 +17,21 @@ import com.now.nowbot.service.messageServiceImpl.ScorePRService.ScorePRParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-
+import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
-import com.now.nowbot.util.CmdUtil.getUserWithRange
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_EQUAL
 import com.now.nowbot.util.command.REG_HYPHEN
 import com.now.nowbot.util.command.REG_RANGE
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -41,6 +44,7 @@ import java.util.regex.Matcher
 class ScorePRService(
     private val osuApiWebClient: WebClient,
     private val imageService: ImageService,
+    private val userApiService: OsuUserApiService,
     private val scoreApiService: OsuScoreApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
@@ -94,67 +98,21 @@ class ScorePRService(
         val matcher = Instruction.SCORE_PR.matcher(messageText)
         if (!matcher.find()) return false
 
-        val any: String? = matcher.group("any")
-
-        // 避免指令冲突
-        if (any?.contains("&sb", ignoreCase = true) == true) return false
-
-        val isPass =
-                if (matcher.group("recent") != null) {
-                    false
-                } else if (matcher.group("pass") != null) {
-                    true
-                } else {
-                    log.error("成绩分类失败：")
-                    throw IllegalStateException.ClassCast("成绩")
-                }
-
-        val isMyself = AtomicBoolean()
-        val mode = getMode(matcher)
-
-        val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "recent")
-
-        range.setZeroToRange100()
-
-        val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
-
-        // 如果不加井号，则有时候范围会被匹配到这里来
-        val rangeInConditions = conditions.lastOrNull()
-        val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
-        val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
-
-        if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
-            throw IllegalArgumentException.WrongException.Cabbage()
-        }
-
-        val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
-
-        val range2 = if (range.start != null) {
-            range
-        } else {
-            val start = ranges?.firstOrNull()?.toIntOrNull()
-            val end = if (ranges?.size == 2) ranges.last().toIntOrNull() else null
-
-            CmdRange(range.data!!, start, end)
-        }
-
         val isMultiple = (matcher.group("s").isNullOrBlank().not() || matcher.group("es").isNullOrBlank().not())
 
-        val isAvoidance: Boolean = CmdUtil.isAvoidance(messageText, "recent")
+        val isPass =
+            if (matcher.group("recent") != null) {
+                false
+            } else if (matcher.group("pass") != null) {
+                true
+            } else {
+                log.error("成绩分类失败：")
+                throw IllegalStateException.ClassCast("成绩")
+            }
 
-        val scores = range2.getRecentScores(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass, isAvoidance)
+        val param = getParam(event, messageText, matcher, isMultiple, isPass) ?: return false
 
-        if (scores.isEmpty() && isAvoidance) {
-            return false
-        }
-
-        val filteredScores = ScoreFilter.filterScores(scores, conditions)
-
-        if (filteredScores.isEmpty()) {
-            throw NoSuchElementException.RecentScoreFiltered(range.data!!.username, range.data!!.currentOsuMode)
-        }
-
-        data.value = ScorePRParam(range.data!!, filteredScores, isPass)
+        data.value = param
         return true
     }
 
@@ -201,14 +159,33 @@ class ScorePRService(
             return null
         }
 
+        val param = getParam(event, messageText, matcher, isMultiple, isPass)
+
+        return param
+    }
+
+    override fun reply(event: MessageEvent, param: ScorePRParam): MessageChain? {
+        param.asyncImage()
+        return param.getMessageChain()
+    }
+
+
+    /**
+     * 封装主获取方法
+     * 请在 matcher.find() 后使用
+     */
+    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isPass: Boolean): ScorePRParam? {
         val any: String? = matcher.group("any")
 
-        val isMyself = AtomicBoolean()
+        // 避免指令冲突
+        if (any?.contains("&sb", ignoreCase = true) == true) return null
+
+        val isMyself = AtomicBoolean(true) // 处理 range
         val mode = getMode(matcher)
 
-        val range = getUserWithRange(event, matcher, mode, isMyself)
+        val id = UserIDUtil.getUserIDWithRange(event, matcher, mode, isMyself)
 
-        range.setZeroToRange100()
+        id.setZeroToRange100()
 
         val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
 
@@ -221,38 +198,134 @@ class ScorePRService(
             throw IllegalArgumentException.WrongException.Cabbage()
         }
 
-        val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
-
-        val range2 = if (range.start != null) {
-            range
+        val ranges = if (hasRangeInConditions) {
+            rangeInConditions
         } else {
-            val start = ranges?.firstOrNull()?.toIntOrNull()
-            val end = if (ranges?.size == 2) ranges.last().toIntOrNull() else null
-
-            CmdRange(range.data!!, start, end)
+            matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
         }
 
-        val scores = range2.getRecentScores(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass, false)
+        val user: OsuUser
+        val scores: Map<Int, LazerScore>
+
+        // 高效的获取方式
+        if (id.data != null) {
+            val id2 = if (id.start != null) {
+                id
+            } else {
+                val start = ranges?.firstOrNull()?.toIntOrNull()
+                val end = if (ranges?.size == 2) {
+                    ranges.last().toIntOrNull()
+                } else {
+                    null
+                }
+
+                CmdRange(id.data!!, start, end)
+            }
+
+            val deferred = scope.async {
+                userApiService.getOsuUser(id2.data!!, mode.data!!)
+            }
+
+            val deferred2 = scope.async {
+                id2.getRecentsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass)
+            }
+
+            runBlocking {
+                user = deferred.await()
+                scores = deferred2.await()
+            }
+        } else {
+            // 经典的获取方式
+
+            val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "re")
+            range.setZeroToRange100()
+
+            val range2 = if (range.start != null) {
+                range
+            } else {
+                val start = ranges?.firstOrNull()?.toIntOrNull()
+                val end = if (ranges?.size == 2) {
+                    ranges.last().toIntOrNull()
+                } else {
+                    null
+                }
+
+                CmdRange(range.data!!, start, end)
+            }
+
+            user = range2.data!!
+
+            scores = range2.getRecentsFromOsuUser(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass)
+        }
 
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
         if (filteredScores.isEmpty()) {
-            throw NoSuchElementException.RecentScoreFiltered(range.data!!.username, range.data!!.currentOsuMode)
+            if (isPass) {
+                throw NoSuchElementException.PassedScoreFiltered(user.username, user.currentOsuMode)
+            } else {
+                throw NoSuchElementException.RecentScoreFiltered(user.username, user.currentOsuMode)
+            }
         }
 
-        return ScorePRParam(range.data!!, filteredScores, isPass)
+        return ScorePRParam(user, scores, isPass)
     }
 
-    override fun reply(event: MessageEvent, param: ScorePRParam): MessageChain? {
-        return param.getMessageChain()
+
+    private fun <T> CmdRange<T>.getOffsetAndLimit(
+        isMultiple: Boolean,
+        isSearch: Boolean = false,
+    ): Pair<Int, Int> {
+        val offset: Int
+        val limit: Int
+
+        if (isSearch && this.start == null) {
+            offset = 0
+            limit = 100
+        } else if (isMultiple) {
+            offset = getOffset(0, true)
+            limit = getLimit(20, true)
+        } else {
+            offset = getOffset(0, false)
+            limit = getLimit(1, false)
+        }
+
+        return offset to limit
     }
 
-    private fun CmdRange<OsuUser>.getRecentScores(
+    private fun CmdRange<Long>.getRecentsFromUserID(
         mode: OsuMode,
         isMultiple: Boolean,
         isSearch: Boolean = false,
         isPass: Boolean = false,
-        isAvoidance: Boolean = false,
+    ): Map<Int, LazerScore> {
+        val o = this.getOffsetAndLimit(isMultiple, isSearch)
+
+        val offset: Int = o.first
+        val limit: Int = o.second
+
+        val scores = scoreApiService.getRecentScore(this.data!!, mode, offset, limit)
+
+        // 检查查到的数据是否为空
+        if (scores.isEmpty()) {
+            if (isPass) {
+                throw NoSuchElementException.RecentScore(this.data!!.toString(), mode)
+            } else {
+                throw NoSuchElementException.PassedScore(this.data!!.toString(), mode)
+            }
+        }
+
+        calculateApiService.applyStarToScores(scores)
+        calculateApiService.applyBeatMapChanges(scores)
+
+        return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
+    }
+
+    private fun CmdRange<OsuUser>.getRecentsFromOsuUser(
+        mode: OsuMode,
+        isMultiple: Boolean,
+        isSearch: Boolean = false,
+        isPass: Boolean = false,
     ): Map<Int, LazerScore> {
 
         val offset: Int
@@ -269,41 +342,32 @@ class ScorePRService(
             limit = getLimit(1, false)
         }
 
-        val scores = try {
-            scoreApiService.getScore(data!!.userID, mode, offset, limit, isPass)
-        } catch (e: Exception) {
-            if (isAvoidance) {
-                log.info("最近成绩：退避成功。请求者：{}", data?.username)
-                return emptyMap()
-            } else {
-                throw e
-            }
-        }
+        val scores = scoreApiService.getScore(data!!.userID, mode, offset, limit, isPass)
 
         calculateApiService.applyStarToScores(scores)
         calculateApiService.applyBeatMapChanges(scores)
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
-            throw NoSuchElementException.RecentScore(data!!.username, data!!.currentOsuMode)
+            if (isPass) {
+                throw NoSuchElementException.RecentScore(data!!.username, data!!.currentOsuMode)
+            } else {
+                throw NoSuchElementException.PassedScore(data!!.username, data!!.currentOsuMode)
+            }
         }
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
 
     private fun ScorePRParam.asyncImage() = run {
-        scoreApiService.asyncDownloadBackground(scores.values)
-        scoreApiService.asyncDownloadBackground(scores.values, CoverType.LIST)
+        scoreApiService.asyncDownloadBackground(scores.values, listOf(CoverType.COVER, CoverType.LIST))
     }
 
     private fun ScorePRParam.getMessageChain(): MessageChain {
         try {
             if (scores.size > 1) {
-                val ranks = scores.map{it.key}.toList()
-                val scores = scores.map{it.value}.toList()
-
-                scoreApiService.asyncDownloadBackground(scores, CoverType.LIST)
-                scoreApiService.asyncDownloadBackground(scores, CoverType.COVER)
+                val ranks = scores.map { it.key }
+                val scores = scores.map { it.value }
 
                 val body = mapOf(
                     "user" to user,
@@ -319,9 +383,6 @@ class ScorePRService(
             } else {
                 // 单成绩发送
                 val score = scores.values.first()
-
-                scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
-                scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
 
                 val e5 = getE5ParamForFilteredScore(user, score, (if (isPass) "P" else "R"), beatmapApiService, calculateApiService)
 
@@ -348,6 +409,8 @@ class ScorePRService(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ScorePRService::class.java)
+
+        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(4))
 
         // 用于已筛选过的成绩。此时成绩内的谱面是已经计算过的，无需再次计算
         fun getE5ParamForFilteredScore(user: OsuUser, score: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {

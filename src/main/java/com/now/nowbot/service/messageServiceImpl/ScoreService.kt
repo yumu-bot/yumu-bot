@@ -1,9 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -16,23 +16,26 @@ import com.now.nowbot.service.messageServiceImpl.ScoreService.ScoreParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.getMod
 import com.now.nowbot.util.CmdUtil.getMode
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 
 @Service("SCORE") class ScoreService(
     private val scoreApiService: OsuScoreApiService,
+    private val userApiService: OsuUserApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
@@ -40,14 +43,14 @@ import java.util.regex.Matcher
 
     data class ScoreParam(
         val user: OsuUser,
+        val map: Beatmap,
+        val scores: List<LazerScore>,
         val mode: OsuMode,
-        val beatmap: Beatmap,
         val mods: List<LazerMod>,
-        val isMyself: Boolean,
         val isMultipleScore: Boolean,
     )
 
-    @Throws(TipsException::class) override fun isHandle(
+    override fun isHandle(
         event: MessageEvent,
         messageText: String,
         data: DataValue<ScoreParam>,
@@ -69,45 +72,13 @@ import java.util.regex.Matcher
             return false
         }
 
-        val inputMode = getMode(matcher)
-        val isMyself = AtomicBoolean(false)
-
-        val bid = getBid(matcher)
-
-        val map = if (bid != 0L) {
-            beatmapApiService.getBeatmap(bid)
-        } else {
-            // 备用方法
-            val currentMode = CmdObject(OsuMode.DEFAULT)
-
-            val user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, currentMode, isMyself, messageText, "score")
-
-            val score = scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 1).first()
-
-            beatmapApiService.getBeatmap(score.beatmapID)
-        }
-
-        if (!map.hasLeaderBoard) {
-            throw NoSuchElementException.Leaderboard()
-        }
-
-        val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
-
-        val user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, CmdObject(mode), isMyself, messageText, "score")
-
-        val mods = getMod(matcher)
-
-        data.value = ScoreParam(user, mode, map, mods, isMyself.get(), isMultipleScore)
+        data.value = getParam(event, messageText, matcher, isMultipleScore)
 
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: ScoreParam) {
-        val message = if (param.isMultipleScore) {
-            getMultipleScore(param)
-        } else {
-            getSingleScore(param)
-        }
+    override fun HandleMessage(event: MessageEvent, param: ScoreParam) {
+        val message = getMessageChain(param)
 
         try {
             event.reply(message)
@@ -133,132 +104,142 @@ import java.util.regex.Matcher
         } else {
             return null
         }
-
-        val inputMode = getMode(matcher)
-        val isMyself = AtomicBoolean(false)
-
-        val bid = getBid(matcher)
-
-        val map = if (bid != 0L) {
-            beatmapApiService.getBeatmap(bid)
-        } else {
-            // 备用方法
-            val currentMode = CmdObject(OsuMode.DEFAULT)
-            val user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, currentMode, isMyself, messageText, "score")
-
-            val score = scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 1).first()
-
-            beatmapApiService.getBeatmap(score.beatmapID)
-        }
-
-        if (!map.hasLeaderBoard) {
-            throw NoSuchElementException.Leaderboard()
-        }
-
-        val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
-
-        val user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, CmdObject(mode), isMyself, messageText, "score")
-
-        val mods = getMod(matcher)
-
-        return ScoreParam(user, mode, map, mods, isMyself.get(), isMultipleScore)
+        return getParam(event, messageText, matcher, isMultipleScore)
     }
 
     override fun reply(event: MessageEvent, param: ScoreParam): MessageChain? {
-        return if (param.isMultipleScore) {
-            getMultipleScore(param)
-        } else {
-            getSingleScore(param)
-        }
+        return getMessageChain(param)
     }
 
-    private fun getMultipleScore(param: ScoreParam): MessageChain {
-        val mode = param.mode
-        val user = param.user
-        val b = param.beatmap
-        val bid = b.beatmapID
+    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultipleScore: Boolean): ScoreParam {
+        val bid = getBid(matcher)
 
-        val scores: List<LazerScore> =
-            scoreApiService.getBeatMapScores(bid, user.userID, mode).sortedByDescending { it.pp }
+        val inputMode = getMode(matcher)
+        val map: Beatmap
+        val user: OsuUser
+        val scores: List<LazerScore>
+        val mode: OsuMode
 
-        if (scores.isEmpty()) {
-            throw NoSuchElementException.BeatmapScore(b.previewName)
+        if (bid != 0L) {
+
+            val id = UserIDUtil.getUserIDWithoutRange(event, matcher, inputMode, AtomicBoolean(true))
+
+            map = beatmapApiService.getBeatmap(bid)
+
+            if (id != null) {
+
+                mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+
+                val deferred = scope.async {
+                    userApiService.getOsuUser(id)
+                }
+
+                val deferred2 = scope.async {
+                    scoreApiService.getBeatMapScores(bid, id, mode)
+                }
+
+                runBlocking {
+                    user = deferred.await()
+                    scores = deferred2.await()
+                }
+            } else {
+                user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score")
+
+                mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+
+                scores = scoreApiService.getBeatMapScores(bid, user.userID, mode)
+            }
+        } else {
+            // 备用方法：先获取最近成绩，再获取谱面
+            val recent: LazerScore
+
+            val currentMode = CmdObject(inputMode.data)
+
+            val id = UserIDUtil.getUserIDWithoutRange(event, matcher, currentMode, AtomicBoolean(true))
+
+            if (id != null) {
+                val deferred = scope.async {
+                    userApiService.getOsuUser(id, currentMode.data!!)
+                }
+
+                val deferred2 = scope.async {
+                    scoreApiService.getRecentScore(id, currentMode.data!!, 0, 1)
+                }
+
+                runBlocking {
+                    user = deferred.await()
+                    recent = deferred2.await().firstOrNull()
+                        ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
+                }
+            } else {
+                user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score")
+
+                recent = scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 1).firstOrNull()
+                    ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
+            }
+
+            map = beatmapApiService.getBeatmap(recent.beatmapID)
+
+            mode = OsuMode.getConvertableMode(currentMode.data, map.mode)
+
+            scores = scoreApiService.getBeatMapScores(recent.beatmapID, user.userID, mode)
         }
 
-        val image: ByteArray = if (scores.size > 1) {
-            calculateApiService.applyStarToScores(scores)
-            calculateApiService.applyBeatMapChanges(scores)
-            beatmapApiService.applyBeatmapExtendForSameScore(scores, b)
+        if (scores.isEmpty()) {
+            throw NoSuchElementException.BeatmapScore(map.previewName)
+        }
 
-            scoreApiService.asyncDownloadBackground(scores.first(), CoverType.COVER)
-            scoreApiService.asyncDownloadBackground(scores.first(), CoverType.LIST)
+        val mods = getMod(matcher)
+
+        val filtered = scores.filter { score ->
+            score.mods
+                .map { it.acronym }
+                .union(mods.map { it.acronym }).size == score.mods.size
+        }
+
+        if (filtered.isEmpty()) {
+            throw NoSuchElementException.BeatmapScoreFiltered(map.previewName)
+        }
+
+        return ScoreParam(user, map, filtered, mode, mods, isMultipleScore)
+    }
+
+    private fun asyncDownloadBackground(param: ScoreParam) {
+        scoreApiService.asyncDownloadBackground(param.scores, listOf(CoverType.COVER, CoverType.LIST))
+    }
+
+    private fun getMessageChain(param: ScoreParam): MessageChain {
+        val image: ByteArray = if (param.scores.size > 1 && param.isMultipleScore) {
+            beatmapApiService.applyBeatmapExtendForSameScore(param.scores, param.map)
+            asyncDownloadBackground(param)
 
             val body = mapOf(
-                "user" to user,
+                "user" to param.user,
 
-                "rank" to (1..(scores.size)).toList(),
-                "score" to scores,
+                "rank" to (1..(param.scores.size)).toList(),
+                "score" to param.scores,
                 "panel" to "SS"
             )
 
             imageService.getPanel(body, "A5")
         } else {
-            val score = scores.first()
+            val score = param.scores.first()
 
-            val e5Param = ScorePRService.getE5Param(user, score, b, null, "S", beatmapApiService, calculateApiService)
+            val e5Param = ScorePRService.getE5Param(param.user, score, param.map, null, "S", beatmapApiService, calculateApiService)
 
-            scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
-            scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
+            asyncDownloadBackground(param)
 
             imageService.getPanel(e5Param.toMap(), "E5")
         }
 
         return QQMsgUtil.getImage(image)
-    }
 
-    private fun getSingleScore(param: ScoreParam): MessageChain {
-        val user = param.user
 
-        val b = param.beatmap
-        val bid = b.beatmapID
-        val mode = param.mode
-
-        val score: LazerScore
-        val position: Int?
-
-        if (param.mods.isNotEmpty()) {
-            score = try {
-                scoreApiService.getBeatMapScore(bid, user.userID, mode, param.mods)?.score
-            } catch (e: WebClientResponseException) {
-                
-            throw NoSuchElementException.BeatmapScore(b.previewName)
-            }!!
-
-            // beatmapApiService.applyBeatMapExtend(score!!, b)
-            position = null
-        } else {
-            val beatmapScore = try {
-                scoreApiService.getBeatMapScore(bid, user.userID, mode)!!
-            } catch (e: WebClientResponseException.NotFound) {
-                
-            throw NoSuchElementException.BeatmapScore(b.previewName)
-            }
-
-            score = beatmapScore.score!!
-            position = beatmapScore.position
-        }
-
-        val e5Param = ScorePRService.getE5Param(user, score, b, position, "S", beatmapApiService, calculateApiService)
-
-        scoreApiService.asyncDownloadBackground(score, CoverType.COVER)
-        scoreApiService.asyncDownloadBackground(score, CoverType.LIST)
-
-        val image: ByteArray = imageService.getPanel(e5Param.toMap(), "E5")
-
-        return QQMsgUtil.getImage(image)
     }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ScoreService::class.java)
+
+        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(4))
     }
 }

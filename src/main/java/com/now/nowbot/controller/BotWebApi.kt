@@ -5,17 +5,13 @@ import ch.qos.logback.classic.LoggerContext
 import com.now.nowbot.aop.OpenResource
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.PPMinusDao
-import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
-import com.now.nowbot.model.osu.Beatmap
-import com.now.nowbot.model.osu.BeatmapDifficultyAttributes
-import com.now.nowbot.model.osu.LazerScore
-import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.mappool.old.MapPoolDto
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.MatchRating
+import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.messageServiceImpl.*
@@ -41,6 +37,7 @@ import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
+import kotlin.jvm.optionals.getOrNull
 import kotlin.math.max
 import kotlin.math.min
 
@@ -662,22 +659,27 @@ import kotlin.math.min
         @OpenResource(name = "name", desp = "玩家名称", required = true) @NonNull @RequestParam("name") name: String,
         @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
     ): ResponseEntity<ByteArray> {
-        val scores: List<LazerScore>
-        val osuUser: OsuUser
+        val bests: List<LazerScore>
+        val user: OsuUser
+        val mappers: List<MicroUser>
 
         try {
             val mode = getMode(playMode)
             val uid = userApiService.getOsuID(name.trim())
-            osuUser = userApiService.getOsuUser(uid, mode)
-            if (mode != OsuMode.DEFAULT) osuUser.currentOsuMode = mode
-            scores = scoreApiService.getBestScores(uid, mode)
+            user = userApiService.getOsuUser(uid, mode)
+            if (mode != OsuMode.DEFAULT) user.currentOsuMode = mode
+            bests = scoreApiService.getBestScores(uid, mode, 0, 200)
+            mappers = userApiService.getUsers(bests.map { it.beatmap.mapperID }.toSet())
+
+            calculateApiService.applyBeatMapChanges(bests)
+            calculateApiService.applyStarToScores(bests)
         } catch (e: Exception) {
             throw RuntimeException(IllegalStateException.Fetch("最好成绩分析"))
         }
 
-        val data: Map<String, Any> = BPAnalysisService.parseData(osuUser, scores, userApiService, 2)
+        val param = BPAnalysisService.BAParam(user, bests, true, mappers, 2)
 
-        val image = imageService.getPanel(data, "J2")
+        val image = imageService.getPanel(param.toMap(), "J2")
         return ResponseEntity(
             image, getImageHeader(
                 "${name}-ba.jpg", image.size
@@ -812,11 +814,11 @@ import kotlin.math.min
         val bests = scoreApiService.getBestScores(user)
         val historyUser = infoDao.getLastFrom(
             user.userID, mode, LocalDate.now().minusDays(day.toLong())
-        ).map { OsuUserInfoDao.fromArchive(it) }.orElse(null)
+        ).map { OsuUserInfoDao.fromArchive(it) }.getOrNull()
 
-        val param = InfoService.PanelDParam(user, historyUser, bests, user.currentOsuMode)
+        val param = InfoService.InfoParam(user, bests, mode, historyUser, false, 2)
 
-        val image = imageService.getPanel(param.toMap(), "D")
+        val image = imageService.getPanel(param.toMap(), "D2")
 
         return ResponseEntity(
             image, getImageHeader(

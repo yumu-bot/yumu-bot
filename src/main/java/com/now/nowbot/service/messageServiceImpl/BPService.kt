@@ -15,7 +15,7 @@ import com.now.nowbot.service.messageServiceImpl.BPService.BPParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-
+import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
@@ -23,6 +23,10 @@ import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.command.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -33,6 +37,7 @@ import kotlin.math.*
 
 @Service("BP") class BPService(
     private val calculateApiService: OsuCalculateApiService,
+    private val userApiService: OsuUserApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val scoreApiService: OsuScoreApiService,
     private val imageService: ImageService,
@@ -40,7 +45,7 @@ import kotlin.math.*
 
     data class BPParam(val user: OsuUser, val scores: Map<Int, LazerScore>)
 
-    @Throws(Throwable::class) override fun isHandle(
+    override fun isHandle(
         event: MessageEvent,
         messageText: String,
         data: DataValue<BPParam>,
@@ -48,51 +53,11 @@ import kotlin.math.*
         val matcher = Instruction.BP.matcher(messageText)
         if (!matcher.find()) return false
 
-        val any: String? = matcher.group("any")
-
-        // 避免指令冲突
-        if (any?.contains("&sb", ignoreCase = true) == true) return false
-
-        val isMyself = AtomicBoolean() // 处理 range
-        val mode = getMode(matcher)
-
-        val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
-        range.setZeroToRange100()
-
-        val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
-
-        // 如果不加井号，则有时候范围会被匹配到这里来
-        val rangeInConditions = conditions.lastOrNull()
-        val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
-        val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
-
-        if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
-            throw IllegalArgumentException.WrongException.Cabbage()
-        }
-
-        val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
-
-        val range2 = if (range.start != null) {
-            range
-        } else {
-            val start = ranges?.firstOrNull()?.toIntOrNull()
-            val end = if (ranges?.size == 2) ranges.last().toIntOrNull() else null
-
-            CmdRange(range.data!!, start, end)
-        }
-
         val isMultiple = matcher.group("s").isNullOrBlank().not()
 
-        val scores = range2.getBPScores(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition)
+        val param = getParam(event, messageText, matcher, isMultiple) ?: return false
 
-        val filteredScores = ScoreFilter.filterScores(scores, conditions)
-
-        if (filteredScores.isEmpty()) {
-            throw NoSuchElementException.BestScoreFiltered(range.data!!.username)
-        }
-
-        data.value = BPParam(range.data!!, filteredScores)
-
+        data.value = param
         return true
     }
 
@@ -125,40 +90,9 @@ import kotlin.math.*
             return null
         }
 
-        val isMyself = AtomicBoolean() // 处理 range
-        val mode = getMode(matcher)
+        val param = getParam(event, messageText, matcher, isMultiple)
 
-        val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
-        range.setZeroToRange100()
-
-        val any = matcher.group("any")
-        val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
-
-        // 如果不加井号，则有时候范围会被匹配到这里来
-        val rangeInConditions = conditions.lastOrNull()
-        val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
-        val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
-
-        val ranges = if (hasRangeInConditions) rangeInConditions else matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
-
-        val range2 = if (range.start != null) {
-            range
-        } else {
-            val start = ranges?.firstOrNull()?.toIntOrNull()
-            val end = if (ranges?.size == 2) ranges.last().toIntOrNull() else null
-
-            CmdRange(range.data!!, start, end)
-        }
-
-        val scores = range2.getBPScores(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition)
-
-        val filteredScores = ScoreFilter.filterScores(scores, conditions)
-
-        if (filteredScores.isEmpty()) {
-            throw NoSuchElementException.BestScoreFiltered(range.data!!.username)
-        }
-
-        return BPParam(range.data!!, filteredScores)
+        return param
     }
 
     override fun reply(event: MessageEvent, param: BPParam): MessageChain? = run {
@@ -166,11 +100,107 @@ import kotlin.math.*
         return QQMsgUtil.getImage(param.getImage())
     }
 
-    private fun CmdRange<OsuUser>.getBPScores(
-        mode: OsuMode,
+    /**
+     * 封装主获取方法
+     * 请在 matcher.find() 后使用
+     */
+    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean): BPParam? {
+        val any: String? = matcher.group("any")
+
+        // 避免指令冲突
+        if (any?.contains("&sb", ignoreCase = true) == true) return null
+
+        val isMyself = AtomicBoolean(true) // 处理 range
+        val mode = getMode(matcher)
+
+        val id = UserIDUtil.getUserIDWithRange(event, matcher, mode, isMyself)
+
+        id.setZeroToRange100()
+
+        val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
+
+        // 如果不加井号，则有时候范围会被匹配到这里来
+        val rangeInConditions = conditions.lastOrNull()
+        val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
+        val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
+
+        if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
+            throw IllegalArgumentException.WrongException.Cabbage()
+        }
+
+        val ranges = if (hasRangeInConditions) {
+            rangeInConditions
+        } else {
+            matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
+        }
+
+        val user: OsuUser
+        val scores: Map<Int, LazerScore>
+
+        // 高效的获取方式
+        if (id.data != null) {
+            val id2 = if (id.start != null) {
+                id
+            } else {
+                val start = ranges?.firstOrNull()?.toIntOrNull()
+                val end = if (ranges?.size == 2) {
+                    ranges.last().toIntOrNull()
+                } else {
+                    null
+                }
+
+                CmdRange(id.data!!, start, end)
+            }
+
+            val deferred = scope.async {
+                userApiService.getOsuUser(id2.data!!, mode.data!!)
+            }
+
+            val deferred2 = scope.async {
+                id2.getBestsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition)
+            }
+
+            runBlocking {
+                user = deferred.await()
+                scores = deferred2.await()
+            }
+        } else {
+            // 经典的获取方式
+
+            val range = getUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "bp")
+            range.setZeroToRange100()
+
+            val range2 = if (range.start != null) {
+                range
+            } else {
+                val start = ranges?.firstOrNull()?.toIntOrNull()
+                val end = if (ranges?.size == 2) {
+                    ranges.last().toIntOrNull()
+                } else {
+                    null
+                }
+
+                CmdRange(range.data!!, start, end)
+            }
+
+            user = range2.data!!
+
+            scores = range2.getBestsFromOsuUser(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition)
+        }
+
+        val filteredScores = ScoreFilter.filterScores(scores, conditions)
+
+        if (filteredScores.isEmpty()) {
+            throw NoSuchElementException.BestScoreFiltered(user.username)
+        }
+
+        return BPParam(user, scores)
+    }
+
+    private fun <T> CmdRange<T>.getOffsetAndLimit(
         isMultiple: Boolean,
         isSearch: Boolean = false,
-    ): Map<Int, LazerScore> {
+    ): Pair<Int, Int> {
         val offset: Int
         val limit: Int
 
@@ -185,16 +215,43 @@ import kotlin.math.*
             limit = getLimit(1, false)
         }
 
-        val scores = scoreApiService.getBestScores(data!!.userID, mode, offset, limit)
+        return offset to limit
+    }
 
-        /*
-        val scores = if (limit > 100) {
-            scoreApiService.getBestScores(data!!.userID, mode, offset, 100) + scoreApiService.getBestScores(data!!.userID, mode, offset + 100, limit - 100)
-        } else {
-            scoreApiService.getBestScores(data!!.userID, mode, offset, limit)
+    private fun CmdRange<Long>.getBestsFromUserID(
+        mode: OsuMode,
+        isMultiple: Boolean,
+        isSearch: Boolean = false,
+    ): Map<Int, LazerScore> {
+        val o = this.getOffsetAndLimit(isMultiple, isSearch)
+
+        val offset: Int = o.first
+        val limit: Int = o.second
+
+        val scores = scoreApiService.getBestScores(this.data!!, mode, offset, limit)
+
+        // 检查查到的数据是否为空
+        if (scores.isEmpty()) {
+            throw NoSuchElementException.BestScoreWithMode(this.data!!.toString(), mode)
         }
 
-         */
+        calculateApiService.applyStarToScores(scores)
+        calculateApiService.applyBeatMapChanges(scores)
+
+        return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
+    }
+
+    private fun CmdRange<OsuUser>.getBestsFromOsuUser(
+        mode: OsuMode,
+        isMultiple: Boolean,
+        isSearch: Boolean = false,
+    ): Map<Int, LazerScore> {
+        val o = this.getOffsetAndLimit(isMultiple, isSearch)
+
+        val offset: Int = o.first
+        val limit: Int = o.second
+
+        val scores = scoreApiService.getBestScores(data!!.userID, mode, offset, limit)
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
@@ -208,14 +265,13 @@ import kotlin.math.*
     }
 
     private fun BPParam.asyncImage() = run {
-        scoreApiService.asyncDownloadBackground(scores.values, CoverType.COVER)
-        scoreApiService.asyncDownloadBackground(scores.values, CoverType.LIST)
+        scoreApiService.asyncDownloadBackground(scores.values, listOf(CoverType.COVER, CoverType.LIST))
     }
 
     private fun BPParam.getImage(): ByteArray =
         if (scores.size > 1) {
-            val ranks = scores.map{it.key}.toList()
-            val scores = scores.map{it.value}.toList()
+            val ranks = scores.map { it.key }
+            val scores = scores.map { it.value }
 
             val body = mapOf(
                 "user" to user,
@@ -234,5 +290,6 @@ import kotlin.math.*
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BPService::class.java)
 
+        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(4))
     }
 }
