@@ -7,6 +7,7 @@ import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.permission.PermissionImplement;
+import com.now.nowbot.qq.message.MessageChain;
 import com.now.nowbot.service.IdempotentService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.BotException;
@@ -114,6 +115,8 @@ public class OneBotListener {
             event.reply("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。").recallIn(RECALL_TIME);
         } else if (e instanceof LogException) {
             log.info(e.getMessage());
+        } else if (e instanceof IllegalStateException) {
+            event.reply(new MessageChain(e.getCause().getMessage()));
         } else if (e instanceof IllegalArgumentException) {
             log.error("正则异常", e);
         } else if (e instanceof DecodingException) {
