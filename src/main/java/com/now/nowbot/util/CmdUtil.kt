@@ -476,8 +476,8 @@ object CmdUtil {
         }
 
         if (matcher.namedGroups().containsKey(FLAG_NAME)) {
-            val name: String = matcher.group(FLAG_NAME) ?: ""
-            if (name.isBlank().not()) {
+            val name: String? = matcher.group(FLAG_NAME)
+            if (!name.isNullOrBlank()) {
                 return getOsuUser(name, mode.data)
             }
         }

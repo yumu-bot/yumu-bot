@@ -32,9 +32,9 @@ object UserIDUtil {
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
-        isMyself: AtomicBoolean = AtomicBoolean(true)
+        isMyself: AtomicBoolean = AtomicBoolean(false)
     ): CmdRange<Long> {
-        val range = getUserIDAndRange(event, matcher, mode)
+        val range = getUserIDAndRange(event, matcher, mode, isMyself)
 
         if (range.data == null) {
             range.data = getUserIDWithoutRange(event, matcher, mode, isMyself)
@@ -91,11 +91,14 @@ object UserIDUtil {
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
     ): CmdRange<Long> {
 
         require(
             matcher.namedGroups().containsKey(FLAG_USER_AND_RANGE)
         ) { "Matcher 中不包含 ur 分组" }
+
+        isMyself.set(false)
 
         if (mode.data == null) {
             mode.data = OsuMode.DEFAULT
@@ -117,15 +120,18 @@ object UserIDUtil {
 
                 if (user != null) {
                     setMode(mode, user.mode, event)
+                } else {
+                    setMode(mode, event)
                 }
 
                 return CmdRange(user?.userID)
             } catch (ignored: Exception) {}
 
+            isMyself.set(true)
             return CmdRange(bindDao.getBindFromQQ(event.sender.id).userID, range.first, range.second)
         }
 
-        val ranges = if (text.contains("($CHAR_HASH|$CHAR_HASH_FULL)")) {
+        val ranges = if (text.contains("($CHAR_HASH|$CHAR_HASH_FULL)".toRegex())) {
             parseNameAndRangeHasHash(text)
         } else {
             parseNameAndRangeWithoutHash(text)
@@ -143,9 +149,13 @@ object UserIDUtil {
 
             if (user != null) {
                 setMode(mode, user.mode, event)
+            } else {
+                setMode(mode, event)
             }
 
-            return CmdRange(user?.userID, range.start, range.end)
+            val id = bindDao.getOsuID(range.data!!)
+
+            return CmdRange(id, range.start, range.end)
 
         } catch (ignored: Exception) {}
 
@@ -226,7 +236,17 @@ object UserIDUtil {
             }
         }
 
-        isMyself.set(true)
+        if (matcher.namedGroups().containsKey(FLAG_USER_AND_RANGE)) {
+            val name2: String? = matcher.group(FLAG_USER_AND_RANGE)
+            if (!name2.isNullOrBlank()) {
+                isMyself.set(false)
+            } else {
+                isMyself.set(true)
+            }
+        } else {
+            isMyself.set(true)
+        }
+
         return null
     }
 
