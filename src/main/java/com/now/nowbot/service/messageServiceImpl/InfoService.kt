@@ -178,7 +178,7 @@ class InfoService(
             val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
                 { userApiService.getOsuUser(id, mode.data!!) },
                 {
-                    val ss = scoreApiService.getBestScores(id, mode.data!!, 0, 200)
+                    val ss = scoreApiService.getBestScores(id, mode.data!!)
 
                     calculateApiService.applyBeatMapChanges(ss)
                     calculateApiService.applyStarToScores(ss)
@@ -191,7 +191,7 @@ class InfoService(
             bests = async.second.toList()
         } else {
             user = getUserWithoutRange(event, matcher, getMode(matcher), isMyself)
-            bests = scoreApiService.getBestScores(user.userID, mode.data!!, 0, 200)
+            bests = scoreApiService.getBestScores(user.userID, mode.data!!)
         }
 
         val day = (matcher.group(FLAG_DAY) ?: "").toLongOrNull() ?: 1L

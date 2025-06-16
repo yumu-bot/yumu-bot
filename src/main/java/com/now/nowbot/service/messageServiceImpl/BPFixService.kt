@@ -47,7 +47,7 @@ class BPFixService(
 
         val user = getUserWithoutRange(event, matcher, mode)
 
-        val bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 200)
+        val bests = scoreApiService.getBestScores(user.userID, mode.data)
         val bestsMap = bests.mapIndexed { i, it -> (i + 1) to it }.toMap()
 
         data.value = BPFixParam(user, bestsMap, mode.data!!)
@@ -73,7 +73,7 @@ class BPFixService(
         val mode = getMode(matcher)
         val user = getUserWithoutRange(event, matcher, mode)
 
-        val bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 200)
+        val bests = scoreApiService.getBestScores(user.userID, mode.data)
         val bestsMap = bests.mapIndexed { i, it -> (i + 1) to it }.toMap()
 
         return BPFixParam(user, bestsMap, mode.data!!)

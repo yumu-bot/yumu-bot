@@ -76,7 +76,7 @@ class RecommendedMapService(
 
         favorite = AsyncMethodExecutor.awaitSupplierExecute(tasks).flatten()
 
-        val bests: List<LazerScore> = scoreApiService.getBestScores(user, 0, 200)
+        val bests: List<LazerScore> = scoreApiService.getBestScores(user)
 
         return UserPrefer(bests, favorite)
     }

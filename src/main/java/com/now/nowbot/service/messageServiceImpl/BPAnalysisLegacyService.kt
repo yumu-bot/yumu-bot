@@ -47,7 +47,7 @@ class BPAnalysisLegacyService(
             val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
                 { userApiService.getOsuUser(id, mode.data!!) },
                 {
-                    val ss = scoreApiService.getBestScores(id, mode.data!!, 0, 200)
+                    val ss = scoreApiService.getBestScores(id, mode.data!!)
 
                     calculateApiService.applyBeatMapChanges(ss)
                     calculateApiService.applyStarToScores(ss)
@@ -60,7 +60,7 @@ class BPAnalysisLegacyService(
             bests = async.second.toList()
         } else {
             user = getUserWithoutRange(event, matcher, mode, isMyself)
-            bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 200)
+            bests = scoreApiService.getBestScores(user.userID, mode.data)
 
             calculateApiService.applyBeatMapChanges(bests)
             calculateApiService.applyStarToScores(bests)

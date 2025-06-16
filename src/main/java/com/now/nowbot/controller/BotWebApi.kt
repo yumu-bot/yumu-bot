@@ -116,7 +116,7 @@ import kotlin.math.min
         val mode = getMode(playMode)
 
         val me = userApiService.getOsuUser(name.trim(), mode)
-        val myBest = scoreApiService.getBestScores(me, mode, 0, 200)
+        val myBest = scoreApiService.getBestScores(me, mode)
 
         val param = PPMinusService.PPMinusParam(false, me, myBest, null, null, mode, 4)
 
@@ -148,10 +148,10 @@ import kotlin.math.min
         val mode = getMode(playMode)
 
         val me = userApiService.getOsuUser(name.trim(), mode)
-        val myBest = scoreApiService.getBestScores(me, mode, 0, 200)
+        val myBest = scoreApiService.getBestScores(me, mode)
 
         val other = if (name2.isBlank()) null else userApiService.getOsuUser(name2.trim(), mode)
-        val othersBest = if (other == null) null else scoreApiService.getBestScores(other, mode, 0, 200)
+        val othersBest = if (other == null) null else scoreApiService.getBestScores(other, mode)
 
         val param = PPMinusService.PPMinusParam(other != null, me, myBest, other, othersBest, mode, 4)
 
@@ -667,7 +667,7 @@ import kotlin.math.min
             val uid = userApiService.getOsuID(name.trim())
             user = userApiService.getOsuUser(uid, mode)
             if (mode != OsuMode.DEFAULT) user.currentOsuMode = mode
-            bests = scoreApiService.getBestScores(uid, mode, 0, 200)
+            bests = scoreApiService.getBestScores(uid, mode)
             mappers = userApiService.getUsers(bests.map { it.beatmap.mapperID }.toSet())
 
             calculateApiService.applyBeatMapChanges(bests)

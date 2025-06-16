@@ -237,7 +237,7 @@ class NewbieRestrictOverSRService(
 
                     if (hasCondition) {
                         offset = 0
-                        limit = 100
+                        limit = 200
                     } else if (isMultiple) {
                         offset = getOffset(0, true)
                         limit = getLimit(20, true)

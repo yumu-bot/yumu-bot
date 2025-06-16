@@ -100,7 +100,7 @@ class TodayBPService(
 
             val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
                 { userApiService.getOsuUser(id.data!!, mode.data!!) },
-                { scoreApiService.getBestScores(id.data!!, mode.data ?: OsuMode.DEFAULT, 0, 200) }
+                { scoreApiService.getBestScores(id.data!!, mode.data ?: OsuMode.DEFAULT) }
             )
 
             user = async.first
@@ -114,7 +114,7 @@ class TodayBPService(
             dayStart = range.getDayStart()
             dayEnd = range.getDayEnd()
 
-            bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 200)
+            bests = scoreApiService.getBestScores(user.userID, mode.data)
         }
 
         val isToday = (dayStart == 0 && dayEnd == 1)
