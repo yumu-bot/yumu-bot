@@ -26,6 +26,7 @@ import org.springframework.web.client.UnknownHttpStatusCodeException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 ////////////////////////////////////////////////////////////////////
 //                          _ooOoo_                               //
@@ -115,6 +116,8 @@ public class OneBotListener {
             event.reply("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。").recallIn(RECALL_TIME);
         } else if (e instanceof LogException) {
             log.info(e.getMessage());
+        } else if (e instanceof ExecutionException) {
+            event.reply(new MessageChain(e.getCause().getMessage()));
         } else if (e instanceof IllegalStateException) {
             event.reply(new MessageChain(e.getCause().getMessage()));
         } else if (e instanceof IllegalArgumentException) {

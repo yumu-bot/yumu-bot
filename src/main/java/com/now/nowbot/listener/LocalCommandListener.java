@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ExecutionException;
 
 public class LocalCommandListener {
     static final   Logger                      log = LoggerFactory.getLogger(LocalCommandListener.class);
@@ -45,15 +46,16 @@ public class LocalCommandListener {
         var event = new Event.GroupMessageEvent(bot, group, message);
         try {
             PermissionImplement.onMessage(event, ((_, throwable) -> {
-                if (throwable instanceof TipsException) {
-                    log.info("捕捉到异常提示：{}", throwable.getMessage());
-                    log.debug("异常详细信息: ", throwable);
-                } else if (throwable instanceof TipsRuntimeException) {
-                    log.info("捕捉到提示：{}", throwable.getMessage());
-                } else if (throwable instanceof LogException) {
-                    log.info("捕捉到记录：{}", throwable.getMessage());
-                } else {
-                    log.info("捕捉到异常：", throwable);
+                switch (throwable) {
+                    case TipsException tx -> {
+                        log.info("捕捉到异常提示：{}", tx.getMessage());
+                        log.debug("异常详细信息: ", tx);
+                    }
+                    case TipsRuntimeException rx -> log.info("捕捉到提示：{}", rx.getMessage());
+                    case ExecutionException xx ->
+                            log.info("捕捉到并行中的提示：{}", xx.getCause().getMessage());
+                    case LogException lx -> log.info("捕捉到记录：{}", lx.getMessage());
+                    case null, default -> log.info("捕捉到异常：", throwable);
                 }
             }));
 
