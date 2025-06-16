@@ -18,6 +18,10 @@ interface OsuScoreApiService {
         return getBestScores(user.userID, mode, offset, limit)
     }
 
+    fun getBestScores(user: OsuUser, mode: OsuMode?, offset: Int, limit: Int): List<LazerScore> {
+        return getBestScores(user.userID, mode, offset, limit)
+    }
+
     fun getBestScores(user: OsuUser): List<LazerScore> {
         return getBestScores(user.userID, user.currentOsuMode, 0, 100)
     }

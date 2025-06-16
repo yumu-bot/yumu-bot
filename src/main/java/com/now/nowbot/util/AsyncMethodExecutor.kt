@@ -300,6 +300,25 @@ object AsyncMethodExecutor {
         return Triple(cf.get(), cf2.get(), cf3.get())
     }
 
+    fun <T, U, V, W> awaitQuadSupplierExecute(
+        work: Supplier<T>,
+        work2: Supplier<U>,
+        work3: Supplier<V>,
+        work4: Supplier<W>,
+        timeout: Duration = Duration.ofMinutes(4)
+    ): Pair<Pair<T, U>, Pair<V, W>> {
+
+        val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
+        val cf2: CompletableFuture<U> = CompletableFuture.supplyAsync(work2)
+        val cf3: CompletableFuture<V> = CompletableFuture.supplyAsync(work3)
+        val cf4: CompletableFuture<W> = CompletableFuture.supplyAsync(work4)
+
+        val cff = CompletableFuture.allOf(cf, cf2, cf3, cf4)
+        cff.get(timeout.toMillis(), TimeUnit.MILLISECONDS)
+
+        return (cf.get() to cf2.get()) to (cf3.get() to cf4.get())
+    }
+
     /**
      * 出现异常时直接抛出错误不进行等待
      * 返回结果严格按照传入的 works 顺序

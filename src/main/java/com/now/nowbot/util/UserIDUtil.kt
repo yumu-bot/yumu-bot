@@ -80,6 +80,114 @@ object UserIDUtil {
         return null
     }
 
+    /**
+     * 获取命令中的 用户 和 range, 不包括 自己的QQ/at
+     *
+     * @param matcher 正则
+     * @param mode 包装的模式, 如果给的 mode 非默认则返回对应 mode 的 userID 信息
+     */
+    fun get2UserID(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isVS: Boolean = false,
+    ): Pair<Long?, Long?> {
+        require(
+            matcher.namedGroups().containsKey(FLAG_2_USER)
+        ) {
+            "Matcher 中不包含 u2 分组"
+        }
+
+        val me = try {
+            bindDao.getBindFromQQ(event.sender.id)
+        } catch (ignored: Exception) {
+            null
+        }
+
+        setMode(mode, me?.mode ?: OsuMode.DEFAULT, event)
+
+        if (event.isAt) {
+            return getUserIDFromQQ(event.target, me, mode, isVS)
+        }
+
+        val qq = matcher.group(FLAG_QQ_ID)?.toLong() ?: 0L
+        if (qq != 0L) {
+            return getUserIDFromQQ(qq, me, mode, isVS)
+        }
+
+        val uid = matcher.group(FLAG_UID)?.toLong() ?: 0L
+        if (uid != 0L) {
+            return getUserIDFromQQ(0L - uid, me, mode, isVS)
+        }
+
+        val g = matcher.group(FLAG_2_USER)
+
+        if (g.isNullOrEmpty()) {
+            if (me == null) {
+                throw BindException.NotBindException.YouNotBind()
+            }
+
+            setMode(mode, me.mode, event)
+            return me.userID to null
+        }
+
+        val gs = g.split(REG_SEPERATOR_NO_SPACE.toRegex())
+
+        when (gs.size) {
+            1 -> return getUserIDFromName(gs.first().trim(), me, mode, isVS)
+            2 -> {
+                val yourID = bindDao.getOsuID(gs.first().trim())
+                val theyID = bindDao.getOsuID(gs.last().trim())
+
+                return yourID to theyID
+            }
+            else -> {
+                val bind = bindDao.getBindFromQQ(event.sender.id, true)
+
+                setMode(mode, bind.mode, event)
+                return bind.userID to null
+            }
+        }
+    }
+
+
+    /**
+     * @param qq 如果是负数，则认为是 UID
+     */
+    private fun getUserIDFromQQ(qq: Long, me: BindUser?, mode: CmdObject<OsuMode>, isVS: Boolean): Pair<Long?, Long?> {
+        val you = if (qq > 0L) {
+            bindDao.getBindFromQQ(qq)
+        } else {
+            BindUser(- qq, "unknown")
+        }
+
+        setMode(mode, me?.mode ?: OsuMode.DEFAULT)
+
+        return if (isVS && me != null) {
+            me.userID to you.userID
+        } else {
+            you.userID to null
+        }
+    }
+
+    private fun getUserIDFromName(name: String?, me: BindUser?, mode: CmdObject<OsuMode>, isVS: Boolean): Pair<Long?, Long?> {
+        val yourID = if (name.isNullOrBlank()) {
+            null
+        } else try {
+            bindDao.getOsuID(name)
+        } catch (ignored: Exception) {
+            null
+        }
+
+        setMode(mode, me?.mode ?: OsuMode.DEFAULT)
+
+        return if (isVS && me != null) {
+            me.userID to yourID
+        } else {
+            yourID to null
+        }
+    }
+
     private fun getUserIDAndRange(
         event: MessageEvent,
         matcher: Matcher,
@@ -121,7 +229,11 @@ object UserIDUtil {
             } catch (ignored: Exception) {}
 
             isMyself.set(true)
-            return CmdRange(bindDao.getBindFromQQ(event.sender.id).userID, range.first, range.second)
+
+            val me = bindDao.getBindFromQQ(event.sender.id)
+            setMode(mode, me.mode, event)
+
+            return CmdRange(me.userID, range.first, range.second)
         }
 
         val ranges = if (text.contains("($CHAR_HASH|$CHAR_HASH_FULL)".toRegex())) {

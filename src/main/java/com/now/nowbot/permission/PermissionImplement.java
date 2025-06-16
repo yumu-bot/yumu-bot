@@ -91,7 +91,7 @@ public class PermissionImplement implements PermissionController {
             } catch (Throwable e) {
                 if (e instanceof BotException) {
                     reply = new MessageChain(e.getMessage());
-                } else if (e instanceof IllegalStateException) {
+                } else if (e instanceof ExecutionException) {
                     reply = new MessageChain(e.getCause().getMessage());
                 } else {
                     log.error("腾讯消息类：其他错误", e);

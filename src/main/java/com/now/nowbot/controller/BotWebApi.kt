@@ -12,7 +12,6 @@ import com.now.nowbot.model.mappool.old.MapPoolDto
 import com.now.nowbot.model.multiplayer.Match
 import com.now.nowbot.model.multiplayer.MatchRating
 import com.now.nowbot.model.osu.*
-import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.messageServiceImpl.*
 import com.now.nowbot.service.osuApiService.*
@@ -71,20 +70,19 @@ import kotlin.math.min
     ): ResponseEntity<ByteArray> {
         val mode = getMode(playMode)
 
-        var info: OsuUser?
-        val bplist: List<LazerScore>
-        var ppm: PPMinus?
+        val me: OsuUser
+        val myBests: List<LazerScore>
 
         try {
-            info = userApiService.getOsuUser(name.trim(), mode)
-            bplist = scoreApiService.getBestScores(info.userID, mode)
-            ppm = PPMinus.getInstance(mode, info, bplist)
+            me = userApiService.getOsuUser(name.trim(), mode)
+            myBests = scoreApiService.getBestScores(me.userID, mode)
         } catch (e: Exception) {
-            info = null
-            ppm = null
+            throw RuntimeException(e.message)
         }
 
-        val data = imageService.getPanelGamma(info, mode, ppm)
+        val param = PPMinusService.PPMinusParam(false, me, myBests, null, null, mode, -1)
+
+        val data = imageService.getPanel(param.toMap(ppMinusDao), "Gamma")
         return ResponseEntity(
             data, getImageHeader(
                 "${name.trim()}-sn.jpg", data.size
@@ -108,21 +106,22 @@ import kotlin.math.min
         @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String? = "osu",
         @RequestParam(value = "u1", required = false) u1: String? = null
     ): ResponseEntity<ByteArray> {
-        if (name2.isNullOrBlank().not()) {
-            return getPPMinusVS(name, name2!!, playMode)
+        if (!name2.isNullOrBlank()) {
+            return getPPMinusVS(name, name2, playMode)
         }
-        if (u1.isNullOrBlank().not()) {
-            return getPPMinus(u1!!, playMode = playMode)
+        if (!u1.isNullOrBlank()) {
+            return getPPMinus(u1, playMode = playMode)
         }
 
         val mode = getMode(playMode)
 
         val me = userApiService.getOsuUser(name.trim(), mode)
+        val myBest = scoreApiService.getBestScores(me, mode, 0, 200)
 
-        val ppm4 = PPMinusService.getPPMinus4(me, scoreApiService, ppMinusDao)
+        val param = PPMinusService.PPMinusParam(false, me, myBest, null, null, mode, 4)
 
         try {
-            val data = imageService.getPanel(PPMinusService.getPPM4Body(me, null, ppm4, null, mode), "B1")
+            val data = imageService.getPanel(param.toMap(ppMinusDao), "B1")
             return ResponseEntity(
                 data, getImageHeader(
                     "${name.trim()}-pm.jpg", data.size
@@ -146,18 +145,18 @@ import kotlin.math.min
         @OpenResource(name = "name2", desp = "第二个玩家的名称", required = true) @RequestParam("name2") name2: String,
         @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
     ): ResponseEntity<ByteArray> {
-        var mode = getMode(playMode)
+        val mode = getMode(playMode)
 
-        val user1 = userApiService.getOsuUser(name.trim(), mode)
-        val user2 = userApiService.getOsuUser(name2.trim(), mode)
+        val me = userApiService.getOsuUser(name.trim(), mode)
+        val myBest = scoreApiService.getBestScores(me, mode, 0, 200)
 
-        mode = getMode(playMode, user1.currentOsuMode)
+        val other = if (name2.isBlank()) null else userApiService.getOsuUser(name2.trim(), mode)
+        val othersBest = if (other == null) null else scoreApiService.getBestScores(other, mode, 0, 200)
 
-        val ppm1 = PPMinusService.getPPMinus4(user1, scoreApiService, ppMinusDao)
-        val ppm2 = PPMinusService.getPPMinus4(user2, scoreApiService, ppMinusDao)
+        val param = PPMinusService.PPMinusParam(other != null, me, myBest, other, othersBest, mode, 4)
 
         try {
-            val data = imageService.getPanel(PPMinusService.getPPM4Body(user1, user2, ppm1, ppm2, mode), "B1")
+            val data = imageService.getPanel(param.toMap(ppMinusDao), "B1")
             return ResponseEntity(
                 data, getImageHeader(
                     "${name.trim()} vs ${name2.trim()}-pv.jpg", data.size

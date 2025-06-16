@@ -19,7 +19,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
-@Service("TEST_PPM") class TestPPMinusService(
+//@Service("TEST_PPM")
+class TestPPMinusService(
     private val scoreApiService: OsuScoreApiService,
     private val ppMinusDao: PPMinusDao,
     private val imageService: ImageService,
@@ -31,12 +32,13 @@ import org.springframework.stereotype.Service
 
         if (matcher.find().not()) return false
 
-        val inputMode = CmdUtil.getMode(matcher)
-        val users = CmdUtil.get2User(event, matcher, inputMode, false)
+        val mode = CmdUtil.getMode(matcher)
+        val users = CmdUtil.get2User(event, matcher, mode, false)
 
-        data.value = PPMinusParam(
-            users.size == 2, users.first(), if (users.size == 2) users.last() else null, users.first().currentOsuMode
-        )
+        val me: OsuUser = users.first()
+        val myBests: List<LazerScore> = scoreApiService.getBestScores(me.userID, mode.data!!)
+
+        data.value = PPMinusParam(false, me, myBests, null, null, mode.data!!, -1)
 
         return true
     }

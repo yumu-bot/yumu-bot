@@ -118,8 +118,6 @@ public class OneBotListener {
             log.info(e.getMessage());
         } else if (e instanceof ExecutionException) {
             event.reply(new MessageChain(e.getCause().getMessage()));
-        } else if (e instanceof IllegalStateException) {
-            event.reply(new MessageChain(e.getCause().getMessage()));
         } else if (e instanceof IllegalArgumentException) {
             log.error("正则异常", e);
         } else if (e instanceof DecodingException) {

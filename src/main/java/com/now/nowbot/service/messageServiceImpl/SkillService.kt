@@ -127,7 +127,7 @@ import kotlin.math.sqrt
                 throw NoSuchElementException.BestScore(this.user.username)
             }
 
-            val skillMap = getSkillMap(bests, beatmapApiService)
+            val skillMap = getSkillMap(bests)
 
             me = getBody(this.user, bests, skillMap, isVS = false, isShowScores = false)
 
@@ -137,7 +137,7 @@ import kotlin.math.sqrt
                 throw NoSuchElementException.BestScore(this.user.username)
             }
 
-            val vsSkillMap = getSkillMap(vsBests, beatmapApiService)
+            val vsSkillMap = getSkillMap(vsBests)
 
             vs = getBody(this.vs, vsBests, vsSkillMap, isVS = true, isShowScores = false)
         } else {
@@ -147,7 +147,7 @@ import kotlin.math.sqrt
                 throw NoSuchElementException.BestScore(this.user.username)
             }
 
-            val skillMap = getSkillMap(bests, beatmapApiService)
+            val skillMap = getSkillMap(bests)
 
             me = getBody(this.user, bests, skillMap, isVS = false, isShowScores = true)
             vs = null
@@ -163,7 +163,7 @@ import kotlin.math.sqrt
         return image
     }
 
-    private fun getSkillMap(bests: List<LazerScore>?, beatmapApiService: OsuBeatmapApiService): Map<Long, Skill?> {
+    private fun getSkillMap(bests: List<LazerScore>?): Map<Long, Skill?> {
         if (bests.isNullOrEmpty()) return mapOf()
 
         val actions = bests.map {
