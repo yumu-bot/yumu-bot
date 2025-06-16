@@ -1,8 +1,9 @@
 package com.now.nowbot.throwable.botRuntimeException
 
+import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
 
-open class DiceException(message: String?): TipsRuntimeException(message) {
+open class DiceException(message: String?): TipsRuntimeException(message), BotException {
     class DiceTooMany(count: Number):
         DiceException("扔了 $count 枚骰子，也排解不了你内心的空虚吗？")
 

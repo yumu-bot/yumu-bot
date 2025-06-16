@@ -11,7 +11,6 @@ import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.CmdUtil.parseNameAndRangeHasHash
 import com.now.nowbot.util.CmdUtil.parseNameAndRangeWithoutHash
 import com.now.nowbot.util.command.*
-import kotlinx.coroutines.*
 import org.springframework.context.ApplicationContext
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
@@ -53,26 +52,19 @@ object UserIDUtil {
         val userID: Long?
         val me: BindUser?
 
-        val deferred = scope.async {
-            getUserID(event, matcher, mode, isMyself)
-        }
-
-        val deferred2 = scope.async {
-            try {
-                bindDao.getBindFromQQ(event.sender.id, true)
-            } catch (ignored: BindException) {
-                null
+        val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+            { getUserID(event, matcher, mode, isMyself) },
+            {
+                try {
+                    bindDao.getBindFromQQ(event.sender.id, true)
+                } catch (ignored: BindException) {
+                    null
+                }
             }
-        }
+        )
 
-        runBlocking {
-            userID = deferred.await()
-            me = deferred2.await()
-
-            deferred2.start()
-        }
-
-        scope.cancel()
+        userID = async.first
+        me = async.second
 
         val myID = me?.userID
 
@@ -275,13 +267,11 @@ object UserIDUtil {
     private lateinit var userApiService: OsuUserApiService
     private lateinit var scoreApiService: OsuScoreApiService
     private lateinit var beatmapApiService: OsuBeatmapApiService
-    private lateinit var scope: CoroutineScope
 
     @JvmStatic fun init(applicationContext: ApplicationContext) {
         bindDao = applicationContext.getBean(BindDao::class.java)
         userApiService = applicationContext.getBean(OsuUserApiService::class.java)
         scoreApiService = applicationContext.getBean(OsuScoreApiService::class.java)
         beatmapApiService = applicationContext.getBean(OsuBeatmapApiService::class.java)
-        scope = CoroutineScope(Dispatchers.IO.limitedParallelism(2))
     }
 }

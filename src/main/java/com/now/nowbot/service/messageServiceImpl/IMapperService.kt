@@ -154,7 +154,7 @@ import kotlin.math.max
                     }
                 }
 
-                AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull().flatten()
+                AsyncMethodExecutor.awaitSupplierExecute(actions).flatten()
             }
 
             val guestDifficultyOwners = relatedUsers.map { u ->

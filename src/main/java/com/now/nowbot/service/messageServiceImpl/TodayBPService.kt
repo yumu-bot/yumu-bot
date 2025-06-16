@@ -98,19 +98,13 @@ class TodayBPService(
             dayStart = id.getDayStart()
             dayEnd = id.getDayEnd()
 
-            val deferred = scope.async {
-                userApiService.getOsuUser(id.data!!, mode.data!!)
-            }
+            val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
+                { userApiService.getOsuUser(id.data!!, mode.data!!) },
+                { scoreApiService.getBestScores(id.data!!, mode.data ?: OsuMode.DEFAULT, 0, 200) }
+            )
 
-            val deferred2 = scope.async {
-                scoreApiService.getBestScores(id.data!!, mode.data ?: OsuMode.DEFAULT, 0, 200)
-            }
-
-            scope.cancel()
-            runBlocking {
-                user = deferred.await()
-                bests = deferred2.await()
-            }
+            user = async.first
+            bests = async.second.toList()
         } else {
             val range = getUserWithRange(event, matcher, mode, isMyself)
             range.setZeroDay()
@@ -183,6 +177,5 @@ class TodayBPService(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(TodayBPService::class.java)
 
-        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(4))
     }
 }

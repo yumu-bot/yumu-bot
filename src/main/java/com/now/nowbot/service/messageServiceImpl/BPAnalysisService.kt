@@ -14,13 +14,10 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.DataUtil.getBonusPP
-import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.QQMsgUtil
-import com.now.nowbot.util.UserIDUtil
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -339,25 +336,20 @@ import kotlin.math.min
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode, isMyself)
 
         if (id != null) {
-            val deferred = scope.async {
-                userApiService.getOsuUser(id, mode.data!!)
-            }
+            val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
+                { userApiService.getOsuUser(id, mode.data!!) },
+                {
+                    val ss = scoreApiService.getBestScores(id, mode.data!!, 0, 200)
 
-            val deferred2 = scope.async {
-                val ss = scoreApiService.getBestScores(id, mode.data!!, 0, 200)
+                    calculateApiService.applyBeatMapChanges(ss)
+                    calculateApiService.applyStarToScores(ss)
 
-                calculateApiService.applyBeatMapChanges(ss)
-                calculateApiService.applyStarToScores(ss)
+                    ss
+                }
+            )
 
-                ss
-            }
-
-            runBlocking {
-                user = deferred.await()
-                bests = deferred2.await()
-            }
-
-            scope.cancel()
+            user = async.first
+            bests = async.second.toList()
         } else {
             user = getUserWithoutRange(event, matcher, mode, isMyself)
             bests = scoreApiService.getBestScores(user.userID, mode.data, 0, 200)
@@ -397,7 +389,6 @@ import kotlin.math.min
     }
 
     companion object {
-        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(4))
         private val log: Logger = LoggerFactory.getLogger(BPAnalysisService::class.java)
         private val RANK_ARRAY = arrayOf("XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F")
     }

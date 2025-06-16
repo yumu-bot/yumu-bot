@@ -7,9 +7,9 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
-import kotlinx.coroutines.*
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
 import kotlin.math.ceil
@@ -40,7 +40,6 @@ class MaiFilterService(private val maimaiApiService: MaimaiApiService, private v
         }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
@@ -101,17 +100,11 @@ class MaiFilterService(private val maimaiApiService: MaimaiApiService, private v
             }
         }.sortedByDescending { it.rating }
 
-        val deferred = scope.async { maimaiApiService.insertSongData(scores) }
-        val deferred2 = scope.async { maimaiApiService.insertMaimaiAliasForScore(scores) }
-        val deferred3 = scope.async { maimaiApiService.insertPosition(scores) }
-
-        runBlocking {
-            deferred.await()
-            deferred2.await()
-            deferred3.await()
-        }
-
-        scope.cancel()
+        AsyncMethodExecutor.awaitTripleSupplierExecute(
+            { maimaiApiService.insertSongData(scores) },
+            { maimaiApiService.insertMaimaiAliasForScore(scores) },
+            { maimaiApiService.insertPosition(scores) }
+        )
 
         if (scores.isEmpty()) throw NoSuchElementException.BestScoreFiltered(user.name!!)
 
@@ -123,9 +116,5 @@ class MaiFilterService(private val maimaiApiService: MaimaiApiService, private v
         val image = imageService.getPanel(param.toMap(), "MI")
 
         event.reply(image)
-    }
-
-    companion object {
-        private val scope = CoroutineScope(Dispatchers.Default.limitedParallelism(3))
     }
 }

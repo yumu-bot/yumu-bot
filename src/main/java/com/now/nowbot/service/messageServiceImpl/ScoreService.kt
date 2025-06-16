@@ -23,7 +23,6 @@ import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.getMod
 import com.now.nowbot.util.CmdUtil.getMode
-import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -123,24 +122,21 @@ import java.util.regex.Matcher
 
             map = beatmapApiService.getBeatmap(bid)
 
+            if (!map.hasLeaderBoard) {
+                throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
+            }
+
             if (id != null) {
 
                 mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
-                val deferred = scope.async {
-                    userApiService.getOsuUser(id)
-                }
+                val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
+                    { userApiService.getOsuUser(id) },
+                    { scoreApiService.getBeatMapScores(bid, id, mode) }
+                )
 
-                val deferred2 = scope.async {
-                    scoreApiService.getBeatMapScores(bid, id, mode)
-                }
-
-                runBlocking {
-                    user = deferred.await()
-                    scores = deferred2.await()
-                }
-
-                scope.cancel()
+                user = async.first
+                scores = async.second.toList()
             } else {
                 user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score")
 
@@ -157,21 +153,15 @@ import java.util.regex.Matcher
             val id = UserIDUtil.getUserIDWithoutRange(event, matcher, currentMode, AtomicBoolean(true))
 
             if (id != null) {
-                val deferred = scope.async {
-                    userApiService.getOsuUser(id, currentMode.data!!)
-                }
+                val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
+                    { userApiService.getOsuUser(id) },
+                    { scoreApiService.getRecentScore(id, currentMode.data!!, 0, 1) }
+                )
 
-                val deferred2 = scope.async {
-                    scoreApiService.getRecentScore(id, currentMode.data!!, 0, 1)
-                }
+                user = async.first
+                recent = async.second.firstOrNull()
+                    ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
 
-                runBlocking {
-                    user = deferred.await()
-                    recent = deferred2.await().firstOrNull()
-                        ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
-                }
-
-                scope.cancel()
             } else {
                 user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score")
 
@@ -180,6 +170,10 @@ import java.util.regex.Matcher
             }
 
             map = beatmapApiService.getBeatmap(recent.beatmapID)
+
+            if (!map.hasLeaderBoard) {
+                throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
+            }
 
             mode = OsuMode.getConvertableMode(currentMode.data, map.mode)
 
@@ -234,13 +228,9 @@ import java.util.regex.Matcher
         }
 
         return QQMsgUtil.getImage(image)
-
-
     }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ScoreService::class.java)
-
-        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(4))
     }
 }

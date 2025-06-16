@@ -172,7 +172,7 @@ import kotlin.math.sqrt
             }
         }
 
-        val files: List<Pair<LazerScore, String?>> = AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull()
+        val files: List<Pair<LazerScore, String?>> = AsyncMethodExecutor.awaitSupplierExecute(actions)
 
         val actions2 = files.map {
             val id = it.first.beatmapID
@@ -192,8 +192,7 @@ import kotlin.math.sqrt
             }
         }
 
-        val result = AsyncMethodExecutor.awaitSupplierExecute(actions2)
-            .filterNotNull().toMap()
+        val result = AsyncMethodExecutor.awaitSupplierExecute(actions2).toMap()
 
         return bests.associate { it.beatmapID to result[it.beatmapID] }
     }

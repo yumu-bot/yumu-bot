@@ -21,10 +21,6 @@ import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -88,13 +84,15 @@ class BPFixService(
     fun fix(playerPP: Double, bestsMap: Map<Int, LazerScore>): Map<String, Any>? {
         val beforeBpSumAtomic = AtomicReference(0.0)
 
-        val deferredList = bestsMap.map { entry ->
+        // TODO 这个方法会触发数据库写入异常
+        /*
+        val tasks = bestsMap.map { entry ->
             val index = entry.key
             val score = entry.value
 
             beforeBpSumAtomic.updateAndGet { it + (score.weight?.pp ?: 0.0) }
 
-            scope.async {
+            AsyncMethodExecutor.Supplier {
                 beatmapApiService.applyBeatmapExtendFromDatabase(score)
 
                 val max = score.beatmap.maxCombo ?: 1
@@ -123,9 +121,8 @@ class BPFixService(
             }
         }
 
-        val fixedBests = runBlocking {
-            deferredList.map { it.await() }
-        }.sortedByDescending {
+        val fixedBests = AsyncMethodExecutor.awaitSupplierExecuteThrows(tasks)
+            .sortedByDescending {
             if (it is LazerScoreWithFcPP && it.fcPP > 0) {
                 it.fcPP
             } else {
@@ -133,6 +130,8 @@ class BPFixService(
             }
         }
 
+
+         */
 
 
         /*
@@ -187,7 +186,6 @@ class BPFixService(
 
             */
 
-        /*
         val fixedBests = bestsMap.map { (index, score) ->
             beforeBpSumAtomic.updateAndGet { it + (score.weight?.pp ?: 0.0) }
             beatmapApiService.applyBeatmapExtendFromDatabase(score)
@@ -224,8 +222,6 @@ class BPFixService(
 
             pp * 100.0
         }
-
-         */
 
         val afterBpSumAtomic = AtomicReference(0.0)
 
@@ -288,7 +284,5 @@ class BPFixService(
 
     companion object {
         val log: Logger = LoggerFactory.getLogger(BPFixService::class.java)
-        val scope = CoroutineScope(Dispatchers.Default.limitedParallelism(8))
-
     }
 }

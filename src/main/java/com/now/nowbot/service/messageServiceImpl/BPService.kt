@@ -149,20 +149,13 @@ import kotlin.math.*
                 CmdRange(id.data!!, start, end)
             }
 
-            val deferred = scope.async {
-                userApiService.getOsuUser(id2.data!!, mode.data!!)
-            }
+            val async = AsyncMethodExecutor.awaitPairWithMapSupplierExecute(
+                { userApiService.getOsuUser(id2.data!!, mode.data!!) },
+                { id2.getBestsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition) }
+            )
 
-            val deferred2 = scope.async {
-                id2.getBestsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition)
-            }
-
-            runBlocking {
-                user = deferred.await()
-                scores = deferred2.await()
-            }
-
-            scope.cancel()
+            user = async.first
+            scores = async.second
         } else {
             // 经典的获取方式
 
@@ -289,6 +282,5 @@ import kotlin.math.*
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BPService::class.java)
 
-        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(4))
     }
 }

@@ -1,8 +1,9 @@
 package com.now.nowbot.throwable.botRuntimeException
 
+import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
 
-open class PermissionException(message: String?): TipsRuntimeException(message) {
+open class PermissionException(message: String?): TipsRuntimeException(message), BotException {
 
     open class DeniedException(message: String?): PermissionException(message) {
         class BelowSuperAdministrator:

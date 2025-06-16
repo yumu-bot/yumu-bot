@@ -105,7 +105,7 @@ import kotlin.math.roundToInt
         }
 
         val actions = ids.map {
-            return@map AsyncMethodExecutor.Supplier<Pair<Long, TestFixPPData>?> {
+            return@map AsyncMethodExecutor.Supplier<Pair<Long, TestFixPPData>> {
                 val user: OsuUser = try {
                     userApiService.getOsuUser(it, mode)
                 } catch (e: Exception) {
@@ -124,7 +124,7 @@ import kotlin.math.roundToInt
             }
         }
 
-        val data = AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull().toMap()
+        val data = AsyncMethodExecutor.awaitSupplierExecute(actions).toMap()
 
         log.info("TP：获取玩家信息和最好成绩成功，耗时：${(System.currentTimeMillis() - time) / 1000} 秒")
         time = System.currentTimeMillis()

@@ -1,9 +1,10 @@
 package com.now.nowbot.throwable.botRuntimeException
 
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
 
-open class BindException(message: String) : TipsRuntimeException(message) {
+open class BindException(message: String) : TipsRuntimeException(message), BotException {
 
     open class TokenExpiredException(message: String): BindException(message) {
         class YouTokenExpiredException:
@@ -24,12 +25,10 @@ open class BindException(message: String) : TipsRuntimeException(message) {
 
     open class UnBindException(message: String): BindException(message) {
 
-        class UnbindSuccess :
+        class UnbindSuccess:
             UnBindException("您已成功解绑。TuT")
         class UnbindFailed:
             UnBindException("该玩家没有绑定。")
-        class UnbindNotFound:
-            UnBindException("请提供要解绑的对象。")
     }
 
     open class BindReceiveException(message: String): BindException(message) {
@@ -102,19 +101,16 @@ open class BindException(message: String) : TipsRuntimeException(message) {
                 请 ctrl+c 并 ctrl+v 到其他 browser 完成绑定。
                 """.trimIndent())
 
-        class BindSuccess(qq: Long, id: Long, name: String):
-            BindResultException("已将 ($id) $name 绑定到 $qq 上！")
-
-        class BindSuccessTip:
-            BindResultException("已绑定成功！")
+        class BindSuccess(qq: Long, id: Long, name: String, mode: OsuMode):
+            BindResultException("""
+                已将 ($id) $name 绑定到 $qq 上！
+                当前绑定模式为：${mode.fullName}
+            """.trimIndent())
 
         class BindSuccessWithMode(mode: OsuMode):
             BindResultException("""
                 已绑定成功！
                 当前绑定模式为：${mode.fullName}
                 """.trimIndent())
-
-        class BindFailed:
-            BindResultException("绑定失败！")
     }
 }

@@ -1,8 +1,9 @@
 package com.now.nowbot.throwable.botRuntimeException
 
+import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
 
-open class IllegalArgumentException(message: String?): TipsRuntimeException(message) {
+open class IllegalArgumentException(message: String?): TipsRuntimeException(message), BotException {
 
     open class ExceedException(message: String?): IllegalArgumentException(message) {
         class FilteredScore(count: Int?):

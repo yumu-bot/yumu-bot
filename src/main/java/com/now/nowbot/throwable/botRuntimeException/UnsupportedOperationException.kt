@@ -1,8 +1,9 @@
 package com.now.nowbot.throwable.botRuntimeException
 
+import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
 
-open class UnsupportedOperationException(message: String?): TipsRuntimeException(message) {
+open class UnsupportedOperationException(message: String?): TipsRuntimeException(message), BotException {
 
     class AudioNotSafeForWork:
         UnsupportedOperationException("这种歌曲，还是有点唱不出口呢。")

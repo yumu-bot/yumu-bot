@@ -130,7 +130,7 @@ class GuestDifficultyService(
                 }
             }
 
-            AsyncMethodExecutor.awaitSupplierExecute(actions).filterNotNull().flatten()
+            AsyncMethodExecutor.awaitSupplierExecute(actions).flatten()
         }
 
         val relatedDiffs = relatedSets.map { it.beatmaps!! }.flatten()

@@ -170,7 +170,7 @@ import java.util.regex.Pattern
         if (qb == null) {
             bindDao.bindQQ(qq, BindUser(ou))
             bindDao.updateMode(ou.userID, ou.defaultOsuMode)
-            event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username))
+            event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username, ou.defaultOsuMode))
             return
         }
 
@@ -181,7 +181,7 @@ import java.util.regex.Pattern
         if (ev.rawMessage.uppercase().startsWith("OK")) {
             bindDao.bindQQ(qq, BindUser(ou))
 
-            event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username))
+            event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, ou.username, ou.defaultOsuMode))
         } else {
             event.reply(BindException.BindReceiveException.ReceiveRefused())
         }
@@ -273,7 +273,7 @@ import java.util.regex.Pattern
         } else {
             bindDao.bindQQ(qq, BindUser(ou))
             bindDao.updateMode(ou.userID, ou.defaultOsuMode)
-            event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, name))
+            event.reply(BindException.BindResultException.BindSuccess(qq, ou.userID, name, ou.defaultOsuMode))
         }
     }
 

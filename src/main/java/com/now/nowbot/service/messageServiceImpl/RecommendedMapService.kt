@@ -8,9 +8,9 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
-import kotlinx.coroutines.*
 
 //@Service("RECOMMEND_MAP")
 class RecommendedMapService(
@@ -66,36 +66,18 @@ class RecommendedMapService(
     }
 
     private fun getUserPrefer(user: OsuUser): UserPrefer {
-        var bests: List<LazerScore>
-        var favorite: List<Beatmapset>
+        val favorite: List<Beatmapset>
 
-        val b = scope.async {
-            scoreApiService.getBestScores(user, 0, 200)
+        val tasks = (0..4).toList().map {
+            AsyncMethodExecutor.Supplier {
+                beatmapApiService.getUserBeatmapset(user.userID, "favourite", it * 100, 100)
+            }
         }
 
-        val d = scope.async {
-            beatmapApiService.getUserBeatmapset(user.userID, "favourite", 0, 100)
-        }
+        favorite = AsyncMethodExecutor.awaitSupplierExecuteThrows(tasks).flatten()
 
-        val d2 = scope.async {
-            beatmapApiService.getUserBeatmapset(user.userID, "favourite", 100, 100)
-        }
-
-        val d3 = scope.async {
-            beatmapApiService.getUserBeatmapset(user.userID, "favourite", 200, 100)
-        }
-
-        runBlocking {
-            bests = b.await()
-            favorite = d.await() + d2.await() + d3.await()
-        }
-
-        scope.cancel()
+        val bests: List<LazerScore> = scoreApiService.getBestScores(user, 0, 200)
 
         return UserPrefer(bests, favorite)
-    }
-
-    companion object {
-        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(6))
     }
 }

@@ -1,9 +1,10 @@
 package com.now.nowbot.throwable.botRuntimeException
 
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
 
-open class NoSuchElementException(message: String?): TipsRuntimeException(message) {
+open class NoSuchElementException(message: String?): TipsRuntimeException(message), BotException {
 
     class Audio:
         NoSuchElementException("""
@@ -14,9 +15,6 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
 
     class Avatar:
         NoSuchElementException("没有找到玩家的头像。")
-
-    class Badge(name: Any):
-        NoSuchElementException("$name 还没有主页奖牌呢...")
 
     class Beatmap(name: Any):
         NoSuchElementException("没有找到谱面 $name。")

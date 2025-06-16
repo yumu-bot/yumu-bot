@@ -7,11 +7,7 @@ import java.lang.System
 import java.lang.Thread
 import java.time.Duration
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Phaser
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.random.Random
@@ -54,7 +50,7 @@ object AsyncMethodExecutor {
     fun <T : Any> execute(supplier: Supplier<T>, key: Any, defaultValue: T?): T? {
         reentrantLock.lock()
         val hasLock = locks.containsKey(key)
-        val lock = locks.computeIfAbsent(key) { s: Any? -> reentrantLock.newCondition() }
+        val lock = locks.computeIfAbsent(key) { reentrantLock.newCondition() }
         reentrantLock.unlock()
         return if (hasLock) {
             waitForResult(lock, key, defaultValue)
@@ -67,7 +63,7 @@ object AsyncMethodExecutor {
     fun <T : Any> execute(supplier: Supplier<T>, key: Any, getDefault: Supplier<T?>): T? {
         reentrantLock.lock()
         val hasLock = locks.containsKey(key)
-        val lock = locks.computeIfAbsent(key) { s: Any? -> reentrantLock.newCondition() }
+        val lock = locks.computeIfAbsent(key) { reentrantLock.newCondition() }
         reentrantLock.unlock()
         return if (hasLock) {
             waitForResult(lock, key, getDefault)
@@ -128,7 +124,7 @@ object AsyncMethodExecutor {
     fun execute(work: Runnable, key: Any) {
         reentrantLock.lock()
         val hasLock = locks.containsKey(key)
-        val lock = locks.computeIfAbsent(key) { s: Any? -> reentrantLock.newCondition() }
+        val lock = locks.computeIfAbsent(key) { reentrantLock.newCondition() }
         reentrantLock.unlock()
 
         if (hasLock) {
@@ -191,7 +187,7 @@ object AsyncMethodExecutor {
     }
 
     @JvmStatic
-    fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>): List<T?> {
+    inline fun <reified T> awaitSupplierExecute(works: Collection<Supplier<T>>): List<T> {
         return awaitSupplierExecute(works, Duration.ofMinutes(4))
     }
 
@@ -201,7 +197,7 @@ object AsyncMethodExecutor {
      * 返回结果严格按照传入的 works 顺序
      */
     @JvmStatic
-    fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>, timeout: Duration = Duration.ofMinutes(4)): List<T?> {
+    inline fun <reified T> awaitSupplierExecute(works: Collection<Supplier<T>>, timeout: Duration = Duration.ofMinutes(4)): List<T> {
         val size = works.size
         val lock = CountDownLatch(size)
         val results: MutableList<T?> = ArrayList(size)
@@ -223,7 +219,84 @@ object AsyncMethodExecutor {
         } catch (e: InterruptedException) {
             log.error("lock error", e)
         }
-        return results
+        return results.filterIsInstance<T>()
+    }
+
+    fun <T, U> awaitPairCollectionSupplierExecute(
+        work: Supplier<Collection<T>>,
+        work2: Supplier<Collection<U>>,
+        timeout: Duration = Duration.ofMinutes(4)
+    ): Pair<Collection<T>, Collection<U>> {
+
+        val cf: CompletableFuture<Collection<T>> = CompletableFuture.supplyAsync(work)
+        val cf2: CompletableFuture<Collection<U>> = CompletableFuture.supplyAsync(work2)
+
+        val cff = CompletableFuture.allOf(cf, cf2)
+        cff.get(timeout.toMillis(), TimeUnit.MILLISECONDS)
+
+        return cf.get() to cf2.get()
+    }
+
+    fun <T, K, V> awaitPairWithMapSupplierExecute(
+        work: Supplier<T>,
+        work2: Supplier<Map<K, V>>,
+        timeout: Duration = Duration.ofMinutes(4)
+    ): Pair<T, Map<K, V>> {
+
+        val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
+        val cf2: CompletableFuture<Map<K, V>> = CompletableFuture.supplyAsync(work2)
+
+        val cff = CompletableFuture.allOf(cf, cf2)
+        cff.get(timeout.toMillis(), TimeUnit.MILLISECONDS)
+
+        return cf.get() to cf2.get()
+    }
+
+    fun <T, U> awaitPairWithCollectionSupplierExecute(
+        work: Supplier<T>,
+        work2: Supplier<Collection<U>>,
+        timeout: Duration = Duration.ofMinutes(4)
+    ): Pair<T, Collection<U>> {
+
+        val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
+        val cf2: CompletableFuture<Collection<U>> = CompletableFuture.supplyAsync(work2)
+
+        val cff = CompletableFuture.allOf(cf, cf2)
+        cff.get(timeout.toMillis(), TimeUnit.MILLISECONDS)
+
+        return cf.get() to cf2.get()
+    }
+
+    fun <T, U> awaitPairSupplierExecute(
+        work: Supplier<T>,
+        work2: Supplier<U>,
+        timeout: Duration = Duration.ofMinutes(4)
+    ): Pair<T, U> {
+
+        val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
+        val cf2: CompletableFuture<U> = CompletableFuture.supplyAsync(work2)
+
+        val cff = CompletableFuture.allOf(cf, cf2)
+        cff.get(timeout.toMillis(), TimeUnit.MILLISECONDS)
+
+        return cf.get() to cf2.get()
+    }
+
+    fun <T, U, V> awaitTripleSupplierExecute(
+        work: Supplier<T>,
+        work2: Supplier<U>,
+        work3: Supplier<V>,
+        timeout: Duration = Duration.ofMinutes(4)
+    ): Triple<T, U, V> {
+
+        val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
+        val cf2: CompletableFuture<U> = CompletableFuture.supplyAsync(work2)
+        val cf3: CompletableFuture<V> = CompletableFuture.supplyAsync(work3)
+
+        val cff = CompletableFuture.allOf(cf, cf2, cf3)
+        cff.get(timeout.toMillis(), TimeUnit.MILLISECONDS)
+
+        return Triple(cf.get(), cf2.get(), cf3.get())
     }
 
     /**
@@ -232,7 +305,7 @@ object AsyncMethodExecutor {
      */
     @JvmStatic
     @Throws(Exception::class)
-    fun <T> awaitSupplierExecuteThrowException(
+    fun <T> awaitSupplierExecuteThrows(
         works: Collection<Supplier<T>>,
         timeout: Duration = Duration.ofMinutes(4)
     ): List<T> {
@@ -241,6 +314,7 @@ object AsyncMethodExecutor {
         val results: MutableList<T> = ArrayList(size)
         val taskThreads: MutableList<Thread> = CopyOnWriteArrayList()
         var exception: Exception? = null
+
         works.mapIndexed { i: Int, w: Supplier<T> ->
             Runnable {
                 phaser.register()
@@ -265,6 +339,7 @@ object AsyncMethodExecutor {
                 }
             }
         }.forEach { task: Runnable -> taskThreads.add(Thread.startVirtualThread(task)) }
+
         try {
             phaser.awaitAdvanceInterruptibly(
                 phaser.phase, timeout.toMillis(), TimeUnit.MILLISECONDS
@@ -273,8 +348,9 @@ object AsyncMethodExecutor {
             log.error("lock error", e)
         }
         if (exception != null) {
-            throw exception
+            throw exception!!
         }
+
         return results
     }
 
@@ -312,7 +388,7 @@ object AsyncMethodExecutor {
 
         fun add(lock: Condition) {
             conditionCount.putIfAbsent(lock, 0)
-            conditionCount.computeIfPresent(lock) { k: Condition?, v: Int -> v + 1 }
+            conditionCount.computeIfPresent(lock) { _: Condition?, v: Int -> v + 1 }
         }
 
         fun getAndRemove(lock: Condition): Int {

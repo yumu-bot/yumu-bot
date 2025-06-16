@@ -1,9 +1,10 @@
 package com.now.nowbot.throwable.botRuntimeException
 
+import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
 import kotlin.IllegalStateException
 
-open class IllegalStateException(message: String?): TipsRuntimeException(message) {
+open class IllegalStateException(message: String?): TipsRuntimeException(message), BotException {
 
     class Calculate(component: String):
         IllegalStateException("$component：数据计算失败。")

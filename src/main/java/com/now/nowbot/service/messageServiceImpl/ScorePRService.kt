@@ -219,20 +219,14 @@ class ScorePRService(
                 CmdRange(id.data!!, start, end)
             }
 
-            val deferred = scope.async {
-                userApiService.getOsuUser(id2.data!!, mode.data!!)
-            }
 
-            val deferred2 = scope.async {
-                id2.getRecentsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass)
-            }
+            val async = AsyncMethodExecutor.awaitPairWithMapSupplierExecute(
+                { userApiService.getOsuUser(id2.data!!, mode.data!!) },
+                { id2.getRecentsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass) }
+            )
 
-            runBlocking {
-                user = deferred.await()
-                scores = deferred2.await()
-            }
-
-            scope.cancel()
+            user = async.first
+            scores = async.second
         } else {
             // 经典的获取方式
 
@@ -408,8 +402,6 @@ class ScorePRService(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ScorePRService::class.java)
-
-        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(4))
 
         // 用于已筛选过的成绩。此时成绩内的谱面是已经计算过的，无需再次计算
         fun getE5ParamForFilteredScore(user: OsuUser, score: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {

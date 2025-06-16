@@ -101,7 +101,7 @@ class SBBindService(
             bindDao.bindSBQQ(param.qq, SBBindUser(user))
             bindDao.updateSBMode(user.userID, user.mode)
 
-            event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username))
+            event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username, user.mode))
 
             return
         }
@@ -116,7 +116,7 @@ class SBBindService(
             bindDao.bindSBQQ(param.qq, SBBindUser(user))
             bindDao.updateSBMode(user.userID, user.mode)
 
-            event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username))
+            event.reply(BindException.BindResultException.BindSuccess(param.qq, user.userID, user.username, user.mode))
         } else {
             event.reply(BindException.BindReceiveException.ReceiveRefused())
         }

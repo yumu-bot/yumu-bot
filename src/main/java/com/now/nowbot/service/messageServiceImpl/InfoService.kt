@@ -175,20 +175,20 @@ class InfoService(
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode, isMyself)
 
         if (id != null) {
-            val deferred = scope.async {
-                userApiService.getOsuUser(id, mode.data!!)
-            }
+            val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
+                { userApiService.getOsuUser(id, mode.data!!) },
+                {
+                    val ss = scoreApiService.getBestScores(id, mode.data!!, 0, 200)
 
-            val deferred2 = scope.async {
-                scoreApiService.getBestScores(id, mode.data!!, 0, 200)
-            }
+                    calculateApiService.applyBeatMapChanges(ss)
+                    calculateApiService.applyStarToScores(ss)
 
-            runBlocking {
-                user = deferred.await()
-                bests = deferred2.await()
-            }
+                    ss
+                }
+            )
 
-            scope.cancel()
+            user = async.first
+            bests = async.second.toList()
         } else {
             user = getUserWithoutRange(event, matcher, getMode(matcher), isMyself)
             bests = scoreApiService.getBestScores(user.userID, mode.data!!, 0, 200)
@@ -210,9 +210,6 @@ class InfoService(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(InfoService::class.java)
-
-        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(4))
-
 
         private fun getBestTimes(bests: List<LazerScore>): IntArray {
             val times: List<OffsetDateTime> = bests.map(LazerScore::endedTime)

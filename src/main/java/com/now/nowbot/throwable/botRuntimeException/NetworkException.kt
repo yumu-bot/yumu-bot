@@ -1,9 +1,10 @@
 package com.now.nowbot.throwable.botRuntimeException
 
+import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
 
 open class NetworkException(message: String?
-): TipsRuntimeException(message) {
+): TipsRuntimeException(message), BotException {
 
     open val code: Int = 0
 

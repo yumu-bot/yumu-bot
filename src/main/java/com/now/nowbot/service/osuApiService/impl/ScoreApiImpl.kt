@@ -13,7 +13,6 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
-import com.now.nowbot.util.AsyncMethodExecutor.Supplier
 import com.now.nowbot.util.JacksonUtil
 import okio.IOException
 import org.slf4j.Logger
@@ -32,7 +31,6 @@ import java.security.MessageDigest
 import java.util.concurrent.ExecutionException
 import java.util.function.Consumer
 import java.util.function.Function
-import kotlin.collections.flatten
 
 @Service
 class ScoreApiImpl(
@@ -72,15 +70,32 @@ class ScoreApiImpl(
         return if (limit <= 100) {
             getBests(id, mode, offset, limit)
         } else {
-            val actionList = ArrayList<Supplier<List<LazerScore>>>(2)
-            actionList.add{
-                getBests(id, mode, offset, 100)
+            val e = AsyncMethodExecutor.awaitPairCollectionSupplierExecute(
+                { getBests(id, mode, offset, 100) },
+                { getBests(id, mode, offset + 100, limit - 100) }
+            )
+
+            return e.first + e.second
+
+            /*
+            val actions = ArrayList<AsyncMethodExecutor.Runnable>(2)
+
+            var list1 = listOf<LazerScore>()
+            var list2 = listOf<LazerScore>()
+
+            actions.add {
+                list1 = getBests(id, mode, offset, 100)
             }
-            actionList.add{
-                getBests(id, mode, offset + 100, limit - 100)
+
+            actions.add {
+                list2 = getBests(id, mode, offset + 100, limit - 100)
             }
-            val result = AsyncMethodExecutor.awaitSupplierExecute(actionList)
-            return result.filterNotNull().flatten()
+
+            AsyncMethodExecutor.awaitRunnableExecute(actions)
+
+            return list1 + list2
+
+             */
         }
     }
 

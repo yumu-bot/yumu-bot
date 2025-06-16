@@ -153,8 +153,7 @@ import kotlin.math.min
                     }
                 }
 
-            return AsyncMethodExecutor.awaitSupplierExecute(actions)
-                .filterNotNull().toMap()
+            return AsyncMethodExecutor.awaitSupplierExecute(actions).toMap()
         }
 
         // 计算对应成绩的对应 DX 评分

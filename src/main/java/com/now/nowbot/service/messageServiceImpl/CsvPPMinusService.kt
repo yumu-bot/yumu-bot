@@ -61,7 +61,7 @@ class CsvPPMinusService(
             param.names.mapNotNull { it.toLongOrNull() }
         } else {
             val actions = param.names.map {
-                return@map AsyncMethodExecutor.Supplier<Pair<String, Long>?> {
+                return@map AsyncMethodExecutor.Supplier<Pair<String, Long>> {
                     return@Supplier try {
                         it to userApiService.getOsuID(it)
                     } catch (e: Exception) {
@@ -72,7 +72,6 @@ class CsvPPMinusService(
             }
 
             val result = AsyncMethodExecutor.awaitSupplierExecute(actions)
-                .filterNotNull()
                 .filter { it.second > 0L }
                 .toMap()
 
