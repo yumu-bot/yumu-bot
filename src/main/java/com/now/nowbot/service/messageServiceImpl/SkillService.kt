@@ -1,6 +1,5 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
@@ -18,7 +17,6 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
@@ -30,10 +28,16 @@ import kotlin.math.sqrt
     private val userApiService: OsuUserApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
-    private val bindDao: BindDao,
     private val imageService: ImageService
 ) : MessageService<SkillService.SkillParam>, TencentMessageService<SkillService.SkillParam> {
-    data class SkillParam(val user: OsuUser, val vs: OsuUser?, val mode: OsuMode)
+    data class SkillParam(
+        val isVs: Boolean,
+        val me: OsuUser,
+        val myBests: List<LazerScore>,
+        val other: OsuUser?,
+        val otherBests: List<LazerScore>?,
+        val mode: OsuMode
+    )
 
     data class SkillScore(val score: LazerScore, val skill: List<Float>)
 
@@ -45,9 +49,18 @@ import kotlin.math.sqrt
         val m = Instruction.SKILL.matcher(messageText)
         val m2 = Instruction.SKILL_VS.matcher(messageText)
 
-        val param = getParam(event, m, m2)
+        val matcher: Matcher
+        val isVs: Boolean
 
-        data.value = param ?: return false
+        if (m.find()) {
+            matcher = m
+            isVs = false
+        } else if (m2.find()) {
+            matcher = m2
+            isVs = true
+        } else return false
+
+        data.value = getParam(event, matcher, isVs)
         return true
     }
 
@@ -65,99 +78,147 @@ import kotlin.math.sqrt
         val m = OfficialInstruction.SKILL.matcher(messageText)
         val m2 = OfficialInstruction.SKILL_VS.matcher(messageText)
 
-        return getParam(event, m, m2)
+        val matcher: Matcher
+        val isVs: Boolean
+
+        if (m.find()) {
+            matcher = m
+            isVs = false
+        } else if (m2.find()) {
+            matcher = m2
+            isVs = true
+        } else return null
+
+        return getParam(event, matcher, isVs)
     }
 
     override fun reply(event: MessageEvent, param: SkillParam): MessageChain? {
         return QQMsgUtil.getImage(param.getImage())
     }
 
-    private fun getParam(event: MessageEvent, m: Matcher, m2: Matcher): SkillParam? {
-        val isVs: Boolean = if (m.find()) {
-            false
-        } else if (m2.find()) {
-            true
-        } else return null
+    private fun getParam(event: MessageEvent, matcher: Matcher, isVs: Boolean = false): SkillParam {
+        val inputMode = CmdObject(OsuMode.MANIA)// getMode(matcher)
 
-        val mode = OsuMode.MANIA
+        val ids = UserIDUtil.get2UserID(event, matcher, inputMode, isVs)
 
-        val me = try {
-            bindDao.getBindFromQQ(event.sender.id)
-        } catch (e: Exception) {
-            null
-        }
-
-        val user: OsuUser
-        val vs: OsuUser?
+        val me: OsuUser
+        val other: OsuUser?
+        val myBests: List<LazerScore>
+        val otherBests: List<LazerScore>?
+        val mode: OsuMode
 
         if (isVs) {
-            if (m2.group("vs").isNullOrBlank().not()) {
-                user = CmdUtil.getUserWithoutRange(event, m2, CmdObject(mode))
-                vs = CmdUtil.getOsuUser(m2.group("vs"), mode)
+            if (ids.first != null && ids.second != null) {
+                // 双人模式
+
+                mode = inputMode.data!!
+
+                val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
+                    { userApiService.getOsuUser(ids.first!!, mode) },
+                    { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
+                    { userApiService.getOsuUser(ids.second!!, mode) },
+                    { scoreApiService.getBestScores(ids.second!!, mode, 0, 100) },
+                )
+
+                me = async.first.first
+                other = async.second.first
+
+                myBests = async.first.second
+                otherBests = async.second.second
             } else {
-                val maybe = CmdUtil.getUserWithoutRange(event, m2, CmdObject(mode))
-                if (me == null || maybe.id == me.userID) {
-                    user = maybe
-                    vs = null
-                } else {
-                    user = userApiService.getOsuUser(me, mode)
-                    vs = maybe
-                }
+                // 缺东西，走常规路线
+                val users = CmdUtil.get2User(event, matcher, inputMode, true)
+
+                mode = OsuMode.getMode(inputMode.data!!, users.first().currentOsuMode)
+
+                me = users.first()
+                other = if (users.size == 2) users.last() else null
+
+                myBests = scoreApiService.getBestScores(me.userID, mode, 0, 100)
+                otherBests = if (other != null) scoreApiService.getBestScores(other.userID, mode, 0, 100) else null
             }
         } else {
-            vs = if (m.group("vs").isNullOrBlank().not()) {
-                CmdUtil.getOsuUser(m.group("vs"), mode)
+            if (ids.first != null && ids.second != null) {
+                // 双人模式
+
+                mode = inputMode.data!!
+
+                val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
+                    { userApiService.getOsuUser(ids.first!!, mode) },
+                    { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
+                    { userApiService.getOsuUser(ids.second!!, mode) },
+                    { scoreApiService.getBestScores(ids.second!!, mode, 0, 100) },
+                )
+
+                me = async.first.first
+                other = async.second.first
+
+                myBests = async.first.second
+                otherBests = async.second.second
+
+            } else if (ids.first != null) {
+                // 单人模式
+
+                mode = inputMode.data!!
+
+                val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+                    { userApiService.getOsuUser(ids.first!!, mode) },
+                    { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
+                )
+
+                me = async.first
+                other = null
+
+                myBests = async.second
+                otherBests = null
+
             } else {
-                null
+                // 缺东西，走常规路线
+
+                val users = CmdUtil.get2User(event, matcher, inputMode, false)
+
+                mode = OsuMode.getMode(inputMode.data!!, users.first().currentOsuMode)
+
+                me = users.first()
+                other = if (users.size == 2) users.last() else null
+
+                myBests = scoreApiService.getBestScores(me.userID, mode, 0, 100)
+                otherBests = if (other != null) scoreApiService.getBestScores(other.userID, mode, 0, 100) else null
             }
-            user = CmdUtil.getUserWithoutRange(event, m, CmdObject(mode))
         }
 
-        return SkillParam(user, vs, mode)
+        return SkillParam(isVs, me, myBests, other, otherBests, mode)
     }
 
     private fun SkillParam.getImage(): ByteArray {
-        val vs: Map<String, Any>?
-        val me: Map<String, Any>
+        val hasOthers = other != null
 
-        if (this.vs != null) {
-            val bests = try {
-                scoreApiService.getBestScores(this.user, this.mode)
-            } catch (e: Exception) {
-                throw NoSuchElementException.BestScore(this.user.username)
-            }
+        val my: Map<Long, Skill?>
+        val others: Map<Long, Skill?>?
 
-            val skillMap = getSkillMap(bests)
+        if (hasOthers) {
+            val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+                { getSkillMap(myBests) },
+                { getSkillMap(otherBests) }
+            )
 
-            me = getBody(this.user, bests, skillMap, isVS = false, isShowScores = false)
-
-            val vsBests = try {
-                scoreApiService.getBestScores(this.vs, this.mode)
-            } catch (e: Exception) {
-                throw NoSuchElementException.BestScore(this.user.username)
-            }
-
-            val vsSkillMap = getSkillMap(vsBests)
-
-            vs = getBody(this.vs, vsBests, vsSkillMap, isVS = true, isShowScores = false)
+            my = async.first
+            others = async.second
         } else {
-            val bests = try {
-                scoreApiService.getBestScores(this.user, this.mode)
-            } catch (e: Exception) {
-                throw NoSuchElementException.BestScore(this.user.username)
-            }
-
-            val skillMap = getSkillMap(bests)
-
-            me = getBody(this.user, bests, skillMap, isVS = false, isShowScores = true)
-            vs = null
+            my = getSkillMap(myBests)
+            others = null
         }
 
+        val myBody = getBody(me, myBests, my, isMyself = true, !hasOthers)
+        val othersBody = if (hasOthers) {
+            getBody(other!!, otherBests!!, others!!, isMyself = false, isShowScores = false)
+        } else null
+
         val image =
-            if (vs != null) {
-                imageService.getPanel(vs + me + mapOf("panel" to "KV"), "K")
+            if (hasOthers) {
+                imageService.getPanel(myBody + othersBody!! + mapOf("panel" to "KV"), "K")
             } else {
-                imageService.getPanel(me + mapOf("panel" to "K"), "K")
+                imageService.getPanel(myBody + mapOf("panel" to "K"), "K")
             }
 
         return image
@@ -201,7 +262,7 @@ import kotlin.math.sqrt
         user: OsuUser,
         bests: List<LazerScore>,
         skillMap: Map<Long, Skill?>,
-        isVS: Boolean = false,
+        isMyself: Boolean = false,
         isShowScores: Boolean = true,
     ): Map<String, Any> {
         val skills = List(8) { mutableListOf<Double>() }
@@ -237,49 +298,16 @@ import kotlin.math.sqrt
         val kSort = skill.take(6).sortedDescending()
         val total = kSort[0] * 0.5f + kSort[1] * 0.3f + kSort[2] * 0.2f + kSort[3] * 0.1f + kSort[4] * 0.05f
 
-        /*
-
-        val sum = MutableList(8) {0.0}
-
-        for (i in bests.indices) {
-            val percent: Double = (0.95).pow(i)
-            val b = bests[i]
-
-            val skills = skillMap[b.beatmapID]?.values ?: listOf()
-
-            for (j in 0..< min(sum.size, skills.size)) {
-                sum[j] += (skills[j] * nerfByAccuracy(b) * percent)
-            }
-        }
-
-        val skill = sum.map { it / DIVISOR }.toList()
-
-        val scores: List<SkillScore> = bests
-            .map { SkillScore(it, skillMap[it.beatmapID]?.values ?: listOf()) }
-
-        val total = run {
-            var star = 0.0
-            val powers = listOf(0.8, 0.8, 0.8, 0.4, 0.6, 1.2)
-
-            for (i in 0 ..< 6) {
-                star += powers[i] * skill[i]
-            }
-
-            star / STAR_DIVISOR
-        }
-
-         */
-
-        return if (isVS) mapOf(
-            "vs_user" to user,
-            "vs_skill" to skill,
-            "vs_scores" to scores,
-            "vs_total" to total,
-        ) else mapOf(
+        return if (isMyself) mapOf(
             "user" to user,
             "skill" to skill,
             "scores" to scores,
             "total" to total,
+        ) else mapOf(
+            "vs_user" to user,
+            "vs_skill" to skill,
+            "vs_scores" to scores,
+            "vs_total" to total,
         )
     }
 

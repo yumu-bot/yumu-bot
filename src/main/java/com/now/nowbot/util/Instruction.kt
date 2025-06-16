@@ -331,30 +331,14 @@ enum class Instruction(val pattern: Pattern) {
 
     SKILL(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("skills?", "k")
-        appendModeQQUIDName()
-        appendSpace()
-        appendGroup(MAYBE) {
-            append(REG_COLON)
-            appendSpace()
-            appendCaptureGroup("vs",
-                REG_USERNAME,
-                MORE
-            )
-        }
+        appendModeQQUID()
+        append2Name()
     }),
 
     SKILL_VS(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("skills?\\s*v(ersu)?s", "kv")
-        appendModeQQUIDName()
-        appendSpace()
-        appendGroup(MAYBE) {
-            append(REG_COLON)
-            appendSpace()
-            appendCaptureGroup("vs",
-                REG_USERNAME,
-                MORE
-            )
-        }
+        appendModeQQUID()
+        append2Name()
     }),
 
     BADGE(CommandPatternBuilder.create {

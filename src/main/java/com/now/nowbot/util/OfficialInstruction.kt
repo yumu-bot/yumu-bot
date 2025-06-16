@@ -216,30 +216,14 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     SKILL(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("skills?", "k")
-        appendModeQQUIDName()
-        appendSpace()
-        appendGroup(MAYBE) {
-            append(REG_COLON)
-            appendSpace()
-            appendCaptureGroup("vs",
-                REG_USERNAME,
-                MORE
-            )
-        }
+        appendModeQQUID()
+        append2Name()
     }),
 
     SKILL_VS(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("skills?\\s*v(ersu)?s", "kv")
-        appendModeQQUIDName()
-        appendSpace()
-        appendGroup(MAYBE) {
-            append(REG_COLON)
-            appendSpace()
-            appendCaptureGroup("vs",
-                REG_USERNAME,
-                MORE
-            )
-        }
+        appendModeQQUID()
+        append2Name()
     }),
 
     BADGE(CommandPatternBuilder.create {
