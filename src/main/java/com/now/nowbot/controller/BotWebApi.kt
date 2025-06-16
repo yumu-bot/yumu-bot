@@ -75,7 +75,7 @@ import kotlin.math.min
 
         try {
             me = userApiService.getOsuUser(name.trim(), mode)
-            myBests = scoreApiService.getBestScores(me.userID, mode)
+            myBests = scoreApiService.getBestScores(me.userID, mode, 0, 100)
         } catch (e: Exception) {
             throw RuntimeException(e.message)
         }
@@ -116,7 +116,7 @@ import kotlin.math.min
         val mode = getMode(playMode)
 
         val me = userApiService.getOsuUser(name.trim(), mode)
-        val myBest = scoreApiService.getBestScores(me, mode)
+        val myBest = scoreApiService.getBestScores(me, mode, 0, 100)
 
         val param = PPMinusService.PPMinusParam(false, me, myBest, null, null, mode, 4)
 
@@ -148,10 +148,10 @@ import kotlin.math.min
         val mode = getMode(playMode)
 
         val me = userApiService.getOsuUser(name.trim(), mode)
-        val myBest = scoreApiService.getBestScores(me, mode)
+        val myBest = scoreApiService.getBestScores(me, mode, 0, 100)
 
         val other = if (name2.isBlank()) null else userApiService.getOsuUser(name2.trim(), mode)
-        val othersBest = if (other == null) null else scoreApiService.getBestScores(other, mode)
+        val othersBest = if (other == null) null else scoreApiService.getBestScores(other, mode, 0, 100)
 
         val param = PPMinusService.PPMinusParam(other != null, me, myBest, other, othersBest, mode, 4)
 

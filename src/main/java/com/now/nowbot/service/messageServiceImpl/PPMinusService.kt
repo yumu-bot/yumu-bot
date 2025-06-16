@@ -289,9 +289,9 @@ import java.util.regex.Matcher
 
                 val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode) },
+                    { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
-                    { scoreApiService.getBestScores(ids.second!!, mode) },
+                    { scoreApiService.getBestScores(ids.second!!, mode, 0, 100) },
                 )
 
                 me = async.first.first
@@ -312,8 +312,8 @@ import java.util.regex.Matcher
                 me = users.first()
                 other = if (users.size == 2) users.last() else null
 
-                myBests = scoreApiService.getBestScores(me.userID, mode)
-                otherBests = if (other != null) scoreApiService.getBestScores(other.userID, mode) else null
+                myBests = scoreApiService.getBestScores(me.userID, mode, 0, 100)
+                otherBests = if (other != null) scoreApiService.getBestScores(other.userID, mode, 0, 100) else null
             }
         } else {
             if (ids.first != null && ids.second != null) {
@@ -327,9 +327,9 @@ import java.util.regex.Matcher
 
                 val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode) },
+                    { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
-                    { scoreApiService.getBestScores(ids.second!!, mode) },
+                    { scoreApiService.getBestScores(ids.second!!, mode, 0, 100) },
                 )
 
                 me = async.first.first
@@ -349,7 +349,7 @@ import java.util.regex.Matcher
 
                 val async = AsyncMethodExecutor.awaitPairSupplierExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode) },
+                    { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
                 )
 
                 me = async.first
@@ -372,8 +372,8 @@ import java.util.regex.Matcher
                 me = users.first()
                 other = if (users.size == 2) users.last() else null
 
-                myBests = scoreApiService.getBestScores(me.userID, mode)
-                otherBests = if (other != null) scoreApiService.getBestScores(other.userID, mode) else null
+                myBests = scoreApiService.getBestScores(me.userID, mode, 0, 100)
+                otherBests = if (other != null) scoreApiService.getBestScores(other.userID, mode, 0, 100) else null
             }
         }
 

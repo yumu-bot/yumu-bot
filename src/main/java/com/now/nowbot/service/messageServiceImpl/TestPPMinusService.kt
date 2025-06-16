@@ -36,7 +36,7 @@ class TestPPMinusService(
         val users = CmdUtil.get2User(event, matcher, mode, false)
 
         val me: OsuUser = users.first()
-        val myBests: List<LazerScore> = scoreApiService.getBestScores(me.userID, mode.data!!)
+        val myBests: List<LazerScore> = scoreApiService.getBestScores(me.userID, mode.data!!, 0, 100)
 
         data.value = PPMinusParam(false, me, myBests, null, null, mode.data!!, -1)
 
