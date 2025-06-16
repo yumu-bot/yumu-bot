@@ -52,8 +52,7 @@ public class LocalCommandListener {
                         log.debug("异常详细信息: ", tx);
                     }
                     case TipsRuntimeException rx -> log.info("捕捉到提示：{}", rx.getMessage());
-                    case ExecutionException xx ->
-                            log.info("捕捉到并行中的提示：{}", xx.getCause().getMessage());
+                    case ExecutionException xx -> log.info("捕捉到并行中的提示：{}", xx.getCause().getMessage());
                     case LogException lx -> log.info("捕捉到记录：{}", lx.getMessage());
                     case null, default -> log.info("捕捉到异常：", throwable);
                 }

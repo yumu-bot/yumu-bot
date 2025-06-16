@@ -187,7 +187,7 @@ object AsyncMethodExecutor {
     }
 
     @JvmStatic
-    inline fun <reified T> awaitSupplierExecute(works: Collection<Supplier<T>>): List<T> {
+    fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>): List<T> {
         return awaitSupplierExecute(works, Duration.ofMinutes(4))
     }
 
@@ -197,10 +197,10 @@ object AsyncMethodExecutor {
      * 返回结果严格按照传入的 works 顺序
      */
     @JvmStatic
-    inline fun <reified T> awaitSupplierExecute(works: Collection<Supplier<T>>, timeout: Duration = Duration.ofMinutes(4)): List<T> {
+    fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>, timeout: Duration = Duration.ofMinutes(4)): List<T> {
         val size = works.size
         val lock = CountDownLatch(size)
-        val results: MutableList<T?> = ArrayList(size)
+        val results: MutableMap<Int, T?> = ConcurrentHashMap(size)
         works.mapIndexed { i: Int, w: Supplier<T> ->
             Runnable {
                 try {
@@ -219,7 +219,8 @@ object AsyncMethodExecutor {
         } catch (e: InterruptedException) {
             log.error("lock error", e)
         }
-        return results.filterIsInstance<T>()
+
+        return results.toSortedMap().mapNotNull { it.value }
     }
 
     fun <T, U> awaitPairCollectionSupplierExecute(
@@ -311,7 +312,7 @@ object AsyncMethodExecutor {
     ): List<T> {
         val size = works.size
         val phaser = Phaser(1)
-        val results: MutableList<T> = ArrayList(size)
+        val results: MutableMap<Int, T> = ConcurrentHashMap(size)
         val taskThreads: MutableList<Thread> = CopyOnWriteArrayList()
         var exception: Exception? = null
 
@@ -351,7 +352,7 @@ object AsyncMethodExecutor {
             throw exception!!
         }
 
-        return results
+        return results.toSortedMap().map { it.value }
     }
 
     fun interface Supplier<T> : java.util.function.Supplier<T> {

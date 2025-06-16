@@ -12,7 +12,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.AsyncMethodExecutor
-import com.now.nowbot.util.AsyncMethodExecutor.awaitSupplierExecute
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -95,7 +94,7 @@ import java.util.concurrent.ConcurrentHashMap
         suppliers.add(createSupplier("accuracy", ppPlusMap, ppPlus, PPPlus.Stats::accuracy))
         suppliers.add(createSupplier("total", ppPlusMap, ppPlus, PPPlus.Stats::total))
 
-        awaitSupplierExecute(suppliers)
+        AsyncMethodExecutor.awaitSupplierExecute(suppliers)
 
         // 计算加权和
         var weight = 1.0 / 0.95
