@@ -13,8 +13,8 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.AsyncMethodExecutor.Supplier
 import com.now.nowbot.util.JacksonUtil
-import kotlinx.coroutines.*
 import okio.IOException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -32,6 +32,7 @@ import java.security.MessageDigest
 import java.util.concurrent.ExecutionException
 import java.util.function.Consumer
 import java.util.function.Function
+import kotlin.collections.flatten
 
 @Service
 class ScoreApiImpl(
@@ -45,19 +46,20 @@ class ScoreApiImpl(
         offset: Int,
         limit: Int,
     ): List<LazerScore> {
-        return request { client -> client.get()
-            .uri {
-                it.path("users/{uid}/scores/best")
-                    .queryParam("legacy_only", 0)
-                    .queryParam("offset", offset)
-                    .queryParam("limit", limit)
-                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                    .build(id)
-            }
-            .headers(base::insertHeader)
-            .retrieve()
-            .bodyToFlux(LazerScore::class.java)
-            .collectList()
+        return request { client ->
+            client.get()
+                .uri {
+                    it.path("users/{uid}/scores/best")
+                        .queryParam("legacy_only", 0)
+                        .queryParam("offset", offset)
+                        .queryParam("limit", limit)
+                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                        .build(id)
+                }
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToFlux(LazerScore::class.java)
+                .collectList()
         }
     }
 
@@ -70,23 +72,15 @@ class ScoreApiImpl(
         return if (limit <= 100) {
             getBests(id, mode, offset, limit)
         } else {
-            val deferred1 = scope.async {
+            val actionList = ArrayList<Supplier<List<LazerScore>>>(2)
+            actionList.add{
                 getBests(id, mode, offset, 100)
             }
-
-            val deferred2 = scope.async {
+            actionList.add{
                 getBests(id, mode, offset + 100, limit - 100)
             }
-
-            val bests: List<LazerScore>
-
-            runBlocking {
-                bests = deferred1.await() + deferred2.await()
-            }
-
-            scope.cancel()
-
-            return bests
+            val result = AsyncMethodExecutor.awaitSupplierExecute(actionList)
+            return result.filterNotNull().flatten()
         }
     }
 
@@ -243,58 +237,63 @@ class ScoreApiImpl(
     override fun getBeatMapScores(bid: Long, user: BindUser, mode: OsuMode?): List<LazerScore> {
         if (!user.isAuthorized) getBeatMapScores(bid, user.userID, mode)
 
-        return request { client -> client.get()
-            .uri { it.path("beatmaps/{bid}/scores/users/{uid}/all")
-                .queryParam("legacy_only", 0)
-                .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                .build(bid, user.userID)
-            }
-            .headers(base.insertHeader(user))
-            .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
-            }
+        return request { client ->
+            client.get()
+                .uri {
+                    it.path("beatmaps/{bid}/scores/users/{uid}/all")
+                        .queryParam("legacy_only", 0)
+                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                        .build(bid, user.userID)
+                }
+                .headers(base.insertHeader(user))
+                .retrieve()
+                .bodyToMono(JsonNode::class.java)
+                .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
+        }
     }
 
     override fun getBeatMapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore> {
-        return request { client -> client.get()
-            .uri {
-                it.path("beatmaps/{bid}/scores/users/{uid}/all")
-                    .queryParam("legacy_only", 0)
-                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                    .build(bid, uid)
-            }
-            .headers(base::insertHeader)
-            .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
+        return request { client ->
+            client.get()
+                .uri {
+                    it.path("beatmaps/{bid}/scores/users/{uid}/all")
+                        .queryParam("legacy_only", 0)
+                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                        .build(bid, uid)
+                }
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(JsonNode::class.java)
+                .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
         }
     }
 
     override fun getLeaderBoardScore(bid: Long, mode: OsuMode?, legacy: Boolean): List<LazerScore> {
-        return request { client -> client.get()
-            .uri { it.path("beatmaps/{bid}/scores")
-                .queryParam("legacy_only", if (legacy) 1 else 0)
-                .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                .build(bid)
-            }
-            .headers(base::insertHeader)
-            .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
+        return request { client ->
+            client.get()
+                .uri {
+                    it.path("beatmaps/{bid}/scores")
+                        .queryParam("legacy_only", if (legacy) 1 else 0)
+                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                        .build(bid)
+                }
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(JsonNode::class.java)
+                .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
         }
     }
 
     @OptIn(ExperimentalStdlibApi::class)
     override fun asyncDownloadBackground(scores: Iterable<LazerScore>, type: CoverType?) {
         val path = Path.of(IMG_BUFFER_PATH)
-        if (Files.isDirectory(path).not() || Files.isWritable(path).not() ) return
+        if (Files.isDirectory(path).not() || Files.isWritable(path).not()) return
 
         val actions = scores.map { score ->
             return@map AsyncMethodExecutor.Runnable {
                 val covers = score.beatmapset.covers
 
-                val url = when(type) {
+                val url = when (type) {
                     CARD -> covers.card
                     CARD_2X -> covers.card2x
                     COVER_2X -> covers.cover2x
@@ -329,15 +328,16 @@ class ScoreApiImpl(
                     val replacePath = split.first().replace("https://assets.ppy.sh/", "")
 
                     val image = try {
-                        request { client -> client.get()
-                            .uri {
-                                it.scheme("https").host("assets.ppy.sh").replacePath(replacePath)
-                                    .query(query.toString())
-                                    .build()
-                            }
-                            .headers(base::insertHeader)
-                            .retrieve()
-                            .bodyToMono(ByteArray::class.java)
+                        request { client ->
+                            client.get()
+                                .uri {
+                                    it.scheme("https").host("assets.ppy.sh").replacePath(replacePath)
+                                        .query(query.toString())
+                                        .build()
+                                }
+                                .headers(base::insertHeader)
+                                .retrieve()
+                                .bodyToMono(ByteArray::class.java)
                         }
                     } catch (e: Exception) {
                         log.error("异步下载谱面图片：任务失败\n", e)
@@ -482,26 +482,26 @@ class ScoreApiImpl(
         retry: Function<UriBuilder, URI>,
     ): T {
         return try {
-            request { client -> client.get()
-                .uri(uri)
-                .headers(headers)
-                .retrieve()
-                .bodyToMono(T::class.java)
+            request { client ->
+                client.get()
+                    .uri(uri)
+                    .headers(headers)
+                    .retrieve()
+                    .bodyToMono(T::class.java)
             }
         } catch (e: NetworkException.ScoreException.NotFound) {
-            request { client -> client.get()
-                .uri(retry)
-                .headers(headers)
-                .retrieve()
-                .bodyToMono(T::class.java)
+            request { client ->
+                client.get()
+                    .uri(retry)
+                    .headers(headers)
+                    .retrieve()
+                    .bodyToMono(T::class.java)
             }
         }
     }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ScoreApiImpl::class.java)
-
-        private val scope = CoroutineScope(Dispatchers.IO.limitedParallelism(2))
 
         private val IMG_BUFFER_PATH: String = if (System.getenv("BUFFER_PATH").isNullOrBlank().not()) {
             System.getenv("BUFFER_PATH")

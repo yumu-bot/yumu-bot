@@ -1,6 +1,5 @@
 package com.now.nowbot.util
 
-import com.now.nowbot.util.AsyncMethodExecutor.Runnable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.InterruptedException
@@ -9,7 +8,9 @@ import java.lang.Thread
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Phaser
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
@@ -109,7 +110,7 @@ object AsyncMethodExecutor {
         } finally {
             reentrantLock.lock()
             val locksSum = Util.getAndRemove(lock)
-            log.info("异步操作：${supplier.javaClass.simpleName} 剩余锁数量：${locksSum}")
+            log.debug("异步操作：${supplier.javaClass.simpleName} 剩余锁数量：${locksSum}")
             val count = countDownLocks.computeIfAbsent(key) { k: Any? -> CountDownLatch(locksSum) }
             lock.signalAll()
             reentrantLock.unlock()
@@ -157,13 +158,13 @@ object AsyncMethodExecutor {
     @JvmStatic
     fun asyncRunnableExecute(works: Collection<Runnable>) {
         works.map { w: Runnable ->
-            (Runnable {
+            Runnable {
                 try {
                     w.run()
                 } catch (e: Throwable) {
                     log.error("Async error", e)
                 }
-            })
+            }
         }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
     }
 
@@ -175,7 +176,7 @@ object AsyncMethodExecutor {
     fun awaitRunnableExecute(works: Collection<Runnable>, timeout: Duration = Duration.ofMinutes(4)) {
         val lock = CountDownLatch(works.size)
         works.map { w: Runnable ->
-            (Runnable {
+            Runnable {
                 try {
                     w.run()
                 } catch (e: Throwable) {
@@ -183,11 +184,12 @@ object AsyncMethodExecutor {
                 } finally {
                     lock.countDown()
                 }
-            })
+            }
         }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
 
         lock.await(timeout.toMillis(), TimeUnit.MILLISECONDS)
     }
+
     @JvmStatic
     fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>): List<T?> {
         return awaitSupplierExecute(works, Duration.ofMinutes(4))
@@ -196,19 +198,20 @@ object AsyncMethodExecutor {
     /**
      * 异步执行需要返回的结果，并等待至所有操作都完成。
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要返回结果（void 方法），请使用 awaitRunnableExecute
+     * 返回结果严格按照传入的 works 顺序
      */
     @JvmStatic
     fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>, timeout: Duration = Duration.ofMinutes(4)): List<T?> {
         val size = works.size
         val lock = CountDownLatch(size)
-        val results: MutableList<T?> = LinkedList()
-        works.map { w: Supplier<T> ->
+        val results: MutableList<T?> = ArrayList(size)
+        works.mapIndexed { i: Int, w: Supplier<T> ->
             Runnable {
                 try {
                     val result = w.get()
-                    results.add(result)
+                    results[i] = result
                 } catch (e: Exception) {
-                    results.add(null)
+                    results[i] = null
                     log.error("AsyncSupplier error", e)
                 } finally {
                     lock.countDown()
@@ -219,6 +222,58 @@ object AsyncMethodExecutor {
             lock.await(timeout.toMillis(), TimeUnit.MILLISECONDS)
         } catch (e: InterruptedException) {
             log.error("lock error", e)
+        }
+        return results
+    }
+
+    /**
+     * 出现异常时直接抛出错误不进行等待
+     * 返回结果严格按照传入的 works 顺序
+     */
+    @JvmStatic
+    @Throws(Exception::class)
+    fun <T> awaitSupplierExecuteThrowException(
+        works: Collection<Supplier<T>>,
+        timeout: Duration = Duration.ofMinutes(4)
+    ): List<T> {
+        val size = works.size
+        val phaser = Phaser(1)
+        val results: MutableList<T> = ArrayList(size)
+        val taskThreads: MutableList<Thread> = CopyOnWriteArrayList()
+        var exception: Exception? = null
+        works.mapIndexed { i: Int, w: Supplier<T> ->
+            Runnable {
+                phaser.register()
+                try {
+                    if (!phaser.isTerminated) {
+                        val result = w.get()
+                        results[i] = result
+                    }
+                } catch (e: Exception) {
+                    exception = e
+                    taskThreads.forEach {
+                        try {
+                            it.interrupt()
+                        } catch (ignore: Exception) {
+                        }
+                    }
+                    phaser.forceTermination()
+                } finally {
+                    if (!phaser.isTerminated) {
+                        phaser.arriveAndDeregister()
+                    }
+                }
+            }
+        }.forEach { task: Runnable -> taskThreads.add(Thread.startVirtualThread(task)) }
+        try {
+            phaser.awaitAdvanceInterruptibly(
+                phaser.phase, timeout.toMillis(), TimeUnit.MILLISECONDS
+            )
+        } catch (e: InterruptedException) {
+            log.error("lock error", e)
+        }
+        if (exception != null) {
+            throw exception
         }
         return results
     }
