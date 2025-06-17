@@ -205,10 +205,11 @@ class MatchRating(
         players.map { (k, v) -> k to PlayerData(v)}.toMap()
 
     @get:JsonProperty("skip_ignore_map")
-    val skipIgnoreMap: Map<String, Int>
+    val skipIgnoreMap: Map<String, Number>
         get() = mapOf(
             "skip" to ratingParam.skip,
-            "ignore" to ratingParam.ignore
+            "ignore" to ratingParam.ignore,
+            "easy" to ratingParam.easy
         )
 
     @get:JsonProperty("team_point_map")

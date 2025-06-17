@@ -261,7 +261,7 @@ class ScorePRService(
             }
         }
 
-        return ScorePRParam(user, scores, isPass)
+        return ScorePRParam(user, filteredScores, isPass)
     }
 
 

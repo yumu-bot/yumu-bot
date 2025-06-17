@@ -186,7 +186,7 @@ import kotlin.math.*
             throw NoSuchElementException.BestScoreFiltered(user.username)
         }
 
-        return BPParam(user, scores)
+        return BPParam(user, filteredScores)
     }
 
     private fun <T> CmdRange<T>.getOffsetAndLimit(
