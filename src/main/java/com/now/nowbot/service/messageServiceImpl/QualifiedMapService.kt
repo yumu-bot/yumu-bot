@@ -79,7 +79,7 @@ import kotlin.math.roundToInt
             // 给完整面板整点头像
             if (search.resultCount <= 12) {
                 AsyncMethodExecutor.asyncRunnableExecute {
-                    userApiService.asyncDownloadAvatar(search.beatmapsets)
+                    userApiService.asyncDownloadAvatarFromBeatmapsets(search.beatmapsets)
                 }
             }
 

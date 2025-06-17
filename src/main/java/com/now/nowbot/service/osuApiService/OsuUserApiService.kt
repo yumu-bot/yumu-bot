@@ -113,7 +113,7 @@ interface OsuUserApiService {
 
     fun asyncDownloadAvatar(users: List<MicroUser>)
 
-    fun asyncDownloadAvatar(beatmapsets: List<Beatmapset>) {
+    fun asyncDownloadAvatarFromBeatmapsets(beatmapsets: List<Beatmapset>) {
         val set = beatmapsets.flatMap { it.beatmaps ?: listOf() }.mapNotNull { it.user }.toSet()
 
         asyncDownloadAvatar(set.map { o -> MicroUser().apply { this.avatarUrl = o.avatarUrl } })
