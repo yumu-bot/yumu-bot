@@ -2,6 +2,7 @@ package com.now.nowbot.util
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
+import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -28,12 +29,29 @@ object UserIDUtil {
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
-        isMyself: AtomicBoolean = AtomicBoolean(false)
+        isMyself: AtomicBoolean = AtomicBoolean(false),
     ): CmdRange<Long> {
         val range = getUserIDAndRange(event, matcher, mode, isMyself)
 
         if (range.data == null) {
             range.data = getUserIDWithoutRange(event, matcher, mode, isMyself)
+        }
+
+        return range
+    }
+    /**
+     * @param isMyself 这里的布尔值仅用于返回当前 parse 的效果
+     */
+    fun getSBUserIDWithRange(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean = AtomicBoolean(false),
+    ): CmdRange<Long> {
+        val range = getSBUserIDAndRange(event, matcher, mode, isMyself)
+
+        if (range.data == null) {
+            range.data = getSBUserIDWithoutRange(event, matcher, mode, isMyself)
         }
 
         return range
@@ -48,7 +66,6 @@ object UserIDUtil {
         mode: CmdObject<OsuMode>,
         isMyself: AtomicBoolean = AtomicBoolean(false),
     ): Long? {
-
         val userID: Long?
         val me: BindUser?
 
@@ -74,6 +91,46 @@ object UserIDUtil {
 
         if (myID != null && isMyself.get()) {
             setMode(mode, me.mode, event)
+            return myID
+        }
+
+        return null
+    }
+
+    /**
+     * @param isMyself 这里的布尔值仅用于返回当前 parse 的效果
+     */
+    fun getSBUserIDWithoutRange(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean = AtomicBoolean(false),
+    ): Long? {
+        val userID: Long?
+        val me: SBBindUser?
+
+        val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+            { getSBUserID(event, matcher, mode, isMyself) },
+            {
+                try {
+                    bindDao.getSBBindFromQQ(event.sender.id, true)
+                } catch (ignored: BindException) {
+                    null
+                }
+            }
+        )
+
+        userID = async.first
+        me = async.second
+
+        val myID = me?.userID
+
+        if (userID != null) {
+            return userID
+        }
+
+        if (myID != null && isMyself.get()) {
+            setMode(mode, me.mode, null)
             return myID
         }
 
@@ -272,6 +329,98 @@ object UserIDUtil {
         return result
     }
 
+    private fun getSBUserIDAndRange(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
+    ): CmdRange<Long> {
+
+        require(
+            matcher.namedGroups().containsKey(FLAG_USER_AND_RANGE)
+        ) { "Matcher 中不包含 ur 分组" }
+
+        isMyself.set(false)
+
+        if (mode.data == null) {
+            mode.data = OsuMode.DEFAULT
+        }
+
+        val text: String? = matcher.group(FLAG_USER_AND_RANGE)?.trim()
+        if (text.isNullOrBlank()) {
+            return CmdRange()
+        }
+
+        val onlyRange = "^\\s*$REG_HASH?\\s*(\\d{1,3}$REG_HYPHEN+)?\\d{1,3}\\s*$".toRegex()
+
+        if (text.contains(onlyRange)) {
+            val range = parseRange(text)
+
+            // 特殊情况，前面是某个 201~999 范围内的玩家
+            if (range.first != null && range.second == null && range.first in 201..999) try {
+                val user = try {
+                    bindDao.getSBBindUser(range.first.toString())
+                } catch (e: BindException) {
+                    null
+                }
+
+                if (user != null) {
+                    setMode(mode, user.mode, null)
+                } else {
+                    setMode(mode, null)
+                }
+
+                return CmdRange(user?.userID)
+            } catch (ignored: Exception) {}
+
+            isMyself.set(true)
+
+            val me = bindDao.getSBBindFromQQ(event.sender.id, true)
+            setMode(mode, me.mode, null)
+
+            return CmdRange(me.userID, range.first, range.second)
+        }
+
+        val ranges = if (text.contains("($CHAR_HASH|$CHAR_HASH_FULL)".toRegex())) {
+            parseNameAndRangeHasHash(text)
+        } else {
+            parseNameAndRangeWithoutHash(text)
+        }
+
+        var result = CmdRange<Long>()
+
+        for (range in ranges) try {
+            if (range.data == null) {
+                result = CmdRange(null, range.start, range.end)
+                break
+            }
+
+            val user = try {
+                bindDao.getSBBindUser(range.data!!)
+            } catch (e: BindException) {
+                null
+            }
+
+            if (user != null) {
+                setMode(mode, user.mode, null)
+            } else {
+                setMode(mode, null)
+            }
+
+            val id = bindDao.getSBUserID(range.data!!)
+
+            return CmdRange(id, range.start, range.end)
+
+        } catch (ignored: Exception) {}
+
+        // 交换顺序
+        if (result.start != null && result.end != null && result.start!! > result.end!!) {
+            result.start = result.end!!.also { result.end = result.start }
+        }
+
+        return result
+    }
+
     private fun parseRange(text: String): Pair<Int?, Int?> {
         val range = text
             .removePrefix(CHAR_HASH.toString())
@@ -338,6 +487,70 @@ object UserIDUtil {
             if (!name.isNullOrBlank()) {
                 isMyself.set(false)
                 return bindDao.getOsuID(name)
+            }
+        }
+
+        if (matcher.namedGroups().containsKey(FLAG_USER_AND_RANGE)) {
+            val name2: String? = matcher.group(FLAG_USER_AND_RANGE)
+            if (!name2.isNullOrBlank()) {
+                isMyself.set(false)
+            } else {
+                isMyself.set(true)
+            }
+        } else {
+            isMyself.set(true)
+        }
+
+        return null
+    }
+
+    /**
+     * @param isMyself 这里的布尔值仅用于返回当前 parse 的效果
+     */
+    private fun getSBUserID(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
+    ): Long? {
+        val qq = if (event.isAt) {
+            event.target
+        } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
+            try {
+                matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: 0L
+            } catch (ignore: RuntimeException) {
+                0L
+            }
+        } else {
+            0L
+        }
+
+        if (qq != 0L) {
+            isMyself.set(qq == event.sender.id)
+
+            try {
+                return bindDao.getSBBindFromQQ(qq, isMyself.get()).userID
+            } catch (ignored: BindException) {}
+        }
+
+        setMode(mode, event)
+
+        if (matcher.namedGroups().containsKey(FLAG_UID)) {
+            try {
+                val uid = matcher.group(FLAG_UID)?.toLongOrNull() ?: 0L
+
+                if (uid != 0L) {
+                    isMyself.set(false)
+                    return uid
+                }
+            } catch (ignore: RuntimeException) {}
+        }
+
+        if (matcher.namedGroups().containsKey(FLAG_NAME)) {
+            val name: String? = matcher.group(FLAG_NAME)
+            if (!name.isNullOrBlank()) {
+                isMyself.set(false)
+                return bindDao.getSBUserID(name)
             }
         }
 

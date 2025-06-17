@@ -51,12 +51,16 @@ class DiscussionApiImpl(var base: OsuApiBaseService) : OsuDiscussionApiService {
             client
                 .get()
                 .uri { u: UriBuilder ->
+
+                    types?.forEach { t ->
+                        u.queryParam("message_types[]", t)
+                    }
+
                     u.path("beatmapsets/discussions")
                         .queryParamIfPresent("beatmap_id", Optional.ofNullable(bid))
                         .queryParamIfPresent("beatmapset_id", Optional.ofNullable(sid))
                         .queryParamIfPresent("beatmapset_status", Optional.ofNullable(status))
                         .queryParamIfPresent("limit", Optional.ofNullable(limit))
-                        .queryParamIfPresent("message_types[]", Optional.ofNullable(types?.toTypedArray()))
                         .queryParamIfPresent("only_resolved", Optional.ofNullable(onlyResolved))
                         .queryParamIfPresent("page", Optional.ofNullable(page))
                         .queryParamIfPresent("sort", Optional.ofNullable(sort))

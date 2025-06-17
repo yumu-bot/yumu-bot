@@ -2,6 +2,7 @@ package com.now.nowbot.service.sbApiService.impl
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.ppysb.SBClan
 import com.now.nowbot.model.ppysb.SBStatistics
 import com.now.nowbot.model.ppysb.SBUser
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
-class SBUserApiImpl(private val base: SBBaseService): SBUserApiService {
+class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDao): SBUserApiService {
     override fun getUserID(username: String): Long? {
         data class Result(
             @JsonProperty("id")
@@ -24,7 +25,7 @@ class SBUserApiImpl(private val base: SBBaseService): SBUserApiService {
             val username: String
         )
 
-        return base.sbApiWebClient.get().uri { it
+        val id = base.sbApiWebClient.get().uri { it
             .path("/v1/search_players")
             .queryParam("q", username)
             .build()
@@ -32,6 +33,10 @@ class SBUserApiImpl(private val base: SBBaseService): SBUserApiService {
             .bodyToMono(JsonNode::class.java)
             .map { parseList<Result>(it, "result", "玩家结果") }
             .block()?.firstOrNull()?.id
+
+        id?.let { bindDao.updateSBNameToID(it, username) }
+
+        return id
     }
 
     override fun getUserOnlineCount(): Pair<Long, Long> {
@@ -83,6 +88,8 @@ class SBUserApiImpl(private val base: SBBaseService): SBUserApiService {
 
         u.clan?.let { user.clan = it }
         user.statistics = u.stats.values.toList()
+
+        bindDao.updateSBNameToID(user)
 
         return user
     }

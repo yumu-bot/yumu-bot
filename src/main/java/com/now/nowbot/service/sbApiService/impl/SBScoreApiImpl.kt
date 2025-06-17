@@ -19,21 +19,36 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
         username: String?,
         mods: List<LazerMod>?,
         mode: OsuMode?,
+        offset: Int?,
         limit: Int?,
         includeLoved: Boolean,
         includeFailed: Boolean,
         scope: String
     ): List<SBScore> {
-        val modeValue = if (mode?.modeValue == (-1).toByte()) null else mode?.modeValue?.toInt()
+        val modeValue = if (mode?.modeValue == (-1).toByte()) {
+            null
+        } else {
+            mode?.modeValue?.toInt()
+        }
 
-        return base.sbApiWebClient.get().uri { it
+        val off = (offset ?: 0)
+        val lim = (limit ?: 100)
+
+        val size = off + lim
+
+        return base.sbApiWebClient.get().uri {
+
+            if (!mods.isNullOrEmpty()) {
+                it.queryParam("mods", LazerMod.getModsValue(mods))
+            }
+
+            it
             .path("/v1/get_player_scores")
             .queryParam("scope", scope) // recent, best
             .queryParamIfPresent("id", Optional.ofNullable(id))
             .queryParamIfPresent("name", Optional.ofNullable(username))
-            .queryParamIfPresent("mods[]", Optional.ofNullable(mods?.map { m -> m.acronym }?.toTypedArray()))
             .queryParamIfPresent("mode", Optional.ofNullable(modeValue))
-            .queryParamIfPresent("limit", Optional.ofNullable(limit))
+            .queryParam("limit", size)
             .queryParamIfPresent("include_loved", Optional.ofNullable(includeLoved))
             .queryParamIfPresent("include_failed", Optional.ofNullable(includeFailed))
             .build()
@@ -41,6 +56,7 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
             .bodyToMono(JsonNode::class.java)
             .map { parseList<SBScore>(it, "scores", "玩家成绩") }
             .block()!!
+            .drop(off)
     }
 
     companion object {

@@ -103,8 +103,8 @@ class ScorePRService(
             } else if (matcher.group("pass") != null) {
                 true
             } else {
-                log.error("成绩分类失败：")
-                throw IllegalStateException.ClassCast("成绩")
+                log.error("最近成绩分类失败：")
+                throw IllegalStateException.ClassCast("最近成绩")
             }
 
         val param = getParam(event, messageText, matcher, isMultiple, isPass) ?: return false
@@ -120,8 +120,8 @@ class ScorePRService(
         try {
             event.reply(messageChain)
         } catch (e: Exception) {
-            log.error("最好成绩：发送失败", e)
-            throw IllegalStateException.Send("最好成绩")
+            log.error("最近成绩：发送失败", e)
+            throw IllegalStateException.Send("最近成绩")
         }
     }
 

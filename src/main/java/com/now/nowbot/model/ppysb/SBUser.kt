@@ -33,6 +33,9 @@ data class SBUser(
     val mode: OsuMode
         get() = OsuMode.getMode(preferredMode.toInt())
 
+    @get:JsonProperty("current_mode")
+    var currentMode: OsuMode = mode
+
     @get:JsonProperty("clan")
     var clan: SBClan = SBClan()
 
@@ -41,6 +44,7 @@ data class SBUser(
 
     fun toOsuUser(mode: OsuMode?): OsuUser {
         val sb = this
+        mode?.let { sb.currentMode = it }
 
         val code = sb.country.uppercase()
 

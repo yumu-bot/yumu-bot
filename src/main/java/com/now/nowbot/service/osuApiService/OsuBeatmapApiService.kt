@@ -26,6 +26,8 @@ interface OsuBeatmapApiService {
 
     fun getBeatmap(bid: Long): Beatmap
 
+    fun getBeatmaps(ids: Iterable<Long>): List<Beatmap>
+
     /**
      * @param type favourite, graveyard, guest, loved, nominated, pending, ranked
      * 注意，是英式英文的 favourite，有个 u

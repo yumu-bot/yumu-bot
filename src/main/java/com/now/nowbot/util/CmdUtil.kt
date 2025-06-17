@@ -2,13 +2,18 @@ package com.now.nowbot.util
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
+import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
+import com.now.nowbot.model.ppysb.SBUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.service.sbApiService.SBBeatmapApiService
+import com.now.nowbot.service.sbApiService.SBScoreApiService
+import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.botRuntimeException.LogException
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
@@ -202,6 +207,212 @@ object CmdUtil {
                 // val id = userApiService.getOsuId(range.data)
                 setMode(mode, bindMode, event)
                 val user = getOsuUser(range.data!!, mode.data)
+                result = CmdRange(user, range.start, range.end)
+                break
+            } catch (ignore: Exception) { // 其余的忽略
+            }
+        }
+
+        // 使其顺序
+        if (result.end != null && result.start != null && result.start!! > result.end!!) {
+            val temp = result.start
+            result.start = result.end
+            result.end = temp
+        }
+
+        if (result.data != null) {
+            return result
+        }
+
+        if (text.matches("$REG_RANGE\\s+\\S+".toRegex())) {
+            throw NoSuchElementException.PlayerWithRange(text)
+        } else if (text.matches("\\S+\\s+\\d+".toRegex())) {
+            throw NoSuchElementException.PlayerWithBeatmapID(text)
+        } else {
+            throw NoSuchElementException.Player(text)
+        }
+    }
+
+    /**
+     * 以下是复制的 SBUser 方法
+     */
+
+
+    /** 获取玩家信息, 末尾没有 range。在未找到匹配的玩家时，抛错 */
+    fun getSBUserWithoutRange(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+    ): SBUser {
+        return getSBUserWithoutRange(event, matcher, mode, AtomicBoolean(false))
+    }
+
+    fun getSBUserWithoutRangeWithBackoff(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
+        messageText: String,
+        vararg ignores: String,
+    ): SBUser {
+        try {
+            return getSBUserWithoutRange(event, matcher, mode, isMyself)
+        } catch (e: BindException) {
+            if (isAvoidance(messageText, *ignores)) throw LogException(
+                "退避指令 $ignores"
+            )
+            throw e
+        }
+    }
+
+    /**
+     * 获取玩家信息, 末尾没有 range
+     *
+     * @param isMyself: 作为返回值使用, 如果是自己则结果为 true
+     */
+    @Throws(BindException::class)
+    fun getSBUserWithoutRange(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
+    ): SBUser {
+        val user = getSBUser(event, matcher, mode, isMyself)
+
+        val me: SBBindUser? = try {
+            bindDao.getSBBindFromQQ(event.sender.id, true)
+        } catch (ignored: Exception) {
+            null
+        }
+
+        if (user != null) {
+            isMyself.set(me?.userID == user.userID)
+            return user
+        } else if (me != null) {
+            isMyself.set(true)
+            setMode(mode, me.mode)
+            return sbUserApiService.getUser(me.userID) ?: throw BindException.TokenExpiredException.SBYouTokenExpiredException()
+        } else {
+            if (isMyself.get()) {
+                throw BindException.TokenExpiredException.SBYouTokenExpiredException()
+            } else {
+                throw BindException.TokenExpiredException.SBUserTokenExpiredException()
+            }
+        }
+    }
+
+    /**
+     * 解析包含 @qq / username / uid= / qq= 的玩家信息, 并且解决后面的 range
+     *
+     * @param mode 一个可以改变的 mode, 解决当获取到 default, 修改成用户默认绑定时的 mode 无法传出的问题
+     * @param isMyself 传入一个 [AtomicBoolean] 作为返回值使用, 如果是自己则结果为 true (注意, 当包含 qq= 或 uid= 时,
+     *   即使是发送者本身也是 false)
+     */
+    fun getSBUserWithRange(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
+    ): CmdRange<SBUser> {
+        val range = getSBUserAndRange(matcher, mode)
+        if (range.data == null) {
+            range.data = getSBUserWithoutRange(event, matcher, mode, isMyself)
+        }
+        return range
+    }
+
+    /**
+     * 前四个参数同 [getUserWithRange]
+     *
+     * @param messageText 命令消息文本
+     * @param ignores 需要避免的指令
+     */
+    fun getSBUserAndRangeWithBackoff(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
+        messageText: String,
+        vararg ignores: String,
+    ): CmdRange<SBUser> {
+        try {
+            return getSBUserWithRange(event, matcher, mode, isMyself)
+        } catch (e: BindException) {
+            if (isMyself.get() && isAvoidance(messageText, *ignores)) {
+                throw LogException(
+                    "${event.sender.id} 触发了退避指令：${ignores.joinToString(", ")}"
+                )
+            } else {
+                throw e
+            }
+        }
+    }
+
+    /**
+     * 获取命令中的 用户 和 range, 不包括 自己的QQ/at
+     *
+     * @param matcher 正则
+     * @param mode 包装的模式, 如果给的 mode 非默认则返回对应 mode 的 user 信息
+     */
+    private fun getSBUserAndRange(
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>
+    ): CmdRange<SBUser> {
+        require(matcher.namedGroups().containsKey(FLAG_USER_AND_RANGE)) { "Matcher 中不包含 ur 分组" }
+        if (mode.data == null) {
+            mode.data = OsuMode.DEFAULT
+        }
+
+        val text: String = (matcher.group(FLAG_USER_AND_RANGE) ?: "").trim()
+        if (text.isBlank()) {
+            return CmdRange()
+        }
+
+        if (JUST_RANGE.matcher(text).matches()) {
+            val range = parseRange(text)
+            if (range[0] != null && range[1] == null && checkRangeFirst(range[0]!!)) {
+                try {
+                    val name = range[0].toString()
+
+                    val bindMode = try {
+                        bindDao.getSBBindUser(name).mode
+                    } catch (e: Exception) {
+                        OsuMode.DEFAULT
+                    }
+
+                    setMode(mode, bindMode)
+                    val user = sbUserApiService.getUser(username = name)
+                    return CmdRange(user)
+                } catch (_: Exception) {
+
+                }
+            }
+            return CmdRange(null, range[0], range[1])
+        } // -1 才是没找到
+
+        val ranges = if (text.indexOf(CHAR_HASH) >= 0 || text.indexOf(CHAR_HASH_FULL) >= 0) {
+            parseNameAndRangeHasHash(text)
+        } else {
+            parseNameAndRangeWithoutHash(text)
+        }
+
+        var result = CmdRange<SBUser>()
+        for (range in ranges) {
+            try {
+                if (range.data == null) {
+                    result = CmdRange(null, range.start, range.end)
+                    break
+                }
+
+                val bindMode = try {
+                    bindDao.getBindUser(range.data!!)!!.mode
+                } catch (e: Exception) {
+                    OsuMode.DEFAULT
+                }
+
+                // val id = userApiService.getOsuId(range.data)
+                setMode(mode, bindMode)
+                val user = sbUserApiService.getUser(username = range.data!!)
                 result = CmdRange(user, range.start, range.end)
                 break
             } catch (ignore: Exception) { // 其余的忽略
@@ -486,6 +697,59 @@ object CmdUtil {
     }
 
     /**
+     * 内部方法 获取玩家信息, 优先级为 at > qq= > uid= > name, 不处理自身绑定, 如果传入 mode 为 default, 同时是 @qq 绑定, 则改为绑定的模式,
+     * 否则就是对应用户的官网主模式 at / qq / uid / name。都没有找到，就返回一个没有 uid，只有 username 的 osuUser
+     *
+     * @param mode 玩家查询时输入的模式
+     */
+    private fun getSBUser(
+        event: MessageEvent,
+        matcher: Matcher,
+        mode: CmdObject<OsuMode>,
+        isMyself: AtomicBoolean,
+    ): SBUser? {
+
+        val qq = if (event.isAt) {
+            event.target
+        } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
+            try {
+                matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: 0L
+            } catch (ignore: RuntimeException) {
+                0L
+            }
+        } else {
+            0L
+        }
+
+        if (qq != 0L) {
+            val bind = bindDao.getSBBindFromQQ(qq, isMyself.get())
+
+            setMode(mode, bind.mode, event)
+            return sbUserApiService.getUser(id = bind.userID)
+        } else {
+            setMode(mode, event)
+        }
+
+        if (matcher.namedGroups().containsKey(FLAG_UID)) {
+            try {
+                val uid = matcher.group(FLAG_UID)?.toLongOrNull() ?: 0L
+                if (uid != 0L) {
+                    return sbUserApiService.getUser(id = uid)
+                }
+            } catch (ignore: RuntimeException) {}
+        }
+
+        if (matcher.namedGroups().containsKey(FLAG_NAME)) {
+            val name: String? = matcher.group(FLAG_NAME)
+            if (!name.isNullOrBlank()) {
+                return sbUserApiService.getUser(username = name)
+            }
+        }
+
+        return null
+    }
+
+    /**
      * 获取 user 信息
      *
      * @param user 绑定
@@ -583,12 +847,18 @@ object CmdUtil {
     private lateinit var userApiService: OsuUserApiService
     private lateinit var scoreApiService: OsuScoreApiService
     private lateinit var beatmapApiService: OsuBeatmapApiService
+    private lateinit var sbUserApiService: SBUserApiService
+    private lateinit var sbScoreApiService: SBScoreApiService
+    private lateinit var sbBeatmapApiService: SBBeatmapApiService
 
     @JvmStatic fun init(applicationContext: ApplicationContext) {
         bindDao = applicationContext.getBean(BindDao::class.java)
         userApiService = applicationContext.getBean(OsuUserApiService::class.java)
         scoreApiService = applicationContext.getBean(OsuScoreApiService::class.java)
         beatmapApiService = applicationContext.getBean(OsuBeatmapApiService::class.java)
+        sbUserApiService = applicationContext.getBean(SBUserApiService::class.java)
+        sbScoreApiService = applicationContext.getBean(SBScoreApiService::class.java)
+        sbBeatmapApiService = applicationContext.getBean(SBBeatmapApiService::class.java)
     }
 
     private fun checkRangeFirst(i: Int): Boolean {

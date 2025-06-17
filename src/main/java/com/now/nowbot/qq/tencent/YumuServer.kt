@@ -49,7 +49,7 @@ object YumuServer : YumuService {
         val (textList, imageList) = messageChain.messageList.filter { it is TextMessage || it is ImageMessage }
             .partition { it is TextMessage }
         var text = textList.joinToString { it.toString() }
-        if (text.contains("!ymbind")) {
+        if (text.contains("(!bi)")) {
             text = BindException.TokenExpiredException.OfficialTokenExpiredException().message!!
         }
         var image: String? = null

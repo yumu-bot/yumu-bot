@@ -8,11 +8,15 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
 
     open class TokenExpiredException(message: String): BindException(message) {
         class YouTokenExpiredException:
-            TokenExpiredException("令牌失效，请重新授权。(!bi)")
+            TokenExpiredException("你的令牌失效或是没有绑定。请授权。(!bi)")
         class UserTokenExpiredException:
-            TokenExpiredException("该玩家令牌失效，请提醒他重新授权。(!bi)")
+            TokenExpiredException("该玩家的令牌失效或是没有绑定。请提醒对方授权。(!bi)")
+        class SBYouTokenExpiredException:
+            TokenExpiredException("你没有绑定偏偏要上班。请授权。(?bi)")
+        class SBUserTokenExpiredException:
+            TokenExpiredException("该玩家没有绑定偏偏要上班。请提醒对方授权。(?bi)")
         class OfficialTokenExpiredException:
-            TokenExpiredException("令牌失效，请重新授权。(/bind osu username)")
+            TokenExpiredException("你的令牌失效或是没有绑定。请重新授权。(/bind osu username)")
     }
 
     open class NotBindException(message: String): BindException(message) {

@@ -10,7 +10,6 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
-
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
@@ -226,6 +225,34 @@ class BeatmapApiImpl(
                 .retrieve()
                 .bodyToMono(Beatmap::class.java)
                 .doOnNext(beatmap1Dao::saveMap)
+        }
+    }
+
+    override fun getBeatmaps(ids: Iterable<Long>): List<Beatmap> {
+        val idChunk = ids.chunked(50)
+
+        val actions = idChunk.map { chunk ->
+            return@map AsyncMethodExecutor.Supplier<List<Beatmap>> {
+                getBeatmapsInside(chunk)
+            }
+        }
+
+        return AsyncMethodExecutor.awaitSupplierExecute(actions).flatten()
+    }
+
+    private fun getBeatmapsInside(ids: Iterable<Long>): List<Beatmap> {
+        return request { client ->
+            client.get()
+                .uri {
+                    it.path("beatmaps")
+                    it.queryParam("ids[]", ids.map { id -> id.toString()})
+
+                    it.build()
+                }
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(JsonNode::class.java)
+                .map { JacksonUtil.parseObjectList(it["beatmaps"], Beatmap::class.java) }
         }
     }
 
@@ -647,17 +674,17 @@ class BeatmapApiImpl(
     }
 
     override fun applyBeatmapExtend(score: LazerScore) {
-        val extended = getBeatmap(score.beatmapID)
-
-        applyBeatmapExtend(score, extended)
+        applyBeatmapExtend(listOf(score))
     }
 
     override fun applyBeatmapExtend(scores: List<LazerScore>) {
-        val actions = scores.map {
-            return@map AsyncMethodExecutor.Runnable { applyBeatmapExtend(it) }
-        }
+        val ids = scores.map { it.beatmapID }.toSet()
 
-        AsyncMethodExecutor.awaitRunnableExecute(actions)
+        val bs = getBeatmaps(ids).associateBy { it.beatmapID }
+
+        scores.forEach { score ->
+            bs[score.beatmapID]?.let { applyBeatmapExtend(score, it) }
+        }
     }
 
     override fun applyBeatmapExtend(score: LazerScore, extended: Beatmap) {
@@ -698,7 +725,7 @@ class BeatmapApiImpl(
     }
 
     override fun getBeatmapsetRankedTimeMap(): Map<Long, String> {
-        return getBeatMapSetWithRankedTimeLibrary().associate {
+        return getBeatmapsetWithRankedTimeLibrary().associate {
             it.beatmapID to if (it.isEarly) {
                 it.rankDateEarly.replace(".000Z", "Z")
             } else {
@@ -750,7 +777,7 @@ class BeatmapApiImpl(
         beatmap.tags = ids.mapNotNull { beatmap1Dao.getTag(it.id) }
     }
 
-    private fun getBeatMapSetWithRankedTimeLibrary(): List<BeatmapsetWithRankTime> {
+    private fun getBeatmapsetWithRankedTimeLibrary(): List<BeatmapsetWithRankTime> {
         return proxyClient.get()
             .uri("https://mapranktimes.vercel.app/api/beatmapsets")
             .retrieve()

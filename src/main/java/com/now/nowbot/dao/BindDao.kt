@@ -3,10 +3,7 @@ package com.now.nowbot.dao
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.RemovalCause
-import com.now.nowbot.entity.OsuBindUserLite
-import com.now.nowbot.entity.OsuGroupConfigLite
-import com.now.nowbot.entity.OsuNameToIdLite
-import com.now.nowbot.entity.SBBindUserLite
+import com.now.nowbot.entity.*
 import com.now.nowbot.entity.bind.DiscordBindLite
 import com.now.nowbot.entity.bind.QQBindLite
 import com.now.nowbot.entity.bind.SBQQBindLite
@@ -16,6 +13,7 @@ import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.isDefaultOrNull
 import com.now.nowbot.model.osu.OsuUser
+import com.now.nowbot.model.ppysb.SBUser
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -46,6 +44,7 @@ class BindDao(
     private val bindUserMapper: BindUserMapper,
     private val sbBindUserMapper: SBBindUserMapper,
     private val osuFindNameMapper: OsuFindNameMapper,
+    private val sbFindNameMapper: SBFindNameMapper,
     private val bindQQMapper: BindQQMapper,
     private val sbQQBindMapper: SBQQBindMapper,
     private val bindDiscordMapper: BindDiscordMapper,
@@ -223,8 +222,12 @@ class BindDao(
         return sbQQBindMapper.findById(qq).getOrNull()
     }
 
-    fun getSBBindUserFromUserID(userID: Long?): SBBindUser {
-        if (userID == null) throw IllegalQQ()
+    fun getSBBindUser(name: String): SBBindUser {
+        return getSBBindUser(getSBUserID(name))
+    }
+
+    fun getSBBindUser(userID: Long?): SBBindUser {
+        if (userID == null) throw YouNotBind()
 
         var liteData: SBBindUserLite?
 
@@ -242,7 +245,7 @@ class BindDao(
     fun getSBBindFromQQ(qq: Long, isMyself: Boolean): SBBindUser {
         if (qq < 0) {
             return try {
-                getSBBindUserFromUserID(-qq)
+                getSBBindUser(-qq)
             } catch (e: BindException) {
                 SBBindUser(-qq, "unknown")
             }
@@ -388,7 +391,7 @@ class BindDao(
 
     fun getOsuID(name: String): Long? {
         return try {
-            osuFindNameMapper.getFirstByNameOrderByIndex(name.uppercase())?.uid
+            osuFindNameMapper.getFirstByNameOrderByIndex(name.uppercase())?.userID
         } catch (e: Exception) {
             log.error("get data Error", e)
             return null
@@ -402,7 +405,7 @@ class BindDao(
     fun saveNameToID(id: Long, vararg name: String) {
         if (name.isEmpty()) return
         for (i in name.indices) {
-            val x = OsuNameToIdLite(id, name[i], i)
+            val x = OsuNameToIDLite(id, name[i], i)
             osuFindNameMapper.save(x)
         }
     }
@@ -423,6 +426,47 @@ class BindDao(
         if (count == 0 || count != names.size) {
             removeNameToID(user.userID)
             saveNameToID(user.userID, *names.toTypedArray())
+        }
+    }
+
+
+    fun getSBUserID(name: String): Long? {
+        return try {
+            sbFindNameMapper.getFirstByNameOrderByIndex(name.uppercase())?.userID
+        } catch (e: Exception) {
+            log.error("get data Error", e)
+            return null
+        }
+    }
+
+    fun removeSBNameToID(userID: Long) {
+        sbFindNameMapper.deleteByUserID(userID)
+    }
+
+    fun saveSBNameToID(id: Long, vararg name: String) {
+        if (name.isEmpty()) return
+        for (i in name.indices) {
+            val x = SBNameToIDLite(id, name[i], i)
+            sbFindNameMapper.save(x)
+        }
+    }
+
+    fun countSBNameToID(userID: Long): Int {
+        return sbFindNameMapper.countByUserID(userID)
+    }
+
+    fun updateSBNameToID(id: Long, name: String) {
+        updateSBNameToID(SBUser(userID = id, username = name))
+    }
+
+    fun updateSBNameToID(user: SBUser) {
+        val names = listOf(user.username.uppercase())
+
+        val count = countSBNameToID(user.userID)
+
+        if (count == 0 || count != names.size) {
+            removeSBNameToID(user.userID)
+            saveSBNameToID(user.userID, *names.toTypedArray())
         }
     }
 

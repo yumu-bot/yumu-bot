@@ -4,7 +4,6 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.ActivityEvent
 import com.now.nowbot.model.osu.Beatmap
-import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -21,6 +20,7 @@ import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.util.StopWatch
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
@@ -93,32 +93,31 @@ import kotlin.math.max
 
         fun getIMapperV2(user: OsuUser, userApiService: OsuUserApiService, beatmapApiService: OsuBeatmapApiService): Map<String, Any> {
             val query = mapOf(
-                "q" to "creator=" + user.userID,
-                "sort" to "ranked_desc",
-                "s" to "any",
-                "page" to 1
+                "q" to "creator=" + user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
             )
-
-            val search = beatmapApiService.searchBeatmapset(query, 10)
-            val result1 = search.beatmapsets
 
             // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
             val query2 = mapOf(
-                "q" to user.userID,
-                "sort" to "ranked_desc",
-                "s" to "any",
-                "page" to 1
+                "q" to user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
             )
 
-            val search2 = beatmapApiService.searchBeatmapset(query2, 10)
-            val result2 = search2.beatmapsets
-                .filter { it.beatmapsetID != user.userID && (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true) }
+            val async = AsyncMethodExecutor.awaitTripleSupplierExecute(
+                { beatmapApiService.searchBeatmapset(query, 10) },
+                { beatmapApiService.searchBeatmapset(query2, 10) },
+                { userApiService.getUserRecentActivity(user.userID, 0, 100).filter { it.isMapping } }
+            )
 
-            val relatedSets = (result1.toHashSet() + result2.toHashSet()).asSequence()
+            val relatedSets = (async.first.beatmapsets.toHashSet() +
+                    async.second.beatmapsets.filter {
+                        it.beatmapsetID != user.userID &&
+                                (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true)
+                    }.toHashSet()).asSequence()
 
-            val activity: List<ActivityEvent> =
-                userApiService.getUserRecentActivity(user.userID, 0, 100).filter { it.isMapping }
+            val relatedUsers = AsyncMethodExecutor.awaitSupplierExecute {
+                userApiService.getUsers(relatedSets.filter { it.creatorID != user.userID }.map { it.creatorID }.toSet(), false)
+            }
 
+            val activity: List<ActivityEvent> = async.third
             val recentActivity: List<ActivityEvent> = try {
                 activity.mapIndexed { i, it ->
                     val before = activity[max(0, i - 1)]
@@ -144,18 +143,6 @@ import kotlin.math.max
             val myDiffs = relatedDiffs.filter { it.mapperID == user.userID } // 包括了别人 Set 里的
             val myGuestDiffs = relatedDiffs.filter { it.mapperID == user.userID && it.beatmapset?.creatorID != user.userID }
             val guestDiffs = relatedDiffs.filter { it.mapperID != user.userID && it.beatmapset?.creatorID == user.userID }
-
-            val relatedUsers = run {
-                val idChunk = relatedSets.filter { it.creatorID != user.userID }.map { it.creatorID }.toSet().chunked(50)
-
-                val actions = idChunk.map {
-                    return@map AsyncMethodExecutor.Supplier<List<MicroUser>> {
-                        userApiService.getUsers(it, false)
-                    }
-                }
-
-                AsyncMethodExecutor.awaitSupplierExecute(actions).flatten()
-            }
 
             val guestDifficultyOwners = relatedUsers.map { u ->
                 val re = guestDiffs.filter { it.mapperID == u.userID }
@@ -287,26 +274,31 @@ import kotlin.math.max
         fun getIMapperV1(
             user: OsuUser, userApiService: OsuUserApiService, beatmapApiService: OsuBeatmapApiService
         ): Map<String, Any?> {
+            val s = StopWatch()
+            s.start("q")
+
             val query = mapOf(
                 "q" to "creator=" + user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
             )
-
-            val search = beatmapApiService.searchBeatmapset(query, 10)
-            val result1 = search.beatmapsets
 
             // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
             val query2 = mapOf(
                 "q" to user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
             )
 
-            val search2 = beatmapApiService.searchBeatmapset(query2, 10)
-            val result2 = search2.beatmapsets
-                .filter { it.beatmapsetID != user.userID && (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true) }
+            val async = AsyncMethodExecutor.awaitTripleSupplierExecute(
+                { beatmapApiService.searchBeatmapset(query, 10) },
+                { beatmapApiService.searchBeatmapset(query2, 10) },
+                { userApiService.getUserRecentActivity(user.userID, 0, 100).filter { it.isMapping } }
+            )
 
-            val result = (result1.toHashSet() + result2.toHashSet()).asSequence()
+            val result = (async.first.beatmapsets.toHashSet() +
+                    async.second.beatmapsets.filter {
+                        it.beatmapsetID != user.userID &&
+                                (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true)
+                    }.toHashSet()).asSequence()
 
-            val activity: List<ActivityEvent> =
-                userApiService.getUserRecentActivity(user.userID, 0, 100).filter { it.isMapping }
+            val activity: List<ActivityEvent> = async.third
 
             val mappingActivity: List<ActivityEvent> = try {
                 activity.mapIndexed { i, it ->
@@ -325,6 +317,9 @@ import kotlin.math.max
                 listOf()
             }
 
+            s.stop()
+            s.start("b")
+
             val mostPopularBeatmap =
                 result.filter { it.creatorID == user.userID }
                     .sortedByDescending { it.playCount }
@@ -340,6 +335,10 @@ import kotlin.math.max
             val beatmaps = result.flatMap { it.beatmaps ?: emptyList() }
 
             val diffArr = IntArray(8)
+
+
+            s.stop()
+            s.start("star")
 
             run {
                 val diffStar = beatmaps.filter { it.mapperID == user.userID }.map { it.starRating }
@@ -371,6 +370,10 @@ import kotlin.math.max
                 "jazz"
             )
 
+
+            s.stop()
+            s.start("genre")
+
             val genre = IntArray(keywords.size)
 
             run {
@@ -393,11 +396,17 @@ import kotlin.math.max
                 }
             }
 
+            s.stop()
+            s.start("fav")
+
             val favorite = result.filter { it.creatorID == user.userID }.sumOf { it.favouriteCount }
             val playcount = result.filter { it.creatorID == user.userID }.sumOf { it.playCount }
 
-            val lengthArr = IntArray(8)
 
+            s.stop()
+            s.start("length")
+
+            val lengthArr = IntArray(8)
             run {
                 val lengthAll = beatmaps.filter { it.mapperID == user.userID }.map { it.totalLength }
                 val lengthMaxBoundary = intArrayOf(60, 100, 140, 180, 220, 260, 300, Int.MAX_VALUE)
@@ -411,6 +420,9 @@ import kotlin.math.max
                     }
                 }
             }
+
+            s.stop()
+            log.info(s.prettyPrint())
 
             return mapOf(
                 "user" to user,

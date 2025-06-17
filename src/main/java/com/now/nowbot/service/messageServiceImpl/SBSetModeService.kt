@@ -46,7 +46,7 @@ class SBSetModeService (
         } else if (name.isNullOrBlank().not()) {
             val id = userApiService.getUserID(name!!.trim())
                 ?: throw IllegalArgumentException.WrongException.PlayerName()
-            SBSetModeParam(mode, bindDao.getSBBindUserFromUserID(id))
+            SBSetModeParam(mode, bindDao.getSBBindUser(id))
         } else {
             SBSetModeParam(mode, bindDao.getSBBindFromQQ(event.sender.id, true))
         }

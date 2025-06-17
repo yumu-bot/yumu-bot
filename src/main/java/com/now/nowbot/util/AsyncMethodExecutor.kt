@@ -208,6 +208,11 @@ object AsyncMethodExecutor {
         return awaitSupplierExecute(works, Duration.ofMinutes(4))
     }
 
+    @JvmStatic
+    fun <T> awaitSupplierExecute(work: Supplier<T>): T {
+        return awaitSupplierExecute(listOf(work), Duration.ofMinutes(4)).first()
+    }
+
     /**
      * 异步执行需要返回的结果，并等待至所有操作都完成。
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要返回结果（void 方法），请使用 awaitRunnableExecute
