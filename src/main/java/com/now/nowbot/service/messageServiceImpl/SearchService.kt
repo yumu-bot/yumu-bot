@@ -47,7 +47,7 @@ import java.util.regex.Pattern
 
         val result: BeatmapsetSearch = try {
             val res = beatmapApiService.searchBeatmapset(query)
-            if (res.beatmapSets.isEmpty()) {
+            if (res.beatmapsets.isEmpty()) {
                 beatmapApiService.searchBeatmapset(constructQueryAlternative(param))
             } else {
                 res
@@ -163,7 +163,7 @@ import java.util.regex.Pattern
             sb.apply {
                 append("可能的结果:")
 
-                result.beatmapSets.take(10).forEach {
+                result.beatmapsets.take(10).forEach {
                     append("\n")
                     append(it.previewName)
                 }
@@ -173,7 +173,7 @@ import java.util.regex.Pattern
         }
 
         private fun MessageEvent.replyImage(result: BeatmapsetSearch, imageService: ImageService) {
-            result.beatmapSets = result.beatmapSets.take(12)
+            result.beatmapsets = result.beatmapsets.take(12)
                 .sortedByDescending { it.playCount }
                 .sortedByDescending {
                     when (it.status) {

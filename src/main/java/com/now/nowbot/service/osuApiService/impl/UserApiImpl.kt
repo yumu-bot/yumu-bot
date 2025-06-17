@@ -245,6 +245,20 @@ import kotlin.text.HexFormat
         }
     }
 
+    override fun applyUserForBeatmapset(beatmapsets: List<Beatmapset>) {
+        val userSet = (beatmapsets.flatMap { it.beatmaps ?: listOf() }.map { it.mapperID } + beatmapsets.map { it.creatorID }).toSet()
+
+        val users = getUsers(userSet).associateBy { it.userID }
+
+        beatmapsets.forEach { set ->
+            users[set.creatorID]?.let { set.creatorData = OsuUser(it) }
+
+            set.beatmaps?.forEach { b ->
+                users[set.creatorID]?.let { b.user = OsuUser(it) }
+            }
+        }
+    }
+
     /**
      * 错误包装
      */

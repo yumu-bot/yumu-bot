@@ -31,7 +31,6 @@ import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.regex.Pattern
-import kotlin.math.min
 
 @Service
 class BeatmapApiImpl(
@@ -592,7 +591,6 @@ class BeatmapApiImpl(
         val search = searchBeatMapSetFromAPI(query)
 
         // 后处理
-        search.resultCount = min(50, search.beatmapSets.size)
         if (query["s"] !== null || query["s"] !== "any") {
             search.rule = query["s"].toString()
         }
@@ -607,31 +605,28 @@ class BeatmapApiImpl(
      */
     
     override fun searchBeatmapset(query: Map<String, Any?>, tries: Int): BeatmapsetSearch {
-        var search = BeatmapsetSearch()
+        val search = BeatmapsetSearch()
         var page = 1
         val queryAlt = query.toMutableMap()
 
         run {
-            var resultCount = 0
             do {
-                if (search.beatmapSets.isEmpty()) {
-                    search = this.searchBeatMapSetFromAPI(queryAlt)
-                    resultCount += search.beatmapSets.size
+                if (search.beatmapsets.isEmpty()) {
+                    search.combine(searchBeatMapSetFromAPI(queryAlt))
                 } else {
                     page++
                     queryAlt["page"] = page
-                    val result = this.searchBeatMapSetFromAPI(queryAlt)
-                    resultCount += result.beatmapSets.size
-                    search.beatmapSets += result.beatmapSets
+
+                    search.combine(searchBeatMapSetFromAPI(queryAlt))
                 }
-            } while (resultCount < search.total && page < tries)
+            } while (search.cursorString != null && page < tries)
         }
 
         // 后处理
-        search.resultCount = min(search.total, search.beatmapSets.size)
         if (query["s"] !== null || query["s"] !== "any") {
             search.rule = query["s"].toString()
         }
+
         search.sortBeatmapDiff()
 
         return search
@@ -725,7 +720,7 @@ class BeatmapApiImpl(
     }
 
     private val beatmapTagLibraryFromAPI: JsonNode
-        get() = request { it.get()
+        get() = request { client -> client.get()
             .uri {
                 it.path("tags").build()
             }.headers(base::insertHeader)

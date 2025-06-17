@@ -79,6 +79,8 @@ interface OsuUserApiService {
 
     fun getPrivateMessage(sender: BindUser, channel: Long, since: Long): JsonNode
 
+    fun applyUserForBeatmapset(beatmapsets: List<Beatmapset>)
+
     fun getTeamInfo(id: Int): TeamInfo?
 
     @JvmRecord
@@ -110,6 +112,12 @@ interface OsuUserApiService {
     )
 
     fun asyncDownloadAvatar(users: List<MicroUser>)
+
+    fun asyncDownloadAvatar(beatmapsets: List<Beatmapset>) {
+        val set = beatmapsets.flatMap { it.beatmaps ?: listOf() }.mapNotNull { it.user }.toSet()
+
+        asyncDownloadAvatar(set.map { o -> MicroUser().apply { this.avatarUrl = o.avatarUrl } })
+    }
 
     fun asyncDownloadBackground(users: List<MicroUser>)
 }

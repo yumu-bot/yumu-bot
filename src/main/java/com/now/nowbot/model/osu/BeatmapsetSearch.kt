@@ -13,9 +13,10 @@ class BeatmapsetSearch {
 
     @JsonProperty("recommended_difficulty") var recommendedDifficulty: Double? = 0.0
 
-    @JsonProperty("result_count") var resultCount: Int = 0
+    @get:JsonProperty("result_count") val resultCount: Int
+        get() = this.beatmapsets.size
 
-    @JsonProperty("beatmapsets") var beatmapSets: List<Beatmapset> = listOf()
+    @JsonProperty("beatmapsets") var beatmapsets: List<Beatmapset> = listOf()
 
     @JsonProperty("total") var total: Int = 0
 
@@ -26,12 +27,26 @@ class BeatmapsetSearch {
     @JsonProperty("search") var info: SearchInfo? = null
 
     fun sortBeatmapDiff() {
-        if (this.beatmapSets.isEmpty()) return
+        if (this.beatmapsets.isEmpty()) return
 
-        for (s in this.beatmapSets) {
+        for (s in this.beatmapsets) {
             if (s.beatmaps.isNullOrEmpty()) return
 
             s.beatmaps = s.beatmaps!!.sortedBy { it.starRating }.sortedBy { it.modeInt ?: 0 }
         }
+    }
+
+    fun combine(search: BeatmapsetSearch): BeatmapsetSearch {
+        search.rule?.let { this.rule = it }
+        search.recommendedDifficulty?.let { this.recommendedDifficulty = it }
+
+        this.beatmapsets += search.beatmapsets
+
+        this.total = search.total
+        this.cursor = search.cursor
+        this.cursorString = search.cursorString
+        this.info = search.info
+
+        return this
     }
 }

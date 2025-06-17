@@ -7,9 +7,11 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuUserApiService
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MODE
@@ -24,6 +26,7 @@ import kotlin.math.roundToInt
 
 @Service("QUALIFIED_MAP") class QualifiedMapService(
     private val beatmapApiService: OsuBeatmapApiService,
+    private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
     private val bindDao: BindDao
 ) : MessageService<Matcher> {
@@ -68,7 +71,17 @@ import kotlin.math.roundToInt
         try {
             val search = beatmapApiService.searchBeatmapset(query, tries)
 
-            beatmapApiService.applyBeatmapsetRankedTime(search.beatmapSets)
+            AsyncMethodExecutor.awaitPairSupplierExecute(
+                { beatmapApiService.applyBeatmapsetRankedTime(search.beatmapsets) },
+                { userApiService.applyUserForBeatmapset(search.beatmapsets) }
+            )
+
+            // 给完整面板整点头像
+            if (search.resultCount <= 12) {
+                AsyncMethodExecutor.asyncRunnableExecute {
+                    userApiService.asyncDownloadAvatar(search.beatmapsets)
+                }
+            }
 
             val img = imageService.getPanel(search, "A2")
             event.reply(img)

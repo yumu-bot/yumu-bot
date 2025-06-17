@@ -100,7 +100,7 @@ import kotlin.math.max
             )
 
             val search = beatmapApiService.searchBeatmapset(query, 10)
-            val result1 = search.beatmapSets
+            val result1 = search.beatmapsets
 
             // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
             val query2 = mapOf(
@@ -111,7 +111,7 @@ import kotlin.math.max
             )
 
             val search2 = beatmapApiService.searchBeatmapset(query2, 10)
-            val result2 = search2.beatmapSets
+            val result2 = search2.beatmapsets
                 .filter { it.beatmapsetID != user.userID && (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true) }
 
             val relatedSets = (result1.toHashSet() + result2.toHashSet()).asSequence()
@@ -292,7 +292,7 @@ import kotlin.math.max
             )
 
             val search = beatmapApiService.searchBeatmapset(query, 10)
-            val result1 = search.beatmapSets
+            val result1 = search.beatmapsets
 
             // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
             val query2 = mapOf(
@@ -300,7 +300,7 @@ import kotlin.math.max
             )
 
             val search2 = beatmapApiService.searchBeatmapset(query2, 10)
-            val result2 = search2.beatmapSets
+            val result2 = search2.beatmapsets
                 .filter { it.beatmapsetID != user.userID && (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true) }
 
             val result = (result1.toHashSet() + result2.toHashSet()).asSequence()

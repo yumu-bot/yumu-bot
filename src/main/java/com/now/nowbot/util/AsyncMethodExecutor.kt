@@ -165,6 +165,23 @@ object AsyncMethodExecutor {
     }
 
     /**
+     * 异步执行不需要返回的结果。
+     * 这个方法不等待结果返回，直接进行下一步。如果需要等待所有异步操作完成，请使用 awaitRunnableExecute
+     */
+    @JvmStatic
+    fun asyncRunnableExecute(work: Runnable) {
+        val task = Runnable {
+            try {
+                work.run()
+            } catch (e: Throwable) {
+                log.error("Async error", e)
+            }
+        }
+
+        Thread.startVirtualThread(task)
+    }
+
+    /**
      * 异步执行不需要返回的结果，并等待至所有操作都完成。
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要等待所有异步操作完成，请使用 asyncRunnableExecute
      */

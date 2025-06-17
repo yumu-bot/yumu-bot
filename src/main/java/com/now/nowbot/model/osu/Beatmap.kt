@@ -186,6 +186,9 @@ class Beatmap {
             difficultyName
         }
 
+    //自己取
+    @JsonProperty("user")
+    var user: OsuUser? = null
 
     companion object {
         @JvmStatic

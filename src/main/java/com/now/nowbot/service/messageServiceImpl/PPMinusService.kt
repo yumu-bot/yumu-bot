@@ -389,17 +389,13 @@ import java.util.regex.Matcher
                 throw NoSuchElementException.PlayerPlayWithMode(user.username, user.currentOsuMode)
             }
 
-            AsyncMethodExecutor.asyncRunnableExecute(
-                listOf(
-                    AsyncMethodExecutor.Runnable {
-                        try {
-                            ppMinusDao.savePPMinus(user, bests)
-                        } catch (e: Exception) {
-                            log.error("PPM2：数据保存失败", e)
-                        }
-                    }
-                )
-            )
+            AsyncMethodExecutor.asyncRunnableExecute {
+                try {
+                    ppMinusDao.savePPMinus(user, bests)
+                } catch (e: Exception) {
+                    log.error("PPM2：数据保存失败", e)
+                }
+            }
 
             try {
                 return PPMinus.getInstance(user.currentOsuMode, user, bests)
@@ -415,17 +411,13 @@ import java.util.regex.Matcher
                 throw NoSuchElementException.PlayerPlayWithMode(user.username, user.currentOsuMode)
             }
 
-            AsyncMethodExecutor.asyncRunnableExecute(
-                listOf(
-                    AsyncMethodExecutor.Runnable {
-                        try {
-                            ppMinusDao.savePPMinus(user, bests)
-                        } catch (e: Exception) {
-                            log.error("PPM4：数据保存失败", e)
-                        }
-                    }
-                )
-            )
+            AsyncMethodExecutor.asyncRunnableExecute {
+                try {
+                    ppMinusDao.savePPMinus(user, bests)
+                } catch (e: Exception) {
+                    log.error("PPM4：数据保存失败", e)
+                }
+            }
 
             var delta = 0
             val surrounding = run {
