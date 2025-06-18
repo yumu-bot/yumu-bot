@@ -12,7 +12,7 @@ data class SBUser(
     @JsonProperty("id") val userID: Long = 0,
     @JsonProperty("name") val username: String = "",
     // @JsonProperty("safe_name") val safeName: String,
-    @JsonProperty("priv") val privilege: Byte = 0,
+    @JsonProperty("priv") val privilege: Int = 0,
     @JsonProperty("country") val country: String = "",
 
     @JsonProperty("silence_end") val silenceEnd: Long = 0,

@@ -43,7 +43,7 @@ enum class Instruction(val pattern: Pattern) {
     SB_BIND(CommandPatternBuilder.create {
         appendSBCommandsIgnoreAll("(?<ub>ub)", "(?<bi>bi)", "(?<un>un)?(?<bind>bind)")
         appendQQID()
-        appendName()
+        appendSBName()
     }),
 
     BAN(CommandPatternBuilder.create {
@@ -112,7 +112,7 @@ enum class Instruction(val pattern: Pattern) {
         appendSBCommandsIgnoreAll("setmode", "mode", "sm", "mo")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
         appendSpace()
-        appendQQUIDName()
+        appendQQUIDSBName()
     }),
 
     SET_GROUP_MODE(CommandPatternBuilder.create {
@@ -148,7 +148,7 @@ enum class Instruction(val pattern: Pattern) {
 
     SB_SCORE_PR(CommandPatternBuilder.create {
         appendSBCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))(?<s>s)?")
-        appendModeQQUIDNameRange()
+        appendModeQQUIDSBNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
             appendSpace(MORE) // 至少需要一个空格区分开来
@@ -194,12 +194,12 @@ enum class Instruction(val pattern: Pattern) {
             append("(?<score>(ym)?(score|s))")
             appendIgnore()
         }
-        appendModeBIDQQUIDNameMod()
+        appendModeBIDQQUIDSBNameMod()
     }),
 
     SB_SCORES(CommandPatternBuilder.create {
         appendSBCommandsIgnoreAll("scores", "ss")
-        appendModeBIDQQUIDNameMod()
+        appendModeBIDQQUIDSBNameMod()
     }),
 
     BP(CommandPatternBuilder.create {
@@ -230,7 +230,7 @@ enum class Instruction(val pattern: Pattern) {
             append("(?<bp>(ym)?(bestperformance|best|bp|b))(?<s>s)?")
             appendIgnore()
         }
-        appendModeQQUIDNameRange()
+        appendModeQQUIDSBNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
             appendSpace(MORE) // 至少需要一个空格区分开来
@@ -251,7 +251,7 @@ enum class Instruction(val pattern: Pattern) {
 
     SB_TODAY_BP(CommandPatternBuilder.create {
         appendSBCommandsIgnoreAll("todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t")
-        appendModeQQUIDNameRange()
+        appendModeQQUIDSBNameRange()
     }),
 
     BP_FIX(CommandPatternBuilder.create {

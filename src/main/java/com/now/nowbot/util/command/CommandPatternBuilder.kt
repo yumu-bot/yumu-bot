@@ -180,6 +180,16 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
+     * sb 合法名称
+     * (?<name> X X+ X)
+     */
+    fun appendSBName() {
+        appendCaptureGroup(FLAG_NAME, REG_SB_NAME)
+        appendSpace()
+    }
+
+
+    /**
      * osu 合法名称
      * (?<name> X X+ X)
      */
@@ -241,6 +251,16 @@ class CommandPatternBuilder private constructor(start: String? = null) {
                     EXIST,
                     MAYBE,
                 )
+        appendSpace()
+    }
+
+    fun appendSBNameAndRange() {
+        appendCaptureGroup(
+            FLAG_USER_AND_RANGE,
+            "$REG_SB_NAME?$REG_SPACE$LEVEL_ANY($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?",
+            EXIST,
+            MAYBE,
+        )
         appendSpace()
     }
 
@@ -350,6 +370,15 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
+     * 添加一个复合匹配组, 包括 qq, uid, name
+     */
+    fun appendQQUIDSBName() {
+        appendQQID()
+        appendUID()
+        appendSBName()
+    }
+
+    /**
      * 添加一个复合匹配组, 包括 mode, qq, uid, name
      */
     fun appendModeQQUIDName() {
@@ -370,6 +399,16 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
+     * 添加一个复合匹配组, 包括 mode, qq, uid, name, range
+     */
+    fun appendModeQQUIDSBNameRange() {
+        appendMode()
+        appendQQID()
+        appendUID()
+        appendSBNameAndRange()
+    }
+
+    /**
      * 添加一个复合匹配组, 包括 mode, bid, qq, uid, name, mod
      */
     fun appendModeBIDQQUIDNameMod() {
@@ -378,6 +417,18 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendQQID()
         appendUID()
         appendName()
+        appendMod()
+    }
+
+    /**
+     * 添加一个复合匹配组, 包括 mode, bid, qq, uid, name, mod
+     */
+    fun appendModeBIDQQUIDSBNameMod() {
+        appendMode()
+        appendBID()
+        appendQQID()
+        appendUID()
+        appendSBName()
         appendMod()
     }
 

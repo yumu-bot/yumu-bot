@@ -466,7 +466,7 @@ object UserIDUtil {
 
             try {
                 val sb = bindDao.getBindFromQQ(qq, isMyself.get())
-                setMode(mode, sb.mode)
+                setMode(mode, sb.mode, event)
                 return sb.userID
             } catch (ignored: BindException) {}
         }
