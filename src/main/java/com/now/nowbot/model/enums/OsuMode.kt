@@ -22,9 +22,9 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
 
     fun toRosuMode(): org.spring.osu.OsuMode {
         return when (this) {
-            OSU -> org.spring.osu.OsuMode.Osu
-            TAIKO -> org.spring.osu.OsuMode.Taiko
-            CATCH -> org.spring.osu.OsuMode.Catch
+            OSU, OSU_RELAX, OSU_AUTOPILOT -> org.spring.osu.OsuMode.Osu
+            TAIKO, TAIKO_RELAX -> org.spring.osu.OsuMode.Taiko
+            CATCH, CATCH_RELAX -> org.spring.osu.OsuMode.Catch
             MANIA -> org.spring.osu.OsuMode.Mania
             else -> org.spring.osu.OsuMode.Default
         }

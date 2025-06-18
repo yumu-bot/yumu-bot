@@ -8,10 +8,14 @@ import com.now.nowbot.model.ppysb.SBStatistics
 import com.now.nowbot.model.ppysb.SBUser
 import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import reactor.core.publisher.Mono
 import java.util.*
 
 @Service
@@ -25,14 +29,19 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
             val username: String
         )
 
-        val id = base.sbApiWebClient.get().uri { it
-            .path("/v1/search_players")
-            .queryParam("q", username)
-            .build()
-        }.retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .map { parseList<Result>(it, "result", "玩家结果") }
-            .block()?.firstOrNull()?.id
+        val id = try {
+            request { client ->
+                client.get().uri { it
+                    .path("/v1/search_players")
+                    .queryParam("q", username)
+                    .build()
+                }.retrieve()
+                    .bodyToMono(JsonNode::class.java)
+                    .map { parseList<Result>(it, "result", "玩家结果") }
+            }.firstOrNull()?.id
+        } catch (e: NetworkException.UserException) {
+            return null
+        }
 
         id?.let { bindDao.updateSBNameToID(it, username) }
 
@@ -48,13 +57,14 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
             val total: Long
         )
 
-        val count = base.sbApiWebClient.get().uri { it
-            .path("/v1/search_players")
-            .build()
-        }.retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .map { parse<Count>(it, "counts", "玩家在线数量") }
-            .block()!!
+        val count = request { client ->
+            client.get().uri { it
+                .path("/v1/search_players")
+                .build()
+            }.retrieve()
+                .bodyToMono(JsonNode::class.java)
+                .map { parse<Count>(it, "counts", "玩家在线数量") }
+        }
 
         return count.online to count.total
 
@@ -72,17 +82,22 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
             val stats: Map<String, SBStatistics>
         )
 
-        val u = base.sbApiWebClient.get().uri {
-            it.path("/v1/get_player_info")
-                .queryParamIfPresent("id", Optional.ofNullable(id))
-                .queryParamIfPresent("name", Optional.ofNullable(username))
-                .queryParam("scope", scope.ifEmpty { "all" })
-                .build()
-        }.retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .map {
-                parse<User>(it, "player","玩家信息") }
-            .block() ?: return null
+        val u = try {
+            request { client ->
+                client.get().uri {
+                    it.path("/v1/get_player_info")
+                        .queryParamIfPresent("id", Optional.ofNullable(id))
+                        .queryParamIfPresent("name", Optional.ofNullable(username))
+                        .queryParam("scope", scope.ifEmpty { "all" })
+                        .build()
+                }.retrieve()
+                    .bodyToMono(JsonNode::class.java)
+                    .map { parse<User>(it, "player","玩家信息") }
+
+            }
+        } catch (e: NetworkException.UserException) {
+            return null
+        }
 
         val user = u.info
 
@@ -103,17 +118,59 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
             val lastSeen: Long
         )
 
-        val count = base.sbApiWebClient.get().uri { it
-            .path("/v1/get_player_status")
-            .queryParamIfPresent("id", Optional.ofNullable(id))
-            .queryParamIfPresent("name", Optional.ofNullable(username))
-            .build()
-        }.retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .map { parse<Status>(it, "player_status","玩家在线状态") }
-            .block() ?: return false to 0L
+        val count = try {
+            request { client ->
+                client.get().uri { it
+                    .path("/v1/get_player_status")
+                    .queryParamIfPresent("id", Optional.ofNullable(id))
+                    .queryParamIfPresent("name", Optional.ofNullable(username))
+                    .build()
+                }.retrieve()
+                    .bodyToMono(JsonNode::class.java)
+                    .map { parse<Status>(it, "player_status", "玩家在线状态")
+                    }
+            }
+        } catch (e: NetworkException.UserException) {
+            return false to 0L
+        }
 
         return count.online to count.lastSeen
+    }
+        /**
+         * 错误包装
+         */
+        private fun <T> request(request: (WebClient) -> Mono<T>): T {
+            return try {
+                request(base.sbApiWebClient).block()!!
+            } catch (e: Throwable) {
+                when (e.cause) {
+                    is WebClientResponseException.BadRequest -> {
+                        throw NetworkException.UserException.BadRequest()
+                    }
+
+                    is WebClientResponseException.Unauthorized -> {
+                        throw NetworkException.UserException.Unauthorized()
+                    }
+
+                    is WebClientResponseException.Forbidden -> {
+                        throw NetworkException.UserException.Forbidden()
+                    }
+
+                    is WebClientResponseException.NotFound -> {
+                        throw NetworkException.UserException.NotFound()
+                    }
+
+                    is WebClientResponseException.TooManyRequests -> {
+                        throw NetworkException.UserException.TooManyRequests()
+                    }
+
+                    is WebClientResponseException.ServiceUnavailable -> {
+                        throw NetworkException.UserException.ServiceUnavailable()
+                    }
+
+                    else -> throw NetworkException.UserException(e.message)
+                }
+            }
     }
 
     companion object {

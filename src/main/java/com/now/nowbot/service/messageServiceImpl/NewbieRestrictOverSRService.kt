@@ -87,7 +87,7 @@ class NewbieRestrictOverSRService(
                 val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
                 user = getUserWithoutRange(event, ss, CmdObject(mode))
-                scores = scoreApiService.getBeatMapScores(map.beatmapID, user.userID, mode)
+                scores = scoreApiService.getBeatmapScores(map.beatmapID, user.userID, mode)
 
                 beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
                 calculateApiService.applyStarToScores(scores, local = true)

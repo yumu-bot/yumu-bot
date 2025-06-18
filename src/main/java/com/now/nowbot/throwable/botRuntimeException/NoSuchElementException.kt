@@ -25,6 +25,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class BeatmapScore(name: Any):
         NoSuchElementException("没有找到您在谱面 $name 内的成绩。")
 
+    class BeatmapRecentScore(name: Any):
+        NoSuchElementException("没有找到您在谱面 $name 最近 100 个成绩之内的成绩。")
+
     class BeatmapScoreFiltered(name: Any):
         NoSuchElementException("没有找到您在谱面 $name 内符合条件的成绩。")
 

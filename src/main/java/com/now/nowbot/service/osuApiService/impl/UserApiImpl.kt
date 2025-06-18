@@ -25,7 +25,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
-import java.util.concurrent.ExecutionException
 import java.util.regex.Pattern
 import kotlin.text.HexFormat
 
@@ -265,7 +264,7 @@ import kotlin.text.HexFormat
     private fun <T> request(request: (WebClient) -> Mono<T>): T {
         return try {
             base.request(request)
-        } catch (e: ExecutionException) {
+        } catch (e: Throwable) {
             when (e.cause) {
                 is WebClientResponseException.BadRequest -> {
                     throw NetworkException.UserException.BadRequest()

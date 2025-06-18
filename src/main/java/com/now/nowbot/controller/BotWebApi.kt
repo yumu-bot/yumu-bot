@@ -613,7 +613,7 @@ import kotlin.math.min
             score = scoreApiService.getBeatMapScore(bid, uid, mode)!!.score
         } else {
             try {
-                scoreList = scoreApiService.getBeatMapScores(bid, uid, mode)
+                scoreList = scoreApiService.getBeatmapScores(bid, uid, mode)
                 for (s in scoreList) {
                     if (LazerMod.getModsValue(s.mods) == modInt) {
                         score = s

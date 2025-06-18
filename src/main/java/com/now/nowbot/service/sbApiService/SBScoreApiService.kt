@@ -18,4 +18,44 @@ interface SBScoreApiService {
     fun getBestScore(id: Long? = null, username: String? = null, mods: List<LazerMod>? = null, mode: OsuMode? = OsuMode.OSU, offset: Int? = 0, limit: Int? = 100, isLoved: Boolean = false): List<SBScore> {
         return getScore(id, username, mods, mode, offset, limit, includeLoved = isLoved, includeFailed = true, scope = "best")
     }
+
+    fun getBeatmapScore(
+        id: Long?,
+        md5: String? = null,
+        mods: List<LazerMod>?,
+        mode: OsuMode?,
+        offset: Int? = 0,
+        limit: Int? = 100,
+        scope: String = "recent"
+    ): List<SBScore>
+
+    fun getBeatmapRecentScore(
+        id: Long?,
+        mods: List<LazerMod>?,
+        mode: OsuMode?,
+    ): List<SBScore> {
+        return getBeatmapScore(
+            id = id,
+            mods = mods,
+            mode = mode,
+            offset = 0,
+            limit = 100,
+            scope = "recent"
+        )
+    }
+
+    fun getLeaderBoardScore(
+        id: Long?,
+        mods: List<LazerMod>?,
+        mode: OsuMode?,
+    ): List<SBScore> {
+        return getBeatmapScore(
+            id = id,
+            mods = mods,
+            mode = mode,
+            offset = 0,
+            limit = 100,
+            scope = "best"
+        )
+    }
 }

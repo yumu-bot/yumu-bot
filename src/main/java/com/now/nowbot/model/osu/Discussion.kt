@@ -11,7 +11,7 @@ import com.now.nowbot.util.JacksonUtil
 @JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
 data class Discussion(
     @JsonProperty("beatmaps")
-    var beatMaps: List<Beatmap>? = null,
+    var beatmaps: List<Beatmap>? = null,
 
     @JsonProperty("reviews_config")
     var reviewsConfig: ReviewsConfig,
@@ -32,11 +32,11 @@ data class Discussion(
     var cursorString: String? = null,
 ) {
     @JsonIgnore
-    var beatMapSet: Beatmapset? = null
+    var beatmapset: Beatmapset? = null
 
     @JsonProperty("beatmapsets") fun parseBeatMapSet(data: JsonNode) {
         if (!data.hasNonNull("beatmapsets") || !data["beatmapsets"].isArray) return
-        beatMapSet = JacksonUtil.parseObject(
+        beatmapset = JacksonUtil.parseObject(
             data["beatmapsets"].first(),
             Beatmapset::class.java
         )

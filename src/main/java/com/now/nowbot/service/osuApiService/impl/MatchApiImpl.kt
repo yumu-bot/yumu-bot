@@ -10,7 +10,6 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import java.time.Duration
-import java.util.concurrent.ExecutionException
 
 @Service
 class MatchApiImpl(
@@ -93,7 +92,7 @@ class MatchApiImpl(
     private fun <T> request(request: (WebClient) -> Mono<T>): T {
         return try {
             base.request(request)
-        } catch (e: ExecutionException) {
+        } catch (e: Throwable) {
             when (e.cause) {
                 is WebClientResponseException.BadRequest -> {
                     throw NetworkException.MatchException.BadRequest()

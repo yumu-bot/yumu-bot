@@ -109,9 +109,9 @@ interface OsuScoreApiService {
         mods: Iterable<LazerMod?>,
     ): BeatmapUserScore?
 
-    fun getBeatMapScores(bid: Long, user: BindUser, mode: OsuMode?): List<LazerScore>
+    fun getBeatmapScores(bid: Long, user: BindUser, mode: OsuMode?): List<LazerScore>
 
-    fun getBeatMapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore>
+    fun getBeatmapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore>
 
     fun getLeaderBoardScore(bid: Long, mode: OsuMode?, legacy: Boolean = false): List<LazerScore>
 

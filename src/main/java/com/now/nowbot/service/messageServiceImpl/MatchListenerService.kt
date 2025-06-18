@@ -301,13 +301,25 @@ class MatchListenerService(
         }
 
         override fun onError(e: Throwable) {
-            if (e is WebClientResponseException) {
-                // 网络错误, 忽略
-                log.error(e) { "比赛监听：网络错误" }
-                return
+            when(e) {
+                is WebClientResponseException -> {
+                    // 网络错误, 忽略
+                    log.error(e) { "比赛监听：网络错误" }
+                    return
+                }
+
+                is TipsRuntimeException -> {
+                    // 监听提示, 忽略
+                    log.error(e) { "比赛监听：提示" }
+                    messageEvent.reply(e.message)
+                    return
+                }
+
+                else -> {
+                    log.error(e) { "比赛监听：出现错误" }
+                    messageEvent.reply("监听期间出现错误, id: $matchID")
+                }
             }
-            log.error(e) { "比赛监听：出现错误" }
-            messageEvent.reply("监听期间出现错误, id: $matchID")
         }
 
         override fun equals(other: Any?): Boolean {

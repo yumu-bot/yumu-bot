@@ -28,7 +28,6 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
-import java.util.concurrent.ExecutionException
 import java.util.function.Consumer
 import java.util.function.Function
 
@@ -249,8 +248,8 @@ class ScoreApiImpl(
         mods.filterNotNull().forEach { builder.queryParam("mods[]", it.acronym) }
     }
 
-    override fun getBeatMapScores(bid: Long, user: BindUser, mode: OsuMode?): List<LazerScore> {
-        if (!user.isAuthorized) getBeatMapScores(bid, user.userID, mode)
+    override fun getBeatmapScores(bid: Long, user: BindUser, mode: OsuMode?): List<LazerScore> {
+        if (!user.isAuthorized) getBeatmapScores(bid, user.userID, mode)
 
         return request { client ->
             client.get()
@@ -267,7 +266,7 @@ class ScoreApiImpl(
         }
     }
 
-    override fun getBeatMapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore> {
+    override fun getBeatmapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore> {
         return request { client ->
             client.get()
                 .uri {
@@ -460,7 +459,7 @@ class ScoreApiImpl(
     private fun <T> request(request: (WebClient) -> Mono<T>): T {
         return try {
             base.request(request)
-        } catch (e: ExecutionException) {
+        } catch (e: Throwable) {
             when (e.cause) {
                 is WebClientResponseException.BadRequest -> {
                     throw NetworkException.ScoreException.BadRequest()

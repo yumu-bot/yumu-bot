@@ -28,7 +28,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.OffsetDateTime
 import java.util.*
-import java.util.concurrent.ExecutionException
 import java.util.regex.Pattern
 
 @Service
@@ -664,12 +663,7 @@ class BeatmapApiImpl(
         if (scores.isEmpty()) return
 
         for (score in scores) {
-            val lite = score.beatmap
-
-            score.beatmap = extend(lite, beatmap)!!
-            if (beatmap.beatmapset != null) {
-                score.beatmapset = beatmap.beatmapset!!
-            }
+            applyBeatmapExtend(score, beatmap)
         }
     }
 
@@ -689,6 +683,8 @@ class BeatmapApiImpl(
 
     override fun applyBeatmapExtend(score: LazerScore, extended: Beatmap) {
         val lite = score.beatmap
+
+        score.beatmapID = extended.beatmapID
 
         score.beatmap = extend(lite, extended)!!
         if (extended.beatmapset != null) {
@@ -810,7 +806,7 @@ class BeatmapApiImpl(
     private fun <T> request(request: (WebClient) -> Mono<T>): T {
         return try {
             base.request(request)
-        } catch (e: ExecutionException) {
+        } catch (e: Throwable) {
             when (e.cause) {
                 is WebClientResponseException.BadRequest -> {
                     throw NetworkException.BeatmapException.BadRequest()

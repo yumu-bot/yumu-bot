@@ -252,7 +252,7 @@ import kotlin.reflect.full.companionObjectInstance
             state.n300 = 0
         }
 
-        val beatmapID = score.beatmapID
+        val beatmapID = if (score.beatmapID > 0L) score.beatmapID else score.beatmap.beatmapID
         val lazer = score.isLazer
 
         val closable = ArrayList<AutoCloseable>(1)

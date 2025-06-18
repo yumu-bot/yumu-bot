@@ -7,7 +7,15 @@ interface SBUserApiService {
 
     fun getUserOnlineCount(): Pair<Long, Long>
 
-    fun getUser(id: Long? = null, username: String? = null, scope: String = "all"): SBUser?
+    fun getUser(id: Long?, username: String?, scope: String = "all"): SBUser?
+
+    fun getUser(id: Long?): SBUser? {
+        return getUser(id = id, username = null)
+    }
+
+    fun getUser(username: String?): SBUser? {
+        return getUser(id = null, username = username)
+    }
 
     fun getUserOnlineStatus(id: Long?, username: String?): Pair<Boolean, Long>
 }

@@ -458,9 +458,13 @@ class ScorePRService(
             val beatmap = score.beatmap
             val original = DataUtil.getOriginal(beatmap)
 
-            calculateApiService.applyPPToScore(score)
-            calculateApiService.applyBeatMapChanges(score)
-            calculateApiService.applyStarToScore(score)
+            AsyncMethodExecutor.awaitRunnableExecute(
+                listOf(
+                    AsyncMethodExecutor.Runnable { calculateApiService.applyPPToScore(score) },
+                    AsyncMethodExecutor.Runnable { calculateApiService.applyBeatMapChanges(score) },
+                    AsyncMethodExecutor.Runnable { calculateApiService.applyStarToScore(score) },
+                )
+            )
 
             val attributes = calculateApiService.getScoreStatisticsWithFullAndPerfectPP(score)
 

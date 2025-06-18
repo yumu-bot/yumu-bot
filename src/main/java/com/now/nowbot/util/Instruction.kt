@@ -187,6 +187,21 @@ enum class Instruction(val pattern: Pattern) {
         appendModeBIDQQUIDNameMod()
     }),
 
+    SB_SCORE(CommandPatternBuilder.create {
+        appendGroup {
+            append(REG_QUESTION)
+            appendSpace()
+            append("(?<score>(ym)?(score|s))")
+            appendIgnore()
+        }
+        appendModeBIDQQUIDNameMod()
+    }),
+
+    SB_SCORES(CommandPatternBuilder.create {
+        appendSBCommandsIgnoreAll("scores", "ss")
+        appendModeBIDQQUIDNameMod()
+    }),
+
     BP(CommandPatternBuilder.create {
         appendGroup {
             append(REG_EXCLAMATION)
@@ -208,8 +223,34 @@ enum class Instruction(val pattern: Pattern) {
         appendRange()
     }),
 
+    SB_BP(CommandPatternBuilder.create {
+        appendGroup {
+            append(REG_QUESTION)
+            appendSpace()
+            append("(?<bp>(ym)?(bestperformance|best|bp|b))(?<s>s)?")
+            appendIgnore()
+        }
+        appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup("any",
+                REG_ANYTHING_BUT_NO_HASH_STARS,
+                MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
+    }),
+
     TODAY_BP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t")
+        appendModeQQUIDNameRange()
+    }),
+
+    SB_TODAY_BP(CommandPatternBuilder.create {
+        appendSBCommandsIgnoreAll("todaybp", "todaybest", "todaybestperformance", "tbp", "tdp", "t")
         appendModeQQUIDNameRange()
     }),
 
