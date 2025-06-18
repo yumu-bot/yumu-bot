@@ -166,12 +166,11 @@ data class SBScore(
             TAIKO, TAIKO_RELAX -> LazerStatistics(
                 great = count300 + count100 + countMiss,
             )
-            /*
-            这里的 great 实际上是大果、中果的和
 
-             */
+            // 这里的 great 实际上是所有大果 和 失误中果的和
             CATCH, CATCH_RELAX -> LazerStatistics(
-                great = count300 + count100 + countMiss,
+                great = count300 + countMiss,
+                largeTickHit = count100,
                 smallTickHit = count50 + countKatu,
             )
             MANIA -> LazerStatistics(

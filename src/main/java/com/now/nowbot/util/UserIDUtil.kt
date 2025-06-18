@@ -465,7 +465,9 @@ object UserIDUtil {
             isMyself.set(qq == event.sender.id)
 
             try {
-                return bindDao.getBindFromQQ(qq).userID
+                val sb = bindDao.getBindFromQQ(qq, isMyself.get())
+                setMode(mode, sb.mode)
+                return sb.userID
             } catch (ignored: BindException) {}
         }
 
@@ -529,11 +531,13 @@ object UserIDUtil {
             isMyself.set(qq == event.sender.id)
 
             try {
-                return bindDao.getSBBindFromQQ(qq, isMyself.get()).userID
+                val sb = bindDao.getSBBindFromQQ(qq, isMyself.get())
+                setMode(mode, sb.mode)
+                return sb.userID
             } catch (ignored: BindException) {}
         }
 
-        setMode(mode, event)
+        // setMode(mode, event)
 
         if (matcher.namedGroups().containsKey(FLAG_UID)) {
             try {
