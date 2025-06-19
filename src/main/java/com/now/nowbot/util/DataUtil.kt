@@ -1151,25 +1151,21 @@ object DataUtil {
             }
         }
 
-        /*
-
-        for (s in strs) {
-            matcher += s
-
-            for (i in regexes.indices) {
-                val reg = regexes[i]
-
-                if (reg.matches(matcher)) {
-
-                    result[i].add(matcher)
-                    matcher = ""
-                }
-            }
-        }
-
-         */
-
         return result
+    }
+
+    /**
+     * 一个分页功能。
+     * @param maxPerPage 每页最多元素数量，默认 50 个。
+     * @return 当前页面显示的元素，当前有多少页，最大有多少页
+     */
+    fun <T> splitPage(collection: Collection<T>, page: Int, maxPerPage: Int = 50): Triple<List<T>, Int, Int> {
+        val maxPage = ceil(collection.size * 1.0 / maxPerPage).roundToInt()
+
+        val start = max(min(page, maxPage) * maxPerPage - maxPerPage, 0)
+        val end = min(min(page, maxPage) * maxPerPage, collection.size)
+
+        return Triple(collection.toList().subList(start, end), max(min(page, maxPage), 1), maxPage)
     }
 
     /**

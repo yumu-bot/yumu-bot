@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -16,14 +16,12 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
+import com.now.nowbot.util.CmdUtil.getMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.ceil
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
+import java.util.regex.Matcher
 
 @Service("GUEST_DIFFICULTY")
 class GuestDifficultyService(
@@ -49,7 +47,7 @@ class GuestDifficultyService(
         val sentRanked: Int,
     )
 
-    data class GuestDifferParam(val user: OsuUser, val page: Int)
+    data class GuestDifferParam(val user: OsuUser, val relatedSets: Set<Beatmapset>, val page: Int)
 
     override fun isHandle(
         event: MessageEvent,
@@ -59,10 +57,7 @@ class GuestDifficultyService(
         val matcher = Instruction.GUEST_DIFFICULTY.matcher(messageText)
         if (!matcher.find()) return false
 
-        val isMyself = AtomicBoolean(true)
-        val cmd = CmdUtil.getUserWithRange(event, matcher, CmdObject(OsuMode.DEFAULT), isMyself)
-
-        data.value = GuestDifferParam(cmd.data!!, cmd.start ?: 1)
+        data.value = getParam(event, matcher)
 
         return true
     }
@@ -84,53 +79,97 @@ class GuestDifficultyService(
         val matcher = OfficialInstruction.GUEST_DIFFICULTY.matcher(messageText)
         if (!matcher.find()) return null
 
-        val isMyself = AtomicBoolean(true)
-        val cmd = CmdUtil.getUserWithRange(event, matcher, CmdObject(OsuMode.DEFAULT), isMyself)
-
-        return GuestDifferParam(cmd.data!!, cmd.start ?: 1)
+        return getParam(event, matcher)
     }
 
     override fun reply(event: MessageEvent, param: GuestDifferParam): MessageChain? {
         return QQMsgUtil.getImage(imageService.getPanel(param.getBody(), "A11"))
     }
 
+    private fun getParam(event: MessageEvent, matcher: Matcher): GuestDifferParam {
+
+        // 其实这个功能下的 mode 和 isMyself 不重要
+        val isMyself = AtomicBoolean(true)
+        val mode = getMode(matcher)
+
+        val id = UserIDUtil.getUserIDWithRange(event, matcher, mode, isMyself)
+
+        val user: OsuUser
+        val relatedSets: Set<Beatmapset>
+        val page: Int
+
+        if (id.data != null) {
+            val query = mapOf(
+                "q" to "creator=" + id.data!!, "sort" to "ranked_desc", "s" to "any", "page" to 1
+            )
+
+            // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
+            val query2 = mapOf(
+                "q" to id.data!!, "sort" to "ranked_desc", "s" to "any", "page" to 1
+            )
+
+            val async = AsyncMethodExecutor.awaitTripleSupplierExecute(
+                { beatmapApiService.searchBeatmapset(query, 10) },
+                { beatmapApiService.searchBeatmapset(query2, 10) },
+                { userApiService.getOsuUser(id.data!!, mode.data!!) },
+            )
+
+            relatedSets = (async.first.beatmapsets.toHashSet() +
+                    async.second.beatmapsets.filter {
+                        it.beatmapsetID != id.data!! &&
+                                (it.beatmaps?.all { that -> that.beatmapID != id.data!! } ?: true)
+                    }.toHashSet())
+
+            user = async.third
+            page = id.start ?: 1
+        } else {
+            val range = CmdUtil.getUserWithRange(event, matcher, mode, isMyself)
+
+            user = range.data!!
+            val query = mapOf(
+                "q" to "creator=" + user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
+            )
+
+            // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
+            val query2 = mapOf(
+                "q" to user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
+            )
+
+            val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+                { beatmapApiService.searchBeatmapset(query, 10) },
+                { beatmapApiService.searchBeatmapset(query2, 10) },
+            )
+
+            relatedSets = (async.first.beatmapsets.toHashSet() +
+                    async.second.beatmapsets.filter {
+                        it.beatmapsetID != user.userID &&
+                                (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true)
+                    }.toHashSet())
+
+            page = range.start ?: 1
+        }
+
+        return GuestDifferParam(user, relatedSets, page)
+    }
+
     private fun GuestDifferParam.getBody(): Map<String, Any> {
         val user = this.user
-
-        val query = mapOf(
-            "q" to "creator=" + user.userID,
-            "sort" to "ranked_desc",
-            "s" to "any",
-            "page" to 1
-        )
-
-        val search = beatmapApiService.searchBeatmapset(query, 10)
-        val result1 = search.beatmapsets
-
-        // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
-        val query2 = mapOf(
-            "q" to user.userID,
-            "sort" to "ranked_desc",
-            "s" to "any",
-            "page" to 1
-        )
-
-        val search2 = beatmapApiService.searchBeatmapset(query2, 10)
-        val result2 = search2.beatmapsets
-            .filter { it.beatmapsetID != user.userID && (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true) }
-
-        val relatedSets = (result1.toHashSet() + result2.toHashSet()).asSequence()
+        val relatedSets = this.relatedSets.asSequence()
 
         val relatedUsers = run {
             val idChunk = relatedSets.filter { it.creatorID != user.userID }.map { it.creatorID }.toSet().chunked(50)
 
             val actions = idChunk.map {
                 return@map AsyncMethodExecutor.Supplier<List<MicroUser>> {
-                    userApiService.getUsers(it, false)
+                    userApiService.getUsers(it)
                 }
             }
 
             AsyncMethodExecutor.awaitSupplierExecute(actions).flatten()
+        }
+
+        AsyncMethodExecutor.asyncRunnableExecute {
+            userApiService.asyncDownloadAvatar(relatedUsers)
         }
 
         val relatedDiffs = relatedSets.map { it.beatmaps!! }.flatten()
@@ -157,16 +196,13 @@ class GuestDifficultyService(
             it.sentRanked + it.receivedRanked
         }
 
-        if (guestDifficultyOwners.isEmpty()) throw NoSuchElementException.GuestDiff()
+        if (guestDifficultyOwners.isEmpty()) {
+            throw NoSuchElementException.GuestDiff()
+        }
 
         // 分页
-        val page = this.page
-        val maxPage = ceil(guestDifficultyOwners.size * 1.0 / MAX_PER_PAGE).roundToInt()
-
-        val start = max(min(page, maxPage) * MAX_PER_PAGE - MAX_PER_PAGE, 0)
-        val end = min(min(page, maxPage) * MAX_PER_PAGE, guestDifficultyOwners.size)
-
-        val list = guestDifficultyOwners.subList(start, end)
+        val split = DataUtil.splitPage(guestDifficultyOwners, this.page)
+        val list = split.first
 
         userApiService.asyncDownloadAvatar(list.map { it.user })
         userApiService.asyncDownloadBackground(list.map { it.user })
@@ -174,15 +210,13 @@ class GuestDifficultyService(
         return mapOf(
             "user" to user,
             "guest_differs" to list,
-            "page" to page,
-            "max_page" to maxPage
+            "page" to split.second,
+            "max_page" to split.third
         )
 
     }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(GuestDifficultyService::class.java)
-
-        const val MAX_PER_PAGE = 50
     }
 }

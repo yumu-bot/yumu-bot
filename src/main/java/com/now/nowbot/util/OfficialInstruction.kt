@@ -149,7 +149,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     BP_FIX(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("bf")
-        appendModeQQUIDName()
+        appendModeQQUIDNameRange()
     }),
 
     BP_ANALYSIS(CommandPatternBuilder.create {

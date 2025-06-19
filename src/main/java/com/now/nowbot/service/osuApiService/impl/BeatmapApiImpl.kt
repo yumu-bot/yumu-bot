@@ -34,8 +34,8 @@ import java.util.regex.Pattern
 class BeatmapApiImpl(
     private val base: OsuApiBaseService,
     config: FileConfig,
-    private val beatmap1Dao: BeatmapDao,
-    private val osuBeatmapMirrorApiService: OsuBeatmapMirrorApiService,
+    private val beatmapDao: BeatmapDao,
+    private val beatmapMirrorApiService: OsuBeatmapMirrorApiService,
     private val beatmapObjectCountMapper: BeatmapObjectCountMapper,
 
     @Qualifier("proxyClient") private val proxyClient: WebClient,
@@ -64,7 +64,7 @@ class BeatmapApiImpl(
     }
 
     private fun getBeatMapFileFromLocalService(bid: Long): String? {
-        return osuBeatmapMirrorApiService.getOsuFile(bid) ?: getBeatMapFileFromOfficialWebsite(bid)
+        return beatmapMirrorApiService.getOsuFile(bid) ?: getBeatMapFileFromOfficialWebsite(bid)
 
     }
 
@@ -223,7 +223,7 @@ class BeatmapApiImpl(
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(Beatmap::class.java)
-                .doOnNext(beatmap1Dao::saveMap)
+                .doOnNext(beatmapDao::saveMap)
         }
     }
 
@@ -316,13 +316,13 @@ class BeatmapApiImpl(
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(Beatmapset::class.java)
-                .doOnNext(beatmap1Dao::saveMapSet)
+                .doOnNext(beatmapDao::saveMapSet)
         }
     }
 
     override fun getBeatmapFromDatabase(bid: Long): Beatmap {
         try {
-            val lite = beatmap1Dao.getBeatMapLite(bid)
+            val lite = beatmapDao.getBeatMapLite(bid)
             return BeatmapDao.fromBeatmapLite(lite)
         } catch (e: Exception) {
             return getBeatmap(bid)
@@ -331,7 +331,7 @@ class BeatmapApiImpl(
 
     override fun isNotOverRating(bid: Long): Boolean {
         try {
-            val map = beatmap1Dao.getBeatMapLite(bid)
+            val map = beatmapDao.getBeatMapLite(bid)
             return map.status.equals("ranked", ignoreCase = true) && map.difficultyRating <= 5.7
         } catch (ignore: Exception) {
         }
@@ -499,7 +499,7 @@ class BeatmapApiImpl(
 
     override fun getAllBeatmapHitLength(bid: Collection<Long>): List<Pair<Long, Int>> {
         if (bid.isEmpty()) return emptyList()
-        val timeMap = beatmap1Dao.getBeatMapsHitLength(bid).associate { it.id to it.length }
+        val timeMap = beatmapDao.getBeatMapsHitLength(bid).associate { it.id to it.length }
 
         val result = ArrayList<Pair<Long, Int>>(bid.size)
 
@@ -692,7 +692,31 @@ class BeatmapApiImpl(
         }
     }
 
+    override fun applyBeatmapExtendFromDatabase(scores: List<LazerScore>) {
+        val exists = scores.mapNotNull {
+            try {
+                BeatmapDao.fromBeatmapLite(beatmapDao.getBeatMapLite(it.beatmapID))
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        val notExistIDs = scores.map { it.beatmapID }.toSet() - exists.map { it.beatmapID }.toSet()
+
+        val notExists = getBeatmaps(notExistIDs)
+
+        val extended = (exists + notExists).associateBy { it.beatmapID }
+
+        scores.forEach { score ->
+            extended[score.beatmapID]?.let {
+                applyBeatmapExtend(score, it)
+            }
+        }
+    }
+
     override fun applyBeatmapExtendFromDatabase(score: LazerScore) {
+        applyBeatmapExtend(listOf(score))
+        /*
         val extended = getBeatmapFromDatabase(score.beatmapID)
         val lite = score.beatmap
 
@@ -700,6 +724,8 @@ class BeatmapApiImpl(
         if (extended.beatmapset != null) {
             score.beatmapset = extended.beatmapset!!
         }
+
+         */
     }
 
     override fun getBeatmapsetRankedTime(beatmap: Beatmap): String {
@@ -760,7 +786,7 @@ class BeatmapApiImpl(
     override fun updateBeatmapTagLibraryDatabase() {
         val tags = JacksonUtil.parseObjectList(beatmapTagLibraryFromAPI["tags"], Tag::class.java)
 
-        beatmap1Dao.saveTag(tags)
+        beatmapDao.saveTag(tags)
 
         log.info("谱面: 玩家标签已更新")
     }
@@ -770,7 +796,7 @@ class BeatmapApiImpl(
 
         if (ids.isNullOrEmpty()) return
 
-        beatmap.tags = ids.mapNotNull { beatmap1Dao.getTag(it.id) }
+        beatmap.tags = ids.mapNotNull { beatmapDao.getTag(it.id) }
     }
 
     private fun getBeatmapsetWithRankedTimeLibrary(): List<BeatmapsetWithRankTime> {

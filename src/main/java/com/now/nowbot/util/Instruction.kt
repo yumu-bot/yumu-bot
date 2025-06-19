@@ -256,7 +256,7 @@ enum class Instruction(val pattern: Pattern) {
 
     BP_FIX(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("bpfix", "fixbp", "bestperformancefix", "bestfix", "bpf", "bf", "boy\\s*friends?")
-        appendModeQQUIDName()
+        appendModeQQUIDNameRange()
     }),
 
     BP_ANALYSIS(CommandPatternBuilder.create {

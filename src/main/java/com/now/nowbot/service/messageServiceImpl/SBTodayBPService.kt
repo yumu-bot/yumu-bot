@@ -150,7 +150,7 @@ class SBTodayBPService(
 
                     AsyncMethodExecutor.Runnable { osuCalculateApiService.applyStarToScores(scores) },
 
-                    AsyncMethodExecutor.Runnable { osuBeatmapApiService.applyBeatmapExtend(scores) },
+                    AsyncMethodExecutor.Runnable { osuBeatmapApiService.applyBeatmapExtendFromDatabase(scores) },
                 )
             )
 

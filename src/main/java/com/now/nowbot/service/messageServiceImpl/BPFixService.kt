@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerScoreWithFcPP
@@ -14,44 +15,36 @@ import com.now.nowbot.service.messageServiceImpl.BPFixService.BPFixParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
+import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserWithoutRange
-import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.math.pow
-import kotlin.math.roundToInt
+import java.util.regex.Matcher
+import kotlin.math.*
 
 @Service("BP_FIX")
 class BPFixService(
-    private val imageService: ImageService,
+    private val userApiService: OsuUserApiService,
     private val scoreApiService: OsuScoreApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
+    private val imageService: ImageService,
 ) : MessageService<BPFixParam>, TencentMessageService<BPFixParam> {
 
-    data class BPFixParam(val user: OsuUser, val bpMap: Map<Int, LazerScore>, val mode: OsuMode)
+    data class BPFixParam(val user: OsuUser, val bestsMap: Map<Int, LazerScore>, val mode: OsuMode, val page: Int = 1)
 
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<BPFixParam>): Boolean {
         val matcher = Instruction.BP_FIX.matcher(messageText)
         if (!matcher.find()) return false
 
-        val mode = getMode(matcher)
-
-        val user = getUserWithoutRange(event, matcher, mode)
-
-        val bests = scoreApiService.getBestScores(user.userID, mode.data)
-        val bestsMap = bests.mapIndexed { i, it -> (i + 1) to it }.toMap()
-
-        data.value = BPFixParam(user, bestsMap, mode.data!!)
-
+        data.value = getParam(event, matcher)
         return true
     }
 
@@ -70,22 +63,67 @@ class BPFixService(
         val matcher = OfficialInstruction.BP_FIX.matcher(messageText)
         if (!matcher.find()) return null
 
-        val mode = getMode(matcher)
-        val user = getUserWithoutRange(event, matcher, mode)
-
-        val bests = scoreApiService.getBestScores(user.userID, mode.data)
-        val bestsMap = bests.mapIndexed { i, it -> (i + 1) to it }.toMap()
-
-        return BPFixParam(user, bestsMap, mode.data!!)
+        return getParam(event, matcher)
     }
 
     override fun reply(event: MessageEvent, param: BPFixParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
 
-    fun fix(playerPP: Double, bestsMap: Map<Int, LazerScore>): Map<String, Any>? {
+    private fun getParam(event: MessageEvent, matcher: Matcher): BPFixParam {
+        val isMyself = AtomicBoolean(true)
+        val mode = getMode(matcher)
+
+        val id = UserIDUtil.getUserIDWithRange(event, matcher, mode, isMyself)
+
+        val user: OsuUser
+        val scores: Map<Int, LazerScore>
+        val page: Int
+
+        // 高效的获取方式
+        if (id.data != null) {
+            val async = AsyncMethodExecutor.awaitPairWithMapSupplierExecute(
+                { userApiService.getOsuUser(id.data!!, mode.data!!) },
+                { scoreApiService.getBestScores(id.data!!, mode.data)
+                    .mapIndexed { i, it ->
+                        (i + 1) to it
+                    }.toMap() }
+            )
+
+            user = async.first
+            scores = async.second
+            page = id.start ?: 1
+        } else {
+            // 经典的获取方式
+            val range = CmdUtil.getUserWithRange(event, matcher, mode, isMyself)
+
+            user = range.data!!
+
+            val bests = scoreApiService.getBestScores(user.userID, mode.data)
+
+            scores = bests.mapIndexed { i, it -> (i + 1) to it }.toMap()
+
+            page = range.start ?: 1
+        }
+
+        if (scores.isEmpty()) {
+            throw NoSuchElementException.BestScore(user.username)
+        }
+
+        return BPFixParam(user, scores, mode.data!!, page)
+    }
+
+    private fun fix(user: OsuUser, bestsMap: Map<Int, LazerScore>): Pair<List<LazerScoreWithFcPP>, Double> {
+        if (bestsMap.isEmpty()) {
+            throw NoSuchElementException.BestScoreWithMode(user.username, user.currentOsuMode)
+        }
+
+        val playerPP = user.pp
         val beforeBpSumAtomic = AtomicReference(0.0)
 
-        // TODO 这个方法会触发数据库写入异常
-        /*
+        AsyncMethodExecutor.awaitPairSupplierExecute(
+            { beatmapApiService.applyBeatmapExtendFromDatabase(bestsMap.map { it.value }) },
+            { calculateApiService.applyStarToScores(bestsMap.map { it.value }) }
+        )
+
         val tasks = bestsMap.map { entry ->
             val index = entry.key
             val score = entry.value
@@ -93,8 +131,6 @@ class BPFixService(
             beforeBpSumAtomic.updateAndGet { it + (score.weight?.pp ?: 0.0) }
 
             AsyncMethodExecutor.Supplier {
-                beatmapApiService.applyBeatmapExtendFromDatabase(score)
-
                 val max = score.beatmap.maxCombo ?: 1
                 val combo = score.maxCombo
                 val stat = score.statistics
@@ -121,106 +157,13 @@ class BPFixService(
             }
         }
 
-        val fixedBests = AsyncMethodExecutor.awaitSupplierExecuteThrows(tasks)
+        val fixedBests = AsyncMethodExecutor.awaitSupplierExecute(tasks)
             .sortedByDescending {
             if (it is LazerScoreWithFcPP && it.fcPP > 0) {
                 it.fcPP
             } else {
                 it.pp
             }
-        }
-
-
-         */
-
-
-        /*
-        val actions = (bestsMap.toList()).map { pair ->
-            return@map AsyncMethodExecutor.Supplier<LazerScore?> {
-                val index = pair.first
-                val score = pair.second
-
-                beforeBpSumAtomic.updateAndGet { it + (score.weight?.pp ?: 0.0) }
-                beatmapApiService.applyBeatMapExtendFromDataBase(score)
-
-                val max = score.beatmap.maxCombo ?: 1
-                val combo = score.maxCombo
-                val stat = score.statistics
-                val ok = stat.ok
-                val meh = stat.meh
-                val miss = stat.miss
-
-                // 断连击，mania 模式现在也可以参与此项筛选
-                val isChoke = if (score.mode == OsuMode.MANIA) {
-                    (ok + meh + miss) / max <= 0.03
-                } else {
-                    (miss == 0) && (combo < (max * 0.98).roundToInt())
-                }
-
-                // 含有 <1% 的失误
-                val has1pMiss = (miss > 0) && ((1.0 * miss / max) <= 0.01)
-
-                // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
-                return@Supplier if (isChoke || has1pMiss) {
-                    initFixScore(score, index)
-                } else {
-                    score
-                }
-            }
-        }
-
-        val a = AsyncMethodExecutor.awaitSupplierExecute(actions, Duration.ofMinutes(10))
-
-        val fixedBests =
-            a
-                .filterNotNull()
-                .sortedByDescending {
-                val pp = if (it is LazerScoreWithFcPP && it.fcPP > 0) {
-                    it.fcPP
-                } else {
-                    it.pp
-                }
-
-                pp
-            }
-
-            */
-
-        val fixedBests = bestsMap.map { (index, score) ->
-            beforeBpSumAtomic.updateAndGet { it + (score.weight?.pp ?: 0.0) }
-            beatmapApiService.applyBeatmapExtendFromDatabase(score)
-
-            val max = score.beatmap.maxCombo ?: 1
-            val combo = score.maxCombo
-            val stat = score.statistics
-            val ok = stat.ok
-            val meh = stat.meh
-            val miss = stat.miss
-
-            // 断连击，mania 模式现在也可以参与此项筛选
-            val isChoke = if (score.mode == OsuMode.MANIA) {
-                (ok + meh + miss) / max <= 0.03
-            } else {
-                (miss == 0) && (combo < (max * 0.98).roundToInt())
-            }
-
-            // 含有 <1% 的失误
-            val has1pMiss = (miss > 0) && ((1.0 * miss / max) <= 0.01)
-
-            // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
-            if (isChoke || has1pMiss) {
-                initFixScore(score, index)
-            } else {
-                score
-            }
-        }.sortedByDescending {
-            val pp = if (it is LazerScoreWithFcPP && it.fcPP > 0) {
-                it.fcPP
-            } else {
-                it.pp
-            }
-
-            pp * 100.0
         }
 
         val afterBpSumAtomic = AtomicReference(0.0)
@@ -242,16 +185,15 @@ class BPFixService(
         val afterBpSum = afterBpSumAtomic.get()
         val newPlayerPP = (playerPP + afterBpSum - beforeBpSum)
 
-        val scoreList = fixedBests.filterIsInstance<LazerScoreWithFcPP>()
+        val scores = fixedBests.filterIsInstance<LazerScoreWithFcPP>()
 
-        if (scoreList.isEmpty()) return null
+        if (scores.isEmpty()) throw NoSuchElementException.BestScoreTheoretical()
 
-        calculateApiService.applyStarToScores(scoreList)
+        AsyncMethodExecutor.asyncRunnableExecute {
+            scoreApiService.asyncDownloadBackground(scores, listOf(CoverType.LIST, CoverType.COVER))
+        }
 
-        return mapOf(
-            "scores" to scoreList,
-            "pp" to newPlayerPP
-        )
+        return  scores to newPlayerPP
     }
 
     private fun initFixScore(score: LazerScore, index: Int): LazerScoreWithFcPP {
@@ -267,16 +209,17 @@ class BPFixService(
     }
 
     private fun BPFixParam.getImage(): ByteArray {
-        if (bpMap.isEmpty()) {
-            throw NoSuchElementException.BestScoreWithMode(this.user.username, this.mode)
-        }
+        val fixes = fix(user, bestsMap)
 
-        val fixes = fix(user.pp, bpMap) ?: throw NoSuchElementException.BestScoreTheoretical()
+        // 分页
+        val split = DataUtil.splitPage(fixes.first, this.page)
 
         val body = mapOf(
             "user" to user,
-            "scores" to fixes["scores"]!!,
-            "pp" to fixes["pp"]!!
+            "scores" to split.first,
+            "pp" to fixes.second,
+            "page" to split.second,
+            "max_page" to split.third
         )
 
         return imageService.getPanel(body, "A7")

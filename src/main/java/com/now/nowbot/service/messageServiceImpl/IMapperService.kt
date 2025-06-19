@@ -20,7 +20,6 @@ import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.StopWatch
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
@@ -274,8 +273,6 @@ import kotlin.math.max
         fun getIMapperV1(
             user: OsuUser, userApiService: OsuUserApiService, beatmapApiService: OsuBeatmapApiService
         ): Map<String, Any?> {
-            val s = StopWatch()
-            s.start("q")
 
             val query = mapOf(
                 "q" to "creator=" + user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
@@ -317,9 +314,6 @@ import kotlin.math.max
                 listOf()
             }
 
-            s.stop()
-            s.start("b")
-
             val mostPopularBeatmap =
                 result.filter { it.creatorID == user.userID }
                     .sortedByDescending { it.playCount }
@@ -335,10 +329,6 @@ import kotlin.math.max
             val beatmaps = result.flatMap { it.beatmaps ?: emptyList() }
 
             val diffArr = IntArray(8)
-
-
-            s.stop()
-            s.start("star")
 
             run {
                 val diffStar = beatmaps.filter { it.mapperID == user.userID }.map { it.starRating }
@@ -370,10 +360,6 @@ import kotlin.math.max
                 "jazz"
             )
 
-
-            s.stop()
-            s.start("genre")
-
             val genre = IntArray(keywords.size)
 
             run {
@@ -396,15 +382,8 @@ import kotlin.math.max
                 }
             }
 
-            s.stop()
-            s.start("fav")
-
             val favorite = result.filter { it.creatorID == user.userID }.sumOf { it.favouriteCount }
             val playcount = result.filter { it.creatorID == user.userID }.sumOf { it.playCount }
-
-
-            s.stop()
-            s.start("length")
 
             val lengthArr = IntArray(8)
             run {
@@ -420,9 +399,6 @@ import kotlin.math.max
                     }
                 }
             }
-
-            s.stop()
-            log.info(s.prettyPrint())
 
             return mapOf(
                 "user" to user,

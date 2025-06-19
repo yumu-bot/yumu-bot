@@ -203,6 +203,29 @@ object AsyncMethodExecutor {
         lock.await(timeout.toMillis(), TimeUnit.MILLISECONDS)
     }
 
+    /**
+     * 异步执行不需要返回的结果，并等待至所有操作都完成。
+     * 这个方法会等待结果返回，不直接进行下一步。如果不需要等待所有异步操作完成，请使用 asyncRunnableExecute
+     */
+    @JvmStatic
+    fun awaitRunnableExecute(work: Runnable, timeout: Duration = Duration.ofMinutes(4)) {
+        val lock = CountDownLatch(1)
+
+        val task = Runnable {
+            try {
+                work.run()
+            } catch (e: Throwable) {
+                log.error("Async error", e)
+            } finally {
+                lock.countDown()
+            }
+        }
+
+        Thread.startVirtualThread(task)
+
+        lock.await(timeout.toMillis(), TimeUnit.MILLISECONDS)
+    }
+
     @JvmStatic
     fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>): List<T> {
         return awaitSupplierExecute(works, Duration.ofMinutes(4))

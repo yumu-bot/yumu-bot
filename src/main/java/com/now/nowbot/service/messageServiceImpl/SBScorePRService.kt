@@ -290,7 +290,7 @@ class SBScorePRService(
                 "panel" to if (isPass) "PS" else "RS"
             )
 
-            osuBeatmapApiService.applyBeatmapExtend(scores)
+            osuBeatmapApiService.applyBeatmapExtendFromDatabase(scores)
 
             osuCalculateApiService.applyPPToScores(scores)
 

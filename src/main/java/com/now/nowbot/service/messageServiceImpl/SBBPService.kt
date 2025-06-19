@@ -245,7 +245,7 @@ class SBBPService(
             val ranks = scores.map { it.key }
             val scores = scores.map { it.value }
 
-            osuBeatmapApiService.applyBeatmapExtend(scores)
+            osuBeatmapApiService.applyBeatmapExtendFromDatabase(scores)
 
             val body = mapOf(
                 "user" to user,

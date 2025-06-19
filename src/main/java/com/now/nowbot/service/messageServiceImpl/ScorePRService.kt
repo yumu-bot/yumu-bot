@@ -430,7 +430,7 @@ class ScorePRService(
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService
         ): PanelE5Param {
-            beatmapApiService.applyBeatmapExtend(score)
+            beatmapApiService.applyBeatmapExtendFromDatabase(score)
             return getScore4PanelE5AfterExtended(user, score, position = null, panel, beatmapApiService, calculateApiService)
         }
 
