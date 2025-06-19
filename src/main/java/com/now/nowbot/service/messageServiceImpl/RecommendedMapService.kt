@@ -11,6 +11,7 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
+import java.util.concurrent.Callable
 
 //@Service("RECOMMEND_MAP")
 class RecommendedMapService(
@@ -69,7 +70,7 @@ class RecommendedMapService(
         val favorite: List<Beatmapset>
 
         val tasks = (0..4).toList().map {
-            AsyncMethodExecutor.Supplier {
+            Callable {
                 beatmapApiService.getUserBeatmapset(user.userID, "favourite", it * 100, 100)
             }
         }

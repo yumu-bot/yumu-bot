@@ -1,16 +1,17 @@
 package com.now.nowbot.util
 
+import com.now.nowbot.util.AsyncMethodExecutor.Runnable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.lang.InterruptedException
-import java.lang.System
-import java.lang.Thread
 import java.time.Duration
+import java.time.Instant
 import java.util.*
 import java.util.concurrent.*
+import java.util.concurrent.StructuredTaskScope.ShutdownOnFailure
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.random.Random
+
 
 object AsyncMethodExecutor {
     val log: Logger = LoggerFactory.getLogger(AsyncMethodExecutor::class.java)
@@ -197,7 +198,10 @@ object AsyncMethodExecutor {
      * 返回结果严格按照传入的 works 顺序
      */
     @JvmStatic
-    inline fun <reified T> awaitSupplierExecute(works: Collection<Supplier<T>>, timeout: Duration = Duration.ofMinutes(4)): List<T> {
+    inline fun <reified T> awaitSupplierExecute(
+        works: Collection<Supplier<T>>,
+        timeout: Duration = Duration.ofMinutes(4)
+    ): List<T> {
         val size = works.size
         val lock = CountDownLatch(size)
         val results: MutableList<T?> = ArrayList(size)
@@ -223,80 +227,75 @@ object AsyncMethodExecutor {
     }
 
     fun <T, U> awaitPairCollectionSupplierExecute(
-        work: Supplier<Collection<T>>,
-        work2: Supplier<Collection<U>>,
+        work1: Callable<Collection<T>>,
+        work2: Callable<Collection<U>>,
         timeout: Duration = Duration.ofMinutes(4)
     ): Pair<Collection<T>, Collection<U>> {
-
-        val cf: CompletableFuture<Collection<T>> = CompletableFuture.supplyAsync(work)
-        val cf2: CompletableFuture<Collection<U>> = CompletableFuture.supplyAsync(work2)
-
-        val cff = CompletableFuture.allOf(cf, cf2)
-        cff.get(timeout.toMillis(), TimeUnit.MILLISECONDS)
-
-        return cf.get() to cf2.get()
+        ShutdownOnFailure().use { virtualPool ->
+            val r1 = virtualPool.fork(work1)
+            val r2 = virtualPool.fork(work2)
+            virtualPool.joinUntil(Instant.now().plus(timeout))
+            virtualPool.throwIfFailed()
+            return Pair(r1.get(), r2.get())
+        }
     }
 
     fun <T, K, V> awaitPairWithMapSupplierExecute(
-        work: Supplier<T>,
-        work2: Supplier<Map<K, V>>,
+        work1: Callable<T>,
+        work2: Callable<Map<K, V>>,
         timeout: Duration = Duration.ofMinutes(4)
     ): Pair<T, Map<K, V>> {
-
-        val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
-        val cf2: CompletableFuture<Map<K, V>> = CompletableFuture.supplyAsync(work2)
-
-        val cff = CompletableFuture.allOf(cf, cf2)
-        cff.get(timeout.toMillis(), TimeUnit.MILLISECONDS)
-
-        return cf.get() to cf2.get()
+        ShutdownOnFailure().use { virtualPool ->
+            val r1 = virtualPool.fork(work1)
+            val r2 = virtualPool.fork(work2)
+            virtualPool.joinUntil(Instant.now().plus(timeout))
+            virtualPool.throwIfFailed()
+            return Pair(r1.get(), r2.get())
+        }
     }
 
     fun <T, U> awaitPairWithCollectionSupplierExecute(
-        work: Supplier<T>,
-        work2: Supplier<Collection<U>>,
+        work1: Callable<T>,
+        work2: Callable<Collection<U>>,
         timeout: Duration = Duration.ofMinutes(4)
     ): Pair<T, Collection<U>> {
-
-        val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
-        val cf2: CompletableFuture<Collection<U>> = CompletableFuture.supplyAsync(work2)
-
-        val cff = CompletableFuture.allOf(cf, cf2)
-        cff.get(timeout.toMillis(), TimeUnit.MILLISECONDS)
-
-        return cf.get() to cf2.get()
+        ShutdownOnFailure().use { virtualPool ->
+            val r1 = virtualPool.fork(work1)
+            val r2 = virtualPool.fork(work2)
+            virtualPool.joinUntil(Instant.now().plus(timeout))
+            virtualPool.throwIfFailed()
+            return Pair(r1.get(), r2.get())
+        }
     }
 
     fun <T, U> awaitPairSupplierExecute(
-        work: Supplier<T>,
-        work2: Supplier<U>,
+        work1: Callable<T>,
+        work2: Callable<U>,
         timeout: Duration = Duration.ofMinutes(4)
     ): Pair<T, U> {
-
-        val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
-        val cf2: CompletableFuture<U> = CompletableFuture.supplyAsync(work2)
-
-        val cff = CompletableFuture.allOf(cf, cf2)
-        cff.get(timeout.toMillis(), TimeUnit.MILLISECONDS)
-
-        return cf.get() to cf2.get()
+        ShutdownOnFailure().use { virtualPool ->
+            val r1 = virtualPool.fork(work1)
+            val r2 = virtualPool.fork(work2)
+            virtualPool.joinUntil(Instant.now().plus(timeout))
+            virtualPool.throwIfFailed()
+            return Pair(r1.get(), r2.get())
+        }
     }
 
     fun <T, U, V> awaitTripleSupplierExecute(
-        work: Supplier<T>,
-        work2: Supplier<U>,
-        work3: Supplier<V>,
+        work1: Callable<T>,
+        work2: Callable<U>,
+        work3: Callable<V>,
         timeout: Duration = Duration.ofMinutes(4)
     ): Triple<T, U, V> {
-
-        val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
-        val cf2: CompletableFuture<U> = CompletableFuture.supplyAsync(work2)
-        val cf3: CompletableFuture<V> = CompletableFuture.supplyAsync(work3)
-
-        val cff = CompletableFuture.allOf(cf, cf2, cf3)
-        cff.get(timeout.toMillis(), TimeUnit.MILLISECONDS)
-
-        return Triple(cf.get(), cf2.get(), cf3.get())
+        ShutdownOnFailure().use { virtualPool ->
+            val r1 = virtualPool.fork(work1)
+            val r2 = virtualPool.fork(work2)
+            val r3 = virtualPool.fork(work3)
+            virtualPool.joinUntil(Instant.now().plus(timeout))
+            virtualPool.throwIfFailed()
+            return Triple(r1.get(), r2.get(), r3.get())
+        }
     }
 
     /**
@@ -305,19 +304,19 @@ object AsyncMethodExecutor {
      */
     @JvmStatic
     @Throws(Exception::class)
-    fun <T> awaitSupplierExecuteThrows(
+    fun <T> awaitSupplierExecuteThrowsOld(
         works: Collection<Supplier<T>>,
         timeout: Duration = Duration.ofMinutes(4)
     ): List<T> {
         val size = works.size
         val phaser = Phaser(1)
-        val results: MutableList<T> = ArrayList(size)
+        val results: MutableList<T?> = MutableList(size) { null }
         val taskThreads: MutableList<Thread> = CopyOnWriteArrayList()
         var exception: Exception? = null
 
         works.mapIndexed { i: Int, w: Supplier<T> ->
+            phaser.register()
             Runnable {
-                phaser.register()
                 try {
                     if (!phaser.isTerminated) {
                         val result = w.get()
@@ -341,17 +340,36 @@ object AsyncMethodExecutor {
         }.forEach { task: Runnable -> taskThreads.add(Thread.startVirtualThread(task)) }
 
         try {
+            val currentPhase = phaser.phase
+            phaser.arrive()
             phaser.awaitAdvanceInterruptibly(
-                phaser.phase, timeout.toMillis(), TimeUnit.MILLISECONDS
+                currentPhase,
+                timeout.toMillis(),
+                TimeUnit.MILLISECONDS
             )
         } catch (e: InterruptedException) {
             log.error("lock error", e)
         }
-        if (exception != null) {
-            throw exception!!
-        }
 
-        return results
+        exception?.let { throw it }
+
+        return results as List<T>
+    }
+
+    @JvmStatic
+    @Throws(Exception::class)
+    fun <T> awaitSupplierExecuteThrows(
+        works: Collection<Callable<T>>,
+        timeout: Duration = Duration.ofMinutes(4)
+    ): List<T> {
+        ShutdownOnFailure().use { virtualPool ->
+            val tasks = works.map {
+                virtualPool.fork(it)
+            }
+            virtualPool.joinUntil(Instant.now().plus(timeout))
+            virtualPool.throwIfFailed()
+            return tasks.map { it.get() }
+        }
     }
 
     fun interface Supplier<T> : java.util.function.Supplier<T> {
