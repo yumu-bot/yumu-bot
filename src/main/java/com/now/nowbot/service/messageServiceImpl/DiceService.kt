@@ -354,7 +354,7 @@ import kotlin.random.Random
 
         LIKE(
             Pattern.compile(
-                "\\s*(?<m1>[\\S\\s]*?)?\\s*?(?<c3>喜欢|爱|\\s((dis)?like|love)\\s)\\s*?(?<m2>[\\S\\s]*)?"
+                "\\s*(?<m1>[\\S\\s]*?)?\\s*?(?<c3>喜欢|((?<![可怜恋做被性])爱)|\\s((dis)?like|love)\\s)\\s*?(?<m2>[\\S\\s]*)?"
             ), onlyC3 = true
         ),
 

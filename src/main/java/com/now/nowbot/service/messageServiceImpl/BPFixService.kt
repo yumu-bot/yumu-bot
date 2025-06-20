@@ -138,11 +138,15 @@ class BPFixService(
                 val meh = stat.meh
                 val miss = stat.miss
 
-                // 断连击，mania 模式现在也可以参与此项筛选
-                val isChoke = if (score.mode == OsuMode.MANIA) {
-                    (ok + meh + miss) / max <= 0.03
-                } else {
-                    (miss == 0) && (combo < (max * 0.98).roundToInt())
+                /**
+                 * 断连击
+                 * mania 模式现在也可以参与此项筛选
+                 * catch 的 choke 会被归纳到 has1pMiss 中
+                 */
+                val isChoke = when(score.mode) {
+                    OsuMode.MANIA -> (ok + meh + miss) / max <= 0.03
+                    OsuMode.CATCH_RELAX, OsuMode.CATCH -> false
+                    else -> (miss == 0) && (combo < (max * 0.98).roundToInt())
                 }
 
                 // 含有 <1% 的失误

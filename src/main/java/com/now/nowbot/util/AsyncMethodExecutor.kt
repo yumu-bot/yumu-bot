@@ -186,7 +186,7 @@ object AsyncMethodExecutor {
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要等待所有异步操作完成，请使用 asyncRunnableExecute
      */
     @JvmStatic
-    fun awaitRunnableExecute(works: Collection<Runnable>, timeout: Duration = Duration.ofMinutes(4)) {
+    fun awaitRunnableExecute(works: Collection<Runnable>, timeout: Duration = Duration.ofSeconds(30)) {
         val lock = CountDownLatch(works.size)
         works.map { w: Runnable ->
             Runnable {
@@ -208,7 +208,7 @@ object AsyncMethodExecutor {
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要等待所有异步操作完成，请使用 asyncRunnableExecute
      */
     @JvmStatic
-    fun awaitRunnableExecute(work: Runnable, timeout: Duration = Duration.ofMinutes(4)) {
+    fun awaitRunnableExecute(work: Runnable, timeout: Duration = Duration.ofSeconds(30)) {
         val lock = CountDownLatch(1)
 
         val task = Runnable {
@@ -228,12 +228,12 @@ object AsyncMethodExecutor {
 
     @JvmStatic
     fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>): List<T> {
-        return awaitSupplierExecute(works, Duration.ofMinutes(4))
+        return awaitSupplierExecute(works, Duration.ofSeconds(30))
     }
 
     @JvmStatic
     fun <T> awaitSupplierExecute(work: Supplier<T>): T {
-        return awaitSupplierExecute(listOf(work), Duration.ofMinutes(4)).first()
+        return awaitSupplierExecute(listOf(work), Duration.ofSeconds(30)).first()
     }
 
     /**
@@ -242,7 +242,7 @@ object AsyncMethodExecutor {
      * 返回结果严格按照传入的 works 顺序
      */
     @JvmStatic
-    fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>, timeout: Duration = Duration.ofMinutes(4)): List<T> {
+    fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>, timeout: Duration = Duration.ofSeconds(30)): List<T> {
         val size = works.size
         val lock = CountDownLatch(size)
         val results: MutableMap<Int, T?> = ConcurrentHashMap(size)
@@ -271,7 +271,7 @@ object AsyncMethodExecutor {
     fun <T, U> awaitPairCollectionSupplierExecute(
         work: Supplier<Collection<T>>,
         work2: Supplier<Collection<U>>,
-        timeout: Duration = Duration.ofMinutes(4)
+        timeout: Duration = Duration.ofSeconds(30)
     ): Pair<Collection<T>, Collection<U>> {
 
         val cf: CompletableFuture<Collection<T>> = CompletableFuture.supplyAsync(work)
@@ -286,7 +286,7 @@ object AsyncMethodExecutor {
     fun <T, K, V> awaitPairWithMapSupplierExecute(
         work: Supplier<T>,
         work2: Supplier<Map<K, V>>,
-        timeout: Duration = Duration.ofMinutes(4)
+        timeout: Duration = Duration.ofSeconds(30)
     ): Pair<T, Map<K, V>> {
 
         val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
@@ -301,7 +301,7 @@ object AsyncMethodExecutor {
     fun <T, U> awaitPairWithCollectionSupplierExecute(
         work: Supplier<T>,
         work2: Supplier<Collection<U>>,
-        timeout: Duration = Duration.ofMinutes(4)
+        timeout: Duration = Duration.ofSeconds(30)
     ): Pair<T, Collection<U>> {
 
         val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
@@ -316,7 +316,7 @@ object AsyncMethodExecutor {
     fun <T, U> awaitPairSupplierExecute(
         work: Supplier<T>,
         work2: Supplier<U>,
-        timeout: Duration = Duration.ofMinutes(4)
+        timeout: Duration = Duration.ofSeconds(30)
     ): Pair<T, U> {
 
         val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
@@ -332,7 +332,7 @@ object AsyncMethodExecutor {
         work: Supplier<T>,
         work2: Supplier<U>,
         work3: Supplier<V>,
-        timeout: Duration = Duration.ofMinutes(4)
+        timeout: Duration = Duration.ofSeconds(30)
     ): Triple<T, U, V> {
 
         val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
@@ -350,7 +350,7 @@ object AsyncMethodExecutor {
         work2: Supplier<U>,
         work3: Supplier<V>,
         work4: Supplier<W>,
-        timeout: Duration = Duration.ofMinutes(4)
+        timeout: Duration = Duration.ofSeconds(30)
     ): Pair<Pair<T, U>, Pair<V, W>> {
 
         val cf: CompletableFuture<T> = CompletableFuture.supplyAsync(work)
@@ -372,7 +372,7 @@ object AsyncMethodExecutor {
     @Throws(Exception::class)
     fun <T> awaitSupplierExecuteThrows(
         works: Collection<Supplier<T>>,
-        timeout: Duration = Duration.ofMinutes(4)
+        timeout: Duration = Duration.ofSeconds(30)
     ): List<T> {
         val size = works.size
         val phaser = Phaser(1)

@@ -55,8 +55,8 @@ class SBTodayBPService(
         try {
             event.reply(image)
         } catch (e: Exception) {
-            log.error("今日最好成绩：发送失败", e)
-            throw IllegalStateException.Send("今日最好成绩")
+            log.error("偏偏要上班今日最好成绩：发送失败", e)
+            throw IllegalStateException.Send("偏偏要上班今日最好成绩")
         }
     }
     private fun getParam(matcher: Matcher, event: MessageEvent): TodayBPParam {

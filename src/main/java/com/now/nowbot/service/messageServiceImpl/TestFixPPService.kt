@@ -21,8 +21,6 @@ import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.Duration
-import kotlin.math.max
 import kotlin.math.round
 import kotlin.math.roundToInt
 
@@ -135,7 +133,7 @@ import kotlin.math.roundToInt
             }
         }
 
-        AsyncMethodExecutor.awaitRunnableExecute(actions2, Duration.ofMinutes(max(5, ids.size / 5).toLong()))
+        AsyncMethodExecutor.awaitRunnableExecute(actions2)
 
         log.info("TP：玩家最好成绩添加谱面成功，耗时：${(System.currentTimeMillis() - time) / 1000} 秒")
         time = System.currentTimeMillis()
