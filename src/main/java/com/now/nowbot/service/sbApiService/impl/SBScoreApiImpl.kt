@@ -15,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import java.util.*
+import kotlin.math.min
 
 @Service
 class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
@@ -38,7 +39,7 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
         val off = (offset ?: 0)
         val lim = (limit ?: 100)
 
-        val size = off + lim
+        val size = min(off + lim, 100)
 
         return request { client ->
             client.get().uri {
@@ -81,7 +82,7 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
         val off = (offset ?: 0)
         val lim = (limit ?: 100)
 
-        val size = off + lim
+        val size = min(off + lim, 100)
 
         return request { client ->
             client.get().uri {

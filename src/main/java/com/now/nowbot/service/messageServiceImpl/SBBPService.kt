@@ -74,6 +74,20 @@ class SBBPService(
         // 避免指令冲突
         if (any?.contains("&sb", ignoreCase = true) == true) return null
 
+        val isRelax = if (any != null) {
+            val rxMatcher = ScoreFilter.MOD.regex.toPattern().matcher(any)
+
+            if (!rxMatcher.find()) {
+                false
+            } else if (rxMatcher.group("n").contains("([Rr][Xx])|([Rr]elax)".toRegex())) {
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+
         val isMyself = AtomicBoolean(true) // 处理 range
         val mode = getMode(matcher)
 
@@ -116,9 +130,15 @@ class SBBPService(
                 CmdRange(id.data!!, start, end)
             }
 
+            val rx = if (isRelax && mode.data!!.modeValue in 0..3) {
+                OsuMode.getMode(mode.data!!.modeValue + 4.toByte())
+            } else {
+                mode.data!!
+            }
+
             val async = AsyncMethodExecutor.awaitPairWithMapSupplierExecute(
-                { userApiService.getUser(id2.data!!)?.toOsuUser(mode.data!!) },
-                { id2.getBestsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition) }
+                { userApiService.getUser(id2.data!!)?.toOsuUser(rx) },
+                { id2.getBestsFromUserID(rx, isMultiple, hasCondition) }
             )
 
             user = async.first ?: throw NoSuchElementException.Player(id2.data!!.toString())
@@ -142,9 +162,15 @@ class SBBPService(
                 CmdRange(range.data!!, start, end)
             }
 
-            user = range2.data!!.toOsuUser(mode.data!!)
+            val rx = if (isRelax && mode.data!!.modeValue in 0..3) {
+                OsuMode.getMode(mode.data!!.modeValue + 4.toByte())
+            } else {
+                mode.data!!
+            }
 
-            scores = range2.getBestsFromSBUser(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition)
+            user = range2.data!!.toOsuUser(rx)
+
+            scores = range2.getBestsFromSBUser(rx, isMultiple, hasCondition)
         }
 
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
@@ -165,7 +191,7 @@ class SBBPService(
 
         if (isSearch && this.start == null) {
             offset = 0
-            limit = 200
+            limit = 100
         } else if (isMultiple) {
             offset = getOffset(0, true)
             limit = getLimit(20, true)

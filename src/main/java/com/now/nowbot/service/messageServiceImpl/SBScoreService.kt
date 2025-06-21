@@ -97,13 +97,13 @@ class SBScoreService(
 
              */
 
-            if (id != null) {
-                val rx = if (LazerMod.hasMod(mods, LazerMod.Relax) && inputMode.data!!.modeValue in 0..3) {
-                    OsuMode.getMode(inputMode.data!!.modeValue + 4.toByte())
-                } else {
-                    inputMode.data
-                }
+            val rx = if (LazerMod.hasMod(mods, LazerMod.Relax) && inputMode.data!!.modeValue in 0..3) {
+                OsuMode.getMode(inputMode.data!!.modeValue + 4.toByte())
+            } else {
+                inputMode.data!!
+            }
 
+            if (id != null) {
                 mode = OsuMode.getConvertableMode(rx, map.mode)
 
                 val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
@@ -118,7 +118,7 @@ class SBScoreService(
             } else {
                 user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score")
 
-                mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+                mode = OsuMode.getConvertableMode(rx, map.mode)
 
                 scores = scoreApiService.getBeatmapRecentScore(bid, mods, mode)
                     .filter { it.userID == user.userID }
@@ -132,28 +132,34 @@ class SBScoreService(
 
             val id = UserIDUtil.getUserIDWithoutRange(event, matcher, currentMode, AtomicBoolean(true))
 
+            val rx = if (LazerMod.hasMod(mods, LazerMod.Relax) && currentMode.data!!.modeValue in 0..3) {
+                OsuMode.getMode(currentMode.data!!.modeValue + 4.toByte())
+            } else {
+                currentMode.data!!
+            }
+
             if (id != null) {
                 val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
                     { userApiService.getUser(id) },
                     { scoreApiService.getRecentScore(
                         id = id,
                         mods = mods,
-                        mode = currentMode.data!!,
+                        mode = rx,
                         offset = 0,
                         limit = 1
                     ) }
                 )
 
-                user = async.first?.toOsuUser(currentMode.data!!) ?: throw NoSuchElementException.Player(id.toString())
+                user = async.first?.toOsuUser(rx) ?: throw NoSuchElementException.Player(id.toString())
                 recent = async.second.firstOrNull()?.toLazerScore()
                     ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
             } else {
-                user = CmdUtil.getSBUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score").toOsuUser(currentMode.data!!)
+                user = CmdUtil.getSBUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score").toOsuUser(rx)
 
                 recent = scoreApiService.getRecentScore(
                     id = user.userID,
                     mods = mods,
-                    mode = currentMode.data!!,
+                    mode = rx,
                     offset = 0,
                     limit = 1
                 ).firstOrNull()?.toLazerScore()
@@ -169,7 +175,7 @@ class SBScoreService(
 
              */
 
-            mode = OsuMode.getConvertableMode(currentMode.data, map.mode)
+            mode = OsuMode.getConvertableMode(rx, map.mode)
 
             scores = scoreApiService.getBeatmapRecentScore(bid, mods, mode)
                 .filter { it.userID == user.userID }

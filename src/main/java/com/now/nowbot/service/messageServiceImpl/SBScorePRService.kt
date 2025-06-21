@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppysb.SBUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -123,7 +124,7 @@ class SBScorePRService(
             matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
         }
 
-        val user: SBUser
+        val user: OsuUser
         val scores: Map<Int, LazerScore>
 
         // 高效的获取方式
@@ -148,7 +149,7 @@ class SBScorePRService(
             }
 
             val async = AsyncMethodExecutor.awaitPairWithMapSupplierExecute(
-                { userApiService.getUser(id2.data!!) },
+                { userApiService.getUser(id2.data!!)?.toOsuUser(rx) },
                 { id2.getRecentsFromSBUserID(rx, isMultiple, hasCondition, isPass) }
             )
 
@@ -179,7 +180,7 @@ class SBScorePRService(
                 mode.data!!
             }
 
-            user = range2.data!!
+            user = range2.data!!.toOsuUser(rx)
 
             scores = range2.getRecentsFromSBUser(rx, isMultiple, hasCondition, isPass)
         }
@@ -188,13 +189,13 @@ class SBScorePRService(
 
         if (filteredScores.isEmpty()) {
             if (isPass) {
-                throw NoSuchElementException.PassedScoreFiltered(user.username, user.currentMode)
+                throw NoSuchElementException.PassedScoreFiltered(user.username, user.currentOsuMode)
             } else {
-                throw NoSuchElementException.RecentScoreFiltered(user.username, user.currentMode)
+                throw NoSuchElementException.RecentScoreFiltered(user.username, user.currentOsuMode)
             }
         }
 
-        return ScorePRParam(user.toOsuUser(mode.data), filteredScores, isPass)
+        return ScorePRParam(user, filteredScores, isPass)
     }
 
 
