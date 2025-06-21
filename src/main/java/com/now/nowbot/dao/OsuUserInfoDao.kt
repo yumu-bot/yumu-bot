@@ -115,11 +115,13 @@ class OsuUserInfoDao(private val osuUserInfoMapper: OsuUserInfoMapper) {
             archive.play_count = data.playCount
             archive.play_time = data.playTime
 
+            // 过滤掉非法的游戏模式
             if (mode.isDefault()) {
-                archive.mode = data.currentOsuMode
+                archive.mode = OsuMode.getMode(data.currentOsuMode.modeValue % 4)
             } else {
-                archive.mode = mode
+                archive.mode = OsuMode.getMode(mode.modeValue % 4)
             }
+
             archive.time = LocalDateTime.now()
             return archive
         }
