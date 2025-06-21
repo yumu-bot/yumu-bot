@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -97,7 +98,13 @@ class SBScoreService(
              */
 
             if (id != null) {
-                mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+                val rx = if (LazerMod.hasMod(mods, LazerMod.Relax) && inputMode.data!!.modeValue in 0..3) {
+                    OsuMode.getMode(inputMode.data!!.modeValue + 4.toByte())
+                } else {
+                    inputMode.data
+                }
+
+                mode = OsuMode.getConvertableMode(rx, map.mode)
 
                 val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
                     { userApiService.getUser(id) },

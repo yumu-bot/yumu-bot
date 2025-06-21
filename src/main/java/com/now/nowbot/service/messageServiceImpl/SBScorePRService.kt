@@ -85,6 +85,20 @@ class SBScorePRService(
         // 避免指令冲突
         if (any?.contains("&sb", ignoreCase = true) == true) return null
 
+        val isRelax = if (any != null) {
+            val rxMatcher = ScoreFilter.MOD.regex.toPattern().matcher(any)
+
+            if (!rxMatcher.find()) {
+                false
+            } else if (rxMatcher.group("n").contains("([Rr][Xx])|([Rr]elax)".toRegex())) {
+                true
+            } else {
+                false
+            }
+        } else {
+            false
+        }
+
         val isMyself = AtomicBoolean(true) // 处理 range
         val mode = getMode(matcher)
 
@@ -127,9 +141,15 @@ class SBScorePRService(
                 CmdRange(id.data!!, start, end)
             }
 
+            val rx = if (isRelax && mode.data!!.modeValue in 0..3) {
+                OsuMode.getMode(mode.data!!.modeValue + 4.toByte())
+            } else {
+                mode.data!!
+            }
+
             val async = AsyncMethodExecutor.awaitPairWithMapSupplierExecute(
                 { userApiService.getUser(id2.data!!) },
-                { id2.getRecentsFromSBUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass) }
+                { id2.getRecentsFromSBUserID(rx, isMultiple, hasCondition, isPass) }
             )
 
             user = async.first ?: throw NoSuchElementException.Player(id2.data!!.toString())
@@ -153,9 +173,15 @@ class SBScorePRService(
                 CmdRange(range.data!!, start, end)
             }
 
+            val rx = if (isRelax && mode.data!!.modeValue in 0..3) {
+                OsuMode.getMode(mode.data!!.modeValue + 4.toByte())
+            } else {
+                mode.data!!
+            }
+
             user = range2.data!!
 
-            scores = range2.getRecentsFromSBUser(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass)
+            scores = range2.getRecentsFromSBUser(rx, isMultiple, hasCondition, isPass)
         }
 
         val filteredScores = ScoreFilter.filterScores(scores, conditions)

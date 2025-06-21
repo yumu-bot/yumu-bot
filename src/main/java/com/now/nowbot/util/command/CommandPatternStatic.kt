@@ -149,7 +149,7 @@ val REG_IGNORE_BS: String = "[^bs:：\\d\\s]"
 val REG_NAME: String = "($CHAR_NAME$CHAR_NAME_WITH_SPACE+$CHAR_NAME)"
 
 @Language("RegExp")
-val REG_SB_NAME: String = "(\\S.+\\S)"
+val REG_SB_NAME: String = "(\\S[^#＃＝=]+\\S)"
 
 /**
  * 这个分隔符会分隔空格

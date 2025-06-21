@@ -914,7 +914,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.SB_SET_MODE) continue
+        if (i != Instruction.SB_SCORE_PR) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }
