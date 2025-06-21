@@ -37,29 +37,6 @@ class ScoreApiImpl(
     val scoreDao: ScoreDao,
 ) : OsuScoreApiService {
 
-    private fun getBests(
-        id: Long,
-        mode: OsuMode?,
-        offset: Int,
-        limit: Int,
-    ): List<LazerScore> {
-        return request { client ->
-            client.get()
-                .uri {
-                    it.path("users/{uid}/scores/best")
-                        .queryParam("legacy_only", 0)
-                        .queryParam("offset", offset)
-                        .queryParam("limit", limit)
-                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                        .build(id)
-                }
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToFlux(LazerScore::class.java)
-                .collectList()
-        }
-    }
-
     override fun getBestScores(
         id: Long,
         mode: OsuMode?,
@@ -75,26 +52,6 @@ class ScoreApiImpl(
             )
 
             return e.first + e.second
-
-            /*
-            val actions = ArrayList<AsyncMethodExecutor.Runnable>(2)
-
-            var list1 = listOf<LazerScore>()
-            var list2 = listOf<LazerScore>()
-
-            actions.add {
-                list1 = getBests(id, mode, offset, 100)
-            }
-
-            actions.add {
-                list2 = getBests(id, mode, offset + 100, limit - 100)
-            }
-
-            AsyncMethodExecutor.awaitRunnableExecute(actions)
-
-            return list1 + list2
-
-             */
         }
     }
 
@@ -132,6 +89,14 @@ class ScoreApiImpl(
         limit: Int,
     ): List<LazerScore> {
         return getRecent(uid, mode, true, offset, limit)!!
+    }
+
+    override fun getScore(scoreID: Long): LazerScore {
+        return request { client ->
+            client.get().uri {
+                it.path("scores/{scoreID}").build(scoreID)
+            }.headers(base::insertHeader).retrieve().bodyToMono(LazerScore::class.java)
+        }
     }
 
     override fun getBeatMapScore(bid: Long, uid: Long, mode: OsuMode?): BeatmapUserScore? {
@@ -235,17 +200,6 @@ class ScoreApiImpl(
             base.insertHeader(user),
             uri.apply(1),
         )
-    }
-
-    private fun setMods(builder: UriBuilder, mods: Iterable<LazerMod?>) {
-        for (mod in mods) {
-            if (mod is LazerMod.NoMod) {
-                builder.queryParam("mods[]", "NM")
-                return
-            }
-        }
-
-        mods.filterNotNull().forEach { builder.queryParam("mods[]", it.acronym) }
     }
 
     override fun getBeatmapScores(bid: Long, user: BindUser, mode: OsuMode?): List<LazerScore> {
@@ -398,6 +352,28 @@ class ScoreApiImpl(
         return null
     }
 
+    private fun getBests(
+        id: Long,
+        mode: OsuMode?,
+        offset: Int,
+        limit: Int,
+    ): List<LazerScore> {
+        return request { client ->
+            client.get()
+                .uri {
+                    it.path("users/{uid}/scores/best")
+                        .queryParam("legacy_only", 0)
+                        .queryParam("offset", offset)
+                        .queryParam("limit", limit)
+                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                        .build(id)
+                }
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToFlux(LazerScore::class.java)
+                .collectList()
+        }
+    }
 
     private fun getRecent(
         user: BindUser,
@@ -452,6 +428,18 @@ class ScoreApiImpl(
                 .doOnNext(scoreDao::saveScoreAsync)
         }
     }
+
+    private fun setMods(builder: UriBuilder, mods: Iterable<LazerMod?>) {
+        for (mod in mods) {
+            if (mod is LazerMod.NoMod) {
+                builder.queryParam("mods[]", "NM")
+                return
+            }
+        }
+
+        mods.filterNotNull().forEach { builder.queryParam("mods[]", it.acronym) }
+    }
+
 
     /**
      * 错误包装

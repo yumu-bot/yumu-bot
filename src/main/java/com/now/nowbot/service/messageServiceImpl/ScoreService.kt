@@ -115,9 +115,9 @@ import java.util.regex.Matcher
         val user: OsuUser
         val scores: List<LazerScore>
         val mode: OsuMode
+        val mods: List<LazerMod>
 
-        if (bid != 0L) {
-
+        if (bid in 0L ..< 10000000L) {
             val id = UserIDUtil.getUserIDWithoutRange(event, matcher, inputMode, AtomicBoolean(true))
 
             map = beatmapApiService.getBeatmap(bid)
@@ -127,7 +127,6 @@ import java.util.regex.Matcher
             }
 
             if (id != null) {
-
                 mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
                 val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
@@ -144,6 +143,22 @@ import java.util.regex.Matcher
 
                 scores = scoreApiService.getBeatmapScores(bid, user.userID, mode)
             }
+
+            mods = getMod(matcher)
+        } else if (bid >= 10000000L) {
+            // 输入成绩 ID 的方法
+            val score = scoreApiService.getScore(bid)
+
+            val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+                { userApiService.getOsuUser(score.userID, score.mode) },
+                { beatmapApiService.getBeatmap(score.beatmapID) }
+            )
+
+            mods = score.mods
+            mode = score.mode
+            user = async.first
+            map = async.second
+            scores = listOf(score)
         } else {
             // 备用方法：先获取最近成绩，再获取谱面
             val recent: LazerScore
@@ -178,13 +193,13 @@ import java.util.regex.Matcher
             mode = OsuMode.getConvertableMode(currentMode.data, map.mode)
 
             scores = scoreApiService.getBeatmapScores(recent.beatmapID, user.userID, mode)
+
+            mods = getMod(matcher)
         }
 
         if (scores.isEmpty()) {
             throw NoSuchElementException.BeatmapScore(map.previewName)
         }
-
-        val mods = getMod(matcher)
 
         val filtered = scores.filter { score ->
             score.mods

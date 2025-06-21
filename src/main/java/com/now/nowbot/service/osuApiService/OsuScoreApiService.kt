@@ -57,6 +57,11 @@ interface OsuScoreApiService {
         }
     }
 
+    /*
+
+     */
+    fun getScore(scoreID: Long): LazerScore
+
     /**
      * 获得成绩 不包含fail 共获取 e 条 [s, e)
      *
