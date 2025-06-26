@@ -213,11 +213,9 @@ object CmdUtil {
             }
         }
 
-        // 使其顺序
-        if (result.end != null && result.start != null && result.start!! > result.end!!) {
-            val temp = result.start
-            result.start = result.end
-            result.end = temp
+        // 交换顺序
+        if (result.start != null && result.end != null && result.start!! > result.end!!) {
+            result.start = result.end!!.also { result.end = result.start }
         }
 
         if (result.data != null) {

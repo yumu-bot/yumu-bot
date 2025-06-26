@@ -317,8 +317,8 @@ object UserIDUtil {
 
             val id = bindDao.getOsuID(range.data!!)
 
-            return CmdRange(id, range.start, range.end)
-
+            result = CmdRange(id, range.start, range.end)
+            break
         } catch (ignored: Exception) {}
 
         // 交换顺序
