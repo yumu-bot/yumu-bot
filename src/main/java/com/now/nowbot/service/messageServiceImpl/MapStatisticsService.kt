@@ -134,9 +134,9 @@ class MapStatisticsService(
 
         var beatmap: Beatmap? = null
 
-        if (bid != 0L) {
+        if (bid != 0L) try {
             beatmap = beatmapApiService.getBeatmap(bid)
-        }
+        } catch (ignored: Throwable) {}
 
         if (beatmap == null) {
             if (isAvoidance(messageText, "！m", "!m")) {

@@ -54,7 +54,9 @@ class GetPoolService(
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: GetPoolParam) {
         val mapPool = MapPoolDto(param.name, param.mode, param.map, beatmapApiService, calculateApiService)
 
-        if (mapPool.modPools.isEmpty()) throw MapPoolException(MapPoolException.Type.GP_Map_Empty)
+        if (mapPool.modPools.isEmpty()) {
+            throw MapPoolException(MapPoolException.Type.GP_Map_Empty)
+        }
 
         val body = mapOf(
             "pool" to mapPool, "mode" to param.mode.shortName
@@ -99,14 +101,8 @@ class GetPoolService(
             val s = dataStrs[i]
             if (s.isBlank()) continue
 
-            var mod: String? = null
-            var v: Long? = s.toLongOrNull()
-
-            try {
-                v = s.toLong()
-            } catch (e: NumberFormatException) {
-                mod = s
-            }
+            val v: Long? = s.toLongOrNull()
+            var mod: String? = if (v != null) null else s
 
             when (status) {
                 0 -> {

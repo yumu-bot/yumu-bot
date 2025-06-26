@@ -9,146 +9,138 @@ import jakarta.persistence.Column
 import java.time.OffsetDateTime
 import java.util.stream.StreamSupport
 
-class Beatmap {
+data class Beatmap(
     @JsonProperty("beatmapset_id")
-    var beatmapsetID: Long = 0
+    var beatmapsetID: Long = 0,
 
     @JsonProperty("difficulty_rating")
-    var starRating: Double = 0.0
+    var starRating: Double = 0.0,
 
     @JsonProperty("id")
     @Column(name = "id")
-    var beatmapID: Long = 0
+    var beatmapID: Long = 0,
 
     @set:JsonProperty("mode")
     @get:JsonIgnore
-    var modeStr = "osu"
-
-    @set:JsonIgnore
-    @get:JsonProperty("mode")
-    var mode: OsuMode
-        get() {
-            return OsuMode.getMode(modeStr)
-        }
-        set(value) {
-            modeStr = value.shortName
-        }
+    var modeStr: String = "osu",
 
     @JsonProperty("status")
-    var status: String = "graveyard"
+    var status: String = "graveyard",
 
     @JsonProperty("total_length")
-    var totalLength: Int = 0
+    var totalLength: Int = 0,
 
     @JsonProperty("user_id")
-    var mapperID: Long = 0
+    var mapperID: Long = 0,
 
     @JsonProperty("version")
-    var difficultyName: String = ""
+    var difficultyName: String = "",
 
     @JsonProperty("beatmapset")
-    var beatmapset: Beatmapset? = null
+    var beatmapset: Beatmapset? = null,
 
     @JsonProperty("checksum")
-    var md5: String? = ""
-        get() {
-            return field ?: ""
-        }
-
-    @get:JsonProperty("retries")
-    val retries: List<Int>
-        get() {
-            return getList(failTimes, "fail")
-        }
-
-    @get:JsonProperty("fails")
-    val fails: List<Int>
-        get() {
-            return getList(failTimes, "exit")
-        }
+    var md5: String? = null,
 
     //retry == fail, fail == exit
     @JsonProperty("failtimes")
-    var failTimes: JsonNode? = null
+    var failTimes: JsonNode? = null,
 
     @JsonProperty("max_combo")
-    var maxCombo: Int? = 0
+    var maxCombo: Int? = 0,
 
     @set:JsonProperty("top_tag_ids")
     @get:JsonIgnoreProperties
-    var tagIDs: List<TagData>? = null
-
-    data class TagData(
-        @JsonProperty("tag_id") val id: Int,
-        @JsonProperty("count") val count: Int,
-    )
+    var tagIDs: List<TagData>? = null,
 
     // 自己设
     @set:JsonIgnoreProperties
     @get:JsonProperty("tags")
-    var tags: List<Tag>? = null
+    var tags: List<Tag>? = null,
 
     // Extend!
-
     @JsonProperty("accuracy")
-    var OD: Float? = null
+    var OD: Float? = null,
 
     @JsonProperty("ar")
-    var AR: Float? = null
+    var AR: Float? = null,
 
     @JsonProperty("bpm")
-    var BPM: Float? = null
+    var BPM: Float? = null,
 
     @JsonProperty("convert")
-    var convert: Boolean? = null
+    var convert: Boolean? = null,
 
     @JsonProperty("count_circles")
-    var circles: Int? = null
+    var circles: Int? = null,
 
     @JsonProperty("count_sliders")
-    var sliders: Int? = null
+    var sliders: Int? = null,
 
     @JsonProperty("count_spinners")
-    var spinners: Int? = null
+    var spinners: Int? = null,
 
     @JsonProperty("cs")
-    var CS: Float? = null
+    var CS: Float? = null,
 
     @JsonProperty("deleted_at")
-    var deletedAt: OffsetDateTime? = null
+    var deletedAt: OffsetDateTime? = null,
 
     @JsonProperty("drain")
-    var HP: Float? = null
+    var HP: Float? = null,
 
     @JsonProperty("hit_length")
-    var hitLength: Int? = null
+    var hitLength: Int? = null,
 
     @JsonProperty("is_scoreable")
-    var scoreAble: Boolean? = null
+    var scoreAble: Boolean? = null,
 
     @JsonProperty("last_updated")
-    var lastUpdated: String? = null
+    var lastUpdated: String? = null,
 
     /**
      * 只有 beatmapSet 内的 beatmap 才有的属性
      */
     @JsonProperty("owners")
-    var owners: List<MicroUser>? = null
+    var owners: List<MicroUser>? = null,
 
     @JsonProperty("mode_int")
-    var modeInt: Int? = null
+    var modeInt: Int? = null,
 
     @JsonProperty("passcount")
-    var passCount: Int? = null
+    var passCount: Int? = null,
 
     @JsonProperty("playcount")
-    var playCount: Int = 0
+    var playCount: Int = 0,
 
     @JsonProperty("ranked")
-    var ranked: Int = 0
+    var ranked: Int = 0,
 
     @JsonProperty("url")
-    var url: String? = null
+    var url: String? = null,
+) {
+
+    @set:JsonIgnore
+    @get:JsonProperty("mode")
+    var mode: OsuMode
+    get() {
+        return OsuMode.getMode(modeStr)
+    }
+    set(value) {
+        modeStr = value.shortName
+    }
+
+    @get:JsonProperty("retries")
+    val retries: List<Int>
+    get() {
+        return getList(failTimes, "fail")
+    }
+
+    @get:JsonProperty("fails")
+    val fails: List<Int>
+    get() {
+        return getList(failTimes, "exit")
+    }
 
     //自己算
     @get:JsonProperty("retry")
@@ -189,6 +181,24 @@ class Beatmap {
     //自己取
     @JsonProperty("user")
     var user: OsuUser? = null
+
+    data class TagData(
+        @JsonProperty("tag_id") val id: Int,
+        @JsonProperty("count") val count: Int,
+    )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Beatmap
+
+        return beatmapID == other.beatmapID
+    }
+
+    override fun hashCode(): Int {
+        return beatmapID.hashCode()
+    }
 
     companion object {
         @JvmStatic

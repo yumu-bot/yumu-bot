@@ -5,6 +5,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.mappool.now.Pool
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
+import com.now.nowbot.util.AsyncMethodExecutor
 
 class MapPoolDto(
     var name: String? = "MapPool",
@@ -15,30 +16,39 @@ class MapPoolDto(
 ) {
     var id: Int = 0
 
-    val modPools: List<ModPool> = poolMap?.map { pool ->
-        val beatmaps = pool.value.map { beatmapApiService.getBeatmap(it) }
-
-        ModPool(pool.key, beatmaps)
-    } ?: listOf()
-
-    val firstMapSID: Long = if (modPools.isNotEmpty() && modPools.first().beatmaps.isNotEmpty()) {
-        modPools.first().beatmaps.first().beatmapset!!.beatmapsetID
+    val modPools: List<ModPool> = if (poolMap.isNullOrEmpty()) {
+        listOf()
     } else {
-        0L
-    }
-
-    val averageStarRating : Double = if (modPools.isNotEmpty()) {
-        modPools.map {
-            if (LazerMod.hasStarRatingChange(listOf(it.mod))) {
-                it.beatmaps.forEach { b ->
-                    calculateApiService.applyBeatMapChanges(b, listOf(it.mod))
-                    calculateApiService.applyStarToBeatMap(b, mode, listOf(it.mod))
+        val action = AsyncMethodExecutor.awaitSupplierExecute {
+            poolMap.mapValues { pool ->
+                pool.value.map {
+                    beatmapApiService.getBeatmapFromDatabase(it)
                 }
             }
+        }
 
-            it.beatmaps.map { it.starRating }
-        }.flatten().average()
-    } else 0.0
+        action.map { ModPool(it.key, it.value) }
+    }
+
+    val firstMapSID: Long = modPools.firstOrNull()?.beatmaps?.firstOrNull()?.beatmapset?.beatmapsetID ?: 0L
+
+    val averageStarRating : Double = if (modPools.isEmpty()) {
+        0.0
+    } else {
+        val hasChange = modPools.filter { LazerMod.hasStarRatingChange(listOf(it.mod ?: return@filter false)) }
+
+        AsyncMethodExecutor.awaitRunnableExecute(hasChange.map {
+            it.beatmaps.map { b ->
+                AsyncMethodExecutor.Runnable {
+                    calculateApiService.applyBeatMapChanges(b, listOf(it.mod!!))
+                    calculateApiService.applyStarToBeatMap(b, mode, listOf(it.mod!!))
+                }
+            }
+        }.flatten())
+
+        modPools.flatMap { it.beatmaps }.map { it.starRating }.average()
+    }
+
 
     constructor(pool: Pool, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService) : this(
         pool.name,

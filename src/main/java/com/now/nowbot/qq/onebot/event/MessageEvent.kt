@@ -13,7 +13,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.MalformedURLException
 import java.net.URI
-import java.net.URISyntaxException
 
 open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot),
     com.now.nowbot.qq.event.MessageEvent {
@@ -74,7 +73,7 @@ open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot),
                             ImageMessage(URI(it.data.getOrDefault("url", "")).toURL())
                         } catch (e: MalformedURLException) {
                             TextMessage("[图片;加载异常]")
-                        } catch (e: URISyntaxException) {
+                        } catch (e: IllegalArgumentException) {
                             TextMessage("[图片;加载异常]")
                         }
                     }

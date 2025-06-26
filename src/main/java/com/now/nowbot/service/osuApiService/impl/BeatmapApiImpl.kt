@@ -663,7 +663,7 @@ class BeatmapApiImpl(
         if (scores.isEmpty()) return
 
         for (score in scores) {
-            applyBeatmapExtend(score, beatmap)
+            applyBeatmapExtend(score, beatmap.copy())
         }
     }
 
@@ -874,6 +874,19 @@ class BeatmapApiImpl(
             }
 
             // 深拷贝
+            return extended.copy().apply {
+                starRating = lite.starRating
+                CS = lite.CS
+                AR = lite.AR
+                OD = lite.OD
+                HP = lite.HP
+                totalLength = lite.totalLength
+                hitLength = lite.hitLength
+                BPM = lite.BPM
+                convert = lite.convert
+            }
+
+            /*
             val deepL = Beatmap().apply {
                 beatmapsetID = extended.beatmapsetID
                 beatmapID = extended.beatmapID
@@ -914,6 +927,8 @@ class BeatmapApiImpl(
             }
 
             return deepL
+
+             */
         }
     }
 }

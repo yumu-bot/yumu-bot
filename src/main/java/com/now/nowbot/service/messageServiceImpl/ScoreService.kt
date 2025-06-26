@@ -221,6 +221,9 @@ import java.util.regex.Matcher
     private fun getMessageChain(param: ScoreParam): MessageChain {
         val image: ByteArray = if (param.scores.size > 1 && param.isMultipleScore) {
             beatmapApiService.applyBeatmapExtendForSameScore(param.scores, param.map)
+            calculateApiService.applyStarToScores(param.scores)
+            // calculateApiService.applyBeatMapChanges(param.scores)
+
             asyncDownloadBackground(param)
 
             val body = mapOf(
