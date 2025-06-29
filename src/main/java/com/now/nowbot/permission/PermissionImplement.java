@@ -89,13 +89,14 @@ public class PermissionImplement implements PermissionController {
                 }
                 reply = service.reply(event, data);
             } catch (Throwable e) {
-                if (e instanceof BotException) {
-                    reply = new MessageChain(e.getMessage());
-                } else if (e instanceof ExecutionException) {
-                    reply = new MessageChain(e.getCause().getMessage());
-                } else {
-                    log.error("腾讯消息类：其他错误", e);
-                    continue;
+                switch (e) {
+                    case BotException botException -> reply = new MessageChain(e.getMessage());
+                    case ExecutionException executionException -> reply = new MessageChain(e.getCause().getMessage());
+                    case TimeoutException timeoutException -> reply = new MessageChain("超时了。");
+                    default -> {
+                        log.error("腾讯消息类：其他错误", e);
+                        continue;
+                    }
                 }
             }
 

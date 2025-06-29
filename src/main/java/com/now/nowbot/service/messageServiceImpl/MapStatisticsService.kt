@@ -132,11 +132,15 @@ class MapStatisticsService(
         val bid = getBid(matcher)
         val conditions = DataUtil.paramMatcher(matcher.group("any"), Filter.entries.map { it.regex })
 
-        var beatmap: Beatmap? = null
-
-        if (bid != 0L) try {
-            beatmap = beatmapApiService.getBeatmap(bid)
-        } catch (ignored: Throwable) {}
+        val beatmap: Beatmap? = if (bid != 0L) {
+            try {
+                beatmapApiService.getBeatmap(bid)
+            } catch (ignored: Throwable) {
+                null
+            }
+        } else {
+            null
+        }
 
         if (beatmap == null) {
             if (isAvoidance(messageText, "！m", "!m")) {

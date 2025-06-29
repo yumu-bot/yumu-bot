@@ -22,36 +22,27 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.regex.Matcher
 import kotlin.math.max
 
 @Service("I_MAPPER") class IMapperService(
     private val userApiService: OsuUserApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService,
-) : MessageService<OsuUser>, TencentMessageService<OsuUser> {
+) : MessageService<Map<String, Any?>>, TencentMessageService<Map<String, Any?>> {
 
-    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<OsuUser>): Boolean {
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Map<String, Any?>>): Boolean {
         val matcher = Instruction.I_MAPPER.matcher(messageText)
         if (!matcher.find()) return false
 
-        val mode = CmdObject(OsuMode.DEFAULT)
-        val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
-
-        val user: OsuUser = if (id != null) {
-            userApiService.getOsuUser(id, mode.data!!)
-        } else {
-            getUserWithoutRange(event, matcher, mode)
-        }
-
-        data.value = user
+        data.value = getIMapperV1(getIMapperParam(event, matcher, userApiService, beatmapApiService))
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: OsuUser) {
-        val map = getIMapperV1(param, userApiService, beatmapApiService)
+    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Map<String, Any?>) {
 
         val image: ByteArray = try {
-            imageService.getPanel(map, "M")
+            imageService.getPanel(param, "M")
         } catch (e: Exception) {
             log.error("谱师信息：渲染失败", e)
             throw IMapperException(IMapperException.Type.IM_Fetch_Error)
@@ -65,58 +56,35 @@ import kotlin.math.max
         }
     }
 
-    override fun accept(event: MessageEvent, messageText: String): OsuUser? {
+    override fun accept(event: MessageEvent, messageText: String): Map<String, Any?>? {
         val matcher = OfficialInstruction.I_MAPPER.matcher(messageText)
         if (!matcher.find()) return null
 
-        val mode = CmdObject(OsuMode.DEFAULT)
-        val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
-
-        val user: OsuUser = if (id != null) {
-            userApiService.getOsuUser(id, mode.data!!)
-        } else {
-            getUserWithoutRange(event, matcher, mode)
-        }
-
-        return user
+        return getIMapperV1(getIMapperParam(event, matcher, userApiService, beatmapApiService))
     }
 
-    override fun reply(event: MessageEvent, param: OsuUser): MessageChain? {
-        val body = getIMapperV1(param, userApiService, beatmapApiService)
-
-        return MessageChainBuilder().addImage(imageService.getPanel(body, "M")).build()
+    override fun reply(event: MessageEvent, param: Map<String, Any?>): MessageChain? {
+        return MessageChainBuilder().addImage(imageService.getPanel(param, "M")).build()
     }
+
+    data class IMapperParam(
+        val user: OsuUser,
+        val relatedSets: Sequence<Beatmapset>,
+        val activity: List<ActivityEvent>,
+    )
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(IMapperService::class.java)
 
-        fun getIMapperV2(user: OsuUser, userApiService: OsuUserApiService, beatmapApiService: OsuBeatmapApiService): Map<String, Any> {
-            val query = mapOf(
-                "q" to "creator=" + user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
-            )
-
-            // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
-            val query2 = mapOf(
-                "q" to user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
-            )
-
-            val async = AsyncMethodExecutor.awaitTripleSupplierExecute(
-                { beatmapApiService.searchBeatmapset(query, 10) },
-                { beatmapApiService.searchBeatmapset(query2, 10) },
-                { userApiService.getUserRecentActivity(user.userID, 0, 100).filter { it.isMapping } }
-            )
-
-            val relatedSets = (async.first.beatmapsets.toHashSet() +
-                    async.second.beatmapsets.filter {
-                        it.beatmapsetID != user.userID &&
-                                (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true)
-                    }.toHashSet()).asSequence()
+        fun getIMapperV2(param: IMapperParam, userApiService: OsuUserApiService): Map<String, Any> {
+            val user = param.user
+            val relatedSets = param.relatedSets
+            val activity = param.activity
 
             val relatedUsers = AsyncMethodExecutor.awaitSupplierExecute {
                 userApiService.getUsers(relatedSets.filter { it.creatorID != user.userID }.map { it.creatorID }.toSet(), false)
             }
 
-            val activity: List<ActivityEvent> = async.third
             val recentActivity: List<ActivityEvent> = try {
                 activity.mapIndexed { i, it ->
                     val before = activity[max(0, i - 1)]
@@ -270,36 +238,75 @@ import kotlin.math.max
                 )
         }
 
+        fun getIMapperParam(event: MessageEvent, matcher: Matcher, userApiService: OsuUserApiService, beatmapApiService: OsuBeatmapApiService): IMapperParam {
+            val mode = CmdObject(OsuMode.DEFAULT)
+            val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
+
+            val user: OsuUser
+            val relatedSets: Sequence<Beatmapset>
+            val activity: List<ActivityEvent>
+
+            if (id != null) {
+                val query = mapOf(
+                    "q" to "creator=${id}", "sort" to "ranked_desc", "s" to "any", "page" to 1
+                )
+
+                // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
+                val query2 = mapOf(
+                    "q" to id, "sort" to "ranked_desc", "s" to "any", "page" to 1
+                )
+
+                val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
+                    { beatmapApiService.searchBeatmapset(query, 10) },
+                    { beatmapApiService.searchBeatmapset(query2, 10) },
+                    { userApiService.getUserRecentActivity(id, 0, 100).filter { it.isMapping } },
+                    { userApiService.getOsuUser(id, mode.data!!) },
+                )
+
+                relatedSets = (async.first.first.beatmapsets.toHashSet() + async.first.second.beatmapsets.filter {
+                    it.beatmapsetID != id && (it.beatmaps?.all { that -> that.beatmapID != id } ?: true)
+                }.toHashSet()).asSequence()
+
+                activity = async.second.first
+
+                user = async.second.second
+            } else {
+                user = getUserWithoutRange(event, matcher, mode)
+
+                val query = mapOf(
+                    "q" to "creator=${user.userID}", "sort" to "ranked_desc", "s" to "any", "page" to 1
+                )
+
+                // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
+                val query2 = mapOf(
+                    "q" to user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
+                )
+
+                val async = AsyncMethodExecutor.awaitTripleSupplierExecute(
+                    { beatmapApiService.searchBeatmapset(query, 10) },
+                    { beatmapApiService.searchBeatmapset(query2, 10) },
+                    { userApiService.getUserRecentActivity(user.userID, 0, 100).filter { it.isMapping } }
+                )
+
+                relatedSets = (async.first.beatmapsets.toHashSet() + async.second.beatmapsets.filter {
+                    it.beatmapsetID != user.userID && (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true)
+                }.toHashSet()).asSequence()
+
+                activity = async.third
+            }
+
+            return IMapperParam(user, relatedSets, activity)
+        }
+
         fun getIMapperV1(
-            user: OsuUser, userApiService: OsuUserApiService, beatmapApiService: OsuBeatmapApiService
+            param: IMapperParam
         ): Map<String, Any?> {
-
-            val query = mapOf(
-                "q" to "creator=" + user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
-            )
-
-            // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
-            val query2 = mapOf(
-                "q" to user.userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
-            )
-
-            val async = AsyncMethodExecutor.awaitTripleSupplierExecute(
-                { beatmapApiService.searchBeatmapset(query, 10) },
-                { beatmapApiService.searchBeatmapset(query2, 10) },
-                { userApiService.getUserRecentActivity(user.userID, 0, 100).filter { it.isMapping } }
-            )
-
-            val result = (async.first.beatmapsets.toHashSet() +
-                    async.second.beatmapsets.filter {
-                        it.beatmapsetID != user.userID &&
-                                (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true)
-                    }.toHashSet()).asSequence()
-
-            val activity: List<ActivityEvent> = async.third
+            val result = param.relatedSets
+            val user = param.user
 
             val mappingActivity: List<ActivityEvent> = try {
-                activity.mapIndexed { i, it ->
-                    val before = activity[max(0, i - 1)]
+                param.activity.mapIndexed { i, it ->
+                    val before = param.activity[max(0, i - 1)]
 
                     if (it != before || i == 0) {
                         it

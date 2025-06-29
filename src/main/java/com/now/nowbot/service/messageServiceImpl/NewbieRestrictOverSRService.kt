@@ -167,11 +167,7 @@ class NewbieRestrictOverSRService(
                         limit = getLimit(1, false)
                     }
 
-                    val pss = try {
-                        scoreApiService.getScore(this.data!!.userID, mode.data, offset, limit, isPass)
-                    } catch (e: Exception) {
-                        return false
-                    }
+                    val pss = scoreApiService.getScore(this.data!!.userID, mode.data, offset, limit, isPass)
 
                     calculateApiService.applyStarToScores(pss)
                     calculateApiService.applyBeatMapChanges(pss)
@@ -303,7 +299,7 @@ class NewbieRestrictOverSRService(
 
                 return false
             } else return false
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             return false
         }
 

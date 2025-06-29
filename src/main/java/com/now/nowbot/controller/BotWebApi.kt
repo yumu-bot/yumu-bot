@@ -22,6 +22,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.parseRange2Limit
 import com.now.nowbot.util.DataUtil.parseRange2Offset
 import com.now.nowbot.util.QQMsgUtil
@@ -829,23 +830,47 @@ import kotlin.math.min
     /**
      * 获取谱师信息 (IM)
      *
-     * @param uid  玩家编号
+     * @param id 玩家编号
      * @param name 玩家名称
      * @return 谱师信息图片
      */
     @GetMapping(value = ["info/mapper"]) @OpenResource(name = "im", desp = "获取谱师信息") fun getMapperInfo(
-        @OpenResource(name = "uid", desp = "玩家编号") @RequestParam("uid") @Nullable uid: Long?,
+        @OpenResource(name = "uid", desp = "玩家编号") @RequestParam("uid") @NonNull id: Long,
         @OpenResource(name = "name", desp = "玩家名称") @RequestParam("name") @Nullable name: String?
     ): ResponseEntity<ByteArray> {
-        val osuUser = getPlayerInfoJson(uid, name, null)
-        val data = IMapperService.getIMapperV1(
-            osuUser, userApiService, beatmapApiService
+        val query = mapOf(
+            "q" to "creator=${id}", "sort" to "ranked_desc", "s" to "any", "page" to 1
         )
-        val image = imageService.getPanel(data, "M")
+
+        // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
+        val query2 = mapOf(
+            "q" to id, "sort" to "ranked_desc", "s" to "any", "page" to 1
+        )
+
+        val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
+            { beatmapApiService.searchBeatmapset(query, 10) },
+            { beatmapApiService.searchBeatmapset(query2, 10) },
+            { userApiService.getUserRecentActivity(id, 0, 100).filter { it.isMapping } },
+            { userApiService.getOsuUser(id) },
+        )
+
+        val relatedSets = (async.first.first.beatmapsets.toHashSet() + async.first.second.beatmapsets.filter {
+            it.beatmapsetID != id && (it.beatmaps?.all { that -> that.beatmapID != id } ?: true)
+        }.toHashSet()).asSequence()
+
+        val activity = async.second.first
+
+        val user = async.second.second
+
+        val param = IMapperService.IMapperParam(
+            user, relatedSets, activity
+        )
+
+        val image = imageService.getPanel(IMapperService.getIMapperV1(param), "M")
 
         return ResponseEntity(
             image, getImageHeader(
-                "${osuUser.userID}-mapper.jpg", image.size
+                "${user.userID}-mapper.jpg", image.size
             ), HttpStatus.OK
         )
     }
