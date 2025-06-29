@@ -874,7 +874,7 @@ data class CmdObject<T>(var data: T? = null)
 
 /** 包装类, 记录包括 range 结果 */
 data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int? = null) {
-    // 设置 ZeroToRange 时生效
+    // 如果为真，则默认为 1-100
     private var rangeZero = false
 
     private fun halfRange() = start != null && end == null

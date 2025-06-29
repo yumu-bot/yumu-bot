@@ -256,7 +256,7 @@ class NewbieRestrictOverSRService(
             } else if (m.find()) {
                 val bid = getBid(m)
 
-                val beatmap = if (bid != 0L) {
+                val beatmap = if (bid > 0L) {
                     beatmapApiService.getBeatmap(bid)
                 } else return false
 
@@ -266,6 +266,7 @@ class NewbieRestrictOverSRService(
                 // 自己构建成绩
                 val constructScore = LazerScore()
 
+                constructScore.beatmapID = beatmap.beatmapID
                 constructScore.beatmap = beatmap
                 constructScore.beatmapset = beatmap.beatmapset!!
                 constructScore.ruleset = mode.modeValue

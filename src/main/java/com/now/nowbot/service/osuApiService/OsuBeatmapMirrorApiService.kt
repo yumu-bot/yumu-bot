@@ -45,14 +45,15 @@ import java.nio.file.Path
             val localPath = webClient.get().uri(url) { it.path("/api/file/local/bg/{bid}").build(bid) }.retrieve()
                 .bodyToMono(String::class.java).block()!!
             val path = Path.of(localPath)
+
             if (Files.isRegularFile(path)) {
                 return path
             }
 
-            log.error("获取谱面 $bid 背景失败: 文件 [$localPath] 不存在, 大概率被版权然后移出了资源")
+            log.error("获取谱面 $bid 背景失败: 文件 [$localPath] 不存在")
             return null
         } catch (e: WebClientResponseException) {
-            log.error("获取谱面 $bid 背景失败：", e)
+            log.error("获取谱面 $bid 背景失败：${e.statusCode}")
             return null
         }
     }
