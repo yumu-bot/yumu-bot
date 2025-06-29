@@ -129,7 +129,7 @@ class NewbieRestrictOverSRService(
                 val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
-                val rangeInConditions = conditions.lastOrNull()
+                val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
                 val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
                 val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
@@ -137,7 +137,11 @@ class NewbieRestrictOverSRService(
                     return false
                 }
 
-                val ranges = if (hasRangeInConditions) rangeInConditions else pr.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
+                val ranges = if (hasRangeInConditions) {
+                    rangeInConditions
+                } else {
+                    b.group(FLAG_RANGE)
+                }?.split(REG_HYPHEN.toRegex())
 
                 val range2 = if (range.start != null) {
                     range
@@ -206,7 +210,7 @@ class NewbieRestrictOverSRService(
                 val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
-                val rangeInConditions = conditions.lastOrNull()
+                val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
                 val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
                 val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
@@ -214,7 +218,11 @@ class NewbieRestrictOverSRService(
                     return false
                 }
 
-                val ranges = if (hasRangeInConditions) rangeInConditions else b.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
+                val ranges = if (hasRangeInConditions) {
+                    rangeInConditions
+                } else {
+                    b.group(FLAG_RANGE)
+                }?.split(REG_HYPHEN.toRegex())
 
                 val range2 = if (range.start != null) {
                     range
@@ -231,7 +239,7 @@ class NewbieRestrictOverSRService(
                     val offset: Int
                     val limit: Int
 
-                    if (hasCondition) {
+                    if (hasCondition && this.start == null) {
                         offset = 0
                         limit = 200
                     } else if (isMultiple) {
