@@ -290,7 +290,7 @@ open class LazerScore(
             // 浮点数比较使用 `==` 容易出bug, 一般5-7位小数就够了
             var rank = when (score.mode) {
                 OSU, OSU_RELAX, OSU_AUTOPILOT -> {
-                    val is50Over1P = s.meh / m.great > 0.01
+                    val is50Over1P = (s.meh * 100 > score.scoreHit)
                     when {
                         p300 > 1.0 - 1e-6 -> "X"
                         p300 >= 0.9 -> if (hasMiss) "A" else if (is50Over1P) "A" else "S"
