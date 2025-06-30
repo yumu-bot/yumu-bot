@@ -117,7 +117,7 @@ import java.util.regex.Matcher
         val mode: OsuMode
         val mods: List<LazerMod>
 
-        if (bid in 0L ..< 10000000L) {
+        if (bid in 1L ..< 10000000L) {
             val id = UserIDUtil.getUserIDWithoutRange(event, matcher, inputMode, AtomicBoolean(true))
 
             map = beatmapApiService.getBeatmap(bid)
