@@ -1,6 +1,5 @@
 package com.now.nowbot.qq.onebot;
 
-import com.mikuac.shiro.core.Bot;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.message.MessageReceipt;
 import com.now.nowbot.qq.message.ReplyMessage;
@@ -19,16 +18,16 @@ public class OneBotMessageReceipt extends MessageReceipt {
     }
 
     int mid;
-    Bot bot;
+    long botId;
     com.now.nowbot.qq.onebot.contact.Contact contact;
 
     private OneBotMessageReceipt() {
     }
 
-    public static OneBotMessageReceipt create(Bot bot, int mid, com.now.nowbot.qq.onebot.contact.Contact contact) {
+    public static OneBotMessageReceipt create(long botId, int mid, com.now.nowbot.qq.onebot.contact.Contact contact) {
         var r = new OneBotMessageReceipt();
         r.mid = mid;
-        r.bot = bot;
+        r.botId = botId;
         r.contact = contact;
         return r;
     }
@@ -39,14 +38,16 @@ public class OneBotMessageReceipt extends MessageReceipt {
 
     @Override
     public void recall() {
+        var bot = BotManager.Companion.getBot(botId);
         if (Objects.isNull(bot)) return;
         bot.deleteMsg(mid);
     }
 
     @Override
     public void recallIn(long time) {
-        if (Objects.isNull(bot)) return;
         executor.schedule(() -> {
+            var bot = BotManager.Companion.getBot(botId);
+            if (Objects.isNull(bot)) return;
             bot.deleteMsg(mid);
         }, time, TimeUnit.MILLISECONDS);
     }

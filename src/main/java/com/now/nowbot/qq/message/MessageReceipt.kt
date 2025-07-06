@@ -8,3 +8,19 @@ abstract class MessageReceipt {
     abstract fun reply(): ReplyMessage?
     abstract fun getTarget(): Contact?
 }
+
+class NoneMessageReceipt : MessageReceipt() {
+    override fun recall() {
+    }
+
+    override fun recallIn(time: Long) {
+    }
+
+    override fun reply(): ReplyMessage? {
+        return null
+    }
+
+    override fun getTarget(): Contact? {
+        return null
+    }
+}

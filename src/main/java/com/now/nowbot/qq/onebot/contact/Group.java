@@ -1,9 +1,9 @@
 package com.now.nowbot.qq.onebot.contact;
 
-import com.mikuac.shiro.core.Bot;
 import com.mikuac.shiro.dto.action.common.ActionData;
 import com.mikuac.shiro.dto.action.response.DownloadFileResp;
 import com.now.nowbot.qq.contact.GroupContact;
+import com.now.nowbot.qq.onebot.BotManager;
 import com.now.nowbot.util.QQMsgUtil;
 
 import java.util.List;
@@ -13,12 +13,12 @@ import java.util.Objects;
 public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
     String name = null;
 
-    public Group(Bot bot, long id) {
-        super(bot, id);
+    public Group(long  botId, long id) {
+        super(botId, id);
     }
 
-    public Group(Bot bot, long id, String name) {
-        super(bot, id);
+    public Group(long  botId, long id, String name) {
+        super(botId, id);
         this.name = name;
     }
 
@@ -26,6 +26,7 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
     public String getName() {
         if (name != null) return name;
         try {
+            var bot =  BotManager.Companion.getBestBot(botId);
             var data = bot.getGroupInfo(getId(), false).getData();
             return data.getGroupName();
         } catch (Exception e) {
@@ -36,25 +37,30 @@ public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
 
     @Override
     public boolean isAdmin() {
+        var bot =  BotManager.Companion.getBestBot(botId);
         var data = bot.getGroupMemberInfo(getId(), bot.getSelfId(), false).getData();
         return data.getRole().equals("owner") || data.getRole().equals("admin");
     }
 
     @Override
     public GroupContact getUser(long qq) {
+
+        var bot =  BotManager.Companion.getBestBot(botId);
         var data = bot.getGroupMemberInfo(getId(), qq, false).getData();
-        return new com.now.nowbot.qq.onebot.contact.GroupContact(bot, data.getUserId(), data.getNickname(), data.getRole(), this.getId());
+        return new com.now.nowbot.qq.onebot.contact.GroupContact(botId, data.getUserId(), data.getNickname(), data.getRole(), this.getId());
     }
 
     @Override
     public List<? extends GroupContact> getAllUser() {
+        var bot =  BotManager.Companion.getBestBot(botId);
         var data = bot.getGroupMemberList(getId()).getData();
-        return data.stream().map(f -> new com.now.nowbot.qq.onebot.contact.GroupContact(bot, f.getUserId(), f.getNickname(), f.getRole(), this.getId())).toList();
+        return data.stream().map(f -> new com.now.nowbot.qq.onebot.contact.GroupContact(botId, f.getUserId(), f.getNickname(), f.getRole(), this.getId())).toList();
     }
 
     @Override
     public void sendFile(byte[] data, String name) {
         String url;
+        var bot =  BotManager.Companion.getBestBot(botId);
         if (QQMsgUtil.botInLocal(bot.getSelfId())) {
             url = QQMsgUtil.getFileUrl(data, name);
         } else {

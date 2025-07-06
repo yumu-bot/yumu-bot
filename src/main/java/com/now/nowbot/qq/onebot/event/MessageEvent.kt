@@ -14,20 +14,20 @@ import org.slf4j.LoggerFactory
 import java.net.MalformedURLException
 import java.net.URI
 
-open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot),
+open class MessageEvent(val event: MessageEvent, bot: Bot) : Event(bot.selfId),
     com.now.nowbot.qq.event.MessageEvent {
     override fun getSubject(): Contact {
         if (event is GroupMessageEvent) {
-            return Group(bot.trueBot, event.groupId)
+            return Group(bot.botID, event.groupId)
         }
-        return Contact(bot.trueBot, event.userId)
+        return Contact(bot.botID, event.userId)
     }
 
     override fun getSender(): Contact {
         return if (event is GroupMessageEvent) {
-            Group(bot.trueBot, event.sender.userId)
+            Group(bot.botID, event.sender.userId)
         } else {
-            Contact(bot.trueBot, event.userId)
+            Contact(bot.botID, event.userId)
         }
     }
 
