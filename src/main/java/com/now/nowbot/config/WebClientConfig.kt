@@ -50,12 +50,12 @@ import java.util.function.Function
             .followRedirect(true).responseTimeout(Duration.ofSeconds(15))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs { clientDefaultCodecsConfigurer: ClientCodecConfigurer ->
-                clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(
-                    Jackson2JsonEncoder(
-                        JacksonUtil.mapper, MediaType.APPLICATION_JSON
-                    )
+            clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(
+                Jackson2JsonEncoder(
+                    JacksonUtil.mapper, MediaType.APPLICATION_JSON
                 )
-            }.build()
+            )
+        }.build()
 
         return builder.clientConnector(connector).exchangeStrategies(strategies)
             .defaultHeaders { headers: HttpHeaders ->
@@ -65,25 +65,13 @@ import java.util.function.Function
             .codecs { codecs: ClientCodecConfigurer -> codecs.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }.build()
     }
 
-    @Bean("divingFishApiWebClient") @Qualifier("divingFishApiWebClient") fun divingFishApiWebClient(builder: WebClient.Builder, divingFishConfig: DivingFishConfig, config: NowbotConfig): WebClient {
+    @Bean("divingFishApiWebClient") @Qualifier("divingFishApiWebClient") fun divingFishApiWebClient(builder: WebClient.Builder, divingFishConfig: DivingFishConfig): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider2")
             .maxIdleTime(Duration.ofSeconds(30))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
         val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
-            // 要用梯子
-            .proxy {
-                val type = if (config.proxyType == "HTTP") {
-                    ProxyProvider.Proxy.HTTP
-                } else {
-                    ProxyProvider.Proxy.SOCKS5
-                }
-                it.type(type).host(config.proxyHost).port(config.proxyPort)
-            }
-
-            .followRedirect(true)
-            .responseTimeout(Duration.ofSeconds(15))
             .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
@@ -104,25 +92,13 @@ import java.util.function.Function
             }.build()
     }
 
-    @Bean("biliApiWebClient") @Qualifier("biliApiWebClient") fun biliApiWebClient(builder: WebClient.Builder, config: NowbotConfig): WebClient {
+    @Bean("biliApiWebClient") @Qualifier("biliApiWebClient") fun biliApiWebClient(builder: WebClient.Builder): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider3")
             .maxIdleTime(Duration.ofSeconds(30))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
         val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
-            // 要用梯子
-            .proxy {
-                val type = if (config.proxyType == "HTTP") {
-                    ProxyProvider.Proxy.HTTP
-                } else {
-                    ProxyProvider.Proxy.SOCKS5
-                }
-                it.type(type).host(config.proxyHost).port(config.proxyPort)
-            }
-
-            .followRedirect(true)
-            .responseTimeout(Duration.ofSeconds(15))
             .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
@@ -206,12 +182,12 @@ import java.util.function.Function
 
     @Bean("proxyClient") @Qualifier("proxyClient") fun proxyClient(builder: WebClient.Builder, config: NowbotConfig): WebClient {
         val httpClient = HttpClient.newConnection().proxy(Consumer { proxy: ProxyProvider.TypeSpec ->
-                proxy.type(
-                    if ("HTTP".equals(
-                            config.proxyType, ignoreCase = true
-                        )) ProxyProvider.Proxy.HTTP else ProxyProvider.Proxy.SOCKS5
-                ).host(config.proxyHost).port(config.proxyPort)
-            }).responseTimeout(Duration.ofSeconds(30))
+            proxy.type(
+                if ("HTTP".equals(
+                        config.proxyType, ignoreCase = true
+                    )) ProxyProvider.Proxy.HTTP else ProxyProvider.Proxy.SOCKS5
+            ).host(config.proxyHost).port(config.proxyPort)
+        }).responseTimeout(Duration.ofSeconds(30))
         return builder.clientConnector(ReactorClientHttpConnector(httpClient)).build()
     }
 
@@ -227,7 +203,7 @@ import java.util.function.Function
             it.defaultCodecs().jackson2JsonEncoder(
                 Jackson2JsonEncoder(JacksonUtil.mapper, MediaType.APPLICATION_JSON)
             )
-            }.build()
+        }.build()
         return builder.clientConnector(connector).exchangeStrategies(strategies)
             .codecs { it.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) } .build()
     }
