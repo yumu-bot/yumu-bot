@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.text.DecimalFormat
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
 import kotlin.math.roundToLong
@@ -295,7 +296,7 @@ class NewbieRestrictOverSRService(
                 val laterDay = OffsetDateTime.now().minusDays(dayStart.toLong())
                 val earlierDay = OffsetDateTime.now().minusDays(dayEnd.toLong())
 
-                scores = bps.filter { it.endedTime.plusHours(8L).isBefore(laterDay) && it.endedTime.plusHours(8L).isAfter(earlierDay) }
+                scores = bps.filter { it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).isBefore(laterDay) && it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).isAfter(earlierDay) }
                 calculateApiService.applyStarToScores(scores, local = true)
             } else if (ba.find()) {
                 /*

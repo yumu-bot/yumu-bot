@@ -22,6 +22,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 
@@ -106,7 +107,8 @@ class SBTodayBPService(
         val laterDay = OffsetDateTime.now().minusDays(dayStart.toLong())
         val earlierDay = OffsetDateTime.now().minusDays(dayEnd.toLong())
         val dataMap = bests.mapIndexed { i, it ->
-            return@mapIndexed if (it.endedTime.plusHours(8L).isBefore(laterDay) && it.endedTime.plusHours(8L).isAfter(earlierDay)) {
+            return@mapIndexed if (it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).isBefore(laterDay)
+                && it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).isAfter(earlierDay)) {
                 i + 1 to it
             } else {
                 null

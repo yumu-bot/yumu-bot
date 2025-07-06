@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
@@ -212,7 +213,7 @@ class InfoService(
         private val log: Logger = LoggerFactory.getLogger(InfoService::class.java)
 
         private fun getBestTimes(bests: List<LazerScore>): IntArray {
-            val times: List<OffsetDateTime> = bests.map { it.endedTime.plusHours(8L) }
+            val times: List<OffsetDateTime> = bests.map { it.endedTime.withOffsetSameLocal(ZoneOffset.ofHours(8)) }
             val now = LocalDate.now()
 
             val timeArray = IntArray(90)

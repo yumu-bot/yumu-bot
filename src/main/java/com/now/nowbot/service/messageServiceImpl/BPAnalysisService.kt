@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
+import java.time.ZoneOffset
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
@@ -143,7 +144,8 @@ import kotlin.math.min
                 it.mods.map { mod -> mod.acronym }
             }
             val timeList =
-                bests.map { 1.0 * it.endedTime.plusHours(8).hour + (it.endedTime.plusHours(8).minute / 60.0) }
+                bests.map { 1.0 * it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).hour +
+                        (it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).minute / 60.0) }
             val timeDist = MutableList(8) { _ -> 0 }
 
             for (time in timeList) {

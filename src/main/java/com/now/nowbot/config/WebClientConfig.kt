@@ -65,13 +65,25 @@ import java.util.function.Function
             .codecs { codecs: ClientCodecConfigurer -> codecs.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }.build()
     }
 
-    @Bean("divingFishApiWebClient") @Qualifier("divingFishApiWebClient") fun divingFishApiWebClient(builder: WebClient.Builder, divingFishConfig: DivingFishConfig): WebClient {
+    @Bean("divingFishApiWebClient") @Qualifier("divingFishApiWebClient") fun divingFishApiWebClient(builder: WebClient.Builder, divingFishConfig: DivingFishConfig, config: NowbotConfig): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider2")
             .maxIdleTime(Duration.ofSeconds(30))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
         val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
+            // 要用梯子
+            .proxy {
+                val type = if (config.proxyType == "HTTP") {
+                    ProxyProvider.Proxy.HTTP
+                } else {
+                    ProxyProvider.Proxy.SOCKS5
+                }
+                it.type(type).host(config.proxyHost).port(config.proxyPort)
+            }
+
+            .followRedirect(true)
+            .responseTimeout(Duration.ofSeconds(15))
             .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
@@ -92,13 +104,25 @@ import java.util.function.Function
             }.build()
     }
 
-    @Bean("biliApiWebClient") @Qualifier("biliApiWebClient") fun biliApiWebClient(builder: WebClient.Builder): WebClient {
+    @Bean("biliApiWebClient") @Qualifier("biliApiWebClient") fun biliApiWebClient(builder: WebClient.Builder, config: NowbotConfig): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider3")
             .maxIdleTime(Duration.ofSeconds(30))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
         val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
+            // 要用梯子
+            .proxy {
+                val type = if (config.proxyType == "HTTP") {
+                    ProxyProvider.Proxy.HTTP
+                } else {
+                    ProxyProvider.Proxy.SOCKS5
+                }
+                it.type(type).host(config.proxyHost).port(config.proxyPort)
+            }
+
+            .followRedirect(true)
+            .responseTimeout(Duration.ofSeconds(15))
             .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
