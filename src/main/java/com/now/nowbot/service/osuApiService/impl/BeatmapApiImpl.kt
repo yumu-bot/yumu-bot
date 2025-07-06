@@ -230,16 +230,19 @@ class BeatmapApiImpl(
     override fun getBeatmaps(ids: Iterable<Long>): List<Beatmap> {
         val idChunk = ids.chunked(50)
 
-        val actions = idChunk.map { chunk ->
+        val callables = idChunk.map { chunk ->
             return@map AsyncMethodExecutor.Supplier<List<Beatmap>> {
-                getBeatmapsInside(chunk)
+                getBeatmapsPrivate(chunk)
             }
         }
 
-        return AsyncMethodExecutor.awaitSupplierExecute(actions).flatten()
+        return AsyncMethodExecutor.awaitSupplierExecute(callables).flatten()
     }
 
-    private fun getBeatmapsInside(ids: Iterable<Long>): List<Beatmap> {
+    /**
+     * @param ids 注意，单次请求量必须小于等于 50
+     */
+    private fun getBeatmapsPrivate(ids: Iterable<Long>): List<Beatmap> {
         return request { client ->
             client.get()
                 .uri {
@@ -715,17 +718,7 @@ class BeatmapApiImpl(
     }
 
     override fun applyBeatmapExtendFromDatabase(score: LazerScore) {
-        applyBeatmapExtend(listOf(score))
-        /*
-        val extended = getBeatmapFromDatabase(score.beatmapID)
-        val lite = score.beatmap
-
-        score.beatmap = extend(lite, extended)!!
-        if (extended.beatmapset != null) {
-            score.beatmapset = extended.beatmapset!!
-        }
-
-         */
+        applyBeatmapExtendFromDatabase(listOf(score))
     }
 
     override fun getBeatmapsetRankedTime(beatmap: Beatmap): String {

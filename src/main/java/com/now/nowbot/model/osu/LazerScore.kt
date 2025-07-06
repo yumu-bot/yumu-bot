@@ -63,6 +63,9 @@ open class LazerScore(
 
     @set:JsonProperty("ended_at")
     @get:JsonIgnore
+    /**
+     * 注意，这个时间需要 +8
+     */
     var endedTime: OffsetDateTime = OffsetDateTime.now(),
 
     @JsonProperty("has_replay")

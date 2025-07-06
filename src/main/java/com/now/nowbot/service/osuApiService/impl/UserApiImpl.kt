@@ -148,13 +148,32 @@ import kotlin.text.HexFormat
         return user.userID
     }
 
+
+    /**
+     * 批量获取用户信息
+     *
+     * @param users 注意, 单次请求数量无限制
+     * @param isVariant 是否获取玩家的多模式信息
+     */
+    override fun <T: Number> getUsers(users: Iterable<T>, isVariant: Boolean): List<MicroUser> {
+        val idChunk = users.chunked(50)
+
+        val callables = idChunk.map {
+            return@map AsyncMethodExecutor.Supplier<List<MicroUser>> {
+                getUsersPrivate(it, isVariant = isVariant)
+            }
+        }
+
+        return AsyncMethodExecutor.awaitSupplierExecute(callables).flatten()
+    }
+
     /**
      * 批量获取用户信息
      *
      * @param users 注意, 单次请求数量必须小于50
      * @param isVariant 是否获取玩家的多模式信息
      */
-    override fun <T : Number> getUsers(users: Iterable<T>, isVariant: Boolean): List<MicroUser> {
+    private fun <T : Number> getUsersPrivate(users: Iterable<T>, isVariant: Boolean): List<MicroUser> {
         return request { client ->
             client.get()
                 .uri {

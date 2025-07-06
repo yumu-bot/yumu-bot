@@ -17,7 +17,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 
-import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getBid
 import com.now.nowbot.util.CmdUtil.getMod
@@ -33,6 +32,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.text.DecimalFormat
+import java.time.OffsetDateTime
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
 import kotlin.math.roundToLong
@@ -140,7 +140,7 @@ class NewbieRestrictOverSRService(
                 val ranges = if (hasRangeInConditions) {
                     rangeInConditions
                 } else {
-                    b.group(FLAG_RANGE)
+                    pr.group(FLAG_RANGE)
                 }?.split(REG_HYPHEN.toRegex())
 
                 val range2 = if (range.start != null) {
@@ -178,7 +178,7 @@ class NewbieRestrictOverSRService(
 
                     // 检查查到的数据是否为空
                     if (pss.isEmpty()) {
-                        throw NoSuchElementException.BestScoreWithMode(this.data!!.username, mode.data ?: OsuMode.DEFAULT)
+                        return false
                     }
 
                     pss.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
@@ -292,10 +292,10 @@ class NewbieRestrictOverSRService(
                 val dayEnd = range.getDayEnd()
 
                 val bps = scoreApiService.getBestScores(user.userID, mode.data)
-                val laterDay = java.time.OffsetDateTime.now().minusDays(dayStart.toLong())
-                val earlierDay = java.time.OffsetDateTime.now().minusDays(dayEnd.toLong())
+                val laterDay = OffsetDateTime.now().minusDays(dayStart.toLong())
+                val earlierDay = OffsetDateTime.now().minusDays(dayEnd.toLong())
 
-                scores = bps.filter { it.endedTime.isBefore(laterDay) && it.endedTime.isAfter(earlierDay) }
+                scores = bps.filter { it.endedTime.plusHours(8L).isBefore(laterDay) && it.endedTime.plusHours(8L).isAfter(earlierDay) }
                 calculateApiService.applyStarToScores(scores, local = true)
             } else if (ba.find()) {
                 /*

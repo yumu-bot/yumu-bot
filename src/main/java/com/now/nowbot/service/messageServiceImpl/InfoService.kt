@@ -212,7 +212,7 @@ class InfoService(
         private val log: Logger = LoggerFactory.getLogger(InfoService::class.java)
 
         private fun getBestTimes(bests: List<LazerScore>): IntArray {
-            val times: List<OffsetDateTime> = bests.map(LazerScore::endedTime)
+            val times: List<OffsetDateTime> = bests.map { it.endedTime.plusHours(8L) }
             val now = LocalDate.now()
 
             val timeArray = IntArray(90)

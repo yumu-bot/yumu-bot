@@ -78,7 +78,7 @@ import kotlin.math.floor
         }
 
         val micro = try {
-            userApiService.getUsers(listOf(user.userID), true).first()
+            userApiService.getUsers(listOf(user.userID), isVariant = true).first()
         } catch (e: Exception) {
             throw NoSuchElementException.Player(user.username)
         }
@@ -108,8 +108,7 @@ import kotlin.math.floor
                 }
             }
 
-            val result = AsyncMethodExecutor.awaitSupplierExecute(actions)
-                .filterNotNull().toMap()
+            val result = AsyncMethodExecutor.awaitSupplierExecute(actions).toMap()
 
             val most = result.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value ?: throw NoSuchElementException.PlayerPlay(user.username)
 

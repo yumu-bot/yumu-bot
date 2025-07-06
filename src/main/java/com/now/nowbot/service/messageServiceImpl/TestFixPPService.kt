@@ -83,14 +83,13 @@ import kotlin.math.roundToInt
                         it to userApiService.getOsuID(it)
                     } catch (e: Exception) {
                         log.error("TF：获取玩家 {} 编号失败", it)
-                        it to -1L
+                        null
                     }
                 }
             }
 
             val result = AsyncMethodExecutor.awaitSupplierExecute(actions)
                 .filterNotNull()
-                .filter { it.second > 0L }
                 .toMap()
 
             param.names.mapNotNull { result[it] }

@@ -866,7 +866,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     MAI_AP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("mai(mai)?\\s*((all\\s?)?perfect|ap)", "mp", "xp")
+        appendCommandsIgnoreAll("mai(mai)?\\s*(((all\\s?)?perfect)|(ap))", "xp")
         appendQQID()
         appendNameAnyButNoHash()
         appendGroup(MAYBE) {
@@ -878,7 +878,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     MAI_FC(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("mai(mai)?\\s*(full\\s?combo|fc)", "mc", "xc")
+        appendCommandsIgnoreAll("mai(mai)?\\s*((full\\s?combo)|(fc))", "xc")
         appendQQID()
         appendNameAnyButNoHash()
         appendGroup(MAYBE) {

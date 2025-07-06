@@ -122,7 +122,7 @@ class TodayBPService(
         val laterDay = OffsetDateTime.now().minusDays(dayStart.toLong())
         val earlierDay = OffsetDateTime.now().minusDays(dayEnd.toLong())
         val dataMap = bests.mapIndexed { i, it ->
-            return@mapIndexed if (it.endedTime.isBefore(laterDay) && it.endedTime.isAfter(earlierDay)) {
+            return@mapIndexed if (it.endedTime.plusHours(8L).isBefore(laterDay) && it.endedTime.plusHours(8L).isAfter(earlierDay)) {
                 i + 1 to it
             } else {
                 null

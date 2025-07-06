@@ -46,7 +46,7 @@ class ScoreApiImpl(
         return if (limit <= 100) {
             getBests(id, mode, offset, limit)
         } else {
-            val e = AsyncMethodExecutor.awaitPairCollectionSupplierExecute(
+            val e = AsyncMethodExecutor.awaitPairSupplierExecute(
                 { getBests(id, mode, offset, 100) },
                 { getBests(id, mode, offset + 100, limit - 100) }
             )
