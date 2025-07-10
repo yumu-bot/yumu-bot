@@ -793,7 +793,7 @@ enum class Instruction(val pattern: Pattern) {
         }
         appendQQID()
         appendSpace()
-        appendCaptureGroup(FLAG_VERSION, "dx|sd|deluxe|standard|标准|豪华")
+        appendCaptureGroup(FLAG_VERSION, "dx|sd|deluxe|standard|标准?|豪华")
         appendSpace()
         appendNameAny()
     }),

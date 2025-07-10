@@ -33,9 +33,10 @@ import org.springframework.stereotype.Service
         val difficulty: MaiDifficulty,
     )
 
-    data class MSPanelParam(val songs: List<MaiSong>, val scores: List<MaiScore>, val version: Version) {
-        fun toMap(): Map<String, Any> {
+    data class MSPanelParam(val user: MaiBestScore.User?, val songs: List<MaiSong>, val scores: List<MaiScore>, val version: Version) {
+        fun toMap(): Map<String, Any?> {
             return mapOf(
+                "user" to user,
                 "songs" to songs,
                 "scores" to scores,
                 "version" to version.name,
@@ -193,7 +194,7 @@ import org.springframework.stereotype.Service
                 val version = if (result.isDeluxe) DX else SD
 
                 return@run imageService.getPanel(
-                    MSPanelParam(songs = listOf(result), scores = scores, version = version).toMap(),
+                    MSPanelParam(user = full?.getUser(), songs = listOf(result), scores = scores, version = version).toMap(),
                     "MS")
             } else if (scores.isNotEmpty() && param.version == ANY) {
                 // 有两种谱面，有成绩，没有规定难度。此时取玩家成绩最好的那个
@@ -202,7 +203,7 @@ import org.springframework.stereotype.Service
                 val songs = listOf(listOf(result, anotherResult).first { it.isDeluxe == isDX })
 
                 return@run imageService.getPanel(
-                    MSPanelParam(songs = songs,
+                    MSPanelParam(user = full?.getUser(), songs = songs,
                         scores = scores.filter { it.isDeluxe == isDX }, version = ANY).toMap(),
                     "MS")
             } else {
@@ -212,7 +213,7 @@ import org.springframework.stereotype.Service
                 val songs = listOf(listOf(result, anotherResult).first { it.isDeluxe == isDX })
 
                 return@run imageService.getPanel(
-                    MSPanelParam(songs = songs, scores = scores.filter { it.isDeluxe == isDX }, version = ANY).toMap(),
+                    MSPanelParam(user = full?.getUser(), songs = songs, scores = scores.filter { it.isDeluxe == isDX }, version = ANY).toMap(),
                     "MS")
             }
         }
@@ -339,7 +340,7 @@ import org.springframework.stereotype.Service
                     if (string.isNullOrBlank()) return ANY
 
                     return when(string.lowercase()) {
-                        "sd", "标准", "standard" -> SD
+                        "sd", "标准", "standard", "标" -> SD
                         "dx", "豪华", "deluxe" -> DX
                         else -> ANY
                     }

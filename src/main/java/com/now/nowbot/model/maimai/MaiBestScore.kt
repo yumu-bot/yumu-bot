@@ -38,14 +38,14 @@ class MaiBestScore {
 
     @JvmRecord
     data class User(
-            val name: String?,
-            val probername: String?,
-            val dan: Int?,
-            val plate: String?,
-            val rating: Int?,
-            val base: Int?,
-            val additional: Int?,
-            val platename: String?,
+            val name: String? = null,
+            val probername: String? = null,
+            val dan: Int? = null,
+            val plate: String? = null,
+            val rating: Int? = null,
+            val base: Int? = null,
+            val additional: Int? = null,
+            val platename: String? = null,
     )
 
     fun getUser(): User {

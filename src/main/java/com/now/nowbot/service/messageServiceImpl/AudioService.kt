@@ -9,7 +9,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -81,6 +80,8 @@ class AudioService(
     }
 
     private fun getVoiceFromSID(sid: Long): ByteArray? {
+
+        /*
         val s =
             try {
                 beatmapApiService.getBeatmapset(sid)
@@ -91,6 +92,8 @@ class AudioService(
         if (s.nsfw) {
             throw UnsupportedOperationException.AudioNotSafeForWork()
         }
+
+         */
 
         return try {
             getVoice(sid)
@@ -107,9 +110,11 @@ class AudioService(
                 return null
             }
 
+        /*
         if (b.beatmapset?.nsfw == true) {
             throw UnsupportedOperationException.AudioNotSafeForWork()
         }
+         */
 
         return try {
             getVoice(b.beatmapsetID)

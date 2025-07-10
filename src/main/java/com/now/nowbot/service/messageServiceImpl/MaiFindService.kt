@@ -232,11 +232,10 @@ import kotlin.math.floor
             } else {
                 val levelBase = floor(level)
 
-                // TODO PRiSM 更新后，会变成 .6
                 if (diff.contains("+") || diff.contains("＋")) {
-                    Range(levelBase + 0.7f, levelBase + 1f, includeFrom = true, includeTo = false)
+                    Range(levelBase + 0.6f, levelBase + 1f, includeFrom = true, includeTo = false)
                 } else {
-                    Range(levelBase, levelBase + 0.7f, includeFrom = true, includeTo = false)
+                    Range(levelBase, levelBase + 0.6f, includeFrom = true, includeTo = false)
                 }
             }
         }
