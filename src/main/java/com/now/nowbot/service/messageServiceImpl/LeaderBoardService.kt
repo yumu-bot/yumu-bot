@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
@@ -13,6 +14,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
@@ -27,6 +29,7 @@ import kotlin.math.min
 
 @Service("LEADER_BOARD")
 class LeaderBoardService(
+    private val bindDao: BindDao,
     private val beatmapApiService: OsuBeatmapApiService,
     private val userApiService: OsuUserApiService,
     private val calculateApiService: OsuCalculateApiService,
@@ -35,7 +38,7 @@ class LeaderBoardService(
 ) : MessageService<LeaderBoardParam> {
 
     data class LeaderBoardParam(
-        val bid: Long,
+        val bid: Long?,
         val isBID: Boolean = true,
         val isLegacy: Boolean = false,
         val range: ClosedRange<Int>,
@@ -61,7 +64,7 @@ class LeaderBoardService(
             isLegacy = true
         } else return false
 
-        val bid = matcher.group(FLAG_BID)?.toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
+        val bid = matcher.group(FLAG_BID)?.toLongOrNull()
 
         val type: String? = matcher.group("type")
         val isBID = !(type != null && (type == "s" || type == "sid"))
@@ -96,9 +99,19 @@ class LeaderBoardService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: LeaderBoardParam) {
-
         val beatmap: Beatmap =
-            if (param.isBID) {
+            if (param.bid == null) {
+                val bindUser = try {
+                    bindDao.getBindFromQQ(event.sender.id, true)
+                } catch (e: BindException) {
+                    throw IllegalArgumentException.WrongException.BeatmapID()
+                }
+
+                val score = scoreApiService.getRecentScore(bindUser, bindUser.mode, 0, 1).firstOrNull()
+                    ?: throw NoSuchElementException.RecentScore(bindUser.username, bindUser.mode)
+
+                score.beatmap
+            } else if (param.isBID) {
                 beatmapApiService.getBeatmap(param.bid)
             } else {
                 beatmapApiService.getBeatmapset(param.bid).getTopDiff()!!
@@ -109,7 +122,7 @@ class LeaderBoardService(
         }
 
         val scores: List<LazerScore> = try {
-            scoreApiService.getLeaderBoardScore(param.bid, param.mode, param.isLegacy)
+            scoreApiService.getLeaderBoardScore(beatmap.beatmapID, param.mode, param.isLegacy)
         } catch (e: Exception) {
             throw IllegalStateException.Fetch("谱面排行榜")
         }
