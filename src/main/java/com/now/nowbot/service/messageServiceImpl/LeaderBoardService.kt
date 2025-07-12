@@ -107,8 +107,8 @@ class LeaderBoardService(
                     throw IllegalArgumentException.WrongException.BeatmapID()
                 }
 
-                val score = scoreApiService.getRecentScore(bindUser, bindUser.mode, 0, 1).firstOrNull()
-                    ?: throw NoSuchElementException.RecentScore(bindUser.username, bindUser.mode)
+                val score = scoreApiService.getRecentScore(bindUser, param.mode, 0, 1).firstOrNull()
+                    ?: throw NoSuchElementException.RecentScore(bindUser.username, param.mode)
 
                 beatmapApiService.getBeatmap(score.beatmapID)
             } else if (param.isBID) {
