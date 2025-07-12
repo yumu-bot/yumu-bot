@@ -14,7 +14,7 @@ enum class Instruction(val pattern: Pattern) {
 
     AUDIO(CommandPatternBuilder.create {
         appendCommandsIgnore(REG_IGNORE_BS, "audio", "song", "a")
-        appendColonCaptureGroup(MAYBE, "type", "bid", "b", "sid", "s")
+        appendColonCaptureGroup(MAYBE, FLAG_TYPE, "bid", "b", "sid", "s")
         appendSpace()
         appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE, MAYBE)
     }),
@@ -453,18 +453,40 @@ enum class Instruction(val pattern: Pattern) {
 
     LEADER_BOARD(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("leaderboard", "leader", "list", "l")
-        appendCaptureGroup("type", "bid|b|sid|s")
+
         appendMode()
         appendBID()
         appendRange()
+
+        appendGroup(MAYBE) {
+            append(REG_STAR)
+            appendSpace()
+            appendCaptureGroup(
+                FLAG_TYPE, REG_WORD, MORE
+            )
+        }
+        appendSpace()
+
+        appendMod()
     }),
 
     LEGACY_LEADER_BOARD(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("legacy\\s*leaderboard", "legacy\\s*leader", "legacy\\s*list", "ll")
-        appendCaptureGroup("type", "bid|b|sid|s")
+        appendCommandsIgnoreAll("legacy\\s*leaderboard", "legacy\\s*leader", "legacy\\s*list", "love\\s*live", "ll")
+
         appendMode()
         appendBID()
         appendRange()
+
+        appendGroup(MAYBE) {
+            append(REG_STAR)
+            appendSpace()
+            appendCaptureGroup(
+                FLAG_TYPE, REG_WORD, MORE
+            )
+        }
+        appendSpace()
+
+        appendMod()
     }),
 
     MAP_MINUS(CommandPatternBuilder.create {
@@ -529,7 +551,7 @@ enum class Instruction(val pattern: Pattern) {
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
-            appendCaptureGroup("type", REG_COVER, MORE)
+            appendCaptureGroup(FLAG_TYPE, REG_COVER, MORE)
         }
         appendSpace()
         appendCaptureGroup(FLAG_DATA, REG_NUMBER_SEPERATOR, MORE)

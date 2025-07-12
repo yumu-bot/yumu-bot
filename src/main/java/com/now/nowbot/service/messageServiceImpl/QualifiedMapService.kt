@@ -71,7 +71,7 @@ import kotlin.math.roundToInt
         try {
             val search = beatmapApiService.searchBeatmapset(query, tries)
 
-            AsyncMethodExecutor.awaitPairSupplierExecute(
+            AsyncMethodExecutor.awaitPairCallableExecute(
                 { beatmapApiService.applyBeatmapsetRankedTime(search.beatmapsets) },
                 { userApiService.applyUserForBeatmapset(search.beatmapsets) }
             )

@@ -28,8 +28,10 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
+import java.util.*
 import java.util.function.Consumer
 import java.util.function.Function
+import kotlin.text.HexFormat
 
 @Service
 class ScoreApiImpl(
@@ -46,7 +48,7 @@ class ScoreApiImpl(
         return if (limit <= 100) {
             getBests(id, mode, offset, limit)
         } else {
-            val e = AsyncMethodExecutor.awaitPairSupplierExecute(
+            val e = AsyncMethodExecutor.awaitPairCallableExecute(
                 { getBests(id, mode, offset, 100) },
                 { getBests(id, mode, offset + 100, limit - 100) }
             )
@@ -165,7 +167,7 @@ class ScoreApiImpl(
                     uriBuilder.queryParam("mode", OsuMode.getQueryName(mode))
                 }
 
-                setMods(uriBuilder, mods)
+                LazerMod.setMods(uriBuilder, mods)
                 uriBuilder.build(bid, uid)
             }
         }
@@ -191,7 +193,7 @@ class ScoreApiImpl(
                     .path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", n)
                     .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                setMods(uriBuilder, mods)
+                LazerMod.setMods(uriBuilder, mods)
                 uriBuilder.build(bid, user.userID)
             }
         }
@@ -236,17 +238,35 @@ class ScoreApiImpl(
         }
     }
 
-    override fun getLeaderBoardScore(bid: Long, mode: OsuMode?, legacy: Boolean): List<LazerScore> {
+    override fun getLeaderBoardScore(
+        bindUser: BindUser?,
+        bid: Long,
+        mode: OsuMode?,
+        mods: Iterable<LazerMod>?,
+        type: String?,
+        legacy: Boolean
+    ): List<LazerScore> {
         return request { client ->
-            client.get()
+            val uriSpec = client.get()
                 .uri {
                     it.path("beatmaps/{bid}/scores")
                         .queryParam("legacy_only", if (legacy) 1 else 0)
                         .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                        .build(bid)
+                        .queryParamIfPresent("type", Optional.ofNullable(type))
+                        .replaceQuery("")
+
+                    LazerMod.setMods(it, mods)
+
+                    it.build(bid)
                 }
-                .headers(base::insertHeader)
-                .retrieve()
+
+            if (bindUser != null) {
+                uriSpec.headers { base.insertHeader(bindUser) }
+            } else {
+                uriSpec.headers(base::insertHeader)
+            }
+
+            uriSpec.retrieve()
                 .bodyToMono(JsonNode::class.java)
                 .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
         }
@@ -429,17 +449,6 @@ class ScoreApiImpl(
         }
     }
 
-    private fun setMods(builder: UriBuilder, mods: Iterable<LazerMod?>) {
-        for (mod in mods) {
-            if (mod is LazerMod.NoMod) {
-                builder.queryParam("mods[]", "NM")
-                return
-            }
-        }
-
-        mods.filterNotNull().forEach { builder.queryParam("mods[]", it.acronym) }
-    }
-
 
     /**
      * 错误包装
@@ -467,6 +476,10 @@ class ScoreApiImpl(
 
                 is WebClientResponseException.TooManyRequests -> {
                     throw NetworkException.ScoreException.TooManyRequests()
+                }
+
+                is WebClientResponseException.UnprocessableEntity -> {
+                    throw NetworkException.ScoreException.UnprocessableEntity()
                 }
 
                 is WebClientResponseException.ServiceUnavailable -> {

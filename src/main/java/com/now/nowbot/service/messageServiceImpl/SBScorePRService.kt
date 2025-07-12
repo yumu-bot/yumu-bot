@@ -148,7 +148,7 @@ class SBScorePRService(
                 mode.data!!
             }
 
-            val async = AsyncMethodExecutor.awaitPairWithMapSupplierExecute(
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { userApiService.getUser(id2.data!!)?.toOsuUser(rx) },
                 { id2.getRecentsFromSBUserID(rx, isMultiple, hasCondition, isPass) }
             )

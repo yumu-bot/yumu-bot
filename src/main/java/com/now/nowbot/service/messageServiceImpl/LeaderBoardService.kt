@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -14,10 +15,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.botRuntimeException.BindException
-import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
-import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.throwable.botRuntimeException.*
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
@@ -39,10 +37,11 @@ class LeaderBoardService(
 
     data class LeaderBoardParam(
         val bid: Long?,
-        val isBID: Boolean = true,
-        val isLegacy: Boolean = false,
+        val type: String?,
         val range: ClosedRange<Int>,
-        val mode: OsuMode
+        val mode: OsuMode,
+        val mods: List<LazerMod>,
+        val isLegacy: Boolean = false
     )
 
     override fun isHandle(
@@ -65,9 +64,6 @@ class LeaderBoardService(
         } else return false
 
         val bid = matcher.group(FLAG_BID)?.toLongOrNull()
-
-        val type: String? = matcher.group("type")
-        val isBID = !(type != null && (type == "s" || type == "sid"))
 
         val rangeStr: String? = matcher.group(FLAG_RANGE)
 
@@ -92,18 +88,26 @@ class LeaderBoardService(
 
         val mode = OsuMode.getMode(matcher.group(FLAG_MODE))
 
-        data.value = LeaderBoardParam(bid, isBID, isLegacy, range, mode)
+        val type = getType(matcher.group(FLAG_TYPE))
+
+        val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))
+
+        data.value = LeaderBoardParam(bid, type, range, mode, mods, isLegacy)
 
         return true
     }
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: LeaderBoardParam) {
+        val bindUser = try {
+            bindDao.getBindFromQQ(event.sender.id, true)
+        } catch (e: BindException) {
+            null
+        }
+
         val beatmap: Beatmap =
             if (param.bid == null) {
-                val bindUser = try {
-                    bindDao.getBindFromQQ(event.sender.id, true)
-                } catch (e: BindException) {
+                if (bindUser == null) {
                     throw IllegalArgumentException.WrongException.BeatmapID()
                 }
 
@@ -111,19 +115,32 @@ class LeaderBoardService(
                     ?: throw NoSuchElementException.RecentScore(bindUser.username, param.mode)
 
                 beatmapApiService.getBeatmap(score.beatmapID)
-            } else if (param.isBID) {
-                beatmapApiService.getBeatmap(param.bid)
             } else {
-                beatmapApiService.getBeatmapset(param.bid).getTopDiff()!!
+                try {
+                    beatmapApiService.getBeatmap(param.bid)
+                } catch (e: NetworkException.BeatmapException.NotFound) {
+                    beatmapApiService.getBeatmapset(param.bid).getTopDiff()!!
+                }
             }
 
         if (!beatmap.hasLeaderBoard) {
             throw NoSuchElementException.Leaderboard()
         }
 
+        val mode = OsuMode.getConvertableMode(param.mode, beatmap.mode)
+
+        if (bindUser?.isAuthorized != true && (param.mods.isNotEmpty() || param.type != "global")) {
+            throw UnsupportedOperationException.NotOauthBind()
+        }
+
         val scores: List<LazerScore> = try {
-            scoreApiService.getLeaderBoardScore(beatmap.beatmapID, param.mode, param.isLegacy)
+            scoreApiService.getLeaderBoardScore(bindUser, beatmap.beatmapID, mode, param.mods, param.type, param.isLegacy)
+        } catch (e: NetworkException.ScoreException.UnprocessableEntity) {
+            throw UnsupportedOperationException.NotSupporter()
+        } catch (e: NetworkException.ScoreException.Unauthorized) {
+            throw UnsupportedOperationException.NotOauthBind()
         } catch (e: Exception) {
+            log.error("谱面排行榜：获取失败", e)
             throw IllegalStateException.Fetch("谱面排行榜")
         }
 
@@ -179,6 +196,14 @@ class LeaderBoardService(
 
         private fun Int.clamp(min: Int = 1, max: Int = 50): Int {
             return min(max(this, min), max)
+        }
+
+        private fun getType(string: String?): String {
+            return when(string?.lowercase()) {
+                "country", "countries", "c" -> "country"
+                "friend", "friends", "f" -> "friend"
+                else -> "global"
+            }
         }
     }
 }

@@ -11,4 +11,10 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
     class NotGroup:
         UnsupportedOperationException("请在群聊中使用这个功能！")
 
+    class NotSupporter:
+        UnsupportedOperationException("如果要使用这个功能，您需要成为 osu!supporter。")
+
+    class NotOauthBind:
+        UnsupportedOperationException("如果要使用这个功能，您需要使用 Oauth2 绑定 (!bi)。")
+
 }

@@ -41,6 +41,7 @@ const val FLAG_QQ_GROUP: String = "group"
 const val FLAG_VERSION: String = "version"
 const val FLAG_PAGE: String = "page"
 const val FLAG_DIFF: String = "diff"
+const val FLAG_TYPE: String = "type"
 
 @Language("RegExp")
 val REG_CAPS_INSENSITIVE: String = "(?i)"

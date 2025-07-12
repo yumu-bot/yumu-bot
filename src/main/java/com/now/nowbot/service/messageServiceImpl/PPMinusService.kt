@@ -52,7 +52,7 @@ import java.util.regex.Matcher
                     val others: PPMinus?
 
                     if (isVs) {
-                        val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+                        val async = AsyncMethodExecutor.awaitPairCallableExecute(
                             { getPPMinus2(me, myBests, dao) },
                             { getPPMinus2(other!!, otherBests!!, dao) }
                         )
@@ -118,7 +118,7 @@ import java.util.regex.Matcher
                     val others: PPMinus4?
 
                     if (isVs) {
-                        val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+                        val async = AsyncMethodExecutor.awaitPairCallableExecute(
                             { getPPMinus4(me, myBests, dao) },
                             { getPPMinus4(other!!, otherBests!!, dao) }
                         )
@@ -347,7 +347,7 @@ import java.util.regex.Matcher
                     inputMode.data!!
                 }
 
-                val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+                val async = AsyncMethodExecutor.awaitPairCallableExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
                     { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
                 )

@@ -69,7 +69,7 @@ object UserIDUtil {
         val userID: Long?
         val me: BindUser?
 
-        val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+        val async = AsyncMethodExecutor.awaitPairCallableExecute(
             { getUserID(event, matcher, mode, isMyself) },
             {
                 try {
@@ -109,7 +109,7 @@ object UserIDUtil {
         val userID: Long?
         val me: SBBindUser?
 
-        val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+        val async = AsyncMethodExecutor.awaitPairCallableExecute(
             { getSBUserID(event, matcher, mode, isMyself) },
             {
                 try {

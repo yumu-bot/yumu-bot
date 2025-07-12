@@ -12,6 +12,7 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botException.MRAException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
@@ -102,6 +103,10 @@ class SeriesRatingService(
         } catch (e: Exception) {
             log.error("系列斗力：数据计算失败", e)
             throw IllegalStateException.Calculate("系列斗力")
+        }
+
+        if (sr.rounds.isEmpty()) {
+            throw NoSuchElementException.SeriesRound()
         }
 
         if (param.group("main") != null) {

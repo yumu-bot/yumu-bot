@@ -129,7 +129,7 @@ import java.util.regex.Matcher
             if (id != null) {
                 mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
-                val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
+                val async = AsyncMethodExecutor.awaitPairCallableExecute(
                     { userApiService.getOsuUser(id) },
                     { scoreApiService.getBeatmapScores(bid, id, mode) }
                 )
@@ -149,7 +149,7 @@ import java.util.regex.Matcher
             // 输入成绩 ID 的方法
             val score = scoreApiService.getScore(bid)
 
-            val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { userApiService.getOsuUser(score.userID, score.mode) },
                 { beatmapApiService.getBeatmap(score.beatmapID) }
             )
@@ -168,7 +168,7 @@ import java.util.regex.Matcher
             val id = UserIDUtil.getUserIDWithoutRange(event, matcher, currentMode, AtomicBoolean(true))
 
             if (id != null) {
-                val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
+                val async = AsyncMethodExecutor.awaitPairCallableExecute(
                     { userApiService.getOsuUser(id) },
                     { scoreApiService.getRecentScore(id, currentMode.data!!, 0, 1) }
                 )

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.botRuntimeException.ModsException
 import org.spring.core.json
+import org.springframework.web.util.UriBuilder
 import kotlin.reflect.full.companionObjectInstance
 
 
@@ -2892,5 +2893,22 @@ sealed class LazerMod {
 
         @JvmStatic
         fun noStarRatingChange(mods: List<LazerMod>?) = hasStarRatingChange(mods).not()
+
+        /**
+         * 用于在 URI 链接中加一组模组
+         */
+        @JvmStatic
+        fun setMods(builder: UriBuilder, mods: Iterable<LazerMod?>?) {
+            if (mods == null) return
+
+            for (mod in mods) {
+                if (mod is NoMod) {
+                    builder.queryParam("mods[]", "NM")
+                    return
+                }
+            }
+
+            mods.filterNotNull().forEach { builder.queryParam("mods[]", it.acronym) }
+        }
     }
 }

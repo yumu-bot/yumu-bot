@@ -220,7 +220,7 @@ class ScorePRService(
             }
 
 
-            val async = AsyncMethodExecutor.awaitPairWithMapSupplierExecute(
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { userApiService.getOsuUser(id2.data!!, mode.data!!) },
                 { id2.getRecentsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass) }
             )

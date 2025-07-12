@@ -238,7 +238,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     // #4 osu! 谱面指令
     MAP(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("m")
+        appendOfficialCommandsIgnoreAll("map", "m")
 
         appendMode()
         appendBID()
@@ -252,7 +252,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     QUALIFIED_MAP(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("q")
+        appendOfficialCommandsIgnoreAll("qualified", "q")
         appendMode()
 
         appendGroup(MAYBE) {
@@ -275,7 +275,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     LEADER_BOARD(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("l")
+        appendOfficialCommandsIgnoreAll("leaderboard", "leader", "list", "l")
         appendMode()
         appendBID()
         appendRange()

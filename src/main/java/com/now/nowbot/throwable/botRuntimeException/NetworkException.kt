@@ -213,6 +213,14 @@ open class NetworkException(message: String?
             override val code = 404
         }
 
+        class UnprocessableEntity:
+            ScoreException("""
+                422 UnprocessableEntity
+                您需要成为 osu!supporter 才能使用此功能。
+            """.trimIndent()) {
+            override val code = 503
+        }
+
         class TooManyRequests:
             ScoreException("""
                 429 Too Many Requests

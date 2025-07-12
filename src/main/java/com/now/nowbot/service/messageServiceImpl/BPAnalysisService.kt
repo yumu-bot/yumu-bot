@@ -338,7 +338,7 @@ import kotlin.math.min
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode, isMyself)
 
         if (id != null) {
-            val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { userApiService.getOsuUser(id, mode.data!!) },
                 {
                     val ss = scoreApiService.getBestScores(id, mode.data!!)

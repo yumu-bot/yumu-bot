@@ -161,7 +161,7 @@ import kotlin.math.sqrt
 
                 mode = inputMode.data!!
 
-                val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+                val async = AsyncMethodExecutor.awaitPairCallableExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
                     { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
                 )
@@ -197,7 +197,7 @@ import kotlin.math.sqrt
         val others: Map<Long, Skill?>?
 
         if (hasOthers) {
-            val async = AsyncMethodExecutor.awaitPairSupplierExecute(
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { getSkillMap(myBests) },
                 { getSkillMap(otherBests) }
             )

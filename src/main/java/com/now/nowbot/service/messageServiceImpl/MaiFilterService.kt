@@ -100,7 +100,7 @@ class MaiFilterService(private val maimaiApiService: MaimaiApiService, private v
             }
         }.sortedByDescending { it.rating }
 
-        AsyncMethodExecutor.awaitTripleSupplierExecute(
+        AsyncMethodExecutor.awaitTripleCallableExecute(
             { maimaiApiService.insertSongData(scores) },
             { maimaiApiService.insertMaimaiAliasForScore(scores) },
             { maimaiApiService.insertPosition(scores) }

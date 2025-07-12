@@ -377,6 +377,8 @@ class BeatmapApiImpl(
 
     private fun getGrouping(x: List<Int>, groups: Int): List<Int> {
         require(groups >= 1)
+        if (x.isEmpty()) return emptyList()
+
         val steps: Int = (x.last() - x.first()) / (groups + 1)
         val out = LinkedList<Int>()
         var m: Int = x.first() + steps

@@ -118,15 +118,20 @@ interface OsuScoreApiService {
 
     fun getBeatmapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore>
 
-    fun getLeaderBoardScore(bid: Long, mode: OsuMode?, legacy: Boolean = false): List<LazerScore>
-
+    fun getLeaderBoardScore(
+        bindUser: BindUser?,
+        bid: Long,
+        mode: OsuMode?,
+        mods: Iterable<LazerMod>?,
+        type: String?,
+        legacy: Boolean = false
+    ): List<LazerScore>
 
     fun asyncDownloadBackground(scores: Iterable<LazerScore>, type: Iterable<CoverType>) {
         type.forEach {
             asyncDownloadBackground(scores, it)
         }
     }
-
 
     fun asyncDownloadBackground(score: LazerScore, type: Iterable<CoverType>) {
         type.forEach {

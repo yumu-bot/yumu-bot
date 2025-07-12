@@ -136,7 +136,7 @@ class SBBPService(
                 mode.data!!
             }
 
-            val async = AsyncMethodExecutor.awaitPairWithMapSupplierExecute(
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { userApiService.getUser(id2.data!!)?.toOsuUser(rx) },
                 { id2.getBestsFromUserID(rx, isMultiple, hasCondition) }
             )

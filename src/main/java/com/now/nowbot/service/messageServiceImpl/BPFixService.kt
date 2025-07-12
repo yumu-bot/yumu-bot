@@ -80,7 +80,7 @@ class BPFixService(
 
         // 高效的获取方式
         if (id.data != null) {
-            val async = AsyncMethodExecutor.awaitPairWithMapSupplierExecute(
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { userApiService.getOsuUser(id.data!!, mode.data!!) },
                 { scoreApiService.getBestScores(id.data!!, mode.data)
                     .mapIndexed { i, it ->
@@ -119,7 +119,7 @@ class BPFixService(
         val playerPP = user.pp
         val beforeBpSumAtomic = AtomicReference(0.0)
 
-        AsyncMethodExecutor.awaitPairSupplierExecute(
+        AsyncMethodExecutor.awaitPairCallableExecute(
             { beatmapApiService.applyBeatmapExtendFromDatabase(bestsMap.map { it.value }) },
             { calculateApiService.applyStarToScores(bestsMap.map { it.value }) }
         )

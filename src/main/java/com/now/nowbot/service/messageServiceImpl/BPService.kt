@@ -149,7 +149,7 @@ import kotlin.math.*
                 CmdRange(id.data!!, start, end)
             }
 
-            val async = AsyncMethodExecutor.awaitPairWithMapSupplierExecute(
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { userApiService.getOsuUser(id2.data!!, mode.data!!) },
                 { id2.getBestsFromUserID(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition) }
             )

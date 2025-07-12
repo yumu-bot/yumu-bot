@@ -56,7 +56,7 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
         NoSuchElementException("这张谱面的在线排行榜内没有成绩。")
 
     class MatchRound:
-        NoSuchElementException("没有找到这场对局。")
+        NoSuchElementException("没有找到比赛里的对局。")
 
     class PassedScore(name: String, mode: OsuMode):
         NoSuchElementException("没有找到玩家 $name 在 ${mode.fullName} 模式内的最近通过成绩。")
@@ -132,6 +132,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
             没有找到可能的结果...
             试试输入更常见的外号或准确的歌曲编号吧。
         """.trimIndent())
+
+    class SeriesRound:
+        NoSuchElementException("没有找到这一系列赛里的对局。")
 
     class Song(name: Any):
         NoSuchElementException("没有找到歌曲 $name。")

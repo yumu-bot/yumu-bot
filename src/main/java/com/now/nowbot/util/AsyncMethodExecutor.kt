@@ -270,49 +270,7 @@ object AsyncMethodExecutor {
         return results.toSortedMap().mapNotNull { it.value }
     }
 
-    fun <T, U> awaitPairCollectionSupplierExecute(
-        work: Callable<Collection<T>>,
-        work2: Callable<Collection<U>>,
-        timeout: Duration = Duration.ofSeconds(30)
-    ): Pair<Collection<T>, Collection<U>> {
-        ShutdownOnFailure().use { virtualPool ->
-            val r1 = virtualPool.fork(work)
-            val r2 = virtualPool.fork(work2)
-            virtualPool.joinUntil(Instant.now().plus(timeout))
-            virtualPool.throwIfFailed()
-            return Pair(r1.get(), r2.get())
-        }
-    }
-
-    fun <T, K, V> awaitPairWithMapSupplierExecute(
-        work: Callable<T>,
-        work2: Callable<Map<K, V>>,
-        timeout: Duration = Duration.ofSeconds(30)
-    ): Pair<T, Map<K, V>> {
-        ShutdownOnFailure().use { virtualPool ->
-            val r1 = virtualPool.fork(work)
-            val r2 = virtualPool.fork(work2)
-            virtualPool.joinUntil(Instant.now().plus(timeout))
-            virtualPool.throwIfFailed()
-            return Pair(r1.get(), r2.get())
-        }
-    }
-
-    fun <T, U> awaitPairWithCollectionSupplierExecute(
-        work: Callable<T>,
-        work2: Callable<Collection<U>>,
-        timeout: Duration = Duration.ofSeconds(30)
-    ): Pair<T, Collection<U>> {
-        ShutdownOnFailure().use { virtualPool ->
-            val r1 = virtualPool.fork(work)
-            val r2 = virtualPool.fork(work2)
-            virtualPool.joinUntil(Instant.now().plus(timeout))
-            virtualPool.throwIfFailed()
-            return Pair(r1.get(), r2.get())
-        }
-    }
-
-    fun <T, U> awaitPairSupplierExecute(
+    fun <T, U> awaitPairCallableExecute(
         work: Callable<T>,
         work2: Callable<U>,
         timeout: Duration = Duration.ofSeconds(30)
@@ -326,7 +284,7 @@ object AsyncMethodExecutor {
         }
     }
 
-    fun <T, U, V> awaitTripleSupplierExecute(
+    fun <T, U, V> awaitTripleCallableExecute(
         work: Callable<T>,
         work2: Callable<U>,
         work3: Callable<V>,

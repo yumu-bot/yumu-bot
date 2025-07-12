@@ -17,6 +17,7 @@ import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botException.MRAException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
@@ -67,6 +68,10 @@ import java.util.regex.Matcher
             throw IllegalStateException.Calculate("木斗力")
         }
 
+        if (mr.rounds.isEmpty()) {
+            throw NoSuchElementException.MatchRound()
+        }
+
         if (param.isUU) {
             mr.insertMicroUserToScores()
             val str = parseCSA(mr)
@@ -78,6 +83,7 @@ import java.util.regex.Matcher
                 throw IllegalStateException.Send("木斗力")
             }
         } else {
+
             val image: ByteArray = imageService.getPanel(mr, "C")
 
             try {

@@ -99,7 +99,7 @@ class TodayBPService(
             dayStart = id.getDayStart()
             dayEnd = id.getDayEnd()
 
-            val async = AsyncMethodExecutor.awaitPairWithCollectionSupplierExecute(
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { userApiService.getOsuUser(id.data!!, mode.data!!) },
                 { scoreApiService.getBestScores(id.data!!, mode.data ?: OsuMode.DEFAULT) }
             )
