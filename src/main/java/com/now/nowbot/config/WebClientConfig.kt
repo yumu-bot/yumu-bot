@@ -24,7 +24,6 @@ import reactor.netty.transport.ProxyProvider
 import reactor.util.retry.Retry
 import reactor.util.retry.Retry.RetrySignal
 import java.time.Duration
-import java.util.function.Consumer
 import java.util.function.Function
 
 @Component @Configuration class WebClientConfig : WebFluxConfigurer {
@@ -32,7 +31,7 @@ import java.util.function.Function
         configurer.defaultCodecs().maxInMemorySize(20 * 1024 * 1024)
     }
 
-    @Bean("osuApiWebClient") @Qualifier("osuApiWebClient") @Primary fun osuApiWebClient(builder: WebClient.Builder): WebClient {/*
+    @Bean("osuApiWebClient") @Qualifier("osuApiWebClient") @Primary fun osuApiWebClient(builder: WebClient.Builder, config: NowbotConfig): WebClient {/*
          * Setting maxIdleTime as 30s, because servers usually have a keepAliveTimeout of 60s, after which the connection gets closed.
          * If the connection pool has any connection which has been idle for over 10s, it will be evicted from the pool.
          * Refer https://github.com/reactor/reactor-netty/issues/1318#issuecomment-702668918
@@ -42,20 +41,25 @@ import java.util.function.Function
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
-        val httpClient = HttpClient.create(connectionProvider) //                .proxy(proxy ->
-            //                        proxy.type("HTTP".equalsIgnoreCase(config.proxyType) ? ProxyProvider.Proxy.HTTP : ProxyProvider.Proxy.SOCKS5)
-            //                                .host(config.proxyHost)
-            //                                .port(config.proxyPort)
-            //                )
+        val httpClient = HttpClient.create(connectionProvider)
+            // 要用梯子
+            .proxy {
+                val type = if (config.proxyType == "HTTP") {
+                    ProxyProvider.Proxy.HTTP
+                } else {
+                    ProxyProvider.Proxy.SOCKS5
+                }
+                it.type(type).host(config.proxyHost).port(config.proxyPort)
+            }
             .followRedirect(true).responseTimeout(Duration.ofSeconds(15))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs { clientDefaultCodecsConfigurer: ClientCodecConfigurer ->
-            clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(
-                Jackson2JsonEncoder(
-                    JacksonUtil.mapper, MediaType.APPLICATION_JSON
+                clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(
+                    Jackson2JsonEncoder(
+                        JacksonUtil.mapper, MediaType.APPLICATION_JSON
+                    )
                 )
-            )
-        }.build()
+            }.build()
 
         return builder.clientConnector(connector).exchangeStrategies(strategies)
             .defaultHeaders { headers: HttpHeaders ->
@@ -65,13 +69,28 @@ import java.util.function.Function
             .codecs { codecs: ClientCodecConfigurer -> codecs.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }.build()
     }
 
-    @Bean("divingFishApiWebClient") @Qualifier("divingFishApiWebClient") fun divingFishApiWebClient(builder: WebClient.Builder, divingFishConfig: DivingFishConfig): WebClient {
+    @Bean("divingFishApiWebClient") @Qualifier("divingFishApiWebClient") fun divingFishApiWebClient(builder: WebClient.Builder, divingFishConfig: DivingFishConfig, config: NowbotConfig): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider2")
             .maxIdleTime(Duration.ofSeconds(30))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
         val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
+            /*
+            // 要用梯子
+            .proxy {
+                val type = if (config.proxyType == "HTTP") {
+                    ProxyProvider.Proxy.HTTP
+                } else {
+                    ProxyProvider.Proxy.SOCKS5
+                }
+                it.type(type).host(config.proxyHost).port(config.proxyPort)
+            }
+
+             */
+
+            .followRedirect(true)
+            .responseTimeout(Duration.ofSeconds(15))
             .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
@@ -99,6 +118,9 @@ import java.util.function.Function
             .pendingAcquireMaxCount(-1)
             .build()
         val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
+
+            .followRedirect(true)
+            .responseTimeout(Duration.ofSeconds(15))
             .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
@@ -181,13 +203,16 @@ import java.util.function.Function
     }
 
     @Bean("proxyClient") @Qualifier("proxyClient") fun proxyClient(builder: WebClient.Builder, config: NowbotConfig): WebClient {
-        val httpClient = HttpClient.newConnection().proxy(Consumer { proxy: ProxyProvider.TypeSpec ->
-            proxy.type(
-                if ("HTTP".equals(
-                        config.proxyType, ignoreCase = true
-                    )) ProxyProvider.Proxy.HTTP else ProxyProvider.Proxy.SOCKS5
+        val httpClient = HttpClient.newConnection()
+            .proxy{ proxy ->
+                proxy.type(
+                    if (config.proxyType == "HTTP") {
+                        ProxyProvider.Proxy.HTTP
+                    } else {
+                        ProxyProvider.Proxy.SOCKS5
+                    }
             ).host(config.proxyHost).port(config.proxyPort)
-        }).responseTimeout(Duration.ofSeconds(30))
+        }.responseTimeout(Duration.ofSeconds(30))
         return builder.clientConnector(ReactorClientHttpConnector(httpClient)).build()
     }
 
