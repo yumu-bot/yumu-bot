@@ -247,7 +247,7 @@ class ScoreApiImpl(
         legacy: Boolean
     ): List<LazerScore> {
         return request { client ->
-            val uriSpec = client.get()
+            val headersSpec = client.get()
                 .uri {
                     it.path("beatmaps/{bid}/scores")
                         .queryParam("legacy_only", if (legacy) 1 else 0)
@@ -261,12 +261,12 @@ class ScoreApiImpl(
                 }
 
             if (bindUser != null) {
-                uriSpec.headers { base.insertHeader(bindUser) }
+                headersSpec.headers(base.insertHeader(bindUser))
             } else {
-                uriSpec.headers(base::insertHeader)
+                headersSpec.headers { base.insertHeader(it) }
             }
 
-            uriSpec.retrieve()
+            headersSpec.retrieve()
                 .bodyToMono(JsonNode::class.java)
                 .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
         }

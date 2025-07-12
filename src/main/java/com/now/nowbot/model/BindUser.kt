@@ -2,8 +2,6 @@ package com.now.nowbot.model
 
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 class BindUser {
     /**
@@ -63,16 +61,7 @@ class BindUser {
 
     val isAuthorized: Boolean
         // 是否绑定过
-        get() {
-            var expired = true // auth 的反
-            try {
-                // 请求 token ，如果过期会报 Unauthorized
-                expired = time == null || time!! <= 0 || accessToken == null
-            } catch (ignored: Exception) {
-                log.info("玩家 {} 已掉绑", username)
-            }
-            return !expired
-        }
+        get() = !accessToken.isNullOrBlank() && !refreshToken.isNullOrBlank()
 
     fun setTimeToNow() {
         time = System.currentTimeMillis()
@@ -114,8 +103,6 @@ class BindUser {
     }
 
     companion object {
-        private val log: Logger = LoggerFactory.getLogger(BindUser::class.java)
-
         @JvmStatic fun create(refreshToken: String?): BindUser {
             val user = BindUser()
             user.refreshToken = refreshToken

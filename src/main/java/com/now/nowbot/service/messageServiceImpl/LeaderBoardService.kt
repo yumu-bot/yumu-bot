@@ -138,6 +138,7 @@ class LeaderBoardService(
         } catch (e: NetworkException.ScoreException.UnprocessableEntity) {
             throw UnsupportedOperationException.NotSupporter()
         } catch (e: NetworkException.ScoreException.Unauthorized) {
+            log.error("谱面排行榜：玩家掉绑", e)
             throw UnsupportedOperationException.NotOauthBind()
         } catch (e: Exception) {
             log.error("谱面排行榜：获取失败", e)
