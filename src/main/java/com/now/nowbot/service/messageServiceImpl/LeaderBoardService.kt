@@ -110,7 +110,7 @@ class LeaderBoardService(
                 val score = scoreApiService.getRecentScore(bindUser, bindUser.mode, 0, 1).firstOrNull()
                     ?: throw NoSuchElementException.RecentScore(bindUser.username, bindUser.mode)
 
-                score.beatmap
+                beatmapApiService.getBeatmap(score.beatmapID)
             } else if (param.isBID) {
                 beatmapApiService.getBeatmap(param.bid)
             } else {
