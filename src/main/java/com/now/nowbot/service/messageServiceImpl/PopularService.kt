@@ -10,6 +10,7 @@ import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
 
@@ -24,7 +25,7 @@ class PopularService(private val bindDao: BindDao, private val scoreDao: ScoreDa
             throw UnsupportedOperationException.NotGroup()
         }
 
-        data.value = matcher.group("FLAG_QQ_GROUP")?.toLongOrNull() ?: event.subject.id
+        data.value = matcher.group(FLAG_QQ_GROUP)?.toLongOrNull() ?: event.subject.id
 
         return true
     }
