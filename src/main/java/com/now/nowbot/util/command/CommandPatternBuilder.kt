@@ -137,9 +137,9 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun appendQQID(maybe: Boolean = false) {
         appendGroup(MAYBE) {
-            append(FLAG_QQ_ID)
+            append("($FLAG_QQ_ID)")
             if (maybe) append(LEVEL_MAYBE)
-            append(CHAR_EQUAL)
+            append(REG_EQUAL)
             if (maybe) append(LEVEL_MAYBE)
             // qq起码5位
             appendCaptureGroup(FLAG_QQ_ID, REG_NUMBER, MORE, EXIST)
@@ -161,9 +161,9 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun appendQQGroup(maybe: Boolean = false) {
         appendGroup(MAYBE) {
-            append(FLAG_QQ_GROUP)
+            append("($FLAG_QQ_GROUP)")
             if (maybe) append(LEVEL_MAYBE)
-            append(CHAR_EQUAL)
+            append(REG_EQUAL)
             if (maybe) append(LEVEL_MAYBE)
             appendCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, MORE, EXIST)
         }
@@ -283,7 +283,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * (+(?<mod>mod))。
      * @param plusMust '+' 是否必须
      */
-    fun appendMod(plusMust: Boolean = false, bodyMust:Boolean = false) {
+    fun appendMod(plusMust: Boolean = false, bodyMust: Boolean = false) {
         val level = if (bodyMust) EXIST else MAYBE
         appendGroup(level) {
             append(REG_PLUS)

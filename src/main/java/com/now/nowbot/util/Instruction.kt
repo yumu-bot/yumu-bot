@@ -541,10 +541,10 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     POPULAR(CommandPatternBuilder.create {
-        appendCommandsIgnore(REG_IGNORE, "popular\\s*(group)?", "po", "pg")
+        appendCommandsIgnore(REG_IGNORE, "popular\\s*(group)?", "pu", "pg")
         appendMode()
-        appendSpace()
         appendQQGroup(maybe = true)
+        appendRange()
     }),
 
     GET_BG(CommandPatternBuilder.create {
@@ -943,7 +943,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.SB_SCORE_PR) continue
+        if (i != Instruction.POPULAR) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

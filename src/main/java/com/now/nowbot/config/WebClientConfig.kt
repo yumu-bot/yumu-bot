@@ -42,15 +42,6 @@ import java.util.function.Function
             .pendingAcquireMaxCount(-1)
             .build()
         val httpClient = HttpClient.create(connectionProvider)
-            // 要用梯子
-            .proxy {
-                val type = if (config.proxyType == "HTTP") {
-                    ProxyProvider.Proxy.HTTP
-                } else {
-                    ProxyProvider.Proxy.SOCKS5
-                }
-                it.type(type).host(config.proxyHost).port(config.proxyPort)
-            }
             .followRedirect(true).responseTimeout(Duration.ofSeconds(15))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs { clientDefaultCodecsConfigurer: ClientCodecConfigurer ->

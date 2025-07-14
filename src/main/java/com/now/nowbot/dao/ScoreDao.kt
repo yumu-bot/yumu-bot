@@ -17,7 +17,7 @@ import java.time.ZonedDateTime
 
 @Component
 class ScoreDao(
-    val beatmap1Dao: BeatmapDao,
+    val beatmapDao: BeatmapDao,
     val scoreRepository: LazerScoreRepository,
     val scoreStatisticRepository: LazerScoreStatisticRepository,
 ) {
@@ -50,8 +50,8 @@ class ScoreDao(
             return
         }
         try {
-            beatmap1Dao.saveMapSet(score.beatmapset)
-            beatmap1Dao.saveMap(score.beatmap)
+            beatmapDao.saveMapSet(score.beatmapset)
+            beatmapDao.saveMap(score.beatmap)
         } catch (e: Exception) {
             log.error("统计成绩中存储 beatmap 异常", e)
         }
@@ -71,9 +71,9 @@ class ScoreDao(
         if (scoreList.isEmpty()) return
         try {
             val set = scoreList.map { it.beatmapset }
-            beatmap1Dao.saveAllMapSet(set)
+            beatmapDao.saveAllMapSet(set)
             val map = scoreList.map { it.beatmap }
-            beatmap1Dao.saveAllMap(map)
+            beatmapDao.saveAllMap(map)
         } catch (e: Exception) {
             log.error("统计成绩中存储 beatmap 异常", e)
         }
