@@ -540,6 +540,13 @@ enum class Instruction(val pattern: Pattern) {
         appendModeQQUIDName()
     }),
 
+    POPULAR(CommandPatternBuilder.create {
+        appendCommandsIgnore(REG_IGNORE, "popular\\s*(group)?", "po", "pg")
+        appendMode()
+        appendSpace()
+        appendQQGroup(maybe = true)
+    }),
+
     GET_BG(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("getbackground", "getbg", "gb")
         appendSpace()

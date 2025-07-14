@@ -3,6 +3,7 @@ package com.now.nowbot.qq.event;
 import com.now.nowbot.qq.contact.Contact;
 import com.now.nowbot.qq.contact.Group;
 import com.now.nowbot.qq.message.*;
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException;
 import org.springframework.lang.Nullable;
 
 import java.net.URL;
@@ -47,7 +48,7 @@ public interface MessageEvent extends Event{
         if (getSubject() instanceof Group group) {
             return group.sendMessage(message);
         } else {
-            throw new RuntimeException("请在群聊中使用这个功能！");
+            throw new UnsupportedOperationException.NotGroup();
         }
     }
 
@@ -55,7 +56,7 @@ public interface MessageEvent extends Event{
         if (getSubject() instanceof Group group) {
             return group.sendMessage(message);
         } else {
-            throw new RuntimeException("请在群聊中使用这个功能！");
+            throw new UnsupportedOperationException.NotGroup();
         }
     }
 
@@ -63,7 +64,7 @@ public interface MessageEvent extends Event{
         if (getSubject() instanceof Group group) {
             return group.sendMessage(e.getMessage());
         } else {
-            throw new RuntimeException("请在群聊中使用这个功能！");
+            throw new UnsupportedOperationException.NotGroup();
         }
     }
 
@@ -71,7 +72,7 @@ public interface MessageEvent extends Event{
         if (getSubject() instanceof Group group) {
             return group.sendImage(image);
         } else {
-            throw new RuntimeException("请在群聊中使用这个功能！");
+            throw new UnsupportedOperationException.NotGroup();
         }
     }
 
@@ -79,7 +80,7 @@ public interface MessageEvent extends Event{
         if (getSubject() instanceof Group group) {
             return group.sendImage(image);
         } else {
-            throw new RuntimeException("请在群聊中使用这个功能！");
+            throw new UnsupportedOperationException.NotGroup();
         }
     }
 
@@ -87,7 +88,7 @@ public interface MessageEvent extends Event{
         if (getSubject() instanceof Group group) {
             group.sendFile(data, Optional.ofNullable(name).orElse("Yumu-file"));
         } else {
-            throw new RuntimeException("请在群聊中使用这个功能！");
+            throw new UnsupportedOperationException.NotGroup();
         }
     }
 

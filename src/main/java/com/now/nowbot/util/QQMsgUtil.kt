@@ -40,7 +40,7 @@ object QQMsgUtil {
         return MessageChainBuilder().addText(text).addImage(image).build()
     }
 
-    fun sendImages(event: MessageEvent, images: List<ByteArray?>) {
+    fun getImages(images: List<ByteArray>): List<MessageChain> {
         var builder = MessageChainBuilder()
         val bs = ArrayList<MessageChain>()
 
@@ -57,6 +57,12 @@ object QQMsgUtil {
         }
 
         bs.add(builder.build())
+
+        return bs
+    }
+
+    fun sendImages(event: MessageEvent, images: List<ByteArray>) {
+        val bs = getImages(images)
 
         for (b in bs) {
             event.reply(b)

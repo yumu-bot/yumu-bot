@@ -16,10 +16,10 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botException.MatchListenerException
 import com.now.nowbot.throwable.botException.MatchRoundException
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.DataUtil.getOriginal
 import com.now.nowbot.util.Instruction
@@ -77,7 +77,7 @@ class MatchListenerService(
         val match: Match
 
         if (event !is GroupMessageEvent) {
-            throw TipsException(MatchListenerException.Type.ML_Send_NotGroup.message)
+            throw UnsupportedOperationException.NotGroup()
         }
 
         when (param.operate) {

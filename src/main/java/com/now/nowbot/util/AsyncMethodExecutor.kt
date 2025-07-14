@@ -270,6 +270,18 @@ object AsyncMethodExecutor {
         return results.toSortedMap().mapNotNull { it.value }
     }
 
+    fun <T> awaitCallableExecute(
+        work: Callable<T>,
+        timeout: Duration = Duration.ofSeconds(30)
+    ): T {
+        ShutdownOnFailure().use { virtualPool ->
+            val r = virtualPool.fork(work)
+            virtualPool.joinUntil(Instant.now().plus(timeout))
+            virtualPool.throwIfFailed()
+            return r.get()
+        }
+    }
+
     fun <T, U> awaitPairCallableExecute(
         work: Callable<T>,
         work2: Callable<U>,
