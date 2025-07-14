@@ -148,6 +148,7 @@ class PopularService(
         val popular = scoreGroup
             .map { entry -> PopularBeatmap.toPopularBeatmap(entry.value) }
             .sortedByDescending { it.count }
+            .sortedByDescending { it.player }
 
         // 目前不清楚如果遇到了不存在的谱面该怎么解决
         /*
