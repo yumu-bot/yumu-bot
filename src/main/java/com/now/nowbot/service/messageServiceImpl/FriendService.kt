@@ -14,16 +14,14 @@ import com.now.nowbot.service.messageServiceImpl.FriendService.Companion.SortTyp
 import com.now.nowbot.service.messageServiceImpl.FriendService.FriendParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botException.FriendException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.QQMsgUtil
-import com.yumu.core.extensions.isNotNull
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -79,7 +77,6 @@ class FriendService(
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: FriendParam) {
         val bu = bindDao.getBindFromQQ(event.sender.id, true)
-
 
         if (!bu.isAuthorized) {
             throw FriendException(FriendException.Type.FRIEND_Me_NoPermission)
@@ -140,8 +137,7 @@ class FriendService(
         val isFollowed = try {
             userApiService
                 .getFriendList(other)
-                .find { it.target.userID == bindUser.userID }
-                .isNotNull()
+                .find { it.target.userID == bindUser.userID } != null
         } catch (ignored: Exception) {
             false
         }
@@ -166,22 +162,12 @@ class FriendService(
             throw FriendException(FriendException.Type.FRIEND_Client_ParameterOutOfBounds)
         }
 
-        val osuUser = param.user ?: try {
-            userApiService.getOsuUser(bindUser)
-        } catch (e: HttpClientErrorException.Unauthorized) {
-            throw FriendException(FriendException.Type.FRIEND_Me_TokenExpired)
-        } catch (e: WebClientResponseException.Unauthorized) {
-            throw FriendException(FriendException.Type.FRIEND_Me_TokenExpired)
-        } catch (e: Exception) {
-            throw FriendException(FriendException.Type.FRIEND_Me_NotFound)
-        }
+        val osuUser = param.user ?: userApiService.getOsuUser(bindUser)
 
         val rawList = try {
-            userApiService.getFriendList(bindUser).map {
-                it.target
-            }.toMutableList()
+            userApiService.getFriendList(bindUser).map { it.target }
         } catch (e: Exception) {
-            throw FriendException(FriendException.Type.FRIEND_Me_FetchFailed)
+            throw IllegalStateException.Fetch("好友列表")
         }
 
         val sequence = if (sortDirection == DESCEND) {

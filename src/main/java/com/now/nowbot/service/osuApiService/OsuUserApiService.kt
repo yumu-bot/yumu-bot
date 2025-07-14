@@ -49,7 +49,7 @@ interface OsuUserApiService {
      */
     fun <T : Number> getUsers(users: Iterable<T>, isVariant: Boolean = false): List<MicroUser>
 
-    @Throws(WebClientResponseException::class) fun getFriendList(user: BindUser): List<LazerFriend>
+    fun getFriendList(user: BindUser): List<LazerFriend>
 
     fun getUserRecentActivity(id: Long, offset: Int, limit: Int): List<ActivityEvent>
 

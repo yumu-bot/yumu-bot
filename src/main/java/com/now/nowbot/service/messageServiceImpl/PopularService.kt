@@ -1,14 +1,19 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
@@ -18,9 +23,33 @@ import org.springframework.stereotype.Service
 import java.time.OffsetDateTime
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 @Service("POPULAR")
-class PopularService(private val bindDao: BindDao, private val scoreDao: ScoreDao): MessageService<CmdRange<Long>> {
+class PopularService(
+    private val bindDao: BindDao,
+    private val scoreDao: ScoreDao,
+    private val beatmapApiService: OsuBeatmapApiService
+): MessageService<CmdRange<Long>> {
+
+    data class PopularBeatmap(
+        val beatmap: Beatmap,
+        val count: Int = 0,
+        val accuracy: Double = 0.0,
+        val combo: Int = 0,
+        val player: Int = 0,
+    ) {
+        companion object {
+            fun toPopularBeatmap(scores: List<LazerScore>, beatmap: Beatmap): PopularBeatmap {
+                val count = scores.size
+                val accuracy = scores.map { it.accuracy }.average()
+                val combo = scores.map { it.maxCombo }.average().roundToInt()
+                val player = scores.map { it.userID }.toSet().size
+
+                return PopularBeatmap(beatmap, count, accuracy, combo, player)
+            }
+        }
+    }
 
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<CmdRange<Long>>): Boolean {
         val matcher = Instruction.POPULAR.matcher(messageText)
@@ -30,6 +59,8 @@ class PopularService(private val bindDao: BindDao, private val scoreDao: ScoreDa
         if (event !is GroupMessageEvent) {
             throw UnsupportedOperationException.NotGroup()
         }
+
+        if (!Permission.isSuperAdmin(event.sender.id)) return false
 
         val group = matcher.group(FLAG_QQ_GROUP)?.toLongOrNull()
         val ranges = matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
@@ -41,20 +72,20 @@ class PopularService(private val bindDao: BindDao, private val scoreDao: ScoreDa
         if (ranges == null) {
             if (group == null || group < 1e6) {
                 groupID = event.subject.id
-                start = 1
+                start = 0
                 end = (group?.toInt() ?: event.subject.id.toInt()).clamp(1, Int.MAX_VALUE)
             } else {
                 groupID = group
-                start = 1
+                start = 0
                 end = 7
             }
         } else if (ranges.size == 1) {
             groupID = event.subject.id
-            start = 1
+            start = 0
             end = ranges.firstOrNull()?.toIntOrNull() ?: 7
         } else {
             groupID = event.subject.id
-            start = ranges.firstOrNull()?.toIntOrNull() ?: 1
+            start = ranges.firstOrNull()?.toIntOrNull() ?: 0
             end = ranges.lastOrNull()?.toIntOrNull() ?: 7
         }
 
@@ -85,19 +116,41 @@ class PopularService(private val bindDao: BindDao, private val scoreDao: ScoreDa
 
         val now = OffsetDateTime.now()
 
-        val before = now.minusDays(1)
+        val before = now.minusDays(param.getDayStart().toLong())
+        val after = now.minusDays(param.getDayEnd().toLong())
 
-        val scores = users.map {
-            scoreDao.scoreRepository.getUserRankedScore(it.userID, mode.modeValue, before, now)
+        val scoreChunk = users.map {
+            scoreDao.scoreRepository.getUserRankedScore(it.userID, mode.modeValue, after, before)
         }
 
-        event.reply("""
+        val scoreGroup = scoreChunk.asSequence()
+            .flatten()
+            .groupBy { it.beatmapId }
+            .mapValues { entry -> entry.value.map { s -> s.toLazerScore() } }
+
+        // 目前不清楚如果遇到了不存在的谱面该怎么解决
+        val beatmaps = AsyncMethodExecutor.awaitCallableExecute(
+            { scoreGroup.map { beatmapApiService.getBeatmapFromDatabase(it.key) } }
+        ).associateBy { it.beatmapID }
+
+        val popular = scoreGroup
+            .map { entry -> PopularBeatmap.toPopularBeatmap(entry.value, beatmaps[entry.key] ?: Beatmap()) }
+            .sortedBy { it.count }
+
+        val sb = StringBuilder("""
             群聊：${group.id}
             群聊人数：${group.allUser.size}
-            被记录的人数：${qqUsers.size}
             绑定人数：${users.size}
-            可获取的成绩数：${scores.flatten().size}
+            可获取的成绩数：${scoreChunk.flatten().size}
         """.trimIndent())
+
+        for (i in 1..min(5, popular.size)) {
+            val p = popular[i - 1]
+
+            sb.append("\n#$i ${p.beatmap.previewName}\n  ${p.count} plays, ${p.player} players, ${String.format("%.2f", p.accuracy)}%, ${p.combo}x")
+        }
+
+        event.reply(sb.toString())
     }
 
     companion object {

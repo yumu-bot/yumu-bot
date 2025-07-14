@@ -1,7 +1,9 @@
 package com.now.nowbot.entity
 
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.util.JacksonUtil
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
@@ -78,6 +80,29 @@ class LazerScoreLite(
         Rank.fromString(score.lazerRank)
     )
 
+    fun toLazerScore(): LazerScore {
+        val lite = this
+
+        return LazerScore().apply {
+            this.scoreID = lite.id
+            this.legacyScoreID = lite.legacyScoreId
+            this.userID = lite.userId
+            this.beatmapID = lite.beatmapId
+            this.mods = JacksonUtil.parseObjectList(lite.mods, LazerMod::class.java)
+            this.pp = lite.pp.toDouble()
+            this.lazerAccuracy = lite.accuracy.toDouble()
+            this.maxCombo = lite.maxCombo
+            this.endedTime = lite.time
+            this.perfectCombo = lite.perfectCombo
+            this.passed = lite.passed
+            this.classicScore = lite.classicScore.toLong()
+            this.legacyScore = lite.legacyScore.toLong()
+            this.score = lite.lazerScore.toLong()
+            this.mode = OsuMode.getMode(lite.mode)
+            this.rank = lite.rank.toString()
+        }
+    }
+
     enum class Rank {
         F, D, C, B, A, S, SH, X, XH, ;
 
@@ -131,6 +156,13 @@ class ScoreStatisticLite(
         2 -> OsuMode.CATCH
         3 -> OsuMode.MANIA
         else -> null
+    }
+
+    fun setStatus(score: LazerScore) {
+        when(this.status) {
+            -1 -> score.statistics = JacksonUtil.parseObject(this.data, LazerStatistics::class.java)
+            else -> score.maximumStatistics = JacksonUtil.parseObject(this.data, LazerStatistics::class.java)
+        }
     }
 
     companion object {

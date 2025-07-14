@@ -9,8 +9,8 @@ import com.now.nowbot.model.enums.OsuMode.Companion.getMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService.TeamInfo
-import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import kotlinx.io.IOException
@@ -26,7 +26,6 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
 import java.util.regex.Pattern
-import kotlin.text.HexFormat
 
 @Service class UserApiImpl(
     private val base: OsuApiBaseService, private val bindDao: BindDao, private val userInfoDao: OsuUserInfoDao
@@ -193,7 +192,7 @@ import kotlin.text.HexFormat
     }
 
     override fun getFriendList(user: BindUser): List<LazerFriend> {
-        if (!user.isAuthorized) throw TipsRuntimeException("无权限")
+        if (!user.isAuthorized) throw UnsupportedOperationException.NotOauthBind()
 
         return request { client ->
             client.get()
@@ -493,7 +492,7 @@ import kotlin.text.HexFormat
                     return@Runnable
                 }
 
-                val hex = md.digest().toHexString(HexFormat.Default)
+                val hex = md.digest().toHexString(kotlin.text.HexFormat.Default)
 
                 if (Files.isRegularFile(path.resolve(hex))) {
                     return@Runnable
@@ -549,7 +548,7 @@ import kotlin.text.HexFormat
                     return@Runnable
                 }
 
-                val hex = md.digest().toHexString(HexFormat.Default)
+                val hex = md.digest().toHexString(kotlin.text.HexFormat.Default)
 
                 if (Files.isRegularFile(path.resolve(hex))) {
                     return@Runnable
