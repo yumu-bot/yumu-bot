@@ -19,10 +19,7 @@ import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
 import org.springframework.stereotype.Service
-import java.time.Instant
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
+import java.time.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -115,16 +112,20 @@ class PopularService(
         val qqUsers = bindDao.getAllQQBindUser(qqIDs)
 
         // 存在的玩家
-        val users = qqUsers.map { bindDao.getBindFromQQ(it.qid) }
+        val users = AsyncMethodExecutor.awaitCallableExecute({
+            qqUsers.map { bindDao.getBindFromQQ(it.qid) }
+        })
 
         val now = OffsetDateTime.now()
 
         val before = now.minusDays(param.getDayStart().toLong()).clamp()
         val after = now.minusDays(param.getDayEnd().toLong()).clamp()
 
-        val scoreChunk = users.map {
-            scoreDao.scoreRepository.getUserRankedScore(it.userID, mode.modeValue, after, before)
-        }
+        val scoreChunk = AsyncMethodExecutor.awaitCallableExecute({
+            users.map {
+                scoreDao.scoreRepository.getUserRankedScore(it.userID, mode.modeValue, after, before)
+            }}, Duration.ofSeconds(60)
+        )
 
         val scoreGroup = scoreChunk.asSequence()
             .flatten()
@@ -133,12 +134,12 @@ class PopularService(
 
         val popular = scoreGroup
             .map { entry -> PopularBeatmap.toPopularBeatmap(entry.value) }
-            .sortedBy { it.count }
+            .sortedByDescending { it.count }
 
         // 目前不清楚如果遇到了不存在的谱面该怎么解决
         val beatmaps = AsyncMethodExecutor.awaitCallableExecute(
-            { popular.take(5).associate { it.beatmapID to beatmapApiService.getBeatmapFromDatabase(it.beatmapID) } }
-        )
+            { popular.take(5).map { it.beatmapID to beatmapApiService.getBeatmapFromDatabase(it.beatmapID) } }
+        ).toMap()
 
         val sb = StringBuilder("""
             群聊：${group.id}
@@ -151,7 +152,7 @@ class PopularService(
             val p = popular[i - 1]
             val b = beatmaps[p.beatmapID]
 
-            sb.append("\n#$i ${b?.previewName ?: p.beatmapID}\n  ${p.count} plays, ${p.player} players, ${String.format("%.2f", p.accuracy)}%, ${p.combo}x")
+            sb.append("\n#$i ${b?.previewName ?: p.beatmapID}\n  ${p.count} plays, ${p.player} players, ${String.format("%.2f", p.accuracy * 100.0)}%, ${p.combo}x")
         }
 
         event.reply(sb.toString())
