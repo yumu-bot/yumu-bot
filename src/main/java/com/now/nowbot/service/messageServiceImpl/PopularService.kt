@@ -185,6 +185,8 @@ class PopularService(
             sb.append("\n#$i ${b?.previewName ?: p.beatmapID}\n  ${p.count} plays, ${p.player} players, ${String.format("%.2f", p.accuracy * 100.0)}%, ${p.combo}x")
         }
 
+        log.info(sb.toString())
+
         event.reply(sb.toString())
         t.stop()
         log.info(t.prettyPrint())
