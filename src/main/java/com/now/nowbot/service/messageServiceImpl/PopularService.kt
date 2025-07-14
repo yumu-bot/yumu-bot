@@ -4,7 +4,6 @@ import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
@@ -36,20 +35,21 @@ class PopularService(
 ): MessageService<CmdRange<Long>> {
 
     data class PopularBeatmap(
-        val beatmap: Beatmap,
+        val beatmapID: Long = -1L,
         val count: Int = 0,
         val accuracy: Double = 0.0,
         val combo: Int = 0,
         val player: Int = 0,
     ) {
         companion object {
-            fun toPopularBeatmap(scores: List<LazerScore>, beatmap: Beatmap): PopularBeatmap {
+            fun toPopularBeatmap(scores: List<LazerScore>): PopularBeatmap {
+                val beatmapID = scores.firstOrNull()?.beatmapID ?: -1L
                 val count = scores.size
                 val accuracy = scores.map { it.accuracy }.average()
                 val combo = scores.map { it.maxCombo }.average().roundToInt()
                 val player = scores.map { it.userID }.toSet().size
 
-                return PopularBeatmap(beatmap, count, accuracy, combo, player)
+                return PopularBeatmap(beatmapID, count, accuracy, combo, player)
             }
         }
     }
@@ -131,14 +131,14 @@ class PopularService(
             .groupBy { it.beatmapId }
             .mapValues { entry -> entry.value.map { s -> s.toLazerScore() } }
 
+        val popular = scoreGroup
+            .map { entry -> PopularBeatmap.toPopularBeatmap(entry.value) }
+            .sortedBy { it.count }
+
         // 目前不清楚如果遇到了不存在的谱面该怎么解决
         val beatmaps = AsyncMethodExecutor.awaitCallableExecute(
-            { scoreGroup.map { beatmapApiService.getBeatmapFromDatabase(it.key) } }
-        ).associateBy { it.beatmapID }
-
-        val popular = scoreGroup
-            .map { entry -> PopularBeatmap.toPopularBeatmap(entry.value, beatmaps[entry.key] ?: Beatmap()) }
-            .sortedBy { it.count }
+            { popular.take(5).associate { it.beatmapID to beatmapApiService.getBeatmapFromDatabase(it.beatmapID) } }
+        )
 
         val sb = StringBuilder("""
             群聊：${group.id}
@@ -149,8 +149,9 @@ class PopularService(
 
         for (i in 1..min(5, popular.size)) {
             val p = popular[i - 1]
+            val b = beatmaps[p.beatmapID]
 
-            sb.append("\n#$i ${p.beatmap.previewName}\n  ${p.count} plays, ${p.player} players, ${String.format("%.2f", p.accuracy)}%, ${p.combo}x")
+            sb.append("\n#$i ${b?.previewName ?: p.beatmapID}\n  ${p.count} plays, ${p.player} players, ${String.format("%.2f", p.accuracy)}%, ${p.combo}x")
         }
 
         event.reply(sb.toString())

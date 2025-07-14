@@ -59,7 +59,7 @@ class LazerScoreLite(
 
     @Enumerated
     @JdbcType(value = PostgreSQLEnumJdbcType::class)
-    var rank: Rank,
+    var rank: Rank?,
 ) {
     constructor(score: LazerScore) : this(
         score.scoreID,
@@ -99,7 +99,7 @@ class LazerScoreLite(
             this.legacyScore = lite.legacyScore.toLong()
             this.score = lite.lazerScore.toLong()
             this.mode = OsuMode.getMode(lite.mode)
-            this.rank = lite.rank.toString()
+            this.rank = lite.rank?.toString() ?: "F"
         }
     }
 
