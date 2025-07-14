@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ScoreDao
@@ -30,6 +31,7 @@ class PopularService(
     private val scoreDao: ScoreDao,
     private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService,
+    private val botContainer: BotContainer
 ): MessageService<CmdRange<Long>> {
 
     data class PopularBeatmap(
@@ -106,17 +108,29 @@ class PopularService(
             null
         }
 
+        val mode = OsuMode.getMode(me?.mode, bindDao.getGroupModeConfig(event))
+
+        val bot = botContainer.robots[event.bot.botID] ?: run {
+            log.info("流行谱面：机器人为空")
+            throw NoSuchElementException("机器人实例为空。")
+        }
+
+        /*
         val bot = event.bot ?: run {
             log.info("流行谱面：机器人为空")
             throw NoSuchElementException("机器人实例为空。")
         }
 
-        val group = bot.getGroup(param.data!!)
+         */
+
+        val memberData = bot.getGroupMemberList(param.data!!)
             ?: throw NoSuchElementException.Group()
+        val members = memberData.data ?: run {
+            log.info("流行谱面：获取群聊信息失败")
+            throw NoSuchElementException("获取群聊信息失败。")
+        }
 
-        val mode = OsuMode.getMode(me?.mode, bindDao.getGroupModeConfig(event))
-
-        val qqIDs = group.allUser.map { it.id }
+        val qqIDs = members.map { member -> member.userId }
 
         t.stop()
         t.start("user")
@@ -171,8 +185,8 @@ class PopularService(
         val beatmaps = beatmapApiService.getBeatmaps(popular.take(5).map { it.beatmapID }).associateBy { it.beatmapID }
 
         val sb = StringBuilder("""
-            群聊：${group.id}
-            群聊人数：${group.allUser.size}
+            群聊：${param.data}
+            群聊人数：${members.size}
             绑定人数：${users.size}
             可获取的成绩数：${scores.size}
         """.trimIndent())
