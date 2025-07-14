@@ -117,13 +117,8 @@ class PopularService(
         t.stop()
         t.start("user")
 
-        // 记录的玩家
-        val qqUsers = bindDao.getAllQQBindUser(qqIDs)
-
         // 存在的玩家
-        val users = AsyncMethodExecutor.awaitCallableExecute({
-            qqUsers.map { bindDao.getBindFromQQ(it.qid) }
-        })
+        val users = bindDao.getBindFromQQs(qqIDs)
 
         val now = OffsetDateTime.now()
 
@@ -136,7 +131,7 @@ class PopularService(
         val scoreChunk = AsyncMethodExecutor.awaitCallableExecute({
             users.map {
                 scoreDao.scoreRepository.getUserRankedScore(it.userID, mode.modeValue, after, before)
-            }}, Duration.ofSeconds(60)
+            }}, Duration.ofSeconds(30L + users.size / 50)
         )
 
         t.stop()

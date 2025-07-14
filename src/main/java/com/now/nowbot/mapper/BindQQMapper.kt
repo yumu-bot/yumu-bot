@@ -11,6 +11,9 @@ interface BindQQMapper : JpaRepository<QQBindLite, Long>, JpaSpecificationExecut
     @Query("select qb from QQBindLite qb where qb.osuUser.id = :id")
     fun findByID(id: Long): QQBindLite?
 
+    @Query("select qb from QQBindLite qb where qb.osuUser.id in (:id)")
+    fun findAllByID(id: Iterable<Long>): List<QQBindLite>
+
     @Query("select qb from QQBindLite qb where qb.osuUser.osuID = :userID")
     fun findByOsuID(userID: Long): QQBindLite?
 
@@ -24,5 +27,5 @@ interface BindQQMapper : JpaRepository<QQBindLite, Long>, JpaSpecificationExecut
     fun unBind(userID: Long)
 
     @Query("select qb.qq as qid, qb.osuUser.osuID as uid, qb.osuUser.osuName as name from QQBindLite qb where qb.qq in (:qq)")
-    fun findAllUserByQQ(qq: Collection<Long>): List<QQBindLite.QQUser>
+    fun findAllUserByQQ(qq: Iterable<Long>): List<QQBindLite.QQUser>
 }

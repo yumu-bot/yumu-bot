@@ -113,6 +113,16 @@ class BindDao(
         return fromLite(u)!!
     }
 
+    fun getBindFromIDs(ids: Iterable<Long>): List<BindUser> {
+        val lites = bindQQMapper.findAllByID(ids)
+        return lites.map { fromLite(it.osuUser)!! }
+    }
+
+    fun getBindFromQQs(qqs: Iterable<Long>): List<BindUser> {
+        val lites = bindQQMapper.findAllByID(bindQQMapper.findAllUserByQQ(qqs).map {it.uid})
+        return lites.map { fromLite(it.osuUser)!! }
+    }
+
     fun saveBind(user: BindUser): BindUser {
         var lite = OsuBindUserLite(user)
         lite = bindUserMapper.save(lite)
