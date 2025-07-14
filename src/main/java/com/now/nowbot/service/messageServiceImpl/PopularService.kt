@@ -7,6 +7,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.botRuntimeException.*
@@ -27,7 +28,8 @@ import kotlin.math.roundToInt
 class PopularService(
     private val bindDao: BindDao,
     private val scoreDao: ScoreDao,
-    private val beatmapApiService: OsuBeatmapApiService
+    private val beatmapApiService: OsuBeatmapApiService,
+    private val imageService: ImageService,
 ): MessageService<CmdRange<Long>> {
 
     data class PopularBeatmap(
@@ -185,9 +187,9 @@ class PopularService(
             sb.append("\n#$i ${b?.previewName ?: p.beatmapID}\n  ${p.count} plays, ${p.player} players, ${String.format("%.2f", p.accuracy * 100.0)}%, ${p.combo}x")
         }
 
-        log.info(sb.toString())
+        val image = imageService.getPanelA6(sb.toString())
 
-        event.reply(sb.toString())
+        event.reply(image)
         t.stop()
         log.info(t.prettyPrint())
     }
