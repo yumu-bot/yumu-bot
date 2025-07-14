@@ -81,11 +81,11 @@ class PopularService(
                 end = 1
             }
         } else if (ranges.size == 1) {
-            groupID = event.subject.id
+            groupID = group ?: event.subject.id
             start = 0
             end = ranges.firstOrNull()?.toIntOrNull() ?: 1
         } else {
-            groupID = event.subject.id
+            groupID = group ?: event.subject.id
             start = ranges.firstOrNull()?.toIntOrNull() ?: 0
             end = ranges.lastOrNull()?.toIntOrNull() ?: 1
         }
@@ -108,8 +108,10 @@ class PopularService(
 
         val mode = OsuMode.getMode(me?.mode, bindDao.getGroupModeConfig(event))
 
-        val bot = botContainer.robots[event.bot.botID] ?: run {
-            log.info("流行谱面：机器人为空")
+        val bot = try {
+            botContainer.robots[event.bot.botID] ?: throw Exception("流行谱面：机器人为空")
+        } catch (e: Exception) {
+            log.info("流行谱面：机器人为空", e)
             throw NoSuchElementException("机器人实例为空。")
         }
 
@@ -121,11 +123,18 @@ class PopularService(
 
          */
 
-        val memberData = bot.getGroupMemberList(param.data!!)
-            ?: throw NoSuchElementException.Group()
-        val members = memberData.data ?: run {
-            log.info("流行谱面：获取群聊信息失败")
+        val memberData = try {
+            bot.getGroupMemberList(param.data!!) ?: throw NoSuchElementException.Group()
+        } catch (e: Exception) {
+            log.info("流行谱面：获取群聊信息失败", e)
             throw NoSuchElementException("获取群聊信息失败。")
+        }
+
+        val members = try {
+            memberData.data ?: throw Exception()
+        } catch (e: Exception) {
+            log.info("流行谱面：获取群聊玩家失败", e)
+            throw NoSuchElementException("获取群聊玩家失败。")
         }
 
         val qqIDs = members.map { member -> member.userId }
