@@ -8,7 +8,6 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.botRuntimeException.*
@@ -30,7 +29,6 @@ class PopularService(
     private val bindDao: BindDao,
     private val scoreDao: ScoreDao,
     private val beatmapApiService: OsuBeatmapApiService,
-    private val imageService: ImageService,
     private val botContainer: BotContainer
 ): MessageService<CmdRange<Long>> {
 
@@ -198,9 +196,13 @@ class PopularService(
             sb.append("\n#$i ${b?.previewName ?: p.beatmapID}\n  ${p.count} plays, ${p.player} players, ${String.format("%.2f", p.accuracy * 100.0)}%, ${p.combo}x")
         }
 
+        /*
         val image = imageService.getPanelA6(sb.toString())
-
         event.reply(image)
+
+         */
+        event.reply(sb.toString())
+
         t.stop()
         log.info(t.prettyPrint())
     }
