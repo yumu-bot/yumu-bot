@@ -9,9 +9,7 @@ import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.throwable.botRuntimeException.BindException
-import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
+import com.now.nowbot.throwable.botRuntimeException.*
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
@@ -79,16 +77,16 @@ class PopularService(
             } else {
                 groupID = group
                 start = 0
-                end = 7
+                end = 1
             }
         } else if (ranges.size == 1) {
             groupID = event.subject.id
             start = 0
-            end = ranges.firstOrNull()?.toIntOrNull() ?: 7
+            end = ranges.firstOrNull()?.toIntOrNull() ?: 1
         } else {
             groupID = event.subject.id
             start = ranges.firstOrNull()?.toIntOrNull() ?: 0
-            end = ranges.lastOrNull()?.toIntOrNull() ?: 7
+            end = ranges.lastOrNull()?.toIntOrNull() ?: 1
         }
 
         data.value = CmdRange(groupID, start, end)
@@ -128,11 +126,16 @@ class PopularService(
         t.stop()
         t.start("score")
 
-        val scoreChunk = AsyncMethodExecutor.awaitCallableExecute({
-            users.map {
-                scoreDao.scoreRepository.getUserRankedScore(it.userID, mode.modeValue, after, before)
-            }}, Duration.ofSeconds(30L + users.size / 50)
-        )
+        val scoreChunk = try{
+            AsyncMethodExecutor.awaitCallableExecute({
+                users.map {
+                    scoreDao.scoreRepository.getUserRankedScore(it.userID, mode.modeValue, after, before)
+                }}, Duration.ofSeconds(30L + users.size / 30)
+            )
+        } catch (e: Throwable) {
+            log.error("流行谱面：查询错误", e)
+            throw NetworkException("查询超时，有可能是天数太多了。")
+        }
 
         t.stop()
         t.start("popular")
