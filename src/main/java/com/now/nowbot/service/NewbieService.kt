@@ -2,10 +2,9 @@ package com.now.nowbot.service
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
+import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.entity.LazerScoreLite
 import com.now.nowbot.entity.NewbiePlayCount
-import com.now.nowbot.mapper.LazerScoreRepository
-import com.now.nowbot.mapper.LazerScoreStatisticRepository
 import com.now.nowbot.mapper.NewbiePlayCountRepository
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
@@ -27,8 +26,7 @@ import kotlin.jvm.optionals.getOrNull
 @Service("NEWBIE_SERVICE")
 class NewbieService(
     private val osuUserInfoDao: OsuUserInfoDao,
-    private val scoreRepository: LazerScoreRepository,
-    private val scoreStatisticRepository: LazerScoreStatisticRepository,
+    private val scoreDao: ScoreDao,
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val osuUserApiService: OsuUserApiService,
@@ -70,16 +68,14 @@ class NewbieService(
             .toOffsetDateTime()
         val end = start.plusDays(1)
 
-        val scores = scoreRepository
+        val scores = scoreDao
             .getUserRankedScore(userId, OsuMode.OSU.modeValue, start, end)
             .filter {
                 val star = getStarRating(it.beatmapId, it.mods ?: "[]")
                 star in 0f..5.7f
             }
 
-        val statisticsMap = scoreStatisticRepository
-            .getByScoreId(scores.map { it.id })
-            .associate { it.id to JacksonUtil.parseObject(it.data, LazerStatistics::class.java) }
+        val statisticsMap = scoreDao.getStatisticsMap(scores)
 
         val (passScore, failedScore) = scores.partition { it.passed }
 

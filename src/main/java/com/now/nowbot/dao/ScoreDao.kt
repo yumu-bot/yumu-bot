@@ -6,6 +6,8 @@ import com.now.nowbot.mapper.LazerScoreRepository
 import com.now.nowbot.mapper.LazerScoreStatisticRepository
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.LazerStatistics
+import com.now.nowbot.util.JacksonUtil
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
@@ -108,6 +110,19 @@ class ScoreDao(
         return scoreRepository.getUserAllScoreTime(userId, start, end, PageRequest.ofSize(500))
     }
 
+    fun getUserRankedScore(id: Long, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite> {
+        return scoreRepository.getUserRankedScore(id, mode, start, end)
+    }
+
+    fun getUsersRankedScore(ids: Iterable<Long>, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite> {
+        return scoreRepository.getUsersRankedScore(ids, mode, start, end)
+    }
+
+    fun getStatisticsMap(scores: Iterable<LazerScoreLite>): Map<Long, LazerStatistics> {
+        return scoreStatisticRepository
+            .getByScoreId(scores.map { it.id })
+            .associate { it.id to JacksonUtil.parseObject(it.data, LazerStatistics::class.java) }
+    }
 
     companion object {
         @JvmStatic

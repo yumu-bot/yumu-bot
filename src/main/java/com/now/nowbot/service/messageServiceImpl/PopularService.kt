@@ -10,7 +10,6 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.botRuntimeException.*
-import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
@@ -126,7 +125,8 @@ class PopularService(
         t.stop()
         t.start("score")
 
-        val scoreChunk = try{
+        /*
+        val scoreChunk = try {
             AsyncMethodExecutor.awaitCallableExecute({
                 users.map {
                     scoreDao.scoreRepository.getUserRankedScore(it.userID, mode.modeValue, after, before)
@@ -137,13 +137,21 @@ class PopularService(
             throw NetworkException("查询超时，有可能是天数太多了。")
         }
 
+         */
+
+        val scores = try {
+            scoreDao.getUsersRankedScore(users.map { it.userID }, mode.modeValue, after, before)
+        } catch (e: Throwable) {
+            log.error("流行谱面：查询错误", e)
+            throw NetworkException("查询超时，有可能是天数太多了。")
+        }
+
         t.stop()
         t.start("popular")
 
-        val scoreGroup = scoreChunk.asSequence()
-            .flatten()
-            .groupBy { it.beatmapId }
-            .mapValues { entry -> entry.value.map { s -> s.toLazerScore() } }
+        val scoreGroup = scores
+            .map { lite -> lite.toLazerScore() }
+            .groupBy { ls -> ls.beatmapID }
 
         val popular = scoreGroup
             .map { entry -> PopularBeatmap.toPopularBeatmap(entry.value) }
@@ -167,7 +175,7 @@ class PopularService(
             群聊：${group.id}
             群聊人数：${group.allUser.size}
             绑定人数：${users.size}
-            可获取的成绩数：${scoreChunk.flatten().size}
+            可获取的成绩数：${scores.size}
         """.trimIndent())
 
         for (i in 1..min(5, popular.size)) {
