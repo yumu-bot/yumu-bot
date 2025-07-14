@@ -533,6 +533,8 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnore(REG_IGNORE, "search", "find", "o", "look(up)?")
         appendColonCaptureGroup(MAYBE, "mode", "bid", "sid", "b", "s")
         appendSpace()
+        appendCaptureGroup("text", REG_ANYTHING, MORE)
+        appendSpace()
     }),
 
     RECOMMEND(CommandPatternBuilder.create {

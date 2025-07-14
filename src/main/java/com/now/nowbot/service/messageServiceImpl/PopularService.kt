@@ -18,7 +18,9 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.util.StopWatch
 import java.time.*
 import kotlin.math.max
 import kotlin.math.min
@@ -95,6 +97,10 @@ class PopularService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: CmdRange<Long>) {
+        val t = StopWatch()
+
+        t.start("group")
+
         val me = try {
             bindDao.getBindFromQQ(event.sender.id)
         } catch (e: BindException) {
@@ -107,6 +113,9 @@ class PopularService(
         val mode = OsuMode.getMode(me?.mode, bindDao.getGroupModeConfig(event))
 
         val qqIDs = group.allUser.map { it.id }
+
+        t.stop()
+        t.start("user")
 
         // 记录的玩家
         val qqUsers = bindDao.getAllQQBindUser(qqIDs)
@@ -121,11 +130,17 @@ class PopularService(
         val before = now.minusDays(param.getDayStart().toLong()).clamp()
         val after = now.minusDays(param.getDayEnd().toLong()).clamp()
 
+        t.stop()
+        t.start("score")
+
         val scoreChunk = AsyncMethodExecutor.awaitCallableExecute({
             users.map {
                 scoreDao.scoreRepository.getUserRankedScore(it.userID, mode.modeValue, after, before)
             }}, Duration.ofSeconds(60)
         )
+
+        t.stop()
+        t.start("popular")
 
         val scoreGroup = scoreChunk.asSequence()
             .flatten()
@@ -137,9 +152,17 @@ class PopularService(
             .sortedByDescending { it.count }
 
         // 目前不清楚如果遇到了不存在的谱面该怎么解决
+        /*
         val beatmaps = AsyncMethodExecutor.awaitCallableExecute(
             { popular.take(5).map { it.beatmapID to beatmapApiService.getBeatmapFromDatabase(it.beatmapID) } }
         ).toMap()
+
+         */
+
+        t.stop()
+        t.start("beatmap")
+
+        val beatmaps = beatmapApiService.getBeatmaps(popular.take(5).map { it.beatmapID }).associateBy { it.beatmapID }
 
         val sb = StringBuilder("""
             群聊：${group.id}
@@ -156,9 +179,12 @@ class PopularService(
         }
 
         event.reply(sb.toString())
+        t.stop()
+        log.info(t.prettyPrint())
     }
 
     companion object {
+        private val log = LoggerFactory.getLogger(PopularService::class.java)
 
         private fun OffsetDateTime.clamp(min: OffsetDateTime = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(8)), max: OffsetDateTime = OffsetDateTime.now()): OffsetDateTime {
             return OffsetDateTime.ofInstant(
