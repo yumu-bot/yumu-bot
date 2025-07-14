@@ -111,12 +111,7 @@ class PopularService(
             throw NoSuchElementException("机器人实例为空。")
         }
 
-        val groupMap = bot.groups?.associateBy { it.id } ?: run {
-            log.info("流行谱面：群组列表为空")
-            throw NoSuchElementException("无法获取机器人的群组列表。")
-        }
-
-        val group = groupMap[param.data!!]
+        val group = bot.getGroup(param.data!!)
             ?: throw NoSuchElementException.Group()
 
         val mode = OsuMode.getMode(me?.mode, bindDao.getGroupModeConfig(event))
