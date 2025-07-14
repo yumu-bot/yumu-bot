@@ -10,6 +10,7 @@ import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.*
 import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
@@ -109,7 +110,7 @@ class PopularService(
         val mode = OsuMode.getMode(me?.mode, bindDao.getGroupModeConfig(event))
 
         val bot = try {
-            botContainer.robots[event.bot.botID] ?: throw Exception("流行谱面：机器人为空")
+            botContainer.robots[event.bot.botID] ?: throw TipsException("流行谱面：机器人为空")
         } catch (e: Exception) {
             log.info("流行谱面：机器人为空", e)
             throw NoSuchElementException("机器人实例为空。")
@@ -124,14 +125,14 @@ class PopularService(
          */
 
         val memberData = try {
-            bot.getGroupMemberList(param.data!!) ?: throw NoSuchElementException.Group()
+            bot.getGroupMemberList(param.data!!, true) ?: throw TipsException("流行谱面：获取群聊信息失败。")
         } catch (e: Exception) {
             log.info("流行谱面：获取群聊信息失败", e)
             throw NoSuchElementException("获取群聊信息失败。")
         }
 
         val members = try {
-            memberData.data ?: throw Exception()
+            memberData.data ?: throw TipsException("流行谱面：获取群聊玩家失败")
         } catch (e: Exception) {
             log.info("流行谱面：获取群聊玩家失败", e)
             throw NoSuchElementException("获取群聊玩家失败。")
