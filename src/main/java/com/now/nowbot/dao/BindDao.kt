@@ -114,12 +114,12 @@ class BindDao(
     }
 
     fun getBindFromIDs(ids: Iterable<Long>): List<BindUser> {
-        val lites = bindQQMapper.findAllByID(ids)
+        val lites = bindQQMapper.findAllByOsuID(ids)
         return lites.map { fromLite(it.osuUser)!! }
     }
 
     fun getBindFromQQs(qqs: Iterable<Long>): List<BindUser> {
-        val lites = bindQQMapper.findAllByID(bindQQMapper.findAllUserByQQ(qqs).map {it.uid})
+        val lites = bindQQMapper.findAllByOsuID(bindQQMapper.findAllUserByQQ(qqs).map {it.uid})
         return lites.map { fromLite(it.osuUser)!! }
     }
 

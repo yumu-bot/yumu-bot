@@ -11,8 +11,8 @@ interface BindQQMapper : JpaRepository<QQBindLite, Long>, JpaSpecificationExecut
     @Query("select qb from QQBindLite qb where qb.osuUser.id = :id")
     fun findByID(id: Long): QQBindLite?
 
-    @Query("select qb from QQBindLite qb where qb.osuUser.id in (:id)")
-    fun findAllByID(id: Iterable<Long>): List<QQBindLite>
+    @Query("select qb from QQBindLite qb where qb.osuUser.osuID in (:userIDs)")
+    fun findAllByOsuID(userIDs: Iterable<Long>): List<QQBindLite>
 
     @Query("select qb from QQBindLite qb where qb.osuUser.osuID = :userID")
     fun findByOsuID(userID: Long): QQBindLite?
