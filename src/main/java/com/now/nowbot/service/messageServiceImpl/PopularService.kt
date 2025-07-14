@@ -20,7 +20,10 @@ import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
 import org.springframework.stereotype.Service
+import java.time.Instant
 import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -116,8 +119,8 @@ class PopularService(
 
         val now = OffsetDateTime.now()
 
-        val before = now.minusDays(param.getDayStart().toLong())
-        val after = now.minusDays(param.getDayEnd().toLong())
+        val before = now.minusDays(param.getDayStart().toLong()).clamp()
+        val after = now.minusDays(param.getDayEnd().toLong()).clamp()
 
         val scoreChunk = users.map {
             scoreDao.scoreRepository.getUserRankedScore(it.userID, mode.modeValue, after, before)
@@ -154,6 +157,18 @@ class PopularService(
     }
 
     companion object {
+
+        private fun OffsetDateTime.clamp(min: OffsetDateTime = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(8)), max: OffsetDateTime = OffsetDateTime.now()): OffsetDateTime {
+            return OffsetDateTime.ofInstant(
+                Instant.ofEpochSecond(
+                    this.toEpochSecond().clamp(min.toEpochSecond(), max.toEpochSecond())
+                ),
+                ZoneId.ofOffset("UTC", ZoneOffset.ofHours(8)))
+        }
+
+        private fun Long.clamp(min: Long = 1, max: Long = 50): Long {
+            return min(max(this, min), max)
+        }
 
         private fun Int.clamp(min: Int = 1, max: Int = 50): Int {
             return min(max(this, min), max)
