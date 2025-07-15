@@ -18,6 +18,12 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
         class VersionDifficulty:
             ExceedException("符合筛选版本的成绩太多了！请指定难度（\":\" + \"b、a、e、m、r\"），缩小查询范围。")
 
+        class GroupMembers:
+            WrongException("""
+                群聊人数太多！无法获取数据。
+                这是一个 bug，将来修复。
+            """.trimIndent())
+
     }
 
     open class WrongException(message: String?): IllegalArgumentException(message) {

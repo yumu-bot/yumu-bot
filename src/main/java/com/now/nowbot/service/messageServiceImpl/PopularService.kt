@@ -124,18 +124,26 @@ class PopularService(
 
          */
 
-        val memberData = try {
-            bot.getGroupMemberList(param.data!!, true) ?: throw TipsException("流行谱面：获取群聊信息失败。")
+        val groupInfo = try {
+            bot.getGroupInfo(param.data!!, false) ?: throw TipsException("流行谱面：获取群聊信息失败。")
         } catch (e: Exception) {
             log.info("流行谱面：获取群聊信息失败", e)
             throw NoSuchElementException("获取群聊信息失败。")
         }
 
+        if ((groupInfo.data?.memberCount ?: 1200) >= 1200) {
+            throw IllegalArgumentException.ExceedException.GroupMembers()
+        }
+
         val members = try {
-            memberData.data ?: throw TipsException("流行谱面：获取群聊玩家失败")
+            bot.getGroupMemberList(param.data!!, false)?.data ?: throw TipsException("流行谱面：获取群聊玩家失败。")
         } catch (e: Exception) {
             log.info("流行谱面：获取群聊玩家失败", e)
             throw NoSuchElementException("获取群聊玩家失败。")
+        }
+
+        if (members.isEmpty()) {
+            throw NoSuchElementException.Group()
         }
 
         val qqIDs = members.map { member -> member.userId }

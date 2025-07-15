@@ -50,7 +50,7 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
         NoSuchElementException("你没有做过客串难度谱面，别人也没有给你赠送过客串难度谱面。")
 
     class Group:
-        NoSuchElementException("没有找到这个群。")
+        NoSuchElementException("这个机器人不在这个群。")
 
     class Leaderboard:
         NoSuchElementException("这张谱面没有在线排行榜。")
