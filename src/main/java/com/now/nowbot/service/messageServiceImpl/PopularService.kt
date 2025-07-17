@@ -340,8 +340,10 @@ class PopularService(
          */
 
         // pp
-        val ppAttr = scores
+        val hasPPScores = scores
             .filter { ls -> ls.pp > 0.1 }
+
+        val ppAttr = hasPPScores
             .groupBy { ls -> when(ls.pp.roundToInt()) {
                 in (Int.MIN_VALUE ..< 50) -> "0"
                 in 50 ..< 100 -> "50"
@@ -354,7 +356,7 @@ class PopularService(
             } }
             .map { entry ->
                 val count = entry.value.size
-                val percent = count * 1.0 / scores.size
+                val percent = count * 1.0 / hasPPScores.size
 
                 Attr(entry.key, count, percent)
             }.sortedByDescending { attr -> attr.count }
