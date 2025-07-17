@@ -334,7 +334,7 @@ class PopularService(
                 val percent = count * 1.0 / scores.size
 
                 Attr(entry.key, count, percent)
-            }
+            }.sortedByDescending { attr -> attr.count }
 
         val ppMaxPercent = ppAttr.maxOfOrNull { it.percent } ?: 0.0
 
