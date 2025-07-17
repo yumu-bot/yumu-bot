@@ -68,11 +68,11 @@ class PopularService(
         @JsonProperty("mod_max_percent")
         val modMaxPercent: Double,
 
-        @JsonProperty("rank_attr")
-        val rankAttr: List<Attr>,
+        @JsonProperty("pp_attr")
+        val ppAttr: List<Attr>,
 
-        @JsonProperty("rank_max_percent")
-        val rankMaxPercent: Double,
+        @JsonProperty("pp_max_percent")
+        val ppMaxPercent: Double,
     )
 
     data class MaxRetry(
@@ -278,7 +278,8 @@ class PopularService(
 
         val modMaxPercent = modAttr.maxOfOrNull { it.percent } ?: 0.0
 
-        // rank
+
+        /*
         val rankAttr = scores.groupBy {
             ls -> ls.rank
         }.map { entry ->
@@ -288,19 +289,20 @@ class PopularService(
             Attr(entry.key, count, percent)
         }.sortedByDescending { attr -> attr.count }
 
-        val rankMaxPercent = rankAttr.maxOfOrNull { it.percent } ?: 0.0
+         */
 
-        /*
+        // pp
         val ppAttr = scores
+            .filter { ls -> ls.pp > 0.1 }
             .groupBy { ls -> when(ls.pp.roundToInt()) {
-                in (Int.MIN_VALUE ..< 2000) -> "0"
-                in 2000 ..< 4000 -> "2"
-                in 4000 ..< 6000 -> "4"
-                in 6000 ..< 8000 -> "6"
-                in 8000 ..< 10000 -> "8"
-                in 10000 ..< 12000 -> "10"
-                in 12000 ..< 14000 -> "12"
-                else -> "14"
+                in (Int.MIN_VALUE ..< 50) -> "0"
+                in 50 ..< 100 -> "50"
+                in 100 ..< 200 -> "100"
+                in 200 ..< 300 -> "200"
+                in 300 ..< 400 -> "300"
+                in 400 ..< 500 -> "400"
+                in 500 ..< 600 -> "500"
+                else -> "600"
             } }
             .map { entry ->
                 val count = entry.value.size
@@ -309,7 +311,7 @@ class PopularService(
                 Attr(entry.key, count, percent)
             }
 
-         */
+        val ppMaxPercent = ppAttr.maxOfOrNull { it.percent } ?: 0.0
 
         // 获取资源
         val beatmaps = beatmapApiService.getBeatmaps(
@@ -330,7 +332,7 @@ class PopularService(
             p.maxRetry.user = maxRetryPlayers[p.maxRetry.userID]
         }
 
-        val panelTData = PanelTData(info, shown, maxRetry, modAttr, modMaxPercent, rankAttr, rankMaxPercent)
+        val panelTData = PanelTData(info, shown, maxRetry, modAttr, modMaxPercent, ppAttr, ppMaxPercent)
 
         try {
             event.reply(getImage(panelTData))
