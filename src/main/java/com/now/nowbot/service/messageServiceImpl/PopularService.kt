@@ -65,8 +65,14 @@ class PopularService(
         @JsonProperty("mod_attr")
         val modAttr: List<Attr>,
 
-        @JsonProperty("pp_attr")
-        val ppAttr: List<Attr>
+        @JsonProperty("mod_max_percent")
+        val modMaxPercent: Double,
+
+        @JsonProperty("rank_attr")
+        val rankAttr: List<Attr>,
+
+        @JsonProperty("rank_max_percent")
+        val rankMaxPercent: Double,
     )
 
     data class MaxRetry(
@@ -82,8 +88,9 @@ class PopularService(
         @JsonProperty("beatmap")
         var beatmap: Beatmap? = null
 
-        constructor(beatmapID: Long, count: Int, userID: Long, user: MicroUser?) : this(beatmapID, count, userID) {
+        constructor(beatmapID: Long, count: Int, userID: Long, user: MicroUser?, beatmap: Beatmap?) : this(beatmapID, count, userID) {
             user?.let { u -> this.user = u }
+            beatmap?.let { b -> this.beatmap = b }
         }
     }
 
@@ -233,16 +240,18 @@ class PopularService(
 
         val shown = popular.take(5)
 
-        // 全局最大重试
-        val maxRetryEntry = scores
+        // 全局最大重试：玩家 ID、谱面 ID、最大重试次数
+        val maxRetryTriple = scores
             .groupBy { ls -> ls.userID }
-            .map { user2Score -> user2Score.value
-                .groupBy { score -> score.beatmapID }
-                .maxBy { beatmapID2Score -> beatmapID2Score.value.size }
-            }
-            .maxBy { user2ScoreCount -> user2ScoreCount.value.size }
+            .map { user2Score ->
 
-        val maxRetryBeatmapID: Long = maxRetryEntry.value.firstOrNull()?.beatmapID ?: -1L
+                val ss = user2Score.value
+                    .groupBy { score -> score.beatmapID }
+                    .maxBy { beatmapID2Score -> beatmapID2Score.value.size }.toPair()
+
+                Triple(user2Score.key, ss.first, ss.second)
+            }
+            .maxBy { triple -> triple.third.size }
 
         // 玩家游玩次数
         /*
@@ -265,9 +274,23 @@ class PopularService(
                 val percent = count * 1.0 / scores.size
 
                 Attr(entry.key, count, percent)
-            }
+            }.sortedByDescending { attr -> attr.count }
 
-        // pp
+        val modMaxPercent = modAttr.maxOfOrNull { it.percent } ?: 0.0
+
+        // rank
+        val rankAttr = scores.groupBy {
+            ls -> ls.rank
+        }.map { entry ->
+            val count = entry.value.size
+            val percent = count * 1.0 / scores.size
+
+            Attr(entry.key, count, percent)
+        }.sortedByDescending { attr -> attr.count }
+
+        val rankMaxPercent = rankAttr.maxOfOrNull { it.percent } ?: 0.0
+
+        /*
         val ppAttr = scores
             .groupBy { ls -> when(ls.pp.roundToInt()) {
                 in (Int.MIN_VALUE ..< 2000) -> "0"
@@ -286,24 +309,28 @@ class PopularService(
                 Attr(entry.key, count, percent)
             }
 
+         */
+
         // 获取资源
         val beatmaps = beatmapApiService.getBeatmaps(
-            (shown.map { it.beatmapID }.toSet() + maxRetryBeatmapID).filter { it > 0L }
+            (shown.map { it.beatmapID }.toSet() + maxRetryTriple.second).filter { it > 0L }
         ).associateBy { it.beatmapID }
 
         val maxRetryPlayers = userApiService.getUsers(
-            shown.map { it.maxRetry.userID }.toSet() + maxRetryEntry.key
+            shown.map { it.maxRetry.userID }.toSet() + maxRetryTriple.first
         ).associateBy { it.userID }
 
         // 赋值
-        val maxRetry = MaxRetry(maxRetryBeatmapID, maxRetryEntry.value.size, maxRetryEntry.key, maxRetryPlayers[maxRetryEntry.key])
+        val maxRetry = MaxRetry(maxRetryTriple.second, maxRetryTriple.third.size, maxRetryTriple.first,
+            maxRetryPlayers[maxRetryTriple.first], beatmaps[maxRetryTriple.second]
+        )
 
         shown.forEach { p ->
             p.beatmap = beatmaps[p.beatmapID]
             p.maxRetry.user = maxRetryPlayers[p.maxRetry.userID]
         }
 
-        val panelTData = PanelTData(info, shown, maxRetry, modAttr, ppAttr)
+        val panelTData = PanelTData(info, shown, maxRetry, modAttr, modMaxPercent, rankAttr, rankMaxPercent)
 
         try {
             event.reply(getImage(panelTData))
