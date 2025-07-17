@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ScoreDao
-import com.now.nowbot.mapper.ServiceCallRepository
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
@@ -39,7 +38,6 @@ class PopularService(
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
     private val botContainer: BotContainer,
-    private val serviceCallRepository: ServiceCallRepository,
 ): MessageService<PopularParam> {
 
     data class PopularParam(
@@ -62,6 +60,12 @@ class PopularService(
 
         @JsonProperty("mode")
         val mode: OsuMode,
+
+        @JsonProperty("started_at")
+        val startedAt: OffsetDateTime,
+
+        @JsonProperty("ended_at")
+        val endedAt: OffsetDateTime,
     )
 
     data class PanelTData(
@@ -158,6 +162,7 @@ class PopularService(
 
          */
 
+        /*
         // TODO 临时做的次数限制
         val now = LocalDateTime.now()
         val before = now.minusSeconds(5)
@@ -166,6 +171,8 @@ class PopularService(
         if (result.map { it.service }.count { it.contains("POPULAR".toRegex()) } > 0) {
             throw UnsupportedOperationException("等一会再查询吧...")
         }
+
+         */
 
         val group = matcher.group(FLAG_QQ_GROUP)?.toLongOrNull()
         val ranges = matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
@@ -196,7 +203,10 @@ class PopularService(
             end = ranges.lastOrNull()?.toIntOrNull() ?: 1
         }
 
-        data.value = PopularParam(CmdRange(groupID, start, end), mode.data!!)
+        val range = CmdRange(groupID, start, end)
+        range.setZeroDay()
+
+        data.value = PopularParam(range, mode.data!!)
 
         return true
     }
@@ -289,7 +299,7 @@ class PopularService(
 
          */
 
-        val info = PopularInfo(param.range.data ?: -1L, members.size, users.size, scores.size, mode)
+        val info = PopularInfo(param.range.data ?: -1L, members.size, users.size, scores.size, mode, after, before)
 
         // 种类
         val modAttr = scores
