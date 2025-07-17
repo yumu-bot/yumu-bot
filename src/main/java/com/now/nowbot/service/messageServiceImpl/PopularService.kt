@@ -13,11 +13,13 @@ import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.messageServiceImpl.PopularService.PopularParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.*
 import com.now.nowbot.util.CmdRange
+import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_RANGE
@@ -37,7 +39,13 @@ class PopularService(
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
     private val botContainer: BotContainer,
-): MessageService<CmdRange<Long>> {
+): MessageService<PopularParam> {
+
+    data class PopularParam(
+        val range: CmdRange<Long>,
+        val mode: OsuMode,
+    )
+
     data class PopularInfo(
         @JsonProperty("group_id")
         val groupID: Long,
@@ -50,6 +58,9 @@ class PopularService(
 
         @JsonProperty("score_count")
         val scoreCount: Int,
+
+        @JsonProperty("mode")
+        val mode: OsuMode,
     )
 
     data class PanelTData(
@@ -132,7 +143,7 @@ class PopularService(
         val percent: Double
     )
 
-    override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<CmdRange<Long>>): Boolean {
+    override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<PopularParam>): Boolean {
         val matcher = Instruction.POPULAR.matcher(messageText)
 
         if (!matcher.find()) return false
@@ -145,6 +156,8 @@ class PopularService(
 
         val group = matcher.group(FLAG_QQ_GROUP)?.toLongOrNull()
         val ranges = matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
+
+        val mode = CmdUtil.getMode(matcher)
 
         val groupID: Long
         val start: Int
@@ -170,12 +183,12 @@ class PopularService(
             end = ranges.lastOrNull()?.toIntOrNull() ?: 1
         }
 
-        data.value = CmdRange(groupID, start, end)
+        data.value = PopularParam(CmdRange(groupID, start, end), mode.data!!)
 
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: CmdRange<Long>) {
+    override fun HandleMessage(event: MessageEvent, param: PopularParam) {
 
         val me = try {
             bindDao.getBindFromQQ(event.sender.id)
@@ -193,7 +206,7 @@ class PopularService(
         }
 
         val groupInfo = try {
-            bot.getGroupInfo(param.data!!, false)?.data ?: throw TipsException("流行谱面：获取群聊信息失败。")
+            bot.getGroupInfo(param.range.data!!, false)?.data ?: throw TipsException("流行谱面：获取群聊信息失败。")
         } catch (e: Exception) {
             log.info("流行谱面：获取群聊信息失败", e)
             throw NoSuchElementException("获取群聊信息失败。")
@@ -204,7 +217,7 @@ class PopularService(
         }
 
         val members = try {
-            bot.getGroupMemberList(param.data!!, false)?.data ?: throw TipsException("流行谱面：获取群聊玩家失败。")
+            bot.getGroupMemberList(param.range.data!!, false)?.data ?: throw TipsException("流行谱面：获取群聊玩家失败。")
         } catch (e: Exception) {
             log.info("流行谱面：获取群聊玩家失败", e)
             throw NoSuchElementException("获取群聊玩家失败。")
@@ -221,8 +234,8 @@ class PopularService(
 
         val now = OffsetDateTime.now()
 
-        val before = now.minusDays(param.getDayStart().toLong()).clamp()
-        val after = now.minusDays(param.getDayEnd().toLong()).clamp()
+        val before = now.minusDays(param.range.getDayStart().toLong()).clamp()
+        val after = now.minusDays(param.range.getDayEnd().toLong()).clamp()
 
         val scores = try {
             scoreDao.getUsersRankedScore(users.map { it.userID }, mode.modeValue, after, before)
@@ -263,7 +276,7 @@ class PopularService(
 
          */
 
-        val info = PopularInfo(param.data ?: -1L, members.size, users.size, scores.size)
+        val info = PopularInfo(param.range.data ?: -1L, members.size, users.size, scores.size, param.mode)
 
         // 种类
         val modAttr = scores
@@ -277,7 +290,6 @@ class PopularService(
             }.sortedByDescending { attr -> attr.count }
 
         val modMaxPercent = modAttr.maxOfOrNull { it.percent } ?: 0.0
-
 
         /*
         val rankAttr = scores.groupBy {
