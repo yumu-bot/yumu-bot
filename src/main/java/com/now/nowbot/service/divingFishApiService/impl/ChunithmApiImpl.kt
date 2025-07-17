@@ -153,7 +153,7 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
 
     override fun insertChunithmAlias(song: ChuSong?) {
         if (song != null) {
-            song.alias = getChunithmAlias(song.songID)?.alias?.firstOrNull()
+            song.alias = getChunithmAlias(song.songID)?.alias?.minByOrNull { it.length }
         }
     }
 
@@ -162,8 +162,9 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
 
         val actions = songs.map {
             return@map AsyncMethodExecutor.Runnable {
-                it.alias = getChunithmAlias(it.songID)?.alias?.firstOrNull()
+                it.alias = getChunithmAlias(it.songID)?.alias?.minByOrNull { it.length }
             }
+
         }
 
         AsyncMethodExecutor.awaitRunnableExecute(actions)
@@ -174,7 +175,7 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
 
         val actions = scores.map {
             return@map AsyncMethodExecutor.Runnable {
-                it.alias = getChunithmAlias(it.songID)?.alias?.firstOrNull()
+                it.alias = getChunithmAlias(it.songID)?.alias?.minByOrNull { it.length }
             }
         }
 
@@ -183,7 +184,7 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
 
     override fun insertChunithmAliasForScore(score: ChuScore?) {
         if (score != null) {
-            score.alias = getChunithmAlias(score.songID)?.alias?.firstOrNull()
+            score.alias = getChunithmAlias(score.songID)?.alias?.minByOrNull { it.length }
         }
     }
 

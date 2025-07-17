@@ -191,7 +191,7 @@ import kotlin.text.Charsets.UTF_8
 
         val actions = songs.map {
             return@map AsyncMethodExecutor.Runnable {
-                it.alias = getMaimaiAlias(it.songID)?.alias?.firstOrNull()
+                it.alias = getMaimaiAlias(it.songID)?.alias?.minByOrNull { it.length }
             }
         }
 
@@ -200,7 +200,7 @@ import kotlin.text.Charsets.UTF_8
 
     override fun insertMaimaiAlias(song: MaiSong?) {
         if (song != null) {
-            song.alias = getMaimaiAlias(song.songID)?.alias?.firstOrNull()
+            song.alias = getMaimaiAlias(song.songID)?.alias?.minByOrNull { it.length }
         }
     }
 
@@ -209,7 +209,7 @@ import kotlin.text.Charsets.UTF_8
 
         val actions = scores.map {
             return@map AsyncMethodExecutor.Runnable {
-                it.alias = getMaimaiAlias(it.songID)?.alias?.firstOrNull()
+                it.alias = getMaimaiAlias(it.songID)?.alias?.minByOrNull { it.length }
             }
         }
 
@@ -218,7 +218,7 @@ import kotlin.text.Charsets.UTF_8
 
     override fun insertMaimaiAliasForScore(score: MaiScore?) {
         if (score != null) {
-            score.alias = getMaimaiAlias(score.songID)?.alias?.firstOrNull()
+            score.alias = getMaimaiAlias(score.songID)?.alias?.minByOrNull { it.length }
         }
     }
 
