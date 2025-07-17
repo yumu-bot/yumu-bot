@@ -58,6 +58,9 @@ class PopularService(
         @JsonProperty("score_count")
         val scoreCount: Int,
 
+        @JsonProperty("beatmap_count")
+        val beatmapCount: Int,
+
         @JsonProperty("mode")
         val mode: OsuMode,
 
@@ -307,7 +310,9 @@ class PopularService(
 
          */
 
-        val info = PopularInfo(param.range.data ?: -1L, members.size, users.size, scores.size, mode, after, before)
+        val beatmapCount = scores.groupBy { it.beatmapID }.count()
+
+        val info = PopularInfo(param.range.data ?: -1L, members.size, users.size, scores.size, beatmapCount, mode, after, before)
 
         // 种类
         val modAttr = scores
