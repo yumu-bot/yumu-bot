@@ -184,10 +184,14 @@ class PopularService(
         val end: Int
 
         if (ranges == null) {
-            if (group == null || group < 1e6) {
+            if (group == null) {
                 groupID = event.subject.id
                 start = 0
-                end = (group?.toInt() ?: event.subject.id.toInt()).clamp(1, Int.MAX_VALUE)
+                end = 1
+            } else if (group < 1e6) {
+                groupID = event.subject.id
+                start = 0
+                end = (group.toInt()).clamp(1, Int.MAX_VALUE)
             } else {
                 groupID = group
                 start = 0
