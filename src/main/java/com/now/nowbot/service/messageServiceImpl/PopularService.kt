@@ -160,7 +160,7 @@ class PopularService(
 
         // TODO 临时做的次数限制
         val now = LocalDateTime.now()
-        val before = now.minusSeconds(10)
+        val before = now.minusSeconds(5)
         val result = serviceCallRepository.countBetween(before, now)
 
         if (result.map { it.service }.count { it.contains("POPULAR".toRegex()) } > 0) {
