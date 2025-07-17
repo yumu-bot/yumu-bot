@@ -2,6 +2,7 @@ package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.*
 import com.now.nowbot.model.osu.OsuUser.Team
+import com.now.nowbot.model.osu.OsuUser.UserGroup
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
@@ -17,14 +18,10 @@ class MicroUser : Comparable<MicroUser> {
     var coverUrl: String? = null
 
     @JsonProperty("default_group")
-    var group: String? = null
+    var defaultGroup: String? = null
 
     @JsonProperty("id")
-    var id: Long = 0L
-
-    @get:JsonIgnoreProperties
-    val userID: Long
-        get() = id
+    var userID: Long = 0L
 
     @JsonProperty("is_active")
     var isActive: Boolean = false
@@ -82,6 +79,9 @@ class MicroUser : Comparable<MicroUser> {
         )
     }
 
+    @JsonProperty("groups")
+    var groups: List<UserGroup> = listOf()
+
     @JsonProperty("statistics")
     var statistics: Statistics? = null
 
@@ -101,22 +101,22 @@ class MicroUser : Comparable<MicroUser> {
     )
 
     override fun hashCode(): Int {
-        return id.hashCode()
+        return userID.hashCode()
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is MicroUser) return false
 
-        return id == other.id
+        return userID == other.userID
     }
 
     override fun compareTo(other: MicroUser): Int {
-        return (id - other.id).toInt()
+        return (userID - other.userID).toInt()
     }
 
     override fun toString(): String {
-        return "MicroUser(avatarUrl=$avatarUrl, coverUrl=$coverUrl, group=$group, id=$id, isActive=$isActive, isBot=$isBot, isDeleted=$isDeleted, isOnline=$isOnline, isSupporter=$isSupporter, pmFriendsOnly=$pmFriendsOnly, userName=$userName, cover=$cover, countryCode=$countryCode, country=$country, isMutual=$isMutual, statistics=$statistics, rulesets=$rulesets)"
+        return "MicroUser(avatarUrl=$avatarUrl, coverUrl=$coverUrl, defaultGroup=$defaultGroup, id=$userID, isActive=$isActive, isBot=$isBot, isDeleted=$isDeleted, isOnline=$isOnline, isSupporter=$isSupporter, lastVisitString=$lastVisitString, pmFriendsOnly=$pmFriendsOnly, profileColor=$profileColor, userName='$userName', cover=$cover, country=$country, isMutual=$isMutual, team=$team, groups=$groups, statistics=$statistics, rulesets=$rulesets)"
     }
 
     companion object {

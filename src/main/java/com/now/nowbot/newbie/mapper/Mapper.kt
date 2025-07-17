@@ -139,8 +139,8 @@ class NewbieDao(
             osuUserService.getUsers(i)
                 .filter { it.rulesets != null && it.rulesets!!.osu != null && it.rulesets!!.osu!!.pp!! < 3600 }
                 .map {
-                    userPP[it.id] = it.rulesets!!.osu!!.pp!!.toFloat()
-                    it.id
+                    userPP[it.userID] = it.rulesets!!.osu!!.pp!!.toFloat()
+                    it.userID
                 }.forEach { under3K.add(it) }
         }
         val timeRange = TimeRange(start, end)

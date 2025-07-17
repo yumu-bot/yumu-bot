@@ -352,7 +352,7 @@ class BPQueryService(
                 .map { mappers -> mappers.map { it.value } }
                 .forEach { ids ->
                     val users = userApiService.getUsers(ids)
-                    users.forEach { rawMapperMap[it.id] = it }
+                    users.forEach { rawMapperMap[it.userID] = it }
                 }
             mapperMap.forEach { (index, mapperID) ->
                 val score = scores[index]

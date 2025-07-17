@@ -1,15 +1,20 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.*
 import com.now.nowbot.util.CmdRange
@@ -19,7 +24,6 @@ import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.StopWatch
 import java.time.*
 import kotlin.math.max
 import kotlin.math.min
@@ -30,28 +34,96 @@ class PopularService(
     private val bindDao: BindDao,
     private val scoreDao: ScoreDao,
     private val beatmapApiService: OsuBeatmapApiService,
-    private val botContainer: BotContainer
+    private val userApiService: OsuUserApiService,
+    private val imageService: ImageService,
+    private val botContainer: BotContainer,
 ): MessageService<CmdRange<Long>> {
+    data class PopularInfo(
+        @JsonProperty("group_id")
+        val groupID: Long,
+
+        @JsonProperty("member_count")
+        val memberCount: Int,
+
+        @JsonProperty("player_count")
+        val playerCount: Int,
+
+        @JsonProperty("score_count")
+        val scoreCount: Int,
+    )
+
+    data class PanelTData(
+        @JsonProperty("info")
+        val info: PopularInfo,
+
+        @JsonProperty("popular")
+        val popular: List<PopularBeatmap>,
+
+        @JsonProperty("max_retry")
+        val maxRetry: MaxRetry,
+
+        @JsonProperty("mod_attr")
+        val modAttr: List<Attr>,
+
+        @JsonProperty("pp_attr")
+        val ppAttr: List<Attr>
+    )
+
+    data class MaxRetry(
+        @JsonProperty("beatmap_id")
+        val beatmapID: Long = -1L,
+        val count: Int = 0,
+        @JsonProperty("user_id")
+        val userID: Long = -1L,
+    ) {
+        @JsonProperty("user")
+        var user: MicroUser? = null
+
+        @JsonProperty("beatmap")
+        var beatmap: Beatmap? = null
+
+        constructor(beatmapID: Long, count: Int, userID: Long, user: MicroUser?) : this(beatmapID, count, userID) {
+            user?.let { u -> this.user = u }
+        }
+    }
 
     data class PopularBeatmap(
+        @JsonProperty("beatmap_id")
         val beatmapID: Long = -1L,
         val count: Int = 0,
         val accuracy: Double = 0.0,
         val combo: Int = 0,
-        val player: Int = 0,
+        @JsonProperty("player_count")
+        val playerCount: Int = 0,
+        @JsonProperty("max_retry")
+        val maxRetry: MaxRetry = MaxRetry(),
     ) {
+        @JsonProperty("beatmap")
+        var beatmap: Beatmap? = null
+
         companion object {
             fun toPopularBeatmap(scores: List<LazerScore>): PopularBeatmap {
                 val beatmapID = scores.firstOrNull()?.beatmapID ?: -1L
                 val count = scores.size
                 val accuracy = scores.map { it.accuracy }.average()
                 val combo = scores.map { it.maxCombo }.average().roundToInt()
-                val player = scores.map { it.userID }.toSet().size
+                val playerCount = scores.map { it.userID }.toSet().size
 
-                return PopularBeatmap(beatmapID, count, accuracy, combo, player)
+                val maxGroup = scores.groupBy { it.userID }.toList().map { it.first to it.second.size }
+
+                val maxRetryCount = maxGroup.maxOf { it.second }
+                val maxRetryPlayerID = maxGroup.maxByOrNull { it.second }?.first ?: -1L
+
+                return PopularBeatmap(beatmapID, count, accuracy, combo, playerCount, MaxRetry(beatmapID, maxRetryCount, maxRetryPlayerID))
             }
         }
     }
+
+    data class Attr(
+        val index: String,
+        val count: Int,
+        val percent: Double
+    )
 
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<CmdRange<Long>>): Boolean {
         val matcher = Instruction.POPULAR.matcher(messageText)
@@ -97,9 +169,6 @@ class PopularService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: CmdRange<Long>) {
-        val t = StopWatch()
-
-        t.start("group")
 
         val me = try {
             bindDao.getBindFromQQ(event.sender.id)
@@ -116,22 +185,14 @@ class PopularService(
             throw NoSuchElementException("机器人实例为空。")
         }
 
-        /*
-        val bot = event.bot ?: run {
-            log.info("流行谱面：机器人为空")
-            throw NoSuchElementException("机器人实例为空。")
-        }
-
-         */
-
         val groupInfo = try {
-            bot.getGroupInfo(param.data!!, false) ?: throw TipsException("流行谱面：获取群聊信息失败。")
+            bot.getGroupInfo(param.data!!, false)?.data ?: throw TipsException("流行谱面：获取群聊信息失败。")
         } catch (e: Exception) {
             log.info("流行谱面：获取群聊信息失败", e)
             throw NoSuchElementException("获取群聊信息失败。")
         }
 
-        if ((groupInfo.data?.memberCount ?: 1200) >= 1200) {
+        if ((groupInfo.memberCount ?: 1200) >= 1200) {
             throw IllegalArgumentException.ExceedException.GroupMembers()
         }
 
@@ -148,9 +209,6 @@ class PopularService(
 
         val qqIDs = members.map { member -> member.userId }
 
-        t.stop()
-        t.start("user")
-
         // 存在的玩家
         val users = bindDao.getBindFromQQs(qqIDs)
 
@@ -159,70 +217,134 @@ class PopularService(
         val before = now.minusDays(param.getDayStart().toLong()).clamp()
         val after = now.minusDays(param.getDayEnd().toLong()).clamp()
 
-        t.stop()
-        t.start("score")
-
-        /*
-        val scoreChunk = try {
-            AsyncMethodExecutor.awaitCallableExecute({
-                users.map {
-                    scoreDao.scoreRepository.getUserRankedScore(it.userID, mode.modeValue, after, before)
-                }}, Duration.ofSeconds(30L + users.size / 30)
-            )
-        } catch (e: Throwable) {
-            log.error("流行谱面：查询错误", e)
-            throw NetworkException("查询超时，有可能是天数太多了。")
-        }
-
-         */
-
         val scores = try {
             scoreDao.getUsersRankedScore(users.map { it.userID }, mode.modeValue, after, before)
         } catch (e: Throwable) {
             log.error("流行谱面：查询错误", e)
             throw NetworkException("查询超时，有可能是天数太多了。")
-        }
+        }.map { lite -> lite.toLazerScore() }
 
-        t.stop()
-        t.start("popular")
+        val scoreGroupByID = scores.groupBy { ls -> ls.beatmapID }
 
-        val scoreGroup = scores
-            .map { lite -> lite.toLazerScore() }
-            .groupBy { ls -> ls.beatmapID }
-
-        val popular = scoreGroup
+        val popular = scoreGroupByID
             .map { entry -> PopularBeatmap.toPopularBeatmap(entry.value) }
             .sortedByDescending { it.count }
-            .sortedByDescending { it.player }
+            .sortedByDescending { it.playerCount }
 
-        t.stop()
-        t.start("beatmap")
+        val shown = popular.take(5)
 
-        val beatmaps = beatmapApiService.getBeatmaps(popular.take(5).map { it.beatmapID }).associateBy { it.beatmapID }
+        // 全局最大重试
+        val maxRetryEntry = scores
+            .groupBy { ls -> ls.userID }
+            .map { user2Score -> user2Score.value
+                .groupBy { score -> score.beatmapID }
+                .maxBy { beatmapID2Score -> beatmapID2Score.value.size }
+            }
+            .maxBy { user2ScoreCount -> user2ScoreCount.value.size }
 
-        val sb = StringBuilder("""
-            群聊：${param.data}
-            群聊人数：${members.size}
-            绑定人数：${users.size}
-            可获取的成绩数：${scores.size}
-        """.trimIndent())
+        val maxRetryBeatmapID: Long = maxRetryEntry.value.firstOrNull()?.beatmapID ?: -1L
 
-        for (i in 1..min(5, popular.size)) {
-            val p = popular[i - 1]
-            val b = beatmaps[p.beatmapID]
-
-            sb.append("\n#$i ${b?.previewName ?: p.beatmapID}\n  ${p.count} plays, ${p.player} players, ${String.format("%.2f", p.accuracy * 100.0)}%, ${p.combo}x")
-        }
-
+        // 玩家游玩次数
         /*
-        val image = imageService.getPanelA6(sb.toString())
-        event.reply(image)
+        val playerPlay: List<PlayerPlay> = scores
+            .groupBy { ls -> ls.userID }
+            .map { entry -> PlayerPlay(entry.key, entry.value.size) }
+            .sortedByDescending { it.count }
+            .take(5)
 
          */
-        event.reply(sb.toString())
 
-        t.stop()
-        log.info(t.prettyPrint())
+        val info = PopularInfo(param.data ?: -1L, members.size, users.size, scores.size)
+
+        // 种类
+        val modAttr = scores
+            .flatMap { ls -> ls.mods }
+            .groupBy { mod -> mod.acronym }
+            .map { entry ->
+                val count = entry.value.size
+                val percent = count * 1.0 / scores.size
+
+                Attr(entry.key, count, percent)
+            }
+
+        // pp
+        val ppAttr = scores
+            .groupBy { ls -> when(ls.pp.roundToInt()) {
+                in (Int.MIN_VALUE ..< 2000) -> "0"
+                in 2000 ..< 4000 -> "2"
+                in 4000 ..< 6000 -> "4"
+                in 6000 ..< 8000 -> "6"
+                in 8000 ..< 10000 -> "8"
+                in 10000 ..< 12000 -> "10"
+                in 12000 ..< 14000 -> "12"
+                else -> "14"
+            } }
+            .map { entry ->
+                val count = entry.value.size
+                val percent = count * 1.0 / scores.size
+
+                Attr(entry.key, count, percent)
+            }
+
+        // 获取资源
+        val beatmaps = beatmapApiService.getBeatmaps(
+            (shown.map { it.beatmapID }.toSet() + maxRetryBeatmapID).filter { it > 0L }
+        ).associateBy { it.beatmapID }
+
+        val maxRetryPlayers = userApiService.getUsers(
+            shown.map { it.maxRetry.userID }.toSet() + maxRetryEntry.key
+        ).associateBy { it.userID }
+
+        // 赋值
+        val maxRetry = MaxRetry(maxRetryBeatmapID, maxRetryEntry.value.size, maxRetryEntry.key, maxRetryPlayers[maxRetryEntry.key])
+
+        shown.forEach { p ->
+            p.beatmap = beatmaps[p.beatmapID]
+            p.maxRetry.user = maxRetryPlayers[p.maxRetry.userID]
+        }
+
+        val panelTData = PanelTData(info, shown, maxRetry, modAttr, ppAttr)
+
+        try {
+            event.reply(getImage(panelTData))
+        } catch (e: Exception) {
+            try {
+                event.reply(getText(panelTData))
+            } catch (e1: Exception) {
+                log.error("流行谱面：发送失败", e)
+                throw e
+            }
+        }
+    }
+
+    private fun getImage(panelTData: PanelTData): ByteArray {
+        return try {
+            imageService.getPanel(panelTData, "T")
+        } catch (e: NetworkException.RenderModuleException) {
+            log.error("流行谱面：渲染失败", e)
+            throw e
+        }
+    }
+
+    private fun getText(panelTData: PanelTData): String {
+        val info = panelTData.info
+        val shown = panelTData.popular
+
+        val sb = StringBuilder("""
+            群聊：${info.groupID}
+            群聊人数：${info.memberCount}
+            绑定人数：${info.playerCount}
+            可获取的成绩数：${info.scoreCount}
+        """.trimIndent())
+
+        for (i in 1..min(5, shown.size)) {
+            val p = shown[i - 1]
+            val b = p.beatmap
+
+            sb.append("\n#$i ${b?.previewName ?: p.beatmapID}\n  ${p.count} plays, ${p.playerCount} players, ${String.format("%.2f", p.accuracy * 100.0)}%, ${p.combo}x")
+        }
+
+        return sb.toString()
     }
 
     companion object {

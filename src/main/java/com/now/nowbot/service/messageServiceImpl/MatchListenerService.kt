@@ -158,7 +158,7 @@ class MatchListenerService(
         if (nonUserID.isEmpty()) return
         val users = userApiService.getUsers(nonUserID)
         users.forEach {
-            listener.userMap[it.id] = it
+            listener.userMap[it.userID] = it
         }
     }
 

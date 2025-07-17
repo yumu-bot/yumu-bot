@@ -207,7 +207,7 @@ class MatchListener(
 
     private fun parseUsers(events: List<Match.MatchEvent>, users: List<MicroUser>) {
         users.forEach {
-            userMap[it.id] = it
+            userMap[it.userID] = it
         }
         events.forEach {
             when (it.type) {
