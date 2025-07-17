@@ -2,9 +2,9 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.mikuac.shiro.core.BotContainer
-import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ScoreDao
+import com.now.nowbot.mapper.ServiceCallRepository
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
@@ -39,6 +39,7 @@ class PopularService(
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
     private val botContainer: BotContainer,
+    private val serviceCallRepository: ServiceCallRepository,
 ): MessageService<PopularParam> {
 
     data class PopularParam(
@@ -152,7 +153,19 @@ class PopularService(
             throw UnsupportedOperationException.NotGroup()
         }
 
+        /*
         if (!Permission.isSuperAdmin(event.sender.id)) return false
+
+         */
+
+        // TODO 临时做的次数限制
+        val now = LocalDateTime.now()
+        val before = now.minusSeconds(30)
+        val result = serviceCallRepository.countBetween(before, now)
+
+        if (result.map { it.service }.count { it.contains("POPULAR".toRegex()) } > 0) {
+            throw UnsupportedOperationException("等一分钟后再查询吧...")
+        }
 
         val group = matcher.group(FLAG_QQ_GROUP)?.toLongOrNull()
         val ranges = matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
@@ -196,7 +209,7 @@ class PopularService(
             null
         }
 
-        val mode = OsuMode.getMode(me?.mode, bindDao.getGroupModeConfig(event))
+        val mode = OsuMode.getMode(param.mode, me?.mode, bindDao.getGroupModeConfig(event))
 
         val bot = try {
             botContainer.robots[event.bot.botID] ?: throw TipsException("流行谱面：机器人为空")
@@ -276,7 +289,7 @@ class PopularService(
 
          */
 
-        val info = PopularInfo(param.range.data ?: -1L, members.size, users.size, scores.size, param.mode)
+        val info = PopularInfo(param.range.data ?: -1L, members.size, users.size, scores.size, mode)
 
         // 种类
         val modAttr = scores
