@@ -187,24 +187,24 @@ class PopularService(
             if (group == null) {
                 groupID = event.subject.id
                 start = 0
-                end = 1
+                end = 2
             } else if (group < 1e6) {
                 groupID = event.subject.id
                 start = 0
-                end = (group.toInt()).clamp(1, Int.MAX_VALUE)
+                end = (group.toInt()).clamp(2, Int.MAX_VALUE)
             } else {
                 groupID = group
                 start = 0
-                end = 1
+                end = 2
             }
-        } else if (ranges.size == 1) {
+        } else if (ranges.size == 2) {
             groupID = group ?: event.subject.id
             start = 0
-            end = ranges.firstOrNull()?.toIntOrNull() ?: 1
+            end = ranges.firstOrNull()?.toIntOrNull() ?: 2
         } else {
             groupID = group ?: event.subject.id
             start = ranges.firstOrNull()?.toIntOrNull() ?: 0
-            end = ranges.lastOrNull()?.toIntOrNull() ?: 1
+            end = ranges.lastOrNull()?.toIntOrNull() ?: 2
         }
 
         val range = CmdRange(groupID, start, end)
@@ -270,6 +270,10 @@ class PopularService(
             log.error("流行谱面：查询错误", e)
             throw NetworkException("查询超时，有可能是天数太多了。")
         }.map { lite -> lite.toLazerScore() }
+
+        if (scores.isEmpty()) {
+            throw NoSuchElementException.ScorePeriod()
+        }
 
         val scoreGroupByID = scores.groupBy { ls -> ls.beatmapID }
 

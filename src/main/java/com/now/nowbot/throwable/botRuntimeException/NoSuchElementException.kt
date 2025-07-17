@@ -136,6 +136,12 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
             试试输入更常见的外号或准确的歌曲编号吧。
         """.trimIndent())
 
+    class ScorePeriod:
+        NoSuchElementException("""
+            这段时间内没有成绩记录。
+            尝试修改范围，或尝试扩大搜索天数吧。
+        """.trimIndent())
+
     class SeriesRound:
         NoSuchElementException("没有找到这一系列赛里的对局。")
 
