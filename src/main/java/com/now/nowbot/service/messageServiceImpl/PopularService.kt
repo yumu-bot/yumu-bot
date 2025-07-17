@@ -61,11 +61,11 @@ class PopularService(
         @JsonProperty("mode")
         val mode: OsuMode,
 
-        @JsonProperty("started_at")
-        val startedAt: OffsetDateTime,
+        @JsonProperty("start_time")
+        val startTime: OffsetDateTime,
 
-        @JsonProperty("ended_at")
-        val endedAt: OffsetDateTime,
+        @JsonProperty("end_time")
+        val endTime: OffsetDateTime,
     )
 
     data class PanelTData(
