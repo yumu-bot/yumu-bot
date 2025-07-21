@@ -8,6 +8,7 @@ import com.mikuac.shiro.dto.event.message.GroupMessageEvent;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.permission.PermissionImplement;
 import com.now.nowbot.qq.message.MessageChain;
+import com.now.nowbot.qq.onebot.BotManager;
 import com.now.nowbot.service.IdempotentService;
 import com.now.nowbot.service.MessageService;
 import com.now.nowbot.throwable.BotException;
@@ -71,10 +72,13 @@ public class OneBotListener {
     @Async
     public void handle(Bot bot, GroupMessageEvent onebotEvent) {
         var groupId = onebotEvent.getGroupId();
+        var botId = bot.getSelfId();
+        // 收到消息时动态注册 bot
+        BotManager.onMessage(botId, groupId);
         var message = ShiroUtils.unescape(onebotEvent.getMessage());
         var messageId = String.format(
                 "[%s|%s]%s(%s)",
-                groupId.toString(),
+                groupId,
                 onebotEvent.getSender().getUserId().toString(),
                 onebotEvent.getSubType(),
                 onebotEvent.getTime().toString()
@@ -90,7 +94,7 @@ public class OneBotListener {
         // 对于超过 30秒 的消息直接舍弃, 解决重新登陆后疯狂刷命令
         if (nowTime - onebotEvent.getTime() > 30) return;
         var event = new com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent);
-        // if (event.getGroup().getId() != 746671531) return;
+         if (event.getGroup().getId() != 746671531) return;
         if (event.getSender().getId() == 365246692L) {
             ContextUtil.setContext("isTest", Boolean.TRUE);
         }

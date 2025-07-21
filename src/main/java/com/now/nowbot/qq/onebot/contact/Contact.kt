@@ -9,7 +9,6 @@ import com.now.nowbot.qq.message.*
 import com.now.nowbot.qq.message.Message.JsonMessage
 import com.now.nowbot.qq.onebot.BotManager
 import com.now.nowbot.qq.onebot.OneBotMessageReceipt
-import com.now.nowbot.throwable.botRuntimeException.LogException
 import com.now.nowbot.util.QQMsgUtil
 
 open class Contact(@JvmField var botId: Long, @JvmField val id: Long) : Contact {
@@ -29,13 +28,21 @@ open class Contact(@JvmField var botId: Long, @JvmField val id: Long) : Contact 
 
     override fun sendMessage(msg: MessageChain): MessageReceipt {
         try {
-            ifNewBot
-        } catch (e: NullPointerException) {
-            Contact.log.error("获取 bot 信息为空, 可能为返回数据超时, 但是仍然尝试发送")
-        } catch (e: LogException) {
-            Contact.log.error("无法获取 bot, 放弃发送消息：{}", msg.rawMessage, e)
+            val result = sendMessageBox(msg)
+            if (result == null) {
+                BotManager.updateStatus(id, false)
+                return OneBotMessageReceipt.create()
+            } else {
+                BotManager.updateStatus(id, true)
+                return result
+            }
+        } catch (e: Exception) {
+            BotManager.updateStatus(id, false)
+            throw e
         }
+    }
 
+    private fun sendMessageBox(msg: MessageChain): MessageReceipt? {
         val id: Long
         val d: ActionData<MsgId?>?
         val bot: Bot
@@ -69,7 +76,6 @@ open class Contact(@JvmField var botId: Long, @JvmField val id: Long) : Contact 
                 throw UnsupportedOperationException("not supported")
             }
         }
-
         if (d != null && d.data != null && d.data!!.messageId != null) {
             return OneBotMessageReceipt.create(botId, d.data!!.messageId, this)
         } else {
@@ -83,26 +89,13 @@ open class Contact(@JvmField var botId: Long, @JvmField val id: Long) : Contact 
             } else {
                 Contact.log.error("发送消息：账号 {} 在 {} 发送 {} 时获取回执失败。", bot.selfId, id, getMsg4Chain(msg))
             }
-
-            return OneBotMessageReceipt.create()
+            return null
         }
     }
 
     private fun testBot(): Boolean {
         return BotManager.getBestBot(this.id) == null
     }
-
-    private val ifNewBot: Unit
-        get() {
-//            if (testBot()) {
-//                return
-//            } else if (OneBotConfig.getBotContainer().robots.containsKey(bot!!.selfId)) {
-//                bot = OneBotConfig.getBotContainer().robots[bot!!.selfId]
-//                if (testBot()) { return }
-//            }
-            // 移除冗余
-            throw LogException("当前 bot 离线, 且未找到代替 bot")
-        }
 
     companion object {
         protected fun getMsg4Chain(messageChain: MessageChain): String {

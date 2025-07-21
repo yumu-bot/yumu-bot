@@ -4,7 +4,6 @@ import com.mikuac.shiro.core.Bot
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Component
-import org.springframework.util.CollectionUtils
 import org.springframework.web.socket.WebSocketSession
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.PriorityBlockingQueue
@@ -26,38 +25,37 @@ class BotManager : com.mikuac.shiro.core.CoreEvent() {
     companion object {
         private val log = LoggerFactory.getLogger("BotManager")
         private val BotMap = mutableMapOf<Long, Bot>()
+
         // 查找状态缓存
         private val BotStatusMap = ConcurrentHashMap<Long, BotStatus>()
         private val GroupSortedBots = ConcurrentHashMap<Long, PriorityBlockingQueue<BotStatus>>()
+        private val GroupSortedBotsSet = ConcurrentHashMap<Long, MutableSet<Long>>()
+
+        @JvmStatic
+        fun onMessage(botId: Long, groupId: Long) {
+            val set = GroupSortedBotsSet.computeIfAbsent(groupId) { mutableSetOf() }
+            if (set.contains(botId)) {
+                return
+            }
+            set.add(botId)
+            GroupSortedBots.computeIfAbsent(groupId) { PriorityBlockingQueue() }
+                .add(BotStatus(botId = botId))
+        }
 
         fun botOnline(bot: Bot) {
             val id = bot.selfId
-            val groups: List<Long>
-            try {
-                val data = bot.groupList.data
-                if (CollectionUtils.isEmpty(data)) {
-                    log.info("bot support groups is empty, botId: $id")
-                    return
-                }
-                groups = data.map { it.groupId }
-            } catch (e: Exception) {
-                log.info("can not get bot support groups, botId: $id, error: ${e.message}")
-                return
-            }
 
             BotMap[id] = bot
             BotStatusMap[id] = BotStatus(botId = id)
-            groups.forEach {
-                GroupSortedBots.computeIfAbsent(it) { PriorityBlockingQueue() }
-                    .add(BotStatusMap[id] ?: BotStatus(botId = id))
-            }
         }
 
         fun botOffline(id: Long) {
             BotMap.remove(id)
             BotStatusMap.remove(id)
 
-            GroupSortedBots.forEach { (groupId, bots) ->
+            GroupSortedBotsSet.forEach { (groupId, set) ->
+                if (!set.remove(id)) return@forEach
+                val bots = GroupSortedBots[groupId] ?: return@forEach
                 bots.removeIf { it.botId == id }
                 if (bots.isEmpty()) {
                     GroupSortedBots.remove(groupId)

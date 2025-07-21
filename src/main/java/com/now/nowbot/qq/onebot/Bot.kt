@@ -53,8 +53,8 @@ class Bot(private val selfBot: Long) : com.now.nowbot.qq.Bot {
      * 未实现
      * @return null
      */
-    override fun getStrangers(): List<Stranger>? {
-        return null
+    override fun getStrangers(): List<Stranger> {
+        return listOf()
     }
 
     /***
