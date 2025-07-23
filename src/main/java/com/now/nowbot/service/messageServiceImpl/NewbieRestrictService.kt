@@ -39,7 +39,7 @@ import kotlin.math.min
 import kotlin.math.roundToLong
 
 @Service("NEWBIE_RESTRICT")
-class NewbieRestrictOverSRService(
+class NewbieRestrictService(
     private val scoreApiService: OsuScoreApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
@@ -91,7 +91,7 @@ class NewbieRestrictOverSRService(
                 scores = scoreApiService.getBeatmapScores(map.beatmapID, user.userID, mode)
 
                 beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
-                calculateApiService.applyStarToScores(scores, local = true)
+                calculateApiService.applyStarToScores(scores, local = false)
             } else if (s.find()) {
                 val bid = getBid(s)
                 if (bid == 0L) return false
@@ -104,7 +104,7 @@ class NewbieRestrictOverSRService(
 
                 user = getUserWithoutRange(event, s, CmdObject(mode))
                 scores = listOf(scoreApiService.getBeatMapScore(map.beatmapID, user.userID, mode, mods)?.score ?: return false)
-                calculateApiService.applyStarToScores(scores, local = true)
+                calculateApiService.applyStarToScores(scores, local = false)
             } else if (pr.find()) {
                 val any: String? = pr.group("any")
 
@@ -174,7 +174,7 @@ class NewbieRestrictOverSRService(
 
                     val pss = scoreApiService.getScore(this.data!!.userID, mode.data, offset, limit, isPass)
 
-                    calculateApiService.applyStarToScores(pss)
+                    calculateApiService.applyStarToScores(pss, local = false)
                     calculateApiService.applyBeatMapChanges(pss)
 
                     // 检查查到的数据是否为空
@@ -252,7 +252,7 @@ class NewbieRestrictOverSRService(
                     }
 
                     val bss = scoreApiService.getBestScores(range2.data!!.userID, mode.data, offset, limit)
-                    calculateApiService.applyStarToScores(bss, local = true)
+                    calculateApiService.applyStarToScores(bss, local = false)
 
                     bss.mapIndexed { index: Int, score: LazerScore -> (index + 1) to score }.toMap()
                 }
@@ -282,7 +282,7 @@ class NewbieRestrictOverSRService(
                 constructScore.mods = mods
 
                 scores = listOf(constructScore)
-                calculateApiService.applyStarToScores(scores, local = true)
+                calculateApiService.applyStarToScores(scores, local = false)
             } else if (t.find()) {
                 val mode = getMode(t)
                 val range = getUserWithRange(event, t, mode, AtomicBoolean())
@@ -297,7 +297,7 @@ class NewbieRestrictOverSRService(
                 val earlierDay = OffsetDateTime.now().minusDays(dayEnd.toLong())
 
                 scores = bps.filter { it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).isBefore(laterDay) && it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).isAfter(earlierDay) }
-                calculateApiService.applyStarToScores(scores, local = true)
+                calculateApiService.applyStarToScores(scores, local = false)
             } else if (ba.find()) {
                 /*
                 val mode = getMode(ba)
@@ -407,7 +407,7 @@ class NewbieRestrictOverSRService(
     }
 
     companion object {
-        private val log: Logger = LoggerFactory.getLogger(NewbieRestrictOverSRService::class.java)
+        private val log: Logger = LoggerFactory.getLogger(NewbieRestrictService::class.java)
 
         /**
          * 获取禁言时长（分钟）

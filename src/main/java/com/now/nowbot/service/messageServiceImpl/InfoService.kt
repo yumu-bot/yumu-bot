@@ -17,6 +17,7 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
@@ -118,10 +119,10 @@ class InfoService(
 
         if (matcher.find()) {
             data.value = getParam(event, matcher, 1)
-            return true
+            return data.value != null
         } else if (matcher2.find()) {
             data.value = getParam(event, matcher2, 2)
-            return true
+            return data.value != null
         }
 
         return false
@@ -166,7 +167,8 @@ class InfoService(
 
         return imageService.getPanel(this.toMap(), name)
     }
-    private fun getParam(event: MessageEvent, matcher: Matcher, version: Int = 1): InfoParam {
+
+    private fun getParam(event: MessageEvent, matcher: Matcher, version: Int = 1): InfoParam? {
         val isMyself = AtomicBoolean(false)
 
         val mode = getMode(matcher)
@@ -191,7 +193,17 @@ class InfoService(
             user = async.first
             bests = async.second.toList()
         } else {
-            user = getUserWithoutRange(event, matcher, getMode(matcher), isMyself)
+            user = try {
+                getUserWithoutRange(event, matcher, getMode(matcher), isMyself)
+            } catch (e: BindException) {
+                if (CmdUtil.isAvoidance(event.textMessage.trim(), "info")) {
+                    log.debug("指令退避：I 退避成功")
+                    return null
+                } else {
+                    throw e
+                }
+            }
+
             bests = scoreApiService.getBestScores(user.userID, mode.data!!)
         }
 

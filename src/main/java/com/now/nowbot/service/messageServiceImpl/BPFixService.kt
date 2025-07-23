@@ -197,7 +197,7 @@ class BPFixService(
             scoreApiService.asyncDownloadBackground(scores, listOf(CoverType.LIST, CoverType.COVER))
         }
 
-        return  scores to newPlayerPP
+        return scores to newPlayerPP
     }
 
     private fun initFixScore(score: LazerScore, index: Int): LazerScoreWithFcPP {

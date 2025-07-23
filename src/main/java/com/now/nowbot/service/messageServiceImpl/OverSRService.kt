@@ -14,11 +14,12 @@ import kotlin.math.roundToInt
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Double>): Boolean {
         val m = Instruction.OVER_SR.matcher(messageText)
         if (m.find()) {
-            val starStr = m.group("SR")
+            val starStr: String? = m.group("SR")
 
-            if (starStr.matches(REG_NUMBER_DECIMAL.toRegex()).not()) {
+            if (starStr.isNullOrBlank() || starStr.matches(REG_NUMBER_DECIMAL.toRegex()).not()) {
                 throw IllegalArgumentException.WrongException.Henan()
             }
+
             val star = starStr.toDoubleOrNull()
                 ?: throw IllegalArgumentException.WrongException.StarRating()
 
