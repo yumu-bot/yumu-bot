@@ -78,8 +78,8 @@ class PopularService(
         @JsonProperty("popular")
         val popular: List<PopularBeatmap>,
 
-        @JsonProperty("max_retry")
-        val maxRetry: MaxRetry,
+        @JsonProperty("best_performance")
+        val bestPerformance: MaxRetry,
 
         @JsonProperty("mod_attr")
         val modAttr: List<Attr>,
@@ -235,6 +235,7 @@ class PopularService(
             throw NoSuchElementException("机器人实例为空。")
         }
 
+        /*
         val groupInfo = try {
             bot.getGroupInfo(param.range.data!!, false)?.data ?: throw TipsException("流行谱面：获取群聊信息失败。")
         } catch (e: Exception) {
@@ -245,6 +246,8 @@ class PopularService(
         if ((groupInfo.memberCount ?: 1200) >= 1200) {
             throw IllegalArgumentException.ExceedException.GroupMembers()
         }
+
+         */
 
         val members = try {
             bot.getGroupMemberList(param.range.data!!, false)?.data ?: throw TipsException("流行谱面：获取群聊玩家失败。")
@@ -288,17 +291,21 @@ class PopularService(
         val shown = popular.take(5)
 
         // 全局最大重试：玩家 ID、谱面 ID、最大重试次数
-        val maxRetryTriple = scores
+        val bestPerformanceTriple = scores
             .groupBy { ls -> ls.userID }
             .map { user2Score ->
 
+                /*
                 val ss = user2Score.value
                     .groupBy { score -> score.beatmapID }
                     .maxBy { beatmapID2Score -> beatmapID2Score.value.size }.toPair()
 
-                Triple(user2Score.key, ss.first, ss.second)
+                 */
+                val ss = user2Score.value.maxBy { it.pp }
+
+                Triple(user2Score.key, ss.beatmapID, ss.pp.roundToInt())
             }
-            .maxBy { triple -> triple.third.size }
+            .maxBy { triple -> triple.third }
 
         // 玩家游玩次数
         /*
@@ -365,16 +372,16 @@ class PopularService(
 
         // 获取资源
         val beatmaps = beatmapApiService.getBeatmaps(
-            (shown.map { it.beatmapID }.toSet() + maxRetryTriple.second).filter { it > 0L }
+            (shown.map { it.beatmapID }.toSet() + bestPerformanceTriple.second).filter { it > 0L }
         ).associateBy { it.beatmapID }
 
         val maxRetryPlayers = userApiService.getUsers(
-            shown.map { it.maxRetry.userID }.toSet() + maxRetryTriple.first
+            shown.map { it.maxRetry.userID }.toSet() + bestPerformanceTriple.first
         ).associateBy { it.userID }
 
         // 赋值
-        val maxRetry = MaxRetry(maxRetryTriple.second, maxRetryTriple.third.size, maxRetryTriple.first,
-            maxRetryPlayers[maxRetryTriple.first], beatmaps[maxRetryTriple.second]
+        val bestPerformance = MaxRetry(bestPerformanceTriple.second, bestPerformanceTriple.third, bestPerformanceTriple.first,
+            maxRetryPlayers[bestPerformanceTriple.first], beatmaps[bestPerformanceTriple.second]
         )
 
         shown.forEach { p ->
@@ -382,7 +389,7 @@ class PopularService(
             p.maxRetry.user = maxRetryPlayers[p.maxRetry.userID]
         }
 
-        val panelTData = PanelTData(info, shown, maxRetry, modAttr, modMaxPercent, ppAttr, ppMaxPercent)
+        val panelTData = PanelTData(info, shown, bestPerformance, modAttr, modMaxPercent, ppAttr, ppMaxPercent)
 
         try {
             event.reply(getImage(panelTData))
