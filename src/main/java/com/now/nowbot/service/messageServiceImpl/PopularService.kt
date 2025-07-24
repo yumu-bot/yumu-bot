@@ -235,7 +235,6 @@ class PopularService(
             throw NoSuchElementException("机器人实例为空。")
         }
 
-        /*
         val groupInfo = try {
             bot.getGroupInfo(param.range.data!!, false)?.data ?: throw TipsException("流行谱面：获取群聊信息失败。")
         } catch (e: Exception) {
@@ -247,7 +246,6 @@ class PopularService(
             throw IllegalArgumentException.ExceedException.GroupMembers()
         }
 
-         */
 
         val members = try {
             bot.getGroupMemberList(param.range.data!!, false)?.data ?: throw TipsException("流行谱面：获取群聊玩家失败。")
