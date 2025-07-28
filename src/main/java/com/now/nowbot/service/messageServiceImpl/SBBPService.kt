@@ -282,7 +282,12 @@ class SBBPService(
 
             imageService.getPanel(body, "A4")
         } else {
-            val e5Param = ScorePRService.getE5ParamForFilteredScore(user, scores.toList().first().second, "B", osuBeatmapApiService, osuCalculateApiService)
+            val pair = scores.toList().first()
+
+            val score: LazerScore = pair.second
+            score.ranking = pair.first
+
+            val e5Param = ScorePRService.getE5ParamForFilteredScore(user, score, "B", osuBeatmapApiService, osuCalculateApiService)
 
             imageService.getPanel(e5Param.toMap(), "E5")
         }

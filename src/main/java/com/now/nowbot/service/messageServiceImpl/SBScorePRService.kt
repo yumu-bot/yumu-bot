@@ -325,7 +325,10 @@ class SBScorePRService(
             return QQMsgUtil.getImage(image)
         } else {
             // 单成绩发送
-            val score = scores.values.first()
+            val pair = scores.toList().first()
+
+            val score: LazerScore = pair.second
+            score.ranking = pair.first
 
             val e5 = getE5ParamForFilteredScore(user, score, (if (isPass) "P" else "R"), osuBeatmapApiService, osuCalculateApiService)
 

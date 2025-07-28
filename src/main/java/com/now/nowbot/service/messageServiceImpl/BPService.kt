@@ -274,7 +274,12 @@ import kotlin.math.*
 
             imageService.getPanel(body, "A4")
         } else {
-            val e5Param = ScorePRService.getE5ParamForFilteredScore(user, scores.toList().first().second, "B", beatmapApiService, calculateApiService)
+            val pair = scores.toList().first()
+
+            val score: LazerScore = pair.second
+            score.ranking = pair.first
+
+            val e5Param = ScorePRService.getE5ParamForFilteredScore(user, score, "B", beatmapApiService, calculateApiService)
 
             imageService.getPanel(e5Param.toMap(), "E5")
         }
