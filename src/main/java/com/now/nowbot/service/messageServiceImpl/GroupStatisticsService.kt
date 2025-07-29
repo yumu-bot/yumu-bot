@@ -133,7 +133,7 @@ class GroupStatisticsService(
     }
 
     @Throws(Exception::class) private fun work(group: Group, groupId: Long) {
-        val bot = bots.robots[newbieConfig.yumuBot]
+        val bot = bots.robots[newbieConfig.hydrantBot]
         if (bot == null) {
             group.sendMessage("主bot未在线")
             return

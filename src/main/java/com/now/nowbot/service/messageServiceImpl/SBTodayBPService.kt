@@ -165,7 +165,10 @@ class SBTodayBPService(
 
             imageService.getPanel(body, "A4")
         } else {
-            val score: LazerScore = scores.toList().first().second
+            val pair = scores.toList().first()
+
+            val score: LazerScore = pair.second
+            score.ranking = pair.first
 
             val body = ScorePRService.getE5Param(user, score, "T", osuBeatmapApiService, osuCalculateApiService)
 

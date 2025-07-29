@@ -58,7 +58,7 @@ class ScorePRService(
         val original: Map<String, Any>,
         val attributes: Any,
         val panel: String,
-        val health: Map<Int, Double>?
+        val health: Map<Int, Double>? = null,
     ) {
         fun toMap(): Map<String, Any> {
             val out = mutableMapOf(
@@ -83,6 +83,19 @@ class ScorePRService(
             }
 
             return out
+        }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as PanelE5Param
+
+            return score.scoreID == other.score.scoreID
+        }
+
+        override fun hashCode(): Int {
+            return score.scoreID.hashCode()
         }
     }
 
@@ -375,7 +388,10 @@ class ScorePRService(
                 return QQMsgUtil.getImage(image)
             } else {
                 // 单成绩发送
-                val score = scores.values.first()
+                val pair = scores.toList().first()
+
+                val score: LazerScore = pair.second
+                score.ranking = pair.first
 
                 val e5 = getE5ParamForFilteredScore(user, score, (if (isPass) "P" else "R"), beatmapApiService, calculateApiService)
 
@@ -418,7 +434,7 @@ class ScorePRService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(originalBeatMap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            return PanelE5Param(user, score, null, density, progress, original, attributes, panel, null)
+            return PanelE5Param(user, score, null, density, progress, original, attributes, panel)
 
         }
 
@@ -431,7 +447,7 @@ class ScorePRService(
             calculateApiService: OsuCalculateApiService
         ): PanelE5Param {
             beatmapApiService.applyBeatmapExtendFromDatabase(score)
-            return getScore4PanelE5AfterExtended(user, score, position = null, panel, beatmapApiService, calculateApiService)
+            return getE5ParamAfterExtended(user, score, score.ranking, panel, beatmapApiService, calculateApiService)
         }
 
         fun getE5Param(
@@ -444,10 +460,10 @@ class ScorePRService(
             calculateApiService: OsuCalculateApiService,
         ): PanelE5Param {
             beatmapApiService.applyBeatmapExtend(score, beatmap)
-            return getScore4PanelE5AfterExtended(user, score, position, panel, beatmapApiService, calculateApiService)
+            return getE5ParamAfterExtended(user, score, position ?: score.ranking, panel, beatmapApiService, calculateApiService)
         }
 
-        private fun getScore4PanelE5AfterExtended(
+        private fun getE5ParamAfterExtended(
             user: OsuUser,
             score: LazerScore,
             position: Int? = null,
@@ -471,7 +487,7 @@ class ScorePRService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            return PanelE5Param(user, score, position, density, progress, original, attributes, panel, null)
+            return PanelE5Param(user, score, position ?: score.ranking, density, progress, original, attributes, panel)
         }
     }
 }
