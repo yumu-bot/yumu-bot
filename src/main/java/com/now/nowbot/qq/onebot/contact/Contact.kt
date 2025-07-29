@@ -4,19 +4,14 @@ import com.mikuac.shiro.common.utils.MsgUtils
 import com.mikuac.shiro.core.Bot
 import com.mikuac.shiro.dto.action.common.ActionData
 import com.mikuac.shiro.dto.action.common.MsgId
-import com.mikuac.shiro.dto.action.response.LoginInfoResp
-import com.mikuac.shiro.exception.ShiroException
-import com.mikuac.shiro.exception.ShiroException.SendMessageException
-import com.mikuac.shiro.exception.ShiroException.SessionCloseException
-import com.now.nowbot.config.OneBotConfig
 import com.now.nowbot.qq.contact.Contact
 import com.now.nowbot.qq.message.*
 import com.now.nowbot.qq.message.Message.JsonMessage
+import com.now.nowbot.qq.onebot.BotManager
 import com.now.nowbot.qq.onebot.OneBotMessageReceipt
-import com.now.nowbot.throwable.botRuntimeException.LogException
 import com.now.nowbot.util.QQMsgUtil
 
-open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
+open class Contact(@JvmField var botId: Long, @JvmField val id: Long) : Contact {
     private var username: String? = null
 
     override fun getId(): Long {
@@ -31,21 +26,30 @@ open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
         this.username = name
     }
 
-    override fun sendMessage(msg: MessageChain): OneBotMessageReceipt {
+    override fun sendMessage(msg: MessageChain): MessageReceipt {
         try {
-            ifNewBot
-        } catch (e: NullPointerException) {
-            Contact.log.error("获取 bot 信息为空, 可能为返回数据超时, 但是仍然尝试发送")
-        } catch (e: LogException) {
-            Contact.log.error("无法获取 bot, 放弃发送消息：{}", msg.rawMessage, e)
+            val result = sendMessageBox(msg)
+            if (result == null) {
+                BotManager.updateStatus(id, false)
+                return OneBotMessageReceipt.create()
+            } else {
+                BotManager.updateStatus(id, true)
+                return result
+            }
+        } catch (e: Exception) {
+            BotManager.updateStatus(id, false)
+            throw e
         }
+    }
 
+    private fun sendMessageBox(msg: MessageChain): MessageReceipt? {
         val id: Long
         val d: ActionData<MsgId?>?
-
+        val bot: Bot
         when (this) {
             is Group -> {
-                d = bot!!.customRawRequest(
+                bot = BotManager.getBestBot(this.id) ?: return NoneMessageReceipt()
+                d = bot.customRawRequest(
                     { "send_group_msg" }, mapOf<String, Any>(
                         "group_id" to getId(),
                         "message" to getMsgJson(msg),
@@ -56,7 +60,8 @@ open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
             }
 
             is GroupContact -> {
-                d = bot!!.customRawRequest(
+                bot = BotManager.getBestBot(this.getGroupId()) ?: return NoneMessageReceipt()
+                d = bot.customRawRequest(
                     { "send_private_msg" }, mapOf<String, Any>(
                         "group_id" to this.getGroupId(),
                         "user_id" to this.getId(),
@@ -68,80 +73,29 @@ open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
             }
 
             else -> {
-                d = bot!!.customRawRequest(
-                    { "send_private_msg" }, mapOf<String, Any>(
-                        "user_id" to getId(),
-                        "message" to getMsgJson(msg),
-                        "auto_escape" to false
-                    ), MsgId::class.java
-                )
-                id = getId()
+                throw UnsupportedOperationException("not supported")
             }
         }
-
         if (d != null && d.data != null && d.data!!.messageId != null) {
-            return OneBotMessageReceipt.create(bot, d.data!!.messageId, this)
+            return OneBotMessageReceipt.create(botId, d.data!!.messageId, this)
         } else {
             if (msg.messageList.first() is ImageMessage) {
                 Contact.log.error(
                     "发送消息：账号 {} 在 {} 发送图片时获取回执失败。发送图片状态：{}",
-                    bot!!.selfId,
+                    bot.selfId,
                     id,
-                    bot!!.canSendImage()?.status ?: "无法获取"
+                    bot.canSendImage()?.status ?: "无法获取"
                 )
             } else {
-                Contact.log.error("发送消息：账号 {} 在 {} 发送 {} 时获取回执失败。", bot!!.selfId, id, getMsg4Chain(msg))
+                Contact.log.error("发送消息：账号 {} 在 {} 发送 {} 时获取回执失败。", bot.selfId, id, getMsg4Chain(msg))
             }
-
-            return OneBotMessageReceipt.create()
+            return null
         }
     }
 
     private fun testBot(): Boolean {
-        val info: ActionData<LoginInfoResp> = try {
-            bot!!.loginInfo
-        } catch (e: NullPointerException) {
-            Contact.log.error("Shiro 框架：无法获取 Bot 实例的登录信息", e)
-            return false
-        } catch (e: ShiroException) {
-            Contact.log.error("Shiro 框架异常", e)
-            return false
-        } catch (e: Exception) {
-            Contact.log.error("未知异常", e)
-            return false
-        }
-
-        try {
-            info.data
-        } catch (e: SendMessageException) {
-            Contact.log.error("Shiro 框架：发送消息失败", e)
-            return false
-        } catch (e: SessionCloseException) {
-            Contact.log.error("Shiro 框架：失去与 Bot 实例的连接", e)
-            return false
-        } catch (e: NullPointerException) {
-            // com.now.nowbot.qq.contact.Contact
-            // 获取bot信息为空, 可能为返回数据超时, 但是仍然尝试发送
-            return false
-        } catch (e: Exception) {
-            Contact.log.error("test bot only", e)
-            return false
-        }
-
-        return true
+        return BotManager.getBestBot(this.id) == null
     }
-
-    private val ifNewBot: Unit
-        get() {
-            if (testBot()) {
-                return
-            } else if (OneBotConfig.getBotContainer().robots.containsKey(bot!!.selfId)) {
-                bot = OneBotConfig.getBotContainer().robots[bot!!.selfId]
-                if (testBot()) { return }
-            }
-            // 移除冗余
-            throw LogException("当前 bot 离线, 且未找到代替 bot")
-        }
 
     companion object {
         protected fun getMsg4Chain(messageChain: MessageChain): String {
