@@ -59,7 +59,6 @@ shiro:
     timeout: 10
     max-binary-message-buffer-size: 5120000
     max-text-message-buffer-size: 512000
-    max-http-header-size: 1024000
   # 关闭 shiro 默认构造的线程池, 本项目已启用虚拟线程
   task-pool:
     enable-task-pool: false
@@ -71,10 +70,10 @@ shiro:
     # 补充速率（每秒补充的令牌数量）
     rate: 10
     # 令牌桶容量
-    capacity: 30
+    capacity: 100
     # 如果该值为 false 时，当令牌获取失败则会直接丢次本次请求
     # 如果该值为 true 时，当令牌获取失败则会阻塞当前线程，后续任务将被添加到等待队列
-    awaitTask: true
+    awaitTask: false
     # 等待超时
     timeout: 10
 #数据源
