@@ -53,24 +53,24 @@ open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot),
             val msg = msgs.map {
                 return@map when (it.type) {
                     MsgTypeEnum.at -> {
-                        val qqStr = it.data.getOrDefault("qq", "0")
+                        val qqStr = it.data["qq"]?.toString() ?: "0"
 
                         //艾特全体是 -1。扔过来的可能是 "all"
                         AtMessage(qqStr.toLongOrNull() ?: -1L)
                     }
 
                     MsgTypeEnum.text -> TextMessage(
-                        decodeArr(it.data.getOrDefault("text", ""))
+                        decodeArr(it.data["text"]?.toString() ?: "")
                     )
 
                     MsgTypeEnum.reply -> ReplyMessage(
-                        it.data.getOrDefault("id", "0").toInt().toLong(),
-                        decodeArr(it.data.getOrDefault("text", ""))
+                        (it.data["id"]?.toString() ?: "0").toLongOrNull() ?: 0L,
+                        decodeArr(it.data["text"]?.toString() ?: "")
                     )
 
                     MsgTypeEnum.image -> {
                         try {
-                            ImageMessage(URI(it.data.getOrDefault("url", "")).toURL())
+                            ImageMessage(URI(it.data["url"]?.toString() ?: "").toURL())
                         } catch (e: MalformedURLException) {
                             TextMessage("[图片;加载异常]")
                         } catch (e: IllegalArgumentException) {
