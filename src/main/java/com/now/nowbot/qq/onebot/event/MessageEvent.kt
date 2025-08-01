@@ -66,7 +66,7 @@ open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot?.selfId 
 
                     MsgTypeEnum.image -> {
                         try {
-                            ImageMessage(URI(it.getStringData("url")).toURL())
+                            ImageMessage(URI(it.data.get("url").asText("")).toURL())
                         } catch (e: MalformedURLException) {
                             TextMessage("[图片;加载异常]")
                         } catch (e: IllegalArgumentException) {
