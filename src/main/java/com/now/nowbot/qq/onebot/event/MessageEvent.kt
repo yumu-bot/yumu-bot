@@ -8,6 +8,7 @@ import com.mikuac.shiro.model.ArrayMsg
 import com.now.nowbot.qq.message.*
 import com.now.nowbot.qq.onebot.contact.Contact
 import com.now.nowbot.qq.onebot.contact.Group
+import org.apache.logging.log4j.util.Strings
 import java.net.MalformedURLException
 import java.net.URI
 
@@ -46,8 +47,8 @@ open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot?.selfId 
 
         @JvmStatic
         fun getMessageChain(msgs: List<ArrayMsg>): MessageChain {
-            val msg = msgs.map {
-                return@map when (it.type) {
+            val msg = msgs.mapNotNull {
+                return@mapNotNull when (it.type) {
                     MsgTypeEnum.at -> {
                         val qqStr = it.getStringData("qq")
 
@@ -66,7 +67,15 @@ open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot?.selfId 
 
                     MsgTypeEnum.image -> {
                         try {
-                            ImageMessage(URI(it.data.get("url").asText("")).toURL())
+                            val url = if (it.data.has("url")) {
+                                it.data.get("url").asText("")
+                            } else {
+                                return@mapNotNull  null
+                            }
+                            if (Strings.isEmpty(url)) {
+                                return@mapNotNull null
+                            }
+                            ImageMessage(URI(url).toURL())
                         } catch (e: MalformedURLException) {
                             TextMessage("[图片;加载异常]")
                         } catch (e: IllegalArgumentException) {
