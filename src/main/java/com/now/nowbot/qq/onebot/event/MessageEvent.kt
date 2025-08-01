@@ -14,20 +14,20 @@ import org.slf4j.LoggerFactory
 import java.net.MalformedURLException
 import java.net.URI
 
-open class MessageEvent(val event: MessageEvent, bot: Bot) : Event(bot.selfId),
+open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot),
     com.now.nowbot.qq.event.MessageEvent {
     override fun getSubject(): Contact {
         if (event is GroupMessageEvent) {
-            return Group(bot.botID, event.groupId)
+            return Group(bot.trueBot, event.groupId)
         }
-        return Contact(bot.botID, event.userId)
+        return Contact(bot.trueBot, event.userId)
     }
 
     override fun getSender(): Contact {
         return if (event is GroupMessageEvent) {
-            Group(bot.botID, event.sender.userId)
+            Group(bot.trueBot, event.sender.userId)
         } else {
-            Contact(bot.botID, event.userId)
+            Contact(bot.trueBot, event.userId)
         }
     }
 
@@ -53,29 +53,24 @@ open class MessageEvent(val event: MessageEvent, bot: Bot) : Event(bot.selfId),
             val msg = msgs.map {
                 return@map when (it.type) {
                     MsgTypeEnum.at -> {
-                        val qqStr = it.getLongData("qq")
+                        val qqStr = it.data["qq"]?.toString() ?: "0"
 
-                        AtMessage(
-                            if (qqStr == 0.toLong()) {
-                                -1
-                            } else {
-                                qqStr
-                            }
-                        )
+                        //艾特全体是 -1。扔过来的可能是 "all"
+                        AtMessage(qqStr.toLongOrNull() ?: -1L)
                     }
 
                     MsgTypeEnum.text -> TextMessage(
-                        decodeArr(it.getStringData("text"))
+                        decodeArr(it.data["text"]?.toString() ?: "")
                     )
 
                     MsgTypeEnum.reply -> ReplyMessage(
-                        it.getLongData("id"),
-                        decodeArr(it.getStringData("text"))
+                        (it.data["id"]?.toString() ?: "0").toLongOrNull() ?: 0L,
+                        decodeArr(it.data["text"]?.toString() ?: "")
                     )
 
                     MsgTypeEnum.image -> {
                         try {
-                            ImageMessage(URI(it.getStringData("url")).toURL())
+                            ImageMessage(URI(it.data["url"]?.toString() ?: "").toURL())
                         } catch (e: MalformedURLException) {
                             TextMessage("[图片;加载异常]")
                         } catch (e: IllegalArgumentException) {
