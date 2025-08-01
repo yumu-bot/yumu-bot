@@ -933,7 +933,7 @@ import kotlin.random.Random
                 .replace("(?i)\\syou\\s".toRegex(), " yumu ").replace("我们".toRegex(), "你们")
                 .replace("我".toRegex(), "你").replace("(?i)\\s([Ii]|me)\\s".toRegex(), " you ")
                 .replace("(?i)\\smy\\s".toRegex(), " your ").replace("(?i)\\smine\\s".toRegex(), " yours ").replace(
-                    "[啊呃欸呀哟欤呕噢呦嘢哦吧呗啵啦嘞哩咧咯啰喽吗嘛嚜呢呐呵兮噻哉矣焉]|[哈罢否乎么麽][?？!！。.\\s]?$".toRegex(),
+                    "[啊呃欸呀哟欤呕噢呦嘢哦吧呗啵啦嘞哩咧咯啰喽吗嘛嚜呢呐呵兮噻哉矣焉]|[罢否乎么麽][?？!！。.\\s]?$".toRegex(),
                     "",
                 ) // 阿耶来唻了价也罗给的般则连不呸哪哇 不匹配，删去其他语气助词
                 // 换句末符号
