@@ -87,6 +87,7 @@ sealed interface ValueMod {
     JsonSubTypes.Type(value = LazerMod.ConstantSpeed::class, name = "CS"),
     JsonSubTypes.Type(value = LazerMod.FloatingFruits::class, name = "FF"),
     JsonSubTypes.Type(value = LazerMod.SimplifiedRhythm::class, name = "SR"),
+    JsonSubTypes.Type(value = LazerMod.MovingFast::class, name = "MF"),
     JsonSubTypes.Type(value = LazerMod.NoRelease::class, name = "NR"),
     JsonSubTypes.Type(value = LazerMod.FadeIn::class, name = "FI"),
     JsonSubTypes.Type(value = LazerMod.Cover::class, name = "CO"),
@@ -2191,6 +2192,24 @@ sealed class LazerMod {
         }
     }
 
+    class MovingFast : LazerMod() {
+        @get:JsonProperty("acronym")
+        override val acronym: String = type
+
+        @get:JsonProperty("settings")
+        override var settings: Any? = null
+
+        @get:JsonProperty("color")
+        override val color: String = FUN_MOD_COLOR
+
+        companion object : Mod {
+            override val type: String = "MF"
+            override val mode: Set<OsuMode> = setOf(OsuMode.CATCH)
+            override val incompatible: Set<Mod> = setOf(Autoplay, Cinema, Relax)
+
+        }
+    }
+
     class NoRelease : LazerMod() {
         @get:JsonProperty("acronym")
         override val acronym: String = type
@@ -2733,6 +2752,7 @@ sealed class LazerMod {
                 ConstantSpeed.type -> ConstantSpeed()
                 FloatingFruits.type -> FloatingFruits()
                 SimplifiedRhythm.type -> SimplifiedRhythm()
+                MovingFast.type -> MovingFast()
                 NoRelease.type -> NoRelease()
                 FadeIn.type -> FadeIn()
                 Cover.type -> Cover()

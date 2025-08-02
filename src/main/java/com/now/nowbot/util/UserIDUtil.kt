@@ -293,7 +293,7 @@ object UserIDUtil {
             return CmdRange(me.userID, range.first, range.second)
         }
 
-        val ranges = if (text.contains("($CHAR_HASH|$CHAR_HASH_FULL)".toRegex())) {
+        val ranges = if (text.contains(REG_HASH.toRegex())) {
             parseNameAndRangeHasHash(text)
         } else {
             parseNameAndRangeWithoutHash(text)
@@ -381,7 +381,7 @@ object UserIDUtil {
             return CmdRange(me.userID, range.first, range.second)
         }
 
-        val ranges = if (text.contains("($CHAR_HASH|$CHAR_HASH_FULL)".toRegex())) {
+        val ranges = if (text.contains(REG_HASH.toRegex())) {
             parseNameAndRangeHasHash(text)
         } else {
             parseNameAndRangeWithoutHash(text)
