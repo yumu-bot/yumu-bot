@@ -12,7 +12,7 @@ import com.now.nowbot.qq.onebot.contact.Group
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.MalformedURLException
-import java.net.URI
+import java.net.URL
 
 open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot),
     com.now.nowbot.qq.event.MessageEvent {
@@ -53,24 +53,24 @@ open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot),
             val msg = msgs.map {
                 return@map when (it.type) {
                     MsgTypeEnum.at -> {
-                        val qqStr = it.data.getOrDefault("qq", "0")
+                        val qqStr = it.getStringData("qq")
 
                         //艾特全体是 -1。扔过来的可能是 "all"
                         AtMessage(qqStr.toLongOrNull() ?: -1L)
                     }
 
                     MsgTypeEnum.text -> TextMessage(
-                        decodeArr(it.data.getOrDefault("text", ""))
+                        decodeArr(it.getStringData("text"))
                     )
 
                     MsgTypeEnum.reply -> ReplyMessage(
-                        it.data.getOrDefault("id", "0").toInt().toLong(),
-                        decodeArr(it.data.getOrDefault("text", ""))
+                        it.getLongData("id"),
+                        decodeArr(it.getStringData("text"))
                     )
 
                     MsgTypeEnum.image -> {
                         try {
-                            ImageMessage(URI(it.data.getOrDefault("url", "")).toURL())
+                            ImageMessage(URL(it.getStringData("url")))
                         } catch (e: MalformedURLException) {
                             TextMessage("[图片;加载异常]")
                         } catch (e: IllegalArgumentException) {
