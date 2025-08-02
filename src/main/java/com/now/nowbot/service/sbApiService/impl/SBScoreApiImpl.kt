@@ -128,8 +128,8 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
                     throw NetworkException.ScoreException.NotFound()
                 }
 
-                is WebClientResponseException.TooManyRequests -> {
-                    throw NetworkException.ScoreException.TooManyRequests()
+                is WebClientResponseException.UnprocessableEntity -> {
+                    throw NetworkException.UserException.UnprocessableEntity()
                 }
 
                 is WebClientResponseException.ServiceUnavailable -> {

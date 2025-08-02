@@ -222,7 +222,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     fun appendUID() {
         appendGroup(MAYBE) {
             append(REG_UID)
-            append(CHAR_EQUAL)
+            append(REG_EQUAL)
             appendCaptureGroup(FLAG_UID, REG_NUMBER, MORE, EXIST)
         }
         appendSpace()

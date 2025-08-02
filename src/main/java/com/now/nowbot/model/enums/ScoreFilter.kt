@@ -14,71 +14,73 @@ import kotlin.math.min
 import kotlin.math.roundToLong
 
 enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
-    MAPPER("(mapper|creator|gd(er)?|host|u)(?<n>$REG_OPERATOR$REG_NAME)".toRegex()),
+    CREATOR("(creator|host|h)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
-    BID("(beatmapid|b?id|i)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    GUEST("((gd|guest\\s*diff)(er)?|mapper|guest|g)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
-    SID("((beatmap)?setid|sid?)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    BID("((beatmap\\s*)?id|bid|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    TITLE("(title|name|song|t)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    SID("((beatmap\\s*)?setid|sid|s)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    ARTIST("(artist|f?a)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    TITLE("(title|name|song|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    SOURCE("(source|src|s)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    ARTIST("(artist|art|f?a)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    TAG("(tags?|g)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    SOURCE("(source|src|from|f)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    DIFFICULTY("(difficulty|diff|d)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    TAG("(tags?|g)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    STAR("(star|rating|sr|r)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)$REG_STAR$LEVEL_MAYBE".toRegex()),
+    DIFFICULTY("(difficulty|diff|d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    AR("(ar|approach)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+    STAR("(star|rating|sr|r)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)$REG_STAR$LEVEL_MAYBE".toRegex()),
 
-    CS("(cs|circle|keys?)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+    AR("(ar|approach)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    OD("(od|overall)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+    CS("(cs|circle|keys?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    HP("(hp|health)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+    OD("(od|overall)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    PERFORMANCE("(performance|pp|p)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+    HP("(hp|health)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    RANK("(rank(ing)?|k)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    PERFORMANCE("(performance|pp|p)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    LENGTH("(length|drain|time|l)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE($REG_COLON$REG_NUMBER$LEVEL_MORE)?)".toRegex()),
+    RANK("(rank(ing)?|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    BPM("(bpm|b)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+    LENGTH("(length|drain|time|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE($REG_COLON$REG_NUMBER$LEVEL_MORE)?)".toRegex()),
 
-    ACCURACY("(accuracy|acc)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
+    BPM("(bpm|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    COMBO("(combo|cb?)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE[xX]?)".toRegex()),
+    ACCURACY("(accuracy|acc)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
 
-    PERFECT("(perfect|320|305|pf)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    COMBO("(combo|cb?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE[xX]?)".toRegex()),
 
-    GREAT("(great|300|良|gr)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    PERFECT("(perfect|320|305|pf)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    GOOD("(good|200|gd)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    GREAT("(great|300|良|gr)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    OK("(ok|150|100|(?<!不)可|ba?d)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    GOOD("(good|200|gd)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    MEH("(meh|p(oo)?r|50)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    OK("(ok|150|100|(?<!不)可|ba?d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    MISS("(m(is)?s|0|x|不可)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    MEH("(meh|p(oo)?r|50)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    MOD("(m(od)?s?)(?<n>$REG_OPERATOR$REG_MOD$LEVEL_MORE)".toRegex()),
+    MISS("(m(is)?s|0|x|不可)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    RATE("(rate|e|pm)(?<n>$REG_OPERATOR$REG_NUMBER_DECIMAL)".toRegex()),
+    MOD("(m(od)?s?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MOD$LEVEL_MORE)".toRegex()),
 
-    CIRCLE("((hit)?circles?|hi?t|click|rice|ci|cr|rc)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    RATE("(rate|e|pm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    SLIDER("(slider?s?|sl|longnote|ln)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    CIRCLE("((hit)?circles?|hi?t|click|rice|ci|cr|rc)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    SPINNER("(spin(ner)?s?|rattle|sp)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    SLIDER("(slider?s?|sl|longnote|ln)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    TOTAL("(total|all|ttl|(hit)?objects?|o)(?<n>$REG_OPERATOR$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    SPINNER("(spin(ner)?s?|rattle|sp)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    CONVERT("(convert|cv)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    TOTAL("(total|all|ttl|(hit)?objects?|o)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    CLIENT("(client|z|v|version)(?<n>$REG_OPERATOR$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    CONVERT("(convert|cv)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+
+    CLIENT("(client|z|v|version)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
     RANGE(REG_RANGE.toRegex());
     
@@ -99,7 +101,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
         private fun filterConditions(scores: MutableMap<Int, LazerScore>, filter: ScoreFilter, conditions: List<String>) {
             for (c in conditions) {
                 val operator = Operator.getOperator(c)
-                val condition = (c.split(REG_OPERATOR.toRegex()).lastOrNull() ?: "").trim()
+                val condition = (c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim()
 
                 scores.entries.removeIf { ScoreFilter.fitScore(it.value, operator, filter, condition).not() }
             }
@@ -126,7 +128,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
                 // 如果输入的特别接近整数，则判断是这个值到这个值 +1 的范围（不包含）
                 when (operator) {
-                    Operator.XQ -> d < 1e-8
+                    Operator.XQ -> d < 1e-4
                     Operator.EQ -> if (isPlus && abs(c) - floor(abs(c)) < 1e-4) {
                         c <= t && (c + 1.0) > t
                     } else {
@@ -162,15 +164,22 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
             val double = condition.toDoubleOrNull() ?: -1.0
 
             return when (filter) {
-                MAPPER ->
-                    if (it.beatmap.owners != null) {
-                        for (o in it.beatmap.owners!!) {
-                            if (fit(operator, o.userName, condition)) return true
-                        }
-                        false
+                CREATOR -> fit(operator, it.beatmapset.creator, condition)
+
+                GUEST -> if (! it.beatmap.owners.isNullOrEmpty()) {
+                    if (long > 0L) {
+                        val ids = it.beatmap.owners!!.map { fit(operator, it.userID, long) }.toSet()
+                        val names = it.beatmap.owners!!.map { fit(operator, it.userName, condition) }.toSet()
+
+                        ids.contains(element = true) || names.contains(element = true)
                     } else {
-                        fit(operator, it.beatmapset.creator, condition)
+                        val names = it.beatmap.owners!!.map { fit(operator, it.userName, condition) }.toSet()
+
+                        names.contains(element = true)
                     }
+                } else {
+                    fit(operator, it.beatmapset.creator, condition)
+                }
 
                 BID -> fit(operator, it.beatmapID, long)
                 SID -> fit(operator, it.beatmapset.beatmapsetID, long)
@@ -179,15 +188,13 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 ARTIST -> (fit(operator, it.beatmapset.artist, condition)
                         || fit(operator, it.beatmapset.artistUnicode, condition))
                 SOURCE -> fit(operator, it.beatmapset.source, condition)
-                TAG -> run {
-                    if (it.beatmapset.tags == null) return false
-
-                    for (t in it.beatmapset.tags!!.split("\\s+".toRegex())) {
-                        if (fit(operator, it.beatmapset.source, condition)) return true
+                TAG ->
+                    if (it.beatmapset.tags.isNullOrBlank()) {
+                        false
+                    } else {
+                        val ts = it.beatmapset.tags!!.split("\\s+".toRegex()).map { fit(operator, it, condition) }.toSet()
+                        return ts.contains(element = true)
                     }
-
-                    return false
-                }
                 DIFFICULTY -> fit(operator, it.beatmap.difficultyName, condition)
 
                 STAR -> fit(operator, it.beatmap.starRating, double)

@@ -160,6 +160,10 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                         throw NetworkException.UserException.NotFound()
                     }
 
+                    is WebClientResponseException.UnprocessableEntity -> {
+                        throw NetworkException.UserException.UnprocessableEntity()
+                    }
+
                     is WebClientResponseException.TooManyRequests -> {
                         throw NetworkException.UserException.TooManyRequests()
                     }

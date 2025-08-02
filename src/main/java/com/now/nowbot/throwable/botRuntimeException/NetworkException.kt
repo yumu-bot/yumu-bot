@@ -108,6 +108,14 @@ open class NetworkException(message: String?
             override val code = 404
         }
 
+        class UnprocessableEntity:
+            UserException("""
+                424 Unprocessable Entity
+                玩家名格式错误或超长。
+            """.trimIndent()) {
+            override val code = 424
+        }
+
         class TooManyRequests:
             UserException("""
                 429 Too Many Requests
