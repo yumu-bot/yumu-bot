@@ -9,7 +9,7 @@ import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.messageServiceImpl.GuestDifficultyService.GuestDifferParam
+import com.now.nowbot.service.messageServiceImpl.GuestDifficultyService.GuestParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 
@@ -28,7 +28,7 @@ class GuestDifficultyService(
     private val userApiService: OsuUserApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService
-): MessageService<GuestDifferParam>, TencentMessageService<GuestDifferParam> {
+): MessageService<GuestParam>, TencentMessageService<GuestParam> {
 
     data class GuestDifficultyOwner(
         @get:JsonProperty("user")
@@ -47,12 +47,12 @@ class GuestDifficultyService(
         val sentRanked: Int,
     )
 
-    data class GuestDifferParam(val user: OsuUser, val relatedSets: Set<Beatmapset>, val page: Int)
+    data class GuestParam(val user: OsuUser, val relatedSets: Set<Beatmapset>, val page: Int)
 
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: MessageService.DataValue<GuestDifferParam>
+        data: MessageService.DataValue<GuestParam>
     ): Boolean {
         val matcher = Instruction.GUEST_DIFFICULTY.matcher(messageText)
         if (!matcher.find()) return false
@@ -62,7 +62,7 @@ class GuestDifficultyService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: GuestDifferParam) {
+    override fun HandleMessage(event: MessageEvent, param: GuestParam) {
         val body = param.getBody()
 
         val image = imageService.getPanel(body, "A11")
@@ -75,18 +75,18 @@ class GuestDifficultyService(
         }
     }
 
-    override fun accept(event: MessageEvent, messageText: String): GuestDifferParam? {
+    override fun accept(event: MessageEvent, messageText: String): GuestParam? {
         val matcher = OfficialInstruction.GUEST_DIFFICULTY.matcher(messageText)
         if (!matcher.find()) return null
 
         return getParam(event, matcher)
     }
 
-    override fun reply(event: MessageEvent, param: GuestDifferParam): MessageChain? {
+    override fun reply(event: MessageEvent, param: GuestParam): MessageChain? {
         return QQMsgUtil.getImage(imageService.getPanel(param.getBody(), "A11"))
     }
 
-    private fun getParam(event: MessageEvent, matcher: Matcher): GuestDifferParam {
+    private fun getParam(event: MessageEvent, matcher: Matcher): GuestParam {
 
         // 其实这个功能下的 mode 和 isMyself 不重要
         val isMyself = AtomicBoolean(true)
@@ -149,10 +149,10 @@ class GuestDifficultyService(
             page = range.start ?: 1
         }
 
-        return GuestDifferParam(user, relatedSets, page)
+        return GuestParam(user, relatedSets, page)
     }
 
-    private fun GuestDifferParam.getBody(): Map<String, Any> {
+    private fun GuestParam.getBody(): Map<String, Any> {
         val user = this.user
         val relatedSets = this.relatedSets.asSequence()
 
