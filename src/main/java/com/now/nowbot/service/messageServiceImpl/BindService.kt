@@ -244,7 +244,11 @@ import java.util.regex.Pattern
             val uid = bindDao.verifyCaptcha(code)
             val bu = bindDao.getBindUser(uid)
             if (bu != null && bu.isAuthorized) {
+                val mode = userApiService.getOsuUser(bu.userID).currentOsuMode
+
                 bindDao.bindQQ(qq, bu)
+                bindDao.updateMode(bu.userID, mode)
+
                 event.reply(BindException.BindResultException.BindSuccessWithMode(bu.mode))
                 return
             }
