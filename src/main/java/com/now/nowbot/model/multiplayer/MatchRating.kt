@@ -313,10 +313,12 @@ class MatchRating(
                 val rws: Double
 
                 if (r.isTeamVS) {
-                    if (data.team == r.winningTeam) {
+                    val team = s.playerStat?.team
+
+                    if (team == r.winningTeam) {
                         rws = 1.0 * s.score / r.winningTeamScore
                         data.win += 1
-                    } else if (null == r.winningTeam) {
+                    } else if (r.winningTeam.isNullOrEmpty() || team.isNullOrEmpty()) {
                         rws = 1.0 * s.score / r.winningTeamScore
                     } else {
                         rws = 0.0
