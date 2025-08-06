@@ -190,7 +190,7 @@ class PopularService(
             if (group == null) {
                 groupID = event.subject.id
                 start = 0
-                end = 2
+                end = 1
             } else if (group < 1e6) {
                 groupID = event.subject.id
                 start = 0
@@ -198,16 +198,16 @@ class PopularService(
             } else {
                 groupID = group
                 start = 0
-                end = 2
+                end = 1
             }
         } else if (ranges.size == 2) {
             groupID = group ?: event.subject.id
             start = 0
-            end = ranges.firstOrNull()?.toIntOrNull() ?: 2
+            end = ranges.firstOrNull()?.toIntOrNull() ?: 1
         } else {
             groupID = group ?: event.subject.id
             start = ranges.firstOrNull()?.toIntOrNull() ?: 0
-            end = ranges.lastOrNull()?.toIntOrNull() ?: 2
+            end = ranges.lastOrNull()?.toIntOrNull() ?: 1
         }
 
         val range = CmdRange(groupID, start, end)
