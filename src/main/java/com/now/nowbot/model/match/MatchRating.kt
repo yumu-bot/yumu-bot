@@ -1,4 +1,4 @@
-package com.now.nowbot.model.multiplayer
+package com.now.nowbot.model.match
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty

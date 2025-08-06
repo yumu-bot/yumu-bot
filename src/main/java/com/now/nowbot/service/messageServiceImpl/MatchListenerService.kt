@@ -3,10 +3,10 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.config.Permission
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.Beatmap
-import com.now.nowbot.model.multiplayer.Match
-import com.now.nowbot.model.multiplayer.MatchAdapter
-import com.now.nowbot.model.multiplayer.MatchListener
-import com.now.nowbot.model.multiplayer.MatchRating
+import com.now.nowbot.model.match.Match
+import com.now.nowbot.model.match.MatchAdapter
+import com.now.nowbot.model.match.MatchListener
+import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService

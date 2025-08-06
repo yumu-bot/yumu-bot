@@ -1,8 +1,8 @@
-package com.now.nowbot.model.multiplayer
+package com.now.nowbot.model.match
 
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.osu.MicroUser
-import com.now.nowbot.model.multiplayer.Match.EventType
+import com.now.nowbot.model.match.Match.EventType
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors

@@ -1,8 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.multiplayer.MatchRating
-import com.now.nowbot.model.multiplayer.MatchRating.Companion.applyDTMod
-import com.now.nowbot.model.multiplayer.MatchRating.Companion.insertMicroUserToScores
+import com.now.nowbot.model.match.MatchRating
+import com.now.nowbot.model.match.MatchRating.Companion.applyDTMod
+import com.now.nowbot.model.match.MatchRating.Companion.insertMicroUserToScores
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder

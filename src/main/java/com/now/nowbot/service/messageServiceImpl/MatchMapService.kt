@@ -5,8 +5,8 @@ import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.MicroUser
-import com.now.nowbot.model.multiplayer.Match
-import com.now.nowbot.model.multiplayer.MatchRating
+import com.now.nowbot.model.match.Match
+import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService

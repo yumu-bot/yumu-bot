@@ -1,4 +1,4 @@
-package com.now.nowbot.model.multiplayer;
+package com.now.nowbot.model.match;
 
 public class PlayerClass {
     String name;

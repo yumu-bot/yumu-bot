@@ -1,8 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.multiplayer.Match
-import com.now.nowbot.model.multiplayer.MatchRating
-import com.now.nowbot.model.multiplayer.SeriesRating
+import com.now.nowbot.model.match.Match
+import com.now.nowbot.model.match.MatchRating
+import com.now.nowbot.model.match.SeriesRating
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService

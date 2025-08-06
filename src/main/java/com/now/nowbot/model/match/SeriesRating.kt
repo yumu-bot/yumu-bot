@@ -1,9 +1,9 @@
-package com.now.nowbot.model.multiplayer
+package com.now.nowbot.model.match
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.now.nowbot.model.multiplayer.MatchRating.PlayerData
-import com.now.nowbot.model.multiplayer.MatchRating.RatingParam
+import com.now.nowbot.model.match.MatchRating.PlayerData
+import com.now.nowbot.model.match.MatchRating.RatingParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import java.util.concurrent.atomic.AtomicInteger

@@ -9,8 +9,8 @@ import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
 import com.now.nowbot.model.mappool.old.MapPoolDto
-import com.now.nowbot.model.multiplayer.Match
-import com.now.nowbot.model.multiplayer.MatchRating
+import com.now.nowbot.model.match.Match
+import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.messageServiceImpl.*

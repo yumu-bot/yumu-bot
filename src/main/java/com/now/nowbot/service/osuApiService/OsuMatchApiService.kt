@@ -1,7 +1,10 @@
 package com.now.nowbot.service.osuApiService
 
-import com.now.nowbot.model.multiplayer.MatchLobby
-import com.now.nowbot.model.multiplayer.Match
+import RoomInfo
+import com.now.nowbot.model.match.MatchLobby
+import com.now.nowbot.model.match.Match
+import com.now.nowbot.model.multiplayer.Room
+import com.now.nowbot.model.multiplayer.RoomLeaderBoard
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 interface OsuMatchApiService {
@@ -16,4 +19,10 @@ interface OsuMatchApiService {
     fun getMatchBefore(matchID: Long, eventID: Long): Match
 
     fun getMatchAfter(matchID: Long, eventID: Long): Match
+
+    fun getRoom(roomID: Long): Room
+
+    fun getRoomInfo(roomID: Long): RoomInfo
+
+    fun getRoomLeaderboard(roomID: Long): RoomLeaderBoard
 }

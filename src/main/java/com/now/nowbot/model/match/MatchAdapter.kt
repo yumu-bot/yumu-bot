@@ -1,4 +1,4 @@
-package com.now.nowbot.model.multiplayer
+package com.now.nowbot.model.match
 
 import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode

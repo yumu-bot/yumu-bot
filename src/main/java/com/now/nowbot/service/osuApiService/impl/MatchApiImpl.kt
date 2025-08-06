@@ -1,8 +1,11 @@
 package com.now.nowbot.service.osuApiService.impl
 
-import com.now.nowbot.model.multiplayer.Match
-import com.now.nowbot.model.multiplayer.Match.Companion.append
-import com.now.nowbot.model.multiplayer.MatchLobby
+import RoomInfo
+import com.now.nowbot.model.match.Match
+import com.now.nowbot.model.match.Match.Companion.append
+import com.now.nowbot.model.match.MatchLobby
+import com.now.nowbot.model.multiplayer.Room
+import com.now.nowbot.model.multiplayer.RoomLeaderBoard
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import org.springframework.stereotype.Service
@@ -15,7 +18,6 @@ import java.time.Duration
 class MatchApiImpl(
     private val base: OsuApiBaseService,
 ) : OsuMatchApiService {
-    @Throws(WebClientResponseException::class)
     override fun getMatchLobby(limit: Int, descending: Boolean, cursor: String?): MatchLobby {
         return request { client ->
             client.get()
@@ -50,6 +52,36 @@ class MatchApiImpl(
 
     override fun getMatchAfter(matchID: Long, eventID: Long): Match {
         return getMatch(matchID, 0, eventID)
+    }
+
+    override fun getRoom(roomID: Long): Room {
+        return request { client ->
+            client.get()
+                .uri("rooms/{room}/events", roomID)
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(Room::class.java)
+        }
+    }
+
+    override fun getRoomInfo(roomID: Long): RoomInfo {
+        return request { client ->
+            client.get()
+                .uri("rooms/{room}", roomID)
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(RoomInfo::class.java)
+        }
+    }
+
+    override fun getRoomLeaderboard(roomID: Long): RoomLeaderBoard {
+        return request { client ->
+            client.get()
+                .uri("rooms/{room}/leaderboard", roomID)
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(RoomLeaderBoard::class.java)
+        }
     }
 
     private fun getMatch(mid: Long): Match {

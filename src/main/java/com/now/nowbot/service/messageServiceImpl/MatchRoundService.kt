@@ -2,11 +2,11 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.Beatmap
-import com.now.nowbot.model.multiplayer.Match
-import com.now.nowbot.model.multiplayer.Match.MatchRound
-import com.now.nowbot.model.multiplayer.MatchRating
-import com.now.nowbot.model.multiplayer.MatchRating.Companion.insertMicroUserToScores
-import com.now.nowbot.model.multiplayer.MatchRating.RatingParam
+import com.now.nowbot.model.match.Match
+import com.now.nowbot.model.match.Match.MatchRound
+import com.now.nowbot.model.match.MatchRating
+import com.now.nowbot.model.match.MatchRating.Companion.insertMicroUserToScores
+import com.now.nowbot.model.match.MatchRating.RatingParam
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
