@@ -249,7 +249,7 @@ import java.util.regex.Pattern
                 bindDao.bindQQ(qq, bu)
                 bindDao.updateMode(bu.userID, mode)
 
-                event.reply(BindException.BindResultException.BindSuccessWithMode(bu.mode))
+                event.reply(BindException.BindResultException.BindSuccessWithMode(mode))
                 return
             }
         }
