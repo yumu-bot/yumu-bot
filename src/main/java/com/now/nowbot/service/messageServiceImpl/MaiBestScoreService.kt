@@ -16,8 +16,6 @@ import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_HYPHEN
 import org.springframework.stereotype.Service
-import kotlin.math.max
-import kotlin.math.min
 
 @Service("MAI_BP")
 class MaiBestScoreService(
@@ -193,7 +191,7 @@ class MaiBestScoreService(
             val isStandardEmpty = c.standard.isEmpty()
             val isDeluxeEmpty = c.deluxe.isEmpty()
 
-            if (offset > 35) {
+            if (offset >= 35) {
                 // dx
                 if (isDeluxeEmpty) {
                     throw TipsException("您的新版本成绩是空的！")
@@ -203,11 +201,8 @@ class MaiBestScoreService(
                     maimaiApiService.insertMaimaiAliasForScore(c.deluxe)
 
                     return MaiBestScore.Charts(
-                        c.deluxe.subList(
-                            min(max(offset - 35, 0), c.deluxe.size - 1),
-                            min(offset + limit - 35, c.deluxe.size),
-                        ),
-                        mutableListOf(),
+                        c.deluxe.drop(offset - 35).take(limit),
+                        emptyList(),
                     )
                 }
             } else if (offset + limit < 35) {
@@ -220,42 +215,15 @@ class MaiBestScoreService(
                     maimaiApiService.insertMaimaiAliasForScore(c.standard)
 
                     return MaiBestScore.Charts(
-                        mutableListOf(),
-                        c.standard.subList(
-                            min(max(offset, 0), c.standard.size - 1),
-                            min(offset + limit, c.standard.size),
-                        ),
+                        emptyList(),
+                        c.standard.drop(offset).take(limit),
                     )
                 }
             } else {
                 // sd + dx
 
                 if (isStandardEmpty && isDeluxeEmpty) {
-                    throw throw NoSuchElementException.BestScore(bp.name)
-                } else if (isDeluxeEmpty) {
-                    maimaiApiService.insertSongData(c.standard)
-                    maimaiApiService.insertPosition(c.standard, true)
-                    maimaiApiService.insertMaimaiAliasForScore(c.standard)
-
-                    return MaiBestScore.Charts(
-                        mutableListOf(),
-                        c.standard.subList(
-                            min(max(offset, 0), c.standard.size - 1),
-                            min(offset + limit, c.standard.size),
-                        ),
-                    )
-                } else if (isStandardEmpty) {
-                    maimaiApiService.insertSongData(c.deluxe)
-                    maimaiApiService.insertPosition(c.deluxe, false)
-                    maimaiApiService.insertMaimaiAliasForScore(c.deluxe)
-
-                    return MaiBestScore.Charts(
-                        c.deluxe.subList(
-                            min(max(offset - 35, 0), c.deluxe.size - 1),
-                            min(offset + limit - 35, c.deluxe.size),
-                        ),
-                        mutableListOf(),
-                    )
+                    throw NoSuchElementException.BestScore(bp.name)
                 } else {
                     maimaiApiService.insertSongData(c.standard)
                     maimaiApiService.insertPosition(c.standard, true)
@@ -265,15 +233,11 @@ class MaiBestScoreService(
                     maimaiApiService.insertPosition(c.deluxe, false)
                     maimaiApiService.insertMaimaiAliasForScore(c.deluxe)
 
+                    // offset < 35, offset + limit >= 35
+
                     return MaiBestScore.Charts(
-                        c.deluxe.subList(
-                            min(max(offset - 35, 0), c.deluxe.size - 1),
-                            min(offset + limit - 35, c.deluxe.size),
-                        ),
-                        c.standard.subList(
-                            min(max(offset, 0), c.standard.size - 1),
-                            min(offset + limit, c.standard.size),
-                        ),
+                        c.deluxe.take(offset + limit - 35),
+                        c.standard.drop(offset),
                     )
                 }
             }

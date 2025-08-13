@@ -12,11 +12,11 @@ class MaiBestScore {
     @JsonProperty("charts") var charts: Charts = Charts()
 
     // 这就是所有成绩，在 BP 里没有
-    @JsonProperty("records") var records = mutableListOf<MaiScore>()
+    @JsonProperty("records") var records = listOf<MaiScore>()
 
     data class Charts(
-        @JsonProperty("dx") val deluxe: MutableList<MaiScore> = mutableListOf(),
-        @JsonProperty("sd") val standard: MutableList<MaiScore> = mutableListOf(),
+        @JsonProperty("dx") val deluxe: List<MaiScore> = listOf(),
+        @JsonProperty("sd") val standard: List<MaiScore> = listOf(),
     )
 
     // 在游戏里的名字
