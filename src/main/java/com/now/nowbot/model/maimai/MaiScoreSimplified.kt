@@ -55,11 +55,11 @@ class MaiScoreSimplified {
             full: List<MaiScore>,
             lite: List<MaiScoreSimplified>
         ): List<MaiScore> {
+            val map: Map<String, MaiScore> =
+                full.associateBy { it.songID.toString() + "_" + it.index.toString() }
+
             val out = lite.map { l ->
                 val index: String = l.songID.toString() + "_" + l.index.toString()
-
-                val map: Map<String, MaiScore> =
-                    full.associateBy { it.songID.toString() + "_" + it.index.toString() }
 
                 val s = map[index] ?: l.toMaiScore()
 
