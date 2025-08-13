@@ -18,7 +18,7 @@ class MaiScoreSimplified {
     // 等于 sid
     @JsonProperty("id") var songID: Long = 0
 
-    // 定数的实际显示，0.6-0.9 后面会多一个 +，宴会场谱面会多一个
+    // 定数的实际显示，0.6-0.9 后面会多一个 +，宴会场谱面会多一个 ?
     @JsonProperty("level") var level: String = ""
 
     // 定数的位置，0-4
@@ -52,11 +52,21 @@ class MaiScoreSimplified {
     companion object {
         @JvmStatic
         fun parseMaiScoreList(
-            full: MutableList<MaiScore>,
-            lite: MutableList<MaiScoreSimplified>
-        ): MutableList<MaiScore> {
-            val out = mutableListOf<MaiScore>()
+            full: List<MaiScore>,
+            lite: List<MaiScoreSimplified>
+        ): List<MaiScore> {
+            val out = lite.map { l ->
+                val index: String = l.songID.toString() + "_" + l.index.toString()
 
+                val map: Map<String, MaiScore> =
+                    full.associateBy { it.songID.toString() + "_" + it.index.toString() }
+
+                val s = map[index] ?: l.toMaiScore()
+
+                return@map s
+            }.sortedByDescending { it.rating }
+
+            /*
             for (l in lite) {
                 val index: String = l.songID.toString() + "_" + l.index.toString()
 
@@ -69,6 +79,8 @@ class MaiScoreSimplified {
             }
 
             out.sortByDescending(MaiScore::rating)
+
+             */
 
             return out
         }

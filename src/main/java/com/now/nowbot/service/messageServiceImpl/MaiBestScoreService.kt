@@ -144,7 +144,7 @@ class MaiBestScoreService(
                 imageService.getPanel(PanelMAParam(user, charts.standard, charts.deluxe).toMap(), "MA")
             } else {
                 val score =
-                    if (charts.deluxe.size > 0) {
+                    if (charts.deluxe.isNotEmpty()) {
                         charts.deluxe.first()
                     } else {
                         charts.standard.first()

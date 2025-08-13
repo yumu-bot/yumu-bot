@@ -20,7 +20,7 @@ class MaiScore {
     // 同步状态，主要是综合看你和拼机的玩家
     @JsonProperty("fs") var sync: String = ""
 
-    // 定数的实际显示，0.6-0.9 后面会多一个 +，宴会场谱面会多一个
+    // 定数的实际显示，0.6-0.9 后面会多一个 +，宴会场谱面会多一个 ?
     @JsonProperty("level") var level: String = ""
 
     // 定数的位置，0-4
