@@ -10,6 +10,8 @@ import kotlin.math.roundToInt
 enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
     CHARTER("(chart(er)?|mapper|谱师?|c)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
+    ID("(id|编?号|i)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
+
     DIFFICULTY("(difficulty|diff|难度?|d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MAI_DIFFICULTY)".toRegex()),
 
     DIFFICULTY_NAME("(difficulty|diff|难度?|d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
@@ -122,6 +124,8 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
                 CHARTER -> fit(operator,
                     MaiCharter.getCharter(it.charter).sorted().joinToString(" "),
                     MaiCharter.getCharter(condition).sorted().joinToString(" "))
+
+                ID -> fit(operator, it.songID % 10000L, int.toLong() % 10000L)
 
                 DIFFICULTY -> fit(operator, it.star, double)
 
