@@ -153,7 +153,16 @@ val REG_IGNORE_BS: String = "[^bs:：\\d\\s]"
 val REG_NAME: String = "($CHAR_NAME$CHAR_NAME_WITH_SPACE+$CHAR_NAME)"
 
 @Language("RegExp")
-val REG_SB_NAME: String = "(\\S[^#＃！!≥≤<>＜＞＝=]+)"
+val REG_ANYTHING_BUT_NO_OPERATOR: String = "(\\S[^#＃！!≥≤<>＜＞＝=]+)"
+
+@Language("RegExp")
+val REG_MAI_DIFFICULTY = "((((1[0-4])|[1-9])$REG_PLUS?$REG_QUESTION?)|(15))"
+
+@Language("RegExp")
+val REG_MAI_CABINET = "(sd|standard|标准|标|dx|deluxe|豪华)"
+
+@Language("RegExp")
+val REG_MAI_RANGE = "$REG_MAI_DIFFICULTY\\s*$REG_HYPHEN?\\s*$REG_MAI_DIFFICULTY?"
 
 /**
  * 这个分隔符会分隔空格

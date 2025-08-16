@@ -209,7 +209,8 @@ import kotlin.text.Charsets.UTF_8
 
         val actions = scores.map {
             return@map AsyncMethodExecutor.Runnable {
-                it.alias = getMaimaiAlias(it.songID)?.alias?.minByOrNull { it.length }
+                it.aliases = getMaimaiAlias(it.songID)?.alias
+                it.alias = it.aliases?.minByOrNull { it.length }
             }
         }
 
@@ -218,7 +219,9 @@ import kotlin.text.Charsets.UTF_8
 
     override fun insertMaimaiAliasForScore(score: MaiScore?) {
         if (score != null) {
-            score.alias = getMaimaiAlias(score.songID)?.alias?.minByOrNull { it.length }
+
+            score.aliases = getMaimaiAlias(score.songID)?.alias
+            score.alias = score.aliases?.minByOrNull { it.length }
         }
     }
 
@@ -237,6 +240,9 @@ import kotlin.text.Charsets.UTF_8
 
     override fun insertSongData(score: MaiScore, song: MaiSong) {
         score.artist = song.info.artist
+        score.genre = song.info.genre
+        score.bpm = song.info.bpm
+        score.version = song.info.version
 
         if (song.charts.isEmpty() || score.index >= song.charts.size) return
 
@@ -244,7 +250,8 @@ import kotlin.text.Charsets.UTF_8
         val notes = chart.notes
 
         score.charter = chart.charter
-        score.max = 3 * (notes.tap + notes.touch + notes.hold + notes.slide + notes.break_)
+        score.max = 3 * (notes.tap + notes.hold + notes.slide + notes.touch + notes.break_)
+        score.notes = listOf(notes.tap, notes.hold, notes.slide, notes.touch, notes.break_)
     }
 
     override fun insertPosition(scores: List<MaiScore>, isBest35: Boolean) {

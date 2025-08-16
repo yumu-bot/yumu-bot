@@ -1,7 +1,6 @@
-package com.now.nowbot.model.enums;
+package com.now.nowbot.model.enums
 
-public enum MaiUtage {
-
+enum class MaiUtage(val alias: String) {
     // 所有音符都是 Break。
     LIGHT("光"),
 
@@ -9,7 +8,7 @@ public enum MaiUtage {
     STAR("星"),
 
     // 所有音符的 Slide 头会跑到尾巴去。
-    REVERSE("星"),
+    REVERSE("回"),
 
     // 有隐藏音符，需要记忆
     MEMORISE("覚"),
@@ -40,12 +39,4 @@ public enum MaiUtage {
 
     // 比以上两个更难
     INSANE("狂"),
-
-    ;
-
-    final String name;
-
-    MaiUtage(String name) {
-        this.name = name;
-    }
 }

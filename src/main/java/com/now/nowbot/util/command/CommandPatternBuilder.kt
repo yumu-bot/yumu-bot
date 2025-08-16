@@ -184,7 +184,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      * (?<name> X X+ X)
      */
     fun appendSBName() {
-        appendCaptureGroup(FLAG_NAME, REG_SB_NAME)
+        appendCaptureGroup(FLAG_NAME, REG_ANYTHING_BUT_NO_OPERATOR)
         appendSpace()
     }
 
@@ -257,7 +257,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     fun appendSBNameAndRange() {
         appendCaptureGroup(
             FLAG_USER_AND_RANGE,
-            "$REG_SB_NAME?$REG_SPACE$LEVEL_ANY($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?",
+            "$REG_ANYTHING_BUT_NO_OPERATOR?$REG_SPACE$LEVEL_ANY($REG_HASH?(($REG_NUMBER_13)$REG_HYPHEN)?($REG_NUMBER_13))?",
             EXIST,
             MAYBE,
         )

@@ -24,7 +24,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
     TITLE("(title|name|song|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    ARTIST("(artist|art|f?a)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    ARTIST("(artist|singer|art|f?a)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
     SOURCE("(source|src|from|f)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
@@ -34,25 +34,25 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
     STAR("(star|rating|sr|r)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)$REG_STAR$LEVEL_MAYBE".toRegex()),
 
-    AR("(ar|approach)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    AR("(ar|approach\\s*(rate)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    CS("(cs|circle|keys?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    CS("(cs|circle\\s*(size)?|keys?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    OD("(od|overall)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    OD("(od|overall\\s*(difficulty)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    HP("(hp|health)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    HP("(hp|health\\s*(point)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    PERFORMANCE("(performance|pp|p)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    PERFORMANCE("(performance|表现分?|pp|p)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    RANK("(rank(ing)?|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    RANK("(rank(ing)?|评价|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    LENGTH("(length|drain|time|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE($REG_COLON$REG_NUMBER$LEVEL_MORE)?)".toRegex()),
+    LENGTH("(length|drain|time|长度|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE($REG_COLON$REG_NUMBER$LEVEL_MORE)?)".toRegex()),
 
-    BPM("(bpm|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    BPM("(bpm|曲速|速度|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    ACCURACY("(accuracy|acc)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
+    ACCURACY("(accuracy|精确率?|精准率?|acc)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
 
-    COMBO("(combo|cb?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE[xX]?)".toRegex()),
+    COMBO("(combo|连击|cb?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE[xX]?)".toRegex()),
 
     PERFECT("(perfect|320|305|pf)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
@@ -64,11 +64,11 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
     MEH("(meh|p(oo)?r|50)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    MISS("(m(is)?s|0|x|不可)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    MISS("(m(is)?s|0|x|不可|失误)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    MOD("(m(od)?s?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MOD$LEVEL_MORE)".toRegex()),
+    MOD("((m(od)?s?)|模组?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MOD$LEVEL_MORE)".toRegex()),
 
-    RATE("(rate|e|pm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    RATE("(rate|彩率?|e|pm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
     CIRCLE("((hit)?circles?|hi?t|click|rice|ci|cr|rc)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
@@ -107,10 +107,22 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
             }
         }
 
-        private fun fit(operator: Operator, compare: Any, to: Any, isPlus: Boolean = false): Boolean {
+        fun fit(operator: Operator, compare: Any, to: Any, isPlus: Boolean = false): Boolean {
             return if (compare is Long && to is Long) {
                 val c: Long = compare
                 val t: Long = to
+
+                when (operator) {
+                    Operator.XQ, Operator.EQ -> c == t
+                    Operator.NE -> c != t
+                    Operator.GT -> c > t
+                    Operator.GE -> c >= t
+                    Operator.LT -> c < t
+                    Operator.LE -> c <= t
+                }
+            } else if (compare is Int && to is Int) {
+                val c: Int = compare
+                val t: Int = to
 
                 when (operator) {
                     Operator.XQ, Operator.EQ -> c == t
@@ -153,6 +165,19 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     Operator.GE -> t.contains(c, ignoreCase = true) && t.length >= c.length
                     Operator.LT -> c.contains(t, ignoreCase = true) && t.length < c.length
                     Operator.LE -> c.contains(t, ignoreCase = true) && t.length <= c.length
+                }
+            } else if (compare is List<*> && to is List<*>) {
+                val c: Set<Any?> = compare.toSet()
+                val t: Set<Any?> = to.toSet()
+
+                when (operator) {
+                    Operator.XQ -> c.contains(t) && t.size == c.size
+                    Operator.EQ -> c.contains(t)
+                    Operator.NE -> c.contains(t).not()
+                    Operator.GT -> t.contains(c) && t.size > c.size
+                    Operator.GE -> t.contains(c) && t.size >= c.size
+                    Operator.LT -> c.contains(t) && t.size < c.size
+                    Operator.LE -> c.contains(t) && t.size <= c.size
                 }
             } else {
                 throw IllegalStateException.Calculate("成绩筛选")

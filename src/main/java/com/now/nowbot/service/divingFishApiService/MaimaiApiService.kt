@@ -12,7 +12,7 @@ interface MaimaiApiService {
 
     fun getMaimaiScoreByVersion(qq: Long, versions: List<MaiVersion>): MaiVersionScore
 
-    fun getMaimaiScoreByVersion(username: String, versions: List<MaiVersion>, ): MaiVersionScore
+    fun getMaimaiScoreByVersion(username: String, versions: List<MaiVersion>): MaiVersionScore
 
     fun getMaimaiCover(songID: Long): ByteArray
 

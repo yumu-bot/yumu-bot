@@ -824,9 +824,14 @@ enum class Instruction(val pattern: Pattern) {
         }
         appendQQID()
         appendSpace()
-        appendCaptureGroup(FLAG_VERSION, "dx|sd|deluxe|standard|标准?|豪华")
+        appendCaptureGroup(FLAG_VERSION, REG_MAI_CABINET)
         appendSpace()
-        appendNameAny()
+        appendNameAnyButNoHash()
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendSpace()
+            appendCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100)
+        }
     }),
 
     MAI_VERSION(CommandPatternBuilder.create {
@@ -945,7 +950,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.SB_BP) continue
+        if (i != Instruction.MAI_SCORE) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

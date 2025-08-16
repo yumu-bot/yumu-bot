@@ -41,7 +41,7 @@ enum class MaiDifficulty(val full : String) {
                 "bsc",
                 "ba",
                 "b",
-                "0",
+                "1",
                 "绿",
                 "初",
                 "初级" -> {
@@ -51,7 +51,7 @@ enum class MaiDifficulty(val full : String) {
                 "adv",
                 "ad",
                 "a",
-                "1",
+                "2",
                 "黄",
                 "高",
                 "高级" -> {
@@ -61,7 +61,7 @@ enum class MaiDifficulty(val full : String) {
                 "exp",
                 "ex",
                 "e",
-                "2",
+                "3",
                 "红",
                 "专",
                 "专家" -> {
@@ -72,7 +72,7 @@ enum class MaiDifficulty(val full : String) {
                 "mst",
                 "ma",
                 "m",
-                "3",
+                "4",
                 "紫",
                 "大",
                 "大师" -> {
@@ -87,7 +87,7 @@ enum class MaiDifficulty(val full : String) {
                 "re",
                 "rm",
                 "r",
-                "4",
+                "5",
                 "白",
                 "宗",
                 "宗师" -> {
@@ -97,7 +97,7 @@ enum class MaiDifficulty(val full : String) {
                 "uta",
                 "ut",
                 "u",
-                "5",
+                "6",
                 "宴",
                 "宴会",
                 "宴会场",

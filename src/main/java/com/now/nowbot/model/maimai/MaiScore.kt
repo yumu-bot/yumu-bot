@@ -1,6 +1,5 @@
 package com.now.nowbot.model.maimai
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
 class MaiScore {
@@ -44,21 +43,36 @@ class MaiScore {
     // 外号，自己填
     @get:JsonProperty("alias") var alias: String? = null
 
+    // 外号，自己填
+    @get:JsonProperty("aliases") var aliases: List<String>? = null
+
     // 谱面种类，有DX和SD之分
     @JsonProperty("type") var type: String = ""
 
     // 通过 MaiSong 算出来的理论 DX Score
-    @JsonIgnoreProperties var max: Int = 0
+    @get:JsonProperty("max") var max: Int = 0
 
     // BP 多少
-    @JsonIgnoreProperties var position: Int = 0
+    @get:JsonProperty("position") var position: Int = 0
 
     // 自己拿
-    @JsonIgnoreProperties var artist: String = ""
+    @get:JsonProperty("artist") var artist: String = ""
 
     // 自己拿
-    @JsonIgnoreProperties var charter: String = ""
+    @get:JsonProperty("charter") var charter: String = ""
 
-    @get:JsonIgnoreProperties val isDeluxe: Boolean
+    // 自己拿
+    @get:JsonProperty("genre") var genre: String = ""
+
+    // 自己拿
+    @get:JsonProperty("version") var version: String = ""
+
+    // 自己拿
+    @get:JsonProperty("notes") var notes: List<Int> = listOf()
+
+    // 自己拿
+    @get:JsonProperty("bpm") var bpm: Int = 0
+
+    @get:JsonProperty("is_deluxe") val isDeluxe: Boolean
         get() = this.songID >= 10000
 }
