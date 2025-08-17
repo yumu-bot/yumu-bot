@@ -22,7 +22,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
     TITLE("(title|name|song|曲|名|曲名|标题|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    ALIASES("(alias|aliases|绰号|别名?|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    ALIASES("(alias|aliases|外号|绰号|别名?|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
     ARTIST("(artist|singer|art|艺术家|歌手?|a)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
@@ -132,7 +132,10 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
                 DIFFICULTY_NAME -> fit(operator, MaiDifficulty.getDifficulty(it.difficulty), MaiDifficulty.getDifficulty(condition))
 
                 CABINET -> fit(operator, MaiCabinet.getCabinet(condition).name, MaiCabinet.getCabinet(it.type).name)
-                VERSION -> fit(operator, MaiVersion.getVersionList(it.version), MaiVersion.getVersionList(condition))
+                VERSION -> fit(operator,
+                    MaiVersion.getVersionList(it.version).joinToString(" ") { it.abbreviation },
+                    MaiVersion.getVersionList(condition).joinToString(" ") { it.abbreviation }
+                )
                 TITLE -> fit(operator, it.title, condition)
                 ALIASES -> run {
                     it.aliases?.map { alias ->
