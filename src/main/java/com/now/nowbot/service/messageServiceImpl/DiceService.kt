@@ -925,23 +925,30 @@ import kotlin.random.Random
          * @return 和谐
          */
         private fun changeCase(str: String?): String {
-            var s = str ?: ""
-            s = recoveryApostrophe(s)
+            val s = recoveryApostrophe(str ?: "")
 
             return s.trim() // 换人称
-                .replace("你们?".toRegex(), "雨沐").replace("(?i)\\syours?\\s".toRegex(), " yumu's ")
-                .replace("(?i)\\syou\\s".toRegex(), " yumu ").replace("我们".toRegex(), "你们")
-                .replace("我".toRegex(), "你").replace("(?i)\\s([Ii]|me)\\s".toRegex(), " you ")
-                .replace("(?i)\\smy\\s".toRegex(), " your ").replace("(?i)\\smine\\s".toRegex(), " yours ").replace(
-                    "[啊呃欸呀哟欤呕噢呦嘢哦吧呗啵啦嘞哩咧咯啰喽吗嘛嚜呢呐呵兮噻哉矣焉]|[哈罢否乎么麽][?？!！。.\\s]?$".toRegex(),
+                .replace("你们?".toRegex(), "雨沐")
+                .replace("(?i)\\syours?\\s".toRegex(), " yumu's ")
+                .replace("(?i)\\syou\\s".toRegex(), " yumu ")
+                .replace("我们".toRegex(), "你们")
+                .replace("我".toRegex(), "你")
+                .replace("(?i)\\s([Ii]|me)\\s".toRegex(), " you ")
+                .replace("(?i)\\smy\\s".toRegex(), " your ")
+                .replace("(?i)\\smine\\s".toRegex(), " yours ")
+                .replace(
+                    "[啊呃欸呀哟欤呕噢呦嘢哦吧呗啵啦嘞哩咧咯啰喽吗嘛嚜呢呐呵兮噻哉矣焉]|[罢否乎][?？!！。.\\s]?$".toRegex(),
                     "",
                 ) // 阿耶来唻了价也罗给的般则连不呸哪哇 不匹配，删去其他语气助词
                 // 换句末符号
 
-                .replace("[?？!！。.\\s]$".toRegex(), "").replace(
+                .replace("[?？!！。.\\s]$".toRegex(), "")
+                .replace(
                     "[习習]近平|[习習]?总书记|主席|国家|政治|反动|反?共(产党)?|[国國]民[党黨]|天安[門门]|极[左右](主义)?|革命|(社会)?主义|自由|解放|中[華华]民[国國]|情趣|迪克|高潮|色[诱情欲色]|擦边|露出|[蛇射受授吞]精|潮喷|成人|性交|小?男娘|小?南梁|做爱|后入|药娘|怀孕|生殖器|寄吧|几把|鸡[鸡巴]|[精卵]子|[精爱]液|子宫|阴[茎蒂唇囊道]|[逼Bb阴吊叼批肛]毛|搞基|出?脚本|[Rr]-?18|18\\s?禁|LGBT".toRegex(),
                     "[和谐]",
-                ).replace("[黨党吊批逼操肏肛杀穴屁萎猥]".toRegex(), "○")
+                )
+                .replace("[黨党吊批逼操肏肛杀穴屁萎猥]".toRegex(), "○")
+                .replace("((电?[棍昆滚])|otto)\\s*的?\\s*((老?[木母]亲?)|([妈老]?妈)|(mom)|(mother))".toRegex(), "    ")
         }
 
         // 避免撇号影响结果，比如 It's time to go bed

@@ -434,7 +434,7 @@ class ScorePRService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(originalBeatMap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            return PanelE5Param(user, score, null, density, progress, original, attributes, panel)
+            return PanelE5Param(user, score, score.ranking, density, progress, original, attributes, panel)
 
         }
 
