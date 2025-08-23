@@ -53,29 +53,24 @@ import java.util.regex.Pattern
         val nameStr = m.group(FLAG_NAME) ?: ""
 
         val isYmBot = messageText.substring(0, 3).contains("ym") ||
-                m.group("bi") != null ||
-                m.group("un") != null ||
-                m.group("ub") != null
+                m.group("bi") != null || m.group("un") != null || m.group("ub") != null
 
-        val needConfirm = isYmBot.not() && m.group("bind").isNullOrBlank()
-
-        val name = if (needConfirm) {
-            // 带着 ym 以及特殊短链不用问
+        val name = if (isYmBot) {
+            nameStr
+        } else {
             if (nameStr.isNotBlank() && nameStr.contains("osu") && userApiService.isPlayerExist(nameStr)) {
                 userApiService.getOsuUser(nameStr).username
             } else {
-                log.info("绑定：退避成功：!bind osu <data>")
+                log.info("绑定：退避成功：!bind $nameStr")
                 return false
             }
-        } else {
-            nameStr
         }
 
-        if (needConfirm) {
+        if (isYmBot.not()) {
             // 提问
             val receipt = event.reply(BindException.BindConfirmException.ConfirmThis())
 
-            val lock = ASyncMessageUtil.getLock(event, (30 * 1000).toLong())
+            val lock = ASyncMessageUtil.getLock(event, 30L * 1000)
             val ev = lock.get()
 
             if (ev.rawMessage.uppercase().contains("OK").not()) {
