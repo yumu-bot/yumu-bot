@@ -142,6 +142,10 @@ class MatchApiImpl(
                     throw NetworkException.MatchException.TooManyRequests()
                 }
 
+                is WebClientResponseException.BadGateway -> {
+                    throw NetworkException.MatchException.BadGateway()
+                }
+
                 is WebClientResponseException.ServiceUnavailable -> {
                     throw NetworkException.MatchException.ServiceUnavailable()
                 }

@@ -304,6 +304,10 @@ import java.util.regex.Pattern
                     throw NetworkException.UserException.TooManyRequests()
                 }
 
+                is WebClientResponseException.BadGateway -> {
+                    throw NetworkException.UserException.BadGateWay()
+                }
+
                 is WebClientResponseException.ServiceUnavailable -> {
                     throw NetworkException.UserException.ServiceUnavailable()
                 }

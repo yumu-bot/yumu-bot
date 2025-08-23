@@ -124,6 +124,14 @@ open class NetworkException(message: String?
             override val code = 429
         }
 
+        class BadGateWay:
+            UserException("""
+                502 Bad GateWay
+                无法访问请求服务器。
+            """.trimIndent()) {
+            override val code = 502
+        }
+
         class ServiceUnavailable:
             UserException("""
                 503 Service Unavailable
@@ -177,6 +185,14 @@ open class NetworkException(message: String?
             override val code = 429
         }
 
+        class BadGateWay:
+            BeatmapException("""
+                502 Bad GateWay
+                无法访问请求服务器。
+            """.trimIndent()) {
+            override val code = 502
+        }
+
         class ServiceUnavailable:
             BeatmapException("""
                 503 Service Unavailable
@@ -226,7 +242,7 @@ open class NetworkException(message: String?
                 422 UnprocessableEntity
                 您需要成为 osu!supporter 才能使用此功能。
             """.trimIndent()) {
-            override val code = 503
+            override val code = 422
         }
 
         class TooManyRequests:
@@ -235,6 +251,14 @@ open class NetworkException(message: String?
                 请求数已达上限。
             """.trimIndent()) {
             override val code = 429
+        }
+
+        class BadGateway:
+            ScoreException("""
+                502 Bad GateWay
+                无法访问请求服务器。
+            """.trimIndent()) {
+            override val code = 502
         }
 
         class ServiceUnavailable:
@@ -279,6 +303,14 @@ open class NetworkException(message: String?
                 请求数已达上限。
             """.trimIndent()) {
             override val code = 429
+        }
+
+        class BadGateway:
+            MatchException("""
+                502 Bad GateWay
+                无法访问请求服务器。
+            """.trimIndent()) {
+            override val code = 502
         }
 
         class ServiceUnavailable:

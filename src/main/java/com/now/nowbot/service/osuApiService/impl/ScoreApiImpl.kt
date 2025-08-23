@@ -478,6 +478,10 @@ class ScoreApiImpl(
                     throw NetworkException.ScoreException.TooManyRequests()
                 }
 
+                is WebClientResponseException.BadGateway -> {
+                    throw NetworkException.ScoreException.BadGateway()
+                }
+
                 is WebClientResponseException.UnprocessableEntity -> {
                     throw NetworkException.ScoreException.UnprocessableEntity()
                 }

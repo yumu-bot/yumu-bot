@@ -58,6 +58,10 @@ class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
                     throw NetworkException.BeatmapException.TooManyRequests()
                 }
 
+                is WebClientResponseException.BadGateway -> {
+                    throw NetworkException.BeatmapException.BadGateWay()
+                }
+
                 is WebClientResponseException.ServiceUnavailable -> {
                     throw NetworkException.BeatmapException.ServiceUnavailable()
                 }

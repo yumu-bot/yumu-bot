@@ -849,6 +849,10 @@ class BeatmapApiImpl(
                     throw NetworkException.BeatmapException.TooManyRequests()
                 }
 
+                is WebClientResponseException.BadGateway -> {
+                    throw NetworkException.BeatmapException.BadGateWay()
+                }
+
                 is WebClientResponseException.ServiceUnavailable -> {
                     throw NetworkException.BeatmapException.ServiceUnavailable()
                 }
