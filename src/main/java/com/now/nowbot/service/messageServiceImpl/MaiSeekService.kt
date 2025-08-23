@@ -11,6 +11,7 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.LEVEL_MORE
 import com.now.nowbot.util.command.REG_NUMBER
+import com.now.nowbot.util.command.REG_QUOTATION
 import org.springframework.stereotype.Service
 
 @Service("MAI_SEEK")
@@ -36,7 +37,7 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
     }
 
     override fun HandleMessage(event: MessageEvent, param: String) {
-        if (param.matches("\\s*$REG_NUMBER$LEVEL_MORE\\s*".toRegex())) {
+        if (param.matches("\\s*$REG_NUMBER$LEVEL_MORE\\s*".toRegex()) && !param.contains(REG_QUOTATION.toRegex())) {
             val rating = param.toIntOrNull() ?: 0
             
             val surrounding = maimaiApiService.getMaimaiSurroundingRank(rating)
@@ -49,8 +50,12 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
                 val name = e.key
                 val achievement = e.value
 
+                val delta = achievement - rating
+                val index = if (delta > 0) "+" else ""
+
                 sb.append("#${i}: ")
-                    .append(achievement - rating)
+                    .append(index)
+                    .append(delta)
                     .append(" ")
                     .append(name)
                     .append(" ")
@@ -71,8 +76,10 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
 
         val similarities = mutableListOf<Pair<String, Double>>()
 
+        val paramNoQuote = param.replace(REG_QUOTATION.toRegex(), "")
+
         for (std in nameMap.keys) {
-            val y = DataUtil.getStringSimilarityStandardised(param, std)
+            val y = DataUtil.getStringSimilarity(paramNoQuote, std, standardised = false)
 
             if (y >= 0.4) {
                 similarities.add(Pair(std, y))

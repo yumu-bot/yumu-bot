@@ -291,6 +291,16 @@ enum class Instruction(val pattern: Pattern) {
         }
     }),
 
+    SB_INFO(CommandPatternBuilder.create {
+        appendSBCommandsIgnoreAll("information", "info", "i")
+        appendModeQQUIDName()
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendSpace()
+            appendCaptureGroup(FLAG_DAY, REG_NUMBER, MORE)
+        }
+    }),
+
     INFO2(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("testinformation", "testinfo", "ti", "ji", "j", "juice")
         appendModeQQUIDName()

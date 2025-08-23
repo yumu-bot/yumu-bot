@@ -499,7 +499,7 @@ object DataUtil {
         var number = num
         var unit = '-'
         number = abs(number)
-        if (level < 1 || level > 2) return '-'
+        if (level !in 1..2) return '-'
         var m = 1 + level
 
         if (number < 10.0.pow(m)) { // level==1->100 level==2->1000
@@ -670,10 +670,10 @@ object DataUtil {
             bpPP += pp * weight // 前 100 的bp上的 pp
         }
 
-        val N = (length - 50).toDouble()
+        val n = (length - 50).toDouble()
         // Exiyi - Nxy__ / Ex2i - Nx_2
-        k = (xy - (x * y / N)) / (x2 - (x.pow(2.0) / N))
-        b = (y / N) - k * (x / N)
+        k = (xy - (x * y / n)) / (x2 - (x.pow(2.0) / n))
+        b = (y / n) - k * (x / n)
 
         // 找零点
         val expectedX = if ((k == 0.0)) -1 else floor(-b / k).toInt()
@@ -932,6 +932,94 @@ object DataUtil {
         }
     }
 
+    /**
+     * 获取两个字符串的相似度。
+     * 新版获取方法参考了 string-similarity-js
+     *
+     * @param stringLength 需要分割的字符串宽度。默认为 2
+     * @param caseSensitive 大小写敏感。默认不敏感
+     * @param standardised 是否标准化字符串。默认标准化。
+     * @return 0-1 之间的相似度
+     */
+    @JvmStatic
+    fun getStringSimilarity(
+        compare: String?,
+        to: String?,
+        stringLength: Int = 2,
+        caseSensitive: Boolean = false,
+        standardised: Boolean = true,
+    ): Double {
+        if (compare.isNullOrEmpty() || to.isNullOrEmpty()) return 0.0
+
+        val cs = if (standardised) {
+            if (caseSensitive) {
+                getStandardisedString(compare)
+            } else {
+                getStandardisedString(compare).lowercase()
+            }
+        } else {
+            if (caseSensitive) {
+                compare
+            } else {
+                compare.lowercase()
+            }
+        }
+
+        val ts = if (standardised) {
+            if (caseSensitive) {
+                getStandardisedString(to).lowercase()
+            } else {
+                getStandardisedString(to)
+            }
+        } else {
+            if (caseSensitive) {
+                to.lowercase()
+            } else {
+                to
+            }
+        }
+
+        if (cs.length < stringLength || ts.length < stringLength) {
+            return if (stringLength > 1) {
+                // 增强短字符串下的辨识性，此时只看包含单字符的比例
+                getStringSimilarity(compare, to, 1, caseSensitive, standardised)
+            } else {
+                0.0
+            }
+        }
+
+        val map = mutableMapOf<String, Int>()
+
+        for (i in 0 ..< cs.length - (stringLength - 1)) {
+            val cb = cs.substring(i, i + stringLength)
+
+            val v = if (map.contains(cb)) {
+                map[cb]?.plus(1)
+            } else {
+                1
+            }
+
+            map[cb] = v ?: 0
+        }
+
+        var match = 0
+
+        for (j in 0 ..< ts.length - (stringLength - 1)) {
+            val tb = ts.substring(j, j + stringLength)
+
+            val count = map[tb] ?: 0
+
+            if (count > 0) {
+                map[tb] = count - 1
+                match ++
+            }
+        }
+
+        return (match * 2.0) / (cs.length + ts.length - ((stringLength - 1.0) * 2.0))
+    }
+
+    /*
+
     @JvmStatic
     // 获取两个字符串的相似度。
     fun getStringSimilarity(compare: String?, to: String?): Double {
@@ -952,7 +1040,6 @@ object DataUtil {
 
         return getSimilarity(cs, toStandard) * getSimilarity(cs.reversed(), toStandard.reversed()).pow(0.5)
     }
-
     private fun getSimilarity(compare: String, too: String): Double {
         var to = too
         val cLength = compare.length
@@ -988,6 +1075,8 @@ object DataUtil {
 
         return 0.0
     }
+
+     */
 
     fun numberTo62(n: Long): String {
         val sb = StringBuilder()
@@ -1160,7 +1249,7 @@ object DataUtil {
      * @return 当前页面显示的元素，当前有多少页，最大有多少页
      */
     fun <T> splitPage(collection: Collection<T>, page: Int, maxPerPage: Int = 50): Triple<List<T>, Int, Int> {
-        val maxPage = ceil(collection.size * 1.0 / maxPerPage).roundToInt()
+        val maxPage = max(ceil(collection.size * 1.0 / maxPerPage).roundToInt(), 1)
 
         val start = max(min(page, maxPage) * maxPerPage - maxPerPage, 0)
         val end = min(min(page, maxPage) * maxPerPage, collection.size)
