@@ -50,21 +50,22 @@ import java.util.regex.Pattern
 
         val qq = m.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.id
 
-        val nameStr = m.group(FLAG_NAME) ?: ""
+        val nameStr = (m.group(FLAG_NAME) ?: "").trim()
 
         val isYmBot = messageText.substring(0, 3).contains("ym") ||
                 m.group("bi") != null || m.group("un") != null || m.group("ub") != null
 
-        val name = if (isYmBot) {
-            nameStr
-        } else {
-            if (nameStr.isNotBlank() && nameStr.contains("osu") && userApiService.isPlayerExist(nameStr)) {
+        val name = if (!isYmBot && nameStr.isNotBlank() && !nameStr.contains("\\d{6}".toRegex()) && nameStr.contains("osu")) {
+            if (userApiService.isPlayerExist(nameStr)) {
                 userApiService.getOsuUser(nameStr).username
             } else {
                 log.info("绑定：退避成功：!bind $nameStr")
                 return false
             }
+        } else {
+            nameStr
         }
+
 
         if (isYmBot.not()) {
             // 提问
