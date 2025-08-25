@@ -35,28 +35,25 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
     companion object {
         @JvmStatic
         fun getNameList(versions: List<MaiVersion>): List<String> {
-            if (versions.isEmpty()) {
-                return listOf()
-            }
-
             return versions.map(MaiVersion::full)
         }
 
         @JvmStatic
         fun getCodeList(versions: List<MaiVersion>): List<String> {
-            if (versions.isEmpty()) {
-                return listOf()
-            }
-
             return versions.map(MaiVersion::code)
         }
 
         fun getVersionFromAbbr(abbreviation: String): MaiVersion {
+            /*
             for(v in MaiVersion.entries) {
                 if (v.abbreviation == abbreviation) return v
             }
 
             return DEFAULT
+
+             */
+
+            return MaiVersion.entries.firstOrNull { it.abbreviation == abbreviation } ?: DEFAULT
         }
 
         @JvmStatic
@@ -85,33 +82,6 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 .filter{it != DEFAULT}
                 .map(MaiVersion::full)
                 .joinToString(separator = ", ", prefix = "[", postfix = "]")
-        }
-
-        @JvmStatic
-        fun getCategory(category: String): String {
-            return when(category) {
-                "東方Project" -> "Touhou Project"
-                "舞萌" -> "maimai"
-                "niconico & VOCALOID" -> "niconico & VOCALOID"
-                "流行&动漫" -> "POPS & ANIME"
-                "其他游戏" -> "GAME & VARIETY"
-                "音击&中二节奏" -> "Ongeki & CHUNITHM"
-                else -> ""
-            }
-        }
-
-        @JvmStatic
-        fun getCategoryAbbreviation(category: String): String {
-            return when(category) {
-                "东方Project", "東方Project" -> "THP"
-                "舞萌", "maimai" -> "MAI"
-                "niconico & VOCALOID" -> "NI&VO"
-                "POPSアニメ", "流行&动漫" -> "PO&AN"
-                "其他游戏" -> "GM&VA"
-                "音击&中二节奏", "オンゲキCHUNITHM" -> "OG&CH"
-                "宴会場", "宴会场" -> "UTAGE"
-                else -> ""
-            }
         }
 
         @JvmStatic

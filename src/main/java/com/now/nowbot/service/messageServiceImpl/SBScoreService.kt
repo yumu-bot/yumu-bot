@@ -116,9 +116,9 @@ class SBScoreService(
                     .filter { it.userID == id }
                     .map { it.toLazerScore() }
             } else {
-                user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score")
-
                 mode = OsuMode.getConvertableMode(rx, map.mode)
+
+                user = CmdUtil.getSBUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score").toOsuUser(mode)
 
                 scores = scoreApiService.getBeatmapRecentScore(bid, mods, mode)
                     .filter { it.userID == user.userID }

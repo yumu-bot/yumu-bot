@@ -24,7 +24,7 @@ import kotlin.math.floor
     private val imageService: ImageService
 ) : MessageService<MaiFindParam> {
 
-    data class MaiFindParam(val ranges: List<Range>?, val difficulty: MaiDifficulty, val version: MaiVersion?, val dxScore: Int?)
+    data class MaiFindParam(val ranges: List<Range>?, val difficulty: MaiDifficulty, val page: Int, val version: MaiVersion?, val dxScore: Int?)
 
     // 默认包含开头，包含结尾
     data class Range(val from: Float, val to: Float, val includeFrom: Boolean = true, val includeTo: Boolean = true)
@@ -66,11 +66,18 @@ import kotlin.math.floor
 
         val version = MaiVersion.getVersion(matcher.group("version"))
 
+        val page = if (version == MaiVersion.DEFAULT &&
+            matcher.group("version")?.matches("\\s*$REG_NUMBER_1_100\\s*".toRegex()) == true) {
+            matcher.group("version")?.toIntOrNull() ?: 1
+        } else {
+            1
+        }
+
         val difficulty = MaiDifficulty.getDifficulty(matcher.group("diff"))
 
         val dxScore = matcher.group("score")?.toIntOrNull()
 
-        data.value = MaiFindParam(range, difficulty, version, dxScore)
+        data.value = MaiFindParam(range, difficulty, page, version, dxScore)
         return true
     }
 
@@ -84,7 +91,8 @@ import kotlin.math.floor
                 continue@song
             }
 
-            var meetCount = 0
+            val requirement: MutableSet<Int> = mutableSetOf()
+            val rangeRequirement: MutableSet<Range> = mutableSetOf()
 
             diff@
             for (i in s.value.star.indices) {
@@ -115,14 +123,16 @@ import kotlin.math.floor
                 } else {
                     for (range in param.ranges) {
                         if (isInRange(sr, range)) {
-                            meetCount++
+                            // meetCount++
+                            requirement.add(i)
+                            rangeRequirement.add(range)
                             continue@diff
                         }
                     }
                 }
             }
 
-            if (meetCount > 0 && meetCount == param.ranges?.size) {
+            if (requirement.size > 0 && rangeRequirement.size > 0 && requirement.size == param.ranges?.size && rangeRequirement.size == param.ranges.size) {
                 songs.add(s.value)
                 continue@song
             }
@@ -137,7 +147,14 @@ import kotlin.math.floor
             MaiBestScore.User("YumuBot", "", null, null, 0, 0, 0, null)
         }
 
-        val image = imageService.getPanel(mapOf("user" to user, "songs" to songs), "MF")
+        val pages = DataUtil.splitPage(songs.reversed(), param.page, 50)
+
+        val image = imageService.getPanel(
+            mapOf(
+                "user" to user,
+                "songs" to pages.first,
+                )
+            , "MF")
         event.reply(image)
     }
 

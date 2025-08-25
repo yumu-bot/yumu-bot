@@ -1,5 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.model.enums.*
 import com.now.nowbot.model.maimai.MaiBestScore
 import com.now.nowbot.model.maimai.MaiScore
@@ -25,211 +27,36 @@ import kotlin.math.roundToInt
     private val imageService: ImageService,
 ) : MessageService<MaiScoreService.MaiScoreParam> {
 
-    /*
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+    data class MaiScoreStatistics(
+        val count: Int,
+        val totalRating: Int,
+        val averageRating: Double,
+        val averageAchievement: Double,
+        val averageStar: Double,
+    ) {
+        companion object {
+            fun getStatistics(scores: List<MaiScore>): MaiScoreStatistics {
+                return MaiScoreStatistics(
+                    count = scores.size,
+                    totalRating = scores.sumOf { it.rating },
+                    averageRating = scores.map { it.rating }.average(),
+                    averageAchievement = scores.map { it.achievements }.average(),
+                    averageStar = scores.map { it.star }.average()
+                )
+            }
+        }
+    }
 
     data class MaiScoreParam(
-        val id: Int?,
-        val title: String?,
-        val name: String?,
-        val qq: Long?,
-        val version: MaiCabinet,
-        val difficulty: MaiDifficulty,
-        val range: MaiFindService.Range,
-    )
-
-    data class MSPanelParam(val user: MaiBestScore.User?, val songs: List<MaiSong>, val scores: List<MaiScore>, val version: MaiCabinet) {
-        fun toMap(): Map<String, Any?> {
-            return mapOf(
-                "user" to user,
-                "songs" to songs,
-                "scores" to scores,
-                "version" to version.name,
-                "panel" to "MS"
-            )
-        }
-    }
-
-    override fun isHandle(
-        event: MessageEvent,
-        messageText: String,
-        data: MessageService.DataValue<MaiScoreParam>,
-    ): Boolean {
-        val matcher = Instruction.MAI_SCORE.matcher(messageText)
-
-        if (!matcher.find()) {
-            return false
-        }
-
-        val difficulty = if (matcher.group(FLAG_DIFF).isNullOrBlank().not()) {
-            MaiDifficulty.getDifficulty(matcher.group(FLAG_DIFF))
-        } else {
-            MaiDifficulty.DEFAULT
-        }
-
-        val version = MaiCabinet.getCabinet(matcher.group(FLAG_VERSION))
-
-        val nameOrTitleStr = (matcher.group(FLAG_NAME) ?: "").trim()
-
-        val qqStr = (matcher.group(FLAG_QQ_ID) ?: "").trim()
-
-        val qq = if (event.isAt) {
-            event.target
-        } else {
-            qqStr.toLongOrNull() ?: event.sender.id
-        }
-
-        if (nameOrTitleStr.isNotBlank()) {
-            if (nameOrTitleStr.contains(Regex(REG_SPACE))) {
-                val s = nameOrTitleStr.split(Regex(REG_SPACE))
-
-                if (s.size >= 2) {
-                    if (s.first().matches(Regex(REG_NUMBER_15))) {
-                        data.value = MaiScoreParam(
-                            s.first().toInt(),
-                            null,
-                            s.last().replace(Regex(REG_QUOTATION), ""),
-                            null,
-                            version,
-                            difficulty,
-                            null,
-                        )
-                    } else {
-                        data.value = MaiScoreParam(
-                            null,
-                            nameOrTitleStr.replace(Regex(REG_QUOTATION), ""),
-                            null,
-                            qq,
-                            version,
-                            difficulty,
-                            null,
-                        )
-                    }
-                } else if (s.size == 1) {
-                    if (s.first().matches(Regex(REG_NUMBER_15))) {
-                        data.value = MaiScoreParam(s.first().toInt(), null, null, qq, version, difficulty, null)
-                    } else if (s.first().contains(Regex(REG_QUOTATION))) {
-                        throw IllegalArgumentException.WrongException.Quotation()
-                    } else {
-                        data.value = MaiScoreParam(null, nameOrTitleStr, null, qq, version, difficulty, null)
-                    }
-                } else {
-                    throw IllegalArgumentException.WrongException.BeatmapID()
-                }
-            } else {
-                if (nameOrTitleStr.matches(Regex(REG_NUMBER_15))) {
-                    data.value = MaiScoreParam(nameOrTitleStr.toInt(), null, null, qq, version, difficulty, null)
-                } else if (nameOrTitleStr.contains(Regex(REG_QUOTATION))) {
-                    throw IllegalArgumentException.WrongException.Quotation()
-                } else {
-                    data.value = MaiScoreParam(null, nameOrTitleStr, null, qq, version, difficulty, null)
-                }
-            }
-        } else {
-            throw IllegalArgumentException.WrongException.BeatmapID()
-        }
-
-        return true
-    }
-
-    override fun HandleMessage(event: MessageEvent, param: MaiScoreParam) {
-        val full = getFullScoreOrNull(param.qq, param.name, maimaiApiService)
-
-        val result: MaiSong = if (param.title != null) {
-            val title = DataUtil.getStandardisedString(param.title)
-
-            // 标题搜歌模式
-            val possibles = maimaiApiService.getMaimaiPossibleSongs(title)
-
-            val r = if (!possibles.isNullOrEmpty()) {
-                possibles.associateBy { it.title.getSimilarity(title) }.filter { it.key > 0.4 }.maxByOrNull { it.key }?.value
-            } else {
-                null
-            }
-
-            if (r != null) {
-                r
-            } else {
-                // 外号模式
-                val s = maimaiApiService.getMaimaiAliasSong(title)
-
-                // id 也可能是外号
-                val i = if (s != null) {
-                    maimaiApiService.getMaimaiAlias(s.songID)?.alias
-                } else null
-
-                val sy = s?.title.getSimilarity(title) >= 0.4
-
-                val iy = (i?.maxOfOrNull { it.getSimilarity(title) } ?: 0.0) >= 0.4
-
-                if (s != null && (sy || iy)) {
-                    s
-                } else {
-                    throw NoSuchElementException.ResultNotAccurate()
-                }
-            }
-        } else if (param.id != null) { // ID 搜歌模式
-            maimaiApiService.getMaimaiSong(param.id.toLong())
-                ?: maimaiApiService.getMaimaiAliasSong(param.id.toString()) // 有的歌曲外号叫 3333
-                ?: throw NoSuchElementException.Song(param.id)
-        } else {
-            throw IllegalStateException.ClassCast("舞萌成绩")
-        }
-
-
-        val image: ByteArray = run {
-
-            // 获取符合的成绩
-            val scores: List<MaiScore> = full?.records?.filter {
-                if (result.isDeluxe) {
-                    return@filter it.songID == result.songID.toLong() || it.songID == (result.songID - 10000).toLong()
-                } else {
-                    return@filter it.songID == result.songID.toLong() || it.songID == (result.songID + 10000).toLong()
-                }
-            } ?: listOf()
-
-            maimaiApiService.insertSongData(scores)
-
-            val anotherResult: MaiSong? = if (result.isDeluxe) {
-                maimaiApiService.getMaimaiSong(result.songID - 10000L)
-            } else {
-                maimaiApiService.getMaimaiSong(result.songID + 10000L)
-            }
-
-            // 只有一种谱面
-            if (anotherResult == null) {
-                val version = if (result.isDeluxe) MaiCabinet.DX else MaiCabinet.SD
-
-                return@run imageService.getPanel(
-                    MSPanelParam(user = full?.getUser(), songs = listOf(result), scores = scores, version = version).toMap(),
-                    "MS")
-            } else if (scores.isNotEmpty() && param.version == MaiCabinet.ANY) {
-                // 有两种谱面，有成绩，没有规定难度。此时取玩家成绩最好的那个
-                val isDX = scores.maxBy { it.rating }.isDeluxe
-
-                val songs = listOf(listOf(result, anotherResult).first { it.isDeluxe == isDX })
-
-                return@run imageService.getPanel(
-                    MSPanelParam(user = full?.getUser(), songs = songs,
-                        scores = scores.filter { it.isDeluxe == isDX }, version = MaiCabinet.ANY).toMap(),
-                    "MS")
-            } else {
-                // 有两种谱面，但是没有成绩
-                val isDX = param.version == MaiCabinet.DX || param.version == MaiCabinet.ANY
-
-                val songs = listOf(listOf(result, anotherResult).first { it.isDeluxe == isDX })
-
-                return@run imageService.getPanel(
-                    MSPanelParam(user = full?.getUser(), songs = songs, scores = scores.filter { it.isDeluxe == isDX }, version = MaiCabinet.ANY).toMap(),
-                    "MS")
-            }
-        }
-
-        event.reply(image)
-    }
-
-     */
-
-    data class MaiScoreParam(val user: MaiBestScore.User?, val songs: List<MaiSong>, val scores: List<MaiScore>, val cabinet: MaiCabinet, val page: Int = 1, val maxPage: Int = 1) {
+        val user: MaiBestScore.User?,
+        val songs: List<MaiSong>,
+        val scores: List<MaiScore>,
+        val cabinet: MaiCabinet,
+        val statistics: MaiScoreStatistics? = null,
+        val page: Int = 1,
+        val maxPage: Int = 1
+    ) {
         fun toMap(): Map<String, Any?> {
             return if (songs.isEmpty()) {
                 mapOf(
@@ -238,6 +65,7 @@ import kotlin.math.roundToInt
                     "page" to page,
                     "max_page" to maxPage,
                     "versions" to emptyList<String>(),
+                    "statistics" to statistics,
                     "panel" to "MS",
                 )
             } else {
@@ -447,7 +275,15 @@ import kotlin.math.roundToInt
 
             val split = DataUtil.splitPage(filteredScores, page, 50)
 
-            return MaiScoreParam(user = full.getUser(), songs = listOf(), scores = split.first, cabinet = MaiCabinet.ANY, page = split.second, maxPage = split.third)
+            return MaiScoreParam(
+                user = full.getUser(),
+                songs = listOf(),
+                scores = split.first,
+                cabinet = MaiCabinet.ANY,
+                statistics = MaiScoreStatistics.getStatistics(filteredScores),
+                page = split.second,
+                maxPage = split.third
+            )
         }
     }
 
@@ -498,30 +334,6 @@ import kotlin.math.roundToInt
         }
 
 
-
-
-        private fun getFullScoreOrNull(
-            qq: Long?,
-            name: String?,
-            maimaiApiService: MaimaiApiService,
-        ): MaiBestScore? {
-            return if (qq != null) {
-                try {
-                    maimaiApiService.getMaimaiFullScores(qq)
-                } catch (e: Exception) {
-                    return null
-                }
-            } else if (name != null) {
-                try {
-                    maimaiApiService.getMaimaiFullScores(name)
-                } catch (e: Exception) {
-                    return null
-                }
-            } else {
-                throw NoSuchElementException.Player()
-            }
-        }
-
         // UUMS
         fun getSearchResult(text: String?, maimaiApiService: MaimaiApiService): MessageChain {
             val songs = maimaiApiService.getMaimaiSongLibrary()
@@ -547,7 +359,7 @@ import kotlin.math.roundToInt
             var i = 1
             for (e in sort) {
                 val code = MaiVersion.getCodeList(MaiVersion.getVersionList(e.value.info.version)).first()
-                val category = MaiVersion.getCategoryAbbreviation(e.value.info.genre)
+                val category = MaiCategory.getCategory(e.value.info.genre).english
 
                 sb.append("#${i}:").append(" ").append(String.format("%.0f", e.key * 100)).append("%").append(" ")
                     .append("[${e.value.songID}]").append(" ").append(e.value.title).append(" ").append("[${code}]")

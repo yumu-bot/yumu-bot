@@ -26,7 +26,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
     ARTIST("(artist|singer|art|艺术家|歌手?|a)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    TYPE("(type|种类?|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    CATEGORY("(type|category|种类?|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
     BPM("(bpm|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
@@ -129,7 +129,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
                 DIFFICULTY -> fit(operator, it.star, double)
 
-                DIFFICULTY_NAME -> fit(operator, MaiDifficulty.getDifficulty(it.difficulty), MaiDifficulty.getDifficulty(condition))
+                DIFFICULTY_NAME -> fit(operator, MaiDifficulty.getDifficulty(it.difficulty).name, MaiDifficulty.getDifficulty(condition).name)
 
                 CABINET -> fit(operator, MaiCabinet.getCabinet(condition).name, MaiCabinet.getCabinet(it.type).name)
                 VERSION -> fit(operator,
@@ -143,7 +143,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
                     }?.contains(true) ?: false
                 }
                 ARTIST -> fit(operator, it.artist, condition)
-                TYPE -> fit(operator, MaiType.getType(it.genre).english, MaiType.getType(condition).english)
+                CATEGORY -> fit(operator, MaiCategory.getCategory(it.genre).english, MaiCategory.getCategory(condition).english)
                 BPM -> fit(operator, it.bpm, int)
                 ACHIEVEMENT -> fit(operator, (it.achievements * 10000).roundToInt(), (double * 10000).roundToInt(), isPlus = true)
                 TAP -> fit(operator, it.notes[0], int)
