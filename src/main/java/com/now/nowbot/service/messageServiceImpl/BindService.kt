@@ -23,14 +23,12 @@ import org.springframework.stereotype.Service
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
-import java.util.regex.Pattern
 
 @Service("BIND") class BindService(
     private val userApiService: OsuUserApiService,
     private val bindDao: BindDao,
     val yumuConfig: YumuConfig
 ) : MessageService<BindService.BindParam> {
-    val captchaReg: Pattern = "\\d{6}".toPattern()
 
     // full: 全绑定，只有 oauth 应用所有者可以这样做
     data class BindParam(
@@ -39,7 +37,8 @@ import java.util.regex.Pattern
         val at: Boolean,
         val unbind: Boolean,
         val isSuper: Boolean,
-        val isFull: Boolean
+        val isFull: Boolean,
+        val isCaptcha: Boolean = false,
     )
 
     override fun isHandle(
@@ -52,10 +51,14 @@ import java.util.regex.Pattern
 
         val nameStr = (m.group(FLAG_NAME) ?: "").trim()
 
-        val isYmBot = messageText.substring(0, 3).contains("ym") ||
-                m.group("bi") != null || m.group("un") != null || m.group("ub") != null
+        val isCaptcha = nameStr.matches("\\d{6}".toRegex())
 
-        val name = if (!isYmBot && nameStr.isNotBlank() && !nameStr.contains("\\d{6}".toRegex()) && nameStr.contains("osu")) {
+        val isYmBot = messageText.substring(0, 3).contains("ym", ignoreCase = true) ||
+                m.group("bi") != null ||
+                m.group("un") != null ||
+                m.group("ub") != null
+
+        val name = if (!isYmBot && nameStr.isNotBlank() && !isCaptcha && nameStr.contains("osu")) {
             if (userApiService.isPlayerExist(nameStr)) {
                 userApiService.getOsuUser(nameStr).username
             } else {
@@ -67,7 +70,7 @@ import java.util.regex.Pattern
         }
 
 
-        if (isYmBot.not()) {
+        if (!isYmBot && !isCaptcha) {
             // 提问
             val receipt = event.reply(BindException.BindConfirmException.ConfirmThis())
 
@@ -86,9 +89,9 @@ import java.util.regex.Pattern
         val isFull = m.group("full") != null
 
         val param = if (event.isAt) { // bi/ub @
-            BindParam(event.target, name, true, isUnbind, isSuper, isFull)
+            BindParam(event.target, name, true, isUnbind, isSuper, isFull, isCaptcha)
         } else { // bi
-            BindParam(qq, name, false, isUnbind, isSuper, isFull)
+            BindParam(qq, name, false, isUnbind, isSuper, isFull, isCaptcha)
         }
 
         data.value = param
@@ -102,7 +105,7 @@ import java.util.regex.Pattern
             if (param.unbind) {
                 unbindQQ(me)
             } else if (param.name.isNotBlank()) {
-                bindQQName(event, param.name, me)
+                bindQQName(event, param.name, me, param.isCaptcha)
             } else {
                 bindQQ(event, me)
             }
@@ -119,7 +122,7 @@ import java.util.regex.Pattern
                     unbindQQ(param.qq)
                 }
             } else if (param.name.isNotBlank()) {
-                bindQQName(event, param.name, param.qq)
+                bindQQName(event, param.name, param.qq, param.isCaptcha)
             } else if (param.at) {
                 bindQQAt(event, param.qq)
             }
@@ -232,12 +235,10 @@ import java.util.regex.Pattern
         }
     }
 
-    private fun bindQQName(event: MessageEvent, name: String, qq: Long) {
+    private fun bindQQName(event: MessageEvent, name: String, qq: Long, isCaptcha: Boolean) {
         // 绑定先判断是否是传入验证码
-        val m = captchaReg.matcher(name.trim())
-        if (m.find()) {
-            val code = m.group(0)
-            val uid = bindDao.verifyCaptcha(code)
+        if (isCaptcha) {
+            val uid = bindDao.verifyCaptcha(name)
             val bu = bindDao.getBindUser(uid)
             if (bu != null && bu.isAuthorized) {
                 val mode = userApiService.getOsuUser(bu.userID).currentOsuMode
