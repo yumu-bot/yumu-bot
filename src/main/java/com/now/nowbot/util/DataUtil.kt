@@ -1318,6 +1318,11 @@ object DataUtil {
 
     private fun String.toRomanizedJaChar() = JaChar.getRomanized(this)
     private fun String.toRomanizedGreekChar() = GreekChar.getRomanized(this)
+
+    fun toHalfWidth(str: String): String {
+        return str.toHalfWidthChar()
+    }
+
     private fun String.toHalfWidthChar() = run {
         val sb = StringBuilder(this.length)
 

@@ -3,23 +3,25 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.model.maimai.ChuBestScore
 import com.now.nowbot.model.maimai.ChuScore
 import com.now.nowbot.model.maimai.ChuSong
+import com.now.nowbot.model.maimai.LxChuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
+import com.now.nowbot.service.lxnsApiService.LxChunithmApiService
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_HYPHEN
 import org.springframework.stereotype.Service
-import kotlin.math.max
-import kotlin.math.min
 
 @Service("CHU_BP")
 class ChuBestScoreService(
     private val chunithmApiService: ChunithmApiService,
+    private val lxChunithmApiService: LxChunithmApiService,
     private val imageService: ImageService,
 ) : MessageService<ChuBestScoreService.ChuBestScoreParam> {
 
@@ -126,7 +128,15 @@ class ChuBestScoreService(
     }
 
     override fun HandleMessage(event: MessageEvent, param: ChuBestScoreParam) {
-        val scores = getBestScores(param.qq, param.name, chunithmApiService)
+        val lxUser = if (param.qq != null) {
+            try {
+                lxChunithmApiService.getUser(param.qq)
+            } catch (e: NetworkException) {
+                null
+            }
+        } else null
+
+        val scores = getBestScores(param.qq, param.name, lxUser, chunithmApiService, lxChunithmApiService)
         val charts = implementScore(param.range, scores, chunithmApiService)
         val isMultipleScore = charts.recent10.size + charts.best30.size > 1
 
@@ -162,9 +172,13 @@ class ChuBestScoreService(
         fun getBestScores(
             qq: Long?,
             name: String?,
+            user: LxChuUser?,
             chunithmApiService: ChunithmApiService,
+            lxChunithmApiService: LxChunithmApiService,
         ): ChuBestScore {
-            return if (qq != null) {
+            return if (user != null) {
+                lxChunithmApiService.getChunithmBests(qq!!).toChuBestScore(user)
+            } else if (qq != null) {
                 chunithmApiService.getChunithmBest30Recent10(qq)
             } else if (!name.isNullOrBlank()) {
                 chunithmApiService.getChunithmBest30Recent10(name)
@@ -197,22 +211,18 @@ class ChuBestScoreService(
             val isStandardEmpty = c.best30.isEmpty()
             val isDeluxeEmpty = c.recent10.isEmpty()
 
-            if (offset > 35) {
+            if (offset >= 35) {
                 // dx
                 if (isDeluxeEmpty) {
                     throw TipsException("您的新版本成绩是空的！")
                 } else {
                     chunithmApiService.insertSongData(c.best30)
-                    chunithmApiService.insertPosition(c.recent10, false)
+                    chunithmApiService.insertPosition(c.best30, false)
                     chunithmApiService.insertChunithmAliasForScore(c.best30)
-                    chunithmApiService.insertChunithmAliasForScore(c.recent10)
 
                     return ChuBestScore.Records(
-                        c.recent10.subList(
-                            min(max(offset - 35, 0), c.recent10.size - 1),
-                            min(offset + limit - 35, c.recent10.size),
-                        ),
-                        mutableListOf(),
+                        c.best30.drop(offset - 35).take(limit),
+                        emptyList(),
                     )
                 }
             } else if (offset + limit < 35) {
@@ -220,16 +230,13 @@ class ChuBestScoreService(
                 if (isStandardEmpty) {
                     throw TipsException("您的旧版本成绩是空的！")
                 } else {
-                    chunithmApiService.insertSongData(c.best30)
-                    chunithmApiService.insertPosition(c.best30, true)
-                    chunithmApiService.insertChunithmAliasForScore(c.best30)
+                    chunithmApiService.insertSongData(c.recent10)
+                    chunithmApiService.insertPosition(c.recent10, true)
+                    chunithmApiService.insertChunithmAliasForScore(c.recent10)
 
                     return ChuBestScore.Records(
-                        mutableListOf(),
-                        c.best30.subList(
-                            min(max(offset, 0), c.best30.size - 1),
-                            min(offset + limit, c.best30.size),
-                        ),
+                        emptyList(),
+                        c.recent10.drop(offset).take(limit),
                     )
                 }
             } else {
@@ -237,52 +244,24 @@ class ChuBestScoreService(
 
                 if (isStandardEmpty && isDeluxeEmpty) {
                     throw NoSuchElementException.BestScore(bp.name)
-                } else if (isDeluxeEmpty) {
-                    chunithmApiService.insertSongData(c.best30)
-                    chunithmApiService.insertPosition(c.best30, true)
-                    chunithmApiService.insertChunithmAliasForScore(c.best30)
-
-                    return ChuBestScore.Records(
-                        mutableListOf(),
-                        c.best30.subList(
-                            min(max(offset, 0), c.best30.size - 1),
-                            min(offset + limit, c.best30.size),
-                        ),
-                    )
-                } else if (isStandardEmpty) {
-                    chunithmApiService.insertSongData(c.recent10)
-                    chunithmApiService.insertPosition(c.recent10, false)
-                    chunithmApiService.insertChunithmAliasForScore(c.recent10)
-
-                    return ChuBestScore.Records(
-                        c.recent10.subList(
-                            min(max(offset - 35, 0), c.recent10.size - 1),
-                            min(offset + limit - 35, c.recent10.size),
-                        ),
-                        mutableListOf(),
-                    )
                 } else {
-                    chunithmApiService.insertSongData(c.best30)
                     chunithmApiService.insertSongData(c.recent10)
-
-                    chunithmApiService.insertPosition(c.best30, true)
-                    chunithmApiService.insertPosition(c.recent10, false)
-
-                    chunithmApiService.insertChunithmAliasForScore(c.best30)
+                    chunithmApiService.insertPosition(c.recent10, true)
                     chunithmApiService.insertChunithmAliasForScore(c.recent10)
 
+                    chunithmApiService.insertSongData(c.best30)
+                    chunithmApiService.insertPosition(c.best30, false)
+                    chunithmApiService.insertChunithmAliasForScore(c.best30)
+
+                    // offset < 35, offset + limit >= 35
+
                     return ChuBestScore.Records(
-                        c.recent10.subList(
-                            min(max(offset - 35, 0), c.recent10.size - 1),
-                            min(offset + limit - 35, c.recent10.size),
-                        ),
-                        c.best30.subList(
-                            min(max(offset, 0), c.best30.size - 1),
-                            min(offset + limit, c.best30.size),
-                        ),
+                        c.best30.take(offset + limit - 35),
+                        c.recent10.drop(offset),
                     )
                 }
             }
         }
+       
     }
 }

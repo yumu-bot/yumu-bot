@@ -321,6 +321,7 @@ open class NetworkException(message: String?
             override val code = 503
         }
     }
+
     open class DivingFishException(message: String?): NetworkException(message) {
         override val code: Int = 0
 
@@ -333,7 +334,7 @@ open class NetworkException(message: String?
         }
 
         class Unauthorized:
-            MatchException("""
+            DivingFishException("""
                 401 Unauthorized
                 请求端的公用授权已过期。
             """.trimIndent()) {
@@ -349,13 +350,12 @@ open class NetworkException(message: String?
         }
 
         class NotFound:
-            MatchException("""
+            DivingFishException("""
                 404 Not Found
                 找不到水鱼用户。
             """.trimIndent()) {
             override val code = 404
         }
-
 
         class RequestTimeout:
             DivingFishException("""
@@ -384,6 +384,74 @@ open class NetworkException(message: String?
         class Undefined(e: Throwable):
             DivingFishException("""
                 和水鱼之间的连接出现未识别的错误。
+                信息如下：${e.message}
+            """.trimIndent()) {
+            override val code = -1
+        }
+    }
+
+    open class LxnsException(message: String?): NetworkException(message) {
+        override val code: Int = 0
+
+        class BadRequest:
+            LxnsException("""
+                400 Bad Request
+                落雪请求格式错误。
+            """.trimIndent()) {
+            override val code = 400
+        }
+
+        class Unauthorized:
+            LxnsException("""
+                401 Unauthorized
+                请求端的公用授权已过期。
+            """.trimIndent()) {
+            override val code = 401
+        }
+
+        class Forbidden:
+            LxnsException("""
+                403 Forbidden
+                落雪用户未授权或是禁止第三方获取数据。
+            """.trimIndent()) {
+            override val code = 403
+        }
+
+        class NotFound:
+            LxnsException("""
+                404 Not Found
+                找不到落雪用户。
+            """.trimIndent()) {
+            override val code = 404
+        }
+
+        class RequestTimeout:
+            LxnsException("""
+                408 Request Timeout
+                落雪连接超时。
+            """.trimIndent()) {
+            override val code = 408
+        }
+
+        class InternalServerError:
+            LxnsException("""
+                500 Internal Server Error
+                落雪内部逻辑错误。
+            """.trimIndent()) {
+            override val code = 500
+        }
+
+        class BadGateway:
+            LxnsException("""
+                502 Bad Gateway
+                和落雪之间的连接出现了问题。
+            """.trimIndent()) {
+            override val code = 502
+        }
+
+        class Undefined(e: Throwable):
+            LxnsException("""
+                和落雪之间的连接出现未识别的错误。
                 信息如下：${e.message}
             """.trimIndent()) {
             override val code = -1

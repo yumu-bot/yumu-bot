@@ -308,12 +308,6 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
         return Files.isRegularFile(path.resolve(fileName))
     }
 
-
-    /**
-     * 错误包装
-     */
-
-
     /**
      * 错误包装
      */

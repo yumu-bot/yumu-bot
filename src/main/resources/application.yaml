@@ -6,6 +6,12 @@ yumu:
   #如果无法通过公网访问则保持与私网一致
   public-domain: ${yumu.private-domain}
   private-device: [ ]
+  diving-fish:
+    url: ~
+    token: ~
+  lxns:
+    url: ~
+    token: ~
   mirror: # 谱面镜像站的设定
     url: ~
     api: ~

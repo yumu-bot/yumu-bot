@@ -16,8 +16,8 @@ class ChuBestScore {
     @JsonProperty("records") var records: Records = Records()
 
     data class Records(
-        @JsonProperty("r10") val recent10: MutableList<ChuScore> = mutableListOf(),
-        @JsonProperty("b30") val best30: MutableList<ChuScore> = mutableListOf(),
+        @JsonProperty("r10") val recent10: List<ChuScore> = listOf(),
+        @JsonProperty("b30") val best30:List<ChuScore> = listOf(),
     )
 
     // 在查分器里的名字
@@ -49,7 +49,7 @@ class ChuBestScore {
 
     companion object {
 
-        fun getAverage(scores: MutableList<ChuScore>): Double {
+        fun getAverage(scores: List<ChuScore>): Double {
             if (scores.isEmpty()) return 0.0
 
             return scores.map { getChunithmRating(it.score, it.star) }.average()
