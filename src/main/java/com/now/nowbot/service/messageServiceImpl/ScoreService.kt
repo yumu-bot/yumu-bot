@@ -148,16 +148,16 @@ import java.util.regex.Matcher
                 mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
                 val async = AsyncMethodExecutor.awaitPairCallableExecute(
-                    { userApiService.getOsuUser(id) },
+                    { userApiService.getOsuUser(id, mode) },
                     { scoreApiService.getBeatmapScores(bid, id, mode) }
                 )
 
                 user = async.first
                 scores = async.second.toList()
             } else {
-                user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score")
-
                 mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+
+                user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, CmdObject(mode), AtomicBoolean(true), messageText, "score")
 
                 scores = scoreApiService.getBeatmapScores(bid, user.userID, mode)
             }
