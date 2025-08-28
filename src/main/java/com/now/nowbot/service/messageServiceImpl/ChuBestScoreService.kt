@@ -154,7 +154,7 @@ class ChuBestScoreService(
             if (isMultipleScore) {
                 imageService.getPanel(PanelMA2Param(user, charts.best30, charts.recent10).toMap(), "MA2")
             } else {
-                val score = if (charts.recent10.size > 0) {
+                val score = if (charts.recent10.isNotEmpty()) {
                     charts.recent10.first()
                 } else {
                     charts.best30.first()
@@ -177,7 +177,7 @@ class ChuBestScoreService(
             lxChunithmApiService: LxChunithmApiService,
         ): ChuBestScore {
             return if (user != null) {
-                lxChunithmApiService.getChunithmBests(qq!!).toChuBestScore(user)
+                lxChunithmApiService.getChunithmBests(user.friendCode).toChuBestScore(user)
             } else if (qq != null) {
                 chunithmApiService.getChunithmBest30Recent10(qq)
             } else if (!name.isNullOrBlank()) {

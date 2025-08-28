@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import java.time.OffsetDateTime
+import kotlin.math.max
+import kotlin.math.round
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class LxChuScore(
@@ -12,7 +14,7 @@ data class LxChuScore(
     val id: Long,
 
     @JsonProperty("song_name")
-    val name: String,
+    val title: String,
 
     @JsonProperty("level")
     val level: String,
@@ -42,10 +44,10 @@ data class LxChuScore(
     val rank: String,
 
     @JsonProperty("play_time")
-    val playTime: OffsetDateTime,
+    val playTime: OffsetDateTime?,
 
     @JsonProperty("upload_time")
-    val uploadTime: OffsetDateTime,
+    val uploadTime: OffsetDateTime?,
 
     // BP 多少
     @JsonIgnoreProperties var position: Int = 0
@@ -54,8 +56,10 @@ data class LxChuScore(
         val lx = this
 
         return ChuScore().apply {
+            val calDiff = getChunithmDifficulty(lx.score, lx.rating)
+
             this.chartID = -1
-            this.star = -1.0
+            this.star = if (calDiff <= 0.0) -1.0 else round(calDiff * 10) / 10.0
             this.score = lx.score
             this.combo = lx.combo ?: ""
             this.level = lx.level
@@ -72,6 +76,7 @@ data class LxChuScore(
 
             this.songID = lx.id
             this.rating = lx.rating
+            this.title = lx.title
 
             song?.let {
                 this.title = song.title
@@ -81,6 +86,23 @@ data class LxChuScore(
             }
 
             this.position = lx.position
+        }
+    }
+
+    companion object {
+        private fun getChunithmDifficulty(score : Int = 0, rating : Double = 0.0): Double {
+            val difficulty: Double = if (score >= 1009000) rating - 2.15
+            else if (score >= 1007500) rating - 2 - 0.15 * (score - 1007500) / (1009000 - 1007500)
+            else if (score >= 1005000) rating - 1.5 - 0.5 * (score - 1005000) / (1007500 - 1005000)
+            else if (score >= 1000000) rating - 1 - 0.5 * (score - 1000000) / (1005000 - 1000000)
+            else if (score >= 975000) rating - 1.0 * (score - 975000) / (1000000 - 975000)
+            else if (score >= 925000) rating + 3.0 - 3.0 * (score - 925000) / (975000 - 925000)
+            else if (score >= 900000) rating + 5.0 - 2.0 * (score - 900000) / (925000 - 900000)
+            else if (score >= 800000) rating / (0.5 + 0.5 * (score - 800000) / (900000 - 800000)) + 5.0
+            else if (score >= 500000) rating / (0.5 * (score - 500000) / (800000 - 500000)) + 5.0
+            else 0.0
+
+            return round(max(difficulty, 0.0) * 10.0) / 10.0
         }
     }
 }

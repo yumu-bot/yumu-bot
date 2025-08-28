@@ -202,10 +202,12 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
     }
 
     override fun insertSongData(score: ChuScore, song: ChuSong) {
-        val chart = song.charts[score.index]
-
-        score.charter = chart.charter
         score.artist = song.info.artist
+
+        if (song.charts.size - 1 < score.index) return
+
+        val chart = song.charts[score.index]
+        score.charter = chart.charter
     }
 
     override fun insertPosition(scores: List<ChuScore>, isBest30: Boolean) {

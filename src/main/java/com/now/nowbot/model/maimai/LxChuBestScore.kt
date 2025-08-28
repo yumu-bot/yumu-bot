@@ -20,14 +20,14 @@ data class LxChuBestScore(
             this.name = DataUtil.toHalfWidth(user.name)
             this.rating = user.rating
             this.records = ChuBestScore.Records(
-                lx.recents.map {
-                    val song = map[it.id.toInt()]
-                    it.toChuScore(song)
-                }.toMutableList(),
                 lx.bests.map {
                     val song = map[it.id.toInt()]
                     it.toChuScore(song)
-                }.toMutableList()
+                },
+                lx.recents.map {
+                    val song = map[it.id.toInt()]
+                    it.toChuScore(song)
+                },
             )
 
             this.probername = this.name

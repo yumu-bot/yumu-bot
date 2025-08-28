@@ -1,11 +1,14 @@
 package com.now.nowbot.service.lxnsApiService.impl
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.model.maimai.LxChuBestScore
 import com.now.nowbot.model.maimai.LxChuUser
 import com.now.nowbot.service.divingFishApiService.impl.LxnsBaseService
 import com.now.nowbot.service.lxnsApiService.LxChunithmApiService
+import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.util.JacksonUtil
 import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -23,7 +26,9 @@ class LxChunithmApiImpl(private val base: LxnsBaseService, private val maiDao: M
                 .build() }
             .headers(base::insertDeveloperHeader)
             .retrieve()
-            .bodyToMono(LxChuBestScore::class.java)
+            .bodyToMono(JsonNode::class.java)
+            .map { parse<LxChuBestScore>(it, "data", "玩家中二节奏最好成绩") }
+            //.bodyToMono(String::class.java).map { JacksonUtil.parseObject(it, LxChuBestScore::class.java) }
         }
     }
 
@@ -34,7 +39,8 @@ class LxChunithmApiImpl(private val base: LxnsBaseService, private val maiDao: M
                     .build() }
             .headers(base::insertDeveloperHeader)
             .retrieve()
-            .bodyToMono(LxChuUser::class.java)
+            .bodyToMono(JsonNode::class.java)
+            .map { parse<LxChuUser>(it, "data", "玩家中二节奏信息")}
         }
     }
 
@@ -62,6 +68,25 @@ class LxChunithmApiImpl(private val base: LxnsBaseService, private val maiDao: M
     }
 
     companion object {
+
+        private inline fun <reified T> parse(node: JsonNode, field: String, name: String): T {
+            val success = node.get("success").asText("未知")
+
+            if (success != "true") {
+                throw TipsException("""
+                    获取${name}失败。
+                    失败代码：${node.get("code").asInt(-1)}
+                    失败原因：${node.get("message").asText("未知")}
+                    """.trimIndent()
+                )
+            } else try {
+                return JacksonUtil.parseObject(node[field]!!, T::class.java)
+            } catch (e : Exception) {
+                log.error("生成${name}失败。", e)
+                return T::class.objectInstance!!
+            }
+        }
+
         private val log: Logger = LoggerFactory.getLogger(LxChunithmApiImpl::class.java)
 
     }

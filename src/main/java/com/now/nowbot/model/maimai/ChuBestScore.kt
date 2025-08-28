@@ -16,8 +16,8 @@ class ChuBestScore {
     @JsonProperty("records") var records: Records = Records()
 
     data class Records(
-        @JsonProperty("r10") val recent10: List<ChuScore> = listOf(),
         @JsonProperty("b30") val best30:List<ChuScore> = listOf(),
+        @JsonProperty("r10") val recent10: List<ChuScore> = listOf(),
     )
 
     // 在查分器里的名字
@@ -56,15 +56,18 @@ class ChuBestScore {
         }
 
         private fun getChunithmRating(score : Int = 0, difficulty : Double = 0.0): Double {
-            return if (score >= 1009000) difficulty + 2.15
-            else if (score >= 1007500) difficulty + 2 + floor((score - 1007500) / 100.0) * 0.01
-            else if (score >= 1005000) difficulty + 1.5 + floor((score - 1005000) / 50.0) * 0.01
-            else if (score >= 1000000) difficulty + 1 + floor((score - 1000000) / 100.0) * 0.01
-            else if (score >= 975000) difficulty + floor((score - 975000) / 250.0) * 0.01
-            else if (score >= 925000) max(difficulty - 3, 0.0)
-            else if (score >= 900000) max(difficulty - 5, 0.0)
-            else if (score >= 800000) max(difficulty - 5, 0.0) / 2.0
+            val rating: Double = if (score >= 1009000) difficulty + 2.15
+            else if (score >= 1007500) difficulty + 2 + 0.15 * (score - 1007500) / (1009000 - 1007500)
+            else if (score >= 1005000) difficulty + 1.5 + 0.5 * (score - 1005000) / (1007500 - 1005000)
+            else if (score >= 1000000) difficulty + 1 + 0.5 * (score - 1000000) / (1005000 - 1000000)
+            else if (score >= 975000) difficulty + 1.0 * (score - 975000) / (1000000 - 975000)
+            else if (score >= 925000) difficulty - 3 + 3.0 * (score - 925000) / (975000 - 925000)
+            else if (score >= 900000) difficulty - 5 + 2.0 * (score - 900000) / (925000 - 900000)
+            else if (score >= 800000) (difficulty - 5) * (0.5 + 0.5 * (score - 800000) / (900000 - 800000))
+            else if (score >= 500000) (difficulty - 5) * (0.5 * (score - 500000) / (800000 - 500000))
             else 0.0
+
+            return floor(max(rating, 0.0) * 100.0) / 100.0
         }
     }
 }

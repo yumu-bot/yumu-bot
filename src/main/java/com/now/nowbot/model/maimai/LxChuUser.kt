@@ -18,10 +18,10 @@ data class LxChuUser(
     val currency: Int,
     val totalPlayCount: Int,
     val trophy: LxCollection,
-    val character: LxCollection?,
-    val namePlate: LxCollection?,
-    val mapIcon: LxCollection?,
-    val uploadTime: OffsetDateTime,
+    val character: LxCollection? = null,
+    val namePlate: LxCollection? = null,
+    val mapIcon: LxCollection? = null,
+    val uploadTime: OffsetDateTime? = null,
 ) {
     data class ClassEmblem(
         // 缎带
