@@ -47,6 +47,7 @@ class SBScorePRService(
         if (!matcher.find()) return false
 
         val isMultiple = (matcher.group("s").isNullOrBlank().not() || matcher.group("es").isNullOrBlank().not())
+        val isShow = matcher.group("w").isNullOrBlank().not()
 
         val isPass =
             if (matcher.group("recent") != null) {
@@ -58,7 +59,7 @@ class SBScorePRService(
                 throw IllegalStateException.ClassCast("偏偏要上班最近成绩")
             }
 
-        val param = getParam(event, messageText, matcher, isMultiple, isPass) ?: return false
+        val param = getParam(event, messageText, matcher, isMultiple, isPass, isShow) ?: return false
 
         data.value = param
         return true
@@ -80,7 +81,7 @@ class SBScorePRService(
      * 封装主获取方法
      * 请在 matcher.find() 后使用
      */
-    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isPass: Boolean): ScorePRParam? {
+    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isPass: Boolean, isShow: Boolean): ScorePRParam? {
         val any: String? = matcher.group("any")
 
         // 避免指令冲突
@@ -195,7 +196,7 @@ class SBScorePRService(
             }
         }
 
-        return ScorePRParam(user, filteredScores, isPass)
+        return ScorePRParam(user, filteredScores, isPass, isShow)
     }
 
 
@@ -332,7 +333,7 @@ class SBScorePRService(
 
             val e5 = getE5ParamForFilteredScore(user, score, (if (isPass) "P" else "R"), osuBeatmapApiService, osuCalculateApiService)
 
-            return QQMsgUtil.getImage(imageService.getPanel(e5.toMap(), "E5"))
+            return QQMsgUtil.getImage(imageService.getPanel(e5.toMap(), if (isShow) "E10" else "E5"))
         }
     }
 

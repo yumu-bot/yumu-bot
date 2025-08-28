@@ -47,7 +47,7 @@ class ScorePRService(
     private val calculateApiService: OsuCalculateApiService,
 ) : MessageService<ScorePRParam>, TencentMessageService<ScorePRParam> {
 
-    data class ScorePRParam(val user: OsuUser, val scores: Map<Int, LazerScore>, val isPass: Boolean = false)
+    data class ScorePRParam(val user: OsuUser, val scores: Map<Int, LazerScore>, val isPass: Boolean = false, val isShow: Boolean = false)
 
     data class PanelE5Param(
         val user: OsuUser,
@@ -109,6 +109,7 @@ class ScorePRService(
         if (!matcher.find()) return false
 
         val isMultiple = (matcher.group("s").isNullOrBlank().not() || matcher.group("es").isNullOrBlank().not())
+        val isShow = matcher.group("w").isNullOrBlank().not()
 
         val isPass =
             if (matcher.group("recent") != null) {
@@ -120,7 +121,7 @@ class ScorePRService(
                 throw IllegalStateException.ClassCast("最近成绩")
             }
 
-        val param = getParam(event, messageText, matcher, isMultiple, isPass) ?: return false
+        val param = getParam(event, messageText, matcher, isMultiple, isPass, isShow) ?: return false
 
         data.value = param
         return true
@@ -143,33 +144,50 @@ class ScorePRService(
         val m2 = OfficialInstruction.SCORE_PASSES.matcher(messageText)
         val m3 = OfficialInstruction.SCORE_RECENT.matcher(messageText)
         val m4 = OfficialInstruction.SCORE_RECENTS.matcher(messageText)
+        val m5 = OfficialInstruction.SCORE_PASS_SHOW.matcher(messageText)
+        val m6 = OfficialInstruction.SCORE_RECENT_SHOW.matcher(messageText)
 
         val matcher: Matcher
 
         val isPass: Boolean
         val isMultiple: Boolean
+        val isShow: Boolean
 
-        if (m1.find()) {
+        if (m5.find()) {
+            matcher = m5
+            isPass = true
+            isMultiple = false
+            isShow = true
+        } else if (m6.find()) {
+            matcher = m6
+            isPass = false
+            isMultiple = false
+            isShow = true
+        } else if (m1.find()) {
             matcher = m1
             isPass = true
             isMultiple = false
+            isShow = false
         } else if (m2.find()) {
             matcher = m2
             isPass = true
             isMultiple = true
+            isShow = false
         } else if (m3.find()) {
             matcher = m3
             isPass = false
             isMultiple = false
+            isShow = false
         } else if (m4.find()) {
             matcher = m4
             isPass = false
             isMultiple = true
+            isShow = false
         } else {
             return null
         }
 
-        val param = getParam(event, messageText, matcher, isMultiple, isPass)
+        val param = getParam(event, messageText, matcher, isMultiple, isPass, isShow)
 
         return param
     }
@@ -184,7 +202,7 @@ class ScorePRService(
      * 封装主获取方法
      * 请在 matcher.find() 后使用
      */
-    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isPass: Boolean): ScorePRParam? {
+    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isPass: Boolean, isShow: Boolean): ScorePRParam? {
         val any: String? = matcher.group("any")
 
         // 避免指令冲突
@@ -274,7 +292,7 @@ class ScorePRService(
             }
         }
 
-        return ScorePRParam(user, filteredScores, isPass)
+        return ScorePRParam(user, filteredScores, isPass, isShow)
     }
 
 
@@ -395,7 +413,7 @@ class ScorePRService(
 
                 val e5 = getE5ParamForFilteredScore(user, score, (if (isPass) "P" else "R"), beatmapApiService, calculateApiService)
 
-                return QQMsgUtil.getImage(imageService.getPanel(e5.toMap(), "E5"))
+                return QQMsgUtil.getImage(imageService.getPanel(e5.toMap(), if (isShow) "E10" else "E5"))
             }
         } catch (e: Exception) {
             return getUUMessage()

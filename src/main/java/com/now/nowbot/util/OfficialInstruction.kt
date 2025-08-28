@@ -44,6 +44,22 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendRange()
     }),
 
+    SCORE_PASS_SHOW(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("pw")
+        appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup("any",
+                REG_ANYTHING_BUT_NO_HASH_STARS,
+                MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
+    }),
+
     SCORE_PASSES(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("ps")
         appendModeQQUIDNameRange()
@@ -62,6 +78,22 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     SCORE_RECENT(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("r")
+        appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup("any",
+                REG_ANYTHING_BUT_NO_HASH_STARS,
+                MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
+    }),
+
+    SCORE_RECENT_SHOW(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("rw")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
@@ -107,6 +139,11 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendModeBIDQQUIDNameMod()
     }),
 
+    SCORE_SHOW(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("sw")
+        appendModeBIDQQUIDNameMod()
+    }),
+
     SCORES(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("ss")
         appendModeBIDQQUIDNameMod()
@@ -114,6 +151,21 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     BP(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("b")
+        appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup(
+                "any", REG_ANYTHING_BUT_NO_HASH_STARS, MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
+    }),
+
+    BP_SHOW(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("bw")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {

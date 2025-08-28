@@ -40,25 +40,32 @@ class SBScoreService(
         messageText: String,
         data: MessageService.DataValue<ScoreParam>
     ): Boolean {
-
+        val m3 = Instruction.SB_SCORE_SHOW.matcher(messageText)
         val m2 = Instruction.SB_SCORES.matcher(messageText)
         val m = Instruction.SB_SCORE.matcher(messageText)
 
         val isMultipleScore: Boolean
+        val isShow: Boolean
 
         val matcher: Matcher
 
-        if (m2.find()) {
+        if (m3.find()) {
+            matcher = m3
+            isMultipleScore = false
+            isShow = true
+        } else if (m2.find()) {
             matcher = m2
             isMultipleScore = true
+            isShow = false
         } else if (m.find()) {
             matcher = m
             isMultipleScore = false
+            isShow = false
         } else {
             return false
         }
 
-        data.value = getParam(event, messageText, matcher, isMultipleScore)
+        data.value = getParam(event, messageText, matcher, isMultipleScore, isShow)
 
         return true
     }
@@ -74,7 +81,7 @@ class SBScoreService(
         }
     }
 
-    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultipleScore: Boolean): ScoreParam {
+    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultipleScore: Boolean, isShow: Boolean): ScoreParam {
         val bid = getBid(matcher)
 
         val inputMode = getMode(matcher)
@@ -196,7 +203,7 @@ class SBScoreService(
             throw NoSuchElementException.BeatmapScoreFiltered(map.previewName)
         }
 
-        return ScoreParam(user, map, filtered, mode, mods, isMultipleScore)
+        return ScoreParam(user, map, filtered, mode, mods, isMultipleScore, isShow)
     }
     private fun getMessageChain(param: ScoreParam): MessageChain {
         val image: ByteArray = if (param.scores.size > 1 && param.isMultipleScore) {
@@ -220,7 +227,7 @@ class SBScoreService(
 
             // asyncDownloadBackground(param)
 
-            imageService.getPanel(e5Param.toMap(), "E5")
+            imageService.getPanel(e5Param.toMap(), if (param.isShow) "E10" else "E5")
         }
 
         return QQMsgUtil.getImage(image)

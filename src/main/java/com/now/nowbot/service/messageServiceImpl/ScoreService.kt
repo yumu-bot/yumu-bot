@@ -44,6 +44,7 @@ import java.util.regex.Matcher
         val mode: OsuMode,
         val mods: List<LazerMod>,
         val isMultipleScore: Boolean,
+        val isShow: Boolean = false,
     )
 
     override fun isHandle(
@@ -51,24 +52,32 @@ import java.util.regex.Matcher
         messageText: String,
         data: DataValue<ScoreParam>,
     ): Boolean {
+        val m3 = Instruction.SCORE_SHOW.matcher(messageText)
         val m2 = Instruction.SCORES.matcher(messageText)
         val m = Instruction.SCORE.matcher(messageText)
 
         val isMultipleScore: Boolean
+        val isShow: Boolean
 
         val matcher: Matcher
 
-        if (m2.find()) {
+        if (m3.find()) {
+            matcher = m3
+            isMultipleScore = false
+            isShow = true
+        } else if (m2.find()) {
             matcher = m2
             isMultipleScore = true
+            isShow = false
         } else if (m.find()) {
             matcher = m
             isMultipleScore = false
+            isShow = false
         } else {
             return false
         }
 
-        data.value = getParam(event, messageText, matcher, isMultipleScore)
+        data.value = getParam(event, messageText, matcher, isMultipleScore, isShow)
 
         return true
     }
@@ -85,29 +94,38 @@ import java.util.regex.Matcher
     }
 
     override fun accept(event: MessageEvent, messageText: String): ScoreParam? {
+        val m3 = OfficialInstruction.SCORE_SHOW.matcher(messageText)
         val m2 = OfficialInstruction.SCORES.matcher(messageText)
         val m = OfficialInstruction.SCORE.matcher(messageText)
 
         val isMultipleScore: Boolean
+        val isShow: Boolean
+
         val matcher: Matcher
 
-        if (m2.find()) {
+        if (m3.find()) {
+            matcher = m3
+            isMultipleScore = false
+            isShow = true
+        } else if (m2.find()) {
             matcher = m2
             isMultipleScore = true
+            isShow = false
         } else if (m.find()) {
             matcher = m
             isMultipleScore = false
+            isShow = false
         } else {
             return null
         }
-        return getParam(event, messageText, matcher, isMultipleScore)
+        return getParam(event, messageText, matcher, isMultipleScore, isShow)
     }
 
     override fun reply(event: MessageEvent, param: ScoreParam): MessageChain? {
         return getMessageChain(param)
     }
 
-    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultipleScore: Boolean): ScoreParam {
+    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultipleScore: Boolean, isShow: Boolean): ScoreParam {
         val bid = getBid(matcher)
 
         val inputMode = getMode(matcher)
@@ -211,7 +229,7 @@ import java.util.regex.Matcher
             throw NoSuchElementException.BeatmapScoreFiltered(map.previewName)
         }
 
-        return ScoreParam(user, map, filtered, mode, mods, isMultipleScore)
+        return ScoreParam(user, map, filtered, mode, mods, isMultipleScore, isShow)
     }
 
     private fun asyncDownloadBackground(param: ScoreParam) {
@@ -242,7 +260,7 @@ import java.util.regex.Matcher
 
             asyncDownloadBackground(param)
 
-            imageService.getPanel(e5Param.toMap(), "E5")
+            imageService.getPanel(e5Param.toMap(), if (param.isShow) "E10" else "E5")
         }
 
         return QQMsgUtil.getImage(image)

@@ -40,7 +40,7 @@ import kotlin.math.*
     private val imageService: ImageService,
 ) : MessageService<BPParam>, TencentMessageService<BPParam> {
 
-    data class BPParam(val user: OsuUser, val scores: Map<Int, LazerScore>)
+    data class BPParam(val user: OsuUser, val scores: Map<Int, LazerScore>, val isShow: Boolean)
 
     override fun isHandle(
         event: MessageEvent,
@@ -51,8 +51,9 @@ import kotlin.math.*
         if (!matcher.find()) return false
 
         val isMultiple = matcher.group("s").isNullOrBlank().not()
+        val isShow = matcher.group("w").isNullOrBlank().not()
 
-        val param = getParam(event, messageText, matcher, isMultiple) ?: return false
+        val param = getParam(event, messageText, matcher, isMultiple, isShow) ?: return false
 
         data.value = param
         return true
@@ -73,21 +74,29 @@ import kotlin.math.*
     override fun accept(event: MessageEvent, messageText: String): BPParam? {
         val matcher1 = OfficialInstruction.BP.matcher(messageText)
         val matcher2 = OfficialInstruction.BPS.matcher(messageText)
+        val matcher3 = OfficialInstruction.BP_SHOW.matcher(messageText)
 
         val matcher: Matcher
         val isMultiple: Boolean
+        val isShow: Boolean
 
-        if (matcher1.find()) {
+        if (matcher3.find()) {
+            matcher = matcher3
+            isMultiple = false
+            isShow = true
+        } else if (matcher1.find()) {
             matcher = matcher1
             isMultiple = false
+            isShow = false
         } else if (matcher2.find()) {
             matcher = matcher2
             isMultiple = true
+            isShow = false
         } else {
             return null
         }
 
-        val param = getParam(event, messageText, matcher, isMultiple)
+        val param = getParam(event, messageText, matcher, isMultiple, isShow)
 
         return param
     }
@@ -101,7 +110,7 @@ import kotlin.math.*
      * 封装主获取方法
      * 请在 matcher.find() 后使用
      */
-    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean): BPParam? {
+    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isShow: Boolean): BPParam? {
         val any: String? = matcher.group("any")
 
         // 避免指令冲突
@@ -186,7 +195,7 @@ import kotlin.math.*
             throw NoSuchElementException.BestScoreFiltered(user.username)
         }
 
-        return BPParam(user, filteredScores)
+        return BPParam(user, filteredScores, isShow)
     }
 
     private fun <T> CmdRange<T>.getOffsetAndLimit(
@@ -281,7 +290,7 @@ import kotlin.math.*
 
             val e5Param = ScorePRService.getE5ParamForFilteredScore(user, score, "B", beatmapApiService, calculateApiService)
 
-            imageService.getPanel(e5Param.toMap(), "E5")
+            imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5")
         }
 
     companion object {

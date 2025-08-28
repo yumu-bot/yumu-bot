@@ -59,7 +59,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SERVICE_SWITCH(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("switch", "sw")
+        appendCommandsIgnoreAll("switch", "sh")
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
@@ -131,7 +131,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SCORE_PR(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))(?<s>s)?")
+        appendCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))((?<s>s)|(?<w>(show|w)))?")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
@@ -147,7 +147,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SB_SCORE_PR(CommandPatternBuilder.create {
-        appendSBCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))(?<s>s)?")
+        appendSBCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))((?<s>s)|(?<w>(show|w)))?")
         appendModeQQUIDSBNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
@@ -182,6 +182,16 @@ enum class Instruction(val pattern: Pattern) {
         appendModeBIDQQUIDNameMod()
     }),
 
+    SCORE_SHOW(CommandPatternBuilder.create {
+        appendGroup {
+            append(REG_EXCLAMATION)
+            appendSpace()
+            append("(?<score>(ym)?(score|s)(show|w))")
+            appendIgnore()
+        }
+        appendModeBIDQQUIDNameMod()
+    }),
+
     SCORES(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("scores", "ss")
         appendModeBIDQQUIDNameMod()
@@ -197,6 +207,16 @@ enum class Instruction(val pattern: Pattern) {
         appendModeBIDQQUIDSBNameMod()
     }),
 
+    SB_SCORE_SHOW(CommandPatternBuilder.create {
+        appendGroup {
+            append(REG_QUESTION)
+            appendSpace()
+            append("(?<score>(ym)?(score|s)\\s*(show|w))")
+            appendIgnore()
+        }
+        appendModeBIDQQUIDSBNameMod()
+    }),
+
     SB_SCORES(CommandPatternBuilder.create {
         appendSBCommandsIgnoreAll("scores", "ss")
         appendModeBIDQQUIDSBNameMod()
@@ -206,7 +226,7 @@ enum class Instruction(val pattern: Pattern) {
         appendGroup {
             append(REG_EXCLAMATION)
             appendSpace()
-            append("(?<bp>(ym)?(bestperformance|best|bp|b))(?<s>s)?")
+            append("(?<bp>(ym)?(bestperformance|best|bp|b))((?<s>s)|(?<w>show|w))?")
             appendIgnore()
         }
         appendModeQQUIDNameRange()
@@ -227,7 +247,7 @@ enum class Instruction(val pattern: Pattern) {
         appendGroup {
             append(REG_QUESTION)
             appendSpace()
-            append("(?<bp>(ym)?(bestperformance|best|bp|b))(?<s>s)?")
+            append("(?<bp>(ym)?(bestperformance|best|bp|b))((?<s>s)|(?<w>show|w))?")
             appendIgnore()
         }
         appendModeQQUIDSBNameRange()

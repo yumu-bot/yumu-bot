@@ -43,8 +43,9 @@ class SBBPService(
         if (!matcher.find()) return false
 
         val isMultiple = matcher.group("s").isNullOrBlank().not()
+        val isShow = matcher.group("w").isNullOrBlank().not()
 
-        val param = getParam(event, messageText, matcher, isMultiple) ?: return false
+        val param = getParam(event, messageText, matcher, isMultiple, isShow) ?: return false
 
         data.value = param
         return true
@@ -68,7 +69,7 @@ class SBBPService(
      * 封装主获取方法
      * 请在 matcher.find() 后使用
      */
-    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean): BPParam? {
+    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isShow: Boolean): BPParam? {
         val any: String? = matcher.group("any")
 
         // 避免指令冲突
@@ -179,7 +180,7 @@ class SBBPService(
             throw NoSuchElementException.BestScoreFiltered(user.username)
         }
 
-        return BPParam(user, filteredScores)
+        return BPParam(user, filteredScores, isShow)
     }
 
     private fun <T> CmdRange<T>.getOffsetAndLimit(
@@ -289,7 +290,7 @@ class SBBPService(
 
             val e5Param = ScorePRService.getE5ParamForFilteredScore(user, score, "B", osuBeatmapApiService, osuCalculateApiService)
 
-            imageService.getPanel(e5Param.toMap(), "E5")
+            imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5")
         }
 
     companion object {
