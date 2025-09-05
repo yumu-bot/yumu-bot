@@ -156,7 +156,7 @@ val REG_NAME: String = "($CHAR_NAME$CHAR_NAME_WITH_SPACE+$CHAR_NAME)"
 val REG_ANYTHING_BUT_NO_OPERATOR: String = "(\\S[^#＃！!≥≤<>＜＞＝=]+)"
 
 @Language("RegExp")
-val REG_MAI_DIFFICULTY = "((((1[0-4])|[1-9])$REG_PLUS?$REG_QUESTION?)|(15))"
+val REG_MAI_DIFFICULTY = "((((1[0-4])|[1-9])($REG_PLUS?$REG_QUESTION?)|(\\.[0-9])?)|(15(\\.0)?))"
 
 @Language("RegExp")
 val REG_MAI_CABINET = "(sd|standard|标准|标|dx|deluxe|豪华)"
