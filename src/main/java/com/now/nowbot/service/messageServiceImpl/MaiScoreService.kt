@@ -295,15 +295,15 @@ import kotlin.math.roundToInt
                 val s = range.split(REG_HYPHEN.toRegex()).map { it.trim() }
 
                 if (s.size == 2) {
-                    val f = parseLevel(s.first())
-                    val l = parseLevel(s.last())
+                    val f = parseLevel(s.first(), isAccurate = true)
+                    val l = parseLevel(s.last(), isAccurate = true)
 
                     val min = min(min(f.first, f.last), min(l.first, l.last))
                     val max = max(max(f.first, f.last), max(l.first, l.last))
 
                     IntRange(min, max)
                 } else {
-                    parseLevel(s.first())
+                    parseLevel(s.first(), isAccurate = false)
                 }
             } else {
                 parseLevel(range)
@@ -315,12 +315,15 @@ import kotlin.math.roundToInt
         }
 
         // 返回等级 x 10
-        private fun parseLevel(level: String): IntRange {
+        /**
+         * @param isAccurate 如果为真，则 13 会匹配成 13.0。否则只会匹配成 13.0-13.5。
+         */
+        private fun parseLevel(level: String, isAccurate: Boolean = false): IntRange {
             if (level.contains(REG_PLUS.toRegex())) {
                 val i = level.dropLastWhile { it == '?' || it == '？' }.dropLastWhile { it == '+' || it == '＋' }
 
                 return IntRange(((floor(i.toDouble()) + 0.6) * 10).roundToInt(), ((floor(i.toDouble()) + 0.9) * 10).roundToInt())
-            } else if (level.contains('.')) {
+            } else if (level.contains('.') || isAccurate) {
                 // 精确定级
                 val i = level.dropLastWhile { it == '?' || it == '？' }
 
