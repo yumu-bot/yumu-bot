@@ -107,81 +107,93 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
         }
 
         fun fit(operator: Operator, compare: Any, to: Any, isPlus: Boolean = false): Boolean {
-            return if (compare is Long && to is Long) {
-                val c: Long = compare
-                val t: Long = to
+            return when {
+                (compare is Long && to is Long) -> {
+                    val c: Long = compare
+                    val t: Long = to
 
-                when (operator) {
-                    Operator.XQ, Operator.EQ -> c == t
-                    Operator.NE -> c != t
-                    Operator.GT -> c > t
-                    Operator.GE -> c >= t
-                    Operator.LT -> c < t
-                    Operator.LE -> c <= t
-                }
-            } else if (compare is Int && to is Int) {
-                val c: Int = compare
-                val t: Int = to
-
-                when (operator) {
-                    Operator.XQ, Operator.EQ -> c == t
-                    Operator.NE -> c != t
-                    Operator.GT -> c > t
-                    Operator.GE -> c >= t
-                    Operator.LT -> c < t
-                    Operator.LE -> c <= t
-                }
-            } else if (compare is Double && to is Double) {
-                val c: Double = compare
-                val t: Double = to
-
-                val d = abs(c - t)
-
-                // 如果输入的特别接近整数，则判断是这个值到这个值 +1 的范围（不包含）
-                when (operator) {
-                    Operator.XQ -> d < 1e-4
-                    Operator.EQ -> if (isPlus && abs(c) - floor(abs(c)) < 1e-4) {
-                        c <= t && (c + 1.0) > t
-                    } else {
-                        d < 1e-4
+                    when (operator) {
+                        Operator.XQ, Operator.EQ -> c == t
+                        Operator.NE -> c != t
+                        Operator.GT -> c > t
+                        Operator.GE -> c >= t
+                        Operator.LT -> c < t
+                        Operator.LE -> c <= t
                     }
-
-                    Operator.NE -> d > 1e-4
-                    Operator.GT -> c > t
-                    Operator.GE -> c >= t
-                    Operator.LT -> c < t
-                    Operator.LE -> c <= t
                 }
-            } else if (compare is String && to is String) {
-                val c: String = DataUtil.getStandardisedString(compare.trim())
-                val t: String = DataUtil.getStandardisedString(to.trim())
 
-                when (operator) {
-                    Operator.XQ -> t.equals(c, ignoreCase = true)
-                    Operator.EQ -> c.contains(t, ignoreCase = true)
-                    Operator.NE -> c.contains(t, ignoreCase = true).not()
-                    Operator.GT -> t.contains(c, ignoreCase = true) && t.length > c.length
-                    Operator.GE -> t.contains(c, ignoreCase = true) && t.length >= c.length
-                    Operator.LT -> c.contains(t, ignoreCase = true) && t.length < c.length
-                    Operator.LE -> c.contains(t, ignoreCase = true) && t.length <= c.length
+                (compare is Int && to is Int) -> {
+                    val c: Int = compare
+                    val t: Int = to
+
+                    when (operator) {
+                        Operator.XQ, Operator.EQ -> c == t
+                        Operator.NE -> c != t
+                        Operator.GT -> c > t
+                        Operator.GE -> c >= t
+                        Operator.LT -> c < t
+                        Operator.LE -> c <= t
+                    }
                 }
-            } else if (compare is List<*> && to is List<*>) {
-                val c: Set<Any?> = compare.toSet()
-                val t: Set<Any?> = to.toSet()
 
-                when (operator) {
-                    Operator.XQ -> c.contains(t) && t.size == c.size
-                    Operator.EQ -> c.contains(t)
-                    Operator.NE -> c.contains(t).not()
-                    Operator.GT -> t.contains(c) && t.size > c.size
-                    Operator.GE -> t.contains(c) && t.size >= c.size
-                    Operator.LT -> c.contains(t) && t.size < c.size
-                    Operator.LE -> c.contains(t) && t.size <= c.size
+                (compare is Double && to is Double) -> {
+                    val c: Double = compare
+                    val t: Double = to
+
+                    val d = abs(c - t)
+
+                    // 如果输入的特别接近整数，则判断是这个值到这个值 +1 的范围（不包含）
+                    when (operator) {
+                        Operator.XQ -> d < 1e-4
+                        Operator.EQ -> if (isPlus && abs(c) - floor(abs(c)) < 1e-4) {
+                            c <= t && (c + 1.0) > t
+                        } else {
+                            d < 1e-4
+                        }
+
+                        Operator.NE -> d > 1e-4
+                        Operator.GT -> c > t
+                        Operator.GE -> c >= t
+                        Operator.LT -> c < t
+                        Operator.LE -> c <= t
+                    }
                 }
-            } else {
-                return fit(operator, compare.toString(), to.toString(), isPlus)
 
-                // throw IllegalStateException.Calculate("成绩筛选")
+                (compare is String && to is String) -> {
+                    val c: String = DataUtil.getStandardisedString(compare.trim())
+                    val t: String = DataUtil.getStandardisedString(to.trim())
+
+                    when (operator) {
+                        Operator.XQ -> t.equals(c, ignoreCase = true)
+                        Operator.EQ -> c.contains(t, ignoreCase = true)
+                        Operator.NE -> c.contains(t, ignoreCase = true).not()
+                        Operator.GT -> t.contains(c, ignoreCase = true) && t.length > c.length
+                        Operator.GE -> t.contains(c, ignoreCase = true) && t.length >= c.length
+                        Operator.LT -> c.contains(t, ignoreCase = true) && t.length < c.length
+                        Operator.LE -> c.contains(t, ignoreCase = true) && t.length <= c.length
+                    }
+                }
+
+                (compare is Enum<*> && to is Enum<*>) -> {
+                    fit(operator, compare.ordinal, to.ordinal, isPlus)
+                }
+
+                (compare is List<*> && to is List<*>) -> {
+                    val c: Set<Any?> = compare.toSet()
+                    val t: Set<Any?> = to.toSet()
+
+                    when (operator) {
+                        Operator.XQ -> c.contains(t) && t.size == c.size
+                        Operator.EQ -> c.contains(t)
+                        Operator.NE -> c.contains(t).not()
+                        Operator.GT -> t.contains(c) && t.size > c.size
+                        Operator.GE -> t.contains(c) && t.size >= c.size
+                        Operator.LT -> c.contains(t) && t.size < c.size
+                        Operator.LE -> c.contains(t) && t.size <= c.size
+                    }
+                }
+
+                else -> fit(operator, compare.toString(), to.toString(), isPlus)
             }
         }
 
@@ -230,7 +242,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 OD -> fit(operator, it.beatmap.OD?.toDouble() ?: 0.0, double)
                 HP -> fit(operator, it.beatmap.HP?.toDouble() ?: 0.0, double)
                 PERFORMANCE -> fit(operator, it.pp, double)
-                RANK -> run {
+                RANK -> {
                     val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
 
                     val cr = rankArray.indexOf(
@@ -249,7 +261,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
                     fit(operator, ir.toLong(), cr.toLong())
                 }
-                LENGTH -> run {
+                LENGTH -> {
                     var seconds = 0L
                     if (condition.contains(REG_COLON.toRegex())) {
                         val strs = condition.split(REG_COLON.toRegex())
@@ -275,9 +287,9 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 }
 
                 BPM -> fit(operator, it.beatmap.BPM?.toDouble() ?: 0.0, double, isPlus = true)
-                ACCURACY -> run {
+                ACCURACY -> {
                     val acc = when {
-                        double > 10000.0 -> throw IllegalArgumentException.WrongException.Henan()
+                        double > 10000.0 || double <= 0.0 -> throw IllegalArgumentException.WrongException.Henan()
                         double > 100.0 -> double / 10000.0
                         double > 1.0 -> double / 100.0
                         else -> double
@@ -285,7 +297,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
                     fit(operator, it.accuracy, acc, isPlus = true)
                 }
-                COMBO -> run {
+                COMBO -> {
                     val combo = when {
                         double <= 1.0 && double > 0.0 -> it.beatmap.maxCombo?.times(double)?.roundToLong() ?: long
                         else -> long
@@ -299,7 +311,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 OK -> fit(operator, it.statistics.ok.toLong(), long)
                 MEH -> fit(operator, it.statistics.meh.toLong(), long)
                 MISS -> fit(operator, it.statistics.miss.toLong(), long)
-                MOD -> run {
+                MOD -> {
                     if (condition.contains("NM", ignoreCase = true)) {
                         when (operator) {
                             Operator.XQ, Operator.EQ -> it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")
@@ -324,7 +336,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     }
                 }
 
-                RATE -> run {
+                RATE -> {
                     if (it.mode != OsuMode.MANIA) throw IllegalArgumentException.WrongException.Mode()
 
                     val rate = min((it.statistics.perfect * 1.0 / it.statistics.great), 100.0)

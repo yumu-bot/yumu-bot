@@ -1229,10 +1229,9 @@ object DataUtil {
                 val reg = regexes[i]
 
                 if (reg.matches(matcher)) {
+                    val after = strs[min(j + 1, strs.size - 1)] // 后一个元素，或是最后一个
 
-                    if (noContains == null || (j <= strs.size - 2 && strs[j + 1].contains(noContains)) || (j == strs.size - 1)) {
-                        // 正常输出、不包含输出、已经结尾，可以输出
-
+                    if (after.contains(REG_OPERATOR.toRegex()) || (noContains != null && after.contains(noContains))) {
                         result[i].add(matcher)
                         matcher = ""
                     }

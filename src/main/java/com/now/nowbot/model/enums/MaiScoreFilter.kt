@@ -129,9 +129,9 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
                 DIFFICULTY -> fit(operator, it.star, double)
 
-                DIFFICULTY_NAME -> fit(operator, MaiDifficulty.getDifficulty(it.difficulty).name, MaiDifficulty.getDifficulty(condition).name)
+                DIFFICULTY_NAME -> fit(operator, MaiDifficulty.getDifficulty(it.difficulty), MaiDifficulty.getDifficulty(condition))
 
-                CABINET -> fit(operator, MaiCabinet.getCabinet(condition).name, MaiCabinet.getCabinet(it.type).name)
+                CABINET -> fit(operator, MaiCabinet.getCabinet(condition), MaiCabinet.getCabinet(it.type))
                 VERSION -> fit(operator,
                     MaiVersion.getVersionList(it.version).joinToString(" ") { it.abbreviation },
                     MaiVersion.getVersionList(condition).joinToString(" ") { it.abbreviation }
@@ -143,9 +143,19 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
                     }?.contains(true) ?: false
                 }
                 ARTIST -> fit(operator, it.artist, condition)
-                CATEGORY -> fit(operator, MaiCategory.getCategory(it.genre).english, MaiCategory.getCategory(condition).english)
+                CATEGORY -> fit(operator, MaiCategory.getCategory(it.genre), MaiCategory.getCategory(condition))
                 BPM -> fit(operator, it.bpm, int)
-                ACHIEVEMENT -> fit(operator, (it.achievements * 10000).roundToInt(), (double * 10000).roundToInt(), isPlus = true)
+                ACHIEVEMENT -> {
+                    val acc = when {
+                        double > 1010000.0 || double <= 0.0 -> throw IllegalArgumentException.WrongException.Henan()
+                        double > 10100.0 -> double / 1000000.0
+                        double > 101.0 -> double / 100.0
+                        double > 1.0 -> double
+                        else -> double * 100.0
+                    }
+
+                    fit(operator, (it.achievements * 10000).roundToInt(), (acc * 10000).roundToInt(), isPlus = true)
+                }
                 TAP -> fit(operator, it.notes[0], int)
                 HOLD -> fit(operator, it.notes[1], int)
                 SLIDE -> fit(operator, it.notes[2], int)
@@ -187,8 +197,8 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
                     fit(operator, ir, cr)
                 }
-                COMBO -> fit(operator, ComboType.getCombo(condition).name, ComboType.getCombo(it.combo).name)
-                SYNC -> fit(operator, SyncType.getSync(condition).name, SyncType.getSync(it.sync).name)
+                COMBO -> fit(operator, ComboType.getCombo(condition), ComboType.getCombo(it.combo))
+                SYNC -> fit(operator, SyncType.getSync(condition), SyncType.getSync(it.sync))
                 else -> false
             }
         }

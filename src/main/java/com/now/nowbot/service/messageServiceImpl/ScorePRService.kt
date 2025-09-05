@@ -25,7 +25,6 @@ import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.command.FLAG_RANGE
-import com.now.nowbot.util.command.REG_EQUAL
 import com.now.nowbot.util.command.REG_HYPHEN
 import com.now.nowbot.util.command.REG_RANGE
 import kotlinx.coroutines.*
@@ -215,7 +214,7 @@ class ScorePRService(
 
         id.setZeroToRange100()
 
-        val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, "$REG_EQUAL|$REG_RANGE".toRegex())
+        val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, REG_RANGE.toRegex())
 
         // 如果不加井号，则有时候范围会被匹配到这里来
         val rangeInConditions = conditions.lastOrNull()?.firstOrNull()

@@ -111,7 +111,7 @@ import kotlin.math.roundToInt
 
         val full: MaiBestScore
 
-        val conditions = DataUtil.paramMatcher(any, MaiScoreFilter.entries.map { it.regex }, REG_EQUAL.toRegex())
+        val conditions = DataUtil.paramMatcher(any, MaiScoreFilter.entries.map { it.regex }, REG_MAI_RANGE.toRegex())
 
         val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
         val hasCondition = conditions.sumOf { it.size } > 0
