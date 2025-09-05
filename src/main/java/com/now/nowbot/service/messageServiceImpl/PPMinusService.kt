@@ -156,7 +156,7 @@ import java.util.regex.Matcher
                 }
 
                 else -> {
-                    val my = getPPMinus2(me, myBests, dao)
+                    val my = getPPMinus2(me, myBests, dao, -1)
 
                     val users = listOf(me)
 
@@ -384,16 +384,18 @@ import java.util.regex.Matcher
         private val log: Logger = LoggerFactory.getLogger(PPMinusService::class.java)
 
         @JvmStatic
-        fun getPPMinus2(user: OsuUser, bests: List<LazerScore>, ppMinusDao: PPMinusDao): PPMinus {
-            if (user.statistics!!.playTime!! < 60 || user.statistics!!.playCount!! < 30) {
-                throw NoSuchElementException.PlayerPlayWithMode(user.username, user.currentOsuMode)
-            }
+        fun getPPMinus2(user: OsuUser, bests: List<LazerScore>, ppMinusDao: PPMinusDao, version: Int = 2): PPMinus {
+            if (version != -1) {
+                if (user.statistics!!.playTime!! < 60 || user.statistics!!.playCount!! < 30) {
+                    throw NoSuchElementException.PlayerPlayWithMode(user.username, user.currentOsuMode)
+                }
 
-            AsyncMethodExecutor.asyncRunnableExecute {
-                try {
-                    ppMinusDao.savePPMinus(user, bests)
-                } catch (e: Exception) {
-                    log.error("PPM2：数据保存失败", e)
+                AsyncMethodExecutor.asyncRunnableExecute {
+                    try {
+                        ppMinusDao.savePPMinus(user, bests)
+                    } catch (e: Exception) {
+                        log.error("PPM2：数据保存失败", e)
+                    }
                 }
             }
 
