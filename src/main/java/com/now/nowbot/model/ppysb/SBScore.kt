@@ -204,7 +204,7 @@ data class SBScore(
             if (sb.userID != null) this.userID = sb.userID
 
             this.type = "sb_score"
-            this.passed = sb.rank != "F"
+            this.passed = this.rank != "F"
 
             this.legacyScore = sb.score
             this.score = sb.score
