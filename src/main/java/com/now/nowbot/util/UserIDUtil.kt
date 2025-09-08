@@ -269,20 +269,19 @@ object UserIDUtil {
 
         val onlyRange = "^\\s*$REG_HASH?\\s*(\\d{1,3}$REG_HYPHEN+)?\\d{1,3}\\s*$".toRegex()
 
-        if (text.contains(onlyRange)) {
+        if (text.matches(onlyRange)) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
             if (range.first != null && range.second == null && range.first in 201..999) try {
                 val user = bindDao.getBindUser(range.first.toString())
 
-                if (user != null) {
+                return if (user != null) {
                     setMode(mode, user.mode, event)
+                    CmdRange(user.userID)
                 } else {
-                    setMode(mode, event)
+                    CmdRange(null, range.first)
                 }
-
-                return CmdRange(user?.userID)
             } catch (ignored: Exception) {}
 
             isMyself.set(true)
@@ -353,7 +352,7 @@ object UserIDUtil {
 
         val onlyRange = "^\\s*$REG_HASH?\\s*(\\d{1,3}$REG_HYPHEN+)?\\d{1,3}\\s*$".toRegex()
 
-        if (text.contains(onlyRange)) {
+        if (text.matches(onlyRange)) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -364,13 +363,12 @@ object UserIDUtil {
                     null
                 }
 
-                if (user != null) {
+                return if (user != null) {
                     setMode(mode, user.mode, null)
+                    CmdRange(user.userID)
                 } else {
-                    setMode(mode, null)
+                    CmdRange(null, range.first)
                 }
-
-                return CmdRange(user?.userID)
             } catch (ignored: Exception) {}
 
             isMyself.set(true)

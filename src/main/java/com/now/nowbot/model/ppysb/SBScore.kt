@@ -202,9 +202,11 @@ data class SBScore(
             this.beatmapID = sb.beatmap?.beatmapID ?: 0L
 
             if (sb.userID != null) this.userID = sb.userID
+            this.rank = sb.rank
+            this.lazerRank = sb.rank
+            this.passed = sb.rank != "F"
 
             this.type = "sb_score"
-            this.passed = this.rank != "F"
 
             this.legacyScore = sb.score
             this.score = sb.score
@@ -214,7 +216,6 @@ data class SBScore(
             this.mods = sb.mods
             this.statistics = sb.statistics
             this.maximumStatistics = sb.maximumStatistics
-            this.rank = sb.rank
             this.beatmap.status = sb.status
             this.ruleset = when(sb.modeByte.toInt()) {
                 0, 4, 8 -> 0
