@@ -267,9 +267,7 @@ object UserIDUtil {
             return CmdRange()
         }
 
-        val onlyRange = "^\\s*$REG_HASH?\\s*(\\d{1,3}$REG_HYPHEN+)?\\d{1,3}\\s*$".toRegex()
-
-        if (text.matches(onlyRange)) {
+        if (text.matches(RANGE_ONLY)) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -350,9 +348,7 @@ object UserIDUtil {
             return CmdRange()
         }
 
-        val onlyRange = "^\\s*$REG_HASH?\\s*(\\d{1,3}$REG_HYPHEN+)?\\d{1,3}\\s*$".toRegex()
-
-        if (text.matches(onlyRange)) {
+        if (text.matches(RANGE_ONLY)) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家

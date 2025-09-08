@@ -164,6 +164,9 @@ val REG_MAI_CABINET = "(sd|standard|标准|标|dx|deluxe|豪华)"
 @Language("RegExp")
 val REG_MAI_RANGE = "$REG_MAI_DIFFICULTY\\s*$REG_HYPHEN?\\s*$REG_MAI_DIFFICULTY?"
 
+@Language("RegExp")
+val RANGE_ONLY = "^\\s*$REG_HASH?\\s*(\\d{1,3}$REG_HYPHEN+)?\\d{1,3}\\s*$".toRegex()
+
 /**
  * 这个分隔符会分隔空格
  */

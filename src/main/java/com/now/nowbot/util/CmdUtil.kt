@@ -24,7 +24,6 @@ import org.springframework.context.ApplicationContext
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import java.util.regex.Pattern
 import kotlin.math.max
 import kotlin.math.min
 
@@ -161,26 +160,33 @@ object CmdUtil {
             return CmdRange()
         }
 
-        if (JUST_RANGE.matcher(text).matches()) {
+        if (text.matches(RANGE_ONLY)) {
             val range = parseRange(text)
-            if (range[0] != null && range[1] == null && checkRangeFirst(range[0]!!)) {
-                try {
-                    val name = range[0].toString()
 
-                    val bindMode = try {
-                        bindDao.getBindUser(name)!!.mode
-                    } catch (e: Exception) {
-                        OsuMode.DEFAULT
-                    }
-
-                    // val id = userApiService.getOsuId(name)
-                    setMode(mode, bindMode, event)
-                    val user = getOsuUser(name, mode.data)
-                    return CmdRange(user)
-                } catch (_: Exception) {
-
+            // 特殊情况，前面是某个 201~999 范围内的玩家
+            if (range.first() != null && range.last() == null && range.first() in 201..999) try {
+                val bindMode = try {
+                    bindDao.getBindUser(range.first().toString())!!.mode
+                } catch (e: Exception) {
+                    OsuMode.DEFAULT
                 }
+
+                val user = try {
+                    getOsuUser(range.first().toString(), mode.data)
+                } catch (e: Exception) {
+                    null
+                }
+
+                return if (user != null) {
+                    setMode(mode, bindMode, event)
+                    CmdRange(user)
+                } else {
+                    CmdRange(null, range.first())
+                }
+            } catch (_: Exception) {
+
             }
+
             return CmdRange(null, range[0], range[1])
         } // -1 才是没找到
 
@@ -366,25 +372,30 @@ object CmdUtil {
             return CmdRange()
         }
 
-        if (JUST_RANGE.matcher(text).matches()) {
+        if (text.matches(RANGE_ONLY)) {
             val range = parseRange(text)
-            if (range[0] != null && range[1] == null && checkRangeFirst(range[0]!!)) {
-                try {
-                    val name = range[0].toString()
 
-                    val bindMode = try {
-                        bindDao.getSBBindUser(name).mode
-                    } catch (e: Exception) {
-                        OsuMode.DEFAULT
-                    }
+            // 特殊情况，前面是某个 201~999 范围内的玩家
+            if (range.first() != null && range.last() == null && range.first() in 201..999) try {
 
-                    setMode(mode, bindMode)
-                    val user = sbUserApiService.getUser(username = name)
-                    return CmdRange(user)
-                } catch (_: Exception) {
-
+                val bindMode = try {
+                    bindDao.getSBBindUser(range.first().toString()).mode
+                } catch (e: Exception) {
+                    OsuMode.DEFAULT
                 }
+
+                val user = sbUserApiService.getUser(username = range.first().toString())
+
+                return if (user != null) {
+                    setMode(mode, bindMode)
+                    CmdRange(user)
+                } else {
+                    CmdRange(null, range.first())
+                }
+            } catch (_: Exception) {
+
             }
+
             return CmdRange(null, range[0], range[1])
         } // -1 才是没找到
 
@@ -839,7 +850,6 @@ object CmdUtil {
 
     private const val OSU_MIN_INDEX = 2
 
-    private val JUST_RANGE: Pattern = "^\\s*$REG_HASH?\\s*(\\d{1,3}$REG_HYPHEN+)?\\d{1,3}\\s*$".toPattern()
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
     private lateinit var bindDao: BindDao
     private lateinit var userApiService: OsuUserApiService
@@ -857,15 +867,6 @@ object CmdUtil {
         sbUserApiService = applicationContext.getBean(SBUserApiService::class.java)
         sbScoreApiService = applicationContext.getBean(SBScoreApiService::class.java)
         sbBeatmapApiService = applicationContext.getBean(SBBeatmapApiService::class.java)
-    }
-
-    private fun checkRangeFirst(i: Int): Boolean {
-        return when {
-            i < 201 -> false
-            i == 666 -> true
-            i < 999 -> true
-            else -> false
-        }
     }
 }
 
