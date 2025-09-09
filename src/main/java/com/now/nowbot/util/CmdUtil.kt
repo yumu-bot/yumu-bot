@@ -576,7 +576,7 @@ object CmdUtil {
         }
 
         // 对于 末尾无数字 / 数字大于3位 / 实际名称小于最小值 认为无 range
-        if (i <= 0 || i > 3 || index < OSU_MIN_INDEX) {
+        if (i !in 1..3 || index < OSU_MIN_INDEX) {
             return ranges
         }
         val rangeN = text.substring(index + 1).toInt()
@@ -601,7 +601,7 @@ object CmdUtil {
             i++
         }
 
-        if (i <= 0 || i > 3 || index < OSU_MIN_INDEX) { // 与上面同理
+        if (i !in 1..3 || index < OSU_MIN_INDEX) { // 与上面同理
             return ranges
         }
 
