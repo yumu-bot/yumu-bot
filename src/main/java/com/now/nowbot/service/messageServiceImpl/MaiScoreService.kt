@@ -320,19 +320,19 @@ import kotlin.math.roundToInt
          */
         private fun parseLevel(level: String, isAccurate: Boolean = false): IntRange {
             if (level.contains(REG_PLUS.toRegex())) {
-                val i = level.dropLastWhile { it == '?' || it == '？' }.dropLastWhile { it == '+' || it == '＋' }
+                val i10 = level.dropLastWhile { it == '?' || it == '？' }.dropLastWhile { it == '+' || it == '＋' }.toDouble() * 10.0
 
-                return IntRange(((floor(i.toDouble()) + 0.6) * 10).roundToInt(), ((floor(i.toDouble()) + 0.9) * 10).roundToInt())
+                return IntRange((floor(i10) + 6).roundToInt(), (floor(i10) + 9).roundToInt())
             } else if (level.contains('.') || isAccurate) {
                 // 精确定级
-                val i = level.dropLastWhile { it == '?' || it == '？' }
+                val i10 = level.dropLastWhile { it == '?' || it == '？' }.toDouble() * 10.0
 
-                return (floor(i.toDouble()) * 10).roundToInt()..(floor(i.toDouble()) * 10).roundToInt()
+                return (floor(i10)).roundToInt()..(floor(i10)).roundToInt()
             } else {
                 // 模糊定级
-                val i = level.dropLastWhile { it == '?' || it == '？' }
+                val i10 = level.dropLastWhile { it == '?' || it == '？' }.toDouble() * 10.0
 
-                return (floor(i.toDouble()) * 10).roundToInt()..((floor(i.toDouble()) + 0.5) * 10).roundToInt()
+                return (floor(i10)).roundToInt()..(floor(i10) + 5).roundToInt()
             }
         }
 

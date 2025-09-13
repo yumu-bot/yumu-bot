@@ -17,7 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientRequestException
 import org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
 import org.springframework.web.reactive.function.client.WebClientResponseException.InternalServerError
-import java.net.ConnectException
+import java.net.SocketException
 
 @Service("NOWBOT_IMAGE")
 class ImageService(private val webClient: WebClient) {
@@ -219,7 +219,7 @@ class ImageService(private val webClient: WebClient) {
                 throw NetworkException.RenderModuleException.RequestTimeout()
             } else if (e is InternalServerError || e.cause is InternalServerError) {
                 throw NetworkException.RenderModuleException.InternalServerError()
-            } else if (e is ConnectException || e.cause is ConnectException) {
+            } else if (e is SocketException || e.cause is SocketException) {
                 throw NetworkException.RenderModuleException.ServiceUnavailable()
             } else if (e is WebClientRequestException) {
                 throw NetworkException.RenderModuleException.BadGateway()
