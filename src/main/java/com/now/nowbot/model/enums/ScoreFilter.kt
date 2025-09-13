@@ -7,10 +7,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
-import kotlin.math.abs
-import kotlin.math.floor
-import kotlin.math.min
-import kotlin.math.roundToLong
+import kotlin.math.*
 
 enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
     CREATOR("(creator|host|h)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
@@ -71,7 +68,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
     CIRCLE("((hit)?circles?|hi?t|click|rice|ci|cr|rc)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    SLIDER("(slider?s?|sl|longnote|ln)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    SLIDER("(slider?s?|sl|long(note)?|lns?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
     SPINNER("(spin(ner)?s?|rattle|sp)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
@@ -106,7 +103,21 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
             }
         }
 
-        fun fit(operator: Operator, compare: Any, to: Any, isPlus: Boolean = false): Boolean {
+        /**
+         * @param compare 谱面数据
+         * @param to 输入的数据
+         * @param digit 需要比较的位数。比如星数，这里就需要输入 2，这样假设条件是 star=7.27，会返回 7.27 ..< 7.28 的谱面。
+         * @param isRound 如果为真，则会按照四舍五入的方式处理 compare（比如表现分或者准确率）。否则按照向下取整的方式处理 compare（比如星数）。
+         * @param isInteger 如果为真，则会在 to 接近某位时，digit 按当前位数处理（此时只会影响 EQ 运算符，假如 star=7.1，此时会返回 7.10 ..< 7.20 的谱面、）如果您需要比较 0-1 之间的数据，这个最好设为假。
+         */
+        fun fit(
+            operator: Operator,
+            compare: Any,
+            to: Any,
+            digit: Int = 0,
+            isRound: Boolean = true,
+            isInteger: Boolean = true,
+        ): Boolean {
             return when {
                 (compare is Long && to is Long) -> {
                     val c: Long = compare
@@ -137,21 +148,39 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 }
 
                 (compare is Double && to is Double) -> {
-                    val c: Double = compare
-                    val t: Double = to
+                    val c: Double = abs(compare)
+                    val t: Double = abs(to)
 
-                    val d = abs(c - t)
+                    val dig = if (isInteger) {
+                        var temp = 0
 
-                    // 如果输入的特别接近整数，则判断是这个值到这个值 +1 的范围（不包含）
-                    when (operator) {
-                        Operator.XQ -> d < 1e-4
-                        Operator.EQ -> if (isPlus && abs(c) - floor(abs(c)) < 1e-4) {
-                            c <= t && (c + 1.0) > t
-                        } else {
-                            d < 1e-4
+                        for (i in 0..digit) {
+                            val sc = 10.0.pow(i)
+                            val tt = t * sc
+
+                            if (tt in floor(tt) ..< floor(tt) + 0.1) {
+                                temp = i
+                                break
+                            }
                         }
 
-                        Operator.NE -> d > 1e-4
+                        temp
+                    } else {
+                        digit
+                    }
+
+                    val scale = 10.0.pow(dig)
+
+                    val rc = if (isRound) {
+                        round(c * scale) / scale
+                    } else {
+                        floor(c * scale) / scale
+                    }
+
+                    when (operator) {
+                        Operator.XQ -> abs(c - t) <= 1e-4
+                        Operator.EQ -> abs(rc - t) <= 1e-4
+                        Operator.NE -> abs(rc - t) > 1e-4
                         Operator.GT -> c > t
                         Operator.GE -> c >= t
                         Operator.LT -> c < t
@@ -175,7 +204,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 }
 
                 (compare is Enum<*> && to is Enum<*>) -> {
-                    fit(operator, compare.ordinal, to.ordinal, isPlus)
+                    fit(operator, compare.ordinal, to.ordinal, digit, isRound)
                 }
 
                 (compare is List<*> && to is List<*>) -> {
@@ -193,7 +222,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     }
                 }
 
-                else -> fit(operator, compare.toString(), to.toString(), isPlus)
+                else -> fit(operator, compare.toString(), to.toString(), digit, isRound)
             }
         }
 
@@ -233,15 +262,16 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                         val ts = it.beatmapset.tags!!.split("\\s+".toRegex()).map { fit(operator, it, condition) }.toSet()
                         return ts.contains(element = true)
                     }
+
                 DIFFICULTY -> fit(operator, it.beatmap.difficultyName, condition)
 
-                STAR -> fit(operator, it.beatmap.starRating, double)
+                STAR -> fit(operator, it.beatmap.starRating, double, digit = 2, isRound = false, isInteger = true)
 
-                AR -> fit(operator, it.beatmap.AR?.toDouble() ?: 0.0, double)
-                CS -> fit(operator, it.beatmap.CS?.toDouble() ?: 0.0, double)
-                OD -> fit(operator, it.beatmap.OD?.toDouble() ?: 0.0, double)
-                HP -> fit(operator, it.beatmap.HP?.toDouble() ?: 0.0, double)
-                PERFORMANCE -> fit(operator, it.pp, double)
+                AR -> fit(operator, it.beatmap.AR?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
+                CS -> fit(operator, it.beatmap.CS?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
+                OD -> fit(operator, it.beatmap.OD?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
+                HP -> fit(operator, it.beatmap.HP?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
+                PERFORMANCE -> fit(operator, it.pp, double, digit = 0, isRound = true, isInteger = true)
                 RANK -> {
                     val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
 
@@ -261,6 +291,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
                     fit(operator, ir.toLong(), cr.toLong())
                 }
+
                 LENGTH -> {
                     var seconds = 0L
                     if (condition.contains(REG_COLON.toRegex())) {
@@ -286,31 +317,27 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     fit(operator, it.beatmap.totalLength.toLong(), seconds)
                 }
 
-                BPM -> fit(operator, it.beatmap.BPM?.toDouble() ?: 0.0, double, isPlus = true)
+                BPM -> fit(operator, it.beatmap.BPM?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
                 ACCURACY -> {
                     val acc = when {
                         double > 10000.0 || double <= 0.0 -> throw IllegalArgumentException.WrongException.Henan()
                         double > 100.0 -> double / 10000.0
                         double > 1.0 -> double / 100.0
                         else -> double
-                    }
+                    } // 0-1
 
-                    fit(operator, it.accuracy, acc, isPlus = true)
+                    fit(operator, it.accuracy, acc, digit = 2, isRound = true, isInteger = true)
                 }
-                COMBO -> {
-                    val combo = when {
-                        double <= 1.0 && double > 0.0 -> it.beatmap.maxCombo?.times(double)?.roundToLong() ?: long
-                        else -> long
-                    }
 
-                    fit(operator, it.maxCombo.toLong(), combo)
-                }
-                PERFECT -> fit(operator, it.statistics.perfect.toLong(), long)
-                GREAT -> fit(operator, it.statistics.great.toLong(), long)
-                GOOD -> fit(operator, it.statistics.good.toLong(), long)
-                OK -> fit(operator, it.statistics.ok.toLong(), long)
-                MEH -> fit(operator, it.statistics.meh.toLong(), long)
-                MISS -> fit(operator, it.statistics.miss.toLong(), long)
+                COMBO -> fitCountOrPercent(operator, it.maxCombo, double, it.beatmap.maxCombo)
+
+                PERFECT -> fitCountOrPercent(operator, it.statistics.perfect, double, it.maximumStatistics.perfect)
+                GREAT -> fitCountOrPercent(operator, it.statistics.great, double, it.maximumStatistics.great)
+                GOOD -> fitCountOrPercent(operator, it.statistics.good, double, it.maximumStatistics.good)
+                OK -> fitCountOrPercent(operator, it.statistics.ok, double, it.maximumStatistics.ok)
+                MEH -> fitCountOrPercent(operator, it.statistics.meh, double, it.maximumStatistics.meh)
+                MISS -> fitCountOrPercent(operator, it.statistics.miss, double, it.maximumStatistics.miss)
+
                 MOD -> {
                     if (condition.contains("NM", ignoreCase = true)) {
                         when (operator) {
@@ -342,18 +369,27 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     val rate = min((it.statistics.perfect * 1.0 / it.statistics.great), 100.0)
                     val input = if (double > 0.0) min(double, 100.0) else double
 
-                    fit(operator, rate, input, isPlus = true)
+                    fit(operator, rate, input, digit = 2, isRound = true, isInteger = true)
                 }
 
-                CIRCLE -> fit(operator, it.beatmap.circles?.toLong() ?: -1L, long)
-                SLIDER -> fit(operator, it.beatmap.sliders?.toLong() ?: -1L, long)
-                SPINNER -> fit(operator, it.beatmap.spinners?.toLong() ?: -1L, long)
-                TOTAL -> fit(operator, (it.beatmap.circles?.toLong() ?: -1L) + (it.beatmap.sliders?.toLong() ?: -1L) + (it.beatmap.spinners?.toLong() ?: -1L), long)
+                CIRCLE -> fitCountOrPercent(operator, it.beatmap.circles, double, it.beatmap.totalNotes)
+                SLIDER -> fitCountOrPercent(operator, it.beatmap.sliders, double, it.beatmap.totalNotes)
+                SPINNER -> fitCountOrPercent(operator, it.beatmap.spinners, double, it.beatmap.totalNotes)
+
+                TOTAL -> {
+                    val total = it.beatmap.totalNotes
+
+                    if (total == 0) {
+                        false
+                    } else {
+                        fit(operator, total, long)
+                    }
+                }
 
                 CONVERT -> when (condition.trim().lowercase()) {
                     "true", "t", "yes", "y" -> it.beatmap.convert == true
-                    "false", "f", "no", "not", "n" -> it.beatmap.convert != true
-                    else -> it.beatmap.convert != true
+                    "false", "f", "no", "not", "n" -> it.beatmap.convert == false
+                    else -> it.beatmap.convert == false
                 }
 
                 CLIENT -> when (condition.trim().lowercase()) {
@@ -363,6 +399,26 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 }
 
                 else -> false
+            }
+        }
+
+        /**
+         * 公用方法
+         * 在 to 位于 0-1 之间时，按 compare 占 total 的百分比来处理。在 to 大于 1 时，按 compare 整数来处理。
+         */
+        fun fitCountOrPercent(operator: Operator, compare: Number?, to: Number, total: Number?): Boolean {
+            val c = compare?.toDouble() ?: 0.0
+            val t = to.toDouble()
+            val l = total?.toDouble() ?: 0.0
+
+            return if (t in 0.0 .. 1.0 && operator !== Operator.XQ) {
+                if (l == 0.0) {
+                    false
+                } else {
+                    fit(operator, c / t, t, digit = 2, isRound = true, isInteger = false)
+                }
+            } else {
+                fit(operator, c.toInt(), t.toInt())
             }
         }
     }

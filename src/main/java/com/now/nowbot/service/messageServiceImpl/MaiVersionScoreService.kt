@@ -15,7 +15,6 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
-import com.yumu.core.extensions.isNotNull
 import org.springframework.stereotype.Service
 
 @Service("MAI_VERSION")
@@ -23,8 +22,6 @@ class MaiVersionScoreService(
         val maimaiApiService: MaimaiApiService,
         val imageService: ImageService
 ) : MessageService<MaiVersionScoreService.MaiVersionParam> {
-
-    private val newest = MaiVersion.PRISM // 当前最新版本
 
     data class MaiVersionParam(
             val name: String?,
@@ -66,45 +63,59 @@ class MaiVersionScoreService(
             return false
         }
 
-        val difficulty =
-                if (matcher.group(FLAG_DIFF).isNotNull()) {
-                    MaiDifficulty.getDifficulty(matcher.group(FLAG_DIFF))
-                } else {
-                    MaiDifficulty.DEFAULT
-                }
+        val difficulty = MaiDifficulty.getDifficulty(matcher.group(FLAG_DIFF))
 
-        var versions =
-                if (matcher.group(FLAG_VERSION).isNotNull()) {
-                    MaiVersion.getVersionList(matcher.group(FLAG_VERSION))
-                } else {
-                    listOf(newest)
-                }
-
-        if (versions.first() == MaiVersion.DEFAULT) {
-            versions = listOf(newest)
+        val nameStr: String = matcher.group(FLAG_NAME)?.trim()  ?: ""
+        val versionStr: String = matcher.group(FLAG_VERSION)?.trim() ?: ""
+        val qq = if (event.isAt) {
+            event.target
+        } else {
+            matcher.group(FLAG_QQ_ID)?.toLongOrNull()
         }
 
-        val page = if (versions.size == 1 && versions.first() == newest &&
-            matcher.group("version")?.matches("\\s*$REG_NUMBER_1_100\\s*".toRegex()) == true) {
-            matcher.group("version")?.toIntOrNull() ?: 1
+        val hasName = nameStr.isNotEmpty()
+        val hasVersion = versionStr.isNotEmpty()
+        val hasPageInVersionStr = hasVersion && versionStr.matches(REG_NUMBER_1_100.toRegex())
+        val hasVersionInNameStr = hasName && MaiVersion.getVersionList(matcher.group(FLAG_VERSION)).contains(MaiVersion.DEFAULT)
+
+        val page = if (hasPageInVersionStr) {
+            versionStr.toIntOrNull() ?: 1
         } else {
             1
         }
 
-        if (matcher.group(FLAG_NAME).isNotNull()) {
-            val versionInName = MaiVersion.getVersion(matcher.group(FLAG_NAME))
+        val versions: List<MaiVersion>
 
-            if (versionInName == MaiVersion.DEFAULT) {
-                data.value = MaiVersionParam(matcher.group(FLAG_NAME).trim(), null, difficulty, versions, page, false)
+        if (qq != null) {
+            versions = if (hasVersionInNameStr) {
+                MaiVersion.getVersionListOrNewest(versionStr)
             } else {
-                data.value = MaiVersionParam(null, event.sender.id, difficulty, listOf(versionInName), page, true)
+                MaiVersion.getVersionListOrNewest(nameStr)
             }
-        } else if (matcher.group(FLAG_QQ_ID).isNotNull()) {
-            data.value = MaiVersionParam(null, matcher.group(FLAG_QQ_ID).toLong(), difficulty, versions, page, false)
-        } else if (event.isAt) {
-            data.value = MaiVersionParam(null, event.target, difficulty, versions, page, false)
+
+            data.value = MaiVersionParam(null, qq, difficulty, versions, page, false)
+        } else if (hasName) {
+            if (hasVersionInNameStr) {
+                versions = MaiVersion.getVersionListOrNewest(nameStr)
+
+                data.value = MaiVersionParam(null, event.sender.id, difficulty, versions, page, false)
+            } else if (hasVersion) {
+                versions = MaiVersion.getVersionListOrNewest(versionStr)
+
+                data.value = MaiVersionParam(nameStr, null, difficulty, versions, page, false)
+            } else {
+                versions = listOf(MaiVersion.newestVersion)
+
+                data.value = MaiVersionParam(nameStr, null, difficulty, versions, page, false)
+            }
         } else {
-            data.value = MaiVersionParam(null, event.sender.id, difficulty, versions, page, true)
+            versions = if (hasVersion) {
+                MaiVersion.getVersionListOrNewest(versionStr)
+            } else {
+                listOf(MaiVersion.newestVersion)
+            }
+
+            data.value = MaiVersionParam(null, event.sender.id, difficulty, versions, page, false)
         }
 
         return true

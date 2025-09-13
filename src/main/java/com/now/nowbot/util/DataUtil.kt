@@ -1220,7 +1220,7 @@ object DataUtil {
         val result = List(regexes.size) { emptyList<String>().toMutableList() }
         var matcher = ""
 
-        val strs = str.split(REG_SEPERATOR.toRegex())
+        val strs = str.lowercase().split(REG_SEPERATOR.toRegex())
 
         strs.forEachIndexed { j, s ->
             matcher += s

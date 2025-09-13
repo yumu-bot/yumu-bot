@@ -182,6 +182,10 @@ data class Beatmap(
     @JsonProperty("user")
     var user: OsuUser? = null
 
+    //自己算
+    @get:JsonProperty("total_notes")
+    val totalNotes = (circles ?: 0) + (sliders ?: 0) + (spinners ?: 0)
+
     data class TagData(
         @JsonProperty("tag_id") val id: Int,
         @JsonProperty("count") val count: Int,

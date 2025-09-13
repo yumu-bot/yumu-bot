@@ -1,5 +1,7 @@
 package com.now.nowbot.model.enums
 
+import com.now.nowbot.util.command.REG_PLUS
+import com.now.nowbot.util.command.REG_SEPERATOR
 import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
 
 enum class MaiVersion(val full: String, val abbreviation: String, val code: String) {
@@ -15,7 +17,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
     MURASAKI("maimai MURASAKi", "紫", "msk"),
     MURASAKI_PLUS("maimai MURASAKi PLUS", "菫", "msp"),
     MILK("maimai MiLK", "白", "mlk"),
-    MILK_PLUS("MiLK PLUS", "雪", "mkp"),
+    MILK_PLUS("maimai MiLK PLUS", "雪", "mkp"),
     FINALE("maimai FiNALE", "輝", "fnl"),
     ALL_FINALE("ALL FiNALE", "舞", "afn"),
     DX("maimai でらっくす", "熊", "dx"),
@@ -29,10 +31,14 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
     BUDDIES("maimai でらっくす BUDDiES", "双", "bud"),
     BUDDIES_PLUS("maimai でらっくす BUDDiES PLUS", "宴", "bdp"),
     PRISM("maimai でらっくす PRiSM", "鏡", "pri"),
-    PRISM_PLUS("maimai でらっくす PRiSM PLUS", "", "prp"),
+    PRISM_PLUS("maimai でらっくす PRiSM PLUS", "稜", "prp"),
+    CIRCLE("maimai でらっくす CiRCLE", "", "cir"),
+    CIRCLE_PLUS("maimai でらっくす CiRCLE PLUS", "", "cip"),
     ;
 
     companion object {
+        val newestVersion = PRISM // 当前最新版本
+
         @JvmStatic
         fun getNameList(versions: List<MaiVersion>): List<String> {
             return versions.map(MaiVersion::full)
@@ -54,6 +60,16 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
              */
 
             return MaiVersion.entries.firstOrNull { it.abbreviation == abbreviation } ?: DEFAULT
+        }
+
+        fun getVersionListOrNewest(str: String?): List<MaiVersion> {
+            val l = getVersionList(str)
+
+            return if (l.isEmpty() || l.contains(DEFAULT)) {
+                listOf(newestVersion)
+            } else {
+                l
+            }
         }
 
         @JvmStatic
@@ -88,16 +104,37 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
         fun getVersion(str: String?): MaiVersion {
             if (str == null) return DEFAULT
 
-            return when (str.trim { it <= ' ' }
-                .replace(Regex("[-—_]"), " ")
-                .replace(Regex("\\s*[＋+]"), "+")
-                .lowercase()) {
+            return when (str
+                .replace(Regex(REG_PLUS), "+")
+                .replace(Regex(REG_SEPERATOR), "")
+                .lowercase()
+            ) {
+                "circleplus",
+                "cip",
+                "cirp",
+                "clep",
+                "circle+",
+                "ci+",
+                "cir+",
+                "cle+",
+                "1.65" -> CIRCLE_PLUS
+                "circle",
+                "ci",
+                "cir",
+                "cle",
+                "舞萌dx2026",
+                "舞萌2026",
+                "2026",
+                "26",
+                "1.6",
+                "1.60" -> CIRCLE
                 "prismplus",
-                "prism plus",
                 "prp",
                 "prip",
                 "prsp",
                 "prism+",
+                "棱",
+                "稜",
                 "pr+",
                 "pri+",
                 "prs+",
@@ -108,14 +145,13 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "prs",
                 "镜",
                 "鏡",
-                "舞萌 2025",
+                "舞萌dx2025",
                 "舞萌2025",
                 "2025",
                 "25",
                 "1.5",
                 "1.50" -> PRISM
                 "buddiesplus",
-                "buddies plus",
                 "bdp",
                 "budp",
                 "buddies+",
@@ -128,13 +164,12 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "bud",
                 "1.4",
                 "双",
-                "舞萌 2024",
+                "舞萌dx2024",
                 "舞萌2024",
                 "2024",
                 "24",
                 "1.40" -> BUDDIES
                 "festivalplus",
-                "festival plus",
                 "fep",
                 "fsp",
                 "fesp",
@@ -150,13 +185,12 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "fst",
                 "1.3",
                 "祭",
-                "舞萌 2023",
+                "舞萌dx2023",
                 "舞萌2023",
                 "2023",
                 "23",
                 "1.30" -> FESTIVAL
                 "universeplus",
-                "universe plus",
                 "unp",
                 "uvp",
                 "unvp",
@@ -172,13 +206,12 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "uni",
                 "1.2",
                 "宙",
-                "舞萌 2022",
+                "舞萌dx2022",
                 "舞萌2022",
                 "2022",
                 "22",
                 "1.20" -> UNIVERSE
                 "splashplus",
-                "splash plus",
                 "spp",
                 "splp",
                 "splash+",
@@ -191,13 +224,12 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "spl",
                 "1.1",
                 "爽",
-                "舞萌 2021",
+                "舞萌dx2021",
                 "舞萌2021",
                 "2021",
                 "21",
                 "1.10" -> SPLASH
                 "deluxeplus",
-                "deluxe plus",
                 "dxp",
                 "dlxp",
                 "deluxe+",
@@ -211,15 +243,13 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "dlx",
                 "1.0",
                 "熊",
-                "舞萌 DX",
-                "舞萌DX",
+                "舞萌dx2020",
+                "舞萌dx",
                 "舞萌",
                 "20",
                 "1.00" -> DX
                 "allfinale",
-                "all finale",
-                "finale plus",
-                "before deluxe",
+                "finaleplus",
                 "beforedeluxe",
                 "beforedx",
                 "afn",
@@ -238,7 +268,6 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "辉",
                 "0.70" -> FINALE
                 "milkplus",
-                "milk plus",
                 "mkp",
                 "milk+",
                 "white+",
@@ -254,7 +283,6 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "白",
                 "0.60" -> MILK
                 "murasakiplus",
-                "murasaki plus",
                 "msp",
                 "murasaki+",
                 "ms+",
@@ -268,7 +296,6 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "紫",
                 "0.50" -> MURASAKI
                 "pinkplus",
-                "pink plus",
                 "pkp",
                 "pink+",
                 "pk+",
@@ -283,7 +310,6 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "桃",
                 "0.40" -> PINK
                 "orangeplus",
-                "orange plus",
                 "orgp",
                 "orp",
                 "or+",
@@ -298,7 +324,6 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "橙",
                 "0.30" -> ORANGE
                 "greenplus",
-                "green plus",
                 "grep",
                 "grp",
                 "gre+",
@@ -315,7 +340,6 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "0.20" -> GREEN
                 "plus",
                 "maimaiplus",
-                "maimai plus",
                 "maimai+",
                 "pl",
                 "pls",

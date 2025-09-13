@@ -1,11 +1,11 @@
 package com.now.nowbot.model.enums
 
 import com.now.nowbot.model.enums.ScoreFilter.Companion.fit
+import com.now.nowbot.model.enums.ScoreFilter.Companion.fitCountOrPercent
 import com.now.nowbot.model.maimai.MaiScore
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
-import kotlin.math.roundToInt
 
 enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
     CHARTER("(chart(er)?|mapper|谱师?|c)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
@@ -16,7 +16,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
     DIFFICULTY_NAME("(difficulty|diff|难度?|d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    CABINET("(cabinet|框体?|n)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MAI_CABINET)".toRegex()),
+    CABINET("(cabinet|框体?|cab|ca|n)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MAI_CABINET)".toRegex()),
 
     VERSION("(version|版本?|v)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
@@ -26,7 +26,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
     ARTIST("(artist|singer|art|艺术家|歌手?|a)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    CATEGORY("(type|category|种类?|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    CATEGORY("(type|category|genre|类型?|种类?|t|g)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
     BPM("(bpm|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
@@ -42,9 +42,9 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
     BREAK("(break|brk|br|bk)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    DX_SCORE("(dx\\s*score|score|dx分|分|dx|x|s)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    DX_SCORE("(dx\\s*score|score|dx分|分|dx|ds|x|s)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
-    DX_STAR("(dx\\s*star|star|dx星|星|sr|r)(?<n>$REG_OPERATOR_WITH_SPACE[0-5])".toRegex()),
+    DX_STAR("(dx\\s*star|star|dx星|星|dxsr|dr|sr|r)(?<n>$REG_OPERATOR_WITH_SPACE[0-5])".toRegex()),
 
     RATING("(rating|评分|ra|rt|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
 
@@ -127,7 +127,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
                 ID -> fit(operator, it.songID % 10000L, int.toLong() % 10000L)
 
-                DIFFICULTY -> fit(operator, it.star, double)
+                DIFFICULTY -> fit(operator, it.star, double, digit = 1, isRound = false, isInteger = true)
 
                 DIFFICULTY_NAME -> fit(operator, MaiDifficulty.getDifficulty(it.difficulty), MaiDifficulty.getDifficulty(condition))
 
@@ -137,7 +137,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
                     MaiVersion.getVersionList(condition).joinToString(" ") { it.abbreviation }
                 )
                 TITLE -> fit(operator, it.title, condition)
-                ALIASES -> run {
+                ALIASES -> {
                     it.aliases?.map { alias ->
                         fit(operator, alias, condition)
                     }?.contains(true) ?: false
@@ -154,15 +154,15 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
                         else -> double * 100.0
                     }
 
-                    fit(operator, (it.achievements * 10000).roundToInt(), (acc * 10000).roundToInt(), isPlus = true)
+                    fit(operator, it.achievements, acc, digit = 4, isRound = true, isInteger = true)
                 }
-                TAP -> fit(operator, it.notes[0], int)
-                HOLD -> fit(operator, it.notes[1], int)
-                SLIDE -> fit(operator, it.notes[2], int)
-                TOUCH -> fit(operator, it.notes[3], int)
-                BREAK -> fit(operator, it.notes[4], int)
-                DX_SCORE -> fit(operator, it.score, int)
-                DX_STAR -> run {
+                TAP -> fitCountOrPercent(operator, it.notes[0], double, it.notes.sum())
+                HOLD -> fitCountOrPercent(operator, it.notes[1], double, it.notes.sum())
+                SLIDE -> fitCountOrPercent(operator, it.notes[2], double, it.notes.sum())
+                TOUCH -> fitCountOrPercent(operator, it.notes[3], double, it.notes.sum())
+                BREAK -> fitCountOrPercent(operator, it.notes[4], double, it.notes.sum())
+                DX_SCORE -> fitCountOrPercent(operator, it.score, double, it.notes.sum() * 3)
+                DX_STAR -> {
                     if (it.max == 0) return false
 
                     val div = it.score * 1.0 / it.max
@@ -184,7 +184,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
                     fit(operator, level, int)
                 }
                 RATING -> fit(operator, it.rating, int)
-                RANK -> run {
+                RANK -> {
                     val rankArray = arrayOf("F", "D", "C", "B", "BB", "BBB", "A", "AA", "AAA", "S", "S+", "SS", "SS+", "SSS", "SSS+")
 
                     val cr = rankArray.indexOf(condition.uppercase().replace('P', '+'))
