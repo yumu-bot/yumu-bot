@@ -63,7 +63,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
             companion object {
                 fun getCombo(str: String?): ComboType {
-                    return when(str?.dropWhile { it == ' ' }?.lowercase()) {
+                    return when(str?.replace(Regex("\\s*"), "")?.lowercase()) {
                         "fullcomboplus", "fullcombo+", "fc+", "fcp" -> FC_PLUS
                         "fullcombo", "fc" -> FC
                         "allperfectplus", "allperfect+", "perfect+", "ap+", "app", "pf+", "pfp" -> AP_PLUS
@@ -80,7 +80,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
             companion object {
                 fun getSync(str: String?): SyncType {
-                    return when(str?.dropWhile { it == ' ' }?.lowercase()) {
+                    return when(str?.replace(Regex("\\s*"), "")?.lowercase()) {
                         "fullsyncplus", "fullsync+", "fs+", "fsp" -> FS_PLUS
                         "fullsync", "fs" -> FS
                         "fullsyncdxplus", "fullsyncdx+", "fulldx+", "fsd+", "fsdp", "fdx+", "fdxp" -> FDX_PLUS
@@ -154,7 +154,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
                         else -> double * 100.0
                     }
 
-                    fit(operator, it.achievements, acc, digit = 4, isRound = true, isInteger = true)
+                    fit(operator, it.achievements, acc, digit = 4, isRound = false, isInteger = true)
                 }
                 TAP -> fitCountOrPercent(operator, it.notes[0], double, it.notes.sum())
                 HOLD -> fitCountOrPercent(operator, it.notes[1], double, it.notes.sum())

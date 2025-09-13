@@ -107,8 +107,11 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
          * @param compare 谱面数据
          * @param to 输入的数据
          * @param digit 需要比较的位数。比如星数，这里就需要输入 2，这样假设条件是 star=7.27，会返回 7.27 ..< 7.28 的谱面。
-         * @param isRound 如果为真，则会按照四舍五入的方式处理 compare（比如表现分或者准确率）。否则按照向下取整的方式处理 compare（比如星数）。
-         * @param isInteger 如果为真，则会在 to 接近某位时，digit 按当前位数处理（此时只会影响 EQ 运算符，假如 star=7.1，此时会返回 7.10 ..< 7.20 的谱面、）如果您需要比较 0-1 之间的数据，这个最好设为假。
+         * @param isRound 如果为真，则会按照四舍五入的方式处理 compare（比如表现分）。否则按照向下取整的方式处理 compare（比如星数或者准确率）。
+         * @param isInteger 如果为真，则会在 to 接近某位时，digit 按当前位数处理。
+         * 如果当前位数小于 digit，则 isRound 会设定为假（默认 floor）
+         * 此设置只会影响 EQ 运算符。假如 star=7.1，此时会返回 7.10 ..< 7.20 的谱面。
+         * 如果您需要比较 0-1 之间的数据，这个最好设为假。
          */
         fun fit(
             operator: Operator,
@@ -133,19 +136,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     }
                 }
 
-                (compare is Int && to is Int) -> {
-                    val c: Int = compare
-                    val t: Int = to
-
-                    when (operator) {
-                        Operator.XQ, Operator.EQ -> c == t
-                        Operator.NE -> c != t
-                        Operator.GT -> c > t
-                        Operator.GE -> c >= t
-                        Operator.LT -> c < t
-                        Operator.LE -> c <= t
-                    }
-                }
+                (compare is Int && to is Int) -> return fit(operator, compare.toLong(), to.toLong(), digit, isRound, isInteger)
 
                 (compare is Double && to is Double) -> {
                     val c: Double = abs(compare)
@@ -171,7 +162,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
                     val scale = 10.0.pow(dig)
 
-                    val rc = if (isRound) {
+                    val rc = if (isRound && digit == dig) {
                         round(c * scale) / scale
                     } else {
                         floor(c * scale) / scale
@@ -204,7 +195,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 }
 
                 (compare is Enum<*> && to is Enum<*>) -> {
-                    fit(operator, compare.ordinal, to.ordinal, digit, isRound)
+                    fit(operator, compare.ordinal.toLong(), to.ordinal.toLong(), digit, isRound)
                 }
 
                 (compare is List<*> && to is List<*>) -> {
