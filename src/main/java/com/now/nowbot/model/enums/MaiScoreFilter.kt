@@ -154,7 +154,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
                         else -> double * 100.0
                     }
 
-                    fit(operator, it.achievements, acc, digit = 4, isRound = false, isInteger = true)
+                    fit(operator, it.achievements, acc, digit = 4, isRound = true, isInteger = true)
                 }
                 TAP -> fitCountOrPercent(operator, it.notes[0], double, it.notes.sum())
                 HOLD -> fitCountOrPercent(operator, it.notes[1], double, it.notes.sum())
