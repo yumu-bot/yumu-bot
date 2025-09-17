@@ -26,6 +26,8 @@ import com.now.nowbot.util.Instruction
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import kotlin.math.max
+import kotlin.math.min
 
 @Service("MATCH_LISTENER")
 class MatchListenerService(
@@ -46,6 +48,7 @@ class MatchListenerService(
         val operate = getStatus(matcher.group("operate"))
 
         val id = matcher.group("matchid")?.toLongOrNull()
+        val skip = matcher.group("skip")?.toIntOrNull() ?: 0
         val isSuper = Permission.isSuperAdmin(event.sender.id)
 
         if (operate == Operation.STOP) {
@@ -60,11 +63,11 @@ class MatchListenerService(
                     return false
                 }
             } else {
-                data.value = ListenerParam(id, Operation.STOP)
+                data.value = ListenerParam(id, Operation.STOP, skip)
                 return true
             }
         } else if (id != null) {
-            data.value = ListenerParam(id, operate)
+            data.value = ListenerParam(id, operate, skip)
             return true
         } else if (matcher.group("matchid").isNullOrBlank().not()) {
             throw MatchListenerException(MatchListenerException.Type.ML_MatchID_Null)
@@ -130,7 +133,8 @@ class MatchListenerService(
                 calculateApiService,
                 imageService,
                 event,
-                param.id
+                param.id,
+                param.skip
             ),
             matchApiService,
             this,
@@ -169,6 +173,7 @@ class MatchListenerService(
         val imageService: ImageService,
         val messageEvent: MessageEvent,
         val matchID: Long,
+        private val skip: Int,
     ) : MatchAdapter {
         var round = 0
         override lateinit var match: Match
@@ -209,11 +214,17 @@ class MatchListenerService(
                     cancelListener(messageEvent.subject.id, matchID, false)
                 }
 
+                val isSkipping = skip >= match.events.count { it.round != null }
+
+                // skip，保留至少一场
                 val mr = MatchRating(
                     match,
+                    MatchRating.RatingParam(skip = min(skip, max(match.events.count { it.round != null } - 1, 0))),
                     beatmapApiService,
-                    calculateApiService
+                    calculateApiService,
+                    isSkipping
                 )
+
                 mr.calculate()
 
                 // 需要拓展
@@ -252,7 +263,14 @@ class MatchListenerService(
 
         override fun onGameEnd(event: MatchAdapter.GameEndEvent) =
             with(event) {
-                val mr = MatchRating(match, beatmapApiService, calculateApiService)
+                val isSkipping = skip >= match.events.count { it.round != null }
+
+                val mr = MatchRating(match,
+                    MatchRating.RatingParam(skip = min(skip, max(match.events.count { it.round != null } - 1, 0))),
+                    beatmapApiService,
+                    calculateApiService,
+                    isSkipping
+                )
 
                 // 其实这个就是 game
                 val round = mr.rounds.last { it.roundID == game.roundID }
@@ -346,7 +364,7 @@ class MatchListenerService(
         END,
     }
 
-    data class ListenerParam(val id: Long, val operate: Operation = Operation.END)
+    data class ListenerParam(val id: Long, val operate: Operation = Operation.END, val skip: Int = 0)
 
     data class ListenerData(val groupID: Long, val userID: Long, val listener: MatchListenerImplement) {
         override fun hashCode(): Int {

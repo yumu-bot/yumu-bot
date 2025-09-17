@@ -608,6 +608,13 @@ enum class Instruction(val pattern: Pattern) {
         appendMatchID()
         appendSpace()
         appendCaptureGroup("operate", "info|list|start|stop|end|off|on|[lispefo]")
+        appendSpace()
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendMatchLevel(MAYBE)
+            appendSpace()
+            appendCaptureGroup("skip", REG_NUMBER_1_100, MORE)
+        }
         appendIgnore()
     }),
 
@@ -980,7 +987,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.MAI_SCORE) continue
+        if (i != Instruction.MATCH_LISTENER) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

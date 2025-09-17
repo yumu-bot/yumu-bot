@@ -17,7 +17,10 @@ class MatchRating(
     val match: Match,
     private val ratingParam: RatingParam,
     private val beatmapApiService: OsuBeatmapApiService,
-    private val calculateApiService: OsuCalculateApiService
+    private val calculateApiService: OsuCalculateApiService,
+
+    @JsonProperty("is_skipping")
+    val skipping: Boolean = false
 ) {
     @JsonIgnore
     private val fullRounds: List<Match.MatchRound> = match.events
@@ -79,8 +82,7 @@ class MatchRating(
         val skip = param.skip
         val limit = size - param.ignore
 
-        if (skip < 0
-            || skip > size
+        if (skip !in 0..size
             || limit < 0
             || limit > size
             || limit - skip < 0) {
