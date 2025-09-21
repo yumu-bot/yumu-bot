@@ -613,36 +613,47 @@ class BindDao(
         return succeedCount
     }
 
-    private fun refreshOldUserToken(u: OsuBindUserLite, userApiService: OsuUserApiService) {
+    private fun refreshOldUserToken(u: OsuBindUserLite, userApiService: OsuUserApiService): Boolean {
         var badRequest = 0
 
         while (true) {
             try {
                 userApiService.refreshUserToken(fromLite(u)!!)
-                return
-            } catch (e: ExecutionException) {
-                if (e.cause is WebClientResponseException.Unauthorized) {
-                    log.info("刷新用户令牌：更新 {} 令牌失败, token 失效, 绑定取消", u.osuName)
-                    bindUserMapper.backupBindByOsuID(u.osuID)
-                    return
-                } else {
-                    badRequest++
+                return true
+            } catch(e: ExecutionException) {
+                when(e.cause) {
 
-                    if (badRequest < 3) {
-                        log.error("刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试", u.osuName, badRequest)
-                    } else {
-                        log.error(
-                            "刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试失败, 放弃更新。错误原因：",
-                            u.osuName,
-                            badRequest,
-                            e
-                        )
-                        return
+                    is WebClientResponseException.Unauthorized -> {
+                        log.info("刷新用户令牌：更新 {} 令牌失败, token 失效, 绑定取消", u.osuName)
+                        bindUserMapper.backupBindByOsuID(u.osuID)
+                        return false
+                    }
+
+                    is WebClientResponseException.Forbidden -> {
+                        log.info("刷新用户令牌：更新 {} 令牌失败, 可能被识别为滥用 API 而禁止访问", u.osuName)
+                        return false
+                    }
+
+                    else -> {
+                        badRequest++
+
+                        if (badRequest < 3) {
+                            log.error("刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试", u.osuName, badRequest)
+                        } else {
+                            log.error(
+                                "刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试失败, 放弃更新。错误原因：",
+                                u.osuName,
+                                badRequest,
+                                e
+                            )
+                            return false
+                        }
                     }
                 }
+
             } catch (e1: Throwable) {
                 log.error("刷新用户令牌：神秘错误: ", e1)
-                return
+                return false
             }
         }
     }
