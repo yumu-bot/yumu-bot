@@ -156,12 +156,12 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
                     fit(operator, it.achievements, acc, digit = 4, isRound = true, isInteger = true)
                 }
-                TAP -> fitCountOrPercent(operator, it.notes[0], double, it.notes.sum())
-                HOLD -> fitCountOrPercent(operator, it.notes[1], double, it.notes.sum())
-                SLIDE -> fitCountOrPercent(operator, it.notes[2], double, it.notes.sum())
-                TOUCH -> fitCountOrPercent(operator, it.notes[3], double, it.notes.sum())
-                BREAK -> fitCountOrPercent(operator, it.notes[4], double, it.notes.sum())
-                DX_SCORE -> fitCountOrPercent(operator, it.score, double, it.notes.sum() * 3)
+                TAP -> fitCountOrPercent(operator, it.notes[0], condition, it.notes.sum())
+                HOLD -> fitCountOrPercent(operator, it.notes[1], condition, it.notes.sum())
+                SLIDE -> fitCountOrPercent(operator, it.notes[2], condition, it.notes.sum())
+                TOUCH -> fitCountOrPercent(operator, it.notes[3], condition, it.notes.sum())
+                BREAK -> fitCountOrPercent(operator, it.notes[4], condition, it.notes.sum())
+                DX_SCORE -> fitCountOrPercent(operator, it.score, condition, it.notes.sum() * 3)
                 DX_STAR -> {
                     if (it.max == 0) return false
 

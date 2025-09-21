@@ -149,7 +149,7 @@ class MapStatisticsService(
             return null
         }
 
-        val mode = OsuMode.getMode(matcher.group("mode"))
+        val mode = OsuMode.getMode(matcher.group("mode"), beatmap.mode)
 
         val user: OsuUser? = try {
             if (beatmap.mapperID > 0L) {

@@ -320,14 +320,14 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     fit(operator, it.accuracy, acc, digit = 2, isRound = true, isInteger = true)
                 }
 
-                COMBO -> fitCountOrPercent(operator, it.maxCombo, double, it.beatmap.maxCombo)
+                COMBO -> fitCountOrPercent(operator, it.maxCombo, condition, it.beatmap.maxCombo)
 
-                PERFECT -> fitCountOrPercent(operator, it.statistics.perfect, double, it.maximumStatistics.perfect)
-                GREAT -> fitCountOrPercent(operator, it.statistics.great, double, it.maximumStatistics.great)
-                GOOD -> fitCountOrPercent(operator, it.statistics.good, double, it.maximumStatistics.good)
-                OK -> fitCountOrPercent(operator, it.statistics.ok, double, it.maximumStatistics.ok)
-                MEH -> fitCountOrPercent(operator, it.statistics.meh, double, it.maximumStatistics.meh)
-                MISS -> fitCountOrPercent(operator, it.statistics.miss, double, it.maximumStatistics.miss)
+                PERFECT -> fitCountOrPercent(operator, it.statistics.perfect, condition, it.maximumStatistics.perfect)
+                GREAT -> fitCountOrPercent(operator, it.statistics.great, condition, it.maximumStatistics.great)
+                GOOD -> fitCountOrPercent(operator, it.statistics.good, condition, it.maximumStatistics.good)
+                OK -> fitCountOrPercent(operator, it.statistics.ok, condition, it.maximumStatistics.ok)
+                MEH -> fitCountOrPercent(operator, it.statistics.meh, condition, it.maximumStatistics.meh)
+                MISS -> fitCountOrPercent(operator, it.statistics.miss, condition, it.maximumStatistics.miss)
 
                 MOD -> {
                     if (condition.contains("NM", ignoreCase = true)) {
@@ -363,9 +363,9 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     fit(operator, rate, input, digit = 2, isRound = true, isInteger = true)
                 }
 
-                CIRCLE -> fitCountOrPercent(operator, it.beatmap.circles, double, it.beatmap.totalNotes)
-                SLIDER -> fitCountOrPercent(operator, it.beatmap.sliders, double, it.beatmap.totalNotes)
-                SPINNER -> fitCountOrPercent(operator, it.beatmap.spinners, double, it.beatmap.totalNotes)
+                CIRCLE -> fitCountOrPercent(operator, it.beatmap.circles, condition, it.beatmap.totalNotes)
+                SLIDER -> fitCountOrPercent(operator, it.beatmap.sliders, condition, it.beatmap.totalNotes)
+                SPINNER -> fitCountOrPercent(operator, it.beatmap.spinners, condition, it.beatmap.totalNotes)
 
                 TOTAL -> {
                     val total = it.beatmap.totalNotes
@@ -395,21 +395,24 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
         /**
          * 公用方法
-         * 在 to 位于 0-1 之间时，按 compare 占 total 的百分比来处理。在 to 大于 1 时，按 compare 整数来处理。
+         * 在 to 含有小数点时，按 compare 占 total 的百分比来处理。在其他情况时，按 compare 整数来处理。
          */
-        fun fitCountOrPercent(operator: Operator, compare: Number?, to: Number, total: Number?): Boolean {
+
+        fun fitCountOrPercent(operator: Operator, compare: Number?, to: String, total: Number?): Boolean {
             val c = compare?.toDouble() ?: 0.0
             val t = to.toDouble()
             val l = total?.toDouble() ?: 0.0
 
-            return if (t in 0.0 .. 1.0 && operator !== Operator.XQ) {
+            val hasDecimal = to.contains('.')
+
+            return if (hasDecimal && t in 0.0..1.0 && operator !== Operator.XQ) {
                 if (l == 0.0) {
                     false
                 } else {
                     fit(operator, c / l, t, digit = 2, isRound = true, isInteger = false)
                 }
             } else {
-                fit(operator, c.toInt(), t.toInt())
+                fit(operator, compare?.toInt() ?: 0, to.toInt())
             }
         }
     }

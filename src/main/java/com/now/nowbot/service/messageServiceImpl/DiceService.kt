@@ -8,6 +8,8 @@ import com.now.nowbot.service.messageServiceImpl.DiceService.DiceParam
 import com.now.nowbot.service.messageServiceImpl.DiceService.Split.*
 import com.now.nowbot.throwable.botRuntimeException.DiceException
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.REG_COLON
+import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -50,7 +52,7 @@ import kotlin.random.Random
             } else if (number.isNullOrBlank().not()) {
                 data.value = DiceParam(null, null, (number + text).trim())
                 return true
-            } else if ("[0-9]+.?[0-9]*".toRegex().matches(text.trim())) {
+            } else if (text.trim().matches("^${REG_NUMBER_DECIMAL}$".toRegex())) {
                 // !roll 4
                 data.value = DiceParam(1L, text.toLongOrNull() ?: 100L, null)
                 return true
@@ -112,21 +114,22 @@ import kotlin.random.Random
                 }
 
                 // 单次匹配 !d, 1d100 和多次匹配 20d100
-                if (param.number == 1L) {
+                if (param.dice == 1L || param.dice == null) {
                     val r = getRandom<Long?>(param.number)
                     val format = if ((r < 1f)) "%.2f" else "%.0f"
 
                     receipt = event.reply(String.format(format, r))
 
                     // 容易被识别成 QQ
-                    if (r >= 1000000f && r < 1000000000f) {
+                    if (r in 1000000.0 ..< 1000000000.0) {
                         receipt.recallIn((60 * 1000).toLong())
                     }
+
                     return
                 } else {
                     val sb = StringBuilder()
 
-                    for (i in 1L..param.dice!!) {
+                    for (i in 1L..param.dice) {
                         val r = getRandom(param.number)
                         val format = if ((r < 1f)) "%.2f" else "%.0f"
 
@@ -210,6 +213,13 @@ import kotlin.random.Random
         BETTER(
             Pattern.compile(
                 "\\s*(?<m1>[\\S\\s]*)\\s*(?<c2>(跟|和|与|并|\\s(?<![A-Za-z])(and|or|with)(?![A-Za-z])\\s))\\s*(?<m2>[\\S\\s]*?)\\s*(?<![叠面傻装牛菜想提分排开小对阿科此豆死伦攀反字])比?(比[，,\\s]*?哪个|比[，,\\s]*?谁|哪个|谁)更?(?<c3>[\\S\\s]*)"
+            ), onlyC3 = false
+        ),
+
+        // 比分 2比4
+        SCORE(
+            Pattern.compile(
+                "\\s*(?<m1>$REG_NUMBER_DECIMAL)\\s*(?<c2>((?<![叠面傻装牛菜想提分排开小对阿科此豆死伦攀反字])比)|$REG_COLON)(?<m2>$REG_NUMBER_DECIMAL)"
             ), onlyC3 = false
         ),
 
@@ -424,11 +434,7 @@ import kotlin.random.Random
 
                     when (split) {
                         RANGE -> {
-                            val range = try {
-                                right.toInt()
-                            } catch (e: NumberFormatException) {
-                                100
-                            }
+                            val range =  right.toIntOrNull() ?: 100
 
                             num = if (range <= 0) {
                                 throw DiceException.TooSmall()
@@ -520,6 +526,10 @@ import kotlin.random.Random
                                 num = getRandom(100)
                                 iis = timeList[getRandom(timeList.size).toInt() - 1]
                             }
+                        }
+
+                        SCORE -> {
+                            num = - 1.0
                         }
 
                         RANK -> { // 缩放结果，让给出的排名更靠前（小
@@ -655,6 +665,7 @@ import kotlin.random.Random
                     COULD, WHETHER -> "%s%s%s。"
                     CONDITION -> "是的。"
                     THINK -> "嗯。"
+                    SCORE -> "您许愿的比分是：%s:%s。"
                 }
 
                 rightFormat = when (split) {
@@ -679,6 +690,7 @@ import kotlin.random.Random
                     LIKE, IS -> "不%s。"
                     THINK -> "也没有吧。"
                     QUESTION -> "不。"
+                    SCORE -> "您许愿的比分是：%s:%s。"
                 }
 
                 // 改变几率
@@ -756,6 +768,10 @@ import kotlin.random.Random
                         return String.format(leftFormat, iis, num)
                     }
 
+                    SCORE -> {
+                        return String.format(leftFormat, ((left.toIntOrNull() ?: 0) + 1).toString(), right)
+                    }
+
                     BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, QUESTION, MULTIPLE -> {
                         return String.format(leftFormat, left)
                     }
@@ -795,6 +811,10 @@ import kotlin.random.Random
 
                     RANK -> {
                         return String.format(rightFormat, iis, num)
+                    }
+
+                    SCORE -> {
+                        return String.format(rightFormat, left, ((right.toIntOrNull() ?: 0) + 1).toString())
                     }
 
                     BETTER, COMPARE, JUXTAPOSITION, PREFER, HESITATE, EVEN, MULTIPLE -> {
@@ -905,8 +925,8 @@ import kotlin.random.Random
          * 获取随机数。
          *
          * @param range 范围
-         * @param <T> 数字的子类 </T>
-         * @return 如果范围是 1，返回 1。如果范围大于 1，返回 1-范围内的数（Double 的整数），其他则返回 0-1。
+         * @param T 数字的子类
+         * @return 如果范围大于 1，返回 1-范围内的数（Double 的整数），其他则返回 0-1 之间的小数。
          */
         @JvmStatic fun <T : Number?> getRandom(range: T): Double {
             val r = range.toString().toIntOrNull() ?: (range?.toDouble() ?: 1.0).roundToInt()
