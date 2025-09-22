@@ -360,7 +360,15 @@ enum class Instruction(val pattern: Pattern) {
             appendSpace()
             appendCaptureGroup("sort", "[\\-_+1247a-zA-Z]", MORE)
         }
-        appendNameAndRange()
+        appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup("any",
+                REG_ANYTHING_BUT_NO_HASH_STARS,
+                MORE
+            )
+        }
 
         /*
         appendGroup(MAYBE) {

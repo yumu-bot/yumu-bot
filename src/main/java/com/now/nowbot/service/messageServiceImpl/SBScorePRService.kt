@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.ScoreFilter
+import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppysb.SBUser
@@ -323,7 +323,7 @@ class SBScorePRService(
             osuCalculateApiService.applyPPToScores(scores)
 
             val image = imageService.getPanel(body, "A5")
-            return QQMsgUtil.getImage(image)
+            return MessageChain(image)
         } else {
             // 单成绩发送
             val pair = scores.toList().first()
@@ -333,7 +333,7 @@ class SBScorePRService(
 
             val e5 = getE5ParamForFilteredScore(user, score, (if (isPass) "P" else "R"), osuBeatmapApiService, osuCalculateApiService)
 
-            return QQMsgUtil.getImage(imageService.getPanel(e5.toMap(), if (isShow) "E10" else "E5"))
+            return MessageChain(imageService.getPanel(e5.toMap(), if (isShow) "E10" else "E5"))
         }
     }
 

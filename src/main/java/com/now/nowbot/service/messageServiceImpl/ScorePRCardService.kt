@@ -18,7 +18,6 @@ import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -137,7 +136,7 @@ class ScorePRCardService(
 
         val image = imageService.getPanelGamma(score)
 
-        return QQMsgUtil.getImage(image)
+        return MessageChain(image)
     }
 
     companion object {

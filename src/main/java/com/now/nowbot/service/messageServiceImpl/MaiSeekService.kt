@@ -8,10 +8,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.command.FLAG_NAME
-import com.now.nowbot.util.command.LEVEL_MORE
-import com.now.nowbot.util.command.REG_NUMBER
-import com.now.nowbot.util.command.REG_QUOTATION
+import com.now.nowbot.util.command.*
 import org.springframework.stereotype.Service
 
 @Service("MAI_SEEK")
@@ -37,7 +34,7 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
     }
 
     override fun HandleMessage(event: MessageEvent, param: String) {
-        if (param.matches("\\s*$REG_NUMBER$LEVEL_MORE\\s*".toRegex()) && !param.contains(REG_QUOTATION.toRegex())) {
+        if (param.matches("\\s*$REG_NUMBER_MORE\\s*".toRegex()) && !param.contains(REG_QUOTATION.toRegex())) {
             val rating = param.toIntOrNull() ?: 0
             
             val surrounding = maimaiApiService.getMaimaiSurroundingRank(rating)

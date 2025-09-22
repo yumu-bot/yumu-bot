@@ -32,10 +32,11 @@ object QQMsgUtil {
         return msg.messageList.filter { clazz.isAssignableFrom(it.javaClass) }.filterIsInstance<T>().firstOrNull()
     }
 
+    @Deprecated("replace with MessageChain()", ReplaceWith("MessageChain()", "com/now/nowbot/qq/message/MessageChain.kt"))
     fun getImage(image: ByteArray): MessageChain {
         return MessageChainBuilder().addImage(image).build()
     }
-
+    @Deprecated("replace with MessageChain()", ReplaceWith("MessageChain()", "com/now/nowbot/qq/message/MessageChain.kt"))
     fun getTextAndImage(text: String, image: ByteArray): MessageChain {
         return MessageChainBuilder().addText(text).addImage(image).build()
     }
@@ -80,17 +81,17 @@ object QQMsgUtil {
         return msg.messageList.filter { clazz.isAssignableFrom(it.javaClass) }.filterIsInstance<T>()
     }
 
-    @JvmStatic fun sendImageAndText(event: MessageEvent, image: ByteArray, text: String) {
+    fun sendImageAndText(event: MessageEvent, image: ByteArray, text: String) {
         val from = event.subject
         sendImageAndText(from, image, text)
     }
 
-    @JvmStatic fun sendImageAndText(from: Contact, image: ByteArray, text: String) {
+    fun sendImageAndText(from: Contact, image: ByteArray, text: String) {
         // beforeContact(from)
         from.sendMessage(MessageChainBuilder().addImage(image).addText(text).build())
     }
 
-    @JvmStatic fun sendGroupFile(event: MessageEvent, name: String?, data: ByteArray?) {
+    fun sendGroupFile(event: MessageEvent, name: String?, data: ByteArray?) {
         val from = event.subject
 
         if (from is Group) {
@@ -98,7 +99,7 @@ object QQMsgUtil {
         }
     }
 
-    @JvmStatic fun sendGroupFile(group: Group, name: String?, data: ByteArray?) {
+    fun sendGroupFile(group: Group, name: String?, data: ByteArray?) {
         group.sendFile(data, name)
     }
 

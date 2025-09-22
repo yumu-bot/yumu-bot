@@ -9,7 +9,6 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.util.DataUtil.TORUS_REGULAR
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.QQMsgUtil
 import io.github.humbleui.skija.*
 import org.springframework.stereotype.Service
 import java.io.IOException
@@ -42,7 +41,7 @@ import java.util.regex.Matcher
     }
 
     @Throws(Throwable::class) override fun reply(event: MessageEvent, param: Matcher): MessageChain? {
-        return QQMsgUtil.getImage(image)
+        return MessageChain(image)
     }
 
     val image: ByteArray

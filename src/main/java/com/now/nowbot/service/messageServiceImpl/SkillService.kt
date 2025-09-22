@@ -93,7 +93,7 @@ import kotlin.math.sqrt
     }
 
     override fun reply(event: MessageEvent, param: SkillParam): MessageChain? {
-        return QQMsgUtil.getImage(param.getImage())
+        return MessageChain(param.getImage())
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher, isVs: Boolean = false): SkillParam {

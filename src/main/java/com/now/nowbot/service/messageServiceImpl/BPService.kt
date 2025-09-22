@@ -2,7 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.ScoreFilter
+import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -103,7 +103,7 @@ import kotlin.math.*
 
     override fun reply(event: MessageEvent, param: BPParam): MessageChain? = run {
         param.asyncImage()
-        return QQMsgUtil.getImage(param.getImage())
+        return MessageChain(param.getImage())
     }
 
     /**

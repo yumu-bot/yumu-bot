@@ -87,7 +87,7 @@ class OldAvatarService(
 
         try {
             return if (images.size == 1) {
-                QQMsgUtil.getImage(images.first())
+                MessageChain(images.first())
             } else {
                 QQMsgUtil.getImages(images).first()
             }

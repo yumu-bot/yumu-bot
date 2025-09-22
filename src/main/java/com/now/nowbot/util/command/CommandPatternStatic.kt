@@ -4,7 +4,7 @@ import org.intellij.lang.annotations.Language
 
 const val CHAR_HASH: Char = '#'
 const val CHAR_HASH_FULL: Char = '＃'
-const val CHAR_EQUAL: Char = '='
+// const val CHAR_EQUAL: Char = '='
 const val CHAR_SEPARATOR: Char = '|'
 const val CHAR_BEGIN: Char = '^'
 const val CHAR_FINAL: Char = '$'
@@ -88,11 +88,23 @@ val REG_NUMBER_1_100: String = "(\\d{1,2}|100)"
 @Language("RegExp")
 val REG_NUMBER_15: String = "\\d{1,5}"
 
+/**
+ * 只匹配单一数字，等同于 [0-9]
+ */
 @Language("RegExp")
 val REG_NUMBER: String = "\\d"
 
 @Language("RegExp")
+val REG_NUMBER_MORE: String = "\\d+"
+
+@Language("RegExp")
 val REG_WORD: String = "\\w"
+
+@Language("RegExp")
+val REG_BOOLEAN: String = "([真假是否非对错tfyn]|正确|错误|true|false|yes|not?)"
+
+@Language("RegExp")
+val REG_TIME: String = "([年月日天分钟秒小时0-9A-Za-z]+)"
 
 @Language("RegExp")
 val REG_OPERATOR: String = "([<>＜＞][=＝]?|[=＝][=＝]?|[!！][=＝]|[≥≤])"

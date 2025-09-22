@@ -1,5 +1,7 @@
-package com.now.nowbot.model.enums
+package com.now.nowbot.model.filter
 
+import com.now.nowbot.model.enums.Operator
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 
@@ -7,6 +9,9 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
+import java.time.OffsetDateTime
+import java.time.YearMonth
+import java.time.ZoneOffset
 import kotlin.math.*
 
 enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
@@ -14,9 +19,9 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
     GUEST("((gd|guest\\s*diff)(er)?|mapper|guest|g)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
-    BID("((beatmap\\s*)?id|bid|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    BID("((beatmap\\s*)?id|bid|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
-    SID("((beatmap\\s*)?setid|sid|s)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    SID("((beatmap\\s*)?setid|sid|s)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
     TITLE("(title|name|song|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
@@ -42,11 +47,11 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
     RANK("(rank(ing)?|评价|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    LENGTH("(length|drain|time|长度|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE($REG_COLON$REG_NUMBER$LEVEL_MORE)?)".toRegex()),
+    LENGTH("(length|drain|time|长度|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE($REG_COLON$REG_NUMBER_MORE)?)".toRegex()),
 
     BPM("(bpm|曲速|速度|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    ACCURACY("(accuracy|精确率?|精准率?|acc)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
+    ACCURACY("(accuracy|精确率?|精准率?|acc?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
 
     COMBO("(combo|连击|cb?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL[xX]?)".toRegex()),
 
@@ -72,7 +77,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
     SPINNER("(spin(ner)?s?|rattle|sp)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    TOTAL("(total|all|ttl|(hit)?objects?|o)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    TOTAL("(total|all|ttl|(hit)?objects?|o)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
     CONVERT("(convert|cv)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
@@ -83,11 +88,14 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
     companion object {
         fun filterScores(scores: Map<Int, LazerScore>, conditions: List<List<String>>): Map<Int, LazerScore> {
             val s = scores.toMutableMap()
+            val el = entries.toList()
 
             // 最后一个筛选条件无需匹配
-            conditions.take(ScoreFilter.entries.size - 1).forEachIndexed { index, strings ->
+            conditions
+                .dropLast(1)
+                .forEachIndexed { index, strings ->
                 if (strings.isNotEmpty()) {
-                    filterConditions(s, ScoreFilter.entries.toList()[index], strings)
+                    filterConditions(s, el[index], strings)
                 }
             }
 
@@ -99,7 +107,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 val operator = Operator.getOperator(c)
                 val condition = (c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim()
 
-                scores.entries.removeIf { ScoreFilter.fitScore(it.value, operator, filter, condition).not() }
+                scores.entries.removeIf { fitScore(it.value, operator, filter, condition).not() }
             }
         }
 
@@ -115,12 +123,14 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
          */
         fun fit(
             operator: Operator,
-            compare: Any,
+            compare: Any?,
             to: Any,
             digit: Int = 0,
             isRound: Boolean = true,
             isInteger: Boolean = true,
         ): Boolean {
+            if (compare == null) return false
+
             return when {
                 (compare is Long && to is Long) -> {
                     val c: Long = compare
@@ -191,6 +201,15 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                         Operator.GE -> t.contains(c, ignoreCase = true) && t.length >= c.length
                         Operator.LT -> c.contains(t, ignoreCase = true) && t.length < c.length
                         Operator.LE -> c.contains(t, ignoreCase = true) && t.length <= c.length
+                    }
+                }
+
+                (compare is Boolean && to is Boolean) -> {
+                    when(operator) {
+                        Operator.XQ, Operator.EQ -> compare == to
+                        Operator.NE -> compare != to
+
+                        else -> throw IllegalArgumentException.WrongException.OperatorOnly("==", "=", "!=")
                     }
                 }
 
@@ -397,10 +416,11 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
          * 公用方法
          * 在 to 含有小数点时，按 compare 占 total 的百分比来处理。在其他情况时，按 compare 整数来处理。
          */
-
         fun fitCountOrPercent(operator: Operator, compare: Number?, to: String, total: Number?): Boolean {
-            val c = compare?.toDouble() ?: 0.0
-            val t = to.toDouble()
+            if (compare == null) return false
+
+            val c = compare.toDouble()
+            val t = to.toDoubleOrNull() ?: 0.0
             val l = total?.toDouble() ?: 0.0
 
             val hasDecimal = to.contains('.')
@@ -412,7 +432,206 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     fit(operator, c / l, t, digit = 2, isRound = true, isInteger = false)
                 }
             } else {
-                fit(operator, compare?.toInt() ?: 0, to.toInt())
+                fit(operator, compare.toInt(), t.toInt())
+            }
+        }
+
+        fun fitTime(operator: Operator, compare: Long?, to: String): Boolean {
+            if (compare == null) return false
+
+            @Language("RegExp")
+            val regY = "((?<y>\\d{1,4})\\s*(年|y|years?))"
+
+            @Language("RegExp")
+            val regMo = "((?<mo>\\d{1,2})\\s*(月份?|o|mo(nth)?s?))"
+
+            @Language("RegExp")
+            val regD = "((?<d>\\d{1,2})\\s*(天|日|d|days?))"
+
+            @Language("RegExp")
+            val regDD = "(?<dd>\\d{1,2})"
+
+            @Language("RegExp")
+            val regH = "((?<h>\\d{1,2})\\s*(小?时|h|hours?))"
+
+            @Language("RegExp")
+            val regM = "((?<m>\\d{1,2})\\s*(分钟?|m|min(ute)?s?))"
+
+            @Language("RegExp")
+            val regS = "((?<s>\\d{1,2})\\s*(秒|s|sec(ond)?s?))"
+
+            @Language("RegExp")
+            val regColon = "(?<hh>([0-1][0-9])|(2[0-4]))(?<mm>[0-5][0-9])(?<ss>[0-5][0-9])"
+
+            @Language("RegExp")
+            val pattern = "$regY?\\s*$regMo?\\s*$regD?\\s*(($regH?\\s*$regM?\\s*$regS?)|($regColon))?\\s*$regDD".toPattern()
+
+            val matcher = pattern.matcher(to)
+
+            if (!matcher.find()) return false
+
+            val n = OffsetDateTime.now()
+
+            val ym = YearMonth.of(n.year, n.month)
+            val maxDayOfMonth = ym.lengthOfMonth()
+            val maxDayOfYear = ym.lengthOfYear()
+
+            val unitContains = MutableList(6, { false })
+
+            // 秒数
+            val unitDelta = arrayListOf(
+                maxDayOfYear * 24 * 60 * 60,
+                maxDayOfMonth * 24 * 60 * 60,
+                24 * 60 * 60,
+                60 * 60,
+                60,
+                1)
+
+            val year = matcher.group("y")?.let {
+                unitContains[0] = true
+                it.toIntOrNull() ?: 0
+            } ?: 0
+
+            val month = matcher.group("mo")?.let {
+                unitContains[1] = true
+                it.toIntOrNull()?: 0
+            } ?: 0
+
+            val day: Int
+            val hour: Int
+            val minute: Int
+            val second: Int
+
+            if (matcher.group("dd").isNullOrEmpty()) {
+                day = matcher.group("d")?.let {
+                    unitContains[2] = true
+
+                    it.toIntOrNull() ?: 0
+                } ?: 0
+            } else {
+                day = matcher.group("dd")?.let {
+                    unitContains[2] = true
+
+                    it.toIntOrNull() ?: 0
+                } ?: 0
+            }
+
+            if (to.contains(REG_COLON.toRegex())) {
+                hour = matcher.group("hh")?.let {
+                    unitContains[3] = true
+
+                    it.toIntOrNull() ?: 0
+                } ?: 0
+
+                minute = matcher.group("mm")?.let {
+                    unitContains[4] = true
+
+                    it.toIntOrNull() ?: 0
+                } ?: 0
+
+                second = matcher.group("ss")?.let {
+                    unitContains[5] = true
+
+                    it.toIntOrNull() ?: 0
+                } ?: 0
+            } else {
+                hour = matcher.group("h")?.let {
+                    unitContains[3] = true
+
+                    it.toIntOrNull() ?: 0
+                } ?: 0
+
+                minute = matcher.group("m")?.let {
+                    unitContains[4] = true
+
+                    it.toIntOrNull() ?: 0
+                } ?: 0
+
+                second = matcher.group("s")?.let {
+                    unitContains[5] = true
+
+                    it.toIntOrNull() ?: 0
+                } ?: 0
+            }
+
+            val isWithInMode = operator == Operator.EQ || operator == Operator.XQ
+
+            val isShiftMode = (operator == Operator.GE || operator == Operator.LE) && (year < n.year - 2007 && month <= 12 && day <= maxDayOfMonth && hour <= 24 && minute <= 60 && second <= 60)
+
+            val too: Long
+
+            if (isShiftMode) {
+                // 移动日期模式，从现在减去这段时间
+
+                too = n.minusYears(year.toLong())
+                    .minusMonths(month.toLong())
+                    .minusDays(day.toLong())
+                    .minusHours(hour.toLong())
+                    .minusMinutes(minute.toLong())
+                    .minusSeconds(second.toLong())
+                    .toEpochSecond()
+
+            } else {
+                // 绝对日期模式，构建一个目标时间
+
+                val years = when(year) {
+                    in 7 ..< 1000 -> (year % 100) + 2000
+                    in 2000 ..< 3000 -> year
+                    else -> n.year
+                }
+
+                val months = when(month) {
+                    in 1 .. 12 -> month
+                    else -> n.monthValue
+                }
+
+                val days = when(day) {
+                    in 1..maxDayOfMonth -> day
+                    else -> n.dayOfMonth
+                }
+
+                val hours = when(hour) {
+                    in 1..24 -> hour
+                    else -> n.hour
+                }
+
+                val minutes = when(minute) {
+                    in 1..60 -> minute
+                    else -> n.minute
+                }
+
+                val seconds = when(second) {
+                    in 1..24 -> second
+                    else -> n.second
+                }
+
+                too = OffsetDateTime.of(years, months, days, hours, minutes, seconds, 0, ZoneOffset.ofHours(8)).toEpochSecond()
+            }
+
+            if (isWithInMode) {
+                // 区域日期模式，从目标时间到输入的最小单位 + 1 的时间
+                var delta = 0
+
+                for (i in unitContains.size downTo 0) {
+                    val b = unitContains[i]
+
+                    if (b) {
+                        delta = unitDelta[i]
+                        break
+                    }
+                }
+
+                return fit(Operator.GE, compare, too - delta)
+                        && fit(Operator.LE, compare, too)
+            } else {
+                return fit(operator, compare, too)
+            }
+        }
+
+        fun getBoolean(string: String): Boolean {
+            return when(string.trim()) {
+                "真", "是", "正确", "对", "t", "true", "y", "yes", "" -> true
+                else -> false
             }
         }
     }

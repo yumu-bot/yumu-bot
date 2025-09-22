@@ -1,7 +1,8 @@
-package com.now.nowbot.model.enums
+package com.now.nowbot.model.filter
 
-import com.now.nowbot.model.enums.ScoreFilter.Companion.fit
-import com.now.nowbot.model.enums.ScoreFilter.Companion.fitCountOrPercent
+import com.now.nowbot.model.enums.*
+import com.now.nowbot.model.filter.ScoreFilter.Companion.fit
+import com.now.nowbot.model.filter.ScoreFilter.Companion.fitCountOrPercent
 import com.now.nowbot.model.maimai.MaiScore
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.command.*
@@ -10,7 +11,7 @@ import org.intellij.lang.annotations.Language
 enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
     CHARTER("(chart(er)?|mapper|谱师?|c)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    ID("(id|编?号|i)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    ID("(id|编?号|i)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
     DIFFICULTY("(difficulty|diff|难度?|d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MAI_DIFFICULTY)".toRegex()),
 
@@ -46,7 +47,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
     DX_STAR("(dx\\s*star|star|dx星|星|dxsr|dr|sr|r)(?<n>$REG_OPERATOR_WITH_SPACE[0-5])".toRegex()),
 
-    RATING("(rating|评分|ra|rt|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER$LEVEL_MORE)".toRegex()),
+    RATING("(rating|评分|ra|rt|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
     RANK("(rank|评价|rk|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
@@ -96,11 +97,14 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
         fun filterScores(scores: List<MaiScore>, conditions: List<List<String>>): List<MaiScore> {
             val s = scores.toMutableList()
+            val el = entries.toList()
 
             // 最后一个筛选条件无需匹配
-            conditions.take(MaiScoreFilter.entries.size - 1).forEachIndexed { index, strings ->
+            conditions
+                .dropLast(1)
+                .forEachIndexed { index, strings ->
                 if (strings.isNotEmpty()) {
-                    filterConditions(s, MaiScoreFilter.entries.toList()[index], strings)
+                    filterConditions(s, el[index], strings)
                 }
             }
 
@@ -112,7 +116,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
                 val operator = Operator.getOperator(c)
                 val condition = (c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim()
 
-                scores.removeIf { MaiScoreFilter.fitScore(it, operator, filter, condition).not() }
+                scores.removeIf { fitScore(it, operator, filter, condition).not() }
             }
         }
 
@@ -129,7 +133,10 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
                 DIFFICULTY -> fit(operator, it.star, double, digit = 1, isRound = false, isInteger = true)
 
-                DIFFICULTY_NAME -> fit(operator, MaiDifficulty.getDifficulty(it.difficulty), MaiDifficulty.getDifficulty(condition))
+                DIFFICULTY_NAME -> fit(operator,
+                    MaiDifficulty.getDifficulty(it.difficulty),
+                    MaiDifficulty.getDifficulty(condition)
+                )
 
                 CABINET -> fit(operator, MaiCabinet.getCabinet(condition), MaiCabinet.getCabinet(it.type))
                 VERSION -> fit(operator,

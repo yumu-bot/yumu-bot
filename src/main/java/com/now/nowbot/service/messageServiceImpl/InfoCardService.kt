@@ -12,7 +12,6 @@ import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -61,7 +60,7 @@ class InfoCardService(
         }
     }
 
-    override fun reply(event: MessageEvent, param: OsuUser): MessageChain? = QQMsgUtil.getImage(imageService.getPanelGamma(param))
+    override fun reply(event: MessageEvent, param: OsuUser): MessageChain? = MessageChain(imageService.getPanelGamma(param))
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(InfoCardService::class.java)

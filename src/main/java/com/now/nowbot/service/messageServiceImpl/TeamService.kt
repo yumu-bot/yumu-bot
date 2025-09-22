@@ -17,7 +17,6 @@ import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.QQMsgUtil
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -119,6 +118,6 @@ class TeamService(
 
         val image = imageService.getPanel(team, "A9")
 
-        return QQMsgUtil.getImage(image)
+        return MessageChain(image)
     }
 }

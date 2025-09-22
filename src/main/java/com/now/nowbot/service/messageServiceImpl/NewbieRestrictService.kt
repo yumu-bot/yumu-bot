@@ -7,7 +7,7 @@ import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.NewbieDao
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.enums.ScoreFilter
+import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent

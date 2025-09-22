@@ -41,7 +41,7 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @Qualifier("osuApiWe
         oauthToken = osuConfig.token
     }
 
-    private val isPassed: Boolean
+    private val isExpired: Boolean
         get() = System.currentTimeMillis() > time
 
     private lateinit var requestService: RequestService
@@ -60,7 +60,7 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @Qualifier("osuApiWe
 
     val botToken: String?
         get() {
-            if (!isPassed) {
+            if (!isExpired) {
                 return accessToken
             }
             val body: MultiValueMap<String, String> = LinkedMultiValueMap()

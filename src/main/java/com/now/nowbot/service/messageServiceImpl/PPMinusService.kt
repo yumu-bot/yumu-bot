@@ -255,7 +255,7 @@ import java.util.regex.Matcher
     }
 
     override fun reply(event: MessageEvent, param: PPMinusParam): MessageChain? {
-        return QQMsgUtil.getImage(param.getPPMImage())
+        return MessageChain(param.getPPMImage())
     }
 
 

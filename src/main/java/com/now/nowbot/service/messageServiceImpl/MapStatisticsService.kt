@@ -23,7 +23,6 @@ import com.now.nowbot.util.CmdUtil.isAvoidance
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.QQMsgUtil
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 import org.slf4j.Logger
@@ -114,7 +113,7 @@ class MapStatisticsService(
         val image = param.getImage()
 
         try {
-            return QQMsgUtil.getImage(image)
+            return MessageChain(image)
         } catch (e: Exception) {
             log.error("谱面信息：发送失败", e)
             throw IllegalStateException.Send("谱面信息")
@@ -124,7 +123,7 @@ class MapStatisticsService(
     enum class Filter(@Language("RegExp") val regex: Regex) {
         ACCURACY("$REG_NUMBER_DECIMAL[a%％]|[a%％]$REG_NUMBER_DECIMAL".toRegex()),
         COMBO("$REG_NUMBER_DECIMAL[cx×]|[cx×]$REG_NUMBER_DECIMAL".toRegex()),
-        MISS("$REG_NUMBER$LEVEL_MORE[\\-m]|[\\-m]$REG_NUMBER$LEVEL_MORE".toRegex()),
+        MISS("$REG_NUMBER_MORE[\\-m]|[\\-m]$REG_NUMBER_MORE".toRegex()),
         ANY(REG_NUMBER_DECIMAL.toRegex()),
     }
 

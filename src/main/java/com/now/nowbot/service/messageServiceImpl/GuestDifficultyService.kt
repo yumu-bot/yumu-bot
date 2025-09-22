@@ -83,7 +83,7 @@ class GuestDifficultyService(
     }
 
     override fun reply(event: MessageEvent, param: GuestParam): MessageChain? {
-        return QQMsgUtil.getImage(imageService.getPanel(param.getBody(), "A11"))
+        return MessageChain(imageService.getPanel(param.getBody(), "A11"))
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): GuestParam {

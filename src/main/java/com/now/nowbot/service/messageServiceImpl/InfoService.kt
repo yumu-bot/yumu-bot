@@ -146,7 +146,7 @@ class InfoService(
         return getParam(event, matcher, 2)
     }
 
-    override fun reply(event: MessageEvent, param: InfoParam): MessageChain = QQMsgUtil.getImage(param.getImage())
+    override fun reply(event: MessageEvent, param: InfoParam): MessageChain = MessageChain(param.getImage())
 
     private fun InfoParam.getImage(): ByteArray {
         if (this.version == 2) {

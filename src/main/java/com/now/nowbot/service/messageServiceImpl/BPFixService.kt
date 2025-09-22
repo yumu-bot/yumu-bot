@@ -66,7 +66,7 @@ class BPFixService(
         return getParam(event, matcher)
     }
 
-    override fun reply(event: MessageEvent, param: BPFixParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
+    override fun reply(event: MessageEvent, param: BPFixParam): MessageChain? = MessageChain(param.getImage())
 
     private fun getParam(event: MessageEvent, matcher: Matcher): BPFixParam {
         val isMyself = AtomicBoolean(true)

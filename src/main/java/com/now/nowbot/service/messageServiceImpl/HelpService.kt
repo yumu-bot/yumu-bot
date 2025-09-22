@@ -11,7 +11,6 @@ import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.DataUtil.getPicture
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -244,6 +243,6 @@ class HelpService(
     }
 
     override fun reply(event: MessageEvent, param: String): MessageChain? {
-        return QQMsgUtil.getImage(getHelpPicture(param, imageService) ?: byteArrayOf())
+        return MessageChain(getHelpPicture(param, imageService) ?: byteArrayOf())
     }
 }

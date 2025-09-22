@@ -263,7 +263,7 @@ import java.util.regex.Matcher
             imageService.getPanel(e5Param.toMap(), if (param.isShow) "E10" else "E5")
         }
 
-        return QQMsgUtil.getImage(image)
+        return MessageChain(image)
     }
 
     companion object {

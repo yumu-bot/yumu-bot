@@ -69,9 +69,6 @@ class MicroUser : Comparable<MicroUser> {
     @JsonProperty("is_mutual")
     var isMutual: Boolean = false
 
-    @JsonProperty("team")
-    var team: Team? = null
-
     @JsonProperty("country") fun setCountry(country: Map<String, String>?) {
         if (country != null) this.country = OsuUser.Country(
             country["code"]!!,
@@ -100,6 +97,12 @@ class MicroUser : Comparable<MicroUser> {
         val mania: Statistics? = null,
     )
 
+    @JsonProperty("support_level")
+    var supportLevel: Byte? = null
+
+    @JsonProperty("team")
+    var team: Team? = null
+
     override fun hashCode(): Int {
         return userID.hashCode()
     }
@@ -116,7 +119,7 @@ class MicroUser : Comparable<MicroUser> {
     }
 
     override fun toString(): String {
-        return "MicroUser(avatarUrl=$avatarUrl, coverUrl=$coverUrl, defaultGroup=$defaultGroup, id=$userID, isActive=$isActive, isBot=$isBot, isDeleted=$isDeleted, isOnline=$isOnline, isSupporter=$isSupporter, lastVisitString=$lastVisitString, pmFriendsOnly=$pmFriendsOnly, profileColor=$profileColor, userName='$userName', cover=$cover, country=$country, isMutual=$isMutual, team=$team, groups=$groups, statistics=$statistics, rulesets=$rulesets)"
+        return "MicroUser(avatarUrl=$avatarUrl, coverUrl=$coverUrl, defaultGroup=$defaultGroup, userID=$userID, isActive=$isActive, isBot=$isBot, isDeleted=$isDeleted, isOnline=$isOnline, isSupporter=$isSupporter, lastVisitString=$lastVisitString, pmFriendsOnly=$pmFriendsOnly, profileColor=$profileColor, userName='$userName', cover=$cover, country=$country, isMutual=$isMutual, groups=$groups, statistics=$statistics, rulesets=$rulesets, supportLevel=$supportLevel, team=$team)"
     }
 
     companion object {

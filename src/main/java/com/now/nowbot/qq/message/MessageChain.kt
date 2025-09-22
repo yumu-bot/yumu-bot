@@ -64,9 +64,20 @@ class MessageChain {
     var messageList: LinkedList<Message>
         private set
 
-    constructor(msg: String) {
+    constructor(text: String) {
         messageList = LinkedList()
-        addMessage(TextMessage(msg))
+        addMessage(TextMessage(text))
+    }
+
+    constructor(image: ByteArray) {
+        messageList = LinkedList()
+        addMessage(ImageMessage(image))
+    }
+
+    constructor(text: String, image: ByteArray) {
+        messageList = LinkedList()
+        addMessage(ImageMessage(image))
+        addMessage(TextMessage(text))
     }
 
     constructor(e: Throwable) {

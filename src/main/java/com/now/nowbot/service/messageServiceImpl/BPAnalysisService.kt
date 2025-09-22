@@ -326,7 +326,7 @@ import kotlin.math.min
         return getParam(event, matcher)
     }
 
-    override fun reply(event: MessageEvent, param: BAParam): MessageChain? = QQMsgUtil.getImage(param.getImage())
+    override fun reply(event: MessageEvent, param: BAParam): MessageChain? = MessageChain(param.getImage())
 
     private fun getParam(event: MessageEvent, matcher: Matcher): BAParam {
         val isMyself = AtomicBoolean(false)
