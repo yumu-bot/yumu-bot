@@ -369,6 +369,9 @@ enum class Instruction(val pattern: Pattern) {
                 MORE
             )
         }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
 
         /*
         appendGroup(MAYBE) {
