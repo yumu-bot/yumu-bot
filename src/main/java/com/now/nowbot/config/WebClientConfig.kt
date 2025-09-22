@@ -42,8 +42,6 @@ import java.util.function.Function
             .pendingAcquireMaxCount(-1)
             .build()
         val httpClient = HttpClient.create(connectionProvider)
-            // IPV6 访问即可 ?
-            /*
             .proxy {
                 val type = if (config.proxyType == "HTTP") {
                     ProxyProvider.Proxy.HTTP
@@ -52,8 +50,6 @@ import java.util.function.Function
                 }
                 it.type(type).host(config.proxyHost).port(config.proxyPort)
             }
-
-             */
             .followRedirect(true).responseTimeout(Duration.ofSeconds(15))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs { clientDefaultCodecsConfigurer: ClientCodecConfigurer ->
@@ -78,8 +74,7 @@ import java.util.function.Function
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
-        val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
-            /*
+        val httpClient = HttpClient.create(connectionProvider)
             // 要用梯子
             .proxy {
                 val type = if (config.proxyType == "HTTP") {
@@ -89,8 +84,6 @@ import java.util.function.Function
                 }
                 it.type(type).host(config.proxyHost).port(config.proxyPort)
             }
-
-             */
 
             .followRedirect(true)
             .responseTimeout(Duration.ofSeconds(15))
