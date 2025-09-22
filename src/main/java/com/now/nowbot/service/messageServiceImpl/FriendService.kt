@@ -360,8 +360,6 @@ class FriendService(
 
         val id = UserIDUtil.getUserIDWithRange(event, matcher, mode, isMyself)
 
-        id.setZeroToRange100()
-
         val conditions = DataUtil.paramMatcher(any, MicroUserFilter.entries.map { it.regex }, REG_RANGE.toRegex())
 
         // 如果不加井号，则有时候范围会被匹配到这里来
@@ -413,7 +411,7 @@ class FriendService(
 
             // 筛选成绩
             val offset = id2.getOffset()
-            val limit = id2.getLimit()
+            val limit = id2.getLimit(100)
 
             val filteredFriends = MicroUserFilter.filterUsers(sortedFriends, conditions).drop(offset).take(limit)
 
