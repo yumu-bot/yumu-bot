@@ -1,5 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.filter.MicroUserFilter
 import com.now.nowbot.model.osu.MicroUser
@@ -48,9 +50,19 @@ class FriendService(
     data class FriendPairParam(
         val user: OsuUser,
         val partner: OsuUser,
-        val following: Boolean,
-        val followed: Boolean? = null,
+        val statistics: FriendPairStatistics
     ) : FriendParam()
+
+    @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+    data class FriendPairStatistics(
+        val userBind: Boolean,
+        val partnerBind: Boolean,
+        val isFollowing: Boolean,
+        val isFollowed: Boolean? = false,
+        val userFollowing: Int,
+        val partnerFollowing: Int,
+
+        )
 
     override fun isHandle(
         event: MessageEvent,
@@ -76,7 +88,30 @@ class FriendService(
     private fun getMessageChain(param: FriendParam): MessageChain {
         when(param) {
             is FriendPairParam -> {
-                return MessageChain(getPairFriendsText(param))
+
+                val image = try {
+                    val stat = param.statistics
+
+                    val body = mapOf(
+                        "user" to param.user,
+                        "partner" to param.partner,
+                        "statistics" to mapOf(
+                            "user_bind" to stat.userBind,
+                            "partner_bind" to stat.partnerBind,
+                            "is_following" to stat.isFollowing,
+                            "is_followed" to stat.isFollowed,
+                            "user_following" to stat.userFollowing,
+                            "partner_following" to stat.partnerFollowing,
+                        ),
+                    )
+
+                    imageService.getPanel(body, "U")
+                } catch (e: Exception) {
+                    log.error("好友列表：渲染失败", e)
+                    return MessageChain(getPairFriendsText(param))
+                }
+
+                return MessageChain(image)
             }
 
             is FriendListParam -> {
@@ -99,7 +134,6 @@ class FriendService(
                 }
 
                 return MessageChain(image)
-
             }
 
             else -> throw IllegalStateException.ClassCast("好友")
@@ -455,7 +489,14 @@ class FriendService(
                 val following = target != null
                 val followed = target?.isMutual
 
-                return FriendPairParam(async.first, others, following, followed)
+                return FriendPairParam(async.first, others, FriendPairStatistics(
+                    userBind = true,
+                    partnerBind = false,
+                    isFollowing = following,
+                    isFollowed = followed,
+                    userFollowing = async.second.size,
+                    partnerFollowing = -1
+                ))
             } else {
                 // 对方已绑定模式
                 val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
@@ -465,13 +506,21 @@ class FriendService(
                     { userApiService.getFriendList(other) },
                 )
 
-                val following = async.second.first.find { it.targetID == other.userID } != null
-
-                val followed = async.second.second.find { it.targetID == me.userID } != null
-
                 val users = async.first
+                val friends = async.second
 
-                return FriendPairParam(users.first, users.second, following, followed)
+                val following = friends.first.find { it.targetID == other.userID } != null
+
+                val followed = friends.second.find { it.targetID == me.userID } != null
+
+                return FriendPairParam(users.first, users.second, FriendPairStatistics(
+                    userBind = true,
+                    partnerBind = false,
+                    isFollowing = following,
+                    isFollowed = followed,
+                    userFollowing = friends.first.size,
+                    partnerFollowing = friends.second.size
+                ))
             }
 
         }
@@ -597,17 +646,18 @@ class FriendService(
         
         private fun getPairFriendsText(param: FriendPairParam): String {
             val name = param.partner.username
+            val stat = param.statistics
 
-            return if (param.following) {
+            return if (stat.isFollowing) {
                 // 此时必然知道 followed
-                if (param.followed!!) {
+                if (stat.isFollowed!!) {
                     "恭喜！你已经与 $name 互相成为好友了。"
                 } else {
                     "你已经添加了 $name 作为你的好友，但对方似乎还没有添加你。"
                 }
-            } else if (param.followed == null) {
+            } else if (stat.isFollowed == null) {
                  "你还没有将 $name 添加为你的好友，并且对方没有使用链接绑定，还不知道有没有添加你。"
-            } else if (param.followed) {
+            } else if (stat.isFollowed) {
                 "你还没有将 $name 添加为你的好友，但对方似乎已经悄悄添加了你。"
             } else {
                 "你们暂未互相成为好友。或许可以考虑一下？"
