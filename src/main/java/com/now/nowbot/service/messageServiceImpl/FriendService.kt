@@ -515,7 +515,7 @@ class FriendService(
 
                 return FriendPairParam(users.first, users.second, FriendPairStatistics(
                     userBind = true,
-                    partnerBind = false,
+                    partnerBind = true,
                     isFollowing = following,
                     isFollowed = followed,
                     userFollowing = friends.first.size,
