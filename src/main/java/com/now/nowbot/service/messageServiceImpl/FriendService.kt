@@ -58,7 +58,7 @@ class FriendService(
         val userBind: Boolean,
         val partnerBind: Boolean,
         val isFollowing: Boolean,
-        val isFollowed: Boolean? = false,
+        val isFollowed: Boolean? = null,
         val userFollowing: Int,
         val partnerFollowing: Int,
 
@@ -77,6 +77,21 @@ class FriendService(
 
         val param = getParam(event, m)
         data.value = param
+
+        /*
+        data.value = FriendPairParam(
+            userApiService.getOsuUser(7003013, OsuMode.OSU),
+            userApiService.getOsuUser(9794030, OsuMode.OSU),
+            statistics = FriendPairStatistics(
+                userBind = true,
+                partnerBind = true,
+                isFollowing = true,
+                isFollowed = true,
+                userFollowing = 243,
+                partnerFollowing = 280,
+                )
+        )
+         */
 
         return true
     }
