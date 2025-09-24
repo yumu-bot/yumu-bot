@@ -1,7 +1,5 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.mikuac.shiro.core.BotContainer
-import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.CoverType.*
 import com.now.nowbot.model.osu.Beatmap
@@ -14,10 +12,8 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
-
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
 import okhttp3.internal.toLongOrDefault
@@ -27,9 +23,7 @@ import java.nio.file.Files
 
 @Service("GET_COVER") class GetCoverService(
     private val beatmapApiService: OsuBeatmapApiService,
-    private val beatmapMirrorApiService: OsuBeatmapMirrorApiService,
-    private val botContainer: BotContainer,
-    private val newbieConfig: NewbieConfig
+    private val beatmapMirrorApiService: OsuBeatmapMirrorApiService
 ) : MessageService<GetCoverService.CoverParam>, TencentMessageService<GetCoverService.CoverParam> {
     @JvmRecord data class CoverParam(val type: CoverType, val bids: List<Long>)
 
@@ -73,16 +67,24 @@ import java.nio.file.Files
     }
 
     @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: CoverParam) {
-        val chain: MessageChain
+        var chain: MessageChain
 
-        if (param.type == RAW) {
-            // messageChains = listOf(MessageChainBuilder().addText("抱歉，应急运行时是没有 getBG 服务的呢...").build())
-
+        if (param.type == RAW) try {
             chain = getRawBackground(param.bids, beatmapMirrorApiService)
 
             event.replyMessageChain(chain)
+        } catch (e: IllegalStateException) {
+            val receipt = event.reply("获取难度背景失败。正在为您获取谱面背景。\n（即 BID 最小的难度的背景，也是官网预览图和谱面预览图内的背景）")
+
+            val beatmaps = beatmapApiService.getBeatmaps(param.bids)
+            chain = getBackground(RAW, beatmaps)
+
+            event.replyMessageChain(chain)
+
+            receipt.recallIn(30 * 1000L)
+            return
         } else {
-            val beatmaps = getBeatMaps(param.bids, beatmapApiService)
+            val beatmaps = beatmapApiService.getBeatmaps(param.bids)
             chain = getBackground(param.type, beatmaps)
 
             event.replyMessageChain(chain)
@@ -90,36 +92,6 @@ import java.nio.file.Files
     }
 
     companion object {
-        /*
-        private fun MessageEvent.replyMessageChainsWithOfficialBot(chain: MessageChain, botContainer: BotContainer, newbieConfig: NewbieConfig) {
-            val groupID = this.subject.id
-            val messages = chain.messageList
-
-            val yumu = botContainer.robots[newbieConfig.yumuBot]
-            val hydrant = botContainer.robots[newbieConfig.hydrantBot]
-
-            val contact: Group = if (yumu != null && yumu.groupList.data.any { groupID == it.groupId } ) {
-                Group(yumu, groupID, "yumu")
-            } else if (hydrant != null && hydrant.groupList.data.any { groupID == it.groupId } ) {
-                Group(hydrant, groupID, "yumu")
-            } else if (yumu == null && hydrant == null) {
-                throw TipsException("当前能发送原图的机器人账号都不在线呢...")
-            } else {
-                throw TipsException("这个群没有可以发送原图的机器人账号呢...")
-            }
-
-            if (messages.isEmpty()) return
-            else if (messages.size <= 20) {
-                contact.sendMessage(chain)
-            } else {
-                for (msg in messages.chunked(20)) {
-                    contact.sendMessage(MessageChain(msg))
-                    Thread.sleep(1000L)
-                }
-            }
-        }
-
-         */
 
         private fun MessageEvent.replyMessageChain(chain: MessageChain) {
             val messages = chain.messageList
@@ -156,6 +128,7 @@ import java.nio.file.Files
         }
 
 
+        @Throws(IllegalStateException::class)
         private fun getRawBackground(bids: List<Long>, beatmapMirrorApiService: OsuBeatmapMirrorApiService): MessageChain {
             val builder = MessageChainBuilder()
 
@@ -166,7 +139,9 @@ import java.nio.file.Files
                     throw IllegalStateException.Fetch("完整背景")
                 }
 
-                if (path == null) throw UnsupportedOperationException("抱歉，服务器暂时没有找到完整背景服务...")
+                if (path == null) {
+                    throw IllegalStateException("抱歉，服务器暂时没有找到完整背景服务...")
+                }
 
                 // TODO 超过 10M 的文件可能发不出
                 val file = try {
@@ -194,7 +169,8 @@ import java.nio.file.Files
                     SLIM_COVER -> covers.slimcover
                     SLIM_COVER_2X -> covers.slimcover2x
                     COVER_2X -> covers.cover2x
-                    else -> covers.cover
+                    COVER -> covers.cover
+                    RAW -> covers.list.replace("list", "raw")
                 }
 
                 builder.addImage(URI.create(url).toURL())
