@@ -15,9 +15,9 @@ import java.time.ZoneOffset
 import kotlin.math.*
 
 enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
-    CREATOR("(creator|host|h)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
+    CREATOR("(creator|host|c|h)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
-    GUEST("((gd|guest\\s*diff)(er)?|mapper|guest|g)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
+    GUEST("((gder|guest\\s*diff(er)?)|mapper|guest|g?u)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
     BID("((beatmap\\s*)?id|bid|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
@@ -27,7 +27,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
     ARTIST("(artist|singer|art|f?a)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    SOURCE("(source|src|from|f)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    SOURCE("(source|src|from|f|o|sc)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
     TAG("(tags?|g)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
@@ -45,11 +45,11 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
     PERFORMANCE("(performance|表现分?|pp|p)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    RANK("(rank(ing)?|评价|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    RANK("(rank(ing)?|评[价级]|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
     LENGTH("(length|drain|time|长度|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE($REG_COLON$REG_NUMBER_MORE)?)".toRegex()),
 
-    BPM("(bpm|曲速|速度|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    BPM("(bpm|曲速|速度|bm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
     ACCURACY("(accuracy|精[确准][率度]?|准确?[率度]|acc?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
 
@@ -63,7 +63,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
     OK("(ok|150|100|(?<!不)可|ba?d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    MEH("(meh|p(oo)?r|50)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    MEH("(me?h|p(oo)?r|50)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
     MISS("(m(is)?s|0|x|不可|失误)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
@@ -77,7 +77,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
     SPINNER("(spin(ner)?s?|rattle|sp)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    TOTAL("(total|all|ttl|(hit)?objects?|o)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+    TOTAL("(total|all|ttl|(hit)?objects?|tt)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
     CONVERT("(convert|cv)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
@@ -240,6 +240,13 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
             val long = condition.toLongOrNull() ?: -1L
             val double = condition.toDoubleOrNull() ?: -1.0
 
+            // 一般这个数据都很大。如果输入很小的数，会自动给你乘 1k
+            val longPlus = if (long in 1..< 100) {
+                long * 1000L
+            } else {
+                long
+            }
+
             return when (filter) {
                 CREATOR -> fit(operator, it.beatmapset.creator, condition)
 
@@ -281,7 +288,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 CS -> fit(operator, it.beatmap.CS?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
                 OD -> fit(operator, it.beatmap.OD?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
                 HP -> fit(operator, it.beatmap.HP?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
-                PERFORMANCE -> fit(operator, it.pp, double, digit = 0, isRound = true, isInteger = true)
+                PERFORMANCE -> fit(operator, it.pp.roundToLong(), longPlus) //fit(operator, it.pp, double, digit = 0, isRound = true, isInteger = true)
                 RANK -> {
                     val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
 
