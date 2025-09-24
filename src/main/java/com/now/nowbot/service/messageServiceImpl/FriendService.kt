@@ -242,7 +242,7 @@ class FriendService(
             // 亲密好友模式
             val other = bindDao.getBindUser(id.data)
 
-            if (other == null) {
+            if (other == null || !other.isAuthorized) {
                 // 对方未绑定模式
                 val others = getUserWithRange(event, matcher, mode, isMyself).data!!
 
@@ -258,7 +258,7 @@ class FriendService(
                 val followed = target?.isMutual
 
                 return FriendPairParam(async.first, others, FriendPairStatistics(
-                    userBind = true,
+                    userBind = me.isAuthorized,
                     partnerBind = false,
                     isFollowing = following,
                     isFollowed = followed,
@@ -282,8 +282,8 @@ class FriendService(
                 val followed = friends.second.find { it.targetID == me.userID } != null
 
                 return FriendPairParam(users.first, users.second, FriendPairStatistics(
-                    userBind = true,
-                    partnerBind = true,
+                    userBind = me.isAuthorized,
+                    partnerBind = other.isAuthorized,
                     isFollowing = following,
                     isFollowed = followed,
                     userFollowing = friends.first.size,
