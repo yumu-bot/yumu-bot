@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
+import kotlin.math.max
 
 @Service("FRIEND")
 class FriendService(
@@ -228,7 +229,7 @@ class FriendService(
 
             // 筛选成绩
             val offset = id2.getOffset()
-            val limit = id2.getLimit(100)
+            val limit = max(id2.getLimit(20), 100)
 
             val filteredFriends = MicroUserFilter.filterUsers(sortedFriends, conditions).drop(offset).take(limit)
 
@@ -243,23 +244,7 @@ class FriendService(
 
             if (other == null) {
                 // 对方未绑定模式
-                val range = getUserWithRange(event, matcher, mode, isMyself)
-                range.setZeroToRange100()
-
-                val range2 = if (range.start != null) {
-                    range
-                } else {
-                    val start = ranges?.firstOrNull()?.toIntOrNull()
-                    val end = if (ranges?.size == 2) {
-                        ranges.last().toIntOrNull()
-                    } else {
-                        null
-                    }
-
-                    CmdRange(range.data!!, start, end)
-                }
-
-                val others = range2.data!!
+                val others = getUserWithRange(event, matcher, mode, isMyself).data!!
 
                 val async = AsyncMethodExecutor.awaitPairCallableExecute(
                     { userApiService.getOsuUser(me) },
