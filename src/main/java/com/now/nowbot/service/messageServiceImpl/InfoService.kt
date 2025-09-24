@@ -19,6 +19,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
@@ -34,6 +35,7 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import kotlin.jvm.optionals.getOrNull
+import kotlin.math.absoluteValue
 import kotlin.math.min
 
 @Service("INFO")
@@ -130,9 +132,9 @@ class InfoService(
 
     @Throws(Throwable::class)
     override fun HandleMessage(event: MessageEvent, param: InfoParam) {
-        val image = param.getImage()
+        val message = param.getMessageChain()
         try {
-            event.reply(image)
+            event.reply(message)
         } catch (e: Exception) {
             log.error("玩家信息：发送失败", e)
             throw IllegalStateException.Send("玩家信息")
@@ -146,9 +148,9 @@ class InfoService(
         return getParam(event, matcher, 2)
     }
 
-    override fun reply(event: MessageEvent, param: InfoParam): MessageChain = MessageChain(param.getImage())
+    override fun reply(event: MessageEvent, param: InfoParam): MessageChain = param.getMessageChain()
 
-    private fun InfoParam.getImage(): ByteArray {
+    private fun InfoParam.getMessageChain(): MessageChain {
         if (this.version == 2) {
             try {
                 calculateApiService.applyStarToScores(bests
@@ -165,7 +167,22 @@ class InfoService(
             else -> "D2"
         }
 
-        return imageService.getPanel(this.toMap(), name)
+        return try {
+            MessageChain(imageService.getPanel(this.toMap(), name))
+        } catch (e: NetworkException) {
+            log.info("玩家信息：渲染失败")
+
+            val avatar = userApiService.getAvatarByte(user)
+
+            // 变化不大就不去拿了
+            val h = if (historyUser == null || (historyUser.pp - user.pp).absoluteValue <= 0.5) {
+                null
+            } else {
+                historyUser
+            }
+
+            UUIService.getUUInfo(user, avatar, h)
+        }
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher, version: Int = 1): InfoParam? {
@@ -231,11 +248,9 @@ class InfoService(
             val timeArray = IntArray(90)
 
             times.forEach { time ->
-                run {
-                    val day = (now.toEpochDay() - time.toLocalDate().toEpochDay()).toInt()
-                    if (day in 0..89) {
-                        timeArray[89 - day]++
-                    }
+                val day = (now.toEpochDay() - time.toLocalDate().toEpochDay()).toInt()
+                if (day in 0..89) {
+                    timeArray[89 - day]++
                 }
             }
 

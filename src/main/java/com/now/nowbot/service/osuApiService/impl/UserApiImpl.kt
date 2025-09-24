@@ -30,6 +30,26 @@ import java.util.regex.Pattern
 @Service class UserApiImpl(
     private val base: OsuApiBaseService, private val bindDao: BindDao, private val userInfoDao: OsuUserInfoDao
 ) : OsuUserApiService {
+    override fun getAvatarByte(user: OsuUser): ByteArray {
+        return try {
+            request { client ->
+                client.get()
+                    .uri(user.avatarUrl)
+                    .retrieve()
+                    .bodyToMono(ByteArray::class.java)
+            }
+        } catch (e: NetworkException) {
+            log.error("获取玩家 ${user.userID} 头像失败，尝试返回默认头像")
+
+            request { client ->
+                client.get()
+                    .uri("https://a.ppy.sh/")
+                    .retrieve()
+                    .bodyToMono(ByteArray::class.java)
+            }
+        }
+    }
+
     // 用来确认玩家是否存在于服务器，而无需使用 API 请求。
     override fun isPlayerExist(name: String): Boolean {
         val response =

@@ -10,6 +10,8 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.concurrent.ExecutionException
 
 interface OsuUserApiService {
+    fun getAvatarByte(user: OsuUser): ByteArray
+
     fun isPlayerExist(name: String): Boolean
 
     @Throws(WebClientResponseException::class) fun getOauthUrl(state: String): String {
