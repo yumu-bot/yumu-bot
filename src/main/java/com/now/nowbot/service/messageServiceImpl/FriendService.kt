@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.math.max
+import kotlin.math.min
 
 @Service("FRIEND")
 class FriendService(
@@ -229,7 +229,7 @@ class FriendService(
 
             // 筛选成绩
             val offset = id2.getOffset()
-            val limit = max(id2.getLimit(20), 100)
+            val limit = min(id2.getLimit(20), 100)
 
             val filteredFriends = MicroUserFilter.filterUsers(sortedFriends, conditions).drop(offset).take(limit)
 
