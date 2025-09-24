@@ -202,7 +202,6 @@ class FriendService(
             }
 
             // 好友列表模式
-
             val id2 = if (id.start != null) {
                 id
             } else {
@@ -218,14 +217,15 @@ class FriendService(
 
             val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { userApiService.getOsuUser(me) },
-                { userApiService.getFriendList(me) },
+                //{ userApiService.getUsers(listOf()) }
+                { userApiService.getFriendList(me).map { it.target } },
             )
 
             val sortParam: Pair<SortType, SortDirection> =
                 getSort(matcher.group("sort"))
 
             // 排序成绩
-            val sortedFriends = sortFriends(async.second.map { it.target }, sortParam.first, sortParam.second)
+            val sortedFriends = sortFriends(async.second, sortParam.first, sortParam.second)
 
             // 筛选成绩
             val offset = id2.getOffset()
@@ -250,9 +250,9 @@ class FriendService(
                     { userApiService.getOsuUser(me) },
                     { userApiService.getFriendList(me) }
                 )
-                
+
                 val target = async.second.find { it.targetID == others.userID }
-                
+
                 // 如果 ing 不为空，则必然知道 ed
                 val following = target != null
                 val followed = target?.isMutual
@@ -411,7 +411,7 @@ class FriendService(
 
             return result
         }
-        
+
         private fun getPairFriendsText(param: FriendPairParam): String {
             val name = param.partner.username
             val stat = param.statistics

@@ -18,43 +18,43 @@ enum class MicroUserFilter(@Language("RegExp") val regex: Regex) {
 
     ACTIVE("(active|活跃|e)(?<n>$REG_OPERATOR_WITH_SPACE$REG_BOOLEAN)".toRegex()),
 
-    BOT("(bot|机器人|人机|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_BOOLEAN)".toRegex()),
+    BOT("((ro)?bot|机器人?|人机|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_BOOLEAN)".toRegex()),
 
-    ONLINE("(online|在线|o)(?<n>$REG_OPERATOR_WITH_SPACE$REG_BOOLEAN)".toRegex()),
+    ONLINE("(online|在线|上线|o)(?<n>$REG_OPERATOR_WITH_SPACE$REG_BOOLEAN)".toRegex()),
 
-    DELETE("(deleted?|删除|del|d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_BOOLEAN)".toRegex()),
+    DELETE("(deleted?|被?删除|del|d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_BOOLEAN)".toRegex()),
 
     SUPPORTER("(support(er)?|支持者?|撒泼特|会员|s?vip|v)(?<n>$REG_OPERATOR_WITH_SPACE$REG_BOOLEAN)".toRegex()),
 
-    SUPPORT_LEVEL("(support(er)?\\s*level|支持者等级|s?vip(lv|level)?|vl|sl|v)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+    SUPPORT_LEVEL("(support(er)?\\s*level|(支持者?|撒泼特|会员)等级|s?vip(lv|level)?|vl|sl|v)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
     LAST_VISIT("(last\\s*visit(\\s*time)?|last|visit|time|seen|上线(时间)?|vt|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_TIME)".toRegex()),
 
-    PM_ONLY("(pm\\s*only|(好友)?私信|y)(?<n>$REG_OPERATOR_WITH_SPACE$REG_BOOLEAN)".toRegex()),
+    PM_ONLY("(pm\\s*only|(好友)?私信|陌生人(私信)?|y)(?<n>$REG_OPERATOR_WITH_SPACE$REG_BOOLEAN)".toRegex()),
 
-    COUNTRY("(country(\\s*(name|code))?|code|国家|地区|c)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
+    COUNTRY("(country(\\s*(name|code))?|code|国家|地区|c)(?<n>$REG_OPERATOR_WITH_SPACE\\w{2,})".toRegex()),
 
-    MUTUAL("(mutual|互相关注|互关|粉|mu|m)(?<n>$REG_OPERATOR_WITH_SPACE$REG_BOOLEAN)".toRegex()),
+    MUTUAL("(mutual|互相关注|互关|互?粉|mu|m)(?<n>$REG_OPERATOR_WITH_SPACE$REG_BOOLEAN)".toRegex()),
 
     // 以下是 statistics 存在时可以匹配的内容
 
-    TEAM("(team|战?队|tm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
+    TEAM("(team|战?队|队伍|团队|公会|tm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
-    PP("(performance(\\s*point)?|表现分?|pp|p)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+    PP("(performance(\\s*points?)?|表现分?|pp|p)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
-    ACCURACY("(accuracy|精确率?|精准率?|acc?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
+    ACCURACY("(accuracy|精[确准][率度]?|准确?[率度]|acc?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
 
-    COMBO("(combo|连击|cb)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL[xX]?)".toRegex()),
+    COMBO("(combo|连击数?|cb)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL[xX]?)".toRegex()),
 
     LEVEL("(levels?|等?级|经验|lv|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
-    SS("(rank\\s*(ss|x)|rss|rx|x)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
-
     SSH("(rank\\s*(ss|x)h|rssh|rxh|xh)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
-    S("(rank\\s*s|rs|s)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+    SS("(rank\\s*(ss|x)|rss|rx|x)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
     SH("(rank\\s*sh|rsh|rh)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+
+    S("(rank\\s*s|rs|s)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
     A("(rank\\s*a|ra)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
@@ -121,7 +121,7 @@ enum class MicroUserFilter(@Language("RegExp") val regex: Regex) {
                     condition)
                 PM_ONLY -> fit(operator, it.pmFriendsOnly, boolean)
                 COUNTRY -> if (condition.length <= 2) {
-                    fit(operator, it.countryCode, condition)
+                    fit(operator, it.country?.code, condition)
                 } else {
                     fit(operator, it.country?.name, condition)
                 }

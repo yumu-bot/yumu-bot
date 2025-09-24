@@ -181,13 +181,13 @@ class GuestDifficultyService(
             val re = guestDiffs.filter { it.mapperID == u.userID }
 
             val received: Int = re.count()
-            val receivedRanked: Int = re.count { it.ranked > 0 }
+            val receivedRanked: Int = re.count { it.hasLeaderBoard }
 
             val se = myGuestDiffs.filter { it.beatmapset?.creatorID == u.userID }
 
             val sent: Int = se.count()
 
-            val sentRanked: Int = se.count { it.ranked > 0 }
+            val sentRanked: Int = se.count { it.hasLeaderBoard }
 
             GuestDifficultyOwner(u, received, receivedRanked, sent, sentRanked)
         }.sortedByDescending {

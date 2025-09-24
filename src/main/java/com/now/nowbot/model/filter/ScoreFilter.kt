@@ -51,7 +51,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
     BPM("(bpm|曲速|速度|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    ACCURACY("(accuracy|精确率?|精准率?|acc?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
+    ACCURACY("(accuracy|精[确准][率度]?|准确?[率度]|acc?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
 
     COMBO("(combo|连击|cb?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL[xX]?)".toRegex()),
 
@@ -574,34 +574,51 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
             } else {
                 // 绝对日期模式，构建一个目标时间
 
-                val years = when(year) {
+                var minUnit = 10
+
+                // 0-5
+                for (i in (unitContains.size - 1) downTo 0) {
+                    val b = unitContains[i]
+
+                    if (b) {
+                        minUnit = i
+                        break
+                    }
+                }
+
+                val years = when (year) {
                     in 7 ..< 1000 -> (year % 100) + 2000
                     in 2000 ..< 3000 -> year
                     else -> n.year
                 }
 
-                val months = when(month) {
-                    in 1 .. 12 -> month
+                val months = when {
+                    month in 1 .. 12 -> month
+                    minUnit < 1 -> 0
                     else -> n.monthValue
                 }
 
-                val days = when(day) {
-                    in 1..maxDayOfMonth -> day
+                val days = when {
+                    day in 1..maxDayOfMonth -> day
+                    minUnit < 2 -> 0
                     else -> n.dayOfMonth
                 }
 
-                val hours = when(hour) {
-                    in 1..24 -> hour
+                val hours = when {
+                    hour in 1..24 -> hour
+                    minUnit < 3 -> 0
                     else -> n.hour
                 }
 
-                val minutes = when(minute) {
-                    in 1..60 -> minute
+                val minutes = when {
+                    minute in 1..60 -> minute
+                    minUnit < 4 -> 0
                     else -> n.minute
                 }
 
-                val seconds = when(second) {
-                    in 1..24 -> second
+                val seconds = when {
+                    second in 1..60 -> second
+                    minUnit < 5 -> 0
                     else -> n.second
                 }
 
@@ -612,7 +629,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 // 区域日期模式，从目标时间到输入的最小单位 + 1 的时间
                 var delta = 0
 
-                for (i in unitContains.size downTo 0) {
+                for (i in (unitContains.size - 1) downTo 0) {
                     val b = unitContains[i]
 
                     if (b) {
