@@ -40,7 +40,7 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
 
         val s =
             try {
-                osuBeatmapApiService.getBeatmapset(sid)
+                osuBeatmapApiService.getBeatmapsets(sid)
             } catch (e: Exception) {
                 throw NoSuchElementException.Beatmap(sid)
             }
