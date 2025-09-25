@@ -346,7 +346,14 @@ class UUIService(
             hasSeperator: Boolean = false,
             additionalUnit: String = ""
         ): String {
-            val delta = now.toDouble() - before.toDouble()
+            val bf = before.toDouble()
+            val nw = now.toDouble()
+
+            if (bf.absoluteValue <= 1e-4 && nw.absoluteValue >= 1e-4) {
+                return ""
+            }
+
+            val delta = nw - bf
 
             val scale = 10.0.pow(digit)
 

@@ -182,6 +182,7 @@ import kotlin.math.min
                     username = microUser?.userName ?: "UID: ${entry.key}",
                     mapCount = entry.value.size,
                     ppCount = entry.value.sumOf { it.pp }.toFloat(),
+                    // ppCount = entry.value.sumOf { it.weight?.pp ?: 0.0 }.toFloat(),
                 )
             }.sortedByDescending { it.ppCount }
 
