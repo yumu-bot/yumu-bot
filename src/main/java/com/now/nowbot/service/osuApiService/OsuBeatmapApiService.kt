@@ -36,11 +36,22 @@ interface OsuBeatmapApiService {
 
     fun getUserMostPlayedBeatmaps(id: Long, offset: Int = 0, limit: Int = 100): Map<Int, Beatmap>
 
-    fun getBeatmapset(sid: Long): Beatmapset
+    fun getBeatmapsets(sid: Long): Beatmapset
 
-    fun getBeatMapSet(sid: Int): Beatmapset {
-        return getBeatmapset(sid.toLong())
-    }
+    /**
+     * 这个可能会撞限制，所以请用 extendBeatmapset
+     */
+    fun getBeatmapsets(sids: Iterable<Long>): List<Beatmapset>
+
+    /**
+     * 扩展 search result 的 set 内的 beatmap，确保它含有 owners 等信息
+     */
+    fun extendBeatmapInSet(sets: Iterable<Beatmapset>): List<Beatmapset>
+
+    /**
+     * 扩展 score 内的 beatmap，确保它含有 owners 等信息
+     */
+    fun extendBeatmapInScore(scores: Iterable<LazerScore>): List<LazerScore>
 
     fun getBeatmapFromDatabase(bid: Int): Beatmap {
         return getBeatmapFromDatabase(bid.toLong())

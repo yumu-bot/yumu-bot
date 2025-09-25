@@ -114,11 +114,23 @@ class GuestDifficultyService(
                 { userApiService.getOsuUser(id.data!!, mode.data!!) },
             )
 
+            // 注意，从 search 返回的 beatmapset 包含的 beatmap 会缺谱师信息
+            val sets = (async.first.beatmapsets +
+                    async.second.beatmapsets.filter {
+                        it.beatmapsetID != id.data!! &&
+                                (it.beatmaps?.all { that -> that.beatmapID != id.data!! } ?: true)
+                    }).toHashSet()
+
+            relatedSets = beatmapApiService.extendBeatmapInSet(sets).toHashSet()
+
+            /*
             relatedSets = (async.first.beatmapsets.toHashSet() +
                     async.second.beatmapsets.filter {
                         it.beatmapsetID != id.data!! &&
                                 (it.beatmaps?.all { that -> that.beatmapID != id.data!! } ?: true)
                     }.toHashSet())
+
+             */
 
             user = async.third
             page = id.start ?: 1
@@ -140,11 +152,24 @@ class GuestDifficultyService(
                 { beatmapApiService.searchBeatmapset(query2, 10) },
             )
 
+            // 注意，从 search 返回的 beatmapset 包含的 beatmap 会缺谱师信息
+            val sets = (async.first.beatmapsets +
+                    async.second.beatmapsets.filter {
+                        it.beatmapsetID != user.userID &&
+                                (it.beatmaps?.all { that -> that.beatmapID != user.userID } ?: true)
+                    }).toHashSet()
+
+            relatedSets = beatmapApiService.extendBeatmapInSet(sets).toHashSet()
+
+            /*
+
             relatedSets = (async.first.beatmapsets.toHashSet() +
                     async.second.beatmapsets.filter {
                         it.beatmapsetID != user.userID &&
                                 (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true)
                     }.toHashSet())
+
+             */
 
             page = range.start ?: 1
         }
@@ -172,13 +197,13 @@ class GuestDifficultyService(
             userApiService.asyncDownloadAvatar(relatedUsers)
         }
 
-        val relatedDiffs = relatedSets.map { it.beatmaps!! }.flatten()
+        val relatedDiffs = relatedSets.map { it.beatmaps!! }.flatten().toList()
 
-        val myGuestDiffs = relatedDiffs.filter { it.mapperID == user.userID && it.beatmapset?.creatorID != user.userID }
-        val guestDiffs = relatedDiffs.filter { it.mapperID != user.userID && it.beatmapset?.creatorID == user.userID }
+        val myGuestDiffs = relatedDiffs.filter { it.mapperIDs.contains(user.userID) && it.beatmapset?.creatorID != user.userID }
+        val guestDiffs = relatedDiffs.filter { !it.mapperIDs.contains(user.userID) && it.beatmapset?.creatorID == user.userID }
 
         val guestDifficultyOwners = relatedUsers.map { u ->
-            val re = guestDiffs.filter { it.mapperID == u.userID }
+            val re = guestDiffs.filter { it.mapperIDs.contains(u.userID) }
 
             val received: Int = re.count()
             val receivedRanked: Int = re.count { it.hasLeaderBoard }

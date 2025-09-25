@@ -11,6 +11,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.UUBAService.BPHeadTailParam
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -31,6 +32,7 @@ import kotlin.math.max
 @Service("UU_BA")
 class UUBAService(
     private val userApiService: OsuUserApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
     private val scoreApiService: OsuScoreApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val bindDao: BindDao,
@@ -106,14 +108,17 @@ class UUBAService(
 
         val mode = OsuMode.getMode(param.user.mode, bu.mode, bindDao.getGroupModeConfig(event))
 
-        val bests: List<LazerScore> = scoreApiService.getBestScores(bu, mode)
+        val b: List<LazerScore> = scoreApiService.getBestScores(bu, mode)
 
-        if (bests.size <= 10) {
+        if (b.size <= 10) {
             throw NoSuchElementException.PlayerBestScore(bu.username, mode)
         }
 
+        val bests = beatmapApiService.extendBeatmapInScore(b)
+
         calculateApiService.applyBeatMapChanges(bests)
         calculateApiService.applyStarToScores(bests)
+
         val lines =
                 if (OsuMode.isDefaultOrNull(mode)) {
                     getTextPlus(bests, bu.username, "", userApiService)
@@ -360,11 +365,22 @@ class UUBAService(
                     maxTTHPP = tthToPp
                 }
 
+                b.mapperIDs.forEach { mapperID ->
+                    if (mapperSum.containsKey(mapperID)) {
+                        mapperSum[mapperID]!!.add(score.pp)
+                    } else {
+                        mapperSum[mapperID] = FavoriteMapperData(score.pp, mapperID)
+                    }
+                }
+
+                /*
                 if (mapperSum.containsKey(b.mapperID)) {
                     mapperSum[b.mapperID]!!.add(score.pp)
                 } else {
                     mapperSum[b.mapperID] = FavoriteMapperData(score.pp, b.mapperID)
                 }
+
+                 */
                 nowPP += score.weight!!.pp
             }
             avgCombo /= bests.size

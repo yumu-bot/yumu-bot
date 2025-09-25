@@ -283,7 +283,7 @@ import java.util.regex.Pattern
     }
 
     override fun applyUserForBeatmapset(beatmapsets: List<Beatmapset>) {
-        val userSet = (beatmapsets.flatMap { it.beatmaps ?: listOf() }.map { it.mapperID } + beatmapsets.map { it.creatorID }).toSet()
+        val userSet = (beatmapsets.flatMap { it.beatmaps ?: listOf() }.flatMap { it.mapperIDs } + beatmapsets.map { it.creatorID }).toSet()
 
         val users = getUsers(userSet).associateBy { it.userID }
 

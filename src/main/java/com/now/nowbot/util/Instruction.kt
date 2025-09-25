@@ -344,8 +344,12 @@ enum class Instruction(val pattern: Pattern) {
 
     UU_INFO(CommandPatternBuilder.create {
         appendUUIgnoreAll("info", "i")
-        appendMode()
-        appendName()
+        appendModeQQUIDName()
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendSpace()
+            appendCaptureGroup(FLAG_DAY, REG_NUMBER, MORE)
+        }
     }),
 
     I_MAPPER(CommandPatternBuilder.create {

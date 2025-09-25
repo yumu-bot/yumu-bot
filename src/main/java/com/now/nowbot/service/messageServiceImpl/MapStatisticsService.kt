@@ -1,10 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.osu.Beatmap
-import com.now.nowbot.model.osu.OsuUser
-import com.now.nowbot.model.osu.RosuPerformance
+import com.now.nowbot.model.osu.*
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -151,8 +148,14 @@ class MapStatisticsService(
         val mode = OsuMode.getMode(matcher.group("mode"), beatmap.mode)
 
         val user: OsuUser? = try {
-            if (beatmap.mapperID > 0L) {
-                userApiService.getOsuUser(beatmap.mapperID, mode)
+            if (beatmap.mapperIDs.isNotEmpty()) {
+                val user = userApiService.getOsuUser(beatmap.mapperIDs.first(), mode)
+
+                if (beatmap.mapperIDs.size > 1) {
+                    user.apply { username = "Multiple Mappers" }
+                } else {
+                    user
+                }
             } else {
                 null
             }

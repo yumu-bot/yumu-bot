@@ -9,6 +9,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -34,6 +35,7 @@ import kotlin.math.min
 
 @Service("BP_ANALYSIS") class BPAnalysisService(
     private val scoreApiService: OsuScoreApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
     private val calculateApiService: OsuCalculateApiService,
@@ -162,6 +164,28 @@ import kotlin.math.min
                 @JsonProperty("pp_count") val ppCount: Float
             )
 
+            val mapperMap = bests
+                .associateWith { it.beatmap.mapperIDs }
+                .flatMap { (score, mappers) ->
+                    mappers.map { mapper -> mapper to score }
+                }.groupBy({ it.first }, { it.second })
+
+            val mapperSize = mapperMap.size
+
+            val mapperUserInfoMap = mappers.associateBy { it.userID }
+
+            val mapperList = mapperMap.map { entry -> entry.key
+                val microUser = mapperUserInfoMap[entry.key]
+
+                Mapper(
+                    avatarUrl = microUser?.avatarUrl ?: "https://a.ppy.sh/${entry.key}",
+                    username = microUser?.userName ?: "UID: ${entry.key}",
+                    mapCount = entry.value.size,
+                    ppCount = entry.value.sumOf { it.pp }.toFloat(),
+                )
+            }.sortedByDescending { it.ppCount }
+
+            /*
             val mapperMap = bests.groupingBy { it.beatmap.mapperID }.eachCount()
 
             val mapperSize = mapperMap.size
@@ -190,6 +214,8 @@ import kotlin.math.min
                         }
                         Mapper(avatar, name, mapperCount[it.key] ?: 0, it.value.toFloat())
                     }.toList()
+
+             */
 
             val userPP = user.pp
             val bonusPP = getBonusPP(userPP, bests.map { it.pp }.toDoubleArray())
@@ -360,9 +386,14 @@ import kotlin.math.min
             calculateApiService.applyStarToScores(bests)
         }
 
-        val mappers = userApiService.getUsers(bests.map { it.beatmap.mapperID }.toSet())
+        val mapperIDs = bests.flatMap { it.beatmap.mapperIDs }.toSet()
 
-        return BAParam(user, bests, isMyself.get(), mappers, 2)
+        val async2 = AsyncMethodExecutor.awaitPairCallableExecute(
+            { beatmapApiService.extendBeatmapInScore(bests) },
+            { userApiService.getUsers(mapperIDs) },
+        )
+
+        return BAParam(user, async2.first, isMyself.get(), async2.second, 2)
 
     }
 

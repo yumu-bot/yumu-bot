@@ -31,6 +31,9 @@ data class Beatmap(
     var totalLength: Int = 0,
 
     @JsonProperty("user_id")
+    /**
+     * 这个只能记录第一个谱师，所以尽量不要用这个参数，而是使用 mapperIDs
+     */
     var mapperID: Long = 0,
 
     @JsonProperty("version")
@@ -99,7 +102,7 @@ data class Beatmap(
     var lastUpdated: String? = null,
 
     /**
-     * 只有 beatmapSet 内的 beatmap 才有的属性
+     * 只有 id 和 username
      */
     @JsonProperty("owners")
     var owners: List<MicroUser>? = null,
@@ -190,6 +193,10 @@ data class Beatmap(
         @JsonProperty("tag_id") val id: Int,
         @JsonProperty("count") val count: Int,
     )
+
+    @get:JsonProperty("mapper_ids")
+    val mapperIDs: List<Long>
+        get() = owners?.map { it.userID } ?: listOf(mapperID)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

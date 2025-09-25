@@ -107,12 +107,12 @@ import kotlin.math.max
             val mySets = relatedSets.filter { it.creatorID == user.userID }
             val otherSets = relatedSets.filter { it.creatorID != user.userID }
 
-            val myDiffs = relatedDiffs.filter { it.mapperID == user.userID } // 包括了别人 Set 里的
-            val myGuestDiffs = relatedDiffs.filter { it.mapperID == user.userID && it.beatmapset?.creatorID != user.userID }
-            val guestDiffs = relatedDiffs.filter { it.mapperID != user.userID && it.beatmapset?.creatorID == user.userID }
+            val myDiffs = relatedDiffs.filter { it.mapperIDs.contains(user.userID) } // 包括了别人 Set 里的
+            val myGuestDiffs = relatedDiffs.filter { it.mapperIDs.contains(user.userID) && it.beatmapset?.creatorID != user.userID }
+            val guestDiffs = relatedDiffs.filter { !it.mapperIDs.contains(user.userID) && it.beatmapset?.creatorID == user.userID }
 
             val guestDifficultyOwners = relatedUsers.map { u ->
-                val re = guestDiffs.filter { it.mapperID == u.userID }
+                val re = guestDiffs.filter { it.mapperIDs.contains(u.userID) }
 
                 val received: Int = re.count()
                 val receivedRanked: Int = re.count { it.ranked > 0 }
@@ -262,10 +262,21 @@ import kotlin.math.max
                     { userApiService.getUserRecentActivity(id, 0, 100).filter { it.isMapping } },
                     { userApiService.getOsuUser(id, mode.data!!) },
                 )
+                // 注意，从 search 返回的 beatmapset 包含的 beatmap 会缺谱师信息
+                val sets = (async.first.first.beatmapsets +
+                        async.first.second.beatmapsets.filter {
+                            it.beatmapsetID != id &&
+                                    (it.beatmaps?.all { that -> that.beatmapID != id } ?: true)
+                        }).toHashSet()
 
+                relatedSets = beatmapApiService.extendBeatmapInSet(sets).asSequence()
+
+                /*
                 relatedSets = (async.first.first.beatmapsets.toHashSet() + async.first.second.beatmapsets.filter {
                     it.beatmapsetID != id && (it.beatmaps?.all { that -> that.beatmapID != id } ?: true)
                 }.toHashSet()).asSequence()
+
+                 */
 
                 activity = async.second.first
 
@@ -288,9 +299,23 @@ import kotlin.math.max
                     { userApiService.getUserRecentActivity(user.userID, 0, 100).filter { it.isMapping } }
                 )
 
+                // 注意，从 search 返回的 beatmapset 包含的 beatmap 会缺谱师信息
+                val sets = (async.first.beatmapsets +
+                        async.second.beatmapsets.filter {
+                            it.beatmapsetID != user.userID &&
+                                    (it.beatmaps?.all { that -> that.beatmapID != user.userID } ?: true)
+                        }).toHashSet()
+
+                relatedSets = beatmapApiService.extendBeatmapInSet(sets).asSequence()
+
+                /*
+
+
                 relatedSets = (async.first.beatmapsets.toHashSet() + async.second.beatmapsets.filter {
                     it.beatmapsetID != user.userID && (it.beatmaps?.all { that -> that.beatmapID != user.id } ?: true)
                 }.toHashSet()).asSequence()
+
+                 */
 
                 activity = async.third
             }
@@ -338,7 +363,7 @@ import kotlin.math.max
             val diffArr = IntArray(8)
 
             run {
-                val diffStar = beatmaps.filter { it.mapperID == user.userID }.map { it.starRating }
+                val diffStar = beatmaps.filter { it.mapperIDs.contains(user.userID)  }.map { it.starRating }
                 val starMaxBoundary = doubleArrayOf(2.0, 2.8, 4.0, 5.3, 6.5, 8.0, 10.0, Double.MAX_VALUE)
 
                 for (d in diffStar) {
@@ -394,7 +419,7 @@ import kotlin.math.max
 
             val lengthArr = IntArray(8)
             run {
-                val lengthAll = beatmaps.filter { it.mapperID == user.userID }.map { it.totalLength }
+                val lengthAll = beatmaps.filter { it.mapperIDs.contains(user.userID) }.map { it.totalLength }
                 val lengthMaxBoundary = intArrayOf(60, 100, 140, 180, 220, 260, 300, Int.MAX_VALUE)
 
                 for (f in lengthAll) {

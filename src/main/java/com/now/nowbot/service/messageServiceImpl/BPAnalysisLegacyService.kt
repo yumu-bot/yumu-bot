@@ -66,7 +66,9 @@ class BPAnalysisLegacyService(
             calculateApiService.applyStarToScores(bests)
         }
 
-        val mappers = userApiService.getUsers(bests.map { it.beatmap.mapperID }.toSet())
+        val mapperIDs = bests.flatMap { it.beatmap.mapperIDs }.toSet()
+
+        val mappers = userApiService.getUsers(mapperIDs)
 
         data.value = BAParam(user, bests, isMyself.get(), mappers, 1)
 

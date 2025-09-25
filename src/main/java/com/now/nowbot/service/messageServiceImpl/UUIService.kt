@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.NowbotConfig
+import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -13,19 +14,29 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.FLAG_DAY
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlin.jvm.optionals.getOrNull
 import kotlin.math.*
 
 @Service("UU_INFO")
-class UUIService(private val userApiService: OsuUserApiService) : MessageService<UUIParam> {
+class UUIService(
+    private val userApiService: OsuUserApiService,
+    private val infoDao: OsuUserInfoDao,
+) : MessageService<UUIParam> {
 
-    @JvmRecord data class UUIParam(val user: OsuUser, val mode: OsuMode?)
+    @JvmRecord data class UUIParam(
+        val user: OsuUser,
+        val historyUser: OsuUser?,
+        val mode: OsuMode,
+    )
 
     @Throws(TipsException::class)
     override fun isHandle(
@@ -33,13 +44,25 @@ class UUIService(private val userApiService: OsuUserApiService) : MessageService
         messageText: String,
         data: DataValue<UUIParam>,
     ): Boolean {
-        val m = Instruction.UU_INFO.matcher(messageText)
-        if (!m.find()) {
+        val matcher = Instruction.UU_INFO.matcher(messageText)
+        if (!matcher.find()) {
             return false
         }
-        val mode = getMode(m)
-        val user = getUserWithoutRange(event, m, mode)
-        data.value = UUIParam(user, mode.data)
+        val mode = getMode(matcher)
+        val user = getUserWithoutRange(event, matcher, mode)
+
+        val day = (matcher.group(FLAG_DAY) ?: "").toLongOrNull() ?: 1L
+
+        val historyUser =
+            infoDao.getLastFrom(
+                user.userID,
+                user.currentOsuMode,
+                LocalDate.now().minusDays(day)
+            ).map { OsuUserInfoDao.fromArchive(it) }.getOrNull()
+
+        val currentMode = OsuMode.getMode(mode.data!!, user.currentOsuMode)
+
+        data.value = UUIParam(user, historyUser, currentMode)
         return true
     }
 
@@ -49,7 +72,7 @@ class UUIService(private val userApiService: OsuUserApiService) : MessageService
 
         val avatar: ByteArray = userApiService.getAvatarByte(user)
 
-        val message = getUUInfo(user, avatar)
+        val message = getUUInfo(user, avatar, param.historyUser)
         try {
             event.reply(message)
         } catch (e: Exception) {
@@ -192,7 +215,7 @@ class UUIService(private val userApiService: OsuUserApiService) : MessageService
 
             val globalRank = if (isHistoryHighestMode) {
                 "#" + (user.highestRank?.rank?.toString() ?: "0") + "^ (" +
-                        user.highestRank?.updatedAt?.format(DateTimeFormatter.ofPattern("yyyy/MM/dd")) + ")"
+                        (user.highestRank?.updatedAt?.format(DateTimeFormatter.ofPattern("yyyy/MM/dd")) ?: "-") + ")"
             } else {
                 "#" + user.globalRank.toString()
             }
@@ -252,9 +275,11 @@ class UUIService(private val userApiService: OsuUserApiService) : MessageService
                 deltaCR = ""
             }
 
+            val pp = String.format("%.2f", round(user.pp * 100.0) / 100.0)
+
             val info = """
             
-            ${user.username} (${user.currentOsuMode.shortName}): ${round(user.pp)}PP $deltaPP
+            ${user.username} (${user.currentOsuMode.shortName}): ${pp}PP $deltaPP
             Rank: $globalRank$deltaGR $countryRank$deltaCR
             
             PC: ${String.format("%,d", user.playCount)} $deltaPC
@@ -307,6 +332,8 @@ class UUIService(private val userApiService: OsuUserApiService) : MessageService
 
             if (seconds > 60) {
                 time.append((seconds % 3600) / 60).append('M')
+            } else {
+                time.append(seconds).append('S')
             }
 
             return time.toString()

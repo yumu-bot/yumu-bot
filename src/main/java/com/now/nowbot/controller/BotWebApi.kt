@@ -669,7 +669,7 @@ import kotlin.math.min
             user = userApiService.getOsuUser(uid, mode)
             if (mode != OsuMode.DEFAULT) user.currentOsuMode = mode
             bests = scoreApiService.getBestScores(uid, mode)
-            mappers = userApiService.getUsers(bests.map { it.beatmap.mapperID }.toSet())
+            mappers = userApiService.getUsers(bests.flatMap { it.beatmap.mapperIDs }.toSet())
 
             calculateApiService.applyBeatMapChanges(bests)
             calculateApiService.applyStarToScores(bests)

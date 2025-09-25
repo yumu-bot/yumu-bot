@@ -312,7 +312,48 @@ class BeatmapApiImpl(
         }
     }
 
-    override fun getBeatmapset(sid: Long): Beatmapset {
+    override fun getBeatmapsets(sids: Iterable<Long>): List<Beatmapset> {
+        val callables = sids.map { sid ->
+            return@map AsyncMethodExecutor.Supplier<Beatmapset> {
+                getBeatmapsets(sid)
+            }
+        }
+
+        return AsyncMethodExecutor.awaitSupplierExecute(callables)
+    }
+
+    override fun extendBeatmapInSet(sets: Iterable<Beatmapset>): List<Beatmapset> {
+        val map = sets.associate {
+            it.beatmapsetID to (it.beatmaps ?: listOf()).map { it.beatmapID }
+        }
+
+        val bids = map.flatMap { it.value }
+
+        val beatmaps = getBeatmaps(bids)
+
+        val group = beatmaps.groupBy { it.beatmapsetID }
+
+        sets.forEach { set ->
+            group[set.beatmapsetID]?.let { set.beatmaps = it }
+        }
+
+        return sets.toList()
+    }
+
+    override fun extendBeatmapInScore(scores: Iterable<LazerScore>): List<LazerScore> {
+
+        val bids = scores.map { it.beatmapID }.toHashSet()
+
+        val beatmaps = getBeatmaps(bids).associateBy { it.beatmapID }
+
+        scores.forEach { s ->
+            beatmaps[s.beatmapID]?.let { s.beatmap = it }
+        }
+
+        return scores.toList()
+    }
+
+    override fun getBeatmapsets(sid: Long): Beatmapset {
         return request { client ->
             client.get()
                 .uri("beatmapsets/{sid}", sid)

@@ -131,16 +131,16 @@ import kotlin.math.floor
 
             if (isSID) {
                 try {
-                    s = beatmapApiService.getBeatmapset(id)
+                    s = beatmapApiService.getBeatmapsets(id)
                 } catch (e: NetworkException.BeatmapException.NotFound) {
                     val b = beatmapApiService.getBeatmapFromDatabase(id)
                     id = b.beatmapsetID
-                    s = beatmapApiService.getBeatmapset(id)
+                    s = beatmapApiService.getBeatmapsets(id)
                 }
             } else {
                 val b = beatmapApiService.getBeatmapFromDatabase(id)
                 id = b.beatmapsetID
-                s = beatmapApiService.getBeatmapset(id)
+                s = beatmapApiService.getBeatmapsets(id)
             }
 
             if (s.creatorData != null) {
@@ -210,7 +210,7 @@ import kotlin.math.floor
                 val minStar = stars.min()
                 val totalLength = bs.sumOf { it.totalLength }
 
-                val hostCount = bs.count { it.mapperID == s.creatorID }
+                val hostCount = bs.count { it.mapperIDs.contains(s.creatorID) }
                 val guestCount = bs.size - hostCount
 
                 val maxSR = floor(maxStar).toString() + if (maxStar - floor(maxStar) >= 0.5) "+" else ""
