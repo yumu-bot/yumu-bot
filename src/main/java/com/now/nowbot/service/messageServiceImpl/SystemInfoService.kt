@@ -7,7 +7,6 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import java.lang.management.ManagementFactory
-import kotlin.math.roundToLong
 
 @Service("SYS_INFO")
 class SystemInfoService : MessageService<Boolean> {
@@ -18,7 +17,12 @@ class SystemInfoService : MessageService<Boolean> {
     ): Boolean {
         val matcher = Instruction.SYSTEM_INFO.matcher(messageText)
 
-        return matcher.find()
+        if (matcher.find()) {
+            data.value = true
+            return true
+        }
+
+        return false
     }
 
     @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun HandleMessage(
@@ -30,7 +34,8 @@ class SystemInfoService : MessageService<Boolean> {
         }
 
         fun Double.digit2(): String {
-            return String.format("%.2f", (this * 100.0).roundToLong())
+            if (this <= 0.0) return "未知"
+            return String.format("%.2f", this * 100.0)
         }
 
         val sb = StringBuilder()
@@ -51,6 +56,7 @@ class SystemInfoService : MessageService<Boolean> {
             当前负载: ${o.systemLoadAverage.digit2()}% (每核 ${(o.systemLoadAverage / o.availableProcessors).digit2()}%)
         """.trimIndent()
 
+        //event.subject.sendMessage(message)
         event.reply(message)
     }
 
