@@ -43,7 +43,7 @@ class SystemInfoService : MessageService<Boolean> {
 
         val m = ManagementFactory.getMemoryMXBean()
         val nm = m.nonHeapMemoryUsage
-        val hm = m.nonHeapMemoryUsage
+        val hm = m.heapMemoryUsage
         val t = ManagementFactory.getThreadMXBean()
         val o = ManagementFactory.getOperatingSystemMXBean()
 
