@@ -73,7 +73,7 @@ import java.nio.file.Files
             chain = getRawBackground(param.bids, beatmapMirrorApiService)
 
             event.replyMessageChain(chain)
-        } catch (e: IllegalStateException) {
+        } catch (e: Exception) {
             val receipt = event.reply("获取难度背景失败。正在为您获取谱面背景。\n（即 BID 最小的难度的背景，也是官网预览图和谱面预览图内的背景）")
 
             val beatmaps = beatmapApiService.getBeatmaps(param.bids)
@@ -82,7 +82,6 @@ import java.nio.file.Files
             event.replyMessageChain(chain)
 
             receipt.recallIn(30 * 1000L)
-            return
         } else {
             val beatmaps = beatmapApiService.getBeatmaps(param.bids)
             chain = getBackground(param.type, beatmaps)
@@ -118,13 +117,6 @@ import java.nio.file.Files
 
             if (dataStrArray.isEmpty()) return listOf()
             return dataStrArray.filter { it.isNotBlank() }.map { it.toLongOrDefault(0L) }
-        }
-
-        private fun getBeatMaps(
-            bids: List<Long>, beatmapApiService: OsuBeatmapApiService
-        ): List<Beatmap> {
-            if (bids.isEmpty()) return listOf()
-            return bids.map { beatmapApiService.getBeatmapFromDatabase(it) }
         }
 
 
@@ -185,12 +177,17 @@ import java.nio.file.Files
     }
 
     override fun reply(event: MessageEvent, param: CoverParam): MessageChain {
-        val chain: MessageChain
+        var chain: MessageChain
 
-        if (param.type == RAW) {
+        if (param.type == RAW) try {
             chain = getRawBackground(param.bids, beatmapMirrorApiService)
+        } catch (e: Exception) {
+            // val receipt = event.reply("获取难度背景失败。正在为您获取谱面背景。\n（即 BID 最小的难度的背景，也是官网预览图和谱面预览图内的背景）")
+
+            val beatmaps = beatmapApiService.getBeatmaps(param.bids)
+            chain = getBackground(RAW, beatmaps)
         } else {
-            val beatmaps = getBeatMaps(param.bids, beatmapApiService)
+            val beatmaps = beatmapApiService.getBeatmaps(param.bids)
             chain = getBackground(param.type, beatmaps)
         }
 
