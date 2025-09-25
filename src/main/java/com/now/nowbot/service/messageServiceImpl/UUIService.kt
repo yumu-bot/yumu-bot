@@ -247,7 +247,7 @@ class UUIService(
                 deltaPP = getDelta(user.pp, historyUser.pp, digit = 2)
                 deltaPC = getDelta(user.playCount, historyUser.playCount, digit = 0, hasSeperator = true)
                 deltaPT = if (user.playTime - historyUser.playTime > 0){
-                    " (${getTime(user.playTime - historyUser.playTime)})"
+                    " (+${getTime(user.playTime - historyUser.playTime)})"
                 } else {
                     ""
                 }
@@ -349,7 +349,7 @@ class UUIService(
             val bf = before.toDouble()
             val nw = now.toDouble()
 
-            if (bf.absoluteValue <= 1.0 || nw.absoluteValue <= 1.0) {
+            if (bf.absoluteValue < 1.0 || nw.absoluteValue < 1.0) {
                 return ""
             }
 
@@ -357,11 +357,7 @@ class UUIService(
 
             val scale = 10.0.pow(digit)
 
-            val sign = when {
-                delta >= 0.5 / scale -> "+"
-                delta < -0.5 / scale -> "-"
-                else -> ""
-            }
+            val sign = getSign(delta, scale)
 
             val formatter = if (hasSeperator) {
                 "%,d"
@@ -379,6 +375,14 @@ class UUIService(
                 ""
             } else {
                 (" (" + sign + String.format(formatter, abs) + additionalUnit + ")").replace("0.", ".")
+            }
+        }
+
+        private fun getSign(number: Double, scale: Double): String {
+            return when {
+                number >= 0.5 / scale -> "+"
+                number < -0.5 / scale -> "-"
+                else -> ""
             }
         }
     }
