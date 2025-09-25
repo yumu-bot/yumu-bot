@@ -349,7 +349,7 @@ class UUIService(
             val bf = before.toDouble()
             val nw = now.toDouble()
 
-            if (bf.absoluteValue <= 1e-4 && nw.absoluteValue >= 1e-4) {
+            if (bf.absoluteValue <= 1.0 || nw.absoluteValue <= 1.0) {
                 return ""
             }
 
