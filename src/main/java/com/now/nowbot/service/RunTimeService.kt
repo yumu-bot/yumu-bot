@@ -152,17 +152,18 @@ class RunTimeService(
     @Scheduled(cron = "0 0/30 8-18 * * *")
     fun alive() {
         fun Long.toMega(): Long {
-            return this / 1024 / 1024
+            return this / 1024L / 1024L
         }
 
         val m = ManagementFactory.getMemoryMXBean()
         val nm = m.nonHeapMemoryUsage
+        val hm = m.nonHeapMemoryUsage
         val t = ManagementFactory.getThreadMXBean()
         val z = ManagementFactory.getMemoryPoolMXBeans()
 
         log.info("""
             非堆内存：已使用 ${nm.used.toMega()} MB，已分配 ${nm.committed.toMega()} MB
-            堆内存：已使用 ${m.heapMemoryUsage.used.toMega()} MB，已分配 ${m.heapMemoryUsage.committed.toMega()} MB，最大可用 ${m.heapMemoryUsage.max.toMega()} MB
+            堆内存：已使用 ${hm.used.toMega()} MB，已分配 ${hm.committed.toMega()} MB，最大可用 ${hm.max.toMega()} MB
             线程：当前 ${t.threadCount} 个 (守护 ${t.daemonThreadCount}，最大 ${t.peakThreadCount})
         """.trimIndent())
 

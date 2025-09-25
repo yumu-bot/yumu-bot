@@ -7,6 +7,7 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import java.lang.management.ManagementFactory
+import kotlin.math.roundToLong
 
 @Service("SYS_INFO")
 class SystemInfoService : MessageService<Boolean> {
@@ -22,18 +23,35 @@ class SystemInfoService : MessageService<Boolean> {
 
     @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun HandleMessage(
         event: MessageEvent,
-        data: Boolean
+        param: Boolean
     ) {
+        fun Long.toMega(): Long {
+            return this / 1024L / 1024L
+        }
+
+        fun Double.digit2(): String {
+            return String.format("%.2f", (this * 100.0).roundToLong())
+        }
+
         val sb = StringBuilder()
         INFO_MAP.forEach { (key: String?, value: String?) -> sb.append(key).append(": ").append(value).append("\n") }
 
         val m = ManagementFactory.getMemoryMXBean()
+        val nm = m.nonHeapMemoryUsage
+        val hm = m.nonHeapMemoryUsage
         val t = ManagementFactory.getThreadMXBean()
+        val o = ManagementFactory.getOperatingSystemMXBean()
 
-        sb.append("已使用堆内存: ").append(m.heapMemoryUsage.used / 1024 / 1024).append(" MB\n")
-        sb.append("当前线程数: ").append(t.threadCount)
+        val message = """
+            $sb
+            
+            非堆内存：已使用 ${nm.used.toMega()} MB，已分配 ${nm.committed.toMega()} MB
+            堆内存：已使用 ${hm.used.toMega()} MB，已分配 ${hm.committed.toMega()} MB，最大可用 ${hm.max.toMega()} MB
+            线程：当前 ${t.threadCount} 个 (守护 ${t.daemonThreadCount}，最大 ${t.peakThreadCount})
+            当前负载: ${o.systemLoadAverage.digit2()}% (每核 ${(o.systemLoadAverage / o.availableProcessors).digit2()}%)
+        """.trimIndent()
 
-        event.subject.sendMessage(sb.toString())
+        event.reply(message)
     }
 
     companion object {
