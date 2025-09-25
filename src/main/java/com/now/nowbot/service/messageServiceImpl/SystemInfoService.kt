@@ -48,16 +48,16 @@ class SystemInfoService : MessageService<Boolean> {
         val o = ManagementFactory.getOperatingSystemMXBean()
 
         val message = """
-            $sb
-            
             非堆内存：已使用 ${nm.used.toMega()} MB，已分配 ${nm.committed.toMega()} MB
             堆内存：已使用 ${hm.used.toMega()} MB，已分配 ${hm.committed.toMega()} MB，最大可用 ${hm.max.toMega()} MB
             线程：当前 ${t.threadCount} 个 (守护 ${t.daemonThreadCount}，最大 ${t.peakThreadCount})
             当前负载: ${o.systemLoadAverage.digit2()}% (每核 ${(o.systemLoadAverage / o.availableProcessors).digit2()}%)
         """.trimIndent()
 
+        sb.append(message)
+
         //event.subject.sendMessage(message)
-        event.reply(message)
+        event.reply(sb.toString())
     }
 
     companion object {
