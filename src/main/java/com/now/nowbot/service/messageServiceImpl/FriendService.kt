@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.MicroUserFilter
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.osu.OsuUser
@@ -19,6 +20,7 @@ import com.now.nowbot.throwable.botException.FriendException
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithRange
@@ -173,6 +175,16 @@ class FriendService(
             // 无权限
         }
 
+        if (me.isExpired) {
+            val t = try {
+                userApiService.refreshUserToken(me)
+            } catch (e: Exception) {
+                throw NetworkException.UserException.TokenExpired()
+            }
+
+            if (t == null) throw NetworkException.UserException.TokenExpired()
+        }
+
         val isMyself = AtomicBoolean(true) // 处理 range
         val mode = getMode(matcher)
 
@@ -217,7 +229,6 @@ class FriendService(
 
             val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { userApiService.getOsuUser(me) },
-                //{ userApiService.getUsers(listOf()) }
                 { userApiService.getFriendList(me).map { it.target } },
             )
 
@@ -242,9 +253,21 @@ class FriendService(
             // 亲密好友模式
             val other = bindDao.getBindUser(id.data)
 
+            if (other != null && other.isAuthorized && other.isExpired) {
+                val t = try {
+                    userApiService.refreshUserToken(other)
+                } catch (ignored: Exception) {
+                    log.info("${other.userID} 的令牌刷新失败，已过期。")
+                }
+
+                if (t == null) {
+                    log.info("${other.userID} 的令牌刷新成功，但已过期。")
+                }
+            }
+
             if (other == null || !other.isAuthorized) {
                 // 对方未绑定模式
-                val others = getUserWithRange(event, matcher, mode, isMyself).data!!
+                val others = getUserWithRange(event, matcher, CmdObject(other?.mode ?: OsuMode.DEFAULT), isMyself).data!!
 
                 val async = AsyncMethodExecutor.awaitPairCallableExecute(
                     { userApiService.getOsuUser(me) },
@@ -269,7 +292,7 @@ class FriendService(
                 // 对方已绑定模式
                 val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
                     { userApiService.getOsuUser(me) },
-                    { userApiService.getOsuUser(id.data!!, other.mode) },
+                    { userApiService.getOsuUser(other) },
                     { userApiService.getFriendList(me) },
                     { userApiService.getFriendList(other) },
                 )

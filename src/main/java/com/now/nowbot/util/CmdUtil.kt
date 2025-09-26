@@ -160,7 +160,9 @@ object CmdUtil {
             return CmdRange()
         }
 
-        if (text.matches(RANGE_ONLY)) {
+        val hasHash = text.contains(REG_HASH.toRegex())
+
+        if (text.matches(RANGE_ONLY) && !hasHash) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -190,7 +192,7 @@ object CmdUtil {
             return CmdRange(null, range[0], range[1])
         } // -1 才是没找到
 
-        val ranges = if (text.indexOf(CHAR_HASH) >= 0 || text.indexOf(CHAR_HASH_FULL) >= 0) {
+        val ranges = if (hasHash) {
             parseNameAndRangeHasHash(text)
         } else {
             parseNameAndRangeWithoutHash(text)
@@ -241,16 +243,6 @@ object CmdUtil {
      * 以下是复制的 SBUser 方法
      */
 
-
-    /** 获取玩家信息, 末尾没有 range。在未找到匹配的玩家时，抛错 */
-    fun getSBUserWithoutRange(
-        event: MessageEvent,
-        matcher: Matcher,
-        mode: CmdObject<OsuMode>,
-    ): SBUser {
-        return getSBUserWithoutRange(event, matcher, mode, AtomicBoolean(false))
-    }
-
     fun getSBUserWithoutRangeWithBackoff(
         event: MessageEvent,
         matcher: Matcher,
@@ -279,7 +271,7 @@ object CmdUtil {
         event: MessageEvent,
         matcher: Matcher,
         mode: CmdObject<OsuMode>,
-        isMyself: AtomicBoolean,
+        isMyself: AtomicBoolean = AtomicBoolean(),
     ): SBUser {
         val user = getSBUser(event, matcher, mode, isMyself)
 
@@ -372,7 +364,9 @@ object CmdUtil {
             return CmdRange()
         }
 
-        if (text.matches(RANGE_ONLY)) {
+        val hasHash = text.contains(REG_HASH.toRegex())
+
+        if (text.matches(RANGE_ONLY) && !hasHash) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -399,7 +393,7 @@ object CmdUtil {
             return CmdRange(null, range[0], range[1])
         } // -1 才是没找到
 
-        val ranges = if (text.indexOf(CHAR_HASH) >= 0 || text.indexOf(CHAR_HASH_FULL) >= 0) {
+        val ranges = if (hasHash) {
             parseNameAndRangeHasHash(text)
         } else {
             parseNameAndRangeWithoutHash(text)

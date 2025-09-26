@@ -124,6 +124,14 @@ open class NetworkException(message: String?
             override val code = 429
         }
 
+        class TokenExpired:
+            UserException("""
+                498 Token Expired/Invalid
+                玩家的令牌已过期，请重新尝试 !bi 绑定。
+            """.trimIndent()) {
+            override val code = 498
+        }
+
         class BadGateWay:
             UserException("""
                 502 Bad GateWay

@@ -97,12 +97,13 @@ open class OsuUser {
     @JvmField @JsonProperty("playmode")
     var mode: String = ""
 
-    @JsonIgnoreProperties
+    @set:JsonIgnoreProperties
+    @get:JsonProperty("mode")
     var currentOsuMode: OsuMode = OsuMode.DEFAULT
         get() = if (rankHistory != null) {
             getMode(rankHistory!!.mode, defaultOsuMode)
         } else {
-            field
+            getMode(mode, field)
         }
         
         set(mode) {

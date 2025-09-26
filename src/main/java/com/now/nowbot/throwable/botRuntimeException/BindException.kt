@@ -102,7 +102,7 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
         class BindUrl(url: String):
             BindResultException("""
                 $url
-                请获取六位数的验证码后，输入 !bind + 验证码 完成绑定。
+                请在获取六位数的验证码后，回来发送 !bind 验证码 完成绑定。
                 """.trimIndent())
 
         class BindSuccess(qq: Long, id: Long, name: String, mode: OsuMode):

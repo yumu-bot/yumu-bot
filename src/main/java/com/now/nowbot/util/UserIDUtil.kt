@@ -267,7 +267,9 @@ object UserIDUtil {
             return CmdRange()
         }
 
-        if (text.matches(RANGE_ONLY)) {
+        val hasHash = text.contains(REG_HASH.toRegex())
+
+        if (text.matches(RANGE_ONLY) && !hasHash) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -290,7 +292,7 @@ object UserIDUtil {
             return CmdRange(me.userID, range.first, range.second)
         }
 
-        val ranges = if (text.contains(REG_HASH.toRegex())) {
+        val ranges = if (hasHash) {
             parseNameAndRangeHasHash(text)
         } else {
             parseNameAndRangeWithoutHash(text)
@@ -348,7 +350,9 @@ object UserIDUtil {
             return CmdRange()
         }
 
-        if (text.matches(RANGE_ONLY)) {
+        val hasHash = text.contains(REG_HASH.toRegex())
+
+        if (text.matches(RANGE_ONLY) && !hasHash) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -375,7 +379,7 @@ object UserIDUtil {
             return CmdRange(me.userID, range.first, range.second)
         }
 
-        val ranges = if (text.contains(REG_HASH.toRegex())) {
+        val ranges = if (hasHash) {
             parseNameAndRangeHasHash(text)
         } else {
             parseNameAndRangeWithoutHash(text)
