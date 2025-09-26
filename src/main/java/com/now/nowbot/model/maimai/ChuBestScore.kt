@@ -16,8 +16,9 @@ class ChuBestScore {
     @JsonProperty("records") var records: Records = Records()
 
     data class Records(
-        @JsonProperty("b30") val best30:List<ChuScore> = listOf(),
-        @JsonProperty("r10") val recent10: List<ChuScore> = listOf(),
+        @JsonProperty("b30") val best30: List<ChuScore> = listOf(),
+        @JsonProperty("n20") val new20: List<ChuScore> = listOf(),
+        @JsonProperty("s10") val selection10: List<ChuScore> = listOf(),
     )
 
     // 在查分器里的名字
@@ -35,12 +36,12 @@ class ChuBestScore {
 
     fun getUser(): User {
         val best30 = this.records.best30.sumOf { it.rating }
-        val recent10 = this.records.recent10.sumOf { it.rating }
+        val new20 = this.records.new20.sumOf { it.rating }
 
-        val sum = best30 + recent10
+        val sum = best30 + new20
 
         val best = if (sum > 0) this.rating * best30 / sum else 0.0
-        val recent = if (sum > 0) this.rating * recent10 / sum else 0.0
+        val recent = if (sum > 0) this.rating * new20 / sum else 0.0
 
         val bestAverage = getAverage(this.records.best30)
 

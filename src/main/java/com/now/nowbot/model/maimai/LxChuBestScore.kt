@@ -10,7 +10,7 @@ data class LxChuBestScore(
 
     val selections: List<LxChuScore>,
 
-    val recents: List<LxChuScore>
+    val newBests: List<LxChuScore>
 ) {
     fun toChuBestScore(user: LxChuUser, songs: List<ChuSong> = listOf()): ChuBestScore {
         val lx = this
@@ -24,7 +24,13 @@ data class LxChuBestScore(
                     val song = map[it.id.toInt()]
                     it.toChuScore(song)
                 },
-                lx.recents.map {
+
+                lx.newBests.map {
+                    val song = map[it.id.toInt()]
+                    it.toChuScore(song)
+                },
+
+                lx.selections.map {
                     val song = map[it.id.toInt()]
                     it.toChuScore(song)
                 },

@@ -47,12 +47,14 @@ class ChuBestScoreService(
         val user: ChuBestScore.User,
         val scores: List<ChuScore>,
         val scoresLatest: List<ChuScore>,
+        val scoresSelection: List<ChuScore>,
     ) {
         fun toMap(): Map<String, Any> {
             return mapOf(
                 "user" to user,
                 "scores" to scores,
                 "scores_latest" to scoresLatest,
+                "scores_selection" to scoresSelection,
                 "panel" to "CB"
             )
         }
@@ -138,24 +140,28 @@ class ChuBestScoreService(
 
         val scores = getBestScores(param.qq, param.name, lxUser, chunithmApiService, lxChunithmApiService)
         val charts = implementScore(param.range, scores, chunithmApiService)
-        val isMultipleScore = charts.recent10.size + charts.best30.size > 1
-
-        if (charts.recent10.isNotEmpty()) {
-            checkCover(charts.recent10, chunithmApiService)
-        }
+        val isMultipleScore = charts.new20.size + charts.best30.size > 1
 
         if (charts.best30.isNotEmpty()) {
             checkCover(charts.best30, chunithmApiService)
+        }
+
+        if (charts.new20.isNotEmpty()) {
+            checkCover(charts.new20, chunithmApiService)
+        }
+
+        if (charts.selection10.isNotEmpty()) {
+            checkCover(charts.selection10, chunithmApiService)
         }
 
         val user = scores.getUser()
 
         val image =
             if (isMultipleScore) {
-                imageService.getPanel(PanelMA2Param(user, charts.best30, charts.recent10).toMap(), "MA2")
+                imageService.getPanel(PanelMA2Param(user, charts.best30, charts.new20, charts.selection10).toMap(), "MA2")
             } else {
-                val score = if (charts.recent10.isNotEmpty()) {
-                    charts.recent10.first()
+                val score = if (charts.new20.isNotEmpty()) {
+                    charts.new20.first()
                 } else {
                     charts.best30.first()
                 }
@@ -209,7 +215,7 @@ class ChuBestScoreService(
             val c = bp.records
 
             val isStandardEmpty = c.best30.isEmpty()
-            val isDeluxeEmpty = c.recent10.isEmpty()
+            val isDeluxeEmpty = c.new20.isEmpty()
 
             if (offset >= 35) {
                 // dx
@@ -217,7 +223,7 @@ class ChuBestScoreService(
                     throw TipsException("您的新版本成绩是空的！")
                 } else {
                     chunithmApiService.insertSongData(c.best30)
-                    chunithmApiService.insertPosition(c.best30, false)
+                    chunithmApiService.insertPosition(c.best30, true)
                     chunithmApiService.insertChunithmAliasForScore(c.best30)
 
                     return ChuBestScore.Records(
@@ -230,13 +236,33 @@ class ChuBestScoreService(
                 if (isStandardEmpty) {
                     throw TipsException("您的旧版本成绩是空的！")
                 } else {
-                    chunithmApiService.insertSongData(c.recent10)
-                    chunithmApiService.insertPosition(c.recent10, true)
-                    chunithmApiService.insertChunithmAliasForScore(c.recent10)
+                    chunithmApiService.insertSongData(c.new20)
+                    chunithmApiService.insertPosition(c.new20, true)
+                    chunithmApiService.insertChunithmAliasForScore(c.new20)
 
                     return ChuBestScore.Records(
                         emptyList(),
-                        c.recent10.drop(offset).take(limit),
+                        c.new20.drop(offset).take(limit),
+                    )
+                }
+            } else if (offset == 0 && limit == 50) {
+                // full
+
+                if (isStandardEmpty && isDeluxeEmpty) {
+                    throw NoSuchElementException.BestScore(bp.name)
+                } else {
+                    chunithmApiService.insertSongData(c.best30 + c.selection10)
+                    chunithmApiService.insertPosition(c.best30 + c.selection10, true)
+                    chunithmApiService.insertChunithmAliasForScore(c.best30 + c.selection10)
+
+                    chunithmApiService.insertSongData(c.new20)
+                    chunithmApiService.insertPosition(c.new20, true)
+                    chunithmApiService.insertChunithmAliasForScore(c.new20)
+
+                    return ChuBestScore.Records(
+                        c.best30,
+                        c.new20,
+                        c.selection10
                     )
                 }
             } else {
@@ -245,19 +271,19 @@ class ChuBestScoreService(
                 if (isStandardEmpty && isDeluxeEmpty) {
                     throw NoSuchElementException.BestScore(bp.name)
                 } else {
-                    chunithmApiService.insertSongData(c.recent10)
-                    chunithmApiService.insertPosition(c.recent10, true)
-                    chunithmApiService.insertChunithmAliasForScore(c.recent10)
-
                     chunithmApiService.insertSongData(c.best30)
-                    chunithmApiService.insertPosition(c.best30, false)
+                    chunithmApiService.insertPosition(c.best30, true)
                     chunithmApiService.insertChunithmAliasForScore(c.best30)
+
+                    chunithmApiService.insertSongData(c.new20)
+                    chunithmApiService.insertPosition(c.new20, true)
+                    chunithmApiService.insertChunithmAliasForScore(c.new20)
 
                     // offset < 35, offset + limit >= 35
 
                     return ChuBestScore.Records(
                         c.best30.take(offset + limit - 35),
-                        c.recent10.drop(offset),
+                        c.new20.drop(offset),
                     )
                 }
             }
