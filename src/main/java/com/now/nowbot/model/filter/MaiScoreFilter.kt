@@ -29,9 +29,9 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
     CATEGORY("(type|category|genre|类型?|种类?|t|g)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    BPM("(bpm|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    BPM("(bpm|b|bm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    ACHIEVEMENT("(accuracy|达成率?|精[确准][率度]?|准确?[率度]|achieve(ment)?|acc|ach)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
+    ACHIEVEMENT("(accuracy|达成率?|精[确准][率度]?|准确?[率度]|achieve(ment)?|acc|ach|ac)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)[%％]?".toRegex()),
 
     TAP("(tap|ta|tp)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
@@ -43,17 +43,17 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
     BREAK("(break|brk|br|bk)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    DX_SCORE("(dx\\s*score|score|dx分|分|dx|ds|x|s)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    DX_SCORE("(dx\\s*score|score|dx分|分|dx|ds|o)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    DX_STAR("(dx\\s*star|star|dx星|星|dxsr|dr|sr|r)(?<n>$REG_OPERATOR_WITH_SPACE[0-5])".toRegex()),
+    DX_STAR("(dx\\s*star|star|dx星|星|dxsr|dr|sr|s)(?<n>$REG_OPERATOR_WITH_SPACE[0-5])".toRegex()),
 
-    RATING("(rating|评分|ra|rt|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+    RATING("(rating|评分|r|ra|rt)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
     RANK("(rank|评价|rk|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    COMBO("(combo|连击|cb)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    COMBO("(combo|连击|cb|x)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    SYNC("(sync|同步|sy)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    SYNC("(sync|同步|sy|y)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
     RANGE(REG_MAI_RANGE.toRegex()),
     ;
@@ -194,9 +194,9 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
                 RANK -> {
                     val rankArray = arrayOf("F", "D", "C", "B", "BB", "BBB", "A", "AA", "AAA", "S", "S+", "SS", "SS+", "SSS", "SSS+")
 
-                    val cr = rankArray.indexOf(condition.uppercase().replace('P', '+'))
-
                     val ir = rankArray.indexOf(it.rank.uppercase().replace('P', '+'))
+
+                    val cr = rankArray.indexOf(condition.uppercase().replace('P', '+'))
 
                     if (cr == -1) {
                         throw IllegalArgumentException.WrongException.Rank()
@@ -204,8 +204,22 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
                     fit(operator, ir, cr)
                 }
-                COMBO -> fit(operator, ComboType.getCombo(condition), ComboType.getCombo(it.combo))
-                SYNC -> fit(operator, SyncType.getSync(condition), SyncType.getSync(it.sync))
+                COMBO -> {
+                    val comboArray = arrayOf(ComboType.PASS, ComboType.FC, ComboType.FC_PLUS, ComboType.AP, ComboType.AP_PLUS)
+
+                    val ic = comboArray.indexOf(ComboType.getCombo(it.combo))
+                    val cc = comboArray.indexOf(ComboType.getCombo(condition))
+
+                    fit(operator, ic, cc)
+                }
+                SYNC -> {
+                    val syncArray = arrayOf(SyncType.PASS, SyncType.SYNC, SyncType.FS, SyncType.FS_PLUS, SyncType.FDX, SyncType.FDX_PLUS)
+
+                    val ic = syncArray.indexOf(SyncType.getSync(it.sync))
+                    val cc = syncArray.indexOf(SyncType.getSync(condition))
+
+                    fit(operator, ic, cc)
+                }
                 else -> false
             }
         }
