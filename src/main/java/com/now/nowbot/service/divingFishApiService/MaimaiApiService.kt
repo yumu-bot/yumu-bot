@@ -42,7 +42,7 @@ interface MaimaiApiService {
 
     fun getMaimaiSong(songID: Long): MaiSong?
 
-    fun getMaimaiSongLibrary(): Map<Int, MaiSong>
+    fun getMaimaiSongLibrary(): List<MaiSong>
 
     fun getMaimaiRank(): Map<String, Int>
 

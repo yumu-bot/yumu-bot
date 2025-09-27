@@ -925,7 +925,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     MAI_FIND(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("mai(mai)?\\s*find", "mf", "mother\\s*fucker")
+        appendCommandsIgnoreAll("mai(mai)?\\s*find", "mf", "mother\\s*fucker", "mai\\s*song")
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
@@ -934,22 +934,12 @@ enum class Instruction(val pattern: Pattern) {
             )
         }
         appendSpace()
-        appendCaptureGroup("any", REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendNameAnyButNoHash()
         appendSpace()
         appendGroup(MAYBE) {
             append(REG_HASH)
-            appendMatchLevel(MAYBE)
             appendSpace()
-            appendCaptureGroup(FLAG_VERSION, REG_ANYTHING_BUT_NO_STARS, MORE)
-        }
-        appendSpace()
-        appendGroup(MAYBE) {
-            append(REG_STAR)
-            appendMatchLevel(MAYBE)
-            appendSpace()
-            appendCaptureGroup(
-                "score", REG_NUMBER, MORE
-            )
+            appendCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100)
         }
     }),
 
@@ -1002,7 +992,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.MATCH_LISTENER) continue
+        if (i != Instruction.MAI_FIND) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

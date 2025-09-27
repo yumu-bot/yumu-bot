@@ -168,13 +168,13 @@ val REG_NAME: String = "($CHAR_NAME$CHAR_NAME_WITH_SPACE+$CHAR_NAME)"
 val REG_ANYTHING_BUT_NO_OPERATOR: String = "(\\S[^#＃！!≥≤<>＜＞＝=]+)"
 
 @Language("RegExp")
-val REG_MAI_DIFFICULTY = "((((1[0-4])|[1-9])(($REG_PLUS?$REG_QUESTION?)|(\\.[0-9])?))|(15(\\.0)?))"
+val REG_MAI_DIFFICULTY = "(\\b(((1[0-4])|[1-9])(($REG_PLUS?$REG_QUESTION?)|(\\.[0-9])?))|(15(\\.0)?)\\b)"
 
 @Language("RegExp")
 val REG_MAI_CABINET = "(sd|standard|标准|标|dx|deluxe|豪华)"
 
 @Language("RegExp")
-val REG_MAI_RANGE = "$REG_MAI_DIFFICULTY\\s*$REG_HYPHEN?\\s*$REG_MAI_DIFFICULTY?"
+val REG_MAI_RANGE = "(?!$REG_HASH)\\s*$REG_MAI_DIFFICULTY$REG_HYPHEN?$REG_MAI_DIFFICULTY?\\s*(?<!$REG_HASH)"
 
 @Language("RegExp")
 val RANGE_ONLY = "^\\s*$REG_HASH?\\s*(\\d{1,3}$REG_HYPHEN+)?\\d{1,3}\\s*$".toRegex()

@@ -108,14 +108,14 @@ import kotlin.math.roundToInt
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): MaiScoreParam {
-        val any: String? = matcher.group("name")
+        val any: String? = matcher.group(FLAG_NAME)
 
         val full: MaiBestScore
 
-        val conditions = DataUtil.paramMatcher(any, MaiScoreFilter.entries.map { it.regex }, REG_MAI_RANGE.toRegex())
+        val conditions = DataUtil.paramMatcher(any, MaiScoreFilter.entries.map { it.regex })
 
         val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
-        val hasCondition = conditions.sumOf { it.size } > 0
+        val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
         val qqStr = (matcher.group(FLAG_QQ_ID) ?: "").trim()
 
@@ -191,7 +191,6 @@ import kotlin.math.roundToInt
                     song = possibles
                 } else {
                     // 外号模式
-
                     val s = maimaiApiService.getMaimaiAliasSong(title ?: "")
 
                     // id 也可能是外号
@@ -315,11 +314,11 @@ import kotlin.math.roundToInt
             }
         }
 
-        // 返回等级 x 10
         /**
+         * 返回等级 x 10
          * @param isAccurate 如果为真，则 13 会匹配成 13.0。否则只会匹配成 13.0-13.5。
          */
-        private fun parseLevel(level: String, isAccurate: Boolean = false): IntRange {
+        fun parseLevel(level: String, isAccurate: Boolean = false): IntRange {
             if (level.contains(REG_PLUS.toRegex())) {
                 val i10 = level.dropLastWhile { it == '?' || it == '？' }.dropLastWhile { it == '+' || it == '＋' }.toDouble() * 10.0
 
@@ -343,11 +342,10 @@ import kotlin.math.roundToInt
             val songs = maimaiApiService.getMaimaiSongLibrary()
             val result = mutableMapOf<Double, MaiSong>()
 
-            for (s in songs.values) {
+            for (s in songs) {
                 val similarity = s.title.getSimilarity(text)
 
                 if (similarity >= 0.4) {
-                    maimaiApiService.insertMaimaiAlias(s)
                     result[similarity] = s
                 }
             }

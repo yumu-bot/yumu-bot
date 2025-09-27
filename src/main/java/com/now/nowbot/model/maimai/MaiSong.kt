@@ -18,6 +18,9 @@ class MaiSong {
     // 曲名外号，需要自己设置
     @get:JsonProperty("alias") var alias: String? = null
 
+    // 曲名外号，需要自己设置
+    @get:JsonProperty("aliases") var aliases: List<String>? = null
+
     // 种类，有 DX 和 SD
     @JsonProperty("type") var type: String = ""
 
@@ -37,12 +40,19 @@ class MaiSong {
     val isDeluxe: Boolean
         get() = this.songID >= 10000
 
+    @get:JsonIgnoreProperties
+    val isUtage: Boolean
+        get() = this.songID >= 100000
+
+    // 自己设置，可以高亮的难度，按 0-4 排布。如果是 null，则会全部显示（也包括宴会场）
+    @JsonProperty("highlight") var highlight: List<Int>? = null
+
     class MaiChart {
         // 物件数量
         @JsonIgnoreProperties var notes: MaiNote = MaiNote()
 
         @get:JsonProperty val dxScore: Int
-            get() = 3 * (notes.tap + notes.touch + notes.hold + notes.slide + notes.break_)
+            get() = 3 * notes.total
 
         @JsonProperty("notes")
         fun setNotes(list: List<Int>) {
@@ -58,14 +68,17 @@ class MaiSong {
         // 谱师
         @JsonProperty("charter") var charter: String = ""
 
-        @JvmRecord
         data class MaiNote(
                 val tap: Int = 0,
                 val hold: Int = 0,
                 val slide: Int = 0,
                 val touch: Int = 0, // 仅 DX 有
                 val break_: Int = 0
-        )
+        ) {
+            @get:JsonProperty("total")
+            val total: Int
+                get() = tap + hold + slide + touch + break_
+        }
     }
 
     class SongInfo {

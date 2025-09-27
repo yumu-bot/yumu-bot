@@ -133,10 +133,18 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
                 DIFFICULTY -> fit(operator, it.star, double, digit = 1, isRound = false, isInteger = true)
 
-                DIFFICULTY_NAME -> fit(operator,
-                    MaiDifficulty.getDifficulty(it.difficulty),
-                    MaiDifficulty.getDifficulty(condition)
-                )
+                DIFFICULTY_NAME -> {
+                    val con = MaiDifficulty.getIndex(MaiDifficulty.getDifficulty(condition))
+
+                    val dif = MaiDifficulty.getIndex(
+                        MaiDifficulty.getDifficulty(it.difficulty)
+                    )
+
+                    // 如果不是查询宴会场，就不会返回宴会场的数据
+                    if (con != 5 && dif == 5) return false
+
+                    fit(operator, dif, con)
+                }
 
                 CABINET -> fit(operator, MaiCabinet.getCabinet(condition), MaiCabinet.getCabinet(it.type))
                 VERSION -> fit(operator,
@@ -147,7 +155,7 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
                 ALIASES -> {
                     it.aliases?.map { alias ->
                         fit(operator, alias, condition)
-                    }?.contains(true) ?: false
+                    }?.toSet()?.contains(true) ?: false
                 }
                 ARTIST -> fit(operator, it.artist, condition)
                 CATEGORY -> fit(operator, MaiCategory.getCategory(it.genre), MaiCategory.getCategory(condition))

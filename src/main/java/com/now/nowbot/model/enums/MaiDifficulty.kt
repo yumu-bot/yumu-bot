@@ -1,5 +1,7 @@
 package com.now.nowbot.model.enums
 
+import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
+
 enum class MaiDifficulty(val full : String) {
     DEFAULT(""),
     BASIC("Basic"),
@@ -19,8 +21,19 @@ enum class MaiDifficulty(val full : String) {
     }
 
     companion object {
-        @JvmStatic
-        fun getIndex(int: Int?): MaiDifficulty {
+        fun getIndex(difficulty: MaiDifficulty): Int {
+            return when (difficulty) {
+                BASIC -> 0
+                ADVANCED -> 1
+                EXPERT -> 2
+                MASTER -> 3
+                RE_MASTER -> 4
+                UTAGE -> 5
+                else -> -1
+            }
+        }
+
+        fun getDifficulty(int: Int?): MaiDifficulty {
             return when (int) {
                 0 -> BASIC
                 1 -> ADVANCED
@@ -32,7 +45,22 @@ enum class MaiDifficulty(val full : String) {
             }
         }
 
-        @JvmStatic
+        /**
+         * 通过字符串来获取多个难度。
+         * 如果为空，则视作允许任意难度。
+         */
+        fun getDifficulties(str: String?): List<MaiDifficulty> {
+            if (str.isNullOrEmpty()) return listOf()
+
+            val strs = str.split(REG_SEPERATOR_NO_SPACE.toRegex())
+
+            val diffs = strs.map { getDifficulty(it) }
+                .distinct()
+                .filter { it != DEFAULT }
+
+            return diffs
+        }
+
         fun getDifficulty(str: String?): MaiDifficulty {
             if (str.isNullOrEmpty()) return DEFAULT
 

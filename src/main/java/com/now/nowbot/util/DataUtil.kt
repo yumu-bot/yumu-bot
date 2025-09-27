@@ -1220,7 +1220,7 @@ object DataUtil {
         val result = List(regexes.size) { emptyList<String>().toMutableList() }
         var matcher = ""
 
-        val strs = str.lowercase().split(REG_SEPERATOR.toRegex())
+        val strs = str.trim().lowercase().split(REG_SEPERATOR.toRegex())
 
         strs.forEachIndexed { j, s ->
             matcher += s
@@ -1231,7 +1231,7 @@ object DataUtil {
                 if (reg.matches(matcher)) {
                     val after = strs[min(j + 1, strs.size - 1)] // 后一个元素，或是最后一个
 
-                    if (after.contains(REG_OPERATOR.toRegex()) || (noContains != null && after.contains(noContains))) {
+                    if (strs.size - 1 == j || after.contains(REG_OPERATOR.toRegex()) || (noContains != null && after.contains(noContains))) {
                         result[i].add(matcher)
                         matcher = ""
                     }

@@ -148,6 +148,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class Song(name: Any):
         NoSuchElementException("没有找到歌曲 $name。")
 
+    class SongsFiltered:
+        NoSuchElementException("没有找到歌曲。")
+
     class Team(name: String):
         NoSuchElementException("没有找到战队 $name。")
 

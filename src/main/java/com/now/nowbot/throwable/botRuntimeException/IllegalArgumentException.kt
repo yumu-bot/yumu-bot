@@ -6,11 +6,12 @@ import com.now.nowbot.throwable.TipsRuntimeException
 open class IllegalArgumentException(message: String?): TipsRuntimeException(message), BotException {
 
     open class ExceedException(message: String?): IllegalArgumentException(message) {
-        class FilteredScore(count: Int?):
-            ExceedException("符合筛选要求的成绩太多了${if (count == null) "" else "($count 个)"}！请缩小查询范围。")
-
         class StarRating:
             WrongException("对方真的糊了那么高星的图吗？还是说你在滥用功能...")
+
+        /*
+        class FilteredScore(count: Int?):
+            ExceedException("符合筛选要求的成绩太多了${if (count == null) "" else "($count 个)"}！请缩小查询范围。")
 
         class Version:
             ExceedException("符合筛选版本的成绩太多了！请减少版本，缩小查询范围。")
@@ -23,6 +24,7 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
                 群聊人数太多！无法获取数据。
                 这是一个 bug，将来修复。
             """.trimIndent())
+         */
 
     }
 

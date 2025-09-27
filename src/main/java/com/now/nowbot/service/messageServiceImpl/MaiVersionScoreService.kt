@@ -141,7 +141,7 @@ class MaiVersionScoreService(
 
         val user = full.getUser()
         val scores = MaiScoreSimplified.parseMaiScoreList(full.records, vs.scores).filter {
-            MaiDifficulty.getIndex(it.index).equalDefault(param.difficulty)
+            MaiDifficulty.getDifficulty(it.index).equalDefault(param.difficulty)
         }
 
         maimaiApiService.insertSongData(scores)

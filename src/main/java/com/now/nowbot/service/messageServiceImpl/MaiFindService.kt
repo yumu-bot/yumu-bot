@@ -1,28 +1,173 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.model.enums.MaiDifficulty
-import com.now.nowbot.model.enums.MaiVersion
-import com.now.nowbot.model.maimai.MaiBestScore
+import com.now.nowbot.model.filter.MaiSongFilter
 import com.now.nowbot.model.maimai.MaiSong
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.messageServiceImpl.MaiFindService.MaiFindParam
-import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.service.messageServiceImpl.MaiScoreService.Companion.parseLevel
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
-import org.intellij.lang.annotations.Language
 import org.springframework.stereotype.Service
-import kotlin.math.abs
-import kotlin.math.floor
+import java.util.regex.Matcher
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 @Service("MAI_FIND") class MaiFindService(
     private val maimaiApiService: MaimaiApiService,
     private val imageService: ImageService
 ) : MessageService<MaiFindParam> {
+    data class MaiFindParam(
+        val songs: List<MaiSong>,
+        val page: Int = 1,
+        val maxPage: Int = 1,
+        val count: Int = 0,
+    ) {
+        fun toMap(): Map<String, Any> {
+            return mapOf(
+                "songs" to songs,
+                "count" to count,
+                "page" to page,
+                "max_page" to maxPage,
+                // "user" to MaiBestScore.User("YumuBot", "", null, null, 0, 0, 0, null)
+            )
+        }
+    }
+
+    override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: MessageService.DataValue<MaiFindParam>
+    ): Boolean {
+        val matcher = Instruction.MAI_FIND.matcher(messageText)
+
+        if (!matcher.find()) {
+            return false
+        }
+
+        data.value = getParam(matcher)
+        return true
+    }
+
+    override fun HandleMessage(event: MessageEvent, param: MaiFindParam) {
+        val image = imageService.getPanel(param.toMap(), "MF")
+
+        event.reply(image)
+    }
+
+    private fun getParam(matcher: Matcher): MaiFindParam {
+        val any: String? = matcher.group(FLAG_NAME)
+
+        val conditions = DataUtil.paramMatcher(any, MaiSongFilter.entries.map { it.regex })
+
+        val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
+        val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
+        val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
+
+        val songs: List<MaiSong>
+
+        if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
+            // 标题搜歌模式
+            val title = any ?: ""
+
+            val possibles = (
+                    maimaiApiService.getMaimaiPossibleSongs(
+                        DataUtil.getStandardisedString(title)
+                    ) ?: listOf())
+                .associateBy { it.title.getSimilarity(title) }
+                .filter { it.key > 0.4 }
+                .map { it.value }
+
+            songs = possibles.ifEmpty {
+                // 外号模式
+                maimaiApiService.getMaimaiAliasSongs(title) ?: throw NoSuchElementException.ResultNotAccurate()
+            }
+        } else {
+            // 常规模式
+            val all = maimaiApiService.getMaimaiSongLibrary()
+                .sortedByDescending { it.songID % 10000 }
+
+            val difficulties = MaiDifficulty.getDifficulties(matcher.group(FLAG_DIFF))
+
+            songs = if (hasCondition) {
+                MaiSongFilter.filterSongs(all, conditions, difficulties)
+            } else {
+                filterInRange(rangeInConditions, all, difficulties)
+            }
+
+            if (songs.isEmpty()) {
+                throw NoSuchElementException.ResultNotAccurate()
+            }
+        }
+
+        val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: 1
+        val pages = DataUtil.splitPage(songs, page, maxPerPage = 48)
+
+        return MaiFindParam(pages.first, pages.second, pages.third, songs.size)
+    }
+
+    companion object {
+
+        private fun String?.getSimilarity(other: String?): Double {
+            return DataUtil.getStringSimilarity(other, this)
+        }
+
+        private fun filterInRange(range: String?, songs: List<MaiSong>, difficulties: List<MaiDifficulty>): List<MaiSong> {
+
+            val intRange = if (range.isNullOrBlank()) {
+                10..150
+            } else if (range.contains(REG_HYPHEN.toRegex())) {
+                val s = range.split(REG_HYPHEN.toRegex()).map { it.trim() }
+
+                if (s.size == 2) {
+                    val f = parseLevel(s.first(), isAccurate = true)
+                    val l = parseLevel(s.last(), isAccurate = true)
+
+                    val min = min(min(f.first, f.last), min(l.first, l.last))
+                    val max = max(max(f.first, f.last), max(l.first, l.last))
+
+                    IntRange(min, max)
+                } else {
+                    parseLevel(s.first(), isAccurate = false)
+                }
+            } else {
+                parseLevel(range)
+            }
+
+            val levels = difficulties.map { diff -> MaiDifficulty.getIndex(diff) }
+
+            return songs.filter { s ->
+                val lvs = mutableListOf<Int>()
+
+                val result = s.star.mapIndexed { i, sr ->
+                    val isLevel = levels.isEmpty() || levels.contains(i) || (s.isUtage && levels.contains(5))
+                    val inRange = (sr * 10).roundToInt() in intRange
+
+                    if (isLevel && inRange) {
+                        lvs.add(i)
+
+                        true
+                    } else {
+                        false
+                    }
+                }
+
+                val t = result.contains(true)
+
+                if (t) s.highlight = lvs
+
+                t
+            }
+        }
+    }
+
+    /*
 
     data class MaiFindParam(val ranges: List<Range>?, val difficulty: MaiDifficulty, val page: Int, val version: MaiVersion?, val dxScore: Int?)
 
@@ -257,4 +402,6 @@ import kotlin.math.floor
             }
         }
     }
+
+     */
 }

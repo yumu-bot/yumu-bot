@@ -144,11 +144,10 @@ import kotlin.text.Charsets.UTF_8
         return cover
     }
 
-    override fun getMaimaiSongLibrary(): Map<Int, MaiSong> { //return getMaimaiSongLibraryFromFile()
-        return maiDao.getAllMaiSong().map {
-            insertMaimaiAlias(it)
-            it
-        }.associateBy { it.songID }
+    override fun getMaimaiSongLibrary(): List<MaiSong> { //return getMaimaiSongLibraryFromFile()
+        val l = maiDao.getAllMaiSong()
+        insertMaimaiAlias(l)
+        return l
     }
 
     override fun getMaimaiSong(songID: Long): MaiSong? { //return getMaimaiSongLibraryFromFile()[songID.toInt()] ?: MaiSong()
@@ -191,7 +190,8 @@ import kotlin.text.Charsets.UTF_8
 
         val actions = songs.map {
             return@map AsyncMethodExecutor.Runnable {
-                it.alias = getMaimaiAlias(it.songID)?.alias?.minByOrNull { it.length }
+                it.aliases = getMaimaiAlias(it.songID)?.alias
+                it.alias = it.aliases?.minByOrNull { it.length }
             }
         }
 
@@ -200,7 +200,8 @@ import kotlin.text.Charsets.UTF_8
 
     override fun insertMaimaiAlias(song: MaiSong?) {
         if (song != null) {
-            song.alias = getMaimaiAlias(song.songID)?.alias?.minByOrNull { it.length }
+            song.aliases = getMaimaiAlias(song.songID)?.alias
+            song.alias = song.aliases?.minByOrNull { it.length }
         }
     }
 
@@ -439,7 +440,8 @@ import kotlin.text.Charsets.UTF_8
                         ?: maiDao.findMaiSongByID(e.key + 10000) //getMaimaiSong(e.key.toLong()) ?: getMaimaiSong(e.key + 10000L) 避免循环引用
 
                     if (s != null) {
-                        s.alias = e.value.firstOrNull()
+                        s.aliases = e.value
+                        s.alias = e.value.minByOrNull { it.length }
 
                         result.add(Triple(s, s.songID, y))
                         continue@search
