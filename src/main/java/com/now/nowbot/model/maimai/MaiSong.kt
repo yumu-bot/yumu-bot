@@ -46,6 +46,23 @@ class MaiSong {
 
     // 自己设置，可以高亮的难度，按 0-4 排布。如果是 null，则会全部显示（也包括宴会场）
     @JsonProperty("highlight") var highlight: List<Int>? = null
+    
+    @JsonIgnoreProperties
+    fun updateHighlight(highlight: List<Int>) {
+        val hil = highlight.isEmpty()
+        if (hil) return
+
+        val nil = this.highlight.isNullOrEmpty()
+        if (nil) {
+            this.highlight = highlight
+        } else {
+            val intersect = highlight.toSet().intersect(this.highlight!!.toSet()).toList()
+
+            if (intersect.isNotEmpty()) {
+                this.highlight = intersect
+            }
+        }
+    }
 
     class MaiChart {
         // 物件数量

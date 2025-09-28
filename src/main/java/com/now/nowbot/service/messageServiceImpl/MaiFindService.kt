@@ -73,20 +73,29 @@ import kotlin.math.roundToInt
         val songs: List<MaiSong>
 
         if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
-            // 标题搜歌模式
-            val title = any ?: ""
+            val title = (any ?: "").trim()
 
-            val possibles = (
-                    maimaiApiService.getMaimaiPossibleSongs(
-                        DataUtil.getStandardisedString(title)
-                    ) ?: listOf())
-                .associateBy { it.title.getSimilarity(title) }
-                .filter { it.key > 0.4 }
-                .map { it.value }
+            val id4Song = if (title.matches(REG_NUMBER_15.toRegex())) {
+                maimaiApiService.getMaimaiSong(title.toLongOrNull() ?: -1L)
+            } else null
 
-            songs = possibles.ifEmpty {
-                // 外号模式
-                maimaiApiService.getMaimaiAliasSongs(title) ?: throw NoSuchElementException.ResultNotAccurate()
+            // 编号搜歌模式
+            if (id4Song != null) {
+                songs = listOf(id4Song)
+            } else {
+                // 标题搜歌模式
+                val possibles = (
+                        maimaiApiService.getMaimaiPossibleSongs(
+                            DataUtil.getStandardisedString(title)
+                        ) ?: listOf())
+                    .associateBy { it.title.getSimilarity(title) }
+                    .filter { it.key > 0.4 }
+                    .map { it.value }
+
+                songs = possibles.ifEmpty {
+                    // 外号模式
+                    maimaiApiService.getMaimaiAliasSongs(title) ?: throw NoSuchElementException.ResultNotAccurate()
+                }
             }
         } else {
             // 常规模式
@@ -142,11 +151,11 @@ import kotlin.math.roundToInt
 
             val levels = difficulties.map { diff -> MaiDifficulty.getIndex(diff) }
 
-            return songs.filter { s ->
+            return songs.filter { song ->
                 val lvs = mutableListOf<Int>()
 
-                val result = s.star.mapIndexed { i, sr ->
-                    val isLevel = levels.isEmpty() || levels.contains(i) || (s.isUtage && levels.contains(5))
+                val result = song.star.mapIndexed { i, sr ->
+                    val isLevel = levels.isEmpty() || levels.contains(i) || (song.isUtage && levels.contains(5))
                     val inRange = (sr * 10).roundToInt() in intRange
 
                     if (isLevel && inRange) {
@@ -158,11 +167,13 @@ import kotlin.math.roundToInt
                     }
                 }
 
-                val t = result.contains(true)
+                val boolean = result.contains(true)
 
-                if (t) s.highlight = lvs
+                if (boolean) {
+                    song.updateHighlight(lvs)
+                }
 
-                t
+                boolean
             }
         }
     }

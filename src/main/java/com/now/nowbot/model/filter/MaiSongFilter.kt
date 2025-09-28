@@ -10,7 +10,7 @@ import org.intellij.lang.annotations.Language
 enum class MaiSongFilter(@Language("RegExp") val regex: Regex) {
     CHARTER("(chart(er)?|mapper|谱师?|c)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    ID("(id|编?号|i)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+    ID("((song\\s*)?id|(歌曲)?编?号|i)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
     DIFFICULTY("(difficulty|diff|难度?|d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MAI_DIFFICULTY)".toRegex()),
 
@@ -20,34 +20,34 @@ enum class MaiSongFilter(@Language("RegExp") val regex: Regex) {
 
     VERSION("(version|版本?|v)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    TITLE("(title|name|song|曲|名|曲名|标题|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    TITLE("(title|name|song|歌?曲|名|歌?曲名|标题|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
     ALIASES("(alias|aliases|外号|绰号|别名?|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    ARTIST("(artist|singer|art|艺术家|歌手?|a)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    ARTIST("(artist|singer|art|艺术家|歌手?|歌手名|a)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    CATEGORY("(type|category|genre|类型?|种类?|t|g)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    CATEGORY("(type|category|genre|类型?|[分种]类|t|g)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    BPM("(bpm|b|bm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    BPM("(bpm|曲?速|b|bm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    TAP("(tap|ta|tp)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    TAP("(tap|点击?|ta|tp)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    HOLD("(hold|hod|ho|hd)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    HOLD("(hold|长?按|hod|ho|hd)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    SLIDE("(slider?|sld|sl|se)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    SLIDE("(slider?|[滑划]动?|sld|sl|se)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    TOUCH("(touch|toh|tch|th|to)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    TOUCH("(touch|触?摸|toh|tch|th|to)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    BREAK("(break|brk|br|bk)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    BREAK("(break|绝?赞|brk|br|bk)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    DX_SCORE("(dx\\s*score|score|dx分|分|dx|ds|o)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    DX_SCORE("(dx\\s*score|score|dx\\s*分数?|分数?|dx|ds|o)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
     RANGE(REG_MAI_RANGE.toRegex()),
     ;
 
     companion object {
         fun filterSongs(songs: List<MaiSong>, conditions: List<List<String>>, difficulties: List<MaiDifficulty>): List<MaiSong> {
-            val result = mutableListOf<Pair<MaiSong, List<MaiDifficulty>>>()
+            var collect = listOf<Pair<MaiSong, List<MaiDifficulty>>>()
 
             val el = entries.toList()
 
@@ -56,38 +56,67 @@ enum class MaiSongFilter(@Language("RegExp") val regex: Regex) {
                 .dropLast(1)
                 .forEachIndexed { index, strings ->
                     if (strings.isNotEmpty()) {
-                        val r = filterConditions(songs, el[index], strings)
+                        val fit = filterConditions(songs, el[index], strings)
 
-                        result.addAll(r)
+                        collect = getOrIntersect(collect, fit)
                     }
                 }
 
             val d = difficulties.toSet()
 
             // 在这里设置高亮难度
-            return result.filter {
+            return collect.filter {
                 if (d.isEmpty()) {
                     true
                 } else {
                     d.containsAll(it.second.toSet())
                 }
             }.map { r ->
-                r.first.highlight = r.second
+                val highlight = r.second
                     .map { diff -> MaiDifficulty.getIndex(diff) }
+
+                r.first.updateHighlight(highlight)
 
                 r.first
             }
         }
 
+        /**
+         * 如果 collection 为空，则返回 fit。否则，返回它们之间的交集
+         */
+        private fun getOrIntersect(collection: List<Pair<MaiSong, List<MaiDifficulty>>>, fit: List<Pair<MaiSong, List<MaiDifficulty>>>): List<Pair<MaiSong, List<MaiDifficulty>>> {
+            if (collection.isEmpty()) {
+                return fit
+            } else {
+                // 根据歌曲名称和难度列表取交集
+                val intersection = collection.filter { col ->
+                    fit.any { f ->
+                        f.first.songID == col.first.songID
+                    }
+                }
+
+                val set = fit.associate { it.first.songID to it.second }
+
+                return intersection.map { pair ->
+                    val new = set[pair.first.songID]
+
+                    if (new != null) {
+                        pair.first to new.toSet().intersect(pair.second.toSet()).toList()
+                    } else {
+                        pair
+                    }
+                }
+            }
+        }
+
         private fun filterConditions(songs: List<MaiSong>, filter: MaiSongFilter, conditions: List<String>): List<Pair<MaiSong, List<MaiDifficulty>>> {
-            val result = mutableListOf<Pair<MaiSong, List<MaiDifficulty>>>()
+            var collect = listOf<Pair<MaiSong, List<MaiDifficulty>>>()
 
             for (c in conditions) {
                 val operator = Operator.getOperator(c)
                 val condition = (c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim()
 
-                val triple = songs.map { s ->
-
+                val fit = songs.map { s ->
                     val r = fitSong(s, operator, filter, condition)
 
                     Triple(r.first, r.second, s)
@@ -95,10 +124,10 @@ enum class MaiSongFilter(@Language("RegExp") val regex: Regex) {
                     .filter { it.first }
                     .map { it.third to it.second }
 
-                result.addAll(triple)
+                collect = getOrIntersect(collect, fit)
             }
 
-            return result
+            return collect
         }
 
         /**
@@ -201,7 +230,14 @@ enum class MaiSongFilter(@Language("RegExp") val regex: Regex) {
 
                 ARTIST -> fit(operator, it.info.artist, condition) to default
 
-                CATEGORY -> fit(operator, MaiCategory.getCategory(it.info.genre), MaiCategory.getCategory(condition)) to default
+                CATEGORY -> {
+                    val con = MaiCategory.getCategory(condition)
+                    val gen = MaiCategory.getCategory(it.info.genre)
+
+                    val fit = fit(operator, gen, con)
+
+                    fit to default
+                }
 
                 BPM -> fit(operator, it.info, int) to default
 
