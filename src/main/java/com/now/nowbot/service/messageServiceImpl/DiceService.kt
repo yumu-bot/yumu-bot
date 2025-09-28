@@ -167,7 +167,7 @@ import kotlin.random.Random
     internal enum class Split(val pattern: Pattern, val onlyC3: Boolean) {
         TIME(
             Pattern.compile(
-                "(?<m1>[\\S\\s]*)?(?<c3>多久|((几多?|多[少长]|什么|啥|哪个|何)(时[候间]|个?(年|月|周|日子?|天|分钟?|小?时|钟[头点]|柱香|时辰|[毫微纳]秒))|几点)(几?何|之?[后内])?)(?<m2>[\\S\\s]*)?"
+                "(?<m1>[\\S\\s]*)?(?<c3>多久|((几多?|多[少长]|什么|啥|哪个|何)(时[候间]|个?(年|月|周|日子?|天|分钟?|小?时|钟[头点]|柱香|时辰|[毫微纳]秒))|几点)(几?何|之?[后内])?|when(?!\\w))(?<m2>[\\S\\s]*)?"
             ), onlyC3 = true
         ), // 皮秒 飞秒
 
@@ -386,7 +386,7 @@ import kotlin.random.Random
         // ....。 不。
         QUESTION(
             Pattern.compile(
-                "\\s*(?<m1>[\\S\\s]*?)?\\s*?(?<c3>吗[?？]?)\\s*?(?<m2>[\\S\\s]*)?"
+                "\\s*(?<m1>[\\S\\s]*?)?\\s*?(?<c3>(吗[?？]?)|([?？]))\\s*?(?<m2>[\\S\\s]*)?"
             ), onlyC3 = true
         ),
 
@@ -728,7 +728,8 @@ import kotlin.random.Random
                 val rightHas = rm.find() && (rm.group("m1").isNullOrBlank().not() || rm.group("m2").isNullOrBlank().not())
 
                 // 临时修改，还没有更好的解决方法
-                if (split != TIME && split != COULD && (leftHas || rightHas)) {
+                // 也就是说，如果这里列出的枚举可以匹配，就不进入多选择模式
+                if (split != TIME && split != COULD && split != QUESTION && (leftHas || rightHas)) {
                     return chooseMultiple(s) // LR一样的
                 }
             }
