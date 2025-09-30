@@ -226,7 +226,7 @@ object CmdUtil {
             result.start = result.end!!.also { result.end = result.start }
         }
 
-        if (result.data != null) {
+        if (result.data != null || result.start != null) {
             return result
         }
 
@@ -429,7 +429,7 @@ object CmdUtil {
             result.end = temp
         }
 
-        if (result.data != null) {
+        if (result.data != null || result.start != null) {
             return result
         }
 

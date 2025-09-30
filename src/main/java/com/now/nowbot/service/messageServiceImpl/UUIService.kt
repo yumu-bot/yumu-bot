@@ -221,9 +221,9 @@ class UUIService(
             }
 
             val countryRank = (user.country?.code ?: "??") + if (isHistoryHighestMode) {
-                ""
+                " "
             } else {
-                "#" + user.countryRank.toString()
+                " #" + user.countryRank.toString()
             }
 
             val time = getTime(user.playTime)
@@ -282,14 +282,14 @@ class UUIService(
             ${user.username} (${user.currentOsuMode.shortName}): ${pp}PP $deltaPP
             Rank: $globalRank$deltaGR $countryRank$deltaCR
             
-            PC: ${String.format("%,d", user.playCount)} $deltaPC
+            PC: ${String.format("%,d", user.playCount)}$deltaPC
             PT: $time $deltaPT
-            TTH: ${String.format("%,d", user.totalHits)} $deltaTTH
+            TTH: ${String.format("%,d", user.totalHits)}$deltaTTH
             
-            SS: ${user.statistics?.countSS}(${user.statistics?.countSSH}) S: ${user.statistics?.countS}(${user.statistics?.countSH}) A: ${user.statistics?.countA}
+            SS: ${user.statistics?.countSS} (${user.statistics?.countSSH}) S: ${user.statistics?.countS} (${user.statistics?.countSH}) A: ${user.statistics?.countA}
             
             Accuracy: ${user.accuracy}% $deltaACC
-            Follower: ${user.followerCount}(${user.mappingFollowerCount})
+            Follower: ${user.followerCount} (${user.mappingFollowerCount})
             Lv: $level
             
             ID: ${user.userID}
