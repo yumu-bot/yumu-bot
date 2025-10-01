@@ -36,11 +36,11 @@ class MaiSong {
 
     @JsonProperty("basic_info") var info: SongInfo = SongInfo()
 
-    @get:JsonIgnoreProperties
+    @get:JsonProperty("is_deluxe")
     val isDeluxe: Boolean
         get() = this.songID >= 10000
 
-    @get:JsonIgnoreProperties
+    @get:JsonProperty("is_utage")
     val isUtage: Boolean
         get() = this.songID >= 100000
 

@@ -73,6 +73,11 @@ class MaiScore {
     // 自己拿
     @get:JsonProperty("bpm") var bpm: Int = 0
 
-    @get:JsonProperty("is_deluxe") val isDeluxe: Boolean
+    @get:JsonProperty("is_deluxe")
+    val isDeluxe: Boolean
         get() = this.songID >= 10000
+
+    @get:JsonProperty("is_utage")
+    val isUtage: Boolean
+        get() = this.songID >= 100000
 }

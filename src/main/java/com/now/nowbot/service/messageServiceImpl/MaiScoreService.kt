@@ -18,10 +18,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
-import kotlin.math.floor
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
 
 @Service("MAI_SCORE") class MaiScoreService(
     private val maimaiApiService: MaimaiApiService,
@@ -127,8 +123,8 @@ import kotlin.math.roundToInt
 
         val cabinet = MaiCabinet.getCabinet(matcher.group(FLAG_VERSION))
 
-        //输入的可能是外号或者歌曲编号
-        if (!hasCondition && !any.isNullOrBlank()) {
+        // 输入的可能是外号或者歌曲编号
+        if (!hasCondition && !any.isNullOrEmpty() && (any.toDoubleOrNull() ?: 0.0) !in 1.0..15.0) {
 
             val id: Long?
             val title: String?
@@ -267,7 +263,7 @@ import kotlin.math.roundToInt
             maimaiApiService.insertSongData(scores)
             maimaiApiService.insertMaimaiAliasForScore(scores)
 
-            val filteredScores = filterInRange(rangeInConditions, MaiScoreFilter.filterScores(scores, conditions))
+            val filteredScores = fitScoreInRange(rangeInConditions, MaiScoreFilter.filterScores(scores, conditions))
 
             if (filteredScores.isEmpty()) {
                 throw NoSuchElementException.BestScoreFiltered(full.getUser().name ?: qq.toString())
@@ -288,52 +284,8 @@ import kotlin.math.roundToInt
     }
 
     companion object {
-        private fun filterInRange(range: String?, scores: List<MaiScore>): List<MaiScore> {
-            if (range.isNullOrBlank()) return scores
-
-            val intRange = if (range.contains(REG_HYPHEN.toRegex())) {
-                val s = range.split(REG_HYPHEN.toRegex()).map { it.trim() }
-
-                if (s.size == 2) {
-                    val f = parseLevel(s.first(), isAccurate = true)
-                    val l = parseLevel(s.last(), isAccurate = true)
-
-                    val min = min(min(f.first, f.last), min(l.first, l.last))
-                    val max = max(max(f.first, f.last), max(l.first, l.last))
-
-                    IntRange(min, max)
-                } else {
-                    parseLevel(s.first(), isAccurate = false)
-                }
-            } else {
-                parseLevel(range)
-            }
-
-            return scores.filter {
-                (it.star * 10).roundToInt() in intRange
-            }
-        }
-
-        /**
-         * 返回等级 x 10
-         * @param isAccurate 如果为真，则 13 会匹配成 13.0。否则只会匹配成 13.0-13.5。
-         */
-        fun parseLevel(level: String, isAccurate: Boolean = false): IntRange {
-            if (level.contains(REG_PLUS.toRegex())) {
-                val i10 = level.dropLastWhile { it == '?' || it == '？' }.dropLastWhile { it == '+' || it == '＋' }.toDouble() * 10.0
-
-                return IntRange((floor(i10) + 6).roundToInt(), (floor(i10) + 9).roundToInt())
-            } else if (level.contains('.') || isAccurate) {
-                // 精确定级
-                val i10 = level.dropLastWhile { it == '?' || it == '？' }.toDouble() * 10.0
-
-                return (floor(i10)).roundToInt()..(floor(i10)).roundToInt()
-            } else {
-                // 模糊定级
-                val i10 = level.dropLastWhile { it == '?' || it == '？' }.toDouble() * 10.0
-
-                return (floor(i10)).roundToInt()..(floor(i10) + 5).roundToInt()
-            }
+        private fun fitScoreInRange(range: String?, scores: List<MaiScore>): List<MaiScore> {
+            return scores.filter { MaiScoreFilter.fitRange(Operator.EQ, range, it.star) }
         }
 
 

@@ -7,6 +7,10 @@ import com.now.nowbot.model.maimai.MaiScore
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
+import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
     CHARTER("(chart(er)?|mapper|谱师?|c)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
@@ -131,14 +135,16 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
 
                 ID -> fit(operator, it.songID % 10000L, int.toLong() % 10000L)
 
-                DIFFICULTY -> fit(operator, it.star, double, digit = 1, isRound = false, isInteger = true)
+                DIFFICULTY -> fitRange(operator, condition, it.star)
 
                 DIFFICULTY_NAME -> {
                     val con = MaiDifficulty.getIndex(MaiDifficulty.getDifficulty(condition))
 
-                    val dif = MaiDifficulty.getIndex(
-                        MaiDifficulty.getDifficulty(it.difficulty)
-                    )
+                    val dif = if (!it.isUtage) {
+                        it.index
+                    } else {
+                        5
+                    }
 
                     // 如果不是查询宴会场，就不会返回宴会场的数据
                     if (con != 5 && dif == 5) return false
@@ -229,6 +235,68 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
                     fit(operator, ic, cc)
                 }
                 else -> false
+            }
+        }
+
+        /**
+         * 公用方法
+         * 检测一个难度是否在输入的难度区间内
+         */
+        fun fitRange(operator: Operator, compare: String?, to: Double): Boolean {
+
+            val intRange = if (compare.isNullOrBlank()) {
+                10..150
+            } else if (compare.contains(REG_HYPHEN.toRegex())) {
+                val s = compare.split(REG_HYPHEN.toRegex()).map { it.trim() }
+
+                if (s.size == 2) {
+                    val f = parseLevel(s.first(), isAccurate = true)
+                    val l = parseLevel(s.last(), isAccurate = true)
+
+                    val min = min(min(f.first, f.last), min(l.first, l.last))
+                    val max = max(max(f.first, f.last), max(l.first, l.last))
+
+                    IntRange(min, max)
+                } else {
+                    parseLevel(s.first(), isAccurate = false)
+                }
+            } else {
+                parseLevel(compare)
+            }
+
+            val t = (to * 10.0).roundToInt()
+
+            return when(operator) {
+                Operator.XQ -> t == intRange.first
+                Operator.EQ -> t in intRange
+
+                Operator.NE -> t !in intRange
+                Operator.GE -> t >= intRange.last
+                Operator.GT -> t > intRange.last
+                Operator.LE -> t <= intRange.first
+                Operator.LT -> t < intRange.first
+            }
+        }
+
+        /**
+         * 返回等级 x 10
+         * @param isAccurate 如果为真，则 13 会匹配成 13.0。否则只会匹配成 13.0-13.5。
+         */
+        private fun parseLevel(level: String, isAccurate: Boolean = false): IntRange {
+            if (level.contains(REG_PLUS.toRegex())) {
+                val i10 = level.dropLastWhile { it == '?' || it == '？' }.dropLastWhile { it == '+' || it == '＋' }.toDouble() * 10.0
+
+                return IntRange((floor(i10) + 6).roundToInt(), (floor(i10) + 9).roundToInt())
+            } else if (level.contains('.') || isAccurate) {
+                // 精确定级
+                val i10 = level.dropLastWhile { it == '?' || it == '？' }.toDouble() * 10.0
+
+                return (floor(i10)).roundToInt()..(floor(i10)).roundToInt()
+            } else {
+                // 模糊定级
+                val i10 = level.dropLastWhile { it == '?' || it == '？' }.toDouble() * 10.0
+
+                return (floor(i10)).roundToInt()..(floor(i10) + 5).roundToInt()
             }
         }
     }
