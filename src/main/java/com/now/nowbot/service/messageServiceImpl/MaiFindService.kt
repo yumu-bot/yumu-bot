@@ -62,7 +62,7 @@ import java.util.regex.Matcher
     private fun getParam(matcher: Matcher): MaiFindParam {
         val any: String? = matcher.group(FLAG_NAME)
 
-        val conditions = DataUtil.paramMatcher(any, MaiSongFilter.entries.map { it.regex })
+        val conditions = DataUtil.paramMatcher(any, MaiSongFilter.entries.map { it.regex }, MaiSongFilter.RANGE.regex)
 
         val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
         val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
@@ -102,10 +102,16 @@ import java.util.regex.Matcher
 
             val difficulties = MaiDifficulty.getDifficulties(matcher.group(FLAG_DIFF))
 
-            songs = if (hasCondition) {
+            val filteredSongs = if (hasCondition) {
                 MaiSongFilter.filterSongs(all, conditions, difficulties)
             } else {
-                fitSongInRange(rangeInConditions, all, difficulties)
+                all
+            }
+
+            songs = if (hasRangeInConditions) {
+                fitSongInRange(rangeInConditions, filteredSongs, difficulties)
+            } else {
+                filteredSongs
             }
 
             if (songs.isEmpty()) {

@@ -1212,7 +1212,9 @@ object DataUtil {
     /**
      * 自己写的空格或逗号分隔的匹配器，这样子就可以无所谓匹配顺序了
      * @param regexes 正则表达式。注意，这里的正则需要写得越简洁越好，不然会有大量重复匹配。推荐写成 xxx=yyy 的形式
-     * @param noContains 如果不填，默认遵循一匹配到就输出的逻辑。如果填写，则只有在靠近末尾的字符串含有这样的字符时，切断并输出当前匹配到的
+     * @param noContains 如果不填写，会自动按空格拼接不匹配此正则的字段。
+     * 举例：!mf v=spl 13，如果不填写 noContains，此时 13 会被拼接到 spl 内。
+     * 但如果填写了匹配数字的正则，则会在这里截断。
      */
     fun paramMatcher(str: String?, regexes: List<Regex>, noContains: Regex? = null) : List<List<String>> {
         if (str == null) return emptyList()

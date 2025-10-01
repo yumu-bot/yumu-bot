@@ -108,7 +108,7 @@ import java.util.regex.Matcher
 
         val full: MaiBestScore
 
-        val conditions = DataUtil.paramMatcher(any, MaiScoreFilter.entries.map { it.regex })
+        val conditions = DataUtil.paramMatcher(any, MaiScoreFilter.entries.map { it.regex }, MaiScoreFilter.RANGE.regex)
 
         val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
         val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
