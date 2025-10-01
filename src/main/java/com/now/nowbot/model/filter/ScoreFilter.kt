@@ -55,21 +55,23 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
     COMBO("(combo|连击|cb?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL[xX]?)".toRegex()),
 
-    PERFECT("(perfect|320|305|pf)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    PERFECT("(perfect|320|305|彩|pf)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    GREAT("(great|300|良|gr)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    GREAT("(great|300|大果?|fruits?|fr|良|黄|gr)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    GOOD("(good|200|gd)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    MISSED_DROPLET("(miss(ed)?\\s*drop(let)?|漏小?果?|md)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    OK("(ok|150|100|(?<!不)可|ba?d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    GOOD("(good|200|绿|gd)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    MEH("(me?h|p(oo)?r|50)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    OK("(ok|150|100|中果?|large\\s*drop(let)?|ld|(?<!不)可|蓝|ba?d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    MISS("(m(is)?s|0|x|不可|失误)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    MEH("(me?h|小果?|drop(let)?|sd|p(oo)?r|灰|50)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+
+    MISS("(m(is)?s|0|x|不可|红|失误)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
     MOD("((m(od)?s?)|模组?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MOD$LEVEL_MORE)".toRegex()),
 
-    RATE("(rate|彩率?|e|pm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    RATE("(rate|彩[率比]|黄彩比?|e|pm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
     CIRCLE("((hit)?circles?|hi?t|click|rice|ci|cr|rc)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
@@ -348,12 +350,37 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
                 COMBO -> fitCountOrPercent(operator, it.maxCombo, condition, it.beatmap.maxCombo)
 
-                PERFECT -> fitCountOrPercent(operator, it.statistics.perfect, condition, it.maximumStatistics.perfect)
+                PERFECT -> if (it.mode == OsuMode.MANIA) {
+                    fitCountOrPercent(operator, it.statistics.perfect, condition, it.maximumStatistics.perfect)
+                } else {
+                    false
+                }
                 GREAT -> fitCountOrPercent(operator, it.statistics.great, condition, it.maximumStatistics.great)
-                GOOD -> fitCountOrPercent(operator, it.statistics.good, condition, it.maximumStatistics.good)
-                OK -> fitCountOrPercent(operator, it.statistics.ok, condition, it.maximumStatistics.ok)
-                MEH -> fitCountOrPercent(operator, it.statistics.meh, condition, it.maximumStatistics.meh)
+                GOOD -> if (it.mode == OsuMode.MANIA) {
+                    fitCountOrPercent(operator, it.statistics.good, condition, it.maximumStatistics.good)
+                } else {
+                    false
+                }
+
+                OK -> if (it.mode != OsuMode.CATCH && it.mode != OsuMode.CATCH_RELAX) {
+                    fitCountOrPercent(operator, it.statistics.ok, condition, it.maximumStatistics.ok)
+                } else {
+                    fitCountOrPercent(operator, it.statistics.ok, condition, it.maximumStatistics.largeTickHit)
+                }
+
+                MEH -> if (it.mode != OsuMode.CATCH && it.mode != OsuMode.CATCH_RELAX) {
+                    fitCountOrPercent(operator, it.statistics.meh, condition, it.maximumStatistics.meh)
+                } else {
+                    fitCountOrPercent(operator, it.statistics.meh, condition, it.maximumStatistics.smallTickHit)
+                }
+
                 MISS -> fitCountOrPercent(operator, it.statistics.miss, condition, it.maximumStatistics.miss)
+
+                MISSED_DROPLET -> if (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) {
+                    fitCountOrPercent(operator, it.statistics.smallTickMiss, condition, it.maximumStatistics.smallTickHit)
+                } else {
+                    false
+                }
 
                 MOD -> {
                     if (condition.contains("NM", ignoreCase = true)) {

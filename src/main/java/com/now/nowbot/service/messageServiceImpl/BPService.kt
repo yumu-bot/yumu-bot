@@ -111,10 +111,10 @@ import kotlin.math.*
      * 请在 matcher.find() 后使用
      */
     private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isShow: Boolean): BPParam? {
-        val any: String? = matcher.group("any")
+        val any: String = matcher.group("any") ?: ""
 
         // 避免指令冲突
-        if (any?.contains("&sb", ignoreCase = true) == true) return null
+        if (any.contains("&sb", ignoreCase = true)) return null
 
         val isMyself = AtomicBoolean(true) // 处理 range
         val mode = getMode(matcher)
@@ -130,7 +130,7 @@ import kotlin.math.*
         val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
         val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
-        if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
+        if (hasRangeInConditions.not() && hasCondition.not() && any.isNotBlank()) {
             throw IllegalArgumentException.WrongException.Cabbage()
         }
 
@@ -142,6 +142,16 @@ import kotlin.math.*
 
         val user: OsuUser
         val scores: Map<Int, LazerScore>
+
+        // todo 未来处理 selectedMode
+        /*
+        val selectedMode = if (any.contains("(fruits?|[大中小]果|漏小?果?|((large|small|miss(ed)?)?\\s*drop(let)?s?)|[lsm]d|fr)\\s*$REG_OPERATOR".toRegex())) {
+            CmdObject(OsuMode.CATCH)
+        } else if (any.contains("(rate|彩[率比]|黄彩比?|e|pm)".toRegex())) {
+            CmdObject(OsuMode.MANIA)
+        } else mode
+
+         */
 
         // 高效的获取方式
         if (id.data != null) {

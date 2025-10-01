@@ -162,7 +162,7 @@ class FriendService(
      * 重写参数获取方式
      */
     private fun getParam(event: MessageEvent, matcher: Matcher): FriendParam {
-        val any: String? = matcher.group("any")
+        val any: String = matcher.group("any") ?: ""
 
         val me = try {
             bindDao.getBindFromQQ(event.sender.id, isMyself = true)
@@ -197,7 +197,7 @@ class FriendService(
         val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
         val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
-        if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
+        if (hasRangeInConditions.not() && hasCondition.not() && any.isNotBlank()) {
             throw IllegalArgumentException.WrongException.Cabbage()
         }
 

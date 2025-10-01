@@ -69,12 +69,12 @@ class SBBPService(
      * 请在 matcher.find() 后使用
      */
     private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isShow: Boolean): BPParam? {
-        val any: String? = matcher.group("any")
+        val any: String = matcher.group("any") ?: ""
 
         // 避免指令冲突
-        if (any?.contains("&sb", ignoreCase = true) == true) return null
+        if (any.contains("&sb", ignoreCase = true)) return null
 
-        val isRelax = if (any != null) {
+        val isRelax = if (any.isNotBlank()) {
             val rxMatcher = ScoreFilter.MOD.regex.toPattern().matcher(any)
 
             if (!rxMatcher.find()) {
@@ -102,7 +102,7 @@ class SBBPService(
         val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
         val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
-        if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
+        if (hasRangeInConditions.not() && hasCondition.not() && any.isNotBlank()) {
             throw IllegalArgumentException.WrongException.Cabbage()
         }
 

@@ -105,10 +105,10 @@ class NewbieRestrictService(
                 scores = listOf(scoreApiService.getBeatMapScore(map.beatmapID, user.userID, mode, mods)?.score ?: return false)
                 calculateApiService.applyStarToScores(scores, local = false)
             } else if (pr.find()) {
-                val any: String? = pr.group("any")
+                val any: String = pr.group("any") ?: ""
 
                 // 避免指令冲突
-                if (any?.contains("&sb", ignoreCase = true) == true) return false
+                if (any.contains("&sb", ignoreCase = true)) return false
 
                 val isPass =
                     if (pr.group("recent") != null) {
@@ -133,7 +133,7 @@ class NewbieRestrictService(
                 val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
                 val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
-                if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
+                if (hasRangeInConditions.not() && hasCondition.not() && any.isNotBlank()) {
                     return false
                 }
 
@@ -196,10 +196,10 @@ class NewbieRestrictService(
 
                 scores = filteredScores.map { it.value }
             } else if (b.find()) {
-                val any: String? = b.group("any")
+                val any: String = b.group("any") ?: ""
 
                 // 避免指令冲突
-                if (any?.contains("&sb", ignoreCase = true) == true) return false
+                if (any.contains("&sb", ignoreCase = true)) return false
 
                 val isMyself = AtomicBoolean() // 处理 range
                 val mode = getMode(b)
@@ -214,7 +214,7 @@ class NewbieRestrictService(
                 val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
                 val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
-                if (hasRangeInConditions.not() && hasCondition.not() && any.isNullOrBlank().not()) {
+                if (hasRangeInConditions.not() && hasCondition.not() && any.isNotBlank()) {
                     return false
                 }
 
