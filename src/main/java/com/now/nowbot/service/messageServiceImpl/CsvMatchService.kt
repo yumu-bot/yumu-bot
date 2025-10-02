@@ -1,7 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
-import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.Match.MatchRound
@@ -192,23 +191,13 @@ import java.util.regex.Matcher
 
         private fun appendRoundStrings(sb: StringBuilder, round: MatchRound) {
             try {
-                val b: Beatmap?
-
-                if (round.beatmap != null) {
-                    b = round.beatmap
-                } else {
-                    b = Beatmap()
-                    b.starRating = 0.0
-                    b.totalLength = 0
-                    b.beatmapID = -1L
-                    b.maxCombo = 0
-                }
+                val b = round.beatmap
 
                 sb.append(round.startTime.format(Date1)).append(',').append(round.startTime.format(Date2)).append(',')
                     .append(round.mode).append(',').append(round.scoringType).append(',').append(round.teamType).append(',')
-                    .append(b!!.starRating).append(',').append(b.totalLength).append(',')
-                    .append(round.mods.join()).append(',').append(b.beatmapID).append(',')
-                    .append(b.maxCombo).append('\n')
+                    .append(String.format("%.2f", b?.starRating ?: 0.0)).append(',').append(b?.totalLength ?: 0).append(',')
+                    .append(round.mods.join()).append(',').append(b?.beatmapID ?: -1L).append(',')
+                    .append(b?.maxCombo ?: 0).append('\n')
             } catch (e: Exception) {
                 sb.append(e.message).append('\n') //.append("  error---->")
             }
@@ -217,7 +206,7 @@ import java.util.regex.Matcher
         private fun appendScoreStrings(sb: StringBuilder, score: LazerScore) {
             try {
                 sb.append(score.userID).append(',').append(String.format("%4.4f", score.accuracy)).append(',')
-                    .append(score.mods.joinToString { it.acronym }).append(',').append(score.score).append(',')
+                    .append(score.mods.map { it.acronym }.join()).append(',').append(score.score).append(',')
                     .append(score.maxCombo).append(',').append(score.passed).append(',').append(score.perfectCombo).append(',')
                     .append(score.playerStat!!.slot).append(',').append(score.playerStat!!.team).append(',')
                     .append(score.playerStat!!.pass).append("\n")
@@ -228,8 +217,8 @@ import java.util.regex.Matcher
 
         private fun appendScoreStringsLite(sb: StringBuilder, score: LazerScore) {
             try {
-                sb.append(score.playerStat!!.team).append(',').append(score.userID).append(',').append(score.user.userName)
-                    .append(',').append(score.score).append(',').append(score.mods.joinToString { it.acronym })
+                sb.append(score.playerStat!!.team).append(',').append(score.userID).append(',').append(score.user.username)
+                    .append(',').append(score.score).append(',').append(score.mods.map { it.acronym }.join())
                     .append(',').append(score.maxCombo).append(',').append(String.format("%4.4f", score.accuracy))
                     .append(',').append("\n")
             } catch (e: Exception) {

@@ -689,7 +689,7 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("mappool", "po")
         appendMode()
         appendSpace()
-        appendCaptureGroup("name", REG_ANYTHING, MORE)
+        appendCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
     }),
 
     GET_POOL(CommandPatternBuilder.create {
@@ -698,10 +698,26 @@ enum class Instruction(val pattern: Pattern) {
         appendSpace()
         appendGroup(MAYBE) {
             append(REG_HASH)
-            appendCaptureGroup("name", REG_ANYTHING, MORE)
+            appendCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
             append(REG_HASH)
         }
         appendCaptureGroup(FLAG_DATA, REG_ANYTHING, ANY)
+    }),
+
+    CALCULATE_NEWBIE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("(calculate|cal|csv)\\s*newbie", "cn")
+        appendMode()
+        appendCaptureGroup(FLAG_DATA, REG_ANYTHING_BUT_NO_HASH_STARS, MORE)
+        appendSpace()
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendCaptureGroup(FLAG_BID, REG_ANYTHING_BUT_NO_STARS, MORE)
+        }
+        appendSpace()
+        appendGroup(MAYBE) {
+            append(REG_STAR)
+            appendCaptureGroup(FLAG_SID, REG_NUMBER, MORE)
+        }
     }),
 
     // #6 聊天指令
@@ -992,7 +1008,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.MAI_FIND) continue
+        if (i != Instruction.CALCULATE_NEWBIE) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

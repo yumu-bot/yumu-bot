@@ -44,7 +44,7 @@ class UUScore(score: LazerScore, beatmapApiService: OsuBeatmapApiService, calcul
 
         val modsList = score.mods
         
-        name = user.userName
+        name = user.username
         mode = score.mode
         country = user.countryCode
         mods = arrayOfNulls(modsList.size)

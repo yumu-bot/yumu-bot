@@ -513,6 +513,8 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         contentLevel: MatchLevel,
         bodyLevel: MatchLevel
     ) {
+        require(flag.matches("[a-zA-Z0-9_]+".toRegex())) { "捕获组的标志位：$flag 不合语法。\nIllegal capture group name." }
+
         appendGroup(bodyLevel) {
             append("?<${flag}>${str}")
             appendMatchLevel(contentLevel)

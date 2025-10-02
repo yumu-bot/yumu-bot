@@ -109,7 +109,7 @@ enum class MicroUserFilter(@Language("RegExp") val regex: Regex) {
             }
 
             return when (filter) {
-                USERNAME -> fit(operator, it.userName, condition)
+                USERNAME -> fit(operator, it.username, condition)
                 ID -> fit(operator, it.userID, long)
                 ACTIVE -> fit(operator, it.isActive, boolean)
                 BOT -> fit(operator, it.isBot, boolean)

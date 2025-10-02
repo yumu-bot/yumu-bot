@@ -371,9 +371,9 @@ class FriendService(
         private fun sortFriends(friends: List<MicroUser>, sortType: SortType, sortDirection: SortDirection): List<MicroUser> {
             val sequence = if (sortDirection == DESCEND) {
                 // 先翻一次，因为等会要翻回来，这样可以保证都是默认按名字升序排序的
-                friends.asSequence().sortedByDescending { it.userName }
+                friends.asSequence().sortedByDescending { it.username }
             } else {
-                friends.asSequence().sortedBy { it.userName }
+                friends.asSequence().sortedBy { it.username }
             }
 
             val sorted = when (sortType) {
@@ -418,7 +418,7 @@ class FriendService(
                     val set = sorted.toSet()
 
                     friends
-                        .sortedBy { it.userName }
+                        .sortedBy { it.username }
                         .filter { ! set.contains(it) }
                         .toList()
                 }

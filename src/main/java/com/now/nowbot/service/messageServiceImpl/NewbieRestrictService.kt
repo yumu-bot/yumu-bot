@@ -330,7 +330,7 @@ class NewbieRestrictService(
         if (silence <= 0) return
 
         val criminal = event.sender
-        val playerName = score.user.userName
+        val playerName = score.user.username
 
         val count7 = newbieDao.getRestrictedCountWithin(criminal.id, 7L * 24 * 60 * 60 * 1000)
         val duration7 = getTime(newbieDao.getRestrictedDurationWithin(criminal.id, 7L * 24 * 60 * 60 * 1000) / 60000)

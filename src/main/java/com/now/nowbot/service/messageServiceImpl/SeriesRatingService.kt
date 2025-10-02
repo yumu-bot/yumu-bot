@@ -180,7 +180,7 @@ class SeriesRatingService(
                 .append(',')
                 .append(data.player.userID)
                 .append(',')
-                .append(data.player.userName)
+                .append(data.player.username)
                 .append(',')
                 .append(String.format("%.2f", Math.round(data.mra * 100.0) / 100.0))
                 .append(',')
@@ -227,7 +227,7 @@ class SeriesRatingService(
             .append("\n")
 
         for (p in sr.playerDataList) {
-            sb.append(String.format("#%d [%.2f] %s", p.ranking, p.mra, p.player.userName))
+            sb.append(String.format("#%d [%.2f] %s", p.ranking, p.mra, p.player.username))
                 .append(" ")
                 .append(
                     String.format(

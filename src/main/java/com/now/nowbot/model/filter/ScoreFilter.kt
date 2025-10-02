@@ -255,11 +255,11 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                 GUEST -> if (! it.beatmap.owners.isNullOrEmpty()) {
                     if (long > 0L) {
                         val ids = it.beatmap.owners!!.map { fit(operator, it.userID, long) }.toSet()
-                        val names = it.beatmap.owners!!.map { fit(operator, it.userName, condition) }.toSet()
+                        val names = it.beatmap.owners!!.map { fit(operator, it.username, condition) }.toSet()
 
                         ids.contains(element = true) || names.contains(element = true)
                     } else {
-                        val names = it.beatmap.owners!!.map { fit(operator, it.userName, condition) }.toSet()
+                        val names = it.beatmap.owners!!.map { fit(operator, it.username, condition) }.toSet()
 
                         names.contains(element = true)
                     }

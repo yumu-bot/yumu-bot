@@ -179,7 +179,7 @@ import kotlin.math.min
 
                 Mapper(
                     avatarUrl = microUser?.avatarUrl ?: "https://a.ppy.sh/${entry.key}",
-                    username = microUser?.userName ?: "UID: ${entry.key}",
+                    username = microUser?.username ?: "UID: ${entry.key}",
                     mapCount = entry.value.size,
                     ppCount = entry.value.sumOf { it.pp }.toFloat(),
                     // ppCount = entry.value.sumOf { it.weight?.pp ?: 0.0 }.toFloat(),

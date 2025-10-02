@@ -458,7 +458,7 @@ class UUBAService(
             val mappersInfo = userApiService.getUsers(mappersId)
             val mapperIdToInfo = HashMap<Long, String>()
             for (node in mappersInfo) {
-                mapperIdToInfo[node.userID] = node.userName
+                mapperIdToInfo[node.userID] = node.username
             }
             mappers.forEach {
                 try {

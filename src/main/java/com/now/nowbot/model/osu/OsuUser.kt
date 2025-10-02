@@ -397,8 +397,14 @@ open class OsuUser {
         this.pp = pp
     }
 
+    constructor(username: String, id: Long, pp: Double) {
+        this.id = id
+        this.username = username
+        this.pp = pp
+    }
+
     constructor(user: MicroUser) {
-        this.username = user.userName
+        this.username = user.username
         this.id = user.userID
         user.avatarUrl?.let { this.avatarUrl = it }
         this.countryCode = user.countryCode

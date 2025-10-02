@@ -126,7 +126,7 @@ import java.util.regex.Matcher
                     "#%d [%.2f] %s (%s)",
                     p.ranking,
                     p.mra,
-                    p.player.userName,
+                    p.player.username,
                     p.team!!.uppercase(Locale.getDefault()),
                 )
             ).append(" ").append(

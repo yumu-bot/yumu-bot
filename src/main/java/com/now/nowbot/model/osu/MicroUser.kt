@@ -55,7 +55,7 @@ class MicroUser : Comparable<MicroUser> {
     var profileColor: String? = null
 
     @JsonProperty("username")
-    var userName: String = ""
+    var username: String = ""
 
     var cover: Cover? = null
 
@@ -119,7 +119,7 @@ class MicroUser : Comparable<MicroUser> {
     }
 
     override fun toString(): String {
-        return "MicroUser(avatarUrl=$avatarUrl, coverUrl=$coverUrl, defaultGroup=$defaultGroup, userID=$userID, isActive=$isActive, isBot=$isBot, isDeleted=$isDeleted, isOnline=$isOnline, isSupporter=$isSupporter, lastVisitString=$lastVisitString, pmFriendsOnly=$pmFriendsOnly, profileColor=$profileColor, userName='$userName', cover=$cover, country=$country, isMutual=$isMutual, groups=$groups, statistics=$statistics, rulesets=$rulesets, supportLevel=$supportLevel, team=$team)"
+        return "MicroUser(avatarUrl=$avatarUrl, coverUrl=$coverUrl, defaultGroup=$defaultGroup, userID=$userID, isActive=$isActive, isBot=$isBot, isDeleted=$isDeleted, isOnline=$isOnline, isSupporter=$isSupporter, lastVisitString=$lastVisitString, pmFriendsOnly=$pmFriendsOnly, profileColor=$profileColor, userName='$username', cover=$cover, country=$country, isMutual=$isMutual, groups=$groups, statistics=$statistics, rulesets=$rulesets, supportLevel=$supportLevel, team=$team)"
     }
 
     companion object {
