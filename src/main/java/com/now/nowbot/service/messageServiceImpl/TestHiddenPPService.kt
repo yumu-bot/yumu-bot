@@ -17,6 +17,7 @@ import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
+import kotlin.math.round
 
 @Service("TEST_HD")
 class TestHiddenPPService(
@@ -47,7 +48,7 @@ class TestHiddenPPService(
         var mode = OsuMode.getMode(param.group("mode"))
 
         if (names.isNullOrEmpty())
-            throw throw IllegalStateException.Fetch("玩家名")
+            throw IllegalStateException.Fetch("玩家名")
 
         val sb = StringBuilder()
 
@@ -83,9 +84,9 @@ class TestHiddenPPService(
                 }
             }
 
-            sb.append(Math.round(hiddenPP)).append(',').append(' ')
+            sb.append(round(hiddenPP)).append(',').append('\n')
         }
 
-        event.reply(sb.substring(0, sb.length - 2))
+        event.reply(sb.toString().removeSuffix(",\n"))
     }
 }

@@ -61,7 +61,6 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
         }
 
         val ids = AsyncMethodExecutor.awaitSupplierExecute(actions)
-            .filterNotNull()
             .filter { it.second > 0L }
             .toMap()
 

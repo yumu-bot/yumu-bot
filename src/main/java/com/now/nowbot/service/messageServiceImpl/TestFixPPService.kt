@@ -55,7 +55,7 @@ import kotlin.math.roundToInt
             }
 
             if (names.isEmpty()) {
-                throw throw IllegalStateException.Fetch("玩家名")
+                throw IllegalStateException.Fetch("玩家名")
             }
 
             data.value = TestFixPPParam(names, mode)
@@ -186,77 +186,6 @@ import kotlin.math.roundToInt
         log.info("TP：修补最好成绩成功，耗时：${(System.currentTimeMillis() - time) / 1000} 秒")
 
         event.reply(sb.toString().removeSuffix(", "))
-
-
-        /*
-
-        for (name in names) {
-            if (name.isBlank()) {
-                continue
-            }
-
-            val user: OsuUser
-            val bests: List<LazerScore>
-            val playerPP: Double
-
-            try {
-                user = userApiService.getOsuUser(name, mode)
-                playerPP = user.pp
-
-                if (mode == OsuMode.DEFAULT) {
-                    mode = user.currentOsuMode
-                }
-
-                bests = scoreApiService.getBestScores(user.userID, mode, 0, 100) +
-                        scoreApiService.getBestScores(user.userID, mode, 100, 100)
-            } catch (e: Exception) {
-                sb.append("name=").append(name).append(" not found").append('\n')
-                continue
-            }
-
-            if (bests.isEmpty()) {
-                sb.append("name=").append(name).append(" bp is empty").append('\n')
-            }
-
-            for (s in bests) {
-                beatmapApiService.applyBeatMapExtendFromDataBase(s)
-
-                val max = s.beatmap.maxCombo ?: 1
-                val combo = s.maxCombo
-
-                val miss = s.statistics.miss
-
-                // 断连击，mania 模式不参与此项筛选
-                val isChoke = (miss == 0) && (combo < round(max * 0.98f)) && (s.mode != OsuMode.MANIA)
-
-                // 含有 <1% 的失误
-                val has1pMiss = (miss > 0) && ((1f * miss / max) <= 0.01f)
-
-                // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
-                if (isChoke || has1pMiss) {
-                    s.PP = calculateApiService.getScoreFullComboPP(s).pp
-                }
-            }
-
-            val bpPP = bests.sumOf { it.weight?.PP ?: 0.0 }
-            val fixed = bests.sortedByDescending{ it.PP ?: 0.0 }
-
-            var weight = 1.0 / 0.95
-
-            for (f in fixed) {
-                weight *= 0.95
-                f.weight = LazerScore.Weight(weight, (f.PP ?: 0.0) * weight)
-            }
-
-            val fixedPP = fixed.sumOf { it.weight?.PP ?: 0.0 }
-
-            val resultPP = playerPP - bpPP + fixedPP
-            sb.append(resultPP.roundToInt()).append(", ")
-        }
-
-        event.reply(sb.toString().removeSuffix(", "))
-
-         */
     }
 
     companion object {

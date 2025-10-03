@@ -1304,9 +1304,16 @@ object DataUtil {
     /**
      * 离散变量估计正态分布的均值和方差
      */
-    fun <T: Number> getNormalDistribution(numbers: List<T?>): Pair<Double, Double> {
+    fun <T: Number> getNormalDistribution(numbers: List<T?>, isBesselCorrection: Boolean = true): Pair<Double, Double> {
         val u = if (numbers.isNotEmpty()) numbers.map { it?.toDouble() ?: 0.0 }.average() else 0.0
-        val o2 = if (numbers.isNotEmpty()) numbers.map { ((it?.toDouble() ?: 0.0) - u).pow(2.0) }.average() else 0.0
+
+        val size = if (isBesselCorrection && numbers.size > 1) {
+            numbers.size - 1
+        } else {
+            numbers.size
+        }
+
+        val o2 = if (numbers.isNotEmpty()) numbers.map { ((it?.toDouble() ?: 0.0) - u).pow(2.0) }.sum() / size else 0.0
 
         return u to o2
     }
