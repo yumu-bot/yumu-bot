@@ -154,7 +154,7 @@ class CalculateNewbieCupService(
             val multiplierArray:Array<DoubleArray> = arrayOf(
                 doubleArrayOf(1.0, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 0.0),
                 doubleArrayOf(0.6, 1.0, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 0.0),
-                doubleArrayOf(0.3, 1.0, 1.1, 1.0, 1.0, 1.1, 1.1, 1.1, 1.1, 1.1, 0.5),
+                doubleArrayOf(0.3, 1.0, 1.1, 1.0, 1.0, 1.1, 1.1, 1.1, 1.1, 1.1, 0.0),
                 doubleArrayOf(0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.5),
                 doubleArrayOf(0.0, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 0.9, 1.0),
                 doubleArrayOf(0.1, 0.1, 0.1, 0.1, 0.1, 0.0, 0.1, 0.1, 0.1, 0.1, 0.1),

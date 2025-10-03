@@ -60,7 +60,7 @@ import java.util.regex.Matcher
     }
 
     private fun getParam(matcher: Matcher): MaiFindParam {
-        val any: String = matcher.group(FLAG_NAME) ?: ""
+        val any: String = (matcher.group(FLAG_NAME) ?: "").trim()
 
         val conditions = DataUtil.paramMatcher(any, MaiSongFilter.entries.map { it.regex }, MaiSongFilter.RANGE.regex)
 
@@ -70,7 +70,9 @@ import java.util.regex.Matcher
 
         val songs: List<MaiSong>
 
-        if (hasRangeInConditions.not() && hasCondition.not() && any.isNotBlank()) {
+        val isRange = any.matches(REG_MAI_RANGE.toRegex())
+
+        if (!hasRangeInConditions && !hasCondition && !isRange) {
             val title = any.trim()
 
             val id4Song = if (title.matches(REG_NUMBER_15.toRegex())) {

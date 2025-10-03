@@ -104,7 +104,7 @@ import java.util.regex.Matcher
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): MaiScoreParam {
-        val any: String? = matcher.group(FLAG_NAME)
+        val any: String = (matcher.group(FLAG_NAME) ?: "").trim()
 
         val full: MaiBestScore
 
@@ -123,8 +123,10 @@ import java.util.regex.Matcher
 
         val cabinet = MaiCabinet.getCabinet(matcher.group(FLAG_VERSION))
 
+        val isRange = any.matches(REG_MAI_RANGE.toRegex())
+
         // 输入的可能是外号或者歌曲编号
-        if (!hasCondition && !any.isNullOrEmpty() && (any.toDoubleOrNull() ?: 0.0) !in 1.0..15.0) {
+        if (!hasCondition && any.isNotEmpty() && !isRange) {
 
             val id: Long?
             val title: String?
