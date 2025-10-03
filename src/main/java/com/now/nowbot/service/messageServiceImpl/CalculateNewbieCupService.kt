@@ -198,7 +198,7 @@ class CalculateNewbieCupService(
                 .toList()
                 .sortedByDescending { it.second }
                 .mapIndexed { i: Int, pair: Pair<Long, Double> ->
-                    val score = ((accuracy.size - 1 - i) * 1000000.0 / (accuracy.size - 1)).roundToLong()
+                    val score = ((accuracy.size - i) * 1000000.0 / (accuracy.size - 1)).roundToLong()
 
                     pair.first to score
                 }
