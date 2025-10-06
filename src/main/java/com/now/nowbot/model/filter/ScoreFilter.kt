@@ -382,30 +382,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     false
                 }
 
-                MOD -> {
-                    if (condition.contains("NM", ignoreCase = true)) {
-                        when (operator) {
-                            Operator.XQ, Operator.EQ -> it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")
-                            Operator.NE -> (it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")).not()
-                            else -> throw IllegalArgumentException.WrongException.OperatorOnly("==", "=", "!=")
-                        }
-                    } else if (condition.contains("FM", ignoreCase = true)) {
-                        when (operator) {
-                            Operator.XQ, Operator.EQ -> it.mods.isNotEmpty() && (it.mods.size == 1 && it.mods.first().acronym == "CL").not()
-                            Operator.NE -> it.mods.isEmpty() || (it.mods.size == 1 && it.mods.first().acronym == "CL")
-                            else -> throw IllegalArgumentException.WrongException.OperatorOnly("==", "=", "!=")
-                        }
-                    } else {
-                        val mods = LazerMod.getModsList(condition)
-
-                        when (operator) {
-                            Operator.XQ -> LazerMod.hasMod(mods, it.mods) && (mods.size == it.mods.size)
-                            Operator.EQ -> LazerMod.hasMod(mods, it.mods)
-                            Operator.NE -> LazerMod.hasMod(mods, it.mods).not()
-                            else -> throw IllegalArgumentException.WrongException.OperatorOnly("==", "=", "!=")
-                        }
-                    }
-                }
+                MOD -> fitMod(operator, condition, it.mods)
 
                 RATE -> {
                     if (it.mode != OsuMode.MANIA) throw IllegalArgumentException.WrongException.Mode()
@@ -510,7 +487,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
             val maxDayOfMonth = ym.lengthOfMonth()
             val maxDayOfYear = ym.lengthOfYear()
 
-            val unitContains = MutableList(6, { false })
+            val unitContains = MutableList(6) { false }
 
             // 秒数
             val unitDelta = arrayListOf(
@@ -676,6 +653,39 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                         && fit(Operator.LE, compare, too)
             } else {
                 return fit(operator, compare, too)
+            }
+        }
+
+        fun fitMod(operator: Operator, compare: String, to: List<LazerMod>): Boolean {
+            val com = LazerMod.getModsList(compare)
+                .map { it.acronym }.toSet()
+            val too = to
+                .map { it.acronym }.filter { it != "CL" }.toSet()
+
+            return if (compare.isEmpty() || compare.contains("NM", ignoreCase = true)) {
+                when (operator) {
+                    Operator.XQ, Operator.EQ -> too.isEmpty()
+                    Operator.NE, Operator.GE, Operator.GT -> too.isNotEmpty()
+                    else -> false
+                }
+            } else if (compare.contains("FM", ignoreCase = true)) {
+                when (operator) {
+                    Operator.XQ, Operator.EQ -> too.isNotEmpty()
+                    Operator.NE, Operator.LE, Operator.LT -> too.isEmpty()
+                    else -> false
+                }
+            } else {
+                val ins = com.intersect(too)
+
+                when (operator) {
+                    Operator.XQ -> com == too
+                    Operator.EQ,
+                    Operator.GE -> ins.size == com.size
+                    Operator.GT -> ins.size == com.size && com.size < too.size
+                    Operator.LE -> ins.size == too.size
+                    Operator.LT -> ins.size == too.size && com.size > too.size
+                    Operator.NE -> ins.isEmpty()
+                }
             }
         }
 

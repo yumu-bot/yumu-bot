@@ -233,7 +233,7 @@ import java.util.regex.Matcher
     }
 
     private fun asyncDownloadBackground(param: ScoreParam) {
-        scoreApiService.asyncDownloadBackground(param.scores, listOf(CoverType.COVER, CoverType.LIST))
+        scoreApiService.asyncDownloadBackgroundFromScores(param.map, listOf(CoverType.COVER, CoverType.LIST))
     }
 
     private fun getMessageChain(param: ScoreParam): MessageChain {

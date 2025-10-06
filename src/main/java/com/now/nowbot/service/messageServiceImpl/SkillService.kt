@@ -211,7 +211,7 @@ import kotlin.math.sqrt
 
         val myBody = getBody(me, myBests, my, isMyself = true, !hasOthers)
         val othersBody = if (hasOthers) {
-            getBody(other!!, otherBests!!, others!!, isMyself = false, isShowScores = false)
+            getBody(other, otherBests!!, others!!, isMyself = false, isShowScores = false)
         } else null
 
         val image =
@@ -285,7 +285,7 @@ import kotlin.math.sqrt
         val scores: List<SkillScore> = if (isShowScores) {
             val s10 = bests.take(10)
 
-            scoreApiService.asyncDownloadBackground(s10, CoverType.LIST)
+            scoreApiService.asyncDownloadBackgroundFromScores(s10, CoverType.LIST)
 
             calculateApiService.applyBeatMapChanges(s10)
             calculateApiService.applyStarToScores(s10)

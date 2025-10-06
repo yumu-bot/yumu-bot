@@ -11,14 +11,14 @@ import java.util.stream.StreamSupport
 
 data class Beatmap(
     @JsonProperty("beatmapset_id")
-    var beatmapsetID: Long = 0,
+    var beatmapsetID: Long = 0L,
 
     @JsonProperty("difficulty_rating")
     var starRating: Double = 0.0,
 
     @JsonProperty("id")
     @Column(name = "id")
-    var beatmapID: Long = 0,
+    var beatmapID: Long = 0L,
 
     @set:JsonProperty("mode")
     @get:JsonIgnore

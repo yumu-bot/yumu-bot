@@ -9,6 +9,7 @@ import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.CoverType.*
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.BeatmapUserScore
+import com.now.nowbot.model.osu.Covers
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
@@ -273,27 +274,26 @@ class ScoreApiImpl(
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    override fun asyncDownloadBackground(scores: Iterable<LazerScore>, type: CoverType?) {
+    override fun asyncDownloadBackground(covers: Iterable<Covers>, type: CoverType?) {
         val path = Path.of(IMG_BUFFER_PATH)
         if (Files.isDirectory(path).not() || Files.isWritable(path).not()) return
 
-        val actions = scores.map { score ->
+        val actions = covers.map { cover ->
             return@map AsyncMethodExecutor.Runnable {
-                val covers = score.beatmapset.covers
 
                 val url = when (type) {
-                    CARD -> covers.card
-                    CARD_2X -> covers.card2x
-                    COVER_2X -> covers.cover2x
-                    LIST -> covers.list
-                    LIST_2X -> covers.list2x
-                    SLIM_COVER -> covers.slimcover
-                    SLIM_COVER_2X -> covers.slimcover2x
-                    else -> covers.cover
+                    CARD -> cover.card
+                    CARD_2X -> cover.card2x
+                    COVER_2X -> cover.cover2x
+                    LIST -> cover.list
+                    LIST_2X -> cover.list2x
+                    SLIM_COVER -> cover.slimcover
+                    SLIM_COVER_2X -> cover.slimcover2x
+                    else -> cover.cover
                 }
 
                 if (url.isBlank()) {
-                    log.info("异步下载谱面图片：成绩的谱面不完整")
+                    log.info("异步下载谱面图片：谱面封面类不完整")
                     return@Runnable
                 }
 

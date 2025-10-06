@@ -22,7 +22,7 @@ import kotlin.random.Random
 
 @Service("DICE") class DiceService : MessageService<DiceParam> {
     // dice：骰子次数，默认为 1
-    @JvmRecord data class DiceParam(val dice: Long?, val number: Long?, val text: String?)
+    data class DiceParam(val dice: Long?, val number: Long?, val text: String?)
 
     @Throws(Throwable::class) override fun isHandle(
         event: MessageEvent,
@@ -52,7 +52,7 @@ import kotlin.random.Random
             } else if (number.isNullOrBlank().not()) {
                 data.value = DiceParam(null, null, (number + text).trim())
                 return true
-            } else if (text.trim().matches("^${REG_NUMBER_DECIMAL}$".toRegex())) {
+            } else if (text.trim().matches("^$REG_NUMBER_DECIMAL$".toRegex())) {
                 // !roll 4
                 data.value = DiceParam(1L, text.toLongOrNull() ?: 100L, null)
                 return true
@@ -576,8 +576,8 @@ import kotlin.random.Random
                         COULD -> {
                             iis = matcher.group("c3")
                             not = "不"
-                            if (left.isNullOrBlank()) left = "..."
-                            if (right.isNullOrBlank()) right = ""
+                            if (left.isBlank()) left = "..."
+                            if (right.isBlank()) right = ""
                         }
 
                         POSSIBILITY -> { // 做点手脚，让 0% 和 100% 更容易出现 -4 ~ 104
@@ -613,7 +613,7 @@ import kotlin.random.Random
                         IS -> {
                             iis = matcher.group("c3") // 有时候，”是“结尾的句子并不是问是否，还可以问比如时间。
                             // 比如，“OWC 的开启时间是？”
-                            if (right.isNullOrBlank()) return "我怎么知道。"
+                            if (right.isBlank()) return "我怎么知道。"
                         }
 
                         REAL, QUESTION -> { // 10% 触发彩蛋。
@@ -624,7 +624,7 @@ import kotlin.random.Random
                     }
 
                     // 排除掉AB一样的选择要求
-                    if (left.isNullOrBlank().not() && right.isNullOrBlank().not() && num == 0.0) {
+                    if (left.isNotBlank() && right.isNotBlank() && num == 0.0) {
                         val isSame: Boolean = try {
                             val l = left.lowercase().trim()
                             val r = right.lowercase().trim()

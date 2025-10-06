@@ -23,7 +23,6 @@ import com.now.nowbot.util.CmdUtil.getMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Matcher
@@ -194,7 +193,7 @@ class BPFixService(
         if (scores.isEmpty()) throw NoSuchElementException.BestScoreTheoretical()
 
         AsyncMethodExecutor.asyncRunnableExecute {
-            scoreApiService.asyncDownloadBackground(scores, listOf(CoverType.LIST, CoverType.COVER))
+            scoreApiService.asyncDownloadBackgroundFromScores(scores, listOf(CoverType.LIST, CoverType.COVER))
         }
 
         return scores to newPlayerPP

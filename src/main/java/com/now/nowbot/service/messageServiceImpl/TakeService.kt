@@ -1,86 +1,100 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.BeatmapsetSearch
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.AsyncMethodExecutor
-import com.now.nowbot.util.CmdObject
-import com.now.nowbot.util.CmdUtil
-import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.*
+import com.now.nowbot.util.command.FLAG_NAME
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.regex.Matcher
 import kotlin.math.exp
 import kotlin.math.floor
 
 @Service("TAKE") class TakeService(
+    private val bindDao: BindDao,
     private val userApiService: OsuUserApiService,
+    private val beatmapApiService: OsuBeatmapApiService,
 ) : MessageService<TakeService.TakeParam> {
-    data class TakeParam(val user: OsuUser, val isMyself: Boolean = false)
+
+    data class TakeParam(
+        val user: OsuUser?,
+        val name: String = "",
+        val isMyself: Boolean = false, // 是本人吗？
+        val isPrevious: Boolean = false, // 曾用名
+        val hostedCount: Int = 0, // 有这个名字的 上架谱面
+        val hasBadge: Boolean = false, // 有牌子
+    )
 
     override fun isHandle(
-        event: MessageEvent,
-        messageText: String,
-        data: MessageService.DataValue<TakeParam>
+        event: MessageEvent, messageText: String, data: MessageService.DataValue<TakeParam>
     ): Boolean {
-
-        val m = Instruction.TAKE.matcher(messageText)
-        if (!m.find()) {
+        val matcher = Instruction.TAKE.matcher(messageText)
+        if (!matcher.find()) {
             return false
         }
 
-        val isMyself = AtomicBoolean()
-
-        val user = try {
-            CmdUtil.getUserWithoutRange(event, m, CmdObject(OsuMode.DEFAULT), isMyself)
-        } catch (e: Exception) {
-            throw NoSuchElementException.Player()
-        }
-
-        data.value = TakeParam(user, isMyself.get())
+        data.value = getParam(event, matcher)
         return true
     }
 
     override fun HandleMessage(event: MessageEvent, param: TakeParam) {
-        val user = param.user
-        val name = user.username
+        val name = if (param.name.isEmpty()) {
+            "此玩家"
+        } else {
+            "玩家 ${param.name} "
+        }
+
+        val type = if (param.isPrevious) {
+            "曾用"
+        } else {
+            "玩家"
+        }
 
         // 提前跳出
-        if (user.badges.isNotEmpty()) {
-            if (user.rankedCount > 0) {
+        if (param.hasBadge) {
+            if (param.hostedCount > 0) {
                 if (param.isMyself) {
-                    event.reply("别人不能占据你的玩家名，因为你已经拥有上架 (ranked) 谱面，并且已经获取主页奖牌 (badges)。")
+                    event.reply("别人不能占据你的${type}名，因为你已经拥有上架 (ranked) 谱面，并且已经获取主页奖牌 (badges)。")
                 } else {
-                    event.reply("你不能占据玩家 $name 的玩家名，因为 ta 已经拥有上架 (ranked) 谱面，并且已经获取主页奖牌 (badges)。")
+                    event.reply("你不能占据${name}的${type}名，因为对方已经拥有上架 (ranked) 谱面，并且已经获取主页奖牌 (badges)。")
                 }
             } else {
                 if (param.isMyself) {
-                    event.reply("别人不能占据你的玩家名，因为你已经获取主页奖牌 (badges)。")
+                    event.reply("别人不能占据你的${type}名，因为你已经获取主页奖牌 (badges)。")
                 } else {
-                    event.reply("你不能占据玩家 $name 的玩家名，因为 ta 已经获取主页奖牌 (badges)。")
+                    event.reply("你不能占据${name}的${type}名，因为对方已经获取主页奖牌 (badges)。")
                 }
             }
+
             return
-        } else if (user.rankedCount > 0) {
+        } else if (param.hostedCount > 0) {
             if (param.isMyself) {
-                event.reply("别人不能占据你的玩家名，因为你已经拥有上架 (ranked) 谱面。")
+                event.reply("别人不能占据你的${type}名，因为你已经拥有上架 (ranked) 谱面。")
             } else {
-                event.reply("你不能占据玩家 $name 的玩家名，因为 ta 已经拥有上架 (ranked) 谱面。")
+                event.reply("你不能占据${name}的${type}名，因为对方已经拥有上架 (ranked) 谱面。")
             }
+
             return
+        } else { // 进入下一轮
         }
+
+        val user = param.user ?: throw NoSuchElementException.TakePlayer(name)
 
         val micro = try {
             userApiService.getUsers(listOf(user.userID), isVariant = true).first()
         } catch (e: Exception) {
-            throw NoSuchElementException.Player(user.username)
+            throw NoSuchElementException.TakePlayer(user.username)
         }
 
         val pc = (micro.rulesets?.osu?.playCount ?: 0L) + (micro.rulesets?.taiko?.playCount
@@ -98,19 +112,19 @@ import kotlin.math.floor
             val rulesets = listOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
 
             val actions = rulesets.map {
-                return@map AsyncMethodExecutor.Supplier<Pair<Int, OffsetDateTime>> {
-                    val lastMonth =
-                        userApiService.getOsuUser(user.userID, it).monthlyPlaycounts.lastOrNull()?.startDate
-                            ?: OffsetDateTime.MIN.format(formatter2)
+                return@map AsyncMethodExecutor.Supplier {
+                    val lastMonth = userApiService.getOsuUser(user.userID, it).monthlyPlaycounts.lastOrNull()?.startDate
+                        ?: OffsetDateTime.MIN.format(formatter2)
 
-                    return@Supplier it.modeValue.toInt() to
-                            LocalDate.parse(lastMonth, formatter2).atTime(0, 0).atOffset(ZoneOffset.UTC)
+                    return@Supplier it.modeValue.toInt() to LocalDate.parse(lastMonth, formatter2).atTime(0, 0)
+                        .atOffset(ZoneOffset.UTC)
                 }
             }
 
             val result = AsyncMethodExecutor.awaitSupplierExecute(actions).toMap()
 
-            val most = result.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value ?: throw NoSuchElementException.PlayerPlay(user.username)
+            val most = result.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value
+                ?: throw NoSuchElementException.PlayerPlay(user.username)
 
             if (most.format(formatter2) == OffsetDateTime.MIN.format(formatter2)) {
                 throw NoSuchElementException.PlayerPlay(user.username)
@@ -171,19 +185,29 @@ import kotlin.math.floor
             "即将"
         }
 
-        if (isImmediately) {
+        val username = user.username
+
+        // 曾用名立刻可以使用
+        if (isImmediately || param.isPrevious) {
             if (param.isMyself) {
+                val tips = if (param.isPrevious) {
+                    "你不会受任何影响。"
+                } else {
+                    "之后你会变成 ${username}_old。赶快回坑开一把！"
+                }
+
                 event.reply(
                     """
-                    别人现在就可以变成 $name，之后你会变成 ${name}_old。赶快回坑开一把！
+                    别人现在就可以使用你的${type}名：${username}。${tips}
                     你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
                     你的游戏次数：${pc}
                     你的玩家名可被占用的时间：${takeTimeFormat}
                     """.trimIndent()
                 )
             } else {
-                event.reply("""
-                    你现在就可以变成玩家 $name。
+                event.reply(
+                    """
+                    你现在就可以使用${name}的${type}名。
                     玩家上次在线时间：${lastVisitFormat}（${visitTimeFormat}）
                     玩家的游戏次数：${pc}
                     玩家名可被占用的时间：${takeTimeFormat}
@@ -195,21 +219,81 @@ import kotlin.math.floor
 
         if (param.isMyself) {
             event.reply("""
-                    别人${soon}可以占据你的玩家名。
-                    你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
-                    你的游戏次数：${pc}
-                    你的玩家名可被占用的时间：${takeTimeFormat}（${takeTime}）
-                    """.trimIndent()
+                别人${soon}可以占据你的${type}名：${username}。
+                你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
+                你的游戏次数：${pc}
+                你的玩家名可被占用的时间：${takeTimeFormat}（${takeTime}）
+                """.trimIndent()
             )
         } else {
             event.reply("""
-                    您${soon}可以占据玩家 $name 的玩家名。
-                    玩家上次在线时间：${lastVisitFormat}（${visitTimeFormat}）
-                    玩家的游戏次数：${pc}
-                    玩家名可被占用的时间：${takeTimeFormat}（${takeTime}）
-                    """.trimIndent()
+                您${soon}可以占据对方的${type}名：${username}。
+                玩家上次在线时间：${lastVisitFormat}（${visitTimeFormat}）
+                玩家的游戏次数：${pc}
+                玩家名可被占用的时间：${takeTimeFormat}（${takeTime}）
+                """.trimIndent()
             )
         }
+    }
+
+    private fun getParam(event: MessageEvent, matcher: Matcher): TakeParam {
+        val mode = CmdUtil.getMode(matcher)
+        val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
+
+        val bindUser = bindDao.getBindUser(event.sender.id)
+        val nameStr = (matcher.group(FLAG_NAME) ?: "").trim()
+
+        val user: OsuUser?
+        val search: BeatmapsetSearch
+
+        // 高效的获取方式
+        if (id != null) { // 构建谱面查询
+
+            val query = mapOf(
+                "q" to "creator=" + nameStr.ifEmpty { id }, "sort" to "ranked_desc", "page" to 1
+            )
+
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+                {
+                    try {
+                        userApiService.getOsuUser(id)
+                    } catch (e: Exception) {
+                        return@awaitPairCallableExecute null
+                    }
+                },
+                { beatmapApiService.searchBeatmapset(query) },
+            )
+
+            user = async.first
+            search = async.second
+
+        } else { // 经典？的获取方式
+
+            user = try {
+                CmdUtil.getUserWithoutRange(event, matcher, CmdObject(OsuMode.DEFAULT))
+            } catch (_: Exception) {
+                null
+            }
+
+            val query = mapOf(
+                "q" to "creator=" + nameStr.ifEmpty { user?.userID ?: 0L }, "sort" to "ranked_desc", "page" to 1
+            )
+
+            search = beatmapApiService.searchBeatmapset(query)
+        }
+
+        val name = nameStr.ifEmpty { user?.username } ?: ""
+        val isMyself = user?.userID == bindUser?.userID
+        val isPrevious =
+            user?.previousNames?.map { prev -> DataUtil.getStringSimilarity(name, prev) > 0.8 }?.contains(true) ?: false
+
+        val hostedCount = search.beatmapsets.count { set ->
+            (set.beatmapsetID != user?.userID) && (set.beatmaps?.all { that -> that.beatmapID != user?.userID } ?: true)
+        }
+
+        val hasBadge = user?.badges?.isNotEmpty() ?: false
+
+        return TakeParam(user, name, isMyself, isPrevious, hostedCount, hasBadge)
     }
 
     companion object {

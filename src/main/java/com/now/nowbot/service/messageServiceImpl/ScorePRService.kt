@@ -27,12 +27,10 @@ import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
 import com.now.nowbot.util.command.REG_RANGE
-import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 
@@ -383,7 +381,7 @@ class ScorePRService(
     }
 
     private fun ScorePRParam.asyncImage() = run {
-        scoreApiService.asyncDownloadBackground(scores.values, listOf(CoverType.COVER, CoverType.LIST))
+        scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
     }
 
     private fun ScorePRParam.getMessageChain(): MessageChain {

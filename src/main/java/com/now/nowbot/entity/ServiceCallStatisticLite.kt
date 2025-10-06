@@ -1,6 +1,9 @@
 package com.now.nowbot.entity
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.util.JacksonUtil
 import jakarta.persistence.*
+import org.spring.core.getItem
 import java.time.LocalDateTime
 
 //@Entity
@@ -24,19 +27,37 @@ data class ServiceCallStatisticLite(
     @Column(name = "duration")
     var duration: Long = -1L,
 
-    @Column(name = "beatmap_id")
-    var beatmapID: Long = -1L,
+    @Column(name = "param", columnDefinition = "JSON", nullable = true)
+    var param: String? = null,
 
-    @Column(name = "beatmapset_id")
-    var beatmapsetID: Long = -1L,
+    ) {
 
-    @Column(name = "mode")
-    var modeInt: Byte = -1,
+    interface ServiceCall {
+        val id: Long
+        val name: String
+        val userID: Long
+        val groupID: Long
+        val createTime: LocalDateTime
+        val duration: Long
 
-    @Column(name = "offset")
-    var offset: Int = 0,
+        /**
+         * 使用 data 获取数据
+         */
+        val param: String?
 
-    @Column(name = "limit")
-    var limit: Int = 1,
+        val data: ServiceData
+            get() {
+                val node = JacksonUtil.parseObject(param, JsonNode::class.java)
 
+                return ServiceData(
+                    node.getItem<Long>("bid"),
+                    node.getItem<Long>("sid"),
+                )
+            }
+    }
+
+    data class ServiceData(
+        val bid: Long? = null,
+        val sid: Long? = null
     )
+}

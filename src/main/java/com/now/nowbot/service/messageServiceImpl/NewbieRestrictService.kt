@@ -4,6 +4,7 @@ import com.mikuac.shiro.core.Bot
 import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.config.Permission
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.NewbieDao
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
@@ -42,6 +43,7 @@ class NewbieRestrictService(
     private val scoreApiService: OsuScoreApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
+    private val bindDao: BindDao,
     private val newbieDao: NewbieDao,
     private val botContainer: BotContainer,
     config: NewbieConfig,
@@ -316,7 +318,7 @@ class NewbieRestrictService(
             remitBIDs.contains(it.beatmapID) && LazerMod.noStarRatingChange(it.mods)
         }
 
-        return data.value.isNullOrEmpty().not()
+        return !data.value.isNullOrEmpty()
     }
 
     override fun HandleMessage(event: MessageEvent, param: Collection<LazerScore>) {
@@ -330,7 +332,14 @@ class NewbieRestrictService(
         if (silence <= 0) return
 
         val criminal = event.sender
-        val playerName = score.user.username
+
+        val criminalUsername = try {
+            bindDao.getBindFromQQ(criminal.id).username
+        } catch (e: Exception) {
+            "未绑定"
+        }
+
+        val username = score.user.username
 
         val count7 = newbieDao.getRestrictedCountWithin(criminal.id, 7L * 24 * 60 * 60 * 1000)
         val duration7 = getTime(newbieDao.getRestrictedDurationWithin(criminal.id, 7L * 24 * 60 * 60 * 1000) / 60000)
@@ -346,21 +355,25 @@ class NewbieRestrictService(
             .sortedByDescending { it.time!! }
             .mapNotNull { it.star }
             .take(5)
-            .map { formatter.format(it) }
-            .joinToString(", ")
+            .toList()
 
-        val index = String.format("%.2f", sr) + " -> " + getTime(silence)
+        val final5 = if (last5.isEmpty()) {
+            last5.joinToString(", ") { formatter.format(it) }
+        } else {
+            "0"
+        }
+
+        val punishment = String.format("%.2f", sr) + "星 -> " + getTime(silence)
 
         val sb = StringBuilder()
 
-        sb.append("检测到 ${criminal.name} (${playerName}) 超星。").append('\n')
-            .append("($index)").append('\n')
+        sb.append("检测到 ${criminal.name} (${criminalUsername}) 超星。").append('\n')
+            .append("玩家：${username}").append('\n')
+            .append("星数：${punishment}").append('\n')
             .append("超星谱面：${score.previewName}").append('\n')
-            .append("七天之内超星次数：${count7}。").append('\n')
-            .append("七天之内禁言时间：${duration7}。").append('\n')
-            .append("总计超星次数：${count}。").append('\n')
-            .append("总计禁言时间：${duration}。").append('\n')
-            .append("最近五次超星的星数：[${last5}]。").append('\n').append('\n')
+            .append("七天内：${count7}次，${duration7}。").append('\n')
+            .append("总计：${count}次，${duration}。").append('\n')
+            .append("最近五次星数：[${final5}]。").append('\n').append('\n')
 
         try {
             newbieDao.saveRestricted(criminal.id, sr, System.currentTimeMillis(), min(silence * 60000L, 7L * 24 * 60 * 60 * 1000))

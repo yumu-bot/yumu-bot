@@ -542,7 +542,7 @@ class BiliUser {
          * 在动态头像框下，这个是 webp 动态图片
          */
         @JsonProperty("image_enhance")
-        val urlWEBP: String,
+        val urlWebp: String,
 
         /**
          * 在动态头像框下，这个是 png 逐帧序列

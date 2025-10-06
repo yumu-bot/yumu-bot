@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlin.math.round
 
 @Service("SERVICE_COUNT") class ServiceCountService(
     private val serviceCallRepository: ServiceCallRepository, private val imageService: ImageService
@@ -35,7 +36,7 @@ import java.util.*
         val hours = if (d.isNullOrEmpty() && h.isNullOrEmpty()) {
             24
         } else if (d.isNullOrEmpty().not()) {
-            24 * (d?.toIntOrNull() ?: 0) + (h?.toIntOrNull() ?: 0)
+            24 * (d.toIntOrNull() ?: 0) + (h?.toIntOrNull() ?: 0)
         } else {
             h?.toIntOrNull() ?: 24
         }
@@ -45,7 +46,7 @@ import java.util.*
     }
 
     @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun HandleMessage(
-        event: MessageEvent, hours: Int
+        event: MessageEvent, param: Int
     ) {
         val sb = StringBuilder()
         val result: List<ServiceCallResult>?
@@ -53,7 +54,7 @@ import java.util.*
         val now = LocalDateTime.now()
         val before: LocalDateTime
 
-        when (hours) {
+        when (param) {
             24 -> {
                 before = now.minusHours(24)
                 result = serviceCallRepository.countBetween(before, now)
@@ -67,7 +68,7 @@ import java.util.*
             }
 
             else -> {
-                before = now.minusHours(hours.toLong())
+                before = now.minusHours(param.toLong())
                 sb.append(
                     "## 时间段：**${before.format(dateTimeFormatter)}** - **${now.format(dateTimeFormatter)}**\n"
                 )
@@ -146,13 +147,9 @@ import java.util.*
     private fun <T : Number?> roundToSec(@Nullable millis: T?): String {
         if (millis == null) return "0"
 
-        val str = String.format("%.1f", Math.round(millis.toFloat() / 100f) / 10f)
+        val str = String.format("%.1f", round(millis.toFloat() / 100f) / 10f)
 
-        if (str.endsWith(".0")) {
-            return str.replace(".0", "")
-        }
-
-        return str
+        return str.removeSuffix(".0")
     }
 
     companion object {

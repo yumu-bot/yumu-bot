@@ -5,7 +5,9 @@ import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.Replay
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.BeatmapUserScore
+import com.now.nowbot.model.osu.Covers
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 
@@ -127,22 +129,32 @@ interface OsuScoreApiService {
         legacy: Boolean = false
     ): List<LazerScore>
 
-    fun asyncDownloadBackground(scores: Iterable<LazerScore>, type: Iterable<CoverType>) {
+    fun asyncDownloadBackgroundFromScores(beatmap: Beatmap, type: Iterable<CoverType>) {
         type.forEach {
-            asyncDownloadBackground(scores, it)
+            asyncDownloadBackground(listOf(beatmap.beatmapset?.covers ?: Covers()), it)
         }
     }
 
-    fun asyncDownloadBackground(score: LazerScore, type: Iterable<CoverType>) {
+    fun asyncDownloadBackground(covers: Iterable<Covers>, type: CoverType? = CoverType.COVER)
+
+    fun asyncDownloadBackgroundFromScores(scores: Iterable<LazerScore>, type: CoverType? = CoverType.COVER) {
+        asyncDownloadBackground(scores.map { it.beatmapset.covers }, type)
+    }
+
+    fun asyncDownloadBackgroundFromScores(scores: Iterable<LazerScore>, type: Iterable<CoverType>) {
         type.forEach {
-            asyncDownloadBackground(listOf(score), it)
+            asyncDownloadBackgroundFromScores(scores, it)
         }
     }
 
-    fun asyncDownloadBackground(scores: Iterable<LazerScore>, type: CoverType? = CoverType.COVER)
+    fun asyncDownloadBackgroundFromScores(score: LazerScore, type: Iterable<CoverType>) {
+        type.forEach {
+            asyncDownloadBackgroundFromScores(listOf(score), it)
+        }
+    }
 
-    fun asyncDownloadBackground(score: LazerScore, type: CoverType? = CoverType.COVER) {
-        asyncDownloadBackground(listOf(score), type)
+    fun asyncDownloadBackgroundFromScores(score: LazerScore, type: CoverType? = CoverType.COVER) {
+        asyncDownloadBackgroundFromScores(listOf(score), type)
     }
 
 

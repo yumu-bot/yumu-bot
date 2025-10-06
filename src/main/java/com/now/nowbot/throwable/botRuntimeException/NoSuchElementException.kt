@@ -151,6 +151,14 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class SongsFiltered:
         NoSuchElementException("没有找到歌曲。")
 
+    class TakePlayer(name: String? = null):
+        NoSuchElementException("没有找到玩家${
+            if (name.isNullOrBlank()) {
+                ""
+            } else {
+                " $name"
+            }}。你也许可以尝试使用这个名字，但它也可能是违禁词。")
+
     class Team(name: String):
         NoSuchElementException("没有找到战队 $name。")
 

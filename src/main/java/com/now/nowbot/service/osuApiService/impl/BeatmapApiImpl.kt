@@ -231,7 +231,7 @@ class BeatmapApiImpl(
         val idChunk = ids.chunked(50)
 
         val callables = idChunk.map { chunk ->
-            return@map AsyncMethodExecutor.Supplier<List<Beatmap>> {
+            return@map AsyncMethodExecutor.Supplier {
                 getBeatmapsPrivate(chunk)
             }
         }
@@ -314,7 +314,7 @@ class BeatmapApiImpl(
 
     override fun getBeatmapsets(sids: Iterable<Long>): List<Beatmapset> {
         val callables = sids.map { sid ->
-            return@map AsyncMethodExecutor.Supplier<Beatmapset> {
+            return@map AsyncMethodExecutor.Supplier {
                 getBeatmapsets(sid)
             }
         }
@@ -323,8 +323,8 @@ class BeatmapApiImpl(
     }
 
     override fun extendBeatmapInSet(sets: Iterable<Beatmapset>): List<Beatmapset> {
-        val map = sets.associate {
-            it.beatmapsetID to (it.beatmaps ?: listOf()).map { it.beatmapID }
+        val map = sets.associate { set ->
+            set.beatmapsetID to (set.beatmaps ?: listOf()).map { b -> b.beatmapID }
         }
 
         val bids = map.flatMap { it.value }
@@ -728,14 +728,22 @@ class BeatmapApiImpl(
     }
 
     override fun applyBeatmapExtend(score: LazerScore, extended: Beatmap) {
-        val lite = score.beatmap
+        val lite = if (score.beatmap.beatmapID > 0L) {
+            score.beatmap
+        } else {
+            // 部分成绩连谱面都没有，比如多成绩模式
+            score.beatmap.apply {
+                beatmapID = score.beatmapID
+                mode = score.mode
+                modeInt = score.ruleset.toInt()
+            }
+        }
 
         score.beatmapID = extended.beatmapID
 
-        score.beatmap = extend(lite, extended)!!
-        if (extended.beatmapset != null) {
-            score.beatmapset = extended.beatmapset!!
-        }
+        score.beatmap = extend(lite, extended)
+
+        extended.beatmapset?.let { score.beatmapset = it }
     }
 
     override fun applyBeatmapExtendFromDatabase(scores: List<LazerScore>) {
@@ -906,69 +914,34 @@ class BeatmapApiImpl(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BeatmapApiImpl::class.java)
 
-        private fun extend(lite: Beatmap?, extended: Beatmap?): Beatmap? {
+        private fun extend(lite: Beatmap, extended: Beatmap?): Beatmap {
             if (extended == null) {
                 return lite
-            } else if (lite?.CS == null) {
+            } else if (lite.beatmapID == 0L) {
                 return extended
             }
 
             // 深拷贝
-            return extended.copy().apply {
-                starRating = lite.starRating
-                CS = lite.CS
-                AR = lite.AR
-                OD = lite.OD
-                HP = lite.HP
-                totalLength = lite.totalLength
-                hitLength = lite.hitLength
-                BPM = lite.BPM
-                convert = lite.convert
+            return if (lite.CS != null) {
+                extended.copy().apply {
+                    mode = lite.mode
+                    starRating = lite.starRating
+                    CS = lite.CS
+                    AR = lite.AR
+                    OD = lite.OD
+                    HP = lite.HP
+                    totalLength = lite.totalLength
+                    hitLength = lite.hitLength
+                    BPM = lite.BPM
+                    convert = lite.convert
+                }
+            } else {
+                extended.copy().apply {
+                    mode = lite.mode
+                    convert = lite.modeInt != 0 && modeInt == 0
+                    modeInt = lite.modeInt
+                }
             }
-
-            /*
-            val deepL = Beatmap().apply {
-                beatmapsetID = extended.beatmapsetID
-                beatmapID = extended.beatmapID
-                modeStr = extended.modeStr
-                status = extended.status
-                totalLength = extended.totalLength
-                mapperID = extended.mapperID
-                difficultyName = extended.difficultyName
-                beatmapset = extended.beatmapset
-                md5 = extended.md5
-                failTimes = extended.failTimes
-                maxCombo = extended.maxCombo
-                tagIDs = extended.tagIDs
-                tags = extended.tags
-
-                starRating = lite.starRating
-                CS = lite.CS
-                AR = lite.AR
-                OD = lite.OD
-                HP = lite.HP
-                totalLength = lite.totalLength
-                hitLength = lite.hitLength
-                BPM = lite.BPM
-                convert = lite.convert
-
-                circles = extended.circles
-                sliders = extended.sliders
-                spinners = extended.spinners
-                deletedAt = extended.deletedAt
-                scoreAble = extended.scoreAble
-                lastUpdated = extended.lastUpdated
-                owners = extended.owners
-                modeInt = extended.modeInt
-                passCount = extended.passCount
-                playCount = extended.playCount
-                ranked = extended.ranked
-                url = extended.url
-            }
-
-            return deepL
-
-             */
         }
     }
 }

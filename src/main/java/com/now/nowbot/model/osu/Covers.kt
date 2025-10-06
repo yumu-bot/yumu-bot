@@ -6,28 +6,28 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
 data class Covers (
-    @JsonProperty("cover")
+    @get:JsonProperty("cover")
     val cover: String = "",
 
-    @JsonProperty("cover@2x")
+    @get:JsonProperty("cover@2x")
     val cover2x: String = "",
 
-    @JsonProperty("card")
+    @get:JsonProperty("card")
     val card: String = "",
 
-    @JsonProperty("card@2x")
+    @get:JsonProperty("card@2x")
     val card2x: String = "",
 
-    @JsonProperty("list")
+    @get:JsonProperty("list")
     val list: String = "",
 
-    @JsonProperty("list@2x")
+    @get:JsonProperty("list@2x")
     val list2x: String = "",
 
-    @JsonProperty("slimcover")
+    @get:JsonProperty("slimcover")
     val slimcover: String = "",
 
-    @JsonProperty("slimcover@2x")
+    @get:JsonProperty("slimcover@2x")
     val slimcover2x: String = "",
 ) {
     override fun toString(): String {

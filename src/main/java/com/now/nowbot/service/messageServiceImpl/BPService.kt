@@ -23,14 +23,11 @@ import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.command.*
-import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.math.*
 
 @Service("BP") class BPService(
     private val calculateApiService: OsuCalculateApiService,
@@ -276,7 +273,7 @@ import kotlin.math.*
     }
 
     private fun BPParam.asyncImage() = run {
-        scoreApiService.asyncDownloadBackground(scores.values, listOf(CoverType.COVER, CoverType.LIST))
+        scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
     }
 
     private fun BPParam.getImage(): ByteArray =

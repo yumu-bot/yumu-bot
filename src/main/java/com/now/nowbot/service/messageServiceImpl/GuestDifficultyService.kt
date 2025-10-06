@@ -116,9 +116,8 @@ class GuestDifficultyService(
 
             // 注意，从 search 返回的 beatmapset 包含的 beatmap 会缺谱师信息
             val sets = (async.first.beatmapsets +
-                    async.second.beatmapsets.filter {
-                        it.beatmapsetID != id.data!! &&
-                                (it.beatmaps?.all { that -> that.beatmapID != id.data!! } ?: true)
+                    async.second.beatmapsets.filter { set ->
+                        (set.beatmapsetID != id.data!!) && (set.beatmaps?.all { that -> that.beatmapID != id.data!! } ?: true)
                     }).toHashSet()
 
             relatedSets = beatmapApiService.extendBeatmapInSet(sets).toHashSet()
@@ -154,9 +153,8 @@ class GuestDifficultyService(
 
             // 注意，从 search 返回的 beatmapset 包含的 beatmap 会缺谱师信息
             val sets = (async.first.beatmapsets +
-                    async.second.beatmapsets.filter {
-                        it.beatmapsetID != user.userID &&
-                                (it.beatmaps?.all { that -> that.beatmapID != user.userID } ?: true)
+                    async.second.beatmapsets.filter { set ->
+                        (set.beatmapsetID != user.userID) && (set.beatmaps?.all { that -> that.beatmapID != user.userID } ?: true)
                     }).toHashSet()
 
             relatedSets = beatmapApiService.extendBeatmapInSet(sets).toHashSet()
