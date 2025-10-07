@@ -180,7 +180,17 @@ class OldAvatarService(
 
         val set = beatmapApiService.getBeatmapset(setID)
 
-        return set.creatorData?.toMicroUser() ?: throw NoSuchElementException.Player(name)
+        if (set.creatorData == null) {
+            throw NoSuchElementException.Player(name)
+        }
+
+        val banned = set.creatorData!!
+            .toMicroUser()
+            .apply {
+                username = set.creator
+            }
+
+        return banned
     }
 
     private fun getImages(param: OAParam): List<ByteArray> {
