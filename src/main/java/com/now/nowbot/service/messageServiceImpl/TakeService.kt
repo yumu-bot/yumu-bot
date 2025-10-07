@@ -283,7 +283,14 @@ import kotlin.math.floor
         }
 
         val name = nameStr.ifEmpty { user?.username } ?: ""
-        val isMyself = user?.userID == bindUser?.userID
+
+        val isMyself = if (bindUser == null || name.isEmpty()) {
+            false
+        } else if (user != null) {
+            user.userID == bindUser.userID
+        } else {
+            DataUtil.getStringSimilarity(name, bindUser.username) > 0.8
+        }
         val isPrevious =
             user?.previousNames?.map { prev -> DataUtil.getStringSimilarity(name, prev) > 0.8 }?.contains(true) ?: false
 
