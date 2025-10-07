@@ -52,7 +52,7 @@ import kotlin.math.floor
         val who = if (param.isMyself) {
             "你"
         } else if (param.user != null) {
-            "玩家 ${param.user.username}"
+            "玩家 ${param.user.username} "
         } else if (param.name.isNotEmpty()) {
             "玩家 ${param.name} "
         } else {
