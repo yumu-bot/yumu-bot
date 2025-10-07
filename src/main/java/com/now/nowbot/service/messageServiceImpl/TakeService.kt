@@ -49,47 +49,53 @@ import kotlin.math.floor
     }
 
     override fun HandleMessage(event: MessageEvent, param: TakeParam) {
-        val name = if (param.name.isEmpty()) {
-            "此玩家"
-        } else {
+        val who = if (param.isMyself) {
+            "你"
+        } else if (param.user != null) {
+            "玩家 ${param.user.username}"
+        } else if (param.name.isNotEmpty()) {
             "玩家 ${param.name} "
+        } else {
+            "此玩家"
         }
 
         val type = if (param.isPrevious) {
-            "曾用"
+            "曾用名：${param.user!!.username}"
         } else {
-            "玩家"
+            "玩家名"
         }
+        
+        val takes = "${who}的${type}"
 
         // 提前跳出
         if (param.hasBadge) {
             if (param.hostedCount > 0) {
                 if (param.isMyself) {
-                    event.reply("别人不能占据你的${type}名，因为你已经拥有上架 (ranked) 谱面，并且已经获取主页奖牌 (badges)。")
+                    event.reply("别人不能使用$takes，因为你已经拥有上架 (ranked) 谱面，并且已经获取主页奖牌 (badges)。")
                 } else {
-                    event.reply("你不能占据${name}的${type}名，因为对方已经拥有上架 (ranked) 谱面，并且已经获取主页奖牌 (badges)。")
+                    event.reply("你不能使用$takes，因为对方已经拥有上架 (ranked) 谱面，并且已经获取主页奖牌 (badges)。")
                 }
             } else {
                 if (param.isMyself) {
-                    event.reply("别人不能占据你的${type}名，因为你已经获取主页奖牌 (badges)。")
+                    event.reply("别人不能使用$takes，因为你已经获取主页奖牌 (badges)。")
                 } else {
-                    event.reply("你不能占据${name}的${type}名，因为对方已经获取主页奖牌 (badges)。")
+                    event.reply("你不能使用$takes，因为对方已经获取主页奖牌 (badges)。")
                 }
             }
 
             return
         } else if (param.hostedCount > 0) {
             if (param.isMyself) {
-                event.reply("别人不能占据你的${type}名，因为你已经拥有上架 (ranked) 谱面。")
+                event.reply("别人不能使用$takes，因为你已经拥有上架 (ranked) 谱面。")
             } else {
-                event.reply("你不能占据${name}的${type}名，因为对方已经拥有上架 (ranked) 谱面。")
+                event.reply("你不能使用$takes，因为对方已经拥有上架 (ranked) 谱面。")
             }
 
             return
         } else { // 进入下一轮
         }
 
-        val user = param.user ?: throw NoSuchElementException.TakePlayer(name)
+        val user = param.user ?: throw NoSuchElementException.TakePlayer(who)
 
         val micro = try {
             userApiService.getUsers(listOf(user.userID), isVariant = true).first()
@@ -185,20 +191,18 @@ import kotlin.math.floor
             "即将"
         }
 
-        val username = user.username
-
         // 曾用名立刻可以使用
         if (isImmediately || param.isPrevious) {
             if (param.isMyself) {
                 val tips = if (param.isPrevious) {
                     "你不会受任何影响。"
                 } else {
-                    "之后你会变成 ${username}_old。赶快回坑开一把！"
+                    "之后你的玩家名会变成 ${user.username}_old。赶快回坑开一把！"
                 }
 
                 event.reply(
                     """
-                    别人现在就可以使用你的${type}名：${username}。${tips}
+                    别人现在就可以使用${takes}。${tips}
                     你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
                     你的游戏次数：${pc}
                     你的玩家名可被占用的时间：${takeTimeFormat}
@@ -207,7 +211,7 @@ import kotlin.math.floor
             } else {
                 event.reply(
                     """
-                    你现在就可以使用${name}的${type}名。
+                    你现在就可以使用${takes}。
                     玩家上次在线时间：${lastVisitFormat}（${visitTimeFormat}）
                     玩家的游戏次数：${pc}
                     玩家名可被占用的时间：${takeTimeFormat}
@@ -219,7 +223,7 @@ import kotlin.math.floor
 
         if (param.isMyself) {
             event.reply("""
-                别人${soon}可以占据你的${type}名：${username}。
+                别人${soon}可以使用${takes}。
                 你上次在线的时间：${lastVisitFormat}（${visitTimeFormat}）
                 你的游戏次数：${pc}
                 你的玩家名可被占用的时间：${takeTimeFormat}（${takeTime}）
@@ -227,7 +231,7 @@ import kotlin.math.floor
             )
         } else {
             event.reply("""
-                您${soon}可以占据对方的${type}名：${username}。
+                您${soon}可以使用${takes}。
                 玩家上次在线时间：${lastVisitFormat}（${visitTimeFormat}）
                 玩家的游戏次数：${pc}
                 玩家名可被占用的时间：${takeTimeFormat}（${takeTime}）
@@ -275,8 +279,12 @@ import kotlin.math.floor
                 null
             }
 
+            val creator = nameStr.ifEmpty {
+                user?.userID ?: 0L
+            }
+
             val query = mapOf(
-                "q" to "creator=" + nameStr.ifEmpty { user?.userID ?: 0L }, "sort" to "ranked_desc", "page" to 1
+                "q" to "creator=$creator", "sort" to "ranked_desc", "page" to 1
             )
 
             search = beatmapApiService.searchBeatmapset(query)
