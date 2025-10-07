@@ -61,7 +61,7 @@ import kotlin.math.floor
 
         val type = if (param.isPrevious) {
             if (param.user?.previousNames?.isNotEmpty() == true) {
-                "曾用名：${param.user.previousNames?.joinToString(",")}"
+                "曾用名：${param.user.previousNames?.joinToString(", ")}"
             } else if (param.name.isNotEmpty()) {
                 "曾用名：${param.name}"
             } else {
@@ -101,7 +101,7 @@ import kotlin.math.floor
         } else { // 进入下一轮
         }
 
-        val user = param.user ?: throw NoSuchElementException.TakePlayer(whose)
+        val user = param.user ?: throw NoSuchElementException.TakePlayer(param.name)
 
         val micro = try {
             userApiService.getUsers(listOf(user.userID), isVariant = true).first()
