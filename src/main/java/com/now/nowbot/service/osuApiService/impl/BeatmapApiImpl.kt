@@ -312,10 +312,10 @@ class BeatmapApiImpl(
         }
     }
 
-    override fun getBeatmapsets(sids: Iterable<Long>): List<Beatmapset> {
+    override fun getBeatmapset(sids: Iterable<Long>): List<Beatmapset> {
         val callables = sids.map { sid ->
             return@map AsyncMethodExecutor.Supplier {
-                getBeatmapsets(sid)
+                getBeatmapset(sid)
             }
         }
 
@@ -353,7 +353,7 @@ class BeatmapApiImpl(
         return scores.toList()
     }
 
-    override fun getBeatmapsets(sid: Long): Beatmapset {
+    override fun getBeatmapset(sid: Long): Beatmapset {
         return request { client ->
             client.get()
                 .uri("beatmapsets/{sid}", sid)

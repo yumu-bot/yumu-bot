@@ -10,6 +10,8 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import org.springframework.beans.BeanUtils
 import org.springframework.lang.Nullable
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 @JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
@@ -94,7 +96,7 @@ open class OsuUser {
     /**
      * 不要用这个
      */
-    @JvmField @JsonProperty("playmode")
+    @JsonProperty("playmode")
     var mode: String = ""
 
     @set:JsonIgnoreProperties
@@ -140,7 +142,6 @@ open class OsuUser {
     @JsonProperty("country")
     var country: Country? = null
 
-    @JvmRecord
     data class Country(val code: String, val name: String)
 
     @JsonProperty("cover")
@@ -149,14 +150,12 @@ open class OsuUser {
     @JsonProperty("kudosu")
     var kudosu: Kudosu? = Kudosu(0, 0)
 
-    @JvmRecord
     data class Kudosu(val available: Int, val total: Int)
 
     @JsonProperty("account_history")
     var accountHistory: List<UserAccountHistory>? = null
 
     //type: note, restriction, silence.
-    @JvmRecord
     data class UserAccountHistory(
         val description: String?, val id: Long, val length: Int, val permanent: Boolean,
         val timestamp: OffsetDateTime, val type: String
@@ -170,7 +169,6 @@ open class OsuUser {
    ProfileBanner profileBanner;
 
     */
-    @JvmRecord
     data class ProfileBanner(
         val id: Long,
         @JsonProperty("tournament_id") val tournamentID: Long,
@@ -185,7 +183,6 @@ open class OsuUser {
     var badges: List<UserBadge> = listOf()
 
 
-    @JvmRecord
     data class UserBadge(
         @field:JsonProperty("awarded_at") @param:JsonProperty(
             "awarded_at"
@@ -211,7 +208,6 @@ open class OsuUser {
     @JsonProperty("daily_challenge_user_stats") @Nullable
     var dailyChallenge: DailyChallenge? = null
 
-    @JvmRecord
     data class DailyChallenge(
         @JsonProperty("daily_streak_best")
         val bestDayStreak: Int,
@@ -342,11 +338,11 @@ open class OsuUser {
     @JsonProperty("scores_recent_count")
     var scoreRecentCount: Int = 0
 
-    @JvmField @JsonProperty("statistics")
+    @JsonProperty("statistics")
     var statistics: Statistics? = null
 
     @JsonProperty("support_level")
-    var supportLevel: Int = 0
+    var supportLevel: Byte = 0
 
     @JsonProperty("team")
     var team: Team? = null
@@ -354,7 +350,6 @@ open class OsuUser {
     @JsonProperty("user_achievements")
     var userAchievements: List<UserAchievement>? = null
 
-    @JvmRecord
     data class UserAchievement(
         @field:JsonProperty("achieved_at") @param:JsonProperty(
             "achieved_at"
@@ -367,7 +362,6 @@ open class OsuUser {
     @JsonProperty("rank_history")
     var rankHistory: RankHistory? = null
 
-    @JvmRecord
     data class RankHistory(val mode: String, val data: List<Int>)
 
     // ranked 和 pending
@@ -475,7 +469,6 @@ open class OsuUser {
         return str?.replace(",".toRegex(), "/") ?: ""
     }
 
-    @JvmRecord
     data class Team(
         @JsonProperty("flag_url") val flag: String?,
         @JsonProperty("id") val id: Int,
@@ -503,6 +496,46 @@ open class OsuUser {
     }
 
     companion object {
+        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
+            .withZone(ZoneOffset.UTC)
+        /*
+        private val formatter: DateTimeFormatter = DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd")
+            .appendLiteral("T")
+            .appendPattern("HH:mm:ss")
+            //.appendZoneId()
+            .appendPattern("Z")
+            .toFormatter()
+
+         */
+
+        fun OsuUser.toMicroUser(): MicroUser {
+            val u = this
+
+            return MicroUser().apply {
+                avatarUrl = u.avatarUrl
+                coverUrl = u.coverUrl
+                defaultGroup = u.defaultGroup
+                userID = u.userID
+                isActive = u.isActive
+                isBot = u.isBot
+                isDeleted = u.isDeleted
+                isOnline = u.isOnline
+                isSupporter = u.isSupporter
+                lastVisitString = u.lastVisit?.format(formatter)
+                pmFriendsOnly = u.pmFriendsOnly
+                profileColor = u.profileColor
+                username = u.username
+                cover = u.cover
+                countryCode = u.countryCode
+                country = u.country
+                groups = u.groups
+                statistics = u.statistics
+                supportLevel = u.supportLevel
+                team = u.team
+            }
+        }
+
         /**
          * List<OsuUser> 去重方法
          *
@@ -511,7 +544,6 @@ open class OsuUser {
          * @return 合并好的 List
         </OsuUser> */
 
-        @JvmStatic
         fun merge2OsuUserList(to: List<OsuUser>, from: List<OsuUser>): List<OsuUser> {
             if (to.isEmpty()) {
                 return from

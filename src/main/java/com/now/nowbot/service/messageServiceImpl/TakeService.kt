@@ -253,11 +253,12 @@ import kotlin.math.floor
         val bindUser = bindDao.getBindUser(event.sender.id)
         val nameStr = (matcher.group(FLAG_NAME) ?: "").trim()
 
-        val user: OsuUser?
+        var user: OsuUser?
         val search: BeatmapsetSearch
 
         // 高效的获取方式
-        if (id != null) { // 构建谱面查询
+        if (id != null) {
+            // 构建谱面查询
 
             val query = mapOf(
                 "q" to "creator=" + nameStr.ifEmpty { id }, "sort" to "ranked_desc", "page" to 1

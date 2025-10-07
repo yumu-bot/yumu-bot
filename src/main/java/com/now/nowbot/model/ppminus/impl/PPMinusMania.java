@@ -71,11 +71,11 @@ public class PPMinusMania extends PPMinus {
         if (bps.size()<10) {
             ppv0 = 0; accv0 = 0; lengv0 = 0; pgr90 = 0;
         }
-        double pp = user.statistics.getPp();
-        double acc = user.statistics.accuracy;
-        double pc = user.statistics.playCount;
-        double pt = user.statistics.playTime;
-        double tth = user.statistics.totalHits;
+        double pp = user.getStatistics().getPp();
+        double acc = user.getStatistics().accuracy;
+        double pc = user.getStatistics().playCount;
+        double pt = user.getStatistics().playTime;
+        double tth = user.getStatistics().totalHits;
 
 
         // 4.1 准度fACC formulaic accuracy 0-1.2

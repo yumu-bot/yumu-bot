@@ -119,7 +119,7 @@ class LeaderBoardService(
                 try {
                     beatmapApiService.getBeatmap(param.bid)
                 } catch (e: NetworkException.BeatmapException.NotFound) {
-                    beatmapApiService.getBeatmapsets(param.bid).getTopDiff()!!
+                    beatmapApiService.getBeatmapset(param.bid).getTopDiff()!!
                 }
             }
 

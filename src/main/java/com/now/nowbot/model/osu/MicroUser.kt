@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.*
 import com.now.nowbot.model.osu.OsuUser.Team
 import com.now.nowbot.model.osu.OsuUser.UserGroup
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 
@@ -127,6 +128,34 @@ class MicroUser : Comparable<MicroUser> {
             .appendPattern("yyyy-MM-dd")
             .appendLiteral("T")
             .appendPattern("HH:mm:ss")
-            .appendZoneId().toFormatter()
+            .appendZoneId()
+            .toFormatter()
+
+
+        fun MicroUser.toOsuUser(): OsuUser {
+            val u = this
+
+            return OsuUser(userID).apply {
+                u.avatarUrl?.let { avatarUrl = it }
+                u.coverUrl?.let { coverUrl = it }
+                defaultGroup = u.defaultGroup
+                isActive = u.isActive
+                isBot = u.isBot
+                isDeleted = u.isDeleted
+                isOnline = u.isOnline
+                isSupporter = u.isSupporter
+                lastVisit = u.lastVisitTime?.atOffset(ZoneOffset.ofHours(8))
+                pmFriendsOnly = u.pmFriendsOnly == true
+                profileColor = u.profileColor
+                username = u.username
+                cover = u.cover
+                countryCode = u.countryCode
+                country = u.country
+                groups = u.groups
+                statistics = u.statistics
+                supportLevel = u.supportLevel ?: 0.toByte()
+                team = u.team
+            }
+        }
     }
 }

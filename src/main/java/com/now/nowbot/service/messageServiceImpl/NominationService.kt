@@ -23,7 +23,6 @@ import com.now.nowbot.util.command.FLAG_SID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.*
 import java.util.regex.Matcher
 import kotlin.math.floor
 
@@ -131,16 +130,16 @@ import kotlin.math.floor
 
             if (isSID) {
                 try {
-                    s = beatmapApiService.getBeatmapsets(id)
+                    s = beatmapApiService.getBeatmapset(id)
                 } catch (e: NetworkException.BeatmapException.NotFound) {
                     val b = beatmapApiService.getBeatmapFromDatabase(id)
                     id = b.beatmapsetID
-                    s = beatmapApiService.getBeatmapsets(id)
+                    s = beatmapApiService.getBeatmapset(id)
                 }
             } else {
                 val b = beatmapApiService.getBeatmapFromDatabase(id)
                 id = b.beatmapsetID
-                s = beatmapApiService.getBeatmapsets(id)
+                s = beatmapApiService.getBeatmapset(id)
             }
 
             if (s.creatorData != null) {

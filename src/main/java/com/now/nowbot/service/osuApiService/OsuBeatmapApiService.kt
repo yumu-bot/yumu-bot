@@ -6,7 +6,6 @@ import com.now.nowbot.model.osu.LazerMod.Companion.getModsValue
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import java.io.IOException
-import java.util.*
 
 interface OsuBeatmapApiService {
     fun getBeatmapFileString(bid: Long): String?
@@ -36,12 +35,12 @@ interface OsuBeatmapApiService {
 
     fun getUserMostPlayedBeatmaps(id: Long, offset: Int = 0, limit: Int = 100): Map<Int, Beatmap>
 
-    fun getBeatmapsets(sid: Long): Beatmapset
+    fun getBeatmapset(sid: Long): Beatmapset
 
     /**
      * 这个可能会撞限制，所以请用 extendBeatmapset
      */
-    fun getBeatmapsets(sids: Iterable<Long>): List<Beatmapset>
+    fun getBeatmapset(sids: Iterable<Long>): List<Beatmapset>
 
     /**
      * 扩展 search result 的 set 内的 beatmap，确保它含有 owners 等信息
