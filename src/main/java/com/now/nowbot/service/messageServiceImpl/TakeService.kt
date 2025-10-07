@@ -49,23 +49,29 @@ import kotlin.math.floor
     }
 
     override fun HandleMessage(event: MessageEvent, param: TakeParam) {
-        val who = if (param.isMyself) {
-            "你"
+        val whose = if (param.isMyself) {
+            "你的"
         } else if (param.user != null) {
-            "玩家 ${param.user.username} "
+            "玩家 ${param.user.username} 的"
         } else if (param.name.isNotEmpty()) {
-            "玩家 ${param.name} "
+            "玩家 ${param.name} 的"
         } else {
-            "此玩家"
+            "此玩家的"
         }
 
         val type = if (param.isPrevious) {
-            "曾用名：${param.user!!.username}"
+            if (param.user?.previousNames?.isNotEmpty() == true) {
+                "曾用名：${param.user.previousNames?.joinToString(",")}"
+            } else if (param.name.isNotEmpty()) {
+                "曾用名：${param.name}"
+            } else {
+                "曾用名"
+            }
         } else {
             "玩家名"
         }
         
-        val takes = "${who}的${type}"
+        val takes = "$whose$type"
 
         // 提前跳出
         if (param.hasBadge) {
@@ -95,7 +101,7 @@ import kotlin.math.floor
         } else { // 进入下一轮
         }
 
-        val user = param.user ?: throw NoSuchElementException.TakePlayer(who)
+        val user = param.user ?: throw NoSuchElementException.TakePlayer(whose)
 
         val micro = try {
             userApiService.getUsers(listOf(user.userID), isVariant = true).first()
