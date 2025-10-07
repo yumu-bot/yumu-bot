@@ -357,7 +357,7 @@ class NewbieRestrictService(
             .take(5)
             .toList()
 
-        val final5 = if (last5.isEmpty()) {
+        val final5 = if (last5.isNotEmpty()) {
             last5.joinToString(", ") { formatter.format(it) }
         } else {
             "0"
