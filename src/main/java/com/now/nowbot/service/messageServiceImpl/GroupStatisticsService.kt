@@ -99,7 +99,7 @@ class GroupStatisticsService(
         return false
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Long) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Long) {
         // init 搬到这里来，别每次启动都要存个文件到那里
         try {
             if (Files.isRegularFile(cachePath)) {

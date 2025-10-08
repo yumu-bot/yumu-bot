@@ -24,7 +24,7 @@ class TransService : MessageService<Matcher> {
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: Matcher) {
+    override fun handleMessage(event: MessageEvent, param: Matcher) {
         val d_index = d1.indexOf(param.group("a"))
         if (d_index <= 0) throw TipsException("输入错误")
 

@@ -40,7 +40,7 @@ class WikiService internal constructor() : MessageService<Matcher> {
         } else return false
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
         val key = param.group("key")
         val msg = event.reply(getWiki(key))
         msg.recallIn((60 * 1000).toLong())

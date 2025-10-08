@@ -17,7 +17,6 @@ import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Service
 
 //@Service("TEST_PPM")
 class TestPPMinusService(
@@ -43,7 +42,7 @@ class TestPPMinusService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: PPMinusParam) {
+    override fun handleMessage(event: MessageEvent, param: PPMinusParam) {
         val my = getPPMinus4(param.me)
         val others = if (param.isVs) {
             getPPMinus4(param.other!!)

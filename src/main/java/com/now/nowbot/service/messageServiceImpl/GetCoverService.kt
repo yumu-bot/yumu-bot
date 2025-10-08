@@ -66,7 +66,7 @@ import java.nio.file.Files
         }
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: CoverParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: CoverParam) {
         var chain: MessageChain
 
         if (param.type == RAW) try {

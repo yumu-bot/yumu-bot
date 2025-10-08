@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: OsuUser) {
+    override fun handleMessage(event: MessageEvent, param: OsuUser) {
         val image = getImage(param)
 
         try {

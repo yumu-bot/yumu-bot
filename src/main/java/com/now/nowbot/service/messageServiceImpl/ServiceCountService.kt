@@ -45,7 +45,7 @@ import kotlin.math.round
         return true
     }
 
-    @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun HandleMessage(
+    @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun handleMessage(
         event: MessageEvent, param: Int
     ) {
         val sb = StringBuilder()

@@ -48,7 +48,7 @@ class BPFixService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: BPFixParam) {
+    override fun handleMessage(event: MessageEvent, param: BPFixParam) {
         val image = param.getImage()
         try {
             event.reply(image)

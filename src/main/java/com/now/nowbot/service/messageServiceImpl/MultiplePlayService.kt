@@ -13,6 +13,6 @@ class MultiplePlayService : MessageService<String> {
         return false
     }
 
-    override fun HandleMessage(event: MessageEvent, data: String) {
+    override fun handleMessage(event: MessageEvent, param: String) {
     }
 }

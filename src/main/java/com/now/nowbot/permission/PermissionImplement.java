@@ -70,7 +70,7 @@ public class PermissionImplement implements PermissionController {
 
                 var data = new MessageService.DataValue<>();
                 if (service.isHandle(event, textMessage, data)) {
-                    service.HandleMessage(event, Objects.requireNonNull(data.getValue()));
+                    service.handleMessage(event, Objects.requireNonNull(data.getValue()));
                 }
             } catch (Throwable e) {
                 errorHandle.accept(event, e);

@@ -30,7 +30,7 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
         }
     }
 
-    override fun HandleMessage(event: MessageEvent, param: Long) {
+    override fun handleMessage(event: MessageEvent, param: Long) {
         val sid =
             try {
                 osuBeatmapApiService.getBeatmapFromDatabase(param).beatmapsetID

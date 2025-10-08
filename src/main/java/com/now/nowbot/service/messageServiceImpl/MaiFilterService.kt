@@ -112,7 +112,7 @@ class MaiFilterService(private val maimaiApiService: MaimaiApiService, private v
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: MaiFilterParam) {
+    override fun handleMessage(event: MessageEvent, param: MaiFilterParam) {
         val image = imageService.getPanel(param.toMap(), "MI")
 
         event.reply(image)

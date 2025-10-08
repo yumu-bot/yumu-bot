@@ -86,7 +86,7 @@ class UUBAService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: BPHeadTailParam) {
+    override fun handleMessage(event: MessageEvent, param: BPHeadTailParam) {
         var bu: BindUser
 
         // 是否为绑定用户

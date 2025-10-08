@@ -18,7 +18,6 @@ import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.FLAG_RANGE
 import org.springframework.stereotype.Service
-import kotlin.math.*
 
 @Service("SET_GROUP_MODE")
 class SetGroupModeService (
@@ -59,7 +58,7 @@ class SetGroupModeService (
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: SetGroupParam) {
+    override fun handleMessage(event: MessageEvent, param: SetGroupParam) {
         val isSuperAdmin = Permission.isSuperAdmin(event)
 
         if (param.group != null && param.group < 0L && isSuperAdmin) {

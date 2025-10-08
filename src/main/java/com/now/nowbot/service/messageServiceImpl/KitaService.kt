@@ -16,7 +16,6 @@ import com.now.nowbot.util.command.FLAG_MOD
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.*
 import java.util.regex.Matcher
 
 @Service("KITA")
@@ -39,7 +38,7 @@ class KitaService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: Matcher) {
+    override fun handleMessage(event: MessageEvent, param: Matcher) {
         val mod: String
         val position: Short
         val beatmap: Beatmap

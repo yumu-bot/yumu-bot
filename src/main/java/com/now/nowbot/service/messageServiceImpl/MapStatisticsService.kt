@@ -86,7 +86,7 @@ class MapStatisticsService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: MapParam) {
+    override fun handleMessage(event: MessageEvent, param: MapParam) {
         val image = param.getImage()
 
         try {

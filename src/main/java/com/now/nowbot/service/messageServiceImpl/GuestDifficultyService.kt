@@ -62,7 +62,7 @@ class GuestDifficultyService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: GuestParam) {
+    override fun handleMessage(event: MessageEvent, param: GuestParam) {
         val body = param.getBody()
 
         val image = imageService.getPanel(body, "A11")

@@ -60,7 +60,7 @@ class SBBindService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: BindParam) {
+    override fun handleMessage(event: MessageEvent, param: BindParam) {
         val me = event.sender.id
 
         if (me == param.qq) {

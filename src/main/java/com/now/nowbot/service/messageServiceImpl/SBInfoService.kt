@@ -16,7 +16,7 @@ class SBInfoService: MessageService<Boolean> {
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: Boolean) {
+    override fun handleMessage(event: MessageEvent, param: Boolean) {
         if (param) {
             event.reply("SB_INFO 正在制作中...即将可用。")
         }

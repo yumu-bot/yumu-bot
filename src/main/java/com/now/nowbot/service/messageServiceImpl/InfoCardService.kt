@@ -32,7 +32,7 @@ class InfoCardService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: OsuUser) {
+    override fun handleMessage(event: MessageEvent, param: OsuUser) {
         val image: ByteArray
 
         try {

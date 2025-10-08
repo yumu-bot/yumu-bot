@@ -28,7 +28,7 @@ import kotlin.math.roundToInt
         } else return false
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Double) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Double) {
         event.reply(getMessage(param))
     }
 

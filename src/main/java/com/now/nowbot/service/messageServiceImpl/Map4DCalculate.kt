@@ -36,7 +36,7 @@ class Map4DCalculate : MessageService<Map4DParam> {
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: Map4DParam) {
+    override fun handleMessage(event: MessageEvent, param: Map4DParam) {
         val mod =
                 if (param.mods == null) {
                     mutableListOf()

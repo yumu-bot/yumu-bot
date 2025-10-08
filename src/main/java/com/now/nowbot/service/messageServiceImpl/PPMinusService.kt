@@ -218,7 +218,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: PPMinusParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: PPMinusParam) {
         val image = param.getPPMImage()
 
         try {

@@ -53,7 +53,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: MaiFindParam) {
+    override fun handleMessage(event: MessageEvent, param: MaiFindParam) {
         val image = imageService.getPanel(param.toMap(), "MF")
 
         event.reply(image)

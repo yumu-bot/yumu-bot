@@ -131,7 +131,7 @@ class InfoService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: InfoParam) {
+    override fun handleMessage(event: MessageEvent, param: InfoParam) {
         val message = param.getMessageChain()
         try {
             event.reply(message)

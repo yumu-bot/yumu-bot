@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.util.*
 
 @Service("AUDIO")
 class AudioService(
@@ -48,7 +47,7 @@ class AudioService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: AudioParam) {
+    override fun handleMessage(event: MessageEvent, param: AudioParam) {
         val voice =
             if (param.isBid) {
                 // 先 b 再 s

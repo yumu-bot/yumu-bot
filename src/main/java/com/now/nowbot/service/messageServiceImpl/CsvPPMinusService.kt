@@ -15,12 +15,10 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.getBonusPP
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
-import io.ktor.util.collections.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
-import java.util.*
 
 @Service("CSV_PPM")
 class CsvPPMinusService(
@@ -52,7 +50,7 @@ class CsvPPMinusService(
 
     @CheckPermission(test = true)
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: CSVPPMinusParam) {
+    override fun handleMessage(event: MessageEvent, param: CSVPPMinusParam) {
         val isOsuID = param.names.first().matches("\\d+".toRegex())
 
         event.reply("CM：正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。")

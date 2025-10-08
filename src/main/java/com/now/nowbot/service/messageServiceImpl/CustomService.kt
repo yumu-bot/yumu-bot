@@ -190,7 +190,7 @@ class CustomService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: CustomParam) {
+    override fun handleMessage(event: MessageEvent, param: CustomParam) {
         val fileName = "${param.uid}-${param.type}.png"
         val path = FILE_DIV_PATH.resolve(fileName)
 

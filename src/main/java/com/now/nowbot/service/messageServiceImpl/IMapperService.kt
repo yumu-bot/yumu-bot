@@ -39,7 +39,7 @@ import kotlin.math.max
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Map<String, Any?>) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Map<String, Any?>) {
 
         val image: ByteArray = try {
             imageService.getPanel(param, "M")

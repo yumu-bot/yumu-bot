@@ -18,8 +18,8 @@ class TestTaikoSRCalculateService : MessageService<Matcher> {
         } else return false
     }
     
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, matcher: Matcher) {
-        val str = matcher.group("data").trim {it <= ' '} .replace("\\s+".toRegex(), "-")
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
+        val str = param.group("data").trim {it <= ' '} .replace("\\s+".toRegex(), "-")
         event.reply("结果：" + getResult(str))
     }
     

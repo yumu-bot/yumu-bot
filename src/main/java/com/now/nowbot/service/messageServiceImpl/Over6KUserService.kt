@@ -15,7 +15,6 @@ import java.io.IOException
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.time.LocalDate
-import java.util.*
 
 //@Service("FOR_NEWBIE_GROUP_WEB_API")
 class Over6KUserService(private val userApiService: OsuUserApiService, fileConfig: FileConfig) : MessageService<OverUser> {
@@ -61,15 +60,14 @@ class Over6KUserService(private val userApiService: OsuUserApiService, fileConfi
         return true
     }
 
-    @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun HandleMessage(
+    @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun handleMessage(
         event: MessageEvent,
-        user: OverUser
+        param: OverUser
     ) {
-        saveUser(user)
-        event.subject.sendMessage("添加成功")
+        saveUser(param)
+        event.reply("添加成功")
     }
 
-    @JvmRecord
     data class OverUser(val id: Long, val name: String, val date: LocalDate)
 
     @Throws(FileNotFoundException::class) private fun readFile(): RandomAccessFile {

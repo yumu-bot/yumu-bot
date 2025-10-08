@@ -332,7 +332,7 @@ import kotlin.math.min
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: BAParam) {
+    override fun handleMessage(event: MessageEvent, param: BAParam) {
         val image = param.getImage()
 
         try {

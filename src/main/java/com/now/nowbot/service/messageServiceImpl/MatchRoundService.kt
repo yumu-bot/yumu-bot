@@ -21,7 +21,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.util.*
 import java.util.regex.Matcher
 
 @Service("MATCH_ROUND") class MatchRoundService(
@@ -39,7 +38,7 @@ import java.util.regex.Matcher
         } else return false
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
         val matchID: Int
         val matchIDStr = param.group("matchid")
 
@@ -87,15 +86,7 @@ import java.util.regex.Matcher
             }
         }
 
-        round = try {
-            roundStr!!.toInt() - 1
-        } catch (e: NumberFormatException) {
-            if (hasKeyword) {
-                -1
-            } else {
-                throw MatchRoundException(MatchRoundException.Type.MR_Round_RangeError)
-            }
-        }
+        round = (roundStr.toIntOrNull()?.minus(1) ?: -1)
 
         val image = getDataImage(matchID, round, keyword)
 
@@ -109,7 +100,7 @@ import java.util.regex.Matcher
 
     @Throws(MatchRoundException::class) fun getDataImage(matchID: Int, index: Int, keyword: String?): ByteArray {
         var i = index
-        val hasKeyword = keyword.isNullOrBlank().not()
+        val hasKeyword = !keyword.isNullOrBlank()
 
         val match: Match
         try {
@@ -185,7 +176,7 @@ import java.util.regex.Matcher
             val word: String
 
             if (keyword.isNullOrBlank().not()) {
-                word = keyword!!.trim { it <= ' ' }.lowercase()
+                word = keyword.trim { it <= ' ' }.lowercase()
             } else {
                 return -1
             }

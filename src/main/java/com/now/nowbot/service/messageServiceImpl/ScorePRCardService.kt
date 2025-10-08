@@ -72,7 +72,7 @@ class ScorePRCardService(
 
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: PRCardParam) {
+    override fun handleMessage(event: MessageEvent, param: PRCardParam) {
         val score = param.score
 
         val message = getMessageChain(score)

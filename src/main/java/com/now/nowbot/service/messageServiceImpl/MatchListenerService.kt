@@ -76,7 +76,7 @@ class MatchListenerService(
         }
     }
 
-    override fun HandleMessage(event: MessageEvent, param: ListenerParam) {
+    override fun handleMessage(event: MessageEvent, param: ListenerParam) {
         val match: Match
 
         if (event !is GroupMessageEvent) {

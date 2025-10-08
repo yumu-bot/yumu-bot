@@ -46,7 +46,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: MapMinusParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: MapMinusParam) {
         val image = getMapMinusImage(param, beatmapApiService, calculateApiService, imageService)
 
         try {

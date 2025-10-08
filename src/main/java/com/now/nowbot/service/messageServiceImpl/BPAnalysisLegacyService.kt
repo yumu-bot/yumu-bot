@@ -75,7 +75,7 @@ class BPAnalysisLegacyService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: BAParam) {
+    override fun handleMessage(event: MessageEvent, param: BAParam) {
         val image = imageService.getPanel(param.toMap(), "J")
 
         try {

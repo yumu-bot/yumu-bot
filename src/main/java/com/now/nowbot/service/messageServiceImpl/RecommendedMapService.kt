@@ -59,7 +59,7 @@ class RecommendedMapService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: OsuUser) {
+    override fun handleMessage(event: MessageEvent, param: OsuUser) {
         val p = getUserPrefer(param)
 
         event.reply("正常获取！${p.favorite.size} ${p.bests.size}")

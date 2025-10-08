@@ -82,7 +82,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: ScoreParam) {
+    override fun handleMessage(event: MessageEvent, param: ScoreParam) {
         val message = getMessageChain(param)
 
         try {

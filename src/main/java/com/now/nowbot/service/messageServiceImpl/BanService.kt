@@ -61,7 +61,7 @@ class BanService(private val permission: Permission, private val imageService: I
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: BanParam) {
+    override fun handleMessage(event: MessageEvent, param: BanParam) {
         if (!Permission.isSuperAdmin(event.sender.id)) {
             throw PermissionException.DeniedException.BelowSuperAdministrator()
         }

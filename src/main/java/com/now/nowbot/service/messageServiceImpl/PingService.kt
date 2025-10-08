@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import java.util.regex.Matcher
 
 @Service("PING") class PingService : MessageService<Matcher>, TencentMessageService<Matcher> {
@@ -28,7 +27,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
         event.reply(image).recallIn(5000)
     }
 

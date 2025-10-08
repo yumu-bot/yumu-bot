@@ -6,29 +6,23 @@ import jakarta.persistence.*
 import org.spring.core.getItem
 import java.time.LocalDateTime
 
-//@Entity
-//@Table(name = "service_call_stat")
-data class ServiceCallStatisticLite(
-    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    var id: Long = 0,
+@Entity @Table(
+    name = "service_call_stat",
+    indexes = [Index(name = "index_time", columnList = "time"), Index(name = "index_group", columnList = "time, group_id")]
+) data class ServiceCallStatisticLite(
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE) var id: Long? = null,
 
-    @Column(name = "name")
-    var name: String = "",
+    @Column(name = "name") var name: String = "",
 
-    @Column(name = "user_id")
-    var userID: Long = -1L,
+    @Column(name = "user_id") var userID: Long = -1L,
 
-    @Column(name = "group_id")
-    var groupID: Long = -1L,
+    @Column(name = "group_id") var groupID: Long = -1L,
 
-    @Column(name = "time")
-    var createTime: LocalDateTime = LocalDateTime.now(),
+    @Column(name = "time") var createTime: LocalDateTime = LocalDateTime.now(),
 
-    @Column(name = "duration")
-    var duration: Long = -1L,
+    @Column(name = "duration") var duration: Long = -1L,
 
-    @Column(name = "param", columnDefinition = "JSON", nullable = true)
-    var param: String? = null,
+    @Column(name = "param", columnDefinition = "JSON", nullable = true) var param: String? = null,
 
     ) {
 
@@ -45,9 +39,9 @@ data class ServiceCallStatisticLite(
          */
         val param: String?
 
-        val data: ServiceData
+        val data: ServiceData?
             get() {
-                val node = JacksonUtil.parseObject(param, JsonNode::class.java)
+                val node = JacksonUtil.parseObject(param ?: return null, JsonNode::class.java)
 
                 return ServiceData(
                     node.getItem<Long>("bid"),
@@ -57,7 +51,6 @@ data class ServiceCallStatisticLite(
     }
 
     data class ServiceData(
-        val bid: Long? = null,
-        val sid: Long? = null
+        val bid: Long? = null, val sid: Long? = null
     )
 }

@@ -81,7 +81,7 @@ import kotlin.math.min
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: MaiDistParam) {
+    override fun handleMessage(event: MessageEvent, param: MaiDistParam) {
         val best = MaiBestScoreService.getBestScores(param.qq, param.name, maimaiApiService)
 
         if (best.charts.standard.isEmpty() && best.charts.deluxe.isEmpty()) {

@@ -42,7 +42,7 @@ class SetModeService (
         data.value = if (qq != null && isSuper) {
             SetModeParam(mode, bindDao.getBindFromQQ(qq, false))
         } else if (name.isNullOrBlank().not()) {
-            val user = bindDao.getBindUser(name!!.trim())
+            val user = bindDao.getBindUser(name.trim())
                 ?: throw IllegalArgumentException.WrongException.PlayerName()
             SetModeParam(mode, user)
         } else {
@@ -52,7 +52,7 @@ class SetModeService (
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: SetModeParam) {
+    override fun handleMessage(event: MessageEvent, param: SetModeParam) {
         event.reply(getReply(param, event))
     }
 

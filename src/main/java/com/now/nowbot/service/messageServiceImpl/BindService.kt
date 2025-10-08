@@ -98,7 +98,7 @@ import java.util.function.Predicate
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: BindParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: BindParam) {
         val me = event.sender.id
 
         if (me == param.qq) {

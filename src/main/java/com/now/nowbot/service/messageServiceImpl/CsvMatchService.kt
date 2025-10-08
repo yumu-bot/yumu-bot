@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.time.format.DateTimeFormatter
-import java.util.*
 import java.util.regex.Matcher
 
 @Service("CSV") class CsvMatchService(
@@ -42,7 +41,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    @CheckPermission(isGroupAdmin = true) @Throws(Throwable::class) override fun HandleMessage(
+    @CheckPermission(isGroupAdmin = true) @Throws(Throwable::class) override fun handleMessage(
         event: MessageEvent, param: Matcher
     ) {
 

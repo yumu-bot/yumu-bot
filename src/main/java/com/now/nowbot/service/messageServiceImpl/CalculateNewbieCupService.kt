@@ -61,7 +61,7 @@ class CalculateNewbieCupService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: NewbieCupParam) {
+    override fun handleMessage(event: MessageEvent, param: NewbieCupParam) {
         event.reply("正在获取玩家表现分...")
 
         val result = getResult(param)
@@ -96,7 +96,7 @@ class CalculateNewbieCupService(
         val osuUsers = getUsers(users, param.mode)
 
         val bids = (if (hasSort) {
-            param.sortBy!!
+            param.sortBy
         } else {
             rounds.map { it.beatmapID }
         }).toSet()

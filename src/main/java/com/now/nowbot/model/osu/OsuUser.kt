@@ -466,7 +466,7 @@ open class OsuUser {
     }
 
     private fun replaceCommas(@Nullable str: String?): String {
-        return str?.replace(",".toRegex(), "/") ?: ""
+        return str?.replace(",", "/") ?: ""
     }
 
     data class Team(
@@ -498,16 +498,6 @@ open class OsuUser {
     companion object {
         private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
             .withZone(ZoneOffset.UTC)
-        /*
-        private val formatter: DateTimeFormatter = DateTimeFormatterBuilder()
-            .appendPattern("yyyy-MM-dd")
-            .appendLiteral("T")
-            .appendPattern("HH:mm:ss")
-            //.appendZoneId()
-            .appendPattern("Z")
-            .toFormatter()
-
-         */
 
         fun OsuUser.toMicroUser(): MicroUser {
             val u = this

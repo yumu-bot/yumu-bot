@@ -100,7 +100,7 @@ import kotlin.random.Random
         // throw DiceException(DiceException.Type.DICE_Instruction);
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: DiceParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: DiceParam) {
         val receipt: MessageReceipt
 
         try {

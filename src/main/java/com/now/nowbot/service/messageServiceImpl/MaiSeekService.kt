@@ -33,7 +33,7 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: String) {
+    override fun handleMessage(event: MessageEvent, param: String) {
         if (param.matches("\\s*$REG_NUMBER_MORE\\s*".toRegex()) && !param.contains(REG_QUOTATION.toRegex())) {
             val rating = param.toIntOrNull() ?: 0
             

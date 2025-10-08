@@ -48,7 +48,7 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: BindUser) {
+    override fun handleMessage(event: MessageEvent, param: BindUser) {
 
         val time = Instant.ofEpochMilli(param.time ?: 0).atOffset(ZoneOffset.ofHours(8))
         val timeStr = if (time.isBefore(botCreatedTime)) {

@@ -321,7 +321,7 @@ class NewbieRestrictService(
         return !data.value.isNullOrEmpty()
     }
 
-    override fun HandleMessage(event: MessageEvent, param: Collection<LazerScore>) {
+    override fun handleMessage(event: MessageEvent, param: Collection<LazerScore>) {
         val score = param.maxByOrNull { it.beatmap.starRating } ?: return
 
         val beatmap = beatmapApiService.getBeatmap(score.beatmapID)

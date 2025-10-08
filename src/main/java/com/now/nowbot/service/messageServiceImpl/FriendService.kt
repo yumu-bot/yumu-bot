@@ -99,7 +99,7 @@ class FriendService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: FriendParam) {
+    override fun handleMessage(event: MessageEvent, param: FriendParam) {
         event.reply(getMessageChain(param))
     }
 

@@ -50,7 +50,7 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: List<MutualParam>) {
+    override fun handleMessage(event: MessageEvent, param: List<MutualParam>) {
         try {
             event.reply(mutual2MessageChain(param)).recallIn((60 * 1000).toLong())
         } catch (e: Exception) {

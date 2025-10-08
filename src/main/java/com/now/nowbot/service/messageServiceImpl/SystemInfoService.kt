@@ -25,7 +25,7 @@ class SystemInfoService : MessageService<Boolean> {
         return false
     }
 
-    @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun HandleMessage(
+    @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun handleMessage(
         event: MessageEvent,
         param: Boolean
     ) {

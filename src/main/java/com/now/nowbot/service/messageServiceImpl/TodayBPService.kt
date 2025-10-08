@@ -56,7 +56,7 @@ class TodayBPService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: TodayBPParam) {
+    override fun handleMessage(event: MessageEvent, param: TodayBPParam) {
         param.asyncImage()
         val image = param.getImage()
         try {

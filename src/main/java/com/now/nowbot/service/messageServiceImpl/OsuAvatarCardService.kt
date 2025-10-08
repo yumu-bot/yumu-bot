@@ -48,7 +48,7 @@ class OsuAvatarCardService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: UserAvatarCardParam) {
+    override fun handleMessage(event: MessageEvent, param: UserAvatarCardParam) {
         event.reply(imageService.getPanel(param, "Zeta"))
     }
 

@@ -218,7 +218,7 @@ class PopularService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: PopularParam) {
+    override fun handleMessage(event: MessageEvent, param: PopularParam) {
 
         val me = try {
             bindDao.getBindFromQQ(event.sender.id)

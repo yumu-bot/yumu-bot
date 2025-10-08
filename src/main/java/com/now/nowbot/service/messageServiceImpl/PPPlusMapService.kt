@@ -44,7 +44,7 @@ class PPPlusMapService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: PPPlusParam) {
+    override fun handleMessage(event: MessageEvent, param: PPPlusParam) {
         val map = try {
             beatmapApiService.getBeatmapFromDatabase(param.bid)
         } catch (e: Exception) {

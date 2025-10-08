@@ -86,7 +86,7 @@ class MatchMapService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: MatchMapParam) {
+    override fun handleMessage(event: MessageEvent, param: MatchMapParam) {
         val e7Param = getPanelE7Param(param, beatmapApiService, calculateApiService)
         val image = imageService.getPanel(e7Param, "E7")
 

@@ -55,7 +55,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: MuRatingPanelParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: MuRatingPanelParam) {
         val mr : MatchRating
 
         try {

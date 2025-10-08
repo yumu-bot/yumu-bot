@@ -93,7 +93,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: MaiScoreParam) {
+    override fun handleMessage(event: MessageEvent, param: MaiScoreParam) {
         val image: ByteArray = if (param.songs.isEmpty()) {
             imageService.getPanel(param.toMap(), "MA")
         } else {

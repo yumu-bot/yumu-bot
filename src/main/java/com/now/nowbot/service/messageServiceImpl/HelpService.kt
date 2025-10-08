@@ -30,7 +30,7 @@ class HelpService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: String) {
+    override fun handleMessage(event: MessageEvent, param: String) {
         try {
             val image = getHelpPicture(param, imageService)
 

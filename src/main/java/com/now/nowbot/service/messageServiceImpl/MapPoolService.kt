@@ -26,7 +26,6 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriComponentsBuilder
 import java.time.Duration
-import java.util.*
 
 @Service("MAP_POOL") class MapPoolService(
     private val imageService: ImageService,
@@ -66,9 +65,9 @@ import java.util.*
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: PoolParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: PoolParam) {
         if (param.name.isNullOrBlank().not()) {
-            val result = searchByName(param.name!!)
+            val result = searchByName(param.name)
             if (result.isEmpty()) throw TipsException("未找到名称包含 ${param.name} 的图池")
 
             if (result.size == 1) {

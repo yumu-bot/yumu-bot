@@ -51,7 +51,7 @@ class GetPoolService(
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: GetPoolParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: GetPoolParam) {
         val mapPool = MapPoolDto(param.name, param.mode, param.map, beatmapApiService, calculateApiService)
 
         if (mapPool.modPools.isEmpty()) {
@@ -116,7 +116,7 @@ class GetPoolService(
                 1 -> {
                     if (!mod.isNullOrBlank()) {
                         if (ids.isEmpty()) {
-                            throw throw IllegalArgumentException.WrongException.ParseMap(s, i)
+                            throw IllegalArgumentException.WrongException.ParseMap(s, i)
                         } else {
                             status = 2
                         }

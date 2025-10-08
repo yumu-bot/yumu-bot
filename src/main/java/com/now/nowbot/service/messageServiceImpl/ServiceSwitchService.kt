@@ -92,7 +92,7 @@ class ServiceSwitchService(
 
     // @CheckPermission(isSuperAdmin = true)
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: SwitchParam) {
+    override fun handleMessage(event: MessageEvent, param: SwitchParam) {
         val service = param.serviceName
         val group = param.groupID
 

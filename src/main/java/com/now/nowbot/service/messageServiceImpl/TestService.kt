@@ -18,13 +18,14 @@ class TestService(private val maimaiApiService: MaimaiApiService) :
             messageText: String,
             data: MessageService.DataValue<String>,
     ): Boolean {
+        /*
         if (messageText.contains("!ymtest")) {
             data.value = messageText
             return true
         } else {
             return false
         }
-        /*
+
         // if (messageText.contains("!test")) {
             if (false) {
             data.value = messageText
@@ -47,7 +48,7 @@ class TestService(private val maimaiApiService: MaimaiApiService) :
 
     }
 
-    override fun HandleMessage(event: MessageEvent, param: String) {
+    override fun handleMessage(event: MessageEvent, param: String) {
         val l = maimaiApiService.getMaimaiSongLibrary().associateBy { it.songID }
 
         fun getVersionInt(maiVersion: MaiVersion): Int {

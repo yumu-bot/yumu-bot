@@ -26,7 +26,7 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
         } else return false
     }
     
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
         val bid = param.group("id").toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
         val mod = param.group("mod")
         

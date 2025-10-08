@@ -46,7 +46,7 @@ class CsvInfoService(private val userApiService: OsuUserApiService) : MessageSer
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: CsvInfoParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: CsvInfoParam) {
         if (param.users.size >= 50) event.reply(
             IllegalStateException.TooManyRequest("CSV"))
 

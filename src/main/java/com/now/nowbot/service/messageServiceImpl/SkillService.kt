@@ -64,7 +64,7 @@ import kotlin.math.sqrt
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: SkillParam) {
+    override fun handleMessage(event: MessageEvent, param: SkillParam) {
         val image = param.getImage()
 
         try {

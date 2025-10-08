@@ -66,7 +66,7 @@ class NewbiePlayStatisticsService(
     }
 
     //    @CheckPermission(isSuperAdmin = true)
-    override fun HandleMessage(event: MessageEvent, param: SearchType) {
+    override fun handleMessage(event: MessageEvent, param: SearchType) {
         if (event !is GroupMessageEvent) return
         val gid = event.group.id
         if (gid != newbieConfig.newbieGroup && gid != newbieConfig.killerGroup) return

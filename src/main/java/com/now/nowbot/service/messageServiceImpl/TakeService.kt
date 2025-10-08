@@ -48,7 +48,7 @@ import kotlin.math.floor
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: TakeParam) {
+    override fun handleMessage(event: MessageEvent, param: TakeParam) {
         val whose = if (param.isMyself) {
             "你的"
         } else if (param.user != null) {

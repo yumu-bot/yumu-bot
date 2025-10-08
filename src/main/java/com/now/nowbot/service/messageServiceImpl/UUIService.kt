@@ -22,9 +22,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.*
 import kotlin.jvm.optionals.getOrNull
-import kotlin.math.*
+import kotlin.math.absoluteValue
+import kotlin.math.pow
+import kotlin.math.round
+import kotlin.math.roundToInt
 
 @Service("UU_INFO")
 class UUIService(
@@ -67,7 +69,7 @@ class UUIService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: UUIParam) {
+    override fun handleMessage(event: MessageEvent, param: UUIParam) {
         val user = param.user
 
         val avatar: ByteArray = userApiService.getAvatarByte(user)
@@ -96,7 +98,7 @@ class UUIService(
                 .append(')')
                 .append(':')
                 .append(' ')
-                .append(Math.round(user.pp))
+                .append(user.pp.roundToInt())
                 .append("PP")
                 .append('\n')
             // #114514 CN#1919 (LV.100(32%))
@@ -117,14 +119,14 @@ class UUIService(
             sb.append("PC: ")
             val pc = user.playCount
             if (pc > 10000) {
-                sb.append(Math.round(pc / 100.0) / 100.0).append('w')
+                sb.append(round(pc / 100.0) / 100.0).append('w')
             } else {
                 sb.append(pc)
             }
             sb.append(" TTH: ")
             val tth = user.totalHits
             if (tth > 10000) {
-                sb.append(Math.round(tth / 100.0) / 100.0).append('w')
+                sb.append(round(tth / 100.0) / 100.0).append('w')
             } else {
                 sb.append(tth)
             }

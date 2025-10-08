@@ -44,7 +44,7 @@ import org.springframework.stereotype.Service
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: MuRatingPanelParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: MuRatingPanelParam) {
         val data = calculate(param, beatmapApiService, calculateApiService)
 
         val image: ByteArray = imageService.getPanel(data, "F")

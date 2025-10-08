@@ -44,7 +44,7 @@ class SBSetModeService (
         data.value = if (qq != null && isSuper) {
             SBSetModeParam(mode, bindDao.getSBBindFromQQ(qq, false))
         } else if (name.isNullOrBlank().not()) {
-            val id = userApiService.getUserID(name!!.trim())
+            val id = userApiService.getUserID(name.trim())
                 ?: throw IllegalArgumentException.WrongException.PlayerName()
             SBSetModeParam(mode, bindDao.getSBBindUser(id))
         } else {
@@ -54,7 +54,7 @@ class SBSetModeService (
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: SBSetModeParam) {
+    override fun handleMessage(event: MessageEvent, param: SBSetModeParam) {
         event.reply(getReply(param, event))
     }
 

@@ -59,7 +59,7 @@ import org.springframework.stereotype.Service
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: MapTypeParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: MapTypeParam) {
         val fileStr: String
         val map: Beatmap
 

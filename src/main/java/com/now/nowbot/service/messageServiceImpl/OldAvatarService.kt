@@ -63,7 +63,7 @@ class OldAvatarService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: OAParam) {
+    override fun handleMessage(event: MessageEvent, param: OAParam) {
         val images = getImages(param)
 
         try {

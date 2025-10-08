@@ -10,7 +10,7 @@ interface MessageService<T> {
         @NonNull data: DataValue<T>
     ): Boolean
 
-    @Throws(Throwable::class) fun HandleMessage(@NonNull event: MessageEvent, @NonNull param: T)
+    @Throws(Throwable::class) fun handleMessage(@NonNull event: MessageEvent, @NonNull param: T)
 
     class DataValue<T> {
         var value: T? = null

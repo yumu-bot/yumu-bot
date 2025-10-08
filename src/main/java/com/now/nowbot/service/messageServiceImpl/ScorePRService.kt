@@ -124,7 +124,7 @@ class ScorePRService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: ScorePRParam) {
+    override fun handleMessage(event: MessageEvent, param: ScorePRParam) {
         param.asyncImage()
         val messageChain: MessageChain = param.getMessageChain()
 

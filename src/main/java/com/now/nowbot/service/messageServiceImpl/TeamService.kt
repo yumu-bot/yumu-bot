@@ -6,8 +6,6 @@ import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.messageServiceImpl.FriendService.Companion.SortDirection.*
-import com.now.nowbot.service.messageServiceImpl.FriendService.Companion.SortType.*
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
@@ -18,7 +16,6 @@ import com.now.nowbot.util.CmdUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import org.springframework.stereotype.Service
-import java.util.*
 
 @Service("TEAM")
 class TeamService(
@@ -55,7 +52,7 @@ class TeamService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: TeamParam) {
+    override fun handleMessage(event: MessageEvent, param: TeamParam) {
         val team = try {
             userApiService.getTeamInfo(param.teamID)
         } catch (ignored: Exception) {

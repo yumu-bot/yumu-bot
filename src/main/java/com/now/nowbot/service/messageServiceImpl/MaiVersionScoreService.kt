@@ -121,7 +121,7 @@ class MaiVersionScoreService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: MaiVersionParam) {
+    override fun handleMessage(event: MessageEvent, param: MaiVersionParam) {
         val vs = getVersionScores(param.qq, param.name, param.versions, maimaiApiService)
 
         if (vs.scores.isEmpty()) {

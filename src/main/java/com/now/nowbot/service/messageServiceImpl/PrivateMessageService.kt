@@ -41,7 +41,7 @@ class PrivateMessageService(private val userApiService: OsuUserApiService, priva
         return true
     }
 
-    @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun HandleMessage(
+    @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun handleMessage(
         event: MessageEvent,
         param: PMParam
     ) {
@@ -66,12 +66,12 @@ class PrivateMessageService(private val userApiService: OsuUserApiService, priva
         return when (param.type) {
             Type.SEND -> {
                 if (noParam) throw TipsException("参数缺失")
-                userApiService.sendPrivateMessage(bin, param.id!!, param.message)
+                userApiService.sendPrivateMessage(bin, param.id, param.message)
             }
 
             Type.GET -> {
                 if (noParam) throw TipsException("参数缺失")
-                userApiService.getPrivateMessage(bin, param.id!!, param.message.toLong())
+                userApiService.getPrivateMessage(bin, param.id, param.message.toLong())
             }
 
             Type.ACT -> {

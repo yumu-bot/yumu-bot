@@ -82,7 +82,7 @@ class PPPlusService(
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: PPPlusParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: PPPlusParam) {
         val dataMap = HashMap<String, Any>(6)
 
         // user 对比
@@ -139,10 +139,10 @@ class PPPlusService(
         var p2: OsuUser?
 
         try {
-            p1 = if (a1.isNullOrBlank().not()) userApiService.getOsuUser(a1!!, OsuMode.OSU)
+            p1 = if (a1.isNullOrBlank().not()) userApiService.getOsuUser(a1, OsuMode.OSU)
             else userApiService.getOsuUser(me!!, OsuMode.OSU)
 
-            p2 = if (a2.isNullOrBlank().not()) userApiService.getOsuUser(a2!!, OsuMode.OSU)
+            p2 = if (a2.isNullOrBlank().not()) userApiService.getOsuUser(a2, OsuMode.OSU)
             else null
 
             if (isVs && p2 == null) {

@@ -50,7 +50,7 @@ class SBBPService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: BPParam) {
+    override fun handleMessage(event: MessageEvent, param: BPParam) {
         // param.asyncImage()
 
         val image: ByteArray = param.getImage()

@@ -39,7 +39,7 @@ class TestHiddenPPService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: Matcher) {
+    override fun handleMessage(event: MessageEvent, param: Matcher) {
         if (Permission.isCommonUser(event)) {
             throw PermissionException.DeniedException.BelowGroupAdministrator()
         }

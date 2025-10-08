@@ -29,7 +29,7 @@ class GetNameService(private val userApiService: OsuUserApiService) : MessageSer
         } else return false
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
         if (Permission.isCommonUser(event)) {
             throw PermissionException.DeniedException.BelowGroupAdministrator()
         }

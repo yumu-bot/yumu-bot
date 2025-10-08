@@ -23,7 +23,6 @@ import org.springframework.web.reactive.function.client.WebClient
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Service("UU_PR")
@@ -64,7 +63,7 @@ class UUPRService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: UUPRParam) {
+    override fun handleMessage(event: MessageEvent, param: UUPRParam) {
         val score = param.score
 
         // 单成绩发送

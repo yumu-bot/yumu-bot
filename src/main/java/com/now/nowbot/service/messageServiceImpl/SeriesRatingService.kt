@@ -48,7 +48,7 @@ class SeriesRatingService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: Matcher) {
+    override fun handleMessage(event: MessageEvent, param: Matcher) {
         val dataStr = param.group("data")
         val nameStr = param.group("name")
 

@@ -129,7 +129,7 @@ class ChuBestScoreService(
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: ChuBestScoreParam) {
+    override fun handleMessage(event: MessageEvent, param: ChuBestScoreParam) {
         val lxUser = if (param.qq != null) {
             try {
                 lxChunithmApiService.getUser(param.qq)

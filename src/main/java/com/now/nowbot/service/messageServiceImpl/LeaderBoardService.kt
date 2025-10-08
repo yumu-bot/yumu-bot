@@ -98,7 +98,7 @@ class LeaderBoardService(
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: LeaderBoardParam) {
+    override fun handleMessage(event: MessageEvent, param: LeaderBoardParam) {
         val bindUser = try {
             bindDao.getBindFromQQ(event.sender.id, true)
         } catch (e: BindException) {

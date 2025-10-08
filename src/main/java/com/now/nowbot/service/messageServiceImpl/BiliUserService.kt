@@ -24,7 +24,7 @@ class BiliUserService(private val biliApiService: BiliApiService): MessageServic
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: Long) {
+    override fun handleMessage(event: MessageEvent, param: Long) {
         val user = biliApiService.getUser(param)
 
         event.reply(getMessage(user.data!!, biliApiService))

@@ -45,7 +45,7 @@ import kotlin.math.floor
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
         val image: ByteArray = getNominationImage(
             param,
             osuBeatmapApiService,

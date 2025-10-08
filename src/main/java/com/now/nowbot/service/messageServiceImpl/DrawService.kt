@@ -34,7 +34,7 @@ class DrawService : MessageService<Matcher> {
         } else return false
     }
 
-    @CheckPermission(test = true) @Throws(Throwable::class) override fun HandleMessage(
+    @CheckPermission(test = true) @Throws(Throwable::class) override fun handleMessage(
         event: MessageEvent,
         param: Matcher
     ) {

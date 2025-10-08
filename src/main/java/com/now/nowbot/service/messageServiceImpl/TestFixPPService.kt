@@ -63,7 +63,7 @@ import kotlin.math.roundToInt
         } else return false
     }
 
-    override fun HandleMessage(event: MessageEvent, param: TestFixPPParam) {
+    override fun handleMessage(event: MessageEvent, param: TestFixPPParam) {
         var mode = param.mode
 
         val sb = StringBuilder()

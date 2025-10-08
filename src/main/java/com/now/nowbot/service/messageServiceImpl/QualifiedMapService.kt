@@ -18,7 +18,6 @@ import com.now.nowbot.util.command.FLAG_MODE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.*
 import java.util.regex.Matcher
 import kotlin.math.floor
 import kotlin.math.max
@@ -43,7 +42,7 @@ import kotlin.math.roundToInt
         } else return false
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: Matcher) { // 获取参数
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) { // 获取参数
         val statusStr = param.group("status") ?: "q"
         val sortStr = param.group("sort") ?: "ranked_asc"
         val rangeStr = param.group("range") ?: "12"

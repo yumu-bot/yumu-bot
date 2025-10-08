@@ -42,7 +42,7 @@ import java.util.regex.Pattern
         return true
     }
 
-    override fun HandleMessage(event: MessageEvent, param: SearchParam) {
+    override fun handleMessage(event: MessageEvent, param: SearchParam) {
         val query = constructQuery(param)
 
         val result: BeatmapsetSearch = try {

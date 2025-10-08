@@ -22,7 +22,7 @@ class EchoService : MessageService<String> {
     @ServiceLimit(limit = 15000)
     @CheckPermission(isSuperAdmin = true)
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: String) {
+    override fun handleMessage(event: MessageEvent, param: String) {
         event.reply(param)
     }
 }

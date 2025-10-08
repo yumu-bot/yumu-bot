@@ -13,7 +13,6 @@ import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
-import io.ktor.util.collections.*
 import org.springframework.stereotype.Service
 
 @Service("GET_ID")
@@ -43,7 +42,7 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
         } else return false
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: List<String>) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: List<String>) {
         if (Permission.isCommonUser(event)) {
             throw PermissionException.DeniedException.BelowGroupAdministrator()
         }

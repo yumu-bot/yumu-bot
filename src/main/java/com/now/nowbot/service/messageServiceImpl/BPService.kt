@@ -56,7 +56,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    @Throws(Throwable::class) override fun HandleMessage(event: MessageEvent, param: BPParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: BPParam) {
         param.asyncImage()
         val image: ByteArray = param.getImage()
 

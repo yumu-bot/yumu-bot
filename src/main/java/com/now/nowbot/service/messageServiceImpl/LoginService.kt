@@ -38,7 +38,7 @@ class LoginService(private val bindDao: BindDao) : MessageService<String> {
     }
 
     @Throws(Throwable::class)
-    override fun HandleMessage(event: MessageEvent, param: String) {
+    override fun handleMessage(event: MessageEvent, param: String) {
         val qq = event.sender.id
         val u = bindDao.getBindFromQQ(qq)
         var code: String?
