@@ -1,15 +1,23 @@
 package com.now.nowbot.entity
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.util.JacksonUtil
 import jakarta.persistence.*
 import org.spring.core.getItem
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 
-@Entity @Table(
+@Entity
+@Table(
     name = "service_call_stat",
-    indexes = [Index(name = "index_time", columnList = "time"), Index(name = "index_group", columnList = "time, group_id")]
-) data class ServiceCallStatisticLite(
+    indexes = [Index(name = "index_time", columnList = "time"), Index(
+        name = "index_group",
+        columnList = "time, group_id"
+    )]
+)
+class ServiceCallStatisticLite(
     @Id @GeneratedValue(strategy = GenerationType.SEQUENCE) var id: Long? = null,
 
     @Column(name = "name") var name: String = "",
@@ -22,9 +30,38 @@ import java.time.LocalDateTime
 
     @Column(name = "duration") var duration: Long = -1L,
 
-    @Column(name = "param", columnDefinition = "JSON", nullable = true) var param: String? = null,
+    @Column(name = "param", columnDefinition = "JSONB", nullable = true) var param: String? = null,
 
     ) {
+
+    companion object {
+        fun <T> build(e: MessageEvent, data: T? = null, other: ServiceCallStatisticLite.() -> Unit = {}): ServiceCallStatisticLite {
+
+            val param = if (data != null) {
+                JacksonUtil.toJson(data)
+            } else {
+                null
+            }
+            val result = ServiceCallStatisticLite(
+                param = param,
+                userID = e.sender.id,
+                groupID = e.subject.id,
+            )
+            result.other()
+            return result
+        }
+
+        private val ZONE: ZoneId = ZoneId.systemDefault()
+    }
+
+    fun setOther(name: String, time: Long, duration: Long) {
+        createTime = Instant.ofEpochMilli(time)
+            .atZone(ZONE)
+            .toLocalDateTime()
+        this.name = name
+        this.duration = duration
+    }
+
 
     interface ServiceCall {
         val id: Long
@@ -50,3 +87,7 @@ import java.time.LocalDateTime
             }
     }
 }
+
+data class ServiceHeritage(
+    val bid: Long? = null, val sid: Long? = null
+)
