@@ -39,18 +39,14 @@ import java.time.LocalDateTime
          */
         val param: String?
 
-        val data: ServiceData?
+        val heritage: ServiceHeritage?
             get() {
                 val node = JacksonUtil.parseObject(param ?: return null, JsonNode::class.java)
 
-                return ServiceData(
+                return ServiceHeritage(
                     node.getItem<Long>("bid"),
                     node.getItem<Long>("sid"),
                 )
             }
     }
-
-    data class ServiceData(
-        val bid: Long? = null, val sid: Long? = null
-    )
 }

@@ -15,4 +15,19 @@ interface MessageService<T> {
     class DataValue<T> {
         var value: T? = null
     }
+
+    /*
+    interface MessageService<T> {
+    fun isHandle(
+        event: MessageEvent, messageText: String
+    ): T?
+
+    fun handleMessage(event: MessageEvent, param: T): MessageWithStat?
+
+    data class MessageWithStat(
+        val messageChain: MessageChain?,
+        val serviceHeritage: ServiceHeritage?,
+    )
+}
+     */
 }

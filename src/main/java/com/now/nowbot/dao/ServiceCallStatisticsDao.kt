@@ -1,6 +1,7 @@
 package com.now.nowbot.dao
 
 import com.now.nowbot.entity.ServiceCallStatisticLite
+import com.now.nowbot.entity.ServiceHeritage
 import com.now.nowbot.mapper.ServiceCallStatisticRepository
 import org.spring.core.toJson
 import org.springframework.stereotype.Component
@@ -15,11 +16,11 @@ import java.time.LocalDateTime
         groupID: Long,
         createTime: LocalDateTime,
         duration: Long,
-        serviceData: ServiceCallStatisticLite.ServiceData?
+        serviceHeritage: ServiceHeritage?
     ) {
 
         val lite = ServiceCallStatisticLite(
-            null, name, userID, groupID, createTime, duration, serviceData.toJson()
+            null, name, userID, groupID, createTime, duration, serviceHeritage.toJson()
         )
 
         serviceCallStatisticRepository.save(lite)
@@ -47,7 +48,7 @@ import java.time.LocalDateTime
     ): Long? {
         val calls = getBetweenInGroup(groupID, from, to)
         
-        return calls.mapNotNull { it.data }.mapNotNull { it.sid }.lastOrNull()
+        return calls.mapNotNull { it.heritage }.mapNotNull { it.sid }.lastOrNull()
     }
 
     fun getGroupLastBeatmapID(
@@ -57,6 +58,6 @@ import java.time.LocalDateTime
     ): Long? {
         val calls = getBetweenInGroup(groupID, from, to)
 
-        return calls.mapNotNull { it.data }.mapNotNull { it.bid }.lastOrNull()
+        return calls.mapNotNull { it.heritage }.mapNotNull { it.bid }.lastOrNull()
     }
 }
