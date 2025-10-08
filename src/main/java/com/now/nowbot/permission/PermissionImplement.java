@@ -161,7 +161,7 @@ public class PermissionImplement implements PermissionController {
              */
             Method method = null;
             for (var m : AopUtils.getTargetClass(service).getMethods()) {
-                if (m.getName().equals("HandleMessage")) method = m;
+                if (m.getName().equals("handleMessage")) method = m;
             }
             // 必定获取到对应函数
             assert Objects.nonNull(method);
