@@ -35,8 +35,11 @@ class ServiceCallStatisticLite(
     ) {
 
     companion object {
-        fun <T> build(e: MessageEvent, data: T? = null, other: ServiceCallStatisticLite.() -> Unit = {}): ServiceCallStatisticLite {
-
+        fun build(
+            e: MessageEvent,
+            data: Any? = null,
+            other: ServiceCallStatisticLite.() -> Unit = {}
+        ): ServiceCallStatisticLite {
             val param = if (data != null) {
                 JacksonUtil.toJson(data)
             } else {
@@ -62,6 +65,11 @@ class ServiceCallStatisticLite(
         this.duration = duration
     }
 
+    fun setParam(data: Any?) {
+        if (data != null) {
+            param = JacksonUtil.toJson(data)
+        }
+    }
 
     interface ServiceCall {
         val id: Long

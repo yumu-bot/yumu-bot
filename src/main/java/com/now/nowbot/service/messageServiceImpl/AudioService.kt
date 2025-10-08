@@ -71,7 +71,17 @@ class AudioService(
             throw IllegalStateException.Send("谱面试听")
         }
 
-        return ServiceCallStatisticLite.build(event, param)
+        // 这两种都可以, 选其中一个
+        val old = ServiceCallStatisticLite.build(event, param)
+        val new = ServiceCallStatisticLite.build(event /* , param=xxx */) {
+            val key = if (param.isBid) {
+                "bid"
+            } else{
+                "sid"
+            }
+            setParam(mapOf(key to param.id))
+        }
+        return new
     }
 
     @Throws(WebClientResponseException::class)
