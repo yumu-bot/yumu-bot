@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.config.NowbotConfig
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.skill.Skill
@@ -10,8 +10,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
 import org.springframework.stereotype.Service
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.regex.Matcher
 
 @Service("TEST_MAP_MINUS") class TestMapMinusService(
@@ -26,7 +24,7 @@ import java.util.regex.Matcher
         } else return false
     }
 
-    override fun handleMessage(event: MessageEvent, param: Matcher) {
+    override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
         val bids = param.group("data").split(REG_SEPERATOR.toRegex()).map { it.toLongOrNull() ?: -1L }
 
         val files = bids.filter { it != -1L }.map {
@@ -47,7 +45,8 @@ import java.util.regex.Matcher
             sb.append(it.toString()).append('\n')
         }
 
-        val p = Path.of(NowbotConfig.RUN_PATH, "debug")
-        Files.write(p.resolve(bids.first().toString() + "s.csv"), sb.toString().toByteArray())
+        event.replyFileInGroup(sb.toString().toByteArray(), bids.first().toString() + "s.csv")
+
+        return null
     }
 }

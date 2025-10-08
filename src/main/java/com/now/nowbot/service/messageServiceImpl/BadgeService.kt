@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -49,7 +50,7 @@ import java.util.concurrent.atomic.AtomicBoolean
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: OsuUser) {
+    override fun handleMessage(event: MessageEvent, param: OsuUser): ServiceCallStatistic? {
         val image = getImage(param)
 
         try {
@@ -57,6 +58,8 @@ import java.util.concurrent.atomic.AtomicBoolean
         } catch (e: Exception) {
             throw IllegalStateException.Send("奖牌信息")
         }
+
+        return ServiceCallStatistic.build(event, userID = param.userID, mode = param.currentOsuMode)
     }
 
     override fun accept(event: MessageEvent, messageText: String): OsuUser? {

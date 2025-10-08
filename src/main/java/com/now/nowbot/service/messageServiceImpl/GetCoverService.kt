@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.CoverType.*
 import com.now.nowbot.model.osu.Beatmap
@@ -66,28 +67,32 @@ import java.nio.file.Files
         }
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: CoverParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: CoverParam): ServiceCallStatistic? {
         var chain: MessageChain
+        var beatmaps: List<Beatmap>
 
         if (param.type == RAW) try {
+            beatmaps = beatmapApiService.getBeatmaps(param.bids)
             chain = getRawBackground(param.bids, beatmapMirrorApiService)
 
             event.replyMessageChain(chain)
         } catch (e: Exception) {
             val receipt = event.reply("获取难度背景失败。正在为您获取谱面背景。\n（即 BID 最小的难度的背景，也是官网预览图和谱面预览图内的背景）")
 
-            val beatmaps = beatmapApiService.getBeatmaps(param.bids)
+            beatmaps = beatmapApiService.getBeatmaps(param.bids)
             chain = getBackground(RAW, beatmaps)
 
             event.replyMessageChain(chain)
 
             receipt.recallIn(30 * 1000L)
         } else {
-            val beatmaps = beatmapApiService.getBeatmaps(param.bids)
+            beatmaps = beatmapApiService.getBeatmaps(param.bids)
             chain = getBackground(param.type, beatmaps)
 
             event.replyMessageChain(chain)
         }
+
+        return ServiceCallStatistic.builds(event, beatmapIDs = beatmaps.map { it.beatmapID }, beatmapsetIDs = beatmaps.map { it.beatmapsetID })
     }
 
     companion object {

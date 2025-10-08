@@ -1,7 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -46,7 +48,7 @@ class CsvInfoService(private val userApiService: OsuUserApiService) : MessageSer
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: CsvInfoParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: CsvInfoParam): ServiceCallStatistic? {
         if (param.users.size >= 50) event.reply(
             IllegalStateException.TooManyRequest("CSV"))
 
@@ -55,9 +57,12 @@ class CsvInfoService(private val userApiService: OsuUserApiService) : MessageSer
 
         var fetchUserFail = 0
 
+        val users = ArrayList<OsuUser>(param.users.size)
+
         for (s in param.users) {
             try {
                 val o = userApiService.getOsuUser(s, param.mode)
+                users.add(o)
                 sb.append('\n').append(o.toCSV())
             } catch (e: WebClientResponseException.TooManyRequests) {
                 fetchUserFail++
@@ -91,6 +96,8 @@ class CsvInfoService(private val userApiService: OsuUserApiService) : MessageSer
 
         //必须群聊
         event.replyFileInGroup(sb.toString().toByteArray(StandardCharsets.UTF_8), param.name)
+
+        return ServiceCallStatistic.builds(event, userIDs = users.map { it.userID })
     }
 
     companion object {

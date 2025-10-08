@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.OsuUserInfoDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.InfoLogStatistics
 import com.now.nowbot.model.osu.LazerMod
@@ -131,7 +132,7 @@ class InfoService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: InfoParam) {
+    override fun handleMessage(event: MessageEvent, param: InfoParam): ServiceCallStatistic? {
         val message = param.getMessageChain()
         try {
             event.reply(message)
@@ -139,6 +140,8 @@ class InfoService(
             log.error("玩家信息：发送失败", e)
             throw IllegalStateException.Send("玩家信息")
         }
+
+        return ServiceCallStatistic.build(event, userID = param.user.userID, mode = param.user.currentOsuMode)
     }
 
     override fun accept(event: MessageEvent, messageText: String): InfoParam? {

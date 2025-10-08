@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.mikuac.shiro.core.BotContainer
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ScoreDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
@@ -218,7 +219,7 @@ class PopularService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: PopularParam) {
+    override fun handleMessage(event: MessageEvent, param: PopularParam): ServiceCallStatistic? {
 
         val me = try {
             bindDao.getBindFromQQ(event.sender.id)
@@ -402,6 +403,11 @@ class PopularService(
                 throw e
             }
         }
+
+        return ServiceCallStatistic.build(event,
+            beatmapID = bestPerformance.beatmapID,
+            userID = bestPerformance.userID,
+        )
     }
 
     private fun getImage(panelTData: PanelTData): ByteArray {

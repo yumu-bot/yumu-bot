@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.ScoreDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -27,7 +28,7 @@ class UserPlayStatisticService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: Long) {
+    override fun handleMessage(event: MessageEvent, param: Long): ServiceCallStatistic? {
         val user = bindDao.getBindFromQQ(param, true)
         scoreApi.getRecentScore(user, OsuMode.DEFAULT, 0, 999)
         val time = scoreDao.getUserAllScoreTime(user.userID)
@@ -46,7 +47,7 @@ class UserPlayStatisticService(
             }
         if (all < 30) {
             event.reply("根据本 bot 对你的计算: 计算个毛你都没怎么玩!")
-            return
+            return null
         }
         val max = intervalCount
             .mapIndexed { i, v -> i to v }
@@ -62,6 +63,7 @@ class UserPlayStatisticService(
         }
 
         event.reply("根据本 bot 对你的计算: $message")
+        return ServiceCallStatistic.building(event)
     }
 
     companion object {

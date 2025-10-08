@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
@@ -42,17 +43,16 @@ class PPPlusService(
         val matcher = Instruction.PP_PLUS.matcher(messageText)
         if (!matcher.find()) return false
 
-        val cmd = Objects.requireNonNullElse(matcher.group("function"), "pp")
-        var a1 = matcher.group("area1")
-        var a2 = matcher.group("area2")
+        val cmd = matcher.group("function")?.ifBlank { "pp" } ?: "pp"
+        val a1 = matcher.group("area1")?.ifBlank { null }
+        val a2 = matcher.group("area2")?.ifBlank { null }
 
         val me = bindDao.getBindFromQQ(event.getSender().getId(), true)
 
         try {
             when (cmd.lowercase()) {
                 "pp", "ppp", "pp+", "p+", "ppplus", "plus" -> { // user 非vs
-                    if (Objects.nonNull(a1) && a1!!.isBlank()) a1 = null
-                    if (Objects.nonNull(a2) && a2!!.isBlank()) a2 = null
+
                     if (event.isAt) setUser(null, null, bindDao.getBindFromQQ(event.target), false, data)
                     else setUser(a1, a2, me, false, data)
                 }
@@ -82,7 +82,7 @@ class PPPlusService(
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: PPPlusParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: PPPlusParam): ServiceCallStatistic? {
         val dataMap = HashMap<String, Any>(6)
 
         // user 对比
@@ -117,6 +117,18 @@ class PPPlusService(
         } catch (e: Exception) {
             log.error("PP+ 发送失败", e)
             throw PPPlusException(PPPlusException.Type.PL_Send_Error)
+        }
+
+        return if (param.other is OsuUser) {
+            ServiceCallStatistic.builds(event,
+                userIDs = listOf(param.me.userID, param.other.userID),
+                modes = listOf(param.me.currentOsuMode)
+            )
+        } else {
+            ServiceCallStatistic.build(event,
+                userID = param.me.userID,
+                mode = param.me.currentOsuMode
+            )
         }
     }
 

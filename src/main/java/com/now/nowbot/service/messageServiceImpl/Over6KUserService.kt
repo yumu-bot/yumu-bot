@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.config.FileConfig
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -63,9 +64,10 @@ class Over6KUserService(private val userApiService: OsuUserApiService, fileConfi
     @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun handleMessage(
         event: MessageEvent,
         param: OverUser
-    ) {
+    ): ServiceCallStatistic? {
         saveUser(param)
         event.reply("添加成功")
+        return null
     }
 
     data class OverUser(val id: Long, val name: String, val date: LocalDate)

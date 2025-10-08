@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.match.Match
@@ -76,7 +77,7 @@ class MatchListenerService(
         }
     }
 
-    override fun handleMessage(event: MessageEvent, param: ListenerParam) {
+    override fun handleMessage(event: MessageEvent, param: ListenerParam): ServiceCallStatistic? {
         val match: Match
 
         if (event !is GroupMessageEvent) {
@@ -94,7 +95,7 @@ class MatchListenerService(
                         String.format(MatchListenerException.Type.ML_Info_List.message, allID)
                     }
                 event.reply(message)
-                return
+                return null
             }
 
             Operation.START -> {
@@ -139,6 +140,12 @@ class MatchListenerService(
             matchApiService,
             this,
         )
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "mids" to listOf(param.id)
+            ))
+        }
     }
 
     private fun initBeatmapAndUser(event: Match.MatchEvent, listener: MatchListener) {

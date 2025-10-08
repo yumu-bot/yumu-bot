@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.qq.event.MessageEvent
@@ -41,12 +42,12 @@ class MapStatisticsService(
     data class MapParam(val user: OsuUser?, val beatmap: Beatmap, val expected: Expected)
 
     data class Expected(
-        @JvmField val mode: OsuMode,
-        @JvmField val accuracy: Double,
-        @JvmField val combo: Int,
-        @JvmField val misses: Int,
-        @JvmField val mods: List<LazerMod>,
-        @JvmField val isLazer: Boolean = false,
+        val mode: OsuMode,
+        val accuracy: Double,
+        val combo: Int,
+        val misses: Int,
+        val mods: List<LazerMod>,
+        val isLazer: Boolean = false,
     )
 
     data class PanelE6Param(
@@ -86,7 +87,7 @@ class MapStatisticsService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: MapParam) {
+    override fun handleMessage(event: MessageEvent, param: MapParam): ServiceCallStatistic? {
         val image = param.getImage()
 
         try {
@@ -95,6 +96,12 @@ class MapStatisticsService(
             log.error("谱面信息：发送失败", e)
             throw IllegalStateException.Send("谱面信息")
         }
+
+        return ServiceCallStatistic.build(event,
+            beatmapID = param.beatmap.beatmapID,
+            beatmapsetID = param.beatmap.beatmapsetID,
+            mode = param.expected.mode
+            )
     }
 
     override fun accept(event: MessageEvent, messageText: String): MapParam? {
@@ -117,7 +124,7 @@ class MapStatisticsService(
         }
     }
 
-    enum class Filter(@Language("RegExp") val regex: Regex) {
+    enum class Filter(@param:Language("RegExp") val regex: Regex) {
         ACCURACY("$REG_NUMBER_DECIMAL[a%％]|[a%％]$REG_NUMBER_DECIMAL".toRegex()),
         COMBO("$REG_NUMBER_DECIMAL[cx×]|[cx×]$REG_NUMBER_DECIMAL".toRegex()),
         MISS("$REG_NUMBER_MORE[\\-m]|[\\-m]$REG_NUMBER_MORE".toRegex()),
@@ -128,13 +135,9 @@ class MapStatisticsService(
         val bid = getBid(matcher)
         val conditions = DataUtil.paramMatcher(matcher.group("any"), Filter.entries.map { it.regex })
 
-        val beatmap: Beatmap? = if (bid != 0L) {
-            try {
-                beatmapApiService.getBeatmap(bid)
-            } catch (ignored: Throwable) {
-                null
-            }
-        } else {
+        val beatmap: Beatmap? = try {
+            beatmapApiService.getBeatmap(bid)
+        } catch (_: Throwable) {
             null
         }
 
@@ -159,7 +162,7 @@ class MapStatisticsService(
             } else {
                 null
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
 

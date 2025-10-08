@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.service.MessageService
@@ -100,7 +101,7 @@ import kotlin.random.Random
         // throw DiceException(DiceException.Type.DICE_Instruction);
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: DiceParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: DiceParam): ServiceCallStatistic? {
         val receipt: MessageReceipt
 
         try {
@@ -121,17 +122,25 @@ import kotlin.random.Random
                     receipt = event.reply(String.format(format, r))
 
                     // 容易被识别成 QQ
-                    if (r in 1000000.0 ..< 1000000000.0) {
+                    if (r in 1000000.0..<1000000000.0) {
                         receipt.recallIn((60 * 1000).toLong())
                     }
 
-                    return
+                    return ServiceCallStatistic.building(event) {
+                        setParam(
+                            mapOf(
+                                "dices" to listOf(r)
+                            )
+                        )
+                    }
                 } else {
                     val sb = StringBuilder()
+                    val dices = ArrayList<Float>(param.dice.toInt())
 
                     for (i in 1L..param.dice) {
                         val r = getRandom(param.number)
                         val format = if ((r < 1f)) "%.2f" else "%.0f"
+                        dices += r.toFloat()
 
                         sb.append(String.format(format, r))
 
@@ -141,6 +150,13 @@ import kotlin.random.Random
                     }
 
                     event.reply(sb.toString())
+                    return ServiceCallStatistic.building(event) {
+                        setParam(
+                            mapOf(
+                                "dices" to dices
+                            )
+                        )
+                    }
                 }
             }
 
@@ -155,6 +171,14 @@ import kotlin.random.Random
                 } else {
                     event.reply(message)
                 }
+
+                return ServiceCallStatistic.building(event) {
+                    setParam(
+                        mapOf(
+                            "select" to message
+                        )
+                    )
+                }
             }
         } catch (e: DiceException) {
             throw e
@@ -162,6 +186,8 @@ import kotlin.random.Random
             log.error("扔骰子：处理失败", e)
             throw DiceException.Unexpected()
         }
+
+        return ServiceCallStatistic.building(event)
     }
 
     internal enum class Split(val pattern: Pattern, val onlyC3: Boolean) {

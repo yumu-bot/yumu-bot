@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -28,7 +29,7 @@ class SystemInfoService : MessageService<Boolean> {
     @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun handleMessage(
         event: MessageEvent,
         param: Boolean
-    ) {
+    ): ServiceCallStatistic? {
         fun Long.toMega(): Long {
             return this / 1024L / 1024L
         }
@@ -56,8 +57,8 @@ class SystemInfoService : MessageService<Boolean> {
 
         sb.append(message)
 
-        //event.subject.sendMessage(message)
         event.reply(sb.toString())
+        return ServiceCallStatistic.building(event)
     }
 
     companion object {

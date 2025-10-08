@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.maimai.MaiBestScore
 import com.now.nowbot.model.maimai.MaiFit.ChartData
 import com.now.nowbot.model.maimai.MaiFit.DiffData
@@ -132,7 +133,7 @@ class MaiBestScoreService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: MaiBestScoreParam) {
+    override fun handleMessage(event: MessageEvent, param: MaiBestScoreParam): ServiceCallStatistic? {
         val scores = getBestScores(param.qq, param.name, maimaiApiService)
         val charts = implementScore(param.range, scores, maimaiApiService = maimaiApiService)
         val isMultipleScore = charts.deluxe.size + charts.standard.size > 1
@@ -159,6 +160,12 @@ class MaiBestScoreService(
                 imageService.getPanel(PanelMEParam(user, score, song, chart, diff).toMap(), "ME")
             }
         event.reply(image)
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "mais" to (scores.charts.deluxe.map { it.songID } + scores.charts.standard.map { it.songID }).toSet()
+            ))
+        }
     }
 
     companion object {

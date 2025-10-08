@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -18,9 +19,11 @@ class TestTaikoSRCalculateService : MessageService<Matcher> {
         } else return false
     }
     
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
         val str = param.group("data").trim {it <= ' '} .replace("\\s+".toRegex(), "-")
         event.reply("结果：" + getResult(str))
+
+        return null
     }
     
     private fun getResult(str: String): String {

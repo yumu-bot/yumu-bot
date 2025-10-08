@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -63,7 +64,7 @@ import kotlin.math.roundToInt
         } else return false
     }
 
-    override fun handleMessage(event: MessageEvent, param: TestFixPPParam) {
+    override fun handleMessage(event: MessageEvent, param: TestFixPPParam): ServiceCallStatistic? {
         var mode = param.mode
 
         val sb = StringBuilder()
@@ -186,6 +187,8 @@ import kotlin.math.roundToInt
         log.info("TP：修补最好成绩成功，耗时：${(System.currentTimeMillis() - time) / 1000} 秒")
 
         event.reply(sb.toString().removeSuffix(", "))
+
+        return null
     }
 
     companion object {

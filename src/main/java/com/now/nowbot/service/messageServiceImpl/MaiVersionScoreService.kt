@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.MaiDifficulty
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.Companion.listToString
@@ -121,7 +122,7 @@ class MaiVersionScoreService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: MaiVersionParam) {
+    override fun handleMessage(event: MessageEvent, param: MaiVersionParam): ServiceCallStatistic? {
         val vs = getVersionScores(param.qq, param.name, param.versions, maimaiApiService)
 
         if (vs.scores.isEmpty()) {
@@ -154,6 +155,12 @@ class MaiVersionScoreService(
             PanelMA2Param(user, page.first, MaiVersion.getNameList(param.versions), page.second, page.third).toMap(), "MA")
 
         event.reply(image)
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "mais" to vs.scores.map { it.songID }
+            ))
+        }
     }
 
     companion object {

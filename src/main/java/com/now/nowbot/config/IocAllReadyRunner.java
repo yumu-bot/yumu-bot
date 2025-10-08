@@ -84,7 +84,7 @@ public class IocAllReadyRunner implements CommandLineRunner {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { //jvm结束钩子
             APP_ALIVE = false;
-            check.doEnd();
+            // check.doEnd();
             ((ThreadPoolTaskExecutor) executor).shutdown();
             //MatchListenerServiceLegacy.stopAllListener();
             MatchListenerService.stopAllListenerFromReboot();

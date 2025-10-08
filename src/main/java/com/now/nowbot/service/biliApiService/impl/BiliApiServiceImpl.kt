@@ -81,7 +81,7 @@ class BiliApiServiceImpl(
             if (code == -400) {
                 throw TipsException("找不到${if (param != null) " $param " else ""}对应的${name}。")
             } else if (code != 0) {
-                throw TipsException("获取${name}信息失败。失败代码：${code}，失败原因：${message}")
+                throw TipsException("获取${name}失败。失败代码：${code}，失败原因：${message}")
             } else try {
                 return JacksonUtil.parseObject(node["data"], T::class.java)
             } catch (e : Exception) {

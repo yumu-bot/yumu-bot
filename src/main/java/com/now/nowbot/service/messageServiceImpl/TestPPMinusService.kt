@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.PPMinusDao
 import com.now.nowbot.entity.PPMinusLite
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -42,7 +43,7 @@ class TestPPMinusService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: PPMinusParam) {
+    override fun handleMessage(event: MessageEvent, param: PPMinusParam): ServiceCallStatistic? {
         val my = getPPMinus4(param.me)
         val others = if (param.isVs) {
             getPPMinus4(param.other!!)
@@ -56,6 +57,8 @@ class TestPPMinusService(
             log.error("PP-：发送失败：", e)
             throw IllegalStateException.Send("PPM")
         }
+
+        return null
     }
 
     private fun getPPMinus4(user: OsuUser): PPMinus4 {

@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
@@ -52,8 +53,9 @@ class SetModeService (
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: SetModeParam) {
+    override fun handleMessage(event: MessageEvent, param: SetModeParam): ServiceCallStatistic? {
         event.reply(getReply(param, event))
+        return ServiceCallStatistic.build(event, mode = param.mode)
     }
 
     override fun accept(event: MessageEvent, messageText: String): SetModeParam? {

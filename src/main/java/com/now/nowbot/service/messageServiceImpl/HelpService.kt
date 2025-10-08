@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -30,7 +31,7 @@ class HelpService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: String) {
+    override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
         try {
             val image = getHelpPicture(param, imageService)
 
@@ -64,6 +65,8 @@ class HelpService(
         } catch (e: Exception) {
             log.error("Help A6 输出错误，使用默认方法也出错？", e)
         }
+
+        return ServiceCallStatistic.building(event)
     }
 
     companion object {

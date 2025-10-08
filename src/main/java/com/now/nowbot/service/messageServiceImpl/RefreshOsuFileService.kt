@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -30,7 +31,7 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
         }
     }
 
-    override fun handleMessage(event: MessageEvent, param: Long) {
+    override fun handleMessage(event: MessageEvent, param: Long): ServiceCallStatistic? {
         val sid =
             try {
                 osuBeatmapApiService.getBeatmapFromDatabase(param).beatmapsetID
@@ -61,6 +62,8 @@ class RefreshOsuFileService(private val osuBeatmapApiService: OsuBeatmapApiServi
         } else {
             event.reply("已成功刷新谱面 ${s.previewName} 的所有相关联的 $count 个缓存文件。")
         }
+
+        return ServiceCallStatistic.builds(event, beatmapIDs = s.beatmaps?.map { it.beatmapID })
     }
 
     companion object {

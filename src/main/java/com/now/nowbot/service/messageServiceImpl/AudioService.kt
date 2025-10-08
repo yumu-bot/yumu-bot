@@ -1,6 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.entity.ServiceCallStatisticLite
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -48,14 +48,22 @@ class AudioService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: AudioParam): ServiceCallStatisticLite? {
+    override fun handleMessage(event: MessageEvent, param: AudioParam): ServiceCallStatistic? {
+        var currentType: Boolean = param.isBid
+
         val voice =
             if (param.isBid) {
                 // 先 b 再 s
-                getVoiceFromBID(param.id) ?: getVoiceFromSID(param.id)
+                getVoiceFromBID(param.id) ?: run {
+                    currentType = false
+                    getVoiceFromSID(param.id)
+                }
             } else {
                 // 先 s 再 b
-                getVoiceFromSID(param.id) ?: getVoiceFromBID(param.id)
+                getVoiceFromSID(param.id) ?: run {
+                    currentType = true
+                    getVoiceFromSID(param.id)
+                }
             }
 
         if (voice == null) {
@@ -71,9 +79,16 @@ class AudioService(
             throw IllegalStateException.Send("谱面试听")
         }
 
+        return if (currentType) {
+            ServiceCallStatistic.build(event, beatmapID = param.id)
+        } else {
+            ServiceCallStatistic.build(event, beatmapsetID = param.id)
+        }
+
+        /*
         // 这两种都可以, 选其中一个
-        val old = ServiceCallStatisticLite.build(event, param)
-        val new = ServiceCallStatisticLite.build(event /* , param=xxx */) {
+        // val old = ServiceCallStatisticLite.build(event, param)
+        val new = ServiceCallStatistic.build(event /* , param=xxx */) {
             val key = if (param.isBid) {
                 "bid"
             } else{
@@ -82,6 +97,8 @@ class AudioService(
             setParam(mapOf(key to param.id))
         }
         return new
+
+         */
     }
 
     @Throws(WebClientResponseException::class)
@@ -92,20 +109,6 @@ class AudioService(
     }
 
     private fun getVoiceFromSID(sid: Long): ByteArray? {
-
-        /*
-        val s =
-            try {
-                beatmapApiService.getBeatmapset(sid)
-            } catch (e: Exception) {
-                return null
-            }
-
-        if (s.nsfw) {
-            throw UnsupportedOperationException.AudioNotSafeForWork()
-        }
-
-         */
 
         return try {
             getVoice(sid)
@@ -121,12 +124,6 @@ class AudioService(
             } catch (e: Exception) {
                 return null
             }
-
-        /*
-        if (b.beatmapset?.nsfw == true) {
-            throw UnsupportedOperationException.AudioNotSafeForWork()
-        }
-         */
 
         return try {
             getVoice(b.beatmapsetID)

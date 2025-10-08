@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -42,7 +43,7 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
         } else return false
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: List<String>) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: List<String>): ServiceCallStatistic? {
         if (Permission.isCommonUser(event)) {
             throw PermissionException.DeniedException.BelowGroupAdministrator()
         }
@@ -50,7 +51,7 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
         val sb = StringBuilder()
 
         val actions = param.map {
-            return@map AsyncMethodExecutor.Supplier<Pair<String, Long>> {
+            return@map AsyncMethodExecutor.Supplier {
                 return@Supplier try {
                     it to userApiService.getOsuID(it)
                 } catch (e: Exception) {
@@ -91,5 +92,7 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
          */
 
         event.reply(sb.toString().removeSuffix(","))
+
+        return ServiceCallStatistic.builds(event, userIDs = ids.map { it.value })
     }
 }

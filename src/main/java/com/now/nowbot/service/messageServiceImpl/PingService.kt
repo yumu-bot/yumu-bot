@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.NowbotConfig
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -27,8 +28,9 @@ import java.util.regex.Matcher
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
         event.reply(image).recallIn(5000)
+        return ServiceCallStatistic.building(event)
     }
 
     override fun accept(event: MessageEvent, messageText: String): Matcher? {

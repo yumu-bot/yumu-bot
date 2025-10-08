@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
@@ -46,7 +47,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: MapMinusParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: MapMinusParam): ServiceCallStatistic? {
         val image = getMapMinusImage(param, beatmapApiService, calculateApiService, imageService)
 
         try {
@@ -55,6 +56,8 @@ import java.util.regex.Matcher
             log.error("谱面 Minus：发送失败", e)
             throw MapMinusException(MapMinusException.Type.MM_Send_Error)
         }
+
+        return ServiceCallStatistic.build(event, beatmapID = param.bid, mode = param.mode)
     }
 
     override fun accept(event: MessageEvent, messageText: String): MapMinusParam? {

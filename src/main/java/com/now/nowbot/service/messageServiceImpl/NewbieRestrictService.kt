@@ -6,6 +6,7 @@ import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.NewbieDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
@@ -321,15 +322,15 @@ class NewbieRestrictService(
         return !data.value.isNullOrEmpty()
     }
 
-    override fun handleMessage(event: MessageEvent, param: Collection<LazerScore>) {
-        val score = param.maxByOrNull { it.beatmap.starRating } ?: return
+    override fun handleMessage(event: MessageEvent, param: Collection<LazerScore>): ServiceCallStatistic? {
+        val score = param.maxByOrNull { it.beatmap.starRating } ?: return null
 
         val beatmap = beatmapApiService.getBeatmap(score.beatmapID)
         beatmapApiService.applyBeatmapExtend(score, beatmap)
 
         val sr = score.beatmap.starRating
         val silence = getSilence(sr)
-        if (silence <= 0) return
+        if (silence <= 0) return null
 
         val criminal = event.sender
 
@@ -384,14 +385,14 @@ class NewbieRestrictService(
         val executorBot = botContainer.robots[executorBotID]
             ?: run {
                 log.info(sb.append("但是执行机器人并未上线。无法执行禁言任务。").toString())
-                return
+                return null
             }
 
         val isReportable = executorBot.groupList.data?.map { it.groupId }?.contains(killerGroupID) == true
 
         if (Permission.isGroupAdmin(event)) {
             report(isReportable, executorBot, sb.append("但是对方是管理员或群主，无法执行禁言任务。").toString())
-            return
+            return null
         }
 
         // 情节严重
@@ -406,6 +407,9 @@ class NewbieRestrictService(
             executorBot.setGroupBan(newbieGroupID, event.sender.id, (silence * 60).toInt())
                 ?: report(isReportable, executorBot, sb.append("但是机器人执行禁言任务失败了。").toString())
         }
+
+        // 不记录 NR 的调用
+        return null
     }
 
     private fun report(isReportable: Boolean = false, executorBot: Bot? = null, messageText: String) {

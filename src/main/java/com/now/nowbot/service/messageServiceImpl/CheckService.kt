@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -48,7 +49,7 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: BindUser) {
+    override fun handleMessage(event: MessageEvent, param: BindUser): ServiceCallStatistic? {
 
         val time = Instant.ofEpochMilli(param.time ?: 0).atOffset(ZoneOffset.ofHours(8))
         val timeStr = if (time.isBefore(botCreatedTime)) {
@@ -77,6 +78,8 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
         """.trimIndent()
 
         event.reply(result)
+
+        return ServiceCallStatistic.build(event, userID = param.userID, mode = param.mode)
     }
 
     companion object {

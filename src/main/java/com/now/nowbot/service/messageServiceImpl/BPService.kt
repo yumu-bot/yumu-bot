@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
@@ -56,7 +57,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: BPParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: BPParam): ServiceCallStatistic? {
         param.asyncImage()
         val image: ByteArray = param.getImage()
 
@@ -66,6 +67,15 @@ import java.util.regex.Matcher
             log.error("最好成绩：发送失败", e)
             throw IllegalStateException.Send("最好成绩")
         }
+
+        val scores = param.scores.toList()
+
+        return ServiceCallStatistic.builds(
+            event,
+            beatmapIDs = scores.map { it.second.beatmapID }.distinct(),
+            userIDs = listOf(param.user.userID),
+            modes = listOf( param.user.currentOsuMode),
+        )
     }
 
     override fun accept(event: MessageEvent, messageText: String): BPParam? {

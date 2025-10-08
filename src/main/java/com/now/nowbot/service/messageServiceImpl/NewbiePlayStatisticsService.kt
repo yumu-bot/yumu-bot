@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
@@ -66,10 +67,10 @@ class NewbiePlayStatisticsService(
     }
 
     //    @CheckPermission(isSuperAdmin = true)
-    override fun handleMessage(event: MessageEvent, param: SearchType) {
-        if (event !is GroupMessageEvent) return
+    override fun handleMessage(event: MessageEvent, param: SearchType): ServiceCallStatistic? {
+        if (event !is GroupMessageEvent) return null
         val gid = event.group.id
-        if (gid != newbieConfig.newbieGroup && gid != newbieConfig.killerGroup) return
+        if (gid != newbieConfig.newbieGroup && gid != newbieConfig.killerGroup) return null
 
         val bind = bindDao.getBindFromQQ(event.sender.id, true)
         val message = when (param) {
@@ -79,11 +80,12 @@ class NewbiePlayStatisticsService(
             SearchType.LIST -> if (gid == newbieConfig.killerGroup) {
                 handleList()
             } else {
-                return
+                return null
             }
         }
 
         event.reply(message)
+        return ServiceCallStatistic.building(event)
     }
 
     private fun handleDay(bind: BindUser): String {

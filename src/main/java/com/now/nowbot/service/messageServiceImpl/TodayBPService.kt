@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
@@ -56,7 +57,7 @@ class TodayBPService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: TodayBPParam) {
+    override fun handleMessage(event: MessageEvent, param: TodayBPParam): ServiceCallStatistic? {
         param.asyncImage()
         val image = param.getImage()
         try {
@@ -65,6 +66,15 @@ class TodayBPService(
             log.error("今日最好成绩：发送失败", e)
             throw IllegalStateException.Send("今日最好成绩")
         }
+
+        val scores = param.scores.toList()
+
+        return ServiceCallStatistic.builds(
+            event,
+            beatmapIDs = scores.map { it.second.beatmapID }.distinct(),
+            userIDs = listOf(param.user.userID),
+            modes = listOf(param.mode)
+        )
     }
 
     override fun accept(event: MessageEvent, messageText: String): TodayBPParam? {

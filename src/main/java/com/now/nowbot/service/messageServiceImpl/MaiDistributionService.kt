@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.maimai.MaiBestScore
 import com.now.nowbot.model.maimai.MaiFit.ChartData
 import com.now.nowbot.model.maimai.MaiScore
@@ -81,7 +82,7 @@ import kotlin.math.min
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: MaiDistParam) {
+    override fun handleMessage(event: MessageEvent, param: MaiDistParam): ServiceCallStatistic? {
         val best = MaiBestScoreService.getBestScores(param.qq, param.name, maimaiApiService)
 
         if (best.charts.standard.isEmpty() && best.charts.deluxe.isEmpty()) {
@@ -125,6 +126,12 @@ import kotlin.math.min
             event.reply(image)
         } catch (e: Exception) {
             throw IllegalStateException.Send("舞萌拟合")
+        }
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "mais" to (body.standard.map { it.score.songID } + body.deluxe.map { it.score.songID }).toSet()
+            ))
         }
     }
 

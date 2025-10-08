@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.MicroUserFilter
 import com.now.nowbot.model.osu.MicroUser
@@ -99,8 +100,16 @@ class FriendService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: FriendParam) {
+    override fun handleMessage(event: MessageEvent, param: FriendParam): ServiceCallStatistic? {
         event.reply(getMessageChain(param))
+
+        return if (param is FriendPairParam) {
+            ServiceCallStatistic.builds(event, userIDs = listOf(param.user.userID, param.partner.userID))
+        } else if (param is FriendListParam) {
+            ServiceCallStatistic.build(event, userID = param.user.userID)
+        } else {
+            ServiceCallStatistic.building(event)
+        }
     }
 
     private fun getMessageChain(param: FriendParam): MessageChain {

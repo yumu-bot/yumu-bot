@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
@@ -86,7 +87,7 @@ class MatchMapService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: MatchMapParam) {
+    override fun handleMessage(event: MessageEvent, param: MatchMapParam): ServiceCallStatistic? {
         val e7Param = getPanelE7Param(param, beatmapApiService, calculateApiService)
         val image = imageService.getPanel(e7Param, "E7")
 
@@ -96,6 +97,13 @@ class MatchMapService(
             log.error("比赛谱面信息：发送失败: ", e)
             event.reply(IllegalStateException.Send("比赛谱面信息"))
         }
+
+        return ServiceCallStatistic.build(
+            event,
+            beatmapID = e7Param.beatmap.beatmapID,
+            beatmapsetID = e7Param.beatmap.beatmapsetID,
+            mode = e7Param.beatmap.mode
+        )
     }
 
     override fun accept(event: MessageEvent, messageText: String): MatchMapParam? {

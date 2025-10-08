@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.config.NowbotConfig
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -40,10 +41,12 @@ class WikiService internal constructor() : MessageService<Matcher> {
         } else return false
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic {
         val key = param.group("key")
         val msg = event.reply(getWiki(key))
         msg.recallIn((60 * 1000).toLong())
+
+        return ServiceCallStatistic.building(event)
     }
 
     @Throws(IOException::class, LogException::class) fun getWiki(key: String?): String {

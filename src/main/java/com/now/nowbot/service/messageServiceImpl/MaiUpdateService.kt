@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
@@ -27,7 +28,7 @@ class MaiUpdateService(private val maimaiApiService: MaimaiApiService, private v
         } else return false
     }
 
-    override fun handleMessage(event: MessageEvent, param: Boolean) {
+    override fun handleMessage(event: MessageEvent, param: Boolean): ServiceCallStatistic? {
         event.reply("正在尝试更新舞萌、中二数据！")
         maimaiApiService.updateMaimaiSongLibraryDatabase()
         maimaiApiService.updateMaimaiAliasLibraryDatabase()
@@ -36,5 +37,6 @@ class MaiUpdateService(private val maimaiApiService: MaimaiApiService, private v
         chunithmApiService.updateChunithmSongLibraryDatabase()
         chunithmApiService.updateChunithmAliasLibraryDatabase()
         event.reply("已尝试更新！")
+        return null
     }
 }

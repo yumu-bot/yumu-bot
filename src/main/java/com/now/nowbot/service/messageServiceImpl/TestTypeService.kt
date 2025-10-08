@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
@@ -59,7 +60,7 @@ import org.springframework.stereotype.Service
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: MapTypeParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: MapTypeParam): ServiceCallStatistic? {
         val fileStr: String
         val map: Beatmap
 
@@ -114,5 +115,7 @@ import org.springframework.stereotype.Service
         event.reply(
             MessageChain.MessageChainBuilder().addText("这张图可能是？？：\n").addText(sb.toString()).build()
         )
+
+        return null
     }
 }

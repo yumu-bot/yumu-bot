@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.UUScore
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
@@ -63,7 +64,7 @@ class UUPRService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: UUPRParam) {
+    override fun handleMessage(event: MessageEvent, param: UUPRParam): ServiceCallStatistic? {
         val score = param.score
 
         // 单成绩发送
@@ -73,6 +74,13 @@ class UUPRService(
             log.error("最近成绩文字：发送失败", e)
             event.reply("最近成绩文字：发送失败，请重试。")
         }
+
+        return ServiceCallStatistic.build(event,
+            beatmapID = score.beatmapID,
+            beatmapsetID = score.beatmapset.beatmapsetID,
+            userID = param.user?.userID,
+            mode = param.score.mode
+        )
     }
 
     

@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.*
 import com.now.nowbot.model.filter.MaiScoreFilter
 import com.now.nowbot.model.maimai.MaiBestScore
@@ -93,7 +94,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: MaiScoreParam) {
+    override fun handleMessage(event: MessageEvent, param: MaiScoreParam): ServiceCallStatistic? {
         val image: ByteArray = if (param.songs.isEmpty()) {
             imageService.getPanel(param.toMap(), "MA")
         } else {
@@ -101,6 +102,13 @@ import java.util.regex.Matcher
         }
 
         event.reply(image)
+
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "mais" to param.songs.map { it.songID }
+            ))
+        }
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): MaiScoreParam {

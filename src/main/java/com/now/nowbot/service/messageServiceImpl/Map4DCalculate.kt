@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
@@ -36,7 +37,7 @@ class Map4DCalculate : MessageService<Map4DParam> {
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: Map4DParam) {
+    override fun handleMessage(event: MessageEvent, param: Map4DParam): ServiceCallStatistic? {
         val mod =
                 if (param.mods == null) {
                     mutableListOf()
@@ -69,5 +70,7 @@ class Map4DCalculate : MessageService<Map4DParam> {
                 }
 
         event.reply(message)
+
+        return ServiceCallStatistic.building(event)
     }
 }

@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.model.match.MatchRating.Companion.insertMicroUserToScores
@@ -34,10 +35,10 @@ import java.util.regex.Matcher
     private val imageService: ImageService,
 ) : MessageService<MuRatingService.MuRatingPanelParam>, TencentMessageService<MuRatingService.MuRatingPanelParam> {
 
-    @JvmRecord data class MuRatingPanelParam(
-        @JvmField val match: Match,
-        @JvmField val param: MatchRating.RatingParam,
-        @JvmField val isUU: Boolean = false
+    data class MuRatingPanelParam(
+        val match: Match,
+        val param: MatchRating.RatingParam,
+        val isUU: Boolean = false
     )
 
     override fun isHandle(
@@ -55,7 +56,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: MuRatingPanelParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: MuRatingPanelParam): ServiceCallStatistic? {
         val mr : MatchRating
 
         try {
@@ -92,6 +93,15 @@ import java.util.regex.Matcher
                 log.error("木斗力：发送失败", e)
                 throw IllegalStateException.Send("木斗力")
             }
+        }
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "mids" to listOf(mr.match.id),
+                "uids" to mr.players.map { it.key }.distinct(),
+                "bids" to mr.rounds.map { it.beatmapID }.distinct(),
+                "sids" to mr.rounds.mapNotNull { it.beatmap?.beatmapsetID }.distinct(),
+                "modes" to mr.rounds.map { it.mode.modeValue }.distinct()
+            ))
         }
     }
 

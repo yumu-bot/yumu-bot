@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.model.match.MatchRating.Companion.applyDTMod
 import com.now.nowbot.model.match.MatchRating.Companion.insertMicroUserToScores
@@ -44,7 +45,7 @@ import org.springframework.stereotype.Service
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: MuRatingPanelParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: MuRatingPanelParam): ServiceCallStatistic? {
         val data = calculate(param, beatmapApiService, calculateApiService)
 
         val image: ByteArray = imageService.getPanel(data, "F")
@@ -54,6 +55,16 @@ import org.springframework.stereotype.Service
         } catch (e: Exception) {
             log.error("比赛结果：发送失败", e)
             throw IllegalStateException.Send("比赛结果")
+        }
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "mids" to listOf(data.match.id),
+                "uids" to data.players.map { it.key }.distinct(),
+                "bids" to data.rounds.map { it.beatmapID }.distinct(),
+                "sids" to data.rounds.mapNotNull { it.beatmap?.beatmapsetID }.distinct(),
+                "modes" to data.rounds.map { it.mode.modeValue }.distinct()
+            ))
         }
     }
 

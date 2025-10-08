@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.dao.PPMinusDao
 import com.now.nowbot.entity.PPMinusLite
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -218,7 +219,7 @@ import java.util.regex.Matcher
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: PPMinusParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: PPMinusParam): ServiceCallStatistic? {
         val image = param.getPPMImage()
 
         try {
@@ -226,6 +227,18 @@ import java.util.regex.Matcher
         } catch (e: Exception) {
             log.error("PP-：发送失败：", e)
             throw IllegalStateException.Send("PPM")
+        }
+
+        return if (param.isVs) {
+            ServiceCallStatistic.builds(event,
+                userIDs = listOf(param.me.userID, param.other!!.userID),
+                modes = listOf(param.mode)
+            )
+        } else {
+            ServiceCallStatistic.build(event,
+                userID = param.me.userID,
+                mode = param.mode
+            )
         }
     }
 

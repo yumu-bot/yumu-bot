@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
@@ -38,7 +39,7 @@ class KitaService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: Matcher) {
+    override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
         val mod: String
         val position: Short
         val beatmap: Beatmap
@@ -52,7 +53,7 @@ class KitaService(
             position = 1
         } else {
             val modStr = param.group("mod")?.uppercase()?.substring(0, 2) ?: throw IllegalArgumentException.WrongException.Mod()
-            mod = modStr.substring(0, 2)
+            mod = modStr.take(2)
             position = modStr.substring(2).toShortOrNull() ?: throw IllegalArgumentException.WrongException("请输入正确的位置！")
         }
 
@@ -87,6 +88,8 @@ class KitaService(
                 throw UnsupportedOperationException.NotGroup()
             }
         }
+
+        return ServiceCallStatistic.build(event, beatmapID = beatmap.beatmapID, beatmapsetID = beatmap.beatmapsetID, mode = beatmap.mode)
     }
 
     companion object {

@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.bili.BiliUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -24,10 +25,12 @@ class BiliUserService(private val biliApiService: BiliApiService): MessageServic
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: Long) {
+    override fun handleMessage(event: MessageEvent, param: Long): ServiceCallStatistic? {
         val user = biliApiService.getUser(param)
 
         event.reply(getMessage(user.data!!, biliApiService))
+
+        return ServiceCallStatistic.building(event)
     }
 
     companion object {

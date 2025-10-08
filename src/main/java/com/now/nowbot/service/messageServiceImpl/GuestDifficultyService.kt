@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.osu.OsuUser
@@ -62,7 +63,7 @@ class GuestDifficultyService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: GuestParam) {
+    override fun handleMessage(event: MessageEvent, param: GuestParam): ServiceCallStatistic? {
         val body = param.getBody()
 
         val image = imageService.getPanel(body, "A11")
@@ -73,6 +74,8 @@ class GuestDifficultyService(
             log.error("客串谱师：发送失败", e)
             throw IllegalStateException.Send("客串谱师")
         }
+
+        return ServiceCallStatistic.build(event, userID = param.user.userID)
     }
 
     override fun accept(event: MessageEvent, messageText: String): GuestParam? {

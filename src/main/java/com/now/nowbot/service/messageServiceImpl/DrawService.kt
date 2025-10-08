@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.DrawLogLite
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.mapper.DrawLogLiteRepository
 import com.now.nowbot.model.DrawConfig
 import com.now.nowbot.model.enums.DrawGrade
@@ -37,7 +38,7 @@ class DrawService : MessageService<Matcher> {
     @CheckPermission(test = true) @Throws(Throwable::class) override fun handleMessage(
         event: MessageEvent,
         param: Matcher
-    ) {
+    ): ServiceCallStatistic? {
         val bindUser = bindDao!!.getBindFromQQ(event.sender.id, true)
 
         var times = 1
@@ -71,7 +72,8 @@ class DrawService : MessageService<Matcher> {
 
         val sb = StringBuilder()
         clist.forEach(Consumer { c: DrawConfig.Card -> sb.append(c.name).append(", ") })
-        event.subject.sendMessage(sb.toString())
+        event.reply(sb.toString())
+        return ServiceCallStatistic.building(event)
     }
 
     companion object {

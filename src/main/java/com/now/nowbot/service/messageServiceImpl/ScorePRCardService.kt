@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -72,7 +73,7 @@ class ScorePRCardService(
 
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: PRCardParam) {
+    override fun handleMessage(event: MessageEvent, param: PRCardParam): ServiceCallStatistic? {
         val score = param.score
 
         val message = getMessageChain(score)
@@ -82,6 +83,13 @@ class ScorePRCardService(
             log.error("迷你成绩面板：发送失败", e)
             throw IllegalStateException.Send("迷你")
         }
+
+        return ServiceCallStatistic.build(
+            event,
+            beatmapID = param.score.beatmapID,
+            userID = param.score.userID,
+            mode = param.score.mode,
+        )
     }
 
     override fun accept(event: MessageEvent, messageText: String): PRCardParam? {

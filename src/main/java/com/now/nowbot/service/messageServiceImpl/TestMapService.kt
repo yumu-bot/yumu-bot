@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -26,7 +27,7 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
         } else return false
     }
     
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
         val bid = param.group("id").toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
         val mod = param.group("mod")
         
@@ -54,8 +55,9 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
             .append(b.AR).append(',')
             .append(b.OD)
             
-            event.subject.sendMessage(sb.toString())
-            return 
+            event.reply(sb.toString())
+
+            return null
         }
         
         val mods = LazerMod.getModsList(Stream.of(*mod.split("[\"\\s,，\\-|:]+".toRegex()).dropLastWhile {it.isEmpty()} .toTypedArray()).map { obj: String -> obj.uppercase(Locale.getDefault())} .toList())
@@ -75,6 +77,8 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
         .append(String.format("%.2f", CalculateApiImpl.applyAR(b.AR!!, mods))).append(',')
         .append(String.format("%.2f", CalculateApiImpl.applyOD(b.OD!!, mods, b.mode)))
         
-        event.subject.sendMessage(sb.toString())
+        event.reply(sb.toString())
+
+        return null
     }
 }

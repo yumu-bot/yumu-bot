@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.config.Permission
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -50,7 +51,7 @@ class CsvPPMinusService(
 
     @CheckPermission(test = true)
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: CSVPPMinusParam) {
+    override fun handleMessage(event: MessageEvent, param: CSVPPMinusParam): ServiceCallStatistic? {
         val isOsuID = param.names.first().matches("\\d+".toRegex())
 
         event.reply("CM：正在按${if (isOsuID) " ID " else "玩家名"}的形式处理数据。")
@@ -85,7 +86,7 @@ class CsvPPMinusService(
         }
 
         val actions = ids.map { id ->
-            return@map AsyncMethodExecutor.Supplier<TestPPMData?> {
+            return@map AsyncMethodExecutor.Supplier {
                 try {
                     val u = userApiService.getOsuUser(id, mode)
 
@@ -112,28 +113,6 @@ class CsvPPMinusService(
             .associateBy { it.user!!.userID }
 
         val result = ids.mapNotNull { async[it] }
-
-        /*
-
-        val result = names.map { name ->
-            val u = if (isOsuID) {
-                userApiService.getOsuUser(name.toLongOrNull() ?: -1L, OsuMode.getMode(mode, inputMode))
-            } else {
-                userApiService.getOsuUser(name, OsuMode.getMode(mode, inputMode))
-            }
-
-            if (OsuMode.isDefaultOrNull(mode)) {
-                mode = u.currentOsuMode
-            }
-
-            val s = scoreApiService.getBestScores(u.id, mode)
-            val ppmData = TestPPMData()
-            ppmData.init(u, s)
-
-            ppmData
-        }
-
-         */
 
         val sb = StringBuilder()
 
@@ -220,6 +199,8 @@ class CsvPPMinusService(
 
         // 必须群聊
         event.replyFileInGroup(file, fileName)
+        
+        return ServiceCallStatistic.builds(event, userIDs = result.mapNotNull { it.user?.userID }.ifEmpty { null })
     }
 
     internal class TestPPMData {

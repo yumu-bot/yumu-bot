@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.BeatmapsetSearch
 import com.now.nowbot.model.osu.OsuUser
@@ -48,7 +49,7 @@ import kotlin.math.floor
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: TakeParam) {
+    override fun handleMessage(event: MessageEvent, param: TakeParam): ServiceCallStatistic? {
         val whose = if (param.isMyself) {
             "你的"
         } else if (param.user != null) {
@@ -89,7 +90,7 @@ import kotlin.math.floor
                 }
             }
 
-            return
+            return ServiceCallStatistic.build(event, userID = param.user?.userID)
         } else if (param.hostedCount > 0) {
             if (param.isMyself) {
                 event.reply("别人不能使用$takes，因为你已经拥有上架 (ranked) 谱面。")
@@ -97,7 +98,7 @@ import kotlin.math.floor
                 event.reply("你不能使用$takes，因为对方已经拥有上架 (ranked) 谱面。")
             }
 
-            return
+            return ServiceCallStatistic.build(event, userID = param.user?.userID)
         } else { // 进入下一轮
         }
 
@@ -224,7 +225,7 @@ import kotlin.math.floor
                     """.trimIndent()
                 )
             }
-            return
+            return ServiceCallStatistic.build(event, userID = param.user.userID)
         }
 
         if (param.isMyself) {
@@ -244,6 +245,8 @@ import kotlin.math.floor
                 """.trimIndent()
             )
         }
+
+        return ServiceCallStatistic.build(event, userID = param.user.userID)
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): TakeParam {

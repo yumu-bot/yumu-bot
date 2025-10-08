@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.AtMessage
 import com.now.nowbot.qq.message.MessageChain
@@ -50,12 +51,14 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: List<MutualParam>) {
+    override fun handleMessage(event: MessageEvent, param: List<MutualParam>): ServiceCallStatistic? {
         try {
             event.reply(mutual2MessageChain(param)).recallIn((60 * 1000).toLong())
         } catch (e: Exception) {
             log.error("添加好友：发送失败！", e)
         }
+
+        return ServiceCallStatistic.builds(event, userIDs = param.mapNotNull { it.uid }.ifEmpty { null })
     }
 
     private fun at2Mutual(at: AtMessage?): MutualParam {

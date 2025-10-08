@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.OsuUserInfoDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -69,7 +70,7 @@ class UUIService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: UUIParam) {
+    override fun handleMessage(event: MessageEvent, param: UUIParam): ServiceCallStatistic? {
         val user = param.user
 
         val avatar: ByteArray = userApiService.getAvatarByte(user)
@@ -81,6 +82,8 @@ class UUIService(
             log.error("UUI 数据发送失败", e)
             event.reply("UUI 请求超时。\n请重试。或使用增强的 !yminfo。")
         }
+
+        return ServiceCallStatistic.build(event, userID = user.userID, mode = user.currentOsuMode)
     }
 
     companion object {

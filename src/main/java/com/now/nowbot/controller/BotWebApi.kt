@@ -887,19 +887,19 @@ import kotlin.math.min
         @OpenResource(name = "sid", desp = "谱面集编号") @RequestParam("sid") @Nullable sid: Int?,
         @OpenResource(name = "bid", desp = "谱面编号") @RequestParam("bid") @Nullable bid: Int?
     ): ResponseEntity<ByteArray> {
-        val data: Map<String, Any>
+        val param: NominationService.NominationParam
 
         try {
-            data = if (sid == null) {
+            param = if (sid == null) {
                 if (bid == null) {
                     throw IllegalArgumentException.WrongException.BeatmapID()
                 } else {
-                    NominationService.parseData(
+                    NominationService.getParam(
                         bid.toLong(), false, beatmapApiService, discussionApiService, userApiService
                     )
                 }
             } else {
-                NominationService.parseData(
+                NominationService.getParam(
                     sid.toLong(), true, beatmapApiService, discussionApiService, userApiService
                 )
             }
@@ -908,7 +908,7 @@ import kotlin.math.min
         }
 
         try {
-            val image = imageService.getPanel(data, "N")
+            val image = imageService.getPanel(param.toMap(), "N")
 
             return ResponseEntity(
                 image, getImageHeader(
@@ -976,7 +976,7 @@ import kotlin.math.min
         return if (uid != null) {
             userApiService.getOsuUser(uid, mode)
         } else if (name.isNullOrBlank().not()) {
-            userApiService.getOsuUser(name!!, mode)
+            userApiService.getOsuUser(name, mode)
         } else {
             userApiService.getOsuUser(17064371L, mode)
         }
@@ -1045,7 +1045,7 @@ import kotlin.math.min
         if (uid != null) {
             return scoreApiService.getBestScores(uid, mode, offset, limit)
         } else if (name.isNullOrBlank().not()) {
-            val user = userApiService.getOsuUser(name!!, mode)
+            val user = userApiService.getOsuUser(name, mode)
             return scoreApiService.getBestScores(user, offset, limit)
         } else {
             return scoreApiService.getBestScores(7003013L, OsuMode.DEFAULT, offset, limit)
@@ -1079,7 +1079,7 @@ import kotlin.math.min
         if (uid != null) {
             return scoreApiService.getScore(uid, mode, offset, limit, isPass)
         } else if (name.isNullOrBlank().not()) {
-            val user = userApiService.getOsuUser(name!!, mode)
+            val user = userApiService.getOsuUser(name, mode)
             return scoreApiService.getScore(user.userID, mode, offset, limit, isPass)
         } else {
             return scoreApiService.getScore(7003013L, OsuMode.DEFAULT, offset, limit, isPass)

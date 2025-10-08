@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
@@ -64,13 +65,25 @@ import kotlin.math.sqrt
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: SkillParam) {
+    override fun handleMessage(event: MessageEvent, param: SkillParam): ServiceCallStatistic? {
         val image = param.getImage()
 
         try {
             event.reply(image)
         } catch (e: Exception) {
             throw IllegalStateException.Send("技巧分析")
+        }
+
+        return if (param.isVs) {
+            ServiceCallStatistic.builds(event,
+                userIDs = listOf(param.me.userID, param.other!!.userID),
+                modes = listOf(param.mode)
+            )
+        } else {
+            ServiceCallStatistic.build(event,
+                userID = param.me.userID,
+                mode = param.mode
+            )
         }
     }
 

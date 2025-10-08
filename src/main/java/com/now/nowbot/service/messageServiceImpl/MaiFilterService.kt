@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.maimai.MaiBestScore
 import com.now.nowbot.model.maimai.MaiScore
 import com.now.nowbot.qq.event.MessageEvent
@@ -112,9 +113,15 @@ class MaiFilterService(private val maimaiApiService: MaimaiApiService, private v
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: MaiFilterParam) {
+    override fun handleMessage(event: MessageEvent, param: MaiFilterParam): ServiceCallStatistic? {
         val image = imageService.getPanel(param.toMap(), "MI")
 
         event.reply(image)
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "mais" to param.score.map { it.songID }
+            ))
+        }
     }
 }

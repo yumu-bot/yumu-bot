@@ -1,26 +1,26 @@
 package com.now.nowbot.mapper
 
-import com.now.nowbot.entity.ServiceCallStatisticLite
+import com.now.nowbot.entity.ServiceCallStatistic
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import java.time.LocalDateTime
 
-interface ServiceCallStatisticRepository : JpaRepository<ServiceCallStatisticLite, Long> {
+interface ServiceCallStatisticRepository : JpaRepository<ServiceCallStatistic, Long> {
     @Query(
         value = """
-            SELECT service FROM service_call_stat
+            SELECT * FROM service_call_stat
             WHERE time BETWEEN :from AND :to;
             """, nativeQuery = true
     ) fun getBetween(
         from: LocalDateTime, to: LocalDateTime
-    ): List<ServiceCallStatisticLite.ServiceCall>
+    ): List<ServiceCallStatistic>
 
     @Query(
         value = """
-            SELECT service FROM service_call_stat
+            SELECT * FROM service_call_stat
             WHERE group_id = :group AND time BETWEEN :from AND :to;
             """, nativeQuery = true
     ) fun getBetweenInGroup(
         group: Long, from: LocalDateTime, to: LocalDateTime
-    ): List<ServiceCallStatisticLite.ServiceCall>
+    ): List<ServiceCallStatistic>
 }

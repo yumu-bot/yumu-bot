@@ -1,7 +1,10 @@
 package com.now.nowbot.dao
 
-import com.now.nowbot.entity.ServiceCallStatisticLite
+import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.entity.ServiceHeritage
 import com.now.nowbot.mapper.ServiceCallStatisticRepository
+import com.now.nowbot.util.JacksonUtil
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 
@@ -9,13 +12,13 @@ import java.time.LocalDateTime
     private val serviceCallStatisticRepository: ServiceCallStatisticRepository
 ) {
     fun saveService(
-        data: ServiceCallStatisticLite
+        data: ServiceCallStatistic
     ) = serviceCallStatisticRepository.save(data)
 
     fun getBetween(
         from: LocalDateTime,
         to: LocalDateTime = LocalDateTime.now()
-    ): List<ServiceCallStatisticLite.ServiceCall> {
+    ): List<ServiceCallStatistic> {
         return serviceCallStatisticRepository.getBetween(from, to)
     }
 
@@ -23,27 +26,57 @@ import java.time.LocalDateTime
         groupID: Long,
         from: LocalDateTime,
         to: LocalDateTime = LocalDateTime.now()
-    ): List<ServiceCallStatisticLite.ServiceCall> {
+    ): List<ServiceCallStatistic> {
         return serviceCallStatisticRepository.getBetweenInGroup(groupID, from, to)
     }
 
-    fun getGroupLastBeatmapsetID(
+    fun getLastBeatmapsetID(
         groupID: Long,
+        name: String?,
         from: LocalDateTime,
         to: LocalDateTime = LocalDateTime.now()
     ): Long? {
         val calls = getBetweenInGroup(groupID, from, to)
         
-        return calls.mapNotNull { it.heritage }.mapNotNull { it.sid }.lastOrNull()
+        return calls
+            .filter { name?.equals(it.name, ignoreCase = true) ?: true }
+            .mapNotNull { getHeritage(it.param) }
+            .lastOrNull { !it.sids.isNullOrEmpty() }
+            ?.sids
+            ?.firstOrNull()
     }
 
-    fun getGroupLastBeatmapID(
+    fun getLastBeatmapID(
         groupID: Long,
+        name: String?,
         from: LocalDateTime,
         to: LocalDateTime = LocalDateTime.now()
     ): Long? {
         val calls = getBetweenInGroup(groupID, from, to)
 
-        return calls.mapNotNull { it.heritage }.mapNotNull { it.bid }.lastOrNull()
+        return calls
+            .filter { name?.equals(it.name, ignoreCase = true) ?: true }
+            .mapNotNull { getHeritage(it.param) }
+            .lastOrNull { !it.bids.isNullOrEmpty() }
+            ?.bids
+            ?.firstOrNull()
+    }
+
+    fun getHeritage(param: String?): ServiceHeritage? {
+        if (param == null) return null
+
+        val node = JacksonUtil.parseObject(param, JsonNode::class.java)
+
+        val bids = node.get("bids")?.mapNotNull { it.asLong() }
+        val sids = node.get("sids")?.mapNotNull { it.asLong() }
+        val uids = node.get("uids")?.mapNotNull { it.asLong() }
+        val mids = node.get("mids")?.mapNotNull { it.asLong() }
+
+        return ServiceHeritage(
+            bids,
+            sids,
+            uids,
+            mids,
+        )
     }
 }

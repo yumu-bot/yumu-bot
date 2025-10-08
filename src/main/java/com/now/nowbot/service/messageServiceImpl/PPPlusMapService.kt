@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
@@ -44,7 +45,7 @@ class PPPlusMapService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: PPPlusParam) {
+    override fun handleMessage(event: MessageEvent, param: PPPlusParam): ServiceCallStatistic {
         val map = try {
             beatmapApiService.getBeatmapFromDatabase(param.bid)
         } catch (e: Exception) {
@@ -75,6 +76,8 @@ class PPPlusMapService(
 
         val image = imageService.getPanel(dataMap, "B3")
         event.reply(image)
+
+        return ServiceCallStatistic.build(event, beatmapID = map.beatmapID, beatmapsetID = map.beatmapsetID)
     }
 
 

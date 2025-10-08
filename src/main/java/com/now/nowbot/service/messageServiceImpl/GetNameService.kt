@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -29,7 +30,7 @@ class GetNameService(private val userApiService: OsuUserApiService) : MessageSer
         } else return false
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
         if (Permission.isCommonUser(event)) {
             throw PermissionException.DeniedException.BelowGroupAdministrator()
         }
@@ -79,5 +80,8 @@ class GetNameService(private val userApiService: OsuUserApiService) : MessageSer
         from.sendMessage(sb.substring(0, sb.length - 2))
 
          */
+
+
+        return ServiceCallStatistic.builds(event, userIDs = ids)
     }
 }

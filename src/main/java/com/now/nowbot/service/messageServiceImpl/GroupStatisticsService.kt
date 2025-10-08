@@ -6,6 +6,7 @@ import com.mikuac.shiro.core.BotContainer
 import com.mikuac.shiro.dto.action.response.GroupMemberInfoResp
 import com.now.nowbot.config.FileConfig
 import com.now.nowbot.config.NewbieConfig
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
@@ -99,7 +100,7 @@ class GroupStatisticsService(
         return false
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Long) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Long): ServiceCallStatistic? {
         // init 搬到这里来，别每次启动都要存个文件到那里
         try {
             if (Files.isRegularFile(cachePath)) {
@@ -130,6 +131,8 @@ class GroupStatisticsService(
                 Files.writeString(cachePath, JacksonUtil.toJson(UserCache)!!)
             }
         }
+
+        return ServiceCallStatistic.building(event)
     }
 
     @Throws(Exception::class) private fun work(group: Group, groupId: Long) {

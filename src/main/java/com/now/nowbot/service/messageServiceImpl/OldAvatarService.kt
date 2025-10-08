@@ -1,8 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.MicroUser
-import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.osu.OsuUser.Companion.toMicroUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -41,7 +41,6 @@ class OldAvatarService(
     private val imageService: ImageService,
 ) : MessageService<OAParam>, TencentMessageService<OAParam> {
 
-    @JvmRecord
     data class OAParam(
         val qq: Long?,
         val uid: Long?,
@@ -63,8 +62,9 @@ class OldAvatarService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: OAParam) {
-        val images = getImages(param)
+    override fun handleMessage(event: MessageEvent, param: OAParam): ServiceCallStatistic? {
+        val users = getUsers(param)
+        val images = getImages(users)
 
         try {
             if (images.size == 1) {
@@ -76,6 +76,8 @@ class OldAvatarService(
             log.error("旧头像：发送失败", e)
             throw IllegalStateException.Send("官网头像")
         }
+
+        return ServiceCallStatistic.builds(event, userIDs = users.map { it.userID })
     }
 
     override fun accept(event: MessageEvent, messageText: String): OAParam? {
@@ -86,12 +88,14 @@ class OldAvatarService(
     }
 
     override fun reply(event: MessageEvent, param: OAParam): MessageChain? {
-        val images = getImages(param)
+        val users = getUsers(param)
+        val images = getImages(users)
 
         try {
             return if (images.size == 1) {
                 MessageChain(images.first())
             } else {
+                // 官方 QQ 消息限制：只能发一张图
                 QQMsgUtil.getImages(images).first()
             }
         } catch (e: Exception) {
@@ -108,9 +112,9 @@ class OldAvatarService(
         return if (event.isAt) {
             OAParam(event.target, null, null, at = true,  isMyself = false)
         } else if (qqStr.isNotBlank()) {
-            OAParam(qqStr.toLong(), null, null, at = false, isMyself = false)
+            OAParam(qqStr.toLongOrNull(), null, null, at = false, isMyself = false)
         } else if (uidStr.isNotBlank()) {
-            OAParam(null, uidStr.toLong(), null, at = false, isMyself = false)
+            OAParam(null, uidStr.toLongOrNull(), null, at = false, isMyself = false)
         } else if (name.isNotBlank()) {
             OAParam(null, null, name.trim(), at = false, isMyself = false)
         } else {
@@ -193,17 +197,17 @@ class OldAvatarService(
         return banned
     }
 
-    private fun getImages(param: OAParam): List<ByteArray> {
-        val user: OsuUser
+    private fun getUsers(param: OAParam): List<MicroUser> {
+        val user: MicroUser
 
         if (param.uid != null) {
             try {
-                user = userApiService.getOsuUser(param.uid)
+                user = userApiService.getOsuUser(param.uid).toMicroUser()
             } catch (e: Exception) {
                 throw NoSuchElementException.Player(param.uid.toString())
             }
         } else if (param.qq != null) {
-            user = userApiService.getOsuUser(bindDao.getBindFromQQ(param.qq))
+            user = userApiService.getOsuUser(bindDao.getBindFromQQ(param.qq)).toMicroUser()
         } else {
             val users = parseDataString(param.name)
 
@@ -215,6 +219,14 @@ class OldAvatarService(
                 userApiService.asyncDownloadAvatar(users)
             }
 
+            return users
+        }
+
+        return listOf(user)
+    }
+
+    private fun getImages(users: List<MicroUser>): List<ByteArray> {
+        if (users.size > 1) {
             return try {
                 AsyncMethodExecutor.awaitSupplierExecute(
                     users.map { u ->
@@ -226,9 +238,9 @@ class OldAvatarService(
             } catch (e: ExecutionException) {
                 throw NetworkException.RenderModuleException.BadGateway()
             }
+        } else {
+            return listOf(imageService.getPanel(mapOf("user" to users.first()), "Epsilon"))
         }
-
-        return listOf(imageService.getPanel(mapOf("user" to user), "Epsilon"))
     }
 
     companion object {

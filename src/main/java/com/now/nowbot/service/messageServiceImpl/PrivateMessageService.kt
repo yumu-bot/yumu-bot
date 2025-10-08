@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -44,7 +45,7 @@ class PrivateMessageService(private val userApiService: OsuUserApiService, priva
     @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun handleMessage(
         event: MessageEvent,
         param: PMParam
-    ) {
+    ): ServiceCallStatistic? {
         val bindUser = bindDao.getBindFromQQ(event.sender.id, true)
         val json: JsonNode = try {
             getJson(param, bindUser)
@@ -52,6 +53,7 @@ class PrivateMessageService(private val userApiService: OsuUserApiService, priva
             throw TipsException("权限不足")
         }
         event.reply(getCodeImage(JacksonUtil.objectToJsonPretty(json)))
+        return ServiceCallStatistic.building(event)
     }
 
     enum class Type {

@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -13,6 +14,7 @@ class MultiplePlayService : MessageService<String> {
         return false
     }
 
-    override fun handleMessage(event: MessageEvent, param: String) {
+    override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
+        return null
     }
 }

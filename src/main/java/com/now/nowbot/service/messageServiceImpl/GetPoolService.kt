@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.mappool.old.MapPoolDto
 import com.now.nowbot.qq.event.MessageEvent
@@ -51,7 +52,7 @@ class GetPoolService(
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: GetPoolParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: GetPoolParam): ServiceCallStatistic? {
         val mapPool = MapPoolDto(param.name, param.mode, param.map, beatmapApiService, calculateApiService)
 
         if (mapPool.modPools.isEmpty()) {
@@ -70,6 +71,8 @@ class GetPoolService(
             log.error("生成图池：发送失败", e)
             throw IllegalStateException.Send("生成图池")
         }
+
+        return ServiceCallStatistic.building(event)
     }
 
     fun getFirstMapMode(dataStr: String): OsuMode {

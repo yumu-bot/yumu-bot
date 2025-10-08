@@ -3,7 +3,7 @@ package com.now.nowbot.aop;
 import com.now.nowbot.config.Permission;
 import com.now.nowbot.dao.ServiceCallStatisticsDao;
 import com.now.nowbot.entity.OsuBindUserLite;
-import com.now.nowbot.entity.ServiceCallStatisticLite;
+import com.now.nowbot.entity.ServiceCallStatistic;
 import com.now.nowbot.mapper.ServiceCallRepository;
 import com.now.nowbot.mapper.UserProfileMapper;
 import com.now.nowbot.model.osu.LazerScore;
@@ -230,14 +230,14 @@ public class CheckAspect {
         } finally {
             long end = System.currentTimeMillis();
             long duration = end - start;
-            if (result instanceof ServiceCallStatisticLite call) {
+            if (result instanceof ServiceCallStatistic call) {
                 // 新版的统计
                 call.setOther(name, start, duration);
                 serviceCallStatisticsDao.saveService(call);
             }
 
             // 原来的可以下线了
-            serviceCall.saveCall(name, duration);
+            //serviceCall.saveCall(name, duration);
         }
     }
 

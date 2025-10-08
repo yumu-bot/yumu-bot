@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.MaiDifficulty
 import com.now.nowbot.model.enums.Operator
 import com.now.nowbot.model.filter.MaiScoreFilter
@@ -53,10 +54,16 @@ import java.util.regex.Matcher
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: MaiFindParam) {
+    override fun handleMessage(event: MessageEvent, param: MaiFindParam): ServiceCallStatistic? {
         val image = imageService.getPanel(param.toMap(), "MF")
 
         event.reply(image)
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "mais" to param.songs.map { it.songID }
+            ))
+        }
     }
 
     private fun getParam(matcher: Matcher): MaiFindParam {

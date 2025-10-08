@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -75,7 +76,7 @@ class BPAnalysisLegacyService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: BAParam) {
+    override fun handleMessage(event: MessageEvent, param: BAParam): ServiceCallStatistic? {
         val image = imageService.getPanel(param.toMap(), "J")
 
         try {
@@ -84,6 +85,8 @@ class BPAnalysisLegacyService(
             log.error("最好成绩分析：发送失败", e)
             throw IllegalStateException.Send("最好成绩分析")
         }
+
+        return ServiceCallStatistic.build(event, userID = param.user.userID, mode = param.user.currentOsuMode)
     }
 
     companion object {

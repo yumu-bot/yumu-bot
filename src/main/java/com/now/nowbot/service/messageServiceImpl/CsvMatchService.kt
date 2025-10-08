@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.Match.MatchRound
@@ -43,7 +44,7 @@ import java.util.regex.Matcher
 
     @CheckPermission(isGroupAdmin = true) @Throws(Throwable::class) override fun handleMessage(
         event: MessageEvent, param: Matcher
-    ) {
+    ): ServiceCallStatistic? {
 
         val isMultiple = param.group("x") != null
         var id = 0L
@@ -79,10 +80,20 @@ import java.util.regex.Matcher
         //必须群聊
         val file = sb.toString().toByteArray(StandardCharsets.UTF_8)
 
+        val matchIDs: List<Long>
+
         if (isMultiple && ids != null) {
+            matchIDs = ids
             event.replyFileInGroup(file, "${ids.first()}s.csv")
         } else {
+            matchIDs = listOf(id)
             event.replyFileInGroup(file, "$id.csv")
+        }
+
+        return ServiceCallStatistic.building(event) {
+            setParam(
+                mapOf("mids" to matchIDs)
+            )
         }
     }
 

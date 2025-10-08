@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.config.PermissionParam
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -13,7 +14,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_QQ_ID
-import java.util.*
 import org.springframework.stereotype.Service
 
 @Service("BAN")
@@ -36,32 +36,23 @@ class BanService(private val permission: Permission, private val imageService: I
         val name: String? = matcher.group(FLAG_NAME)
         val operate = matcher.group("operate")
 
-        if (event.isAt) {
-            data.value = BanParam(event.target, null, operate, true)
-            return true
+        data.value = if (event.isAt) {
+            BanParam(event.target, null, operate, true)
+        } else if (!(qq.isNullOrBlank())) {
+            BanParam(qq.toLongOrNull(), null, operate, true)
+        } else if (!(group.isNullOrBlank())) {
+            BanParam(group.toLongOrNull(), null, operate, false)
+        } else if (!(name.isNullOrBlank())) {
+            BanParam(null, name, operate, true)
+        } else {
+            BanParam(null, null, operate, false)
         }
 
-        if (Objects.nonNull(qq)) {
-            data.value = BanParam(qq!!.toLong(), null, operate, true)
-            return true
-        }
-
-        if (Objects.nonNull(group)) {
-            data.value = BanParam(group!!.toLong(), null, operate, false)
-            return true
-        }
-
-        if (Objects.nonNull(name)) {
-            data.value = BanParam(null, name, operate, true)
-            return true
-        }
-
-        data.value = BanParam(null, null, operate, false)
         return true
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: BanParam) {
+    override fun handleMessage(event: MessageEvent, param: BanParam): ServiceCallStatistic? {
         if (!Permission.isSuperAdmin(event.sender.id)) {
             throw PermissionException.DeniedException.BelowSuperAdministrator()
         }
@@ -70,19 +61,18 @@ class BanService(private val permission: Permission, private val imageService: I
             "list",
             "whitelist",
             "l",
-            "w" -> SendImage(event, Permission.getWhiteList(), "白名单包含：")
+            "w" -> sendImage(event, Permission.getWhiteList(), "白名单包含：")
             "banlist",
             "blacklist",
-            "k" -> SendImage(event, Permission.getBlackList(), "黑名单包含：")
+            "k" -> sendImage(event, Permission.getBlackList(), "黑名单包含：")
             "add",
             "a" -> {
-                if (Objects.nonNull(param.qq) && param.isUser) {
+                if (param.qq != null && param.isUser) {
                     val add = permission.addUser(param.qq, true)
                     if (add) {
                         event.reply("成功添加用户 ${param.qq} 进白名单")
                     }
-                } else if (Objects.nonNull(param.qq)) {
-                    // throw new TipsException("群聊功能还在制作中");
+                } else if (param.qq != null) {
                     val add = permission.addGroup(param.qq, true, true)
                     if (add) {
                         event.reply("成功添加群聊 ${param.qq} 进白名单")
@@ -93,13 +83,12 @@ class BanService(private val permission: Permission, private val imageService: I
             }
             "remove",
             "r" -> {
-                if (Objects.nonNull(param.qq) && param.isUser) {
+                if (param.qq != null && param.isUser) {
                     val remove = permission.removeUser(param.qq, true)
                     if (remove) {
                         event.reply("成功添加群聊 ${param.qq} 出白名单")
                     }
-                } else if (Objects.nonNull(param.qq)) {
-                    // throw new TipsException("群聊功能还在制作中");
+                } else if (param.qq != null) {
                     val add = permission.removeGroup(param.qq, false, true)
                     if (add) {
                         event.reply("成功移除群聊 ${param.qq} 出白名单")
@@ -110,13 +99,12 @@ class BanService(private val permission: Permission, private val imageService: I
             }
             "ban",
             "b" -> {
-                if (Objects.nonNull(param.qq) && param.isUser) {
+                if (param.qq != null && param.isUser) {
                     val add = permission.addUser(param.qq, false)
                     if (add) {
                         event.reply("成功拉黑用户 ${param.qq}")
                     }
-                } else if (Objects.nonNull(param.qq)) {
-                    // throw new TipsException("群聊功能还在制作中");
+                } else if (param.qq != null) {
                     val add = permission.addGroup(param.qq, false, true)
                     if (add) {
                         event.reply("成功拉黑群聊 ${param.qq}")
@@ -127,13 +115,12 @@ class BanService(private val permission: Permission, private val imageService: I
             }
             "unban",
             "u" -> {
-                if (Objects.nonNull(param.qq) && param.isUser) {
+                if (param.qq != null && param.isUser) {
                     val add = permission.removeUser(param.qq, false)
                     if (add) {
                         event.reply("成功恢复用户 ${param.qq}")
                     }
-                } else if (Objects.nonNull(param.qq)) {
-                    // throw new TipsException("群聊功能还在制作中");
+                } else if (param.qq != null) {
                     val add = permission.removeGroup(param.qq, false, true)
                     if (add) {
                         event.reply("成功恢复群聊 ${param.qq}")
@@ -144,9 +131,21 @@ class BanService(private val permission: Permission, private val imageService: I
             }
             else -> throw BanException(BanException.Type.SUPER_Instruction)
         }
+        
+        return ServiceCallStatistic.building(event) {
+            if (param.isUser) {
+                param.qq?.let { userID = it }
+            } else {
+                param.qq?.let { groupID = it }
+            }
+
+            setParam(mapOf(
+                "operation" to param.operate.first()
+            ))
+        }
     }
 
-    private fun SendImage(event: MessageEvent, param: PermissionParam, info: String) {
+    private fun sendImage(event: MessageEvent, param: PermissionParam, info: String) {
         val users = param.userList
         val groups = param.groupList
 

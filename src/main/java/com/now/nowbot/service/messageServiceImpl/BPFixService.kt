@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
@@ -37,7 +38,7 @@ class BPFixService(
     private val imageService: ImageService,
 ) : MessageService<BPFixParam>, TencentMessageService<BPFixParam> {
 
-    data class BPFixParam(val user: OsuUser, val bestsMap: Map<Int, LazerScore>, val mode: OsuMode, val page: Int = 1)
+    data class BPFixParam(val user: OsuUser, val bests: Map<Int, LazerScore>, val mode: OsuMode, val page: Int = 1)
 
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<BPFixParam>): Boolean {
         val matcher = Instruction.BP_FIX.matcher(messageText)
@@ -48,7 +49,7 @@ class BPFixService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: BPFixParam) {
+    override fun handleMessage(event: MessageEvent, param: BPFixParam): ServiceCallStatistic? {
         val image = param.getImage()
         try {
             event.reply(image)
@@ -56,6 +57,16 @@ class BPFixService(
             log.error("理论最好成绩：发送失败", e)
             throw IllegalStateException.Send("理论最好成绩")
         }
+
+        val scores = param.bests.toList()
+
+        return ServiceCallStatistic.builds(
+            event,
+            beatmapIDs = scores.map { it.second.beatmapID },
+            beatmapsetIDs = scores.map { it.second.beatmapset.beatmapsetID },
+            userIDs =  listOf(param.user.userID),
+            modes = listOf(param.mode)
+        )
     }
 
     override fun accept(event: MessageEvent, messageText: String): BPFixParam? {
@@ -212,7 +223,7 @@ class BPFixService(
     }
 
     private fun BPFixParam.getImage(): ByteArray {
-        val fixes = fix(user, bestsMap)
+        val fixes = fix(user, bests)
 
         // 分页
         val split = DataUtil.splitPage(fixes.first, this.page)

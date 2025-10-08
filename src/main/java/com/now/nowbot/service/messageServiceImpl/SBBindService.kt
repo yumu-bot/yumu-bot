@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.entity.bind.SBQQBindLite
 import com.now.nowbot.model.SBBindUser
 import com.now.nowbot.model.ppysb.SBUser
@@ -60,7 +61,7 @@ class SBBindService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: BindParam) {
+    override fun handleMessage(event: MessageEvent, param: BindParam): ServiceCallStatistic? {
         val me = event.sender.id
 
         if (me == param.qq) {
@@ -69,7 +70,7 @@ class SBBindService(
             } else {
                 bindQQ(event, param)
             }
-            return
+            return ServiceCallStatistic.building(event)
         }
 
         // 超管使用量少, 所以相关分支靠后
@@ -84,7 +85,7 @@ class SBBindService(
             } else {
                 bindQQ(event, param)
             }
-            return
+            return ServiceCallStatistic.building(event)
         }
 
         // bi ub 但是不是自己, 也不是超管

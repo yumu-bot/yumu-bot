@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.config.BeatmapMirrorConfig
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.mappool.now.Pool
 import com.now.nowbot.model.mappool.old.MapPoolDto
@@ -65,7 +66,7 @@ import java.time.Duration
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: PoolParam) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: PoolParam): ServiceCallStatistic? {
         if (param.name.isNullOrBlank().not()) {
             val result = searchByName(param.name)
             if (result.isEmpty()) throw TipsException("未找到名称包含 ${param.name} 的图池")
@@ -96,6 +97,8 @@ import java.time.Duration
 
             event.reply(MapPoolDto(pool, beatmapApiService, calculateApiService), param.mode)
         }
+
+        return ServiceCallStatistic.building(event)
     }
 
     private fun MessageEvent.reply(data: MapPoolDto, mode: OsuMode) {

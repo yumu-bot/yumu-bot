@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.osu.MicroUser
@@ -61,7 +62,7 @@ class CalculateNewbieCupService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: NewbieCupParam) {
+    override fun handleMessage(event: MessageEvent, param: NewbieCupParam): ServiceCallStatistic? {
         event.reply("正在获取玩家表现分...")
 
         val result = getResult(param)
@@ -71,6 +72,13 @@ class CalculateNewbieCupService(
         val name = param.matches.first().name.split("\\s*$REG_COLON\\s*".toRegex()).firstOrNull()?.trim() ?: "OCNC"
 
         event.replyFileInGroup(str.toByteArray(Charsets.UTF_8), "$name.csv")
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "mids" to param.matches.map { it.statistics.matchID },
+                "uids" to param.matches.flatMap { it.players }.map { it.userID }.distinct(),
+            ))
+        }
     }
 
     data class NewbieCupResult(

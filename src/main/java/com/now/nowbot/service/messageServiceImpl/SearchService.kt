@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.BeatmapsetSearch
 import com.now.nowbot.qq.event.MessageEvent
@@ -42,7 +43,7 @@ import java.util.regex.Pattern
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: SearchParam) {
+    override fun handleMessage(event: MessageEvent, param: SearchParam): ServiceCallStatistic? {
         val query = constructQuery(param)
 
         val result: BeatmapsetSearch = try {
@@ -61,6 +62,10 @@ import java.util.regex.Pattern
         }
 
         event.replyImage(result, imageService)
+
+        return ServiceCallStatistic.builds(event,
+            beatmapsetIDs = result.beatmapsets.map { it.beatmapsetID }
+            )
     }
 
     companion object {

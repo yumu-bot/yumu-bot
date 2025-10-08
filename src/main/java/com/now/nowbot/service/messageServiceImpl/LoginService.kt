@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -38,7 +39,7 @@ class LoginService(private val bindDao: BindDao) : MessageService<String> {
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: String) {
+    override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
         val qq = event.sender.id
         val u = bindDao.getBindFromQQ(qq)
         var code: String?
@@ -47,6 +48,8 @@ class LoginService(private val bindDao: BindDao) : MessageService<String> {
                 (getRoStr().also { code = it }).uppercase())) {}
         event.reply("您的登录验证码: $code")
         LOGIN_USER_MAP[code!!.uppercase(Locale.getDefault())] = LoginUser(u.userID, u.username, System.currentTimeMillis())
+
+        return null
     }
 
     @JvmRecord data class LoginUser(val uid: Long, val name: String, val time: Long)

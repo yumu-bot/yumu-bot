@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.maimai.ChuBestScore
 import com.now.nowbot.model.maimai.ChuScore
 import com.now.nowbot.model.maimai.ChuSong
@@ -129,7 +130,7 @@ class ChuBestScoreService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: ChuBestScoreParam) {
+    override fun handleMessage(event: MessageEvent, param: ChuBestScoreParam): ServiceCallStatistic? {
         val lxUser = if (param.qq != null) {
             try {
                 lxChunithmApiService.getUser(param.qq)
@@ -171,6 +172,14 @@ class ChuBestScoreService(
                 imageService.getPanel(PanelME2Param(user, score, song).toMap(), "ME")
             }
         event.reply(image)
+
+        val ids = (charts.selection10 + charts.best30 + charts.new20).map { it.songID }.distinct()
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "chus" to ids
+            ))
+        }
     }
 
     companion object {

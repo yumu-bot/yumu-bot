@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -24,29 +25,30 @@ class TransService : MessageService<Matcher> {
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: Matcher) {
-        val d_index = d1.indexOf(param.group("a"))
-        if (d_index <= 0) throw TipsException("输入错误")
+    override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
+        val di = d1.indexOf(param.group("a"))
+        if (di <= 0) throw TipsException("输入错误")
 
         val x = param.group("b").toInt()
         val sb = StringBuilder()
 
-        if (d_index == 2 || d_index == 4 || d_index == 7 || d_index == 9 || d_index == 11) {
-            sb.append("降").append(d1.get(d_index + 1))
+        if (di == 2 || di == 4 || di == 7 || di == 9 || di == 11) {
+            sb.append("降").append(d1[di + 1])
         } else {
-            sb.append(d1.get(d_index))
+            sb.append(d1[di])
         }
 
         sb.append("大调").append('\n')
         for (j in c1) {
-            if (12 < d_index + j) {
-                sb.append(d1[d_index + j - 12]).append(x + 1).append(' ')
+            if (12 < di + j) {
+                sb.append(d1[di + j - 12]).append(x + 1).append(' ')
             } else {
-                sb.append(d1[d_index + j]).append(x).append(' ')
+                sb.append(d1[di + j]).append(x).append(' ')
             }
         }
 
         event.reply(sb.toString())
+        return ServiceCallStatistic.building(event)
     }
 
     companion object {

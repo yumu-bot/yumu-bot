@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.permission.PermissionController
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -92,7 +93,7 @@ class ServiceSwitchService(
 
     // @CheckPermission(isSuperAdmin = true)
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: SwitchParam) {
+    override fun handleMessage(event: MessageEvent, param: SwitchParam): ServiceCallStatistic? {
         val service = param.serviceName
         val group = param.groupID
 
@@ -161,6 +162,7 @@ class ServiceSwitchService(
                 }
             }
         }
+        return ServiceCallStatistic.building(event)
     }
 
     private val serviceListMarkdown: String

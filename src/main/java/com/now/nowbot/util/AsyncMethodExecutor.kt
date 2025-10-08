@@ -2,9 +2,6 @@ package com.now.nowbot.util
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.lang.InterruptedException
-import java.lang.System
-import java.lang.Thread
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -229,8 +226,30 @@ object AsyncMethodExecutor {
     }
 
     @JvmStatic
-    fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>): List<T> {
-        return awaitSupplierExecute(works, Duration.ofSeconds(30))
+    fun <T> awaitSupplierExecute(works: Collection<Callable<T>>): List<T> {
+        val size = works.size
+        val lock = CountDownLatch(size)
+        val results: MutableMap<Int, T?> = ConcurrentHashMap(size)
+        works.mapIndexed { i: Int, w: Callable<T> ->
+            Runnable {
+                try {
+                    val result = w.call()
+                    results[i] = result
+                } catch (e: Exception) {
+                    results[i] = null
+                    log.error("AsyncSupplier error", e)
+                } finally {
+                    lock.countDown()
+                }
+            }
+        }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
+        try {
+            lock.await(Duration.ofSeconds(30).toMillis(), TimeUnit.MILLISECONDS)
+        } catch (e: InterruptedException) {
+            log.error("lock error", e)
+        }
+
+        return results.toSortedMap().mapNotNull { it.value }
     }
 
     @JvmStatic

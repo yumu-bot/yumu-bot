@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -66,8 +67,8 @@ import kotlin.math.min
 
             data class Attr(
                 val index: String,
-                @JsonProperty("map_count") val mapCount: Int,
-                @JsonProperty("pp_count") val ppCount: Double,
+                @param:JsonProperty("map_count") val mapCount: Int,
+                @param:JsonProperty("pp_count") val ppCount: Double,
                 val percent: Double
             )
 
@@ -332,7 +333,7 @@ import kotlin.math.min
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: BAParam) {
+    override fun handleMessage(event: MessageEvent, param: BAParam): ServiceCallStatistic? {
         val image = param.getImage()
 
         try {
@@ -341,6 +342,8 @@ import kotlin.math.min
             log.error("最好成绩分析：发送失败", e)
             throw IllegalStateException.Send("最好成绩分析")
         }
+
+        return ServiceCallStatistic.build(event, userID = param.user.userID, mode = param.user.currentOsuMode)
     }
 
     override fun accept(event: MessageEvent, messageText: String): BAParam? {

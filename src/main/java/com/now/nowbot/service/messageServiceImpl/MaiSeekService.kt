@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
@@ -33,7 +34,7 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: String) {
+    override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
         if (param.matches("\\s*$REG_NUMBER_MORE\\s*".toRegex()) && !param.contains(REG_QUOTATION.toRegex())) {
             val rating = param.toIntOrNull() ?: 0
             
@@ -65,7 +66,7 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
             }
 
             event.reply(sb.toString())
-            return
+            return ServiceCallStatistic.building(event)
         }
         
         val rankMap = maimaiApiService.getMaimaiRank()
@@ -110,5 +111,6 @@ class MaiSeekService(private val maimaiApiService: MaimaiApiService) : MessageSe
         }
 
         event.reply(sb.toString())
+        return ServiceCallStatistic.building(event)
     }
 }

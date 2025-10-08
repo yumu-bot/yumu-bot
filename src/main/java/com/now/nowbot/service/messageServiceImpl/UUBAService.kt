@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
@@ -86,7 +87,7 @@ class UUBAService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: BPHeadTailParam) {
+    override fun handleMessage(event: MessageEvent, param: BPHeadTailParam): ServiceCallStatistic? {
         var bu: BindUser
 
         // 是否为绑定用户
@@ -134,6 +135,8 @@ class UUBAService(
         } catch (e: Exception) {
             throw IllegalStateException.Send("最好成绩分析（文字版）")
         }
+
+        return ServiceCallStatistic.build(event, userID = bu.userID, mode = mode)
     }
 
     override fun accept(event: MessageEvent, messageText: String): BPHeadTailParam? {

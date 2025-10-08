@@ -1,7 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.BeatmapsetSearch
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
@@ -42,7 +44,7 @@ import kotlin.math.roundToInt
         } else return false
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) { // 获取参数
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? { // 获取参数
         val statusStr = param.group("status") ?: "q"
         val sortStr = param.group("sort") ?: "ranked_asc"
         val rangeStr = param.group("range") ?: "12"
@@ -51,7 +53,7 @@ import kotlin.math.roundToInt
 
         val range = rangeStr.toIntOrNull() ?: throw IllegalArgumentException.WrongException.Henan()
 
-        if (range < 1 || range > 999) {
+        if (range !in 1..999) {
             throw IllegalArgumentException.WrongException.Range()
         }
 
@@ -67,8 +69,10 @@ import kotlin.math.roundToInt
             "page" to 1,
         )
 
+        val search: BeatmapsetSearch
+
         try {
-            val search = beatmapApiService.searchBeatmapset(query, tries)
+            search = beatmapApiService.searchBeatmapset(query, tries)
 
             AsyncMethodExecutor.awaitPairCallableExecute(
                 { beatmapApiService.applyBeatmapsetRankedTime(search.beatmapsets) },
@@ -88,6 +92,10 @@ import kotlin.math.roundToInt
             log.error("过审谱面：", e)
             throw IllegalStateException.Send("过审谱面")
         }
+
+        return ServiceCallStatistic.builds(event,
+            beatmapsetIDs = search.beatmapsets.map { it.beatmapsetID },
+        )
     }
 
     companion object {

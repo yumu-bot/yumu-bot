@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallLite.ServiceCallResult
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.mapper.ServiceCallRepository
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -47,7 +48,7 @@ import kotlin.math.round
 
     @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun handleMessage(
         event: MessageEvent, param: Int
-    ) {
+    ): ServiceCallStatistic? {
         val sb = StringBuilder()
         val result: List<ServiceCallResult>?
 
@@ -84,7 +85,10 @@ import kotlin.math.round
         sb.getCharts(result, r1, r50, r80, r99)
 
         val image = imageService.getPanelA6(sb.toString(), "service")
+
         event.reply(image)
+
+        return ServiceCallStatistic.building(event)
     }
 
     // 构建表格

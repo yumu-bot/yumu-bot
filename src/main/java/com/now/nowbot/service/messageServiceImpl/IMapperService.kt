@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.ActivityEvent
@@ -29,20 +30,21 @@ import kotlin.math.max
     private val userApiService: OsuUserApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService,
-) : MessageService<Map<String, Any?>>, TencentMessageService<Map<String, Any?>> {
+) : MessageService<IMapperService.IMapperParam>, TencentMessageService<IMapperService.IMapperParam> {
 
-    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Map<String, Any?>>): Boolean {
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<IMapperParam>): Boolean {
         val matcher = Instruction.I_MAPPER.matcher(messageText)
         if (!matcher.find()) return false
 
-        data.value = getIMapperV1(getIMapperParam(event, matcher, userApiService, beatmapApiService))
+        data.value = getIMapperParam(event, matcher, userApiService, beatmapApiService)
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Map<String, Any?>) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: IMapperParam): ServiceCallStatistic? {
+        val map = getIMapperV1(param)
 
         val image: ByteArray = try {
-            imageService.getPanel(param, "M")
+            imageService.getPanel(map, "M")
         } catch (e: Exception) {
             log.error("谱师信息：渲染失败", e)
             throw IMapperException(IMapperException.Type.IM_Fetch_Error)
@@ -54,23 +56,27 @@ import kotlin.math.max
             log.error("谱师信息：发送失败", e)
             throw IMapperException(IMapperException.Type.IM_Send_Error)
         }
+
+        return ServiceCallStatistic.build(event, userID = param.user.userID)
     }
 
-    override fun accept(event: MessageEvent, messageText: String): Map<String, Any?>? {
+    override fun accept(event: MessageEvent, messageText: String): IMapperParam? {
         val matcher = OfficialInstruction.I_MAPPER.matcher(messageText)
         if (!matcher.find()) return null
 
-        return getIMapperV1(getIMapperParam(event, matcher, userApiService, beatmapApiService))
+        return getIMapperParam(event, matcher, userApiService, beatmapApiService)
     }
 
-    override fun reply(event: MessageEvent, param: Map<String, Any?>): MessageChain? {
-        return MessageChainBuilder().addImage(imageService.getPanel(param, "M")).build()
+    override fun reply(event: MessageEvent, param: IMapperParam): MessageChain? {
+        val map = getIMapperV1(param)
+
+        return MessageChainBuilder().addImage(imageService.getPanel(map, "M")).build()
     }
 
     data class IMapperParam(
         val user: OsuUser,
         val relatedSets: Sequence<Beatmapset>,
-        val activity: List<ActivityEvent>,
+        val activities: List<ActivityEvent>,
     )
 
     companion object {
@@ -79,7 +85,7 @@ import kotlin.math.max
         fun getIMapperV2(param: IMapperParam, userApiService: OsuUserApiService): Map<String, Any> {
             val user = param.user
             val relatedSets = param.relatedSets
-            val activity = param.activity
+            val activity = param.activities
 
             val relatedUsers = AsyncMethodExecutor.awaitSupplierExecute {
                 userApiService.getUsers(relatedSets.filter { it.creatorID != user.userID }.map { it.creatorID }.toSet(), false)
@@ -329,8 +335,8 @@ import kotlin.math.max
             val user = param.user
 
             val mappingActivity: List<ActivityEvent> = try {
-                param.activity.mapIndexed { i, it ->
-                    val before = param.activity[max(0, i - 1)]
+                param.activities.mapIndexed { i, it ->
+                    val before = param.activities[max(0, i - 1)]
 
                     if (it != before || i == 0) {
                         it

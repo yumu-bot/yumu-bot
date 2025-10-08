@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.FileConfig
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.entity.UserProfileItem
 import com.now.nowbot.entity.UserProfileKey
 import com.now.nowbot.mapper.UserProfileItemRepository
@@ -190,7 +191,7 @@ class CustomService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: CustomParam) {
+    override fun handleMessage(event: MessageEvent, param: CustomParam): ServiceCallStatistic? {
         val fileName = "${param.uid}-${param.type}.png"
         val path = FILE_DIV_PATH.resolve(fileName)
 
@@ -211,7 +212,8 @@ class CustomService(
                 Files.write(path, imgBytes!!)
             } catch (e: Exception) {
                 log.error("自定义：文件添加失败", e)
-                throw CustomException(CustomException.Type.CUSTOM_Set_Failed, param.type)
+                event.reply(CustomException(CustomException.Type.CUSTOM_Set_Failed, param.type))
+                return ServiceCallStatistic.building(event)
             }
 
             val pathStr = path.toAbsolutePath().toString()
@@ -221,24 +223,29 @@ class CustomService(
                 else -> profile.banner = pathStr
             }
             userProfileMapper.saveAndFlush(profile)
-            throw CustomException(CustomException.Type.CUSTOM_Set_Success, param.type)
+            event.reply(CustomException(CustomException.Type.CUSTOM_Set_Success, param.type))
+            return ServiceCallStatistic.building(event)
         } else {
             // 删除
             try {
                 Files.delete(path)
             } catch (e: NoSuchFileException) {
-                throw CustomException(CustomException.Type.CUSTOM_Clear_NoSuchFile, param.type)
+                event.reply(CustomException(CustomException.Type.CUSTOM_Clear_NoSuchFile, param.type))
+                return ServiceCallStatistic.building(event)
             } catch (e: Exception) {
                 log.error("自定义：文件删除失败", e)
-                throw CustomException(CustomException.Type.CUSTOM_Clear_Failed, param.type)
+                event.reply(CustomException(CustomException.Type.CUSTOM_Clear_Failed, param.type))
+                return ServiceCallStatistic.building(event)
             }
+
             when (param.type) {
                 CARD -> profile.card = null
                 MASCOT -> profile.mascot = null
                 else -> profile.banner = null
             }
             userProfileMapper.saveAndFlush(profile)
-            throw CustomException(CustomException.Type.CUSTOM_Clear_Success, param.type)
+            event.reply(CustomException(CustomException.Type.CUSTOM_Clear_Success, param.type))
+            return ServiceCallStatistic.building(event)
         }
     }
 

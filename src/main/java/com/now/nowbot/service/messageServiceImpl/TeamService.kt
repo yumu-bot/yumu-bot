@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -52,7 +53,7 @@ class TeamService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: TeamParam) {
+    override fun handleMessage(event: MessageEvent, param: TeamParam): ServiceCallStatistic? {
         val team = try {
             userApiService.getTeamInfo(param.teamID)
         } catch (ignored: Exception) {
@@ -74,6 +75,13 @@ class TeamService(
             event.reply(image)
         } catch (e: Exception) {
             throw IllegalStateException.Send("战队信息")
+        }
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "tids" to listOf(team!!.id),
+                "modes" to listOf(team.ruleset.modeValue)
+            ))
         }
     }
 

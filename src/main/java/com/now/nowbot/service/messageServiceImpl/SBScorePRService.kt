@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
@@ -65,7 +66,7 @@ class SBScorePRService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: ScorePRParam) {
+    override fun handleMessage(event: MessageEvent, param: ScorePRParam): ServiceCallStatistic? {
         // param.asyncImage()
         val messageChain: MessageChain = param.getMessageChain()
 
@@ -75,6 +76,15 @@ class SBScorePRService(
             log.error("偏偏要上班最好成绩：发送失败", e)
             throw IllegalStateException.Send("偏偏要上班最好成绩")
         }
+
+        val scores = param.scores.toList()
+
+        return ServiceCallStatistic.builds(
+            event,
+            beatmapIDs = scores.map { it.second.beatmapID }.distinct(),
+            userIDs = listOf(param.user.userID),
+            modes = listOf(param.user.currentOsuMode),
+        )
     }
 
     /**

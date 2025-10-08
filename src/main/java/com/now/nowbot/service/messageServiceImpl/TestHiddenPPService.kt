@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
@@ -39,7 +40,7 @@ class TestHiddenPPService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: Matcher) {
+    override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
         if (Permission.isCommonUser(event)) {
             throw PermissionException.DeniedException.BelowGroupAdministrator()
         }
@@ -69,7 +70,7 @@ class TestHiddenPPService(
                 }
 
                 bps = scoreApiService.getBestScores(user, mode)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 sb.append("name=").append(name).append(" not found").append('\n')
                 break
             }
@@ -88,5 +89,7 @@ class TestHiddenPPService(
         }
 
         event.reply(sb.toString().removeSuffix(",\n"))
+
+        return null
     }
 }

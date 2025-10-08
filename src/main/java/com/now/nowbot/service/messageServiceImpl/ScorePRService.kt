@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
@@ -124,7 +125,7 @@ class ScorePRService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: ScorePRParam) {
+    override fun handleMessage(event: MessageEvent, param: ScorePRParam): ServiceCallStatistic? {
         param.asyncImage()
         val messageChain: MessageChain = param.getMessageChain()
 
@@ -134,6 +135,15 @@ class ScorePRService(
             log.error("最近成绩：发送失败", e)
             throw IllegalStateException.Send("最近成绩")
         }
+
+        val scores = param.scores.toList()
+
+        return ServiceCallStatistic.builds(
+            event,
+            beatmapIDs = scores.map { it.second.beatmapID }.distinct(),
+            userIDs = listOf(param.user.userID),
+            modes = listOf(param.user.currentOsuMode),
+        )
     }
 
     override fun accept(event: MessageEvent, messageText: String): ScorePRParam? {

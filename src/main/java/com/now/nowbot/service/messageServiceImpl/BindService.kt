@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.config.Permission
 import com.now.nowbot.config.YumuConfig
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
@@ -53,7 +54,7 @@ import java.util.function.Predicate
 
         val isCaptcha = nameStr.matches("\\d{6}".toRegex())
 
-        val isYmBot = messageText.substring(0, 3).contains("ym", ignoreCase = true) ||
+        val isYmBot = messageText.take(3).contains("ym", ignoreCase = true) ||
                 m.group("bi") != null ||
                 m.group("un") != null ||
                 m.group("ub") != null
@@ -98,7 +99,8 @@ import java.util.function.Predicate
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: BindParam) {
+    @Throws(Throwable::class)
+    override fun handleMessage(event: MessageEvent, param: BindParam): ServiceCallStatistic? {
         val me = event.sender.id
 
         if (me == param.qq) {
@@ -109,7 +111,7 @@ import java.util.function.Predicate
             } else {
                 bindQQ(event, me)
             }
-            return
+            return ServiceCallStatistic.building(event)
         }
 
         // 超管使用量少, 所以相关分支靠后
@@ -126,7 +128,7 @@ import java.util.function.Predicate
             } else if (param.at) {
                 bindQQAt(event, param.qq)
             }
-            return
+            return ServiceCallStatistic.building(event)
         }
 
         // bi ub 但是不是自己, 也不是超管

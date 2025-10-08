@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.model.match.SeriesRating
@@ -48,7 +49,7 @@ class SeriesRatingService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: Matcher) {
+    override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
         val dataStr = param.group("data")
         val nameStr = param.group("name")
 
@@ -57,7 +58,7 @@ class SeriesRatingService(
                 val md = getMarkdownFile("Help/series.md")
                 val image = imageService.getPanelA6(md, "help")
                 event.reply(image)
-                return
+                return null
             } catch (e: Exception) {
                 throw MRAException(MRAException.Type.RATING_Series_Instructions)
             }
@@ -129,6 +130,16 @@ class SeriesRatingService(
         } else if (param.group("csv") != null) {
             // 必须群聊
             event.replyFileInGroup(parseCSA(sr).toByteArray(StandardCharsets.UTF_8), "${sr.statistics.matchID}-results.csv")
+        }
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "mids" to sr.matches.map { it.id },
+                "uids" to sr.players.map { it.key }.distinct(),
+                "bids" to sr.rounds.map { it.beatmapID }.distinct(),
+                "sids" to sr.rounds.mapNotNull { it.beatmap?.beatmapsetID }.distinct(),
+                "modes" to sr.rounds.map { it.mode.modeValue }.distinct()
+            ))
         }
     }
 

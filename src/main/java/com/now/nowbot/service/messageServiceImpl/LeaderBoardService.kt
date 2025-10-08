@@ -1,6 +1,8 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.ServiceCallStatisticsDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
@@ -21,6 +23,7 @@ import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 import java.util.regex.Matcher
 import kotlin.math.max
 import kotlin.math.min
@@ -33,6 +36,7 @@ class LeaderBoardService(
     private val calculateApiService: OsuCalculateApiService,
     private val scoreApiService: OsuScoreApiService,
     private val imageService: ImageService,
+    private val dao: ServiceCallStatisticsDao,
 ) : MessageService<LeaderBoardParam> {
 
     data class LeaderBoardParam(
@@ -86,7 +90,7 @@ class LeaderBoardService(
             throw IllegalArgumentException.WrongException.Range()
         }
 
-        val mode = OsuMode.getMode(matcher.group(FLAG_MODE))
+        val mode = OsuMode.getMode(matcher.group(FLAG_MODE), bindDao.getGroupModeConfig(event))
 
         val type = getType(matcher.group(FLAG_TYPE))
 
@@ -98,7 +102,7 @@ class LeaderBoardService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: LeaderBoardParam) {
+    override fun handleMessage(event: MessageEvent, param: LeaderBoardParam): ServiceCallStatistic? {
         val bindUser = try {
             bindDao.getBindFromQQ(event.sender.id, true)
         } catch (e: BindException) {
@@ -111,10 +115,40 @@ class LeaderBoardService(
                     throw IllegalArgumentException.WrongException.BeatmapID()
                 }
 
-                val score = scoreApiService.getRecentScore(bindUser, param.mode, 0, 1).firstOrNull()
-                    ?: throw NoSuchElementException.RecentScore(bindUser.username, param.mode)
+                // 进阶备用方法：先获取之前大家使用的 bid，然后尝试获取谱面
+                val beforeBeatmapID = dao.getLastBeatmapID(
+                    groupID = event.subject.id,
+                    name = "LEADER_BOARD",
+                    from = LocalDateTime.now().minusHours(24L)
+                ) ?: dao.getLastBeatmapID(
+                    groupID = event.subject.id,
+                    name = null,
+                    from = LocalDateTime.now().minusHours(24L)
+                )
 
-                beatmapApiService.getBeatmap(score.beatmapID)
+                val beatmap = beforeBeatmapID?.let {
+                    try {
+                        beatmapApiService.getBeatmap(it)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+
+                if (beatmap == null || beatmap.hasLeaderBoard) {
+                    if (beatmap == null) {
+                        event.reply("没有获取到 24 小时内的参数。正在为您查询最近成绩的谱面排行榜。").recallIn(60 * 1000L)
+                    } else {
+                        event.reply("之前的参数对应的谱面没有榜。正在为您查询最近成绩的谱面排行榜。").recallIn(60 * 1000L)
+                    }
+
+                    val score = scoreApiService.getRecentScore(bindUser, param.mode, 0, 1).firstOrNull()
+                        ?: throw NoSuchElementException.RecentScore(bindUser.username, param.mode)
+
+                    beatmapApiService.getBeatmap(score.beatmapID)
+                } else {
+                    beatmap
+                }
+
             } else {
                 try {
                     beatmapApiService.getBeatmap(param.bid)
@@ -190,6 +224,13 @@ class LeaderBoardService(
             log.error("谱面排行：发送失败", e)
             throw IllegalStateException.Send("谱面排行")
         }
+
+        return ServiceCallStatistic.builds(event,
+            beatmapIDs = listOf(beatmap.beatmapID),
+            beatmapsetIDs = listOf(beatmap.beatmapsetID),
+            userIDs = ss.map { it.userID },
+            modes = listOf(param.mode),
+        )
     }
 
     companion object {

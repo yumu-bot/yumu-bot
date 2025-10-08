@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -17,8 +18,8 @@ class OsuAvatarCardService(
     private val userApiService: OsuUserApiService,
     private val bindDao: BindDao,
     private val imageService: ImageService,
-) : MessageService<OsuAvatarCardService.UserAvatarCardParam>,
-    TencentMessageService<OsuAvatarCardService.UserAvatarCardParam> {
+) : MessageService<OsuUser>,
+    TencentMessageService<OsuUser> {
 
     data class UserAvatarCardParam(
         var banner: String? = null,
@@ -34,31 +35,35 @@ class OsuAvatarCardService(
         )
     }
 
-
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: MessageService.DataValue<UserAvatarCardParam>
+        data: MessageService.DataValue<OsuUser>
     ): Boolean {
         val matcher = Instruction.OSU_AVATAR_CARD.matcher(messageText)
         if (!matcher.find()) return false
 
         val u = bindDao.getBindFromQQ(event.sender.id)
-        data.value = UserAvatarCardParam(userApiService.getOsuUser(u))
+        data.value = userApiService.getOsuUser(u)
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: UserAvatarCardParam) {
-        event.reply(imageService.getPanel(param, "Zeta"))
+    override fun handleMessage(event: MessageEvent, param: OsuUser): ServiceCallStatistic? {
+        val p = UserAvatarCardParam(param)
+
+        event.reply(imageService.getPanel(p, "Zeta"))
+
+        return ServiceCallStatistic.build(event, userID = param.userID)
     }
 
-    override fun accept(event: MessageEvent, messageText: String): UserAvatarCardParam? {
+    override fun accept(event: MessageEvent, messageText: String): OsuUser? {
         if (!OfficialInstruction.OSU_AVATAR_CARD.matcher(messageText).find()) return null
         val u = bindDao.getBindFromQQ(event.sender.id)
-        return UserAvatarCardParam(userApiService.getOsuUser(u))
+        return userApiService.getOsuUser(u)
     }
 
-    override fun reply(event: MessageEvent, param: UserAvatarCardParam): MessageChain? {
-        return MessageChain.MessageChainBuilder().addImage(imageService.getPanel(param, "Zeta")).build()
+    override fun reply(event: MessageEvent, param: OsuUser): MessageChain? {
+        val p = UserAvatarCardParam(param)
+        return MessageChain.MessageChainBuilder().addImage(imageService.getPanel(p, "Zeta")).build()
     }
 }

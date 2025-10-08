@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -32,7 +33,7 @@ class InfoCardService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: OsuUser) {
+    override fun handleMessage(event: MessageEvent, param: OsuUser): ServiceCallStatistic? {
         val image: ByteArray
 
         try {
@@ -48,6 +49,8 @@ class InfoCardService(
             log.error("迷你信息面板：发送失败", e)
             throw IllegalStateException.Send("迷你信息")
         }
+
+        return ServiceCallStatistic.build(event, userID = param.userID, mode = param.currentOsuMode)
     }
 
     override fun accept(event: MessageEvent, messageText: String): OsuUser? {

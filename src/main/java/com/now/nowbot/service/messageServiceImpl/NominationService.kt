@@ -1,8 +1,10 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.model.osu.Discussion
 import com.now.nowbot.model.osu.DiscussionDetails
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
@@ -10,6 +12,7 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.messageServiceImpl.NominationService.NominationParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuDiscussionApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -31,28 +34,47 @@ import kotlin.math.floor
     private val osuUserApiService: OsuUserApiService,
     private val osuDiscussionApiService: OsuDiscussionApiService,
     private val imageService: ImageService,
-) : MessageService<Matcher>, TencentMessageService<Matcher> {
+) : MessageService<NominationParam>, TencentMessageService<NominationParam> {
 
-    @Throws(Throwable::class) override fun isHandle(
+    data class NominationParam(
+        val beatmapset: Beatmapset,
+        val discussions: List<DiscussionDetails>,
+        val hype: List<DiscussionDetails>,
+        val more: Map<String, Any>,
+        val users: List<OsuUser>
+    ) {
+        fun toMap(): Map<String, Any> {
+            return mapOf(
+                "beatmapset" to beatmapset,
+                "discussion" to discussions,
+                "hype" to hype,
+                "more" to more,
+                "users" to users,
+            )
+        }
+    }
+
+    override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: DataValue<Matcher>,
+        data: DataValue<NominationParam>,
     ): Boolean {
         val matcher = Instruction.NOMINATION.matcher(messageText)
         if (!matcher.find()) return false
 
-        data.value = matcher
-        return true
-    }
-
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
-        val image: ByteArray = getNominationImage(
-            param,
+        val param = getNominationParam(
+            matcher,
             osuBeatmapApiService,
             osuDiscussionApiService,
             osuUserApiService,
-            imageService,
         )
+
+        data.value = param
+        return true
+    }
+
+    override fun handleMessage(event: MessageEvent, param: NominationParam): ServiceCallStatistic? {
+        val image: ByteArray = imageService.getPanel(param.toMap(), "N")
 
         try {
             event.reply(image)
@@ -60,23 +82,31 @@ import kotlin.math.floor
             log.error("提名信息：发送失败", e)
             throw IllegalStateException.Send("提名信息")
         }
+
+        return ServiceCallStatistic.builds(event,
+            beatmapIDs = param.beatmapset.beatmaps?.map { it.beatmapID },
+            beatmapsetIDs = listOf(param.beatmapset.beatmapsetID),
+            userIDs = param.users.map { it.userID },
+            modes = param.beatmapset.beatmaps?.map { it.mode }?.distinct()
+        )
     }
 
-    override fun accept(event: MessageEvent, messageText: String): Matcher? {
+    override fun accept(event: MessageEvent, messageText: String): NominationParam? {
         val matcher = OfficialInstruction.NOMINATION.matcher(messageText)
         if (!matcher.find()) return null
 
-        return matcher
-    }
-
-    override fun reply(event: MessageEvent, param: Matcher): MessageChain? {
-        val image: ByteArray = getNominationImage(
-            param,
+        val param = getNominationParam(
+            matcher,
             osuBeatmapApiService,
             osuDiscussionApiService,
             osuUserApiService,
-            imageService,
         )
+
+        return param
+    }
+
+    override fun reply(event: MessageEvent, param: NominationParam): MessageChain? {
+        val image: ByteArray =  imageService.getPanel(param.toMap(), "N")
 
         return MessageChainBuilder().addImage(image).build()
     }
@@ -84,13 +114,12 @@ import kotlin.math.floor
     companion object {
         private val log: Logger = LoggerFactory.getLogger(NominationService::class.java)
 
-        private fun getNominationImage(
+        private fun getNominationParam(
             matcher: Matcher,
             osuBeatmapApiService: OsuBeatmapApiService,
             osuDiscussionApiService: OsuDiscussionApiService,
             osuUserApiService: OsuUserApiService,
-            imageService: ImageService,
-        ): ByteArray {
+        ): NominationParam {
             val sidStr: String? = matcher.group(FLAG_SID)
             val mode = matcher.group("mode")
             val isSID = !(mode != null && (mode == "b" || mode == "bid"))
@@ -102,24 +131,22 @@ import kotlin.math.floor
                     throw IllegalArgumentException.WrongException.BeatmapID()
                 }
 
-            val data = parseData(
+            return getParam(
                 sid,
                 isSID,
                 osuBeatmapApiService,
                 osuDiscussionApiService,
                 osuUserApiService,
             )
-
-            return imageService.getPanel(data, "N")
         }
 
-        @JvmStatic  fun parseData(
+        fun getParam(
             sid: Long,
             isSID: Boolean,
             beatmapApiService: OsuBeatmapApiService,
             discussionApiService: OsuDiscussionApiService,
             userApiService: OsuUserApiService,
-        ): Map<String, Any> {
+        ): NominationParam {
             var id = sid
             var s: Beatmapset
             val d: Discussion
@@ -235,15 +262,9 @@ import kotlin.math.floor
                 )
             }
 
-            val n = mapOf(
-                "beatmapset" to s,
-                "discussion" to discussions,
-                "hype" to hypes,
-                "more" to more,
-                "users" to d.users,
+            return NominationParam(
+                s, discussions, hypes, more, d.users
             )
-
-            return n
         }
     }
 }

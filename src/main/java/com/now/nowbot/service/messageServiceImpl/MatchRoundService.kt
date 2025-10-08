@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.match.Match
@@ -15,6 +16,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botException.MatchRoundException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
@@ -38,7 +40,7 @@ import java.util.regex.Matcher
         } else return false
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
         val matchID: Int
         val matchIDStr = param.group("matchid")
 
@@ -47,17 +49,13 @@ import java.util.regex.Matcher
                 val md = getMarkdownFile("Help/round.md")
                 val image = imageService.getPanelA6(md, "help")
                 event.reply(image)
-                return
+                return null
             } catch (e: Exception) {
                 throw MatchRoundException(MatchRoundException.Type.MR_Instructions)
             }
         }
 
-        try {
-            matchID = matchIDStr.toInt()
-        } catch (e: NumberFormatException) {
-            throw MatchRoundException(MatchRoundException.Type.MR_MatchID_RangeError)
-        }
+        matchID = matchIDStr.toIntOrNull() ?: throw MatchRoundException(MatchRoundException.Type.MR_MatchID_RangeError)
 
         var keyword = param.group("keyword")
         val hasKeyword = keyword.isNullOrBlank().not()
@@ -79,7 +77,7 @@ import java.util.regex.Matcher
                     val md = getMarkdownFile("Help/round.md")
                     val image = imageService.getPanelA6(md, "help")
                     event.reply(image)
-                    return
+                    return null
                 } catch (e: Exception) {
                     throw MatchRoundException(MatchRoundException.Type.MR_Instructions)
                 }
@@ -88,17 +86,50 @@ import java.util.regex.Matcher
 
         round = (roundStr.toIntOrNull()?.minus(1) ?: -1)
 
-        val image = getDataImage(matchID, round, keyword)
+        val mrParam = getParam(matchID, round, keyword)
+
+        val image = try {
+            imageService.getPanel(mrParam.toMap(), "F3")
+        } catch (e: Exception) {
+            log.error("对局信息图片渲染失败：", e)
+            throw IllegalStateException.Render("对局信息")
+        }
 
         try {
             event.reply(image)
         } catch (e: Exception) {
             log.error("对局信息数据请求失败", e)
-            throw MatchRoundException(MatchRoundException.Type.MR_Send_Error)
+            throw IllegalStateException.Send("对局信息")
+        }
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "mids" to listOf(mrParam.matchRating.match.id),
+                "uids" to mrParam.round.scores.map { it.userID },
+                "bids" to listOf(mrParam.round.beatmapID),
+                "sids" to mrParam.round.beatmap?.beatmapsetID?.let { listOf(it) },
+                "modes" to listOf(mrParam.round.mode.modeValue)
+            ))
         }
     }
 
-    @Throws(MatchRoundException::class) fun getDataImage(matchID: Int, index: Int, keyword: String?): ByteArray {
+    data class MatchRoundParam(
+        val matchRating: MatchRating,
+        val round: MatchRound,
+        val index: Int,
+    ) {
+        fun toMap(): Map<String, Any> {
+
+            return mapOf(
+                "match" to matchRating,
+                "round" to round,
+                "index" to index,
+                "panel" to "MR"
+            )
+        }
+    }
+
+    @Throws(MatchRoundException::class) fun getParam(matchID: Int, index: Int, keyword: String?): MatchRoundParam {
         var i = index
         val hasKeyword = !keyword.isNullOrBlank()
 
@@ -140,8 +171,6 @@ import java.util.regex.Matcher
             throw MatchRoundException(MatchRoundException.Type.MR_KeyWord_NotFound)
         }
 
-        val img: ByteArray
-
         val round = rounds[i]
 
         calculateApiService.applyBeatMapChanges(round.beatmap, LazerMod.getModsList(round.mods))
@@ -151,21 +180,7 @@ import java.util.regex.Matcher
             round.scores = round.scores.sortedByDescending { it.score }
         }
 
-        try {
-            val body = mapOf(
-                "match" to mr,
-                "round" to round,
-                "index" to i,
-                "panel" to "MR"
-            )
-
-            img = imageService.getPanel(body, "F3")
-        } catch (e: Exception) {
-            log.error("对局信息图片渲染失败：", e)
-            throw MatchRoundException(MatchRoundException.Type.MR_Fetch_Error)
-        }
-
-        return img
+        return MatchRoundParam(mr, round, i)
     }
 
     companion object {

@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -59,10 +60,12 @@ class RecommendedMapService(
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: OsuUser) {
+    override fun handleMessage(event: MessageEvent, param: OsuUser): ServiceCallStatistic? {
         val p = getUserPrefer(param)
 
         event.reply("正常获取！${p.favorite.size} ${p.bests.size}")
+
+        return ServiceCallStatistic.building(event)
     }
 
     private fun getUserPrefer(user: OsuUser): UserPrefer {

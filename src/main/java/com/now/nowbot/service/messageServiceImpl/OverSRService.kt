@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -28,8 +29,13 @@ import kotlin.math.roundToInt
         } else return false
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Double) {
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Double): ServiceCallStatistic? {
         event.reply(getMessage(param))
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "star" to param.toFloat().toString()
+            ))
+        }
     }
 
      private fun getMessage(star: Double): String {

@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.*
 import com.now.nowbot.qq.event.MessageEvent
@@ -48,7 +49,7 @@ class TestService(private val maimaiApiService: MaimaiApiService) :
 
     }
 
-    override fun handleMessage(event: MessageEvent, param: String) {
+    override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
         val l = maimaiApiService.getMaimaiSongLibrary().associateBy { it.songID }
 
         fun getVersionInt(maiVersion: MaiVersion): Int {
@@ -127,5 +128,7 @@ class TestService(private val maimaiApiService: MaimaiApiService) :
         }
 
          */
+
+        return null
     }
 }

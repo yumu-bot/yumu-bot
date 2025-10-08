@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
@@ -58,12 +59,12 @@ class SetGroupModeService (
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: SetGroupParam) {
+    override fun handleMessage(event: MessageEvent, param: SetGroupParam): ServiceCallStatistic? {
         val isSuperAdmin = Permission.isSuperAdmin(event)
 
         if (param.group != null && param.group < 0L && isSuperAdmin) {
             event.reply(getGroupModeCharts(0 - param.group.toInt()))
-            return
+            return ServiceCallStatistic.build(event, mode = param.mode)
         }
 
         val mode: OsuMode = param.mode
@@ -125,5 +126,6 @@ class SetGroupModeService (
         }
 
         event.reply(text)
+        return ServiceCallStatistic.build(event, mode = param.mode)
     }
 }
