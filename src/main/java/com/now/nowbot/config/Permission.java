@@ -184,11 +184,11 @@ public class Permission {
             /*
                 获得代理后的class AopUtils.getTargetClass
              * AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
-             * AopUtils.getTargetClass(point.getTarget()).getMethod("HandleMessage", MessageEvent.class, java.util.regex.Matcher.class).getAnnotation(com.now.nowbot.aop.CheckPermission.class);
+             * AopUtils.getTargetClass(point.getTarget()).getMethod("handleMessage", MessageEvent.class, java.util.regex.Matcher.class).getAnnotation(com.now.nowbot.aop.CheckPermission.class);
              */
             Method method = null;
             for (var m : AopUtils.getTargetClass(bean).getMethods()) {
-                if (m.getName().equals("HandleMessage")) method = m;
+                if (m.getName().equals("handleMessage")) method = m;
             }
 
             if (method == null) return;
