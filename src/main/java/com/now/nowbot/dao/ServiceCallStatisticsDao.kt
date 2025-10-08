@@ -1,9 +1,7 @@
 package com.now.nowbot.dao
 
 import com.now.nowbot.entity.ServiceCallStatisticLite
-import com.now.nowbot.entity.ServiceHeritage
 import com.now.nowbot.mapper.ServiceCallStatisticRepository
-import org.spring.core.toJson
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 
@@ -11,20 +9,8 @@ import java.time.LocalDateTime
     private val serviceCallStatisticRepository: ServiceCallStatisticRepository
 ) {
     fun saveService(
-        name: String,
-        userID: Long,
-        groupID: Long,
-        createTime: LocalDateTime,
-        duration: Long,
-        serviceHeritage: ServiceHeritage?
-    ) {
-
-        val lite = ServiceCallStatisticLite(
-            null, name, userID, groupID, createTime, duration, serviceHeritage.toJson()
-        )
-
-        serviceCallStatisticRepository.save(lite)
-    }
+        data: ServiceCallStatisticLite
+    ) = serviceCallStatisticRepository.save(data)
 
     fun getBetween(
         from: LocalDateTime,

@@ -1,7 +1,9 @@
 package com.now.nowbot.aop;
 
 import com.now.nowbot.config.Permission;
+import com.now.nowbot.dao.ServiceCallStatisticsDao;
 import com.now.nowbot.entity.OsuBindUserLite;
+import com.now.nowbot.entity.ServiceCallStatisticLite;
 import com.now.nowbot.mapper.ServiceCallRepository;
 import com.now.nowbot.mapper.UserProfileMapper;
 import com.now.nowbot.model.osu.LazerScore;
@@ -17,13 +19,15 @@ import com.now.nowbot.throwable.botRuntimeException.PermissionException;
 import com.now.nowbot.util.ContextUtil;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.*;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,17 +36,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Aspect
 @Component
 public class CheckAspect {
-    private static final Logger log = LoggerFactory.getLogger(CheckAspect.class);
+    private static final Logger log              = LoggerFactory.getLogger(CheckAspect.class);
     private static final String USER_PROFILE_KEY = "#user_profile";
-    Permission        permission;
+    Permission            permission;
     ServiceCallRepository serviceCall;
-    UserProfileMapper userProfileMapper;
+    ServiceCallStatisticsDao serviceCallStatisticsDao;
+    UserProfileMapper     userProfileMapper;
 
     @Autowired
     public CheckAspect(Permission permission,
                        ServiceCallRepository serviceCallRepository,
+                       ServiceCallStatisticsDao serviceCallStatisticsDao,
                        UserProfileMapper userProfileMapper) {
         this.permission = permission;
+        this.serviceCallStatisticsDao = serviceCallStatisticsDao;
         this.userProfileMapper = userProfileMapper;
         serviceCall = serviceCallRepository;
     }
@@ -50,7 +57,7 @@ public class CheckAspect {
     static final List<MessageEvent> workList = new CopyOnWriteArrayList<>();
 
     //所有实现MessageService的HandMessage方法切入点
-    @Pointcut("within(com.now.nowbot.service.MessageService+) &&  execution(void handleMessage(com.now.nowbot.qq.event.MessageEvent, ..))")
+    @Pointcut("within(com.now.nowbot.service.MessageService+) &&  execution(* handleMessage(com.now.nowbot.qq.event.MessageEvent, ..))")
     public void servicePoint() {
     }
 
@@ -121,7 +128,7 @@ public class CheckAspect {
         }
         //超管权限判断
         if (CheckPermission.isGroupAdmin()) {
-            if (event.getSender() instanceof GroupContact groupUser && ! (groupUser.getRole().equals(Role.ADMIN) || groupUser.getRole().equals(Role.OWNER))) {
+            if (event.getSender() instanceof GroupContact groupUser && !(groupUser.getRole().equals(Role.ADMIN) || groupUser.getRole().equals(Role.OWNER))) {
                 throw new PermissionException.RoleException.NormalUserUseAdminService(name, qq);
             }
         }
@@ -129,16 +136,16 @@ public class CheckAspect {
             throw new PermissionException.RoleException.AdminUseAdminService(name, qq);
         }
         // test 功能
-        if (CheckPermission.test() && ! Permission.isTester(qq)) {
+        if (CheckPermission.test() && !Permission.isTester(qq)) {
             throw new PermissionException.RoleException.SomebodyUseTestService(name, qq);
         }
         //服务权限判断
         //白/黑名单
         if (CheckPermission.isWhite()) {
-            if (CheckPermission.friend() && ! permission.hasUser(name, qq)) {
+            if (CheckPermission.friend() && !permission.hasUser(name, qq)) {
                 throw new PermissionException.WhiteListException.UserFilter(name, qq);
             }
-            if (CheckPermission.group() && event instanceof GroupMessageEvent g && ! permission.hasGroup(name, g.getGroup().getId())) {
+            if (CheckPermission.group() && event instanceof GroupMessageEvent g && !permission.hasGroup(name, g.getGroup().getId())) {
                 throw new PermissionException.WhiteListException.GroupFilter(name, qq);
             }
         } else {
@@ -163,22 +170,20 @@ public class CheckAspect {
         var name = Service.value();
         var qq = event.getSender().getId();
 //        var name = AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
-        try {
-            if (Permission.isSuperAdmin(qq)) {
-                //超管无视任何限制
-                return args;
-            }
-            if (permission.isAllWhite() && permission.containsAllW(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null)) {
-                return args;
-            }
-            // 群跟人的id进行全局黑名单校验
-            else if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null, qq)) {
-                return args;
-            }
-            throw new PermissionException.BlackListException.Blocked(name, qq);
-        } finally {
-//            workList.add(event);
+
+        if (Permission.isSuperAdmin(qq)) {
+            //超管无视任何限制
+            return args;
         }
+        if (permission.isAllWhite() && permission.containsAllW(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null)) {
+            return args;
+        }
+        // 群跟人的id进行全局黑名单校验
+        else if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null, qq)) {
+            return args;
+        }
+        throw new PermissionException.BlackListException.Blocked(name, qq);
+
     }
 
 //    @After("servicePoint() && @target(Service)")
@@ -189,29 +194,6 @@ public class CheckAspect {
 
     Set<Contact> sended;
 
-    public void doEnd() {
-        sended = new HashSet<>();
-        if (! CollectionUtils.isEmpty(workList)) {
-            var s = workList.getFirst().getBot().getFriend(2480557535L);
-            if (s != null) {
-                StringBuilder sb = new StringBuilder();
-                sb.append("work").append('\n');
-                workList.forEach((event) -> sb
-                        .append(event.getSender().getName())
-                        .append("(->)")
-                        .append(event.getMessage()).append('\n'));
-                s.sendMessage(sb.toString());
-            }
-        }
-        workList.forEach(this::sendWorn);
-    }
-
-    public void sendWorn(MessageEvent event) {
-        var s = event.getSubject();
-        if (sended.add(s)) {
-            s.sendMessage("bot即将重启,放弃所有未完成任务,请稍后重试(具体时间请联系管理员)");
-        }
-    }
 
     @Around("imageService()")
     public Object beforeGetImage(ProceedingJoinPoint point) throws Throwable {
@@ -229,7 +211,6 @@ public class CheckAspect {
     //    @Around(value = "execution (public * com.now.nowbot..*(..))", argNames = "pjp,point")
     @Around(value = "servicePoint()", argNames = "pjp")
     public void setContext(ProceedingJoinPoint pjp) throws Throwable {
-        long now = System.currentTimeMillis();
         var ser = pjp.getTarget().getClass().getAnnotation(Service.class);
         String name = "unknown";
         if (ser != null) {
@@ -237,19 +218,29 @@ public class CheckAspect {
         }
         if (pjp.getArgs()[0] instanceof MessageEvent e) {
             if (e.getSubject().getId() < 0) {
-                log.debug("官方bot [uid {}] 调用 -> {}", - e.getSender().getId(), name);
+                log.debug("官方bot [uid {}] 调用 -> {}", -e.getSender().getId(), name);
             } else {
                 log.debug("{} 调用 -> {}", e.getSender().getId(), name);
             }
         }
+        Object result = null;
+        long start = System.currentTimeMillis();
         try {
-            pjp.proceed(pjp.getArgs());
+            result = pjp.proceed(pjp.getArgs());
         } finally {
             long end = System.currentTimeMillis();
-            long work = end - now;
-            serviceCall.saveCall(name, work);
+            long duration = end - start;
+            if (result instanceof ServiceCallStatisticLite call) {
+                // 新版的统计
+                call.setOther(name, start, duration);
+                serviceCallStatisticsDao.saveService(call);
+            }
+
+            // 原来的可以下线了
+            serviceCall.saveCall(name, duration);
         }
     }
+
 
     static final long MY_ID = 17064371L;
 

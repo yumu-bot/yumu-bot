@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.entity.ServiceCallStatisticLite
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -47,7 +48,7 @@ class AudioService(
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: AudioParam) {
+    override fun handleMessage(event: MessageEvent, param: AudioParam): ServiceCallStatisticLite? {
         val voice =
             if (param.isBid) {
                 // 先 b 再 s
@@ -69,6 +70,8 @@ class AudioService(
             log.error("谱面试听：发送失败", e)
             throw IllegalStateException.Send("谱面试听")
         }
+
+        return ServiceCallStatisticLite.build(event, param)
     }
 
     @Throws(WebClientResponseException::class)
