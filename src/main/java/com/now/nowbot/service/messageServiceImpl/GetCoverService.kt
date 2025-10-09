@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.CoverType.*
+import com.now.nowbot.model.enums.CoverType.Companion.getString
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.ImageMessage
@@ -35,18 +36,7 @@ import java.nio.file.Files
         val matcher2 = Instruction.GET_BG.matcher(messageText)
 
         if (matcher.find()) {
-            val type = when (matcher.group("type")) {
-                "raw", "r", "full", "f", "background", "b" -> RAW
-                "list", "l", "l1" -> LIST
-                "list2", "list2x", "list@2x", "l2" -> LIST_2X
-                "c", "card", "c1" -> CARD
-                "card2", "card2x", "card@2x", "c2" -> CARD_2X
-                "slim", "slimcover", "s", "s1" -> SLIM_COVER
-                "slim2", "slim2x", "slim@2x", "slimcover2", "slimcover2x", "slimcover@2x", "s2" -> SLIM_COVER_2X
-                "2", "cover2", "cover2x", "cover@2x", "o2" -> COVER_2X
-                null -> COVER
-                else -> COVER
-            }
+            val type = CoverType.getCovetType(matcher.group("type"))
 
             val dataStr: String? = matcher.group("data")
             if (dataStr.isNullOrBlank()) throw IllegalArgumentException.WrongException.BeatmapID()
@@ -158,17 +148,7 @@ import java.nio.file.Files
 
             beatmaps.forEach {
                 val covers = it.beatmapset!!.covers
-                val url = when (type) {
-                    LIST -> covers.list
-                    LIST_2X -> covers.list2x
-                    CARD -> covers.card
-                    CARD_2X -> covers.card2x
-                    SLIM_COVER -> covers.slimcover
-                    SLIM_COVER_2X -> covers.slimcover2x
-                    COVER_2X -> covers.cover2x
-                    COVER -> covers.cover
-                    RAW -> covers.list.replace("list", "raw")
-                }
+                val url = covers.getString(type)
 
                 builder.addImage(URI.create(url).toURL())
             }

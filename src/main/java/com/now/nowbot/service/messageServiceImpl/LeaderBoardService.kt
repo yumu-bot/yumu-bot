@@ -119,7 +119,7 @@ class LeaderBoardService(
                 val beforeBeatmapID = dao.getLastBeatmapID(
                     groupID = event.subject.id,
                     name = "LEADER_BOARD",
-                    from = LocalDateTime.now().minusHours(24L)
+                    from = LocalDateTime.now().minusMinutes(5L)
                 ) ?: dao.getLastBeatmapID(
                     groupID = event.subject.id,
                     name = null,

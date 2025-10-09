@@ -30,7 +30,6 @@ import java.time.ZoneOffset
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 
@@ -152,7 +151,7 @@ import kotlin.math.min
             val timeDist = MutableList(8) { _ -> 0 }
 
             for (time in timeList) {
-                val position: Int = min(floor(time / 3.0).toInt(), 7)
+                val position: Int = min((time / 3.0).toInt(), 7)
                 timeDist[position]++
             }
 

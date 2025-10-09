@@ -27,6 +27,11 @@ class MessageChain {
             return this
         }
 
+        fun addText(msg: Char): MessageChainBuilder {
+            msgChain.addMessage(TextMessage(msg.toString()))
+            return this
+        }
+
         fun addText(msg: String): MessageChainBuilder {
             msgChain.addMessage(TextMessage(msg))
             return this

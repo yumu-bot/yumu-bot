@@ -16,7 +16,6 @@ import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import kotlin.math.floor
 import kotlin.math.roundToLong
 
 @Service("CSV_NEWBIE")
@@ -259,7 +258,7 @@ class CalculateNewbieCupService(
                 }.sortedByDescending { it.second.sum() }.toMap()
 
                 multipliedLines.forEach { (user, scores) ->
-                    sb.append("${user.userID},${user.username},${floor(user.pp).toLong()},").append(
+                    sb.append("${user.userID},${user.username},${user.pp.toLong()},").append(
                         scores.joinToString(",")
                     ).append(',').append(scores.sum()).append('\n')
                 }
@@ -284,7 +283,7 @@ class CalculateNewbieCupService(
                     .sortedByDescending { pair -> pair.second.sumOf { score -> score.first } }
                     .toMap()
                     .forEach { (user, line) ->
-                        sb.append("${user.userID},${user.username},${floor(user.pp).toLong()},").append(
+                        sb.append("${user.userID},${user.username},${user.pp.toLong()},").append(
                             line.mapIndexed { i: Int, pair: Pair<Long, Double> ->
                                 if (i != index) {
                                     pair.first
@@ -306,7 +305,7 @@ class CalculateNewbieCupService(
                     .sortedByDescending { pair -> pair.second.sumOf { score -> score.first } }
                     .toMap()
                     .forEach { (user, line) ->
-                        sb.append("${user.userID},${user.username},${floor(user.pp).toLong()},").append(
+                        sb.append("${user.userID},${user.username},${user.pp.toLong()},").append(
                             line.joinToString(",") { "${it.first},${it.second}" }
                     ).append('\n')
                 }

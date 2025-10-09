@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
@@ -12,8 +13,11 @@ import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.ScoreService.ScoreParam
+import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScore
+import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScores
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
+import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.sbApiService.SBScoreApiService
 import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
@@ -36,6 +40,7 @@ class SBScoreService(
 
     private val beatmapApiService: OsuBeatmapApiService,
     private val osuCalculateApiService: OsuCalculateApiService,
+    private val osuScoreApiService: OsuScoreApiService,
     private val imageService: ImageService,
     private val dao: ServiceCallStatisticsDao,
     ): MessageService<ScoreParam> {
@@ -75,7 +80,7 @@ class SBScoreService(
     }
 
     override fun handleMessage(event: MessageEvent, param: ScoreParam): ServiceCallStatistic? {
-        val message = getMessageChain(param)
+        val message = param.getMessageChain()
 
         try {
             event.reply(message)
@@ -149,7 +154,7 @@ class SBScoreService(
             val beforeBeatmapID = dao.getLastBeatmapID(
                 groupID = event.subject.id,
                 name = "SCORE",
-                from = LocalDateTime.now().minusHours(24L)
+                from = LocalDateTime.now().minusMinutes(5L)
             ) ?: dao.getLastBeatmapID(
                 groupID = event.subject.id,
                 name = null,
@@ -270,32 +275,66 @@ class SBScoreService(
 
         return ScoreParam(user, map, filtered, mode, mods, isMultipleScore, isShow)
     }
-    private fun getMessageChain(param: ScoreParam): MessageChain {
-        val image: ByteArray = if (param.scores.size > 1 && param.isMultipleScore) {
-            // 实际上 SB 服内的成绩只能拿谱面最近 100 个和最高 100 个，事实上 SS 功能是失效的
-            beatmapApiService.applyBeatmapExtendForSameScore(param.scores, param.map)
-            // asyncDownloadBackground(param)
+    private fun ScoreParam.getMessageChain(): MessageChain {
+        return try {
+            if (scores.size > 1 && isMultipleScore) {
+                // 实际上 SB 服内的成绩只能拿谱面最近 100 个和最高 100 个，事实上 SS 功能是失效的
+                beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
+                // asyncDownloadBackground(param)
 
-            val body = mapOf(
-                "user" to param.user,
+                val body = mapOf(
+                    "user" to user,
 
-                "rank" to (1..(param.scores.size)).toList(),
-                "score" to param.scores,
-                "panel" to "SS"
-            )
+                    "rank" to (1..(scores.size)).toList(),
+                    "score" to scores,
+                    "panel" to "SS"
+                )
 
-            imageService.getPanel(body, "A5")
-        } else {
-            val score = param.scores.first()
+                MessageChain(imageService.getPanel(body, "A5"))
+            } else {
+                val score = scores.first()
 
-            val e5Param = ScorePRService.getE5Param(param.user, score, param.map, null, "S", beatmapApiService, osuCalculateApiService)
+                val e5Param = ScorePRService.getE5Param(
+                    user,
+                    score,
+                    map,
+                    null,
+                    "S",
+                    beatmapApiService,
+                    osuCalculateApiService
+                )
 
-            // asyncDownloadBackground(param)
+                // asyncDownloadBackground(param)
 
-            imageService.getPanel(e5Param.toMap(), if (param.isShow) "E10" else "E5")
+                MessageChain(imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5"))
+            }
+        } catch (e: Exception) {
+            log.error(e.message)
+            return getUUMessageChain()
         }
+    }
 
-        return MessageChain(image)
+    private fun ScoreParam.getUUMessageChain(): MessageChain {
+        return if (scores.size > 1) {
+            val ss = scores.take(5)
+
+            beatmapApiService.applyBeatmapExtendForSameScore(ss, map)
+
+            val covers = osuScoreApiService.getCovers(ss, CoverType.COVER_2X)
+
+            val pairs = ss.mapIndexed { i, it -> i + 1 to it }
+
+            getUUScores(user, pairs, covers)
+        } else {
+
+            val s = scores.first()
+
+            val cover = osuScoreApiService.getCover(s, CoverType.COVER_2X)
+
+            beatmapApiService.applyBeatmapExtend(s, map)
+
+            getUUScore(user, s, cover)
+        }
     }
 
     companion object {

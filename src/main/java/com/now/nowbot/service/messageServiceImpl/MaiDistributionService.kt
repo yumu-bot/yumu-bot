@@ -18,7 +18,6 @@ import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.floor
 import kotlin.math.min
 
 @Service("MAI_DIST") class MaiDistributionService(
@@ -201,7 +200,7 @@ import kotlin.math.min
                 else -> 0.0
             }
 
-            return floor(star * min(achievements, 100.5) / 100.0 * accLevel).toInt()
+            return (star * min(achievements, 100.5) / 100.0 * accLevel).toInt()
         }
     }
 }

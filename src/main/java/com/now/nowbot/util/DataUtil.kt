@@ -307,7 +307,7 @@ object DataUtil {
         val weight = 1.0 / total
 
         fun getTheoreticalCount(value: Double): Int {
-            val count = floor(acc / value).roundToInt()
+            val count = (acc / value).toInt()
             acc -= (value * count)
             return count
         }
@@ -437,7 +437,7 @@ object DataUtil {
 
         val nGreat = list.first() + list[1]
 
-        list[0] = floor(nGreat * ratio).toInt()
+        list[0] = (nGreat * ratio).toInt()
         list[1] = max((nGreat - list.first()).toDouble(), 0.0).toInt()
 
         stat.countGeki = list.first()
@@ -676,7 +676,7 @@ object DataUtil {
         b = (y / n) - k * (x / n)
 
         // 找零点
-        val expectedX = if ((k == 0.0)) -1 else floor(-b / k).toInt()
+        val expectedX = if ((k == 0.0)) -1 else (-b / k).toInt()
 
         // 这个预估的零点应该在很后面，不应该小于 100
         // 如果bp没满100，那么bns直接可算得，remainPP = 0

@@ -12,6 +12,8 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.TodayBPService.TodayBPParam
+import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScore
+import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScores
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
@@ -59,9 +61,10 @@ class TodayBPService(
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: TodayBPParam): ServiceCallStatistic? {
         param.asyncImage()
-        val image = param.getImage()
+        val message = param.getMessageChain()
+
         try {
-            event.reply(image)
+            event.reply(message)
         } catch (e: Exception) {
             log.error("今日最好成绩：发送失败", e)
             throw IllegalStateException.Send("今日最好成绩")
@@ -88,7 +91,7 @@ class TodayBPService(
 
     override fun reply(event: MessageEvent, param: TodayBPParam): MessageChain? {
         param.asyncImage()
-        return MessageChain(param.getImage())
+        return param.getMessageChain()
     }
 
     private fun getParam(matcher: Matcher, event: MessageEvent): TodayBPParam {
@@ -156,34 +159,66 @@ class TodayBPService(
         scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
     }
 
-    fun TodayBPParam.getImage(): ByteArray {
-        val todayMap = scores
+    fun TodayBPParam.getMessageChain(): MessageChain {
+        return try {
+            if (scores.size > 1) {
 
-        return if (todayMap.size > 1) {
+                val ranks = scores.map { it.key }
+                val ss = scores.map { it.value }
 
-            val ranks = todayMap.map { it.key }
-            val scores = todayMap.map { it.value }
+                AsyncMethodExecutor.awaitPairCallableExecute(
+                    { calculateApiService.applyBeatMapChanges(ss) },
+                    { calculateApiService.applyStarToScores(ss) }
+                )
 
-            calculateApiService.applyBeatMapChanges(scores)
-            calculateApiService.applyStarToScores(scores)
+                val body = mapOf(
+                    "user" to user,
+                    "scores" to ss,
+                    "rank" to ranks,
+                    "panel" to "T"
+                )
 
-            val body = mapOf(
-                "user" to user,
-                "scores" to scores,
-                "rank" to ranks,
-                "panel" to "T"
+                MessageChain(imageService.getPanel(body, "A4"))
+            } else {
+                val pair = scores.toList().first()
+
+                val score: LazerScore = pair.second
+                score.ranking = pair.first
+
+                val body = ScorePRService.getE5Param(user, score, "T", beatmapApiService, calculateApiService)
+
+                MessageChain(imageService.getPanel(body, "E5"))
+            }
+        } catch (e: Exception) {
+            log.error(e.message)
+            return getUUMessageChain()
+        }
+    }
+    private fun TodayBPParam.getUUMessageChain(): MessageChain {
+        return if (scores.size > 1) {
+            val list = scores.toList().take(5)
+            val ss = list.map { it.second }
+
+            AsyncMethodExecutor.awaitPairCallableExecute (
+                { beatmapApiService.applyBeatmapExtend(ss) },
+                { calculateApiService.applyPPToScores(ss) },
             )
 
-            imageService.getPanel(body, "A4")
+            val covers = scoreApiService.getCovers(ss, CoverType.COVER_2X)
+
+            getUUScores(user, list, covers)
         } else {
-            val pair = scores.toList().first()
 
-            val score: LazerScore = pair.second
-            score.ranking = pair.first
+            val s = scores.toList().take(1).first().second
 
-            val body = ScorePRService.getE5Param(user, score, "T", beatmapApiService, calculateApiService)
+            val cover = scoreApiService.getCover(s, CoverType.COVER_2X)
 
-            imageService.getPanel(body, "E5")
+            AsyncMethodExecutor.awaitPairCallableExecute (
+                { beatmapApiService.applyBeatmapExtend(s) },
+                { calculateApiService.applyPPToScore(s) },
+            )
+
+            getUUScore(user, s, cover)
         }
     }
 

@@ -36,6 +36,21 @@ import java.time.LocalDateTime
         from: LocalDateTime,
         to: LocalDateTime = LocalDateTime.now()
     ): Long? {
+        return if (name.isNullOrEmpty()) {
+            serviceCallStatisticRepository.getLastAvailableBeatmapsetIDByGroup(groupID, from, to)
+        } else {
+            serviceCallStatisticRepository.getLastAvailableBeatmapsetIDByGroupAndName(groupID, name, from, to)
+        }
+    }
+
+    /*
+
+    fun getLastBeatmapsetID(
+        groupID: Long,
+        name: String?,
+        from: LocalDateTime,
+        to: LocalDateTime = LocalDateTime.now()
+    ): Long? {
         val calls = getBetweenInGroup(groupID, from, to)
         
         return calls
@@ -45,6 +60,24 @@ import java.time.LocalDateTime
             ?.sids
             ?.firstOrNull()
     }
+
+     */
+
+    fun getLastBeatmapID(
+        groupID: Long,
+        name: String?,
+        from: LocalDateTime,
+        to: LocalDateTime = LocalDateTime.now()
+    ): Long? {
+        return if (name.isNullOrEmpty()) {
+            serviceCallStatisticRepository.getLastAvailableBeatmapIDByGroup(groupID, from, to)
+        } else {
+            serviceCallStatisticRepository.getLastAvailableBeatmapIDByGroupAndName(groupID, name, from, to)
+        }
+    }
+
+
+    /*
 
     fun getLastBeatmapID(
         groupID: Long,
@@ -61,6 +94,8 @@ import java.time.LocalDateTime
             ?.bids
             ?.firstOrNull()
     }
+
+     */
 
     fun getHeritage(param: String?): ServiceHeritage? {
         if (param == null) return null

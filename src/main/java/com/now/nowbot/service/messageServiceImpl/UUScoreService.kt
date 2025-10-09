@@ -11,14 +11,12 @@ import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
-import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.ScoreService.ScoreParam
 import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScore
 import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScores
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
-import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
@@ -34,62 +32,31 @@ import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 
-@Service("SCORE") class ScoreService(
+@Service("UU_SCORE") class UUScoreService(
     private val scoreApiService: OsuScoreApiService,
     private val userApiService: OsuUserApiService,
     private val beatmapApiService: OsuBeatmapApiService,
-    private val calculateApiService: OsuCalculateApiService,
-    private val imageService: ImageService,
     private val dao: ServiceCallStatisticsDao
 ) : MessageService<ScoreParam>, TencentMessageService<ScoreParam> {
-
-    data class ScoreParam(
-        val user: OsuUser,
-        val map: Beatmap,
-        val scores: List<LazerScore>,
-        val mode: OsuMode,
-        val mods: List<LazerMod>,
-        val isMultipleScore: Boolean,
-        val isShow: Boolean = false,
-    )
 
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
         data: DataValue<ScoreParam>,
     ): Boolean {
-        val m3 = Instruction.SCORE_SHOW.matcher(messageText)
-        val m2 = Instruction.SCORES.matcher(messageText)
-        val m = Instruction.SCORE.matcher(messageText)
+        val matcher = Instruction.UU_SCORE.matcher(messageText)
 
-        val isMultipleScore: Boolean
-        val isShow: Boolean
-
-        val matcher: Matcher
-
-        if (m3.find()) {
-            matcher = m3
-            isMultipleScore = false
-            isShow = true
-        } else if (m2.find()) {
-            matcher = m2
-            isMultipleScore = true
-            isShow = false
-        } else if (m.find()) {
-            matcher = m
-            isMultipleScore = false
-            isShow = false
-        } else {
+        if (!matcher.find()) {
             return false
         }
 
-        data.value = getParam(event, messageText, matcher, isMultipleScore, isShow)
+        data.value = getParam(event, messageText, matcher)
 
         return true
     }
 
     override fun handleMessage(event: MessageEvent, param: ScoreParam): ServiceCallStatistic? {
-        val message = param.getMessageChain()
+        val message = param.getUUMessageChain()
 
         try {
             event.reply(message)
@@ -108,38 +75,18 @@ import java.util.regex.Matcher
     }
 
     override fun accept(event: MessageEvent, messageText: String): ScoreParam? {
-        val m3 = OfficialInstruction.SCORE_SHOW.matcher(messageText)
-        val m2 = OfficialInstruction.SCORES.matcher(messageText)
-        val m = OfficialInstruction.SCORE.matcher(messageText)
+        val matcher = OfficialInstruction.UU_SCORE.matcher(messageText)
 
-        val isMultipleScore: Boolean
-        val isShow: Boolean
+        if (!matcher.find()) return null
 
-        val matcher: Matcher
-
-        if (m3.find()) {
-            matcher = m3
-            isMultipleScore = false
-            isShow = true
-        } else if (m2.find()) {
-            matcher = m2
-            isMultipleScore = true
-            isShow = false
-        } else if (m.find()) {
-            matcher = m
-            isMultipleScore = false
-            isShow = false
-        } else {
-            return null
-        }
-        return getParam(event, messageText, matcher, isMultipleScore, isShow)
+        return getParam(event, messageText, matcher)
     }
 
     override fun reply(event: MessageEvent, param: ScoreParam): MessageChain? {
-        return param.getMessageChain()
+        return param.getUUMessageChain()
     }
 
-    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultipleScore: Boolean, isShow: Boolean): ScoreParam {
+    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher): ScoreParam {
         val bid = getBid(matcher)
 
         val inputMode = getMode(matcher)
@@ -240,7 +187,10 @@ import java.util.regex.Matcher
                     throw NoSuchElementException.BeatmapScoreFiltered(map.previewName)
                 }
 
-                return ScoreParam(user, map, filtered, currentMode.data!!, mods, isMultipleScore, isShow)
+                return ScoreParam(user, map, filtered, currentMode.data!!, mods,
+                    isMultipleScore = false,
+                    isShow = false
+                )
             }
 
             // 备用方法：先获取最近成绩，再获取谱面
@@ -295,44 +245,7 @@ import java.util.regex.Matcher
             throw NoSuchElementException.BeatmapScoreFiltered(map.previewName)
         }
 
-        return ScoreParam(user, map, filtered, mode, mods, isMultipleScore, isShow)
-    }
-
-    private fun ScoreParam.asyncDownloadBackground() {
-        scoreApiService.asyncDownloadBackgroundFromScores(map, listOf(CoverType.COVER, CoverType.LIST))
-    }
-
-    private fun ScoreParam.getMessageChain(): MessageChain {
-        return try {
-            if (scores.size > 1 && isMultipleScore) {
-                beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
-                calculateApiService.applyStarToScores(scores)
-                // calculateApiService.applyBeatMapChanges(scores)
-
-                asyncDownloadBackground()
-
-                val body = mapOf(
-                    "user" to user,
-
-                    "rank" to (1..(scores.size)).toList(),
-                    "score" to scores,
-                    "panel" to "SS"
-                )
-
-                MessageChain(imageService.getPanel(body, "A5"))
-            } else {
-                val score = scores.first()
-
-                val e5Param = ScorePRService.getE5Param(user, score, map, null, "S", beatmapApiService, calculateApiService)
-
-                asyncDownloadBackground()
-
-                MessageChain(imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5"))
-            }
-        } catch (e: Exception) {
-            log.error(e.message)
-            return getUUMessageChain()
-        }
+        return ScoreParam(user, map, filtered, mode, mods, isMultipleScore = false, isShow = false)
     }
 
     private fun ScoreParam.getUUMessageChain(): MessageChain {
@@ -350,9 +263,9 @@ import java.util.regex.Matcher
 
             val s = scores.first()
 
-            val cover = scoreApiService.getCover(s, CoverType.COVER_2X)
-
             beatmapApiService.applyBeatmapExtend(s, map)
+
+            val cover = scoreApiService.getCover(s, CoverType.COVER_2X)
 
             getUUScore(user, s, cover)
         }

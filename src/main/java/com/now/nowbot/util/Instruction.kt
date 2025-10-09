@@ -168,8 +168,19 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     UU_PR(CommandPatternBuilder.create {
-        appendUUIgnoreAll("(?<pass>(pass|p))", "(?<recent>(recent|r))")
+        appendUUIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))")
         appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup("any",
+                REG_ANYTHING_BUT_NO_HASH_STARS,
+                MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
     }),
 
     SCORE(CommandPatternBuilder.create {
@@ -189,6 +200,11 @@ enum class Instruction(val pattern: Pattern) {
             append("(?<score>(ym)?(score|s)(show|w))")
             appendIgnore()
         }
+        appendModeBIDQQUIDNameMod()
+    }),
+
+    UU_SCORE(CommandPatternBuilder.create {
+        appendUUIgnoreAll("score", "s")
         appendModeBIDQQUIDNameMod()
     }),
 

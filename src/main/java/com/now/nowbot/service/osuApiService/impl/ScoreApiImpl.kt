@@ -1,12 +1,14 @@
 package com.now.nowbot.service.osuApiService.impl
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.Replay
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.CoverType.*
+import com.now.nowbot.model.enums.CoverType.Companion.getString
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.BeatmapUserScore
 import com.now.nowbot.model.osu.Covers
@@ -39,6 +41,70 @@ class ScoreApiImpl(
     val base: OsuApiBaseService,
     val scoreDao: ScoreDao,
 ) : OsuScoreApiService {
+    override fun getCovers(
+        scores: List<LazerScore>,
+        type: CoverType
+    ): List<ByteArray> {
+        val async = AsyncMethodExecutor.awaitCallableExecute(
+            {
+                scores.map { s ->
+                    getCover(s, type)
+                }
+            }
+        )
+
+        return async
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    override fun getCover(score: LazerScore, type: CoverType): ByteArray {
+        val path = Path.of(IMG_BUFFER_PATH)
+        if (Files.isDirectory(path).not() || Files.isWritable(path).not()) return byteArrayOf()
+
+        val default = try {
+            Files.readAllBytes(
+                Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("Banner").resolve("c8.png")
+            )
+        } catch (_: IOException) {
+            byteArrayOf()
+        }
+
+        val url = score.beatmapset.covers.getString(type)
+
+        if (url.isBlank()) {
+            log.info("获取谱面图片：谱面封面类不完整")
+            return default
+        }
+
+        val md = MessageDigest.getInstance("MD5")
+
+        try {
+            md.update(url.toByteArray(Charsets.UTF_8))
+        } catch (e: Exception) {
+            log.info("获取谱面图片：计算 MD5 失败")
+            return default
+        }
+
+        val hex = md.digest().toHexString(HexFormat.Default)
+
+        return if (Files.isRegularFile(path.resolve(hex))) {
+            Files.readAllBytes(path.resolve(hex))
+        } else {
+            try {
+                val image = base.osuApiWebClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .bodyToMono(ByteArray::class.java)
+                    .block()!!
+
+                Files.write(path.resolve(hex), image)
+
+                return image
+            } catch (_: Exception) {
+                default
+            }
+        }
+    }
 
     override fun getBestScores(
         id: Long,

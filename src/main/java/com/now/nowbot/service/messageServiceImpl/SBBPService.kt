@@ -1,17 +1,22 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppysb.SBUser
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.BPService.BPParam
+import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScore
+import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScores
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
+import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.sbApiService.SBScoreApiService
 import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
@@ -36,6 +41,7 @@ class SBBPService(
 
     private val osuCalculateApiService: OsuCalculateApiService,
     private val osuBeatmapApiService: OsuBeatmapApiService,
+    private val osuScoreApiService: OsuScoreApiService,
     private val imageService: ImageService,
 ) : MessageService<BPParam> {
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<BPParam>): Boolean {
@@ -54,10 +60,10 @@ class SBBPService(
     override fun handleMessage(event: MessageEvent, param: BPParam): ServiceCallStatistic? {
         // param.asyncImage()
 
-        val image: ByteArray = param.getImage()
+        val message = param.getMessageChain()
 
         try {
-            event.reply(image)
+            event.reply(message)
         } catch (e: Exception) {
             log.error("偏偏要上班最好成绩：发送失败", e)
             throw IllegalStateException.Send("偏偏要上班最好成绩")
@@ -276,31 +282,60 @@ class SBBPService(
 
      */
 
-    private fun BPParam.getImage(): ByteArray =
-        if (scores.size > 1) {
-            val ranks = scores.map { it.key }
-            val scores = scores.map { it.value }
+    private fun BPParam.getMessageChain(): MessageChain {
+        return try {
+            if (scores.size > 1) {
+                val ranks = scores.map { it.key }
+                val scores = scores.map { it.value }
 
-            osuBeatmapApiService.applyBeatmapExtendFromDatabase(scores)
+                osuBeatmapApiService.applyBeatmapExtendFromDatabase(scores)
 
-            val body = mapOf(
-                "user" to user,
-                "scores" to scores,
-                "rank" to ranks,
-                "panel" to "BS"
-            )
+                val body = mapOf(
+                    "user" to user,
+                    "scores" to scores,
+                    "rank" to ranks,
+                    "panel" to "BS"
+                )
 
-            imageService.getPanel(body, "A4")
-        } else {
-            val pair = scores.toList().first()
+                MessageChain(imageService.getPanel(body, "A4"))
+            } else {
+                val pair = scores.toList().first()
 
-            val score: LazerScore = pair.second
-            score.ranking = pair.first
+                val score: LazerScore = pair.second
+                score.ranking = pair.first
 
-            val e5Param = ScorePRService.getE5ParamForFilteredScore(user, score, "B", osuBeatmapApiService, osuCalculateApiService)
+                val e5Param = ScorePRService.getE5ParamForFilteredScore(user, score, "B", osuBeatmapApiService, osuCalculateApiService)
 
-            imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5")
+                MessageChain(imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5"))
+            }
+        } catch (e: Exception) {
+            log.error(e.message)
+            return getUUMessageChain()
         }
+    }
+
+
+    private fun BPParam.getUUMessageChain(): MessageChain {
+        return if (scores.size > 1) {
+            val list = scores.toList().take(5)
+            val ss = list.map { it.second }
+
+            osuBeatmapApiService.applyBeatmapExtend(ss)
+
+            val covers = osuScoreApiService.getCovers(ss, CoverType.COVER_2X)
+
+            getUUScores(user, list, covers)
+        } else {
+
+            val s = scores.toList().take(1).first().second
+
+            val cover = osuScoreApiService.getCover(s, CoverType.COVER_2X)
+
+            osuBeatmapApiService.applyBeatmapExtend(s)
+
+            getUUScore(user, s, cover)
+        }
+    }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(SBBPService::class.java)

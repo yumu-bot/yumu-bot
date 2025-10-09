@@ -19,7 +19,7 @@ open class LocalContact : Contact {
 
     override fun sendMessage(msg: MessageChain): MessageReceipt {
         val contact = this
-        val message = msg.messageList.joinToString {
+        val message = msg.messageList.joinToString("") {
             when (it) {
                 is AtMessage -> "[@${it.target}]"
                 is ReplyMessage -> "[回复:${it.id}]"

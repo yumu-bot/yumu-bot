@@ -7,7 +7,6 @@ import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
-import com.now.nowbot.model.osu.UUScore
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -15,6 +14,8 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.ScorePRService.ScorePRParam
+import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScore
+import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScores
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
@@ -31,13 +32,11 @@ import com.now.nowbot.util.command.REG_RANGE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 
 @Service("SCORE_PR")
 class ScorePRService(
-    private val osuApiWebClient: WebClient,
     private val imageService: ImageService,
     private val userApiService: OsuUserApiService,
     private val scoreApiService: OsuScoreApiService,
@@ -423,10 +422,37 @@ class ScorePRService(
                 return MessageChain(imageService.getPanel(e5.toMap(), if (isShow) "E10" else "E5"))
             }
         } catch (e: Exception) {
-            return getUUMessage()
+            log.error(e.message)
+            return getUUMessageChain()
         }
     }
 
+    private fun ScorePRParam.getUUMessageChain(): MessageChain {
+        return if (scores.size > 1) {
+            val list = scores.toList().take(5)
+            val ss = list.map { it.second }
+
+            val covers = scoreApiService.getCovers(ss, CoverType.COVER_2X)
+
+            calculateApiService.applyPPToScores(ss)
+
+            getUUScores(user, list, covers)
+        } else {
+
+            val s = scores.toList().take(1).first().second
+
+            val cover = scoreApiService.getCover(s, CoverType.COVER_2X)
+
+            AsyncMethodExecutor.awaitPairCallableExecute (
+                { beatmapApiService.applyBeatmapExtend(s) },
+                { calculateApiService.applyPPToScore(s) },
+            )
+
+            getUUScore(user, s, cover)
+        }
+    }
+
+    /*
     private fun ScorePRParam.getUUMessage(): MessageChain {
         val score = scores.values.first()
 
@@ -440,6 +466,8 @@ class ScorePRService(
 
         return MessageChain(d.scoreLegacyOutput, imgBytes)
     }
+
+     */
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(ScorePRService::class.java)

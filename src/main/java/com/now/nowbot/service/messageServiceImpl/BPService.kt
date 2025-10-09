@@ -13,6 +13,8 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPService.BPParam
+import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScore
+import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScores
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
@@ -59,10 +61,10 @@ import java.util.regex.Matcher
 
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: BPParam): ServiceCallStatistic? {
         param.asyncImage()
-        val image: ByteArray = param.getImage()
+        val message: MessageChain = param.getMessageChain()
 
         try {
-            event.reply(image)
+            event.reply(message)
         } catch (e: Exception) {
             log.error("最好成绩：发送失败", e)
             throw IllegalStateException.Send("最好成绩")
@@ -110,7 +112,7 @@ import java.util.regex.Matcher
 
     override fun reply(event: MessageEvent, param: BPParam): MessageChain? = run {
         param.asyncImage()
-        return MessageChain(param.getImage())
+        return param.getMessageChain()
     }
 
     /**
@@ -286,29 +288,58 @@ import java.util.regex.Matcher
         scoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
     }
 
-    private fun BPParam.getImage(): ByteArray =
-        if (scores.size > 1) {
-            val ranks = scores.map { it.key }
-            val scores = scores.map { it.value }
+    private fun BPParam.getMessageChain(): MessageChain {
+        return try {
+            if (scores.size > 1) {
+                val ranks = scores.map { it.key }
+                val scores = scores.map { it.value }
 
-            val body = mapOf(
-                "user" to user,
-                "scores" to scores,
-                "rank" to ranks,
-                "panel" to "BS"
-            )
+                val body = mapOf(
+                    "user" to user,
+                    "scores" to scores,
+                    "rank" to ranks,
+                    "panel" to "BS"
+                )
 
-            imageService.getPanel(body, "A4")
-        } else {
-            val pair = scores.toList().first()
+                MessageChain(imageService.getPanel(body, "A4"))
+            } else {
+                val pair = scores.toList().first()
 
-            val score: LazerScore = pair.second
-            score.ranking = pair.first
+                val score: LazerScore = pair.second
+                score.ranking = pair.first
 
-            val e5Param = ScorePRService.getE5ParamForFilteredScore(user, score, "B", beatmapApiService, calculateApiService)
+                val e5Param = ScorePRService.getE5ParamForFilteredScore(user, score, "B", beatmapApiService, calculateApiService)
 
-            imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5")
+                MessageChain(imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5"))
+            }
+        } catch (e: Exception) {
+            log.error(e.message)
+            return getUUMessageChain()
         }
+    }
+
+
+    private fun BPParam.getUUMessageChain(): MessageChain {
+        return if (scores.size > 1) {
+            val list = scores.toList().take(5)
+            val ss = list.map { it.second }
+
+            beatmapApiService.applyBeatmapExtend(ss)
+
+            val covers = scoreApiService.getCovers(ss, CoverType.COVER_2X)
+
+            getUUScores(user, list, covers)
+        } else {
+
+            val s = scores.toList().take(1).first().second
+
+            val cover = scoreApiService.getCover(s, CoverType.COVER_2X)
+
+            beatmapApiService.applyBeatmapExtend(s)
+
+            getUUScore(user, s, cover)
+        }
+    }
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BPService::class.java)

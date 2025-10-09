@@ -7,7 +7,6 @@ import com.now.nowbot.model.maimai.MaiScore
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
-import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -286,17 +285,17 @@ enum class MaiScoreFilter(@Language("RegExp") val regex: Regex) {
             if (level.contains(REG_PLUS.toRegex())) {
                 val i10 = level.dropLastWhile { it == '?' || it == '？' }.dropLastWhile { it == '+' || it == '＋' }.toDouble() * 10.0
 
-                return IntRange((floor(i10) + 6).roundToInt(), (floor(i10) + 9).roundToInt())
+                return IntRange(i10.toInt() + 6, i10.toInt() + 9)
             } else if (level.contains('.') || isAccurate) {
                 // 精确定级
                 val i10 = level.dropLastWhile { it == '?' || it == '？' }.toDouble() * 10.0
 
-                return (floor(i10)).roundToInt()..(floor(i10)).roundToInt()
+                return i10.toInt()..i10.toInt()
             } else {
                 // 模糊定级
                 val i10 = level.dropLastWhile { it == '?' || it == '？' }.toDouble() * 10.0
 
-                return (floor(i10)).roundToInt()..(floor(i10) + 5).roundToInt()
+                return i10.toInt()..(i10.toInt() + 5)
             }
         }
     }

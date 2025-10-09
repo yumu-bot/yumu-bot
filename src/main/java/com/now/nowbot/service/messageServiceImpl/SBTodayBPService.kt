@@ -1,15 +1,20 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.TodayBPService.TodayBPParam
+import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScore
+import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScores
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
+import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.sbApiService.SBScoreApiService
 import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
@@ -34,6 +39,7 @@ class SBTodayBPService(
 
     private val osuBeatmapApiService: OsuBeatmapApiService,
     private val osuCalculateApiService: OsuCalculateApiService,
+    private val osuScoreApiService: OsuScoreApiService,
     private val imageService: ImageService,
 
     ) : MessageService<TodayBPParam> {
@@ -53,7 +59,7 @@ class SBTodayBPService(
 
     override fun handleMessage(event: MessageEvent, param: TodayBPParam): ServiceCallStatistic? {
         // param.asyncImage()
-        val image = param.getImage()
+        val image = param.getMessageChain()
         try {
             event.reply(image)
         } catch (e: Exception) {
@@ -148,41 +154,69 @@ class SBTodayBPService(
 
      */
 
-    fun TodayBPParam.getImage(): ByteArray {
-        val todayMap = scores
+    fun TodayBPParam.getMessageChain(): MessageChain {
+        return try {
+            if (scores.size > 1) {
 
-        return if (todayMap.size > 1) {
+                val ranks = scores.map { it.key }
+                val ss = scores.map { it.value }
 
-            val ranks = todayMap.map { it.key }
-            val scores = todayMap.map { it.value }
+                AsyncMethodExecutor.awaitTripleCallableExecute(
+                    { osuCalculateApiService.applyBeatMapChanges(ss) },
+                    { osuCalculateApiService.applyStarToScores(ss) },
+                    { osuBeatmapApiService.applyBeatmapExtendFromDatabase(ss) },
 
-            AsyncMethodExecutor.awaitRunnableExecute(
-                listOf(
-                    AsyncMethodExecutor.Runnable { osuCalculateApiService.applyBeatMapChanges(scores) },
+                    )
 
-                    AsyncMethodExecutor.Runnable { osuCalculateApiService.applyStarToScores(scores) },
-
-                    AsyncMethodExecutor.Runnable { osuBeatmapApiService.applyBeatmapExtendFromDatabase(scores) },
+                val body = mapOf(
+                    "user" to user,
+                    "scores" to ss,
+                    "rank" to ranks,
+                    "panel" to "T"
                 )
+
+                MessageChain(imageService.getPanel(body, "A4"))
+            } else {
+                val pair = scores.toList().first()
+
+                val score: LazerScore = pair.second
+                score.ranking = pair.first
+
+                val body = ScorePRService.getE5Param(user, score, "T", osuBeatmapApiService, osuCalculateApiService)
+
+                MessageChain(imageService.getPanel(body, "E5"))
+            }
+        } catch (e: Exception) {
+            log.error(e.message)
+            return getUUMessageChain()
+        }
+    }
+
+    private fun TodayBPParam.getUUMessageChain(): MessageChain {
+        return if (scores.size > 1) {
+            val list = scores.toList().take(5)
+            val ss = list.map { it.second }
+
+            AsyncMethodExecutor.awaitPairCallableExecute (
+                { osuBeatmapApiService.applyBeatmapExtend(ss) },
+                { osuCalculateApiService.applyPPToScores(ss) },
             )
 
-            val body = mapOf(
-                "user" to user,
-                "scores" to scores,
-                "rank" to ranks,
-                "panel" to "T"
-            )
+            val covers = osuScoreApiService.getCovers(ss, CoverType.COVER_2X)
 
-            imageService.getPanel(body, "A4")
+            getUUScores(user, list, covers)
         } else {
-            val pair = scores.toList().first()
 
-            val score: LazerScore = pair.second
-            score.ranking = pair.first
+            val s = scores.toList().take(1).first().second
 
-            val body = ScorePRService.getE5Param(user, score, "T", osuBeatmapApiService, osuCalculateApiService)
+            val cover = osuScoreApiService.getCover(s, CoverType.COVER_2X)
 
-            imageService.getPanel(body, "E5")
+            AsyncMethodExecutor.awaitPairCallableExecute (
+                { osuBeatmapApiService.applyBeatmapExtend(s) },
+                { osuCalculateApiService.applyPPToScore(s) },
+            )
+
+            getUUScore(user, s, cover)
         }
     }
 

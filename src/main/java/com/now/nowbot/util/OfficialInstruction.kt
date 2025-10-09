@@ -134,8 +134,29 @@ enum class OfficialInstruction(val pattern: Pattern) {
         appendModeQQUIDNameRange()
     }),
 
+    UU_PR(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("uu?\\s*(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))")
+        appendModeQQUIDNameRange()
+        appendIgnore(REG_OPERATOR)
+        appendGroup(MAYBE) {
+            appendSpace(MORE) // 至少需要一个空格区分开来
+            appendCaptureGroup("any",
+                REG_ANYTHING_BUT_NO_HASH_STARS,
+                MORE
+            )
+        }
+        appendSpace()
+        appendIgnore(REG_HYPHEN)
+        appendRange()
+    }),
+
     SCORE(CommandPatternBuilder.create {
         appendOfficialCommandsIgnoreAll("s")
+        appendModeBIDQQUIDNameMod()
+    }),
+
+    UU_SCORE(CommandPatternBuilder.create {
+        appendOfficialCommandsIgnoreAll("uu?\\s*s")
         appendModeBIDQQUIDNameMod()
     }),
 
