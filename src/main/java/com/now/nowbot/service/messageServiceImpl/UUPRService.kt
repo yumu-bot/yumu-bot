@@ -369,7 +369,7 @@ class UUPRService(
 
             sb.addText("${user.username} (${user.currentOsuMode.shortName}):\n\n")
 
-            scores.mapIndexed { i, (_, s) ->
+            scores.mapIndexed { i, (rk, s) ->
                 val cover = covers.getOrNull(i)
 
                 val image = cover ?: try {
@@ -380,7 +380,7 @@ class UUPRService(
                     byteArrayOf()
                 }
 
-                val info = getUUScoresInfo(s, i)
+                val info = getUUScoresInfo(s, rk)
 
                 sb.addImage(image).addText("\n").addText(info)
 
