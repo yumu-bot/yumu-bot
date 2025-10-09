@@ -359,7 +359,7 @@ class UUPRService(
     companion object {
         private val log: Logger = LoggerFactory.getLogger(UUPRService::class.java)
 
-        fun getUUScores(user: OsuUser, scores: List<Pair<Int, LazerScore>>, covers: List<ByteArray>): MessageChain {
+        fun getUUScores(user: OsuUser, scores: List<Pair<Int, LazerScore>>, covers: List<ByteArray?>): MessageChain {
             /*
              * Muziyami (taiko):
              *

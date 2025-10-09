@@ -44,7 +44,7 @@ class ScoreApiImpl(
     override fun getCovers(
         scores: List<LazerScore>,
         type: CoverType
-    ): List<ByteArray> {
+    ): List<ByteArray?> {
         val async = AsyncMethodExecutor.awaitCallableExecute(
             {
                 scores.map { s ->
@@ -57,16 +57,17 @@ class ScoreApiImpl(
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    override fun getCover(score: LazerScore, type: CoverType): ByteArray {
+    override fun getCover(score: LazerScore, type: CoverType): ByteArray? {
         val path = Path.of(IMG_BUFFER_PATH)
-        if (Files.isDirectory(path).not() || Files.isWritable(path).not()) return byteArrayOf()
 
-        val default = try {
-            Files.readAllBytes(
-                Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("Banner").resolve("c8.png")
-            )
-        } catch (_: IOException) {
-            byteArrayOf()
+        val default by lazy {
+            try {
+                Files.readAllBytes(
+                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("Banner").resolve("c8.png")
+                )
+            } catch (_: IOException) {
+                null
+            }
         }
 
         val url = score.beatmapset.covers.getString(type)
@@ -97,7 +98,9 @@ class ScoreApiImpl(
                     .bodyToMono(ByteArray::class.java)
                     .block()!!
 
-                Files.write(path.resolve(hex), image)
+                if (Files.isDirectory(path) && Files.isWritable(path)) {
+                    Files.write(path.resolve(hex), image)
+                }
 
                 return image
             } catch (_: Exception) {

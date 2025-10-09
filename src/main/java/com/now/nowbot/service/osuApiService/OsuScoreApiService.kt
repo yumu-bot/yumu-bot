@@ -13,9 +13,9 @@ import com.now.nowbot.model.osu.OsuUser
 
 interface OsuScoreApiService {
 
-    fun getCovers(scores: List<LazerScore>, type: CoverType): List<ByteArray>
+    fun getCovers(scores: List<LazerScore>, type: CoverType): List<ByteArray?>
 
-    fun getCover(score: LazerScore, type: CoverType): ByteArray
+    fun getCover(score: LazerScore, type: CoverType): ByteArray?
 
     // 获取最好成绩
     fun getBestScores(id: Long, mode: OsuMode?, offset: Int, limit: Int): List<LazerScore>
