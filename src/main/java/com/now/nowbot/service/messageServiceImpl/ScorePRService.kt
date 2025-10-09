@@ -432,7 +432,7 @@ class ScorePRService(
             val list = scores.toList().take(5)
             val ss = list.map { it.second }
 
-            val covers = scoreApiService.getCovers(ss, CoverType.COVER_2X)
+            val covers = scoreApiService.getCovers(ss, CoverType.COVER)
 
             calculateApiService.applyPPToScores(ss)
 
@@ -441,7 +441,7 @@ class ScorePRService(
 
             val s = scores.toList().take(1).first().second
 
-            val cover = scoreApiService.getCover(s, CoverType.COVER_2X)
+            val cover = scoreApiService.getCover(s, CoverType.COVER)
 
             AsyncMethodExecutor.awaitPairCallableExecute (
                 { beatmapApiService.applyBeatmapExtend(s) },

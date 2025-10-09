@@ -338,14 +338,14 @@ class UUPRService(
                 { calculateApiService.applyPPToScores(ss) },
             )
 
-            val covers = scoreApiService.getCovers(ss, CoverType.COVER_2X)
+            val covers = scoreApiService.getCovers(ss, CoverType.COVER)
 
             getUUScores(user, list, covers)
         } else {
 
             val s = scores.toList().take(1).first().second
 
-            val cover = scoreApiService.getCover(s, CoverType.COVER_2X)
+            val cover = scoreApiService.getCover(s, CoverType.COVER)
 
             AsyncMethodExecutor.awaitPairCallableExecute (
                 { beatmapApiService.applyBeatmapExtend(s) },
@@ -372,17 +372,14 @@ class UUPRService(
             scores.mapIndexed { i, (rk, s) ->
                 val cover = covers.getOrNull(i)
 
-                val image = cover ?: try {
-                    Files.readAllBytes(
-                        Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("Banner").resolve("c8.png")
-                    )
-                } catch (_: IOException) {
-                    byteArrayOf()
+                val info = getUUScoresInfo(s, rk)
+                
+                if (cover == null || cover.isEmpty()) {
+                    sb.addImage("[cover]").addText("\n" + info)
+                } else {
+                    sb.addImage(cover).addText("\n" + info)
                 }
 
-                val info = getUUScoresInfo(s, rk)
-
-                sb.addImage(image).addText("\n").addText(info)
 
                 if (i != scores.size - 1) {
                     sb.addText("\n\n")

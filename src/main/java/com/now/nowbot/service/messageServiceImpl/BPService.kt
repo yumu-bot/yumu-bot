@@ -326,14 +326,14 @@ import java.util.regex.Matcher
 
             beatmapApiService.applyBeatmapExtend(ss)
 
-            val covers = scoreApiService.getCovers(ss, CoverType.COVER_2X)
+            val covers = scoreApiService.getCovers(ss, CoverType.COVER)
 
             getUUScores(user, list, covers)
         } else {
 
             val s = scores.toList().take(1).first().second
 
-            val cover = scoreApiService.getCover(s, CoverType.COVER_2X)
+            val cover = scoreApiService.getCover(s, CoverType.COVER)
 
             beatmapApiService.applyBeatmapExtend(s)
 

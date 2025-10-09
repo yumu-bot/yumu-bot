@@ -341,7 +341,7 @@ import java.util.regex.Matcher
 
             beatmapApiService.applyBeatmapExtendForSameScore(ss, map)
 
-            val covers = scoreApiService.getCovers(ss, CoverType.COVER_2X)
+            val covers = scoreApiService.getCovers(ss, CoverType.COVER)
 
             val pairs = ss.mapIndexed { i, it -> i + 1 to it }
 
@@ -350,7 +350,7 @@ import java.util.regex.Matcher
 
             val s = scores.first()
 
-            val cover = scoreApiService.getCover(s, CoverType.COVER_2X)
+            val cover = scoreApiService.getCover(s, CoverType.COVER)
 
             beatmapApiService.applyBeatmapExtend(s, map)
 

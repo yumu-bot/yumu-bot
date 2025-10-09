@@ -320,7 +320,7 @@ class SBScoreService(
 
             beatmapApiService.applyBeatmapExtendForSameScore(ss, map)
 
-            val covers = osuScoreApiService.getCovers(ss, CoverType.COVER_2X)
+            val covers = osuScoreApiService.getCovers(ss, CoverType.COVER)
 
             val pairs = ss.mapIndexed { i, it -> i + 1 to it }
 
@@ -329,7 +329,7 @@ class SBScoreService(
 
             val s = scores.first()
 
-            val cover = osuScoreApiService.getCover(s, CoverType.COVER_2X)
+            val cover = osuScoreApiService.getCover(s, CoverType.COVER)
 
             beatmapApiService.applyBeatmapExtend(s, map)
 

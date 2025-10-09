@@ -202,14 +202,14 @@ class SBTodayBPService(
                 { osuCalculateApiService.applyPPToScores(ss) },
             )
 
-            val covers = osuScoreApiService.getCovers(ss, CoverType.COVER_2X)
+            val covers = osuScoreApiService.getCovers(ss, CoverType.COVER)
 
             getUUScores(user, list, covers)
         } else {
 
             val s = scores.toList().take(1).first().second
 
-            val cover = osuScoreApiService.getCover(s, CoverType.COVER_2X)
+            val cover = osuScoreApiService.getCover(s, CoverType.COVER)
 
             AsyncMethodExecutor.awaitPairCallableExecute (
                 { osuBeatmapApiService.applyBeatmapExtend(s) },
