@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
@@ -59,6 +60,7 @@ class SetGroupModeService (
     }
 
     @Throws(Throwable::class)
+    @CheckPermission(isSuperAdmin = true)
     override fun handleMessage(event: MessageEvent, param: SetGroupParam): ServiceCallStatistic? {
         val isSuperAdmin = Permission.isSuperAdmin(event)
 

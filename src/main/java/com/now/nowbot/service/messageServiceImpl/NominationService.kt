@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.model.osu.Discussion
@@ -26,6 +27,7 @@ import com.now.nowbot.util.command.FLAG_SID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 import java.util.regex.Matcher
 import kotlin.math.floor
 
@@ -34,6 +36,7 @@ import kotlin.math.floor
     private val osuUserApiService: OsuUserApiService,
     private val osuDiscussionApiService: OsuDiscussionApiService,
     private val imageService: ImageService,
+    private val dao: ServiceCallStatisticsDao,
 ) : MessageService<NominationParam>, TencentMessageService<NominationParam> {
 
     data class NominationParam(
@@ -62,12 +65,7 @@ import kotlin.math.floor
         val matcher = Instruction.NOMINATION.matcher(messageText)
         if (!matcher.find()) return false
 
-        val param = getNominationParam(
-            matcher,
-            osuBeatmapApiService,
-            osuDiscussionApiService,
-            osuUserApiService,
-        )
+        val param = getNominationParam(event, matcher)
 
         data.value = param
         return true
@@ -95,12 +93,7 @@ import kotlin.math.floor
         val matcher = OfficialInstruction.NOMINATION.matcher(messageText)
         if (!matcher.find()) return null
 
-        val param = getNominationParam(
-            matcher,
-            osuBeatmapApiService,
-            osuDiscussionApiService,
-            osuUserApiService,
-        )
+        val param = getNominationParam(event, matcher)
 
         return param
     }
@@ -111,34 +104,39 @@ import kotlin.math.floor
         return MessageChainBuilder().addImage(image).build()
     }
 
-    companion object {
-        private val log: Logger = LoggerFactory.getLogger(NominationService::class.java)
+    private fun getNominationParam(event: MessageEvent,
+        matcher: Matcher,
+    ): NominationParam {
+        val idStr: String? = matcher.group(FLAG_SID)
+        val mode = matcher.group("mode")
+        var isSID = !(mode != null && (mode == "b" || mode == "bid"))
 
-        private fun getNominationParam(
-            matcher: Matcher,
-            osuBeatmapApiService: OsuBeatmapApiService,
-            osuDiscussionApiService: OsuDiscussionApiService,
-            osuUserApiService: OsuUserApiService,
-        ): NominationParam {
-            val sidStr: String? = matcher.group(FLAG_SID)
-            val mode = matcher.group("mode")
-            val isSID = !(mode != null && (mode == "b" || mode == "bid"))
+        val id = idStr?.toLongOrNull()
+            ?: run {
+                val last = dao.getLastBeatmapID(
+                    groupID = event.subject.id,
+                    name = null,
+                    from = LocalDateTime.now().minusHours(24L)
+                )
 
-            val sid = sidStr?.toLongOrNull()
-                ?: if (isSID) {
-                    throw IllegalArgumentException.WrongException.BeatmapsetID()
-                } else {
-                    throw IllegalArgumentException.WrongException.BeatmapID()
+                if (last != null) {
+                    isSID = false
                 }
 
-            return getParam(
-                sid,
-                isSID,
-                osuBeatmapApiService,
-                osuDiscussionApiService,
-                osuUserApiService,
-            )
-        }
+                last ?: throw IllegalArgumentException.WrongException.Audio()
+            }
+
+        return getParam(
+            id,
+            isSID,
+            osuBeatmapApiService,
+            osuDiscussionApiService,
+            osuUserApiService,
+        )
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(NominationService::class.java)
 
         fun getParam(
             sid: Long,
@@ -158,7 +156,7 @@ import kotlin.math.floor
             if (isSID) {
                 try {
                     s = beatmapApiService.getBeatmapset(id)
-                } catch (e: NetworkException.BeatmapException.NotFound) {
+                } catch (_: NetworkException.BeatmapException.NotFound) {
                     val b = beatmapApiService.getBeatmapFromDatabase(id)
                     id = b.beatmapsetID
                     s = beatmapApiService.getBeatmapset(id)

@@ -12,13 +12,6 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup("module", REG_ANYTHING, ANY, MAYBE)
     }),
 
-    AUDIO(CommandPatternBuilder.create {
-        appendCommandsIgnore(REG_IGNORE_BS, "audio", "song", "a")
-        appendColonCaptureGroup(MAYBE, FLAG_TYPE, "bid", "b", "sid", "s")
-        appendSpace()
-        appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE, MAYBE)
-    }),
-
     // #1 BOT 内部指令
     PING(CommandPatternBuilder.create {
         appendGroup {
@@ -100,6 +93,14 @@ enum class Instruction(val pattern: Pattern) {
         appendQQUIDName()
     }),
 
+    GROUP_LIST(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("group\\s*list", "gl")
+        appendCaptureGroup(FLAG_RANGE,
+            REG_NUMBER,
+            ANY
+        )
+    }),
+
     // #2 osu! 成绩指令
     SET_MODE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("setmode", "mode", "sm", "mo")
@@ -120,14 +121,6 @@ enum class Instruction(val pattern: Pattern) {
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
         appendQQID(maybe = true)
         appendQQGroup(maybe = true)
-    }),
-
-    GROUP_LIST(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("group\\s*list", "gl")
-        appendCaptureGroup(FLAG_RANGE,
-            REG_NUMBER,
-            ANY
-        )
     }),
 
     SCORE_PR(CommandPatternBuilder.create {
@@ -305,12 +298,6 @@ enum class Instruction(val pattern: Pattern) {
         appendModeQQUIDName()
     }),
 
-    BP_QUERY(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("bp\\s*query", "bq")
-        appendMode()
-        appendCaptureGroup("text", ".", MORE)
-    }),
-
     UU_BA(CommandPatternBuilder.create {
         appendUUIgnoreAll("(bp?)?a", "(bp\\s*analysis)")
         appendModeQQUIDName()
@@ -475,6 +462,13 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     // #4 osu! 谱面指令
+    AUDIO(CommandPatternBuilder.create {
+        appendCommandsIgnore(REG_IGNORE_BS, "audio", "song", "a")
+        appendColonCaptureGroup(MAYBE, FLAG_TYPE, "bid", "b", "sid", "s")
+        appendSpace()
+        appendCaptureGroup(FLAG_ID, REG_NUMBER, MORE, MAYBE)
+    }),
+
     MAP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("beatmap", "map", "m")
 

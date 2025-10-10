@@ -327,7 +327,7 @@ class SBBPService(
             getUUScores(user, list, covers)
         } else {
 
-            val s = scores.toList().take(1).first().second
+            val s = scores.toList().first().second
 
             val cover = osuScoreApiService.getCover(s, CoverType.COVER)
 

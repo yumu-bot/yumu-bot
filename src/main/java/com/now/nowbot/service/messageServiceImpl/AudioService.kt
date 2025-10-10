@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
@@ -17,11 +18,13 @@ import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.time.LocalDateTime
 
 @Service("AUDIO")
 class AudioService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val osuApiWebClient: WebClient,
+    private val dao: ServiceCallStatisticsDao,
 ) : MessageService<AudioParam> {
 
     data class AudioParam(var id: Long = 0, var isBid: Boolean = false)
@@ -39,9 +42,23 @@ class AudioService(
         val idStr: String? = matcher.group("id")
         val type: String? = matcher.group("type")
 
-        val id = idStr?.toLongOrNull() ?: throw IllegalArgumentException.WrongException.Audio()
+        var isBID = !(type != null && (type == "s" || type == "sid"))
 
-        val isBID = !(type != null && (type == "s" || type == "sid"))
+        val id = idStr?.toLongOrNull()
+            ?: run {
+                val last = dao.getLastBeatmapID(
+                    groupID = event.subject.id,
+                    name = null,
+                    from = LocalDateTime.now().minusHours(24L)
+                )
+
+                if (last != null) {
+                    isBID = true
+                }
+
+                last ?: throw IllegalArgumentException.WrongException.Audio()
+            }
+
 
         data.value = AudioParam(id, isBID)
         return true
@@ -112,7 +129,7 @@ class AudioService(
 
         return try {
             getVoice(sid)
-        } catch (e: WebClientException) {
+        } catch (_: WebClientException) {
             null
         }
     }
@@ -121,13 +138,13 @@ class AudioService(
         val b =
             try {
                 beatmapApiService.getBeatmap(bid)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 return null
             }
 
         return try {
             getVoice(b.beatmapsetID)
-        } catch (e: WebClientException) {
+        } catch (_: WebClientException) {
             null
         }
     }

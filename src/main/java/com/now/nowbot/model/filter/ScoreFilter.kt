@@ -14,7 +14,7 @@ import java.time.YearMonth
 import java.time.ZoneOffset
 import kotlin.math.*
 
-enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
+enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
     CREATOR("(creator|host|c|h)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
     GUEST("((gder|guest\\s*diff(er)?)|mapper|guest|g?u)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
@@ -567,7 +567,8 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
 
             val isWithInMode = operator == Operator.EQ || operator == Operator.XQ
 
-            val isShiftMode = (operator == Operator.GE || operator == Operator.LE) && (year < n.year - 2007 && month <= 12 && day <= maxDayOfMonth && hour <= 24 && minute <= 60 && second <= 60)
+            val isShiftMode = (operator == Operator.GE || operator == Operator.LE) &&
+                    (year < n.year - 2007 && month <= 12 && day <= maxDayOfMonth && hour <= 24 && minute <= 60 && second <= 60)
 
             val too: Long
 
@@ -649,8 +650,7 @@ enum class ScoreFilter(@Language("RegExp") val regex: Regex) {
                     }
                 }
 
-                return fit(Operator.GE, compare, too - delta)
-                        && fit(Operator.LE, compare, too)
+                return fit(Operator.GE, compare, too - delta) && fit(Operator.LE, compare, too)
             } else {
                 return fit(operator, compare, too)
             }

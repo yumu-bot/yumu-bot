@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
@@ -17,7 +18,6 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.CmdUtil.getBid
-import com.now.nowbot.util.CmdUtil.isAvoidance
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
@@ -26,6 +26,7 @@ import org.intellij.lang.annotations.Language
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 import java.util.regex.Matcher
 import kotlin.math.max
 import kotlin.math.min
@@ -37,6 +38,7 @@ class MapStatisticsService(
     private val userApiService: OsuUserApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
+    private val dao: ServiceCallStatisticsDao,
 ) : MessageService<MapParam>, TencentMessageService<MapParam> {
 
     data class MapParam(val user: OsuUser?, val beatmap: Beatmap, val expected: Expected)
@@ -82,7 +84,7 @@ class MapStatisticsService(
             return false
         }
 
-        data.value = getParam(matcher, messageText) ?: return false
+        data.value = getParam(event, matcher)
         return true
     }
 
@@ -110,7 +112,7 @@ class MapStatisticsService(
             return null
         }
 
-        return getParam(matcher, messageText)
+        return getParam(event, matcher)
     }
 
     override fun reply(event: MessageEvent, param: MapParam): MessageChain? {
@@ -131,21 +133,40 @@ class MapStatisticsService(
         ANY(REG_NUMBER_DECIMAL.toRegex()),
     }
 
-    private fun getParam(matcher: Matcher, messageText: String): MapParam? {
-        val bid = getBid(matcher)
+    private fun getParam(event: MessageEvent, matcher: Matcher): MapParam {
         val conditions = DataUtil.paramMatcher(matcher.group("any"), Filter.entries.map { it.regex })
 
-        val beatmap: Beatmap? = try {
-            beatmapApiService.getBeatmap(bid)
-        } catch (_: Throwable) {
-            null
+        val id = getBid(matcher)
+
+        val bid: Long
+
+        if (id == 0L) {
+            bid = dao.getLastBeatmapID(
+                groupID = event.subject.id,
+                name = null,
+                from = LocalDateTime.now().minusHours(24L)
+            ) ?: 0L
+        } else {
+            bid = id
         }
 
+        val beatmap: Beatmap? = if (bid > 0L) {
+            try {
+                beatmapApiService.getBeatmap(bid)
+            } catch (_: Throwable) {
+                null
+            }
+        } else null
+
         if (beatmap == null) {
+            /*
             if (isAvoidance(messageText, "！m", "!m")) {
                 log.debug("指令退避：M 退避成功")
             }
             return null
+
+             */
+            throw IllegalArgumentException.WrongException.BeatmapID()
         }
 
         val mode = OsuMode.getMode(matcher.group("mode"), beatmap.mode)

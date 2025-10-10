@@ -439,7 +439,7 @@ class ScorePRService(
             getUUScores(user, list, covers)
         } else {
 
-            val s = scores.toList().take(1).first().second
+            val s = scores.toList().first().second
 
             val cover = scoreApiService.getCover(s, CoverType.COVER)
 

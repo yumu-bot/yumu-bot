@@ -12,48 +12,66 @@ import com.now.nowbot.util.DataUtil.getMarkdownFile
 import com.now.nowbot.util.DataUtil.getPicture
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.command.REG_EXCLAMATION
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.util.*
 
 @Service("HELP")
 class HelpService(
     private val imageService: ImageService
-) : MessageService<String>, TencentMessageService<String> {
+) : MessageService<HelpService.HelpParam>, TencentMessageService<HelpService.HelpParam> {
 
-    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<String>): Boolean {
+    data class HelpParam(
+        val module: String,
+        val isSimplified: Boolean = false,
+    )
+
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<HelpParam>): Boolean {
         val m = Instruction.HELP.matcher(messageText)
-        if (m.find()) {
-            data.value=m.group("module").trim { it <= ' ' }.lowercase(Locale.getDefault()) //传东西进来
-            return true
-        } else return false
+
+        if (!m.find()) return false
+
+        val module = m.group("module")
+            ?.trim { it <= ' ' }
+            ?.lowercase() ?: ""
+
+        val isSimplified = module.isEmpty() && messageText.contains("$REG_EXCLAMATION\\s*(helps?|帮助)\\s*".toRegex())
+
+        data.value = HelpParam(module, isSimplified)
+        return true
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
+    override fun handleMessage(event: MessageEvent, param: HelpParam): ServiceCallStatistic? {
+        if (param.isSimplified) try {
+            val image = imageService.getPanelA6(getMarkdownFile("Help/SIMPLIFIED_GUIDE.md"), "help")
+
+            event.reply(image)
+
+            return ServiceCallStatistic.building(event)
+        } catch (_: Exception) {
+
+        }
+
         try {
-            val image = getHelpPicture(param, imageService)
+            val image = getHelpPicture(param.module, imageService) ?: throw TipsException("窝趣，找不到文件")
 
-            if (Objects.nonNull(image)) {
-                event.reply(image)
-            } else {
-                throw TipsException("窝趣，找不到文件")
-            }
-        } catch (e: TipsException) {
-            val imgLegacy = getHelpImageLegacy(param)
-            val msgLegacy = getHelpLinkLegacy(param)
+            event.reply(image)
+        } catch (_: TipsException) {
+            val imgLegacy = getHelpImageLegacy(param.module)
+            val msgLegacy = getHelpLinkLegacy(param.module)
 
-            if (Objects.nonNull(imgLegacy)) {
+            if (imgLegacy != null) {
                 event.reply(imgLegacy)
             }
 
-            if (Objects.nonNull(msgLegacy)) {
+            if (msgLegacy != null) {
                 event.reply(msgLegacy).recallIn((110 * 1000).toLong())
             }
-        } catch (e: NullPointerException) {
-            val imgLegacy = getHelpImageLegacy(param)
-            val msgLegacy = getHelpLinkLegacy(param)
+        } catch (_: NullPointerException) {
+            val imgLegacy = getHelpImageLegacy(param.module)
+            val msgLegacy = getHelpLinkLegacy(param.module)
 
             if (imgLegacy != null) {
                 event.reply(imgLegacy)
@@ -135,7 +153,7 @@ class HelpService(
 
             return try {
                 imageService.getPanelA6(getMarkdownFile("Help/${fileName}.md"), "help")
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -237,15 +255,22 @@ class HelpService(
         }
     }
 
-    override fun accept(event: MessageEvent, messageText: String): String? {
+    override fun accept(event: MessageEvent, messageText: String): HelpParam? {
         return if (OfficialInstruction.HELP.matcher(messageText).find()) {
-            "OFFICIAL"
+            HelpParam("OFFICIAL", false)
         } else {
             null
         }
     }
 
-    override fun reply(event: MessageEvent, param: String): MessageChain? {
-        return MessageChain(getHelpPicture(param, imageService) ?: byteArrayOf())
+    override fun reply(event: MessageEvent, param: HelpParam): MessageChain? {
+        val pic = getHelpPicture(param.module, imageService)
+
+        return if (pic == null) {
+            MessageChain("未找到对应的帮助文档。推荐您前往官方网站查询。")
+        } else {
+            MessageChain(pic)
+        }
+
     }
 }
