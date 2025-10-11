@@ -107,7 +107,13 @@ import java.util.regex.Matcher
         } else {
             // 常规模式
             val all = maimaiApiService.getMaimaiSongLibrary()
-                .sortedByDescending { it.songID % 10000 }
+                .sortedByDescending {
+                    if (it.songID > 10000) {
+                        (it.songID % 10000) + 10000
+                    } else {
+                        it.songID
+                    }
+                }
 
             val difficulties = MaiDifficulty.getDifficulties(matcher.group(FLAG_DIFF))
 

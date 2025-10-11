@@ -81,7 +81,7 @@ class ScoreApiImpl(
 
         try {
             md.update(url.toByteArray(Charsets.UTF_8))
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             log.info("获取谱面图片：计算 MD5 失败")
             return default
         }
@@ -323,7 +323,6 @@ class ScoreApiImpl(
                         .queryParam("legacy_only", if (legacy) 1 else 0)
                         .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                         .queryParamIfPresent("type", Optional.ofNullable(type))
-                        .replaceQuery("")
 
                     LazerMod.setMods(it, mods)
 
@@ -370,7 +369,7 @@ class ScoreApiImpl(
 
                 try {
                     md.update(url.toByteArray(Charsets.UTF_8))
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     log.info("异步下载谱面图片：计算 MD5 失败")
                     return@Runnable
                 }
@@ -433,7 +432,7 @@ class ScoreApiImpl(
 
                      */
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 return null
             }
         }
@@ -577,7 +576,7 @@ class ScoreApiImpl(
                     .retrieve()
                     .bodyToMono(T::class.java)
             }
-        } catch (e: NetworkException.ScoreException.NotFound) {
+        } catch (_: NetworkException.ScoreException.NotFound) {
             request { client ->
                 client.get()
                     .uri(retry)

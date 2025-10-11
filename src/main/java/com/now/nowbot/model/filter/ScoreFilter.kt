@@ -470,7 +470,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             // = ==
             val isWithInMode = operator == Operator.EQ || operator == Operator.XQ || operator == Operator.NE
 
-            // < >
+            // <= >=
             val isAbsoluteMode = (operator == Operator.GE || operator == Operator.LE)
 
             val too: Long
