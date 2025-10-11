@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.config.Permission
+import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallLite.ServiceCallResult
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.mapper.ServiceCallRepository
@@ -10,19 +11,31 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
-import org.springframework.lang.Nullable
+import com.now.nowbot.util.command.FLAG_TIME
+import com.now.nowbot.util.command.REG_HYPHEN
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import kotlin.math.absoluteValue
 import kotlin.math.round
+import kotlin.math.roundToInt
 
-@Service("SERVICE_COUNT") class ServiceCountService(
-    private val serviceCallRepository: ServiceCallRepository, private val imageService: ImageService
-) : MessageService<Int> {
-    @Throws(Throwable::class) override fun isHandle(
-        event: MessageEvent, messageText: String, data: DataValue<Int>
+@Service("SERVICE_COUNT")
+class ServiceCountService(
+    private val legacyRepository: ServiceCallRepository,
+    private val dao: ServiceCallStatisticsDao,
+    private val imageService: ImageService
+) : MessageService<ServiceCountService.ServiceCountParam> {
+
+    data class ServiceCountParam(
+        val from: LocalDateTime,
+        val to: LocalDateTime,
+    )
+
+    override fun isHandle(
+        event: MessageEvent, messageText: String, data: DataValue<ServiceCountParam>
     ): Boolean {
         val matcher = Instruction.SERVICE_COUNT.matcher(messageText)
         if (!matcher.find()) return false
@@ -31,64 +44,136 @@ import kotlin.math.round
             throw PermissionException.DeniedException.BelowSuperAdministrator()
         }
 
-        val d: String? = matcher.group("days")
-        val h: String? = matcher.group("hours")
+        val range = getTimeRange(matcher.group(FLAG_TIME))
 
-        val hours = if (d.isNullOrEmpty() && h.isNullOrEmpty()) {
-            24
-        } else if (d.isNullOrEmpty().not()) {
-            24 * (d.toIntOrNull() ?: 0) + (h?.toIntOrNull() ?: 0)
-        } else {
-            h?.toIntOrNull() ?: 24
-        }
+        data.value = ServiceCountParam(from = range.first, to = range.second)
 
-        data.value = hours
         return true
     }
 
-    @CheckPermission(isSuperAdmin = true) @Throws(Throwable::class) override fun handleMessage(
-        event: MessageEvent, param: Int
+    @CheckPermission(isSuperAdmin = true)
+    override fun handleMessage(
+        event: MessageEvent, param: ServiceCountParam
     ): ServiceCallStatistic? {
+
+        val isAll = java.time.Duration.between(param.from, param.to).toMinutes().absoluteValue <= 1
+
+        if (param.from.isBefore(boundary) || isAll) {
+            val md = getLegacyServiceCountMarkdown(param)
+
+            val image = imageService.getPanelA6(md, "service")
+
+            event.reply(image)
+        }
+
+        if (param.to.isAfter(boundary) || isAll) {
+            val md = getServiceCountMarkdown(param)
+
+            val image = imageService.getPanelA6(md, "service")
+
+            event.reply(image)
+        }
+
+
+        return ServiceCallStatistic.building(event)
+    }
+
+    private fun getServiceCountMarkdown(param: ServiceCountParam): String {
+        val sb = StringBuilder("## 时间段：${param.from.format(dateTimeFormatter)} - ${param.to.format(dateTimeFormatter)}\n")
+
+        sb.append("""
+            | # | 服务名 | 调用次数 | 平均 | 中位 | 最长 | 最短 | 中位用时占比 |
+            | :-: | :-- | :-: | :-: | :-: | :-: | :-: | :-- |
+            """.trimIndent()
+        ).append('\n')
+
+        val list = if (java.time.Duration.between(param.from, param.to).toMinutes().absoluteValue <= 1) {
+            dao.getBetween(minimum, param.to)
+        } else {
+            dao.getBetween(param.from, param.to)
+        }
+
+        val map = list
+            .groupBy { it.name }
+            .mapValues { (_, v) -> v.map { it.duration } }
+
+        // val x = (map.values.maxOfOrNull { it.average() }?.roundToLong() ?: 0L).coerceIn(10000L, 15000L)
+
+        val avs = map.mapValues { (_, v) -> v.average() }
+        val mxs = map.mapValues { (_, v) -> v.takePercent(0.1) }
+        val mis = map.mapValues { (_, v) -> v.takePercent(- 0.1) }
+        val mds = map.mapValues { (_, v) -> v.takePercent(0.5) }
+
+        fun getMarkdownLine(index: Int, name: String, times: List<Long>, maxAverage: Long = 10000L): String {
+            val av = avs[name] ?: 0.0
+            val mx = mxs[name] ?: 0L
+            val mi = mis[name] ?: 0L
+            val md = mds[name] ?: 0L
+
+            val percent = (md * 1.0 / maxAverage)
+
+            val block = when(percent) {
+                in 0.0..1.0 / 3 -> "\uD83D\uDFE9" // 绿色方块
+                in 1.0 / 3..2.0 / 3 -> "\uD83D\uDFE8" // 黄色方块
+                in 2.0 / 3..1.0 -> "\uD83D\uDFE7" // 橙色方块
+                else -> "\uD83D\uDFE5" // 红色方块
+            }
+
+            val blocks = block.repeat((percent.coerceIn(0.0, 1.5) * 10).roundToInt())
+
+            return "| $index | $name | ${times.size} | ${av.roundToSec()}s | ${md.roundToSec()}s | ${mx.roundToSec()}s | ${mi.roundToSec()}s | $blocks |"
+        }
+
+        map.toList()
+            .sortedByDescending {
+                (_, v) -> v.size
+            }
+            .mapIndexed { i, (k, v) ->
+                sb.append(getMarkdownLine(i + 1 , k, v))
+
+                if (i != map.size - 1) {
+                    sb.append('\n')
+                }
+        }
+
+        return sb.toString()
+    }
+
+
+
+    private fun getLegacyServiceCountMarkdown(param: ServiceCountParam): String {
         val sb = StringBuilder()
         val result: List<ServiceCallResult>?
 
         val now = LocalDateTime.now()
-        val before: LocalDateTime
 
-        when (param) {
-            24 -> {
-                before = now.minusHours(24)
-                result = serviceCallRepository.countBetween(before, now)
-                sb.append("## 时间段：今天之内\n")
-            }
+        val from: LocalDateTime
+        val to: LocalDateTime = param.to
 
-            0 -> {
-                before = LocalDateTime.of(2021, 4, 26, 0, 0, 0)
-                result = serviceCallRepository.countAll()
-                sb.append("## 时间段：迄今为止\n")
-            }
-
-            else -> {
-                before = now.minusHours(param.toLong())
-                sb.append(
-                    "## 时间段：**${before.format(dateTimeFormatter)}** - **${now.format(dateTimeFormatter)}**\n"
-                )
-                result = serviceCallRepository.countBetween(before, now)
-            }
+        if (java.time.Duration.between(param.from, param.to).toMinutes().absoluteValue <= 1) {
+            from = minimum
+            sb.append("## 时间段：迄今为止\n")
+            result = legacyRepository.countAll()
+        } else if (java.time.Duration.between(param.from, now.minusDays(1)).toMinutes().absoluteValue <= 1) {
+            from = param.from
+            result = legacyRepository.countBetween(from, to)
+            sb.append("## 时间段：今天之内\n")
+        } else {
+            from = param.from
+            sb.append(
+                "## 时间段：**${from.format(dateTimeFormatter)}** - **${now.format(dateTimeFormatter)}**\n"
+            )
+            result = legacyRepository.countBetween(from, now)
         }
 
-        val r1 = serviceCallRepository.countBetweenLimit(before, now, 0.01).associate { it.service to it.data }
-        val r50 = serviceCallRepository.countBetweenLimit(before, now, 0.50).associate { it.service to it.data }
-        val r80 = serviceCallRepository.countBetweenLimit(before, now, 0.80).associate { it.service to it.data }
-        val r99 = serviceCallRepository.countBetweenLimit(before, now, 0.99).associate { it.service to it.data }
+        val r1 = legacyRepository.countBetweenLimit(from, to, 0.01).associate { it.service to it.data }
+        val r50 = legacyRepository.countBetweenLimit(from, to, 0.50).associate { it.service to it.data }
+        val r80 = legacyRepository.countBetweenLimit(from, to, 0.80).associate { it.service to it.data }
+        val r99 = legacyRepository.countBetweenLimit(from, to, 0.99).associate { it.service to it.data }
 
         sb.getCharts(result, r1, r50, r80, r99)
 
-        val image = imageService.getPanelA6(sb.toString(), "service")
-
-        event.reply(image)
-
-        return ServiceCallStatistic.building(event)
+        return sb.toString()
     }
 
     // 构建表格
@@ -99,9 +184,10 @@ import kotlin.math.round
         r80: Map<String, Long>,
         r99: Map<String, Long>
     ) {
-        if (result == null) return
+        if (result.isNullOrEmpty()) return
 
-        this.append("""
+        this.append(
+            """
                 | 服务名 | 调用次数 | 最长用时 (99%) | 大部分人用时 (80%) | 平均用时 (50%) | 最短用时 (1%) |
                 | :-- | :-: | :-: | :-: | :-: | :-: |
                 """.trimIndent()
@@ -125,17 +211,17 @@ import kotlin.math.round
             r1List.add(r1.getOrDefault(service, 0L) * size)
 
             this.append("| ").append(service).append(" | ").append(size).append(" | ")
-                .append(roundToSec(r99.getOrDefault(service, 0L))).append('s').append(" | ")
-                .append(roundToSec(r80.getOrDefault(service, 0L))).append('s').append(" | ")
-                .append(roundToSec(r50.getOrDefault(service, 0L))).append('s').append(" | ")
-                .append(roundToSec(r1.getOrDefault(service, 0L))).append('s').append(" |\n")
+                .append(r99.getOrDefault(service, 0L).roundToSec()).append('s').append(" | ")
+                .append(r80.getOrDefault(service, 0L).roundToSec()).append('s').append(" | ")
+                .append(r50.getOrDefault(service, 0L).roundToSec()).append('s').append(" | ")
+                .append(r1.getOrDefault(service, 0L).roundToSec()).append('s').append(" |\n")
         }
 
         this.append("| ").append("总计和平均").append(" | ").append(count).append(" | ")
-            .append(roundToSec(getListAverage(r99List, count))).append('s').append(" | ")
-            .append(roundToSec(getListAverage(r80List, count))).append('s').append(" | ")
-            .append(roundToSec(getListAverage(r50List, count))).append('s').append(" | ")
-            .append(roundToSec(getListAverage(r1List, count))).append('s').append(" |\n")
+            .append(getListAverage(r99List, count).roundToSec()).append('s').append(" | ")
+            .append(getListAverage(r80List, count).roundToSec()).append('s').append(" | ")
+            .append(getListAverage(r50List, count).roundToSec()).append('s').append(" | ")
+            .append(getListAverage(r1List, count).roundToSec()).append('s').append(" |\n")
     }
 
     //数组求平均值
@@ -148,15 +234,92 @@ import kotlin.math.round
     }
 
     //1926ms -> 1.9s
-    private fun <T : Number?> roundToSec(@Nullable millis: T?): String {
-        if (millis == null) return "0"
-
-        val str = String.format("%.1f", round(millis.toFloat() / 100f) / 10f)
-
-        return str.removeSuffix(".0")
-    }
 
     companion object {
+        private val boundary = LocalDateTime.of(2025, 10, 9, 8, 0, 0)
+        private val minimum = LocalDateTime.of(2021, 4, 26, 0, 0, 0)
+
         private val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yy/MM/dd HH:mm")
+
+        private fun <T : Number> T.roundToSec(): String {
+            val str = String.format("%.1f", round(this.toFloat() / 100f) / 10f)
+
+            return str.removeSuffix(".0")
+        }
+
+
+        /*
+
+        /**
+         * 筛选前 ..% 的数据，如果是负数，则是后 ..% 的数据
+         * @param percent 0-1
+         */
+        fun <T : Comparable<T>> List<T>.takeTopPercentWithSet(percent: Double): List<T> {
+            if (isEmpty()) return emptyList()
+
+            val count = (size * percent.absoluteValue).toInt().coerceAtLeast(1)
+            val topValues = sortedDescending().take(count).toSet()
+
+            return if (percent > 0) {
+                filter { it in topValues }
+            } else {
+                filter { it !in topValues }
+            }
+        }
+
+         */
+
+        /**
+         * 找出前 ..% 的数据，如果是负数，则是后 ..% 的数据
+         * @param percent 0-1
+         */
+        fun <T : Comparable<T>> List<T>.takePercent(percent: Double): T? {
+            if (isEmpty()) return null
+
+            val count = (size * percent.absoluteValue).toInt().coerceAtLeast(1)
+            return if (percent >= 0.0) {
+                sortedDescending().getOrNull(count - 1)
+            } else {
+                sorted().getOrNull(count - 1)
+            }
+        }
+
+
+        private fun getTimeRange(input: String?): Pair<LocalDateTime, LocalDateTime> {
+            val now = LocalDateTime.now()
+
+            if (input.isNullOrEmpty()) {
+                return now.minusDays(1) to now
+            }
+
+            val split = input.split(REG_HYPHEN.toRegex())
+                .dropWhile { it.isEmpty() }
+
+            return when (split.size) {
+                1 -> {
+
+                    val time = DataUtil.getTime(DataUtil.parseTime(split[0]))
+
+                    if (time.isBefore(now)) {
+                        time to now
+                    } else {
+                        now to time
+                    }
+                }
+
+                2 -> {
+                    val first = DataUtil.getTime(DataUtil.parseTime(split[0]))
+                    val second = DataUtil.getTime(DataUtil.parseTime(split[1]))
+
+                    if (first.isBefore(second)) {
+                        first to second
+                    } else {
+                        second to first
+                    }
+                }
+
+                else -> now.minusDays(1) to now
+            }
+        }
     }
 }

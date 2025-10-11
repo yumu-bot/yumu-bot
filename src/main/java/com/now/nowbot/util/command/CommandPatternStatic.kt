@@ -42,6 +42,7 @@ const val FLAG_VERSION: String = "version"
 const val FLAG_PAGE: String = "page"
 const val FLAG_DIFF: String = "diff"
 const val FLAG_TYPE: String = "type"
+const val FLAG_TIME: String = "time"
 
 @Language("RegExp")
 val REG_CAPS_INSENSITIVE: String = "(?i)"
@@ -141,6 +142,9 @@ val REG_HASH: String = "[#＃]"
 
 @Language("RegExp")
 val REG_HYPHEN: String = "[\\-－—~～〜]"
+
+@Language("RegExp")
+val REG_SLASH: String = "[/\\\\]"
 
 @Language("RegExp")
 val REG_EXCLAMATION: String = "[!！]"

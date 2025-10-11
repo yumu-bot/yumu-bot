@@ -71,17 +71,10 @@ enum class Instruction(val pattern: Pattern) {
 
     SERVICE_COUNT(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("servicecount", "统计服务调用", "sc")
-
-        appendGroup(MAYBE) {
-            appendCaptureGroup("days", REG_NUMBER, MORE)
-            append('d')
-        }
-        appendSpace()
-        appendGroup(MAYBE) {
-            appendCaptureGroup("hours", REG_NUMBER, MORE)
-            append('h')
-            appendMatchLevel(MAYBE)
-        }
+        appendCaptureGroup(FLAG_TIME,
+            REG_TIME,
+            ANY
+        )
     }),
 
     SYSTEM_INFO(CommandPatternBuilder.create {
@@ -447,17 +440,17 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     GUEST_DIFFICULTY(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("guest", "guest\\s*diff(er)?", "gd(er)?")
+        appendCommandsIgnoreAll("(get)?\\s*guest", "guest\\s*diff(er)?", "gd(er)?")
         appendModeQQUIDNameRange()
     }),
 
     GET_ID(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("getid", "gi")
+        appendCommandsIgnoreAll("get\\s*id", "gi")
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),
 
     GET_NAME(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("getname", "gn")
+        appendCommandsIgnoreAll("get\\s*name", "gn")
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),
 

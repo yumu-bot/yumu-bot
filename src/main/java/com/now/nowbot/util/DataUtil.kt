@@ -17,13 +17,17 @@ import org.springframework.lang.Nullable
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.LocalDateTime
+import java.time.Period
 import kotlin.math.*
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 object DataUtil {
     private val log: Logger = LoggerFactory.getLogger(DataUtil::class.java)
 
     var TORUS_REGULAR: Typeface? = null
-        @JvmStatic
         get() {
             if (field == null || field!!.isClosed) {
                 try {
@@ -37,7 +41,6 @@ object DataUtil {
         }
 
     var TORUS_SEMIBOLD: Typeface? = null
-        @JvmStatic
         get() {
             if (field == null || field!!.isClosed) {
                 try {
@@ -51,7 +54,6 @@ object DataUtil {
         }
 
     var PUHUITI: Typeface? = null
-        @JvmStatic
         get() {
             if (field == null || field!!.isClosed) {
                 try {
@@ -65,7 +67,6 @@ object DataUtil {
         }
 
     var PUHUITI_MEDIUM: Typeface? = null
-        @JvmStatic
         get() {
             if (field == null || field!!.isClosed) {
                 try {
@@ -81,7 +82,6 @@ object DataUtil {
         }
 
     var EXTRA: Typeface? = null
-        @JvmStatic
         get() {
             if (field == null || field!!.isClosed) {
                 try {
@@ -910,7 +910,7 @@ object DataUtil {
             bufferedReader.close()
 
             return sb.toString()
-        } catch (ignored: Exception) {
+        } catch (_: Exception) {
             return ""
         }
     }
@@ -927,7 +927,7 @@ object DataUtil {
 
         return try {
             Files.readAllBytes(Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve(path))
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             null
         }
     }
@@ -1313,15 +1313,169 @@ object DataUtil {
             numbers.size
         }
 
-        val o2 = if (numbers.isNotEmpty()) numbers.map { ((it?.toDouble() ?: 0.0) - u).pow(2.0) }.sum() / size else 0.0
+        val o2 = if (numbers.isNotEmpty()) numbers.sumOf { ((it?.toDouble() ?: 0.0) - u).pow(2.0) } / size else 0.0
 
         return u to o2
     }
 
-    @JvmRecord
+    /**
+     * 通过获取的时间段，往前推到特定的日期
+     */
+    fun getTime(pair: Pair<Period, Duration>): LocalDateTime {
+        val period = pair.first
+        val duration = pair.second
+
+        return LocalDateTime.now()
+            .minusYears(period.years.toLong())
+            .minusMonths(period.months.toLong())
+            .minusSeconds(duration.inWholeSeconds)
+    }
+
+    /**
+     * 结合三种方法获取时间段
+     */
+    fun parseTime(input: String, mode: Boolean? = null): Pair<Period, Duration> {
+        val letter = parseLetterTime(input)
+        val colon = parseColonTime(input, mode)
+        val hyphen = parseHyphenOrSlashTime(input)
+
+        // 年月
+        val period = letter.first + hyphen
+
+        // 日时分秒
+        val duration = letter.second + colon + hyphen.days.toDuration(DurationUnit.DAYS)
+
+        return period to duration
+    }
+
+    /**
+     * 将输入的字符串转换成一段时间
+     * 字符串格式支持：
+     * - 123y2434mo1345d1413h12334m5383s
+     * @return Duration：日时分秒，Period：年月
+     */
+    fun parseLetterTime(input: String): Pair<Period, Duration> {
+        var duration = Duration.ZERO
+        var years = 0
+        var months = 0
+
+        val pattern = "(\\d+)\\s*([yodhms]|years?|months?|days?|hours?|minutes?|seconds?|yr|mo|dy|hr|min?|sec?|[年月日天时分秒]|分钟|小时)".toRegex()
+
+        pattern.findAll(input.replace("\\s+".toRegex(), "")).forEach { matchResult ->
+            val value = matchResult.groupValues[1].toLongOrNull() ?: 0L
+            val unit = matchResult.groupValues[2]
+
+            when (unit) {
+                "y", "yr", "year", "years", "年" -> years += value.toInt()
+                "o", "mo", "month", "months", "月" -> months += value.toInt()
+                "d", "dy" , "day", "days", "日", "天" -> duration += value.toDuration(DurationUnit.DAYS)
+                "h", "hr", "hour", "hours", "时", "小时" -> duration += value.toDuration(DurationUnit.HOURS)
+                "m", "mi", "min", "minute", "minutes", "分", "分钟" -> duration += value.toDuration(DurationUnit.MINUTES)
+                "s", "se", "sec", "second", "seconds", "秒" -> duration += value.toDuration(DurationUnit.SECONDS)
+
+                else -> duration += value.toDuration(DurationUnit.SECONDS)
+            }
+        }
+
+        val total = Period.of(years, months, 0) to duration
+
+        return total
+    }
+
+    /**
+     * 解析冒号格式: "12:05:02", "01:30", "45"
+     * 支持格式:
+     * - HH:mm:ss
+     * - HH:mm
+     * - mm:ss
+     * - ss
+     *
+     * @param mode
+     * - null: 自动判断 HH:mm 还是 mm:ss，不推荐
+     * - false: 默认 HH:mm
+     * - true: 默认 mm:ss
+     * @return Duration：时分秒
+     */
+    fun parseColonTime(input: String, mode: Boolean? = null): Duration {
+        if (input.isEmpty() || !input.contains(REG_COLON.toRegex())) return Duration.ZERO
+
+        val parts = input.replace("\\s+".toRegex(), "")
+            .split(REG_COLON.toRegex())
+            .dropWhile { it.isEmpty() }
+
+        return when (parts.size) {
+            1 -> {
+                // 只有秒数: "45"
+                parts[0].toLong().toDuration(DurationUnit.SECONDS)
+            }
+
+            2 -> {
+                if (mode == null) {
+                    // 自动判断
+                    val first = parts[0].toLong()
+                    val second = parts[1].toLong()
+
+                    if (first > 24) {
+                        first.toDuration(DurationUnit.MINUTES) + second.toDuration(DurationUnit.SECONDS)
+                    } else {
+                        first.toDuration(DurationUnit.HOURS) + second.toDuration(DurationUnit.MINUTES)
+                    }
+                } else if (!mode) {
+                    // 时:分格式
+                    val hours = parts[0].toLong()
+                    val minutes = parts[1].toLong()
+                    hours.toDuration(DurationUnit.HOURS) + minutes.toDuration(DurationUnit.MINUTES)
+                } else {
+                    // 分:秒格式
+                    val minutes = parts[0].toLong()
+                    val seconds = parts[1].toLong()
+                    minutes.toDuration(DurationUnit.MINUTES) + seconds.toDuration(DurationUnit.SECONDS)
+                }
+            }
+
+            3 -> {
+                // 时:分:秒格式 "12:05:02"
+                val hours = parts[0].toLong()
+                val minutes = parts[1].toLong()
+                val seconds = parts[2].toLong()
+                hours.toDuration(DurationUnit.HOURS) + minutes.toDuration(DurationUnit.MINUTES) + seconds.toDuration(DurationUnit.SECONDS)
+            }
+            else -> Duration.ZERO
+        }
+    }
+
+    /**
+     * 解析连字符或斜杠格式：
+     * 转换为
+     * - 年月日
+     * - 月日
+     *
+     * 不存在连字符时不转换
+     * @return Period：年月日 或 月日
+     */
+    fun parseHyphenOrSlashTime(input: String): Period {
+        if (input.isEmpty() || !input.contains(REG_HYPHEN.toRegex())) return Period.ZERO
+
+        val parts = input.replace("\\s+".toRegex(), "")
+            .split("$REG_HYPHEN|$REG_SLASH".toRegex())
+            .dropWhile { it.isEmpty() }
+
+        return when (parts.size) {
+            1 -> {
+                Period.of(0, 0, 0)
+            }
+            2 -> {
+                Period.of(0, parts[0].toInt(), parts[1].toInt())
+            }
+            3 -> {
+                Period.of(parts[0].toInt(), parts[1].toInt(), parts[2].toInt())
+            }
+            else -> Period.ZERO
+        }
+    }
+
     private data class Range(val offset: Int, val limit: Int)
 
-    @JvmRecord
     data class Exchange(val great: Int, val bad: Int, val accuracy: Double)
 
     private fun String.toRomanizedJaChar() = JaChar.getRomanized(this)

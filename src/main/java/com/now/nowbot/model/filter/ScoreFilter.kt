@@ -9,35 +9,37 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.YearMonth
 import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 import kotlin.math.*
 
 enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
-    CREATOR("(creator|host|c|h)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
+    CREATOR("(creator|host|c|h|谱师|作者|谱|主)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
-    GUEST("((gder|guest\\s*diff(er)?)|mapper|guest|g?u)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
+    GUEST("((gder|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
-    BID("((beatmap\\s*)?id|bid|b)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+    BID("((beatmap\\s*)?id|bid|b|(谱面)?编?号)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
-    SID("((beatmap\\s*)?setid|sid|s)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+    SID("((beatmap\\s*)?setid|sid|s|(谱面)?集编号)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
-    TITLE("(title|name|song|t)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    TITLE("(title|name|song|t|歌?曲名|歌曲|标题)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    ARTIST("(artist|singer|art|f?a)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    ARTIST("(artist|singer|art|f?a|艺术家|曲师?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    SOURCE("(source|src|from|f|o|sc)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    SOURCE("(source|src|from|f|o|sc|来?源)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    TAG("(tags?|g)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    TAG("(tags?|g|标签?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    DIFFICULTY("(difficulty|diff|d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    DIFFICULTY("(difficulty|diff|d|难度名?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    STAR("(star|rating|sr|r)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)$REG_STAR$LEVEL_MAYBE".toRegex()),
+    STAR("(star|rating|sr|r|星数?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)$REG_STAR$LEVEL_MAYBE".toRegex()),
 
     AR("(ar|approach\\s*(rate)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    CS("(cs|circle\\s*(size)?|keys?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    CS("(cs|circle\\s*(size)?|keys?|键)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
     OD("(od|overall\\s*(difficulty)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
@@ -55,35 +57,37 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     COMBO("(combo|连击|cb?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL[xX]?)".toRegex()),
 
-    PERFECT("(perfect|320|305|彩|pf)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    PERFECT("(perfect|320|305|彩|完美|pf)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    GREAT("(great|300|大果?|fruits?|fr|良|黄|gr)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    GREAT("(great|300|大果?|fruits?|fr|良|黄|gr|很好)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
     MISSED_DROPLET("(miss(ed)?\\s*drop(let)?|漏小?果?|md)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    GOOD("(good|200|绿|gd)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    GOOD("(good|200|绿|gd|良好)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    OK("(ok|150|100|中果?|large\\s*drop(let)?|ld|(?<!不)可|蓝|ba?d)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    OK("(ok|150|100|中果?|large\\s*drop(let)?|ld|(?<!不)可|蓝|ba?d|可以)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    MEH("(me?h|小果?|drop(let)?|sd|p(oo)?r|灰|50)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    MEH("(me?h|小果?|drop(let)?|sd|p(oo)?r|灰|50|一般)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    MISS("(m(is)?s|0|x|不可|红|失误)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    MISS("(m(is)?s|0|x|不可|红|失误|漏击)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
     MOD("((m(od)?s?)|模组?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MOD$LEVEL_MORE)".toRegex()),
 
     RATE("(rate|彩[率比]|黄彩比?|e|pm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    CIRCLE("((hit)?circles?|hi?t|click|rice|ci|cr|rc)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    CIRCLE("((hit)?circles?|hi?t|click|rice|ci|cr|rc|圆圈?|米)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    SLIDER("(slider?s?|sl|long(note)?|lns?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    SLIDER("(slider?s?|sl|long(note)?|lns?|[滑长]?条|长键|面)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    SPINNER("(spin(ner)?s?|rattle|sp)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    SPINNER("(spin(ner)?s?|rattle|sp|转盘|[转盘])(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    TOTAL("(total|all|ttl|(hit)?objects?|tt)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
+    TOTAL("(total|all|ttl|(hit)?objects?|tt|物件数?|总数?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
-    CONVERT("(convert|cv)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    CONVERT("(convert|cv|转谱?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    CLIENT("(client|z|v|version)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    CLIENT("(client|z|v|version|版本?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+
+    TIME("(time|时间?|ti)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$REG_TIME)".toRegex()),
 
     RANGE(REG_RANGE.toRegex());
     
@@ -419,6 +423,8 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     else -> !it.isLazer
                 }
 
+                TIME -> fitTime(operator, it.endedTime.toEpochSecond(), condition)
+
                 else -> false
             }
         }
@@ -447,212 +453,115 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             }
         }
 
+        /**
+         * 时间筛选器升级
+         */
         fun fitTime(operator: Operator, compare: Long?, to: String): Boolean {
             if (compare == null) return false
 
-            @Language("RegExp")
-            val regY = "((?<y>\\d{1,4})\\s*(年|y|years?))"
+            val t = DataUtil.parseTime(to)
 
-            @Language("RegExp")
-            val regMo = "((?<mo>\\d{1,2})\\s*(月份?|o|mo(nth)?s?))"
+            // 年月
+            val period = t.first
 
-            @Language("RegExp")
-            val regD = "((?<d>\\d{1,2})\\s*(天|日|d|days?))"
+            // 日时分秒
+            val duration = t.second
 
-            @Language("RegExp")
-            val regDD = "(?<dd>\\d{1,2})"
+            // = ==
+            val isWithInMode = operator == Operator.EQ || operator == Operator.XQ || operator == Operator.NE
 
-            @Language("RegExp")
-            val regH = "((?<h>\\d{1,2})\\s*(小?时|h|hours?))"
-
-            @Language("RegExp")
-            val regM = "((?<m>\\d{1,2})\\s*(分钟?|m|min(ute)?s?))"
-
-            @Language("RegExp")
-            val regS = "((?<s>\\d{1,2})\\s*(秒|s|sec(ond)?s?))"
-
-            @Language("RegExp")
-            val regColon = "(?<hh>([0-1][0-9])|(2[0-4]))(?<mm>[0-5][0-9])(?<ss>[0-5][0-9])"
-
-            @Language("RegExp")
-            val pattern = "$regY?\\s*$regMo?\\s*$regD?\\s*(($regH?\\s*$regM?\\s*$regS?)|($regColon))?\\s*$regDD".toPattern()
-
-            val matcher = pattern.matcher(to)
-
-            if (!matcher.find()) return false
-
-            val n = OffsetDateTime.now()
-
-            val ym = YearMonth.of(n.year, n.month)
-            val maxDayOfMonth = ym.lengthOfMonth()
-            val maxDayOfYear = ym.lengthOfYear()
-
-            val unitContains = MutableList(6) { false }
-
-            // 秒数
-            val unitDelta = arrayListOf(
-                maxDayOfYear * 24 * 60 * 60,
-                maxDayOfMonth * 24 * 60 * 60,
-                24 * 60 * 60,
-                60 * 60,
-                60,
-                1)
-
-            val year = matcher.group("y")?.let {
-                unitContains[0] = true
-                it.toIntOrNull() ?: 0
-            } ?: 0
-
-            val month = matcher.group("mo")?.let {
-                unitContains[1] = true
-                it.toIntOrNull()?: 0
-            } ?: 0
-
-            val day: Int
-            val hour: Int
-            val minute: Int
-            val second: Int
-
-            if (matcher.group("dd").isNullOrEmpty()) {
-                day = matcher.group("d")?.let {
-                    unitContains[2] = true
-
-                    it.toIntOrNull() ?: 0
-                } ?: 0
-            } else {
-                day = matcher.group("dd")?.let {
-                    unitContains[2] = true
-
-                    it.toIntOrNull() ?: 0
-                } ?: 0
-            }
-
-            if (to.contains(REG_COLON.toRegex())) {
-                hour = matcher.group("hh")?.let {
-                    unitContains[3] = true
-
-                    it.toIntOrNull() ?: 0
-                } ?: 0
-
-                minute = matcher.group("mm")?.let {
-                    unitContains[4] = true
-
-                    it.toIntOrNull() ?: 0
-                } ?: 0
-
-                second = matcher.group("ss")?.let {
-                    unitContains[5] = true
-
-                    it.toIntOrNull() ?: 0
-                } ?: 0
-            } else {
-                hour = matcher.group("h")?.let {
-                    unitContains[3] = true
-
-                    it.toIntOrNull() ?: 0
-                } ?: 0
-
-                minute = matcher.group("m")?.let {
-                    unitContains[4] = true
-
-                    it.toIntOrNull() ?: 0
-                } ?: 0
-
-                second = matcher.group("s")?.let {
-                    unitContains[5] = true
-
-                    it.toIntOrNull() ?: 0
-                } ?: 0
-            }
-
-            val isWithInMode = operator == Operator.EQ || operator == Operator.XQ
-
-            val isShiftMode = (operator == Operator.GE || operator == Operator.LE) &&
-                    (year < n.year - 2007 && month <= 12 && day <= maxDayOfMonth && hour <= 24 && minute <= 60 && second <= 60)
+            // < >
+            val isAbsoluteMode = (operator == Operator.GE || operator == Operator.LE)
 
             val too: Long
+            val now = LocalDateTime.now()
 
-            if (isShiftMode) {
-                // 移动日期模式，从现在减去这段时间
+            // 区域日期模式下，最小的单位差
+            // 如果是 ==，则会精确到秒。如果是 =，则只会精确到天。
+            var delta = 0L
 
-                too = n.minusYears(year.toLong())
-                    .minusMonths(month.toLong())
-                    .minusDays(day.toLong())
-                    .minusHours(hour.toLong())
-                    .minusMinutes(minute.toLong())
-                    .minusSeconds(second.toLong())
-                    .toEpochSecond()
-
-            } else {
+            if (isAbsoluteMode) {
                 // 绝对日期模式，构建一个目标时间
 
-                var minUnit = 10
-
-                // 0-5
-                for (i in (unitContains.size - 1) downTo 0) {
-                    val b = unitContains[i]
-
-                    if (b) {
-                        minUnit = i
-                        break
+                val years = when(period.years) {
+                    0 -> {
+                        delta = ChronoUnit.SECONDS.between(now.minusYears(1), now)
+                        now.year
                     }
+                    else -> period.years % 100 + (now.year / 1000) * 1000
                 }
 
-                val years = when (year) {
-                    in 7 ..< 1000 -> (year % 100) + 2000
-                    in 2000 ..< 3000 -> year
-                    else -> n.year
+                val months = when(period.months) {
+                    0 -> {
+                        delta = ChronoUnit.SECONDS.between(now.minusMonths(1), now)
+                        now.month.value
+                    }
+                    else -> period.months
                 }
 
-                val months = when {
-                    month in 1 .. 12 -> month
-                    minUnit < 1 -> 0
-                    else -> n.monthValue
+                val totalSeconds = duration.inWholeSeconds
+
+                val dd = (totalSeconds / (24 * 3600)).toInt()
+                val hh = ((totalSeconds % (24 * 3600)) / 3600).toInt()
+                val mm = ((totalSeconds % 3600) / 60).toInt()
+                val ss = (totalSeconds % 60).toInt()
+
+                val days = when(dd) {
+                    0 -> {
+                        delta = 24 * 60 * 60
+                        now.dayOfMonth
+                    }
+                    else -> min(YearMonth.from(now).lengthOfMonth(), dd)
                 }
 
-                val days = when {
-                    day in 1..maxDayOfMonth -> day
-                    minUnit < 2 -> 0
-                    else -> n.dayOfMonth
+                val hours = when(hh) {
+                    0 -> {
+                        delta = 24 * 60 * 60
+                        now.dayOfMonth
+                    }
+                    else -> min(hh, 24)
                 }
 
-                val hours = when {
-                    hour in 1..24 -> hour
-                    minUnit < 3 -> 0
-                    else -> n.hour
+                val minutes = when(mm) {
+                    0 -> {
+                        delta = 24 * 60 * 60
+                        now.minute
+                    }
+
+                    else -> min(mm, 60)
                 }
 
-                val minutes = when {
-                    minute in 1..60 -> minute
-                    minUnit < 4 -> 0
-                    else -> n.minute
-                }
-
-                val seconds = when {
-                    second in 1..60 -> second
-                    minUnit < 5 -> 0
-                    else -> n.second
+                val seconds = when(ss) {
+                    0 -> {
+                        delta = 24 * 60 * 60
+                        now.second
+                    }
+                    else -> min(ss, 60)
                 }
 
                 too = OffsetDateTime.of(years, months, days, hours, minutes, seconds, 0, ZoneOffset.ofHours(8)).toEpochSecond()
+            } else {
+                // 移动日期模式，从现在减去这段时间
+                delta = 24 * 60 * 60
+
+                too = now
+                    .minusYears(period.years.toLong())
+                    .minusMonths(period.months.toLong())
+                    .minusSeconds(duration.inWholeSeconds)
+                    .toEpochSecond(ZoneOffset.ofHours(8))
             }
 
-            if (isWithInMode) {
-                // 区域日期模式，从目标时间到输入的最小单位 + 1 的时间
-                var delta = 0
+            return if (isWithInMode) {
+                // 区域日期模式，从目标时间到目标时间 + 输入的最小单位的时间
 
-                for (i in (unitContains.size - 1) downTo 0) {
-                    val b = unitContains[i]
-
-                    if (b) {
-                        delta = unitDelta[i]
-                        break
-                    }
+                if (operator != Operator.NE) {
+                    fit(Operator.GE, compare, too) && fit(Operator.LE, compare, too + delta)
+                } else {
+                    !(fit(Operator.GE, compare, too) && fit(Operator.LE, compare, too + delta))
                 }
-
-                return fit(Operator.GE, compare, too - delta) && fit(Operator.LE, compare, too)
             } else {
-                return fit(operator, compare, too)
+                // 注意，要在这里取反：因为 >2d，其实是指 2 天前并且更早的结果
+                fit(operator, -compare, -too)
             }
         }
 
