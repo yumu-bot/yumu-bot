@@ -138,7 +138,7 @@ class OldAvatarService(
         return if (strings.size == 1) {
             try {
                 listOf(userApiService.getOsuUser(strings.first()).toMicroUser())
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 listOf(getBannedPlayerFromSearch(name = strings.first()))
             }
         } else {
@@ -148,7 +148,7 @@ class OldAvatarService(
                         userApiService.getOsuUser(name).toMicroUser()
                     }
                 })
-            } catch (e: ExecutionException) {
+            } catch (_: ExecutionException) {
                 throw IllegalArgumentException.WrongException.PlayerName()
             }
         }
@@ -158,13 +158,13 @@ class OldAvatarService(
 
         // 构建谱面查询，获取被封禁玩家的 id
 
-        val query1 = mapOf(
-            "q" to name, "page" to 1
+        val query = mapOf(
+            "q" to name, "s" to "any", "page" to 1
         )
 
-        val search1 = beatmapApiService.searchBeatmapset(query1, 1)
+        val search = beatmapApiService.searchBeatmapset(query, 1)
 
-        val pairs = search1.beatmapsets
+        val pairs = search.beatmapsets
             .sortedByDescending { it.lastUpdated?.toInstant()?.toEpochMilli() ?: 0L }
             .sortedByDescending { it.ranked }
             .filter { DataUtil.getStringSimilarity(it.creator, name) > 0.8 }
@@ -203,7 +203,7 @@ class OldAvatarService(
         if (param.uid != null) {
             try {
                 user = userApiService.getOsuUser(param.uid).toMicroUser()
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 throw NoSuchElementException.Player(param.uid.toString())
             }
         } else if (param.qq != null) {
@@ -226,8 +226,8 @@ class OldAvatarService(
     }
 
     private fun getImages(users: List<MicroUser>): List<ByteArray> {
-        if (users.size > 1) {
-            return try {
+        return if (users.size > 1) {
+            try {
                 AsyncMethodExecutor.awaitSupplierExecute(
                     users.map { u ->
                         AsyncMethodExecutor.Supplier {
@@ -235,11 +235,11 @@ class OldAvatarService(
                         }
                     }, Duration.ofSeconds(30L + users.size / 2)
                 )
-            } catch (e: ExecutionException) {
+            } catch (_: ExecutionException) {
                 throw NetworkException.RenderModuleException.BadGateway()
             }
         } else {
-            return listOf(imageService.getPanel(mapOf("user" to users.first()), "Epsilon"))
+            listOf(imageService.getPanel(mapOf("user" to users.first()), "Epsilon"))
         }
     }
 
