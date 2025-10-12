@@ -19,12 +19,12 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     // #2 osu! 成绩指令
     SET_MODE(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("mode", "mo")
+        appendOfficialCommandsIgnoreAll("mode", "set mode", "mo", "sm")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
     }),
 
     SB_SET_MODE(CommandPatternBuilder.create {
-        appendOfficialSBCommandsIgnoreAll("mode", "mo")
+        appendOfficialSBCommandsIgnoreAll("mode", "set mode", "mo")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
     }),
 

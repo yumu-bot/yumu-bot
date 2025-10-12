@@ -96,21 +96,21 @@ enum class Instruction(val pattern: Pattern) {
 
     // #2 osu! 成绩指令
     SET_MODE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("setmode", "mode", "sm", "mo")
+        appendCommandsIgnoreAll("set\\s*mode", "mode", "sm", "mo")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
         appendSpace()
         appendQQUIDName()
     }),
 
     SB_SET_MODE(CommandPatternBuilder.create {
-        appendSBCommandsIgnoreAll("setmode", "mode", "sm", "mo")
+        appendSBCommandsIgnoreAll("set\\s*mode", "mode", "sm", "mo")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
         appendSpace()
         appendQQUIDSBName()
     }),
 
     SET_GROUP_MODE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(set)?group\\s*mode", "gm")
+        appendCommandsIgnoreAll("(set)?\\s*group\\s*mode", "gm")
         appendColonCaptureGroup(MAYBE, FLAG_MODE, REG_MODE)
         appendQQID(maybe = true)
         appendQQGroup(maybe = true)
