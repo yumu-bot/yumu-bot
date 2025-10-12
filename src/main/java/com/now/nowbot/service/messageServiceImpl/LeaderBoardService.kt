@@ -114,10 +114,6 @@ class LeaderBoardService(
                 // 进阶备用方法：先获取之前大家使用的 bid，然后尝试获取谱面
                 val beforeBeatmapID = dao.getLastBeatmapID(
                     groupID = event.subject.id,
-                    name = "LEADER_BOARD",
-                    from = LocalDateTime.now().minusMinutes(5L)
-                ) ?: dao.getLastBeatmapID(
-                    groupID = event.subject.id,
                     name = null,
                     from = LocalDateTime.now().minusHours(24L)
                 )
