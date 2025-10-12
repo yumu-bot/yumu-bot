@@ -139,7 +139,7 @@ class OldAvatarService(
             try {
                 listOf(userApiService.getOsuUser(strings.first()).toMicroUser())
             } catch (_: Exception) {
-                listOf(getBannedPlayerFromSearch(name = strings.first()))
+                listOf(getBannedPlayerFromSearch(strings.first()))
             }
         } else {
             try {
@@ -154,10 +154,21 @@ class OldAvatarService(
         }
     }
 
-    private fun getBannedPlayerFromSearch(name: String): MicroUser {
+    private fun getBannedPlayerFromSearch(input: String): MicroUser {
+
+        // 如果输入的格式是 deleteduser_121313 的形式，那么后面的数字就是玩家 id
+
+        val matcher = "DeletedUser_(\\d+)".toPattern().matcher(input.trim())
+
+        val isDeleted = matcher.find()
+
+        val name = if (isDeleted) {
+            matcher.group(1)
+        } else {
+            input.trim()
+        }
 
         // 构建谱面查询，获取被封禁玩家的 id
-
         val query = mapOf(
             "q" to name, "s" to "any", "page" to 1
         )
@@ -167,7 +178,13 @@ class OldAvatarService(
         val pairs = search.beatmapsets
             .sortedByDescending { it.lastUpdated?.toInstant()?.toEpochMilli() ?: 0L }
             .sortedByDescending { it.ranked }
-            .filter { DataUtil.getStringSimilarity(it.creator, name) > 0.8 }
+            .filter {
+                if (isDeleted) {
+                    DataUtil.getStringSimilarity(it.creatorID.toString(), name) > 0.8
+                } else {
+                    DataUtil.getStringSimilarity(it.creator, name) > 0.8
+                }
+            }
             .map { it.creatorID to it.beatmapsetID }
 
         // 找到重复最多次的键
