@@ -109,7 +109,7 @@ class OldAvatarService(
         val uidStr: String = matcher.group(FLAG_UID) ?: ""
         val name: String = matcher.group(FLAG_DATA) ?: ""
 
-        return if (event.isAt) {
+        return if (event.hasAt()) {
             OAParam(event.target, null, null, at = true,  isMyself = false)
         } else if (qqStr.isNotBlank()) {
             OAParam(qqStr.toLongOrNull(), null, null, at = false, isMyself = false)

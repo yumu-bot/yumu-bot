@@ -68,7 +68,7 @@ class MaiVersionScoreService(
 
         val nameStr: String = matcher.group(FLAG_NAME)?.trim()  ?: ""
         val versionStr: String = matcher.group(FLAG_VERSION)?.trim() ?: ""
-        val qq = if (event.isAt) {
+        val qq = if (event.hasAt()) {
             event.target
         } else {
             matcher.group(FLAG_QQ_ID)?.toLongOrNull()

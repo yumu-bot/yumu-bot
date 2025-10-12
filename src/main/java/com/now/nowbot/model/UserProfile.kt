@@ -8,45 +8,64 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KMutableProperty1
 
 data class UserProfile(
-    @JsonProperty("card")
+    @field:JsonProperty("card")
     var card: String? = null,
 
-    @JsonProperty("banner")
+    @field:JsonProperty("banner")
     var banner: String? = null,
 
-    @JsonProperty("mascot")
+    @field:JsonProperty("mascot")
     var mascot: String? = null,
 
-    @JsonProperty("header")
-    var headerBorder: String? = null,
+    @field:JsonProperty("header")
+    var avatarFrame: String? = null,
 
-    @JsonProperty("info")
+    @field:JsonProperty("info")
     var infoPanel: String? = null,
 
-    @JsonProperty("score")
+    @field:JsonProperty("score")
     var scorePanel: String? = null,
 
-    @JsonProperty("ppm")
+    @field:JsonProperty("ppm")
     var ppmPanel: String? = null,
 ) {
-    enum class Type(val column: String, val field: KMutableProperty1<UserProfile, String?>) {
+    enum class UserProfileType(val column: String, val field: KMutableProperty1<UserProfile, String?>) {
         CARD("card", UserProfile::card),
         BANNER("banner", UserProfile::banner),
         MASCOT("mascot", UserProfile::mascot),
-        HEADER("header", UserProfile::headerBorder),
+        AVATAR_FRAME("header", UserProfile::avatarFrame),
+
         INFO("panel_info", UserProfile::infoPanel),
         SCORE("panel_score", UserProfile::scorePanel),
         PPM("panel_ppm", UserProfile::ppmPanel),
+
+        ;
+
+        companion object {
+            fun getType(input: String?): UserProfileType {
+                return when (input) {
+                    "c", "card", "cards" -> CARD
+                    "m", "mascot", "mascots" -> MASCOT
+                    "h", "a", "f", "head", "header", "avatar", "frame", "avatarframe" -> AVATAR_FRAME
+
+                    "i", "info" -> INFO
+                    "s", "score" -> SCORE
+                    "ppm" -> PPM
+
+                    else -> BANNER
+                }
+            }
+        }
     }
 
     fun setByColumn(column: String, path: String) {
-        Type.entries.firstOrNull { it.column == column }?.also {
+        UserProfileType.entries.firstOrNull { it.column == column }?.also {
             it.field.set(this, path)
         }
     }
 
     fun getColumns(userId: Long): List<UserProfileItem> {
-        return Type.entries.mapNotNull {
+        return UserProfileType.entries.mapNotNull {
             it.field.get(this)?.let { path ->
                 UserProfileItem(userId, it.column, path)
             }

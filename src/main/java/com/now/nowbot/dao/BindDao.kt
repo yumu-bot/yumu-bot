@@ -83,10 +83,6 @@ class BindDao(
         return code
     }
 
-    fun getBindFromQQ(qq: Long): BindUser {
-        return getBindFromQQ(qq, false)
-    }
-
     /**
      * 获取绑定的玩家
      *
@@ -94,7 +90,7 @@ class BindDao(
      * @param isMyself 仅影响报错信息，不影响结果
      * @return 绑定的玩家
      */
-    fun getBindFromQQ(qq: Long, isMyself: Boolean): BindUser {
+    fun getBindFromQQ(qq: Long, isMyself: Boolean = false): BindUser {
         if (qq < 0) {
             return try {
                 getBindUserFromOsuID(-qq)
@@ -111,6 +107,17 @@ class BindDao(
 
         val u = liteData.osuUser
         return fromLite(u)!!
+    }
+
+    /**
+     * 不报错的方法
+     */
+    fun getBindFromQQOrNull(qq: Long, isMyself: Boolean = false): BindUser? {
+        return try {
+            getBindFromQQ(qq, isMyself)
+        } catch (_: BindException) {
+            null
+        }
     }
 
     fun getBindFromIDs(ids: Iterable<Long>): List<BindUser> {
@@ -142,6 +149,14 @@ class BindDao(
 
         if (liteData == null) throw UserNotBind()
         return fromLite(liteData)!!
+    }
+
+    fun getBindUserFromOsuIDOrNull(userID: Long?): BindUser? {
+        return try {
+            getBindUserFromOsuID(userID)
+        } catch (_: BindException) {
+            null
+        }
     }
 
     fun getAllBindUser(userIDs: Collection<Long>): List<OsuBindUserLite> {

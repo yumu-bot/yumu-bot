@@ -121,7 +121,7 @@ class ChuBestScoreService(
             data.value = ChuBestScoreParam(matcher.group("name").trim(), null, range)
         } else if (matcher.group("qq").isNullOrBlank().not()) {
             data.value = ChuBestScoreParam(null, matcher.group("qq").toLong(), range)
-        } else if (event.isAt) {
+        } else if (event.hasAt()) {
             data.value = ChuBestScoreParam(null, event.target, range)
         } else {
             data.value = ChuBestScoreParam(null, event.sender.id, range, true)

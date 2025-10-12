@@ -62,7 +62,7 @@ import kotlin.math.min
         val nameStr = (matcher.group(FLAG_NAME) ?: "").trim()
         val qqStr = (matcher.group(FLAG_QQ_ID) ?: "").trim()
 
-        val qq = if (event.isAt) {
+        val qq = if (event.hasAt()) {
             event.target
         } else if (qqStr.isNotBlank()) {
             qqStr.toLong()

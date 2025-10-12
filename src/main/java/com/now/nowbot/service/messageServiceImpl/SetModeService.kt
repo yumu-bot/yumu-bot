@@ -13,7 +13,6 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.SetModeService.SetModeParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
-import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
@@ -65,9 +64,9 @@ class SetModeService (
 
         val mode = OsuMode.getMode(m.group(FLAG_MODE))
 
-        val user = try {
-            bindDao.getBindUserFromOsuID(-event.sender.id)
-        } catch (e: BindException) {
+        val user = bindDao.getBindUserFromOsuIDOrNull(-event.sender.id)
+            ?:
+        run {
             val osuUser = userApiService.getOsuUser(-event.sender.id)
             val bindUser = BindUser()
             with(bindUser) {

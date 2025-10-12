@@ -22,8 +22,8 @@ class LoginService(private val bindDao: BindDao) : MessageService<String> {
                 } catch (ignore: InterruptedException) {
                 }
                 val t = System.currentTimeMillis()
-                LOGIN_USER_MAP.entries.removeIf { entry: MutableMap.MutableEntry<String?, LoginUser?> ->
-                    t.minus(entry.value!!.time) > 60 * 1000
+                LOGIN_USER_MAP.entries.removeIf { entry: MutableMap.MutableEntry<String, LoginUser> ->
+                    t.minus(entry.value.time) > 60 * 1000
                 }
             }
         }
@@ -56,8 +56,8 @@ class LoginService(private val bindDao: BindDao) : MessageService<String> {
 
     companion object {
         @JvmField
-        val LOGIN_USER_MAP: MutableMap<String?, LoginUser?> =
-                ConcurrentHashMap<String?, LoginUser?>()
+        val LOGIN_USER_MAP: MutableMap<String, LoginUser> =
+                ConcurrentHashMap<String, LoginUser>()
         private const val CODE_SIZE = 6
         var random: Random = Random.from(RandomGenerator.getDefault())
 

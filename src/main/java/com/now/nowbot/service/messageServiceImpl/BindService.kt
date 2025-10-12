@@ -89,7 +89,7 @@ import java.util.function.Predicate
         val isSuper = Permission.isSuperAdmin(event.sender.id)
         val isFull = m.group("full") != null
 
-        val param = if (event.isAt) { // bi/ub @
+        val param = if (event.hasAt()) { // bi/ub @
             BindParam(event.target, name, true, isUnbind, isSuper, isFull, isCaptcha)
         } else { // bi
             BindParam(qq, name, false, isUnbind, isSuper, isFull, isCaptcha)

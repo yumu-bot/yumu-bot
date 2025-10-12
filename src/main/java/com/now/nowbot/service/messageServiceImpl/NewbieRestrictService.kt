@@ -334,11 +334,7 @@ class NewbieRestrictService(
 
         val criminal = event.sender
 
-        val criminalUsername = try {
-            bindDao.getBindFromQQ(criminal.id).username
-        } catch (e: Exception) {
-            "未绑定"
-        }
+        val criminalUsername = bindDao.getBindFromQQOrNull(criminal.id)?.username ?: "未绑定"
 
         val username = score.user.username
 

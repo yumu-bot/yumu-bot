@@ -36,7 +36,7 @@ class BanService(private val permission: Permission, private val imageService: I
         val name: String? = matcher.group(FLAG_NAME)
         val operate = matcher.group("operate")
 
-        data.value = if (event.isAt) {
+        data.value = if (event.hasAt()) {
             BanParam(event.target, null, operate, true)
         } else if (!(qq.isNullOrBlank())) {
             BanParam(qq.toLongOrNull(), null, operate, true)

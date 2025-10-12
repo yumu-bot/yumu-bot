@@ -124,7 +124,7 @@ class MaiBestScoreService(
             data.value = MaiBestScoreParam(matcher.group("name").trim(), null, range)
         } else if (matcher.group("qq").isNullOrBlank().not()) {
             data.value = MaiBestScoreParam(null, matcher.group("qq").toLong(), range)
-        } else if (event.isAt) {
+        } else if (event.hasAt()) {
             data.value = MaiBestScoreParam(null, event.target, range)
         } else {
             data.value = MaiBestScoreParam(null, event.sender.id, range, true)

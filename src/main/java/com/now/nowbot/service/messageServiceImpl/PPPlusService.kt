@@ -53,12 +53,12 @@ class PPPlusService(
             when (cmd.lowercase()) {
                 "pp", "ppp", "pp+", "p+", "ppplus", "plus" -> { // user 非vs
 
-                    if (event.isAt) setUser(null, null, bindDao.getBindFromQQ(event.target), false, data)
+                    if (event.hasAt()) setUser(null, null, bindDao.getBindFromQQ(event.target), false, data)
                     else setUser(a1, a2, me, false, data)
                 }
 
                 "px", "ppx", "ppv", "ppvs", "pppvs", "ppplusvs", "plusvs" -> { // user vs
-                    if (event.isAt) {
+                    if (event.hasAt()) {
                         setUser(
                             null, bindDao.getBindFromQQ(event.target).username, me, true, data
                         )

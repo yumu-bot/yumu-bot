@@ -37,7 +37,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.absoluteValue
-import kotlin.math.min
 
 @Service("INFO")
 class InfoService(
@@ -157,10 +156,10 @@ class InfoService(
         if (this.version == 2) {
             try {
                 calculateApiService.applyStarToScores(bests
-                    .take(min(bests.size - 1, 5))
+                    .take(5)
                     .filter { LazerMod.hasStarRatingChange(it.mods) }
                 )
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 log.info("玩家信息：获取新谱面星数失败")
             }
         }
@@ -172,7 +171,7 @@ class InfoService(
 
         return try {
             MessageChain(imageService.getPanel(this.toMap(), name))
-        } catch (e: NetworkException) {
+        } catch (_: NetworkException) {
             log.info("玩家信息：渲染失败")
 
             val avatar = userApiService.getAvatarByte(user)
@@ -200,14 +199,7 @@ class InfoService(
         if (id != null) {
             val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { userApiService.getOsuUser(id, mode.data!!) },
-                {
-                    val ss = scoreApiService.getBestScores(id, mode.data!!)
-
-                    calculateApiService.applyBeatMapChanges(ss)
-                    calculateApiService.applyStarToScores(ss)
-
-                    ss
-                }
+                { scoreApiService.getBestScores(id, mode.data!!) }
             )
 
             user = async.first
@@ -226,6 +218,11 @@ class InfoService(
 
             bests = scoreApiService.getBestScores(user.userID, mode.data!!)
         }
+
+        AsyncMethodExecutor.awaitPairCallableExecute(
+            { calculateApiService.applyBeatMapChanges(bests.take(6)) },
+            { calculateApiService.applyStarToScores(bests.take(6)) }
+        )
 
         val day = (matcher.group(FLAG_DAY) ?: "").toLongOrNull() ?: 1L
 

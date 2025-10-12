@@ -221,11 +221,7 @@ class PopularService(
 
     override fun handleMessage(event: MessageEvent, param: PopularParam): ServiceCallStatistic? {
 
-        val me = try {
-            bindDao.getBindFromQQ(event.sender.id)
-        } catch (e: BindException) {
-            null
-        }
+        val me = bindDao.getBindFromQQOrNull(event.sender.id)
 
         val mode = OsuMode.getMode(param.mode, me?.mode, bindDao.getGroupModeConfig(event))
 

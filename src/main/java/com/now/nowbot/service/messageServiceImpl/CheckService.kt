@@ -23,7 +23,7 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
         if (!Permission.isSuperAdmin(event)) return false
 
         val bindUser = run {
-            val qq = if (event.isAt) {
+            val qq = if (event.hasAt()) {
                 event.target
             } else if (matcher.namedGroups().containsKey("qq")) {
                 matcher.group("qq")?.toLongOrNull()

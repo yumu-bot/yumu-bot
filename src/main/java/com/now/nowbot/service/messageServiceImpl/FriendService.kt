@@ -18,7 +18,6 @@ import com.now.nowbot.service.messageServiceImpl.FriendService.FriendParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botException.FriendException
-import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
@@ -173,11 +172,7 @@ class FriendService(
     private fun getParam(event: MessageEvent, matcher: Matcher): FriendParam {
         val any: String = matcher.group("any") ?: ""
 
-        val me = try {
-            bindDao.getBindFromQQ(event.sender.id, isMyself = true)
-        } catch (ignored: BindException) {
-            null
-        }
+        val me = bindDao.getBindFromQQOrNull(event.sender.id, isMyself = true)
 
         if (me == null || !me.isAuthorized) {
             throw FriendException(FriendException.Type.FRIEND_Me_NoPermission)
@@ -217,7 +212,7 @@ class FriendService(
         }?.split(REG_HYPHEN.toRegex())
 
         if (id.data == me.userID) {
-            if (event.isAt && event.target == event.sender.id
+            if (event.hasAt() && event.target == event.sender.id
                 || matcher.group(FLAG_UID)?.toLongOrNull() == me.userID) {
                 throw TipsException("你自己与你自己就是最好的朋友。")
             }

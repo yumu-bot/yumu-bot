@@ -71,13 +71,7 @@ object UserIDUtil {
 
         val async = AsyncMethodExecutor.awaitPairCallableExecute(
             { getUserID(event, matcher, mode, isMyself) },
-            {
-                try {
-                    bindDao.getBindFromQQ(event.sender.id, true)
-                } catch (ignored: BindException) {
-                    null
-                }
-            }
+            { bindDao.getBindFromQQOrNull(event.sender.id, true) }
         )
 
         userID = async.first
@@ -155,15 +149,11 @@ object UserIDUtil {
             "Matcher 中不包含 u2 分组"
         }
 
-        val me = try {
-            bindDao.getBindFromQQ(event.sender.id)
-        } catch (ignored: Exception) {
-            null
-        }
+        val me = bindDao.getBindFromQQOrNull(event.sender.id)
 
         setMode(mode, me?.mode ?: OsuMode.DEFAULT, event)
 
-        if (event.isAt) {
+        if (event.hasAt()) {
             return getUserIDFromQQ(event.target, me, mode, isVS)
         }
 
@@ -447,7 +437,7 @@ object UserIDUtil {
         mode: CmdObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): Long? {
-        val qq = if (event.isAt) {
+        val qq = if (event.hasAt()) {
             event.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
             try {
@@ -513,7 +503,7 @@ object UserIDUtil {
         mode: CmdObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): Long? {
-        val qq = if (event.isAt) {
+        val qq = if (event.hasAt()) {
             event.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
             try {

@@ -123,7 +123,7 @@ import java.util.regex.Matcher
 
         val qqStr = (matcher.group(FLAG_QQ_ID) ?: "").trim()
 
-        val qq = if (event.isAt) {
+        val qq = if (event.hasAt()) {
             event.target
         } else {
             qqStr.toLongOrNull() ?: event.sender.id

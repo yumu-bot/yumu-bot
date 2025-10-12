@@ -16,7 +16,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.CmdUtil
@@ -73,7 +72,7 @@ class UUBAService(
         val info = true
         val mode: OsuMode = OsuMode.getMode(matcher.group(FLAG_MODE))
 
-        if (event.isAt) {
+        if (event.hasAt()) {
             data.value = BPHeadTailParam(UserParam(event.target, null, mode, true), info)
             return true
         }
@@ -88,7 +87,7 @@ class UUBAService(
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: BPHeadTailParam): ServiceCallStatistic? {
-        var bu: BindUser
+        val bu: BindUser
 
         // 是否为绑定用户
         if (param.user.qq != null) {
@@ -96,15 +95,15 @@ class UUBAService(
         } else {
             // 查询其他人 [data]
             val name = param.user.name!!
-            var id: Long = 0
+            val id: Long
+
             try {
                 id = userApiService.getOsuID(name)
-                bu = bindDao.getBindUserFromOsuID(id)
-            } catch (e: BindException) {
-                bu = BindUser(id, name)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 throw NoSuchElementException.Player(name)
             }
+
+            bu = bindDao.getBindUserFromOsuIDOrNull(id) ?: BindUser(id, name)
         }
 
         val mode = OsuMode.getMode(param.user.mode, bu.mode, bindDao.getGroupModeConfig(event))
@@ -132,7 +131,7 @@ class UUBAService(
 
         try {
             event.reply(image)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw IllegalStateException.Send("最好成绩分析（文字版）")
         }
 
@@ -465,14 +464,14 @@ class UUBAService(
             }
             mappers.forEach {
                 try {
-                    sb.append(mapperIdToInfo[it.uid])
+                    sb.append(mapperIdToInfo[it.uid]!!)
                         .append(": ")
                         .append(it.size)
                         .append("x ")
                         .append(decimalFormat.format(it.allPP))
                         .append("PP")
                         .append('\n')
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     sb.append("UID: ")
                         .append(it.uid)
                         .append(": ")

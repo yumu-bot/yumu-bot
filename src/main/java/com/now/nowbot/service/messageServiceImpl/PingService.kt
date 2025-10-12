@@ -11,6 +11,8 @@ import com.now.nowbot.util.DataUtil.TORUS_REGULAR
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import io.github.humbleui.skija.*
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.io.IOException
 import java.nio.file.Files
@@ -29,7 +31,7 @@ import java.util.regex.Matcher
     }
 
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
-        event.reply(image).recallIn(5000)
+        event.reply(getMessageChain()).recallIn(10 * 1000L)
         return ServiceCallStatistic.building(event)
     }
 
@@ -42,46 +44,50 @@ import java.util.regex.Matcher
     }
 
     @Throws(Throwable::class) override fun reply(event: MessageEvent, param: Matcher): MessageChain? {
-        return MessageChain(image)
+        return getMessageChain()
     }
 
-    val image: ByteArray
-        get() {
-            Surface.makeRaster(ImageInfo.makeN32Premul(648, 648)).use {
-                val canvas = it.canvas
-                try {
-                    val file = Files.readAllBytes(
-                        Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("help-ping.png")
-                    )
-                    val background = Image.makeDeferredFromEncodedBytes(file)
-                    canvas.drawImage(background, 0f, 0f)
-                } catch (ignored: IOException) {
-                    throw RuntimeException("ping failed cuz no BG??!")
-                }
-
-                val textPaint = Paint().setARGB(255, 191, 193, 124)
-                val millisPaint = Paint().setARGB(200, 191, 193, 124)
-
-                var x = Font(TORUS_REGULAR, 160f)
-                var t = TextLine.make("?", x)
-
-                canvas.drawTextLine(t, (648 - t.width) / 2, 208f, textPaint)
-                textPaint.close()
-
-                x.close()
-                t.close()
-
-                x = Font(TORUS_REGULAR, 40f)
-                t = TextLine.make(
-                    System.currentTimeMillis().toString() + "ms", x
+    fun getMessageChain(): MessageChain {
+        Surface.makeRaster(ImageInfo.makeN32Premul(648, 648)).use {
+            val canvas = it.canvas
+            try {
+                val file = Files.readAllBytes(
+                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("help-ping.png")
                 )
-
-                canvas.drawTextLine(t, 10f, t.capHeight + 10, millisPaint)
-                millisPaint.close()
-
-                x.close()
-                t.close()
-                return EncoderPNG.encode(it.makeImageSnapshot())!!.bytes
+                val background = Image.makeDeferredFromEncodedBytes(file)
+                canvas.drawImage(background, 0f, 0f)
+            } catch (e: IOException) {
+                log.error("没有 Ping 底图呢...", e)
+                return MessageChain("小沐收到！")
             }
+
+            val textPaint = Paint().setARGB(255, 191, 193, 124)
+            val millisPaint = Paint().setARGB(200, 191, 193, 124)
+
+            var x = Font(TORUS_REGULAR, 160f)
+            var t = TextLine.make("?", x)
+
+            canvas.drawTextLine(t, (648 - t.width) / 2, 208f, textPaint)
+            textPaint.close()
+
+            x.close()
+            t.close()
+
+            x = Font(TORUS_REGULAR, 40f)
+            t = TextLine.make(
+                System.currentTimeMillis().toString() + "ms", x
+            )
+
+            canvas.drawTextLine(t, 10f, t.capHeight + 10, millisPaint)
+            millisPaint.close()
+
+            x.close()
+            t.close()
+            return MessageChain(EncoderPNG.encode(it.makeImageSnapshot())!!.bytes)
         }
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(PingService::class.java)
+    }
 }

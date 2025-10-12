@@ -5,7 +5,7 @@ import com.now.nowbot.dao.ServiceCallStatisticsDao;
 import com.now.nowbot.entity.OsuBindUserLite;
 import com.now.nowbot.entity.ServiceCallStatistic;
 import com.now.nowbot.mapper.ServiceCallRepository;
-import com.now.nowbot.mapper.UserProfileMapper;
+import com.now.nowbot.mapper.UserProfileRepository;
 import com.now.nowbot.model.osu.LazerScore;
 import com.now.nowbot.model.osu.OsuUser;
 import com.now.nowbot.model.osu.OsuUserPlus;
@@ -41,16 +41,16 @@ public class CheckAspect {
     Permission            permission;
     ServiceCallRepository serviceCall;
     ServiceCallStatisticsDao serviceCallStatisticsDao;
-    UserProfileMapper     userProfileMapper;
+    UserProfileRepository    userProfileRepository;
 
     @Autowired
     public CheckAspect(Permission permission,
                        ServiceCallRepository serviceCallRepository,
                        ServiceCallStatisticsDao serviceCallStatisticsDao,
-                       UserProfileMapper userProfileMapper) {
+                       UserProfileRepository userProfileRepository) {
         this.permission = permission;
         this.serviceCallStatisticsDao = serviceCallStatisticsDao;
-        this.userProfileMapper = userProfileMapper;
+        this.userProfileRepository = userProfileRepository;
         serviceCall = serviceCallRepository;
     }
 
@@ -250,13 +250,15 @@ public class CheckAspect {
 
     private OsuUser getUser(OsuUser user) {
         if (user.getUserID() == 0L) return user;
-        var data = userProfileMapper.findTopByUserId(user.getUserID());
+        var profile = userProfileRepository.findTopById(user.getUserID());
 
-        return data.map(profile -> {
-            var result = OsuUserPlus.copyOf(user);
-            result.setProfile(profile);
-            return (OsuUser) result;
-        }).orElse(user);
+        if (profile == null) {
+            return user;
+        } else {
+            var user2 = OsuUserPlus.copyOf(user);
+            user2.setProfile(profile);
+            return user2;
+        }
     }
 
     private Object parse(Object param) {
@@ -267,7 +269,7 @@ public class CheckAspect {
                         && opt.isPresent()
                         && opt.get() instanceof OsuUser user
         ) {
-            return Optional.ofNullable(getUser(user));
+            return Optional.of(getUser(user));
         }
         if (param instanceof LazerScore score) {
             return getScore(score);
@@ -284,13 +286,15 @@ public class CheckAspect {
 
     private LazerScore getScore(LazerScore score) {
         if (score == null || score.getUser().getUserID() == 0L) return score;
-        var data = userProfileMapper.findTopByUserId(score.getUser().getUserID());
+        var profile = userProfileRepository.findTopById(score.getUser().getUserID());
 
-        return data.map(profile -> {
-            var result = ScoreWithUserProfile.copyOf(score);
-            result.setProfile(profile);
-            return (LazerScore) result;
-        }).orElse(score);
+        if (profile == null) {
+            return score;
+        } else {
+            var score2 = ScoreWithUserProfile.copyOf(score);
+            score2.setProfile(profile);
+            return score2;
+        }
     }
 
     @Pointcut("execution(* com.now.nowbot.service.osuApiService.OsuScoreApiService.*(..))")

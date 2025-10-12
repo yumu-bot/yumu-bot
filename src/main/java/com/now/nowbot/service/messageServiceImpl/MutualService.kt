@@ -10,7 +10,6 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.MutualService.MutualParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
@@ -66,12 +65,8 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
     }
 
     private fun qq2Mutual(qq: Long): MutualParam {
-        try {
-            val u = bindDao.getBindFromQQ(qq)
-            return MutualParam(u.userID, qq, u.username)
-        } catch (e: BindException) {
-            return MutualParam(null, qq, "$qq : 未绑定或绑定状态失效！")
-        }
+        val u = bindDao.getBindFromQQOrNull(qq) ?: return MutualParam(null, qq, "$qq : 未绑定或绑定状态失效！")
+        return MutualParam(u.userID, qq, u.username)
     }
 
     private fun name2Mutual(name: String): MutualParam {

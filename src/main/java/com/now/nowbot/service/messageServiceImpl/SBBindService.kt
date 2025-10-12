@@ -52,7 +52,7 @@ class SBBindService(
 
         val isSuper = Permission.isSuperAdmin(event.sender.id)
 
-        data.value = if (event.isAt) {
+        data.value = if (event.hasAt()) {
             BindParam(event.target, id, name, true, isUnbind, isSuper)
         } else {
             BindParam(qq, id, name, false, isUnbind, isSuper)

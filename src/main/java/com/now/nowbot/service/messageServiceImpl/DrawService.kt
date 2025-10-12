@@ -13,19 +13,16 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
-import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 import java.util.*
 import java.util.function.Consumer
 import java.util.regex.Matcher
 
 @Service("DRAW")
-class DrawService : MessageService<Matcher> {
-    @Resource
-    private val bindDao: BindDao? = null
-
-    @Resource
-    private val drawLogLiteRepository: DrawLogLiteRepository? = null
+class DrawService(
+    private val bindDao: BindDao,
+    private val drawLogLiteRepository: DrawLogLiteRepository
+) : MessageService<Matcher> {
 
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<Matcher>): Boolean {
         val m = Instruction.DRAW.matcher(messageText)
@@ -39,7 +36,7 @@ class DrawService : MessageService<Matcher> {
         event: MessageEvent,
         param: Matcher
     ): ServiceCallStatistic? {
-        val bindUser = bindDao!!.getBindFromQQ(event.sender.id, true)
+        val bindUser = bindDao.getBindFromQQ(event.sender.id, true)
 
         var times = 1
         if (param.group("d") != null) {
@@ -50,24 +47,22 @@ class DrawService : MessageService<Matcher> {
         times %= 10
         val clist: MutableList<DrawConfig.Card> = LinkedList()
         // 10 连
-        for (i in 0..<tenTimes) {
+        for (i in 0..< tenTimes) {
             val gradeList = defaultConfig!!.getGrade10(bindUser.userID, drawLogLiteRepository)
             val cards = gradeList.stream().map { grade: DrawGrade? -> defaultConfig.getCard(grade) }.toList()
             val cardLites = ArrayList<DrawLogLite>(gradeList.size)
             for (j in gradeList.indices) {
-                cardLites.add(DrawLogLite(cards[i], gradeList[i], bindUser.userID))
+                cardLites.add(DrawLogLite(cards[i], gradeList[j], bindUser.userID))
             }
-            drawLogLiteRepository!!.saveAll(cardLites)
+            drawLogLiteRepository.saveAll(cardLites)
             clist.addAll(cards)
         }
         // 单抽
-        run {
-            for (i in 0..<times) {
-                val grade = defaultConfig!!.getGrade(bindUser.userID, drawLogLiteRepository)
-                val card = defaultConfig.getCard(grade)
-                drawLogLiteRepository!!.save(DrawLogLite(card, grade, bindUser.userID))
-                clist.add(card)
-            }
+        (0 ..< times).forEach { _ ->
+            val grade = defaultConfig!!.getGrade(bindUser.userID, drawLogLiteRepository)
+            val card = defaultConfig.getCard(grade)
+            drawLogLiteRepository.save(DrawLogLite(card, grade, bindUser.userID))
+            clist.add(card)
         }
 
         val sb = StringBuilder()

@@ -70,11 +70,7 @@ object CmdUtil {
     ): OsuUser {
         val user = getOsuUser(event, matcher, mode, isMyself)
 
-        val me: BindUser? = try {
-            bindDao.getBindFromQQ(event.sender.id, true)
-        } catch (ignored: Exception) {
-            null
-        }
+        val me: BindUser? = bindDao.getBindFromQQOrNull(event.sender.id, true)
 
         if (user != null) {
             isMyself.set(me?.userID == user.userID)
@@ -456,11 +452,7 @@ object CmdUtil {
     ): List<OsuUser> {
         require(matcher.namedGroups().containsKey(FLAG_2_USER)) { "Matcher 中不包含 u2 分组" }
 
-        val myBind = try {
-            bindDao.getBindFromQQ(event.sender.id, true)
-        } catch (ignored: Exception) {
-            null
-        }
+        val myBind = bindDao.getBindFromQQOrNull(event.sender.id, true)
 
         setMode(mode, myBind?.mode ?: OsuMode.DEFAULT, event)
 
@@ -485,7 +477,7 @@ object CmdUtil {
             }
         }
 
-        if (event.isAt) {
+        if (event.hasAt()) {
             return parseAtQQUID(event.target, myBind, mode, isVS)
         }
 
@@ -659,7 +651,7 @@ object CmdUtil {
         isMyself: AtomicBoolean,
     ): OsuUser? {
 
-        val qq = if (event.isAt) {
+        val qq = if (event.hasAt()) {
             event.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
             try {
@@ -712,7 +704,7 @@ object CmdUtil {
         isMyself: AtomicBoolean,
     ): SBUser? {
 
-        val qq = if (event.isAt) {
+        val qq = if (event.hasAt()) {
             event.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
             try {

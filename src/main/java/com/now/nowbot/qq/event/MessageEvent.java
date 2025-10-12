@@ -108,7 +108,7 @@ public interface MessageEvent extends Event{
         return getMessageType(this, ImageMessage.class);
     }
 
-    default boolean isImage() {
+    default boolean hasImage() {
         return getImage() != null;
     }
 
@@ -117,7 +117,7 @@ public interface MessageEvent extends Event{
         return getMessageType(this, AtMessage.class);
     }
 
-    default boolean isAt() {
+    default boolean hasAt() {
         return getAt() != null;
     }
 
