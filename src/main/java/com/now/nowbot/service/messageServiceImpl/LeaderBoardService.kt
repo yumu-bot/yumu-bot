@@ -125,12 +125,12 @@ class LeaderBoardService(
                 val beatmap = beforeBeatmapID?.let {
                     try {
                         beatmapApiService.getBeatmap(it)
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         null
                     }
                 }
 
-                if (beatmap == null || beatmap.hasLeaderBoard) {
+                if (beatmap == null || !beatmap.hasLeaderBoard) {
                     if (beatmap == null) {
                         event.reply("没有获取到 24 小时内的参数。正在为您查询最近成绩的谱面排行榜。").recallIn(60 * 1000L)
                     } else {
@@ -148,7 +148,7 @@ class LeaderBoardService(
             } else {
                 try {
                     beatmapApiService.getBeatmap(param.bid)
-                } catch (e: NetworkException.BeatmapException.NotFound) {
+                } catch (_: NetworkException.BeatmapException.NotFound) {
                     beatmapApiService.getBeatmapset(param.bid).getTopDiff()!!
                 }
             }
@@ -165,7 +165,7 @@ class LeaderBoardService(
 
         val scores: List<LazerScore> = try {
             scoreApiService.getLeaderBoardScore(bindUser, beatmap.beatmapID, mode, param.mods, param.type, param.isLegacy)
-        } catch (e: NetworkException.ScoreException.UnprocessableEntity) {
+        } catch (_: NetworkException.ScoreException.UnprocessableEntity) {
             throw UnsupportedOperationException.NotSupporter()
         } catch (e: NetworkException.ScoreException.Unauthorized) {
             log.error("谱面排行榜：玩家掉绑", e)
@@ -191,7 +191,7 @@ class LeaderBoardService(
 
             val user = try {
                 userApiService.getOsuUser(score.userID, score.mode)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 OsuUser(score.user)
             }
 
