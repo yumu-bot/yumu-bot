@@ -124,9 +124,9 @@ class ServiceCountService(
         // val x = (map.values.maxOfOrNull { it.average() }?.roundToLong() ?: 0L).coerceIn(10000L, 15000L)
 
         val avs = map.mapValues { (_, v) -> v.average() }
-        val mxs = map.mapValues { (_, v) -> v.takePercent(0.1) }
-        val mis = map.mapValues { (_, v) -> v.takePercent(- 0.1) }
-        val mds = map.mapValues { (_, v) -> v.takePercent(0.5) }
+        val mxs = map.mapValues { (_, v) -> v.takePercent(0.1) ?: 0L }
+        val mis = map.mapValues { (_, v) -> v.takePercent(- 0.1) ?: 0L }
+        val mds = map.mapValues { (_, v) -> v.takePercent(0.5) ?: 0L }
 
         fun getMarkdownLine(index: Int, name: String, times: List<Long>, maxAverage: Long = 10000L): String {
             val av = avs[name] ?: 0.0
@@ -155,10 +155,10 @@ class ServiceCountService(
             .mapIndexed { i, (k, v) ->
                 sb.append(getMarkdownLine(i + 1 , k, v))
 
-                if (i != map.size - 1) {
-                    sb.append('\n')
-                }
+                sb.append('\n')
         }
+
+        sb.append("| 0 | 总计和平均 | ${list.size} | ${avs.map { it.value }.average().roundToSec()}s | ${mds.map { it.value }.average().roundToSec()}s | ${mxs.map { it.value }.average().roundToSec()}s | ${mis.map { it.value }.average().roundToSec()}s |")
 
         return sb.toString()
     }
@@ -188,9 +188,9 @@ class ServiceCountService(
         // val x = (map.values.maxOfOrNull { it.average() }?.roundToLong() ?: 0L).coerceIn(10000L, 15000L)
 
         val avs = map.mapValues { (_, v) -> v.average() }
-        val mxs = map.mapValues { (_, v) -> v.takePercent(0.1) }
-        val mis = map.mapValues { (_, v) -> v.takePercent(- 0.1) }
-        val mds = map.mapValues { (_, v) -> v.takePercent(0.5) }
+        val mxs = map.mapValues { (_, v) -> v.takePercent(0.1) ?: 0L }
+        val mis = map.mapValues { (_, v) -> v.takePercent(- 0.1) ?: 0L }
+        val mds = map.mapValues { (_, v) -> v.takePercent(0.5) ?: 0L }
 
         fun getMarkdownLineWithDAU(index: Int, name: String, times: List<Long>, dau: Int? = 0, mau: Int? = 0, maxAverage: Long = 10000L): String {
             val av = avs[name] ?: 0.0
@@ -230,10 +230,15 @@ class ServiceCountService(
             .mapIndexed { i, (k, v) ->
                 sb.append(getMarkdownLineWithDAU(i + 1 , k, v.map { it.duration }, dau[k], mau[k]))
 
-                if (i != map.size - 1) {
-                    sb.append('\n')
-                }
+                sb.append('\n')
             }
+
+        val dauTotal = list.map { it.userID }.toSet().size
+        val mauTotal = beforeList.map { it.userID }.toSet().size
+
+        val stickiness = String.format("%.1f", dauTotal * 100.0 / mauTotal.coerceAtLeast(1)) + "%"
+
+        sb.append("| 0 | 总计和平均 | ${list.size} | ${avs.map { it.value }.average().roundToSec()}s | ${mds.map { it.value }.average().roundToSec()}s | ${mxs.map { it.value }.average().roundToSec()}s | ${mis.map { it.value }.average().roundToSec()}s |  | $mauTotal | $stickiness |")
 
         return sb.toString()
     }
