@@ -174,7 +174,7 @@ class ServiceCountService(
 
         val list = dao.getBetween(param.from, param.to)
         val beforeList = dao.getBetween(
-            param.from
+            param.to
                 .minus(java.time.Duration.ofDays(
                     param.to.toLocalDate().lengthOfMonth().toLong()
                 )),
