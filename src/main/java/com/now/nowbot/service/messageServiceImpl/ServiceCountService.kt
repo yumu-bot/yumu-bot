@@ -32,7 +32,12 @@ class ServiceCountService(
     data class ServiceCountParam(
         val from: LocalDateTime,
         val to: LocalDateTime,
+        val status: ServiceCountStatus,
     )
+
+    enum class ServiceCountStatus {
+         DAILY, DURATION, ALL
+    }
 
     override fun isHandle(
         event: MessageEvent, messageText: String, data: DataValue<ServiceCountParam>
@@ -46,7 +51,24 @@ class ServiceCountService(
 
         val range = getTimeRange(matcher.group(FLAG_TIME))
 
-        data.value = ServiceCountParam(from = range.first, to = range.second)
+        val between = java.time.Duration.between(range.first, range.second)
+
+        val status = if (between.toMinutes().absoluteValue <= 1) {
+            // 0 分之内，视作获取全部
+            ServiceCountStatus.ALL
+        } else if (between.toMinutes().absoluteValue <= 24 * 60 + 5) {
+            // 1 天 5 分之内
+            ServiceCountStatus.DAILY
+        } else {
+            // 常规
+            ServiceCountStatus.DURATION
+        }
+
+        data.value = ServiceCountParam(
+            from = range.first,
+            to = range.second,
+            status = status,
+        )
 
         return true
     }
@@ -56,9 +78,7 @@ class ServiceCountService(
         event: MessageEvent, param: ServiceCountParam
     ): ServiceCallStatistic? {
 
-        val isAll = java.time.Duration.between(param.from, param.to).toMinutes().absoluteValue <= 1
-
-        if (param.from.isBefore(boundary) || isAll) {
+        if (param.from.isBefore(boundary) || param.status == ServiceCountStatus.ALL) {
             val md = getLegacyServiceCountMarkdown(param)
 
             val image = imageService.getPanelA6(md, "service")
@@ -66,8 +86,12 @@ class ServiceCountService(
             event.reply(image)
         }
 
-        if (param.to.isAfter(boundary) || isAll) {
-            val md = getServiceCountMarkdown(param)
+        if (param.to.isAfter(boundary) || param.status == ServiceCountStatus.ALL) {
+            val md = if (param.status == ServiceCountStatus.DAILY) {
+                getServiceCountMarkdownDaily(param)
+            } else {
+                getServiceCountMarkdown(param)
+            }
 
             val image = imageService.getPanelA6(md, "service")
 
@@ -87,7 +111,7 @@ class ServiceCountService(
             """.trimIndent()
         ).append('\n')
 
-        val list = if (java.time.Duration.between(param.from, param.to).toMinutes().absoluteValue <= 1) {
+        val list = if (param.status == ServiceCountStatus.ALL) {
             dao.getBetween(minimum, param.to)
         } else {
             dao.getBetween(param.from, param.to)
@@ -139,6 +163,80 @@ class ServiceCountService(
         return sb.toString()
     }
 
+    private fun getServiceCountMarkdownDaily(param: ServiceCountParam): String {
+        val sb = StringBuilder("## 时间段：${param.from.format(dateTimeFormatter)} - ${param.to.format(dateTimeFormatter)} (日结模式)\n")
+
+        sb.append("""
+            | # | 服务名 | 调用次数 | 平均 | 中位 | 最长 | 最短 | 中位用时占比 | DAU | DAU/MAU
+            | :-: | :-- | :-: | :-: | :-: | :-: | :-: | :-- | :-: | :-: |
+            """.trimIndent()
+        ).append('\n')
+
+        val list = dao.getBetween(param.from, param.to)
+        val beforeList = dao.getBetween(
+            param.from
+                .minus(java.time.Duration.ofDays(
+                    param.to.toLocalDate().lengthOfMonth().toLong()
+                )),
+            param.to
+        )
+
+        val map = list
+            .groupBy { it.name }
+            .mapValues { (_, v) -> v.map { it.duration } }
+
+        // val x = (map.values.maxOfOrNull { it.average() }?.roundToLong() ?: 0L).coerceIn(10000L, 15000L)
+
+        val avs = map.mapValues { (_, v) -> v.average() }
+        val mxs = map.mapValues { (_, v) -> v.takePercent(0.1) }
+        val mis = map.mapValues { (_, v) -> v.takePercent(- 0.1) }
+        val mds = map.mapValues { (_, v) -> v.takePercent(0.5) }
+
+        fun getMarkdownLineWithDAU(index: Int, name: String, times: List<Long>, dau: Int? = 0, mau: Int? = 0, maxAverage: Long = 10000L): String {
+            val av = avs[name] ?: 0.0
+            val mx = mxs[name] ?: 0L
+            val mi = mis[name] ?: 0L
+            val md = mds[name] ?: 0L
+
+            val percent = (md * 1.0 / maxAverage)
+
+            val block = when(percent) {
+                in 0.0..1.0 / 3 -> "\uD83D\uDFE9" // 绿色方块
+                in 1.0 / 3..2.0 / 3 -> "\uD83D\uDFE8" // 黄色方块
+                in 2.0 / 3..1.0 -> "\uD83D\uDFE7" // 橙色方块
+                else -> "\uD83D\uDFE5" // 红色方块
+            }
+
+            val blocks = block.repeat((percent.coerceIn(0.0, 1.5) * 10).roundToInt())
+
+            val stickiness = String.format("%.1f", (dau ?: 0) * 100.0 / (mau ?: 1)) + "%"
+
+            return "| $index | $name | ${times.size} | ${av.roundToSec()}s | ${md.roundToSec()}s | ${mx.roundToSec()}s | ${mi.roundToSec()}s | $blocks | ${dau ?: 0} | $stickiness |"
+        }
+
+        val mau = beforeList
+            .groupBy { it.name }
+            .mapValues { (_, v) -> v.map { it.userID }.toSet().size }
+
+        val dau = list
+            .groupBy { it.name }
+            .mapValues { (_, v) -> v.map { it.userID }.toSet().size }
+
+        list.groupBy { it.name }
+            .toList()
+            .sortedByDescending {
+                    (_, v) -> v.size
+            }
+            .mapIndexed { i, (k, v) ->
+                sb.append(getMarkdownLineWithDAU(i + 1 , k, v.map { it.duration }, dau[k], mau[k]))
+
+                if (i != map.size - 1) {
+                    sb.append('\n')
+                }
+            }
+
+        return sb.toString()
+    }
 
 
     private fun getLegacyServiceCountMarkdown(param: ServiceCountParam): String {
@@ -150,20 +248,26 @@ class ServiceCountService(
         val from: LocalDateTime
         val to: LocalDateTime = param.to
 
-        if (java.time.Duration.between(param.from, param.to).toMinutes().absoluteValue <= 1) {
-            from = minimum
-            sb.append("## 时间段：迄今为止\n")
-            result = legacyRepository.countAll()
-        } else if (java.time.Duration.between(param.from, now.minusDays(1)).toMinutes().absoluteValue <= 1) {
-            from = param.from
-            result = legacyRepository.countBetween(from, to)
-            sb.append("## 时间段：今天之内\n")
-        } else {
-            from = param.from
-            sb.append(
-                "## 时间段：**${from.format(dateTimeFormatter)}** - **${now.format(dateTimeFormatter)}**\n"
-            )
-            result = legacyRepository.countBetween(from, now)
+        when (param.status) {
+            ServiceCountStatus.ALL -> {
+                from = minimum
+                sb.append("## 时间段：迄今为止\n")
+                result = legacyRepository.countAll()
+            }
+
+            ServiceCountStatus.DAILY -> {
+                from = param.from
+                result = legacyRepository.countBetween(from, to)
+                sb.append("## 时间段：今天之内\n")
+            }
+
+            else -> {
+                from = param.from
+                sb.append(
+                    "## 时间段：**${from.format(dateTimeFormatter)}** - **${now.format(dateTimeFormatter)}**\n"
+                )
+                result = legacyRepository.countBetween(from, now)
+            }
         }
 
         val r1 = legacyRepository.countBetweenLimit(from, to, 0.01).associate { it.service to it.data }

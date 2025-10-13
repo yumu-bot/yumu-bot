@@ -105,7 +105,7 @@ val REG_WORD: String = "\\w"
 val REG_BOOLEAN: String = "([真假是否非对错tfyn]|正确|错误|true|false|yes|not?)"
 
 @Language("RegExp")
-val REG_TIME: String = "([年月日天分钟秒小时0-9A-Za-z]+)"
+val REG_TIME: String = "([\\-年月日天分钟秒小时0-9A-Za-z/\\\\]+)"
 
 @Language("RegExp")
 val REG_OPERATOR: String = "([<>＜＞][=＝]?|[=＝][=＝]?|[!！][=＝]|[≥≤])"

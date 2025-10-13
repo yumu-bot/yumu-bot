@@ -26,6 +26,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.regex.Matcher
+import kotlin.math.round
 
 @Service("SERIES_RATING")
 class SeriesRatingService(
@@ -59,7 +60,7 @@ class SeriesRatingService(
                 val image = imageService.getPanelA6(md, "help")
                 event.reply(image)
                 return null
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 throw MRAException(MRAException.Type.RATING_Series_Instructions)
             }
         }
@@ -193,14 +194,14 @@ class SeriesRatingService(
                 .append(',')
                 .append(data.player.username)
                 .append(',')
-                .append(String.format("%.2f", Math.round(data.mra * 100.0) / 100.0))
+                .append(String.format("%.2f", round(data.mra * 100.0) / 100.0))
                 .append(',')
-                .append(String.format("%.2f", Math.round(data.rws * 10000.0) / 100.0))
+                .append(String.format("%.2f", round(data.rws * 10000.0) / 100.0))
                 .append(',')
-                .append(String.format("%.0f", Math.round(winRate * 100.0) * 1.0))
+                .append(String.format("%.0f", round(winRate * 100.0)))
                 .append('%')
                 .append(',')
-                .append(String.format("%.0f", Math.round(playRate * 100.0) * 1.0))
+                .append(String.format("%.0f", round(playRate * 100.0)))
                 .append('%')
                 .append(',')
                 .append(data.win)
@@ -245,7 +246,7 @@ class SeriesRatingService(
                         "%dW-%dL %d%% (%.2fM) [%.2f] [%s | %s]",
                         p.win,
                         p.lose,
-                        Math.round(p.win.toDouble() * 100 / (p.win + p.lose)),
+                        round((p.win * 100.0) / (p.win + p.lose)),
                         p.total / 1000000.0,
                         p.rws * 100.0,
                         p.playerClass!!.name,
@@ -522,16 +523,11 @@ class SeriesRatingService(
         @Throws(MRAException::class)
         private fun getEasyMultiplier(matcher: Matcher): Double {
             val easyStr = matcher.group("easy") ?: ""
-            var easy = 1.0
 
-            if (easyStr.isNotBlank()) {
-                try {
-                    easy = easyStr.toDouble()
-                } catch (e: NullPointerException) {
-                    throw MRAException(MRAException.Type.RATING_Parameter_EasyError)
-                } catch (e: NumberFormatException) {
-                    throw MRAException(MRAException.Type.RATING_Parameter_EasyError)
-                }
+            val easy: Double = if (easyStr.isNotBlank()) {
+                easyStr.toDoubleOrNull() ?: throw MRAException(MRAException.Type.RATING_Parameter_EasyError)
+            } else {
+                1.0
             }
 
             if (easy > 10.0) throw MRAException(MRAException.Type.RATING_Parameter_EasyTooLarge)
