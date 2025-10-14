@@ -407,7 +407,7 @@ class ServiceCountService(
             return when (split.size) {
                 1 -> {
 
-                    val time = DataUtil.getTime(DataUtil.parseTime(split[0]))
+                    val time = DataUtil.getTime(split[0])
 
                     if (time.isBefore(now)) {
                         time to now
@@ -417,8 +417,8 @@ class ServiceCountService(
                 }
 
                 2 -> {
-                    val first = DataUtil.getTime(DataUtil.parseTime(split[0]))
-                    val second = DataUtil.getTime(DataUtil.parseTime(split[1]))
+                    val first = DataUtil.getTime(split[0])
+                    val second = DataUtil.getTime(split[1])
 
                     if (first.isBefore(second)) {
                         first to second

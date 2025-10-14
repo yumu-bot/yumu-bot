@@ -102,15 +102,15 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
         }
 
         @JvmStatic fun getMode(@Nullable name: String?): OsuMode {
-            return when (name?.trim()?.lowercase()) {
+            return when (name?.replace(" ", "")?.trim()?.lowercase()) {
                 "taiko", "t", "1", "osu!taiko" -> TAIKO
-                "catch", "c", "fruits", "f", "2", "osu!catch" -> CATCH
+                "catch", "ctb", "c", "fruits", "f", "2", "osu!catch" -> CATCH
                 "mania", "m", "3", "osu!mania" -> MANIA
                 "osu", "o", "0", "osu!" -> OSU
-                "osu relax", "osurelax", "std relax", "stdrelax", "osurx", "osu rx", "4", "rx0", "rx 0" -> OSU_RELAX
-                "taiko relax", "taikorelax", "taikorx", "taiko rx", "tr", "5", "rx1", "rx 1" -> TAIKO_RELAX
-                "catch relax", "catchrelax", "catchrx", "catch rx", "cr", "6", "rx2", "rx 2" -> CATCH_RELAX
-                "osu autopilot", "autopilot", "stdap", "std ap", "osu ap", "osuap", "oa", "8" -> OSU_AUTOPILOT
+                "osu relax", "osurelax", "std relax", "stdrelax", "osurx", "osu rx", "4", "rx0" -> OSU_RELAX
+                "taiko relax", "taikorelax", "taikorx", "tr", "5", "rx1" -> TAIKO_RELAX
+                "catch relax", "catchrelax", "catchrx", "cr", "6", "rx2" -> CATCH_RELAX
+                "osu autopilot", "autopilot", "stdap", "std ap", "osuap", "oa", "8" -> OSU_AUTOPILOT
 
                 else -> DEFAULT
             }

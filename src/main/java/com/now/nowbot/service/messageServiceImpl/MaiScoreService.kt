@@ -113,6 +113,7 @@ import java.util.regex.Matcher
 
     private fun getParam(event: MessageEvent, matcher: Matcher): MaiScoreParam {
         val any: String = (matcher.group(FLAG_NAME) ?: "").trim()
+        val difficulties: String? = matcher.group(FLAG_DIFF)
 
         val full: MaiBestScore
 
@@ -273,7 +274,15 @@ import java.util.regex.Matcher
             maimaiApiService.insertSongData(scores)
             maimaiApiService.insertMaimaiAliasForScore(scores)
 
-            val filteredScores = fitScoreInRange(rangeInConditions, MaiScoreFilter.filterScores(scores, conditions))
+            val filteredScores = fitScoreInDifficulties(
+                difficulties,
+                fitScoreInRange(
+                    rangeInConditions,
+                    MaiScoreFilter.filterScores(
+                        scores, conditions
+                    )
+                )
+            )
 
             if (filteredScores.isEmpty()) {
                 throw NoSuchElementException.BestScoreFiltered(full.getUser().name ?: qq.toString())
@@ -296,6 +305,15 @@ import java.util.regex.Matcher
     companion object {
         private fun fitScoreInRange(range: String?, scores: List<MaiScore>): List<MaiScore> {
             return scores.filter { MaiScoreFilter.fitRange(Operator.EQ, range, it.star) }
+        }
+
+        private fun fitScoreInDifficulties(difficulty: String?, scores: List<MaiScore>): List<MaiScore> {
+            val difficulties = MaiDifficulty.getDifficulties(difficulty)
+                .map { MaiDifficulty.getIndex(it) }.toSet()
+
+            val filterUtage = difficulties.contains(5)
+
+            return scores.filter { (it.index in difficulties) || (it.isUtage && filterUtage) }
         }
 
 

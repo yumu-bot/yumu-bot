@@ -1319,16 +1319,35 @@ object DataUtil {
     }
 
     /**
-     * 通过获取的时间段，往前推到特定的日期
+     * 通过获取的时间段，
+     * 注意：年月日是绝对值。
+     * - 如果年月都为 0，则日时分秒视作往前推（相对）。
+     * - 如果年月有一个不为 0，则年月日时分秒视作绝对值
      */
-    fun getTime(pair: Pair<Period, Duration>): LocalDateTime {
-        val period = pair.first
-        val duration = pair.second
+    fun getTime(input: String, mode: Boolean? = false): LocalDateTime {
+        val parse = parseTime(input, mode)
 
-        return LocalDateTime.now()
-            .minusYears(period.years.toLong())
-            .minusMonths(period.months.toLong())
-            .minusSeconds(duration.inWholeSeconds)
+        // 年月
+        val period = parse.first
+
+        // 日时分秒
+        val duration = parse.second
+
+        val totalSeconds = duration.inWholeSeconds
+
+        val now = LocalDateTime.now()
+
+        if (period.isZero) {
+            return now.minusSeconds(totalSeconds)
+        } else {
+            val time = LocalDateTime.of(
+                period.years.takeIf { it > 0 } ?: now.year,
+                period.months.takeIf { it > 0 } ?: now.monthValue,
+                1, 0, 0, 0, 0
+            )
+
+            return time.plusSeconds(totalSeconds)
+        }
     }
 
     /**
@@ -1340,7 +1359,11 @@ object DataUtil {
         val hyphen = parseHyphenOrSlashTime(input)
 
         // 年月
-        val period = letter.first + hyphen
+        val period = Period.of(
+            max(letter.first.years, hyphen.years),
+            max(letter.first.months, hyphen.months),
+            0
+        )
 
         // 日时分秒
         val duration = letter.second + colon + hyphen.days.toDuration(DurationUnit.DAYS)
@@ -1383,12 +1406,11 @@ object DataUtil {
     }
 
     /**
-     * 解析冒号格式: "12:05:02", "01:30", "45"
+     * 解析冒号格式: "12:05:02", "01:30"
      * 支持格式:
      * - HH:mm:ss
      * - HH:mm
      * - mm:ss
-     * - ss
      *
      * @param mode
      * - null: 自动判断 HH:mm 还是 mm:ss，不推荐
@@ -1454,10 +1476,10 @@ object DataUtil {
      * @return Period：年月日 或 月日
      */
     fun parseHyphenOrSlashTime(input: String): Period {
-        if (input.isEmpty() || !input.contains(REG_HYPHEN.toRegex())) return Period.ZERO
+        if (input.isEmpty()) return Period.ZERO
 
         val parts = input.replace("\\s+".toRegex(), "")
-            .split("$REG_HYPHEN|$REG_SLASH".toRegex())
+            .split("($REG_HYPHEN|$REG_SLASH)+".toRegex())
             .dropWhile { it.isEmpty() }
 
         return when (parts.size) {

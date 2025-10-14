@@ -891,7 +891,7 @@ enum class Instruction(val pattern: Pattern) {
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
-            appendCaptureGroup(FLAG_DIFF, REG_DIFF)
+            appendCaptureGroup(FLAG_DIFF, REG_ANYTHING_BUT_NO_SPACE, MORE)
         }
         appendQQID()
         appendSpace()
@@ -910,7 +910,7 @@ enum class Instruction(val pattern: Pattern) {
         appendGroup(MAYBE) {
             append(REG_COLON)
             appendSpace()
-            appendCaptureGroup(FLAG_DIFF, REG_DIFF)
+            appendCaptureGroup(FLAG_DIFF, REG_ANYTHING_BUT_NO_SPACE, MORE)
         }
         appendQQID()
         appendNameAnyButNoHash()
