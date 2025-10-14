@@ -304,12 +304,15 @@ import java.util.regex.Matcher
 
     companion object {
         private fun fitScoreInRange(range: String?, scores: List<MaiScore>): List<MaiScore> {
+            if (range.isNullOrEmpty()) return scores
             return scores.filter { MaiScoreFilter.fitRange(Operator.EQ, range, it.star) }
         }
 
         private fun fitScoreInDifficulties(difficulty: String?, scores: List<MaiScore>): List<MaiScore> {
             val difficulties = MaiDifficulty.getDifficulties(difficulty)
                 .map { MaiDifficulty.getIndex(it) }.toSet()
+
+            if (difficulties.isEmpty()) return scores
 
             val filterUtage = difficulties.contains(5)
 
