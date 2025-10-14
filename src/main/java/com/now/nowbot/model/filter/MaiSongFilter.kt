@@ -40,7 +40,7 @@ enum class MaiSongFilter(@Language("RegExp") val regex: Regex) {
 
     BREAK("(break|绝?赞|brk|br|bk)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    DX_SCORE("(dx\\s*score|score|dx\\s*分数?|分数?|dx|ds|o)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    DX_SCORE("(dx\\s*score|score|(dx)?分数?|dx|ds|o)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
     RANGE(REG_MAI_RANGE.toRegex()),
     ;
