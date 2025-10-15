@@ -3,9 +3,12 @@ package com.now.nowbot.service.osuApiService.impl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.config.FileConfig
+import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.BeatmapObjectCountLite
 import com.now.nowbot.mapper.BeatmapObjectCountMapper
+import com.now.nowbot.model.enums.CoverType
+import com.now.nowbot.model.enums.CoverType.Companion.getString
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -27,6 +30,7 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.security.MessageDigest
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.Callable
@@ -44,10 +48,75 @@ class BeatmapApiImpl(
     private val beatmapMirrorApiService: OsuBeatmapMirrorApiService,
     private val beatmapObjectCountMapper: BeatmapObjectCountMapper,
 
-    @Qualifier("proxyClient") private val proxyClient: WebClient,
+    @param:Qualifier("proxyClient") private val proxyClient: WebClient,
 ) : OsuBeatmapApiService {
 
     private val osuDir: Path = Path.of(config.osuFilePath)
+
+    @OptIn(ExperimentalStdlibApi::class)
+    override fun asyncDownloadCover(
+        covers: List<Covers>,
+        type: CoverType
+    ) {
+        AsyncMethodExecutor.asyncRunnableExecute {
+            covers.map { c ->
+                getCover(c, type)
+            }
+        }
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    override fun getCover(covers: Covers, type: CoverType): ByteArray? {
+        val path = Path.of(IMG_BUFFER_PATH)
+
+        val default by lazy {
+            try {
+                Files.readAllBytes(
+                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("Banner").resolve("c8.png")
+                )
+            } catch (_: okio.IOException) {
+                null
+            }
+        }
+
+        val url = covers.getString(type)
+
+        if (url.isBlank()) {
+            log.info("获取谱面图片：谱面封面类不完整")
+            return default
+        }
+
+        val md = MessageDigest.getInstance("MD5")
+
+        try {
+            md.update(url.toByteArray(Charsets.UTF_8))
+        } catch (_: Exception) {
+            log.info("获取谱面图片：计算 MD5 失败")
+            return default
+        }
+
+        val hex = md.digest().toHexString(kotlin.text.HexFormat.Default)
+
+        return if (Files.isRegularFile(path.resolve(hex))) {
+            Files.readAllBytes(path.resolve(hex))
+        } else {
+            try {
+                val image = base.osuApiWebClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .bodyToMono(ByteArray::class.java)
+                    .block()!!
+
+                if (Files.isDirectory(path) && Files.isWritable(path)) {
+                    Files.write(path.resolve(hex), image)
+                }
+
+                return image
+            } catch (_: Exception) {
+                default
+            }
+        }
+    }
 
     override fun hasBeatmapFileFromDirectory(bid: Long): Boolean {
         val path = osuDir.resolve("$bid.osu")
@@ -283,16 +352,16 @@ class BeatmapApiImpl(
     override fun getUserMostPlayedBeatmaps(id: Long, offset: Int, limit: Int): Map<Int, Beatmap> {
 
         data class MostPlayed(
-            @JsonProperty("beatmap_id")
+            @field:JsonProperty("beatmap_id")
             val beatmapID: Long,
 
-            @JsonProperty("count")
+            @field:JsonProperty("count")
             val count: Int,
 
-            @JsonProperty("beatmap")
+            @field:JsonProperty("beatmap")
             val beatmap: Beatmap,
 
-            @JsonProperty("beatmapset")
+            @field:JsonProperty("beatmapset")
             val beatmapset: Beatmapset,
         )
 
@@ -960,6 +1029,12 @@ class BeatmapApiImpl(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BeatmapApiImpl::class.java)
+
+        private val IMG_BUFFER_PATH: String = if (System.getenv("BUFFER_PATH").isNullOrBlank().not()) {
+            System.getenv("BUFFER_PATH")
+        } else {
+            System.getProperty("java.io.tmpdir") + "/n-bot/buffer"
+        }
 
         private fun extend(lite: Beatmap, extended: Beatmap?): Beatmap {
             if (extended == null) {

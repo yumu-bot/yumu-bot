@@ -1,6 +1,7 @@
 package com.now.nowbot.service.osuApiService
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerMod.Companion.getModsValue
 import com.now.nowbot.model.enums.OsuMode
@@ -8,6 +9,14 @@ import com.now.nowbot.model.osu.*
 import java.io.IOException
 
 interface OsuBeatmapApiService {
+    @OptIn(ExperimentalStdlibApi::class) fun getCover(covers: Covers, type: CoverType): ByteArray?
+
+    @OptIn(ExperimentalStdlibApi::class) fun asyncDownloadCoverFromSets(beatmapsets: List<Beatmapset>, type: CoverType) {
+        asyncDownloadCover(beatmapsets.map { it.covers }, type)
+    }
+
+    @OptIn(ExperimentalStdlibApi::class) fun asyncDownloadCover(covers: List<Covers>, type: CoverType)
+
     fun getBeatmapFileString(bid: Long): String?
 
     fun getBeatmapFileByte(bid: Long): ByteArray?
