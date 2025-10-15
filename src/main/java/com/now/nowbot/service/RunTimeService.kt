@@ -5,6 +5,7 @@ import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.service.messageServiceImpl.HelpService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import org.slf4j.Logger
@@ -16,7 +17,6 @@ import org.springframework.scheduling.annotation.SchedulingConfigurer
 import org.springframework.scheduling.config.ScheduledTaskRegistrar
 import org.springframework.stereotype.Service
 import java.lang.management.ManagementFactory
-import java.time.LocalDate
 
 /***
  * 统一设置定时任务
@@ -24,6 +24,7 @@ import java.time.LocalDate
 @Service
 class RunTimeService(
     private val dailyStatisticsService: DailyStatisticsService,
+    private val helpService: HelpService,
     private val bindDao: BindDao,
     private val newbieService: NewbieService,
     private val maimaiApiService: MaimaiApiService,
@@ -49,6 +50,12 @@ class RunTimeService(
         dailyStatisticsService.asyncTask()
     }
 
+    // 每天凌晨3点59清除过期的缓存
+    @Scheduled(cron = "0 59 3 * * *")
+    fun clearCache() {
+        helpService.clearExpiredCache()
+    }
+
     // 每天凌晨4点统计新人群用户信息
     @Scheduled(cron = "0 0 4 * * *")
     fun statisticNewbieInfo() {
@@ -67,13 +74,16 @@ class RunTimeService(
         newbieService.dailyTask(uid)
     }
 
-    // 今天下午更新数据
+    // 今天下午更新数据'
+    /*
     @Scheduled(cron = "0 0 14 20 1 *")
     fun update() {
         if (LocalDate.now().year == 2025) {
             newbieService.recalculate()
         }
     }
+
+     */
 
     @Scheduled(cron = "0 0 6 * * *")
     fun updateMaimaiSongLibrary() {

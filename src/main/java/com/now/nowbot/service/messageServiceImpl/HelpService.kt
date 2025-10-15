@@ -30,6 +30,10 @@ class HelpService(
         val isSimplified: Boolean = false,
     )
 
+    fun clearExpiredCache() {
+        imageCacheProvider.clearExpiredCache()
+    }
+
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<HelpParam>): Boolean {
         val m = Instruction.HELP.matcher(messageText)
         val m2 = Instruction.REFRESH_HELP.matcher(messageText)

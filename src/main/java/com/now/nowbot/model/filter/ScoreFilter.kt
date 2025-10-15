@@ -562,10 +562,12 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 // 移动日期模式，从现在减去这段时间
                 delta = 24 * 60 * 60
 
+                // 因为日期是从 1 开始计算，所以这里从 duration 给的秒要减去 1 天（1 号到 14 号之间只有 13 天）
                 too = now
                     .minusYears(period.years.toLong())
                     .minusMonths(period.months.toLong())
                     .minusSeconds(duration.inWholeSeconds)
+                    .plusDays(1)
                     .toEpochSecond(ZoneOffset.ofHours(8))
             }
 

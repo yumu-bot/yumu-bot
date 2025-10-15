@@ -1347,7 +1347,8 @@ object DataUtil {
                 1, 0, 0, 0, 0
             )
 
-            return time.plusSeconds(totalSeconds)
+            // 因为日期是从 1 开始计算，所以这里从 duration 给的秒要减去 1 天（1 号到 14 号之间只有 13 天）
+            return time.plusSeconds(totalSeconds).minusDays(1)
         }
     }
 

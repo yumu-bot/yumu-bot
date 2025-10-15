@@ -12,11 +12,11 @@ class ImageCacheProvider {
 
     /**
      * 可缓存图片的图片提供者
-     * @param expired 过期时间，一般设为 7 天
+     * @param expired 过期时间
      */
     fun getImage(
         name: String,
-        expired: Duration = 7.toDuration(DurationUnit.DAYS),
+        expired: Duration = 1.toDuration(DurationUnit.DAYS),
         fetch: () -> ByteArray?,
     ): ByteArray? {
         val now = LocalDateTime.now()
@@ -42,7 +42,7 @@ class ImageCacheProvider {
     }
 
     // 清理所有过期缓存
-    fun clearExpiredCache(expired: Duration = 7.toDuration(DurationUnit.DAYS)) {
+    fun clearExpiredCache(expired: Duration = 1.toDuration(DurationUnit.DAYS)) {
         val now = LocalDateTime.now()
         val iterator = imageCache.iterator()
         while (iterator.hasNext()) {
