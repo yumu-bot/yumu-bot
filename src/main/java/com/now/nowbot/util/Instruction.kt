@@ -12,6 +12,10 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup("module", REG_ANYTHING, ANY, MAYBE)
     }),
 
+    REFRESH_HELP(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("refresh\\s*help", "rh")
+    }),
+
     // #1 BOT 内部指令
     PING(CommandPatternBuilder.create {
         appendGroup {

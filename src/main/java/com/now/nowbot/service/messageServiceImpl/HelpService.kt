@@ -1,5 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.config.Permission
+import com.now.nowbot.service.ImageCacheProvider
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -19,7 +21,8 @@ import org.springframework.stereotype.Service
 
 @Service("HELP")
 class HelpService(
-    private val imageService: ImageService
+    private val imageService: ImageService,
+    private val imageCacheProvider: ImageCacheProvider,
 ) : MessageService<HelpService.HelpParam>, TencentMessageService<HelpService.HelpParam> {
 
     data class HelpParam(
@@ -29,6 +32,13 @@ class HelpService(
 
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<HelpParam>): Boolean {
         val m = Instruction.HELP.matcher(messageText)
+        val m2 = Instruction.REFRESH_HELP.matcher(messageText)
+
+        if (m2.find() && Permission.isSuperAdmin(event.sender.id)) {
+            imageCacheProvider.clearCache()
+            event.reply("已清除所有帮助文档的图片缓存。")
+            return false
+        }
 
         if (!m.find()) return false
 
@@ -87,98 +97,102 @@ class HelpService(
         return ServiceCallStatistic.building(event)
     }
 
+    /**
+     * 目前的 help 方法，走 panel A6
+     * @param module 需要查询的功能名字
+     * @return 图片流
+     */
+    private fun getHelpPicture(module: String, imageService: ImageService): ByteArray? {
+        val fileName = when (module) {
+            "interbot", "inter", "it", "因特" -> "interbot"
+            "maomaobot", "meowbot", "meow", "maomao", "kanonbot", "kanon", "cat", "kn", "猫猫", "猫猫bot" -> "kanonbot"
+            "superdalou", "dalou", "daloubot", "superdaloubot", "dl", "大楼" -> "superdaloubot"
+            "hydrantbot", "hydrant", "hydro", "hy", "xfs", "xf", "~", "消防栓" -> "hydrantbot"
+            "cabbage", "白菜", "baicai", "妈船", "妈船？", "mothership", "mother ship", "bc" -> "cabbagebot"
+            "bot", "b", "内部指令", "内部" -> "bot"
+            "score", "s", "成绩指令", "成绩" -> "score"
+            "player", "p", "玩家指令", "玩家" -> "player"
+            "map", "m", "谱面指令", "谱面" -> "map"
+            "chat", "c", "聊天指令", "聊天" -> "chat"
+            "fun", "f", "娱乐指令", "娱乐" -> "fun"
+            "aid", "a", "辅助指令", "辅助" -> "aid"
+            "tournament", "t", "比赛指令", "比赛" -> "tournament"
+            "ping", "pi" -> "ping"
+            "bind", "bi" -> "bind"
+            "ban", "bq", "bu", "bg" -> "ban"
+            "switch", "sw" -> "switch"
+            "antispam", "as" -> "antispam"
+            "mode", "setmode", "sm", "mo" -> "mode"
+            "pass", "pr", "ps" -> "pass"
+            "recent", "re", "r" -> "recent"
+            "scores", "ss" -> "scores"
+            "bestperformance", "bp" -> "bestperformance"
+            "todaybp", "tbp", "tb" -> "todaybp"
+            "bpanalysis", "bpa", "ba" -> "bpanalysis"
+            "information", "info", "i" -> "info"
+            "immapper", "imapper", "im" -> "immapper"
+            "friend", "friends", "fr" -> "friend"
+            "mutual", "mu" -> "mutual"
+            "ppminus", "ppm", "pm" -> "ppminus"
+            "ppplus", "ppp" -> "ppplus"
+            "maps" -> "maps"
+            "audio", "song", "au" -> "audio"
+            "search", "sh" -> "search"
+            "course", "co" -> "course"
+            "danacc", "da" -> "danacc"
+            "qualified", "q" -> "qualified"
+            "leader", "l" -> "leader"
+            "match", "ma" -> "match"
+            "rating", "mra", "ra" -> "rating"
+            "series", "sra", "sa" -> "series"
+            "matchlisten", "listen", "ml", "li" -> "listen"
+            "matchnow", "now", "mn" -> "matchnow"
+            "matchround", "round", "ro", "mr" -> "round"
+            "mappool", "pool", "po" -> "pool"
+            "oldavatar", "oa" -> "oldavatar"
+            "overrating", "oversr", "or" -> "overrating"
+            "trans", "tr" -> "trans"
+            "kita", "k" -> "kita"
+
+            "OFFICIAL" -> "OFFICIAL"
+            else -> "GUIDE"
+        }
+
+        val image = imageCacheProvider.getImage(fileName) {
+            imageService.getPanelA6(getMarkdownFile("Help/${fileName}.md"), "help")
+        }
+
+        return image
+    }
+
+    /**
+     * 老旧的 help 方法，可以备不时之需
+     * @param module 需要查询的功能名字
+     * @return 图片流
+     */
+    private fun getHelpImageLegacy(module: String?): ByteArray? {
+        val fileName = when (module) {
+            "bot", "b" -> "help-bot"
+            "score", "s" -> "help-score"
+            "player", "p" -> "help-player"
+            "map", "m" -> "help-map"
+            "chat", "c" -> "help-chat"
+            "fun", "f" -> "help-fun"
+            "aid", "a" -> "help-aid"
+            "tournament", "t" -> "help-tournament"
+            "" -> "help-default"
+            else -> ""
+        }
+
+        val image = imageCacheProvider.getImage(fileName) {
+            getPicture("${fileName}.png")
+        }
+
+        return image
+    }
+
     companion object {
         private val log: Logger = LoggerFactory.getLogger(HelpService::class.java)
-
-        /**
-         * 目前的 help 方法，走 panel A6
-         * @param module 需要查询的功能名字
-         * @return 图片流
-         */
-        private fun getHelpPicture(module: String, imageService: ImageService): ByteArray? {
-            val fileName = when (module) {
-                "interbot", "inter", "it", "因特" -> "interbot"
-                "maomaobot", "meowbot", "meow", "maomao", "kanonbot", "kanon", "cat", "kn", "猫猫", "猫猫bot" -> "kanonbot"
-                "superdalou", "dalou", "daloubot", "superdaloubot", "dl", "大楼" -> "superdaloubot"
-                "hydrantbot", "hydrant", "hydro", "hy", "xfs", "xf", "~", "消防栓" -> "hydrantbot"
-                "cabbage", "白菜", "baicai", "妈船", "妈船？", "mothership", "mother ship", "bc" -> "cabbagebot"
-                "bot", "b", "内部指令", "内部" -> "bot"
-                "score", "s", "成绩指令", "成绩" -> "score"
-                "player", "p", "玩家指令", "玩家" -> "player"
-                "map", "m", "谱面指令", "谱面" -> "map"
-                "chat", "c", "聊天指令", "聊天" -> "chat"
-                "fun", "f", "娱乐指令", "娱乐" -> "fun"
-                "aid", "a", "辅助指令", "辅助" -> "aid"
-                "tournament", "t", "比赛指令", "比赛" -> "tournament"
-                "ping", "pi" -> "ping"
-                "bind", "bi" -> "bind"
-                "ban", "bq", "bu", "bg" -> "ban"
-                "switch", "sw" -> "switch"
-                "antispam", "as" -> "antispam"
-                "mode", "setmode", "sm", "mo" -> "mode"
-                "pass", "pr", "ps" -> "pass"
-                "recent", "re", "r" -> "recent"
-                "scores", "ss" -> "scores"
-                "bestperformance", "bp" -> "bestperformance"
-                "todaybp", "tbp", "tb" -> "todaybp"
-                "bpanalysis", "bpa", "ba" -> "bpanalysis"
-                "information", "info", "i" -> "info"
-                "immapper", "imapper", "im" -> "immapper"
-                "friend", "friends", "fr" -> "friend"
-                "mutual", "mu" -> "mutual"
-                "ppminus", "ppm", "pm" -> "ppminus"
-                "ppplus", "ppp" -> "ppplus"
-                "maps" -> "maps"
-                "audio", "song", "au" -> "audio"
-                "search", "sh" -> "search"
-                "course", "co" -> "course"
-                "danacc", "da" -> "danacc"
-                "qualified", "q" -> "qualified"
-                "leader", "l" -> "leader"
-                "match", "ma" -> "match"
-                "rating", "mra", "ra" -> "rating"
-                "series", "sra", "sa" -> "series"
-                "matchlisten", "listen", "ml", "li" -> "listen"
-                "matchnow", "now", "mn" -> "matchnow"
-                "matchround", "round", "ro", "mr" -> "round"
-                "mappool", "pool", "po" -> "pool"
-                "oldavatar", "oa" -> "oldavatar"
-                "overrating", "oversr", "or" -> "overrating"
-                "trans", "tr" -> "trans"
-                "kita", "k" -> "kita"
-
-                "OFFICIAL" -> "OFFICIAL"
-                else -> "GUIDE"
-            }
-
-            return try {
-                imageService.getPanelA6(getMarkdownFile("Help/${fileName}.md"), "help")
-            } catch (_: Exception) {
-                null
-            }
-        }
-
-        /**
-         * 老旧的 help 方法，可以备不时之需
-         * @param module 需要查询的功能名字
-         * @return 图片流
-         */
-        private fun getHelpImageLegacy(module: String?): ByteArray? {
-            val fileName = when (module) {
-                "bot", "b" -> "help-bot"
-                "score", "s" -> "help-score"
-                "player", "p" -> "help-player"
-                "map", "m" -> "help-map"
-                "chat", "c" -> "help-chat"
-                "fun", "f" -> "help-fun"
-                "aid", "a" -> "help-aid"
-                "tournament", "t" -> "help-tournament"
-                "" -> "help-default"
-                else -> ""
-            }
-
-            return getPicture("${fileName}.png")
-        }
 
         /**
          * 老旧的 help 方法，可以备不时之需

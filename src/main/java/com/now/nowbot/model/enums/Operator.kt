@@ -9,7 +9,7 @@ import org.intellij.lang.annotations.Language
 
 enum class Operator(@param:Language("RegExp") val regex: Regex) {
     // 不等于
-    NE("$REG_EXCLAMATION$REG_EQUAL|≠".toRegex()),
+    NE("$REG_EXCLAMATION$REG_EQUAL|$REG_LESS$REG_GREATER|≠".toRegex()),
 
     // 完全等于
     XQ("$REG_EQUAL$REG_EQUAL|≌".toRegex()),
