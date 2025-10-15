@@ -96,6 +96,13 @@ interface OsuBeatmapApiService {
      */
     fun searchBeatmapset(query: Map<String, Any?>): BeatmapsetSearch
 
+    fun parallelSearchBeatmapset(
+        query: Map<String, Any?>,
+        tries: Int = 4,
+        quantity: Int = 5,
+        awaitMillis: Long = 200
+    ): BeatmapsetSearch
+
     /**
      * 多次获取搜索结果
      */

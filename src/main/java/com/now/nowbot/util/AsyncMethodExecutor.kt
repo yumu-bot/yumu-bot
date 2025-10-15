@@ -206,7 +206,6 @@ object AsyncMethodExecutor {
      * 异步执行不需要返回的结果，并等待至所有操作都完成。
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要等待所有异步操作完成，请使用 asyncRunnableExecute
      */
-    @JvmStatic
     fun awaitRunnableExecute(work: Runnable, timeout: Duration = Duration.ofSeconds(30)) {
         val lock = CountDownLatch(1)
 
@@ -225,7 +224,6 @@ object AsyncMethodExecutor {
         lock.await(timeout.toMillis(), TimeUnit.MILLISECONDS)
     }
 
-    @JvmStatic
     fun <T> awaitSupplierExecute(works: Collection<Callable<T>>): List<T> {
         val size = works.size
         val lock = CountDownLatch(size)
@@ -252,7 +250,6 @@ object AsyncMethodExecutor {
         return results.toSortedMap().mapNotNull { it.value }
     }
 
-    @JvmStatic
     fun <T> awaitSupplierExecute(work: Supplier<T>): T {
         return awaitSupplierExecute(listOf(work), Duration.ofSeconds(30)).first()
     }
@@ -298,6 +295,18 @@ object AsyncMethodExecutor {
             virtualPool.joinUntil(Instant.now().plus(timeout))
             virtualPool.throwIfFailed()
             return r.get()
+        }
+    }
+
+    fun <T> awaitCallablesExecute(
+        works: List<Callable<T>>,
+        timeout: Duration = Duration.ofSeconds(30)
+    ): List<T> {
+        ShutdownOnFailure().use { virtualPool ->
+            val results = works.map { virtualPool.fork(it) }
+            virtualPool.joinUntil(Instant.now().plus(timeout))
+            virtualPool.throwIfFailed()
+            return results.map { it.get() }
         }
     }
 

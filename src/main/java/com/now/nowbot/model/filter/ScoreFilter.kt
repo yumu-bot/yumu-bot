@@ -61,7 +61,11 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     GREAT("(great|300|大果?|fruits?|fr|良|黄|gr|很好)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    MISSED_DROPLET("(miss(ed)?\\s*drop(let)?|漏小?果?|md)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+    MISSED_FRUIT("(miss(ed)?\\s*fruits?|漏大果?|mf)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+
+    MISSED_DROP("(miss(ed)?\\s*drop|漏中果?|mp)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
+
+    MISSED_DROPLET("(miss(ed)?\\s*droplet|漏小?果?|md)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
     GOOD("(good|200|绿|gd|良好)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
@@ -380,7 +384,21 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
                 MISS -> fitCountOrPercent(operator, it.statistics.miss, condition, it.maximumStatistics.miss)
 
+                MISSED_FRUIT -> if (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) {
+                    fitCountOrPercent(operator, it.statistics.miss - it.statistics.largeTickMiss, condition, it.maximumStatistics.great)
+                } else {
+                    false
+                }
+
+                MISSED_DROP -> if (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) {
+                    it.maximumStatistics.largeTickHit > 0 &&
+                    fitCountOrPercent(operator, it.statistics.largeTickMiss, condition, it.maximumStatistics.largeTickHit)
+                } else {
+                    false
+                }
+
                 MISSED_DROPLET -> if (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) {
+                    it.maximumStatistics.smallTickHit > 0 &&
                     fitCountOrPercent(operator, it.statistics.smallTickMiss, condition, it.maximumStatistics.smallTickHit)
                 } else {
                     false

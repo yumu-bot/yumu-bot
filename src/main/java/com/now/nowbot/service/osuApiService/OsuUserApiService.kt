@@ -48,6 +48,7 @@ interface OsuUserApiService {
      * 批量获取用户信息
      *
      * @param users 单次请求量无限制
+     * @param isVariant 是否需要额外的四模式信息
      */
     fun <T : Number> getUsers(users: Iterable<T>, isVariant: Boolean = false): List<MicroUser>
 

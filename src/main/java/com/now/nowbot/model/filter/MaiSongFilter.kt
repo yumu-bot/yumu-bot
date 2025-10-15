@@ -7,7 +7,7 @@ import com.now.nowbot.model.maimai.MaiSong
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 
-enum class MaiSongFilter(@Language("RegExp") val regex: Regex) {
+enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
     CHARTER("(chart(er)?|mapper|谱师?|c)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
     ID("((song\\s*)?id|(歌曲)?编?号|i)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),

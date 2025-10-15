@@ -11,7 +11,7 @@ import org.intellij.lang.annotations.Language
 import java.time.ZoneOffset
 import kotlin.math.roundToLong
 
-enum class MicroUserFilter(@Language("RegExp") val regex: Regex) {
+enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
     USERNAME("(user|name|username|玩家名称?|玩家|名称?|u|n)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
     ID("((user\\s*)?id|uid|(玩家)?编号|id|i)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),

@@ -87,9 +87,10 @@ import kotlin.math.max
             val relatedSets = param.relatedSets
             val activity = param.activities
 
-            val relatedUsers = AsyncMethodExecutor.awaitSupplierExecute {
-                userApiService.getUsers(relatedSets.filter { it.creatorID != user.userID }.map { it.creatorID }.toSet(), false)
-            }
+            val relatedUsers = userApiService.getUsers(
+                relatedSets.filter { it.creatorID != user.userID }.map { it.creatorID }.toSet(),
+                false
+            )
 
             val recentActivity: List<ActivityEvent> = try {
                 activity.mapIndexed { i, it ->
@@ -101,7 +102,7 @@ import kotlin.math.max
                         null
                     }
                 }.filterNotNull()
-            } catch (ignored: NoSuchElementException) {
+            } catch (_: NoSuchElementException) {
                 listOf()
             } catch (e: Exception) {
                 log.error("谱师信息：筛选出错", e)
@@ -344,7 +345,7 @@ import kotlin.math.max
                         null
                     }
                 }.filterNotNull()
-            } catch (ignored: NoSuchElementException) {
+            } catch (_: NoSuchElementException) {
                 listOf()
             } catch (e: Exception) {
                 log.error("谱师信息：筛选出错", e)

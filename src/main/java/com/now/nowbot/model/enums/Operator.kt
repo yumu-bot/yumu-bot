@@ -7,7 +7,7 @@ import com.now.nowbot.util.command.REG_GREATER
 import com.now.nowbot.util.command.REG_LESS
 import org.intellij.lang.annotations.Language
 
-enum class Operator(@Language("RegExp") val regex: Regex) {
+enum class Operator(@param:Language("RegExp") val regex: Regex) {
     // 不等于
     NE("$REG_EXCLAMATION$REG_EQUAL|≠".toRegex()),
 

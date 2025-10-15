@@ -60,7 +60,7 @@ class DailyStatisticsService(
     }
 
     private fun saveUserInfo(uidList: List<Long>, needSearch: MutableList<Pair<Long, OsuMode>>) {
-        val userInfoList = userApiService.getUsers(uidList)
+        val userInfoList = userApiService.getUsers(uidList, isVariant = true)
         val yesterdayInfo = userInfoDao.getYesterdayInfo(uidList)
         val userMap = userInfoList.associateBy { it.userID }
         for (user in yesterdayInfo) {

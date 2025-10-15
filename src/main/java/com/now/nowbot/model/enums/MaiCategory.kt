@@ -22,14 +22,14 @@ enum class MaiCategory(val english: String) {
 
     companion object {
 
-        internal enum class CategoryFilter(@Language("RegExp") val regex: Regex) {
+        internal enum class CategoryFilter(@param:Language("RegExp") val regex: Regex) {
             POPS_ANIME("流行&?动漫|pops\\s*&?\\s*anime|pops\\s*アニメ|アニメ|pops?|anime|流行|动漫|ap".toRegex()),
 
             NICONICO_VOCALOID("(niconico)?\\s*&?\\s*(ボーカロイド|vocaloid)|niconico|vocal|vocaloid|ボーカロイド|博歌乐|nv".toRegex()),
 
-            TOUHOU_PROJECT("[东東]方\\s*project|[东東]方?|touhou|th|[t东東]".toRegex()),
+            TOUHOU_PROJECT("[东東]方\\s*project|[东東]方?|车万|touhou|th|[t东東]".toRegex()),
 
-            MAIMAI("mai(mai)?|舞萌".toRegex()),
+            MAIMAI("mai(mai)?|original|舞萌?|原创?".toRegex()),
 
             ONGEKI_CHUNITHM("ongeki\\s*&?\\s*chunithm|オンゲキ\\s*chunithm|音击&中二节奏|音击|中二(节奏)?|oc".toRegex()),
 
@@ -62,10 +62,10 @@ enum class MaiCategory(val english: String) {
              */
 
             return when(g.first()) {
-                'a', 'p', 'ア', '流', '动' -> POPS_ANIME
-                'n', 'v', 'ボ' -> NICONICO_VOCALOID
-                't', 'h', '东', '東' -> TOUHOU_PROJECT
-                'm', 'i', '舞' -> MAIMAI
+                'a', 'p', 'ア', '流', '动', '漫' -> POPS_ANIME
+                'n', 'v', 'に', 'ボ' -> NICONICO_VOCALOID
+                't', 'h', '东', '東', '车' -> TOUHOU_PROJECT
+                'm', 'i', 'l', '原', '舞' -> MAIMAI
                 'o', 'c', 'オ', '音', '中' -> ONGEKI_CHUNITHM
                 'g', 'y', 'ゲ', 'バ', '游', '其' -> GAME_VARIETY
                 'u', 'e', '宴' -> U_TA_GE

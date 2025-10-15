@@ -13,6 +13,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
+import okhttp3.internal.toImmutableList
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -28,7 +29,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.OffsetDateTime
 import java.util.*
+import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
+import kotlin.collections.set
 
 @Service
 class BeatmapApiImpl(
@@ -672,10 +678,83 @@ class BeatmapApiImpl(
     }
 
     /**
+     * 更加高效的搜索谱面集合方式
+     * @param query
+     * @param tries 尝试次数
+     * @param quantity 同时获取多少页，这个太大不好，总可获取的页数是它乘以 tries
+     * @param awaitMillis 每次并行获取后的冷却时间（毫秒），避免被判定为恶意获取
+     */
+    override fun parallelSearchBeatmapset(
+        query: Map<String, Any?>,
+        tries: Int,
+        quantity: Int,
+        awaitMillis: Long
+    ): BeatmapsetSearch {
+        val size = (tries * quantity).coerceAtLeast(1)
+
+        val queries = List(size) { index ->
+            val q = query.toMutableMap()
+            q["page"] = index + 1
+
+            q
+        }.toImmutableList()
+
+        val map = ConcurrentHashMap<Int, BeatmapsetSearch>()
+
+        Thread.startVirtualThread {
+            val isEnd = AtomicBoolean(false)
+            val tried = AtomicInteger(0)
+
+            do {
+                val qs = queries.drop(tried.get() * quantity).take(quantity)
+
+                val actions = qs.map { q ->
+                    Callable {
+                        searchBeatMapSetFromAPI(q)
+                    }
+                }
+
+                val searches = AsyncMethodExecutor.awaitCallablesExecute(actions)
+
+                if (searches.map { it.cursorString }.any { it == null }) {
+                    isEnd.set(true)
+                }
+
+                searches.filter { it.beatmapsets.isNotEmpty() }
+                    .forEachIndexed { i, search ->
+                        val index = tried.get() * quantity + i
+
+                        map[index] = search
+                }
+
+                tried.getAndIncrement()
+
+                if (!isEnd.get() && tried.get() < tries) {
+                    Thread.sleep(awaitMillis.coerceIn(0L, 30000L))
+                }
+            } while (!isEnd.get() && tried.get() < tries)
+        }.join((5L + 5L * tries).coerceIn(10L, 30L) * 1000L)
+
+        val search = BeatmapsetSearch()
+
+        map.toList()
+            .sortedBy { it.first }
+            .forEach { search.combine(it.second) }
+
+        // 后处理
+        if (query["s"] !== null && query["s"] !== "any") {
+            search.rule = query["s"].toString()
+        }
+
+        search.sortBeatmapDiff()
+
+        return search
+    }
+
+    /**
      * 依据QualifiedMapService 的逻辑来多次获取
      * tries 一般可以设为 10（500 个结果）
      */
-    
     override fun searchBeatmapset(query: Map<String, Any?>, tries: Int): BeatmapsetSearch {
         val search = BeatmapsetSearch()
         var page = 1
@@ -695,7 +774,7 @@ class BeatmapApiImpl(
         }
 
         // 后处理
-        if (query["s"] !== null || query["s"] !== "any") {
+        if (query["s"] !== null && query["s"] !== "any") {
             search.rule = query["s"].toString()
         }
 

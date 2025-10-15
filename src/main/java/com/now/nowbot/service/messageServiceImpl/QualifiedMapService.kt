@@ -17,62 +17,55 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MODE
+import com.now.nowbot.util.command.FLAG_PAGE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
-import kotlin.math.floor
-import kotlin.math.max
-import kotlin.math.roundToInt
 
 @Service("QUALIFIED_MAP") class QualifiedMapService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val userApiService: OsuUserApiService,
     private val imageService: ImageService,
     private val bindDao: BindDao
-) : MessageService<Matcher> {
+) : MessageService<QualifiedMapService.QualifiedMapParam> {
+
+    data class QualifiedMapParam(
+        val mode: OsuMode,
+        val status: String?,
+        val genre: Byte?,
+        val sort: String,
+        val page: Int = 1,
+    )
 
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
-        data: DataValue<Matcher>,
+        data: DataValue<QualifiedMapParam>,
     ): Boolean {
-        val m = Instruction.QUALIFIED_MAP.matcher(messageText)
-        if (m.find()) {
-            data.value = m
-            return true
-        } else return false
-    }
+        val matcher = Instruction.QUALIFIED_MAP.matcher(messageText)
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? { // 获取参数
-        val statusStr = param.group("status") ?: "q"
-        val sortStr = param.group("sort") ?: "ranked_asc"
-        val rangeStr = param.group("range") ?: "12"
-
-        val mode = OsuMode.getMode(OsuMode.getMode(param.group(FLAG_MODE)), null, bindDao.getGroupModeConfig(event))
-
-        val range = rangeStr.toIntOrNull() ?: throw IllegalArgumentException.WrongException.Henan()
-
-        if (range !in 1..999) {
-            throw IllegalArgumentException.WrongException.Range()
+        if (!matcher.find()) {
+            return false
         }
 
-        val tries = max(floor(range / 50.0).roundToInt() + 1, 10)
+        data.value = getParam(event, matcher)
+        return true
+    }
 
-        val status = DataUtil.getStatus(statusStr)
-        val sort = DataUtil.getSort(sortStr)
+    override fun handleMessage(event: MessageEvent, param: QualifiedMapParam): ServiceCallStatistic? {
 
         val query = mapOf<String, Any>(
-            "m" to mode.modeValue,
-            "s" to if (status == "any" || status == null) "qualified" else status,
-            "sort" to sort,
+            "m" to param.mode.modeValue,
+            "s" to (param.status?.takeIf { it != "any" } ?: "qualified"),
+            "sort" to param.sort,
             "page" to 1,
         )
 
         val search: BeatmapsetSearch
 
         try {
-            search = beatmapApiService.searchBeatmapset(query, tries)
+            search = beatmapApiService.parallelSearchBeatmapset(query)
 
             AsyncMethodExecutor.awaitPairCallableExecute(
                 { beatmapApiService.applyBeatmapsetRankedTime(search.beatmapsets) },
@@ -81,12 +74,24 @@ import kotlin.math.roundToInt
 
             // 给完整面板整点头像
             if (search.resultCount <= 12) {
-                AsyncMethodExecutor.asyncRunnableExecute {
-                    userApiService.asyncDownloadAvatarFromBeatmapsets(search.beatmapsets)
-                }
+                userApiService.asyncDownloadAvatarFromBeatmapsets(search.beatmapsets)
             }
 
-            val img = imageService.getPanel(search, "A2")
+            val maxPerPage: Int = if (search.resultCount <= 24) {
+                12
+            } else {
+                48
+            }
+
+            val split = DataUtil.splitPage(search.beatmapsets, param.page, maxPerPage)
+
+            search.beatmapsets = split.first
+
+            val img = imageService.getPanel(mapOf(
+                "search" to search,
+                "page" to split.second,
+                "max_page" to split.third
+            ), "A2")
             event.reply(img)
         } catch (e: Exception) {
             log.error("过审谱面：", e)
@@ -95,6 +100,33 @@ import kotlin.math.roundToInt
 
         return ServiceCallStatistic.builds(event,
             beatmapsetIDs = search.beatmapsets.map { it.beatmapsetID },
+        )
+    }
+
+    private fun getParam(event: MessageEvent, matcher: Matcher): QualifiedMapParam {
+        // 获取参数
+        val statusStr: String? = matcher.group("status")
+        val sortStr: String? = matcher.group("sort")
+        val genreStr: String? = matcher.group("genre")
+        val pageStr: String? = matcher.group(FLAG_PAGE)
+
+        val page = pageStr?.toIntOrNull() ?: 1
+
+        if (page !in 1..999) {
+            throw IllegalArgumentException.WrongException.Henan()
+        }
+
+        val mode = OsuMode.getMode(OsuMode.getMode(matcher.group(FLAG_MODE)), bindDao.getGroupModeConfig(event))
+        val status = DataUtil.getStatus(statusStr)
+        val genre = DataUtil.getGenre(genreStr)
+        val sort = DataUtil.getSort(sortStr ?: "ranked_asc")
+
+        return QualifiedMapParam(
+            mode = mode,
+            status = status,
+            genre = genre,
+            sort = sort,
+            page = page
         )
     }
 

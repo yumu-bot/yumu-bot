@@ -479,24 +479,34 @@ enum class Instruction(val pattern: Pattern) {
     QUALIFIED_MAP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("qualified", "qua", "q")
         appendMode()
+        appendSpace()
 
-        appendGroup(MAYBE) {
-            append(REG_HASH)
-            appendSpace()
-            appendCaptureGroup("status", "[-\\w]", MORE)
-        }
         appendSpace()
         appendGroup(MAYBE) {
-            append(REG_STAR)
-            appendMatchLevel(MAYBE)
+            append("status=")
+            appendSpace()
+            appendCaptureGroup("status", "[\\-\\w]", MORE)
+        }
+
+        appendSpace()
+        appendGroup(MAYBE) {
+            append("sort=")
             appendSpace()
             appendCaptureGroup("sort", "[\\-_+a-zA-Z]", MORE)
         }
+
         appendSpace()
         appendGroup(MAYBE) {
-            appendCaptureGroup("range", REG_NUMBER, MORE)
+            append("genre=")
+            appendSpace()
+            appendCaptureGroup("genre", "\\w", MORE)
         }
 
+        appendGroup(MAYBE) {
+            append(REG_HASH)
+            appendMatchLevel(MAYBE)
+            appendCaptureGroup(FLAG_PAGE, REG_NUMBER, MORE)
+        }
     }),
 
     LEADER_BOARD(CommandPatternBuilder.create {

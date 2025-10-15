@@ -1152,7 +1152,6 @@ object DataUtil {
         }
     }
 
-    @JvmStatic
     fun getStatus(status: String?): String? {
         return when (status?.lowercase()) {
             "0", "p", "pend", "pending" -> "pending"
@@ -1168,7 +1167,6 @@ object DataUtil {
         }
     }
 
-    @JvmStatic
     fun getGenre(genre: String?): Byte? {
         return when (genre?.lowercase()) {
             "u", "un", "uns", "unspecified" -> 1
@@ -1247,7 +1245,10 @@ object DataUtil {
     /**
      * 一个分页功能。
      * @param maxPerPage 每页最多元素数量，默认 50 个。
-     * @return 当前页面显示的元素，当前有多少页，最大有多少页
+     * @return
+     * - 当前页面显示的元素
+     * - 当前所在的页
+     * - 最大页
      */
     fun <T> splitPage(collection: Collection<T>, page: Int, maxPerPage: Int = 50): Triple<List<T>, Int, Int> {
         val maxPage = max(ceil(collection.size * 1.0 / maxPerPage).roundToInt(), 1)
