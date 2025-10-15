@@ -14,9 +14,15 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.CmdObject
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.command.FLAG_ID
+import com.now.nowbot.util.command.FLAG_NAME
+import com.now.nowbot.util.command.FLAG_PAGE
+import com.now.nowbot.util.command.REG_NUMBER
 import org.springframework.stereotype.Service
+import java.util.regex.Matcher
 
 @Service("TEAM")
 class TeamService(
@@ -24,105 +30,107 @@ class TeamService(
     private val imageService: ImageService,
 ) : MessageService<TeamService.TeamParam>, TencentMessageService<TeamService.TeamParam> {
 
-    data class TeamParam(val teamID: Int, val isInputTeam: Boolean = false)
+    data class TeamParam(val teamID: Int, val assumeTeam: Boolean = false, val page: Int = 1)
 
     override fun isHandle(
         event: MessageEvent,
         messageText: String,
         data: MessageService.DataValue<TeamParam>
     ): Boolean {
-        val m = Instruction.TEAM.matcher(messageText)
-        if (!m.find()) {
+        val matcher = Instruction.TEAM.matcher(messageText)
+        if (!matcher.find()) {
             return false
         }
 
-        if (m.group("team")?.matches("\\d+".toRegex()) == true) {
-            data.value = TeamParam(
-                m.group("team")?.toIntOrNull() ?: throw IllegalArgumentException.WrongException.TeamID(), true) // 因为是确信用户输入的是战队的编号
-        } else if (m.group("name")?.matches("\\d+".toRegex()) == true) {
-            data.value = TeamParam(
-                m.group("name")?.toIntOrNull() ?: throw IllegalArgumentException.WrongException.TeamID(), false)
-        } else {
-            val user = getUserWithoutRange(event, m, CmdObject(OsuMode.DEFAULT))
-
-            data.value = TeamParam(
-                user.team?.id ?: throw NoSuchElementException.PlayerTeam(user.username), true)
-        }
+        data.value = getParam(event, matcher)
 
         return true
     }
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: TeamParam): ServiceCallStatistic? {
-        val team = try {
-            userApiService.getTeamInfo(param.teamID)
-        } catch (ignored: Exception) {
-            if (param.isInputTeam) {
-                throw NoSuchElementException.TeamID(param.teamID)
-            } else try {
-                userApiService.getTeamInfo(
-                    userApiService.getOsuUser(param.teamID.toLong()).team?.id ?:
-                    throw NoSuchElementException.TeamID(param.teamID)
-                )
-            } catch (ignored2: Exception) {
-                throw NoSuchElementException.TeamID(param.teamID)
-            }
-        }
+        val team = param.getTeam()
 
-        val image = imageService.getPanel(team, "A9")
+        val image = team.getImage(param.page)
 
         try {
             event.reply(image)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw IllegalStateException.Send("战队信息")
         }
 
         return ServiceCallStatistic.building(event) {
             setParam(mapOf(
-                "tids" to listOf(team!!.id),
+                "tids" to listOf(team.id),
                 "modes" to listOf(team.ruleset.modeValue)
             ))
         }
     }
 
     override fun accept(event: MessageEvent, messageText: String): TeamParam? {
-        val m = OfficialInstruction.TEAM.matcher(messageText)
-        if (!m.find()) {
+        val matcher = OfficialInstruction.TEAM.matcher(messageText)
+        if (!matcher.find()) {
             return null
         }
 
-        val user = getUserWithoutRange(event, m, CmdObject(OsuMode.DEFAULT))
-
-        return if (m.group("team")?.matches("\\d+".toRegex()) == true) {
-            TeamParam(m.group("team")?.toIntOrNull() ?: throw IllegalArgumentException.WrongException.Range(), true) // 因为是确信用户输入的是战队的编号
-        } else if (m.group("name")?.matches("\\d+".toRegex()) == true) {
-            TeamParam(m.group("name")?.toIntOrNull() ?: throw IllegalArgumentException.WrongException.Range(), false)
-        } else {
-            TeamParam(user.team?.id ?: throw NoSuchElementException.PlayerTeam(user.username), true)
-        }
+        return getParam(event, matcher)
     }
 
     override fun reply(event: MessageEvent, param: TeamParam): MessageChain? {
+
+        return MessageChain(param.getTeam().getImage(param.page))
+    }
+
+
+    private fun getParam(event: MessageEvent, matcher: Matcher): TeamParam {
+        val nameStr: String = (matcher.group(FLAG_NAME) ?: "").trim()
+        val idStr: String = (matcher.group(FLAG_ID) ?: "").trim()
+        val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: 1
+        val id: Int
+
+        return if (idStr.isNotEmpty()) {
+            id = idStr.toIntOrNull() ?: throw IllegalArgumentException.WrongException.TeamID()
+
+            TeamParam(id, assumeTeam = true, page)
+        } else if (nameStr.matches(REG_NUMBER.toRegex())) {
+            id = nameStr.toIntOrNull() ?: throw IllegalArgumentException.WrongException.TeamID()
+
+            TeamParam(id, assumeTeam = false, page)
+        } else {
+            val user = getUserWithoutRange(event, matcher, CmdObject(OsuMode.DEFAULT))
+            id = user.team?.id ?: throw NoSuchElementException.PlayerTeam(user.username)
+
+            TeamParam(id, assumeTeam = true, page)
+        }
+    }
+
+    private fun OsuUserApiService.TeamInfo.getImage(page: Int = 1): ByteArray {
+        val split = DataUtil.splitPage(
+            users,
+            page = page,
+            maxPerPage = 48
+        )
+
+        return imageService.getPanel(mapOf("team" to this, "page" to split.second, "max_page" to split.third), "A9")
+    }
+
+    private fun TeamParam.getTeam(): OsuUserApiService.TeamInfo {
+
         val team = try {
-            userApiService.getTeamInfo(param.teamID)
-        } catch (ignored: Exception) {
-            if (param.isInputTeam) {
-                throw NoSuchElementException.TeamID(param.teamID)
+            userApiService.getTeamInfo(teamID)!!
+        } catch (_: Exception) {
+            if (assumeTeam) {
+                throw NoSuchElementException.TeamID(teamID)
             } else try {
-                val u = userApiService.getOsuUser(param.teamID.toLong())
+                val user = userApiService.getOsuUser(teamID.toLong())
 
-                if (u.team == null) {
-                    throw NoSuchElementException.PlayerTeam(u.username)
-                }
-
-                userApiService.getTeamInfo(u.team!!.id)
-            } catch (ignored2: Exception) {
-                throw NoSuchElementException.TeamID(param.teamID)
+                userApiService.getTeamInfo(user.team?.id ?: throw NoSuchElementException.PlayerTeam(user.username))
+                    ?: throw NoSuchElementException.PlayerTeam(user.username)
+            } catch (_: Exception) {
+                throw NoSuchElementException.TeamID(teamID)
             }
         }
 
-        val image = imageService.getPanel(team, "A9")
-
-        return MessageChain(image)
+        return team
     }
 }

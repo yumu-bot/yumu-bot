@@ -72,7 +72,6 @@ interface OsuUserApiService {
 
     fun getTeamInfo(id: Int): TeamInfo?
 
-    @JvmRecord
     data class TeamInfo(
         val id: Int,
         val name: String,
@@ -85,14 +84,15 @@ interface OsuUserApiService {
         val users: List<OsuUser>,
         val ruleset: OsuMode,
         val application: String,
+        val available: Int,
 
         val rank: Int,
         val pp: Int,
 
-        @JsonProperty("ranked_score")
+        @field:JsonProperty("ranked_score")
         val rankedScore: Long,
 
-        @JsonProperty("play_count")
+        @field:JsonProperty("play_count")
         val playCount: Long,
 
         val members: Int,

@@ -751,38 +751,6 @@ class BeatmapApiImpl(
         return search
     }
 
-    /**
-     * 依据QualifiedMapService 的逻辑来多次获取
-     * tries 一般可以设为 10（500 个结果）
-     */
-    override fun searchBeatmapset(query: Map<String, Any?>, tries: Int): BeatmapsetSearch {
-        val search = BeatmapsetSearch()
-        var page = 1
-        val queryAlt = query.toMutableMap()
-
-        run {
-            do {
-                if (search.beatmapsets.isEmpty()) {
-                    search.combine(searchBeatMapSetFromAPI(queryAlt))
-                } else {
-                    page++
-                    queryAlt["page"] = page
-
-                    search.combine(searchBeatMapSetFromAPI(queryAlt))
-                }
-            } while (search.cursorString != null && page < tries)
-        }
-
-        // 后处理
-        if (query["s"] !== null && query["s"] !== "any") {
-            search.rule = query["s"].toString()
-        }
-
-        search.sortBeatmapDiff()
-
-        return search
-    }
-
     // 给同一张图的成绩添加完整的谱面
     override fun applyBeatmapExtendForSameScore(scores: List<LazerScore>, beatmap: Beatmap) {
         if (scores.isEmpty()) return

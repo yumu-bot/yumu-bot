@@ -112,8 +112,8 @@ class GuestDifficultyService(
             )
 
             val async = AsyncMethodExecutor.awaitTripleCallableExecute(
-                { beatmapApiService.searchBeatmapset(query, 10) },
-                { beatmapApiService.searchBeatmapset(query2, 10) },
+                { beatmapApiService.parallelSearchBeatmapset(query) },
+                { beatmapApiService.parallelSearchBeatmapset(query2) },
                 { userApiService.getOsuUser(id.data!!, mode.data!!) },
             )
 
@@ -150,8 +150,8 @@ class GuestDifficultyService(
             )
 
             val async = AsyncMethodExecutor.awaitPairCallableExecute(
-                { beatmapApiService.searchBeatmapset(query, 10) },
-                { beatmapApiService.searchBeatmapset(query2, 10) },
+                { beatmapApiService.parallelSearchBeatmapset(query) },
+                { beatmapApiService.parallelSearchBeatmapset(query2) },
             )
 
             // 注意，从 search 返回的 beatmapset 包含的 beatmap 会缺谱师信息

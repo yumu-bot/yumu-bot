@@ -46,18 +46,21 @@ import java.util.regex.Pattern
     override fun handleMessage(event: MessageEvent, param: SearchParam): ServiceCallStatistic? {
         val query = constructQuery(param)
 
-        val result: BeatmapsetSearch = try {
-            val res = beatmapApiService.searchBeatmapset(query)
+        val result: BeatmapsetSearch = run {
+            val res = try {
+                beatmapApiService.searchBeatmapset(query)
+            } catch (_: Exception) {
+                try {
+                    beatmapApiService.searchBeatmapset(constructQueryAlternative(param))
+                } catch (_: Exception) {
+                    throw NoSuchElementException.Result()
+                }
+            }
+
             if (res.beatmapsets.isEmpty()) {
                 beatmapApiService.searchBeatmapset(constructQueryAlternative(param))
             } else {
                 res
-            }
-        } catch (e: Exception) {
-            try {
-                beatmapApiService.searchBeatmapset(constructQueryAlternative(param))
-            } catch (e: Exception) {
-                throw NoSuchElementException.Result()
             }
         }
 

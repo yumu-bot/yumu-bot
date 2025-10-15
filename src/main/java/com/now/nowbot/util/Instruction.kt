@@ -411,13 +411,20 @@ enum class Instruction(val pattern: Pattern) {
 
     TEAM(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("tm", "team", "clan")
-        appendQQUIDName()
+        appendModeQQUIDName()
+        appendGroup(MAYBE) {
+            append(REG_STAR)
+            appendSpace()
+            appendCaptureGroup(
+                FLAG_ID, REG_NUMBER, MORE
+            )
+        }
         appendGroup(MAYBE) {
             append(REG_HASH)
             appendMatchLevel(MAYBE)
             appendSpace()
             appendCaptureGroup(
-                "team", REG_NUMBER, MORE
+                FLAG_PAGE, REG_NUMBER_1_100, MORE
             )
         }
     }),

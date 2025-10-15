@@ -38,7 +38,7 @@ import java.util.regex.Pattern
                     .retrieve()
                     .bodyToMono(ByteArray::class.java)
             }
-        } catch (e: NetworkException) {
+        } catch (_: NetworkException) {
             log.error("获取玩家 ${user.userID} 头像失败，尝试返回默认头像")
 
             request { client ->
@@ -84,8 +84,8 @@ import java.util.regex.Pattern
         val o = getOsuUser(user)
         val uid = o.userID
         user.userID = uid
-        user.username = user.username
-        user.mode = user.mode
+        user.username = o.username
+        user.mode = o.currentOsuMode
     }
 
     override fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser {
@@ -178,7 +178,7 @@ import java.util.regex.Pattern
         val idChunk = users.chunked(50)
 
         val callables = idChunk.map {
-            return@map AsyncMethodExecutor.Supplier<List<MicroUser>> {
+            return@map AsyncMethodExecutor.Supplier {
                 getUsersPrivate(it, isVariant = isVariant)
             }
         }
@@ -337,12 +337,15 @@ import java.util.regex.Pattern
         }
     }
 
-    private val teamFormedPattern: Pattern = Pattern.compile(
-        "Formed</div>\\s+<div class=\"team-info-entry__value\">\\s+<time class=\"js-tooltip-time\"\\s+data-tooltip-position=\"bottom center\"\\s+data-orig-title=\"(.+)\""
+    private val teamFormedPattern: Pattern =
+        Pattern.compile(
+            "<time\\s*class=\"js-tooltip-time\"\\s*data-tooltip-position=\"bottom center\"\\s+title=\"(\\S+)\""
     )
     private val teamUserPattern: Pattern = Pattern.compile("data-user=\"(?<json>.+)\"")
     private val teamModePattern: Pattern =
-        Pattern.compile("<div class=\"team-info-entry__title\">Default ruleset</div>\\s+<div class=\"team-info-entry__value\">\\s+<span class=\"fal fa-extra-mode-(\\w+)\">")
+        Pattern.compile(
+            "(?s)<div class=\"team-info-entry__title\">Default ruleset</div>\\s+<div class=\"team-info-entry__value\">\\s+<span class=\"fal fa-extra-mode-(\\w+)\">"
+        )
 
     // 有点刻晴了
     // "<a\s+class="game-mode-link"\s+href="https://osu.ppy.sh/teams/\d+/(.+)"\s+>"
@@ -351,27 +354,27 @@ import java.util.regex.Pattern
         "<h1 class=\"profile-info__name\">\\s*<span class=\"u-ellipsis-overflow\">\\s*([\\S\\s]+)\\s*</span>\\s*</h1>"
     )
     private val teamAbbrPattern: Pattern = Pattern.compile(
-        "<p class=\"profile-info__flag\">\\s+\\[([\\S\\s]+)]\\s+</p>"
+        "(?s)<p class=\"profile-info__flag\">\\s*\\[(.+)]\\s*</p>"
     )
     private val teamApplicationPattern: Pattern = Pattern.compile(
-        "application</div>\\s+<div class=\"team-info-entry__value\">\\s+(.+)\\s+</div>"
+        "(?s)application</div>\\s*<div class=\"team-info-entry__value\">\\s*(\\S+)\\s*\\((\\d+).+\\s*</div>"
     )
 
     private val rankPattern: Pattern = Pattern.compile(
-        "<div class=\"team-info-entry__value team-info-entry__value--large\">\\s+#([\\d,]+)\\s+</div>"
+        "(?s)<div class=\"team-info-entry__value team-info-entry__value--large\">\\s+#([\\d,]+)\\s+</div>"
     )
 
     private val ppPattern: Pattern = Pattern.compile(
-        "<div class=\"team-info-entry__title\">\\s+Performance\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>"
+        "(?s)<div class=\"team-info-entry__title\">\\s+Performance\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>"
     )
     private val rankedScorePattern: Pattern = Pattern.compile(
-        "<div class=\"team-info-entry__title\">\\s+Ranked Score\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>"
+        "(?s)<div class=\"team-info-entry__title\">\\s+Ranked Score\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>"
     )
     private val playCountPattern: Pattern = Pattern.compile(
-        "<div class=\"team-info-entry__title\">\\s+Play Count\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>"
+        "(?s)<div class=\"team-info-entry__title\">\\s+Play Count\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>"
     )
     private val membersPattern: Pattern = Pattern.compile(
-        "<div class=\"team-info-entry__title\">\\s+Members\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>"
+        "(?s)<div class=\"team-info-entry__title\">\\s+Members\\s+</div>\\s+<div class=\"team-info-entry__value\">\\s+([\\d,]+)\\s+</div>"
     )
 
     private val teamDescriptionPattern: Pattern = Pattern.compile("<div class='bbcode'>(.+)</div>")
@@ -426,11 +429,15 @@ import java.util.regex.Pattern
         }
 
         val application: String
+        val available: Int
+
         val applicationMatcher = teamApplicationPattern.matcher(html)
-        application = if (applicationMatcher.find()) {
-            applicationMatcher.group(1)
+        if (applicationMatcher.find()) {
+            application = applicationMatcher.group(1)
+            available = applicationMatcher.group(2)?.toIntOrNull() ?: 0
         } else {
-            ""
+            application = ""
+            available = 0
         }
 
         val rankMatcher = rankPattern.matcher(html)
@@ -485,7 +492,7 @@ import java.util.regex.Pattern
         }
 
         return TeamInfo(
-            id, name, abbr, formed, banner, flag, users, mode, application,
+            id, name, abbr, formed, banner, flag, users, mode, application, available,
 
             rank, pp, rankedScore, playCount, members,
 
@@ -496,11 +503,11 @@ import java.util.regex.Pattern
     @OptIn(ExperimentalStdlibApi::class)
     override fun asyncDownloadAvatar(users: List<MicroUser>) {
         val path = Path.of(IMG_BUFFER_PATH)
-        if (Files.isDirectory(path).not() || Files.isWritable(path).not() ) return
+        if (!Files.isDirectory(path) || !Files.isWritable(path) ) return
 
-        val actions = users.map {
+        val actions = users.map { user ->
             return@map AsyncMethodExecutor.Runnable {
-                val url = it.avatarUrl
+                val url = user.avatarUrl
 
                 if (url.isNullOrBlank()) {
                     log.info("异步下载头像：头像不完整")
@@ -511,7 +518,7 @@ import java.util.regex.Pattern
 
                 try {
                     md.update(url.toByteArray(Charsets.UTF_8))
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     log.info("异步下载谱面图片：计算 MD5 失败")
                     return@Runnable
                 }
@@ -554,9 +561,9 @@ import java.util.regex.Pattern
         val path = Path.of(IMG_BUFFER_PATH)
         if (Files.isDirectory(path).not() || Files.isWritable(path).not() ) return
 
-        val actions = users.map {
+        val actions = users.map { user ->
             return@map AsyncMethodExecutor.Runnable {
-                val url = it.cover?.url ?: it.coverUrl
+                val url = user.cover?.url ?: user.coverUrl
 
                 if (url.isNullOrBlank()) {
                     log.info("异步下载背景：背景不完整")
@@ -567,7 +574,7 @@ import java.util.regex.Pattern
 
                 try {
                     md.update(url.toByteArray(Charsets.UTF_8))
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     log.info("异步下载背景图片：计算 MD5 失败")
                     return@Runnable
                 }

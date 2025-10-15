@@ -96,17 +96,15 @@ interface OsuBeatmapApiService {
      */
     fun searchBeatmapset(query: Map<String, Any?>): BeatmapsetSearch
 
+    /**
+     * 多次获取搜索结果
+     */
     fun parallelSearchBeatmapset(
         query: Map<String, Any?>,
         tries: Int = 4,
         quantity: Int = 5,
         awaitMillis: Long = 200
     ): BeatmapsetSearch
-
-    /**
-     * 多次获取搜索结果
-     */
-    fun searchBeatmapset(query: Map<String, Any?>, tries: Int): BeatmapsetSearch
 
     // 给同一张图的成绩添加完整的谱面
     fun applyBeatmapExtendForSameScore(scores: List<LazerScore>, beatmap: Beatmap)

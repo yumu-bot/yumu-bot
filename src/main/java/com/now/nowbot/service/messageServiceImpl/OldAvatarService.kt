@@ -173,7 +173,7 @@ class OldAvatarService(
             "q" to name, "s" to "any", "page" to 1
         )
 
-        val search = beatmapApiService.searchBeatmapset(query, 1)
+        val search = beatmapApiService.searchBeatmapset(query)
 
         val pairs = search.beatmapsets
             .sortedByDescending { it.lastUpdated?.toInstant()?.toEpochMilli() ?: 0L }
