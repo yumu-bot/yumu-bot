@@ -3,14 +3,13 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.ServiceCallStatisticsDao
-import com.now.nowbot.entity.ServiceCallLite.ServiceCallResult
+import com.now.nowbot.entity.ServiceCallLite.Companion.toStatistic
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.mapper.ServiceCallRepository
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_TIME
@@ -25,7 +24,7 @@ import kotlin.math.roundToInt
 @Service("SERVICE_COUNT")
 class ServiceCountService(
     private val legacyRepository: ServiceCallRepository,
-    private val dao: ServiceCallStatisticsDao,
+    private val serviceCallStatisticsDao: ServiceCallStatisticsDao,
     private val imageService: ImageService
 ) : MessageService<ServiceCountService.ServiceCountParam> {
 
@@ -46,7 +45,7 @@ class ServiceCountService(
         if (!matcher.find()) return false
 
         if (!Permission.isSuperAdmin(event.sender.id)) {
-            throw PermissionException.DeniedException.BelowSuperAdministrator()
+            return false
         }
 
         val range = getTimeRange(matcher.group(FLAG_TIME))
@@ -77,32 +76,67 @@ class ServiceCountService(
     override fun handleMessage(
         event: MessageEvent, param: ServiceCountParam
     ): ServiceCallStatistic? {
-
-        if (param.from.isBefore(boundary) || param.status == ServiceCountStatus.ALL) {
-            val md = getLegacyServiceCountMarkdown(param)
-
-            val image = imageService.getPanelA6(md, "service")
-
-            event.reply(image)
+        val md = if (param.status == ServiceCountStatus.DAILY) {
+            val pair = getServiceCountListDaily(param)
+            getServiceCountMarkdownDaily(param, pair.first, pair.second)
+        } else {
+            val services = getServiceCountList(param)
+            getServiceCountMarkdown(param, services)
         }
 
-        if (param.to.isAfter(boundary) || param.status == ServiceCountStatus.ALL) {
-            val md = if (param.status == ServiceCountStatus.DAILY) {
-                getServiceCountMarkdownDaily(param)
-            } else {
-                getServiceCountMarkdown(param)
-            }
+        val image = imageService.getPanelA6(md, "service")
 
-            val image = imageService.getPanelA6(md, "service")
-
-            event.reply(image)
-        }
-
+        event.reply(image)
 
         return ServiceCallStatistic.building(event)
     }
 
-    private fun getServiceCountMarkdown(param: ServiceCountParam): String {
+    /**
+     * 整合新老两版的数据
+     */
+    private fun getServiceCountList(
+        param: ServiceCountParam
+    ): List<ServiceCallStatistic> {
+        val services = mutableListOf<ServiceCallStatistic>()
+
+        if (param.status == ServiceCountStatus.ALL) {
+            return legacyRepository.getBetween(minimum, param.to).map {
+                it.toStatistic()
+            } + serviceCallStatisticsDao.getBetween(minimum, param.to)
+        }
+
+        if (param.from.isBefore(boundary)) {
+            services.addAll(
+                legacyRepository.getBetween(param.from, param.to).map {
+                    it.toStatistic()
+                }
+            )
+
+        }
+
+        if (param.to.isAfter(boundary)) {
+            services.addAll(serviceCallStatisticsDao.getBetween(param.from, param.to))
+        }
+
+        return services.toList()
+    }
+
+    /**
+     * 获取今天和前一天的数据
+     */
+    private fun getServiceCountListDaily(param: ServiceCountParam): Pair<List<ServiceCallStatistic>, List<ServiceCallStatistic>> {
+        val monthAgo = param.to.minus(
+            java.time.Duration.ofDays(
+                param.to.toLocalDate().lengthOfMonth().toLong()
+            ))
+
+        val today = ServiceCountParam(param.to.minusDays(1), param.to, param.status)
+        val monthly = ServiceCountParam(monthAgo, param.to, param.status)
+
+        return getServiceCountList(today) to getServiceCountList(monthly)
+    }
+
+    private fun getServiceCountMarkdown(param: ServiceCountParam, list: List<ServiceCallStatistic>): String {
         val sb = StringBuilder("## 时间段：${param.from.format(dateTimeFormatter)} - ${param.to.format(dateTimeFormatter)}\n")
 
         sb.append("""
@@ -111,17 +145,9 @@ class ServiceCountService(
             """.trimIndent()
         ).append('\n')
 
-        val list = if (param.status == ServiceCountStatus.ALL) {
-            dao.getBetween(minimum, param.to)
-        } else {
-            dao.getBetween(param.from, param.to)
-        }
-
         val map = list
             .groupBy { it.name }
             .mapValues { (_, v) -> v.map { it.duration } }
-
-        // val x = (map.values.maxOfOrNull { it.average() }?.roundToLong() ?: 0L).coerceIn(10000L, 15000L)
 
         val avs = map.mapValues { (_, v) -> v.average() }
         val mxs = map.mapValues { (_, v) -> v.takePercent(0.1) ?: 0L }
@@ -163,7 +189,11 @@ class ServiceCountService(
         return sb.toString()
     }
 
-    private fun getServiceCountMarkdownDaily(param: ServiceCountParam): String {
+    private fun getServiceCountMarkdownDaily(
+        param: ServiceCountParam,
+        list: List<ServiceCallStatistic>,
+        monthlyList: List<ServiceCallStatistic>
+    ): String {
         val sb = StringBuilder("## 时间段：${param.from.format(dateTimeFormatter)} - ${param.to.format(dateTimeFormatter)} (日结模式)\n")
 
         sb.append("""
@@ -171,15 +201,6 @@ class ServiceCountService(
             | :-: | :-- | :-: | :-: | :-: | :-: | :-: | :-- | :-: | :-: |
             """.trimIndent()
         ).append('\n')
-
-        val list = dao.getBetween(param.from, param.to)
-        val beforeList = dao.getBetween(
-            param.to
-                .minus(java.time.Duration.ofDays(
-                    param.to.toLocalDate().lengthOfMonth().toLong()
-                )),
-            param.to
-        )
 
         val map = list
             .groupBy { it.name }
@@ -214,7 +235,7 @@ class ServiceCountService(
             return "| $index | $name | ${times.size} | ${av.roundToSec()}s | ${md.roundToSec()}s | ${mx.roundToSec()}s | ${mi.roundToSec()}s | $blocks | ${dau ?: 0} | $stickiness |"
         }
 
-        val mau = beforeList
+        val mau = monthlyList
             .groupBy { it.name }
             .mapValues { (_, v) -> v.map { it.userID }.toSet().size }
 
@@ -234,7 +255,7 @@ class ServiceCountService(
             }
 
         val dauTotal = list.map { it.userID }.toSet().size
-        val mauTotal = beforeList.map { it.userID }.toSet().size
+        val mauTotal = monthlyList.map { it.userID }.toSet().size
 
         val stickiness = String.format("%.1f", dauTotal * 100.0 / mauTotal.coerceAtLeast(1)) + "%"
 
@@ -242,107 +263,6 @@ class ServiceCountService(
 
         return sb.toString()
     }
-
-
-    private fun getLegacyServiceCountMarkdown(param: ServiceCountParam): String {
-        val sb = StringBuilder()
-        val result: List<ServiceCallResult>?
-
-        val now = LocalDateTime.now()
-
-        val from: LocalDateTime
-        val to: LocalDateTime = param.to
-
-        when (param.status) {
-            ServiceCountStatus.ALL -> {
-                from = minimum
-                sb.append("## 时间段：迄今为止\n")
-                result = legacyRepository.countAll()
-            }
-
-            ServiceCountStatus.DAILY -> {
-                from = param.from
-                result = legacyRepository.countBetween(from, to)
-                sb.append("## 时间段：今天之内\n")
-            }
-
-            else -> {
-                from = param.from
-                sb.append(
-                    "## 时间段：**${from.format(dateTimeFormatter)}** - **${now.format(dateTimeFormatter)}**\n"
-                )
-                result = legacyRepository.countBetween(from, now)
-            }
-        }
-
-        val r1 = legacyRepository.countBetweenLimit(from, to, 0.01).associate { it.service to it.data }
-        val r50 = legacyRepository.countBetweenLimit(from, to, 0.50).associate { it.service to it.data }
-        val r80 = legacyRepository.countBetweenLimit(from, to, 0.80).associate { it.service to it.data }
-        val r99 = legacyRepository.countBetweenLimit(from, to, 0.99).associate { it.service to it.data }
-
-        sb.getCharts(result, r1, r50, r80, r99)
-
-        return sb.toString()
-    }
-
-    // 构建表格
-    private fun StringBuilder.getCharts(
-        result: List<ServiceCallResult>?,
-        r1: Map<String, Long>,
-        r50: Map<String, Long>,
-        r80: Map<String, Long>,
-        r99: Map<String, Long>
-    ) {
-        if (result.isNullOrEmpty()) return
-
-        this.append(
-            """
-                | 服务名 | 调用次数 | 最长用时 (99%) | 大部分人用时 (80%) | 平均用时 (50%) | 最短用时 (1%) |
-                | :-- | :-: | :-: | :-: | :-: | :-: |
-                """.trimIndent()
-        ).append('\n')
-
-        var count = 0
-        val r99List = ArrayList<Long>()
-        val r80List = ArrayList<Long>()
-        val r50List = ArrayList<Long>()
-        val r1List = ArrayList<Long>()
-
-        for (r in result) {
-            val service = r.service
-            val size = r.size
-
-            count += size
-
-            r99List.add(r99.getOrDefault(service, 0L) * size)
-            r80List.add(r80.getOrDefault(service, 0L) * size)
-            r50List.add(r50.getOrDefault(service, 0L) * size)
-            r1List.add(r1.getOrDefault(service, 0L) * size)
-
-            this.append("| ").append(service).append(" | ").append(size).append(" | ")
-                .append(r99.getOrDefault(service, 0L).roundToSec()).append('s').append(" | ")
-                .append(r80.getOrDefault(service, 0L).roundToSec()).append('s').append(" | ")
-                .append(r50.getOrDefault(service, 0L).roundToSec()).append('s').append(" | ")
-                .append(r1.getOrDefault(service, 0L).roundToSec()).append('s').append(" |\n")
-        }
-
-        this.append("| ").append("总计和平均").append(" | ").append(count).append(" | ")
-            .append(getListAverage(r99List, count).roundToSec()).append('s').append(" | ")
-            .append(getListAverage(r80List, count).roundToSec()).append('s').append(" | ")
-            .append(getListAverage(r50List, count).roundToSec()).append('s').append(" | ")
-            .append(getListAverage(r1List, count).roundToSec()).append('s').append(" |\n")
-    }
-
-    //数组求平均值
-    private fun getListAverage(list: List<Long>?, count: Int): Float {
-        return if (list.isNullOrEmpty() || count == 0) {
-            0f
-        } else {
-            list.sum() * 1f / count
-        }
-    }
-
-    //1926ms -> 1.9s
 
     companion object {
         private val boundary = LocalDateTime.of(2025, 10, 9, 8, 0, 0)
@@ -387,10 +307,10 @@ class ServiceCountService(
 
             val count = (size * percent.absoluteValue).toInt().coerceAtLeast(1)
             return if (percent >= 0.0) {
-                sortedDescending().getOrNull(count - 1)
+                sortedDescending()
             } else {
-                sorted().getOrNull(count - 1)
-            }
+                sorted()
+            }.getOrNull(count - 1)
         }
 
 

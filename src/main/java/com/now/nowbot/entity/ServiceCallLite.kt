@@ -1,49 +1,30 @@
-package com.now.nowbot.entity;
+package com.now.nowbot.entity
 
-import jakarta.persistence.*;
+import jakarta.persistence.*
+import java.time.LocalDateTime
 
-import java.time.LocalDateTime;
+@Entity @Table(name = "service_call")
+class ServiceCallLite {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long? = null
 
-@Entity
-@Table(name = "service_call")
-public class ServiceCallLite {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    @Column(name = "service")
+    var name: String = ""
 
-    String service;
-    Long   time;
+    @Column(name = "time")
+    var duration: Long = 0L
 
     @Column(name = "ctime")
-    LocalDateTime createTime;
+    var createTime: LocalDateTime = LocalDateTime.now()
 
-    public ServiceCallLite() {
-        createTime = LocalDateTime.now();
-    }
-
-    public ServiceCallLite(String service, Long time) {
-        this.service = service;
-        this.time = time;
-        createTime = LocalDateTime.now();
-    }
-
-
-    public interface ServiceCallResult {
-        String getService();
-
-        Integer getSize();
-
-        Double getAvgTime();
-
-        Long getMinTime();
-
-        Long getMaxTime();
-    }
-
-
-    public interface ServiceCallResultLimit {
-        String getService();
-
-        Long getData();
+    companion object {
+        fun ServiceCallLite.toStatistic(): ServiceCallStatistic {
+            return ServiceCallStatistic(
+                id = id,
+                name = name,
+                duration = duration,
+                createTime = createTime,
+            )
+        }
     }
 }

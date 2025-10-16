@@ -104,10 +104,10 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
         } catch (e: NetworkException.DivingFishException.NotFound) {
             val path = path.resolve("Cover").resolve("0.png")
 
-            try {
-                return Files.readAllBytes(path)
+            return try {
+                Files.readAllBytes(path)
             } catch (e: IOException) {
-                return byteArrayOf()
+                byteArrayOf()
             }
         }
 
@@ -317,15 +317,17 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
     private fun <T> request(request: (WebClient) -> Mono<T>): T {
         return try {
             request(base.divingFishApiWebClient).block()!!
-        } catch (e: WebClientResponseException.BadGateway) {
+        } catch (_: WebClientResponseException.BadRequest) {
+            throw NetworkException.DivingFishException.BadRequest()
+        } catch (_: WebClientResponseException.BadGateway) {
             throw NetworkException.DivingFishException.BadGateway()
-        } catch (e: WebClientResponseException.Unauthorized) {
+        } catch (_: WebClientResponseException.Unauthorized) {
             throw NetworkException.DivingFishException.Unauthorized()
-        } catch (e: WebClientResponseException.Forbidden) {
+        } catch (_: WebClientResponseException.Forbidden) {
             throw NetworkException.DivingFishException.Forbidden()
-        } catch (e: ReadTimeoutException) {
+        } catch (_: ReadTimeoutException) {
             throw NetworkException.DivingFishException.RequestTimeout()
-        } catch (e: WebClientResponseException.InternalServerError) {
+        } catch (_: WebClientResponseException.InternalServerError) {
             throw NetworkException.DivingFishException.InternalServerError()
         } catch (e: Exception) {
             log.error("水鱼查分器：获取失败", e)
