@@ -40,7 +40,7 @@ class OsuAvatarCardService(
         messageText: String,
         data: MessageService.DataValue<OsuUser>
     ): Boolean {
-        val matcher = Instruction.OSU_AVATAR_CARD.matcher(messageText)
+        val matcher = Instruction.OSU_AVATAR_PROFILE.matcher(messageText)
         if (!matcher.find()) return false
 
         val u = bindDao.getBindFromQQ(event.sender.id)
@@ -57,7 +57,7 @@ class OsuAvatarCardService(
     }
 
     override fun accept(event: MessageEvent, messageText: String): OsuUser? {
-        if (!OfficialInstruction.OSU_AVATAR_CARD.matcher(messageText).find()) return null
+        if (!OfficialInstruction.OSU_AVATAR_PROFILE.matcher(messageText).find()) return null
         val u = bindDao.getBindFromQQ(event.sender.id)
         return userApiService.getOsuUser(u)
     }

@@ -3,6 +3,8 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.MicroUser
+import com.now.nowbot.model.osu.MicroUser.Companion.toOsuUser
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.osu.OsuUser.Companion.toMicroUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
@@ -47,6 +49,7 @@ class OldAvatarService(
         val name: String?,
         val at: Boolean,
         val isMyself: Boolean,
+        val version: Int = 1,
     )
 
     override fun isHandle(
@@ -54,17 +57,28 @@ class OldAvatarService(
         messageText: String,
         data: DataValue<OAParam>,
     ): Boolean {
-        val matcher = Instruction.OLD_AVATAR.matcher(messageText)
-        if (!matcher.find()) return false
+        val m1 = Instruction.OLD_AVATAR.matcher(messageText)
+        val m2 = Instruction.OLD_AVATAR_CARD.matcher(messageText)
 
-        data.value = getParam(event, matcher)
+        val matcher: Matcher
+        val version: Int
+
+        if (m1.find()) {
+            matcher = m1
+            version = 1
+        } else if (m2.find()) {
+            matcher = m2
+            version = 2
+        } else return false
+
+        data.value = getParam(event, matcher, version)
         return true
     }
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: OAParam): ServiceCallStatistic? {
         val users = getUsers(param)
-        val images = getImages(users)
+        val images = getImages(users, param.version)
 
         try {
             if (images.size == 1) {
@@ -81,10 +95,21 @@ class OldAvatarService(
     }
 
     override fun accept(event: MessageEvent, messageText: String): OAParam? {
-        val matcher = OfficialInstruction.OLD_AVATAR.matcher(messageText)
-        if (!matcher.find()) return null
+        val m1 = OfficialInstruction.OLD_AVATAR.matcher(messageText)
+        val m2 = Instruction.OLD_AVATAR_CARD.matcher(messageText)
 
-        return getParam(event, matcher)
+        val matcher: Matcher
+        val version: Int
+
+        if (m1.find()) {
+            matcher = m1
+            version = 1
+        } else if (m2.find()) {
+            matcher = m2
+            version = 2
+        } else return null
+
+        return getParam(event, matcher, version)
     }
 
     override fun reply(event: MessageEvent, param: OAParam): MessageChain? {
@@ -104,21 +129,21 @@ class OldAvatarService(
         }
     }
 
-    private fun getParam(event: MessageEvent, matcher: Matcher): OAParam {
+    private fun getParam(event: MessageEvent, matcher: Matcher, version: Int = 1): OAParam {
         val qqStr: String = matcher.group(FLAG_QQ_ID) ?: ""
         val uidStr: String = matcher.group(FLAG_UID) ?: ""
         val name: String = matcher.group(FLAG_DATA) ?: ""
 
         return if (event.hasAt()) {
-            OAParam(event.target, null, null, at = true,  isMyself = false)
+            OAParam(event.target, null, null, at = true,  isMyself = false, version = version)
         } else if (qqStr.isNotBlank()) {
-            OAParam(qqStr.toLongOrNull(), null, null, at = false, isMyself = false)
+            OAParam(qqStr.toLongOrNull(), null, null, at = false, isMyself = false, version = version)
         } else if (uidStr.isNotBlank()) {
-            OAParam(null, uidStr.toLongOrNull(), null, at = false, isMyself = false)
+            OAParam(null, uidStr.toLongOrNull(), null, at = false, isMyself = false, version = version)
         } else if (name.isNotBlank()) {
-            OAParam(null, null, name.trim(), at = false, isMyself = false)
+            OAParam(null, null, name.trim(), at = false, isMyself = false, version = version)
         } else {
-            OAParam(event.sender.id, null, null, at = false, isMyself = true)
+            OAParam(event.sender.id, null, null, at = false, isMyself = true, version = version)
         }
     }
 
@@ -214,17 +239,17 @@ class OldAvatarService(
         return banned
     }
 
-    private fun getUsers(param: OAParam): List<MicroUser> {
-        val user: MicroUser
+    private fun getUsers(param: OAParam): List<OsuUser> {
+        val user: OsuUser
 
         if (param.uid != null) {
             try {
-                user = userApiService.getOsuUser(param.uid).toMicroUser()
+                user = userApiService.getOsuUser(param.uid)
             } catch (_: Exception) {
                 throw NoSuchElementException.Player(param.uid.toString())
             }
         } else if (param.qq != null) {
-            user = userApiService.getOsuUser(bindDao.getBindFromQQ(param.qq)).toMicroUser()
+            user = userApiService.getOsuUser(bindDao.getBindFromQQ(param.qq))
         } else {
             val users = parseDataString(param.name)
 
@@ -232,23 +257,26 @@ class OldAvatarService(
                 throw IllegalStateException.Fetch("玩家名")
             }
 
-            AsyncMethodExecutor.asyncRunnableExecute {
-                userApiService.asyncDownloadAvatar(users)
-            }
+            userApiService.asyncDownloadAvatar(users)
 
-            return users
+            return users.map { it.toOsuUser() }
         }
 
         return listOf(user)
     }
 
-    private fun getImages(users: List<MicroUser>): List<ByteArray> {
+    private fun getImages(users: List<OsuUser>, version: Int = 1): List<ByteArray> {
+        val panel = when (version) {
+            2 -> "Epsilon2"
+            else -> "Epsilon"
+        }
+
         return if (users.size > 1) {
             try {
                 AsyncMethodExecutor.awaitSupplierExecute(
                     users.map { u ->
                         AsyncMethodExecutor.Supplier {
-                            imageService.getPanel(mapOf("user" to u), "Epsilon")
+                            imageService.getPanel(mapOf("user" to u), panel)
                         }
                     }, Duration.ofSeconds(30L + users.size / 2)
                 )
@@ -256,7 +284,7 @@ class OldAvatarService(
                 throw NetworkException.RenderModuleException.BadGateway()
             }
         } else {
-            listOf(imageService.getPanel(mapOf("user" to users.first()), "Epsilon"))
+            listOf(imageService.getPanel(mapOf("user" to users.first()), panel))
         }
     }
 

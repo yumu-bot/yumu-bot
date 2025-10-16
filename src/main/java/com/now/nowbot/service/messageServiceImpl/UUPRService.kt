@@ -245,9 +245,9 @@ class UUPRService(
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
             if (isPass) {
-                throw NoSuchElementException.RecentScore(data!!.username, data!!.currentOsuMode)
-            } else {
                 throw NoSuchElementException.PassedScore(data!!.username, data!!.currentOsuMode)
+            } else {
+                throw NoSuchElementException.RecentScore(data!!.username, data!!.currentOsuMode)
             }
         }
 

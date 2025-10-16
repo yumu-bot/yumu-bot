@@ -774,8 +774,15 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),
 
-    OSU_AVATAR_CARD(CommandPatternBuilder.create {
+    OLD_AVATAR_CARD(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(old|osu)?\\s*card", "oc")
+        appendQQID()
+        appendUID()
+        appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
+    }),
+
+    OSU_AVATAR_PROFILE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("(old|osu)?\\s*profile", "op")
     }),
 
     OVER_SR(CommandPatternBuilder.create {

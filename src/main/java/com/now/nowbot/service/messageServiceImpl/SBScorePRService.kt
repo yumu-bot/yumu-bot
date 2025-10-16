@@ -253,9 +253,9 @@ class SBScorePRService(
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
             if (isPass) {
-                throw NoSuchElementException.RecentScore(this.data!!.toString(), mode)
-            } else {
                 throw NoSuchElementException.PassedScore(this.data!!.toString(), mode)
+            } else {
+                throw NoSuchElementException.RecentScore(this.data!!.toString(), mode)
             }
         }
 
@@ -300,9 +300,9 @@ class SBScorePRService(
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
             if (isPass) {
-                throw NoSuchElementException.RecentScore(data!!.username, mode)
-            } else {
                 throw NoSuchElementException.PassedScore(data!!.username, mode)
+            } else {
+                throw NoSuchElementException.RecentScore(data!!.username, mode)
             }
         }
 
