@@ -7,9 +7,8 @@ import java.util.regex.Pattern
 
 enum class OfficialInstruction(val pattern: Pattern) {
     // #0 调出帮助
-    // 与官方 bot 使用上有差异先不发
     HELP(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("h")
+        appendOfficialCommandsIgnoreAll("h", "help")
     }),
 
     // #1 BOT 内部指令
@@ -29,7 +28,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     SCORE_PASS(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("p")
+        appendOfficialCommandsIgnoreAll("p", "pass")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
@@ -45,7 +44,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     SCORE_PASS_SHOW(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("pw")
+        appendOfficialCommandsIgnoreAll("pw", "pass(es)?\\s*show")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
@@ -61,7 +60,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     SCORE_PASSES(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("ps")
+        appendOfficialCommandsIgnoreAll("ps", "passes")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
@@ -77,7 +76,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     SCORE_RECENT(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("r")
+        appendOfficialCommandsIgnoreAll("r", "recent")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
@@ -93,7 +92,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     SCORE_RECENT_SHOW(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("rw")
+        appendOfficialCommandsIgnoreAll("rw", "recents?\\s*show")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
@@ -109,7 +108,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     SCORE_RECENTS(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("rs")
+        appendOfficialCommandsIgnoreAll("rs", "recents")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
@@ -125,12 +124,12 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     PR_CARD(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("pc")
+        appendOfficialCommandsIgnoreAll("pc", "pass\\s*card")
         appendModeQQUIDNameRange()
     }),
 
     RE_CARD(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("rc")
+        appendOfficialCommandsIgnoreAll("rc", "recent\\s*card")
         appendModeQQUIDNameRange()
     }),
 
@@ -151,27 +150,27 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     SCORE(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("s")
+        appendOfficialCommandsIgnoreAll("s", "score")
         appendModeBIDQQUIDNameMod()
     }),
 
     UU_SCORE(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("uu?\\s*s")
+        appendOfficialCommandsIgnoreAll("uu?\\s*(score|s)")
         appendModeBIDQQUIDNameMod()
     }),
 
     SCORE_SHOW(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("sw")
+        appendOfficialCommandsIgnoreAll("sw", "scores?\\s*show")
         appendModeBIDQQUIDNameMod()
     }),
 
     SCORES(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("ss")
+        appendOfficialCommandsIgnoreAll("ss", "scores")
         appendModeBIDQQUIDNameMod()
     }),
 
     BP(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("b")
+        appendOfficialCommandsIgnoreAll("b", "best")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
@@ -186,7 +185,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     BP_SHOW(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("bw")
+        appendOfficialCommandsIgnoreAll("bw", "bests?\\s*show")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
@@ -201,7 +200,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     BPS(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("bs")
+        appendOfficialCommandsIgnoreAll("bs", "bests")
         appendModeQQUIDNameRange()
         appendIgnore(REG_OPERATOR)
         appendGroup(MAYBE) {
@@ -216,28 +215,28 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     TODAY_BP(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("t")
+        appendOfficialCommandsIgnoreAll("t", "today\\s*(bests?|bp)")
         appendModeQQUIDNameRange()
     }),
 
     BP_FIX(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("bf")
+        appendOfficialCommandsIgnoreAll("bf", "(bests?|bp)\\s*fix")
         appendModeQQUIDNameRange()
     }),
 
     BP_ANALYSIS(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("ba")
+        appendOfficialCommandsIgnoreAll("ba", "(bests?|bp)\\s*(analys(e|sis))")
         appendModeQQUIDName()
     }),
 
     UU_BA(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("ua")
+        appendOfficialCommandsIgnoreAll("uu?b?a")
         appendModeQQUIDName()
     }),
 
     // #3 osu! 玩家指令
     INFO(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("i")
+        appendOfficialCommandsIgnoreAll("i", "info")
         appendModeQQUIDName()
         appendGroup(MAYBE) {
             append(REG_HASH)
@@ -247,12 +246,12 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     INFO_CARD(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("ic")
+        appendOfficialCommandsIgnoreAll("ic", "info\\s*card")
         appendModeQQUIDName()
     }),
 
     I_MAPPER(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("im")
+        appendOfficialCommandsIgnoreAll("im", "im?\\s*mapper")
         appendQQUIDName()
     }),
 
@@ -288,19 +287,19 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     SKILL(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("skills?", "k")
+        appendOfficialCommandsIgnoreAll("k", "skills?")
         appendModeQQUID()
         append2Name()
     }),
 
     SKILL_VS(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("skills?\\s*v(ersu)?s", "kv")
+        appendOfficialCommandsIgnoreAll("kv", "skills?\\s*v(ersu)?s")
         appendModeQQUID()
         append2Name()
     }),
 
     BADGE(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("badge", "bd")
+        appendOfficialCommandsIgnoreAll("bd", "badge")
         appendQQUIDName()
     }),
 
@@ -311,7 +310,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
 
     // #4 osu! 谱面指令
     MAP(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("map", "m")
+        appendOfficialCommandsIgnoreAll("m", "map")
 
         appendMode()
         appendBID()
@@ -325,7 +324,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     QUALIFIED_MAP(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("qualified", "q")
+        appendOfficialCommandsIgnoreAll("q", "qualified")
         appendMode()
 
         appendGroup(MAYBE) {
@@ -355,7 +354,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     MAP_MINUS(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("mm")
+        appendOfficialCommandsIgnoreAll("mm", "map\\s*minus")
         appendMode()
         appendBID()
         appendMod()
@@ -404,7 +403,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     MATCH_NOW(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("mn")
+        appendOfficialCommandsIgnoreAll("mn", "match\\s*now")
 
         appendMatchID()
         appendMatchParam()
@@ -414,20 +413,20 @@ enum class OfficialInstruction(val pattern: Pattern) {
     // ...
     // #7 娱乐指令
     DICE(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("d")
+        appendOfficialCommandsIgnoreAll("d", "dice")
         appendCaptureGroup("number", "-?\\d", ANY)
         appendCaptureGroup("text", REG_ANYTHING, MORE)
     }),
 
     // #8 辅助指令
     OLD_AVATAR(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("oa")
+        appendOfficialCommandsIgnoreAll("oa", "old\\s*avatar")
         appendModeQQUID()
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),
 
     OLD_AVATAR_CARD(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("oc")
+        appendOfficialCommandsIgnoreAll("oc", "old\\s*(avatar\\s*)?card")
         appendModeQQUID()
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),

@@ -774,7 +774,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     OLD_AVATAR_CARD(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(old|osu)?\\s*card", "oc")
+        appendCommandsIgnoreAll("(old|osu)?\\s*(card|chicken)", "oishi", "oc")
         appendModeQQUID()
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),
