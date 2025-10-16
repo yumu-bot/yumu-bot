@@ -2,8 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.osu.MicroUser
-import com.now.nowbot.model.osu.MicroUser.Companion.toOsuUser
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.osu.OsuUser.Companion.toMicroUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -15,7 +14,6 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.OldAvatarService.OAParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
@@ -25,6 +23,7 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.QQMsgUtil
 import com.now.nowbot.util.command.FLAG_DATA
+import com.now.nowbot.util.command.FLAG_MODE
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.FLAG_UID
 import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
@@ -49,6 +48,7 @@ class OldAvatarService(
         val name: String?,
         val at: Boolean,
         val isMyself: Boolean,
+        val mode: OsuMode,
         val version: Int = 1,
     )
 
@@ -133,22 +133,23 @@ class OldAvatarService(
         val qqStr: String = matcher.group(FLAG_QQ_ID) ?: ""
         val uidStr: String = matcher.group(FLAG_UID) ?: ""
         val name: String = matcher.group(FLAG_DATA) ?: ""
+        val mode = OsuMode.getMode(matcher.group(FLAG_MODE), bindDao.getGroupModeConfig(event))
 
         return if (event.hasAt()) {
-            OAParam(event.target, null, null, at = true,  isMyself = false, version = version)
+            OAParam(event.target, null, null, at = true, isMyself = false, mode = mode, version = version)
         } else if (qqStr.isNotBlank()) {
-            OAParam(qqStr.toLongOrNull(), null, null, at = false, isMyself = false, version = version)
+            OAParam(qqStr.toLongOrNull(), null, null, at = false, isMyself = false, mode = mode, version = version)
         } else if (uidStr.isNotBlank()) {
-            OAParam(null, uidStr.toLongOrNull(), null, at = false, isMyself = false, version = version)
+            OAParam(null, uidStr.toLongOrNull(), null, at = false, isMyself = false, mode = mode, version = version)
         } else if (name.isNotBlank()) {
-            OAParam(null, null, name.trim(), at = false, isMyself = false, version = version)
+            OAParam(null, null, name.trim(), at = false, isMyself = false, mode = mode, version = version)
         } else {
-            OAParam(event.sender.id, null, null, at = false, isMyself = true, version = version)
+            OAParam(event.sender.id, null, null, at = false, isMyself = true, mode = mode, version = version)
         }
     }
 
 
-    private fun parseDataString(dataStr: String?): List<MicroUser> {
+    private fun parseDataString(dataStr: String?, mode: OsuMode): List<OsuUser> {
         if (dataStr.isNullOrBlank()) return emptyList()
 
         val strings =
@@ -162,24 +163,31 @@ class OldAvatarService(
 
         return if (strings.size == 1) {
             try {
-                listOf(userApiService.getOsuUser(strings.first()).toMicroUser())
+                listOf(userApiService.getOsuUser(strings.first(), mode))
             } catch (_: Exception) {
-                listOf(getBannedPlayerFromSearch(strings.first()))
+                listOf(getBannedPlayerFromSearch(strings.first(), mode))
             }
         } else {
             try {
                 AsyncMethodExecutor.awaitCallableExecute({
                     strings.map { name ->
-                        userApiService.getOsuUser(name).toMicroUser()
+                        userApiService.getOsuUser(name, mode)
                     }
                 })
             } catch (_: ExecutionException) {
-                throw IllegalArgumentException.WrongException.PlayerName()
+                // 可能含有被 ban 的玩家，退回到逐个获取
+                strings.map { name ->
+                    try {
+                        userApiService.getOsuUser(name, mode)
+                    } catch (_: NetworkException) {
+                        getBannedPlayerFromSearch(name, mode)
+                    }
+                }
             }
         }
     }
 
-    private fun getBannedPlayerFromSearch(input: String): MicroUser {
+    private fun getBannedPlayerFromSearch(input: String, mode: OsuMode): OsuUser {
 
         // 如果输入的格式是 deleteduser_121313 的形式，那么后面的数字就是玩家 id
 
@@ -230,11 +238,12 @@ class OldAvatarService(
             throw NoSuchElementException.Player(name)
         }
 
-        val banned = set.creatorData!!
-            .toMicroUser()
-            .apply {
-                username = set.creator
-            }
+        val m = OsuMode.getMode(mode, OsuMode.getMode(set.ranked))
+
+        val banned = set.creatorData!!.apply {
+            this.username = set.creator
+            this.currentOsuMode = m
+        }
 
         return banned
     }
@@ -244,22 +253,24 @@ class OldAvatarService(
 
         if (param.uid != null) {
             try {
-                user = userApiService.getOsuUser(param.uid)
+                user = userApiService.getOsuUser(param.uid, param.mode)
             } catch (_: Exception) {
                 throw NoSuchElementException.Player(param.uid.toString())
             }
         } else if (param.qq != null) {
-            user = userApiService.getOsuUser(bindDao.getBindFromQQ(param.qq))
+            val bind = bindDao.getBindFromQQ(param.qq)
+
+            user = userApiService.getOsuUser(bind.userID, OsuMode.getMode(param.mode, bind.mode))
         } else {
-            val users = parseDataString(param.name)
+            val users = parseDataString(param.name, param.mode)
 
             if (users.isEmpty()) {
                 throw IllegalStateException.Fetch("玩家名")
             }
 
-            userApiService.asyncDownloadAvatar(users)
+            userApiService.asyncDownloadAvatar(users.map { it.toMicroUser() })
 
-            return users.map { it.toOsuUser() }
+            return users
         }
 
         return listOf(user)

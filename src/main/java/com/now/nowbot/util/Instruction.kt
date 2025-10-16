@@ -769,15 +769,13 @@ enum class Instruction(val pattern: Pattern) {
     // #8 辅助指令
     OLD_AVATAR(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(old|osu)?\\s*avatar", "oa")
-        appendQQID()
-        appendUID()
+        appendModeQQUID()
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),
 
     OLD_AVATAR_CARD(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(old|osu)?\\s*card", "oc")
-        appendQQID()
-        appendUID()
+        appendModeQQUID()
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),
 
