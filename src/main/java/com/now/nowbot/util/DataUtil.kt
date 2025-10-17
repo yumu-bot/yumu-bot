@@ -1168,20 +1168,20 @@ object DataUtil {
     }
 
     fun getGenre(genre: String?): Byte? {
-        return when (genre?.lowercase()) {
-            "u", "un", "uns", "unspecified" -> 1
-            "v", "vg", "vgm", "videogame", "video game" -> 2
-            "a", "an", "ani", "manga", "anime" -> 3
-            "r", "rk", "rock" -> 4
-            "p", "pp", "pop" -> 5
-            "o", "ot", "oth", "other" -> 6
-            "n", "nv", "nvt", "novel", "novelty" -> 7
-            "h", "hh", "hip", "hop", "hiphop", "hip hop" -> 9
-            "e", "el", "ele", "elect", "electro", "electric", "electronic" -> 10
-            "m", "mt", "mtl", "metal" -> 11
-            "c", "cl", "cls", "classic", "classical" -> 12
-            "f", "fk", "folk" -> 13
-            "j", "jz", "jazz" -> 14
+        return when (genre?.lowercase()?.dropWhile { it.isWhitespace() }) {
+            "u", "un", "uns", "unspecified", "未指定", "默认" -> 1
+            "v", "vg", "vgm", "videogame", "电子游戏", "游戏" -> 2
+            "a", "an", "ani", "manga", "anime", "动漫" -> 3
+            "r", "rk", "rock", "摇滚" -> 4
+            "p", "pp", "pop", "流行" -> 5
+            "o", "ot", "oth", "other", "其他" -> 6
+            "n", "nv", "nvt", "novel", "novelty", "新奇", "鬼畜" -> 7
+            "h", "hh", "hip", "hop", "hiphop", "嘻哈" -> 9
+            "e", "el", "ele", "elect", "electro", "electric", "electronic", "电子", "舞曲" -> 10
+            "m", "mt", "mtl", "metal", "金属" -> 11
+            "c", "cl", "cls", "classic", "classical", "古典" -> 12
+            "f", "fk", "folk", "民谣" -> 13
+            "j", "jz", "jazz", "爵士" -> 14
             else -> null
         }
     }
@@ -1189,20 +1189,20 @@ object DataUtil {
     @JvmStatic
     fun getLanguage(language: String?): Byte? {
         return when (language?.lowercase()) {
-            "c", "cn", "chn", "china", "chinese" -> 4
-            "e", "en", "gb", "eng", "gbr", "england", "english" -> 2
-            "f", "fr", "fra", "france", "french" -> 7
-            "g", "ge", "ger", "germany", "german" -> 8
-            "i", "it", "ita", "italy", "italian" -> 11
-            "j", "ja", "jpn", "japan", "japanese" -> 3
-            "k", "kr", "kor", "korea", "korean" -> 6
-            "s", "sp", "esp", "spa", "spain", "spanish" -> 10
-            "w", "sw", "swe", "sweden", "swedish" -> 9
-            "r", "ru", "rus", "russia", "russian" -> 12
-            "p", "po", "pol", "poland", "polish" -> 13
-            "n", "in", "ins", "instrument", "instrumental" -> 5
-            "u", "un", "uns", "unspecified" -> 1
-            "o", "ot", "oth", "any", "other", "others" -> 14
+            "c", "cn", "chn", "china", "chinese", "中文", "汉语", "中" -> 4
+            "e", "en", "gb", "eng", "gbr", "england", "english", "英语", "英文", "英" -> 2
+            "f", "fr", "fra", "france", "french", "法语", "法文", "法" -> 7
+            "g", "ge", "ger", "germany", "german", "德语", "德文", "德" -> 8
+            "i", "it", "ita", "italy", "italian", "意大利语", "意大利文", "意大利", "意" -> 11
+            "j", "ja", "jpn", "japan", "japanese", "日语", "日文", "日本", "日" -> 3
+            "k", "kr", "kor", "korea", "korean", "韩语", "韩文", "韩" -> 6
+            "s", "sp", "esp", "spa", "spain", "spanish", "西班牙语", "西班牙文", "西班牙", "西", "西语" -> 10
+            "w", "sw", "swe", "sweden", "swedish", "瑞典语", "瑞典文", "瑞典", "瑞" -> 9
+            "r", "ru", "rus", "russia", "russian", "俄语", "俄文", "俄罗斯", "俄" -> 12
+            "p", "po", "pol", "poland", "polish", "波兰语", "波兰文", "波兰", "波" -> 13
+            "n", "in", "ins", "instrument", "instrumental", "器乐", "纯音乐", "器", "纯" -> 5
+            "u", "un", "uns", "unspecified", "未指定", "默认" -> 1
+            "o", "ot", "oth", "any", "other", "others", "其他" -> 14
             else -> null
         }
     }

@@ -297,6 +297,8 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                             .toSet()
                         return ts.contains(element = true)
                     }
+                GENRE -> fit(operator, it.beatmapset.genreID.toInt(), DataUtil.getGenre(condition)?.toInt() ?: return false)
+                LANGUAGE -> fit(operator, it.beatmapset.languageID.toInt(), DataUtil.getLanguage(condition)?.toInt() ?: return false)
 
                 DIFFICULTY -> fit(operator, it.beatmap.difficultyName, condition)
 
