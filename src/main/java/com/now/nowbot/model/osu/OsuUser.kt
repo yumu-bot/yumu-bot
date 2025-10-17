@@ -6,8 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
-import com.now.nowbot.service.osuApiService.OsuUserApiService
-import org.springframework.beans.BeanUtils
 import org.springframework.lang.Nullable
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -309,10 +307,10 @@ open class OsuUser {
     var highestRank: HighestRank? = HighestRank()
 
     data class HighestRank(
-        @JsonProperty("rank")
+        @field:JsonProperty("rank")
         val rank: Int = 0,
-        
-        @JsonProperty("updated_at")
+
+        @field:JsonProperty("updated_at")
         val updatedAt: OffsetDateTime? = null
     )
 
@@ -405,18 +403,6 @@ open class OsuUser {
         this.country = user.country
         this.cover = user.cover
         this.profileColor = user.profileColor
-    }
-
-    //这个是把基础 OsuUser 转换成完整 OsuUser 的方法
-    fun parseFull(osuUserApiService: OsuUserApiService) {
-        val o: OsuUser
-        try {
-            o = osuUserApiService.getOsuUser(userID)
-        } catch (e: Exception) {
-            return
-        }
-
-        BeanUtils.copyProperties(o, this)
     }
 
     var defaultOsuMode: OsuMode

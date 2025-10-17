@@ -25,8 +25,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.regex.Matcher
-import kotlin.math.max
-import kotlin.math.min
 
 @Service("LEADER_BOARD")
 class LeaderBoardService(
@@ -69,25 +67,20 @@ class LeaderBoardService(
 
         val bid = matcher.group(FLAG_BID)?.toLongOrNull()
 
-        val rangeStr: String? = matcher.group(FLAG_RANGE)
+        val rangeStr: String = matcher.group(FLAG_RANGE) ?: ""
 
-        val range = if (rangeStr.isNullOrBlank()) {
-            1..50
-        } else if (rangeStr.contains(REG_HYPHEN.toRegex())) {
-            val split = rangeStr.trim().removePrefix(REG_HASH).split(REG_HYPHEN.toRegex()).map { it.trim() }
+        val split = rangeStr.trim()
+            .replace(REG_HASH.toRegex(), "")
+            .split(REG_HYPHEN.toRegex())
+            .dropWhile { it.isEmpty() }
 
-            val start = split.firstOrNull()?.toIntOrNull() ?: 1
-            val end = split.lastOrNull()?.toIntOrNull() ?: 50
+        val range: IntRange = if (split.isNotEmpty()) {
+            val s = split.firstOrNull()?.toIntOrNull() ?: 1
+            val e = split.lastOrNull()?.toIntOrNull() ?: 50
 
-            start.clamp()..end.clamp()
+            s.coerceIn(1, 50)..e.coerceIn(1, 50)
         } else {
-            val start = rangeStr.trim().removePrefix(REG_HASH).trim().toIntOrNull() ?: 1
-
-            start.clamp()..start.clamp()
-        }
-
-        if (range.isEmpty()) {
-            throw IllegalArgumentException.WrongException.Range()
+            1..50
         }
 
         val mode = OsuMode.getMode(matcher.group(FLAG_MODE), bindDao.getGroupModeConfig(event))
@@ -174,10 +167,10 @@ class LeaderBoardService(
         if (scores.isEmpty())
             throw NoSuchElementException.LeaderboardScore()
 
-        val start = param.range.start.clamp(max = scores.size)
-        val end = param.range.endInclusive.clamp(max = scores.size)
+        val start = param.range.start.coerceIn(1, scores.size)
+        val end = param.range.endInclusive.coerceIn(1, scores.size)
 
-        val ss = scores.take(end).drop(start - 1)
+        val ss = scores.drop(start - 1).take(end - start + 1)
 
         val image = if (ss.isEmpty()) {
             throw IllegalArgumentException.WrongException.Range()
@@ -227,10 +220,6 @@ class LeaderBoardService(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(LeaderBoardService::class.java)
-
-        private fun Int.clamp(min: Int = 1, max: Int = 50): Int {
-            return min(max(this, min), max)
-        }
 
         private fun getType(string: String?): String {
             return when(string?.lowercase()) {

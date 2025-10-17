@@ -139,13 +139,13 @@ import kotlin.math.floor
         private val log: Logger = LoggerFactory.getLogger(NominationService::class.java)
 
         fun getParam(
-            sid: Long,
-            isSID: Boolean,
+            id: Long,
+            assumeSID: Boolean,
             beatmapApiService: OsuBeatmapApiService,
             discussionApiService: OsuDiscussionApiService,
             userApiService: OsuUserApiService,
         ): NominationParam {
-            var id = sid
+            var id = id
             var s: Beatmapset
             val d: Discussion
             val details: List<DiscussionDetails>
@@ -153,7 +153,7 @@ import kotlin.math.floor
             val hypes: List<DiscussionDetails>
             val more: Map<String, Any>
 
-            if (isSID) {
+            if (assumeSID) {
                 try {
                     s = beatmapApiService.getBeatmapset(id)
                 } catch (_: NetworkException.BeatmapException.NotFound) {
@@ -167,8 +167,12 @@ import kotlin.math.floor
                 s = beatmapApiService.getBeatmapset(id)
             }
 
-            if (s.creatorData != null) {
-                s.creatorData!!.parseFull(userApiService)
+            s.creatorData?.let {
+                try {
+                    s.creatorData = userApiService.getOsuUser(it.userID, it.currentOsuMode)
+                } catch (_: Exception) {
+
+                }
             }
 
             try {

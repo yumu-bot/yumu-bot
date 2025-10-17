@@ -146,15 +146,10 @@ class SkillType {
         //
         private fun getDifference(input: Double, base: Double): Double {
             return if (base != 0.0) {
-                1.0 - clamp(double = (input - base)) / base
+                1.0 - abs(input - base).coerceIn(0.0, 1.0) / base
             } else {
                 1.0
             }
-        }
-
-        // 0-0.99 限制值
-        private fun clamp(double: Double): Double {
-            return max(min(abs(double), 1.0), 0.0)
         }
     }
 }

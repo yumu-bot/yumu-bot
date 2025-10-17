@@ -498,9 +498,9 @@ import kotlin.reflect.full.companionObjectInstance
             }
 
             if (mods.contains(LazerMod.HardRock)) {
-                a = (a * 1.4f).clamp()
+                a = (a * 1.4f).coerceIn(0f, 10f)
             } else if (mods.contains(LazerMod.Easy)) {
-                a = (a / 2f).clamp()
+                a = (a / 2f).coerceIn(0f, 10f)
             }
 
             val speed = LazerMod.getModSpeed(mods)
@@ -539,9 +539,9 @@ import kotlin.reflect.full.companionObjectInstance
         @JvmStatic fun applyOD(od: Float, mods: List<LazerMod>, mode: OsuMode): Float {
             var o = od
             if (mods.contains(LazerMod.HardRock)) {
-                o = (o * 1.4f).clamp()
+                o = (o * 1.4f).coerceIn(0f, 10f)
             } else if (mods.contains(LazerMod.Easy)) {
-                o = (o / 2f).clamp()
+                o = (o / 2f).coerceIn(0f, 10f)
             }
 
             for (mod in mods) {
@@ -582,7 +582,7 @@ import kotlin.reflect.full.companionObjectInstance
             } else if (mods.contains(LazerMod.Easy)) {
                 c /= 2f
             }
-            return c.clamp().roundToDigits2()
+            return c.coerceIn(0f, 10f).roundToDigits2()
         }
 
         @JvmStatic fun applyHP(hp: Float, mods: List<LazerMod>): Float {
@@ -600,7 +600,7 @@ import kotlin.reflect.full.companionObjectInstance
             } else if (mods.contains(LazerMod.Easy)) {
                 h /= 2f
             }
-            return h.clamp().roundToDigits2()
+            return h.coerceIn(0f, 10f).roundToDigits2()
         }
 
         @JvmStatic fun applyBPM(bpm: Float?, mods: List<LazerMod>): Float {
@@ -609,14 +609,6 @@ import kotlin.reflect.full.companionObjectInstance
 
         @JvmStatic fun applyLength(length: Int?, mods: List<LazerMod>): Int {
             return ((length ?: 0).toDouble() / LazerMod.getModSpeed(mods)).roundToInt()
-        }
-
-        private fun Float.clamp() = if ((0f..10f).contains(this)) {
-            this
-        } else if (this > 10f) {
-            10f
-        } else {
-            0f
         }
 
         private fun Float.roundToDigits2() = BigDecimal(this.toDouble()).setScale(2, RoundingMode.HALF_EVEN).toFloat()

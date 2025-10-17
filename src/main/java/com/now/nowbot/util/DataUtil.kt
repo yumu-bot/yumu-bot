@@ -478,14 +478,6 @@ object DataUtil {
         return Exchange(g, b, currentAcc)
     }
 
-    @JvmStatic
-    @NonNull
-    fun isHelp(@Nullable str: String?): Boolean {
-        val s = str?.trim() ?: return false
-        return s.equals("help", ignoreCase = true) ||
-                s.equals("帮助", ignoreCase = true)
-    }
-
     fun string2Markdown(str: String): String {
         return str.replace("\n", "\n\n")
     }
@@ -1193,14 +1185,14 @@ object DataUtil {
             "e", "en", "gb", "eng", "gbr", "england", "english", "英语", "英文", "英" -> 2
             "f", "fr", "fra", "france", "french", "法语", "法文", "法" -> 7
             "g", "ge", "ger", "germany", "german", "德语", "德文", "德" -> 8
-            "i", "it", "ita", "italy", "italian", "意大利语", "意大利文", "意大利", "意" -> 11
+            "t", "it", "ita", "italy", "italian", "意大利语", "意大利文", "意大利", "意" -> 11
             "j", "ja", "jpn", "japan", "japanese", "日语", "日文", "日本", "日" -> 3
             "k", "kr", "kor", "korea", "korean", "韩语", "韩文", "韩" -> 6
             "s", "sp", "esp", "spa", "spain", "spanish", "西班牙语", "西班牙文", "西班牙", "西", "西语" -> 10
             "w", "sw", "swe", "sweden", "swedish", "瑞典语", "瑞典文", "瑞典", "瑞" -> 9
             "r", "ru", "rus", "russia", "russian", "俄语", "俄文", "俄罗斯", "俄" -> 12
             "p", "po", "pol", "poland", "polish", "波兰语", "波兰文", "波兰", "波" -> 13
-            "n", "in", "ins", "instrument", "instrumental", "器乐", "纯音乐", "器", "纯" -> 5
+            "i", "in", "ins", "instrument", "instrumental", "器乐", "纯音乐", "器", "纯" -> 5
             "u", "un", "uns", "unspecified", "未指定", "默认" -> 1
             "o", "ot", "oth", "any", "other", "others", "其他" -> 14
             else -> null

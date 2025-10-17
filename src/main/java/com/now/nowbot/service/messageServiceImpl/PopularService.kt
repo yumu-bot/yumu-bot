@@ -11,6 +11,7 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.messageServiceImpl.PopularService.PopularParam
@@ -27,8 +28,6 @@ import com.now.nowbot.util.command.REG_HYPHEN
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.*
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 @Service("POPULAR")
@@ -47,65 +46,65 @@ class PopularService(
     )
 
     data class PopularInfo(
-        @JsonProperty("group_id")
+        @field:JsonProperty("group_id")
         val groupID: Long,
 
-        @JsonProperty("member_count")
+        @field:JsonProperty("member_count")
         val memberCount: Int,
 
-        @JsonProperty("player_count")
+        @field:JsonProperty("player_count")
         val playerCount: Int,
 
-        @JsonProperty("score_count")
+        @field:JsonProperty("score_count")
         val scoreCount: Int,
 
-        @JsonProperty("beatmap_count")
+        @field:JsonProperty("beatmap_count")
         val beatmapCount: Int,
 
-        @JsonProperty("mode")
+        @field:JsonProperty("mode")
         val mode: OsuMode,
 
-        @JsonProperty("start_time")
+        @field:JsonProperty("start_time")
         val startTime: OffsetDateTime,
 
-        @JsonProperty("end_time")
+        @field:JsonProperty("end_time")
         val endTime: OffsetDateTime,
     )
 
     data class PanelTData(
-        @JsonProperty("info")
+        @field:JsonProperty("info")
         val info: PopularInfo,
 
-        @JsonProperty("popular")
+        @field:JsonProperty("popular")
         val popular: List<PopularBeatmap>,
 
-        @JsonProperty("best_performance")
+        @field:JsonProperty("best_performance")
         val bestPerformance: MaxRetry,
 
-        @JsonProperty("mod_attr")
+        @field:JsonProperty("mod_attr")
         val modAttr: List<Attr>,
 
-        @JsonProperty("mod_max_percent")
+        @field:JsonProperty("mod_max_percent")
         val modMaxPercent: Double,
 
-        @JsonProperty("pp_attr")
+        @field:JsonProperty("pp_attr")
         val ppAttr: List<Attr>,
 
-        @JsonProperty("pp_max_percent")
+        @field:JsonProperty("pp_max_percent")
         val ppMaxPercent: Double,
     )
 
     data class MaxRetry(
-        @JsonProperty("beatmap_id")
+        @field:JsonProperty("beatmap_id")
         val beatmapID: Long = -1L,
         val count: Int = 0,
-        @JsonProperty("user_id")
+        @field:JsonProperty("user_id")
         val userID: Long = -1L,
     ) {
-        @JsonProperty("user")
+        @field:JsonProperty("user")
         var user: MicroUser? = null
 
-        @JsonProperty("beatmap")
+        @field:JsonProperty("beatmap")
         var beatmap: Beatmap? = null
 
         constructor(beatmapID: Long, count: Int, userID: Long, user: MicroUser?, beatmap: Beatmap?) : this(beatmapID, count, userID) {
@@ -115,17 +114,17 @@ class PopularService(
     }
 
     data class PopularBeatmap(
-        @JsonProperty("beatmap_id")
+        @field:JsonProperty("beatmap_id")
         val beatmapID: Long = -1L,
         val count: Int = 0,
         val accuracy: Double = 0.0,
         val combo: Int = 0,
-        @JsonProperty("player_count")
+        @field:JsonProperty("player_count")
         val playerCount: Int = 0,
-        @JsonProperty("max_retry")
+        @field:JsonProperty("max_retry")
         val maxRetry: MaxRetry = MaxRetry(),
     ) {
-        @JsonProperty("beatmap")
+        @field:JsonProperty("beatmap")
         var beatmap: Beatmap? = null
 
         companion object {
@@ -195,7 +194,7 @@ class PopularService(
             } else if (group < 1e6) {
                 groupID = event.subject.id
                 start = 0
-                end = (group.toInt()).clamp(2, Int.MAX_VALUE)
+                end = (group.toInt()).coerceAtLeast(2)
             } else {
                 groupID = group
                 start = 0
@@ -389,15 +388,22 @@ class PopularService(
 
         val panelTData = PanelTData(info, shown, bestPerformance, modAttr, modMaxPercent, ppAttr, ppMaxPercent)
 
-        try {
-            event.reply(getImage(panelTData))
+        val message: MessageChain = try {
+            MessageChain(getImage(panelTData))
         } catch (e: Exception) {
             try {
-                event.reply(getText(panelTData))
-            } catch (e1: Exception) {
-                log.error("流行谱面：发送失败", e)
-                throw e
+                MessageChain(getText(panelTData))
+            } catch (_: Exception) {
+                log.error("流行谱面：获取失败", e)
+                throw IllegalStateException.Fetch("流行谱面")
             }
+        }
+
+        try {
+            event.reply(message)
+        } catch (e: Exception) {
+            log.error("流行谱面：发送失败", e)
+            throw IllegalStateException.Send("流行谱面")
         }
 
         return ServiceCallStatistic.build(event,
@@ -426,7 +432,7 @@ class PopularService(
             可获取的成绩数：${info.scoreCount}
         """.trimIndent())
 
-        for (i in 1..min(5, shown.size)) {
+        for (i in 1..shown.size.coerceAtLeast(5)) {
             val p = shown[i - 1]
             val b = p.beatmap
 
@@ -442,17 +448,9 @@ class PopularService(
         private fun OffsetDateTime.clamp(min: OffsetDateTime = OffsetDateTime.of(1970, 1, 1, 0, 0, 0, 0, ZoneOffset.ofHours(8)), max: OffsetDateTime = OffsetDateTime.now()): OffsetDateTime {
             return OffsetDateTime.ofInstant(
                 Instant.ofEpochSecond(
-                    this.toEpochSecond().clamp(min.toEpochSecond(), max.toEpochSecond())
+                    this.toEpochSecond().coerceIn(min.toEpochSecond(), max.toEpochSecond())
                 ),
                 ZoneId.ofOffset("UTC", ZoneOffset.ofHours(8)))
-        }
-
-        private fun Long.clamp(min: Long = 1, max: Long = 50): Long {
-            return min(max(this, min), max)
-        }
-
-        private fun Int.clamp(min: Int = 1, max: Int = 50): Int {
-            return min(max(this, min), max)
         }
     }
 }
