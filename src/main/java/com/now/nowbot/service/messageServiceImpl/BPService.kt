@@ -208,6 +208,8 @@ import java.util.regex.Matcher
             scores = range2.getBestsFromOsuUser(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition)
         }
 
+        beatmapApiService.applyBeatmapExtend(scores.map { it.value })
+
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
         if (filteredScores.isEmpty()) {
@@ -330,7 +332,6 @@ import java.util.regex.Matcher
 
             getUUScores(user, list, covers)
         } else {
-
             val s = scores.toList().first().second
 
             val cover = scoreApiService.getCover(s, CoverType.COVER)

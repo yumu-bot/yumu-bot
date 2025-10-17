@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.DigestUtils
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -31,6 +32,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
+import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.Callable
@@ -299,6 +301,7 @@ class BeatmapApiImpl(
                 .retrieve()
                 .bodyToMono(Beatmap::class.java)
                 .doOnNext(beatmapDao::saveMap)
+                .doOnNext(beatmapDao::saveExtendedBeatmap)
         }
     }
 
@@ -311,7 +314,11 @@ class BeatmapApiImpl(
             }
         }
 
-        return AsyncMethodExecutor.awaitSupplierExecute(callables).flatten()
+        val beatmaps = AsyncMethodExecutor.awaitSupplierExecute(callables).flatten()
+
+        beatmapDao.saveExtendedBeatmap(beatmaps)
+
+        return beatmaps
     }
 
     /**
@@ -824,25 +831,34 @@ class BeatmapApiImpl(
     override fun applyBeatmapExtendForSameScore(scores: List<LazerScore>, beatmap: Beatmap) {
         if (scores.isEmpty()) return
 
+        beatmapDao.saveExtendedBeatmap(beatmap)
+
         for (score in scores) {
             applyBeatmapExtend(score, beatmap.copy())
         }
     }
 
-    override fun applyBeatmapExtend(score: LazerScore) {
-        applyBeatmapExtend(listOf(score))
+    override fun applyBeatmapExtendFromAPI(score: LazerScore) {
+        applyBeatmapExtendFromAPI(listOf(score))
     }
 
-    override fun applyBeatmapExtend(scores: List<LazerScore>) {
+    override fun applyBeatmapExtendFromAPI(scores: List<LazerScore>) {
         val ids = scores.map { it.beatmapID }.toSet()
 
-        val bs = getBeatmaps(ids).associateBy { it.beatmapID }
+        val extends = getBeatmaps(ids)
+
+        beatmapDao.saveExtendedBeatmap(extends)
+
+        val map = extends.associateBy { it.beatmapID }
 
         scores.forEach { score ->
-            bs[score.beatmapID]?.let { applyBeatmapExtend(score, it) }
+            map[score.beatmapID]?.let { applyBeatmapExtend(score, it) }
         }
     }
 
+    /**
+     * 这个方法本身不存 extended Beatmap
+     */
     override fun applyBeatmapExtend(score: LazerScore, extended: Beatmap) {
         val lite = if (score.beatmap.beatmapID > 0L) {
             score.beatmap
@@ -862,7 +878,16 @@ class BeatmapApiImpl(
         extended.beatmapset?.let { score.beatmapset = it }
     }
 
-    override fun applyBeatmapExtendFromDatabase(scores: List<LazerScore>) {
+    override fun applyBeatmapExtend(scores: List<LazerScore>) {
+        val existSet = scores.mapNotNull { s ->
+            beatmapDao.extendBeatmap(s)
+        }.toSet()
+
+        val notExistScores = scores.filterNot { it.beatmapID in existSet }
+
+        applyBeatmapExtendFromAPI(notExistScores)
+
+        /*
         val exists = scores.mapNotNull {
             try {
                 BeatmapDao.fromBeatmapLite(beatmapDao.getBeatMapLite(it.beatmapID))
@@ -882,10 +907,12 @@ class BeatmapApiImpl(
                 applyBeatmapExtend(score, it)
             }
         }
+
+         */
     }
 
-    override fun applyBeatmapExtendFromDatabase(score: LazerScore) {
-        applyBeatmapExtendFromDatabase(listOf(score))
+    override fun applyBeatmapExtend(score: LazerScore) {
+        applyBeatmapExtend(listOf(score))
     }
 
     override fun getBeatmapsetRankedTime(beatmap: Beatmap): String {
@@ -898,7 +925,7 @@ class BeatmapApiImpl(
                 } else {
                     t.rankDate.replace(".000Z", "Z")
                 }
-            } catch (e: WebClientResponseException) {
+            } catch (_: WebClientResponseException) {
                 ""
             }
         } else {
@@ -957,6 +984,42 @@ class BeatmapApiImpl(
         if (ids.isNullOrEmpty()) return
 
         beatmap.tags = ids.mapNotNull { beatmapDao.getTag(it.id) }
+    }
+
+    /**
+     * 定时任务，更新谱面的数据
+     */
+    @Transactional
+    override fun updateExtendedBeatmapFailTimes(): Int {
+        log.info("自动更新扩展谱面：正在启动")
+
+        val ids = beatmapDao.findMapByUpdateAtAscend(LocalDateTime.now().minusDays(3)).map { it.beatmapID }
+
+        if (ids.isEmpty()) {
+            log.info("自动更新扩展谱面：没有可更新的谱面。")
+            return 0
+        }
+
+        val news = try {
+            getBeatmaps(ids)
+        } catch (e: Exception) {
+            log.error("自动更新扩展谱面：出现了问题", e)
+            return -1
+        }
+
+        val result = news.sumOf {
+            beatmapDao.updateFailTimeByBeatmapID(it.beatmapID, it.failTimes?.toString())
+        }
+
+        val result2 = news.sumOf {
+            val set = it.beatmapset!!
+
+            beatmapDao.updateFailTimeByBeatmapsetID(it.beatmapsetID, set.favouriteCount, set.offset, set.playCount, set.spotlight, set.trackID, set.discussionLocked, set.rating, set.ratings.toTypedArray())
+        }
+
+        log.info("自动更新扩展谱面：已更新 $result($result2) 张谱面。")
+
+        return result
     }
 
     private fun getBeatmapsetWithRankedTimeLibrary(): List<BeatmapsetWithRankTime> {

@@ -29,9 +29,13 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     ARTIST("(artist|singer|art|f?a|艺术家|曲师?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    SOURCE("(source|src|from|f|o|sc|来?源)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    SOURCE("(source|src|from|f|o|sc|se|来?源)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    TAG("(tags?|g|标签?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    TAG("(tags?|ta|tg|y|标签?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+
+    GENRE("(genre|g|曲?风|风格|流派?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+
+    LANGUAGE("(languages?|l|曲?风|风格|流派?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
     DIFFICULTY("(difficulty|diff|d|难度名?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
@@ -47,9 +51,9 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     PERFORMANCE("(performance|表现分?|pp|p)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
-    RANK("(rank(ing)?|评[价级]|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    RANK("(rank(ing)?|评[价级]?|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    LENGTH("(length|drain|time|长度|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE($REG_COLON$REG_NUMBER_MORE)?)".toRegex()),
+    LENGTH("(length|drain|long|duration|长度|时?长|lh)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE($REG_COLON$REG_NUMBER_MORE)?)".toRegex()),
 
     BPM("(bpm|曲速|速度|bm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
@@ -91,7 +95,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     CLIENT("(client|z|v|version|版本?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    TIME("(time|时间?|ti)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$REG_TIME)".toRegex()),
+    CREATED_TIME("(created\\s*(at|time)|creat\\s*(at|time)?|创建(时间)?|ct|ca)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$REG_TIME)".toRegex()),
 
     RANGE(REG_RANGE.toRegex());
     
@@ -283,10 +287,14 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                         || fit(operator, it.beatmapset.artistUnicode, condition))
                 SOURCE -> fit(operator, it.beatmapset.source, condition)
                 TAG ->
-                    if (it.beatmapset.tags.isNullOrBlank()) {
+                    if (it.beatmapset.tags.isBlank()) {
                         false
                     } else {
-                        val ts = it.beatmapset.tags!!.split("\\s+".toRegex()).map { fit(operator, it, condition) }.toSet()
+                        val ts = it.beatmapset.tags
+                            .split("\\s+".toRegex())
+                            .asSequence()
+                            .map { fit(operator, it, condition) }
+                            .toSet()
                         return ts.contains(element = true)
                     }
 
@@ -319,30 +327,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, ir.toLong(), cr.toLong())
                 }
 
-                LENGTH -> {
-                    var seconds = 0L
-                    if (condition.contains(REG_COLON.toRegex())) {
-                        val strs = condition.split(REG_COLON.toRegex())
-                        var parseMinute = true
-
-                        for (s in strs) {
-                            if (s.contains(REG_NUMBER_DECIMAL.toRegex())) {
-                                seconds += if (parseMinute) {
-                                    s.toLong()
-                                } else {
-                                    s.toLong() * 60L
-                                }
-
-                                parseMinute = false
-                            }
-                        }
-
-                    } else {
-                        seconds = condition.toLong()
-                    }
-
-                    fit(operator, it.beatmap.totalLength.toLong(), seconds)
-                }
+                LENGTH -> fitTime(operator, it.beatmap.totalLength.toLong(), condition)
 
                 BPM -> fit(operator, it.beatmap.BPM?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
                 ACCURACY -> {
@@ -441,7 +426,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     else -> !it.isLazer
                 }
 
-                TIME -> fitTime(operator, it.endedTime.toEpochSecond(), condition)
+                CREATED_TIME -> fitTime(operator, it.endedTime.toEpochSecond(), condition)
 
                 else -> false
             }
@@ -623,6 +608,13 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 "真", "是", "正确", "对", "t", "true", "y", "yes", "" -> true
                 else -> false
             }
+        }
+
+        /**
+         * 通过返回的查询列表，来判断需不需要补充数据（补充数据很耗时间！）
+         */
+        fun isExpandNeeded(conditions: List<List<String>>): Boolean {
+            return (conditions.getOrNull(7)?.isNotEmpty() ?: false)
         }
     }
 }

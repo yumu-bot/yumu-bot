@@ -129,7 +129,7 @@ import kotlin.math.roundToInt
 
         val actions2 = data.values.flatMap { it.bests }.map {
             return@map AsyncMethodExecutor.Runnable {
-                beatmapApiService.applyBeatmapExtendFromDatabase(it)
+                beatmapApiService.applyBeatmapExtend(it)
             }
         }
 
@@ -147,7 +147,7 @@ import kotlin.math.roundToInt
                 val bests = d.bests
 
                 for (s in bests) {
-                    beatmapApiService.applyBeatmapExtendFromDatabase(s)
+                    beatmapApiService.applyBeatmapExtend(s)
 
                     val max = s.beatmap.maxCombo ?: 1
                     val combo = s.maxCombo

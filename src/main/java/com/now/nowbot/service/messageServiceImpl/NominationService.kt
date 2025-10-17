@@ -241,7 +241,7 @@ import kotlin.math.floor
                 val minSR = if (bs.size <= 1) "" else floor(minStar).toString()
 
                 // 其他
-                val tags = (s.tags ?: "").split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                val tags = s.tags.split("\\s+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
                 more = mapOf(
                     "host_count" to hostCount,

@@ -130,7 +130,7 @@ class BPFixService(
         val beforeBpSumAtomic = AtomicReference(0.0)
 
         AsyncMethodExecutor.awaitPairCallableExecute(
-            { beatmapApiService.applyBeatmapExtendFromDatabase(bestsMap.map { it.value }) },
+            { beatmapApiService.applyBeatmapExtend(bestsMap.map { it.value }) },
             { calculateApiService.applyStarToScores(bestsMap.map { it.value }) }
         )
 

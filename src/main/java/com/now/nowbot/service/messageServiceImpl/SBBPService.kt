@@ -189,6 +189,8 @@ class SBBPService(
             scores = range2.getBestsFromSBUser(rx, isMultiple, hasCondition)
         }
 
+        osuBeatmapApiService.applyBeatmapExtend(scores.map { it.value })
+
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
         if (filteredScores.isEmpty()) {
@@ -288,7 +290,7 @@ class SBBPService(
                 val ranks = scores.map { it.key }
                 val scores = scores.map { it.value }
 
-                osuBeatmapApiService.applyBeatmapExtendFromDatabase(scores)
+                osuBeatmapApiService.applyBeatmapExtend(scores)
 
                 val body = mapOf(
                     "user" to user,

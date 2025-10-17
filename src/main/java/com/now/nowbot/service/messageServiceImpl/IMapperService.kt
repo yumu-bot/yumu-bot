@@ -408,7 +408,7 @@ import kotlin.math.max
                     for (i in 1 until keywords.size) {
                         val keyword = keywords[i]
 
-                        if ((it.tags ?: "").lowercase().contains(keyword)) {
+                        if (it.tags.lowercase().contains(keyword)) {
                             genre[i]++
                             hasAnyGenre.set(true)
                         }

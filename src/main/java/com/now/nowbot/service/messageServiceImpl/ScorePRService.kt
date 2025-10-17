@@ -288,6 +288,8 @@ class ScorePRService(
             scores = range2.getRecentsFromOsuUser(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition, isPass)
         }
 
+        beatmapApiService.applyBeatmapExtend(scores.map { it.value })
+
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
         if (filteredScores.isEmpty()) {
@@ -499,7 +501,7 @@ class ScorePRService(
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService
         ): PanelE5Param {
-            beatmapApiService.applyBeatmapExtendFromDatabase(score)
+            beatmapApiService.applyBeatmapExtend(score)
             return getE5ParamAfterExtended(user, score, score.ranking, panel, beatmapApiService, calculateApiService)
         }
 

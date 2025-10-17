@@ -10,13 +10,13 @@ import java.time.OffsetDateTime
 import java.util.stream.StreamSupport
 
 data class Beatmap(
-    @JsonProperty("beatmapset_id")
+    @field:JsonProperty("beatmapset_id")
     var beatmapsetID: Long = 0L,
 
-    @JsonProperty("difficulty_rating")
+    @field:JsonProperty("difficulty_rating")
     var starRating: Double = 0.0,
 
-    @JsonProperty("id")
+    @field:JsonProperty("id")
     @Column(name = "id")
     var beatmapID: Long = 0L,
 
@@ -24,32 +24,32 @@ data class Beatmap(
     @get:JsonIgnore
     var modeStr: String = "osu",
 
-    @JsonProperty("status")
+    @field:JsonProperty("status")
     var status: String = "graveyard",
 
-    @JsonProperty("total_length")
+    @field:JsonProperty("total_length")
     var totalLength: Int = 0,
 
-    @JsonProperty("user_id")
+    @field:JsonProperty("user_id")
     /**
      * 这个只能记录第一个谱师，所以尽量不要用这个参数，而是使用 mapperIDs
      */
     var mapperID: Long = 0,
 
-    @JsonProperty("version")
+    @field:JsonProperty("version")
     var difficultyName: String = "",
 
-    @JsonProperty("beatmapset")
+    @field:JsonProperty("beatmapset")
     var beatmapset: Beatmapset? = null,
 
-    @JsonProperty("checksum")
+    @field:JsonProperty("checksum")
     var md5: String? = null,
 
     //retry == fail, fail == exit
-    @JsonProperty("failtimes")
+    @field:JsonProperty("failtimes")
     var failTimes: JsonNode? = null,
 
-    @JsonProperty("max_combo")
+    @field:JsonProperty("max_combo")
     var maxCombo: Int? = 0,
 
     @set:JsonProperty("top_tag_ids")
@@ -62,65 +62,69 @@ data class Beatmap(
     var tags: List<Tag>? = null,
 
     // Extend!
-    @JsonProperty("accuracy")
+    @field:JsonProperty("accuracy")
     var OD: Float? = null,
 
-    @JsonProperty("ar")
+    @field:JsonProperty("ar")
     var AR: Float? = null,
 
-    @JsonProperty("bpm")
+    @field:JsonProperty("bpm")
     var BPM: Float? = null,
 
-    @JsonProperty("convert")
+    @field:JsonProperty("convert")
     var convert: Boolean? = null,
 
-    @JsonProperty("count_circles")
+    @field:JsonProperty("count_circles")
     var circles: Int? = null,
 
-    @JsonProperty("count_sliders")
+    @field:JsonProperty("count_sliders")
     var sliders: Int? = null,
 
-    @JsonProperty("count_spinners")
+    @field:JsonProperty("count_spinners")
     var spinners: Int? = null,
 
-    @JsonProperty("cs")
+    @field:JsonProperty("cs")
     var CS: Float? = null,
 
-    @JsonProperty("deleted_at")
+    @field:JsonProperty("deleted_at")
     var deletedAt: OffsetDateTime? = null,
 
-    @JsonProperty("drain")
+    @field:JsonProperty("drain")
     var HP: Float? = null,
 
-    @JsonProperty("hit_length")
+    @field:JsonProperty("hit_length")
     var hitLength: Int? = null,
 
-    @JsonProperty("is_scoreable")
+    @field:JsonProperty("is_scoreable")
     var scoreAble: Boolean? = null,
 
-    @JsonProperty("last_updated")
+    @field:JsonProperty("last_updated")
     var lastUpdated: String? = null,
 
     /**
      * 只有 id 和 username
      */
-    @JsonProperty("owners")
+    @field:JsonProperty("owners")
     var owners: List<MicroUser>? = null,
 
-    @JsonProperty("mode_int")
+    @field:JsonProperty("mode_int")
     var modeInt: Int? = null,
 
-    @JsonProperty("passcount")
+    @field:JsonProperty("passcount")
     var passCount: Int? = null,
 
-    @JsonProperty("playcount")
+    @field:JsonProperty("playcount")
     var playCount: Int = 0,
 
-    @JsonProperty("ranked")
+    @field:JsonProperty("ranked")
     var ranked: Int = 0,
 
-    @JsonProperty("url")
+    @field:JsonProperty("url")
     var url: String? = null,
+
+    // 如果是走用户 token，还可以看到玩家玩了这张图几次
+    @field:JsonProperty("current_user_playcount")
+    val currentPlayCount: Int? = null
 ) {
 
     @set:JsonIgnore
@@ -182,7 +186,7 @@ data class Beatmap(
         }
 
     //自己取
-    @JsonProperty("user")
+    @field:JsonProperty("user")
     var user: OsuUser? = null
 
     //自己算

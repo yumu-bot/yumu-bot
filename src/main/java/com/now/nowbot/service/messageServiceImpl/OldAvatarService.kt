@@ -209,7 +209,7 @@ class OldAvatarService(
         val search = beatmapApiService.searchBeatmapset(query)
 
         val pairs = search.beatmapsets
-            .sortedByDescending { it.lastUpdated?.toInstant()?.toEpochMilli() ?: 0L }
+            .sortedByDescending { it.lastUpdated.toInstant().toEpochMilli() }
             .sortedByDescending { it.ranked }
             .filter {
                 if (isDeleted) {

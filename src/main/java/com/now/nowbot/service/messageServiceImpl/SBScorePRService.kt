@@ -196,6 +196,8 @@ class SBScorePRService(
             scores = range2.getRecentsFromSBUser(rx, isMultiple, hasCondition, isPass)
         }
 
+        osuBeatmapApiService.applyBeatmapExtend(scores.map { it.value })
+
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
         if (filteredScores.isEmpty()) {
@@ -328,7 +330,7 @@ class SBScorePRService(
                 "panel" to if (isPass) "PS" else "RS"
             )
 
-            osuBeatmapApiService.applyBeatmapExtendFromDatabase(scores)
+            osuBeatmapApiService.applyBeatmapExtend(scores)
 
             osuCalculateApiService.applyPPToScores(scores)
 

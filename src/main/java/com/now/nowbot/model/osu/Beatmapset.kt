@@ -23,27 +23,26 @@ class Beatmapset {
     var creator: String = ""
 
     @JsonProperty("favourite_count")
-    var favouriteCount: Int = 0
+    var favouriteCount: Long = 0
 
     @JsonProperty("genre_id")
-    var genreID: Int = 0
+    var genreID: Byte = 0
 
     @Nullable
     var hype: Hype? = null
 
-    @JvmRecord
     data class Hype(val current: Int, val required: Int)
 
     @JsonProperty("id")
     var beatmapsetID: Long = 0L
 
     @JsonProperty("language_id")
-    var languageID: Int = 0
+    var languageID: Byte = 0
 
     @JsonProperty("nsfw")
     var nsfw: Boolean = false
 
-    var offset: Int = 0
+    var offset: Short = 0
 
     @JsonProperty("play_count")
     var playCount: Long = 0
@@ -72,7 +71,7 @@ class Beatmapset {
     var video: Boolean = false
 
     @JsonProperty("bpm")
-    var bpm: Double? = null
+    var bpm: Float = 0f
 
     @JsonProperty("can_be_hyped")
     var canBeHyped: Boolean? = null
@@ -84,25 +83,25 @@ class Beatmapset {
  //@JsonProperty("discussion_enabled")
  //Boolean discussionEnabled;
     @JsonProperty("discussion_locked")
-    var discussionLocked: Boolean? = null
+    var discussionLocked: Boolean = false
 
     @JsonProperty("is_scoreable")
-    var scoreable: Boolean? = null
+    var scoreable: Boolean = false
 
     @JsonProperty("last_updated")
-    var lastUpdated: OffsetDateTime? = null
+    var lastUpdated: OffsetDateTime = OffsetDateTime.now()
 
     @JsonProperty("legacy_thread_url")
     var legacyThreadUrl: String? = null
 
     @JsonProperty("nominations_summary")
-    val nominationsSummary: NominationsSummary? = null
+    var nominationsSummary: NominationsSummary? = null
         get(){
             val s = field ?: return null
 
             val r = s.required
 
-            val secondary: Int
+            val secondary: Byte
 
             if (beatmaps.isNullOrEmpty()) {
                 secondary = 0
@@ -116,11 +115,11 @@ class Beatmapset {
                 val changedTime = LocalDateTime.from(formatter.parse("2024-06-03T00:00:00Z"))
 
                 // 没榜，或者最后更新时间晚于这一天的谱面才应用这次更改
-                secondary = if (lastUpdated!!.toLocalDateTime().isAfter(changedTime) || !this.hasLeaderBoard) {
-                    max(beatmaps!!.map { it.modeInt }.toSet().size - 1, 0)
+                secondary = if (lastUpdated.toLocalDateTime().isAfter(changedTime) || !this.hasLeaderBoard) {
+                    max(beatmaps!!.map { it.modeInt }.toSet().size - 1, 0).toByte()
                 } else {
                     // 之前的，其他模式要 x2
-                    max((beatmaps!!.map { it.modeInt }.toSet().size - 1) * 2, 0)
+                    max((beatmaps!!.map { it.modeInt }.toSet().size - 1) * 2, 0).toByte()
                 }
             }
 
@@ -128,50 +127,51 @@ class Beatmapset {
         }
 
      // https://osu.ppy.sh/home/changelog/web/2024.603.0 改了
-    @JvmRecord
     data class NominationsSummary (
-         val current: Int,  // 只有一个元素的列表，存储模式信息
+         @field:JsonProperty("current")
+         val current: Byte,
 
-         @JsonProperty("eligible_main_rulesets")
+         // 只有一个元素的列表，存储模式信息
+
+         @field:JsonProperty("eligible_main_rulesets")
          val mode: List<String>?,
 
-         @JsonProperty("required_meta")
+         @field:JsonProperty("required_meta")
          val required: RequiredMeta
 
     )
 
-    @JvmRecord
     data class RequiredMeta (
-        @JsonProperty("main_ruleset")
-        val main: Int,  // 这个不准，需要重新计算并赋值。
+        @field:JsonProperty("main_ruleset")
+        val main: Byte,  // 这个不准，需要重新计算并赋值。
 
-        @JsonProperty("non_main_ruleset")
-        val secondary: Int
+        @field:JsonProperty("non_main_ruleset")
+        val secondary: Byte
 
     )
 
-    var ranked: Int = 0
+    var ranked: Byte = 0
 
     @JsonProperty("ranked_date")
     var rankedDate: OffsetDateTime? = null
 
-    var storyboard: Boolean? = null
+    var storyboard: Boolean = false
 
     @JsonProperty("submitted_date")
-    var submittedDate: OffsetDateTime? = null
+    var submittedDate: OffsetDateTime = OffsetDateTime.now()
 
-    var tags: String? = null
+    @JsonProperty("tags")
+    var tags: String = ""
 
     @JsonProperty("availability")
-    var availability: Availability? = null
+    var availability: Availability = Availability()
 
-    @JvmRecord
     data class Availability (
-        @JsonProperty("download_disabled")
-        val downloadDisabled: Boolean,
+        @field:JsonProperty("download_disabled")
+        val downloadDisabled: Boolean = false,
 
-        @JsonProperty("more_information")
-        val moreInformation: String?
+        @field:JsonProperty("more_information")
+        val moreInformation: String? = null
     )
 
     @JsonProperty("beatmaps")
@@ -226,15 +226,15 @@ class Beatmapset {
     var currentNominations: List<CurrentNominations>? = null
 
     data class CurrentNominations (
-        @JsonProperty("beatmapset_id")
+        @field:JsonProperty("beatmapset_id")
         val beatmapsetID: Long,
 
-        @JsonProperty("rulesets")
+        @field:JsonProperty("rulesets")
         val mode: List<String>?,
 
         val reset: Boolean,
 
-        @JsonProperty("user_id")
+        @field:JsonProperty("user_id")
         val userID: Long
     )
 
@@ -258,7 +258,7 @@ class Beatmapset {
     var packTags: List<String>? = null
 
     @JsonProperty("ratings")
-    var ratings: List<Int>? = null
+    var ratings: List<Int> = listOf()
 
     @JsonProperty("recent_favourites")
     var recentFavourites: List<OsuUser>? = null
@@ -268,7 +268,6 @@ class Beatmapset {
 
     @JsonProperty("user")
     var creatorData: OsuUser? = null
-
 
 
     //自己算
@@ -308,9 +307,14 @@ class Beatmapset {
              return n.toList()
          }
 
+    @JsonProperty("rating")
+    var rating: Float = 0f
 
-    //自己算
+    //不用自己算
     @get:JsonProperty("public_rating")
+    val publicRating: Float
+        get() = rating
+    /*
     val publicRating: Double
         get(){
             if (ratings.isNullOrEmpty()) return 0.0
@@ -329,6 +333,8 @@ class Beatmapset {
             return r
         }
 
+     */
+
     //自己算
     @get:JsonProperty("has_leader_board")
     val hasLeaderBoard: Boolean
@@ -336,7 +342,7 @@ class Beatmapset {
              return if (status.isNotBlank()) {
                  (status == "ranked" || status == "qualified" || status == "loved" || status == "approved")
              } else {
-                 when (ranked) {
+                 when (ranked.toInt()) {
                      1, 2, 3, 4 -> true
                      else -> false
                  }

@@ -44,6 +44,12 @@ class RunTimeService(
         bindDao.refreshOldUserToken(userApiService)
     }
 
+    // 每2小时更新一次过期的谱面
+    @Scheduled(cron = "0 0 */2 * * *")
+    fun updateBeatmapExtendFailTimes() {
+        beatmapApiService.updateExtendedBeatmapFailTimes()
+    }
+
     // 每天凌晨3点统计用户信息
     @Scheduled(cron = "0 0 3 * * *")
     fun statisticUserInfo() {

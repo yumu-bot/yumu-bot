@@ -164,7 +164,7 @@ class SBTodayBPService(
                 AsyncMethodExecutor.awaitTripleCallableExecute(
                     { osuCalculateApiService.applyBeatMapChanges(ss) },
                     { osuCalculateApiService.applyStarToScores(ss) },
-                    { osuBeatmapApiService.applyBeatmapExtendFromDatabase(ss) },
+                    { osuBeatmapApiService.applyBeatmapExtend(ss) },
 
                     )
 
