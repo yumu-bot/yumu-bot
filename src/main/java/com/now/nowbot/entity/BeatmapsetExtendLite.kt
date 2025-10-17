@@ -23,7 +23,7 @@ class BeatmapsetExtendLite (
     @Column(name = "cover_cache", nullable = true)
     val coverID: Long? = null,
 
-    @Column(name = "creator", columnDefinition = "VARCHAR(15)")
+    @Column(name = "creator", columnDefinition = "VARCHAR(20)")
     val creator: String = "",
 
     @Column(name = "favourite_count")
