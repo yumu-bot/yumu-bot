@@ -1019,7 +1019,7 @@ class BeatmapApiImpl(
 
         log.info("自动更新扩展谱面：已更新 $result($result2) 张谱面。")
 
-        return result
+        return result + result2
     }
 
     private fun getBeatmapsetWithRankedTimeLibrary(): List<BeatmapsetWithRankTime> {

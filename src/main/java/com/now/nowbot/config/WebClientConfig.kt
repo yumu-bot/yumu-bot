@@ -1,6 +1,7 @@
 package com.now.nowbot.config
 
 import com.now.nowbot.util.JacksonUtil
+import io.netty.channel.ChannelOption
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -24,14 +25,13 @@ import reactor.netty.transport.ProxyProvider
 import reactor.util.retry.Retry
 import reactor.util.retry.Retry.RetrySignal
 import java.time.Duration
-import java.util.function.Function
 
 @Component @Configuration class WebClientConfig : WebFluxConfigurer {
     override fun configureHttpMessageCodecs(configurer: ServerCodecConfigurer) {
         configurer.defaultCodecs().maxInMemorySize(20 * 1024 * 1024)
     }
 
-    @Bean("osuApiWebClient") @Qualifier("osuApiWebClient") @Primary fun osuApiWebClient(builder: WebClient.Builder, config: NowbotConfig): WebClient {/*
+    @Bean("osuApiWebClient") @Qualifier("osuApiWebClient") @Primary fun osuApiWebClient(builder: WebClient.Builder): WebClient {/*
          * Setting maxIdleTime as 30s, because servers usually have a keepAliveTimeout of 60s, after which the connection gets closed.
          * If the connection pool has any connection which has been idle for over 10s, it will be evicted from the pool.
          * Refer https://github.com/reactor/reactor-netty/issues/1318#issuecomment-702668918
@@ -40,8 +40,11 @@ import java.util.function.Function
             .maxIdleTime(Duration.ofSeconds(30))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
+            .evictInBackground(Duration.ofSeconds(30))
             .build()
+
         val httpClient = HttpClient.create(connectionProvider)
+            /*
             .proxy {
                 val type = if (config.proxyType == "HTTP") {
                     ProxyProvider.Proxy.HTTP
@@ -50,7 +53,11 @@ import java.util.function.Function
                 }
                 it.type(type).host(config.proxyHost).port(config.proxyPort)
             }
-            .followRedirect(true).responseTimeout(Duration.ofSeconds(15))
+            .followRedirect(true)
+
+             */
+
+            .responseTimeout(Duration.ofSeconds(15))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs { clientDefaultCodecsConfigurer: ClientCodecConfigurer ->
                 clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(
@@ -85,8 +92,6 @@ import java.util.function.Function
                 it.type(type).host(config.proxyHost).port(config.proxyPort)
             }
 
-            .followRedirect(true)
-            .responseTimeout(Duration.ofSeconds(15))
             .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
@@ -107,7 +112,7 @@ import java.util.function.Function
             }.build()
     }
 
-    @Bean("lxnsApiWebClient") @Qualifier("lxnsApiWebClient") fun lxnsApiWebClient(builder: WebClient.Builder, lxnsConfig: LxnsConfig, config: NowbotConfig): WebClient {
+    @Bean("lxnsApiWebClient") @Qualifier("lxnsApiWebClient") fun lxnsApiWebClient(builder: WebClient.Builder, lxnsConfig: LxnsConfig): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider5")
             .maxIdleTime(Duration.ofSeconds(30))
             .maxConnections(200)
@@ -173,6 +178,7 @@ import java.util.function.Function
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
+
         val httpClient = HttpClient.create(connectionProvider)
             // 要用梯子
             .proxy {
@@ -203,8 +209,34 @@ import java.util.function.Function
             }.build()
     }
 
-    private fun doRetryFilter(request: ClientRequest, next: ExchangeFunction): Mono<ClientResponse?> {
+    private fun doRetryFilter(request: ClientRequest, next: ExchangeFunction): Mono<ClientResponse> {
         return next.exchange(request)
+            .flatMap {
+                response ->
+                when (response.statusCode().value()) {
+                    504, 503, 502, 429, 408 -> response.createException().flatMap { error ->
+                        Mono.error(error)
+                    }
+
+                    else -> Mono.just(response)
+                }
+            }
+            .retryWhen(Retry.backoff(3, Duration.ofSeconds(2))
+                .jitter(0.1)
+                .doBeforeRetry { _: RetrySignal? ->
+                    log.warn("Retrying request {}", request.url())
+                }
+            )
+            .onErrorResume(RuntimeException::class.java) { e ->
+                if (Exceptions.isRetryExhausted(e)) {
+                    Mono.error(e.cause ?: e)
+                } else {
+                    Mono.error(e)
+                }
+            }
+
+                /*
+
             .flatMap<ClientResponse?>(Function<ClientResponse, Mono<out ClientResponse?>> { response: ClientResponse ->
                 when (response.statusCode().value()) {
                     504, 503, 502, 429, 408 -> response.createException().flatMap (
@@ -218,14 +250,17 @@ import java.util.function.Function
                 }
             }).retryWhen(
                 Retry.backoff(3, Duration.ofSeconds(2)).jitter(0.1)
-                    .doBeforeRetry { a: RetrySignal? -> log.warn("Retrying request {}", request.url()) })
+                    .doBeforeRetry { _: RetrySignal? -> log.warn("Retrying request {}", request.url()) })
             .onErrorResume(
-                RuntimeException::class.java, { e: RuntimeException ->
-                    if (Exceptions.isRetryExhausted(e)) {
-                        return@onErrorResume Mono.error<ClientResponse>(e.cause!!)
-                    }
-                    Mono.error(e)
-                })
+                RuntimeException::class.java
+            ) { e: RuntimeException ->
+                if (Exceptions.isRetryExhausted(e)) {
+                    return@onErrorResume Mono.error(e.cause!!)
+                }
+                Mono.error(e)
+            }
+
+                 */
     }
 
     @Bean("proxyClient") @Qualifier("proxyClient") fun proxyClient(builder: WebClient.Builder, config: NowbotConfig): WebClient {
@@ -244,11 +279,17 @@ import java.util.function.Function
 
     @Bean("webClient") @Qualifier("webClient") fun webClient(builder: WebClient.Builder): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider3")
-            .maxIdleTime(Duration.ofSeconds(30))
-            .maxConnections(200)
+            .maxIdleTime(Duration.ofMinutes(1))
+            .maxLifeTime(Duration.ofMinutes(2))
+            .maxConnections(500)
             .pendingAcquireMaxCount(-1)
+            .evictInBackground(Duration.ofSeconds(30))
             .build()
-        val httpClient = HttpClient.create(connectionProvider).responseTimeout(Duration.ofSeconds(30))
+
+        val httpClient = HttpClient.create(connectionProvider)
+            .responseTimeout(Duration.ofSeconds(30))
+            .option(ChannelOption.TCP_NODELAY, true)
+
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
             it.defaultCodecs().jackson2JsonEncoder(
