@@ -95,7 +95,7 @@ open class NetworkException(message: String?
         class Forbidden:
             UserException("""
                 403 Forbidden
-                玩家已被封禁。
+                服务器禁止获取玩家数据。
             """.trimIndent()) {
             override val code = 403
         }
@@ -172,7 +172,7 @@ open class NetworkException(message: String?
         class Forbidden:
             BeatmapException("""
                 403 Forbidden
-                谱面已被限制。
+                服务器禁止获取谱面数据。
             """.trimIndent()) {
             override val code = 403
         }
@@ -232,7 +232,7 @@ open class NetworkException(message: String?
         class Forbidden:
             ScoreException("""
                 403 Forbidden
-                成绩已被限制。
+                服务器禁止获取成绩数据。
             """.trimIndent()) {
             override val code = 403
         }
@@ -297,6 +297,14 @@ open class NetworkException(message: String?
             override val code = 401
         }
 
+        class Forbidden:
+            MatchException("""
+                403 Forbidden
+                服务器禁止获取比赛数据。
+            """.trimIndent()) {
+            override val code = 403
+        }
+
         class NotFound:
             MatchException("""
                 404 Not Found
@@ -352,7 +360,7 @@ open class NetworkException(message: String?
         class Forbidden:
             DivingFishException("""
                 403 Forbidden
-                水鱼用户未授权或是禁止第三方获取数据。
+                水鱼用户未授权或是服务器禁止获取数据。
             """.trimIndent()) {
             override val code = 403
         }
@@ -420,7 +428,7 @@ open class NetworkException(message: String?
         class Forbidden:
             LxnsException("""
                 403 Forbidden
-                落雪用户未授权或是禁止第三方获取数据。
+                落雪用户未授权或是服务器禁止获取数据。
             """.trimIndent()) {
             override val code = 403
         }
