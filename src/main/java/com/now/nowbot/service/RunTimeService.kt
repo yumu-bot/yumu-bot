@@ -39,10 +39,10 @@ class RunTimeService(
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
 
     // 每 30 秒刷新一次 token
-    //@Scheduled(cron = "0,30 * * * * *")
-    //fun refreshToken() {
-    //    bindDao.refreshOldUserToken(userApiService)
-    //}
+    @Scheduled(cron = "0,30 * * * * *")
+    fun refreshToken() {
+        bindDao.refreshOldUserToken(userApiService)
+    }
 
     // 每2小时更新一次过期的谱面
     // 每2小时执行：0点, 2点, 4点... 22点
