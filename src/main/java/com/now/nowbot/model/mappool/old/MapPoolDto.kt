@@ -36,13 +36,19 @@ class MapPoolDto(
     val averageStarRating : Double = if (modPools.isEmpty()) {
         0.0
     } else {
-        val hasChange = modPools.filter { LazerMod.hasStarRatingChange(listOf(it.mod ?: return@filter false)) }
+        val hasChange = modPools.filter { pool ->
+            val mod = pool.mod ?: return@filter false
 
-        AsyncMethodExecutor.awaitRunnableExecute(hasChange.map {
-            it.beatmaps.map { b ->
+            LazerMod.hasStarRatingChange(listOf(mod))
+        }
+
+        AsyncMethodExecutor.awaitRunnableExecute(hasChange.map { pool ->
+            val mod = pool.mod!!
+
+            pool.beatmaps.map { b ->
                 AsyncMethodExecutor.Runnable {
-                    calculateApiService.applyBeatMapChanges(b, listOf(it.mod!!))
-                    calculateApiService.applyStarToBeatMap(b, mode, listOf(it.mod))
+                    calculateApiService.applyBeatMapChanges(b, listOf(mod))
+                    calculateApiService.applyStarToBeatMap(b, mode, listOf(mod))
                 }
             }
         }.flatten())

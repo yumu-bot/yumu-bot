@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Matcher
 import kotlin.math.*
 
@@ -128,18 +127,17 @@ class BPFixService(
         }
 
         val playerPP = user.pp
-        val beforeBpSumAtomic = AtomicReference(0.0)
 
-        AsyncMethodExecutor.awaitPairCallableExecute(
-            { beatmapApiService.applyBeatmapExtend(bestsMap.map { it.value }) },
-            { calculateApiService.applyStarToScores(bestsMap.map { it.value }) }
-        )
+        beatmapApiService.applyBeatmapExtend(bestsMap.map { it.value })
+        calculateApiService.applyStarToScores(bestsMap.map { it.value })
 
-        val tasks = bestsMap.map { entry ->
-            val index = entry.key
-            val score = entry.value
+        //before bp sum
 
-            beforeBpSumAtomic.updateAndGet { it + (score.weight?.pp ?: 0.0) }
+        val originalBestsSum = bestsMap.map { (_, score) ->
+            (score.weight?.pp ?: 0.0)
+        }.sum()
+
+        val tasks = bestsMap.map { (index, score) ->
 
             Callable {
                 val max = score.beatmap.maxCombo ?: 1
@@ -181,10 +179,8 @@ class BPFixService(
             }
         }
 
-        val afterBpSumAtomic = AtomicReference(0.0)
-
         // 这里的 i 是重排过后的，从 0 开始
-        fixedBests.forEachIndexed { index, score ->
+        val newBestsSum = fixedBests.mapIndexed { index, score ->
             val weight: Double = 0.95.pow(index)
             val pp: Double
             if (score is LazerScoreWithFcPP) {
@@ -193,20 +189,17 @@ class BPFixService(
             } else {
                 pp = score.pp
             }
-            afterBpSumAtomic.updateAndGet { it + (weight * pp) }
-        }
 
-        val beforeBpSum = beforeBpSumAtomic.get()
-        val afterBpSum = afterBpSumAtomic.get()
-        val newPlayerPP = (playerPP + afterBpSum - beforeBpSum)
+            weight * pp
+        }.sum()
+
+        val newPlayerPP = (playerPP + newBestsSum - originalBestsSum)
 
         val scores = fixedBests.filterIsInstance<LazerScoreWithFcPP>()
 
         if (scores.isEmpty()) throw NoSuchElementException.BestScoreTheoretical()
 
-        AsyncMethodExecutor.asyncRunnableExecute {
-            scoreApiService.asyncDownloadBackgroundFromScores(scores, listOf(CoverType.LIST, CoverType.COVER))
-        }
+        scoreApiService.asyncDownloadBackgroundFromScores(scores, listOf(CoverType.LIST, CoverType.COVER))
 
         return scores to newPlayerPP
     }
