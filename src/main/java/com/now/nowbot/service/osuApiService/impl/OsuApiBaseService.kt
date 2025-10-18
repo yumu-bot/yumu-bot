@@ -134,7 +134,8 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @Qualifier("osuApiWe
         headers.setAll(
             mapOf(
                 "Authorization" to "Bearer $botToken",
-                "x-api-version" to "20240529"
+                "x-api-version" to "20240529",
+                "User-Agent" to "osu!"
             )
         )
     }
@@ -167,7 +168,8 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @Qualifier("osuApiWe
             headers.setAll(
                 mapOf(
                     "Authorization" to "Bearer $token",
-                    "x-api-version" to "20241101"
+                    "x-api-version" to "20241101",
+                    "User-Agent" to "osu!"
                 )
             )
         }
