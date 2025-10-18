@@ -4,7 +4,7 @@ import jakarta.persistence.*
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "osu_extend_beatmapset")
+@Table(name = "osu_extend_beatmapset", indexes = [Index(name = "index_extend_time", columnList = "beatmapset_id,updated_at")])
 class BeatmapsetExtendLite (
     @Id
     @Column(name = "beatmapset_id")
