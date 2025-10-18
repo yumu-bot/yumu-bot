@@ -141,7 +141,7 @@ class BeatmapApiImpl(
     }
 
     private fun getBeatMapFileFromLocalService(bid: Long): String? {
-        return beatmapMirrorApiService.getOsuFile(bid) ?: getBeatMapFileFromOfficialWebsite(bid)
+        return beatmapMirrorApiService.getOsuFile(bid)
 
     }
 
@@ -202,12 +202,8 @@ class BeatmapApiImpl(
 
     private fun downloadBeatMapFileString(bid: Long): String? {
         var str: String? = try {
-            AsyncMethodExecutor.execute(
-                { getBeatMapFileFromLocalService(bid) ?: "" },
-                "_getBeatMapFileFromLocalService$bid",
-                null
-            )
-        } catch (e: Exception) {
+            getBeatMapFileFromLocalService(bid)
+        } catch (_: Exception) {
             null
         }
 
@@ -216,12 +212,8 @@ class BeatmapApiImpl(
         }
 
         str = try {
-            AsyncMethodExecutor.execute(
-                { getBeatMapFileFromOfficialWebsite(bid) ?: "" },
-                "_getBeatMapFileFromWebsite$bid",
-                null
-            )
-        } catch (e: Exception) {
+            getBeatMapFileFromOfficialWebsite(bid)
+        } catch (_: Exception) {
             null
         }
 

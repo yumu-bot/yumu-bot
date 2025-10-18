@@ -40,7 +40,6 @@ import java.time.Duration
             .maxIdleTime(Duration.ofSeconds(30))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
-            .evictInBackground(Duration.ofSeconds(30))
             .build()
 
         val httpClient = HttpClient.create(connectionProvider)

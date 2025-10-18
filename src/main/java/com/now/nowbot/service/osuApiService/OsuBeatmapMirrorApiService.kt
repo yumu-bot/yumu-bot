@@ -1,7 +1,6 @@
 package com.now.nowbot.service.osuApiService
 
 import com.now.nowbot.config.BeatmapMirrorConfig
-import jakarta.annotation.Nullable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -16,7 +15,7 @@ import java.nio.file.Path
 ) {
     private val url = beatmapMirrorConfig.url
 
-    @Nullable fun getOsuFile(bid: Long): String? {
+    fun getOsuFile(bid: Long): String? {
         if (url.isNullOrEmpty()) return null
 
         try {
@@ -40,7 +39,7 @@ import java.nio.file.Path
         }
     }
 
-    @Nullable fun getFullBackgroundPath(bid: Long): Path? {
+    fun getFullBackgroundPath(bid: Long): Path? {
         if (url.isNullOrEmpty()) return null
 
         try {
