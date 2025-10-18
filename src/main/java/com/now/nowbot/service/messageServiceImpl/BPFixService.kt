@@ -211,7 +211,7 @@ class BPFixService(
             val pp = calculateApiService.getScoreFullComboPP(score)
             result.fcPP = pp.pp
         } catch (e: Exception) {
-            log.error("bp 计算 pp 出错:", e)
+            log.error("修补成绩：获取第 $index 成绩 (${score.previewName}) 全连 PP 出错：", e)
         }
         return result
     }
