@@ -286,17 +286,22 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 ARTIST -> (fit(operator, it.beatmapset.artist, condition)
                         || fit(operator, it.beatmapset.artistUnicode, condition))
                 SOURCE -> fit(operator, it.beatmapset.source, condition)
-                TAG ->
+                TAG -> {
+
                     if (it.beatmapset.tags.isBlank()) {
-                        false
-                    } else {
-                        val ts = it.beatmapset.tags
-                            .split("\\s+".toRegex())
-                            .asSequence()
-                            .map { fit(operator, it, condition) }
-                            .toSet()
-                        return ts.contains(element = true)
+                        return false
                     }
+
+                    // O(n2)操作，使用并行流
+                    val ts = it.beatmapset.tags
+                        .split("\\s+".toRegex())
+                        .dropWhile { it.isEmpty() }
+                        .parallelStream()
+                        .map { fit(operator, it.replace("_", ""), condition) }
+                        .toList()
+                        .toSet()
+                    return ts.contains(element = true)
+                }
                 GENRE -> fit(operator, it.beatmapset.genreID.toInt(), DataUtil.getGenre(condition)?.toInt() ?: return false)
                 LANGUAGE -> fit(operator, it.beatmapset.languageID.toInt(), DataUtil.getLanguage(condition)?.toInt() ?: return false)
 
@@ -610,13 +615,6 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 "真", "是", "正确", "对", "t", "true", "y", "yes", "" -> true
                 else -> false
             }
-        }
-
-        /**
-         * 通过返回的查询列表，来判断需不需要补充数据（补充数据很耗时间！）
-         */
-        fun isExpandNeeded(conditions: List<List<String>>): Boolean {
-            return (conditions.getOrNull(7)?.isNotEmpty() ?: false)
         }
     }
 }
