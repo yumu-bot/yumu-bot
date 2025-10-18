@@ -24,6 +24,7 @@ import com.now.nowbot.util.CmdUtil.getMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Matcher
@@ -140,7 +141,7 @@ class BPFixService(
 
             beforeBpSumAtomic.updateAndGet { it + (score.weight?.pp ?: 0.0) }
 
-            AsyncMethodExecutor.Supplier {
+            Callable {
                 val max = score.beatmap.maxCombo ?: 1
                 val combo = score.maxCombo
                 val stat = score.statistics
@@ -171,7 +172,7 @@ class BPFixService(
             }
         }
 
-        val fixedBests = AsyncMethodExecutor.awaitSupplierExecute(tasks)
+        val fixedBests = AsyncMethodExecutor.awaitCallableExecute(tasks)
             .sortedByDescending {
             if (it is LazerScoreWithFcPP && it.fcPP > 0) {
                 it.fcPP

@@ -22,6 +22,7 @@ import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.concurrent.Callable
 import kotlin.math.round
 import kotlin.math.roundToInt
 
@@ -79,17 +80,17 @@ import kotlin.math.roundToInt
             param.names.mapNotNull { it.toLongOrNull() }
         } else {
             val actions = param.names.map {
-                return@map AsyncMethodExecutor.Supplier<Pair<String, Long>?> {
-                    return@Supplier try {
+                Callable {
+                    try {
                         it to userApiService.getOsuID(it)
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         log.error("TF：获取玩家 {} 编号失败", it)
                         null
                     }
                 }
             }
 
-            val result = AsyncMethodExecutor.awaitSupplierExecute(actions)
+            val result = AsyncMethodExecutor.awaitCallableExecute(actions)
                 .filterNotNull()
                 .toMap()
 
@@ -103,26 +104,26 @@ import kotlin.math.roundToInt
         }
 
         val actions = ids.map {
-            return@map AsyncMethodExecutor.Supplier<Pair<Long, TestFixPPData>> {
+            Callable {
                 val user: OsuUser = try {
                     userApiService.getOsuUser(it, mode)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     log.error("TP：获取玩家 $it 信息失败")
-                    return@Supplier it to TestFixPPData(OsuUser(it), listOf())
+                    return@Callable it to TestFixPPData(OsuUser(it), listOf())
                 }
 
                 val bests: List<LazerScore> = try {
                     scoreApiService.getBestScores(user.userID, mode)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     log.error("TP：获取玩家 $it 最好成绩失败")
-                    return@Supplier it to TestFixPPData(user, listOf())
+                    return@Callable it to TestFixPPData(user, listOf())
                 }
 
                 it to TestFixPPData(user, bests)
             }
         }
 
-        val data = AsyncMethodExecutor.awaitSupplierExecute(actions).toMap()
+        val data = AsyncMethodExecutor.awaitCallableExecute(actions).toMap()
 
         log.info("TP：获取玩家信息和最好成绩成功，耗时：${(System.currentTimeMillis() - time) / 1000} 秒")
         time = System.currentTimeMillis()

@@ -6,6 +6,7 @@ import com.now.nowbot.model.mappool.now.Pool
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.AsyncMethodExecutor
+import java.util.concurrent.Callable
 
 class MapPoolDto(
     var name: String? = "MapPool",
@@ -19,15 +20,15 @@ class MapPoolDto(
     val modPools: List<ModPool> = if (poolMap.isNullOrEmpty()) {
         listOf()
     } else {
-        val action = AsyncMethodExecutor.awaitSupplierExecute {
-            poolMap.mapValues { pool ->
-                pool.value.map {
+        poolMap.mapValues { (key, value) ->
+
+            val action = value.map {
+                Callable {
                     beatmapApiService.getBeatmapFromDatabase(it)
                 }
             }
-        }
-
-        action.map { ModPool(it.key, it.value) }
+            AsyncMethodExecutor.awaitCallableExecute(action)
+        }.map { ModPool(it.key, it.value) }
     }
 
     val firstMapSID: Long = modPools.firstOrNull()?.beatmaps?.firstOrNull()?.beatmapset?.beatmapsetID ?: 0L
@@ -41,7 +42,7 @@ class MapPoolDto(
             it.beatmaps.map { b ->
                 AsyncMethodExecutor.Runnable {
                     calculateApiService.applyBeatMapChanges(b, listOf(it.mod!!))
-                    calculateApiService.applyStarToBeatMap(b, mode, listOf(it.mod!!))
+                    calculateApiService.applyStarToBeatMap(b, mode, listOf(it.mod))
                 }
             }
         }.flatten())

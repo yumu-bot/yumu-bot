@@ -25,6 +25,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
+import java.util.concurrent.Callable
 import java.util.regex.Pattern
 
 @Service class UserApiImpl(
@@ -178,12 +179,12 @@ import java.util.regex.Pattern
         val idChunk = users.chunked(50)
 
         val callables = idChunk.map {
-            return@map AsyncMethodExecutor.Supplier {
+            Callable {
                 getUsersPrivate(it, isVariant = isVariant)
             }
         }
 
-        return AsyncMethodExecutor.awaitSupplierExecute(callables).flatten()
+        return AsyncMethodExecutor.awaitCallableExecute(callables).flatten()
     }
 
     /**

@@ -15,6 +15,7 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
+import java.util.concurrent.Callable
 
 @Service("GET_ID")
 class GetIDService(private val userApiService: OsuUserApiService, private val bindDao: BindDao) : MessageService<List<String>> {
@@ -51,16 +52,16 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
         val sb = StringBuilder()
 
         val actions = param.map {
-            return@map AsyncMethodExecutor.Supplier {
-                return@Supplier try {
+            Callable {
+                try {
                     it to userApiService.getOsuID(it)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     it to -1L
                 }
             }
         }
 
-        val ids = AsyncMethodExecutor.awaitSupplierExecute(actions)
+        val ids = AsyncMethodExecutor.awaitCallableExecute(actions)
             .filter { it.second > 0L }
             .toMap()
 

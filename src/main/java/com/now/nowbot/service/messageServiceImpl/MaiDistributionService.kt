@@ -17,6 +17,7 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import org.springframework.stereotype.Service
+import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.min
 
@@ -88,28 +89,20 @@ import kotlin.math.min
             throw NoSuchElementException.BestScore(best.name)
         }
 
-        maimaiApiService.insertPosition(best.charts.deluxe, false)
-        maimaiApiService.insertPosition(best.charts.standard, true)
+        maimaiApiService.insert(best.charts)
 
-        maimaiApiService.insertMaimaiAliasForScore(best.charts.deluxe)
-        maimaiApiService.insertMaimaiAliasForScore(best.charts.standard)
-
-        maimaiApiService.insertSongData(best.charts.deluxe)
-        maimaiApiService.insertSongData(best.charts.standard)
-
-        val deluxe =
-            getMaiFitChartData(best.charts.deluxe, maimaiApiService).sortedByDescending { it.rating }
-        val standard =
-            getMaiFitChartData(best.charts.standard, maimaiApiService).sortedByDescending { it.rating }
+        val deluxe = getMaiFitChartData(best.charts.deluxe, maimaiApiService)
+            .sortedByDescending { it.rating }
+        val standard = getMaiFitChartData(best.charts.standard, maimaiApiService)
+            .sortedByDescending { it.rating }
 
         val rating =
             standard.sumOf { it.rating } + deluxe.sumOf { it.rating }
         val count =
-            standard
-                .filter { it.chart.fit > 0.0 }
-                .count { it.score.star < it.chart.fit } + deluxe
-                .filter { it.chart.fit > 0.0 }
-                .count { it.score.star < it.chart.fit }
+            standard.filter { it.chart.fit > 0.0 }
+                .count { it.score.star < it.chart.fit } +
+                    deluxe.filter { it.chart.fit > 0.0 }
+                        .count { it.score.star < it.chart.fit }
 
         val size = standard.count {
             it.chart.fit > 0.0
@@ -153,13 +146,13 @@ import kotlin.math.min
             ConcurrentHashMap<Long, ChartData>()
 
             val actions = scores.map {
-                return@map AsyncMethodExecutor.Supplier<Pair<Long, ChartData>> {
-                    return@Supplier it.songID * 10 + it.index to
+                Callable {
+                    it.songID * 10 + it.index to
                             (maimaiApiService.getMaimaiChartData(it.songID).getOrNull(it.index) ?: ChartData())
                     }
                 }
 
-            return AsyncMethodExecutor.awaitSupplierExecute(actions).toMap()
+            return AsyncMethodExecutor.awaitCallableExecute(actions).toMap()
         }
 
         // 计算对应成绩的对应 DX 评分

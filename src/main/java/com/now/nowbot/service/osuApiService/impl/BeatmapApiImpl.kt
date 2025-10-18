@@ -309,12 +309,12 @@ class BeatmapApiImpl(
         val idChunk = ids.chunked(50)
 
         val callables = idChunk.map { chunk ->
-            return@map AsyncMethodExecutor.Supplier {
+            Callable {
                 getBeatmapsPrivate(chunk)
             }
         }
 
-        val beatmaps = AsyncMethodExecutor.awaitSupplierExecute(callables).flatten()
+        val beatmaps = AsyncMethodExecutor.awaitCallableExecute(callables).flatten()
 
         beatmapDao.saveExtendedBeatmap(beatmaps)
 
@@ -396,12 +396,12 @@ class BeatmapApiImpl(
 
     override fun getBeatmapset(sids: Iterable<Long>): List<Beatmapset> {
         val callables = sids.map { sid ->
-            return@map AsyncMethodExecutor.Supplier {
+            Callable {
                 getBeatmapset(sid)
             }
         }
 
-        return AsyncMethodExecutor.awaitSupplierExecute(callables)
+        return AsyncMethodExecutor.awaitCallableExecute(callables)
     }
 
     override fun extendBeatmapInSet(sets: Iterable<Beatmapset>): List<Beatmapset> {
@@ -790,7 +790,7 @@ class BeatmapApiImpl(
                     }
                 }
 
-                val searches = AsyncMethodExecutor.awaitCallablesExecute(actions)
+                val searches = AsyncMethodExecutor.awaitCallableExecute(actions)
 
                 if (searches.map { it.cursorString }.any { it == null }) {
                     isEnd.set(true)

@@ -20,6 +20,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.*
 import org.springframework.stereotype.Service
+import java.util.concurrent.Callable
 import java.util.regex.Matcher
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -241,32 +242,32 @@ import kotlin.math.sqrt
         if (bests.isNullOrEmpty()) return mapOf()
 
         val actions = bests.map {
-            return@map AsyncMethodExecutor.Supplier<Pair<LazerScore, String?>> {
-                return@Supplier it to beatmapApiService.getBeatmapFileString(it.beatmapID)
+            Callable {
+                it to beatmapApiService.getBeatmapFileString(it.beatmapID)
             }
         }
 
-        val files: List<Pair<LazerScore, String?>> = AsyncMethodExecutor.awaitSupplierExecute(actions)
+        val files: List<Pair<LazerScore, String?>> = AsyncMethodExecutor.awaitCallableExecute(actions)
 
         val actions2 = files.map {
             val id = it.first.beatmapID
 
-            return@map AsyncMethodExecutor.Supplier<Pair<Long, Skill?>> {
+            Callable {
                 try {
                     val file = OsuFile.getInstance(it.second)
 
-                    return@Supplier id to Skill.getInstance(
+                    id to Skill.getInstance(
                         file,
                         OsuMode.MANIA,
                         LazerMod.getModSpeedForStarCalculate(it.first.mods).toDouble()
                     )
                 } catch (_: Exception) {
-                    return@Supplier id to null
+                    id to null
                 }
             }
         }
 
-        val result = AsyncMethodExecutor.awaitSupplierExecute(actions2).toMap()
+        val result = AsyncMethodExecutor.awaitCallableExecute(actions2).toMap()
 
         return bests.associate { it.beatmapID to result[it.beatmapID] }
     }

@@ -121,6 +121,9 @@ public interface MessageEvent extends Event{
         return getAt() != null;
     }
 
+    @Nullable
+    default ReplyMessage getReplyMessage() { return getMessageType(this, ReplyMessage.class); }
+
     default long getTarget() {
         if (getAt() != null) {
             return getAt().getTarget();

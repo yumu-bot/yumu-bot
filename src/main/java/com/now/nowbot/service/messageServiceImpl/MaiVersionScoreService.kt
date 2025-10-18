@@ -147,7 +147,7 @@ class MaiVersionScoreService(
 
         maimaiApiService.insertSongData(scores)
         maimaiApiService.insertMaimaiAliasForScore(scores)
-        maimaiApiService.insertPosition(scores, true)
+        maimaiApiService.insertPosition(scores, 0)
 
         val page = DataUtil.splitPage(scores, param.page, 50)
 

@@ -31,6 +31,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.Duration
+import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.regex.Matcher
 
@@ -284,9 +285,9 @@ class OldAvatarService(
 
         return if (users.size > 1) {
             try {
-                AsyncMethodExecutor.awaitSupplierExecute(
+                AsyncMethodExecutor.awaitCallableExecute(
                     users.map { u ->
-                        AsyncMethodExecutor.Supplier {
+                        Callable {
                             imageService.getPanel(mapOf("user" to u), panel)
                         }
                     }, Duration.ofSeconds(30L + users.size / 2)

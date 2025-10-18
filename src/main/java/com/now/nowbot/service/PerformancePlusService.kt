@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 
 @Service("PP_PLUS_SEV") class PerformancePlusService(
@@ -80,21 +81,21 @@ import java.util.concurrent.ConcurrentHashMap
         var accuracy = 0.0
         var total = 0.0
 
-        val suppliers: MutableList<AsyncMethodExecutor.Supplier<String>> = ArrayList(7)
+        val callables: MutableList<Callable<String>> = ArrayList(7)
         val ppPlusMap: MutableMap<String, List<Double>> = ConcurrentHashMap(7)
 
 
         // 逐个排序
-        suppliers.add(createSupplier("aim", ppPlusMap, ppPlus, PPPlus.Stats::aim))
-        suppliers.add(createSupplier("jumpAim", ppPlusMap, ppPlus, PPPlus.Stats::jumpAim))
-        suppliers.add(createSupplier("flowAim", ppPlusMap, ppPlus, PPPlus.Stats::flowAim))
-        suppliers.add(createSupplier("precision", ppPlusMap, ppPlus, PPPlus.Stats::precision))
-        suppliers.add(createSupplier("speed", ppPlusMap, ppPlus, PPPlus.Stats::speed))
-        suppliers.add(createSupplier("stamina", ppPlusMap, ppPlus, PPPlus.Stats::stamina))
-        suppliers.add(createSupplier("accuracy", ppPlusMap, ppPlus, PPPlus.Stats::accuracy))
-        suppliers.add(createSupplier("total", ppPlusMap, ppPlus, PPPlus.Stats::total))
+        callables.add(createCallable("aim", ppPlusMap, ppPlus, PPPlus.Stats::aim))
+        callables.add(createCallable("jumpAim", ppPlusMap, ppPlus, PPPlus.Stats::jumpAim))
+        callables.add(createCallable("flowAim", ppPlusMap, ppPlus, PPPlus.Stats::flowAim))
+        callables.add(createCallable("precision", ppPlusMap, ppPlus, PPPlus.Stats::precision))
+        callables.add(createCallable("speed", ppPlusMap, ppPlus, PPPlus.Stats::speed))
+        callables.add(createCallable("stamina", ppPlusMap, ppPlus, PPPlus.Stats::stamina))
+        callables.add(createCallable("accuracy", ppPlusMap, ppPlus, PPPlus.Stats::accuracy))
+        callables.add(createCallable("total", ppPlusMap, ppPlus, PPPlus.Stats::total))
 
-        AsyncMethodExecutor.awaitSupplierExecute(suppliers)
+        AsyncMethodExecutor.awaitCallableExecute(callables)
 
         // 计算加权和
         var weight = 1.0 / 0.95
@@ -252,13 +253,16 @@ import java.util.concurrent.ConcurrentHashMap
         return false
     }
 
-    private fun createSupplier(
+    private fun createCallable(
         key: String, ppPlusMap: MutableMap<String, List<Double>>, list: List<PPPlus>, function: (PPPlus.Stats) -> Double
-    ): AsyncMethodExecutor.Supplier<String> {
-        return AsyncMethodExecutor.Supplier {
-            ppPlusMap[key] = list.map { it.performance }.map { function(it!!) }.sortedDescending().toList()
+    ): Callable<String> {
+        return Callable {
+            ppPlusMap[key] = list
+                .mapNotNull { it.performance }
+                .map { function(it) }
+                .sortedDescending()
 
-            return@Supplier key
+            key
         }
     }
 

@@ -298,7 +298,7 @@ object AsyncMethodExecutor {
         }
     }
 
-    fun <T> awaitCallablesExecute(
+    fun <T> awaitCallableExecute(
         works: List<Callable<T>>,
         timeout: Duration = Duration.ofSeconds(30)
     ): List<T> {

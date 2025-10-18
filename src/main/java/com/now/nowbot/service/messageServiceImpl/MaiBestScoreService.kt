@@ -10,8 +10,6 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
-
-import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.CmdRange
 import com.now.nowbot.util.Instruction
@@ -26,7 +24,6 @@ class MaiBestScoreService(
 
     data class MaiBestScoreParam(val name: String?, val qq: Long?, val range: CmdRange<Int>, val isMyself: Boolean = false)
 
-    @JvmRecord
     data class PanelMEParam(
         val user: MaiBestScore.User,
         val score: MaiScore,
@@ -46,7 +43,6 @@ class MaiBestScoreService(
         }
     }
 
-    @JvmRecord
     data class PanelMAParam(
         val user: MaiBestScore.User,
         val scores: List<MaiScore>,
@@ -154,8 +150,9 @@ class MaiBestScoreService(
                 val song = maimaiApiService.getMaimaiSong(score.songID)
                     ?: throw NoSuchElementException.Song(score.songID)
 
-                val chart = maimaiApiService.getMaimaiChartData(score.songID).getOrNull(score.index) ?: ChartData()
-                val diff = maimaiApiService.getMaimaiDiffData(score.difficulty)
+                val chart = maimaiApiService.getMaimaiChartData(score.songID)
+                    .getOrNull(score.index) ?: ChartData()
+                val diff = maimaiApiService.getMaimaiDiffData(score.level)
 
                 imageService.getPanel(PanelMEParam(user, score, song, chart, diff).toMap(), "ME")
             }
@@ -169,7 +166,6 @@ class MaiBestScoreService(
     }
 
     companion object {
-        @JvmStatic
         fun getBestScores(
             qq: Long?,
             name: String?,
@@ -184,70 +180,39 @@ class MaiBestScoreService(
             }
         }
 
-        @JvmStatic
         fun implementScore(
             range: CmdRange<Int>,
-            bp: MaiBestScore,
+            best: MaiBestScore,
             maimaiApiService: MaimaiApiService
         ): MaiBestScore.Charts {
             val offset = range.getOffset()
             val limit = range.getLimit()
 
-            val c = bp.charts
+            val c = getOffsetLimitedScores(best.charts, offset, limit)
 
-            val isStandardEmpty = c.standard.isEmpty()
-            val isDeluxeEmpty = c.deluxe.isEmpty()
-
-            if (offset >= 35) {
-                // dx
-                if (isDeluxeEmpty) {
-                    throw TipsException("您的新版本成绩是空的！")
-                } else {
-                    maimaiApiService.insertSongData(c.deluxe)
-                    maimaiApiService.insertPosition(c.deluxe, false)
-                    maimaiApiService.insertMaimaiAliasForScore(c.deluxe)
-
-                    return MaiBestScore.Charts(
-                        c.deluxe.drop(offset - 35).take(limit),
-                        emptyList(),
-                    )
-                }
-            } else if (offset + limit < 35) {
-                // sd
-                if (isStandardEmpty) {
-                    throw TipsException("您的旧版本成绩是空的！")
-                } else {
-                    maimaiApiService.insertSongData(c.standard)
-                    maimaiApiService.insertPosition(c.standard, true)
-                    maimaiApiService.insertMaimaiAliasForScore(c.standard)
-
-                    return MaiBestScore.Charts(
-                        emptyList(),
-                        c.standard.drop(offset).take(limit),
-                    )
-                }
-            } else {
-                // sd + dx
-
-                if (isStandardEmpty && isDeluxeEmpty) {
-                    throw NoSuchElementException.BestScore(bp.name)
-                } else {
-                    maimaiApiService.insertSongData(c.standard)
-                    maimaiApiService.insertPosition(c.standard, true)
-                    maimaiApiService.insertMaimaiAliasForScore(c.standard)
-
-                    maimaiApiService.insertSongData(c.deluxe)
-                    maimaiApiService.insertPosition(c.deluxe, false)
-                    maimaiApiService.insertMaimaiAliasForScore(c.deluxe)
-
-                    // offset < 35, offset + limit >= 35
-
-                    return MaiBestScore.Charts(
-                        c.deluxe.take(offset + limit - 35),
-                        c.standard.drop(offset),
-                    )
-                }
+            if (c.deluxe.isEmpty() && c.standard.isEmpty()) {
+                throw NoSuchElementException.BestScore(best.name)
             }
+
+            maimaiApiService.insert(c)
+
+            return c
+        }
+        private fun getOffsetLimitedScores(
+            charts: MaiBestScore.Charts,
+            offset: Int,
+            limit: Int
+        ): MaiBestScore.Charts {
+            val standard = charts.standard
+            val deluxe = charts.deluxe
+
+            val filteredStandard = standard.drop(offset).take(limit)
+            val remaining = limit - filteredStandard.size
+            val newOffset = maxOf(0, offset - standard.size)
+
+            val filteredDeluxe = deluxe.drop(newOffset).take(remaining)
+
+            return MaiBestScore.Charts(filteredDeluxe, filteredStandard)
         }
     }
 }

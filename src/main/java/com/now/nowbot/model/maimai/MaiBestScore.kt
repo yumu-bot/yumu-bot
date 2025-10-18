@@ -15,8 +15,8 @@ class MaiBestScore {
     @JsonProperty("records") var records = listOf<MaiScore>()
 
     data class Charts(
-        @JsonProperty("dx") val deluxe: List<MaiScore> = listOf(),
-        @JsonProperty("sd") val standard: List<MaiScore> = listOf(),
+        @field:JsonProperty("dx") val deluxe: List<MaiScore> = listOf(),
+        @field:JsonProperty("sd") val standard: List<MaiScore> = listOf(),
     )
 
     // 在游戏里的名字

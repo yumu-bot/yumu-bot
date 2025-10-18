@@ -8,7 +8,6 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
 import org.springframework.stereotype.Service
@@ -101,11 +100,7 @@ class MaiFilterService(private val maimaiApiService: MaimaiApiService, private v
             }
         }.sortedByDescending { it.rating }
 
-        AsyncMethodExecutor.awaitTripleCallableExecute(
-            { maimaiApiService.insertSongData(scores) },
-            { maimaiApiService.insertMaimaiAliasForScore(scores) },
-            { maimaiApiService.insertPosition(scores) }
-        )
+        maimaiApiService.insert(scores)
 
         if (scores.isEmpty()) throw NoSuchElementException.BestScoreFiltered(user.name!!)
 

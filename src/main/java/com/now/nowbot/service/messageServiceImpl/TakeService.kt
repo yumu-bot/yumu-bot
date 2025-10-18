@@ -18,6 +18,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.Callable
 import java.util.regex.Matcher
 import kotlin.math.exp
 import kotlin.math.floor
@@ -125,16 +126,16 @@ import kotlin.math.floor
             val rulesets = listOf(OsuMode.OSU, OsuMode.TAIKO, OsuMode.CATCH, OsuMode.MANIA)
 
             val actions = rulesets.map {
-                return@map AsyncMethodExecutor.Supplier {
+                Callable {
                     val lastMonth = userApiService.getOsuUser(user.userID, it).monthlyPlaycounts.lastOrNull()?.startDate
                         ?: OffsetDateTime.MIN.format(formatter2)
 
-                    return@Supplier it.modeValue.toInt() to LocalDate.parse(lastMonth, formatter2).atTime(0, 0)
-                        .atOffset(ZoneOffset.UTC)
+                    it.modeValue.toInt() to
+                            LocalDate.parse(lastMonth, formatter2).atTime(0, 0).atOffset(ZoneOffset.UTC)
                 }
             }
 
-            val result = AsyncMethodExecutor.awaitSupplierExecute(actions).toMap()
+            val result = AsyncMethodExecutor.awaitCallableExecute(actions).toMap()
 
             val most = result.maxByOrNull { it.value.toInstant().toEpochMilli() }?.value
                 ?: throw NoSuchElementException.PlayerPlay(user.username)

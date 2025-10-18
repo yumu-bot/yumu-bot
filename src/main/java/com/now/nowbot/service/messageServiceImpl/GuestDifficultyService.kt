@@ -21,6 +21,7 @@ import com.now.nowbot.util.CmdUtil.getMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 
@@ -186,12 +187,12 @@ class GuestDifficultyService(
             val idChunk = relatedSets.filter { it.creatorID != user.userID }.map { it.creatorID }.toSet().chunked(50)
 
             val actions = idChunk.map {
-                return@map AsyncMethodExecutor.Supplier<List<MicroUser>> {
+                Callable {
                     userApiService.getUsers(it)
                 }
             }
 
-            AsyncMethodExecutor.awaitSupplierExecute(actions).flatten()
+            AsyncMethodExecutor.awaitCallableExecute(actions).flatten()
         }
 
         AsyncMethodExecutor.asyncRunnableExecute {

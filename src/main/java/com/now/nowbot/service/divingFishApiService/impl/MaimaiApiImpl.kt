@@ -21,6 +21,7 @@ import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import java.io.IOException
 import java.nio.file.Files
+import java.util.concurrent.Callable
 import kotlin.math.abs
 import kotlin.text.Charsets.UTF_8
 
@@ -169,8 +170,8 @@ import kotlin.text.Charsets.UTF_8
         return maiDao.getMaiFitChartDataBySongID(songID.toInt())
     }
 
-    override fun getMaimaiDiffData(difficulty: String): MaiFit.DiffData { //return getMaimaiFitLibraryFromFile().diffData[difficulty] ?: MaiFit.DiffData()
-        return maiDao.getMaiFitDiffDataByDifficulty(difficulty)
+    override fun getMaimaiDiffData(level: String): MaiFit.DiffData { //return getMaimaiFitLibraryFromFile().diffData[difficulty] ?: MaiFit.DiffData()
+        return maiDao.getMaiFitDiffDataByLevel(level)
     }
 
     override fun getMaimaiAlias(songID: Long): MaiAlias? {
@@ -209,20 +210,23 @@ import kotlin.text.Charsets.UTF_8
         if (scores.isNullOrEmpty()) return
 
         val actions = scores.map {
-            return@map AsyncMethodExecutor.Runnable {
-                it.aliases = getMaimaiAlias(it.songID)?.alias
+            Callable {
+                val aliases = getMaimaiAlias(it.songID)?.alias
+
+                it.aliases = aliases
                 it.alias = it.aliases?.minByOrNull { it.length }
             }
         }
 
-        AsyncMethodExecutor.awaitRunnableExecute(actions)
+        AsyncMethodExecutor.awaitCallableExecute(actions)
     }
 
     override fun insertMaimaiAliasForScore(score: MaiScore?) {
         if (score != null) {
+            val aliases = getMaimaiAlias(score.songID)?.alias
 
-            score.aliases = getMaimaiAlias(score.songID)?.alias
-            score.alias = score.aliases?.minByOrNull { it.length }
+            score.aliases = aliases
+            score.alias = aliases?.minByOrNull { it.length }
         }
     }
 
@@ -255,17 +259,11 @@ import kotlin.text.Charsets.UTF_8
         score.notes = listOf(notes.tap, notes.hold, notes.slide, notes.touch, notes.break_)
     }
 
-    override fun insertPosition(scores: List<MaiScore>, isBest35: Boolean) {
+    override fun insertPosition(scores: List<MaiScore>, offset: Int) {
         if (scores.isEmpty()) return
 
-        for (i in scores.indices) {
-            val s = scores[i]
-
-            if (isBest35) {
-                s.position = (i + 1)
-            } else {
-                s.position = (i + 36)
-            }
+        scores.forEachIndexed { i, score ->
+            score.position = (i + 1 + offset)
         }
     }
 

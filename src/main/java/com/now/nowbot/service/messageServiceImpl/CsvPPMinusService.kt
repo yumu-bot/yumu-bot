@@ -20,6 +20,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.Callable
 
 @Service("CSV_PPM")
 class CsvPPMinusService(
@@ -60,8 +61,8 @@ class CsvPPMinusService(
             param.names.mapNotNull { it.toLongOrNull() }
         } else {
             val actions = param.names.map {
-                return@map AsyncMethodExecutor.Supplier<Pair<String, Long>> {
-                    return@Supplier try {
+                 Callable {
+                    try {
                         it to userApiService.getOsuID(it)
                     } catch (e: Exception) {
                         log.error("CM：获取玩家 {} 编号失败", it)
@@ -70,7 +71,7 @@ class CsvPPMinusService(
                 }
             }
 
-            val result = AsyncMethodExecutor.awaitSupplierExecute(actions)
+            val result = AsyncMethodExecutor.awaitCallableExecute(actions)
                 .filter { it.second > 0L }
                 .toMap()
 
@@ -86,7 +87,7 @@ class CsvPPMinusService(
         }
 
         val actions = ids.map { id ->
-            return@map AsyncMethodExecutor.Supplier {
+            Callable {
                 try {
                     val u = userApiService.getOsuUser(id, mode)
 
@@ -99,15 +100,16 @@ class CsvPPMinusService(
                     ppmData.init(u, s)
 
                     log.info("CM：获取玩家 $id 信息成功")
-                    return@Supplier ppmData
+
+                    ppmData
                 } catch (e: Exception) {
                     log.error("CM：获取玩家 $id 信息失败", e)
-                    return@Supplier null
+                    null
                 }
             }
         }
 
-        val async: Map<Long, TestPPMData> = AsyncMethodExecutor.awaitSupplierExecute(actions)
+        val async: Map<Long, TestPPMData> = AsyncMethodExecutor.awaitCallableExecute(actions)
             .filterNotNull()
             .filter { it.user != null }
             .associateBy { it.user!!.userID }

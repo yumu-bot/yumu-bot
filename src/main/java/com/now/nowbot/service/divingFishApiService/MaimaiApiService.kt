@@ -50,13 +50,30 @@ interface MaimaiApiService {
 
     fun getMaimaiChartData(songID: Long): List<MaiFit.ChartData>
 
-    fun getMaimaiDiffData(difficulty: String): MaiFit.DiffData
+    fun getMaimaiDiffData(level: String): MaiFit.DiffData
 
     fun getMaimaiAlias(songID: Long): MaiAlias?
 
     fun getMaimaiAlias(songID: Int): MaiAlias?
 
     fun getMaimaiAliasLibrary(): Map<Int, List<String>>?
+
+    /**
+     * 一条龙服务
+     */
+    fun insert(charts: MaiBestScore.Charts) {
+        insert(charts.deluxe, 35)
+        insert(charts.standard, 0)
+    }
+
+    /**
+     * 一条龙服务
+     */
+    fun insert(scores: List<MaiScore>, offset: Int = 0) {
+        insertPosition(scores, offset)
+        insertMaimaiAliasForScore(scores)
+        insertSongData(scores)
+    }
 
     fun insertMaimaiAlias(song: MaiSong?)
 
@@ -68,7 +85,7 @@ interface MaimaiApiService {
 
     fun insertSongData(scores: List<MaiScore>)
 
-    fun insertPosition(scores: List<MaiScore>, isBest35: Boolean = true)
+    fun insertPosition(scores: List<MaiScore>, offset: Int = 0)
 
     fun insertSongData(score: MaiScore, song: MaiSong)
 

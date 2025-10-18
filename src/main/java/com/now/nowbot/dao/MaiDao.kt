@@ -161,7 +161,7 @@ class MaiDao(
         return data.map { it.toModel() }
     }
 
-    fun getMaiFitDiffDataByDifficulty(difficulty: String): MaiFit.DiffData {
+    fun getMaiFitDiffDataByLevel(difficulty: String): MaiFit.DiffData {
         val data = maiFitDiffLiteRepository.findById(difficulty)
         return data.map { it.toModel() }.getOrNull() ?: MaiFit.DiffData()
     }
