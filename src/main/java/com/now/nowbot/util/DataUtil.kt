@@ -12,8 +12,6 @@ import com.now.nowbot.util.command.*
 import io.github.humbleui.skija.Typeface
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.lang.NonNull
-import org.springframework.lang.Nullable
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -216,8 +214,6 @@ object DataUtil {
      * @param end 结束
      * @return offset
      */
-    @JvmStatic
-    @NonNull
     fun parseRange2Offset(start: Int?, end: Int?): Int {
         return parseRange(start, end).offset
     }
@@ -229,8 +225,6 @@ object DataUtil {
      * @param end 结束
      * @return limit
      */
-    @JvmStatic
-    @NonNull
     fun parseRange2Limit(start: Int?, end: Int?): Int {
         return parseRange(start, end).limit
     }
@@ -242,7 +236,6 @@ object DataUtil {
      * @param end 结束
      * @return offset-limit 对
      */
-    @NonNull
     private fun parseRange(start: Int?, end: Int?): Range {
         val st =
             start.let {
@@ -279,7 +272,6 @@ object DataUtil {
 
 
     // 获取谱面的原信息，方便成绩面板使用。请在 applyBeatMapExtend 和 applySRAndPP 之前用。
-    @JvmStatic
     fun getOriginal(beatmap: Beatmap): Map<String, Any> {
         if (beatmap.CS == null) return mapOf()
 
@@ -295,8 +287,6 @@ object DataUtil {
     }
 
     /** 根据准确率，通过获取准确率，来构建一个 Statistic。 */
-    @NonNull
-    @JvmStatic
     fun accuracy2Statistics(accuracy: Double, total: Int, osuMode: OsuMode): Statistics {
         val stat = Statistics()
 
@@ -369,8 +359,7 @@ object DataUtil {
      * @param stat 当前的判定结果
      * @return 达到目标准确率时的判定结果
      */
-    @NonNull
-    fun maniaAimingAccuracy2Statistics(aiming: Double?, @NonNull stat: Statistics): Statistics {
+    fun maniaAimingAccuracy2Statistics(aiming: Double?, stat: Statistics): Statistics {
         if (stat.isNull) {
             return Statistics()
         }
@@ -451,7 +440,6 @@ object DataUtil {
     }
 
     // 交换评级
-    @NonNull
     fun exchangeJudge(
         nGreat: Int,
         nBad: Int,
@@ -1488,6 +1476,20 @@ object DataUtil {
             }
             else -> Period.ZERO
         }
+    }
+
+    /**
+     * 找到底层的目标错误类，如果没找到就返回 null
+     */
+    inline fun <reified T : Throwable> Throwable.findCauseOfType(): T? {
+        var current: Throwable? = this
+        while (current != null) {
+            if (current is T) {
+                return current
+            }
+            current = current.cause
+        }
+        return null
     }
 
     private data class Range(val offset: Int, val limit: Int)

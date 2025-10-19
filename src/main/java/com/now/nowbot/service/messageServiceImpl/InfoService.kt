@@ -152,41 +152,6 @@ class InfoService(
 
     override fun reply(event: MessageEvent, param: InfoParam): MessageChain = param.getMessageChain()
 
-    private fun InfoParam.getMessageChain(): MessageChain {
-        if (this.version == 2) {
-            try {
-                calculateApiService.applyStarToScores(bests
-                    .take(5)
-                    .filter { LazerMod.hasStarRatingChange(it.mods) }
-                )
-            } catch (_: Exception) {
-                log.info("玩家信息：获取新谱面星数失败")
-            }
-        }
-
-        val name = when(version) {
-            1 -> "D"
-            else -> "D2"
-        }
-
-        return try {
-            MessageChain(imageService.getPanel(this.toMap(), name))
-        } catch (_: NetworkException) {
-            log.info("玩家信息：渲染失败")
-
-            val avatar = userApiService.getAvatarByte(user)
-
-            // 变化不大就不去拿了
-            val h = if (historyUser == null || (historyUser.pp - user.pp).absoluteValue <= 0.5) {
-                null
-            } else {
-                historyUser
-            }
-
-            UUIService.getUUInfo(user, avatar, h)
-        }
-    }
-
     private fun getParam(event: MessageEvent, matcher: Matcher, version: Int = 1): InfoParam? {
         val isMyself = AtomicBoolean(false)
 
@@ -236,6 +201,41 @@ class InfoService(
         val currentMode = OsuMode.getMode(mode.data!!, user.currentOsuMode)
 
         return InfoParam(user, bests, currentMode, historyUser, isMyself.get(), version)
+    }
+
+    private fun InfoParam.getMessageChain(): MessageChain {
+        if (this.version == 2) {
+            try {
+                calculateApiService.applyStarToScores(bests
+                    .take(5)
+                    .filter { LazerMod.hasStarRatingChange(it.mods) }
+                )
+            } catch (_: Exception) {
+                log.info("玩家信息：获取新谱面星数失败")
+            }
+        }
+
+        val name = when(version) {
+            1 -> "D"
+            else -> "D2"
+        }
+
+        return try {
+            MessageChain(imageService.getPanel(this.toMap(), name))
+        } catch (_: NetworkException) {
+            log.info("玩家信息：渲染失败")
+
+            val avatar = userApiService.getAvatarByte(user)
+
+            // 变化不大就不去拿了
+            val h = if (historyUser == null || (historyUser.pp - user.pp).absoluteValue <= 0.5) {
+                null
+            } else {
+                historyUser
+            }
+
+            UUIService.getUUInfo(user, avatar, h)
+        }
     }
 
     companion object {

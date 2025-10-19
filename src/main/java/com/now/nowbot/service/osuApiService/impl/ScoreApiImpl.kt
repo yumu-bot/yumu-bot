@@ -16,6 +16,7 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import okio.IOException
 import org.slf4j.Logger
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
@@ -525,7 +527,9 @@ class ScoreApiImpl(
         return try {
             base.request(request)
         } catch (e: Throwable) {
-            when (e.cause) {
+            val ex = e.findCauseOfType<WebClientException>()
+
+            when (ex) {
                 is WebClientResponseException.BadRequest -> {
                     throw NetworkException.ScoreException.BadRequest()
                 }

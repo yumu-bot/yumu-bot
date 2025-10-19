@@ -138,36 +138,37 @@ class BPFixService(
         }.sum()
 
         val tasks = bestsMap.map { (index, score) ->
+            val max = score.beatmap.maxCombo ?: 1
+            val combo = score.maxCombo
+            val stat = score.statistics
+            val ok = stat.ok
+            val meh = stat.meh
+            val miss = stat.miss
 
-            Callable {
-                val max = score.beatmap.maxCombo ?: 1
-                val combo = score.maxCombo
-                val stat = score.statistics
-                val ok = stat.ok
-                val meh = stat.meh
-                val miss = stat.miss
+            /**
+             * 断连击
+             * mania 模式现在也可以参与此项筛选
+             * catch 的 choke 会被归纳到 has1pMiss 中
+             */
+            val isChoke = when(score.mode) {
+                OsuMode.MANIA -> (ok + meh + miss) / max <= 0.03
+                OsuMode.CATCH_RELAX, OsuMode.CATCH -> false
+                else -> (miss == 0) && (combo < (max * 0.98).roundToInt())
+            }
 
-                /**
-                 * 断连击
-                 * mania 模式现在也可以参与此项筛选
-                 * catch 的 choke 会被归纳到 has1pMiss 中
-                 */
-                val isChoke = when(score.mode) {
-                    OsuMode.MANIA -> (ok + meh + miss) / max <= 0.03
-                    OsuMode.CATCH_RELAX, OsuMode.CATCH -> false
-                    else -> (miss == 0) && (combo < (max * 0.98).roundToInt())
-                }
+            // 含有 <1% 的失误
+            val has1pMiss = (miss > 0) && ((1.0 * miss / max) <= 0.01)
 
-                // 含有 <1% 的失误
-                val has1pMiss = (miss > 0) && ((1.0 * miss / max) <= 0.01)
-
-                // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
+            // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
+            val callable: Callable<out LazerScore> = Callable {
                 if (isChoke || has1pMiss) {
                     initFixScore(score, index)
                 } else {
                     score
                 }
             }
+
+            callable
         }
 
         val fixedBests = AsyncMethodExecutor.awaitCallableExecute(tasks)

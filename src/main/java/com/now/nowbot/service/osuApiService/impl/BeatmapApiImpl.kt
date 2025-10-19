@@ -15,6 +15,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import okhttp3.internal.toImmutableList
 import org.slf4j.Logger
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.DigestUtils
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import java.io.IOException
@@ -97,7 +99,7 @@ class BeatmapApiImpl(
             return default
         }
 
-        val hex = md.digest().toHexString(kotlin.text.HexFormat.Default)
+        val hex = md.digest().toHexString()
 
         return if (Files.isRegularFile(path.resolve(hex))) {
             Files.readAllBytes(path.resolve(hex))
@@ -1048,7 +1050,9 @@ class BeatmapApiImpl(
         return try {
             base.request(request)
         } catch (e: Throwable) {
-            when (e.cause) {
+            val ex = e.findCauseOfType<WebClientException>()
+
+            when (ex) {
                 is WebClientResponseException.BadRequest -> {
                     throw NetworkException.BeatmapException.BadRequest()
                 }

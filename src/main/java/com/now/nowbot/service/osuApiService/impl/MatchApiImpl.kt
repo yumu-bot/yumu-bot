@@ -8,8 +8,10 @@ import com.now.nowbot.model.multiplayer.Room
 import com.now.nowbot.model.multiplayer.RoomLeaderBoard
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import java.time.Duration
@@ -125,13 +127,19 @@ class MatchApiImpl(
         return try {
             base.request(request)
         } catch (e: Throwable) {
-            when (e.cause) {
+            val ex = e.findCauseOfType<WebClientException>()
+
+            when (ex) {
                 is WebClientResponseException.BadRequest -> {
                     throw NetworkException.MatchException.BadRequest()
                 }
 
                 is WebClientResponseException.Unauthorized -> {
                     throw NetworkException.MatchException.Unauthorized()
+                }
+
+                is WebClientResponseException.Forbidden -> {
+                    throw NetworkException.MatchException.Forbidden()
                 }
 
                 is WebClientResponseException.NotFound -> {

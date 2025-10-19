@@ -12,12 +12,14 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService.TeamInfo
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import kotlinx.io.IOException
 import org.codehaus.plexus.util.StringUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriComponentsBuilder
 import reactor.core.publisher.Mono
@@ -304,7 +306,9 @@ import java.util.regex.Pattern
         return try {
             base.request(request)
         } catch (e: Throwable) {
-            when (e.cause) {
+            val ex = e.findCauseOfType<WebClientException>()
+
+            when (ex) {
                 is WebClientResponseException.BadRequest -> {
                     throw NetworkException.UserException.BadRequest()
                 }
@@ -349,8 +353,6 @@ import java.util.regex.Pattern
         )
 
     // 有点刻晴了
-    // "<a\s+class="game-mode-link"\s+href="https://osu.ppy.sh/teams/\d+/(.+)"\s+>"
-    // "<div class=\"team-info-entry__title\">Default ruleset</div>\\s+<div class=\"team-info-entry__value\">\\s+<span class=\"fal fa-extra-mode-mania\">[^<]+</span>\\s+(.+)\\s+</div>"
     private val teamNamePattern: Pattern = Pattern.compile(
         "<h1 class=\"profile-info__name\">\\s*<span class=\"u-ellipsis-overflow\">\\s*([\\S\\s]+)\\s*</span>\\s*</h1>"
     )
@@ -524,7 +526,7 @@ import java.util.regex.Pattern
                     return@Runnable
                 }
 
-                val hex = md.digest().toHexString(kotlin.text.HexFormat.Default)
+                val hex = md.digest().toHexString()
 
                 if (Files.isRegularFile(path.resolve(hex))) {
                     return@Runnable
@@ -580,7 +582,7 @@ import java.util.regex.Pattern
                     return@Runnable
                 }
 
-                val hex = md.digest().toHexString(kotlin.text.HexFormat.Default)
+                val hex = md.digest().toHexString()
 
                 if (Files.isRegularFile(path.resolve(hex))) {
                     return@Runnable
