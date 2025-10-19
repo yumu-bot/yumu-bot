@@ -226,10 +226,10 @@ private fun <T : Number, U : Number> getRelativePPMinus(compare: T?, to: List<U?
 
     val max = too.max()
 
-    return if (coo.isInfinite() || (coo >= max - 1e-4) || coo >= u + 2 * o) {
+    return if (coo.isInfinite() || (coo >= max - 1e-4) || coo >= u + 2.5 * o) {
         1.01
     } else if (coo >= u + o) {
-        1.0 + 0.01 * (coo - (u + o)) / o
+        1.0 + 0.01 * (coo - (u + o)) / (1.5 * o)
     } else if (coo >= u + 0.5 * o) {
         0.9 + 0.1 * (coo - (u + 0.5 * o)) / (0.5 * o)
     } else if (coo >= u) {

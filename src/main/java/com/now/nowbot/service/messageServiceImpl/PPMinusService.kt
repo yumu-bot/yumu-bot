@@ -439,7 +439,7 @@ import java.util.regex.Matcher
                 var surrounding: List<PPMinusLite>
 
                 do {
-                    delta += 500
+                    delta += 200
                     surrounding = ppMinusDao.getSurroundingPPMinus(user, bests, delta)
                 } while (delta < 3000 && surrounding.size < 50)
 
