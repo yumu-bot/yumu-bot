@@ -97,7 +97,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     CLIENT("(client|z|v|version|版本?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    CREATED_TIME("(created\\s*(at|time)|creat\\s*(at|time)?|创建(时间)?|ct|ca)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$REG_TIME)".toRegex()),
+    CREATED_TIME("((created)?\\s*(at|time)|creat(ed)?\\s*(at|time)?|创建(时间)?|ct|ca)(?<n>$REG_OPERATOR_WITH_SPACE$REG_TIME)".toRegex()),
 
     RANGE(REG_RANGE.toRegex());
     
@@ -537,7 +537,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 val hours = when(hh) {
                     0 -> {
                         delta = 24 * 60 * 60
-                        now.dayOfMonth
+                        now.hour
                     }
                     else -> min(hh, 24)
                 }
@@ -564,12 +564,10 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 // 移动日期模式，从现在减去这段时间
                 delta = 24 * 60 * 60
 
-                // 因为日期是从 1 开始计算，所以这里从 duration 给的秒要减去 1 天（1 号到 14 号之间只有 13 天）
                 too = now
                     .minusYears(period.years.toLong())
                     .minusMonths(period.months.toLong())
                     .minusSeconds(duration.inWholeSeconds)
-                    .plusDays(1)
                     .toEpochSecond(ZoneOffset.ofHours(8))
             }
 
