@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 
+import static kotlin.reflect.jvm.internal.impl.builtins.StandardNames.FqNames.throwable;
+
 public class LocalCommandListener {
     static final   Logger                      log = LoggerFactory.getLogger(LocalCommandListener.class);
     private static Map<String, MessageService> handler;
@@ -45,16 +47,18 @@ public class LocalCommandListener {
         var group = new LocalGroup();
         var event = new Event.GroupMessageEvent(bot, group, message);
         try {
-            PermissionImplement.onMessage(event, ((_, throwable) -> {
-                switch (throwable) {
-                    case TipsException tx -> {
-                        log.info("捕捉到异常提示：{}", tx.getMessage());
-                        log.debug("异常详细信息: ", tx);
-                    }
-                    case TipsRuntimeException rx -> log.info("捕捉到提示：{}", rx.getMessage());
-                    case ExecutionException xx -> log.info("捕捉到并行中的提示：{}", xx.getCause().getMessage());
-                    case LogException lx -> log.info("捕捉到记录：{}", lx.getMessage());
-                    case null, default -> log.info("捕捉到异常：", throwable);
+            PermissionImplement.onMessage(event, ((_, x) -> {
+                if (x instanceof TipsException tx) {
+                    log.info("捕捉到异常提示：{}", tx.getMessage());
+                    log.debug("异常详细信息: ", tx);
+                } else if (x instanceof TipsRuntimeException rx) {
+                    log.info("捕捉到提示：{}", rx.getMessage());
+                } else if (x instanceof ExecutionException xx) {
+                    log.info("捕捉到并行中的提示：{}", xx.getCause().getMessage());
+                } else if (x instanceof LogException lx) {
+                    log.info("捕捉到记录：{}", lx.getMessage());
+                } else {
+                    log.info("捕捉到异常：", x);
                 }
             }));
 

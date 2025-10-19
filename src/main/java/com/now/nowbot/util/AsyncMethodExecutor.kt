@@ -231,7 +231,7 @@ object AsyncMethodExecutor {
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要返回结果（void 方法），请使用 awaitRunnableExecute
      * 返回结果严格按照传入的 works 顺序
      */
-    fun <T: Any> awaitCallableExecute(
+    fun <T> awaitCallableExecute(
         works: Collection<Callable<out T>>,
         timeout: Duration = Duration.ofSeconds(30)
     ): List<T> {
@@ -268,7 +268,7 @@ object AsyncMethodExecutor {
             }
         }
 
-        return results.toSortedMap().map { it.value }
+        return results.toSortedMap().mapNotNull { it.value }
     }
 
     /*
