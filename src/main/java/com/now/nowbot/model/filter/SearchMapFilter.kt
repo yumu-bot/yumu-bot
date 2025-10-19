@@ -93,7 +93,7 @@ enum class SearchMapFilter(@param:Language("RegExp") val regex: Regex) {
     private fun filterConditions(filter: SearchMapFilter, conditions: List<String>): List<Pair<String, Any>> {
         val maps = conditions.map { c ->
             val operator = Operator.getOperator(c)
-            val condition = (c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim()
+            val condition = Condition((c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim())
 
             fitMap(operator, filter, condition)
         }.flatten()
@@ -101,8 +101,8 @@ enum class SearchMapFilter(@param:Language("RegExp") val regex: Regex) {
         return maps
     }
 
-    private fun fitMap(operator: Operator, filter: SearchMapFilter, condition: String): List<Pair<String, Any>> {
-        val text = condition.trim()
+    private fun fitMap(operator: Operator, filter: SearchMapFilter, condition: Condition): List<Pair<String, Any>> {
+        val text = condition.condition
         val op = operator.getText()
 
         return when (filter) {

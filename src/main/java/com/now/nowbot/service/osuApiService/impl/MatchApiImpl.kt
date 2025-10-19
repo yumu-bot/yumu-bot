@@ -14,7 +14,6 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
-import java.time.Duration
 
 @Service
 class MatchApiImpl(
@@ -116,7 +115,6 @@ class MatchApiImpl(
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(Match::class.java)
-                .timeout(Duration.ofSeconds(5))
         }
     }
 

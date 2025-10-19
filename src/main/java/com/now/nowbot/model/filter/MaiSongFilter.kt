@@ -114,7 +114,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
             for (c in conditions) {
                 val operator = Operator.getOperator(c)
-                val condition = (c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim()
+                val condition = Condition((c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim())
 
                 val fit = songs.map { s ->
                     val r = fitSong(s, operator, filter, condition)
@@ -133,8 +133,13 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
         /**
          * 如果返回的 list 为空，则视作匹配所有难度
          */
-        private fun fitSong(it: MaiSong, operator: Operator, filter: MaiSongFilter, condition: String): Pair<Boolean, List<MaiDifficulty>> {
-            val int = condition.toIntOrNull() ?: -1
+        private fun fitSong(it: MaiSong, operator: Operator, filter: MaiSongFilter, condition: Condition): Pair<Boolean, List<MaiDifficulty>> {
+            val int = condition.int
+            val long = condition.long
+            val double = condition.double
+            val str = condition.condition
+            val hasDecimal = condition.hasDecimal
+
             val default = listOf<MaiDifficulty>()
 
             val levelArray = when (it.charts.size) {
@@ -154,7 +159,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                         }
                         .filter { pair -> pair.second != "-" }
 
-                    val con = MaiCharter.getCharter(condition).sorted().joinToString(" ")
+                    val con = MaiCharter.getCharter(str).sorted().joinToString(" ")
 
                     val result = list.map { l ->
                         val charter = l.second
@@ -173,11 +178,11 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                     }
                 }
 
-                ID -> fit(operator, it.songID % 10000L, int.toLong() % 10000L) to default
+                ID -> fit(operator, it.songID % 10000L, long % 10000L) to default
 
                 DIFFICULTY -> {
                     val result = it.star.mapIndexed{ i, sr ->
-                        val f = MaiScoreFilter.fitRange(operator, condition, sr)
+                        val f = MaiScoreFilter.fitRange(operator, str, sr)
 
                         val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
 
@@ -196,7 +201,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                 }
 
                 DIFFICULTY_NAME -> {
-                    val con = MaiDifficulty.getIndex(MaiDifficulty.getDifficulty(condition))
+                    val con = MaiDifficulty.getIndex(MaiDifficulty.getDifficulty(str))
 
                     // 如果不是查询宴会场，就不会返回宴会场的数据
                     if (con != 5 && levelArray.contains(5)) return false to default
@@ -214,26 +219,22 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                     }
                 }
 
-                CABINET -> fit(operator, MaiCabinet.getCabinet(condition), MaiCabinet.getCabinet(it.type)) to default
-                VERSION -> fit(
-                    operator,
-                    MaiVersion.getVersionList(it.info.version).joinToString(" ") { it.abbreviation },
-                    MaiVersion.getVersionList(condition).joinToString(" ") { it.abbreviation }
-                ) to default
+                CABINET -> fit(operator, MaiCabinet.getCabinet(str), MaiCabinet.getCabinet(it.type)) to default
+                VERSION -> fit(operator, MaiVersion.getVersionList(it.info.version), MaiVersion.getVersionList(str)) to default
 
-                TITLE -> fit(operator, it.title, condition) to default
+                TITLE -> fit(operator, it.title, str) to default
                 ALIASES -> {
                     val a = it.aliases ?: listOf()
 
                     return a.map { alias ->
-                        fit(operator, alias, condition)
+                        fit(operator, alias, str)
                     }.toSet().contains(true) to default
                 }
 
-                ARTIST -> fit(operator, it.info.artist, condition) to default
+                ARTIST -> fit(operator, it.info.artist, str) to default
 
                 CATEGORY -> {
-                    val con = MaiCategory.getCategory(condition)
+                    val con = MaiCategory.getCategory(str)
                     val gen = MaiCategory.getCategory(it.info.genre)
 
                     val fit = fit(operator, gen, con)
@@ -247,7 +248,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                     val result = it.charts.mapIndexed{ i, chart ->
                         val t = chart.notes.total
 
-                        val f = fitCountOrPercent(operator, chart.notes.tap, condition, t)
+                        val f = fitCountOrPercent(operator, chart.notes.tap, double, t, hasDecimal)
 
                         val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
 
@@ -267,7 +268,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                     val result = it.charts.mapIndexed{ i, chart ->
                         val t = chart.notes.total
 
-                        val f = fitCountOrPercent(operator, chart.notes.hold, condition, t)
+                        val f = fitCountOrPercent(operator, chart.notes.hold, double, t, hasDecimal)
 
                         val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
 
@@ -286,7 +287,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                     val result = it.charts.mapIndexed{ i, chart ->
                         val t = chart.notes.total
 
-                        val f = fitCountOrPercent(operator, chart.notes.slide, condition, t)
+                        val f = fitCountOrPercent(operator, chart.notes.slide, double, t, hasDecimal)
 
                         val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
 
@@ -305,7 +306,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                     val result = it.charts.mapIndexed{ i, chart ->
                         val t = chart.notes.total
 
-                        val f = fitCountOrPercent(operator, chart.notes.touch, condition, t)
+                        val f = fitCountOrPercent(operator, chart.notes.touch, double, t, hasDecimal)
 
                         val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
 
@@ -324,7 +325,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                     val result = it.charts.mapIndexed{ i, chart ->
                         val t = chart.notes.total
 
-                        val f = fitCountOrPercent(operator, chart.notes.break_, condition, t)
+                        val f = fitCountOrPercent(operator, chart.notes.break_, double, t, hasDecimal)
 
                         val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
 

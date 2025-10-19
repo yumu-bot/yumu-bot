@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.absoluteValue
 import kotlin.math.round
 import kotlin.math.roundToInt
+import kotlin.time.DurationUnit
 
 @Service("SERVICE_COUNT")
 class ServiceCountService(
@@ -327,7 +328,7 @@ class ServiceCountService(
             return when (split.size) {
                 1 -> {
 
-                    val time = DataUtil.getTime(split[0])
+                    val time = DataUtil.getTime(split[0], mode = false, unit = DurationUnit.DAYS)
 
                     if (time.isBefore(now)) {
                         time to now
@@ -337,8 +338,8 @@ class ServiceCountService(
                 }
 
                 2 -> {
-                    val first = DataUtil.getTime(split[0])
-                    val second = DataUtil.getTime(split[1])
+                    val first = DataUtil.getTime(split[0], mode = false, unit = DurationUnit.DAYS)
+                    val second = DataUtil.getTime(split[1], mode = false, unit = DurationUnit.DAYS)
 
                     if (first.isBefore(second)) {
                         first to second

@@ -552,10 +552,10 @@ object DataUtil {
 
     fun getRoundedNumberStr(num: Double, level: Int): String {
         var number = num
-        val c = getRoundedNumberUnit(number, level)
+        val unit = getRoundedNumberUnit(number, level)
         val isInt: Boolean
         val intValue: Int
-        if (c.code == 0) {
+        if (unit.code == 0) {
             intValue = number.toInt()
             isInt =
                 if (level == 1) {
@@ -588,13 +588,16 @@ object DataUtil {
             }
 
         if (isInt) {
-            return String.format("%d%c", intValue, c)
+            return String.format("%d%c", intValue, unit)
         }
-        var out = String.format(if (level == 1) "%.1f%c" else "%.2f%c", number, c)
-        if (out[out.length - 2] == '0') {
-            out = out.substring(0, out.length - 2) + c
+
+        var out = String.format("%.${level}f", number)
+
+        if (out.contains('.')) {
+            out = out.trimEnd('0')
         }
-        return out
+
+        return out.trimEnd('.') + unit
     }
 
     fun time2HourAndMinute(time: Long): String {
@@ -1304,9 +1307,14 @@ object DataUtil {
      * 注意：年月日是绝对值。
      * - 如果年月都为 0，则日时分秒视作往前推（相对）。
      * - 如果年月有一个不为 0，则年月日时分秒视作绝对值
+     * @param mode
+     * - null: 自动判断 HH:mm 还是 mm:ss，不推荐
+     * - false: 默认 HH:mm
+     * - true: 默认 mm:ss
+     * @param unit 如果不填，则在没有单位的时候，默认将其判定为秒数。也可以自己改成天数。
      */
-    fun getTime(input: String, mode: Boolean? = false): LocalDateTime {
-        val parse = parseTime(input, mode)
+    fun getTime(input: String, mode: Boolean? = null, unit: DurationUnit = DurationUnit.SECONDS): LocalDateTime {
+        val parse = parseTime(input, mode, unit)
 
         // 年月
         val period = parse.first
@@ -1334,11 +1342,17 @@ object DataUtil {
 
     /**
      * 结合三种方法获取时间段
+     * @param mode
+     * - null: 自动判断 HH:mm 还是 mm:ss，不推荐
+     * - false: 默认 HH:mm
+     * - true: 默认 mm:ss
+     * @param unit 如果不填，则在没有单位的时候，默认将其判定为秒数。也可以自己改成天数。
      */
-    fun parseTime(input: String, mode: Boolean? = null): Pair<Period, Duration> {
+    fun parseTime(input: String, mode: Boolean? = null, unit: DurationUnit = DurationUnit.SECONDS): Pair<Period, Duration> {
         val letter = parseLetterTime(input)
         val colon = parseColonTime(input, mode)
         val hyphen = parseHyphenOrSlashTime(input)
+        val sec = parseSecondTime(input, unit)
 
         // 年月
         val period = Period.of(
@@ -1348,9 +1362,21 @@ object DataUtil {
         )
 
         // 日时分秒
-        val duration = letter.second + colon + hyphen.days.toDuration(DurationUnit.DAYS)
+        val duration = letter.second + colon + hyphen.days.toDuration(DurationUnit.DAYS) + sec
 
         return period to duration
+    }
+
+    /**
+     * 如果只有数字，那就默认是秒数
+     * - 也可以自己修改
+     */
+    fun parseSecondTime(input: String, unit: DurationUnit = DurationUnit.SECONDS): Duration {
+        return if (input.matches("\\d+".toRegex())) {
+            (input.toIntOrNull() ?: 0).toDuration(unit)
+        } else {
+            Duration.ZERO
+        }
     }
 
     /**

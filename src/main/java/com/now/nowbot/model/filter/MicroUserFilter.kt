@@ -3,7 +3,6 @@ package com.now.nowbot.model.filter
 import com.now.nowbot.model.enums.Operator
 import com.now.nowbot.model.filter.ScoreFilter.Companion.fit
 import com.now.nowbot.model.filter.ScoreFilter.Companion.fitTime
-import com.now.nowbot.model.filter.ScoreFilter.Companion.getBoolean
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.command.*
@@ -90,16 +89,18 @@ enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
         private fun filterConditions(users: MutableList<MicroUser>, filter: MicroUserFilter, conditions: List<String>) {
             for (c in conditions) {
                 val operator = Operator.getOperator(c)
-                val condition = (c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim()
+                val condition = Condition((c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim())
 
                 users.removeIf { fitUser(it, operator, filter, condition).not() }
             }
         }
 
-        private fun fitUser(it: MicroUser, operator: Operator, filter: MicroUserFilter, condition: String): Boolean {
-            val long = condition.toLongOrNull() ?: -1L
-            val double = condition.toDoubleOrNull() ?: -1.0
-            val boolean = getBoolean(condition)
+        private fun fitUser(it: MicroUser, operator: Operator, filter: MicroUserFilter, condition: Condition): Boolean {
+            val long = condition.long
+            val double = condition.double
+            val boolean = condition.boolean
+            val str = condition.condition
+            val time = condition.time
 
             // 一般这个数据都很大。如果输入很小的数，会自动给你乘 1k
             val longPlus = if (long in 1..< 100) {
@@ -109,7 +110,7 @@ enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
             }
 
             return when (filter) {
-                USERNAME -> fit(operator, it.username, condition)
+                USERNAME -> fit(operator, it.username, str)
                 ID -> fit(operator, it.userID, long)
                 ACTIVE -> fit(operator, it.isActive, boolean)
                 BOT -> fit(operator, it.isBot, boolean)
@@ -118,21 +119,21 @@ enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
                 SUPPORTER -> fit(operator, it.isSupporter, boolean)
                 LAST_VISIT -> fitTime(operator,
                     it.lastVisitTime?.toEpochSecond(ZoneOffset.ofHours(8)),
-                    condition)
+                    time)
                 PM_ONLY -> fit(operator, it.pmFriendsOnly, boolean)
-                COUNTRY -> if (condition.length <= 2) {
-                    fit(operator, it.country?.code, condition)
+                COUNTRY -> if (str.length <= 2) {
+                    fit(operator, it.country?.code, str)
                 } else {
-                    fit(operator, it.country?.name, condition)
+                    fit(operator, it.country?.name, str)
                 }
                 MUTUAL -> fit(operator, it.isMutual, boolean)
                 TEAM -> if (long >= 0L) {
                     fit(operator, it.team?.id?.toLong(), long)
-                            || fit(operator, it.team?.name, condition)
-                            || fit(operator, it.team?.shortName, condition)
+                            || fit(operator, it.team?.name, str)
+                            || fit(operator, it.team?.shortName, str)
                 } else {
-                    fit(operator, it.team?.name, condition)
-                            || fit(operator, it.team?.shortName, condition)
+                    fit(operator, it.team?.name, str)
+                            || fit(operator, it.team?.shortName, str)
                 }
 
                 SUPPORT_LEVEL -> fit(operator,

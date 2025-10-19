@@ -11,13 +11,15 @@ import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.Period
 import java.time.YearMonth
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import kotlin.math.*
+import kotlin.time.Duration
 
 enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
-    CREATOR("(creator|host|c|h|谱师|作者|谱|主)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
+    CREATOR("(creator|host|c|谱师|作者|谱|主)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
     GUEST("((gder|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
@@ -53,7 +55,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     RANK("(rank(ing)?|评[价级]?|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    LENGTH("(length|drain|long|duration|长度|时?长|lh)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE($REG_COLON$REG_NUMBER_MORE)?)".toRegex()),
+    LENGTH("(length|drain|long|duration|长度|时?长|lh|h)(?<n>$REG_OPERATOR_WITH_SPACE$REG_TIME)".toRegex()),
 
     BPM("(bpm|曲速|速度|bm)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)".toRegex()),
 
@@ -100,6 +102,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
     RANGE(REG_RANGE.toRegex());
     
     companion object {
+
         fun filterScores(scores: Map<Int, LazerScore>, conditions: List<List<String>>): Map<Int, LazerScore> {
             val s = scores.toMutableMap()
             val el = entries.toList()
@@ -119,7 +122,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
         private fun filterConditions(scores: MutableMap<Int, LazerScore>, filter: ScoreFilter, conditions: List<String>) {
             for (c in conditions) {
                 val operator = Operator.getOperator(c)
-                val condition = (c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim()
+                val condition = Condition((c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim())
 
                 scores.entries.removeIf { fitScore(it.value, operator, filter, condition).not() }
             }
@@ -232,17 +235,20 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 }
 
                 (compare is List<*> && to is List<*>) -> {
-                    val c: Set<Any?> = compare.toSet()
-                    val t: Set<Any?> = to.toSet()
+                    val c = compare.filterNotNull().groupingBy { it }.eachCount()
+                    val t = to.filterNotNull().groupingBy { it }.eachCount()
+
+                    val cs = c.map { it.key }.toHashSet()
+                    val ts = t.map { it.key }.toHashSet()
 
                     when (operator) {
-                        Operator.XQ -> c.contains(t) && t.size == c.size
-                        Operator.EQ -> c.contains(t)
-                        Operator.NE -> c.contains(t).not()
-                        Operator.GT -> t.contains(c) && t.size > c.size
-                        Operator.GE -> t.contains(c) && t.size >= c.size
-                        Operator.LT -> c.contains(t) && t.size < c.size
-                        Operator.LE -> c.contains(t) && t.size <= c.size
+                        Operator.XQ -> cs == ts
+                        Operator.EQ -> cs.containsAll(ts)
+                        Operator.NE -> !cs.containsAll(ts)
+                        Operator.GT -> ts.containsAll(cs) && t.size > c.size
+                        Operator.GE -> ts.containsAll(cs) && t.size >= c.size
+                        Operator.LT -> cs.containsAll(ts) && t.size < c.size
+                        Operator.LE -> cs.containsAll(ts) && t.size <= c.size
                     }
                 }
 
@@ -250,9 +256,12 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             }
         }
 
-        private fun fitScore(it: LazerScore, operator: Operator, filter: ScoreFilter, condition: String): Boolean {
-            val long = condition.toLongOrNull() ?: -1L
-            val double = condition.toDoubleOrNull() ?: -1.0
+        private fun fitScore(it: LazerScore, operator: Operator, filter: ScoreFilter, condition: Condition): Boolean {
+            val long = condition.long
+            val double = condition.double
+            val str = condition.condition
+            val dec = condition.hasDecimal
+            val time = condition.time
 
             // 一般这个数据都很大。如果输入很小的数，会自动给你乘 1k
             val longPlus = if (long in 1..< 100) {
@@ -262,30 +271,30 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             }
 
             return when (filter) {
-                CREATOR -> fit(operator, it.beatmapset.creator, condition)
+                CREATOR -> fit(operator, it.beatmapset.creator, str)
 
                 GUEST -> if (! it.beatmap.owners.isNullOrEmpty()) {
                     if (long > 0L) {
                         val ids = it.beatmap.owners!!.map { fit(operator, it.userID, long) }.toSet()
-                        val names = it.beatmap.owners!!.map { fit(operator, it.username, condition) }.toSet()
+                        val names = it.beatmap.owners!!.map { fit(operator, it.username, str) }.toSet()
 
                         ids.contains(element = true) || names.contains(element = true)
                     } else {
-                        val names = it.beatmap.owners!!.map { fit(operator, it.username, condition) }.toSet()
+                        val names = it.beatmap.owners!!.map { fit(operator, it.username, str) }.toSet()
 
                         names.contains(element = true)
                     }
                 } else {
-                    fit(operator, it.beatmapset.creator, condition)
+                    fit(operator, it.beatmapset.creator, str)
                 }
 
                 BID -> fit(operator, it.beatmapID, long)
                 SID -> fit(operator, it.beatmapset.beatmapsetID, long)
-                TITLE -> (fit(operator, it.beatmapset.title, condition)
-                        || fit(operator, it.beatmapset.titleUnicode, condition))
-                ARTIST -> (fit(operator, it.beatmapset.artist, condition)
-                        || fit(operator, it.beatmapset.artistUnicode, condition))
-                SOURCE -> fit(operator, it.beatmapset.source, condition)
+                TITLE -> (fit(operator, it.beatmapset.title, str)
+                        || fit(operator, it.beatmapset.titleUnicode, str))
+                ARTIST -> (fit(operator, it.beatmapset.artist, str)
+                        || fit(operator, it.beatmapset.artistUnicode, str))
+                SOURCE -> fit(operator, it.beatmapset.source, str)
                 TAG -> {
 
                     if (it.beatmapset.tags.isBlank()) {
@@ -297,15 +306,15 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                         .split("\\s+".toRegex())
                         .dropWhile { it.isEmpty() }
                         .parallelStream()
-                        .map { fit(operator, it.replace("_", ""), condition) }
+                        .map { fit(operator, it.replace("_", ""), str) }
                         .toList()
                         .toSet()
                     return ts.contains(element = true)
                 }
-                GENRE -> fit(operator, it.beatmapset.genreID.toInt(), DataUtil.getGenre(condition)?.toInt() ?: return false)
-                LANGUAGE -> fit(operator, it.beatmapset.languageID.toInt(), DataUtil.getLanguage(condition)?.toInt() ?: return false)
+                GENRE -> fit(operator, it.beatmapset.genreID.toInt(), DataUtil.getGenre(str)?.toInt() ?: return false)
+                LANGUAGE -> fit(operator, it.beatmapset.languageID.toInt(), DataUtil.getLanguage(str)?.toInt() ?: return false)
 
-                DIFFICULTY -> fit(operator, it.beatmap.difficultyName, condition)
+                DIFFICULTY -> fit(operator, it.beatmap.difficultyName, str)
 
                 STAR -> fit(operator, it.beatmap.starRating, double, digit = 2, isRound = false, isInteger = true)
 
@@ -318,10 +327,10 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
 
                     val cr = rankArray.indexOf(
-                        when(condition.uppercase()) {
+                        when(str.uppercase()) {
                             "SSH" -> "XH"
                             "SS" -> "X"
-                            else -> condition.uppercase()
+                            else -> str.uppercase()
                         }
                     )
 
@@ -334,7 +343,13 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, ir.toLong(), cr.toLong())
                 }
 
-                LENGTH -> fitTime(operator, it.beatmap.totalLength.toLong(), condition)
+                LENGTH -> {
+                    val compare = it.beatmap.totalLength.toLong()
+
+                    val to = time.second.inWholeSeconds
+
+                    fit(operator, compare, to)
+                }
 
                 BPM -> fit(operator, it.beatmap.BPM?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
                 ACCURACY -> {
@@ -348,55 +363,55 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.accuracy, acc, digit = 2, isRound = true, isInteger = true)
                 }
 
-                COMBO -> fitCountOrPercent(operator, it.maxCombo, condition, it.beatmap.maxCombo)
+                COMBO -> fitCountOrPercent(operator, it.maxCombo, double, it.beatmap.maxCombo, dec)
 
                 PERFECT -> if (it.mode == OsuMode.MANIA) {
-                    fitCountOrPercent(operator, it.statistics.perfect, condition, it.maximumStatistics.perfect)
+                    fitCountOrPercent(operator, it.statistics.perfect, double, it.maximumStatistics.perfect, dec)
                 } else {
                     false
                 }
-                GREAT -> fitCountOrPercent(operator, it.statistics.great, condition, it.maximumStatistics.great)
+                GREAT -> fitCountOrPercent(operator, it.statistics.great, double, it.maximumStatistics.great, dec)
                 GOOD -> if (it.mode == OsuMode.MANIA) {
-                    fitCountOrPercent(operator, it.statistics.good, condition, it.maximumStatistics.good)
+                    fitCountOrPercent(operator, it.statistics.good, double, it.maximumStatistics.good, dec)
                 } else {
                     false
                 }
 
                 OK -> if (it.mode != OsuMode.CATCH && it.mode != OsuMode.CATCH_RELAX) {
-                    fitCountOrPercent(operator, it.statistics.ok, condition, it.maximumStatistics.ok)
+                    fitCountOrPercent(operator, it.statistics.ok, double, it.maximumStatistics.ok, dec)
                 } else {
-                    fitCountOrPercent(operator, it.statistics.ok, condition, it.maximumStatistics.largeTickHit)
+                    fitCountOrPercent(operator, it.statistics.ok, double, it.maximumStatistics.largeTickHit, dec)
                 }
 
                 MEH -> if (it.mode != OsuMode.CATCH && it.mode != OsuMode.CATCH_RELAX) {
-                    fitCountOrPercent(operator, it.statistics.meh, condition, it.maximumStatistics.meh)
+                    fitCountOrPercent(operator, it.statistics.meh, double, it.maximumStatistics.meh, dec)
                 } else {
-                    fitCountOrPercent(operator, it.statistics.meh, condition, it.maximumStatistics.smallTickHit)
+                    fitCountOrPercent(operator, it.statistics.meh, double, it.maximumStatistics.smallTickHit, dec)
                 }
 
-                MISS -> fitCountOrPercent(operator, it.statistics.miss, condition, it.maximumStatistics.miss)
+                MISS -> fitCountOrPercent(operator, it.statistics.miss, double, it.maximumStatistics.miss, dec)
 
                 MISSED_FRUIT -> if (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) {
-                    fitCountOrPercent(operator, it.statistics.miss - it.statistics.largeTickMiss, condition, it.maximumStatistics.great)
+                    fitCountOrPercent(operator, it.statistics.miss - it.statistics.largeTickMiss, double, it.maximumStatistics.great, dec)
                 } else {
                     false
                 }
 
                 MISSED_DROP -> if (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) {
                     it.maximumStatistics.largeTickHit > 0 &&
-                    fitCountOrPercent(operator, it.statistics.largeTickMiss, condition, it.maximumStatistics.largeTickHit)
+                    fitCountOrPercent(operator, it.statistics.largeTickMiss, double, it.maximumStatistics.largeTickHit, dec)
                 } else {
                     false
                 }
 
                 MISSED_DROPLET -> if (it.mode == OsuMode.CATCH || it.mode == OsuMode.CATCH_RELAX) {
                     it.maximumStatistics.smallTickHit > 0 &&
-                    fitCountOrPercent(operator, it.statistics.smallTickMiss, condition, it.maximumStatistics.smallTickHit)
+                    fitCountOrPercent(operator, it.statistics.smallTickMiss, double, it.maximumStatistics.smallTickHit, dec)
                 } else {
                     false
                 }
 
-                MOD -> fitMod(operator, condition, it.mods)
+                MOD -> fitMod(operator, str, it.mods)
 
                 RATE -> {
                     if (it.mode != OsuMode.MANIA) throw IllegalArgumentException.WrongException.Mode()
@@ -407,9 +422,9 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, rate, input, digit = 2, isRound = true, isInteger = true)
                 }
 
-                CIRCLE -> fitCountOrPercent(operator, it.beatmap.circles, condition, it.beatmap.totalNotes)
-                SLIDER -> fitCountOrPercent(operator, it.beatmap.sliders, condition, it.beatmap.totalNotes)
-                SPINNER -> fitCountOrPercent(operator, it.beatmap.spinners, condition, it.beatmap.totalNotes)
+                CIRCLE -> fitCountOrPercent(operator, it.beatmap.circles, double, it.beatmap.totalNotes, dec)
+                SLIDER -> fitCountOrPercent(operator, it.beatmap.sliders, double, it.beatmap.totalNotes, dec)
+                SPINNER -> fitCountOrPercent(operator, it.beatmap.spinners, double, it.beatmap.totalNotes, dec)
 
                 TOTAL -> {
                     val total = it.beatmap.totalNotes
@@ -421,19 +436,19 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     }
                 }
 
-                CONVERT -> when (condition.trim().lowercase()) {
+                CONVERT -> when (str.trim().lowercase()) {
                     "true", "t", "yes", "y" -> it.beatmap.convert == true
                     "false", "f", "no", "not", "n" -> it.beatmap.convert == false
                     else -> it.beatmap.convert == false
                 }
 
-                CLIENT -> when (condition.trim().lowercase()) {
+                CLIENT -> when (str.trim().lowercase()) {
                     "lazer", "l", "lz", "lzr" -> it.isLazer
                     "stable", "s", "st", "stb" -> !it.isLazer
                     else -> !it.isLazer
                 }
 
-                CREATED_TIME -> fitTime(operator, it.endedTime.toEpochSecond(), condition)
+                CREATED_TIME -> fitTime(operator, it.endedTime.toEpochSecond(), time)
 
                 else -> false
             }
@@ -443,14 +458,12 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
          * 公用方法
          * 在 to 含有小数点时，按 compare 占 total 的百分比来处理。在其他情况时，按 compare 整数来处理。
          */
-        fun fitCountOrPercent(operator: Operator, compare: Number?, to: String, total: Number?): Boolean {
+        fun fitCountOrPercent(operator: Operator, compare: Number?, to: Number, total: Number?, hasDecimal: Boolean): Boolean {
             if (compare == null) return false
 
             val c = compare.toDouble()
-            val t = to.toDoubleOrNull() ?: 0.0
+            val t = to.toDouble()
             val l = total?.toDouble() ?: 0.0
-
-            val hasDecimal = to.contains('.')
 
             return if (hasDecimal && t in 0.0..1.0 && operator !== Operator.XQ) {
                 if (l == 0.0) {
@@ -462,20 +475,17 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 fit(operator, compare.toInt(), t.toInt())
             }
         }
-
         /**
          * 时间筛选器升级
          */
-        fun fitTime(operator: Operator, compare: Long?, to: String): Boolean {
+        fun fitTime(operator: Operator, compare: Long?, to: Pair<Period, Duration>): Boolean {
             if (compare == null) return false
 
-            val t = DataUtil.parseTime(to)
-
             // 年月
-            val period = t.first
+            val period = to.first
 
             // 日时分秒
-            val duration = t.second
+            val duration = to.second
 
             // = ==
             val isWithInMode = operator == Operator.EQ || operator == Operator.XQ || operator == Operator.NE
@@ -607,13 +617,6 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     Operator.LT -> ins.size == too.size && com.size > too.size
                     Operator.NE -> ins.isEmpty()
                 }
-            }
-        }
-
-        fun getBoolean(string: String): Boolean {
-            return when(string.trim()) {
-                "真", "是", "正确", "对", "t", "true", "y", "yes", "" -> true
-                else -> false
             }
         }
     }

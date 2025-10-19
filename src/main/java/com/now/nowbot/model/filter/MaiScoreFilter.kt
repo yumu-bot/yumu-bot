@@ -117,27 +117,27 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
         private fun filterConditions(scores: MutableList<MaiScore>, filter: MaiScoreFilter, conditions: List<String>) {
             for (c in conditions) {
                 val operator = Operator.getOperator(c)
-                val condition = (c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim()
+                val condition = Condition((c.split(REG_OPERATOR_WITH_SPACE.toRegex()).lastOrNull() ?: "").trim())
 
                 scores.removeIf { fitScore(it, operator, filter, condition).not() }
             }
         }
 
-        private fun fitScore(it: MaiScore, operator: Operator, filter: MaiScoreFilter, condition: String): Boolean {
-            val int = condition.toIntOrNull() ?: -1
-            val double = condition.toDoubleOrNull() ?: -1.0
+        private fun fitScore(it: MaiScore, operator: Operator, filter: MaiScoreFilter, condition: Condition): Boolean {
+            val int = condition.int
+            val double = condition.double
+            val str = condition.condition
+            val hasDecimal = condition.hasDecimal
 
             return when (filter) {
-                CHARTER -> fit(operator,
-                    MaiCharter.getCharter(it.charter).sorted().joinToString(" "),
-                    MaiCharter.getCharter(condition).sorted().joinToString(" "))
+                CHARTER -> fit(operator, MaiCharter.getCharter(it.charter), MaiCharter.getCharter(str))
 
                 ID -> fit(operator, it.songID % 10000L, int.toLong() % 10000L)
 
-                DIFFICULTY -> fitRange(operator, condition, it.star)
+                DIFFICULTY -> fitRange(operator, str, it.star)
 
                 DIFFICULTY_NAME -> {
-                    val con = MaiDifficulty.getIndex(MaiDifficulty.getDifficulty(condition))
+                    val con = MaiDifficulty.getIndex(MaiDifficulty.getDifficulty(str))
 
                     val dif = if (!it.isUtage) {
                         it.index
@@ -151,19 +151,19 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, dif, con)
                 }
 
-                CABINET -> fit(operator, MaiCabinet.getCabinet(condition), MaiCabinet.getCabinet(it.type))
+                CABINET -> fit(operator, MaiCabinet.getCabinet(str), MaiCabinet.getCabinet(it.type))
                 VERSION -> fit(operator,
                     MaiVersion.getVersionList(it.version).joinToString(" ") { it.abbreviation },
-                    MaiVersion.getVersionList(condition).joinToString(" ") { it.abbreviation }
+                    MaiVersion.getVersionList(str).joinToString(" ") { it.abbreviation }
                 )
-                TITLE -> fit(operator, it.title, condition)
+                TITLE -> fit(operator, it.title, str)
                 ALIASES -> {
                     it.aliases?.map { alias ->
-                        fit(operator, alias, condition)
+                        fit(operator, alias, str)
                     }?.toSet()?.contains(true) ?: false
                 }
-                ARTIST -> fit(operator, it.artist, condition)
-                CATEGORY -> fit(operator, MaiCategory.getCategory(it.genre), MaiCategory.getCategory(condition))
+                ARTIST -> fit(operator, it.artist, str)
+                CATEGORY -> fit(operator, MaiCategory.getCategory(it.genre), MaiCategory.getCategory(str))
                 BPM -> fit(operator, it.bpm, int)
                 ACHIEVEMENT -> {
                     val acc = when {
@@ -176,12 +176,12 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
                     fit(operator, it.achievements, acc, digit = 4, isRound = true, isInteger = true)
                 }
-                TAP -> fitCountOrPercent(operator, it.notes[0], condition, it.notes.sum())
-                HOLD -> fitCountOrPercent(operator, it.notes[1], condition, it.notes.sum())
-                SLIDE -> fitCountOrPercent(operator, it.notes[2], condition, it.notes.sum())
-                TOUCH -> fitCountOrPercent(operator, it.notes[3], condition, it.notes.sum())
-                BREAK -> fitCountOrPercent(operator, it.notes[4], condition, it.notes.sum())
-                DX_SCORE -> fitCountOrPercent(operator, it.score, condition, it.notes.sum() * 3)
+                TAP -> fitCountOrPercent(operator, it.notes[0], double, it.notes.sum(), hasDecimal)
+                HOLD -> fitCountOrPercent(operator, it.notes[1], double, it.notes.sum(), hasDecimal)
+                SLIDE -> fitCountOrPercent(operator, it.notes[2], double, it.notes.sum(), hasDecimal)
+                TOUCH -> fitCountOrPercent(operator, it.notes[3], double, it.notes.sum(), hasDecimal)
+                BREAK -> fitCountOrPercent(operator, it.notes[4], double, it.notes.sum(), hasDecimal)
+                DX_SCORE -> fitCountOrPercent(operator, it.score, double, it.notes.sum() * 3, hasDecimal)
                 DX_STAR -> {
                     if (it.max == 0) return false
 
@@ -209,7 +209,7 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
                     val ir = rankArray.indexOf(it.rank.uppercase().replace('P', '+'))
 
-                    val cr = rankArray.indexOf(condition.uppercase().replace('P', '+'))
+                    val cr = rankArray.indexOf(str.uppercase().replace('P', '+'))
 
                     if (cr == -1) {
                         throw IllegalArgumentException.WrongException.Rank()
@@ -221,7 +221,7 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     val comboArray = arrayOf(ComboType.PASS, ComboType.FC, ComboType.FC_PLUS, ComboType.AP, ComboType.AP_PLUS)
 
                     val ic = comboArray.indexOf(ComboType.getCombo(it.combo))
-                    val cc = comboArray.indexOf(ComboType.getCombo(condition))
+                    val cc = comboArray.indexOf(ComboType.getCombo(str))
 
                     fit(operator, ic, cc)
                 }
@@ -229,7 +229,7 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     val syncArray = arrayOf(SyncType.PASS, SyncType.SYNC, SyncType.FS, SyncType.FS_PLUS, SyncType.FDX, SyncType.FDX_PLUS)
 
                     val ic = syncArray.indexOf(SyncType.getSync(it.sync))
-                    val cc = syncArray.indexOf(SyncType.getSync(condition))
+                    val cc = syncArray.indexOf(SyncType.getSync(str))
 
                     fit(operator, ic, cc)
                 }
