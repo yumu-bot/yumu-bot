@@ -15,6 +15,7 @@ import java.time.Period
 import java.time.YearMonth
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
+import java.util.stream.Collectors
 import kotlin.math.*
 import kotlin.time.Duration
 
@@ -307,8 +308,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                         .dropWhile { it.isEmpty() }
                         .parallelStream()
                         .map { fit(operator, it.replace("_", ""), str) }
-                        .toList()
-                        .toSet()
+                        .collect(Collectors.toCollection(::HashSet))
                     return ts.contains(element = true)
                 }
                 GENRE -> fit(operator, it.beatmapset.genreID.toInt(), DataUtil.getGenre(str)?.toInt() ?: return false)

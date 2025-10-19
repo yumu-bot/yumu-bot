@@ -48,8 +48,8 @@ class PPMinus4Standard(user: OsuUser, bests: List<LazerScore>, surrounding: List
             (me.topPP ?: 0.0) / (me.rawPP ?: 1.0) * 100.0,
             surrounding.map { (it.topPP ?: 0.0) / (it.rawPP ?: 1.0) * 100.0 })
         val bdr: Double = getRelativePPMinus(
-            (me.topPP ?: 0.0) / (me.bottomPP ?: 1.0),
-            surrounding.map { (it.topPP ?: 0.0) / (it.bottomPP ?: 1.0) })
+            (me.topPP ?: 0.0) / (me.bottomPP?.coerceAtLeast(1.0) ?: 1.0),
+            surrounding.map { (it.topPP ?: 0.0) / (it.bottomPP?.coerceAtLeast(1.0) ?: 1.0) })
 
         val spt: Double = getRelativePPMinus(
             (me.playTime ?: 0L) / ((me.playCount ?: 0L) + 1L),

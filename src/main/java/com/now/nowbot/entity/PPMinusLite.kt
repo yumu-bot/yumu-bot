@@ -111,30 +111,30 @@ class PPMinusLite(
             bests.takeLast(10)
         } else emptyList()
 
-        lite.topPP = top.map { it.pp }.average()
-        lite.middlePP = middle.map { it.pp }.average()
-        lite.bottomPP = bottom.map { it.pp }.average()
+        lite.topPP = if (top.isEmpty()) 0.0 else top.map { it.pp }.average()
+        lite.middlePP = if (middle.isEmpty()) 0.0 else middle.map { it.pp }.average()
+        lite.bottomPP = if (bottom.isEmpty()) 0.0 else bottom.map { it.pp }.average()
 
-        lite.topAccuracy = top.map { it.accuracy }.average()
-        lite.middleAccuracy = middle.map { it.accuracy }.average()
-        lite.bottomAccuracy = bottom.map { it.accuracy }.average()
+        lite.topAccuracy = if (top.isEmpty()) 0.0 else top.map { it.accuracy }.average()
+        lite.middleAccuracy = if (middle.isEmpty()) 0.0 else middle.map { it.accuracy }.average()
+        lite.bottomAccuracy = if (bottom.isEmpty()) 0.0 else bottom.map { it.accuracy }.average()
 
-        lite.topLength = top.map { it.beatmap.hitLength ?: 0 }.average().toInt()
-        lite.middleLength = middle.map { it.beatmap.hitLength ?: 0 }.average().toInt()
-        lite.bottomLength = bottom.map { it.beatmap.hitLength ?: 0 }.average().toInt()
+        lite.topLength = if (top.isEmpty()) 0 else top.map { it.beatmap.hitLength ?: 0 }.average().toInt()
+        lite.middleLength = if (middle.isEmpty()) 0 else middle.map { it.beatmap.hitLength ?: 0 }.average().toInt()
+        lite.bottomLength = if (bottom.isEmpty()) 0 else bottom.map { it.beatmap.hitLength ?: 0 }.average().toInt()
 
         lite.topPGRate = if (mode == OsuMode.MANIA) {
-            top.map { it.statistics.perfect * 1.0 / it.statistics.great }.average()
+            top.map { it.statistics.perfect * 1.0 / it.statistics.great.coerceAtLeast(1) }.average()
         } else {
             0.0
         }
         lite.middlePGRate = if (mode == OsuMode.MANIA) {
-            middle.map { it.statistics.perfect * 1.0 / it.statistics.great }.average()
+            middle.map { it.statistics.perfect * 1.0 / it.statistics.great.coerceAtLeast(1) }.average()
         } else {
             0.0
         }
         lite.bottomPGRate = if (mode == OsuMode.MANIA) {
-            bottom.map { it.statistics.perfect * 1.0 / it.statistics.great }.average()
+            bottom.map { it.statistics.perfect * 1.0 / it.statistics.great.coerceAtLeast(1) }.average()
         } else {
             0.0
         }
