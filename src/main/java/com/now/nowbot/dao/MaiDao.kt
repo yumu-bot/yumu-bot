@@ -3,9 +3,8 @@ package com.now.nowbot.dao
 import com.now.nowbot.entity.*
 import com.now.nowbot.mapper.*
 import com.now.nowbot.model.maimai.*
-import com.now.nowbot.util.AsyncMethodExecutor
-import jakarta.persistence.Transient
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 import kotlin.jvm.optionals.getOrNull
 
 @Component
@@ -21,11 +20,12 @@ class MaiDao(
     val chuAliasLiteRepository: ChuAliasLiteRepository,
 ) {
     fun saveMaiRanking(ranking: List<MaiRanking>) {
-        val rankingLite = ranking.mapNotNull {
-            if (it.name.isBlank()) null
-            else MaiRankingLite.from(it)
-        }
+        val ranks = ranking
+            .filterNot { it.name.isBlank() }
 
+        ranks.parallelStream().map { maiRankLiteRepository.saveAndUpdate(it.name, it.rating) }
+
+        /*
         val actions = rankingLite.map {
             return@map AsyncMethodExecutor.Runnable {
                 maiRankLiteRepository.saveAndUpdate(it.name, it.rating)
@@ -33,6 +33,9 @@ class MaiDao(
         }
 
         AsyncMethodExecutor.awaitRunnableExecute(actions)
+
+         */
+
     }
 
     fun getMaiRanking(name: String): MaiRanking? {
@@ -86,7 +89,7 @@ class MaiDao(
         return songs.map { it.toModel() }
     }
 
-    @Transient
+    @Transactional
     fun saveMaiSong(song: MaiSong) {
         val charts = song.getChartLite()
         maiChartLiteRepository.saveAll(charts)
@@ -94,7 +97,7 @@ class MaiDao(
         maiSongLiteRepository.save(songLite)
     }
 
-    @Transient
+    @Transactional
     fun deleteMaiSongByID(id: Int) {
         val songOpt = maiSongLiteRepository.findById(id)
         if (songOpt.isEmpty) return
@@ -103,7 +106,7 @@ class MaiDao(
         maiSongLiteRepository.deleteById(id)
     }
 
-    @Transient
+    @Transactional
     fun deleteMaiChartsByIds(ids: Iterable<Int>) {
         maiChartLiteRepository.deleteAllById(ids)
     }
@@ -118,6 +121,7 @@ class MaiDao(
         }
     }
 
+    @Transactional
     fun saveMaiFit(maiFit: MaiFit) {
         val allChart = maiFit
             .charts
@@ -166,6 +170,7 @@ class MaiDao(
         return data.map { it.toModel() }.getOrNull() ?: MaiFit.DiffData()
     }
 
+    @Transactional
     fun saveMaiAliases(maiAliases: List<MaiAlias>) {
         val lites = maiAliases.map { MaiAliasLite.from(it) }
         maiAliasLiteRepository.saveAll(lites)
@@ -192,6 +197,7 @@ class MaiDao(
         return alias.toModel()
     }
 
+    @Transactional
     fun saveChuAliases(maiAliases: List<ChuAlias>) {
         val lites = maiAliases.map {ChuAliasLite.from(it) }
         chuAliasLiteRepository.saveAll(lites)
@@ -245,7 +251,7 @@ class MaiDao(
         }
     }
 
-    @Transient
+    @Transactional
     fun saveChuSong(song: ChuSong) {
         val charts = song.getChartLite()
         chuChartLiteRepository.saveAll(charts)

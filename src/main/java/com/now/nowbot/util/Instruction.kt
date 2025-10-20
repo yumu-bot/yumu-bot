@@ -756,7 +756,7 @@ enum class Instruction(val pattern: Pattern) {
 
     DICE(CommandPatternBuilder.create {
         append("($REG_EXCLAMATION|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d(?!${REG_IGNORE}))")
-        appendCaptureGroup("number", "${REG_HYPHEN}?\\d", ANY)
+        appendCaptureGroup("number", "$REG_HYPHEN?($REG_NUMBER_DECIMAL)")
         appendSpace()
         appendCaptureGroup("text", REG_ANYTHING, MORE)
     }),

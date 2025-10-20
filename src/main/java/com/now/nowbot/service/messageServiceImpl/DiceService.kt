@@ -62,7 +62,8 @@ import kotlin.random.Random
                 return true
             }
         } else if (dice.isNullOrBlank().not()) {
-            val d: Long = dice.toLongOrNull() ?: throw DiceException.Exceed()
+            val d: Long = dice.toLongOrNull()
+                ?: dice.toDoubleOrNull()?.toLong() ?: throw DiceException.Exceed()
 
             // 如果 dice 有符合，但是是 0，选择主动忽视（0d2）
             if (d < 1) {
@@ -76,7 +77,9 @@ import kotlin.random.Random
                     throw DiceException.Negative()
                 }
 
-                number.toLongOrNull() ?: throw DiceException.Exceed()
+                number.toLongOrNull()
+                    ?: number.toDoubleOrNull()?.coerceAtLeast(1.0)?.toLong()
+                    ?: throw DiceException.Exceed()
             } else {
                 100L
             }

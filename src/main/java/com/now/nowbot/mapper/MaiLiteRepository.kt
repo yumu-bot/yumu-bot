@@ -34,6 +34,13 @@ interface MaiRankLiteRepository : JpaRepository<MaiRankingLite, String> {
         """, nativeQuery = true)
     fun saveAndUpdate(name: String, rating: Int)
 
+    @Transactional
+    @Modifying
+    @Query("""
+        TRUNCATE TABLE maimai_rank RESTART IDENTITY;
+        """, nativeQuery = true)
+    fun clear()
+
     @Query("""
         SELECT * FROM maimai_rank WHERE rating BETWEEN :bottomRating AND :topRating
     """, nativeQuery = true)

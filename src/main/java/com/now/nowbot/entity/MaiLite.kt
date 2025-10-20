@@ -96,7 +96,6 @@ class MaiSongLite(
     }
 
     companion object {
-        @JvmStatic
         fun from(song: MaiSong): MaiSongLite {
             val queryTitle = DataUtil.getStandardisedString(song.title)
 
@@ -163,7 +162,6 @@ class MaiChartLite(
     }
 
     companion object {
-        @JvmStatic
         fun from(id: Int, chart: MaiSong.MaiChart): MaiChartLite {
             val notes = if (chart.notes.touch == 0) with(IntArray(4)) {
                 this[0] = chart.notes.tap
