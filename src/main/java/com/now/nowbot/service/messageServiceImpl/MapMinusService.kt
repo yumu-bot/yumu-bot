@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.ServiceCallStatisticsDao
+import com.now.nowbot.dao.SkillDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
@@ -26,12 +27,14 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.regex.Matcher
+import kotlin.math.absoluteValue
 
 @Service("MAP_MINUS") class MapMinusService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
-    private val dao: ServiceCallStatisticsDao
+    private val skillDao: SkillDao,
+    private val dao: ServiceCallStatisticsDao,
 ) : MessageService<MapMinusService.MapMinusParam>, TencentMessageService<MapMinusService.MapMinusParam> {
 
     data class MapMinusParam(val bid: Long, val mode: OsuMode, val rate: Double = 1.0, val mods: List<LazerMod>)
@@ -80,11 +83,11 @@ import java.util.regex.Matcher
     private fun getMapMinusParam(event: MessageEvent, matcher: Matcher): MapMinusParam {
         val modsList: List<LazerMod> = LazerMod.getModsList(matcher.group(FLAG_MOD))
 
-        val bid = matcher.group("bid").toLongOrNull() ?:
+        val bid = matcher.group("bid")?.toLongOrNull() ?:
         dao.getLastBeatmapID(event.subject.id, name = null, LocalDateTime.now().minusHours(24)) ?:
         throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
 
-        val rate = matcher.group("rate").toDoubleOrNull() ?: 1.0
+        val rate = matcher.group("rate")?.toDoubleOrNull() ?: 1.0
 
         if (rate < 0.1) throw MapMinusException(MapMinusException.Type.MM_Rate_TooSmall)
         if (rate > 5.0) throw MapMinusException(MapMinusException.Type.MM_Rate_TooLarge)
@@ -92,71 +95,65 @@ import java.util.regex.Matcher
         return MapMinusParam(bid, OsuMode.MANIA, rate, modsList)
     }
 
+    private fun getMapMinusImage(
+        param: MapMinusParam,
+        beatmapApiService: OsuBeatmapApiService,
+        calculateApiService: OsuCalculateApiService,
+        imageService: ImageService,
+    ): ByteArray {
+        val fileStr: String
+        val map: Beatmap = beatmapApiService.getBeatmap(param.bid).apply {
+            this.starRating = calculateApiService.getBeatMapStarRating(this.beatmapID, this.mode, param.mods, this.hasLeaderBoard)
+        }
+
+        val isChangedRating = LazerMod.hasStarRatingChange(param.mods)
+
+        try {
+
+            fileStr = beatmapApiService.getBeatmapFileString(param.bid)!!
+        } catch (_: Exception) {
+            throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
+        }
+
+        if (map.mode.isNotConvertAble(param.mode)) {
+            throw MapMinusException(MapMinusException.Type.MM_Function_NotSupported)
+        }
+
+        val file = try {
+            OsuFile.getInstance(fileStr)
+        } catch (_: NullPointerException) {
+            throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
+        }
+
+        val clockRate = if (isChangedRating) {
+            LazerMod.getModSpeedForStarCalculate(param.mods).toDouble()
+        } else {
+            param.rate
+        }
+
+        val mapMinus = Skill.getInstance(
+            file,
+            param.mode,
+            clockRate,
+        )
+
+        val type = SkillType.getType(mapMinus)
+
+        if ((clockRate - 1.0).absoluteValue <= 1e-4) {
+            skillDao.saveAndUpdateSkill(map, param.mode, mapMinus)
+        }
+
+        val body = mapOf(
+            "beatmap" to map,
+            "map_minus" to mapMinus,
+            "type" to type.keys.first().name,
+            "type_percent" to type.values.first()
+        )
+
+        return imageService.getPanel(body, "B2")
+    }
+
     companion object {
         private val log: Logger = LoggerFactory.getLogger(MapMinusService::class.java)
-
-
-        private fun getMapMinusImage(
-            param: MapMinusParam,
-            beatmapApiService: OsuBeatmapApiService,
-            calculateApiService: OsuCalculateApiService,
-            imageService: ImageService,
-        ): ByteArray {
-            val fileStr: String
-            val map: Beatmap
-            val isChangedRating = LazerMod.hasStarRatingChange(param.mods)
-
-            try {
-
-                map = beatmapApiService.getBeatmap(param.bid)
-
-                if (isChangedRating) {
-                    map.starRating = calculateApiService.getBeatMapStarRating(map.beatmapID, map.mode, param.mods, map.hasLeaderBoard)
-                }
-                fileStr = beatmapApiService.getBeatmapFileString(param.bid)!!
-            } catch (_: Exception) {
-                throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
-            }
-
-            if (map.mode.isNotConvertAble(param.mode)) {
-                throw MapMinusException(MapMinusException.Type.MM_Function_NotSupported)
-            }
-
-            val file = try {
-                OsuFile.getInstance(fileStr)
-            } catch (_: NullPointerException) {
-                throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
-            }
-
-            val mapMinus = Skill.getInstance(
-                file,
-                param.mode,
-                if (isChangedRating) {
-                    LazerMod.getModSpeedForStarCalculate(param.mods).toDouble()
-                } else {
-                    param.rate
-                },
-            )
-
-            val type = SkillType.getType(mapMinus)
-
-            val image: ByteArray
-
-            try {
-                val body = mapOf(
-                    "beatmap" to map,
-                    "map_minus" to mapMinus,
-                    "type" to type.keys.first().name,
-                    "type_percent" to type.values.first()
-                )
-
-                image = imageService.getPanel(body, "B2")
-            } catch (e: Exception) {
-                log.error("谱面 Minus：渲染失败", e)
-                throw MapMinusException(MapMinusException.Type.MM_Render_Error)
-            }
-
-            return image
-        }
     }
 }
