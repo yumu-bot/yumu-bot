@@ -282,7 +282,7 @@ import kotlin.random.Random
         // 我是 YumuBot
         AM(
             Pattern.compile(
-                "(?<m1>[\\S\\s]*)?(?<c3>你是谁?)(?<m2>[\\S\\s]*)?"
+                "(?<m1>[\\S\\s]*)?(?<c3>你是谁?|\\bwho\\b\\s*\\b('re|are)\\b)(?<m2>[\\S\\s]*)?"
             ), onlyC3 = true
         ),
 
@@ -290,7 +290,7 @@ import kotlin.random.Random
         // 我怎么知道。是哈基米。
         WHAT(
             Pattern.compile(
-                "\\s*(?<m1>[\\S\\s]*)?\\s*(?<c3>(?<!你们?|[要还哪那就])[是吃做干看玩买唱喝打听抽](([你我他她它祂]们?|别人)?谁|哪[个里处位天日]|什么歌?|啥))\\s*(?<m2>[\\S\\s]*)?"
+                "\\s*(?<m1>[\\S\\s]*)?\\s*(?<c3>(?<!你们?|[要还哪那就])[是吃做干看玩买唱喝打听抽](([你我他她它祂]们?|别人)?谁|哪[个里处位天日]|什么歌?|啥|\\bwhat\\b))\\s*(?<m2>[\\S\\s]*)?"
             ), onlyC3 = true
         ),
 
@@ -298,7 +298,7 @@ import kotlin.random.Random
         // 我怎么知道。因为爱情。
         WHY(
             Pattern.compile(
-                "\\s*(?<m1>[\\S\\s]*)?\\s*(?<c3>为(什么|何|啥))\\s*(?<m2>[\\S\\s]*)?"
+                "\\s*(?<m1>[\\S\\s]*)?\\s*(?<c3>为(什么|何|啥)|\\bwhy\\b)\\s*(?<m2>[\\S\\s]*)?"
             ), onlyC3 = true
         ),
 
@@ -306,7 +306,7 @@ import kotlin.random.Random
         // 我怎么知道。是雪豹。
         WHO(
             Pattern.compile(
-                "\\s*(?<m1>[\\S\\s]*)?\\s*(?<c3>谁是|是(谁|哪位|哪个))\\s*(?<m2>[\\S\\s]*)?"
+                "\\s*(?<m1>[\\S\\s]*)?\\s*(?<c3>谁是|是(谁|哪位|哪个)|\\bwho\\b\\s*\\b('s|is)\\b)\\s*(?<m2>[\\S\\s]*)?"
             ), onlyC3 = true
         ),
 
@@ -314,7 +314,14 @@ import kotlin.random.Random
         // 是。不是。
         IS(
             Pattern.compile(
-                "\\s*(?<m1>[\\S\\s]*?)?\\s*?(?<c3>(?<![要还哪那就])((?<![一等开集机领误神社公工财理附利员法动应半倒标大相生体约庙云际照而融茶酒览话赴])(会不)?会|(?<![求只总如煞假利而熟皆老要凡既为倒先可])(是不)?是|(?<![占己拥存国私仅乌还所尽其必具富稀不之保享岂凡总现])(有没)?有|(?<![摘纲刚重指打务六八提])(要不)?要|(可不)?可以)吗?|\\sis\\s)\\s*?(?<m2>[\\S\\s]*)?"
+                "\\s*(?<m1>[\\S\\s]*?)?\\s*?(?<c3>(?<![要还哪那就])((?<![一等开集机领误神社公工财理附利员法动应半倒标大相生体约庙云际照而融茶酒览话赴])(会不)?会|(?<![求只总如煞假利而熟皆老要凡既为倒先可])(是不)?是|(可不)?可以)吗?|\\bis\\b)\\s*?(?<m2>[\\S\\s]*)?"
+            ), onlyC3 = true
+        ),
+
+        // 有。没有。
+        HAS(
+            Pattern.compile(
+                "\\s*(?<m1>[\\S\\s]*?)?\\s*?(?<c3>(?<![要还哪那就])((?<![求只总如煞假利而熟皆老要凡既为倒先可])(是不)?是|(?<![占己拥存国私仅乌还所尽其必具富稀不之保享岂凡总现])(有没)?有)吗?|\\bhas\\b)\\s*?(?<m2>[\\S\\s]*)?"
             ), onlyC3 = true
         ),
 
@@ -486,7 +493,9 @@ import kotlin.random.Random
                             val cannot = arrayOf(
                                 "不可能。",
                                 "永远不会。",
-                                "等鸡啄完了米，狗舔完了面，火烧断了锁..."
+                                "等鸡啄完了米，狗舔完了面，火烧断了锁...",
+                                "等到世界末日了也没可能。",
+                                "这辈子就别想了。",
                             )
 
                             if (getRandom(100) <= 4f) {
@@ -565,7 +574,7 @@ import kotlin.random.Random
                             num = floor(16.0 * (getRandom().pow(2.0))) + 1.0
 
                             val i = getRandom()
-                            if (i > 0.98) num = 4294967295.0 else if (i > 0.95) num = 114514.0
+                            if (i > 0.98) num = Long.MAX_VALUE.toDouble() else if (i > 0.95) num = 114514.0
 
                             iis = "第"
                         }
@@ -577,7 +586,7 @@ import kotlin.random.Random
 
                             val i = getRandom()
 
-                            if (i > 0.98) num = 2147483647.0 else if (i > 0.95) num = 114514.0
+                            if (i > 0.98) num = Int.MAX_VALUE.toDouble() else if (i > 0.95) num = 114514.0
 
                             iis = if (c3.matches("[次个位件名只发层岁人枚字章节]".toRegex())) {
                                 c3
@@ -596,7 +605,7 @@ import kotlin.random.Random
                                     split = null
                                     continue
                                 } // 找不到也不行
-                            } catch (e: RuntimeException) {
+                            } catch (_: RuntimeException) {
                                 split = null
                                 continue
                             }
@@ -615,13 +624,11 @@ import kotlin.random.Random
 
                             iis = ""
 
-                            // 钳位
-                            if (num >= 102.0) { // 2% 买卖理论值
+                            if (num >= 101.0) { // 2% 买卖理论值
                                 num = 101.0
                                 iis = "0000"
                             }
-                            if (num >= 100f) num = 100.0
-                            if (num <= 0f) num = 0.0
+                            num = num.coerceIn(0.0, 100.0)
                         }
 
                         ACCURACY -> { // 做点手脚，让 90%-100% 和 100% 更容易出现 90 ~ 104
@@ -629,17 +636,13 @@ import kotlin.random.Random
                                 round(getRandom(1) * 1400.0) / 100.0 + 90.0
                             } else {
                                 sqrt(getRandom(1)) * 9000.0 / 100.0
-                            }
+                            }.coerceIn(0.0, 100.0)
 
                             iis = ""
-
-                            // 钳位
-                            if (num >= 100.0) num = 100.0
-                            if (num <= 0.0) num = 0.0
                         }
 
                         LIKE -> iis = matcher.group("c3")
-                        IS -> {
+                        IS, HAS -> {
                             iis = matcher.group("c3") // 有时候，”是“结尾的句子并不是问是否，还可以问比如时间。
                             // 比如，“OWC 的开启时间是？”
                             if (right.isBlank()) return "我怎么知道。"
@@ -659,7 +662,7 @@ import kotlin.random.Random
                             val r = right.lowercase().trim()
 
                             (l == r) || ((l.contains(r) || r.contains(l)) && l.length >= 3 && r.length >= 3)
-                        } catch (ignored: PatternSyntaxException) {
+                        } catch (_: PatternSyntaxException) {
                             false
                         }
 
@@ -690,7 +693,7 @@ import kotlin.random.Random
                     WHAT, WHY, WHO -> "我怎么知道。我又不是 deepseek。"
                     REAL -> "我觉得，是真的。"
                     BETTER, COMPARE, OR, JUXTAPOSITION, PREFER, HESITATE, EVEN -> "当然%s啦！"
-                    ASSUME, LIKE, IS, QUESTION -> "%s。"
+                    ASSUME, LIKE, IS, HAS, QUESTION -> "%s。"
                     COULD, WHETHER -> "%s%s%s。"
                     CONDITION -> "是的。"
                     THINK -> "嗯。"
@@ -717,6 +720,7 @@ import kotlin.random.Random
                     COULD, WHETHER -> "%s%s%s%s。"
                     CONDITION -> "不是。"
                     LIKE, IS -> "不%s。"
+                    HAS -> "没%s。"
                     THINK -> "也没有吧。"
                     QUESTION -> "不。"
                     SCORE -> "您许愿的比分是：%s:%s。"
@@ -735,7 +739,7 @@ import kotlin.random.Random
                     return chooseMultiple(s)
                 } catch (e: DiceException) {
                     throw e
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     log.info("扔骰子：$s 匹配失败。")
                     throw DiceException.NotMatched()
                 }
@@ -814,7 +818,7 @@ import kotlin.random.Random
                         return String.format(leftFormat, left, iis, right)
                     }
 
-                    LIKE, IS -> {
+                    LIKE, IS, HAS -> {
                         return String.format(leftFormat, iis)
                     }
 
@@ -862,7 +866,7 @@ import kotlin.random.Random
                         return String.format(rightFormat, left, not, iis, right)
                     }
 
-                    LIKE, IS -> {
+                    LIKE, IS, HAS -> {
                         return String.format(rightFormat, iis)
                     }
                 }
