@@ -167,8 +167,8 @@ data class Beatmap(
     @get:JsonProperty("has_leader_board")
     val hasLeaderBoard: Boolean
         get() {
-            return when (status.trim()) {
-                "ranked", "qualified", "loved", "approved" -> true
+            return when (status.firstOrNull()) {
+                'r', 'q', 'l', 'a' -> true
                 else -> when (ranked) {
                     1, 2, 3, 4 -> true
                     else -> false

@@ -39,7 +39,7 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
     }
 
     /**
-     * 返回可以被 mode 转换
+     * 当且仅当这是转谱组合时（主模式搭配输入的其他模式）
      */
     fun isConvertAble(mode: OsuMode?): Boolean {
         return this == OSU && (mode == TAIKO || mode == CATCH || mode == MANIA)

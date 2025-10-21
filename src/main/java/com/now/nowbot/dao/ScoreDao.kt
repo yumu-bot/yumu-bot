@@ -2,9 +2,12 @@ package com.now.nowbot.dao
 
 import com.now.nowbot.entity.LazerScoreLite
 import com.now.nowbot.entity.ScoreStatisticLite
+import com.now.nowbot.mapper.BeatmapStarRatingCacheRepository
 import com.now.nowbot.mapper.LazerScoreRepository
 import com.now.nowbot.mapper.LazerScoreStatisticRepository
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.isValueMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.util.JacksonUtil
@@ -19,10 +22,50 @@ import java.time.ZonedDateTime
 
 @Component
 class ScoreDao(
-    val beatmapDao: BeatmapDao,
-    val scoreRepository: LazerScoreRepository,
-    val scoreStatisticRepository: LazerScoreStatisticRepository,
+    private val beatmapDao: BeatmapDao,
+    private val scoreRepository: LazerScoreRepository,
+    private val scoreStatisticRepository: LazerScoreStatisticRepository,
+    private val beatmapStarRatingCacheRepository: BeatmapStarRatingCacheRepository
 ) {
+    fun saveStarRatingCache(scores: List<LazerScore>) {
+        scores.forEach {
+            saveStarRatingCache(it)
+        }
+    }
+
+    fun saveStarRatingCache(score: LazerScore) {
+        saveStarRatingCache(score.beatmapID, score.mode, score.mods, score.beatmap.starRating.toFloat(), score.beatmap.hasLeaderBoard)
+    }
+
+    fun saveStarRatingCache(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>, star: Float, hasLeaderBoard: Boolean = false) {
+        // 只存储谱面已上架、星数正常计算、所有模组都是老模组时的星数
+        if (!hasLeaderBoard || !mods.isValueMod() || star <= 0.1f) {
+            return
+        }
+
+        try {
+            beatmapStarRatingCacheRepository.saveAndUpdate(beatmapID, mode.modeValue, LazerMod.getModsValue(mods), star)
+        } catch (e: Exception) {
+            log.error("保存星级缓存失败", e)
+        }
+    }
+
+    fun deleteByMode(mode: OsuMode) {
+        beatmapStarRatingCacheRepository.deleteByMode(mode.modeValue)
+    }
+
+    fun getStarRatingCache(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>): Float? {
+
+        val modsValue: Int = if (mods.isValueMod()) {
+            LazerMod.getModsValue(mods)
+        } else {
+            0
+        }
+
+        return beatmapStarRatingCacheRepository.findByKey(beatmapID, mode.modeValue, modsValue)
+    }
+
+
     @Transactional
     fun saveScoreAsync(scoreList: List<LazerScore>) {
         Thread.startVirtualThread {

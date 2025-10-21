@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
@@ -23,12 +24,14 @@ import com.now.nowbot.util.command.FLAG_MOD
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 import java.util.regex.Matcher
 
 @Service("MAP_MINUS") class MapMinusService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
+    private val dao: ServiceCallStatisticsDao
 ) : MessageService<MapMinusService.MapMinusParam>, TencentMessageService<MapMinusService.MapMinusParam> {
 
     data class MapMinusParam(val bid: Long, val mode: OsuMode, val rate: Double = 1.0, val mods: List<LazerMod>)
@@ -43,7 +46,7 @@ import java.util.regex.Matcher
             return false
         }
 
-        data.value = getMapMinusParam(m)
+        data.value = getMapMinusParam(event, m)
         return true
     }
 
@@ -61,12 +64,12 @@ import java.util.regex.Matcher
     }
 
     override fun accept(event: MessageEvent, messageText: String): MapMinusParam? {
-        val m2 = OfficialInstruction.MAP_MINUS.matcher(messageText)
-        if (!m2.find()) {
+        val m = OfficialInstruction.MAP_MINUS.matcher(messageText)
+        if (!m.find()) {
             return null
         }
 
-        return getMapMinusParam(m2)
+        return getMapMinusParam(event, m)
     }
 
     override fun reply(event: MessageEvent, param: MapMinusParam): MessageChain? {
@@ -74,35 +77,24 @@ import java.util.regex.Matcher
         return MessageChainBuilder().addImage(image).build()
     }
 
+    private fun getMapMinusParam(event: MessageEvent, matcher: Matcher): MapMinusParam {
+        val modsList: List<LazerMod> = LazerMod.getModsList(matcher.group(FLAG_MOD))
+
+        val bid = matcher.group("bid").toLongOrNull() ?:
+        dao.getLastBeatmapID(event.subject.id, name = null, LocalDateTime.now().minusHours(24)) ?:
+        throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
+
+        val rate = matcher.group("rate").toDoubleOrNull() ?: 1.0
+
+        if (rate < 0.1) throw MapMinusException(MapMinusException.Type.MM_Rate_TooSmall)
+        if (rate > 5.0) throw MapMinusException(MapMinusException.Type.MM_Rate_TooLarge)
+
+        return MapMinusParam(bid, OsuMode.MANIA, rate, modsList)
+    }
+
     companion object {
         private val log: Logger = LoggerFactory.getLogger(MapMinusService::class.java)
 
-        private fun getMapMinusParam(matcher: Matcher): MapMinusParam {
-            val modsList: List<LazerMod> = LazerMod.getModsList(matcher.group(FLAG_MOD))
-
-            if (matcher.group("bid") == null) throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
-
-            val bid = try {
-                matcher.group("bid").toLong()
-            } catch (e: NumberFormatException) {
-                throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
-            }
-
-            val rate = if (matcher.group("rate").isNullOrBlank().not()) {
-                try {
-                    matcher.group("rate").toDouble()
-                } catch (e: NumberFormatException) {
-                    throw MapMinusException(MapMinusException.Type.MM_Rate_Error)
-                }
-            } else {
-                1.0
-            }
-
-            if (rate < 0.1) throw MapMinusException(MapMinusException.Type.MM_Rate_TooSmall)
-            if (rate > 5.0) throw MapMinusException(MapMinusException.Type.MM_Rate_TooLarge)
-
-            return MapMinusParam(bid, OsuMode.MANIA, rate, modsList)
-        }
 
         private fun getMapMinusImage(
             param: MapMinusParam,
@@ -119,10 +111,10 @@ import java.util.regex.Matcher
                 map = beatmapApiService.getBeatmap(param.bid)
 
                 if (isChangedRating) {
-                    map.starRating = calculateApiService.getBeatMapStarRating(map.beatmapID, map.mode, param.mods)
+                    map.starRating = calculateApiService.getBeatMapStarRating(map.beatmapID, map.mode, param.mods, map.hasLeaderBoard)
                 }
                 fileStr = beatmapApiService.getBeatmapFileString(param.bid)!!
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
             }
 
@@ -132,7 +124,7 @@ import java.util.regex.Matcher
 
             val file = try {
                 OsuFile.getInstance(fileStr)
-            } catch (e: NullPointerException) {
+            } catch (_: NullPointerException) {
                 throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
             }
 

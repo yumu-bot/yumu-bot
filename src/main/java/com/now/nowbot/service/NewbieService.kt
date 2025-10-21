@@ -8,6 +8,7 @@ import com.now.nowbot.entity.NewbiePlayCount
 import com.now.nowbot.mapper.NewbiePlayCountRepository
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.LazerMod.Companion.isValueMod
 import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
@@ -54,7 +55,8 @@ class NewbieService(
             return beatmapApiService.getBeatmapFromDatabase(bid).starRating.toFloat()
         }
         val mods = JacksonUtil.parseObjectList(modsString, LazerMod::class.java)
-        if (mods.any { !allowedMods.contains(it::class) || it.settings != null }) {
+
+        if (!mods.isValueMod()) {
             return -1f
         }
 
