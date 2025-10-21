@@ -102,12 +102,18 @@ class FriendService(
     override fun handleMessage(event: MessageEvent, param: FriendParam): ServiceCallStatistic? {
         event.reply(getMessageChain(param))
 
-        return if (param is FriendPairParam) {
-            ServiceCallStatistic.builds(event, userIDs = listOf(param.user.userID, param.partner.userID))
-        } else if (param is FriendListParam) {
-            ServiceCallStatistic.build(event, userID = param.user.userID)
-        } else {
-            ServiceCallStatistic.building(event)
+        return when (param) {
+            is FriendPairParam -> {
+                ServiceCallStatistic.builds(event, userIDs = listOf(param.user.userID, param.partner.userID))
+            }
+
+            is FriendListParam -> {
+                ServiceCallStatistic.build(event, userID = param.user.userID)
+            }
+
+            else -> {
+                ServiceCallStatistic.building(event)
+            }
         }
     }
 
@@ -182,7 +188,7 @@ class FriendService(
         if (me.isExpired) {
             val t = try {
                 userApiService.refreshUserToken(me)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 throw NetworkException.UserException.TokenExpired()
             }
 
@@ -260,7 +266,7 @@ class FriendService(
             if (other != null && other.isAuthorized && other.isExpired) {
                 val t = try {
                     userApiService.refreshUserToken(other)
-                } catch (ignored: Exception) {
+                } catch (_: Exception) {
                     log.info("${other.userID} 的令牌刷新失败，已过期。")
                 }
 

@@ -2,7 +2,6 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
-import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.DiceService.DiceParam
@@ -105,8 +104,6 @@ import kotlin.random.Random
     }
 
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: DiceParam): ServiceCallStatistic? {
-        val receipt: MessageReceipt
-
         try {
             if (param.number != null) {
                 if (param.number >= Int.MAX_VALUE) {
@@ -121,8 +118,9 @@ import kotlin.random.Random
                 if (param.dice == 1L || param.dice == null) {
                     val r = getRandom<Long?>(param.number)
                     val format = if ((r < 1f)) "%.2f" else "%.0f"
+                    val result = String.format(format, r)
 
-                    receipt = event.reply(String.format(format, r))
+                    val receipt = event.reply(result)
 
                     // 容易被识别成 QQ
                     if (r in 1000000.0..<1000000000.0) {
@@ -132,20 +130,22 @@ import kotlin.random.Random
                     return ServiceCallStatistic.building(event) {
                         setParam(
                             mapOf(
-                                "dices" to listOf(r)
+                                "src" to event.rawMessage.trim(),
+                                "dices" to listOf(result)
                             )
                         )
                     }
                 } else {
                     val sb = StringBuilder()
-                    val dices = ArrayList<Float>(param.dice.toInt())
+                    val dices = ArrayList<String>(param.dice.toInt())
 
                     for (i in 1L..param.dice) {
                         val r = getRandom(param.number)
                         val format = if ((r < 1f)) "%.2f" else "%.0f"
-                        dices += r.toFloat()
+                        val result = String.format(format, r)
+                        dices += result
 
-                        sb.append(String.format(format, r))
+                        sb.append(result)
 
                         if (i != param.dice) {
                             sb.append(", ")
@@ -156,6 +156,7 @@ import kotlin.random.Random
                     return ServiceCallStatistic.building(event) {
                         setParam(
                             mapOf(
+                                "src" to event.rawMessage.trim(),
                                 "dices" to dices
                             )
                         )
@@ -167,10 +168,9 @@ import kotlin.random.Random
                 val message = compare(param.text)
 
                 // 用于匹配是否被和谐
-                val h = "○|(\\[和谐])".toPattern()
-                if (h.matcher(message).find()) { // 被和谐就撤回
-                    receipt = event.reply(message)
-                    receipt.recallIn((60 * 1000).toLong())
+                val harmonised = "○|(\\[和谐])".toRegex()
+                if (message.contains(harmonised)) { // 被和谐就撤回
+                    event.reply(message).recallIn((60 * 1000).toLong())
                 } else {
                     event.reply(message)
                 }
@@ -178,6 +178,7 @@ import kotlin.random.Random
                 return ServiceCallStatistic.building(event) {
                     setParam(
                         mapOf(
+                            "src" to event.rawMessage.trim(),
                             "select" to message
                         )
                     )
