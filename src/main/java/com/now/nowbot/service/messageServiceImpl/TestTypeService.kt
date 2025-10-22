@@ -1,10 +1,12 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
 import com.now.nowbot.model.skill.SkillType
 import com.now.nowbot.model.skill.Skill
 import com.now.nowbot.qq.event.MessageEvent
@@ -18,10 +20,12 @@ import com.now.nowbot.throwable.botException.MapMinusException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MOD
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 
 @Service("TEST_TYPE") class TestTypeService(
     private val beatmapApiService: OsuBeatmapApiService,
-    private val calculateApiService: OsuCalculateApiService
+    private val calculateApiService: OsuCalculateApiService,
+    private val dao: ServiceCallStatisticsDao
 ) : MessageService<MapTypeParam> {
     data class MapTypeParam(val bid: Long, val mode: OsuMode, val rate: Double = 1.0, val mods: List<LazerMod>)
 
@@ -30,28 +34,18 @@ import org.springframework.stereotype.Service
         messageText: String,
         data: DataValue<MapTypeParam>,
     ): Boolean {
-        val m = Instruction.TEST_TYPE.matcher(messageText)
-        if (!m.find()) {
+        val matcher = Instruction.TEST_TYPE.matcher(messageText)
+        if (!matcher.find()) {
             return false
         }
 
-        val modsList: List<LazerMod> = LazerMod.getModsList(m.group(FLAG_MOD))
+        val modsList: List<LazerMod> = LazerMod.getModsList(matcher.group(FLAG_MOD))
 
-        val bid = try {
-            m.group("bid").toLong()
-        } catch (e: NumberFormatException) {
-            throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
-        }
+        val bid = matcher.group("bid")?.toLongOrNull()
+            ?: dao.getLastBeatmapID(event.subject.id, name = null, LocalDateTime.now().minusHours(24))
+            ?: throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
 
-        val rate = if (m.group("rate").isNullOrBlank().not()) {
-            try {
-                m.group("rate").toDouble()
-            } catch (e: NumberFormatException) {
-                throw MapMinusException(MapMinusException.Type.MM_Rate_Error)
-            }
-        } else {
-            1.0
-        }
+        val rate = matcher.group("rate")?.toDoubleOrNull() ?: 1.0
 
         if (rate < 0.1) throw MapMinusException(MapMinusException.Type.MM_Rate_TooSmall)
         if (rate > 5.0) throw MapMinusException(MapMinusException.Type.MM_Rate_TooLarge)
@@ -64,7 +58,7 @@ import org.springframework.stereotype.Service
         val fileStr: String
         val map: Beatmap
 
-        val isChangedRating = LazerMod.hasStarRatingChange(param.mods)
+        val isChangedRating = param.mods.isAffectStarRating()
 
         try {
             map = beatmapApiService.getBeatmapFromDatabase(param.bid)

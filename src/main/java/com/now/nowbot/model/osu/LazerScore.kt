@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
+import com.now.nowbot.model.osu.LazerMod.Companion.containsHidden
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
@@ -332,7 +333,7 @@ open class LazerScore(
                 else -> "F"
             }
 
-            if (LazerMod.containsHidden(score.mods) && (rank == "S" || rank == "X")) rank += "H"
+            if (score.mods.containsHidden() && (rank == "S" || rank == "X")) rank += "H"
 
             return rank
         }

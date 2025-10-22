@@ -879,7 +879,9 @@ class BeatmapApiImpl(
 
         val notExistScores = scores.filterNot { it.beatmapID in existSet }
 
-        applyBeatmapExtendFromAPI(notExistScores)
+        if (notExistScores.isNotEmpty()) {
+            applyBeatmapExtendFromAPI(notExistScores)
+        }
 
         /*
         val exists = scores.mapNotNull {

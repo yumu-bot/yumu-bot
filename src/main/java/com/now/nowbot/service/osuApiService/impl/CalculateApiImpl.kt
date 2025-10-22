@@ -5,6 +5,8 @@ import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.Mod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
+import com.now.nowbot.model.osu.LazerMod.Companion.isNotAffectStarRating
 import com.now.nowbot.model.osu.LazerMod.Companion.isValueMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.RosuPerformance
@@ -289,25 +291,25 @@ import kotlin.math.roundToInt
     }
 
     override fun applyPPToScore(score: LazerScore) {
-        if (score.pp > 0.0 + 1e-6) return
+        if (score.pp > 1e-4) return
         score.pp = getScorePP(score).pp
     }
 
     override fun applyStarToScore(score: LazerScore, local: Boolean) {
-        if (score.beatmapID == 0L || (LazerMod.noStarRatingChange(score.mods)) && score.beatmap.mode.isEqualOrDefault(score.mode)) {
+        if (score.beatmapID == 0L || score.mods.isNotAffectStarRating()) {
             return
         }
 
         if (local) {
             applyStarToScoreFromLocal(score)
 
-            if (score.beatmap.starRating < 0.15) {
+            if (score.beatmap.starRating < 0.10) {
                 applyStarToScoreFromOfficial(score)
             }
         } else {
             applyStarToScoreFromOfficial(score)
 
-            if (score.beatmap.starRating < 0.15) {
+            if (score.beatmap.starRating < 0.10) {
                 applyStarToScoreFromLocal(score)
             }
         }
@@ -322,24 +324,29 @@ import kotlin.math.roundToInt
             return
         }
 
-        if (beatmap.starRating > 0.15 && LazerMod.noStarRatingChange(mods)) return
+        if (beatmap.starRating >= 0.10 && mods.isNotAffectStarRating()) return
 
         if (local) {
             applyStarToBeatMapFromLocal(beatmap, mode, mods)
 
-            if (beatmap.starRating < 0.15) {
+            if (beatmap.starRating < 0.10) {
                 applyStarToBeatMapFromOfficial(beatmap, mode, mods)
             }
         } else {
             applyStarToBeatMapFromOfficial(beatmap, mode, mods)
 
-            if (beatmap.starRating < 0.15) {
+            if (beatmap.starRating < 0.10) {
                 applyStarToBeatMapFromLocal(beatmap, mode, mods)
             }
         }
     }
 
     override fun applyStarToScores(scores: List<LazerScore>, local: Boolean) {
+        scores.forEach {
+            applyStarToScore(it, local)
+        }
+
+        /*
         val actions = scores.map {
             return@map AsyncMethodExecutor.Runnable {
                 applyStarToScore(it, local)
@@ -347,14 +354,18 @@ import kotlin.math.roundToInt
         }
 
         AsyncMethodExecutor.awaitRunnableExecute(actions)
+
+         */
     }
 
     private fun applyStarToScoreFromOfficial(score: LazerScore) {
         try {
-            val attr = beatmapApiService.getAttributes(score.beatmapID, score.mode, LazerMod.getModsValue(score.mods))
+            val sr = beatmapApiService.getAttributes(score.beatmapID, score.mode, LazerMod.getModsValue(score.mods)).starRating
 
-            if (attr.starRating > 0.0) {
-                score.beatmap.starRating = attr.starRating
+            if (sr > 0.09) {
+                score.beatmap.starRating = sr
+
+                scoreDao.saveStarRatingCache(score, star = sr.toFloat())
             } else {
                 log.error("给成绩应用星级：无法获取谱面 {}，无法应用 API 提供的星数！", score.beatmapID)
             }
@@ -365,10 +376,13 @@ import kotlin.math.roundToInt
 
     private fun applyStarToBeatMapFromOfficial(beatmap: Beatmap, mode: OsuMode, mods: List<LazerMod>) {
         try {
-            val attr = beatmapApiService.getAttributes(beatmap.beatmapID, mode, LazerMod.getModsValue(mods))
+            val sr = beatmapApiService.getAttributes(beatmap.beatmapID, mode, LazerMod.getModsValue(mods))
+                .starRating
 
-            if (attr.starRating > 0.0) {
-                beatmap.starRating = attr.starRating
+            if (sr > 0.09) {
+                beatmap.starRating = sr
+
+                scoreDao.saveStarRatingCache(beatmapID = beatmap.beatmapID, mode = mode, mods = mods, star = sr.toFloat())
             } else {
                 log.error("给谱面应用星级：无法获取谱面 {}，无法应用 API 提供的星数！", beatmap.beatmapID)
             }
@@ -397,7 +411,7 @@ import kotlin.math.roundToInt
 
         val mode = beatmap.mode
 
-        if (LazerMod.hasStarRatingChange(mods)) {
+        if (mods.isAffectStarRating()) {
             beatmap.BPM = applyBPM(beatmap.BPM ?: 0f, mods)
             beatmap.AR = applyAR(beatmap.AR ?: 0f, mods)
             beatmap.CS = applyCS(beatmap.CS ?: 0f, mods)
@@ -427,7 +441,6 @@ import kotlin.math.roundToInt
     }
 
     override fun getBeatMapStarRating(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>, hasLeaderBoard: Boolean): Double {
-
         val isValueMod = mods.isValueMod()
 
         if (isValueMod) {

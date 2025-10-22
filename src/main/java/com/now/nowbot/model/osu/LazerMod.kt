@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.*
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.botRuntimeException.ModsException
+import com.now.nowbot.util.command.LEVEL_MORE
+import com.now.nowbot.util.command.REG_SPACE
 import org.spring.core.json
 import org.springframework.web.util.UriBuilder
 import kotlin.reflect.full.companionObjectInstance
@@ -2631,6 +2633,36 @@ sealed class LazerMod {
             return !this.any { it.settings != null || it::class.companionObjectInstance !is ValueMod }
         }
 
+
+        /**
+         * 老 stable 会改变星数的模组
+         */
+        inline fun <reified T: LazerMod> List<T>.isAffectStarRating(): Boolean {
+            return this.any {
+                when(it) {
+                    is Easy,
+                    is HardRock,
+                    is Daycore,
+                    is DoubleTime,
+                    is Nightcore,
+                    is WindUp,
+                    is WindDown,
+                    is Flashlight,
+                    is TouchDevice,
+                    is DifficultyAdjust,
+                    is AdaptiveSpeed -> true
+
+                    else -> false
+                }
+            }
+        }
+
+
+        inline fun <reified T: LazerMod> List<T>.isNotAffectStarRating(): Boolean {
+            return !this.isAffectStarRating()
+        }
+
+
         inline fun <reified T : Mod> hasMod(mods: List<LazerMod>, type: Collection<T>): Boolean {
             val set = type.map { it.type }.toSet()
             return mods.any {
@@ -2668,19 +2700,17 @@ sealed class LazerMod {
             }
         }
 
-        private val hiddenSet = setOf(
-            Hidden::class,
-            Flashlight::class,
-            Blinds::class,
-            FadeIn::class,
-        )
+        inline fun <reified T: LazerMod> List<T>.containsHidden(): Boolean {
+            val hiddenSet = setOf(
+                Hidden::class,
+                Flashlight::class,
+                Blinds::class,
+                FadeIn::class,
+            )
 
-        @JvmStatic
-        fun containsHidden(mods: List<LazerMod>): Boolean {
-            return mods.any { hiddenSet.contains(it::class) }
+            return this.any { hiddenSet.contains(it::class) }
         }
 
-        @JvmStatic
         fun getModsListFromModInt(modInt: Int): List<LazerMod> {
             val list = List(31) { it }
 
@@ -2783,12 +2813,9 @@ sealed class LazerMod {
             }
         }
 
-        private val spaceRegex = "\\s+".toRegex()
-
-        @JvmStatic
         fun splitModAcronyms(acronyms: String): List<String> {
             val newStr = acronyms.uppercase()
-                .replace(spaceRegex, "")
+                .replace("$REG_SPACE$LEVEL_MORE".toRegex(), "")
             if (newStr.length % 2 != 0) {
                 throw ModsException.CharNotPaired()
             }
@@ -2796,13 +2823,11 @@ sealed class LazerMod {
             return list
         }
 
-        @JvmStatic
         fun getModsList(acronym: String?): List<LazerMod> {
             if (acronym.isNullOrBlank()) return emptyList()
             return getModsList(splitModAcronyms(acronym))
         }
 
-        @JvmStatic
         fun getModsList(mods: List<String>?): List<LazerMod> {
             if (mods.isNullOrEmpty()) return emptyList()
             return mods
@@ -2811,7 +2836,6 @@ sealed class LazerMod {
                 .filter { it !is None }
         }
 
-        @JvmStatic
         fun getModsValue(acronym: String?): Int {
             return getModsList(acronym)
                 .mapNotNull {
@@ -2825,7 +2849,6 @@ sealed class LazerMod {
                 .reduceOrNull { sum, i -> sum or i } ?: 0
         }
 
-        @JvmStatic
         fun getModsValue(mods: List<LazerMod>?): Int {
             if (mods.isNullOrEmpty()) return 0
             return mods.mapNotNull {
@@ -2841,7 +2864,6 @@ sealed class LazerMod {
         /**
          * 原 speed 方法
          */
-        @JvmStatic
         fun getSpeedChange(mod: LazerMod): Float? {
             return when (mod) {
                 is HalfTime -> mod.speedChange ?: 0.75f
@@ -2858,7 +2880,6 @@ sealed class LazerMod {
         /**
          * 原 speed final 方法
          */
-        @JvmStatic
         fun getFinalSpeed(mod: LazerMod): Float? {
             return when (mod) {
                 is HalfTime -> mod.speedChange ?: 0.75f
@@ -2872,7 +2893,6 @@ sealed class LazerMod {
             }
         }
 
-        @JvmStatic
         fun getModSpeedForStarCalculate(mods: List<LazerMod>?): Float {
             if (mods.isNullOrEmpty()) return 1f
             var f: Float?
@@ -2885,7 +2905,6 @@ sealed class LazerMod {
             return 1f
         }
 
-        @JvmStatic
         fun getModSpeed(mods: List<LazerMod>?): Float {
             if (mods.isNullOrEmpty()) return 1f
             var f: Float?
@@ -2897,28 +2916,6 @@ sealed class LazerMod {
             }
             return 1f
         }
-
-        @JvmStatic
-        fun hasStarRatingChange(mods: List<LazerMod>?): Boolean {
-            if (mods.isNullOrEmpty()) return false
-            return mods.any {
-                it is Easy ||
-                        it is HardRock ||
-                        it is HalfTime ||
-                        it is Daycore ||
-                        it is DoubleTime ||
-                        it is Nightcore ||
-                        it is WindUp ||
-                        it is WindDown ||
-                        it is Flashlight ||
-                        it is TouchDevice ||
-                        it is DifficultyAdjust ||
-                        it is AdaptiveSpeed
-            }
-        }
-
-        @JvmStatic
-        fun noStarRatingChange(mods: List<LazerMod>?) = hasStarRatingChange(mods).not()
 
         /**
          * 用于在 URI 链接中加一组模组

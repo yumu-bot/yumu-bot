@@ -1,8 +1,8 @@
 package com.now.nowbot.model.mappool.old
 
-import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.mappool.now.Pool
+import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.util.AsyncMethodExecutor
@@ -39,7 +39,7 @@ class MapPoolDto(
         val hasChange = modPools.filter { pool ->
             val mod = pool.mod ?: return@filter false
 
-            LazerMod.hasStarRatingChange(listOf(mod))
+            listOf(mod).isAffectStarRating()
         }
 
         AsyncMethodExecutor.awaitRunnableExecute(hasChange.map { pool ->

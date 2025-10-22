@@ -10,6 +10,7 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
+import com.now.nowbot.model.osu.LazerMod.Companion.isNotAffectStarRating
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -311,12 +312,12 @@ class NewbieRestrictService(
 
                 return false
             } else return false
-        } catch (e: Throwable) {
+        } catch (_: Throwable) {
             return false
         }
 
         data.value = scores.filterNot {
-            remitBIDs.contains(it.beatmapID) && LazerMod.noStarRatingChange(it.mods)
+            remitBIDs.contains(it.beatmapID) && it.mods.isNotAffectStarRating()
         }
 
         return !data.value.isNullOrEmpty()

@@ -27,14 +27,12 @@ class ScoreDao(
     private val scoreStatisticRepository: LazerScoreStatisticRepository,
     private val beatmapStarRatingCacheRepository: BeatmapStarRatingCacheRepository
 ) {
-    fun saveStarRatingCache(scores: List<LazerScore>) {
-        scores.forEach {
-            saveStarRatingCache(it)
-        }
-    }
 
-    fun saveStarRatingCache(score: LazerScore) {
-        saveStarRatingCache(score.beatmapID, score.mode, score.mods, score.beatmap.starRating.toFloat(), score.beatmap.hasLeaderBoard)
+    /**
+     * 使用外界的星数
+     */
+    fun saveStarRatingCache(score: LazerScore, star: Float) {
+        saveStarRatingCache(score.beatmapID, score.mode, score.mods, star, score.beatmap.hasLeaderBoard)
     }
 
     fun saveStarRatingCache(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>, star: Float, hasLeaderBoard: Boolean = false) {

@@ -125,9 +125,7 @@ class ScoreApiImpl(
                 { getBests(id, mode, offset + 100, limit - 100) }
             )
 
-            return (e.first + e.second).apply {
-                scoreDao.saveStarRatingCache(this)
-            }
+            return (e.first + e.second)
         }
     }
 
@@ -172,8 +170,6 @@ class ScoreApiImpl(
             client.get().uri {
                 it.path("scores/{scoreID}").build(scoreID)
             }.headers(base::insertHeader).retrieve().bodyToMono(LazerScore::class.java)
-        }.apply {
-            scoreDao.saveStarRatingCache(this)
         }
     }
 
@@ -493,8 +489,6 @@ class ScoreApiImpl(
                 .bodyToFlux(LazerScore::class.java)
                 .collectList()
                 .doOnNext(scoreDao::saveScoreAsync)
-        }.apply {
-            scoreDao.saveStarRatingCache(this)
         }
     }
 
@@ -522,8 +516,6 @@ class ScoreApiImpl(
                 .bodyToFlux(LazerScore::class.java)
                 .collectList()
                 .doOnNext(scoreDao::saveScoreAsync)
-        }.apply {
-            scoreDao.saveStarRatingCache(this)
         }
     }
 

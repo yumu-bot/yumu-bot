@@ -4,7 +4,6 @@ import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.InfoLogStatistics
-import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -206,10 +205,7 @@ class InfoService(
     private fun InfoParam.getMessageChain(): MessageChain {
         if (this.version == 2) {
             try {
-                calculateApiService.applyStarToScores(bests
-                    .take(5)
-                    .filter { LazerMod.hasStarRatingChange(it.mods) }
-                )
+                calculateApiService.applyStarToScores(bests.take(5))
             } catch (_: Exception) {
                 log.info("玩家信息：获取新谱面星数失败")
             }
