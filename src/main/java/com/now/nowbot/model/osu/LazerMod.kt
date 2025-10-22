@@ -2628,7 +2628,7 @@ sealed class LazerMod {
         const val KEY_MOD_COLOR = "#616161"
 
         inline fun <reified T: LazerMod> List<T>.isValueMod(): Boolean {
-            return this.any { it.settings == null && it::class.companionObjectInstance is ValueMod }
+            return !this.any { it.settings != null || it::class.companionObjectInstance !is ValueMod }
         }
 
         inline fun <reified T : Mod> hasMod(mods: List<LazerMod>, type: Collection<T>): Boolean {
