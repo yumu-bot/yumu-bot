@@ -2642,12 +2642,17 @@ sealed class LazerMod {
                 when(it) {
                     is Easy,
                     is HardRock,
-                    is Daycore,
+
                     is DoubleTime,
+                    is Daycore,
+                    is HalfTime,
                     is Nightcore,
+
                     is WindUp,
                     is WindDown,
+
                     is Flashlight,
+
                     is TouchDevice,
                     is DifficultyAdjust,
                     is AdaptiveSpeed -> true
