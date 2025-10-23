@@ -137,54 +137,56 @@ class BPFixService(
             (score.weight?.pp ?: 0.0)
         }.sum()
 
-        val tasks = bestsMap.map { (index, score) ->
-            val max = score.beatmap.maxCombo ?: 1
-            val combo = score.maxCombo
-            val stat = score.statistics
-            val ok = stat.ok
-            val meh = stat.meh
-            val miss = stat.miss
+        val (scoresToFix, scoresToKeep) = bestsMap.toList()
+            .partition { (_, score) ->
+                val max = score.beatmap.maxCombo ?: 1
+                val combo = score.maxCombo
+                val stat = score.statistics
+                val ok = stat.ok
+                val meh = stat.meh
+                val miss = stat.miss
 
-            /**
-             * 断连击
-             * mania 模式现在也可以参与此项筛选
-             * catch 的 choke 会被归纳到 has1pMiss 中
-             */
-            val isChoke = when(score.mode) {
-                OsuMode.MANIA -> (ok + meh + miss) / max <= 0.03
-                OsuMode.CATCH_RELAX, OsuMode.CATCH -> false
-                else -> (miss == 0) && (combo < (max * 0.98).roundToInt())
-            }
-
-            // 含有 <1% 的失误
-            val has1pMiss = (miss > 0) && ((1.0 * miss / max) <= 0.01)
-
-            // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
-            val callable: Callable<LazerScore> = Callable {
-                if (isChoke || has1pMiss) {
-                    initFixScore(score, index)
-                } else {
-                    score
+                /**
+                 * 断连击
+                 * mania 模式现在也可以参与此项筛选
+                 * catch 的 choke 会被归纳到 has1pMiss 中
+                 */
+                val isChoke = when(score.mode) {
+                    OsuMode.MANIA -> (ok + meh + miss) / max <= 0.03
+                    OsuMode.CATCH_RELAX, OsuMode.CATCH -> false
+                    else -> (miss == 0) && (combo < (max * 0.98).roundToInt())
                 }
-            }
 
-            callable
+                // 含有 <1% 的失误
+                val has1pMiss = (miss > 0) && ((1.0 * miss / max) <= 0.01)
+
+                // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
+                isChoke || has1pMiss
         }
 
-        val fixedBests = AsyncMethodExecutor.awaitCallableExecute(tasks, 1.toDuration(DurationUnit.MINUTES))
-            .sortedByDescending { score ->
-                val fc = score as? LazerScoreWithFcPP
+        // 只对需要修复的分数进行并行处理
+        val fixTasks = scoresToFix.map { (index, score) ->
+            Callable { initFixScore(score, index) }
+        }
 
-                if (fc != null && fc.fcPP > 0) {
-                    fc.fcPP
-                } else {
-                    score.pp
-                }
+        val fixedScores = if (fixTasks.isNotEmpty()) {
+            AsyncMethodExecutor.awaitCallableExecute(fixTasks, 1.toDuration(DurationUnit.MINUTES))
+        } else {
+            emptyList()
+        }
+
+        // 合并结果：修复后的分数 + 不需要修复的分数
+        val fixedBests = (fixedScores + scoresToKeep.map { it.second }).sortedByDescending { score ->
+            if (score is LazerScoreWithFcPP && score.fcPP > 0) {
+                score.fcPP
+            } else {
+                score.pp
+            }
         }
 
         // 这里的 i 是重排过后的，从 0 开始
         val newBestsSum = fixedBests.mapIndexed { index, score ->
-            val weight: Double = 0.95.pow(index)
+            val weight: Double = FastPower095.pow(index)
             val pp: Double
             if (score is LazerScoreWithFcPP) {
                 pp = score.fcPP

@@ -280,7 +280,7 @@ object DataUtil {
             "ar" to beatmap.AR!!,
             "od" to beatmap.OD!!,
             "hp" to beatmap.HP!!,
-            "bpm" to beatmap.BPM!!,
+            "bpm" to beatmap.BPM,
             "drain" to beatmap.hitLength!!,
             "total" to beatmap.totalLength,
         )
@@ -640,7 +640,7 @@ object DataUtil {
         val length = fullPP.size
 
         for (i in 0 until length) {
-            val weight: Double = 0.95.pow(i)
+            val weight: Double = FastPower095.pow(i)
             val pp = fullPP[i]
 
             // 只拿最后50个bp来算，这样精准
@@ -668,14 +668,16 @@ object DataUtil {
         } else {
             // 对离散数据求和
             for (i in length..expectedX) {
-                val weight: Double = 0.95.pow(i)
+                val weight: Double = FastPower095.pow(i)
                 remainPP += (k * i + b) * weight
             }
 
             bonusPP = playerPP - bpPP - remainPP
         }
 
-        return max(min(bonusPP, 413.894179759), 0.0)
+        val maxBonusPP = (417.0 - 1.0 / 3.0) * (1.0 - 0.9994.pow(1000))
+
+        return bonusPP.coerceIn(0.0, maxBonusPP)
     }
 
     // 下下策
@@ -1541,5 +1543,24 @@ object DataUtil {
         }
 
         return@run sb.toString()
+    }
+}
+
+object FastPower095 {
+    const val MAX_EXP = 200
+
+    val precomputed = DoubleArray(MAX_EXP + 1).apply {
+        this[0] = 1.0
+        for (i in 1..MAX_EXP) {
+            this[i] = this[i - 1] * 0.95
+        }
+    }
+
+    fun pow(n: Int): Double {
+        return if (n in 0..199) {
+            precomputed[n]
+        } else {
+            0.0
+        }
     }
 }
