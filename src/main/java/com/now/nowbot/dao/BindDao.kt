@@ -35,8 +35,6 @@ import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.function.Function
-import java.util.stream.Collectors
 import kotlin.jvm.optionals.getOrNull
 
 @Component
@@ -498,7 +496,7 @@ class BindDao(
     fun getBindUserByDbId(id: Long?): BindUser? {
         if (id == null) return null
         val data = bindUserMapper.findById(id)
-        return data.map(Function { buLite: OsuBindUserLite? -> fromLite(buLite) }).orElse(null)
+        return fromLite(data.getOrNull() ?: return null)
     }
 
     @Async fun refreshOldUserToken(userApiService: OsuUserApiService) {
@@ -675,13 +673,9 @@ class BindDao(
 
     val allGroupMode: Map<Long, OsuMode>
         get() = osuGroupConfigRepository
-            .findAll()
-            .stream()
-            .collect(
-                Collectors.toMap(
-                    OsuGroupConfigLite::groupId,
-                    Function { it: OsuGroupConfigLite -> Optional.ofNullable(it.mainMode).orElse(OsuMode.DEFAULT) })
-            )
+            .findAll().associate { lite ->
+                (lite.groupId ?: -1) to (lite.mainMode ?: OsuMode.DEFAULT)
+            }
 
     fun getGroupModeConfig(event: MessageEvent?): OsuMode {
         if (event == null || event.subject !is Group) {

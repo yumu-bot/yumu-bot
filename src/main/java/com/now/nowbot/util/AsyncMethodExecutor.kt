@@ -2,7 +2,6 @@ package com.now.nowbot.util
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.time.Duration
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.*
@@ -10,6 +9,9 @@ import java.util.concurrent.StructuredTaskScope.ShutdownOnFailure
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.random.Random
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 object AsyncMethodExecutor {
     val log: Logger = LoggerFactory.getLogger(AsyncMethodExecutor::class.java)
@@ -31,7 +33,7 @@ object AsyncMethodExecutor {
             }
 
             return result as T
-        } catch (ignore: InterruptedException) {
+        } catch (_: InterruptedException) {
             return defaultValue
         } finally {
             countDownLock?.countDown()
@@ -186,7 +188,7 @@ object AsyncMethodExecutor {
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要等待所有异步操作完成，请使用 asyncRunnableExecute
      */
     @JvmStatic
-    fun awaitRunnableExecute(works: Collection<Runnable>, timeout: Duration = Duration.ofSeconds(30)) {
+    fun awaitRunnableExecute(works: Collection<Runnable>, timeout: Duration = 30.toDuration(DurationUnit.SECONDS)) {
         val lock = CountDownLatch(works.size)
         works.map { w: Runnable ->
             Runnable {
@@ -200,14 +202,14 @@ object AsyncMethodExecutor {
             }
         }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
 
-        lock.await(timeout.toMillis(), TimeUnit.MILLISECONDS)
+        lock.await(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
     }
 
     /**
      * 异步执行不需要返回的结果，并等待至所有操作都完成。
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要等待所有异步操作完成，请使用 asyncRunnableExecute
      */
-    fun awaitRunnableExecute(work: Runnable, timeout: Duration = Duration.ofSeconds(30)) {
+    fun awaitRunnableExecute(work: Runnable, timeout: Duration = 30.toDuration(DurationUnit.SECONDS)) {
         val lock = CountDownLatch(1)
 
         val task = Runnable {
@@ -222,7 +224,7 @@ object AsyncMethodExecutor {
 
         Thread.startVirtualThread(task)
 
-        lock.await(timeout.toMillis(), TimeUnit.MILLISECONDS)
+        lock.await(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
     }
 
 
@@ -233,7 +235,7 @@ object AsyncMethodExecutor {
      */
     fun <T> awaitCallableExecute(
         works: Collection<Callable<out T>>,
-        timeout: Duration = Duration.ofSeconds(30)
+        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
     ): List<T> {
         val size = works.size
         val lock = CountDownLatch(size)
@@ -253,11 +255,11 @@ object AsyncMethodExecutor {
                 }
             }
         }.forEach {
-            task: Runnable -> Thread.startVirtualThread(task)
+                task: Runnable -> Thread.startVirtualThread(task)
         }
 
         try {
-            lock.await(timeout.toMillis(), TimeUnit.MILLISECONDS)
+            lock.await(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
         } catch (e: InterruptedException) {
             log.error("lock error", e)
         }
@@ -273,7 +275,7 @@ object AsyncMethodExecutor {
 
     /*
     fun <T> awaitSupplierExecute(work: Supplier<T>): T {
-        return awaitSupplierExecute(listOf(work), Duration.ofSeconds(30)).first()
+        return awaitSupplierExecute(listOf(work), 30.toDuration(DurationUnit.SECONDS)).first()
     }
 
     /**
@@ -281,7 +283,7 @@ object AsyncMethodExecutor {
      * 这个方法会等待结果返回，不直接进行下一步。如果不需要返回结果（void 方法），请使用 awaitRunnableExecute
      * 返回结果严格按照传入的 works 顺序
      */
-    fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>, timeout: Duration = Duration.ofSeconds(30)): List<T> {
+    fun <T> awaitSupplierExecute(works: Collection<Supplier<T>>, timeout: Duration = 30.toDuration(DurationUnit.SECONDS)): List<T> {
         val size = works.size
         val lock = CountDownLatch(size)
         val results: MutableMap<Int, T?> = ConcurrentHashMap(size)
@@ -299,7 +301,7 @@ object AsyncMethodExecutor {
             }
         }.forEach { task: Runnable -> Thread.startVirtualThread(task) }
         try {
-            lock.await(timeout.toMillis(), TimeUnit.MILLISECONDS)
+            lock.await(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
         } catch (e: InterruptedException) {
             log.error("lock error", e)
         }
@@ -311,11 +313,11 @@ object AsyncMethodExecutor {
 
     fun <T> awaitCallableExecute(
         work: Callable<out T>,
-        timeout: Duration = Duration.ofSeconds(30)
+        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
     ): T {
         ShutdownOnFailure().use { virtualPool ->
             val r = virtualPool.fork(work)
-            virtualPool.joinUntil(Instant.now().plus(timeout))
+            virtualPool.joinUntil(Instant.now().plusMillis(timeout.inWholeMilliseconds))
             virtualPool.throwIfFailed()
             return r.get()
         }
@@ -324,7 +326,7 @@ object AsyncMethodExecutor {
     /*
     fun <T> awaitCallableExecute(
         works: List<Callable<out T>>,
-        timeout: Duration = Duration.ofSeconds(30)
+        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
     ): List<T> {
         ShutdownOnFailure().use { virtualPool ->
             val results = works.map { virtualPool.fork(it) }
@@ -339,12 +341,12 @@ object AsyncMethodExecutor {
     fun <T, U> awaitPairCallableExecute(
         work: Callable<out T>,
         work2: Callable<out U>,
-        timeout: Duration = Duration.ofSeconds(30)
+        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
     ): Pair<T, U> {
         ShutdownOnFailure().use { virtualPool ->
             val r1 = virtualPool.fork(work)
             val r2 = virtualPool.fork(work2)
-            virtualPool.joinUntil(Instant.now().plus(timeout))
+            virtualPool.joinUntil(Instant.now().plusMillis(timeout.inWholeMilliseconds))
             virtualPool.throwIfFailed()
             return Pair(r1.get(), r2.get())
         }
@@ -354,13 +356,13 @@ object AsyncMethodExecutor {
         work: Callable<out T>,
         work2: Callable<out U>,
         work3: Callable<out V>,
-        timeout: Duration = Duration.ofSeconds(30)
+        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
     ): Triple<T, U, V> {
         ShutdownOnFailure().use { virtualPool ->
             val r1 = virtualPool.fork(work)
             val r2 = virtualPool.fork(work2)
             val r3 = virtualPool.fork(work3)
-            virtualPool.joinUntil(Instant.now().plus(timeout))
+            virtualPool.joinUntil(Instant.now().plusMillis(timeout.inWholeMilliseconds))
             virtualPool.throwIfFailed()
             return Triple(r1.get(), r2.get(), r3.get())
         }
@@ -371,14 +373,14 @@ object AsyncMethodExecutor {
         work2: Callable<out U>,
         work3: Callable<out V>,
         work4: Callable<out W>,
-        timeout: Duration = Duration.ofSeconds(30)
+        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
     ): Pair<Pair<T, U>, Pair<V, W>> {
         ShutdownOnFailure().use { virtualPool ->
             val r1 = virtualPool.fork(work)
             val r2 = virtualPool.fork(work2)
             val r3 = virtualPool.fork(work3)
             val r4 = virtualPool.fork(work4)
-            virtualPool.joinUntil(Instant.now().plus(timeout))
+            virtualPool.joinUntil(Instant.now().plusMillis(timeout.inWholeMilliseconds))
             virtualPool.throwIfFailed()
             return (r1.get() to r2.get()) to (r3.get() to r4.get())
         }
@@ -392,7 +394,7 @@ object AsyncMethodExecutor {
     @Throws(Exception::class)
     fun <T> awaitSupplierExecuteThrows(
         works: Collection<Supplier<T>>,
-        timeout: Duration = Duration.ofSeconds(30)
+        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
     ): List<T> {
         val size = works.size
         val phaser = Phaser(1)
@@ -430,7 +432,7 @@ object AsyncMethodExecutor {
             phaser.arrive()
             phaser.awaitAdvanceInterruptibly(
                 currentPhase,
-                timeout.toMillis(),
+                timeout.inWholeMilliseconds,
                 TimeUnit.MILLISECONDS
             )
         } catch (e: InterruptedException) {

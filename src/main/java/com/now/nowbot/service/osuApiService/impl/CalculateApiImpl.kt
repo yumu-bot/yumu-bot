@@ -360,7 +360,7 @@ import kotlin.math.roundToInt
 
     private fun applyStarToScoreFromOfficial(score: LazerScore) {
         try {
-            val sr = beatmapApiService.getAttributes(score.beatmapID, score.mode, LazerMod.getModsValue(score.mods)).starRating
+            val sr = beatmapApiService.getAttributes(score.beatmapID, score.mode, score.mods).starRating
 
             if (sr > 0.09) {
                 score.beatmap.starRating = sr
@@ -376,7 +376,7 @@ import kotlin.math.roundToInt
 
     private fun applyStarToBeatMapFromOfficial(beatmap: Beatmap, mode: OsuMode, mods: List<LazerMod>) {
         try {
-            val sr = beatmapApiService.getAttributes(beatmap.beatmapID, mode, LazerMod.getModsValue(mods))
+            val sr = beatmapApiService.getAttributes(beatmap.beatmapID, mode, mods)
                 .starRating
 
             if (sr > 0.09) {
@@ -412,7 +412,7 @@ import kotlin.math.roundToInt
         val mode = beatmap.mode
 
         if (mods.isAffectStarRating()) {
-            beatmap.BPM = applyBPM(beatmap.BPM ?: 0f, mods)
+            beatmap.BPM = applyBPM(beatmap.BPM, mods)
             beatmap.AR = applyAR(beatmap.AR ?: 0f, mods)
             beatmap.CS = applyCS(beatmap.CS ?: 0f, mods)
             beatmap.OD = applyOD(beatmap.OD ?: 0f, mods, mode)

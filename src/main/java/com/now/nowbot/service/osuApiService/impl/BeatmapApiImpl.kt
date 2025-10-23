@@ -269,24 +269,6 @@ class BeatmapApiImpl(
         return DigestUtils.md5DigestAsHex(fileStr.toByteArray(StandardCharsets.UTF_8))
     }
 
-    override fun getAttributes(id: Long, mode: OsuMode?): BeatmapDifficultyAttributes {
-        val body: MutableMap<String, Any> = HashMap()
-        if (OsuMode.isNotDefaultOrNull(mode)) {
-            body["ruleset_id"] = mode!!.modeValue
-        }
-        return request { client ->
-            client.post().uri("beatmaps/{id}/attributes", id)
-                .headers(base::insertHeader)
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(JsonNode::class.java)
-                .mapNotNull {
-                    JacksonUtil.parseObject(it["attributes"], BeatmapDifficultyAttributes::class.java)
-                }
-        }
-
-    }
-
     override fun getBeatmap(bid: Long): Beatmap {
         return request { client ->
             client.get()
@@ -444,7 +426,7 @@ class BeatmapApiImpl(
         try {
             val lite = beatmapDao.getBeatMapLite(bid)
             return BeatmapDao.fromBeatmapLite(lite)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return getBeatmap(bid)
         }
     }
@@ -453,13 +435,13 @@ class BeatmapApiImpl(
         try {
             val map = beatmapDao.getBeatMapLite(bid)
             return map.status.equals("ranked", ignoreCase = true) && map.difficultyRating <= 5.7
-        } catch (ignore: Exception) {
+        } catch (_: Exception) {
         }
 
         try {
             val map = getBeatmap(bid)
             return map.status.equals("ranked", ignoreCase = true) && map.starRating <= 5.7
-        } catch (e: WebClientResponseException.NotFound) {
+        } catch (_: WebClientResponseException.NotFound) {
             return false
         }
     }
@@ -492,7 +474,7 @@ class BeatmapApiImpl(
         }
     }
 
-    private fun getGrouping(x: List<Int>, groups: Int): List<Int> {
+    private fun getGrouping(x: List<Int>, groups: Int = 26): List<Int> {
         require(groups >= 1)
         if (x.isEmpty()) return emptyList()
 
@@ -532,11 +514,11 @@ class BeatmapApiImpl(
 
         try {
             objectList = getMapObjectList(file)
-        } catch (e: IndexOutOfBoundsException) {
+        } catch (_: IndexOutOfBoundsException) {
             refreshBeatmapFileFromDirectory(bid)
             try {
                 objectList = getMapObjectList(file)
-            } catch (e1: IndexOutOfBoundsException) {
+            } catch (_: IndexOutOfBoundsException) {
                 result.timestamp = intArrayOf()
                 result.density = intArrayOf()
                 return result
@@ -544,7 +526,7 @@ class BeatmapApiImpl(
         }
 
         result.timestamp = objectList.toIntArray()
-        val grouping = getGrouping(objectList, 26)
+        val grouping = getGrouping(objectList)
         result.density = grouping.toIntArray()
 
         return result
@@ -581,7 +563,7 @@ class BeatmapApiImpl(
             dataObj = beatmapObjectCountMapper.saveAndFlush(dataObj)
             val start = dataObj.timestamp!![0]
             return dataObj.timestamp!![passObj] - start
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return 0
         }
         return (time / 1000)
@@ -605,7 +587,7 @@ class BeatmapApiImpl(
                 beatmapObjectCountMapper.saveAndFlush(dataObj)
                 timeMap.plus(bid to dataObj.timestamp)
                 dataObj.timestamp!!
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 result.add(0)
                 continue
             }
@@ -672,13 +654,16 @@ class BeatmapApiImpl(
 
     data class AttributesResponse(val attributes: BeatmapDifficultyAttributes = BeatmapDifficultyAttributes())
 
-    override fun getAttributes(id: Long, mode: OsuMode?, modsInt: Int): BeatmapDifficultyAttributes {
+    override fun getAttributes(id: Long, mode: OsuMode?, mods: List<LazerMod>?): BeatmapDifficultyAttributes {
         val body: MutableMap<String, Any> = HashMap()
+
         if (OsuMode.isNotDefaultOrNull(mode)) {
             body["ruleset_id"] = mode!!.modeValue
         }
 
-        if (modsInt != 0) {
+        val modsInt = LazerMod.getModsValue(mods)
+
+        if (!mods.isNullOrEmpty() && modsInt > 0) {
             body["mods"] = modsInt
         }
 

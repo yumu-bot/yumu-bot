@@ -112,7 +112,10 @@ class BeatmapDao(
         if (hasBeatmap && hasBeatmapset) return
 
         val hasGenreID = beatmap.beatmapset?.genreID != null
-        val stabled = beatmap.beatmapset?.ranked?.toInt() in 1..2 || beatmap.beatmapset?.ranked?.toInt() == 4
+
+        val ranked = beatmap.beatmapset?.ranked
+
+        val stabled = ranked == 1.toByte() || ranked == 2.toByte() || ranked == 4.toByte()
 
         if (!(hasGenreID && stabled)) return
 

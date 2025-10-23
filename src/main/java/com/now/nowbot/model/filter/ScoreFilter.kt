@@ -351,7 +351,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, compare, to)
                 }
 
-                BPM -> fit(operator, it.beatmap.BPM?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
+                BPM -> fit(operator, it.beatmap.BPM.toDouble(), double, digit = 2, isRound = true, isInteger = true)
                 ACCURACY -> {
                     val acc = when {
                         double > 10000.0 || double <= 0.0 -> throw IllegalArgumentException.WrongException.Henan()

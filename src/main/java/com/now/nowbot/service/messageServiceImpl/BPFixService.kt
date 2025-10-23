@@ -28,6 +28,8 @@ import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import kotlin.math.*
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @Service("BP_FIX")
 class BPFixService(
@@ -92,14 +94,14 @@ class BPFixService(
         if (id.data != null) {
             val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { userApiService.getOsuUser(id.data!!, mode.data!!) },
-                { scoreApiService.getBestScores(id.data!!, mode.data)
-                    .mapIndexed { i, it ->
-                        (i + 1) to it
-                    }.toMap() }
+                { scoreApiService.getBestScores(id.data!!, mode.data) },
+                1.toDuration(DurationUnit.MINUTES)
             )
 
             user = async.first
             scores = async.second
+                .mapIndexed { i, it -> (i + 1) to it }
+                .toMap()
             page = id.start ?: 1
         } else {
             // 经典的获取方式
@@ -107,9 +109,7 @@ class BPFixService(
 
             user = range.data!!
 
-            val bests = scoreApiService.getBestScores(user.userID, mode.data)
-
-            scores = bests.mapIndexed { i, it -> (i + 1) to it }.toMap()
+            scores = scoreApiService.getBestScores(user.userID, mode.data).mapIndexed { i, it -> (i + 1) to it }.toMap()
 
             page = range.start ?: 1
         }
@@ -160,7 +160,7 @@ class BPFixService(
             val has1pMiss = (miss > 0) && ((1.0 * miss / max) <= 0.01)
 
             // 并列关系，miss 不一定 choke（断尾不会计入 choke），choke 不一定 miss（断滑条
-            val callable: Callable<out LazerScore> = Callable {
+            val callable: Callable<LazerScore> = Callable {
                 if (isChoke || has1pMiss) {
                     initFixScore(score, index)
                 } else {
@@ -171,13 +171,15 @@ class BPFixService(
             callable
         }
 
-        val fixedBests = AsyncMethodExecutor.awaitCallableExecute(tasks)
-            .sortedByDescending {
-            if (it is LazerScoreWithFcPP && it.fcPP > 0) {
-                it.fcPP
-            } else {
-                it.pp
-            }
+        val fixedBests = AsyncMethodExecutor.awaitCallableExecute(tasks, 1.toDuration(DurationUnit.MINUTES))
+            .sortedByDescending { score ->
+                val fc = score as? LazerScoreWithFcPP
+
+                if (fc != null && fc.fcPP > 0) {
+                    fc.fcPP
+                } else {
+                    score.pp
+                }
         }
 
         // 这里的 i 是重排过后的，从 0 开始

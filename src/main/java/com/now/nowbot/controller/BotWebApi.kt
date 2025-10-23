@@ -5,7 +5,6 @@ import ch.qos.logback.classic.LoggerContext
 import com.now.nowbot.aop.OpenResource
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.PPMinusDao
-import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
 import com.now.nowbot.model.mappool.old.MapPoolDto
@@ -1013,7 +1012,7 @@ import kotlin.math.min
     ): BeatmapDifficultyAttributes {
         return if (bid != null) {
             beatmapApiService.getAttributes(
-                bid, getMode(mode), OsuMod.getModsValue(mods)
+                bid, getMode(mode), LazerMod.getModsList(mods)
             )
         } else {
             BeatmapDifficultyAttributes()

@@ -93,7 +93,7 @@ import kotlin.math.min
                         i + 1,
                         b.totalLength,
                         best.maxCombo,
-                        (b.BPM ?: 0.0).toFloat(),
+                        b.BPM,
                         b.starRating.toFloat(),
                         best.rank,
                         best.beatmapset.covers.list,

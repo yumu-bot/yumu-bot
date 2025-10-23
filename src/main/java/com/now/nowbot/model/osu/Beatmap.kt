@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.OsuMode
 import jakarta.persistence.Column
 import java.time.OffsetDateTime
-import java.util.stream.StreamSupport
 
 data class Beatmap(
     @field:JsonProperty("beatmapset_id")
@@ -69,7 +68,7 @@ data class Beatmap(
     var AR: Float? = null,
 
     @field:JsonProperty("bpm")
-    var BPM: Float? = null,
+    var BPM: Float = 0f,
 
     @field:JsonProperty("convert")
     var convert: Boolean? = null,
@@ -221,9 +220,14 @@ data class Beatmap(
             if (data == null) return listOf(0)
 
             return if (data.hasNonNull(fieldName) && data[fieldName].isArray) {
+                data[fieldName].map { it.asInt(0) }
+
+                /*
                 StreamSupport.stream(data[fieldName].spliterator(), false)
                     .map { n: JsonNode -> n.asInt(0) }
                     .toList()
+
+                 */
             } else listOf()
         }
     }

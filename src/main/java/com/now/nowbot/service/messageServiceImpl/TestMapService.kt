@@ -10,11 +10,11 @@ import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
 import org.springframework.stereotype.Service
-import java.util.*
 import java.util.regex.Matcher
-import java.util.stream.Stream
 import kotlin.math.floor
+import kotlin.math.roundToInt
 
 @Service("TEST_MAP") 
 class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : MessageService<Matcher> {
@@ -45,10 +45,10 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
         
         if (mod == null || mod.trim {it <= ' '} .isEmpty()) {
             sb.append(String.format("%.2f", b.starRating)).append(',')
-            .append(String.format("%d", Math.round(b.BPM!!))).append(',')
-            .append(String.format("%d", Math.round(floor((b.totalLength / 60f).toDouble()))))
+            .append(String.format("%d", b.BPM.roundToInt())).append(',')
+            .append(String.format("%d", floor((b.totalLength / 60.0)).roundToInt()))
             .append(':')
-            .append(String.format("%02d", Math.round(b.totalLength % 60f)))
+            .append(String.format("%02d", (b.totalLength % 60f).roundToInt()))
             .append(',')
             sb.append(b.maxCombo).append(',')
             .append(b.CS).append(',')
@@ -59,18 +59,20 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
 
             return null
         }
-        
-        val mods = LazerMod.getModsList(Stream.of(*mod.split("[\"\\s,，\\-|:]+".toRegex()).dropLastWhile {it.isEmpty()} .toTypedArray()).map { obj: String -> obj.uppercase(Locale.getDefault())} .toList())
 
+        val mods = LazerMod.getModsList(mod
+            .split(REG_SEPERATOR_NO_SPACE.toRegex())
+            .dropLastWhile { it.isEmpty() }
+        )
         
-        val a = beatmapApiService.getAttributes(bid, LazerMod.getModsValue(mods))
+        val a = beatmapApiService.getAttributes(bid, b.mode, mods)
         val newTotalLength = CalculateApiImpl.applyLength(b.totalLength, mods).toFloat()
         
         sb.append(String.format("%.2f", a.starRating)).append(',')
-        .append(String.format("%d", Math.round(CalculateApiImpl.applyBPM(b.BPM, mods)))).append(',')
-        .append(String.format("%d", Math.round(floor((newTotalLength / 60f).toDouble()))))
+        .append(String.format("%d", CalculateApiImpl.applyBPM(b.BPM, mods).roundToInt())).append(',')
+        .append(String.format("%d", floor((newTotalLength / 60.0)).roundToInt()))
         .append(':')
-        .append(String.format("%02d", Math.round(newTotalLength % 60f)))
+        .append(String.format("%02d", (newTotalLength % 60.0).roundToInt()))
         .append(',')
         sb.append(a.maxCombo).append(',')
         .append(String.format("%.2f", CalculateApiImpl.applyCS(b.CS!!, mods))).append(',')

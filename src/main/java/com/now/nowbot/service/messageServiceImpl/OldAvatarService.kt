@@ -30,10 +30,11 @@ import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.Duration
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.regex.Matcher
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @Service("OLD_AVATAR")
 class OldAvatarService(
@@ -190,7 +191,7 @@ class OldAvatarService(
 
     private fun getBannedPlayerFromSearch(input: String, mode: OsuMode): OsuUser {
 
-        // 如果输入的格式是 deleteduser_121313 的形式，那么后面的数字就是玩家 id
+        // 如果输入的格式是 DeletedUser_121313 的形式，那么后面的数字就是玩家 id
 
         val matcher = "DeletedUser_(\\d+)".toPattern().matcher(input.trim())
 
@@ -290,7 +291,7 @@ class OldAvatarService(
                         Callable {
                             imageService.getPanel(mapOf("user" to u), panel)
                         }
-                    }, Duration.ofSeconds(30L + users.size / 2)
+                    }, (30L + users.size / 2).toDuration(DurationUnit.SECONDS)
                 )
             } catch (_: ExecutionException) {
                 throw NetworkException.RenderModuleException.BadGateway()

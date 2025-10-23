@@ -3,7 +3,6 @@ package com.now.nowbot.service.osuApiService
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.osu.LazerMod
-import com.now.nowbot.model.osu.LazerMod.Companion.getModsValue
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import java.io.IOException
@@ -80,23 +79,7 @@ interface OsuBeatmapApiService {
 
     fun getPlayPercentage(score: LazerScore): Double
 
-    fun getAttributes(id: Long, mode: OsuMode?): BeatmapDifficultyAttributes
-
-    fun getAttributes(id: Long, mode: OsuMode?, modsInt: Int): BeatmapDifficultyAttributes
-
-    fun getAttributes(id: Long): BeatmapDifficultyAttributes {
-        return getAttributes(id, OsuMode.DEFAULT)
-    }
-
-    fun getAttributes(id: Long, value: Int): BeatmapDifficultyAttributes {
-        return getAttributes(id, OsuMode.DEFAULT, value)
-    }
-
-    fun getAttributes(id: Long, mods: List<LazerMod>?): BeatmapDifficultyAttributes {
-        if (mods.isNullOrEmpty()) return getAttributes(id, OsuMode.DEFAULT)
-
-        return getAttributes(id, getModsValue(mods))
-    }
+    fun getAttributes(id: Long, mode: OsuMode? = OsuMode.DEFAULT, mods: List<LazerMod>? = null): BeatmapDifficultyAttributes
 
     fun lookupBeatmap(checksum: String?, filename: String?, id: Long?): JsonNode?
 

@@ -120,12 +120,7 @@ class ScoreApiImpl(
         return if (limit <= 100) {
             getBests(id, mode, offset, limit)
         } else {
-            val e = AsyncMethodExecutor.awaitPairCallableExecute(
-                { getBests(id, mode, offset, 100) },
-                { getBests(id, mode, offset + 100, limit - 100) }
-            )
-
-            return (e.first + e.second)
+            return getBests(id, mode, offset, 100) + getBests(id, mode, offset + 100, limit - 100)
         }
     }
 
@@ -229,6 +224,7 @@ class ScoreApiImpl(
         mode: OsuMode?,
         mods: Iterable<LazerMod?>,
     ): BeatmapUserScore? {
+
         val uri = Function { n: Int? ->
             Function { uriBuilder: UriBuilder ->
                 uriBuilder

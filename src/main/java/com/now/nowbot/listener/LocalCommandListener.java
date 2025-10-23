@@ -16,8 +16,6 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 
-import static kotlin.reflect.jvm.internal.impl.builtins.StandardNames.FqNames.throwable;
-
 public class LocalCommandListener {
     static final   Logger                      log = LoggerFactory.getLogger(LocalCommandListener.class);
     private static Map<String, MessageService> handler;
@@ -54,7 +52,7 @@ public class LocalCommandListener {
                 } else if (x instanceof TipsRuntimeException rx) {
                     log.info("捕捉到提示：{}", rx.getMessage());
                 } else if (x instanceof ExecutionException xx) {
-                    log.info("捕捉到并行中的提示：{}", xx.getCause().getMessage());
+                    log.info("捕捉到并行中的提示", xx);
                 } else if (x instanceof LogException lx) {
                     log.info("捕捉到记录：{}", lx.getMessage());
                 } else {

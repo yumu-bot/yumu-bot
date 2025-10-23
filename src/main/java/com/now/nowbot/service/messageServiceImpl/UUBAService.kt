@@ -280,7 +280,7 @@ class UUBAService(
             val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
 
             val best: LazerScore = bests.first()
-            val bestBPM = best.beatmap.BPM!!
+            val bestBPM = best.beatmap.BPM
             val bestLength = best.beatmap.totalLength.toFloat()
 
             var star: Double
@@ -316,7 +316,7 @@ class UUBAService(
             bests.forEachIndexed { i, score ->
                 val b = score.beatmap
                 val length = b.totalLength.toFloat()
-                val bpm = b.BPM!!
+                val bpm = b.BPM
 
                 score.mods.forEach {
                     if (modSum.containsKey(it.acronym)) {
@@ -449,6 +449,9 @@ class UUBAService(
             sb.append("谱师: \n")
             val mappers =
                 mapperSum.values
+                    .sortedByDescending { it.size }.sortedByDescending { it.allPP }.take(9)
+
+                    /*
                     .stream()
                     .sorted { o1: FavoriteMapperData, o2: FavoriteMapperData ->
                         if (o1.size != o2.size) return@sorted 2 * (o2.size - o1.size)
@@ -456,6 +459,8 @@ class UUBAService(
                     }
                     .limit(9)
                     .toList()
+
+                     */
             val mappersId = mappers.map { u: FavoriteMapperData -> u.uid }
             val mappersInfo = userApiService.getUsers(mappersId)
             val mapperIdToInfo = HashMap<Long, String>()
