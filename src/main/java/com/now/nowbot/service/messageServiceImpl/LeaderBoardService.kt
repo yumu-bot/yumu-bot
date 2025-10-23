@@ -172,6 +172,8 @@ class LeaderBoardService(
 
         val ss = scores.drop(start - 1).take(end - start + 1)
 
+        userApiService.asyncDownloadAvatar(ss.map { it.user })
+
         val image = if (ss.isEmpty()) {
             throw IllegalArgumentException.WrongException.Range()
         } else if (ss.size == 1) {
@@ -194,6 +196,7 @@ class LeaderBoardService(
             ss.forEach { it.beatmap = beatmap }
 
             val body = mapOf(
+                "user" to bindUser,
                 "beatmap" to beatmap,
                 "scores" to ss,
                 "start" to start,

@@ -41,6 +41,8 @@ interface OsuCalculateApiService {
 
     fun applyPPToScores(scores: List<LazerScore>)
 
+    fun applyPPToScoresWithSameBeatmap(scores: List<LazerScore>)
+
     fun getAccPPList(
         beatmapID: Long,
         mode: OsuMode,

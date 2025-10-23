@@ -1,8 +1,11 @@
 package com.now.nowbot.model
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
 
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class BindUser {
     /**
      * 记录在数据库中的 id, 非 uid

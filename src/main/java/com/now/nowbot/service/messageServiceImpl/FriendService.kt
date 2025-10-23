@@ -147,8 +147,8 @@ class FriendService(
             }
 
             is FriendListParam -> {
-                userApiService.asyncDownloadAvatar(param.friends)
-                userApiService.asyncDownloadBackground(param.friends)
+                //userApiService.asyncDownloadAvatar(param.friends)
+                //userApiService.asyncDownloadBackground(param.friends)
 
                 val image = try {
                     val type = param.sortType.name.lowercase()

@@ -86,61 +86,6 @@ import kotlin.math.roundToInt
         }.toRosuPerformance()
     }
 
-    private fun getScorePP(score: LazerScore): RosuPerformance {
-        val mode = score.mode.toRosuMode()
-        val mods = score.mods
-        val isNotPass = score.passed.not()
-        val state = with(score.statistics) {
-            val state = toScoreStatistics(score.mode)
-            JniScoreState.create(
-                maxCombo = score.maxCombo,
-                largeTickHits = largeTickHit,
-                smallTickHits = smallTickHit,
-                sliderEndHits = sliderTailHit,
-                geki = state.countGeki!!,
-                katu = state.countKatu!!,
-                n300 = state.count300!!,
-                n100 = state.count100!!,
-                n50 = state.count50!!,
-                misses = state.countMiss!!,
-            )
-        }
-        if (isNotPass) {
-            state.n300 = 0
-        }
-
-        val beatmapID = score.beatmapID
-        val lazer = score.isLazer
-
-        val closable = ArrayList<AutoCloseable>(1)
-        return try {
-            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
-            beatmap.createPerformance(state).apply {
-                setLazer(lazer)
-                if (isNotPass) setHitResultPriority(true)
-                if (change) this.setGameMode(mode)
-                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
-            }.calculate()
-        } finally {
-            closable.forEach { it.close() }
-        }.toRosuPerformance()
-    }
-
-    private fun getBeatmap(
-        beatmapID: Long, mode: org.spring.osu.OsuMode, set: (JniBeatmap) -> Unit
-    ): Pair<JniBeatmap, Boolean> {
-        val map = beatmapApiService.getBeatmapFileByte(beatmapID) ?: throw Exception("无法获取谱面文件, 请稍后再试")
-        val beatmap = JniBeatmap(map)
-        set(beatmap)
-        val isConvert = if (beatmap.mode != mode && beatmap.mode == org.spring.osu.OsuMode.Osu) {
-            beatmap.convertInPlace(mode)
-            true
-        } else {
-            false
-        }
-        return beatmap to isConvert
-    }
-
     override fun getAccPPList(
         beatmapID: Long,
         mode: OsuMode,
@@ -358,6 +303,110 @@ import kotlin.math.roundToInt
          */
     }
 
+
+    private fun getScoresPPWithSameBeatmap(scores: List<LazerScore>): Map<Long, RosuPerformance> {
+        if (scores.isEmpty()) return emptyMap()
+
+        val beatmapID = scores.first().beatmapID
+        val mode = scores.first().mode.toRosuMode()
+
+
+        val closable = ArrayList<AutoCloseable>(scores.size + 1)
+        return try {
+            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
+
+            scores.map { score ->
+                val mods = score.mods
+
+                val state = with(score.statistics) {
+                    val state = toScoreStatistics(score.mode)
+                    JniScoreState.create(
+                        maxCombo = score.maxCombo,
+                        largeTickHits = largeTickHit,
+                        smallTickHits = smallTickHit,
+                        sliderEndHits = sliderTailHit,
+                        geki = state.countGeki!!,
+                        katu = state.countKatu!!,
+                        n300 = state.count300!!,
+                        n100 = state.count100!!,
+                        n50 = state.count50!!,
+                        misses = state.countMiss!!,
+                    )
+                }
+
+                val isNotPass = !score.passed
+                val lazer = score.isLazer
+
+                score.scoreID to beatmap.createPerformance(state).apply {
+                    setLazer(lazer)
+                    if (isNotPass) setHitResultPriority(true)
+                    if (change) this.setGameMode(mode)
+                    if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
+                }.calculate()
+            }
+        } finally {
+            closable.forEach { it.close() }
+        }.associate { (id, attr) ->
+            id to attr.toRosuPerformance()
+        }
+    }
+
+
+    private fun getScorePP(score: LazerScore): RosuPerformance {
+        val mode = score.mode.toRosuMode()
+        val mods = score.mods
+        val isNotPass = !score.passed
+        val state = with(score.statistics) {
+            val state = toScoreStatistics(score.mode)
+            JniScoreState.create(
+                maxCombo = score.maxCombo,
+                largeTickHits = largeTickHit,
+                smallTickHits = smallTickHit,
+                sliderEndHits = sliderTailHit,
+                geki = state.countGeki!!,
+                katu = state.countKatu!!,
+                n300 = state.count300!!,
+                n100 = state.count100!!,
+                n50 = state.count50!!,
+                misses = state.countMiss!!,
+            )
+        }
+        if (isNotPass) {
+            state.n300 = 0
+        }
+
+        val beatmapID = score.beatmapID
+        val lazer = score.isLazer
+
+        val closable = ArrayList<AutoCloseable>(1)
+        return try {
+            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
+            beatmap.createPerformance(state).apply {
+                setLazer(lazer)
+                if (isNotPass) setHitResultPriority(true)
+                if (change) this.setGameMode(mode)
+                if (mods.isNotEmpty()) setMods(JacksonUtil.toJson(mods))
+            }.calculate()
+        } finally {
+            closable.forEach { it.close() }
+        }.toRosuPerformance()
+    }
+
+    private fun getBeatmap(
+        beatmapID: Long, mode: org.spring.osu.OsuMode, set: (JniBeatmap) -> Unit
+    ): Pair<JniBeatmap, Boolean> {
+        val map = beatmapApiService.getBeatmapFileByte(beatmapID) ?: throw Exception("无法获取谱面文件, 请稍后再试")
+        val beatmap = JniBeatmap(map)
+        set(beatmap)
+        val isConvert = if (beatmap.mode != mode && beatmap.mode == org.spring.osu.OsuMode.Osu) {
+            beatmap.convertInPlace(mode)
+            true
+        } else {
+            false
+        }
+        return beatmap to isConvert
+    }
+
     private fun applyStarToScoreFromOfficial(score: LazerScore) {
         try {
             val sr = beatmapApiService.getAttributes(score.beatmapID, score.mode, score.mods).starRating
@@ -388,6 +437,16 @@ import kotlin.math.roundToInt
             }
         } catch (e: Exception) {
             log.error("给谱面应用星级：无法获取谱面 {}，无法获取 API 提供的星数！", beatmap.beatmapID, e)
+        }
+    }
+
+    override fun applyPPToScoresWithSameBeatmap(scores: List<LazerScore>) {
+        val noPPs = scores.filter { it.pp <= 1e-4 }
+
+        val attrs = getScoresPPWithSameBeatmap(noPPs)
+
+        noPPs.forEach { score ->
+            attrs[score.scoreID]?.pp?.let { score.pp = it }
         }
     }
 
