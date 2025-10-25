@@ -71,7 +71,7 @@ object UserIDUtil {
 
         val async = AsyncMethodExecutor.awaitPairCallableExecute(
             { getUserID(event, matcher, mode, isMyself) },
-            { bindDao.getBindFromQQOrNull(event.sender.id, true) }
+            { bindDao.getBindFromQQOrNull(event.sender.id) }
         )
 
         userID = async.first
@@ -108,7 +108,7 @@ object UserIDUtil {
             {
                 try {
                     bindDao.getSBBindFromQQ(event.sender.id, true)
-                } catch (ignored: BindException) {
+                } catch (_: BindException) {
                     null
                 }
             }
@@ -222,7 +222,7 @@ object UserIDUtil {
             null
         } else try {
             bindDao.getOsuID(name)
-        } catch (ignored: Exception) {
+        } catch (_: Exception) {
             null
         }
 
@@ -272,7 +272,7 @@ object UserIDUtil {
                 } else {
                     CmdRange(null, range.first)
                 }
-            } catch (ignored: Exception) {}
+            } catch (_: Exception) {}
 
             isMyself.set(true)
 
@@ -308,7 +308,7 @@ object UserIDUtil {
 
             result = CmdRange(id, range.start, range.end)
             break
-        } catch (ignored: Exception) {}
+        } catch (_: Exception) {}
 
         // 交换顺序
         if (result.start != null && result.end != null && result.start!! > result.end!!) {
@@ -349,7 +349,7 @@ object UserIDUtil {
             if (range.first != null && range.second == null && range.first in 201..999) try {
                 val user = try {
                     bindDao.getSBBindUser(range.first.toString())
-                } catch (e: BindException) {
+                } catch (_: BindException) {
                     null
                 }
 
@@ -359,7 +359,7 @@ object UserIDUtil {
                 } else {
                     CmdRange(null, range.first)
                 }
-            } catch (ignored: Exception) {}
+            } catch (_: Exception) {}
 
             isMyself.set(true)
 
@@ -385,7 +385,7 @@ object UserIDUtil {
 
             val user = try {
                 bindDao.getSBBindUser(range.data!!)
-            } catch (e: BindException) {
+            } catch (_: BindException) {
                 null
             }
 
@@ -399,7 +399,7 @@ object UserIDUtil {
 
             return CmdRange(id, range.start, range.end)
 
-        } catch (ignored: Exception) {}
+        } catch (_: Exception) {}
 
         // 交换顺序
         if (result.start != null && result.end != null && result.start!! > result.end!!) {
@@ -437,42 +437,43 @@ object UserIDUtil {
         mode: CmdObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): Long? {
+        // 监控是否已经符合某个字段
+        val parsed = AtomicBoolean(false)
+
         val qq = if (event.hasAt()) {
             event.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
-            try {
-                matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: 0L
-            } catch (ignore: RuntimeException) {
-                0L
-            }
+            matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: 0L
         } else {
             0L
         }
 
         if (qq != 0L) {
+            parsed.set(true)
             isMyself.set(qq == event.sender.id)
 
-            try {
-                val sb = bindDao.getBindFromQQ(qq, isMyself.get())
+            val sb = bindDao.getBindFromQQOrNull(qq)
+
+            sb?.let {
                 setMode(mode, sb.mode, event)
                 return sb.userID
-            } catch (ignored: BindException) {}
+            }
         }
 
         setMode(mode, event)
 
         if (matcher.namedGroups().containsKey(FLAG_UID)) {
-            try {
-                val uid = matcher.group(FLAG_UID)?.toLongOrNull() ?: 0L
+            parsed.set(true)
+            val uid = matcher.group(FLAG_UID)?.toLongOrNull() ?: 0L
 
-                if (uid != 0L) {
-                    isMyself.set(false)
-                    return uid
-                }
-            } catch (ignore: RuntimeException) {}
+            if (uid != 0L) {
+                isMyself.set(false)
+                return uid
+            }
         }
 
         if (matcher.namedGroups().containsKey(FLAG_NAME)) {
+            parsed.set(true)
             val name: String? = matcher.group(FLAG_NAME)
             if (!name.isNullOrBlank()) {
                 isMyself.set(false)
@@ -482,15 +483,15 @@ object UserIDUtil {
 
         if (matcher.namedGroups().containsKey(FLAG_USER_AND_RANGE)) {
             val name2: String? = matcher.group(FLAG_USER_AND_RANGE)
-            if (!name2.isNullOrBlank()) {
+
+            if (parsed.get() || !name2.isNullOrBlank()) {
                 isMyself.set(false)
             } else {
                 isMyself.set(true)
             }
-        } else {
-            isMyself.set(true)
         }
 
+        isMyself.set(true)
         return null
     }
 
@@ -508,7 +509,7 @@ object UserIDUtil {
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
             try {
                 matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: 0L
-            } catch (ignore: RuntimeException) {
+            } catch (_: RuntimeException) {
                 0L
             }
         } else {
@@ -522,7 +523,7 @@ object UserIDUtil {
                 val sb = bindDao.getSBBindFromQQ(qq, isMyself.get())
                 setMode(mode, sb.mode)
                 return sb.userID
-            } catch (ignored: BindException) {}
+            } catch (_: BindException) {}
         }
 
         // setMode(mode, event)
@@ -535,7 +536,7 @@ object UserIDUtil {
                     isMyself.set(false)
                     return uid
                 }
-            } catch (ignore: RuntimeException) {}
+            } catch (_: RuntimeException) {}
         }
 
         if (matcher.namedGroups().containsKey(FLAG_NAME)) {

@@ -68,23 +68,30 @@ object CmdUtil {
         mode: CmdObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): OsuUser {
-        val user = getOsuUser(event, matcher, mode, isMyself)
+        val user: OsuUser?
+        val me: BindUser?
 
-        val me: BindUser? = bindDao.getBindFromQQOrNull(event.sender.id, true)
+        val async = AsyncMethodExecutor.awaitPairCallableExecute(
+            { getOsuUser(event, matcher, mode, isMyself) },
+            { bindDao.getBindFromQQOrNull(event.sender.id) }
+        )
+
+        user = async.first
+        me = async.second
 
         if (user != null) {
-            isMyself.set(me?.userID == user.userID)
             return user
-        } else if (me != null) {
-            isMyself.set(true)
+        }
+
+        if (me != null && isMyself.get()) {
             setMode(mode, me.mode, event)
-            return userApiService.getOsuUser(me, mode.data!!)
+            return getOsuUser(me, me.mode)
+        }
+
+        if (isMyself.get()) {
+            throw BindException.TokenExpiredException.YouTokenExpiredException()
         } else {
-            if (isMyself.get()) {
-                throw BindException.TokenExpiredException.YouTokenExpiredException()
-            } else {
-                throw BindException.TokenExpiredException.UserTokenExpiredException()
-            }
+            throw BindException.TokenExpiredException.UserTokenExpiredException()
         }
     }
 
@@ -163,15 +170,11 @@ object CmdUtil {
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
             if (range.first() != null && range.last() == null && range.first() in 201..999) try {
-                val bindMode = try {
-                    bindDao.getBindUser(range.first().toString())!!.mode
-                } catch (e: Exception) {
-                    OsuMode.DEFAULT
-                }
+                val bindMode = bindDao.getBindUser(range.first().toString())?.mode ?: OsuMode.DEFAULT
 
                 val user = try {
                     getOsuUser(range.first().toString(), mode.data)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     null
                 }
 
@@ -202,18 +205,14 @@ object CmdUtil {
                     break
                 }
 
-                val bindMode = try {
-                    bindDao.getBindUser(range.data!!)!!.mode
-                } catch (e: Exception) {
-                    OsuMode.DEFAULT
-                }
+                val bindMode = bindDao.getBindUser(range.data!!)?.mode ?: OsuMode.DEFAULT
 
                 // val id = userApiService.getOsuId(range.data)
                 setMode(mode, bindMode, event)
                 val user = getOsuUser(range.data!!, mode.data)
                 result = CmdRange(user, range.start, range.end)
                 break
-            } catch (ignore: Exception) { // 其余的忽略
+            } catch (_: Exception) { // 其余的忽略
             }
         }
 
@@ -273,7 +272,7 @@ object CmdUtil {
 
         val me: SBBindUser? = try {
             bindDao.getSBBindFromQQ(event.sender.id, true)
-        } catch (ignored: Exception) {
+        } catch (_: Exception) {
             null
         }
 
@@ -370,7 +369,7 @@ object CmdUtil {
 
                 val bindMode = try {
                     bindDao.getSBBindUser(range.first().toString()).mode
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     OsuMode.DEFAULT
                 }
 
@@ -403,18 +402,16 @@ object CmdUtil {
                     break
                 }
 
-                val bindMode = try {
-                    bindDao.getBindUser(range.data!!)!!.mode
-                } catch (e: Exception) {
-                    OsuMode.DEFAULT
-                }
+                val bindMode = bindDao.getBindUser(range.data!!)?.mode ?:
+                OsuMode.DEFAULT
+
 
                 // val id = userApiService.getOsuId(range.data)
                 setMode(mode, bindMode)
                 val user = sbUserApiService.getUser(username = range.data!!)
                 result = CmdRange(user, range.start, range.end)
                 break
-            } catch (ignore: Exception) { // 其余的忽略
+            } catch (_: Exception) { // 其余的忽略
             }
         }
 
@@ -452,7 +449,7 @@ object CmdUtil {
     ): List<OsuUser> {
         require(matcher.namedGroups().containsKey(FLAG_2_USER)) { "Matcher 中不包含 u2 分组" }
 
-        val myBind = bindDao.getBindFromQQOrNull(event.sender.id, true)
+        val myBind = bindDao.getBindFromQQOrNull(event.sender.id)
 
         setMode(mode, myBind?.mode ?: OsuMode.DEFAULT, event)
 
@@ -540,7 +537,7 @@ object CmdUtil {
         if (hashIndex < 0) {
             hashIndex = text.indexOf(CHAR_HASH_FULL)
         }
-        var nameStr: String? = text.substring(0, hashIndex).trim()
+        var nameStr: String? = text.take(hashIndex).trim()
         if (nameStr.isNullOrBlank()) nameStr = null
         val rangeStr = text.substring(hashIndex + 1).trim()
         val rangeInt = parseRange(rangeStr)
@@ -565,8 +562,8 @@ object CmdUtil {
         if (i !in 1..3 || index < OSU_MIN_INDEX) {
             return ranges
         }
-        val rangeN = text.substring(index + 1).toInt()
-        tempRange = CmdRange(text.substring(0, index + 1).trim(), rangeN, null)
+        val rangeN = text.take(index + 1).toInt()
+        tempRange = CmdRange(text.take(index + 1).trim(), rangeN, null)
         ranges.push(tempRange)
         if (tempChar != '-' && tempChar != '－' && tempChar != ' ') { // 对应末尾不是 - 或者 空格, 直接忽略剩余 range
             // 优先认为紧贴的数字是名字的一部分, 也就是目前结果集的第一个
@@ -592,9 +589,9 @@ object CmdUtil {
         }
 
         tempRange = CmdRange(
-            text.substring(0, index + 1).trim(),
+            text.take(index + 1).trim(),
             rangeN,
-            text.substring(index + 1, index + i + 1).toInt(),
+            text.drop(index + 1).take(i).toInt(),
         )
 
         if (tempChar != ' ') { // 优先认为紧贴的数字是名字的一部分, 交换位置
@@ -650,44 +647,51 @@ object CmdUtil {
         mode: CmdObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): OsuUser? {
+        // 监控是否已经符合某个字段
+        val parsed = AtomicBoolean(false)
 
         val qq = if (event.hasAt()) {
             event.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
-            try {
-                matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: 0L
-            } catch (ignore: RuntimeException) {
-                0L
-            }
+            matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: 0L
         } else {
             0L
         }
 
         if (qq != 0L) {
-            val bind = bindDao.getBindFromQQ(qq, isMyself.get())
+            parsed.set(true)
+            val bind = bindDao.getBindFromQQOrNull(qq)
 
-            setMode(mode, bind.mode, event)
-            return getOsuUser(bind, mode.data)
-        } else {
-            setMode(mode, event)
+            bind?.let {
+                isMyself.set(false)
+                setMode(mode, bind.mode, event)
+                return getOsuUser(bind, mode.data)
+            }
         }
 
+        setMode(mode, event)
+
         if (matcher.namedGroups().containsKey(FLAG_UID)) {
-            try {
-                val uid = matcher.group(FLAG_UID)?.toLongOrNull() ?: 0L
-                if (uid != 0L) {
-                    return getOsuUser(uid, mode.data)
-                }
-            } catch (ignore: RuntimeException) {}
+            parsed.set(true)
+
+            val uid = matcher.group(FLAG_UID)?.toLongOrNull() ?: 0L
+            if (uid != 0L) {
+                isMyself.set(false)
+                return getOsuUser(uid, mode.data)
+            }
         }
 
         if (matcher.namedGroups().containsKey(FLAG_NAME)) {
             val name: String? = matcher.group(FLAG_NAME)
+
+            isMyself.set(!parsed.get())
+
             if (!name.isNullOrBlank()) {
                 return getOsuUser(name, mode.data)
             }
         }
 
+        isMyself.set(true)
         return null
     }
 
@@ -709,7 +713,7 @@ object CmdUtil {
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
             try {
                 matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: 0L
-            } catch (ignore: RuntimeException) {
+            } catch (_: RuntimeException) {
                 0L
             }
         } else {
@@ -731,7 +735,7 @@ object CmdUtil {
                 if (uid != 0L) {
                     return sbUserApiService.getUser(id = uid)
                 }
-            } catch (ignore: RuntimeException) {}
+            } catch (_: RuntimeException) {}
         }
 
         if (matcher.namedGroups().containsKey(FLAG_NAME)) {

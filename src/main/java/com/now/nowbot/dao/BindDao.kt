@@ -110,9 +110,9 @@ class BindDao(
     /**
      * 不报错的方法
      */
-    fun getBindFromQQOrNull(qq: Long, isMyself: Boolean = false): BindUser? {
+    fun getBindFromQQOrNull(qq: Long): BindUser? {
         return try {
-            getBindFromQQ(qq, isMyself)
+            getBindFromQQ(qq, true)
         } catch (_: BindException) {
             null
         }

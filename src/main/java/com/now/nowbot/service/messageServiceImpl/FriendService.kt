@@ -178,7 +178,7 @@ class FriendService(
     private fun getParam(event: MessageEvent, matcher: Matcher): FriendParam {
         val any: String = matcher.group("any") ?: ""
 
-        val me = bindDao.getBindFromQQOrNull(event.sender.id, isMyself = true)
+        val me = bindDao.getBindFromQQOrNull(event.sender.id)
 
         if (me == null || !me.isAuthorized) {
             throw FriendException(FriendException.Type.FRIEND_Me_NoPermission)
@@ -186,13 +186,11 @@ class FriendService(
         }
 
         if (me.isExpired) {
-            val t = try {
-                userApiService.refreshUserToken(me)
+            try {
+                userApiService.refreshUserToken(me)!!
             } catch (_: Exception) {
                 throw NetworkException.UserException.TokenExpired()
             }
-
-            if (t == null) throw NetworkException.UserException.TokenExpired()
         }
 
         val isMyself = AtomicBoolean(true) // 处理 range

@@ -96,7 +96,7 @@ class LeaderBoardService(
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: LeaderBoardParam): ServiceCallStatistic? {
-        val bindUser = bindDao.getBindFromQQOrNull(event.sender.id, true)
+        val bindUser = bindDao.getBindFromQQOrNull(event.sender.id)
 
         val beatmap: Beatmap =
             if (param.bid == null) {
