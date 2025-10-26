@@ -81,6 +81,18 @@ import java.util.regex.Pattern
             }
         }
 
+        log.info("""
+                玩家 ${user.username} 的绑定信息：
+                
+                游戏 ID：${user.userID}
+                游戏模式：${user.mode.fullName}
+                
+                绑定状态：${if (user.isAuthorized) "链接绑定" else "玩家名绑定"}
+                令牌状态：${if (user.isNotExpired) "有效" else "无效"}
+                令牌过期时间：${LocalDateTime.ofEpochSecond(user.time ?: 0, 0, ZoneOffset.ofHours(8))}
+                """.trimIndent()
+        )
+
         if (!user.isAuthorized) {
             throw BindException.Oauth2Exception.UpgradeException()
         }
@@ -88,20 +100,6 @@ import java.util.regex.Pattern
         if (user.isExpired) {
             try {
                 val i = base.refreshUserToken(user, false)
-                log.info(
-                    """
-                    访问秘钥： $i
-                    
-                    玩家 ${user.username} 的绑定信息：
-            
-                    游戏 ID：${user.userID}
-                    游戏模式：${user.mode.fullName}
-            
-                    绑定状态：${if (user.isAuthorized) "链接绑定" else "玩家名绑定"}
-                    令牌状态：${if (user.isNotExpired) "有效" else "无效"}
-                    令牌过期时间：${LocalDateTime.ofEpochSecond(user.time ?: 0, 0, ZoneOffset.ofHours(8))}
-                    """.trimIndent()
-                )
             } catch (_: Exception) {
                 throw BindException.Oauth2Exception.RefreshException()
             }
