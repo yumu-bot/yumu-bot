@@ -797,7 +797,7 @@ class BeatmapApiImpl(
         tries: Int,
         quantity: Int,
         awaitMillis: Long,
-        bindUser: BindUser?
+        user: BindUser?
     ): BeatmapsetSearch {
         val size = (tries * quantity).coerceAtLeast(1)
 
@@ -819,7 +819,7 @@ class BeatmapApiImpl(
 
                 val actions = qs.map { q ->
                     Callable {
-                        searchBeatMapSetFromAPI(q, bindUser)
+                        searchBeatMapSetFromAPI(q, user)
                     }
                 }
 

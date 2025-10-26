@@ -33,7 +33,8 @@ import java.nio.file.Path
                 null
             }
         } catch (e: Exception) {
-            log.error("谱面镜像站：请求谱面 $bid 失败：${e.message}")
+            // TODO 谱面镜像站修好之前，这个都要忽视掉
+            // log.error("谱面镜像站：请求谱面 $bid 失败：${e.message}")
 
             return null
         }

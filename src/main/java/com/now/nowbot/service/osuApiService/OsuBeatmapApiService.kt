@@ -97,7 +97,7 @@ interface OsuBeatmapApiService {
         tries: Int = 4,
         quantity: Int = 5,
         awaitMillis: Long = 200,
-        bindUser: BindUser? = null
+        user: BindUser? = null
     ): BeatmapsetSearch
 
     // 给同一张图的成绩添加完整的谱面

@@ -177,7 +177,7 @@ class ExploreService(
 
                 val search = if (query.containsKey("played") || query.containsKey("r")) {
                     val bind = userApiService.refreshUserTokenInstant(bindUser, true)
-                    beatmapApiService.searchBeatmapsetParallel(query, bindUser = bind)
+                    beatmapApiService.searchBeatmapset(query, user = bind)
                 } else {
                     beatmapApiService.searchBeatmapsetParallel(query)
                 }

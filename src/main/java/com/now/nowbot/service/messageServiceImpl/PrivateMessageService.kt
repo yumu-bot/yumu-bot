@@ -87,11 +87,10 @@ class PrivateMessageService(private val userApiService: OsuUserApiService, priva
     }
 
     private fun getCodeImage(code: String): ByteArray {
-        val codeStr: String =
-            """
-                ```
-                $code
-                ```
+        val codeStr: String = """
+            ```
+            $code
+            ```
             """.trimIndent()
         return imageService.getPanelA6(codeStr, "NO NAME")
     }
