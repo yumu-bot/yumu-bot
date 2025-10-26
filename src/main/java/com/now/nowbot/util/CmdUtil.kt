@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.text.trim
 
 object CmdUtil {
 
@@ -562,7 +563,7 @@ object CmdUtil {
         if (i !in 1..3 || index < OSU_MIN_INDEX) {
             return ranges
         }
-        val rangeN = text.take(index + 1).toInt()
+        val rangeN = text.drop(index + 1).trim().toInt()
         tempRange = CmdRange(text.take(index + 1).trim(), rangeN, null)
         ranges.push(tempRange)
         if (tempChar != '-' && tempChar != '－' && tempChar != ' ') { // 对应末尾不是 - 或者 空格, 直接忽略剩余 range
