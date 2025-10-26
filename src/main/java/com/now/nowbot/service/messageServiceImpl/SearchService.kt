@@ -35,12 +35,12 @@ import java.util.regex.Pattern
     ): Boolean {
         val matcher = Instruction.SEARCH.matcher(messageText)
 
+        if (!matcher.find()) return false
+
         event.reply("""
             SEARCH 即将下线。感谢您的支持。
             如果想使用搜索谱面功能，可以尝试更强大的 EXPLORE (!e) 功能。
         """.trimIndent()).recallIn(30 * 1000)
-
-        if (!matcher.find()) return false
 
         val param = constructParam(matcher.group("text")) ?: return false
 
