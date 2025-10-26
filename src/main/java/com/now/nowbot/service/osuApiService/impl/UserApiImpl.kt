@@ -27,6 +27,8 @@ import reactor.core.publisher.Mono
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.regex.Pattern
@@ -37,34 +39,23 @@ import java.util.regex.Pattern
     override fun getAvatarByte(user: OsuUser): ByteArray {
         return try {
             request { client ->
-                client.get()
-                    .uri(user.avatarUrl)
-                    .retrieve()
-                    .bodyToMono(ByteArray::class.java)
+                client.get().uri(user.avatarUrl).retrieve().bodyToMono(ByteArray::class.java)
             }
         } catch (_: NetworkException) {
             log.error("获取玩家 ${user.userID} 头像失败，尝试返回默认头像")
 
             request { client ->
-                client.get()
-                    .uri("https://a.ppy.sh/")
-                    .retrieve()
-                    .bodyToMono(ByteArray::class.java)
+                client.get().uri("https://a.ppy.sh/").retrieve().bodyToMono(ByteArray::class.java)
             }
         }
     }
 
     // 用来确认玩家是否存在于服务器，而无需使用 API 请求。
     override fun isPlayerExist(name: String): Boolean {
-        val response =
-            request { client ->
-                client.get()
-                    .uri("https://osu.ppy.sh/users/{name}", name)
-                    .headers(base::insertHeader)
-                    .retrieve()
-                    .bodyToMono(String::class.java)
-                    .onErrorReturn("")
-            }
+        val response = request { client ->
+            client.get().uri("https://osu.ppy.sh/users/{name}", name).headers(base::insertHeader).retrieve()
+                .bodyToMono(String::class.java).onErrorReturn("")
+        }
 
         return StringUtils.isNotEmpty(response)
     }
@@ -96,13 +87,27 @@ import java.util.regex.Pattern
 
         if (user.isExpired) {
             try {
-                base.refreshUserToken(user, false)
+                val i = base.refreshUserToken(user, false)
+                log.info(
+                    """
+                    访问秘钥： $i
+                    
+                    玩家 ${user.username} 的绑定信息：
+            
+                    游戏 ID：${user.userID}
+                    游戏模式：${user.mode.fullName}
+            
+                    绑定状态：${if (user.isAuthorized) "链接绑定" else "玩家名绑定"}
+                    令牌状态：${if (user.isNotExpired) "有效" else "无效"}
+                    令牌过期时间：${LocalDateTime.ofEpochSecond(user.time ?: 0, 0, ZoneOffset.ofHours(8))}
+                    """.trimIndent()
+                )
             } catch (_: Exception) {
                 throw BindException.Oauth2Exception.RefreshException()
             }
         }
 
-        return user
+        return bindDao.getBindUser(user.userID)!!
     }
 
     override fun refreshUserToken(user: BindUser): String? {
@@ -123,8 +128,7 @@ import java.util.regex.Pattern
         if (!user.isAuthorized) return getOsuUser(user.userID, mode)
 
         return request { client ->
-            client.get()
-                .uri("me/{mode}", mode.shortName).headers(base.insertHeader(user)).retrieve()
+            client.get().uri("me/{mode}", mode.shortName).headers(base.insertHeader(user)).retrieve()
                 .bodyToMono(OsuUser::class.java).map { data ->
                     userInfoDao.saveUser(data, mode)
                     user.userID = data.userID
@@ -143,11 +147,9 @@ import java.util.regex.Pattern
 
     override fun getOsuUser(name: String, mode: OsuMode): OsuUser {
         return request { client ->
-            client.get()
-                .uri {
+            client.get().uri {
                     it.path("users/{data}/{mode}").build("@$name", mode.shortName)
-                }.headers(base::insertHeader).retrieve().bodyToMono(OsuUser::class.java)
-                .map { data ->
+                }.headers(base::insertHeader).retrieve().bodyToMono(OsuUser::class.java).map { data ->
                     userInfoDao.saveUser(data, mode)
                     data.currentOsuMode = getMode(mode, data.defaultOsuMode)
 
@@ -162,15 +164,11 @@ import java.util.regex.Pattern
 
     override fun getOsuUser(id: Long, mode: OsuMode): OsuUser {
         return request { client ->
-            client.get()
-                .uri {
+            client.get().uri {
                     it.path("users/{id}/{mode}").build(id, mode.shortName)
-                }.headers(base::insertHeader).retrieve()
-                /*
+                }.headers(base::insertHeader).retrieve()/*
             .bodyToMono(JsonNode::class.java).map { JacksonUtil.parseObject(it, OsuUser::class.java) }.block()!!
-            */
-                .bodyToMono(OsuUser::class.java)
-                .map { data: OsuUser ->
+            */.bodyToMono(OsuUser::class.java).map { data: OsuUser ->
                     userInfoDao.saveUser(data, mode)
                     data.currentOsuMode = getMode(mode, data.defaultOsuMode)
 
@@ -205,7 +203,7 @@ import java.util.regex.Pattern
      * @param users 注意, 单次请求数量无限制
      * @param isVariant 是否获取玩家的多模式信息
      */
-    override fun <T: Number> getUsers(users: Iterable<T>, isVariant: Boolean): List<MicroUser> {
+    override fun <T : Number> getUsers(users: Iterable<T>, isVariant: Boolean): List<MicroUser> {
         val idChunk = users.chunked(50)
 
         val callables = idChunk.map {
@@ -225,14 +223,10 @@ import java.util.regex.Pattern
      */
     private fun <T : Number> getUsersPrivate(users: Iterable<T>, isVariant: Boolean): List<MicroUser> {
         return request { client ->
-            client.get()
-                .uri {
-                    it.path("users")
-                        .queryParam("ids[]", users.toList())
-                        .queryParam("include_variant_statistics", isVariant)
-                        .build()
-                }.headers(base::insertHeader).retrieve().bodyToMono(JsonNode::class.java)
-                .map {
+            client.get().uri {
+                    it.path("users").queryParam("ids[]", users.toList())
+                        .queryParam("include_variant_statistics", isVariant).build()
+                }.headers(base::insertHeader).retrieve().bodyToMono(JsonNode::class.java).map {
                     val userList = JacksonUtil.parseObjectList(
                         it["users"], MicroUser::class.java
                     )
@@ -246,75 +240,53 @@ import java.util.regex.Pattern
         if (!user.isAuthorized) throw UnsupportedOperationException.NotOauthBind()
 
         return request { client ->
-            client.get()
-                .uri("friends")
-                .headers(base.insertHeader(user))
-                .retrieve()
-                .bodyToFlux(LazerFriend::class.java)
+            client.get().uri("friends").headers(base.insertHeader(user)).retrieve().bodyToFlux(LazerFriend::class.java)
                 .collectList()
         }
     }
 
     override fun getUserRecentActivity(id: Long, offset: Int, limit: Int): List<ActivityEvent> {
         return request { client ->
-            client.get()
-                .uri {
-                    it.path("users/{userId}/recent_activity")
-                        .queryParam("offset", offset).queryParam("limit", limit)
+            client.get().uri {
+                    it.path("users/{userId}/recent_activity").queryParam("offset", offset).queryParam("limit", limit)
                         .build(id)
-                }.headers(base::insertHeader).retrieve()
-                .bodyToFlux(ActivityEvent::class.java)
-                .collectList()
+                }.headers(base::insertHeader).retrieve().bodyToFlux(ActivityEvent::class.java).collectList()
         }
     }
 
     override fun getUserKudosu(user: BindUser): KudosuHistory {
         return request { client ->
-            client.get()
-                .uri("users/{uid}/kudosu")
-                .headers(base.insertHeader(user))
-                .retrieve()
+            client.get().uri("users/{uid}/kudosu").headers(base.insertHeader(user)).retrieve()
                 .bodyToMono(KudosuHistory::class.java)
         }
     }
 
     override fun sendPrivateMessage(sender: BindUser, target: Long, message: String): JsonNode {
-        val body: Map<String, Any> =
-            mapOf("target_id" to target, "message" to message, "is_action" to false)
+        val body: Map<String, Any> = mapOf("target_id" to target, "message" to message, "is_action" to false)
         return request { client ->
-            client.post()
-                .uri("chat/new")
-                .headers(base.insertHeader(sender))
-                .bodyValue(body)
-                .retrieve()
+            client.post().uri("chat/new").headers(base.insertHeader(sender)).bodyValue(body).retrieve()
                 .bodyToMono(JsonNode::class.java)
         }
     }
 
     override fun acknowledgmentPrivateMessageAlive(user: BindUser, since: Long?): JsonNode {
         return request { client ->
-            client.post()
-                .uri {
+            client.post().uri {
                     it.path("chat/ack").queryParamIfPresent("since", Optional.ofNullable(since)).build()
-                }
-                .headers(base.insertHeader(user))
-                .retrieve()
-                .bodyToMono(JsonNode::class.java)
+                }.headers(base.insertHeader(user)).retrieve().bodyToMono(JsonNode::class.java)
         }
     }
 
     override fun getPrivateMessage(sender: BindUser, channel: Long, since: Long): JsonNode {
-        return request { client -> client
-            .get()
-            .uri("chat/channels/{channel}/messages?since={since}", channel, since)
-            .headers(base.insertHeader(sender))
-            .retrieve()
-            .bodyToMono(JsonNode::class.java)
+        return request { client ->
+            client.get().uri("chat/channels/{channel}/messages?since={since}", channel, since)
+                .headers(base.insertHeader(sender)).retrieve().bodyToMono(JsonNode::class.java)
         }
     }
 
     override fun applyUserForBeatmapset(beatmapsets: List<Beatmapset>) {
-        val userSet = (beatmapsets.flatMap { it.beatmaps ?: listOf() }.flatMap { it.mapperIDs } + beatmapsets.map { it.creatorID }).toSet()
+        val userSet = (beatmapsets.flatMap { it.beatmaps ?: listOf() }
+            .flatMap { it.mapperIDs } + beatmapsets.map { it.creatorID }).toSet()
 
         val users = getUsers(userSet).associateBy { it.userID }
 
@@ -370,15 +342,13 @@ import java.util.regex.Pattern
         }
     }
 
-    private val teamFormedPattern: Pattern =
-        Pattern.compile(
-            "<time\\s*class=\"js-tooltip-time\"\\s*data-tooltip-position=\"bottom center\"\\s+title=\"(\\S+)\""
+    private val teamFormedPattern: Pattern = Pattern.compile(
+        "<time\\s*class=\"js-tooltip-time\"\\s*data-tooltip-position=\"bottom center\"\\s+title=\"(\\S+)\""
     )
     private val teamUserPattern: Pattern = Pattern.compile("data-user=\"(?<json>.+)\"")
-    private val teamModePattern: Pattern =
-        Pattern.compile(
-            "(?s)<div class=\"team-info-entry__title\">Default ruleset</div>\\s+<div class=\"team-info-entry__value\">\\s+<span class=\"fal fa-extra-mode-(\\w+)\">"
-        )
+    private val teamModePattern: Pattern = Pattern.compile(
+        "(?s)<div class=\"team-info-entry__title\">Default ruleset</div>\\s+<div class=\"team-info-entry__value\">\\s+<span class=\"fal fa-extra-mode-(\\w+)\">"
+    )
 
     // 有点刻晴了
     private val teamNamePattern: Pattern = Pattern.compile(
@@ -531,10 +501,9 @@ import java.util.regex.Pattern
         )
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    override fun asyncDownloadAvatar(users: List<MicroUser>) {
+    @OptIn(ExperimentalStdlibApi::class) override fun asyncDownloadAvatar(users: List<MicroUser>) {
         val path = Path.of(IMG_BUFFER_PATH)
-        if (!Files.isDirectory(path) || !Files.isWritable(path) ) return
+        if (!Files.isDirectory(path) || !Files.isWritable(path)) return
 
         val actions = users.map { user ->
             return@map AsyncMethodExecutor.Runnable {
@@ -562,13 +531,9 @@ import java.util.regex.Pattern
                     val replacePath = url.replace("https://a.ppy.sh/", "")
 
                     val image = try {
-                        base.osuApiWebClient.get()
-                            .uri { it.scheme("https").host("a.ppy.sh").replacePath(replacePath)
-                                .build() }
-                            .headers(base::insertHeader)
-                            .retrieve()
-                            .bodyToMono(ByteArray::class.java)
-                            .block()!!
+                        base.osuApiWebClient.get().uri {
+                                it.scheme("https").host("a.ppy.sh").replacePath(replacePath).build()
+                            }.headers(base::insertHeader).retrieve().bodyToMono(ByteArray::class.java).block()!!
                     } catch (e: Exception) {
                         log.error("异步下载头像：任务失败\n", e)
                         return@Runnable
@@ -587,10 +552,9 @@ import java.util.regex.Pattern
         AsyncMethodExecutor.asyncRunnableExecute(actions)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    override fun asyncDownloadBackground(users: List<MicroUser>) {
+    @OptIn(ExperimentalStdlibApi::class) override fun asyncDownloadBackground(users: List<MicroUser>) {
         val path = Path.of(IMG_BUFFER_PATH)
-        if (Files.isDirectory(path).not() || Files.isWritable(path).not() ) return
+        if (Files.isDirectory(path).not() || Files.isWritable(path).not()) return
 
         val actions = users.map { user ->
             return@map AsyncMethodExecutor.Runnable {
@@ -618,13 +582,9 @@ import java.util.regex.Pattern
                     val replacePath = url.replace("https://assets.ppy.sh/", "")
 
                     val image = try {
-                        base.osuApiWebClient.get()
-                            .uri { it.scheme("https").host("assets.ppy.sh").replacePath(replacePath)
-                                .build() }
-                            .headers(base::insertHeader)
-                            .retrieve()
-                            .bodyToMono(ByteArray::class.java)
-                            .block()!!
+                        base.osuApiWebClient.get().uri {
+                                it.scheme("https").host("assets.ppy.sh").replacePath(replacePath).build()
+                            }.headers(base::insertHeader).retrieve().bodyToMono(ByteArray::class.java).block()!!
                     } catch (e: Exception) {
                         log.error("异步下载背景：任务失败\n", e)
                         return@Runnable

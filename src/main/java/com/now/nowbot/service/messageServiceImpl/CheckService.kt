@@ -30,17 +30,17 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
             } else null
 
             if (qq != null) {
-                return@run bindDao.getBindFromQQ(qq)
-            }
-
-            val name = if (matcher.namedGroups().containsKey("name")) {
-                matcher.group("name")
-            } else null
-
-            if (name.isNullOrEmpty()) {
-                return@run bindDao.getBindFromQQ(event.sender.id)
+                bindDao.getBindFromQQ(qq)
             } else {
-                return@run bindDao.getBindUser(name)
+                val name = if (matcher.namedGroups().containsKey("name")) {
+                    matcher.group("name")
+                } else null
+
+                if (name.isNullOrEmpty()) {
+                    bindDao.getBindFromQQ(event.sender.id)
+                } else {
+                    bindDao.getBindUser(name)
+                }
             }
         }
 

@@ -21,7 +21,7 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
         UnsupportedOperationException("""
             $operation 操作必须输入 qq！
             格式：!sp $operation qq=114514 / group=1919810
-        """.trimMargin())
+        """.trimIndent())
 
     class OnlyStandard:
         UnsupportedOperationException("抱歉，本功能暂不支持除 Standard 模式以外的谱面！")

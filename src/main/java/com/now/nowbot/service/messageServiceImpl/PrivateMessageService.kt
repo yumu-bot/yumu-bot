@@ -49,7 +49,7 @@ class PrivateMessageService(private val userApiService: OsuUserApiService, priva
         val bindUser = bindDao.getBindFromQQ(event.sender.id, true)
         val json: JsonNode = try {
             getJson(param, bindUser)
-        } catch (e: WebClientResponseException.Forbidden) {
+        } catch (_: WebClientResponseException.Forbidden) {
             throw TipsException("权限不足")
         }
         event.reply(getCodeImage(JacksonUtil.objectToJsonPretty(json)))
@@ -92,7 +92,7 @@ class PrivateMessageService(private val userApiService: OsuUserApiService, priva
                 ```
                 $code
                 ```
-            """.trimMargin()
+            """.trimIndent()
         return imageService.getPanelA6(codeStr, "NO NAME")
     }
 
