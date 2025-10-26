@@ -1,6 +1,7 @@
 package com.now.nowbot.service.osuApiService
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
@@ -86,7 +87,7 @@ interface OsuBeatmapApiService {
     /**
      * 单次获取搜索结果
      */
-    fun searchBeatmapset(query: Map<String, Any?>): BeatmapsetSearch
+    fun searchBeatmapset(query: Map<String, Any?>, user: BindUser? = null): BeatmapsetSearch
 
     /**
      * 多次获取搜索结果
@@ -95,7 +96,8 @@ interface OsuBeatmapApiService {
         query: Map<String, Any?>,
         tries: Int = 4,
         quantity: Int = 5,
-        awaitMillis: Long = 200
+        awaitMillis: Long = 200,
+        bindUser: BindUser? = null
     ): BeatmapsetSearch
 
     // 给同一张图的成绩添加完整的谱面

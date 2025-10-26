@@ -6,6 +6,12 @@ import com.now.nowbot.throwable.TipsRuntimeException
 open class IllegalArgumentException(message: String?): TipsRuntimeException(message), BotException {
 
     open class ExceedException(message: String?): IllegalArgumentException(message) {
+        class RateTooLarge:
+            WrongException("我觉得吧，你要是能按这个倍速去打，早就进入天空之城了。")
+
+        class RateTooSmall:
+            WrongException("这是什么奇怪的倍速？")
+
         class StarRating:
             WrongException("对方真的糊了那么高星的图吗？还是说你在滥用功能...")
 
@@ -101,8 +107,6 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
             WrongException("捞翔，恁发嘞是个啥玩应啊？")
 
     }
-
-    open class Not
 
 
 }

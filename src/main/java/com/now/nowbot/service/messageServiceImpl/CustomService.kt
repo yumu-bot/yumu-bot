@@ -16,7 +16,7 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.CustomService.CustomParam
 import com.now.nowbot.service.messageServiceImpl.CustomService.CustomOperate.*
 import com.now.nowbot.throwable.TipsException
-import com.now.nowbot.throwable.botException.CustomException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.Instruction
 import okio.IOException
@@ -134,7 +134,7 @@ class CustomService(
                 .bodyToMono(ByteArray::class.java).block()!!
 
         } catch (_: Exception) {
-            throw CustomException(CustomException.Type.CUSTOM_Receive_PictureFetchFailed)
+            throw IllegalStateException.Fetch("自定义图片")
         } else byteArrayOf()
 
         val profile = userProfileRepository.findTopById(param.uid) ?:
@@ -158,32 +158,35 @@ class CustomService(
                 Files.write(path, imgBytes)
             } catch (e: Exception) {
                 log.error("自定义：文件添加失败", e)
-                event.reply(CustomException(CustomException.Type.CUSTOM_Set_Failed, param.type))
+                event.reply("设置 ${param.type} 失败。错误已记录。")
                 return ServiceCallStatistic.building(event)
             }
 
             profile.applyType(param.type, path.toAbsolutePath().toString())
 
             userProfileRepository.saveAndFlush(profile)
-            event.reply(CustomException(CustomException.Type.CUSTOM_Set_Success, param.type))
+            event.reply("设置 ${param.type} 成功！")
             return ServiceCallStatistic.building(event)
         } else {
             // 删除
             try {
                 Files.delete(path)
             } catch (_: NoSuchFileException) {
-                event.reply(CustomException(CustomException.Type.CUSTOM_Clear_NoSuchFile, param.type))
+                event.reply("""
+                    删除 ${param.type} 失败。
+                    数据库里不存在你设置的自定义图片呢。
+                """.trimIndent())
                 return ServiceCallStatistic.building(event)
             } catch (e: Exception) {
                 log.error("自定义：文件删除失败", e)
-                event.reply(CustomException(CustomException.Type.CUSTOM_Clear_Failed, param.type))
+                event.reply("删除 ${param.type} 失败。错误已记录。")
                 return ServiceCallStatistic.building(event)
             }
 
             profile.applyType(param.type, null)
 
             userProfileRepository.saveAndFlush(profile)
-            event.reply(CustomException(CustomException.Type.CUSTOM_Clear_Success, param.type))
+            event.reply("删除 ${param.type} 成功！")
             return ServiceCallStatistic.building(event)
         }
     }

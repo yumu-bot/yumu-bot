@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
@@ -11,18 +12,23 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.PerformancePlusService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.impl.CalculateApiImpl
-import com.now.nowbot.throwable.botException.PPPlusException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD
 import com.yumu.core.constants.log
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.time.LocalDateTime
 
 //@Service("PP_PLUS_MAP")
 class PPPlusMapService(
     private val performancePlusService: PerformancePlusService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val imageService: ImageService,
+    private val dao: ServiceCallStatisticsDao
 ) : MessageService<PPPlusMapService.PPPlusParam> {
 
     data class PPPlusParam(
@@ -38,7 +44,9 @@ class PPPlusMapService(
         if (bidStr.isNullOrBlank()) {
             return false
         }
-        val bid = bidStr.toLong()
+        val bid = bidStr.toLongOrNull()
+            ?: dao.getLastBeatmapID(event.subject.id, null, LocalDateTime.now().minusHours(24L))
+            ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
         val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))
         data.value = PPPlusParam(bid, mods)
@@ -48,12 +56,13 @@ class PPPlusMapService(
     override fun handleMessage(event: MessageEvent, param: PPPlusParam): ServiceCallStatistic {
         val map = try {
             beatmapApiService.getBeatmapFromDatabase(param.bid)
-        } catch (e: Exception) {
-            throw PPPlusException(PPPlusException.Type.PL_Map_NotFound)
+        } catch (_: Exception) {
+            throw NoSuchElementException.Beatmap(param.bid)
         }
+
         // 不支持其他模式
         if (map.mode != OsuMode.OSU) {
-            throw PPPlusException(PPPlusException.Type.PL_Function_NotSupported)
+            throw UnsupportedOperationException.OnlyStandard()
         }
         val pp = try {
             performancePlusService.getMapPerformancePlus(param.bid, param.mods)!!
@@ -63,7 +72,7 @@ class PPPlusMapService(
             } else {
                 log.error { e.message }
             }
-            throw PPPlusException(PPPlusException.Type.PL_Fetch_APIConnectFailed)
+            throw IllegalStateException.Fetch("PP+")
         }
 
         map.addPPPlus(pp, param.mods)
@@ -79,7 +88,6 @@ class PPPlusMapService(
 
         return ServiceCallStatistic.build(event, beatmapID = map.beatmapID, beatmapsetID = map.beatmapsetID)
     }
-
 
     private fun Beatmap.addPPPlus(pp: PPPlus, mods: List<LazerMod>) {
         starRating = pp.difficulty?.total ?: 0.0

@@ -15,14 +15,11 @@ import com.now.nowbot.service.PerformancePlusService
 import com.now.nowbot.service.messageServiceImpl.PPPlusService.PPPlusParam
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.BindException
-import com.now.nowbot.throwable.botException.PPPlusException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.util.*
 import kotlin.math.atan
 import kotlin.math.floor
 import kotlin.math.sqrt
@@ -35,9 +32,9 @@ class PPPlusService(
     private val performancePlusService: PerformancePlusService,
     private val imageService: ImageService,
 ) : MessageService<PPPlusParam> {
-    @JvmRecord data class PPPlusParam(val isUser: Boolean, val me: Any?, val other: Any?)
+    data class PPPlusParam(val isUser: Boolean, val me: Any?, val other: Any?)
 
-    @Throws(Throwable::class) override fun isHandle(
+    override fun isHandle(
         event: MessageEvent, messageText: String, data: DataValue<PPPlusParam>
     ): Boolean {
         val matcher = Instruction.PP_PLUS.matcher(messageText)
@@ -47,7 +44,7 @@ class PPPlusService(
         val a1 = matcher.group("area1")?.ifBlank { null }
         val a2 = matcher.group("area2")?.ifBlank { null }
 
-        val me = bindDao.getBindFromQQ(event.getSender().getId(), true)
+        val me = bindDao.getBindFromQQ(event.sender.id, true)
 
         try {
             when (cmd.lowercase()) {
@@ -76,7 +73,7 @@ class PPPlusService(
             throw e
         } catch (e: Exception) {
             log.error("pp+ 请求异常", e)
-            throw PPPlusException(PPPlusException.Type.PL_Send_Error)
+            throw IllegalStateException.Fetch("PP+")
         }
 
         return true
@@ -110,13 +107,13 @@ class PPPlusService(
             image = imageService.getPanel(dataMap, "B3")
         } catch (e: Exception) {
             log.error("PP+ 渲染失败", e)
-            throw PPPlusException(PPPlusException.Type.PL_Render_Error)
+            throw IllegalStateException.Render("PP+")
         }
         try {
             event.reply(image)
         } catch (e: Exception) {
             log.error("PP+ 发送失败", e)
-            throw PPPlusException(PPPlusException.Type.PL_Send_Error)
+            throw IllegalStateException.Send("PP+")
         }
 
         return if (param.other is OsuUser) {
@@ -133,40 +130,40 @@ class PPPlusService(
     }
 
     // 把数据合并一下 。这个才是真传过去的 PP+
-    @Throws(TipsException::class) private fun getUserPerformancePlus(uid: Long): PPPlus {
-        val bps = scoreApiService.getBestScores(uid, OsuMode.OSU)
-        val performance = performancePlusService.calculateUserPerformance(bps)
+    private fun getUserPerformancePlus(uid: Long): PPPlus {
+        val bests = scoreApiService.getBestScores(uid, OsuMode.OSU)
+        val performance = performancePlusService.calculateUserPerformance(bests)
+        val stats = calculateUserAdvancedStats(performance)
 
-        val plus = PPPlus()
-        plus.performance = performance
-        plus.advancedStats = calculateUserAdvancedStats(performance)
+        val plus = PPPlus().apply {
+            this.performance = performance
+            this.advancedStats = stats
+        }
 
         return plus
     }
 
-    @Throws(PPPlusException::class) private fun setUser(
+    private fun setUser(
         a1: String?, a2: String?, me: BindUser?, isVs: Boolean, data: DataValue<PPPlusParam>
     ) {
         var p1: OsuUser?
         var p2: OsuUser?
 
-        try {
-            p1 = if (a1.isNullOrBlank().not()) userApiService.getOsuUser(a1, OsuMode.OSU)
-            else userApiService.getOsuUser(me!!, OsuMode.OSU)
+        p1 = if (a1.isNullOrBlank().not()) {
+            userApiService.getOsuUser(a1, OsuMode.OSU)
+        } else {
+            userApiService.getOsuUser(me!!, OsuMode.OSU)
+        }
 
-            p2 = if (a2.isNullOrBlank().not()) userApiService.getOsuUser(a2, OsuMode.OSU)
-            else null
+        p2 = if (a2.isNullOrBlank().not()) {
+            userApiService.getOsuUser(a2, OsuMode.OSU)
+        } else {
+            null
+        }
 
-            if (isVs && p2 == null) {
-                p2 = p1
-                p1 = userApiService.getOsuUser(me!!, OsuMode.OSU)
-            }
-        } catch (e: WebClientResponseException.NotFound) {
-            throw PPPlusException(PPPlusException.Type.PL_User_NotFound)
-        } catch (e: WebClientResponseException.Forbidden) {
-            throw PPPlusException(PPPlusException.Type.PL_User_Banned)
-        } catch (e: WebClientResponseException) {
-            throw PPPlusException(PPPlusException.Type.PL_API_NotAccessible)
+        if (isVs && p2 == null) {
+            p2 = p1
+            p1 = userApiService.getOsuUser(me!!, OsuMode.OSU)
         }
 
         data.value = PPPlusParam(true, p1, p2)

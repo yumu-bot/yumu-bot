@@ -16,7 +16,10 @@ import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.TestTypeService.MapTypeParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
-import com.now.nowbot.throwable.botException.MapMinusException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MOD
 import org.springframework.stereotype.Service
@@ -43,12 +46,12 @@ import java.time.LocalDateTime
 
         val bid = matcher.group("bid")?.toLongOrNull()
             ?: dao.getLastBeatmapID(event.subject.id, name = null, LocalDateTime.now().minusHours(24))
-            ?: throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
+            ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
         val rate = matcher.group("rate")?.toDoubleOrNull() ?: 1.0
 
-        if (rate < 0.1) throw MapMinusException(MapMinusException.Type.MM_Rate_TooSmall)
-        if (rate > 5.0) throw MapMinusException(MapMinusException.Type.MM_Rate_TooLarge)
+        if (rate < 0.1) throw IllegalArgumentException.ExceedException.RateTooSmall()
+        if (rate > 5.0) throw IllegalArgumentException.ExceedException.RateTooLarge()
 
         data.value = MapTypeParam(bid, OsuMode.MANIA, rate, modsList)
         return true
@@ -63,20 +66,20 @@ import java.time.LocalDateTime
         try {
             map = beatmapApiService.getBeatmapFromDatabase(param.bid)
             fileStr = beatmapApiService.getBeatmapFileString(param.bid)!!
-        } catch (e: Exception) {
-            throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
+        } catch (_: Exception) {
+            throw NoSuchElementException.BeatmapCache(param.bid)
         }
 
         if (map.mode.isNotConvertAble(param.mode)) {
-            throw MapMinusException(MapMinusException.Type.MM_Function_NotSupported)
+            throw UnsupportedOperationException.OnlyMania()
         }
 
         calculateApiService.applyStarToBeatMap(map, param.mode, param.mods)
 
         val file = try {
             OsuFile.getInstance(fileStr)
-        } catch (e: NullPointerException) {
-            throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
+        } catch (_: NullPointerException) {
+            throw IllegalStateException.Fetch("谱面文件")
         }
 
         val mapMinus = Skill.getInstance(

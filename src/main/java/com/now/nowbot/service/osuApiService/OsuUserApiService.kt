@@ -6,6 +6,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.concurrent.ExecutionException
 
@@ -19,6 +20,8 @@ interface OsuUserApiService {
     }
 
     @Throws(WebClientResponseException::class) fun getOauthUrl(state: String, full: Boolean): String
+
+    @Throws(BindException::class) fun refreshUserTokenInstant(bindUser: BindUser?, isMyself: Boolean = false): BindUser
 
     @CanIgnoreReturnValue @Throws(ExecutionException::class) fun refreshUserToken(user: BindUser): String?
 

@@ -52,6 +52,15 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class Group:
         NoSuchElementException("这个机器人不在这个群。")
 
+    class Friend:
+        NoSuchElementException("""
+            我叫奇异博士找遍了 2000 条世界线，
+            都没找到你的游戏好友。
+        """.trimIndent())
+
+    class FriendMatched:
+        NoSuchElementException("没有找到符合你提供的条件的游戏好友。")
+
     class Leaderboard:
         NoSuchElementException("这张谱面没有在线排行榜。")
 

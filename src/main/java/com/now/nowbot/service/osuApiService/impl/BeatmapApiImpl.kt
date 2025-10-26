@@ -7,6 +7,7 @@ import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.BeatmapObjectCountLite
 import com.now.nowbot.mapper.BeatmapObjectCountMapper
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.CoverType
 import com.now.nowbot.model.enums.CoverType.Companion.getString
 import com.now.nowbot.model.enums.OsuMode
@@ -747,7 +748,7 @@ class BeatmapApiImpl(
         }
     }
 
-    private fun searchBeatMapSetFromAPI(query: Map<String, Any?>): BeatmapsetSearch {
+    private fun searchBeatMapSetFromAPI(query: Map<String, Any?>, bindUser: BindUser? = null): BeatmapsetSearch {
         return request { client ->
             client.get().uri {
                 it.path("beatmapsets/search")
@@ -760,14 +761,20 @@ class BeatmapApiImpl(
                 }
                 it.build()
             }
-                .headers(base::insertHeader)
+                .headers {
+                    if (bindUser?.isAuthorized == true && bindUser.isNotExpired) {
+                        base.insertHeader(bindUser)
+                    } else {
+                        base.insertHeader(it)
+                    }
+                }
                 .retrieve()
                 .bodyToMono(BeatmapsetSearch::class.java)
         }
     }
 
-    override fun searchBeatmapset(query: Map<String, Any?>): BeatmapsetSearch {
-        val search = searchBeatMapSetFromAPI(query)
+    override fun searchBeatmapset(query: Map<String, Any?>, user: BindUser?): BeatmapsetSearch {
+        val search = searchBeatMapSetFromAPI(query, user)
 
         // 后处理
         if (query["s"] !== null || query["s"] !== "any") {
@@ -789,7 +796,8 @@ class BeatmapApiImpl(
         query: Map<String, Any?>,
         tries: Int,
         quantity: Int,
-        awaitMillis: Long
+        awaitMillis: Long,
+        bindUser: BindUser?
     ): BeatmapsetSearch {
         val size = (tries * quantity).coerceAtLeast(1)
 
@@ -811,7 +819,7 @@ class BeatmapApiImpl(
 
                 val actions = qs.map { q ->
                     Callable {
-                        searchBeatMapSetFromAPI(q)
+                        searchBeatMapSetFromAPI(q, bindUser)
                     }
                 }
 

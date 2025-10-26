@@ -19,7 +19,10 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
-import com.now.nowbot.throwable.botException.MapMinusException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_MOD
@@ -61,7 +64,7 @@ import kotlin.math.absoluteValue
             event.reply(image)
         } catch (e: Exception) {
             log.error("谱面 Minus：发送失败", e)
-            throw MapMinusException(MapMinusException.Type.MM_Send_Error)
+            throw IllegalStateException.Send("谱面 Minus")
         }
 
         return ServiceCallStatistic.build(event, beatmapID = param.bid, mode = param.mode)
@@ -86,12 +89,12 @@ import kotlin.math.absoluteValue
 
         val bid = matcher.group("bid")?.toLongOrNull()
             ?: dao.getLastBeatmapID(event.subject.id, name = null, LocalDateTime.now().minusHours(24))
-            ?: throw MapMinusException(MapMinusException.Type.MM_Bid_Error)
+            ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
         val rate = matcher.group("rate")?.toDoubleOrNull() ?: 1.0
 
-        if (rate < 0.1) throw MapMinusException(MapMinusException.Type.MM_Rate_TooSmall)
-        if (rate > 5.0) throw MapMinusException(MapMinusException.Type.MM_Rate_TooLarge)
+        if (rate < 0.1) throw IllegalArgumentException.ExceedException.RateTooSmall()
+        if (rate > 5.0) throw IllegalArgumentException.ExceedException.RateTooLarge()
 
         return MapMinusParam(bid, OsuMode.MANIA, rate, modsList)
     }
@@ -103,27 +106,26 @@ import kotlin.math.absoluteValue
         imageService: ImageService,
     ): ByteArray {
         val fileStr: String
-        val map: Beatmap = beatmapApiService.getBeatmap(param.bid).apply {
-            this.starRating = calculateApiService.getBeatMapStarRating(this.beatmapID, this.mode, param.mods, this.hasLeaderBoard)
-        }
+        val map: Beatmap = beatmapApiService.getBeatmap(param.bid)
+
+        calculateApiService.applyStarToBeatMap(map, param.mode, param.mods)
 
         val isChangedRating = param.mods.isAffectStarRating()
 
         try {
-
             fileStr = beatmapApiService.getBeatmapFileString(param.bid)!!
         } catch (_: Exception) {
-            throw MapMinusException(MapMinusException.Type.MM_Map_NotFound)
+            throw NoSuchElementException.BeatmapCache(param.bid)
         }
 
         if (map.mode.isNotConvertAble(param.mode)) {
-            throw MapMinusException(MapMinusException.Type.MM_Function_NotSupported)
+            throw UnsupportedOperationException.OnlyMania()
         }
 
         val file = try {
             OsuFile.getInstance(fileStr)
         } catch (_: NullPointerException) {
-            throw MapMinusException(MapMinusException.Type.MM_Map_FetchFailed)
+            throw IllegalStateException.Fetch("谱面文件")
         }
 
         val clockRate = if (isChangedRating) {

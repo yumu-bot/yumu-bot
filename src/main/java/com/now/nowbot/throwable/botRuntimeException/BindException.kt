@@ -19,6 +19,15 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
             TokenExpiredException("你的令牌失效或是没有绑定。请重新授权。(/bind osu username)")
     }
 
+
+    open class Oauth2Exception(message: String): BindException(message) {
+        class UpgradeException:
+            Oauth2Exception("你需要完成 Oauth2 绑定（不是名称绑定）才能使用这个功能或这类查询。")
+        class RefreshException:
+            Oauth2Exception("你的 Oauth2 令牌已经完全过期，无法刷新。请尝试重新完成 Oauth2 绑定（不是名称绑定）。")
+    }
+
+
     open class NotBindException(message: String): BindException(message) {
 
         class YouNotBind:

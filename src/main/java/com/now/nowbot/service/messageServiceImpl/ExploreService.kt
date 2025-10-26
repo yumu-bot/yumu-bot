@@ -19,9 +19,10 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
+import com.now.nowbot.util.CmdObject
+import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
@@ -166,13 +167,20 @@ class ExploreService(
         val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: 1
         val any = matcher.group(FLAG_ANY)?.trim() ?: ""
 
-        val bindUser = bindDao.getBindFromQQOrNull(event.sender.id)
+        val user = CmdUtil.getUserWithoutRange(event, matcher, CmdObject(bindDao.getGroupModeConfig(event)))
 
         when(type) {
             BeatmapType.SEARCH -> {
                 val query = getQuery(event, matcher)
 
-                val search = beatmapApiService.searchBeatmapsetParallel(query)
+                val bindUser = bindDao.getBindUserFromOsuIDOrNull(user.userID)
+
+                val search = if (query.containsKey("played") || query.containsKey("r")) {
+                    val bind = userApiService.refreshUserTokenInstant(bindUser, true)
+                    beatmapApiService.searchBeatmapsetParallel(query, bindUser = bind)
+                } else {
+                    beatmapApiService.searchBeatmapsetParallel(query)
+                }
 
                 if (search.beatmapsets.isEmpty()) {
                     throw NoSuchElementException.Result()
@@ -188,8 +196,6 @@ class ExploreService(
             }
 
             BeatmapType.MOST_PLAYED -> {
-                if (bindUser == null) throw BindException.NotBindException.YouNotBind()
-
                 val conditions = DataUtil.paramMatcher(any, MostPlayedBeatmapFilter.entries.map { it.regex }, REG_RANGE.toRegex())
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
@@ -198,12 +204,10 @@ class ExploreService(
                 val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
                 val most = if (hasRangeInConditions.not() && hasCondition.not() && page == 1) {
-                    beatmapApiService.getUserMostPlayedBeatmaps(bindUser.userID, 0, 50)
+                    beatmapApiService.getUserMostPlayedBeatmaps(user.userID, 0, 50)
                 } else {
-                    beatmapApiService.getUserMostPlayedBeatmaps(bindUser.userID, 0, 1000)
+                    beatmapApiService.getUserMostPlayedBeatmaps(user.userID, 0, 1000)
                 }
-
-                val user = userApiService.getOsuUser(bindUser)
 
                 val filter = MostPlayedBeatmapFilter.filterMostPlayBeatmaps(most, conditions)
 
@@ -219,8 +223,6 @@ class ExploreService(
             }
 
             else -> {
-                if (bindUser == null) throw BindException.NotBindException.YouNotBind()
-
                 val conditions = DataUtil.paramMatcher(any, BeatmapsetFilter.entries.map { it.regex }, REG_RANGE.toRegex())
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
@@ -229,12 +231,10 @@ class ExploreService(
                 val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
                 val mine = if (hasRangeInConditions.not() && hasCondition.not() && page == 1) {
-                    beatmapApiService.getUserBeatmapset(bindUser.userID, type.query, 0, 48)
+                    beatmapApiService.getUserBeatmapset(user.userID, type.query, 0, 48)
                 } else {
-                    beatmapApiService.getUserBeatmapset(bindUser.userID, type.query, 0, 480)
+                    beatmapApiService.getUserBeatmapset(user.userID, type.query, 0, 480)
                 }
-
-                val user = userApiService.getOsuUser(bindUser)
 
                 val filter = BeatmapsetFilter.filterBeatmapsets(mine, conditions)
 

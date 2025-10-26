@@ -540,7 +540,7 @@ object CmdUtil {
         }
         var nameStr: String? = text.take(hashIndex).trim()
         if (nameStr.isNullOrBlank()) nameStr = null
-        val rangeStr = text.substring(hashIndex + 1).trim()
+        val rangeStr = text.drop(hashIndex + 1).trim()
         val rangeInt = parseRange(rangeStr)
         ranges.add(CmdRange(nameStr, rangeInt[0], rangeInt[1]))
         return ranges

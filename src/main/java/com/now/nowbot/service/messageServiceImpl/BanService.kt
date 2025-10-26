@@ -8,8 +8,9 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BanService.BanParam
-import com.now.nowbot.throwable.botException.BanException
+import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
@@ -78,7 +79,7 @@ class BanService(private val permission: Permission, private val imageService: I
                         event.reply("成功添加群聊 ${param.qq} 进白名单")
                     }
                 } else {
-                    throw BanException(BanException.Type.SUPER_Receive_NoQQ, "add", "add")
+                    throw UnsupportedOperationException.NoQQ("add")
                 }
             }
             "remove",
@@ -94,7 +95,7 @@ class BanService(private val permission: Permission, private val imageService: I
                         event.reply("成功移除群聊 ${param.qq} 出白名单")
                     }
                 } else {
-                    throw BanException(BanException.Type.SUPER_Receive_NoQQ, "remove", "remove")
+                    throw UnsupportedOperationException.NoQQ("remove")
                 }
             }
             "ban",
@@ -110,7 +111,7 @@ class BanService(private val permission: Permission, private val imageService: I
                         event.reply("成功拉黑群聊 ${param.qq}")
                     }
                 } else {
-                    throw BanException(BanException.Type.SUPER_Receive_NoQQ, "ban", "ban")
+                    throw UnsupportedOperationException.NoQQ("ban")
                 }
             }
             "unban",
@@ -126,10 +127,20 @@ class BanService(private val permission: Permission, private val imageService: I
                         event.reply("成功恢复群聊 ${param.qq}")
                     }
                 } else {
-                    throw BanException(BanException.Type.SUPER_Receive_NoQQ, "unban", "unban")
+                    throw UnsupportedOperationException.NoQQ("unban")
                 }
             }
-            else -> throw BanException(BanException.Type.SUPER_Instruction)
+            else -> throw TipsException(
+                """
+                请输入 super 操作！超管可用的操作有：
+                
+                whitelist：查询白名单
+                blacklist：查询黑名单
+                add：添加用户至白名单
+                remove：移除用户出白名单
+                ban：添加用户至黑名单
+                unban：移除用户出黑名单
+                """.trimIndent())
         }
         
         return ServiceCallStatistic.building(event) {

@@ -17,10 +17,9 @@ import com.now.nowbot.service.messageServiceImpl.FriendService.Companion.SortTyp
 import com.now.nowbot.service.messageServiceImpl.FriendService.FriendParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
-import com.now.nowbot.throwable.botException.FriendException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithRange
@@ -179,20 +178,7 @@ class FriendService(
     private fun getParam(event: MessageEvent, matcher: Matcher): FriendParam {
         val any: String = matcher.group(FLAG_ANY) ?: ""
 
-        val me = bindDao.getBindFromQQOrNull(event.sender.id)
-
-        if (me == null || !me.isAuthorized) {
-            throw FriendException(FriendException.Type.FRIEND_Me_NoPermission)
-            // 无权限
-        }
-
-        if (me.isExpired) {
-            try {
-                userApiService.refreshUserToken(me)!!
-            } catch (_: Exception) {
-                throw NetworkException.UserException.TokenExpired()
-            }
-        }
+        val me = userApiService.refreshUserTokenInstant(bindDao.getBindFromQQOrNull(event.sender.id), isMyself = true)
 
         val isMyself = AtomicBoolean(true) // 处理 range
         val mode = getMode(matcher)
@@ -254,7 +240,7 @@ class FriendService(
             val filteredFriends = MicroUserFilter.filterUsers(sortedFriends, conditions).drop(offset).take(limit)
 
             if (filteredFriends.isEmpty()) {
-                throw FriendException(FriendException.Type.FRIEND_Client_NoMatch)
+                throw NoSuchElementException.FriendMatched()
             }
 
             return FriendListParam(async.first, filteredFriends, sortParam.first)
@@ -435,9 +421,9 @@ class FriendService(
 
             if (result.isEmpty()) {
                 if (sortType == NULL) {
-                    throw FriendException(FriendException.Type.FRIEND_Client_NoFriend)
+                    throw NoSuchElementException.Friend()
                 } else {
-                    throw FriendException(FriendException.Type.FRIEND_Client_NoMatch)
+                    throw NoSuchElementException.FriendMatched()
                 }
             }
 
