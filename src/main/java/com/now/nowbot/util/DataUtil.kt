@@ -1229,7 +1229,7 @@ object DataUtil {
             for (i in regexes.indices) {
                 val reg = regexes[i]
 
-                if (reg.matches(matcher)) {
+                if (reg.matches(matcher.trim())) {
                     val after = strs[min(j + 1, strs.size - 1)] // 后一个元素，或是最后一个
 
                     if (strs.size - 1 == j || after.contains(REG_OPERATOR.toRegex()) || (noContains != null && after.contains(noContains))) {
@@ -1513,10 +1513,10 @@ object DataUtil {
                 Period.of(0, 0, 0)
             }
             2 -> {
-                Period.of(0, parts[0].toInt(), parts[1].toInt())
+                Period.of(0, parts[0].toIntOrNull() ?: 0, parts[1].toIntOrNull() ?: 0)
             }
             3 -> {
-                Period.of(parts[0].toInt(), parts[1].toInt(), parts[2].toInt())
+                Period.of(parts[0].toIntOrNull() ?: 0, parts[1].toIntOrNull() ?: 0, parts[2].toIntOrNull() ?: 0)
             }
             else -> Period.ZERO
         }
