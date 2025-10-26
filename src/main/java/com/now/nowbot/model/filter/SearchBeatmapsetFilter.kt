@@ -111,8 +111,8 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
                 else -> {
                     val con: Pair<String, String>? = when(filter) {
-                        CREATOR -> "q" to "creator=${text}"
-                        GUEST -> "q" to "creator=${text}"
+                        CREATOR -> "q" to "creator=\"${text}\""
+                        GUEST -> "q" to "creator=\"${text}\""
                         BID -> "q" to text
                         SID -> "q" to text
                         TITLE -> "q" to "title=\"${text}\""
