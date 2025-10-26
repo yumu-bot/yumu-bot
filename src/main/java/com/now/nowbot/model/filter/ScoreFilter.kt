@@ -34,7 +34,9 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     SOURCE("(source|src|from|f|o|sc|se|来?源)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
-    TAG("(tags?|ta|tg|y|标签?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    TAG("(tags?|ta|tg|w|标签?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+
+    ANY("(any(thing)?|y|任[何意]?(字段|文字)?|[字文])(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
     GENRE("(genre|g|曲?风|风格|流派?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
 
@@ -142,12 +144,12 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
         fun fit(
             operator: Operator,
             compare: Any?,
-            to: Any,
+            to: Any?,
             digit: Int = 0,
             isRound: Boolean = true,
             isInteger: Boolean = true,
         ): Boolean {
-            if (compare == null) return false
+            if (compare == null || to == null) return false
 
             return when {
                 (compare is Long && to is Long) -> {
@@ -297,7 +299,6 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                         || fit(operator, it.beatmapset.artistUnicode, str))
                 SOURCE -> fit(operator, it.beatmapset.source, str)
                 TAG -> {
-
                     if (it.beatmapset.tags.isBlank()) {
                         return false
                     }
@@ -311,6 +312,24 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                         .collect(Collectors.toCollection(::HashSet))
                     return ts.contains(element = true)
                 }
+
+                ANY -> {
+                    // O(n2)操作，使用并行流
+                    val ts = it.beatmapset.tags
+                        .split("\\s+".toRegex())
+                        .dropWhile { it.isEmpty() }
+                        .parallelStream()
+                        .map { fit(operator, it.replace("_", ""), str) }
+                        .collect(Collectors.toCollection(::HashSet))
+
+                    fit(operator, it.beatmapset.title, str)
+                            || fit(operator, it.beatmapset.titleUnicode, str)
+                            || fit(operator, it.beatmapset.artist, str)
+                            || fit(operator, it.beatmapset.artistUnicode, str)
+                            || fit(operator, it.beatmapset.source, str)
+                            || ts.contains(element = true)
+                }
+
                 GENRE -> fit(operator, it.beatmapset.genreID.toInt(), DataUtil.getGenre(str)?.toInt() ?: return false)
                 LANGUAGE -> fit(operator, it.beatmapset.languageID.toInt(), DataUtil.getLanguage(str)?.toInt() ?: return false)
 

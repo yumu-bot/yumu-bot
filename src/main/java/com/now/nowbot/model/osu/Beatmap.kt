@@ -123,7 +123,7 @@ data class Beatmap(
 
     // 如果是走用户 token，还可以看到玩家玩了这张图几次
     @field:JsonProperty("current_user_playcount")
-    val currentPlayCount: Int? = null
+    var currentPlayCount: Int? = null
 ) {
 
     @set:JsonIgnore
@@ -193,8 +193,8 @@ data class Beatmap(
     val totalNotes = (circles ?: 0) + (sliders ?: 0) + (spinners ?: 0)
 
     data class TagData(
-        @JsonProperty("tag_id") val id: Int,
-        @JsonProperty("count") val count: Int,
+        @field:JsonProperty("tag_id") val id: Int,
+        @field:JsonProperty("count") val count: Int,
     )
 
     @get:JsonProperty("mapper_ids")

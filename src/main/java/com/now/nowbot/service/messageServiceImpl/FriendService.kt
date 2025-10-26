@@ -24,6 +24,7 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserWithRange
+import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.FLAG_UID
 import com.now.nowbot.util.command.REG_HYPHEN
@@ -176,7 +177,7 @@ class FriendService(
      * 重写参数获取方式
      */
     private fun getParam(event: MessageEvent, matcher: Matcher): FriendParam {
-        val any: String = matcher.group("any") ?: ""
+        val any: String = matcher.group(FLAG_ANY) ?: ""
 
         val me = bindDao.getBindFromQQOrNull(event.sender.id)
 

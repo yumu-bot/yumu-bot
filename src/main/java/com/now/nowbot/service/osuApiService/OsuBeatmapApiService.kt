@@ -41,7 +41,7 @@ interface OsuBeatmapApiService {
      */
     fun getUserBeatmapset(id: Long, type: String = "favourite", offset: Int = 0, limit: Int = 100): List<Beatmapset>
 
-    fun getUserMostPlayedBeatmaps(id: Long, offset: Int = 0, limit: Int = 100): Map<Int, Beatmap>
+    fun getUserMostPlayedBeatmaps(id: Long, offset: Int = 0, limit: Int = 100): List<Beatmap>
 
     fun getBeatmapset(sid: Long): Beatmapset
 
@@ -91,7 +91,7 @@ interface OsuBeatmapApiService {
     /**
      * 多次获取搜索结果
      */
-    fun parallelSearchBeatmapset(
+    fun searchBeatmapsetParallel(
         query: Map<String, Any?>,
         tries: Int = 4,
         quantity: Int = 5,

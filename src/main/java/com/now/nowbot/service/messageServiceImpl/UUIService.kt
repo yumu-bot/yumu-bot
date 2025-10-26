@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.NowbotConfig
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
@@ -33,6 +34,7 @@ import kotlin.math.roundToInt
 class UUIService(
     private val userApiService: OsuUserApiService,
     private val infoDao: OsuUserInfoDao,
+    private val bindDao: BindDao,
 ) : MessageService<UUIParam> {
 
     @JvmRecord data class UUIParam(
@@ -51,7 +53,8 @@ class UUIService(
         if (!matcher.find()) {
             return false
         }
-        val mode = getMode(matcher)
+
+        val mode = getMode(matcher, bindDao.getGroupModeConfig(event))
         val user = getUserWithoutRange(event, matcher, mode)
 
         val day = (matcher.group(FLAG_DAY) ?: "").toLongOrNull() ?: 1L

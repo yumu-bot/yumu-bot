@@ -134,7 +134,7 @@ class MapStatisticsService(
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): MapParam {
-        val conditions = DataUtil.paramMatcher(matcher.group("any"), Filter.entries.map { it.regex })
+        val conditions = DataUtil.paramMatcher(matcher.group(FLAG_ANY), Filter.entries.map { it.regex })
 
         val id = getBid(matcher)
 
@@ -274,7 +274,7 @@ class MapStatisticsService(
                 original["ar"] = AR!!
                 original["od"] = OD!!
                 original["hp"] = HP!!
-                original["bpm"] = BPM!!
+                original["bpm"] = BPM
                 original["drain"] = hitLength!!
                 original["total"] = totalLength
             }

@@ -92,7 +92,7 @@ class SBScorePRService(
      * 请在 matcher.find() 后使用
      */
     private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isPass: Boolean, isShow: Boolean): ScorePRParam? {
-        val any: String = matcher.group("any") ?: ""
+        val any: String = matcher.group(FLAG_ANY) ?: ""
 
         // 避免指令冲突
         if (any.contains("&sb", ignoreCase = true)) return null

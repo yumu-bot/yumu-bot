@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
 import kotlin.collections.set
+import kotlin.math.min
 
 @Service
 class BeatmapApiImpl(
@@ -317,6 +318,29 @@ class BeatmapApiImpl(
     }
 
     override fun getUserBeatmapset(id: Long, type: String, offset: Int, limit: Int): List<Beatmapset> {
+
+        if (limit <= 100) {
+            return getUserBeatmapsetPrivate(id, type, offset, limit)
+        } else {
+            val times = (limit / 100).coerceAtLeast(1)
+
+            val works = (0..< times).map { i ->
+                val of = offset + (i * 100)
+                val li = min(100, limit - (i * 100))
+
+                Callable {
+                    getUserBeatmapsetPrivate(id, type, of, li)
+                }
+            }
+
+            val async = AsyncMethodExecutor.awaitCallableExecute(works)
+
+            return async.flatten()
+        }
+    }
+
+
+    private fun getUserBeatmapsetPrivate(id: Long, type: String, offset: Int, limit: Int): List<Beatmapset> {
         return request { client ->
             client.get()
                 .uri { it
@@ -332,8 +356,28 @@ class BeatmapApiImpl(
         }
     }
 
-    override fun getUserMostPlayedBeatmaps(id: Long, offset: Int, limit: Int): Map<Int, Beatmap> {
+    override fun getUserMostPlayedBeatmaps(id: Long, offset: Int, limit: Int): List<Beatmap> {
+        if (limit <= 100) {
+            return getUserMostPlayedBeatmapsPrivate(id, offset, limit)
+        } else {
+            val times = (limit / 100).coerceAtLeast(1)
 
+            val works = (0..< times).map { i ->
+                val of = offset + (i * 100)
+                val li = min(100, limit - (i * 100))
+
+                Callable {
+                    getUserMostPlayedBeatmapsPrivate(id, of, li)
+                }
+            }
+
+            val async = AsyncMethodExecutor.awaitCallableExecute(works)
+
+            return async.flatten()
+        }
+    }
+
+    private fun getUserMostPlayedBeatmapsPrivate(id: Long, offset: Int, limit: Int): List<Beatmap> {
         data class MostPlayed(
             @field:JsonProperty("beatmap_id")
             val beatmapID: Long,
@@ -363,10 +407,12 @@ class BeatmapApiImpl(
 
         val most = JacksonUtil.parseObjectList(node, MostPlayed::class.java)
 
-        return most.associate {
-            it.beatmap.beatmapset = it.beatmapset
-
-            return@associate it.count to it.beatmap
+        return most.map { (beatmapID, count, beatmap, beatmapset) ->
+            beatmap.copy().apply {
+                this.beatmapset = beatmapset
+                this.beatmapID = beatmapID
+                this.currentPlayCount = count
+            }
         }
     }
 
@@ -739,7 +785,7 @@ class BeatmapApiImpl(
      * @param quantity 同时获取多少页，这个太大不好，总可获取的页数是它乘以 tries
      * @param awaitMillis 每次并行获取后的冷却时间（毫秒），避免被判定为恶意获取
      */
-    override fun parallelSearchBeatmapset(
+    override fun searchBeatmapsetParallel(
         query: Map<String, Any?>,
         tries: Int,
         quantity: Int,

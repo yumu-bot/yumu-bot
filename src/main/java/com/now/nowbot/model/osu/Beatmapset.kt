@@ -269,7 +269,6 @@ class Beatmapset {
     @JsonProperty("user")
     var creatorData: OsuUser? = null
 
-
     //自己算
     @get:JsonProperty("mappers")
     val mappers: MutableList<OsuUser>

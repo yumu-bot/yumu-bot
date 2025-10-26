@@ -9,10 +9,8 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.CmdUtil
 import com.now.nowbot.util.Instruction
-import java.util.concurrent.Callable
 
 //@Service("RECOMMEND_MAP")
 class RecommendedMapService(
@@ -70,15 +68,7 @@ class RecommendedMapService(
     }
 
     private fun getUserPrefer(user: OsuUser): UserPrefer {
-        val favorite: List<Beatmapset>
-
-        val tasks = (0..4).toList().map {
-            Callable {
-                beatmapApiService.getUserBeatmapset(user.userID, "favourite", it * 100, 100)
-            }
-        }
-
-        favorite = AsyncMethodExecutor.awaitCallableExecute(tasks).flatten()
+        val favorite: List<Beatmapset> = beatmapApiService.getUserBeatmapset(user.userID, "favourite", 0, 500)
 
         val bests: List<LazerScore> = scoreApiService.getBestScores(user)
 

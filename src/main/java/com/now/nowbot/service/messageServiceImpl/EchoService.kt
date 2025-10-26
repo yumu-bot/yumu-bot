@@ -6,6 +6,7 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.FLAG_ANY
 import org.springframework.stereotype.Service
 
 @Service("ECHO")
@@ -16,7 +17,7 @@ class EchoService : MessageService<String> {
         if (!m.find()) {
             return false
         }
-        data.value = m.group("any") ?: return false
+        data.value = m.group(FLAG_ANY) ?: return false
         return true
     }
 

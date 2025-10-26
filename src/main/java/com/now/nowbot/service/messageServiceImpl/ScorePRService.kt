@@ -26,6 +26,7 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
+import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
 import com.now.nowbot.util.command.REG_RANGE
@@ -209,7 +210,7 @@ class ScorePRService(
      * 请在 matcher.find() 后使用
      */
     private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isPass: Boolean, isShow: Boolean): ScorePRParam? {
-        val any: String = matcher.group("any") ?: ""
+        val any: String = matcher.group(FLAG_ANY) ?: ""
 
         // 避免指令冲突
         if (any.contains("&sb", ignoreCase = true)) return null

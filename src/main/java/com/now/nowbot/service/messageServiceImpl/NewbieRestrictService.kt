@@ -27,6 +27,7 @@ import com.now.nowbot.util.CmdUtil.getMode
 import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.CmdUtil.getUserWithRange
 import com.now.nowbot.util.CmdUtil.getUserWithoutRange
+import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
 import com.now.nowbot.util.command.REG_RANGE
@@ -109,7 +110,7 @@ class NewbieRestrictService(
                 scores = listOf(scoreApiService.getBeatMapScore(map.beatmapID, user.userID, mode, mods)?.score ?: return false)
                 calculateApiService.applyStarToScores(scores, local = false)
             } else if (pr.find()) {
-                val any: String = pr.group("any") ?: ""
+                val any: String = pr.group(FLAG_ANY) ?: ""
 
                 // 避免指令冲突
                 if (any.contains("&sb", ignoreCase = true)) return false
@@ -200,7 +201,7 @@ class NewbieRestrictService(
 
                 scores = filteredScores.map { it.value }
             } else if (b.find()) {
-                val any: String = b.group("any") ?: ""
+                val any: String = b.group(FLAG_ANY) ?: ""
 
                 // 避免指令冲突
                 if (any.contains("&sb", ignoreCase = true)) return false

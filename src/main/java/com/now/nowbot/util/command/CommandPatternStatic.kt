@@ -43,6 +43,8 @@ const val FLAG_PAGE: String = "page"
 const val FLAG_DIFF: String = "diff"
 const val FLAG_TYPE: String = "type"
 const val FLAG_TIME: String = "time"
+const val FLAG_TEXT: String = "text"
+const val FLAG_ANY: String = "any"
 
 @Language("RegExp")
 val REG_CAPS_INSENSITIVE: String = "(?i)"
@@ -182,6 +184,9 @@ val REG_MAI_RANGE = "(?!$REG_HASH)\\s*$REG_MAI_DIFFICULTY$REG_HYPHEN?$REG_MAI_DI
 
 @Language("RegExp")
 val RANGE_ONLY = "^\\s*$REG_HASH?\\s*(\\d{1,3}$REG_HYPHEN+)?\\d{1,3}\\s*$".toRegex()
+
+@Language("RegExp")
+val REG_BID_SID: String = "(bid|sid|b|s)"
 
 /**
  * 这个分隔符会分隔空格

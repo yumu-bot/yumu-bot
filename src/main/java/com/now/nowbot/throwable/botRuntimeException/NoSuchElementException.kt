@@ -61,6 +61,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class MatchRound:
         NoSuchElementException("没有找到比赛里的对局。")
 
+    class MostPlayed:
+        NoSuchElementException("没有找到您的最多游玩谱面。")
+
     class PassedScore(name: String, mode: OsuMode):
         NoSuchElementException("没有找到玩家 $name 在 ${mode.fullName} 模式内的最近通过成绩。")
 
@@ -170,6 +173,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
             玩家 $name 今天之内没有新增的 BP 呢...
             尝试修改范围，或尝试扩大搜索天数吧。
         """.trimIndent())
+
+    class UserBeatmapset(type: String):
+        NoSuchElementException("没有找到玩家的 $type 谱面。")
 
     class UnrankedBeatmapScore(name: String):
         NoSuchElementException("谱面 $name 没有榜，无法获取成绩。")

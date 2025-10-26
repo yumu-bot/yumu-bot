@@ -22,7 +22,7 @@ open class IllegalStateException(message: String?): TipsRuntimeException(message
         IllegalStateException("$component：文件读取失败。")
 
     class ClassCast(component: String):
-        IllegalStateException("$component：分类失败。")
+        IllegalStateException("$component：类型转换失败。")
 
     class TooManyRequest(component: String):
         IllegalStateException("$component：一次性输入的数据太多！获取信息的时候可能会遇到 API 瓶颈。")

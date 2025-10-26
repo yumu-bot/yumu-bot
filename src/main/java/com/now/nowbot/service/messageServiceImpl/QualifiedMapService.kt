@@ -66,7 +66,7 @@ import java.util.regex.Matcher
         val search: BeatmapsetSearch
 
         try {
-            search = beatmapApiService.parallelSearchBeatmapset(query)
+            search = beatmapApiService.searchBeatmapsetParallel(query)
 
             val maxPerPage: Int = if (search.resultCount <= 24) {
                 12

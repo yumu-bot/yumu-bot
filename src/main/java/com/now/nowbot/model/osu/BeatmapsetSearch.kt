@@ -30,7 +30,7 @@ class BeatmapsetSearch {
         if (this.beatmapsets.isEmpty()) return
 
         for (s in this.beatmapsets) {
-            if (s.beatmaps.isNullOrEmpty()) return
+            if (s.beatmaps.isNullOrEmpty()) continue
 
             s.beatmaps = s.beatmaps!!.sortedBy { it.starRating }.sortedBy { it.modeInt ?: 0 }
         }

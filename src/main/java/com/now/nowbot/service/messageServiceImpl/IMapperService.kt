@@ -264,8 +264,8 @@ import kotlin.math.max
                 )
 
                 val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
-                    { beatmapApiService.parallelSearchBeatmapset(query) },
-                    { beatmapApiService.parallelSearchBeatmapset(query2) },
+                    { beatmapApiService.searchBeatmapsetParallel(query) },
+                    { beatmapApiService.searchBeatmapsetParallel(query2) },
                     { userApiService.getUserRecentActivity(id, 0, 100).filter { it.isMapping } },
                     { userApiService.getOsuUser(id, mode.data!!) },
                 )
@@ -301,8 +301,8 @@ import kotlin.math.max
                 )
 
                 val async = AsyncMethodExecutor.awaitTripleCallableExecute(
-                    { beatmapApiService.parallelSearchBeatmapset(query) },
-                    { beatmapApiService.parallelSearchBeatmapset(query2) },
+                    { beatmapApiService.searchBeatmapsetParallel(query) },
+                    { beatmapApiService.searchBeatmapsetParallel(query2) },
                     { userApiService.getUserRecentActivity(user.userID, 0, 100).filter { it.isMapping } }
                 )
 

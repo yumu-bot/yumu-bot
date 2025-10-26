@@ -1147,8 +1147,22 @@ object DataUtil {
             "-1", "5", "w", "wip", "inprogress", "in progress", "workinprogress", "work in progress" -> "wip"
             "-2", "6", "g", "gra", "grave", "graveyard", "graveyarded" -> "graveyard"
             "f", "fav", "favor", "favorite", "favorites" -> "favorites"
+            "m", "my", "mine", "myself" -> "mine"
             "h", "has", "leader", "leaderboard", "has leaderboard" -> null
             else -> "any"
+        }
+    }
+
+    fun getStatusIndex(status: String?): Int? {
+        return when (status?.lowercase()) {
+            "0", "p", "pend", "pending" -> 0
+            "1", "r", "rnk", "rank", "ranked" -> 1
+            "2", "a", "app", "approve", "approved" -> 2
+            "3", "q", "qua", "qualify", "qualified" -> 3
+            "4", "l", "lvd", "loved" -> 4
+            "-1", "5", "w", "wip", "inprogress", "in progress", "workinprogress", "work in progress" -> -1
+            "-2", "6", "g", "gra", "grave", "graveyard", "graveyarded" -> -2
+            else -> null
         }
     }
 
@@ -1173,7 +1187,7 @@ object DataUtil {
 
     @JvmStatic
     fun getLanguage(language: String?): Byte? {
-        return when (language?.lowercase()) {
+        return when (language?.lowercase()?.dropWhile { it.isWhitespace() }) {
             "c", "cn", "chn", "china", "chinese", "中文", "汉语", "中" -> 4
             "e", "en", "gb", "eng", "gbr", "england", "english", "英语", "英文", "英" -> 2
             "f", "fr", "fra", "france", "french", "法语", "法文", "法" -> 7
@@ -1198,8 +1212,9 @@ object DataUtil {
      * @param noContains 如果不填写，会自动按空格拼接不匹配此正则的字段。
      * 举例：!mf v=spl 13，如果不填写 noContains，此时 13 会被拼接到 spl 内。
      * 但如果填写了匹配数字的正则，则会在这里截断。
+     * @param keepWhiteSpace 保留空格
      */
-    fun paramMatcher(str: String?, regexes: List<Regex>, noContains: Regex? = null) : List<List<String>> {
+    fun paramMatcher(str: String?, regexes: List<Regex>, noContains: Regex? = null, keepWhiteSpace: Boolean = false) : List<List<String>> {
         if (str == null) return emptyList()
 
         val result = List(regexes.size) { emptyList<String>().toMutableList() }
@@ -1208,7 +1223,8 @@ object DataUtil {
         val strs = str.trim().lowercase().split(REG_SEPERATOR.toRegex())
 
         strs.forEachIndexed { j, s ->
-            matcher += s
+            matcher +=
+                if (keepWhiteSpace) " $s" else s
 
             for (i in regexes.indices) {
                 val reg = regexes[i]

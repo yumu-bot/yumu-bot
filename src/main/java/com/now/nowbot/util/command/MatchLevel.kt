@@ -9,9 +9,25 @@ package com.now.nowbot.util.command
      * - EXIST：必须存在 ()，
      */
     enum class MatchLevel {
+        /**
+         * \*?
+         */
         ANY_LAZY,
+
+        /**
+         * \*
+         */
         ANY,
+
+        /**
+         * \?
+         */
         MAYBE,
+
+        /**
+         * \+
+         */
         MORE,
+
         EXIST
     }

@@ -39,5 +39,17 @@ enum class Operator(@param:Language("RegExp") val regex: Regex) {
 
             throw IllegalArgumentException.WrongException.Operator()
         }
+
+        fun Operator.getText(): String {
+            return when (this) {
+                XQ,
+                EQ -> "="
+                NE -> "!="
+                GE -> ">="
+                GT -> ">"
+                LE -> "<="
+                LT -> "<"
+            }
+        }
     }
 }
