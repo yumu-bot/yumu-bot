@@ -27,8 +27,6 @@ import reactor.core.publisher.Mono
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.regex.Pattern
@@ -81,25 +79,13 @@ import java.util.regex.Pattern
             }
         }
 
-        log.info("""
-                玩家 ${user.username} 的绑定信息：
-                
-                游戏 ID：${user.userID}
-                游戏模式：${user.mode.fullName}
-                
-                绑定状态：${if (user.isAuthorized) "链接绑定" else "玩家名绑定"}
-                令牌状态：${if (user.isNotExpired) "有效" else "无效"}
-                令牌过期时间：${LocalDateTime.ofEpochSecond(user.time ?: 0, 0, ZoneOffset.ofHours(8))}
-                """.trimIndent()
-        )
-
         if (!user.isAuthorized) {
             throw BindException.Oauth2Exception.UpgradeException()
         }
 
         if (user.isExpired) {
             try {
-                val i = base.refreshUserToken(user, false)
+                base.refreshUserToken(user, false)
             } catch (_: Exception) {
                 throw BindException.Oauth2Exception.RefreshException()
             }
@@ -125,8 +111,11 @@ import java.util.regex.Pattern
     override fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser {
         if (!user.isAuthorized) return getOsuUser(user.userID, mode)
 
-        return request { client ->
-            client.get().uri("me/{mode}", mode.shortName).headers(base.insertHeader(user)).retrieve()
+        return request { client -> client
+            .get().uri("me/{mode}", mode.shortName)
+            .headers { headers ->
+                base.insertHeader(headers, user)
+            }.retrieve()
                 .bodyToMono(OsuUser::class.java).map { data ->
                     userInfoDao.saveUser(data, mode)
                     user.userID = data.userID
@@ -238,7 +227,11 @@ import java.util.regex.Pattern
         if (!user.isAuthorized) throw UnsupportedOperationException.NotOauthBind()
 
         return request { client ->
-            client.get().uri("friends").headers(base.insertHeader(user)).retrieve().bodyToFlux(LazerFriend::class.java)
+            client.get().uri("friends")
+                .headers { headers ->
+                    base.insertHeader(headers, user)
+                }
+                .retrieve().bodyToFlux(LazerFriend::class.java)
                 .collectList()
         }
     }
@@ -254,7 +247,9 @@ import java.util.regex.Pattern
 
     override fun getUserKudosu(user: BindUser): KudosuHistory {
         return request { client ->
-            client.get().uri("users/{uid}/kudosu").headers(base.insertHeader(user)).retrieve()
+            client.get().uri("users/{uid}/kudosu").headers { headers ->
+                base.insertHeader(headers, user)
+            }.retrieve()
                 .bodyToMono(KudosuHistory::class.java)
         }
     }
@@ -262,7 +257,9 @@ import java.util.regex.Pattern
     override fun sendPrivateMessage(sender: BindUser, target: Long, message: String): JsonNode {
         val body: Map<String, Any> = mapOf("target_id" to target, "message" to message, "is_action" to false)
         return request { client ->
-            client.post().uri("chat/new").headers(base.insertHeader(sender)).bodyValue(body).retrieve()
+            client.post().uri("chat/new").headers { headers ->
+                base.insertHeader(headers, sender)
+            }.bodyValue(body).retrieve()
                 .bodyToMono(JsonNode::class.java)
         }
     }
@@ -271,14 +268,18 @@ import java.util.regex.Pattern
         return request { client ->
             client.post().uri {
                     it.path("chat/ack").queryParamIfPresent("since", Optional.ofNullable(since)).build()
-                }.headers(base.insertHeader(user)).retrieve().bodyToMono(JsonNode::class.java)
+                }.headers { headers ->
+                base.insertHeader(headers, user)
+            }.retrieve().bodyToMono(JsonNode::class.java)
         }
     }
 
     override fun getPrivateMessage(sender: BindUser, channel: Long, since: Long): JsonNode {
         return request { client ->
             client.get().uri("chat/channels/{channel}/messages?since={since}", channel, since)
-                .headers(base.insertHeader(sender)).retrieve().bodyToMono(JsonNode::class.java)
+                .headers { headers ->
+                    base.insertHeader(headers, sender)
+                }.retrieve().bodyToMono(JsonNode::class.java)
         }
     }
 

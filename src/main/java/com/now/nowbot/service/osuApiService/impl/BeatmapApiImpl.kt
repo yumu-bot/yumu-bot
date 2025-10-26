@@ -748,7 +748,7 @@ class BeatmapApiImpl(
         }
     }
 
-    private fun searchBeatMapSetFromAPI(query: Map<String, Any?>, bindUser: BindUser? = null): BeatmapsetSearch {
+    private fun searchBeatMapSetFromAPI(query: Map<String, Any?>, user: BindUser? = null): BeatmapsetSearch {
         return request { client ->
             client.get().uri {
                 it.path("beatmapsets/search")
@@ -760,16 +760,16 @@ class BeatmapApiImpl(
                     }
                 }
                 it.build()
-            }
-                .headers {
-                    if (bindUser?.isAuthorized == true && bindUser.isNotExpired) {
-                        base.insertHeader(bindUser)
-                    } else {
-                        base.insertHeader(it)
-                    }
+            }.headers { header ->
+                if (user != null) {
+                    base.insertHeader(header, user)
+                } else {
+                    base.insertHeader(header)
                 }
+            }
                 .retrieve()
                 .bodyToMono(BeatmapsetSearch::class.java)
+
         }
     }
 

@@ -81,15 +81,6 @@ class BindUser {
     val isNotExpired: Boolean
         get() = time != null && System.currentTimeMillis() < time!!
 
-    override fun toString(): String {
-        return baseID.toString() +
-                "," + username +
-                "," + userID +
-                "," + accessToken +
-                "," + refreshToken +
-                "," + time +
-                "," + mode
-    }
 
     // 重写 equals 必须要重写 hashCode, 如果别的地方使用 HashSet/HashMap 会炸
     override fun equals(other: Any?): Boolean {
@@ -103,6 +94,10 @@ class BindUser {
         var result = username.hashCode()
         result = 31 * result + userID.hashCode()
         return result
+    }
+
+    override fun toString(): String {
+        return "BindUser(isExpired=$isExpired, isAuthorized=$isAuthorized, mode=$mode, time=$time, refreshToken=$refreshToken, accessToken=$accessToken, userID=$userID, username='$username', baseID=$baseID)"
     }
 
     companion object {

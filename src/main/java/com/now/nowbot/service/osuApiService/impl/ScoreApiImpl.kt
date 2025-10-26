@@ -34,7 +34,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
-import java.util.function.Consumer
 import java.util.function.Function
 import kotlin.text.HexFormat
 
@@ -177,7 +176,7 @@ class ScoreApiImpl(
                     .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                     .build(bid, uid)
             },
-            { base.insertHeader(it) },
+            { base.insertHeader(this) },
             { uriBuilder: UriBuilder ->
                 uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}")
@@ -204,7 +203,9 @@ class ScoreApiImpl(
 
                 it.build(bid, user.userID)
             },
-            base.insertHeader(user),
+            {
+                base.insertHeader(this, user)
+            },
             {
                 it.path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", 1)
@@ -241,7 +242,9 @@ class ScoreApiImpl(
         }
         return retryOn404<BeatmapUserScore>(
             uri.apply(0),
-            { base.insertHeader(it) },
+            {
+                base.insertHeader(this)
+            },
             uri.apply(1),
         )
     }
@@ -267,7 +270,9 @@ class ScoreApiImpl(
         }
         return retryOn404<BeatmapUserScore>(
             uri.apply(0),
-            base.insertHeader(user),
+            {
+                base.insertHeader(this, user)
+            },
             uri.apply(1),
         )
     }
@@ -282,8 +287,9 @@ class ScoreApiImpl(
                         .queryParam("legacy_only", 0)
                         .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                         .build(bid, user.userID)
+                }.headers { headers ->
+                    base.insertHeader(headers, user)
                 }
-                .headers(base.insertHeader(user))
                 .retrieve()
                 .bodyToMono(JsonNode::class.java)
                 .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
@@ -314,28 +320,26 @@ class ScoreApiImpl(
         type: String?,
         legacy: Boolean
     ): List<LazerScore> {
-        return request { client ->
-            val headersSpec = client.get()
-                .uri {
-                    it.path("beatmaps/{bid}/scores")
-                        .queryParam("legacy_only", if (legacy) 1 else 0)
-                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                        .queryParamIfPresent("type", Optional.ofNullable(type))
+        return request { client -> client.get()
+            .uri {
+                it.path("beatmaps/{bid}/scores")
+                    .queryParam("legacy_only", if (legacy) 1 else 0)
+                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                    .queryParamIfPresent("type", Optional.ofNullable(type))
 
-                    LazerMod.setMods(it, mods)
+                LazerMod.setMods(it, mods)
 
-                    it.build(bid)
+                it.build(bid)
+            }.headers { headers ->
+                if (bindUser != null) {
+                    base.insertHeader(headers, bindUser)
+                } else {
+                    base.insertHeader(headers)
                 }
-
-            if (bindUser != null) {
-                headersSpec.headers(base.insertHeader(bindUser))
-            } else {
-                headersSpec.headers { base.insertHeader(it) }
             }
-
-            headersSpec.retrieve()
-                .bodyToMono(JsonNode::class.java)
-                .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
+            .retrieve()
+            .bodyToMono(JsonNode::class.java)
+            .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
         }
     }
 
@@ -480,7 +484,9 @@ class ScoreApiImpl(
                         .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                         .build(user.userID)
                 }
-                .headers(base.insertHeader(user))
+                .headers { headers ->
+                    base.insertHeader(headers, user)
+                }
                 .retrieve()
                 .bodyToFlux(LazerScore::class.java)
                 .collectList()
@@ -565,14 +571,16 @@ class ScoreApiImpl(
 
     private inline fun <reified T> retryOn404(
         uri: Function<UriBuilder, URI>,
-        headers: Consumer<HttpHeaders>,
+        crossinline headers: HttpHeaders.() -> Unit,
         retry: Function<UriBuilder, URI>,
     ): T {
         return try {
             request { client ->
                 client.get()
                     .uri(uri)
-                    .headers(headers)
+                    .headers {
+                        h -> headers(h)
+                    }
                     .retrieve()
                     .bodyToMono(T::class.java)
             }
@@ -580,7 +588,9 @@ class ScoreApiImpl(
             request { client ->
                 client.get()
                     .uri(retry)
-                    .headers(headers)
+                    .headers {
+                        h -> headers(h)
+                    }
                     .retrieve()
                     .bodyToMono(T::class.java)
             }
