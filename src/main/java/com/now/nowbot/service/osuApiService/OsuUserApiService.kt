@@ -21,7 +21,7 @@ interface OsuUserApiService {
 
     @Throws(WebClientResponseException::class) fun getOauthUrl(state: String, full: Boolean): String
 
-    @Throws(BindException::class) fun refreshUserTokenInstant(bindUser: BindUser?, isMyself: Boolean = false): BindUser
+    @Throws(BindException::class) fun refreshUserTokenInstant(user: BindUser?, isMyself: Boolean = false): BindUser
 
     @CanIgnoreReturnValue @Throws(ExecutionException::class) fun refreshUserToken(user: BindUser): String?
 

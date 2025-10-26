@@ -81,27 +81,28 @@ import java.util.regex.Pattern
     /**
      * 这个方法适用于需要传递玩家 token 的请求之前——绑定玩家需要有立即可用的 token。
      */
-    override fun refreshUserTokenInstant(bindUser: BindUser?, isMyself: Boolean): BindUser {
-        if (bindUser == null) {
+    override fun refreshUserTokenInstant(user: BindUser?, isMyself: Boolean): BindUser {
+        if (user == null) {
             if (isMyself) {
                 throw BindException.NotBindException.YouNotBind()
             } else {
                 throw BindException.NotBindException.UserNotBind()
             }
-            // 无权限
-        } else if (!bindUser.isAuthorized) {
+        }
+
+        if (!user.isAuthorized) {
             throw BindException.Oauth2Exception.UpgradeException()
         }
 
-        if (bindUser.isExpired) {
+        if (user.isExpired) {
             try {
-                refreshUserToken(bindUser)!!
+                base.refreshUserToken(user, false)
             } catch (_: Exception) {
                 throw BindException.Oauth2Exception.RefreshException()
             }
         }
 
-        return bindUser
+        return user
     }
 
     override fun refreshUserToken(user: BindUser): String? {
