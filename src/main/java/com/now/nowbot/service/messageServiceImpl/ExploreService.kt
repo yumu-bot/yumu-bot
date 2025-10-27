@@ -175,9 +175,14 @@ class ExploreService(
 
                 val bindUser = bindDao.getBindUserFromOsuIDOrNull(user.userID)
 
-                val search = if (query.containsKey("played") || query.containsKey("r")) {
+                val search = if (query.containsKey("played")
+                    || query.containsKey("r")
+                    || (query.containsKey("c") && query.map { (_, v) ->
+                        v.toString().contains("recommended") || v.toString().contains("follows")
+                    }.contains(true))
+                    ) {
                     val bind = userApiService.refreshUserTokenInstant(bindUser, true)
-                    beatmapApiService.searchBeatmapset(query, user = bind)
+                    beatmapApiService.searchBeatmapsetParallel(query, user = bind)
                 } else {
                     beatmapApiService.searchBeatmapsetParallel(query)
                 }

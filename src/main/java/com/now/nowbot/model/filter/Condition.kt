@@ -14,7 +14,7 @@ data class Condition(
     private val string: String,
     private val mode: Boolean? = true,
 ) {
-    val condition = string.trim()
+    val condition = string.replace('_', ' ').trim()
     val long: Long = condition.toLongOrNull() ?: -1L
     val int: Int = condition.toIntOrNull() ?: -1
     val double: Double = condition.toDoubleOrNull() ?: -1.0

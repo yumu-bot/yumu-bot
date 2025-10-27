@@ -1233,8 +1233,9 @@ object DataUtil {
                     val after = strs[min(j + 1, strs.size - 1)] // 后一个元素，或是最后一个
 
                     if (strs.size - 1 == j || after.contains(REG_OPERATOR.toRegex()) || (noContains != null && after.contains(noContains))) {
-                        result[i].add(matcher)
+                        result[i].add(matcher.trim())
                         matcher = ""
+                        break
                     }
                 }
             }
