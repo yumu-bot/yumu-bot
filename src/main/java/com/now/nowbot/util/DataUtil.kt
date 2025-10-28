@@ -1259,7 +1259,7 @@ object DataUtil {
             "每页个数必须大于 0"
         }
 
-        val maxPage = (collection.size / maxPerPage).coerceAtLeast(0) + 1
+        val maxPage = ((collection.size - 1) / maxPerPage).coerceAtLeast(0) + 1
 
         val end = (page.coerceAtMost(maxPage) * maxPerPage).coerceAtMost(collection.size)
         val start = (end - maxPerPage).coerceAtLeast(0)
