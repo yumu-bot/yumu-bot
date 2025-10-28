@@ -1,76 +1,92 @@
-package com.now.nowbot.listener;
+package com.now.nowbot.listener
 
-import com.now.nowbot.permission.PermissionImplement;
-import com.now.nowbot.qq.local.Bot;
-import com.now.nowbot.qq.local.Event;
-import com.now.nowbot.qq.local.contact.LocalGroup;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.throwable.TipsException;
-import com.now.nowbot.throwable.TipsRuntimeException;
-import com.now.nowbot.throwable.botRuntimeException.LogException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.StringUtils;
+import com.now.nowbot.permission.PermissionImplement
+import com.now.nowbot.qq.local.Bot
+import com.now.nowbot.qq.local.Event
+import com.now.nowbot.qq.local.contact.LocalGroup
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.TipsRuntimeException
+import com.now.nowbot.throwable.botRuntimeException.LogException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.util.*
+import java.util.concurrent.ExecutionException
 
-import java.util.Map;
-import java.util.Scanner;
-import java.util.concurrent.ExecutionException;
+class LocalCommandListener {
+    private val bot: Bot = Bot()
 
-public class LocalCommandListener {
-    static final   Logger                      log = LoggerFactory.getLogger(LocalCommandListener.class);
-    private static Map<String, MessageService> handler;
-    private final  Bot                         bot;
-
-    public LocalCommandListener() {
-        bot = new Bot();
-    }
-
-    public static void setHandler(Map<String, MessageService> handler) {
-        LocalCommandListener.handler = handler;
-    }
-
-    public static void startListener() {
-        var listener = new LocalCommandListener();
-        Thread.startVirtualThread(() -> {
-            Scanner sc = new Scanner(System.in);
-            String cmd;
-            while (StringUtils.hasText((cmd = sc.nextLine()))) {
-                String finalCmd = cmd;
-                Thread.startVirtualThread(() -> listener.onMessage(finalCmd));
-            }
-        });
-    }
-
-    void onMessage(String message) {
-        var group = new LocalGroup();
-        var event = new Event.GroupMessageEvent(bot, group, message);
+    fun onMessage(message: String?) {
+        val group = LocalGroup()
+        val event = Event.GroupMessageEvent(bot, group, message)
         try {
-            PermissionImplement.onMessage(event, ((_, x) -> {
-                if (x instanceof TipsException tx) {
-                    log.info("捕捉到异常提示：{}", tx.getMessage());
-                    log.debug("异常详细信息: ", tx);
-                } else if (x instanceof TipsRuntimeException rx) {
-                    log.info("捕捉到提示：{}", rx.getMessage());
-                } else if (x instanceof ExecutionException xx) {
-                    log.info("捕捉到并行中的提示", xx);
-                } else if (x instanceof LogException lx) {
-                    log.info("捕捉到记录：{}", lx.getMessage());
-                } else {
-                    log.info("捕捉到异常：", x);
-                }
-            }));
+            PermissionImplement.onMessage(event, ({ _, x ->
+                when (x) {
+                    is TipsException -> {
+                        log.info("捕捉到异常提示：{}", x.message)
+                        log.debug("异常详细信息: ", x)
+                    }
 
-        } catch (Exception e) {
-            log.info("捕捉到未知异常：{}", e.getMessage());
-            log.debug("异常详细信息:", e);
+                    is TipsRuntimeException -> {
+                        log.info("捕捉到提示：{}", x.message)
+                    }
+
+                    is ExecutionException -> {
+                        log.info("捕捉到并行中的提示", x)
+                    }
+
+                    is LogException -> {
+                        log.info("捕捉到记录：{}", x.message)
+                    }
+
+                    else -> {
+                        log.info("捕捉到异常：", x)
+                    }
+                }
+            }))
+        } catch (e: Exception) {
+            log.info("捕捉到未知异常：{}", e.message)
+            log.debug("异常详细信息:", e)
         }
 
-        if (event.getRawMessage().startsWith("/")) {
+        if (event.rawMessage.startsWith("/")) {
             try {
-                PermissionImplement.onTencentMessage(event, (event::reply));
-            } catch (Exception e) {
-                log.info("捕捉到腾讯异常：{}", e.getMessage());
-                log.debug("异常详细信息:", e);
+                PermissionImplement.onTencentMessage(event, (event::reply))
+            } catch (e: Exception) {
+                log.info("捕捉到腾讯异常：{}", e.message)
+                log.debug("异常详细信息:", e)
+            }
+        }
+    }
+
+    companion object {
+        val log: Logger = LoggerFactory.getLogger(LocalCommandListener::class.java)
+        private var handler: MutableMap<String, out MessageService<Any>?> = mutableMapOf()
+
+        fun setHandler(handler: Map<String, MessageService<*>>?) {
+            @Suppress("UNCHECKED_CAST")
+            Companion.handler = handler as? MutableMap<String, MessageService<Any>> ?: mutableMapOf()
+        }
+
+        fun startListener() {
+            val listener = LocalCommandListener()
+            Thread.startVirtualThread {
+                Scanner(System.`in`).use { sc ->  // 使用 use 确保资源关闭
+                    while (true) {
+                        val input = sc.nextLine()
+                        if (input.isBlank()) {
+                            continue  // 跳过空输入
+                        }
+
+                        if (input.equals("exit", ignoreCase = true)) {
+                            break  // 提供退出机制
+                        }
+
+                        Thread.startVirtualThread {
+                            listener.onMessage(input)
+                        }
+                    }
+                }
             }
         }
     }

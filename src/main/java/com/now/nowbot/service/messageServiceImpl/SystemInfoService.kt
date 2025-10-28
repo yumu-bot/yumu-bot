@@ -63,6 +63,6 @@ class SystemInfoService : MessageService<Boolean> {
 
     companion object {
         @JvmField
-        val INFO_MAP: Map<String, String> = HashMap(2)
+        val INFO_MAP: MutableMap<String, String> = HashMap(2)
     }
 }

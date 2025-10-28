@@ -1,228 +1,281 @@
-package com.now.nowbot.permission;
+package com.now.nowbot.permission
 
-import com.now.nowbot.aop.CheckPermission;
-import com.now.nowbot.aop.ServiceOrder;
-import com.now.nowbot.config.AsyncSetting;
-import com.now.nowbot.config.Permission;
-import com.now.nowbot.dao.PermissionDao;
-import com.now.nowbot.entity.ServiceSwitchLite;
-import com.now.nowbot.mapper.ServiceSwitchMapper;
-import com.now.nowbot.qq.event.GroupMessageEvent;
-import com.now.nowbot.qq.event.MessageEvent;
-import com.now.nowbot.qq.message.MessageChain;
-import com.now.nowbot.qq.tencent.TencentMessageService;
-import com.now.nowbot.service.MessageService;
-import com.now.nowbot.throwable.BotException;
-import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException;
-import com.now.nowbot.throwable.botRuntimeException.NetworkException;
-import com.now.nowbot.util.ASyncMessageUtil;
-import com.now.nowbot.util.ContextUtil;
-import jakarta.annotation.Resource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.aop.support.AopUtils;
-import org.springframework.stereotype.Component;
-
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.ToIntFunction;
+import com.now.nowbot.aop.CheckPermission
+import com.now.nowbot.aop.ServiceOrder
+import com.now.nowbot.config.AsyncSetting
+import com.now.nowbot.config.Permission
+import com.now.nowbot.dao.PermissionDao
+import com.now.nowbot.entity.ServiceSwitchLite
+import com.now.nowbot.mapper.ServiceSwitchMapper
+import com.now.nowbot.qq.event.GroupMessageEvent
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.tencent.TencentMessageService
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.throwable.BotException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.util.ASyncMessageUtil
+import com.now.nowbot.util.ContextUtil
+import com.now.nowbot.util.command.REG_EXCLAMATION
+import com.now.nowbot.util.command.REG_IGNORE
+import com.now.nowbot.util.command.REG_SLASH
+import jakarta.annotation.Resource
+import org.slf4j.LoggerFactory
+import org.springframework.aop.support.AopUtils
+import org.springframework.stereotype.Component
+import java.lang.reflect.Method
+import java.util.concurrent.*
+import java.util.function.BiConsumer
+import java.util.function.Consumer
 
 @Component
-public class PermissionImplement implements PermissionController {
-    private static final Logger                                     log               = LoggerFactory.getLogger(PermissionImplement.class);
-    private static final ScheduledExecutorService                   EXECUTOR          = Executors.newScheduledThreadPool(Integer.MAX_VALUE, AsyncSetting.THREAD_FACTORY);
-    public static final  String                                     GLOBAL_PERMISSION = "PERMISSION_ALL";
-    private static final Long                                       LOCAL_GROUP_ID    = -10086L;
-    private static final Set<String>                                superService      = new CopyOnWriteArraySet<>();
-    private static final Map<String, PermissionService>             permissionMap     = new LinkedHashMap<>();
-    private static final Map<String, MessageService<Object>>        servicesMap       = new LinkedHashMap<>();
-    private static final Map<String, TencentMessageService<Object>> serviceMap4TX     = new LinkedHashMap<>();
-    private static final Map<String, ScheduledFuture<?>>            futureMap         = new ConcurrentHashMap<>();
+class PermissionImplement : PermissionController {
+    companion object {
+        private val log = LoggerFactory.getLogger(PermissionImplement::class.java)
+        private val EXECUTOR = Executors.newScheduledThreadPool(Int.MAX_VALUE, AsyncSetting.THREAD_FACTORY)
+        const val GLOBAL_PERMISSION = "PERMISSION_ALL"
+        private const val LOCAL_GROUP_ID = -10086L
 
-    private static Set<Long>         superList;
-    private static Set<Long>         testerList;
-    private static PermissionService AllService;
+        private val superService = CopyOnWriteArraySet<String>()
+        private val permissionMap = LinkedHashMap<String, PermissionService>()
+        private val servicesMap = LinkedHashMap<String, MessageService<*>>()
+        private val serviceMap4TX = LinkedHashMap<String, TencentMessageService<*>>()
+        private val futureMap = ConcurrentHashMap<String, ScheduledFuture<*>>()
 
-    @Resource
-    private PermissionDao       permissionDao;
-    @Resource
-    private ServiceSwitchMapper serviceSwitchMapper;
+        private lateinit var superList: Set<Long>
+        private lateinit var testerList: Set<Long>
+        private lateinit var AllService: PermissionService
 
-    public static void onMessage(MessageEvent event, BiConsumer<MessageEvent, Throwable> errorHandle) {
-        ASyncMessageUtil.put(event);
-        String textMessage = event.getTextMessage().trim();
-        servicesMap.forEach((serviceName, service) -> {
-            try {
-                // 服务截止
-                if (checkStopListener()) return;
-                // super 用户不受检查
-                if (!isSuper(event.getSender().getId())) {
-                    // 是否再黑名单内
-                    if (isBlock(serviceName, event)) {
+        private val DICE_REGEX = Regex("^($REG_EXCLAMATION|$REG_SLASH|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d(?!${REG_IGNORE})).*")
+        private const val PREFIX = "!！?？#＃/\\"
+
+        /**
+         * 极速™ 筛选器：
+         * 消息预处理
+         */
+        private fun filterMessage(trimmed: String): Boolean {
+            if (trimmed.isEmpty()) return false
+
+            val firstChar = trimmed.first()
+
+            // 情况1：以特殊符号开头
+            if (firstChar in PREFIX) {
+                return true
+            }
+
+            // 情况2：以数字开头，并且包含d或dice
+            if (firstChar.isDigit()) {
+                return trimmed.matches(DICE_REGEX)
+            }
+
+            return false
+        }
+
+        fun onMessage(event: MessageEvent, errorHandle: BiConsumer<MessageEvent, Throwable>) {
+            ASyncMessageUtil.put(event)
+            val textMessage = event.textMessage.trim()
+
+            if (!filterMessage(textMessage)) {
+                return
+            }
+
+            servicesMap.forEach { (serviceName, service) ->
+                try {
+                    // 服务截止
+                    if (checkStopListener()) {
+                        return@forEach
+                    }
+                    // super 用户不受检查
+                    // 是否在黑名单内
+                    if (!isSuper(event.sender.id) && isBlock(serviceName, event)) {
                         // 被黑名单禁止
-                        log.debug("黑名单禁止, 请求功能:{} ,请求人: {}", serviceName, event.getSender().getId());
-                        return;
+                        log.debug("黑名单禁止, 请求功能: {} ,请求人: {}", serviceName, event.sender.id)
+                        return@forEach
+                    }
+
+                    @Suppress("UNCHECKED_CAST")
+                    val typedService = service as MessageService<Any>
+
+                    val data = MessageService.DataValue<Any>()
+
+                    if (typedService.isHandle(event, textMessage, data)) {
+                        typedService.handleMessage(event, data.value!!)
+                    }
+                } catch (e: Throwable) {
+                    errorHandle.accept(event, e)
+                }
+            }
+        }
+
+        fun onTencentMessage(event: MessageEvent, onMessage: Consumer<MessageChain>) {
+            val textMessage = event.textMessage.trim()
+
+            if (!filterMessage(textMessage)) {
+                return
+            }
+
+            for ((_, service) in serviceMap4TX) {
+                var reply: MessageChain?
+
+                try {
+                    val data = service.accept(event, textMessage) ?: continue
+
+                    @Suppress("UNCHECKED_CAST")
+                    val typedService = service as TencentMessageService<Any>
+                    reply = typedService.reply(event, data)
+                } catch (e: Throwable) {
+                    reply = when (e) {
+                        is BotException -> MessageChain(e.message ?: "错误")
+                        is ExecutionException -> MessageChain(e.cause?.message ?: "错误")
+                        is TimeoutException -> MessageChain("超时了。")
+                        else -> {
+                            log.error("腾讯消息类：其他错误", e)
+                            continue
+                        }
                     }
                 }
 
-                var data = new MessageService.DataValue<>();
-                if (service.isHandle(event, textMessage, data)) {
-                    service.handleMessage(event, Objects.requireNonNull(data.getValue()));
+                if (reply == null) {
+                    reply = MessageChain(NetworkException.ComponentException.NoResponse())
                 }
-            } catch (Throwable e) {
-                errorHandle.accept(event, e);
-            }
-        });
-    }
-
-    public static void onTencentMessage(MessageEvent event, Consumer<MessageChain> onMessage) {
-        for (var entry : serviceMap4TX.entrySet()) {
-            var service = entry.getValue();
-            MessageChain reply = null;
-            try {
-                var data = service.accept(event, event.getTextMessage());
-                if (data == null) {
-                    continue;
-                }
-                reply = service.reply(event, data);
-            } catch (Throwable e) {
-                switch (e) {
-                    case BotException botException -> reply = new MessageChain(e.getMessage());
-                    case ExecutionException executionException -> reply = new MessageChain(e.getCause().getMessage());
-                    case TimeoutException timeoutException -> reply = new MessageChain("超时了。");
-                    default -> {
-                        log.error("腾讯消息类：其他错误", e);
-                        continue;
-                    }
-                }
+                onMessage.accept(reply)
+                return
             }
 
-            if (reply == null) {
-                reply = new MessageChain(new NetworkException.ComponentException.NoResponse());
-            }
-            onMessage.accept(reply);
-            return;
+            onMessage.accept(MessageChain(IllegalArgumentException.WrongException.Instruction(textMessage)))
         }
 
-        onMessage.accept(new MessageChain(new IllegalArgumentException.WrongException.Instruction()));
-    }
+        private fun checkStopListener(): Boolean {
+            return ContextUtil.getContext("StopListener", Boolean::class.java) == true
+        }
 
-    private static boolean checkStopListener() {
-        return Boolean.TRUE.equals(ContextUtil.getContext("StopListener", Boolean.class));
-    }
+        private fun isSuper(id: Long): Boolean {
+            return superList.contains(id)
+        }
 
-    private static boolean isSuper(Long id) {
-        return superList.contains(id);
-    }
+        private fun isBlock(name: String, event: MessageEvent): Boolean {
+            if (superService.contains(name)) return true
+            val record = getService(name)
+            val servicePermission = record.permission
+            val globalPermission = AllService
 
-    private static boolean isBlock(String name, MessageEvent event) {
-        if (superService.contains(name)) return true;
-        PermissionRecord record = getService(name);
-        var servicePermission = record.permission;
-        var globalPermission = AllService;
+            return if (event is GroupMessageEvent) {
+                val gid = event.group.id
+                val uid = event.sender.id
+                !globalPermission.check(gid, uid) || !servicePermission.check(gid, uid)
+            } else {
+                val uid = event.sender.id
+                !globalPermission.check(null, uid) || !servicePermission.check(null, uid)
+            }
+        }
 
-        if (event instanceof GroupMessageEvent group) {
-            var gid = group.getGroup().getId();
-            var uid = group.getSender().getId();
-            return !globalPermission.check(gid, uid) || !servicePermission.check(gid, uid);
-        } else {
-            var uid = event.getSender().getId();
-            return !globalPermission.check(null, uid) || !servicePermission.check(null, uid);
+        private fun getService(name: String): PermissionRecord {
+            for ((key, value) in permissionMap) {
+                if (name.equals(key, ignoreCase = true)) {
+                    return PermissionRecord.fromEntry(key to value)
+                }
+            }
+            log.debug("未找到对应的服务 {}, {}", name, permissionMap.size)
+            throw RuntimeException("未找到对应的服务")
         }
     }
 
-    private static PermissionRecord getService(String name) {
-        for (var entry : permissionMap.entrySet()) {
-            if (name.equalsIgnoreCase(entry.getKey())) {
-                return PermissionRecord.fromEntry(entry);
-            }
-        }
-        log.debug("未找到对应的服务 {}, {}", name, permissionMap.size());
-        throw new RuntimeException("未找到对应的服务");
-    }
+    @Resource
+    private lateinit var permissionDao: PermissionDao
 
-    @SuppressWarnings("unchecked")
-    public void init(
-            Map<String, MessageService> services
-    ) {
-        // 初始化 全局服务控制
-        var globalGroupList = permissionDao.getQQList(GLOBAL_PERMISSION, PermissionType.GROUP_B);
-        var globalUserList = permissionDao.getQQList(GLOBAL_PERMISSION, PermissionType.FRIEND_B);
-        AllService = new PermissionService(false, false, false, globalGroupList, globalUserList, List.of());
+    @Resource
+    private lateinit var serviceSwitchMapper: ServiceSwitchMapper
+
+    @Suppress("UNCHECKED_CAST")
+    fun init(services: Map<String, MessageService<*>>) {
+        // 初始化全局服务控制
+        val globalGroupList = permissionDao.getQQList(GLOBAL_PERMISSION, PermissionType.GROUP_B)
+        val globalUserList = permissionDao.getQQList(GLOBAL_PERMISSION, PermissionType.FRIEND_B)
+        AllService = PermissionService(false, false, false, globalGroupList, globalUserList, emptyList())
+
         // 初始化顺序
-        Map<String, Integer> sortServiceMap = new HashMap<>();
-        services.forEach((name, service) -> {
-            CheckPermission $beansCheck;
+        val sortServiceMap = HashMap<String, Int>()
+        services.forEach { (name, service) ->
+            var beansCheck: CheckPermission?
             /*
              * 获取 service 的执行函数
              */
-            Method method = null;
-            for (var m : AopUtils.getTargetClass(service).getMethods()) {
-                if (m.getName().equals("handleMessage")) method = m;
+            var method: Method? = null
+            for (m in AopUtils.getTargetClass(service).methods) {
+                if (m.name == "handleMessage") method = m
             }
             // 必定获取到对应函数
-            assert Objects.nonNull(method);
+            checkNotNull(method) { "未找到 handleMessage 方法" }
 
             // 处理排序
-            var sort = method.getAnnotation(ServiceOrder.class);
-            if (Objects.isNull(sort)) {
-                sortServiceMap.put(name, 0);
+            val sort = method.getAnnotation(ServiceOrder::class.java)
+            if (sort == null) {
+                sortServiceMap[name] = 0
             } else {
-                sortServiceMap.put(name, sort.sort());
+                sortServiceMap[name] = sort.sort
             }
 
             // 处理权限注解
-            $beansCheck = method.getAnnotation(CheckPermission.class);
-            if (Objects.isNull($beansCheck)) {
+            beansCheck = method.getAnnotation(CheckPermission::class.java)
+            if (beansCheck == null) {
                 try {
-                    $beansCheck = Permission.class.getDeclaredMethod("CheckPermission").getAnnotation(CheckPermission.class);
-                } catch (NoSuchMethodException ignore) {
+                    beansCheck = Permission::class.java.getDeclaredMethod("CheckPermission").getAnnotation(CheckPermission::class.java)
+                } catch (_: NoSuchMethodException) {
+
                 }
             }
             // 必定有对应注解
-            assert Objects.nonNull($beansCheck);
+            checkNotNull(beansCheck) { "未找到 CheckPermission 注解" }
 
-            if ($beansCheck.isSuperAdmin()) {
-                superService.add(name);
-                return;
+            if (beansCheck.isSuperAdmin) {
+                superService.add(name)
+                return@forEach
             }
 
-            List<Long> groups;
-            List<Long> groupsSelf;
-            List<Long> users;
+            val groups = permissionDao.getQQList(name, if (beansCheck.isWhite) PermissionType.GROUP_W else PermissionType.GROUP_B)
+            val users = permissionDao.getQQList(name, if (beansCheck.isWhite) PermissionType.FRIEND_W else PermissionType.FRIEND_B)
+            val groupsSelf = permissionDao.getQQList(name, if (beansCheck.isWhite) PermissionType.FRIEND_W else PermissionType.GROUP_SELF_B)
 
-            groups = permissionDao.getQQList(name, $beansCheck.isWhite() ? PermissionType.GROUP_W : PermissionType.GROUP_B);
-            users = permissionDao.getQQList(name, $beansCheck.isWhite() ? PermissionType.FRIEND_W : PermissionType.FRIEND_B);
-            groupsSelf = permissionDao.getQQList(name, $beansCheck.isWhite() ? PermissionType.FRIEND_W : PermissionType.GROUP_SELF_B);
+            val param = PermissionService(beansCheck.userWhite, beansCheck.groupWhite, beansCheck.userSet, groups, users, groupsSelf)
+            permissionMap[name] = param
+        }
 
-            var param = new PermissionService($beansCheck.userWhite(), $beansCheck.groupWhite(), $beansCheck.userSet(), groups, users, groupsSelf);
-            permissionMap.put(name, param);
-        });
+        sortServiceMap.entries
+            .sortedByDescending { it.value }
+            .map { it.key }
+            .forEach { name ->
+                val service = services[name]?.apply {
+                    servicesMap[name] = this
+                }
 
+                if (service is TencentMessageService<*>) {
+                    @Suppress("UNCHECKED_CAST")
+                    serviceMap4TX[name] = service as TencentMessageService<Any>
+                }
+            }
+
+        /*
         // 处理完服务排序
-        sortServiceMap.entrySet()
-                .stream()
-                .sorted(Comparator.comparingInt(
-                        (ToIntFunction<Map.Entry<String, Integer>>) Map.Entry::getValue).reversed()
-                )
-                .map(Map.Entry::getKey)
-                .forEach(name -> {
-                    var service = services.get(name);
-                    servicesMap.put(name, service);
-                    if (service instanceof TencentMessageService tx) {
-                        serviceMap4TX.put(name, tx);
-                    }
-                });
+        sortServiceMap.entries
+            .stream()
+            .sorted(Comparator.comparingInt(ToIntFunction<Map.Entry<String, Int>> { it.value }.reversed()))
+            .map { it.key }
+            .forEach { name ->
+                val service = services[name]
+                servicesMap[name] = service
+                if (service is TencentMessageService<*>) {
+                    @Suppress("UNCHECKED_CAST")
+                    serviceMap4TX[name] = service as TencentMessageService<Any>
+                }
+            }
 
+         */
 
-        //初始化暗杀名单
-        superList = Set.of(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L, LOCAL_GROUP_ID);
+        // 初始化暗杀名单
+        superList = setOf(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L, LOCAL_GROUP_ID)
 
-        log.info("权限模块初始化完成");
-
+        log.info("权限模块初始化完成")
     }
 
     /**
@@ -232,29 +285,28 @@ public class PermissionImplement implements PermissionController {
      * @param isGroup 是否为群
      * @param time    撤销时间
      */
-    private void blockService(String name, PermissionService perm, Long id, boolean isGroup, Long time) {
-        var index = isGroup ? "g" : "u";
-
-        var key = name + ":" + index + id;
+    private fun blockService(name: String, perm: PermissionService, id: Long, isGroup: Boolean, time: Long?) {
+        val index = if (isGroup) "g" else "u"
+        val key = "$name:$index$id"
         if (time != null) {
-            futureMap.put(key, EXECUTOR.schedule(() -> unblockService(name, perm, id, isGroup, null), time, TimeUnit.MILLISECONDS));
+            futureMap[key] = EXECUTOR.schedule({ unblockService(name, perm, id, isGroup, null) }, time, TimeUnit.MILLISECONDS)
         } else {
-            futureMap.computeIfPresent(key, this::cancelFuture);
+            futureMap.computeIfPresent(key, this::cancelFuture)
         }
         if (isGroup) {
-            if (perm.isGroupWhite()) {
-                permissionDao.addGroup(name, PermissionType.GROUP_W, id);
+            if (perm.isGroupWhite) {
+                permissionDao.addGroup(name, PermissionType.GROUP_W, id)
             } else {
-                permissionDao.addGroup(name, PermissionType.GROUP_B, id);
+                permissionDao.addGroup(name, PermissionType.GROUP_B, id)
             }
-            perm.addGroup(id);
+            perm.addGroup(id)
         } else {
-            if (perm.isUserWhite()) {
-                permissionDao.addUser(name, PermissionType.FRIEND_W, id);
+            if (perm.isUserWhite) {
+                permissionDao.addUser(name, PermissionType.FRIEND_W, id)
             } else {
-                permissionDao.addUser(name, PermissionType.FRIEND_B, id);
+                permissionDao.addUser(name, PermissionType.FRIEND_B, id)
             }
-            perm.addUser(id);
+            perm.addUser(id)
         }
     }
 
@@ -265,244 +317,219 @@ public class PermissionImplement implements PermissionController {
      * @param isGroup 是否为群
      * @param time    撤销时间
      */
-    private void unblockService(String name, PermissionService perm, Long id, boolean isGroup, Long time) {
-        var index = isGroup ? "g" : "u";
-        var key = name + ":" + index + id;
+    private fun unblockService(name: String, perm: PermissionService, id: Long, isGroup: Boolean, time: Long?) {
+        val index = if (isGroup) "g" else "u"
+        val key = "$name:$index$id"
         if (time != null && time > 0) {
-            futureMap.put(key, EXECUTOR.schedule(() -> blockService(name, perm, id, isGroup, null), time, TimeUnit.MILLISECONDS));
+            futureMap[key] = EXECUTOR.schedule({ blockService(name, perm, id, isGroup, null) }, time, TimeUnit.MILLISECONDS)
         } else {
-            futureMap.computeIfPresent(key, this::cancelFuture);
+            futureMap.computeIfPresent(key, this::cancelFuture)
         }
 
         if (isGroup) {
-            if (perm.isGroupWhite()) {
-                permissionDao.deleteGroup(name, PermissionType.GROUP_W, id);
+            if (perm.isGroupWhite) {
+                permissionDao.deleteGroup(name, PermissionType.GROUP_W, id)
             } else {
-                permissionDao.deleteGroup(name, PermissionType.GROUP_B, id);
+                permissionDao.deleteGroup(name, PermissionType.GROUP_B, id)
             }
-            perm.deleteGroup(id);
+            perm.deleteGroup(id)
         } else {
-            if (perm.isUserWhite()) {
-                permissionDao.deleteUser(name, PermissionType.FRIEND_W, id);
+            if (perm.isUserWhite) {
+                permissionDao.deleteUser(name, PermissionType.FRIEND_W, id)
             } else {
-                permissionDao.deleteUser(name, PermissionType.FRIEND_B, id);
+                permissionDao.deleteUser(name, PermissionType.FRIEND_B, id)
             }
-            perm.deleteUser(id);
+            perm.deleteUser(id)
         }
     }
 
-    private void blockServiceSelf(String name, PermissionService perm, Long id, Long time) {
-        var key = name + ":sg" + id;
+    private fun blockServiceSelf(name: String, perm: PermissionService, id: Long, time: Long?) {
+        val key = "$name:sg$id"
         if (time != null) {
-            futureMap.put(key, EXECUTOR.schedule(() -> unblockServiceSelf(name, perm, id, null), time, TimeUnit.MILLISECONDS));
+            futureMap[key] = EXECUTOR.schedule({ unblockServiceSelf(name, perm, id, null) }, time, TimeUnit.MILLISECONDS)
         } else {
-            futureMap.computeIfPresent(key, this::cancelFuture);
+            futureMap.computeIfPresent(key, this::cancelFuture)
         }
-        permissionDao.addGroup(name, PermissionType.GROUP_SELF_B, id);
-        perm.addSelfGroup(id);
+        permissionDao.addGroup(name, PermissionType.GROUP_SELF_B, id)
+        perm.addSelfGroup(id)
     }
 
-    private void unblockServiceSelf(String name, PermissionService perm, Long id, Long time) {
-        var key = name + ":sg" + id;
+    private fun unblockServiceSelf(name: String, perm: PermissionService, id: Long, time: Long?) {
+        val key = "$name:sg$id"
         if (time != null) {
-            futureMap.put(key, EXECUTOR.schedule(() -> blockServiceSelf(name, perm, id, null), time, TimeUnit.MILLISECONDS));
+            futureMap[key] = EXECUTOR.schedule({ blockServiceSelf(name, perm, id, null) }, time, TimeUnit.MILLISECONDS)
         } else {
-            futureMap.computeIfPresent(key, this::cancelFuture);
+            futureMap.computeIfPresent(key, this::cancelFuture)
         }
-        permissionDao.deleteGroup(name, PermissionType.GROUP_SELF_B, id);
-        perm.deleteSelfGroup(id);
+        permissionDao.deleteGroup(name, PermissionType.GROUP_SELF_B, id)
+        perm.deleteSelfGroup(id)
     }
 
-    record PermissionRecord(String name, PermissionService permission) {
-        static PermissionRecord fromEntry(Map.Entry<String, PermissionService> e) {
-            return new PermissionRecord(e.getKey(), e.getValue());
-        }
-    }
-
-    @Override
-    public void serviceSwitch(String name, boolean open) {
-        var record = getService(name);
-        serviceSwitchMapper.save(new ServiceSwitchLite(name, open));
-        record.permission.setEnable(open);
-        futureMap.computeIfPresent(name, this::cancelFuture);
-    }
-
-
-    @Override
-    public void serviceSwitch(String name, boolean open, Long time) {
-        serviceSwitch(name, open);
-        if (Objects.nonNull(time)) {
-            futureMap.computeIfPresent(name, this::cancelFuture);
-            var future = EXECUTOR.schedule(() -> serviceSwitch(name, !open), time, TimeUnit.MILLISECONDS);
-            futureMap.put(name, future);
+    data class PermissionRecord(val name: String, val permission: PermissionService) {
+        companion object {
+            fun fromEntry(entry: Pair<String, PermissionService>): PermissionRecord {
+                return PermissionRecord(entry.first, entry.second)
+            }
         }
     }
 
-
-    @Override
-    public void blockGroup(Long id) {
-        blockService(GLOBAL_PERMISSION, AllService, id, true, null);
+    override fun serviceSwitch(name: String, open: Boolean) {
+        val record = getService(name)
+        serviceSwitchMapper.save(ServiceSwitchLite(name, open))
+        record.permission.setEnable(open)
+        futureMap.computeIfPresent(name, this::cancelFuture)
     }
 
-    @Override
-    public void blockGroup(Long id, Long time) {
-        blockService(GLOBAL_PERMISSION, AllService, id, true, time);
+    override fun serviceSwitch(name: String, open: Boolean, time: Long?) {
+        serviceSwitch(name, open)
+        if (time != null) {
+            futureMap.computeIfPresent(name, this::cancelFuture)
+            val future = EXECUTOR.schedule({ serviceSwitch(name, !open) }, time, TimeUnit.MILLISECONDS)
+            futureMap[name] = future
+        }
     }
 
-    @Override
-    public void blockGroup(String service, Long id) {
-        var record = getService(service);
-        blockService(record.name, record.permission, id, true, null);
+    override fun blockGroup(id: Long) {
+        blockService(GLOBAL_PERMISSION, AllService, id, true, null)
     }
 
-    @Override
-    public void blockGroup(String service, Long id, Long time) {
-        var record = getService(service);
-        blockService(record.name, record.permission, id, true, time);
+    override fun blockGroup(id: Long, time: Long?) {
+        blockService(GLOBAL_PERMISSION, AllService, id, true, time)
     }
 
-    @Override
-    public void unblockGroup(Long id) {
-        unblockService(GLOBAL_PERMISSION, AllService, id, true, null);
+    override fun blockGroup(service: String, id: Long) {
+        val record = getService(service)
+        blockService(record.name, record.permission, id, true, null)
     }
 
-    @Override
-    public void unblockGroup(String service, Long id) {
-        var record = getService(service);
-        unblockService(record.name, record.permission, id, true, null);
+    override fun blockGroup(service: String, id: Long, time: Long?) {
+        val record = getService(service)
+        blockService(record.name, record.permission, id, true, time)
     }
 
-    @Override
-    public void unblockGroup(String service, Long id, Long time) {
-        var record = getService(service);
-        unblockService(record.name, record.permission, id, true, time);
+    override fun unblockGroup(id: Long) {
+        unblockService(GLOBAL_PERMISSION, AllService, id, true, null)
     }
 
-
-    @Override
-    public void blockUser(Long id) {
-        blockService(GLOBAL_PERMISSION, AllService, id, false, null);
+    override fun unblockGroup(service: String, id: Long) {
+        val record = getService(service)
+        unblockService(record.name, record.permission, id, true, null)
     }
 
-    @Override
-    public void blockUser(Long id, Long time) {
-        blockService(GLOBAL_PERMISSION, AllService, id, false, time);
+    override fun unblockGroup(service: String, id: Long, time: Long?) {
+        val record = getService(service)
+        unblockService(record.name, record.permission, id, true, time)
     }
 
-    @Override
-    public void blockUser(String service, Long id) {
-        var record = getService(service);
-        blockService(record.name, record.permission, id, false, null);
+    override fun blockUser(id: Long) {
+        blockService(GLOBAL_PERMISSION, AllService, id, false, null)
     }
 
-    @Override
-    public void blockUser(String service, Long id, Long time) {
-        var record = getService(service);
-        blockService(record.name, record.permission, id, false, time);
+    override fun blockUser(id: Long, time: Long?) {
+        blockService(GLOBAL_PERMISSION, AllService, id, false, time)
     }
 
-    @Override
-    public void unblockUser(Long id) {
-        unblockService(GLOBAL_PERMISSION, AllService, id, false, null);
+    override fun blockUser(service: String, id: Long) {
+        val record = getService(service)
+        blockService(record.name, record.permission, id, false, null)
     }
 
-    @Override
-    public void unblockUser(String service, Long id) {
-        var record = getService(service);
-        unblockService(record.name, record.permission, id, false, null);
+    override fun blockUser(service: String, id: Long, time: Long?) {
+        val record = getService(service)
+        blockService(record.name, record.permission, id, false, time)
     }
 
-    @Override
-    public void unblockUser(String service, Long id, Long time) {
-        var record = getService(service);
-        unblockService(record.name, record.permission, id, false, time);
+    override fun unblockUser(id: Long) {
+        unblockService(GLOBAL_PERMISSION, AllService, id, false, null)
     }
 
-
-    @Override
-    public void ignoreAll(Long id) {
-        blockServiceSelf(GLOBAL_PERMISSION, AllService, id, null);
+    override fun unblockUser(service: String, id: Long) {
+        val record = getService(service)
+        unblockService(record.name, record.permission, id, false, null)
     }
 
-    @Override
-    public void ignoreAll(Long id, Long time) {
-        blockServiceSelf(GLOBAL_PERMISSION, AllService, id, time);
+    override fun unblockUser(service: String, id: Long, time: Long?) {
+        val record = getService(service)
+        unblockService(record.name, record.permission, id, false, time)
     }
 
-    @Override
-    public void ignoreAll(String service, Long id) {
-        var record = getService(service);
-        blockServiceSelf(record.name, record.permission, id, null);
+    override fun ignoreAll(id: Long) {
+        blockServiceSelf(GLOBAL_PERMISSION, AllService, id, null)
     }
 
-    @Override
-    public void ignoreAll(String service, Long id, Long time) {
-        var record = getService(service);
-        blockServiceSelf(record.name, record.permission, id, time);
+    override fun ignoreAll(id: Long, time: Long?) {
+        blockServiceSelf(GLOBAL_PERMISSION, AllService, id, time)
     }
 
-    @Override
-    public void unignoreAll(Long id) {
-        unblockServiceSelf(GLOBAL_PERMISSION, AllService, id, null);
+    override fun ignoreAll(service: String, id: Long) {
+        val record = getService(service)
+        blockServiceSelf(record.name, record.permission, id, null)
     }
 
-    @Override
-    public void unignoreAll(Long id, Long time) {
-        unblockServiceSelf(GLOBAL_PERMISSION, AllService, id, time);
+    override fun ignoreAll(service: String, id: Long, time: Long?) {
+        val record = getService(service)
+        blockServiceSelf(record.name, record.permission, id, time)
     }
 
-    @Override
-    public void unignoreAll(String service, Long id) {
-        var record = getService(service);
-        unblockServiceSelf(record.name, record.permission, id, null);
+    override fun unignoreAll(id: Long) {
+        unblockServiceSelf(GLOBAL_PERMISSION, AllService, id, null)
     }
 
-    @Override
-    public void unignoreAll(String service, Long id, Long time) {
-        var record = getService(service);
-        unblockServiceSelf(record.name, record.permission, id, time);
+    override fun unignoreAll(id: Long, time: Long?) {
+        unblockServiceSelf(GLOBAL_PERMISSION, AllService, id, time)
     }
 
-
-    private ScheduledFuture<?> cancelFuture(String name, ScheduledFuture<?> future) {
-        future.cancel(true);
-        return null;
+    override fun unignoreAll(service: String, id: Long) {
+        val record = getService(service)
+        unblockServiceSelf(record.name, record.permission, id, null)
     }
 
-    @Override
-    public List<LockRecord> queryAllBlock() {
-        var result = new ArrayList<LockRecord>(permissionMap.size() + 1);
-        result.add(queryGlobal());
-        permissionMap.forEach((name, p) -> result.add(new LockRecord(
-                name,
-                !p.isDisable(),
-                Objects.requireNonNullElseGet(p.getGroupList(), HashSet::new),
-                Objects.requireNonNullElseGet(p.getUserList(), HashSet::new),
-                Objects.requireNonNullElseGet(p.getGroupSelfBlackList(), HashSet::new)
-        )));
-        return result;
+    override fun unignoreAll(service: String, id: Long, time: Long?) {
+        val record = getService(service)
+        unblockServiceSelf(record.name, record.permission, id, time)
     }
 
-    public LockRecord queryGlobal() {
-        return new LockRecord(
-                GLOBAL_PERMISSION,
-                true,
-                AllService.getGroupList(),
-                AllService.getUserList(),
-                new HashSet<>()
-        );
+    private fun cancelFuture(name: String, future: ScheduledFuture<*>): ScheduledFuture<*>? {
+        future.cancel(true)
+        return null
     }
 
-    @Override
-    public LockRecord queryBlock(String name) {
-        var p = getService(name);
+    override fun queryAllBlock(): List<PermissionController.LockRecord?>? {
+        val result = ArrayList<PermissionController.LockRecord>(permissionMap.size + 1)
+        result.add(queryGlobal())
+        permissionMap.forEach { (name, p) ->
+            result.add(
+                PermissionController.LockRecord(
+                    name,
+                    !p.isDisable,
+                    p.groupList ?: HashSet(),
+                    p.userList ?: HashSet(),
+                    p.groupSelfBlackList ?: HashSet()
+                )
+            )
+        }
+        return result
+    }
 
-        return new LockRecord(
-                p.name,
-                !p.permission.isDisable(),
-                Objects.requireNonNullElseGet(p.permission().getGroupList(), HashSet::new),
-                Objects.requireNonNullElseGet(p.permission().getUserList(), HashSet::new),
-                Objects.requireNonNullElseGet(p.permission().getGroupSelfBlackList(), HashSet::new)
-        );
+    override fun queryGlobal(): PermissionController.LockRecord {
+        return PermissionController.LockRecord(
+            GLOBAL_PERMISSION,
+            true,
+            AllService.groupList,
+            AllService.userList,
+            HashSet()
+        )
+    }
+
+    override fun queryBlock(name: String): PermissionController.LockRecord {
+        val p = getService(name)
+
+        return PermissionController.LockRecord(
+            p.name,
+            !p.permission.isDisable,
+            p.permission.groupList ?: HashSet(),
+            p.permission.userList ?: HashSet(),
+            p.permission.groupSelfBlackList ?: HashSet()
+        )
     }
 }

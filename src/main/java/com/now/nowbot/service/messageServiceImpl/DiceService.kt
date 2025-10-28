@@ -2,12 +2,15 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.DiceService.DiceParam
 import com.now.nowbot.service.messageServiceImpl.DiceService.Split.*
 import com.now.nowbot.throwable.botRuntimeException.DiceException
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.REG_COLON
 import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
 import org.slf4j.Logger
@@ -19,12 +22,16 @@ import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 import kotlin.math.*
 import kotlin.random.Random
+import kotlin.text.contains
+import kotlin.text.toDoubleOrNull
+import kotlin.text.toLongOrNull
+import kotlin.text.trim
 
-@Service("DICE") class DiceService : MessageService<DiceParam> {
+@Service("DICE") class DiceService : MessageService<DiceParam>, TencentMessageService<DiceParam> {
     // dice：骰子次数，默认为 1
     data class DiceParam(val dice: Long?, val number: Long?, val text: String?)
 
-    @Throws(Throwable::class) override fun isHandle(
+    override fun isHandle(
         event: MessageEvent,
         messageText: String,
         data: DataValue<DiceParam>,
@@ -42,25 +49,64 @@ import kotlin.random.Random
         val m = Instruction.DICE.matcher(messageText)
         if (!m.find()) return false
 
-        val dice = m.group("dice")
-        val number = m.group("number")
-        val text = m.group("text")
+        data.value = getParam(m) ?: return false
 
-        if (text.isNullOrBlank().not()) { // 如果 dice 有符合，但是并不是 1，选择主动忽视
-            if (dice.isNullOrBlank().not() && (dice.toLongOrNull() ?: return false) > 1L) {
-                return false
-            } else if (number.isNullOrBlank().not()) {
-                data.value = DiceParam(null, null, (number + text).trim())
-                return true
+        return true
+    }
+
+    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: DiceParam): ServiceCallStatistic? {
+        val res = handle(event, param)
+
+        if (res.recall > 0) {
+            event.reply(res.text).recallIn(res.recall)
+        } else {
+            event.reply(res.text)
+        }
+
+        return res.statistic
+    }
+
+    override fun accept(
+        event: MessageEvent,
+        messageText: String
+    ): DiceParam? {
+        val m = OfficialInstruction.DICE.matcher(messageText)
+        if (!m.find()) return null
+
+        return getParam(m)
+    }
+
+    override fun reply(
+        event: MessageEvent,
+        param: DiceParam
+    ): MessageChain? {
+        val res = handle(event, param)
+
+        return MessageChain(res.text)
+    }
+
+    private fun getParam(matcher: Matcher): DiceParam? {
+        val dice: String? = if (matcher.namedGroups().containsKey("dice")) {
+            matcher.group("dice")
+        } else {
+            "1"
+        }
+
+        val number: String? = matcher.group("number")
+        val text: String? = matcher.group("text")
+
+        if (!text.isNullOrBlank()) { // 如果 dice 有符合，但是并不是 1，选择主动忽视
+            if (!dice.isNullOrBlank() && (dice.toLongOrNull() ?: return null) > 1L) {
+                return null
+            } else if (!number.isNullOrBlank()) {
+                return DiceParam(null, null, (number + text).trim())
             } else if (text.trim().matches("^$REG_NUMBER_DECIMAL$".toRegex())) {
                 // !roll 4
-                data.value = DiceParam(1L, text.toLongOrNull() ?: 100L, null)
-                return true
+                return DiceParam(1L, text.toLongOrNull() ?: 100L, null)
             } else {
-                data.value = DiceParam(null, null, text.trim())
-                return true
+                return DiceParam(null, null, text.trim())
             }
-        } else if (dice.isNullOrBlank().not()) {
+        } else if (!dice.isNullOrBlank()) {
             val d: Long = dice.toLongOrNull()
                 ?: dice.toDoubleOrNull()?.toLong() ?: throw DiceException.Exceed()
 
@@ -83,8 +129,7 @@ import kotlin.random.Random
                 100L
             }
 
-            data.value = DiceParam(d, n, null)
-            return true
+            return DiceParam(d, n, null)
         } else if (number.isNullOrBlank().not()) {
 
             val n = number.toLongOrNull() ?: throw DiceException.Exceed()
@@ -93,17 +138,19 @@ import kotlin.random.Random
                 throw DiceException.Negative()
             }
 
-            data.value = DiceParam(1L, n, null)
-            return true
+            return DiceParam(1L, n, null)
         } else {
-            data.value = DiceParam(1L, 100L, null)
-            return true
+            return DiceParam(1L, 100L, null)
         }
-
-        // throw DiceException(DiceException.Type.DICE_Instruction);
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: DiceParam): ServiceCallStatistic? {
+    data class DiceResponse(
+        val text: String,
+        val statistic: ServiceCallStatistic,
+        val recall: Long = -1
+    )
+
+    private fun handle(event: MessageEvent, param: DiceParam): DiceResponse {
         try {
             if (param.number != null) {
                 if (param.number >= Int.MAX_VALUE) {
@@ -120,14 +167,14 @@ import kotlin.random.Random
                     val format = if ((r < 1f)) "%.2f" else "%.0f"
                     val result = String.format(format, r)
 
-                    val receipt = event.reply(result)
-
                     // 容易被识别成 QQ
-                    if (r in 1000000.0..<1000000000.0) {
-                        receipt.recallIn((60 * 1000).toLong())
+                    val recall = if (r in 1000000.0..<1000000000.0) {
+                        (60 * 1000).toLong()
+                    } else {
+                        -1
                     }
 
-                    return ServiceCallStatistic.building(event) {
+                    val stat = ServiceCallStatistic.building(event) {
                         setParam(
                             mapOf(
                                 "src" to event.rawMessage.trim(),
@@ -135,6 +182,10 @@ import kotlin.random.Random
                             )
                         )
                     }
+
+                    return DiceResponse(
+                        result, stat, recall
+                    )
                 } else {
                     val sb = StringBuilder()
                     val dices = ArrayList<String>(param.dice.toInt())
@@ -152,8 +203,7 @@ import kotlin.random.Random
                         }
                     }
 
-                    event.reply(sb.toString())
-                    return ServiceCallStatistic.building(event) {
+                    val stat = ServiceCallStatistic.building(event) {
                         setParam(
                             mapOf(
                                 "src" to event.rawMessage.trim(),
@@ -161,6 +211,8 @@ import kotlin.random.Random
                             )
                         )
                     }
+
+                    return DiceResponse(sb.toString(), stat)
                 }
             }
 
@@ -169,13 +221,14 @@ import kotlin.random.Random
 
                 // 用于匹配是否被和谐
                 val harmonised = "○|(\\[和谐])".toRegex()
-                if (message.contains(harmonised)) { // 被和谐就撤回
-                    event.reply(message).recallIn((60 * 1000).toLong())
+
+                val recall = if (message.contains(harmonised)) { // 被和谐就撤回
+                    (60 * 1000).toLong()
                 } else {
-                    event.reply(message)
+                    -1
                 }
 
-                return ServiceCallStatistic.building(event) {
+                val stat = ServiceCallStatistic.building(event) {
                     setParam(
                         mapOf(
                             "src" to event.rawMessage.trim(),
@@ -183,6 +236,8 @@ import kotlin.random.Random
                         )
                     )
                 }
+
+                return DiceResponse(message, stat, recall)
             }
         } catch (e: DiceException) {
             throw e
@@ -191,7 +246,7 @@ import kotlin.random.Random
             throw DiceException.Unexpected()
         }
 
-        return ServiceCallStatistic.building(event)
+        return DiceResponse("出错了...", ServiceCallStatistic.building(event), -1)
     }
 
     internal enum class Split(val pattern: Pattern, val onlyC3: Boolean) {

@@ -51,8 +51,8 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
         class BeatmapsetID:
             WrongException("请输入正确的谱面集编号 (SID)！")
 
-        class Instruction:
-            WrongException("指令错误。")
+        class Instruction(command: String):
+            WrongException("没有找到指令 $command。")
 
         class MatchID:
             WrongException("请输入正确的比赛编号 (MID)！")
