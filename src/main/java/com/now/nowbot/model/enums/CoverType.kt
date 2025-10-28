@@ -3,12 +3,12 @@ package com.now.nowbot.model.enums
 import com.now.nowbot.model.osu.Covers
 
 enum class CoverType {
-    RAW, CARD, CARD_2X, COVER, COVER_2X, LIST, LIST_2X, SLIM_COVER, SLIM_COVER_2X;
+    FULL_SIZE, CARD, CARD_2X, COVER, COVER_2X, LIST, LIST_2X, SLIM_COVER, SLIM_COVER_2X;
 
     companion object {
         fun getCovetType(string: String?): CoverType {
-            return when (string) {
-                "raw", "r", "full", "f", "background", "b" -> RAW
+            return when (string?.replace(" ", "")) {
+                "fullsize", "full", "raw", "r", "f", "background", "b" -> FULL_SIZE
                 "list", "l", "l1" -> LIST
                 "list2", "list2x", "list@2x", "l2" -> LIST_2X
                 "c", "card", "c1" -> CARD
@@ -31,7 +31,7 @@ enum class CoverType {
                 SLIM_COVER_2X -> slimcover2x
                 COVER_2X -> cover2x
                 COVER -> cover
-                RAW -> list.replace("@2x", "").replace("list", "raw")
+                FULL_SIZE -> list.replace("@2x", "").replace("list", "fullsize")
             }
         }
     }

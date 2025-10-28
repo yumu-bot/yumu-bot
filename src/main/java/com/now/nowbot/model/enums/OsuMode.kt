@@ -104,9 +104,9 @@ enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: Stri
         @JvmStatic fun getMode(@Nullable name: String?): OsuMode {
             return when (name?.replace(" ", "")?.trim()?.lowercase()) {
                 "taiko", "t", "1", "osu!taiko" -> TAIKO
-                "catch", "ctb", "c", "fruits", "f", "2", "osu!catch" -> CATCH
+                "catch", "catchthebeat", "ctb", "c", "fruits", "fruit", "f", "2", "osu!catch" -> CATCH
                 "mania", "m", "3", "osu!mania" -> MANIA
-                "osu", "o", "0", "osu!" -> OSU
+                "osu", "o", "0", "osu!", "std", "standard" -> OSU
                 "osu relax", "osurelax", "std relax", "stdrelax", "osurx", "osu rx", "4", "rx0" -> OSU_RELAX
                 "taiko relax", "taikorelax", "taikorx", "tr", "5", "rx1" -> TAIKO_RELAX
                 "catch relax", "catchrelax", "catchrx", "cr", "6", "rx2" -> CATCH_RELAX

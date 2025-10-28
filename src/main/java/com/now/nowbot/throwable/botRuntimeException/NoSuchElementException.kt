@@ -67,6 +67,12 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class LeaderboardScore:
         NoSuchElementException("这张谱面的在线排行榜内没有成绩。")
 
+    class LocalBG:
+        UnsupportedOperationException("""
+            获取本地镜像站的单一难度背景失败，正在为您获取谱面背景。
+            （如果不同难度用的不同背景，则只能获取到预览图、官网可见的那个背景）
+        """.trimIndent())
+
     class MatchRound:
         NoSuchElementException("没有找到比赛里的对局。")
 

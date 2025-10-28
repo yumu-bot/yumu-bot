@@ -91,7 +91,13 @@ import java.util.regex.Pattern
             }
         }
 
-        return bindDao.getBindUser(user.userID)!!
+        val result = bindDao.getBindUser(user.userID)!!
+
+        if (!user.isAuthorized) {
+            throw BindException.Oauth2Exception.RefreshException()
+        }
+
+        return result
     }
 
     override fun refreshUserToken(user: BindUser): String? {
