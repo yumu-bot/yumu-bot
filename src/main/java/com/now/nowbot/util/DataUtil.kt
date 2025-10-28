@@ -1247,18 +1247,27 @@ object DataUtil {
     /**
      * 一个分页功能。
      * @param maxPerPage 每页最多元素数量，默认 50 个。
+     * @param before 在集合前还有多少元素
+     * @param after 在集合后还有多少元素
      * @return
      * - 当前页面显示的元素
      * - 当前所在的页
      * - 最大页
      */
-    fun <T> splitPage(collection: Collection<T>, page: Int, maxPerPage: Int = 50): Triple<List<T>, Int, Int> {
-        val maxPage = max(ceil(collection.size * 1.0 / maxPerPage).roundToInt(), 1)
+    fun <T> splitPage(collection: Collection<T>, page: Int, maxPerPage: Int = 50, before: Int = 0, after: Int = 0): Triple<List<T>, Int, Int> {
+        require(maxPerPage > 0) {
+            "每页个数必须大于 0"
+        }
 
-        val start = max(min(page, maxPage) * maxPerPage - maxPerPage, 0)
-        val end = min(min(page, maxPage) * maxPerPage, collection.size)
+        val maxPage = (collection.size / maxPerPage).coerceAtLeast(0) + 1
 
-        return Triple(collection.toList().subList(start, end), max(min(page, maxPage), 1), maxPage)
+        val end = (page.coerceAtMost(maxPage) * maxPerPage).coerceAtMost(collection.size)
+        val start = (end - maxPerPage).coerceAtLeast(0)
+
+        val p = page.coerceIn(1, maxPage) + (before / maxPerPage)
+        val m = maxPage + (before / maxPerPage) + (after / maxPerPage)
+
+        return Triple(collection.drop(start).take(end), p, m)
     }
 
     /**

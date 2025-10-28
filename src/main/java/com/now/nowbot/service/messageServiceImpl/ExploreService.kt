@@ -191,7 +191,7 @@ class ExploreService(
                     throw NoSuchElementException.Result()
                 }
 
-                val (split, _, maxPage) = DataUtil.splitPage(search.beatmapsets, page, 48)
+                val (split, _, maxPage) = DataUtil.splitPage(search.beatmapsets, page, 15)
 
                 search.beatmapsets = split
 
@@ -208,10 +208,28 @@ class ExploreService(
                 val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
                 val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
-                val most = if (hasRangeInConditions.not() && hasCondition.not() && page == 1) {
-                    beatmapApiService.getUserMostPlayedBeatmaps(user.userID, 0, 50)
+                val before: Int
+                val after: Int
+
+                val most = if (hasRangeInConditions.not() && hasCondition.not()) {
+                    // 这个数量级肯定很大，所以减小查询
+                    if (page <= 1) {
+                        before = 0
+                        after = 99
+                        beatmapApiService.getUserMostPlayedBeatmaps(user.userID, 0, 20)
+                    } else if (page <= 50) {
+                        before = 0
+                        after = 50
+                        beatmapApiService.getUserMostPlayedBeatmaps(user.userID, 0, 1000)
+                    } else {
+                        before = (page - 1) / 50
+                        after = 0
+                        beatmapApiService.getUserMostPlayedBeatmaps(user.userID, before * 1000, before * 1000 + 1000)
+                    }
                 } else {
-                    beatmapApiService.getUserMostPlayedBeatmaps(user.userID, 0, 1000)
+                    before = 0
+                    after = 0
+                    beatmapApiService.getUserMostPlayedBeatmaps(user.userID, 0, 2000)
                 }
 
                 val filter = MostPlayedBeatmapFilter.filterMostPlayBeatmaps(most, conditions)
@@ -222,7 +240,7 @@ class ExploreService(
 
                 val page2 = rangeInConditions?.toIntOrNull() ?: page
 
-                val (split, _, maxPage) = DataUtil.splitPage(filter, page2, 50)
+                val (split, _, maxPage) = DataUtil.splitPage(filter, page2, 20, before * 20, after * 20)
 
                 return MostPlayedParam(user, split, page, maxPage)
             }
@@ -235,10 +253,23 @@ class ExploreService(
                 val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
                 val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
 
-                val mine = if (hasRangeInConditions.not() && hasCondition.not() && page == 1) {
-                    beatmapApiService.getUserBeatmapset(user.userID, type.query, 0, 48)
+                val before: Int
+                val after: Int
+
+                val mine = if (hasRangeInConditions.not() && hasCondition.not()) {
+                    if (page <= 50) {
+                        before = 0
+                        after = 50
+                        beatmapApiService.getUserBeatmapset(user.userID, type.query, 0, 750)
+                    } else {
+                        before = (page - 1) / 50
+                        after = 0
+                        beatmapApiService.getUserBeatmapset(user.userID, type.query, before * 750, before * 750 + 750)
+                    }
                 } else {
-                    beatmapApiService.getUserBeatmapset(user.userID, type.query, 0, 480)
+                    before = 0
+                    after = 0
+                    beatmapApiService.getUserBeatmapset(user.userID, type.query, 0, 1500)
                 }
 
                 val filter = BeatmapsetFilter.filterBeatmapsets(mine, conditions)
@@ -249,7 +280,7 @@ class ExploreService(
 
                 val page2 = rangeInConditions?.toIntOrNull() ?: page
 
-                val (split, _, maxPage) = DataUtil.splitPage(filter, page2, 48)
+                val (split, _, maxPage) = DataUtil.splitPage(filter, page2, 15, before * 15, after * 15)
 
                 return MyBeatmapsetParam(user, split.sortBeatmapDiff(), page, maxPage)
             }
