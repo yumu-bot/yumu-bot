@@ -89,8 +89,8 @@ class IocAllReadyRunner(
         log.info("新人群配置: {}", env.getProperty("spring.datasource.newbie.enable", "false"))
 
         try {
-            val debuging = ApplicationHome(NowbotConfig::class.java).source?.parentFile?.toString()?.contains("target") ?: false
-            if (debuging) {
+            val debugging = ApplicationHome(NowbotConfig::class.java).source?.parentFile?.toString()?.contains("target") ?: false
+            if (debugging) {
                 PerformancePlusService.runDevelopment()
                 startCommandListener()
             }
