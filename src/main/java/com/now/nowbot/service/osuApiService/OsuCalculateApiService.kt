@@ -8,7 +8,7 @@ import com.now.nowbot.model.osu.RosuPerformance
 
 interface OsuCalculateApiService {
     companion object {
-        const val LOCAL: Boolean = false
+        const val LOCAL: Boolean = true
     }
 
     fun getScorePerfectPP(score: LazerScore): RosuPerformance
