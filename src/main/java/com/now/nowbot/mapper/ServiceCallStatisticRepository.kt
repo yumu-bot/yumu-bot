@@ -35,7 +35,7 @@ interface ServiceCallStatisticRepository : JpaRepository<ServiceCallStatistic, L
                 AND jsonb_typeof(param -> 'bids') = 'array'
                 AND jsonb_array_length(param -> 'bids') > 0
                 AND param -> 'bids' -> 0 IS NOT NULL
-            ORDER BY time DESC
+                ORDER BY CASE WHEN jsonb_array_length(param -> 'bids') = 1 THEN 0 ELSE 1 END ASC, time DESC
             LIMIT 1;
         """, nativeQuery = true
     ) fun getLastAvailableBeatmapIDByGroupAndName(
@@ -51,7 +51,7 @@ interface ServiceCallStatisticRepository : JpaRepository<ServiceCallStatistic, L
                 AND jsonb_typeof(param -> 'bids') = 'array'
                 AND jsonb_array_length(param -> 'bids') > 0
                 AND param -> 'bids' -> 0 IS NOT NULL
-            ORDER BY time DESC
+                ORDER BY CASE WHEN jsonb_array_length(param -> 'bids') = 1 THEN 0 ELSE 1 END ASC, time DESC
             LIMIT 1;
         """, nativeQuery = true
     ) fun getLastAvailableBeatmapIDByGroup(
@@ -67,8 +67,8 @@ interface ServiceCallStatisticRepository : JpaRepository<ServiceCallStatistic, L
                 AND jsonb_exists(param, 'sids')
                 AND jsonb_typeof(param -> 'sids') = 'array'
                 AND jsonb_array_length(param -> 'sids') > 0
-                AND param -> 'bids' -> 0 IS NOT NULL
-            ORDER BY time DESC
+                AND param -> 'sids' -> 0 IS NOT NULL
+                ORDER BY CASE WHEN jsonb_array_length(param -> 'sids') = 1 THEN 0 ELSE 1 END ASC, time DESC
             LIMIT 1;
         """, nativeQuery = true
     ) fun getLastAvailableBeatmapsetIDByGroupAndName(
@@ -83,8 +83,8 @@ interface ServiceCallStatisticRepository : JpaRepository<ServiceCallStatistic, L
                 AND jsonb_exists(param, 'sids')
                 AND jsonb_typeof(param -> 'sids') = 'array'
                 AND jsonb_array_length(param -> 'sids') > 0
-                AND param -> 'bids' -> 0 IS NOT NULL
-            ORDER BY time DESC
+                AND param -> 'sids' -> 0 IS NOT NULL
+                ORDER BY CASE WHEN jsonb_array_length(param -> 'sids') = 1 THEN 0 ELSE 1 END ASC, time DESC
             LIMIT 1;
         """, nativeQuery = true
     ) fun getLastAvailableBeatmapsetIDByGroup(

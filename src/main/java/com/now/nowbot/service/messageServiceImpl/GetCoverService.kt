@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.Covers.Companion.CoverType.*
@@ -23,39 +24,48 @@ import okhttp3.internal.toLongOrDefault
 import org.springframework.stereotype.Service
 import java.net.URI
 import java.nio.file.Files
+import java.time.LocalDateTime
 
 @Service("GET_COVER") class GetCoverService(
     private val beatmapApiService: OsuBeatmapApiService,
-    private val beatmapMirrorApiService: OsuBeatmapMirrorApiService
+    private val beatmapMirrorApiService: OsuBeatmapMirrorApiService,
+    private val dao: ServiceCallStatisticsDao
 ) : MessageService<GetCoverService.CoverParam>, TencentMessageService<GetCoverService.CoverParam> {
-    @JvmRecord data class CoverParam(val type: CoverType, val bids: List<Long>)
+    data class CoverParam(val type: CoverType, val bids: List<Long>)
 
-    @Throws(Throwable::class) override fun isHandle(
+    override fun isHandle(
         event: MessageEvent, messageText: String, data: DataValue<CoverParam>
     ): Boolean {
         val matcher = Instruction.GET_COVER.matcher(messageText)
         val matcher2 = Instruction.GET_BG.matcher(messageText)
 
+        val type: CoverType
+        val dataStr: String?
+
         if (matcher.find()) {
-            val type = CoverType.getCovetType(matcher.group("type"))
-
-            val dataStr: String? = matcher.group("data")
-            if (dataStr.isNullOrBlank()) throw IllegalArgumentException.WrongException.BeatmapID()
-            val bids = parseDataString(dataStr)
-
-            data.value = CoverParam(type, bids)
-            return true
+            type = CoverType.getCovetType(matcher.group("type"))
+            dataStr = matcher.group("data")
         } else if (matcher2.find()) {
-
-            val dataStr: String? = matcher2.group("data")
-            if (dataStr.isNullOrBlank()) throw IllegalArgumentException.WrongException.BeatmapID()
-            val bids = parseDataString(dataStr)
-
-            data.value = CoverParam(FULL_SIZE, bids)
-            return true
+            type = FULL_SIZE
+            dataStr = matcher2.group("data")
         } else {
             return false
         }
+
+        val bids = if (dataStr.isNullOrBlank()) {
+            val last = dao.getLastBeatmapID(event.subject.id, null, LocalDateTime.now().minusHours(24L))
+
+            if (last != null) {
+                listOf(last)
+            } else {
+                throw IllegalArgumentException.WrongException.BeatmapID()
+            }
+        } else {
+            parseDataString(dataStr)
+        }
+
+        data.value = CoverParam(type, bids)
+        return true
     }
 
     @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: CoverParam): ServiceCallStatistic? {
