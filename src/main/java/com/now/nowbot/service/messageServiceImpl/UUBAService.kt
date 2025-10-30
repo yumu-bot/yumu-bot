@@ -1,33 +1,30 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.dao.BindDao
+import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.service.messageServiceImpl.UUBAService.BPHeadTailParam
+import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.InstructionUtil
-import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.OfficialInstruction
-import com.now.nowbot.util.command.FLAG_MODE
+import com.now.nowbot.util.*
+import com.now.nowbot.util.InstructionUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import org.springframework.stereotype.Service
 import java.text.DecimalFormat
-import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.math.max
+import kotlin.math.roundToInt
 
 @Service("UU_BA")
 class UUBAService(
@@ -35,96 +32,27 @@ class UUBAService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val scoreApiService: OsuScoreApiService,
     private val calculateApiService: OsuCalculateApiService,
-    private val bindDao: BindDao,
     private val imageService: ImageService,
-) : MessageService<BPHeadTailParam>, TencentMessageService<BPHeadTailParam> {
-
-    data class UserParam(val qq: Long?, val name: String?, val mode: OsuMode, val at: Boolean )
-
-    // bpht 的全称大概是 BP Head / Tail
-    data class BPHeadTailParam(val user: UserParam, val info: Boolean)
+) : MessageService<BAParam>, TencentMessageService<BAParam> {
 
     @Throws(Throwable::class)
     override fun isHandle(
             event: MessageEvent,
             messageText: String,
-            data: DataValue<BPHeadTailParam>
+            data: DataValue<BAParam>
     ): Boolean {
-        // 旧功能指引
-
-        /*
-        val matcher2 = Instruction.DEPRECATED_BPHT.matcher(messageText)
-        if (matcher2.find()) {
-            throw GeneralTipsException("bpht 已移至 ua。\n您也可以使用 !ba 来体验丰富版本。\n猫猫 Bot 的 bpht 需要输入 !get bpht。"
-            )
-        }
-
-        val matcher3 = Instruction.DEPRECATED_UUBA_I.matcher(messageText)
-        if (matcher3.find()) {
-            throw GeneralTipsException("uuba-i 已移至 ua。\n您也可以使用 !ba 来体验丰富版本。")
-        }
-
-         */
 
         val matcher = Instruction.UU_BA.matcher(messageText)
         if (!matcher.find()) return false
 
-        val info = true
-        val mode: OsuMode = OsuMode.getMode(matcher.group(FLAG_MODE))
+        data.value = getParam(event, matcher)
 
-        if (event.hasAt()) {
-            data.value = BPHeadTailParam(UserParam(event.target, null, mode, true), info)
-            return true
-        }
-        val name = matcher.group("name")
-        if (name.isNullOrBlank().not()) {
-            data.value = BPHeadTailParam(UserParam(null, name, mode, false), info)
-            return true
-        }
-        data.value = BPHeadTailParam(UserParam(event.sender.id, null, mode, false), info)
         return true
     }
 
     @Throws(Throwable::class)
-    override fun handleMessage(event: MessageEvent, param: BPHeadTailParam): ServiceCallStatistic? {
-        val bu: BindUser
-
-        // 是否为绑定用户
-        if (param.user.qq != null) {
-            bu = bindDao.getBindFromQQ(param.user.qq)
-        } else {
-            // 查询其他人 [data]
-            val name = param.user.name!!
-            val id: Long
-
-            try {
-                id = userApiService.getOsuID(name)
-            } catch (_: Exception) {
-                throw NoSuchElementException.Player(name)
-            }
-
-            bu = bindDao.getBindUserFromOsuIDOrNull(id) ?: BindUser(id, name)
-        }
-
-        val mode = OsuMode.getMode(param.user.mode, bu.mode, bindDao.getGroupModeConfig(event))
-
-        val b: List<LazerScore> = scoreApiService.getBestScores(bu, mode)
-
-        if (b.size <= 10) {
-            throw NoSuchElementException.PlayerBestScore(bu.username, mode)
-        }
-
-        val bests = beatmapApiService.extendBeatmapInScore(b)
-
-        calculateApiService.applyBeatMapChanges(bests)
-        calculateApiService.applyStarToScores(bests)
-
-        val lines =
-                if (OsuMode.isDefaultOrNull(mode)) {
-                    getTextPlus(bests, bu.username, "", userApiService)
-                } else {
-                    getTextPlus(bests, bu.username, mode.fullName, userApiService)
-                }
+    override fun handleMessage(event: MessageEvent, param: BAParam): ServiceCallStatistic? {
+        val lines = param.getText()
 
         val panelParam = lines.split("\n".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         val image = imageService.getPanelAlpha(*panelParam)
@@ -135,375 +63,121 @@ class UUBAService(
             throw IllegalStateException.Send("最好成绩分析（文字版）")
         }
 
-        return ServiceCallStatistic.build(event, userID = bu.userID, mode = mode)
+        return ServiceCallStatistic.build(event, userID = param.user.userID, mode = param.user.currentOsuMode)
     }
 
-    override fun accept(event: MessageEvent, messageText: String): BPHeadTailParam? {
-        val matcher: Matcher
-        when {
-            OfficialInstruction.UU_BA.matcher(messageText).apply { matcher = this }.find() -> {}
+    override fun accept(event: MessageEvent, messageText: String): BAParam? {
+        val matcher = OfficialInstruction.UU_BA.matcher(messageText)
+        if (!matcher.find()) return null
 
-            else -> return null
-        }
-        val mode = InstructionUtil.getMode(matcher)
-        val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
-
-        return BPHeadTailParam(UserParam(user.userID, user.username, mode.data!!, false), info = true)
+        return getParam(event, matcher)
     }
 
-    override fun reply(event: MessageEvent, param: BPHeadTailParam): MessageChain? {
-        val mode = param.user.mode
-        val bu = BindUser().apply {
-            param.user.qq?.let { userID = it }
-            param.user.name?.let { username = it }
-            this.mode = mode
-        }
-
-        val bests = scoreApiService.getBestScores(bu, mode)
-
-        calculateApiService.applyBeatMapChanges(bests)
-        calculateApiService.applyStarToScores(bests)
-
-        val modeStr = mode.fullName
-        val lines = getTextPlus(bests, bu.username, modeStr, userApiService)
+    override fun reply(event: MessageEvent, param: BAParam): MessageChain? {
+        val lines = param.getText()
         return MessageChain(lines)
     }
 
-    internal class FavoriteMapperData(var allPP: Double, var uid: Long) {
-        var size: Int = 1
+    private fun getParam(event: MessageEvent, matcher: Matcher): BAParam {
+        val isMyself = AtomicBoolean(false)
+        val mode = getMode(matcher)
 
-        fun add(pp: Double) {
-            allPP += pp
-            size++
+        val user: OsuUser
+        val bests: List<LazerScore>
+
+        val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode, isMyself)
+
+        if (id != null) {
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+                { userApiService.getOsuUser(id, mode.data!!) },
+                {
+                    val ss = scoreApiService.getBestScores(id, mode.data!!)
+
+                    calculateApiService.applyBeatMapChanges(ss)
+                    calculateApiService.applyStarToScores(ss)
+
+                    ss
+                }
+            )
+
+            user = async.first
+            bests = async.second.toList()
+        } else {
+            user = getUserWithoutRange(event, matcher, mode, isMyself)
+            bests = scoreApiService.getBestScores(user.userID, mode.data)
+
+            calculateApiService.applyBeatMapChanges(bests)
+            calculateApiService.applyStarToScores(bests)
         }
-    }
 
-    internal class ModData(var allPP: Double) {
-        var size: Int = 1
+        val mapperIDs = bests.flatMap { it.beatmap.mapperIDs }.toSet()
 
-        fun add(pp: Double) {
-            allPP += pp
-            size++
-        }
+        val async2 = AsyncMethodExecutor.awaitPairCallableExecute(
+            { beatmapApiService.extendBeatmapInScore(bests) },
+            { userApiService.getUsers(mapperIDs) },
+        )
+
+        return BAParam(user, async2.first, isMyself.get(), async2.second, 2)
+
     }
 
     companion object {
-        private fun getTimeStr(l: Int): String {
-            return if (l < 60) {
-                "${l}秒"
-            } else {
-                "${l / 60}分${l % 60}秒"
+        fun BAParam.getText(): String {
+            val node = JacksonUtil.toNode(JacksonUtil.toJson(this.toMap())) as JsonNode
+
+            val name = node["user"]["username"].asText()
+            val mode = OsuMode.getMode(node["user"]["mode"].asText()).fullName
+
+            val length = node["length_attr"].toList().toTriple("length")
+            val combo = node["combo_attr"].toList().toTriple("combo")
+            val star = node["star_attr"].toList().toTriple("star")
+            val bpm = node["bpm_attr"].toList().toTriple("bpm")
+
+            val mappers = node["favorite_mappers"].take(5)
+                .joinToString("\n") {
+                    "${it["username"].asText()}: ${it["map_count"]}x ${it["pp_count"].asDouble().roundToInt()}PP"
+                }
+
+            val mods = node["mods_attr"].take(5)
+                .joinToString("\n") {
+                    "${it["index"].asText()}: ${it["map_count"]}x ${it["pp_count"].asDouble().roundToInt()}PP (${it["percent"].asDouble().times(100).round2()}%)"
+                }
+
+            return """
+                $name: $mode
+                ---
+                length: mid: #${length[1].first} ${length[1].second.secondsToTime()},
+                max: #${length[0].first} ${length[0].second.secondsToTime()}, min: #${length[2].first} ${length[2].second.secondsToTime()}
+                ---
+                combo: mid: #${combo[1].first} ${combo[1].second}x,
+                max: #${combo[0].first} ${combo[0].second}x, min: #${combo[2].first} ${combo[2].second}x
+                ---
+                star: mid: #${star[1].first} ${star[1].second}*,
+                max: #${star[0].first}* ${star[0].second}, min: #${star[2].first} ${star[2].second}*
+                ---
+                bpm: mid: #${bpm[1].first} ${bpm[1].second},
+                max: #${bpm[0].first} ${bpm[0].second}, min: #${bpm[2].first} ${bpm[2].second}
+            """.trimIndent() + "\n---\nmappers:\n" + mappers + "\n---\nmods:\n" + mods
+        }
+
+        private fun List<JsonNode>.toTriple(name: String = "length"): List<Pair<Int, String>> {
+            return this.map {
+                it["ranking"].asInt() to it[name].asText()
             }
         }
 
-        @Deprecated("这个标准获取基本上没人喜欢用了，只有进阶版有人用")
-        fun getText(bests: List<LazerScore>, name: String?, mode: String?): String {
-            val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
-            var allPP = 0.0
-            var sSum = 0
-            var xSum = 0
-            var fcSum = 0
-            val modTreeMap = TreeMap<String, AtomicInteger>() // 各个mod的数量
+        private fun String.secondsToTime(): String {
+            val sec = this.toIntOrNull() ?: return "00:00"
 
-            for (i in bests.indices) {
-                val bp = bests[i]
-                // 显示前五跟后五的数据
-                if (i < 5 || i >= bests.size - 5) {
-                    sb.append("#")
-                        .append(i + 1)
-                        .append(' ')
-                        .append(String.format("%.2f", bp.pp))
-                        .append(' ')
-                        .append(String.format("%.2f", 100 * bp.accuracy))
-                        .append('%')
-                        .append(' ')
-                        .append(bp.rank)
-                    if (bp.mods.isNotEmpty()) {
-                        sb.append(" +")
-                        for (m in bp.mods) {
-                            sb.append(m).append(' ')
-                        }
-                    }
-                    sb.append('\n')
-                } else if (i == 5) {
-                    sb.append("...").append('\n')
-                }
-                allPP += bp.pp  // 统计总数
-                if (bp.mods.isNotEmpty()) {
-                    for (j in bp.mods.indices) {
-                        val mod = bp.mods[j].acronym
-                        if (!modTreeMap.containsKey(mod)) modTreeMap[mod] = AtomicInteger()
-                        else modTreeMap[mod]!!.incrementAndGet()
-                    }
-                }
-                if (bp.rank.contains("S")) sSum++
-                if (bp.rank.contains("X")) {
-                    sSum++
-                    xSum++
-                }
-                if (bp.fullCombo) fcSum++
-            }
-            sb.append("——————————").append('\n')
-            sb.append("模组数量: \n")
-
-            val c = AtomicInteger()
-
-            modTreeMap.forEach { (mod: String, sum) ->
-                c.getAndIncrement()
-                sb.append(mod).append(' ').append(sum.get()).append("x; ")
-                if (c.get() == 2) {
-                    c.set(0)
-                    sb.append('\n')
-                }
-            }
-
-            sb.append("\nS+ 评级: ").append(sSum)
-            if (xSum != 0) sb.append("\n     其中 SS: ").append(xSum)
-
-            sb.append('\n')
-                .append("完美 FC: ")
-                .append(fcSum)
-                .append('\n')
-                .append("平均: ")
-                .append(String.format("%.2f", allPP / bests.size))
-                .append("PP")
-                .append('\n')
-                .append("差值: ")
-                .append(String.format("%.2f", bests.first().pp - bests.last().pp))
-                .append("PP")
-
-            return sb.toString()
+            val minutes = sec / 60
+            val seconds = sec % 60
+            return "%02d:%02d".format(minutes, seconds)
         }
 
-        fun getTextPlus(bests: List<LazerScore>, name: String?, mode: String?, userApiService: OsuUserApiService): String {
-            if (bests.isEmpty()) return ""
-            val sb = StringBuffer().append(name).append(": ").append(' ').append(mode).append('\n')
+        private val df = DecimalFormat("#.00")
 
-            val best: LazerScore = bests.first()
-            val bestBPM = best.beatmap.BPM
-            val bestLength = best.beatmap.totalLength.toFloat()
-
-            var star: Double
-            var maxStar = best.beatmap.starRating
-            var minStar = maxStar
-            var maxBPM = bestBPM
-            var minBPM = maxBPM
-            var maxCombo = best.maxCombo
-            var minCombo = maxCombo
-            var maxLength = bestLength
-            var minLength = maxLength
-
-            var maxComboBP = 0
-            var minComboBP = 0
-            var maxLengthBP = 0
-            var minLengthBP = 0
-            var maxStarBP = 0
-            var minStarBP = 0
-
-            var avgLength = 0.0
-            var avgCombo = 0
-            var avgStar = 0.0
-
-            var maxTTHPPBP = 0
-            var maxTTHPP = 0.0
-            var nowPP = 0.0
-
-            val modSum = TreeMap<String, ModData>() // 各个mod的数量
-            val mapperSum = TreeMap<Long, FavoriteMapperData>()
-            val decimalFormat = DecimalFormat("0.00") // acc格式
-
-
-            bests.forEachIndexed { i, score ->
-                val b = score.beatmap
-                val length = b.totalLength.toFloat()
-                val bpm = b.BPM
-
-                score.mods.forEach {
-                    if (modSum.containsKey(it.acronym)) {
-                        modSum[it.acronym]!!.add(score.weight?.pp ?: 0.0)
-                    } else {
-                        modSum[it.acronym] = ModData(score.weight?.pp ?: 0.0)
-                    }
-                }
-
-                avgLength += length
-                star = score.beatmap.starRating
-                avgStar += star
-
-                if (bpm < minBPM) {
-                    minBPM = bpm
-                } else if (bpm >= maxBPM) {
-                    maxBPM = bpm
-                }
-
-                if (star < minStar) {
-                    minStarBP = i
-                    minStar = star
-                } else if (star > maxStar) {
-                    maxStarBP = i
-                    maxStar = star
-                }
-
-                if (length < minLength) {
-                    minLengthBP = i
-                    minLength = length
-                } else if (length > maxLength) {
-                    maxLengthBP = i
-                    maxLength = length
-                }
-
-                if (score.maxCombo < minCombo) {
-                    minComboBP = i
-                    minCombo = score.maxCombo
-                } else if (score.maxCombo > maxCombo) {
-                    maxComboBP = i
-                    maxCombo = score.maxCombo
-                }
-                avgCombo += score.maxCombo
-
-                val tthToPp = (score.pp) / max((b.sliders!! + b.spinners!! + b.circles!!), 1)
-                if (maxTTHPP < tthToPp) {
-                    maxTTHPPBP = i
-                    maxTTHPP = tthToPp
-                }
-
-                b.mapperIDs.forEach { mapperID ->
-                    if (mapperSum.containsKey(mapperID)) {
-                        mapperSum[mapperID]!!.add(score.pp)
-                    } else {
-                        mapperSum[mapperID] = FavoriteMapperData(score.pp, mapperID)
-                    }
-                }
-
-                /*
-                if (mapperSum.containsKey(b.mapperID)) {
-                    mapperSum[b.mapperID]!!.add(score.pp)
-                } else {
-                    mapperSum[b.mapperID] = FavoriteMapperData(score.pp, b.mapperID)
-                }
-
-                 */
-                nowPP += score.weight!!.pp
-            }
-            avgCombo /= bests.size
-            avgLength /= bests.size.toFloat()
-            avgStar /= bests.size.toFloat()
-
-            sb.append("平均时间: ").append(getTimeStr(avgLength.toInt())).append('\n')
-            sb.append("时间最长: BP")
-                .append(maxLengthBP + 1)
-                .append(' ')
-                .append(getTimeStr(maxLength.toInt()))
-                .append('\n')
-            sb.append("时间最短: BP")
-                .append(minLengthBP + 1)
-                .append(' ')
-                .append(getTimeStr(minLength.toInt()))
-                .append('\n')
-            sb.append("——————————").append('\n')
-
-            sb.append("平均连击: ").append(avgCombo).append('x').append('\n')
-            sb.append("连击最大: BP")
-                .append(maxComboBP + 1)
-                .append(' ')
-                .append(maxCombo)
-                .append('x')
-                .append('\n')
-            sb.append("连击最小: BP")
-                .append(minComboBP + 1)
-                .append(' ')
-                .append(minCombo)
-                .append('x')
-                .append('\n')
-            sb.append("——————————").append('\n')
-
-            sb.append("平均星数: ").append(String.format("%.2f", avgStar)).append('*').append('\n')
-            sb.append("星数最高: BP")
-                .append(maxStarBP + 1)
-                .append(' ')
-                .append(String.format("%.2f", maxStar))
-                .append('*')
-                .append('\n')
-            sb.append("星数最低: BP")
-                .append(minStarBP + 1)
-                .append(' ')
-                .append(String.format("%.2f", minStar))
-                .append('*')
-                .append('\n')
-            sb.append("——————————").append('\n')
-
-            sb.append("PP/TTH 比例最大: BP")
-                .append(maxTTHPPBP + 1)
-                .append("，为")
-                .append(decimalFormat.format(maxTTHPP))
-                .append('倍')
-                .append('\n')
-
-            sb.append("BPM 区间: ")
-                .append(String.format("%.0f", minBPM))
-                .append('-')
-                .append(String.format("%.0f", maxBPM))
-                .append('\n')
-            sb.append("——————————").append('\n')
-
-            sb.append("谱师: \n")
-            val mappers =
-                mapperSum.values
-                    .sortedByDescending { it.size }.sortedByDescending { it.allPP }.take(9)
-
-                    /*
-                    .stream()
-                    .sorted { o1: FavoriteMapperData, o2: FavoriteMapperData ->
-                        if (o1.size != o2.size) return@sorted 2 * (o2.size - o1.size)
-                        o2.allPP.compareTo(o1.allPP)
-                    }
-                    .limit(9)
-                    .toList()
-
-                     */
-            val mappersId = mappers.map { u: FavoriteMapperData -> u.uid }
-            val mappersInfo = userApiService.getUsers(mappersId)
-            val mapperIdToInfo = HashMap<Long, String>()
-            for (node in mappersInfo) {
-                mapperIdToInfo[node.userID] = node.username
-            }
-            mappers.forEach {
-                try {
-                    sb.append(mapperIdToInfo[it.uid]!!)
-                        .append(": ")
-                        .append(it.size)
-                        .append("x ")
-                        .append(decimalFormat.format(it.allPP))
-                        .append("PP")
-                        .append('\n')
-                } catch (_: Exception) {
-                    sb.append("UID: ")
-                        .append(it.uid)
-                        .append(": ")
-                        .append(it.size)
-                        .append("x ")
-                        .append(decimalFormat.format(it.allPP))
-                        .append("PP")
-                        .append('\n')
-                }
-            }
-            sb.append("——————————").append('\n')
-            sb.append("模组数量: \n")
-            val finalAllPP = nowPP
-            modSum.forEach { (mod: String, sum: ModData) ->
-                sb.append(mod)
-                    .append(": ")
-                    .append(sum.size)
-                    .append("x ")
-                    .append(decimalFormat.format(sum.allPP))
-                    .append("PP ")
-                    .append('(')
-                    .append(decimalFormat.format((100 * sum.allPP / finalAllPP)))
-                    .append('%')
-                    .append(')')
-                    .append('\n')
-            }
-            return sb.toString()
+        private fun Double.round2(): String {
+            return df.format(this)
         }
     }
 }

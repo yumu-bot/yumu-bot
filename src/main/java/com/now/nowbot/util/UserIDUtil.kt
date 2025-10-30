@@ -46,8 +46,9 @@ object UserIDUtil {
         matcher: Matcher,
         mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean = AtomicBoolean(false),
+        maximum: Int = 200
     ): InstructionRange<Long> {
-        val range = getSBUserIDAndRange(event, matcher, mode, isMyself)
+        val range = getSBUserIDAndRange(event, matcher, mode, isMyself, maximum)
 
         if (range.data == null) {
             range.data = getSBUserIDWithoutRange(event, matcher, mode, isMyself)
@@ -319,6 +320,7 @@ object UserIDUtil {
         matcher: Matcher,
         mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
+        maximum: Int = 200
     ): InstructionRange<Long> {
 
         require(
@@ -366,9 +368,9 @@ object UserIDUtil {
         }
 
         val range = if (hasHash) {
-            InstructionUtil.parseNameWithHashedRange(text)
+            InstructionUtil.parseNameWithHashedRange(text, maximum)
         } else {
-            InstructionUtil.parseNameWithRange(text)
+            InstructionUtil.parseNameWithRange(text, maximum)
         }
 
         var result: InstructionRange<Long>

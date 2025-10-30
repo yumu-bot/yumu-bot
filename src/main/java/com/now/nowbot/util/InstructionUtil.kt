@@ -402,13 +402,6 @@ object InstructionUtil {
             result = InstructionRange<SBUser>()
         }
 
-        // 使其顺序
-        if (result.end != null && result.start != null && result.start!! > result.end!!) {
-            val temp = result.start
-            result.start = result.end
-            result.end = temp
-        }
-
         if (result.data != null || result.start != null) {
             return result
         }

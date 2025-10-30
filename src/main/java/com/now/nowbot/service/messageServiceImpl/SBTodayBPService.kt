@@ -80,7 +80,7 @@ class SBTodayBPService(
         val mode = getMode(matcher)
         val isMyself = AtomicBoolean()
 
-        val id = UserIDUtil.getSBUserIDWithRange(event, matcher, mode, isMyself)
+        val id = UserIDUtil.getSBUserIDWithRange(event, matcher, mode, isMyself, 999)
         id.setZeroDay()
 
         val user: OsuUser
@@ -164,9 +164,8 @@ class SBTodayBPService(
                 AsyncMethodExecutor.awaitTripleCallableExecute(
                     { osuCalculateApiService.applyBeatMapChanges(ss) },
                     { osuCalculateApiService.applyStarToScores(ss) },
-                    { osuBeatmapApiService.applyBeatmapExtend(ss) },
-
-                    )
+                    { osuBeatmapApiService.applyBeatmapExtend(ss) }
+                )
 
                 val body = mapOf(
                     "user" to user,

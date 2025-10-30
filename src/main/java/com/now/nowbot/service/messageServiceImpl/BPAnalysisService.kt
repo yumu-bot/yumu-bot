@@ -10,6 +10,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
+import com.now.nowbot.service.messageServiceImpl.UUBAService.Companion.getText
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
@@ -158,10 +159,10 @@ import kotlin.math.min
             val rankSort = rankList.groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.map { it.key }
 
             data class Mapper(
-                @JsonProperty("avatar_url") val avatarUrl: String,
-                val username: String,
-                @JsonProperty("map_count") val mapCount: Int,
-                @JsonProperty("pp_count") val ppCount: Float
+                @field:JsonProperty("avatar_url") val avatarUrl: String,
+                @field:JsonProperty("username") val username: String,
+                @field:JsonProperty("map_count") val mapCount: Int,
+                @field:JsonProperty("pp_count") val ppCount: Float
             )
 
             val mapperMap = bests
@@ -185,38 +186,6 @@ import kotlin.math.min
                     // ppCount = entry.value.sumOf { it.weight?.pp ?: 0.0 }.toFloat(),
                 )
             }.sortedByDescending { it.ppCount }
-
-            /*
-            val mapperMap = bests.groupingBy { it.beatmap.mapperID }.eachCount()
-
-            val mapperSize = mapperMap.size
-            val mapperCount =
-                mapperMap.entries.sortedByDescending { it.value }.take(8).associateBy({ it.key }, { it.value })
-                    .toMap(LinkedHashMap())
-
-            val mapperInfo = mappers
-            val mapperList =
-                bests.filter { mapperCount.containsKey(it.beatmap.mapperID) }.groupingBy { it.beatmap.mapperID }
-                    .aggregate<LazerScore, Long, Double> { _, accumulator, element, _ ->
-                        if (accumulator == null) {
-                            element.pp
-                        } else {
-                            accumulator + (element.pp)
-                        }
-                    }.entries.sortedByDescending { it.value }.map {
-                        var name = ""
-                        var avatar = ""
-                        for (m in mapperInfo) {
-                            if (it.key == m.userID) {
-                                name = m.userName
-                                avatar = m.avatarUrl!!
-                                break
-                            }
-                        }
-                        Mapper(avatar, name, mapperCount[it.key] ?: 0, it.value.toFloat())
-                    }.toList()
-
-             */
 
             val userPP = user.pp
             val bonusPP = getBonusPP(userPP, bests.map { it.pp }.toDoubleArray())
@@ -401,9 +370,6 @@ import kotlin.math.min
     }
 
     private fun BAParam.getImage(): ByteArray {
-        val scores = bests
-        val user = user
-
         return try {
             when (version) {
                 1 -> imageService.getPanel(this.toMap(), "J")
@@ -412,7 +378,7 @@ import kotlin.math.min
         } catch (e: Exception) {
             log.error("最好成绩分析：复杂面板生成失败", e)
             try {
-                val msg = UUBAService.getTextPlus(scores, user.username, user.mode, userApiService)
+                val msg = this.getText()
                     .split("\n".toRegex())
                     .dropLastWhile { it.isEmpty() }
                     .toTypedArray()
