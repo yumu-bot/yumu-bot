@@ -54,24 +54,6 @@ import kotlin.math.min
             val t6: List<LazerScore> = bests.take(6)
             val b5: List<LazerScore> = bests.takeLast(bpSize - max((bpSize - 5).toDouble(), 0.0).toInt())
 
-            data class BeatMap4BA(
-                val ranking: Int,
-                val length: Int,
-                val combo: Int,
-                val bpm: Float,
-                val star: Float,
-                val rank: String,
-                val cover: String,
-                val mods: List<LazerMod>
-            )
-
-            data class Attr(
-                val index: String,
-                @param:JsonProperty("map_count") val mapCount: Int,
-                @param:JsonProperty("pp_count") val ppCount: Double,
-                val percent: Double
-            )
-
             val beatmapList: MutableList<BeatMap4BA> = ArrayList(bpSize)
             val modsPPMap: MultiValueMap<String, Double> = LinkedMultiValueMap()
             val rankMap: MultiValueMap<String, Double> = LinkedMultiValueMap()
@@ -157,13 +139,6 @@ import kotlin.math.min
             }
 
             val rankSort = rankList.groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.map { it.key }
-
-            data class Mapper(
-                @field:JsonProperty("avatar_url") val avatarUrl: String,
-                @field:JsonProperty("username") val username: String,
-                @field:JsonProperty("map_count") val mapCount: Int,
-                @field:JsonProperty("pp_count") val ppCount: Float
-            )
 
             val mapperMap = bests
                 .associateWith { it.beatmap.mapperIDs }
@@ -302,10 +277,10 @@ import kotlin.math.min
     }
 
     override fun handleMessage(event: MessageEvent, param: BAParam): ServiceCallStatistic? {
-        val image = param.getImage()
+        val message = param.getMessageChain()
 
         try {
-            event.reply(image)
+            event.reply(message)
         } catch (e: Exception) {
             log.error("最好成绩分析：发送失败", e)
             throw IllegalStateException.Send("最好成绩分析")
@@ -324,7 +299,7 @@ import kotlin.math.min
         return getParam(event, matcher)
     }
 
-    override fun reply(event: MessageEvent, param: BAParam): MessageChain? = MessageChain(param.getImage())
+    override fun reply(event: MessageEvent, param: BAParam): MessageChain? = param.getMessageChain()
 
     private fun getParam(event: MessageEvent, matcher: Matcher): BAParam {
         val isMyself = AtomicBoolean(false)
@@ -369,11 +344,11 @@ import kotlin.math.min
 
     }
 
-    private fun BAParam.getImage(): ByteArray {
+    private fun BAParam.getMessageChain(): MessageChain {
         return try {
             when (version) {
-                1 -> imageService.getPanel(this.toMap(), "J")
-                else -> imageService.getPanel(this.toMap(), "J2")
+                1 -> MessageChain(imageService.getPanel(this.toMap(), "J"))
+                else -> MessageChain(imageService.getPanel(this.toMap(), "J2"))
             }
         } catch (e: Exception) {
             log.error("最好成绩分析：复杂面板生成失败", e)
@@ -382,10 +357,11 @@ import kotlin.math.min
                     .split("\n".toRegex())
                     .dropLastWhile { it.isEmpty() }
                     .toTypedArray()
-                imageService.getPanelAlpha(*msg)
+                MessageChain(imageService.getPanelAlpha(*msg))
             } catch (e1: Exception) {
                 log.error("最好成绩分析：文字版转换失败", e1)
-                throw IllegalStateException.Fetch("最好成绩分析（文字版）")
+                MessageChain(this.getText())
+                // throw IllegalStateException.Fetch("最好成绩分析（文字版）")
             }
         }
     }
@@ -393,5 +369,30 @@ import kotlin.math.min
     companion object {
         private val log: Logger = LoggerFactory.getLogger(BPAnalysisService::class.java)
         private val RANK_ARRAY = arrayOf("XH", "X", "SSH", "SS", "SH", "S", "A", "B", "C", "D", "F")
+
+        data class Mapper(
+            @field:JsonProperty("avatar_url") val avatarUrl: String,
+            @field:JsonProperty("username") val username: String,
+            @field:JsonProperty("map_count") val mapCount: Int,
+            @field:JsonProperty("pp_count") val ppCount: Float
+        )
+
+        data class BeatMap4BA(
+            val ranking: Int,
+            val length: Int,
+            val combo: Int,
+            val bpm: Float,
+            val star: Float,
+            val rank: String,
+            val cover: String,
+            val mods: List<LazerMod>
+        )
+
+        data class Attr(
+            val index: String,
+            @param:JsonProperty("map_count") val mapCount: Int,
+            @param:JsonProperty("pp_count") val ppCount: Double,
+            val percent: Double
+        )
     }
 }

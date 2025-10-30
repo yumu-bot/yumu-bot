@@ -1,10 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
+import com.now.nowbot.model.osu.ValueMod
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -12,18 +11,26 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
+import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.Companion.Attr
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import org.springframework.stereotype.Service
+import org.springframework.util.LinkedMultiValueMap
+import org.springframework.util.MultiValueMap
 import java.text.DecimalFormat
+import java.util.ArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
+import kotlin.collections.component1
+import kotlin.collections.component2
+import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.Companion.Mapper
 import kotlin.math.roundToInt
 
 @Service("UU_BA")
@@ -122,62 +129,183 @@ class UUBAService(
     }
 
     companion object {
+
+        /**
+         * 重写自己的获取
+         */
+        private fun <T> List<LazerScore>.sortCount2(
+            username: String,
+            sortedByDescending: (LazerScore) -> T
+        ): List<Triple<Int, Number, LazerScore>> where T : Number, T : Comparable<T> {
+            if (this.isEmpty()) throw NoSuchElementException.BestScore(username)
+
+            val sorted: List<Triple<Int, Number, LazerScore>> = this
+                .mapIndexed { index, score ->
+                    val value = sortedByDescending(score)
+                    Triple(index + 1, value, score)
+                }
+                .sortedByDescending { it.second }  // 这里可以直接比较，因为 T 是 Comparable<T>
+
+            val max = sorted.first()
+            val mid = sorted[sorted.size / 2]
+            val min = sorted.last()
+
+            return listOf(
+                Triple(-1, sorted.map { it.second.toString().toDouble() }.average(), LazerScore()),
+                max, mid, min,
+            )
+        }
+
+
         fun BAParam.getText(): String {
-            val node = JacksonUtil.toNode(JacksonUtil.toJson(this.toMap())) as JsonNode
+            val name = this.user.username
+            val mode = this.user.currentOsuMode.fullName
 
-            val name = node["user"]["username"].asText()
-            val mode = OsuMode.getMode(node["user"]["mode"].asText()).fullName
+            val length = this.bests.sortCount2(name) { score -> score.beatmap.totalLength }
+            val combo = this.bests.sortCount2(name) { score -> score.maxCombo }
+            val star = this.bests.sortCount2(name) { score -> score.beatmap.starRating }
+            val bpm = this.bests.sortCount2(name) { score -> score.beatmap.totalLength }
 
-            val length = node["length_attr"].toList().toTriple("length")
-            val combo = node["combo_attr"].toList().toTriple("combo")
-            val star = node["star_attr"].toList().toTriple("star")
-            val bpm = node["bpm_attr"].toList().toTriple("bpm")
+            val mapperMap = bests
+                .associateWith { it.beatmap.mapperIDs }
+                .flatMap { (score, mappers) ->
+                    mappers.map { mapper -> mapper to score }
+                }.groupBy({ it.first }, { it.second })
 
-            val mappers = node["favorite_mappers"].take(5)
-                .joinToString("\n") {
-                    "${it["username"].asText()}: ${it["map_count"]}x ${it["pp_count"].asDouble().roundToInt()}PP"
+            val mapperUserInfoMap = mappers.associateBy { it.userID }
+
+            val mapperList = mapperMap.map { entry -> entry.key
+                val microUser = mapperUserInfoMap[entry.key]
+
+                Mapper(
+                    avatarUrl = microUser?.avatarUrl ?: "https://a.ppy.sh/${entry.key}",
+                    username = microUser?.username ?: "UID: ${entry.key}",
+                    mapCount = entry.value.size,
+                    ppCount = entry.value.sumOf { it.pp }.toFloat(),
+                    // ppCount = entry.value.sumOf { it.weight?.pp ?: 0.0 }.toFloat(),
+                )
+            }.sortedByDescending { it.ppCount }
+
+            val modsPPMap: MultiValueMap<String, Double> = LinkedMultiValueMap()
+
+            bests.map { best ->
+                val m = best.mods.filter {
+                    if (it is ValueMod) {
+                        it.value != 0
+                    } else {
+                        true
+                    }
                 }
 
-            val mods = node["mods_attr"].take(5)
-                .joinToString("\n") {
-                    "${it["index"].asText()}: ${it["map_count"]}x ${it["pp_count"].asDouble().roundToInt()}PP (${it["percent"].asDouble().times(100).round2()}%)"
+                if (m.isNotEmpty()) {
+                    m.forEach {
+                        modsPPMap.add(it.acronym, best.weight!!.pp)
+                    }
                 }
+            }
+
+            val modsAttr: List<Attr> = run {
+                val modsAttrTmp: MutableList<Attr> = ArrayList(modsPPMap.size)
+                modsPPMap.forEach { (mod: String, value: MutableList<Double?>) ->
+                    val attr = Attr(
+                        mod, value.filterNotNull().count(), value.filterNotNull().sum(), value.filterNotNull().average()
+                    )
+                    modsAttrTmp.add(attr)
+                }
+
+                modsAttrTmp.sortedByDescending { it.ppCount }
+            }
+
+            val l = length.toResult { it.toInt().secondsToTime() }
+            val c = combo.toResult(suffix = "x") { it.toInt().toString() }
+            val r = star.toResult(suffix = "*") { it.toDouble().round2() }
+            val m = bpm.toResult { it.toDouble().round2() }
 
             return """
                 $name: $mode
                 ---
-                length: mid: #${length[1].first} ${length[1].second.secondsToTime()},
-                max: #${length[0].first} ${length[0].second.secondsToTime()}, min: #${length[2].first} ${length[2].second.secondsToTime()}
+                [length]: ${l.first}
+                ${l.second}
                 ---
-                combo: mid: #${combo[1].first} ${combo[1].second}x,
-                max: #${combo[0].first} ${combo[0].second}x, min: #${combo[2].first} ${combo[2].second}x
+                [combo]: ${c.first}
+                ${c.second}
                 ---
-                star: mid: #${star[1].first} ${star[1].second}*,
-                max: #${star[0].first}* ${star[0].second}, min: #${star[2].first} ${star[2].second}*
+                [star]: ${r.first}
+                ${r.second}
                 ---
-                bpm: mid: #${bpm[1].first} ${bpm[1].second},
-                max: #${bpm[0].first} ${bpm[0].second}, min: #${bpm[2].first} ${bpm[2].second}
-            """.trimIndent() + "\n---\nmappers:\n" + mappers + "\n---\nmods:\n" + mods
+                [bpm]: ${m.first}
+                ${m.second}
+            """.trimIndent() + "\n---\n[mappers]:\n" + mapperList.mapperToLine(5) + "\n---\n[mods]:\n" + modsAttr.attrToLine(5)
         }
 
-        private fun List<JsonNode>.toTriple(name: String = "length"): List<Pair<Int, String>> {
-            return this.map {
-                it["ranking"].asInt() to it[name].asText()
-            }
+        /**
+         * 第一行和第二行的内容，第一行的是平均，第二行是最大中位最小
+         * @param suffix 后缀，会添加到所有地方
+         * @param function 格式化 triple 第二个值，用于时间的显示
+         */
+        private fun <T> List<Triple<Int, T, LazerScore>>.toResult(
+            suffix: String = "",
+            function: (T) -> String = { it.toString() }
+        ): Pair<String, String> {
+            val average = "${function.invoke(this[0].second)}${suffix}"
+            val max = this[1].toLine(suffix, function)
+            val mid = this[2].toLine(suffix, function)
+            val min = this[3].toLine(suffix, function)
+
+            val first = "average: $average"
+
+            val second = "max: $max, mid: $mid, min: $min"
+
+            return first to second
         }
 
-        private fun String.secondsToTime(): String {
-            val sec = this.toIntOrNull() ?: return "00:00"
+        private fun <T> Triple<Int, T, LazerScore>.toLine(
+            suffix: String = "",
+            function: (T) -> String = { it.toString() },
+        ): String {
+            return "#${this.first} ${function.invoke(this.second)}${suffix}"
+        }
 
-            val minutes = sec / 60
-            val seconds = sec % 60
+        private fun Int?.secondsToTime(): String {
+            if (this == null) return "00:00"
+
+            val minutes = this / 60
+            val seconds = this % 60
             return "%02d:%02d".format(minutes, seconds)
         }
 
-        private val df = DecimalFormat("#.00")
+        private val df = DecimalFormat("#.##")
 
         private fun Double.round2(): String {
             return df.format(this)
+        }
+
+        private fun List<Mapper>.mapperToLine(take: Int = -1): String {
+            val list = if (take > 0) {
+                this.take(take)
+            } else {
+                this
+            }
+
+            if (list.isEmpty()) return "no mappers."
+
+            return list.joinToString("\n") {
+                "${it.username}: ${it.mapCount}x ${it.ppCount.roundToInt()}PP"
+            }
+        }
+
+        private fun List<Attr>.attrToLine(take: Int = -1): String {
+            val list = if (take > 0) {
+                this.take(take)
+            } else {
+                this
+            }
+
+            if (list.isEmpty()) return "all no-mod."
+
+            return list.joinToString("\n") {
+                "${it.index}: ${it.mapCount}x ${it.ppCount.roundToInt()}PP (${it.percent.round2()}%)"
+            }
         }
     }
 }
