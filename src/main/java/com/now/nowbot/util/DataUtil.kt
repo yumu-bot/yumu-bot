@@ -1261,13 +1261,12 @@ object DataUtil {
 
         val maxPage = ((collection.size - 1) / maxPerPage).coerceAtLeast(0) + 1
 
-        val end = (page.coerceAtMost(maxPage) * maxPerPage).coerceAtMost(collection.size)
-        val start = (end - maxPerPage).coerceAtLeast(0)
+        val start = ((page.coerceIn(1, maxPage) - 1) * maxPerPage).coerceIn(0, collection.size)
 
         val p = page.coerceIn(1, maxPage) + (before / maxPerPage)
         val m = maxPage + (before / maxPerPage) + (after / maxPerPage)
 
-        return Triple(collection.drop(start).take(end), p, m)
+        return Triple(collection.drop(start).take(maxPerPage.coerceAtLeast(0)), p, m)
     }
 
     /**
