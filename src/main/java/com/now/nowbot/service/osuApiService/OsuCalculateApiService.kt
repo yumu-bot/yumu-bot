@@ -7,6 +7,10 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.RosuPerformance
 
 interface OsuCalculateApiService {
+    companion object {
+        const val LOCAL: Boolean = false
+    }
+
     fun getScorePerfectPP(score: LazerScore): RosuPerformance
 
     fun getScoreFullComboPP(score: LazerScore): RosuPerformance
@@ -20,22 +24,22 @@ interface OsuCalculateApiService {
     fun applyBeatMapChanges(beatmap: Beatmap?, mods: List<LazerMod>)
 
     fun applyStarToScore(score: LazerScore) {
-        applyStarToScore(score, local = true)
+        applyStarToScore(score, local = LOCAL)
     }
 
-    fun applyStarToScore(score: LazerScore, local: Boolean = true)
+    fun applyStarToScore(score: LazerScore, local: Boolean = LOCAL)
 
     fun applyStarToScores(scores: List<LazerScore>) {
-        applyStarToScores(scores, local = true)
+        applyStarToScores(scores, local = LOCAL)
     }
 
-    fun applyStarToScores(scores: List<LazerScore>, local: Boolean = true)
+    fun applyStarToScores(scores: List<LazerScore>, local: Boolean = LOCAL)
 
     fun applyStarToBeatMap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>) {
-        applyStarToBeatMap(beatmap, mode, mods, local = true)
+        applyStarToBeatMap(beatmap, mode, mods, local = LOCAL)
     }
 
-    fun applyStarToBeatMap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>, local: Boolean = true)
+    fun applyStarToBeatMap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>, local: Boolean = LOCAL)
 
     fun applyPPToScore(score: LazerScore)
 
