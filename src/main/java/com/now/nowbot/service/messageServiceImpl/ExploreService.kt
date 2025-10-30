@@ -214,9 +214,9 @@ class ExploreService(
                 // 此时这个字段用于筛选模式
                 val mode = OsuMode.getMode(matcher.group(FLAG_TYPE))
 
-                val most = if (hasRangeInConditions.not() && hasCondition.not()) {
+                val most = if (hasRangeInConditions.not() && hasCondition.not() && mode == OsuMode.DEFAULT) {
                     // 这个数量级肯定很大，所以减小查询
-                    if (page <= 1 && mode != OsuMode.DEFAULT) {
+                    if (page <= 1) {
                         before = 0
                         after = 99
                         beatmapApiService.getUserMostPlayedBeatmaps(user.userID, 0, 20)
