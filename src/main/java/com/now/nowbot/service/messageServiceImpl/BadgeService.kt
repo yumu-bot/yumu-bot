@@ -11,8 +11,8 @@ import com.now.nowbot.service.MessageService
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.CmdObject
-import com.now.nowbot.util.CmdUtil.getUserWithoutRange
+import com.now.nowbot.util.InstructionObject
+import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_NAME
@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
         val isMyself = AtomicBoolean(false)
 
-        val user = getUserWithoutRange(event, m, CmdObject(OsuMode.DEFAULT), isMyself = isMyself)
+        val user = getUserWithoutRange(event, m, InstructionObject(OsuMode.DEFAULT), isMyself = isMyself)
 
         if (user.badges.isEmpty()) {
             if (isMyself.get()) {
@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
         try {
             event.reply(image)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw IllegalStateException.Send("奖牌信息")
         }
 
@@ -70,7 +70,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
         val isMyself = AtomicBoolean(false)
 
-        val user = getUserWithoutRange(event, m, CmdObject(OsuMode.DEFAULT), isMyself = isMyself)
+        val user = getUserWithoutRange(event, m, InstructionObject(OsuMode.DEFAULT), isMyself = isMyself)
 
         if (user.badges.isEmpty()) {
             if (isMyself.get()) {

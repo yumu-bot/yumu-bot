@@ -21,8 +21,8 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserWithRange
+import com.now.nowbot.util.InstructionUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getUserWithRange
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.FLAG_UID
@@ -219,7 +219,7 @@ class FriendService(
                     null
                 }
 
-                CmdRange(id.data!!, start, end)
+                InstructionRange(id.data!!, start, end)
             }
 
             val async = AsyncMethodExecutor.awaitPairCallableExecute(
@@ -262,7 +262,7 @@ class FriendService(
 
             if (other == null || !other.isAuthorized) {
                 // 对方未绑定模式
-                val others = getUserWithRange(event, matcher, CmdObject(other?.mode ?: OsuMode.DEFAULT), isMyself).data!!
+                val others = getUserWithRange(event, matcher, InstructionObject(other?.mode ?: OsuMode.DEFAULT), isMyself).data!!
 
                 val async = AsyncMethodExecutor.awaitPairCallableExecute(
                     { userApiService.getOsuUser(me) },

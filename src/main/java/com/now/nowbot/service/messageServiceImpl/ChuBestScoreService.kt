@@ -14,7 +14,7 @@ import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
-import com.now.nowbot.util.CmdRange
+import com.now.nowbot.util.InstructionRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_HYPHEN
 import org.springframework.stereotype.Service
@@ -26,7 +26,7 @@ class ChuBestScoreService(
     private val imageService: ImageService,
 ) : MessageService<ChuBestScoreService.ChuBestScoreParam> {
 
-    data class ChuBestScoreParam(val name: String?, val qq: Long?, val range: CmdRange<Int>, val isMyself: Boolean = false)
+    data class ChuBestScoreParam(val name: String?, val qq: Long?, val range: InstructionRange<Int>, val isMyself: Boolean = false)
 
     @JvmRecord
     data class PanelME2Param(
@@ -82,20 +82,20 @@ class ChuBestScoreService(
 
                     when (s.size) {
                         2 -> {
-                            CmdRange<Int>(null, s.first().toInt(), s.last().toInt())
+                            InstructionRange<Int>(null, s.first().toInt(), s.last().toInt())
                         }
                         1 -> {
-                            CmdRange<Int>(null, s.first().toInt(), null)
+                            InstructionRange<Int>(null, s.first().toInt(), null)
                         }
                         else -> {
-                            CmdRange<Int>(null, 1, 50)
+                            InstructionRange<Int>(null, 1, 50)
                         }
                     }
                 } else {
-                    CmdRange<Int>(null, rangeStr.toInt(), null)
+                    InstructionRange<Int>(null, rangeStr.toInt(), null)
                 }
             } else {
-                CmdRange<Int>(null, 1, 50)
+                InstructionRange<Int>(null, 1, 50)
             }
 
         if (matcher.group("name").isNullOrBlank().not()) {
@@ -108,13 +108,13 @@ class ChuBestScoreService(
                         ChuBestScoreParam(
                             strs.first().trim(),
                             null,
-                            CmdRange(null, strs.last().toInt(), null),
+                            InstructionRange(null, strs.last().toInt(), null),
                         )
                     return true
                 }
             } else if (Regex("\\d{1,3}").matches(name)) {
                 data.value =
-                    ChuBestScoreParam(null, event.sender.id, CmdRange(null, name.toInt(), null))
+                    ChuBestScoreParam(null, event.sender.id, InstructionRange(null, name.toInt(), null))
                 return true
             }
 
@@ -214,7 +214,7 @@ class ChuBestScoreService(
 
         @JvmStatic
         fun implementScore(
-            range: CmdRange<Int>,
+            range: InstructionRange<Int>,
             bp: ChuBestScore,
             chunithmApiService: ChunithmApiService
         ): ChuBestScore.Records {

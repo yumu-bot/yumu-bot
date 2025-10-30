@@ -21,8 +21,8 @@ import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserWithoutRange
+import com.now.nowbot.util.InstructionUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import com.now.nowbot.util.command.FLAG_DAY
 import kotlinx.coroutines.*
 import org.slf4j.Logger
@@ -172,7 +172,7 @@ class InfoService(
             user = try {
                 getUserWithoutRange(event, matcher, getMode(matcher), isMyself)
             } catch (e: BindException) {
-                if (CmdUtil.isAvoidance(event.textMessage.trim(), "info")) {
+                if (InstructionUtil.isAvoidance(event.textMessage.trim(), "info")) {
                     log.debug("指令退避：I 退避成功")
                     return null
                 } else {

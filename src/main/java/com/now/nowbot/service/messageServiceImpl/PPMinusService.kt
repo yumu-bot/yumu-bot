@@ -21,7 +21,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.CmdUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -314,7 +314,7 @@ import java.util.regex.Matcher
                 otherBests = async.second.second
             } else {
                 // 缺东西，走常规路线
-                val users = CmdUtil.get2User(event, matcher, inputMode, true)
+                val users = InstructionUtil.get2User(event, matcher, inputMode, true)
 
                 mode = if (version == -1) {
                     OsuMode.OSU
@@ -374,7 +374,7 @@ import java.util.regex.Matcher
             } else {
                 // 缺东西，走常规路线
 
-                val users = CmdUtil.get2User(event, matcher, inputMode, false)
+                val users = InstructionUtil.get2User(event, matcher, inputMode, false)
 
                 mode = if (version == -1) {
                     OsuMode.OSU

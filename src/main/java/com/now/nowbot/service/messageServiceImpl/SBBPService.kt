@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.CoverType
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
@@ -23,8 +23,8 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getSBUserAndRangeWithBackoff
+import com.now.nowbot.util.InstructionUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getSBUserAndRangeWithBackoff
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
@@ -144,7 +144,7 @@ class SBBPService(
                     null
                 }
 
-                CmdRange(id.data!!, start, end)
+                InstructionRange(id.data!!, start, end)
             }
 
             val rx = if (isRelax && mode.data!!.modeValue in 0..3) {
@@ -176,7 +176,7 @@ class SBBPService(
                     null
                 }
 
-                CmdRange(range.data!!, start, end)
+                InstructionRange(range.data!!, start, end)
             }
 
             val rx = if (isRelax && mode.data!!.modeValue in 0..3) {
@@ -201,7 +201,7 @@ class SBBPService(
         return BPParam(user, filteredScores, isShow)
     }
 
-    private fun <T> CmdRange<T>.getOffsetAndLimit(
+    private fun <T> InstructionRange<T>.getOffsetAndLimit(
         isMultiple: Boolean,
         isSearch: Boolean = false,
     ): Pair<Int, Int> {
@@ -222,7 +222,7 @@ class SBBPService(
         return offset to limit
     }
 
-    private fun CmdRange<Long>.getBestsFromUserID(
+    private fun InstructionRange<Long>.getBestsFromUserID(
         mode: OsuMode,
         isMultiple: Boolean,
         isSearch: Boolean = false,
@@ -250,7 +250,7 @@ class SBBPService(
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
 
-    private fun CmdRange<SBUser>.getBestsFromSBUser(
+    private fun InstructionRange<SBUser>.getBestsFromSBUser(
         mode: OsuMode,
         isMultiple: Boolean,
         isSearch: Boolean = false,

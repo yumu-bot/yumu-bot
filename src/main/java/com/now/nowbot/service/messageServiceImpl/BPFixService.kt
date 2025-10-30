@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.CoverType
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerScoreWithFcPP
@@ -20,7 +20,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.CmdUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -105,7 +105,7 @@ class BPFixService(
             page = id.start ?: 1
         } else {
             // 经典的获取方式
-            val range = CmdUtil.getUserWithRange(event, matcher, mode, isMyself)
+            val range = InstructionUtil.getUserWithRange(event, matcher, mode, isMyself)
 
             user = range.data!!
 

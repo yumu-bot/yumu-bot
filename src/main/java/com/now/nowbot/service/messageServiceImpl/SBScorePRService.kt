@@ -21,7 +21,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.CmdUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -150,7 +150,7 @@ class SBScorePRService(
                     null
                 }
 
-                CmdRange(id.data!!, start, end)
+                InstructionRange(id.data!!, start, end)
             }
 
             val rx = if (isRelax && mode.data!!.modeValue in 0..3) {
@@ -169,7 +169,7 @@ class SBScorePRService(
         } else {
             // 经典的获取方式
 
-            val range = CmdUtil.getSBUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "re")
+            val range = InstructionUtil.getSBUserAndRangeWithBackoff(event, matcher, mode, isMyself, messageText, "re")
             range.setZeroToRange100()
 
             val range2 = if (range.start != null) {
@@ -182,7 +182,7 @@ class SBScorePRService(
                     null
                 }
 
-                CmdRange(range.data!!, start, end)
+                InstructionRange(range.data!!, start, end)
             }
 
             val rx = if (isRelax && mode.data!!.modeValue in 0..3) {
@@ -212,7 +212,7 @@ class SBScorePRService(
     }
 
 
-    private fun <T> CmdRange<T>.getOffsetAndLimit(
+    private fun <T> InstructionRange<T>.getOffsetAndLimit(
         isMultiple: Boolean,
         isSearch: Boolean = false,
     ): Pair<Int, Int> {
@@ -233,7 +233,7 @@ class SBScorePRService(
         return offset to limit
     }
 
-    private fun CmdRange<Long>.getRecentsFromSBUserID(
+    private fun InstructionRange<Long>.getRecentsFromSBUserID(
         mode: OsuMode,
         isMultiple: Boolean,
         isSearch: Boolean = false,
@@ -267,7 +267,7 @@ class SBScorePRService(
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
 
-    private fun CmdRange<SBUser>.getRecentsFromSBUser(
+    private fun InstructionRange<SBUser>.getRecentsFromSBUser(
         mode: OsuMode,
         isMultiple: Boolean,
         isSearch: Boolean = false,

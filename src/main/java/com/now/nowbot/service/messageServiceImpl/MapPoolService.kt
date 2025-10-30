@@ -15,7 +15,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.ASyncMessageUtil
-import com.now.nowbot.util.CmdUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.command.FLAG_NAME

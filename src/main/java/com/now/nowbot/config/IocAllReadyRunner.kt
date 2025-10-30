@@ -1,7 +1,6 @@
 package com.now.nowbot.config
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.now.nowbot.aop.CheckAspect
 import com.now.nowbot.listener.LocalCommandListener
 import com.now.nowbot.permission.PermissionImplement
 import com.now.nowbot.qq.tencent.YumuServer
@@ -10,7 +9,7 @@ import com.now.nowbot.service.PerformancePlusService
 import com.now.nowbot.service.messageServiceImpl.MatchListenerService
 import com.now.nowbot.service.messageServiceImpl.SystemInfoService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.util.CmdUtil
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.QQMsgUtil
 import com.now.nowbot.util.UserIDUtil
@@ -31,7 +30,6 @@ import java.util.concurrent.Executor
 @Component
 class IocAllReadyRunner(
     private val applicationContext: ApplicationContext,
-    private val check: CheckAspect,
     private val permission: Permission,
     private val permissionImplement: PermissionImplement
 ) : CommandLineRunner {
@@ -54,7 +52,7 @@ class IocAllReadyRunner(
     init {
         val services = applicationContext.getBeansOfType(MessageService::class.java)
         YumuServer.userApiService = applicationContext.getBean(OsuUserApiService::class.java)
-        CmdUtil.init(applicationContext)
+        InstructionUtil.init(applicationContext)
         UserIDUtil.init(applicationContext)
 
         LocalCommandListener.setHandler(services)

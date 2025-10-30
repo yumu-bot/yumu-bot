@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.CoverType
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.LazerScore
@@ -23,8 +23,8 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
+import com.now.nowbot.util.InstructionUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -174,7 +174,7 @@ import java.util.regex.Matcher
                     null
                 }
 
-                CmdRange(id.data!!, start, end)
+                InstructionRange(id.data!!, start, end)
             }
 
             val async = AsyncMethodExecutor.awaitPairCallableExecute(
@@ -200,7 +200,7 @@ import java.util.regex.Matcher
                     null
                 }
 
-                CmdRange(range.data!!, start, end)
+                InstructionRange(range.data!!, start, end)
             }
 
             user = range2.data!!
@@ -219,7 +219,7 @@ import java.util.regex.Matcher
         return BPParam(user, filteredScores, isShow)
     }
 
-    private fun <T> CmdRange<T>.getOffsetAndLimit(
+    private fun <T> InstructionRange<T>.getOffsetAndLimit(
         isMultiple: Boolean,
         isSearch: Boolean = false,
     ): Pair<Int, Int> {
@@ -240,7 +240,7 @@ import java.util.regex.Matcher
         return offset to limit
     }
 
-    private fun CmdRange<Long>.getBestsFromUserID(
+    private fun InstructionRange<Long>.getBestsFromUserID(
         mode: OsuMode,
         isMultiple: Boolean,
         isSearch: Boolean = false,
@@ -263,7 +263,7 @@ import java.util.regex.Matcher
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
 
-    private fun CmdRange<OsuUser>.getBestsFromOsuUser(
+    private fun InstructionRange<OsuUser>.getBestsFromOsuUser(
         mode: OsuMode,
         isMultiple: Boolean,
         isSearch: Boolean = false,

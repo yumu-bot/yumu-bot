@@ -1,9 +1,9 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.CoverType
-import com.now.nowbot.model.enums.CoverType.*
-import com.now.nowbot.model.enums.CoverType.Companion.getString
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
+import com.now.nowbot.model.osu.Covers.Companion.CoverType.*
+import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.ImageMessage

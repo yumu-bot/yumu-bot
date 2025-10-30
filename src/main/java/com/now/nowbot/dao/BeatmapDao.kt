@@ -210,7 +210,7 @@ class BeatmapDao(
         score.beatmapset.apply {
             artist = x.artist
             artistUnicode = x.artistUnicode
-            covers = Covers.getCover(x.beatmapsetID, x.coverID)
+            covers = Covers.getCoverFromCacheID(x.beatmapsetID, x.coverID)
             creator = x.creator
             favouriteCount = x.favouriteCount
             genreID = x.genreID
@@ -293,7 +293,7 @@ class BeatmapDao(
         val set = (from.beatmapset ?: Beatmapset()).apply {
             artist = x.artist
             artistUnicode = x.artistUnicode
-            covers = Covers.getCover(x.beatmapsetID, x.coverID)
+            covers = Covers.getCoverFromCacheID(x.beatmapsetID, x.coverID)
             creator = x.creator
             favouriteCount = x.favouriteCount
             genreID = x.genreID

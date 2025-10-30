@@ -8,8 +8,8 @@ import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.BeatmapObjectCountLite
 import com.now.nowbot.mapper.BeatmapObjectCountMapper
 import com.now.nowbot.model.BindUser
-import com.now.nowbot.model.enums.CoverType
-import com.now.nowbot.model.enums.CoverType.Companion.getString
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
+import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService

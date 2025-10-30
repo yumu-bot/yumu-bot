@@ -15,8 +15,8 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserWithRange
+import com.now.nowbot.util.InstructionUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getUserWithRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
@@ -138,7 +138,7 @@ class ScorePRCardService(
     private fun getMessageChain(score: LazerScore): MessageChain {
         try {
             beatmapApiService.applyBeatmapExtend(score)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw IllegalStateException.Fetch("谱面")
         }
 

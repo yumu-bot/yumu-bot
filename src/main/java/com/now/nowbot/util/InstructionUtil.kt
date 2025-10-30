@@ -21,20 +21,19 @@ import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationContext
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.text.trim
 
-object CmdUtil {
+object InstructionUtil {
 
     /** 获取玩家信息, 末尾没有 range。在未找到匹配的玩家时，抛错 */
     fun getUserWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
     ): OsuUser {
         return getUserWithoutRange(event, matcher, mode, AtomicBoolean(false))
     }
@@ -42,7 +41,7 @@ object CmdUtil {
     fun getUserWithoutRangeWithBackoff(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
         messageText: String,
         vararg ignores: String,
@@ -66,7 +65,7 @@ object CmdUtil {
     fun getUserWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): OsuUser {
         val user: OsuUser?
@@ -106,9 +105,9 @@ object CmdUtil {
     fun getUserWithRange(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
-    ): CmdRange<OsuUser> {
+    ): InstructionRange<OsuUser> {
         val range = getUserAndRange(event, matcher, mode)
         if (range.data == null) {
             range.data = getUserWithoutRange(event, matcher, mode, isMyself)
@@ -125,11 +124,11 @@ object CmdUtil {
     fun getUserAndRangeWithBackoff(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
         messageText: String,
         vararg ignores: String,
-    ): CmdRange<OsuUser> {
+    ): InstructionRange<OsuUser> {
         try {
             return getUserWithRange(event, matcher, mode, isMyself)
         } catch (e: BindException) {
@@ -152,8 +151,8 @@ object CmdUtil {
     private fun getUserAndRange(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>
-    ): CmdRange<OsuUser> {
+        mode: InstructionObject<OsuMode>
+    ): InstructionRange<OsuUser> {
         require(matcher.namedGroups().containsKey(FLAG_USER_AND_RANGE)) { "Matcher 中不包含 ur 分组" }
         if (mode.data == null) {
             mode.data = OsuMode.DEFAULT
@@ -161,7 +160,7 @@ object CmdUtil {
 
         val text: String = (matcher.group(FLAG_USER_AND_RANGE) ?: "").trim()
         if (text.isBlank()) {
-            return CmdRange()
+            return InstructionRange()
         }
 
         val hasHash = text.contains(REG_HASH.toRegex())
@@ -170,56 +169,48 @@ object CmdUtil {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
-            if (range.first() != null && range.last() == null && range.first() in 201..999) try {
-                val bindMode = bindDao.getBindUser(range.first().toString())?.mode ?: OsuMode.DEFAULT
+            if (range.first != null && range.second == null && range.first in 201..999) try {
+                val bindMode = bindDao.getBindUser(range.first.toString())?.mode ?: OsuMode.DEFAULT
 
                 val user = try {
-                    getOsuUser(range.first().toString(), mode.data)
+                    getOsuUser(range.first.toString(), mode.data)
                 } catch (_: Exception) {
                     null
                 }
 
                 return if (user != null) {
                     setMode(mode, bindMode, event)
-                    CmdRange(user)
+                    InstructionRange(user)
                 } else {
-                    CmdRange(null, range.first())
+                    InstructionRange(null, range.first)
                 }
             } catch (_: Exception) {
 
             }
 
-            return CmdRange(null, range[0], range[1])
-        } // -1 才是没找到
-
-        val ranges = if (hasHash) {
-            parseNameAndRangeHasHash(text)
-        } else {
-            parseNameAndRangeWithoutHash(text)
+            return InstructionRange(null, range.first, range.second)
         }
 
-        var result = CmdRange<OsuUser>()
-        for (range in ranges) {
-            try {
-                if (range.data == null) {
-                    result = CmdRange(null, range.start, range.end)
-                    break
-                }
+        val range = if (hasHash) {
+            parseNameWithHashedRange(text)
+        } else {
+            parseNameWithRange(text)
+        }
 
+        var result: InstructionRange<OsuUser>
+
+        try {
+            if (range.data == null) {
+                result = InstructionRange(null, range.start, range.end)
+            } else {
                 val bindMode = bindDao.getBindUser(range.data!!)?.mode ?: OsuMode.DEFAULT
 
-                // val id = userApiService.getOsuId(range.data)
                 setMode(mode, bindMode, event)
                 val user = getOsuUser(range.data!!, mode.data)
-                result = CmdRange(user, range.start, range.end)
-                break
-            } catch (_: Exception) { // 其余的忽略
+                result = InstructionRange(user, range.start, range.end)
             }
-        }
-
-        // 交换顺序
-        if (result.start != null && result.end != null && result.start!! > result.end!!) {
-            result.start = result.end!!.also { result.end = result.start }
+        } catch (_: Exception) {
+            result = InstructionRange<OsuUser>()
         }
 
         if (result.data != null || result.start != null) {
@@ -242,7 +233,7 @@ object CmdUtil {
     fun getSBUserWithoutRangeWithBackoff(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
         messageText: String,
         vararg ignores: String,
@@ -266,7 +257,7 @@ object CmdUtil {
     fun getSBUserWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean = AtomicBoolean(),
     ): SBUser {
         val user = getSBUser(event, matcher, mode, isMyself)
@@ -303,9 +294,9 @@ object CmdUtil {
     fun getSBUserWithRange(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
-    ): CmdRange<SBUser> {
+    ): InstructionRange<SBUser> {
         val range = getSBUserAndRange(matcher, mode)
         if (range.data == null) {
             range.data = getSBUserWithoutRange(event, matcher, mode, isMyself)
@@ -322,11 +313,11 @@ object CmdUtil {
     fun getSBUserAndRangeWithBackoff(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
         messageText: String,
         vararg ignores: String,
-    ): CmdRange<SBUser> {
+    ): InstructionRange<SBUser> {
         try {
             return getSBUserWithRange(event, matcher, mode, isMyself)
         } catch (e: BindException) {
@@ -348,8 +339,8 @@ object CmdUtil {
      */
     private fun getSBUserAndRange(
         matcher: Matcher,
-        mode: CmdObject<OsuMode>
-    ): CmdRange<SBUser> {
+        mode: InstructionObject<OsuMode>
+    ): InstructionRange<SBUser> {
         require(matcher.namedGroups().containsKey(FLAG_USER_AND_RANGE)) { "Matcher 中不包含 ur 分组" }
         if (mode.data == null) {
             mode.data = OsuMode.DEFAULT
@@ -357,7 +348,7 @@ object CmdUtil {
 
         val text: String = (matcher.group(FLAG_USER_AND_RANGE) ?: "").trim()
         if (text.isBlank()) {
-            return CmdRange()
+            return InstructionRange()
         }
 
         val hasHash = text.contains(REG_HASH.toRegex())
@@ -366,54 +357,49 @@ object CmdUtil {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
-            if (range.first() != null && range.last() == null && range.first() in 201..999) try {
+            if (range.first != null && range.second == null && range.first in 201..999) try {
 
                 val bindMode = try {
-                    bindDao.getSBBindUser(range.first().toString()).mode
+                    bindDao.getSBBindUser(range.first.toString()).mode
                 } catch (_: Exception) {
                     OsuMode.DEFAULT
                 }
 
-                val user = sbUserApiService.getUser(username = range.first().toString())
+                val user = sbUserApiService.getUser(username = range.first.toString())
 
                 return if (user != null) {
                     setMode(mode, bindMode)
-                    CmdRange(user)
+                    InstructionRange(user)
                 } else {
-                    CmdRange(null, range.first())
+                    InstructionRange(null, range.first)
                 }
             } catch (_: Exception) {
 
             }
 
-            return CmdRange(null, range[0], range[1])
-        } // -1 才是没找到
-
-        val ranges = if (hasHash) {
-            parseNameAndRangeHasHash(text)
-        } else {
-            parseNameAndRangeWithoutHash(text)
+            return InstructionRange(null, range.first, range.second)
         }
 
-        var result = CmdRange<SBUser>()
-        for (range in ranges) {
-            try {
-                if (range.data == null) {
-                    result = CmdRange(null, range.start, range.end)
-                    break
-                }
+        val range = if (hasHash) {
+            parseNameWithHashedRange(text)
+        } else {
+            parseNameWithRange(text)
+        }
 
-                val bindMode = bindDao.getBindUser(range.data!!)?.mode ?:
-                OsuMode.DEFAULT
+        var result: InstructionRange<SBUser>
 
+        try {
+            if (range.data == null) {
+                result = InstructionRange(null, range.start, range.end)
+            } else {
+                val bindMode = bindDao.getBindUser(range.data!!)?.mode ?: OsuMode.DEFAULT
 
-                // val id = userApiService.getOsuId(range.data)
                 setMode(mode, bindMode)
                 val user = sbUserApiService.getUser(username = range.data!!)
-                result = CmdRange(user, range.start, range.end)
-                break
-            } catch (_: Exception) { // 其余的忽略
+                result = InstructionRange(user, range.start, range.end)
             }
+        } catch (_: Exception) { // 其余的忽略
+            result = InstructionRange<SBUser>()
         }
 
         // 使其顺序
@@ -445,7 +431,7 @@ object CmdUtil {
     fun get2User(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isVS: Boolean = false,
     ): List<OsuUser> {
         require(matcher.namedGroups().containsKey(FLAG_2_USER)) { "Matcher 中不包含 u2 分组" }
@@ -457,7 +443,7 @@ object CmdUtil {
         /**
          * @param qq 如果是负数，则认为是 UID
          */
-        fun parseAtQQUID(qq: Long, myBind: BindUser?, mode: CmdObject<OsuMode>, isVS: Boolean): List<OsuUser> {
+        fun parseAtQQUID(qq: Long, myBind: BindUser?, mode: InstructionObject<OsuMode>, isVS: Boolean): List<OsuUser> {
             val you = if (qq > 0) {
                 getOsuUser(bindDao.getBindFromQQ(qq, false), mode.data)
             } else {
@@ -531,9 +517,91 @@ object CmdUtil {
         }
     }
 
+    /**
+     * 重写获取方法
+     */
+    fun parseNameWithHashedRange(input: String, maximum: Int = 200): InstructionRange<String> {
+        val split = input.split(REG_HASH.toRegex())
+
+        return when(split.size) {
+            2 -> {
+                val range = parseRange(split[1])
+
+                InstructionRange(split[0].ifBlank { null }, range.first?.coerceAtMost(maximum), range.second?.coerceAtMost(maximum))
+            }
+
+            1 -> {
+                val range = parseRange(split[0])
+
+                InstructionRange(null, range.first?.coerceAtMost(maximum), range.second?.coerceAtMost(maximum))
+            }
+
+            else -> {
+                InstructionRange()
+            }
+        }
+    }
+
+    /**
+     * 重写获取方法
+     * 注意，这里不能包含 hash，也就是需要先去前面匹配
+     * @param maximum 如果数字大于这个值，则视作字符串
+     */
+    fun parseNameWithRange(string: String, maximum: Int = 200): InstructionRange<String> {
+        val input = string.trim()
+
+        // 情况1: 纯数字 (如 "100")
+        if (input.matches(Regex("\\d+"))) {
+            val first = input.toInt()
+
+            return if (first > maximum) {
+                InstructionRange(input, null, null)
+            } else {
+                InstructionRange(null, first, null)
+            }
+        }
+
+        // 情况2: 数字-数字 格式 (如 "200-100", "aaa 200-100")
+        val dashNumberRegex = Regex("(.+?)\\s*(\\d+)${REG_HYPHEN}(\\d+)\\s*$")
+        dashNumberRegex.find(input)?.let { match ->
+            val (prefix, firstStr, secondStr) = match.destructured
+
+            val first = firstStr.toInt()
+
+            return if (first > maximum) {
+                InstructionRange(input, null, null)
+            } else {
+                val str = prefix.ifBlank { null }?.trim()
+                val second = secondStr.toInt()
+
+                InstructionRange(str, min(first, second), max(first, second).coerceAtMost(maximum))
+            }
+        }
+
+        // 情况3: 末尾有空格分隔的数字 (如 "aaa aa 2")
+        val spaceNumberRegex = Regex("(.+)\\s+(\\d+)\\s*$")
+        spaceNumberRegex.find(input)?.let { match ->
+            val (prefix, suffix) = match.destructured
+
+            val first = suffix.toInt()
+
+            return if (first > maximum) {
+                InstructionRange(input, null, null)
+            } else {
+                val str = prefix.ifBlank { null }?.trim()
+                InstructionRange(str, first, null)
+            }
+        }
+
+        // 情况4: 其他所有情况都作为字符串
+        return InstructionRange(input, null, null)
+
+    }
+
     /** 内部方法, 解析'#'后的 range */
-    fun parseNameAndRangeHasHash(text: String): LinkedList<CmdRange<String>> {
-        val ranges = LinkedList<CmdRange<String>>()
+    /*
+    fun parseNameAndRangeHasHash(text: String): LinkedList<InstructionRange<String>> {
+        val ranges = LinkedList<InstructionRange<String>>()
         var hashIndex: Int = text.indexOf(CHAR_HASH)
         if (hashIndex < 0) {
             hashIndex = text.indexOf(CHAR_HASH_FULL)
@@ -542,14 +610,17 @@ object CmdUtil {
         if (nameStr.isNullOrBlank()) nameStr = null
         val rangeStr = text.drop(hashIndex + 1).trim()
         val rangeInt = parseRange(rangeStr)
-        ranges.add(CmdRange(nameStr, rangeInt[0], rangeInt[1]))
+        ranges.add(InstructionRange(nameStr, rangeInt[0], rangeInt[1]))
         return ranges
     }
 
+     */
+
     /** 内部方法, 解析 name 与 range */
-    fun parseNameAndRangeWithoutHash(text: String): LinkedList<CmdRange<String>> {
-        val ranges = LinkedList<CmdRange<String>>()
-        var tempRange = CmdRange(text, null, null) // 保底 只有名字
+    /*
+    fun parseNameAndRangeWithoutHash(text: String): LinkedList<InstructionRange<String>> {
+        val ranges = LinkedList<InstructionRange<String>>()
+        var tempRange = InstructionRange(text, null, null) // 保底 只有名字
         ranges.push(tempRange)
         var index = text.length - 1
         var i = 0
@@ -564,7 +635,7 @@ object CmdUtil {
             return ranges
         }
         val rangeN = text.drop(index + 1).trim().toInt()
-        tempRange = CmdRange(text.take(index + 1).trim(), rangeN, null)
+        tempRange = InstructionRange(text.take(index + 1).trim(), rangeN, null)
         ranges.push(tempRange)
         if (tempChar != '-' && tempChar != '－' && tempChar != ' ') { // 对应末尾不是 - 或者 空格, 直接忽略剩余 range
             // 优先认为紧贴的数字是名字的一部分, 也就是目前结果集的第一个
@@ -589,7 +660,7 @@ object CmdUtil {
             return ranges
         }
 
-        tempRange = CmdRange(
+        tempRange = InstructionRange(
             text.take(index + 1).trim(),
             rangeN,
             text.drop(index + 1).take(i).toInt(),
@@ -606,34 +677,30 @@ object CmdUtil {
         return ranges
     }
 
-    /** 内部方法 */
-    private fun parseRange(text: String): Array<Int?> {
-        val rangeInt = arrayOf<Int?>(null, null)
+     */
 
-        try {
-            val range = text
-                .removePrefix(CHAR_HASH.toString())
+    /** 内部方法 */
+    private fun parseRange(text: String): Pair<Int?, Int?> {
+        val range = try {
+            text.removePrefix(CHAR_HASH.toString())
                 .removePrefix(CHAR_HASH_FULL.toString())
                 .trim()
                 .split(REG_HYPHEN.toRegex())
-                .dropLastWhile { it.isEmpty() }
+                .dropWhile { it.isEmpty() }
                 .map { it.toInt() }
                 .toTypedArray()
-            if (range.size >= 2) {
-                rangeInt[0] = range[0]
-                rangeInt[1] = range[1]
-            } else if (range.size == 1) {
-                rangeInt[0] = range[0]
-            }
         } catch (e: Exception) {
             log.debug("range 解析参数有误: {}", text, e)
+            return null to null
         }
 
-        return rangeInt
-    }
-
-    private fun isNumber(c: Char): Boolean {
-        return c in '0'..'9'
+        return if (range.size >= 2) {
+            range[0] to range[1]
+        } else if (range.size == 1) {
+            range[0] to null
+        } else {
+            null to null
+        }
     }
 
     /**
@@ -645,7 +712,7 @@ object CmdUtil {
     private fun getOsuUser(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): OsuUser? {
         // 监控是否已经符合某个字段
@@ -705,7 +772,7 @@ object CmdUtil {
     private fun getSBUser(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): SBUser? {
 
@@ -790,8 +857,8 @@ object CmdUtil {
     /**
      * 获取一个包装的 mode 传入的 mode 如果不是 default 且命令中没显式指定 mode 则覆盖掉结果 单纯为了java添加的重载方法, 可以不指定, 所以这里没有这个参数
      */
-    @JvmStatic fun getMode(matcher: Matcher): CmdObject<OsuMode> {
-        val result = CmdObject(OsuMode.DEFAULT)
+    @JvmStatic fun getMode(matcher: Matcher): InstructionObject<OsuMode> {
+        val result = InstructionObject(OsuMode.DEFAULT)
         if (matcher.namedGroups().containsKey(FLAG_MODE)) {
             result.data = OsuMode.getMode(matcher.group(FLAG_MODE) ?: "")
         }
@@ -799,8 +866,8 @@ object CmdUtil {
     }
 
     /** 获取一个包装的 mode 传入的 mode 如果不是 default 且命令中没显式指定 mode 则覆盖掉结果 */
-    @JvmStatic fun getMode(matcher: Matcher, other: OsuMode = OsuMode.DEFAULT): CmdObject<OsuMode> {
-        val result = CmdObject(OsuMode.getMode(getMode(matcher).data, other))
+    @JvmStatic fun getMode(matcher: Matcher, other: OsuMode = OsuMode.DEFAULT): InstructionObject<OsuMode> {
+        val result = InstructionObject(OsuMode.getMode(getMode(matcher).data, other))
         return result
     }
 
@@ -826,7 +893,7 @@ object CmdUtil {
      * @param selfMode 一般是玩家自己绑定的游戏模式
      * @param event 可能为群聊
      */
-    private fun setMode(mode: CmdObject<OsuMode>, selfMode: OsuMode, event: MessageEvent? = null) {
+    private fun setMode(mode: InstructionObject<OsuMode>, selfMode: OsuMode, event: MessageEvent? = null) {
         mode.data = OsuMode.getMode(mode.data, selfMode, bindDao.getGroupModeConfig(event))
     }
 
@@ -835,7 +902,7 @@ object CmdUtil {
      * @param mode 玩家查询时输入的游戏模式
      * @param event 可能为群聊
      */
-    private fun setMode(mode: CmdObject<OsuMode>, event: MessageEvent? = null) {
+    private fun setMode(mode: InstructionObject<OsuMode>, event: MessageEvent? = null) {
         mode.data = OsuMode.getMode(mode.data, OsuMode.DEFAULT, bindDao.getGroupModeConfig(event))
     }
 
@@ -862,10 +929,10 @@ object CmdUtil {
 }
 
 /** 包装类, 貌似只 mode 用到了 */
-data class CmdObject<T>(var data: T? = null)
+data class InstructionObject<T>(var data: T? = null)
 
 /** 包装类, 记录包括 range 结果 */
-data class CmdRange<T>(var data: T? = null, var start: Int? = null, var end: Int? = null) {
+data class InstructionRange<T>(var data: T? = null, var start: Int? = null, var end: Int? = null) {
     // 如果为真，则默认为 1-100
     private var rangeZero = false
 

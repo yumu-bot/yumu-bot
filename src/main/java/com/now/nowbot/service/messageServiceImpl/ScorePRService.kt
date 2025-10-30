@@ -1,7 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.CoverType
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
@@ -24,8 +24,8 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
+import com.now.nowbot.util.InstructionUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getUserAndRangeWithBackoff
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
@@ -254,7 +254,7 @@ class ScorePRService(
                     null
                 }
 
-                CmdRange(id.data!!, start, end)
+                InstructionRange(id.data!!, start, end)
             }
 
 
@@ -281,7 +281,7 @@ class ScorePRService(
                     null
                 }
 
-                CmdRange(range.data!!, start, end)
+                InstructionRange(range.data!!, start, end)
             }
 
             user = range2.data!!
@@ -305,7 +305,7 @@ class ScorePRService(
     }
 
 
-    private fun <T> CmdRange<T>.getOffsetAndLimit(
+    private fun <T> InstructionRange<T>.getOffsetAndLimit(
         isMultiple: Boolean,
         isSearch: Boolean = false,
     ): Pair<Int, Int> {
@@ -326,7 +326,7 @@ class ScorePRService(
         return offset to limit
     }
 
-    private fun CmdRange<Long>.getRecentsFromUserID(
+    private fun InstructionRange<Long>.getRecentsFromUserID(
         mode: OsuMode,
         isMultiple: Boolean,
         isSearch: Boolean = false,
@@ -354,7 +354,7 @@ class ScorePRService(
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
 
-    private fun CmdRange<OsuUser>.getRecentsFromOsuUser(
+    private fun InstructionRange<OsuUser>.getRecentsFromOsuUser(
         mode: OsuMode,
         isMultiple: Boolean,
         isSearch: Boolean = false,

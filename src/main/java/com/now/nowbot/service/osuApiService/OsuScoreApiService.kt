@@ -3,7 +3,7 @@ package com.now.nowbot.service.osuApiService
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.Replay
-import com.now.nowbot.model.enums.CoverType
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.BeatmapUserScore

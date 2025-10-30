@@ -17,7 +17,7 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botException.IMapperException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.CmdUtil.getUserWithoutRange
+import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -246,7 +246,7 @@ import kotlin.math.max
         }
 
         fun getIMapperParam(event: MessageEvent, matcher: Matcher, userApiService: OsuUserApiService, beatmapApiService: OsuBeatmapApiService): IMapperParam {
-            val mode = CmdObject(OsuMode.DEFAULT)
+            val mode = InstructionObject(OsuMode.DEFAULT)
             val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
 
             val user: OsuUser

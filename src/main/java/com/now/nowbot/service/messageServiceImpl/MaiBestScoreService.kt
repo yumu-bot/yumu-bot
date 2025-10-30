@@ -11,7 +11,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.CmdRange
+import com.now.nowbot.util.InstructionRange
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_HYPHEN
 import org.springframework.stereotype.Service
@@ -22,7 +22,7 @@ class MaiBestScoreService(
     private val imageService: ImageService,
 ) : MessageService<MaiBestScoreService.MaiBestScoreParam> {
 
-    data class MaiBestScoreParam(val name: String?, val qq: Long?, val range: CmdRange<Int>, val isMyself: Boolean = false)
+    data class MaiBestScoreParam(val name: String?, val qq: Long?, val range: InstructionRange<Int>, val isMyself: Boolean = false)
 
     data class PanelMEParam(
         val user: MaiBestScore.User,
@@ -81,20 +81,20 @@ class MaiBestScoreService(
 
                     when (s.size) {
                         2 -> {
-                            CmdRange<Int>(null, s.first().toInt(), s.last().toInt())
+                            InstructionRange<Int>(null, s.first().toInt(), s.last().toInt())
                         }
                         1 -> {
-                            CmdRange<Int>(null, s.first().toInt(), null)
+                            InstructionRange<Int>(null, s.first().toInt(), null)
                         }
                         else -> {
-                            CmdRange<Int>(null, 1, 50)
+                            InstructionRange<Int>(null, 1, 50)
                         }
                     }
                 } else {
-                    CmdRange<Int>(null, rangeStr.toInt(), null)
+                    InstructionRange<Int>(null, rangeStr.toInt(), null)
                 }
             } else {
-                CmdRange<Int>(null, 1, 50)
+                InstructionRange<Int>(null, 1, 50)
             }
 
         if (matcher.group("name").isNullOrBlank().not()) {
@@ -107,13 +107,13 @@ class MaiBestScoreService(
                         MaiBestScoreParam(
                             strs.first().trim(),
                             null,
-                            CmdRange(null, strs.last().toInt(), null),
+                            InstructionRange(null, strs.last().toInt(), null),
                         )
                     return true
                 }
             } else if (Regex("\\d{1,3}").matches(name)) {
                 data.value =
-                    MaiBestScoreParam(null, event.sender.id, CmdRange(null, name.toInt(), null))
+                    MaiBestScoreParam(null, event.sender.id, InstructionRange(null, name.toInt(), null))
                 return true
             }
 
@@ -181,7 +181,7 @@ class MaiBestScoreService(
         }
 
         fun implementScore(
-            range: CmdRange<Int>,
+            range: InstructionRange<Int>,
             best: MaiBestScore,
             maimaiApiService: MaimaiApiService
         ): MaiBestScore.Charts {

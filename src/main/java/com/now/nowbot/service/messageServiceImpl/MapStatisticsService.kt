@@ -17,7 +17,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.util.CmdUtil.getBid
+import com.now.nowbot.util.InstructionUtil.getBid
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction

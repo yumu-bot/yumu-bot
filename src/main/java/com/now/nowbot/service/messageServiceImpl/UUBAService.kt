@@ -18,7 +18,7 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.CmdUtil
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_MODE
@@ -145,8 +145,8 @@ class UUBAService(
 
             else -> return null
         }
-        val mode = CmdUtil.getMode(matcher)
-        val user = CmdUtil.getUserWithoutRange(event, matcher, mode)
+        val mode = InstructionUtil.getMode(matcher)
+        val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
 
         return BPHeadTailParam(UserParam(user.userID, user.username, mode.data!!, false), info = true)
     }

@@ -2,7 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.CoverType
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
@@ -23,9 +23,9 @@ import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.CmdUtil.getBid
-import com.now.nowbot.util.CmdUtil.getMod
-import com.now.nowbot.util.CmdUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getBid
+import com.now.nowbot.util.InstructionUtil.getMod
+import com.now.nowbot.util.InstructionUtil.getMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -143,7 +143,7 @@ class SBScoreService(
             } else {
                 mode = OsuMode.getConvertableMode(rx, map.mode)
 
-                user = CmdUtil.getSBUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score").toOsuUser(mode)
+                user = InstructionUtil.getSBUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score").toOsuUser(mode)
 
                 scores = scoreApiService.getBeatmapRecentScore(bid, mods, mode)
                     .filter { it.userID == user.userID }
@@ -161,7 +161,7 @@ class SBScoreService(
                 from = LocalDateTime.now().minusHours(24L)
             )
 
-            val currentMode = CmdObject(inputMode.data)
+            val currentMode = InstructionObject(inputMode.data)
 
             if (beforeBeatmapID != null) {
                 map = beatmapApiService.getBeatmap(beforeBeatmapID)
@@ -183,7 +183,7 @@ class SBScoreService(
                     user = userApiService.getUser(id)?.toOsuUser(rx) ?: throw NoSuchElementException.Player(id.toString())
 
                 } else {
-                    user = CmdUtil.getSBUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score").toOsuUser(rx)
+                    user = InstructionUtil.getSBUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score").toOsuUser(rx)
                 }
 
                 mode = OsuMode.getConvertableMode(rx, map.mode)
@@ -238,7 +238,7 @@ class SBScoreService(
                 recent = async.second.firstOrNull()?.toLazerScore()
                     ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
             } else {
-                user = CmdUtil.getSBUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score").toOsuUser(rx)
+                user = InstructionUtil.getSBUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score").toOsuUser(rx)
 
                 recent = scoreApiService.getRecentScore(
                     id = user.userID,

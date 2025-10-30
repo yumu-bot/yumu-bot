@@ -2,7 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.beatmapParse.OsuFile
-import com.now.nowbot.model.enums.CoverType
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
@@ -71,7 +71,7 @@ import kotlin.math.sqrt
 
         try {
             event.reply(image)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw IllegalStateException.Send("技巧分析")
         }
 
@@ -111,7 +111,7 @@ import kotlin.math.sqrt
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher, isVs: Boolean = false): SkillParam {
-        val inputMode = CmdObject(OsuMode.MANIA)// getMode(matcher)
+        val inputMode = InstructionObject(OsuMode.MANIA)// getMode(matcher)
 
         val ids = UserIDUtil.get2UserID(event, matcher, inputMode, isVs)
 
@@ -141,7 +141,7 @@ import kotlin.math.sqrt
                 otherBests = async.second.second
             } else {
                 // 缺东西，走常规路线
-                val users = CmdUtil.get2User(event, matcher, inputMode, true)
+                val users = InstructionUtil.get2User(event, matcher, inputMode, true)
 
                 mode = OsuMode.getMode(inputMode.data!!, users.first().currentOsuMode)
 
@@ -189,7 +189,7 @@ import kotlin.math.sqrt
             } else {
                 // 缺东西，走常规路线
 
-                val users = CmdUtil.get2User(event, matcher, inputMode, false)
+                val users = InstructionUtil.get2User(event, matcher, inputMode, false)
 
                 mode = OsuMode.getMode(inputMode.data!!, users.first().currentOsuMode)
 

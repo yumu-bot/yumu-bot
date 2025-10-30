@@ -6,9 +6,9 @@ import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.Replay
-import com.now.nowbot.model.enums.CoverType
-import com.now.nowbot.model.enums.CoverType.*
-import com.now.nowbot.model.enums.CoverType.Companion.getString
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
+import com.now.nowbot.model.osu.Covers.Companion.CoverType.*
+import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.BeatmapUserScore
 import com.now.nowbot.model.osu.Covers

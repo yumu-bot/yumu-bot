@@ -17,7 +17,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.CmdUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -138,7 +138,7 @@ class GuestDifficultyService(
             user = async.third
             page = id.start ?: 1
         } else {
-            val range = CmdUtil.getUserWithRange(event, matcher, mode, isMyself)
+            val range = InstructionUtil.getUserWithRange(event, matcher, mode, isMyself)
 
             user = range.data!!
             val query = mapOf(

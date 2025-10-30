@@ -21,8 +21,8 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.CmdObject
-import com.now.nowbot.util.CmdUtil
+import com.now.nowbot.util.InstructionObject
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
@@ -167,7 +167,7 @@ class ExploreService(
         val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: 1
         val any = matcher.group(FLAG_ANY)?.trim() ?: ""
 
-        val user = CmdUtil.getUserWithoutRange(event, matcher, CmdObject(bindDao.getGroupModeConfig(event)))
+        val user = InstructionUtil.getUserWithoutRange(event, matcher, InstructionObject(bindDao.getGroupModeConfig(event)))
 
         when(type) {
             BeatmapType.SEARCH -> {

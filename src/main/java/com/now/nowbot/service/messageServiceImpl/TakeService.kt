@@ -107,7 +107,7 @@ import kotlin.math.floor
 
         val micro = try {
             userApiService.getUsers(listOf(user.userID), isVariant = true).first()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw NoSuchElementException.TakePlayer(user.username)
         }
 
@@ -251,7 +251,7 @@ import kotlin.math.floor
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): TakeParam {
-        val mode = CmdUtil.getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
 
         val bindUser = bindDao.getBindUser(event.sender.id)
@@ -272,7 +272,7 @@ import kotlin.math.floor
                 {
                     try {
                         userApiService.getOsuUser(id)
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         return@awaitPairCallableExecute null
                     }
                 },
@@ -285,7 +285,7 @@ import kotlin.math.floor
         } else { // 经典？的获取方式
 
             user = try {
-                CmdUtil.getUserWithoutRange(event, matcher, CmdObject(OsuMode.DEFAULT))
+                InstructionUtil.getUserWithoutRange(event, matcher, InstructionObject(OsuMode.DEFAULT))
             } catch (_: Exception) {
                 null
             }

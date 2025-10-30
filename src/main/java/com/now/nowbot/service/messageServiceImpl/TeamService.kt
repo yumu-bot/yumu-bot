@@ -12,8 +12,8 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.CmdObject
-import com.now.nowbot.util.CmdUtil.getUserWithoutRange
+import com.now.nowbot.util.InstructionObject
+import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
@@ -97,7 +97,7 @@ class TeamService(
 
             TeamParam(id, assumeTeam = false, page)
         } else {
-            val user = getUserWithoutRange(event, matcher, CmdObject(OsuMode.DEFAULT))
+            val user = getUserWithoutRange(event, matcher, InstructionObject(OsuMode.DEFAULT))
             id = user.team?.id ?: throw NoSuchElementException.PlayerTeam(user.username)
 
             TeamParam(id, assumeTeam = true, page)

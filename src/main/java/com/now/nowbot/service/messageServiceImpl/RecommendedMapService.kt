@@ -9,7 +9,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
-import com.now.nowbot.util.CmdUtil
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.Instruction
 
 //@Service("RECOMMEND_MAP")
@@ -51,15 +51,15 @@ class RecommendedMapService(
 
         if (!matcher.find()) return false
 
-        val mode = CmdUtil.getMode(matcher)
-        val user = CmdUtil.getUserWithoutRange(event, matcher, mode)
+        val mode = InstructionUtil.getMode(matcher)
+        val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
 
         data.value = user
 
         return true
     }
 
-    override fun handleMessage(event: MessageEvent, param: OsuUser): ServiceCallStatistic? {
+    override fun handleMessage(event: MessageEvent, param: OsuUser): ServiceCallStatistic {
         val p = getUserPrefer(param)
 
         event.reply("正常获取！${p.favorite.size} ${p.bests.size}")

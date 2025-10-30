@@ -21,12 +21,12 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 
 import com.now.nowbot.util.*
-import com.now.nowbot.util.CmdUtil.getBid
-import com.now.nowbot.util.CmdUtil.getMod
-import com.now.nowbot.util.CmdUtil.getMode
-import com.now.nowbot.util.CmdUtil.getUserAndRangeWithBackoff
-import com.now.nowbot.util.CmdUtil.getUserWithRange
-import com.now.nowbot.util.CmdUtil.getUserWithoutRange
+import com.now.nowbot.util.InstructionUtil.getBid
+import com.now.nowbot.util.InstructionUtil.getMod
+import com.now.nowbot.util.InstructionUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getUserAndRangeWithBackoff
+import com.now.nowbot.util.InstructionUtil.getUserWithRange
+import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
@@ -91,7 +91,7 @@ class NewbieRestrictService(
                 val map = beatmapApiService.getBeatmap(bid)
                 val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
-                user = getUserWithoutRange(event, ss, CmdObject(mode))
+                user = getUserWithoutRange(event, ss, InstructionObject(mode))
                 scores = scoreApiService.getBeatmapScores(map.beatmapID, user.userID, mode)
 
                 beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
@@ -106,7 +106,7 @@ class NewbieRestrictService(
                 val map = beatmapApiService.getBeatmap(bid)
                 val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
-                user = getUserWithoutRange(event, s, CmdObject(mode))
+                user = getUserWithoutRange(event, s, InstructionObject(mode))
                 scores = listOf(scoreApiService.getBeatMapScore(map.beatmapID, user.userID, mode, mods)?.score ?: return false)
                 calculateApiService.applyStarToScores(scores, local = false)
             } else if (pr.find()) {
@@ -154,12 +154,12 @@ class NewbieRestrictService(
                     val start = ranges?.firstOrNull()?.toIntOrNull()
                     val end = if (ranges?.size == 2) ranges.last().toIntOrNull() else null
 
-                    CmdRange(range.data!!, start, end)
+                    InstructionRange(range.data!!, start, end)
                 }
 
                 val isMultiple = (pr.group("s").isNullOrBlank().not() || pr.group("es").isNullOrBlank().not())
 
-                val isAvoidance: Boolean = CmdUtil.isAvoidance(messageText, "recent")
+                val isAvoidance: Boolean = InstructionUtil.isAvoidance(messageText, "recent")
 
                 val ps = range2.run {
                     val offset: Int
@@ -235,7 +235,7 @@ class NewbieRestrictService(
                     val start = ranges?.firstOrNull()?.toIntOrNull()
                     val end = if (ranges?.size == 2) ranges.last().toIntOrNull() else null
 
-                    CmdRange(range.data!!, start, end)
+                    InstructionRange(range.data!!, start, end)
                 }
 
                 val isMultiple = b.group("s").isNullOrBlank().not()

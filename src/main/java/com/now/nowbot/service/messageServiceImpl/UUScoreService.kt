@@ -2,7 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.CoverType
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod
@@ -22,9 +22,9 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
-import com.now.nowbot.util.CmdUtil.getBid
-import com.now.nowbot.util.CmdUtil.getMod
-import com.now.nowbot.util.CmdUtil.getMode
+import com.now.nowbot.util.InstructionUtil.getBid
+import com.now.nowbot.util.InstructionUtil.getMod
+import com.now.nowbot.util.InstructionUtil.getMode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -118,7 +118,7 @@ import java.util.regex.Matcher
             } else {
                 mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
-                user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, CmdObject(mode), AtomicBoolean(true), messageText, "score")
+                user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, InstructionObject(mode), AtomicBoolean(true), messageText, "score")
 
                 scores = scoreApiService.getBeatmapScores(bid, user.userID, mode)
             }
@@ -150,7 +150,7 @@ import java.util.regex.Matcher
                 from = LocalDateTime.now().minusHours(24L)
             )
 
-            val currentMode = CmdObject(inputMode.data)
+            val currentMode = InstructionObject(inputMode.data)
 
             if (beforeBeatmapID != null) {
                 map = beatmapApiService.getBeatmap(beforeBeatmapID)
@@ -164,7 +164,7 @@ import java.util.regex.Matcher
                 user = if (id != null) {
                     userApiService.getOsuUser(id, currentMode.data!!)
                 } else {
-                    CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score")
+                    InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score")
                 }
 
                 mode = OsuMode.getConvertableMode(currentMode.data, map.mode)
@@ -212,7 +212,7 @@ import java.util.regex.Matcher
                     ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)
 
             } else {
-                user = CmdUtil.getUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score")
+                user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, currentMode, AtomicBoolean(true), messageText, "score")
 
                 recent = scoreApiService.getRecentScore(user.userID, currentMode.data!!, 0, 1).firstOrNull()
                     ?: throw NoSuchElementException.RecentScore(user.username, user.currentOsuMode)

@@ -14,7 +14,7 @@ import com.now.nowbot.service.messageServiceImpl.PPMinusService.PPMinusParam
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.CmdUtil
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -32,8 +32,8 @@ class TestPPMinusService(
 
         if (matcher.find().not()) return false
 
-        val mode = CmdUtil.getMode(matcher)
-        val users = CmdUtil.get2User(event, matcher, mode, false)
+        val mode = InstructionUtil.getMode(matcher)
+        val users = InstructionUtil.get2User(event, matcher, mode, false)
 
         val me: OsuUser = users.first()
         val myBests: List<LazerScore> = scoreApiService.getBestScores(me.userID, mode.data!!, 0, 100)

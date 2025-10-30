@@ -19,8 +19,8 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.*
-import com.now.nowbot.util.CmdRange
-import com.now.nowbot.util.CmdUtil
+import com.now.nowbot.util.InstructionRange
+import com.now.nowbot.util.InstructionUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_RANGE
@@ -41,7 +41,7 @@ class PopularService(
 ): MessageService<PopularParam> {
 
     data class PopularParam(
-        val range: CmdRange<Long>,
+        val range: InstructionRange<Long>,
         val mode: OsuMode,
     )
 
@@ -180,7 +180,7 @@ class PopularService(
         val group = matcher.group(FLAG_QQ_GROUP)?.toLongOrNull()
         val ranges = matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
 
-        val mode = CmdUtil.getMode(matcher)
+        val mode = InstructionUtil.getMode(matcher)
 
         val groupID: Long
         val start: Int
@@ -210,7 +210,7 @@ class PopularService(
             end = ranges.lastOrNull()?.toIntOrNull() ?: 1
         }
 
-        val range = CmdRange(groupID, start, end)
+        val range = InstructionRange(groupID, start, end)
         range.setZeroDay()
 
         data.value = PopularParam(range, mode.data!!)

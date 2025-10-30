@@ -9,8 +9,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.BindException
-import com.now.nowbot.util.CmdUtil.parseNameAndRangeHasHash
-import com.now.nowbot.util.CmdUtil.parseNameAndRangeWithoutHash
 import com.now.nowbot.util.command.*
 import org.springframework.context.ApplicationContext
 import java.util.concurrent.atomic.AtomicBoolean
@@ -28,10 +26,11 @@ object UserIDUtil {
     fun getUserIDWithRange(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean = AtomicBoolean(false),
-    ): CmdRange<Long> {
-        val range = getUserIDAndRange(event, matcher, mode, isMyself)
+        maximum: Int = 200,
+    ): InstructionRange<Long> {
+        val range = getUserIDAndRange(event, matcher, mode, isMyself, maximum)
 
         if (range.data == null) {
             range.data = getUserIDWithoutRange(event, matcher, mode, isMyself)
@@ -45,9 +44,9 @@ object UserIDUtil {
     fun getSBUserIDWithRange(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean = AtomicBoolean(false),
-    ): CmdRange<Long> {
+    ): InstructionRange<Long> {
         val range = getSBUserIDAndRange(event, matcher, mode, isMyself)
 
         if (range.data == null) {
@@ -63,7 +62,7 @@ object UserIDUtil {
     fun getUserIDWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean = AtomicBoolean(false),
     ): Long? {
         val userID: Long?
@@ -97,7 +96,7 @@ object UserIDUtil {
     fun getSBUserIDWithoutRange(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean = AtomicBoolean(false),
     ): Long? {
         val userID: Long?
@@ -140,7 +139,7 @@ object UserIDUtil {
     fun get2UserID(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isVS: Boolean = false,
     ): Pair<Long?, Long?> {
         require(
@@ -201,7 +200,7 @@ object UserIDUtil {
     /**
      * @param qq 如果是负数，则认为是 UID
      */
-    private fun getUserIDFromQQ(qq: Long, me: BindUser?, mode: CmdObject<OsuMode>, isVS: Boolean): Pair<Long?, Long?> {
+    private fun getUserIDFromQQ(qq: Long, me: BindUser?, mode: InstructionObject<OsuMode>, isVS: Boolean): Pair<Long?, Long?> {
         val you = if (qq > 0L) {
             bindDao.getBindFromQQ(qq)
         } else {
@@ -217,7 +216,7 @@ object UserIDUtil {
         }
     }
 
-    private fun getUserIDFromName(name: String?, me: BindUser?, mode: CmdObject<OsuMode>, isVS: Boolean): Pair<Long?, Long?> {
+    private fun getUserIDFromName(name: String?, me: BindUser?, mode: InstructionObject<OsuMode>, isVS: Boolean): Pair<Long?, Long?> {
         val yourID = if (name.isNullOrBlank()) {
             null
         } else try {
@@ -238,9 +237,10 @@ object UserIDUtil {
     private fun getUserIDAndRange(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
-    ): CmdRange<Long> {
+        maximum: Int = 200,
+    ): InstructionRange<Long> {
 
         require(
             matcher.namedGroups().containsKey(FLAG_USER_AND_RANGE)
@@ -254,7 +254,7 @@ object UserIDUtil {
 
         val text: String? = matcher.group(FLAG_USER_AND_RANGE)?.trim()
         if (text.isNullOrBlank()) {
-            return CmdRange()
+            return InstructionRange()
         }
 
         val hasHash = text.contains(REG_HASH.toRegex())
@@ -268,9 +268,9 @@ object UserIDUtil {
 
                 return if (user != null) {
                     setMode(mode, user.mode, event)
-                    CmdRange(user.userID)
+                    InstructionRange(user.userID)
                 } else {
-                    CmdRange(null, range.first)
+                    InstructionRange(null, range.first)
                 }
             } catch (_: Exception) {}
 
@@ -279,40 +279,35 @@ object UserIDUtil {
             val me = bindDao.getBindFromQQ(event.sender.id)
             setMode(mode, me.mode, event)
 
-            return CmdRange(me.userID, range.first, range.second)
+            return InstructionRange(me.userID, range.first, range.second)
         }
 
-        val ranges = if (hasHash) {
-            parseNameAndRangeHasHash(text)
+        val range = if (hasHash) {
+            InstructionUtil.parseNameWithHashedRange(text, maximum)
         } else {
-            parseNameAndRangeWithoutHash(text)
+            InstructionUtil.parseNameWithRange(text, maximum)
         }
 
-        var result = CmdRange<Long>()
+        var result: InstructionRange<Long>
 
-        for (range in ranges) try {
+        try {
             if (range.data == null) {
-                result = CmdRange(null, range.start, range.end)
-                break
-            }
-
-            val user = bindDao.getBindUser(range.data!!)
-
-            if (user != null) {
-                setMode(mode, user.mode, event)
+                result = InstructionRange(null, range.start, range.end)
             } else {
-                setMode(mode, event)
+                val user = bindDao.getBindUser(range.data!!)
+
+                if (user != null) {
+                    setMode(mode, user.mode, event)
+                } else {
+                    setMode(mode, event)
+                }
+
+                val id = bindDao.getOsuID(range.data!!)
+
+                result = InstructionRange(id, range.start, range.end)
             }
-
-            val id = bindDao.getOsuID(range.data!!)
-
-            result = CmdRange(id, range.start, range.end)
-            break
-        } catch (_: Exception) {}
-
-        // 交换顺序
-        if (result.start != null && result.end != null && result.start!! > result.end!!) {
-            result.start = result.end!!.also { result.end = result.start }
+        } catch (_: Exception) {
+            result = InstructionRange()
         }
 
         return result
@@ -321,9 +316,9 @@ object UserIDUtil {
     private fun getSBUserIDAndRange(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
-    ): CmdRange<Long> {
+    ): InstructionRange<Long> {
 
         require(
             matcher.namedGroups().containsKey(FLAG_USER_AND_RANGE)
@@ -337,7 +332,7 @@ object UserIDUtil {
 
         val text: String? = matcher.group(FLAG_USER_AND_RANGE)?.trim()
         if (text.isNullOrBlank()) {
-            return CmdRange()
+            return InstructionRange()
         }
 
         val hasHash = text.contains(REG_HASH.toRegex())
@@ -355,9 +350,9 @@ object UserIDUtil {
 
                 return if (user != null) {
                     setMode(mode, user.mode, null)
-                    CmdRange(user.userID)
+                    InstructionRange(user.userID)
                 } else {
-                    CmdRange(null, range.first)
+                    InstructionRange(null, range.first)
                 }
             } catch (_: Exception) {}
 
@@ -366,44 +361,39 @@ object UserIDUtil {
             val me = bindDao.getSBBindFromQQ(event.sender.id, true)
             setMode(mode, me.mode, null)
 
-            return CmdRange(me.userID, range.first, range.second)
+            return InstructionRange(me.userID, range.first, range.second)
         }
 
-        val ranges = if (hasHash) {
-            parseNameAndRangeHasHash(text)
+        val range = if (hasHash) {
+            InstructionUtil.parseNameWithHashedRange(text)
         } else {
-            parseNameAndRangeWithoutHash(text)
+            InstructionUtil.parseNameWithRange(text)
         }
 
-        var result = CmdRange<Long>()
+        var result: InstructionRange<Long>
 
-        for (range in ranges) try {
+        try {
             if (range.data == null) {
-                result = CmdRange(null, range.start, range.end)
-                break
-            }
-
-            val user = try {
-                bindDao.getSBBindUser(range.data!!)
-            } catch (_: BindException) {
-                null
-            }
-
-            if (user != null) {
-                setMode(mode, user.mode, null)
+                result = InstructionRange(null, range.start, range.end)
             } else {
-                setMode(mode, null)
+                val user = try {
+                    bindDao.getSBBindUser(range.data!!)
+                } catch (_: BindException) {
+                    null
+                }
+
+                if (user != null) {
+                    setMode(mode, user.mode, null)
+                } else {
+                    setMode(mode, null)
+                }
+
+                val id = bindDao.getSBUserID(range.data!!)
+
+                return InstructionRange(id, range.start, range.end)
             }
-
-            val id = bindDao.getSBUserID(range.data!!)
-
-            return CmdRange(id, range.start, range.end)
-
-        } catch (_: Exception) {}
-
-        // 交换顺序
-        if (result.start != null && result.end != null && result.start!! > result.end!!) {
-            result.start = result.end!!.also { result.end = result.start }
+        } catch (_: Exception) {
+            result = InstructionRange()
         }
 
         return result
@@ -434,7 +424,7 @@ object UserIDUtil {
     private fun getUserID(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): Long? {
         // 监控是否已经符合某个字段
@@ -489,9 +479,10 @@ object UserIDUtil {
             } else {
                 isMyself.set(true)
             }
+        } else {
+            isMyself.set(true)
         }
 
-        isMyself.set(true)
         return null
     }
 
@@ -501,7 +492,7 @@ object UserIDUtil {
     private fun getSBUserID(
         event: MessageEvent,
         matcher: Matcher,
-        mode: CmdObject<OsuMode>,
+        mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
     ): Long? {
         val qq = if (event.hasAt()) {
@@ -567,7 +558,7 @@ object UserIDUtil {
      * @param selfMode 一般是玩家自己绑定的游戏模式
      * @param event 可能为群聊
      */
-    private fun setMode(mode: CmdObject<OsuMode>, selfMode: OsuMode, event: MessageEvent? = null) {
+    private fun setMode(mode: InstructionObject<OsuMode>, selfMode: OsuMode, event: MessageEvent? = null) {
         mode.data = OsuMode.getMode(mode.data, selfMode, bindDao.getGroupModeConfig(event))
     }
 
@@ -576,7 +567,7 @@ object UserIDUtil {
      * @param mode 玩家查询时输入的游戏模式
      * @param event 可能为群聊
      */
-    private fun setMode(mode: CmdObject<OsuMode>, event: MessageEvent? = null) {
+    private fun setMode(mode: InstructionObject<OsuMode>, event: MessageEvent? = null) {
         mode.data = OsuMode.getMode(mode.data, OsuMode.DEFAULT, bindDao.getGroupModeConfig(event))
     }
 
