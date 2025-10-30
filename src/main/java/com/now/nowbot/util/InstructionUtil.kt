@@ -165,7 +165,7 @@ object InstructionUtil {
 
         val hasHash = text.contains(REG_HASH.toRegex())
 
-        if (text.matches(RANGE_ONLY) && !hasHash) {
+        if (text.matches(RANGE_ONLY.toRegex()) && !hasHash) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -353,7 +353,7 @@ object InstructionUtil {
 
         val hasHash = text.contains(REG_HASH.toRegex())
 
-        if (text.matches(RANGE_ONLY) && !hasHash) {
+        if (text.matches(RANGE_ONLY.toRegex()) && !hasHash) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -905,8 +905,6 @@ object InstructionUtil {
     private fun setMode(mode: InstructionObject<OsuMode>, event: MessageEvent? = null) {
         mode.data = OsuMode.getMode(mode.data, OsuMode.DEFAULT, bindDao.getGroupModeConfig(event))
     }
-
-    private const val OSU_MIN_INDEX = 2
 
     private val log: Logger = LoggerFactory.getLogger(this::class.java)
     private lateinit var bindDao: BindDao

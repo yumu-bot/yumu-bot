@@ -33,7 +33,7 @@ object UserIDUtil {
         val range = getUserIDAndRange(event, matcher, mode, isMyself, maximum)
 
         if (range.data == null) {
-            range.data = getUserIDWithoutRange(event, matcher, mode, isMyself)
+            range.data = getUserIDWithoutRange(event, matcher, mode, isMyself, maximum)
         }
 
         return range
@@ -64,12 +64,13 @@ object UserIDUtil {
         matcher: Matcher,
         mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean = AtomicBoolean(false),
+        maximum: Int = 200,
     ): Long? {
         val userID: Long?
         val me: BindUser?
 
         val async = AsyncMethodExecutor.awaitPairCallableExecute(
-            { getUserID(event, matcher, mode, isMyself) },
+            { getUserID(event, matcher, mode, isMyself, maximum) },
             { bindDao.getBindFromQQOrNull(event.sender.id) }
         )
 
@@ -259,7 +260,7 @@ object UserIDUtil {
 
         val hasHash = text.contains(REG_HASH.toRegex())
 
-        if (text.matches(RANGE_ONLY) && !hasHash) {
+        if (text.matches(RANGE_ONLY.toRegex()) && !hasHash) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -337,7 +338,7 @@ object UserIDUtil {
 
         val hasHash = text.contains(REG_HASH.toRegex())
 
-        if (text.matches(RANGE_ONLY) && !hasHash) {
+        if (text.matches(RANGE_ONLY.toRegex()) && !hasHash) {
             val range = parseRange(text)
 
             // 特殊情况，前面是某个 201~999 范围内的玩家
@@ -426,10 +427,8 @@ object UserIDUtil {
         matcher: Matcher,
         mode: InstructionObject<OsuMode>,
         isMyself: AtomicBoolean,
+        maximum: Int = 200,
     ): Long? {
-        // 监控是否已经符合某个字段
-        val parsed = AtomicBoolean(false)
-
         val qq = if (event.hasAt()) {
             event.target
         } else if (matcher.namedGroups().containsKey(FLAG_QQ_ID)) {
@@ -439,7 +438,6 @@ object UserIDUtil {
         }
 
         if (qq != 0L) {
-            parsed.set(true)
             isMyself.set(qq == event.sender.id)
 
             val sb = bindDao.getBindFromQQOrNull(qq)
@@ -453,7 +451,6 @@ object UserIDUtil {
         setMode(mode, event)
 
         if (matcher.namedGroups().containsKey(FLAG_UID)) {
-            parsed.set(true)
             val uid = matcher.group(FLAG_UID)?.toLongOrNull() ?: 0L
 
             if (uid != 0L) {
@@ -463,7 +460,6 @@ object UserIDUtil {
         }
 
         if (matcher.namedGroups().containsKey(FLAG_NAME)) {
-            parsed.set(true)
             val name: String? = matcher.group(FLAG_NAME)
             if (!name.isNullOrBlank()) {
                 isMyself.set(false)
@@ -472,17 +468,17 @@ object UserIDUtil {
         }
 
         if (matcher.namedGroups().containsKey(FLAG_USER_AND_RANGE)) {
-            val name2: String? = matcher.group(FLAG_USER_AND_RANGE)
+            val name2: String = matcher.group(FLAG_USER_AND_RANGE) ?: ""
 
-            if (parsed.get() || !name2.isNullOrBlank()) {
+            val onlyRange = name2.matches(RANGE_ONLY.toRegex())
+
+            if (!onlyRange || (name2.toIntOrNull() ?: -1) > maximum) {
                 isMyself.set(false)
-            } else {
-                isMyself.set(true)
+                return null
             }
-        } else {
-            isMyself.set(true)
         }
 
+        isMyself.set(true)
         return null
     }
 
