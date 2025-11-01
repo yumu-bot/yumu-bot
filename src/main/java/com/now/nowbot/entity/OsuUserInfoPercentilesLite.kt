@@ -18,65 +18,65 @@ import java.time.LocalDateTime
     name = "osu_user_info_percent",
     )
 @IdClass(OsuUserInfoPercentilesKey::class)
-class OsuUserInfoPercentiles(
+class OsuUserInfoPercentilesLite(
     @Id
     @Column(name = "user_id")
-    val userID: Long,
+    var userID: Long,
 
     @Id
     @Column(name = "mode")
-    val mode: Byte,
+    var mode: Byte,
 
     @Column(name = "updated_at")
-    val updatedAt: LocalDateTime = LocalDateTime.now(),
+    var updatedAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(name = "global_rank", nullable = true)
-    val globalRank: Long? = null,
+    var globalRank: Long? = null,
 
     @Column(name = "country_rank", nullable = true)
-    val countryRank: Long? = null,
+    var countryRank: Long? = null,
 
     /**
      * 这个数据的等级是在百分位开始，十分位和个分位是进度
      */
     @Column(name = "level")
-    val level: Int = 0,
+    var level: Int = 0,
 
     /**
      * 这个分数：SS 视作 3 分，S 视作 2 分，A 视作 1 分
      */
     @Column(name = "rank_count_score")
-    val rankCountScore: Int = 0,
+    var rankCountScore: Int = 0,
 
     @Column(name = "play_count")
-    val playCount: Long = 0L,
+    var playCount: Long = 0L,
 
     @Column(name = "total_hits")
-    val totalHits: Long = 0L,
+    var totalHits: Long = 0L,
 
     @Column(name = "play_time")
-    val playTime: Long = 0L,
+    var playTime: Long = 0L,
 
     @Column(name = "ranked_score")
-    val rankedScore: Long = 0L,
+    var rankedScore: Long = 0L,
 
     @Column(name = "total_score")
-    val totalScore: Long = 0L,
-
-    @Column(name = "achievement_count")
-    val achievementCount: Int = 0,
+    var totalScore: Long = 0L,
 
     @Column(name = "beatmap_playcount")
-    val beatmapPlaycount: Long = 0L,
+    var beatmapPlaycount: Int = 0,
 
     @Column(name = "replays_watched")
-    val replaysWatched: Int = 0,
+    var replaysWatched: Int = 0,
 
     @Column(name = "maximum_combo")
-    val maximumCombo: Int = 0,
+    var maximumCombo: Int = 0,
 
-    )
+    ) {
 
+    @Suppress("UNUSED")
+    constructor() : this(0, 0, LocalDateTime.now())
+}
 
 data class OsuUserInfoPercentilesKey(
     var userID: Long,

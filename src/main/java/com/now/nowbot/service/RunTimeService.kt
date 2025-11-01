@@ -53,8 +53,14 @@ class RunTimeService(
 
     // 每天凌晨3点统计用户信息
     @Scheduled(cron = "0 0 3 * * *")
-    fun statisticUserInfo() {
-        dailyStatisticsService.asyncTask()
+    fun collectInfoAndScores() {
+        dailyStatisticsService.collectInfoAndScores()
+    }
+
+    // 每天凌晨3点50统计玩家百分比
+    @Scheduled(cron = "0 50 3 * * *")
+    fun collectPercentiles() {
+        dailyStatisticsService.collectPercentiles()
     }
 
     // 每天凌晨3点59清除过期的缓存

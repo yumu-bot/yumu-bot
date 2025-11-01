@@ -53,7 +53,6 @@ class OsuUserInfoArchiveLite {
 
     @Column(name = "grade_counts_ss") var countSS: Int = 0
 
-
     @Column(name = "grade_counts_ssh") var countSSH: Int = 0
 
     @Column(name = "grade_counts_s") var countS: Int = 0

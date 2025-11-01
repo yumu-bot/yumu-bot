@@ -3,19 +3,58 @@ package com.now.nowbot.dao
 import com.now.nowbot.entity.OsuUserInfoArchiveLite
 import com.now.nowbot.entity.OsuUserInfoArchiveLite.InfoArchive
 import com.now.nowbot.mapper.OsuUserInfoRepository
+import com.now.nowbot.mapper.OsuUserInfoPercentilesLiteRepository
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.InfoLogStatistics
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.osu.Statistics
 import com.now.nowbot.util.JacksonUtil
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
 @Component
-class OsuUserInfoDao(private val infoRepository: OsuUserInfoRepository) {
+class OsuUserInfoDao(
+    private val infoRepository: OsuUserInfoRepository,
+    private val percentileRepository: OsuUserInfoPercentilesLiteRepository
+) {
+
+    fun percentilesDailyUpsert() {
+        log.info("正在更新玩家百分比")
+
+        val now = LocalDateTime.now()
+
+        val users = infoRepository.getLastBetween(now.minusDays(1), now)
+
+        log.info("已经获取到 ${users.size} 条数据，正在更新")
+
+        users.forEach { upsert(it) }
+    }
+
+
+
+    fun upsert(info: OsuUserInfoArchiveLite) {
+        percentileRepository.upsert(
+            userID = info.userID,
+            mode = info.mode.modeValue,
+            updatedAt = LocalDateTime.now(),
+            globalRank = info.globalRank,
+            countryRank = info.countryRank,
+            level = info.levelCurrent * 100 + info.levelProgress,
+            rankCountScore = 3 * (info.countSS + info.countSSH) + 2 * (info.countSH + info.countS) + info.countA,
+            playCount = info.playCount,
+            totalHits = info.totalHits,
+            playTime = info.playTime,
+            rankedScore = info.rankedScore,
+            totalScore = info.totalScore,
+            beatmapPlaycount = info.beatmapPlaycount,
+            replaysWatched = info.replaysWatched,
+            maximumCombo = info.maximumCombo
+        )
+    }
 
     fun saveUserToday(user: OsuUser, mode: OsuMode) {
         val now = LocalDateTime.now()
@@ -49,16 +88,24 @@ class OsuUserInfoDao(private val infoRepository: OsuUserInfoRepository) {
             val mc = infoRepository.getLastCountryRank(it.userID, OsuMode.MANIA)
 
             val osu = fromStatistics(it.rulesets!!.osu, OsuMode.OSU, oc)
-            if (osu != null) osu.userID = it.userID
+            if (osu != null) {
+                osu.userID = it.userID
+            }
 
             val taiko = fromStatistics(it.rulesets!!.taiko, OsuMode.TAIKO, tc)
-            if (taiko != null) taiko.userID = it.userID
+            if (taiko != null) {
+                taiko.userID = it.userID
+            }
 
             val fruits = fromStatistics(it.rulesets!!.fruits, OsuMode.CATCH, cc)
-            if (fruits != null) fruits.userID = it.userID
+            if (fruits != null) {
+                fruits.userID = it.userID
+            }
 
             val mania = fromStatistics(it.rulesets!!.mania, OsuMode.MANIA, mc)
-            if (mania != null) mania.userID = it.userID
+            if (mania != null) {
+                mania.userID = it.userID
+            }
 
             return@flatMap listOf(osu, taiko, fruits, mania)
             }
@@ -108,6 +155,8 @@ class OsuUserInfoDao(private val infoRepository: OsuUserInfoRepository) {
     }
 
     companion object {
+        private val log = LoggerFactory.getLogger(OsuUserInfoDao::class.java)
+
         fun fromArchive(archive: OsuUserInfoArchiveLite): OsuUser {
             val user = OsuUser()
             user.mode = archive.mode.shortName

@@ -20,12 +20,21 @@ class DailyStatisticsService(
     /**
      * 统计任务包括 user info 以及 scores
      */
-    fun asyncTask() {
+    fun collectInfoAndScores() {
         Thread.startVirtualThread {
             val startTime = System.currentTimeMillis()
             runTask()
             val endTime = System.currentTimeMillis()
             log.info("统计全部绑定用户完成, 耗时: ${(endTime - startTime) / 1000} s")
+        }
+    }
+
+    fun collectPercentiles() {
+        Thread.startVirtualThread {
+            val startTime = System.currentTimeMillis()
+            userInfoDao.percentilesDailyUpsert()
+            val endTime = System.currentTimeMillis()
+            log.info("更新玩家百分比完成, 耗时: ${(endTime - startTime) / 1000} s")
         }
     }
 

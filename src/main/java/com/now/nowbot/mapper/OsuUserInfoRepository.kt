@@ -50,6 +50,17 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
         to: LocalDateTime
     ): OsuUserInfoArchiveLite?
 
+    @Query(
+        "SELECT o FROM OsuUserInfoArchiveLite o " +
+                "WHERE (o.time BETWEEN :from AND :to) " +
+                "AND o.time = (SELECT MAX(o2.time) FROM OsuUserInfoArchiveLite o2 " +
+                "WHERE o2.userID = o.userID AND o2.mode = o.mode " +
+                "AND o2.time BETWEEN :from AND :to)"
+    ) fun getLastBetween(
+        from: LocalDateTime,
+        to: LocalDateTime
+    ): List<OsuUserInfoArchiveLite>
+
     @Query("select o from OsuUserInfoArchiveLite o where o.userID = :userID and o.mode = :mode order by o.time desc limit 1")
     fun getLast(userID: Long, mode: OsuMode): OsuUserInfoArchiveLite?
 
