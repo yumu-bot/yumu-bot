@@ -14,6 +14,7 @@ import com.now.nowbot.service.messageServiceImpl.SetModeService.SetModeParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_MODE
@@ -34,6 +35,11 @@ class SetModeService (
         if (!m.find()) return false
 
         val mode = OsuMode.getMode(m.group(FLAG_MODE))
+
+        if (mode.modeValue.toInt() >= 4) {
+            throw UnsupportedOperationException.InvalidMode(mode)
+        }
+
         val qq = m.group(FLAG_QQ_ID)?.toLongOrNull()
         val name = m.group(FLAG_NAME)?.trim()
 

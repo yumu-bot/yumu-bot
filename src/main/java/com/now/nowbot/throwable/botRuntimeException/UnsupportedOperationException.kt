@@ -1,5 +1,6 @@
 package com.now.nowbot.throwable.botRuntimeException
 
+import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
 
@@ -7,6 +8,9 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
 
     // class AudioNotSafeForWork:
     //    UnsupportedOperationException("这种歌曲，还是有点唱不出口呢。")
+
+    class InvalidMode(mode: OsuMode):
+        UnsupportedOperationException("不支持绑定 ${mode.fullName} 这个游戏模式。")
 
     class NotGroup:
         UnsupportedOperationException("请在群聊中使用这个功能！")
