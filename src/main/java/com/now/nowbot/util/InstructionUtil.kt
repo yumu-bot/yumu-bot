@@ -85,7 +85,7 @@ object InstructionUtil {
 
         if (me != null && isMyself.get()) {
             setMode(mode, me.mode, event)
-            return getOsuUser(me, me.mode)
+            return getOsuUser(me, mode.data)
         }
 
         if (isMyself.get()) {
