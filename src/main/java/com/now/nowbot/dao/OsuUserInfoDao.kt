@@ -18,16 +18,16 @@ import java.time.LocalTime
 class OsuUserInfoDao(private val infoRepository: OsuUserInfoRepository) {
 
     fun saveUserToday(user: OsuUser, mode: OsuMode) {
-        val now = LocalDateTime.now().toLocalDate()
+        val now = LocalDateTime.now()
+        val today = LocalDate.now()
 
-        val last = getLastToday(user.userID, mode, now)
+        val last = getLastToday(user.userID, mode, today)
 
         if (last != null && user.playCount > 0) {
 
             // 今天内已经有数据，但是最新的数据发生了变化
             if (user.playCount != last.playCount) {
-                val today = LocalDateTime.of(LocalDate.now(), LocalTime.MIN)
-                infoRepository.removeBetween(user.userID, mode, today.minusDays(1), today)
+                infoRepository.removeBetween(user.userID, mode, LocalDateTime.of(today, LocalTime.MIN), now)
             } else {
                 return
             }
