@@ -174,7 +174,7 @@ import kotlin.math.min
                 val modsAttrTmp: MutableList<Attr> = ArrayList(modsPPMap.size)
                 modsPPMap.forEach { (mod: String, value: MutableList<Double?>) ->
                     val attr = Attr(
-                        mod, value.filterNotNull().count(), value.filterNotNull().sum(), (value.size * 1.0 / modsSum)
+                        mod, value.filterNotNull().size, value.filterNotNull().sum(), (value.size * 1.0 / modsSum)
                     )
                     modsAttrTmp.add(attr)
                 }

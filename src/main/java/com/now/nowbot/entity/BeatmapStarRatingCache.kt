@@ -28,6 +28,7 @@ class BeatmapStarRatingCache(
     @Column("star")
     var star: Float
 ) {
+    @Suppress("UNUSED")
     constructor(bid: Long, mode: OsuMode, mods: Int, star: Float): this(bid, mode.modeValue, mods, star)
 
     data class BeatmapStarRatingKey(
@@ -35,6 +36,7 @@ class BeatmapStarRatingCache(
         var mode: Byte,
         var mods: Int,
     ) : Serializable {
+        @Suppress("UNUSED")
         constructor() : this(0, 0, 0)
     }
 }

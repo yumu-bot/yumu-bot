@@ -33,6 +33,8 @@ import org.springframework.stereotype.Service
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import java.time.Year
+import java.time.YearMonth
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -61,8 +63,11 @@ class InfoService(
             when(this.version) {
                 3 -> {
                     return mapOf(
-
-                        "best_arr" to BestsArray(bests)
+                        "user" to user,
+                        "best_arr" to BestsArray(bests),
+                        "playcount_arr" to PlaycountsArray(user.monthlyPlaycounts),
+                        "ranking_arr" to RankingArray(user.rankHistory?.data ?: listOf()),
+                        "highest_rank" to HighestRanking(user.highestRank, user.rankHistory)
                     )
                 }
 
@@ -277,7 +282,7 @@ class InfoService(
         ) {
             val count: List<Int>
             val max: Int
-            val maxDay: String
+            val time: String
             val week0: String
             val week4: String
             val week8: String
@@ -296,14 +301,17 @@ class InfoService(
                 val maxEntry = bestsCount.toList().maxByOrNull { it.second }
 
                 max = maxEntry?.second ?: 0
-                maxDay = maxEntry?.first?.format(formatter) ?: "-"
+                time = maxEntry?.first?.format(formatter) ?: "-"
 
                 week0 = endOfWeek.format(formatter)
                 week4 = endOfWeek.minusWeeks(4).format(formatter)
                 week8 = endOfWeek.minusWeeks(8).format(formatter)
             }
 
-            private fun countLast90DaysFromEndOfWeek(scores: List<LazerScore>, endOfWeek: LocalDate = LocalDate.now().with(DayOfWeek.SUNDAY)): Map<LocalDate, Int> {
+            private fun countLast90DaysFromEndOfWeek(
+                scores: List<LazerScore>,
+                endOfWeek: LocalDate = LocalDate.now().with(DayOfWeek.SUNDAY)
+            ): Map<LocalDate, Int> {
 
                 // 计算 90天 前的日期
                 val startDate = endOfWeek.minusDays(90)
@@ -334,5 +342,225 @@ class InfoService(
                 return result
             }
         }
+
+
+        @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+        internal data class PlaycountsArray(
+            private val monthlies: List<OsuUser.UserMonthly>
+        ) {
+            val count: List<Int>
+            val max: Int
+            val time: String
+            val year0: String
+            val year1: String
+            val year2: String
+            val year3: String
+
+            private val formatter = DateTimeFormatter.ofPattern("yy-MM-dd")
+            private val formatter2 = DateTimeFormatter.ofPattern("yyyy-MM")
+            private val formatter3 = DateTimeFormatter.ofPattern("yy")
+
+            init {
+                val today = LocalDate.now()
+                val thisYear = Year.from(today)
+
+                val playcountsCount = countLastThreeAndQuarterYearFromEndOfYear(monthlies, thisYear)
+
+                count = playcountsCount.map { it.value }
+
+                val maxEntry = playcountsCount.toList().maxByOrNull { it.second }
+
+                max = maxEntry?.second ?: 0
+                time = maxEntry?.first?.format(formatter2) ?: "-"
+
+                year0 = thisYear.format(formatter3)
+                year1 = thisYear.minusYears(1).format(formatter3)
+                year2 = thisYear.minusYears(2).format(formatter3)
+                year3 = thisYear.minusYears(3).format(formatter3)
+
+            }
+
+            private fun countLastThreeAndQuarterYearFromEndOfYear(
+                monthlies: List<OsuUser.UserMonthly>,
+                thisYear: Year
+            ): Map<YearMonth, Int> {
+                val latestYearMonth = thisYear.atMonth(12)
+
+                val months = monthlies.associate {
+                    YearMonth.parse(it.startDate, formatter) to it.count
+                }
+
+                // 计算 三年又四分之一年 前的日期，3年前的10月开始计时
+                val startDate = thisYear.atMonth(12)
+                    .minusYears(3)
+                    .minusMonths(12 - 10)
+
+                // 创建包含所有日期的结果映射，没有数据的日期填充0
+                val result = mutableMapOf<YearMonth, Int>()
+                var currentYearMonth = startDate
+
+                while (currentYearMonth <= latestYearMonth) {
+                    result[currentYearMonth] = months[currentYearMonth] ?: 0
+                    currentYearMonth = currentYearMonth.plusMonths(1)
+                }
+
+                return result
+            }
+        }
+
+        @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+        internal data class RankingArray(
+            val ranking: List<Long>
+        ) {
+            val statistics: RankingStatistics
+
+            init {
+                statistics = getRankingStatistics()
+            }
+
+            /**
+             * 获取排名上升（数值下降）的区间信息，并过滤掉太短的区间
+             * @param minIntervalLength 最小区间长度（包含的索引数量），默认4表示至少4个索引变化
+             */
+            fun getRankingImprovementIntervals(minIntervalLength: Int = 4): List<RankingInterval> {
+                val intervals = mutableListOf<RankingInterval>()
+
+                // 确保列表有90个元素，不足的用0填充
+                val paddedRanking = ranking.toMutableList()
+                while (paddedRanking.size < 90) {
+                    paddedRanking.add(0, 0L)
+                }
+
+                var startIndex = -1
+                var currentImprovement = 0L
+
+                for (i in 1 until paddedRanking.size) {
+                    val prevRank = paddedRanking[i - 1]
+                    val currentRank = paddedRanking[i]
+
+                    // 跳过包含0的情况
+                    if (prevRank == 0L || currentRank == 0L) {
+                        // 如果正在记录区间，结束当前区间
+                        if (startIndex != -1) {
+                            val intervalLength = (i - 1) - startIndex + 1
+                            // 只添加长度满足要求的区间
+                            if (intervalLength >= minIntervalLength) {
+                                intervals.add(RankingInterval(startIndex, i - 1, currentImprovement, intervalLength))
+                            }
+                            startIndex = -1
+                            currentImprovement = 0L
+                        }
+                        continue
+                    }
+
+                    // 检查是否是排名上升（数值下降）
+                    if (currentRank < prevRank) {
+                        // 排名上升：从45名上升到40名（数值从45降到40）
+                        if (startIndex == -1) {
+                            // 开始新的上升区间
+                            startIndex = i - 1
+                        }
+                        currentImprovement += (prevRank - currentRank) // 计算提升的位数
+                    } else {
+                        // 排名下降或持平，结束当前上升区间
+                        if (startIndex != -1) {
+                            val intervalLength = (i - 1) - startIndex + 1
+                            // 只添加长度满足要求的区间
+                            if (intervalLength >= minIntervalLength) {
+                                intervals.add(RankingInterval(startIndex, i - 1, currentImprovement, intervalLength))
+                            }
+                            startIndex = -1
+                            currentImprovement = 0L
+                        }
+                    }
+                }
+
+                // 处理最后一个区间
+                if (startIndex != -1) {
+                    val intervalLength = paddedRanking.size - 1 - startIndex + 1
+                    if (intervalLength >= minIntervalLength) {
+                        intervals.add(RankingInterval(startIndex, paddedRanking.size - 1, currentImprovement, intervalLength))
+                    }
+                }
+
+                return intervals
+            }
+
+            /**
+             * 获取所有统计信息，包含区间过滤
+             */
+            fun getRankingStatistics(minIntervalLength: Int = 4): RankingStatistics {
+                val intervals = getRankingImprovementIntervals(minIntervalLength)
+                val (bestRanking, worstRanking) = getRankingExtremes()
+
+                return RankingStatistics(
+                    intervals = intervals,
+                    top = bestRanking,
+                    bottom = worstRanking,
+                    count = intervals.sumOf { it.improvement },
+                    intervalMinLength = minIntervalLength
+                )
+            }
+
+            // 其他方法保持不变...
+            fun getRankingExtremes(): Pair<Long, Long> {
+                val nonZeroRankings = ranking.filter { it > 0L }
+                return if (nonZeroRankings.isEmpty()) {
+                    Pair(0L, 0L)
+                } else {
+                    Pair(nonZeroRankings.min(), nonZeroRankings.max())
+                }
+            }
+        }
+
+        @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+        internal data class RankingInterval(
+            val start: Int,
+            val end: Int,
+            val improvement: Long,
+            val length: Int  // 新增：区间长度
+        )
+
+        @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+        internal data class RankingStatistics(
+            val intervals: List<RankingInterval>,
+            val top: Long,
+            val bottom: Long,
+            val count: Long,
+            private val intervalMinLength: Int = 0  // 新增：使用的最小区间长度
+        )
+
+        @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+        internal data class HighestRanking(
+            private val highestRank: OsuUser.HighestRank?,
+            private val ranks: OsuUser.RankHistory?
+        ) {
+            val rank: Long
+            val time: OffsetDateTime
+
+            init {
+                if (highestRank != null && highestRank.updatedAt != null) {
+                    rank = highestRank.rank
+                    time = highestRank.updatedAt
+                } else if (ranks != null) {
+
+                    // 确保列表有90个元素，不足的用0填充
+                    val paddedRanking = ranks.data.toMutableList()
+                    while (paddedRanking.size < 90) {
+                        paddedRanking.add(0, Long.MAX_VALUE)
+                    }
+
+                    rank = paddedRanking.minOrNull() ?: -1
+
+                    val index = paddedRanking.indexOf(rank)
+
+                    time = OffsetDateTime.now().minusDays(89L - index.toLong())
+                } else {
+                    rank = -1
+                    time = OffsetDateTime.now()
+                }
+            }
+        }
     }
+
 }

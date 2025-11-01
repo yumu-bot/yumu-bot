@@ -49,8 +49,6 @@ class OsuUserInfoArchiveLite {
 
     @Column(name = "total_hits") var totalHits: Long = 0
 
-    @Column(name = "maximum_combo") var maximumCombo: Int = 0
-
     @Column(name = "is_ranked") var isRanked: Boolean = false
 
     @Column(name = "grade_counts_ss") var countSS: Int = 0
@@ -65,6 +63,12 @@ class OsuUserInfoArchiveLite {
     @Column(name = "grade_counts_a") var countA: Int = 0
 
     @Column(name = "beatmap_playcount") var beatmapPlaycount: Int = 0
+
+    @Column(name = "replays_watched")
+    var replaysWatched: Int = 0
+
+    @Column(name = "maximum_combo")
+    var maximumCombo: Int = 0
 
     interface InfoArchive {
         @get:Column(name = "osu_id")

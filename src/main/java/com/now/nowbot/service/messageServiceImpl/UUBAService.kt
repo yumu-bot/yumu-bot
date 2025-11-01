@@ -208,7 +208,7 @@ class UUBAService(
                 val modsAttrTmp: MutableList<Attr> = ArrayList(modsPPMap.size)
                 modsPPMap.forEach { (mod: String, value: MutableList<Double?>) ->
                     val attr = Attr(
-                        mod, value.filterNotNull().count(), value.filterNotNull().sum(), value.filterNotNull().average()
+                        mod, value.filterNotNull().size, value.filterNotNull().sum(), value.filterNotNull().average()
                     )
                     modsAttrTmp.add(attr)
                 }

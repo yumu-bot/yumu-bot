@@ -302,7 +302,7 @@ open class OsuUser {
 
     data class HighestRank(
         @field:JsonProperty("rank")
-        val rank: Int = 0,
+        val rank: Long = 0,
 
         @field:JsonProperty("updated_at")
         val updatedAt: OffsetDateTime? = null
@@ -342,19 +342,19 @@ open class OsuUser {
     @JsonProperty("user_achievements")
     var userAchievements: List<UserAchievement>? = null
 
+    @get:JsonProperty("user_achievements_count")
+    val userAchievementsCount: Int
+        get() = userAchievements?.size ?: 0
+
     data class UserAchievement(
-        @field:JsonProperty("achieved_at") @param:JsonProperty(
-            "achieved_at"
-        ) val achievedAt: OffsetDateTime,
-        @field:JsonProperty("achievement_id") @param:JsonProperty(
-            "achievement_id"
-        ) val achievementID: Int
+        @field:JsonProperty("achieved_at") val achievedAt: OffsetDateTime,
+        @field:JsonProperty("achievement_id") val achievementID: Int
     )
 
     @JsonProperty("rank_history")
     var rankHistory: RankHistory? = null
 
-    data class RankHistory(val mode: String, val data: List<Int>)
+    data class RankHistory(val mode: String, val data: List<Long>)
 
     // ranked 和 pending
     /*

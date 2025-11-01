@@ -131,6 +131,7 @@ class OsuUserInfoDao(private val infoRepository: OsuUserInfoRepository) {
             statistics.levelCurrent = archive.levelCurrent
             statistics.levelProgress = archive.levelProgress
             statistics.maxCombo = archive.maximumCombo
+            statistics.replaysWatchedByOthers = archive.replaysWatched
             statistics.pp = archive.pp
 
             statistics.logTime = archive.time
@@ -138,7 +139,7 @@ class OsuUserInfoDao(private val infoRepository: OsuUserInfoRepository) {
             user.statistics = statistics
             archive.rankHistory?.let {
                 user.rankHistory = OsuUser.RankHistory(archive.mode.shortName,
-                    JacksonUtil.parseObjectList(archive.rankHistory, Int::class.java) ?: listOf())
+                    JacksonUtil.parseObjectList(archive.rankHistory, Long::class.java) ?: listOf())
             }
 
             return user
@@ -185,6 +186,7 @@ class OsuUserInfoDao(private val infoRepository: OsuUserInfoRepository) {
             this.levelProgress = statistics.levelProgress
             this.isRanked = statistics.ranked ?: false
             this.maximumCombo = statistics.maxCombo
+            this.replaysWatched = statistics.replaysWatchedByOthers
             this.totalHits = statistics.totalHits ?: 0
             this.playCount = statistics.playCount ?: 0
             this.playTime = statistics.playTime ?: 0

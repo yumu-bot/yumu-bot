@@ -314,7 +314,7 @@ class PopularService(
 
          */
 
-        val beatmapCount = scores.groupBy { it.beatmapID }.count()
+        val beatmapCount = scores.groupBy { it.beatmapID }.size
 
         val info = PopularInfo(param.range.data ?: -1L, members.size, users.size, scores.size, beatmapCount, mode, after, before)
 

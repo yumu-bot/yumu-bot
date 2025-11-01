@@ -78,7 +78,7 @@ class MatchRating(
 
 
         // skip and remove
-        val size = rs.count()
+        val size = rs.size
         val skip = param.skip
         val limit = size - param.ignore
 
@@ -101,7 +101,7 @@ class MatchRating(
                 .toSet()
                 .sortedDescending()
 
-            for (i in 0..< rs.count()) {
+            for (i in 0..< rs.size) {
                 if (i in remove) {
                     rs.removeAt(i)
                 }
