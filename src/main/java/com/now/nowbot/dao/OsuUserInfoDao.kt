@@ -56,6 +56,17 @@ class OsuUserInfoDao(
         )
     }
 
+    fun getPercentiles(userID: Long, mode: OsuMode): Map<String, Double> {
+        val strings = listOf(
+            "global_rank", "country_rank", "level", "rank_count_score", "play_count", "total_hits", "play_time", "ranked_score", "total_score", "beatmap_playcount", "replays_watched", "maximum_combo"
+        )
+
+        return percentileRepository.getUserPercentileList(userID, mode.modeValue)
+            .mapIndexed { i, it ->
+                strings[i] to it
+            }.toMap()
+    }
+
     fun saveUserToday(user: OsuUser, mode: OsuMode) {
         val now = LocalDateTime.now()
         val today = LocalDate.now()

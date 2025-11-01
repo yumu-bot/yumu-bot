@@ -58,6 +58,7 @@ class InfoService(
         val historyUser: OsuUser?,
         val isMyself: Boolean,
         val version: Int = 2,
+        val percentiles: Map<String, Double> = mapOf(),
     ) {
         fun toMap(): Map<String, Any> {
             when(this.version) {
@@ -67,7 +68,8 @@ class InfoService(
                         "best_arr" to BestsArray(bests),
                         "playcount_arr" to PlaycountsArray(user.monthlyPlaycounts),
                         "ranking_arr" to RankingArray(user.rankHistory?.data ?: listOf()),
-                        "highest_rank" to HighestRanking(user.highestRank, user.rankHistory)
+                        "highest_rank" to HighestRanking(user.highestRank, user.rankHistory),
+                        "percentiles" to percentiles,
                     )
                 }
 
@@ -214,7 +216,9 @@ class InfoService(
 
         val currentMode = OsuMode.getMode(mode.data!!, user.currentOsuMode)
 
-        return InfoParam(user, bests, currentMode, historyUser, isMyself.get(), version)
+        val percentiles = infoDao.getPercentiles(user.userID, user.currentOsuMode)
+
+        return InfoParam(user, bests, currentMode, historyUser, isMyself.get(), version, percentiles)
     }
 
     private fun InfoParam.getMessageChain(): MessageChain {
