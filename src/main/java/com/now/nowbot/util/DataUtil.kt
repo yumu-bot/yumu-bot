@@ -639,12 +639,15 @@ object DataUtil {
 
         val length = fullPP.size
 
+        var weight : Double = 1.0 / 0.95
+
         for (i in 0 until length) {
-            val weight: Double = FastPower095.pow(i)
+            weight *= 0.95
+
             val pp = fullPP[i]
 
             // 只拿最后50个bp来算，这样精准
-            if (i >= 50) {
+            if (i >= 100) {
                 x += i.toDouble()
                 y += pp
                 x2 += i.toDouble().pow(2)
@@ -661,21 +664,21 @@ object DataUtil {
         // 找零点
         val expectedX = if ((k == 0.0)) -1 else (-b / k).toInt()
 
-        // 这个预估的零点应该在很后面，不应该小于 100
-        // 如果bp没满100，那么bns直接可算得，remainPP = 0
-        if (length < 100 || expectedX <= 100) {
+        // 这个预估的零点应该在很后面，不应该小于 200
+        // 如果bp没满200，那么bns直接可算得，remainPP = 0
+        if (length < 200 || expectedX <= 200) {
             bonusPP = playerPP - bpPP
         } else {
             // 对离散数据求和
             for (i in length..expectedX) {
-                val weight: Double = FastPower095.pow(i)
+                val weight: Double = 0.95.pow(i)
                 remainPP += (k * i + b) * weight
             }
 
             bonusPP = playerPP - bpPP - remainPP
         }
 
-        val maxBonusPP = (417.0 - 1.0 / 3.0) * (1.0 - 0.9994.pow(1000))
+        val maxBonusPP = (417.0 - 1.0 / 3.0) * (1.0 - 0.995.pow(1000))
 
         return bonusPP.coerceIn(0.0, maxBonusPP)
     }

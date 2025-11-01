@@ -236,31 +236,31 @@ open class OsuUser {
     var groups: List<UserGroup> = listOf()
 
     data class UserGroup(
-        @JsonProperty("colour")
+        @field:JsonProperty("colour")
         val color: String? = "",
 
-        @JsonProperty("has_listing")
+        @field:JsonProperty("has_listing")
         val hasListing: Boolean = false,
 
-        @JsonProperty("has_playmodes")
+        @field:JsonProperty("has_playmodes")
         val hasModes: Boolean = false,
 
-        @JsonProperty("id")
+        @field:JsonProperty("id")
         val id: Int = 0,
 
-        @JsonProperty("identifier")
+        @field:JsonProperty("identifier")
         val identifier: String = "",
 
-        @JsonProperty("is_probationary")
+        @field:JsonProperty("is_probationary")
         val isProbationary: Boolean = false,
 
-        @JsonProperty("name")
+        @field:JsonProperty("name")
         val name: String = "",
 
-        @JsonProperty("short_name")
+        @field:JsonProperty("short_name")
         val shortName: String = "",
 
-        @JsonProperty("playmodes")
+        @field:JsonProperty("playmodes")
         val modes: List<String>? = null,
     )
 
@@ -280,7 +280,7 @@ open class OsuUser {
         monthlyPlaycounts = dataList.map { UserMonthly(it["start_date"] as String, it["count"] as Int) }
     }
 
-    data class UserMonthly(@JsonProperty("start_date") val startDate: String, val count: Int)
+    data class UserMonthly(@field:JsonProperty("start_date") val startDate: String, val count: Int)
 
     @JsonProperty("nominated_beatmapset_count")
     var nominatedCount: Int = 0
@@ -450,10 +450,10 @@ open class OsuUser {
     }
 
     data class Team(
-        @JsonProperty("flag_url") val flag: String?,
-        @JsonProperty("id") val id: Int,
-        @JsonProperty("name") val name: String,
-        @JsonProperty("short_name")val shortName: String
+        @field:JsonProperty("flag_url") val flag: String?,
+        @field:JsonProperty("id") val id: Int,
+        @field:JsonProperty("name") val name: String,
+        @field:JsonProperty("short_name")val shortName: String
     )
 
     override fun equals(other: Any?): Boolean {

@@ -1,5 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
@@ -28,9 +30,11 @@ import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
@@ -55,6 +59,13 @@ class InfoService(
     ) {
         fun toMap(): Map<String, Any> {
             when(this.version) {
+                3 -> {
+                    return mapOf(
+
+                        "best_arr" to BestsArray(bests)
+                    )
+                }
+
                 // 新面板 (v5.0) 的数据
                 2 -> {
                     val out = mutableMapOf<String, Any>()
@@ -257,6 +268,70 @@ class InfoService(
                 DataUtil.getBonusPP(user.pp, bests.map { it.pp })
             } else {
                 0.0
+            }
+        }
+
+        @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
+        internal data class BestsArray(
+            private val bests: List<LazerScore>
+        ) {
+            val count: List<Int>
+            val max: Int
+            val maxDay: String
+            val week0: String
+            val week4: String
+            val week8: String
+
+            private val formatter = DateTimeFormatter.ofPattern("MM-dd")
+
+            init {
+                // 获取本周最后一天（周日）
+                val today = LocalDate.now()
+                val endOfWeek = today.with(DayOfWeek.SUNDAY)
+
+                val bestsCount = countLast90DaysFromEndOfWeek(bests, endOfWeek)
+
+                count = bestsCount.map { it.value }
+
+                val maxEntry = bestsCount.toList().maxByOrNull { it.second }
+
+                max = maxEntry?.second ?: 0
+                maxDay = maxEntry?.first?.format(formatter) ?: "-"
+
+                week0 = endOfWeek.format(formatter)
+                week4 = endOfWeek.minusWeeks(4).format(formatter)
+                week8 = endOfWeek.minusWeeks(8).format(formatter)
+            }
+
+            private fun countLast90DaysFromEndOfWeek(scores: List<LazerScore>, endOfWeek: LocalDate = LocalDate.now().with(DayOfWeek.SUNDAY)): Map<LocalDate, Int> {
+
+                // 计算 90天 前的日期
+                val startDate = endOfWeek.minusDays(90)
+
+                val groupedData = scores
+                    .filter { score ->
+                        val localDate = score.endedTime
+                            .atZoneSameInstant(ZoneOffset.ofHours(8))
+                            .toLocalDate()
+
+                        localDate.isAfter(startDate) && localDate.isBefore(endOfWeek.plusDays(1))
+                    }
+                    .groupBy { obj ->
+                        obj.endedTime.atZoneSameInstant(ZoneOffset.UTC).toLocalDate()
+                    }
+                    .mapValues { (_, values) -> values.size }
+
+
+                // 创建包含所有日期的结果映射，没有数据的日期填充0
+                val result = mutableMapOf<LocalDate, Int>()
+                var currentDate = startDate
+
+                while (currentDate <= endOfWeek) {
+                    result[currentDate] = groupedData[currentDate] ?: 0
+                    currentDate = currentDate.plusDays(1)
+                }
+
+                return result
             }
         }
     }
