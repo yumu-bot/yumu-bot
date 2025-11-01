@@ -169,9 +169,9 @@ open class OsuUser {
     */
     data class ProfileBanner(
         val id: Long,
-        @JsonProperty("tournament_id") val tournamentID: Long,
+        @field:JsonProperty("tournament_id") val tournamentID: Long,
         val image: String?,
-        @JsonProperty("image@2x") val image2x: String?
+        @field:JsonProperty("image@2x") val image2x: String?
     )
 
 
@@ -182,19 +182,11 @@ open class OsuUser {
 
 
     data class UserBadge(
-        @field:JsonProperty("awarded_at") @param:JsonProperty(
-            "awarded_at"
-        ) val awardAt: OffsetDateTime,
-        @field:JsonProperty("description") @param:JsonProperty(
-            "description"
-        ) val description: String,
-        @field:JsonProperty("image@2x_url") @param:JsonProperty(
-            "image@2x_url"
-        ) val image2xUrl: String,
-        @field:JsonProperty("image_url") @param:JsonProperty(
-            "image_url"
-        ) val imageUrl: String,
-        @field:Nullable @param:Nullable val url: String?
+        @field:JsonProperty("awarded_at") val awardAt: OffsetDateTime,
+        @field:JsonProperty("description") val description: String,
+        @field:JsonProperty("image@2x_url") val image2xUrl: String,
+        @field:JsonProperty("image_url") val imageUrl: String,
+        @field:JsonProperty("url") val url: String?
     )
 
     @JsonProperty("beatmap_playcounts_count")
@@ -203,29 +195,31 @@ open class OsuUser {
     @JsonProperty("comments_count")
     var commentsCount: Int = 0
 
-    @JsonProperty("daily_challenge_user_stats") @Nullable
+    // current_season_stats
+
+    @JsonProperty("daily_challenge_user_stats")
     var dailyChallenge: DailyChallenge? = null
 
     data class DailyChallenge(
-        @JsonProperty("daily_streak_best")
+        @field:JsonProperty("daily_streak_best")
         val bestDayStreak: Int,
-        @JsonProperty("daily_streak_current")
+        @field:JsonProperty("daily_streak_current")
         val currentDayStreak: Int,
-        @JsonProperty("last_update")
+        @field:JsonProperty("last_update")
         val lastUpdate: OffsetDateTime,
-        @JsonProperty("last_weekly_streak")
+        @field:JsonProperty("last_weekly_streak")
         val lastWeeklyStreak: OffsetDateTime,
-        @JsonProperty("playcount")
+        @field:JsonProperty("playcount")
         val playCount: Int,
-        @JsonProperty("top_10p_placements")
+        @field:JsonProperty("top_10p_placements")
         val top10PercentCount: Int,
-        @JsonProperty("top_50p_placements")
+        @field:JsonProperty("top_50p_placements")
         val top50PercentCount: Int,
-        @JsonProperty("user_id")
+        @field:JsonProperty("user_id")
         val userID: Int,
-        @JsonProperty("weekly_streak_best")
+        @field:JsonProperty("weekly_streak_best")
         val bestWeekStreak: Int,
-        @JsonProperty("weekly_streak_current")
+        @field:JsonProperty("weekly_streak_current")
         val currentWeekStreak: Int
     )
 

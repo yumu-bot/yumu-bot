@@ -24,7 +24,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import kotlin.jvm.optionals.getOrNull
 import kotlin.math.absoluteValue
 import kotlin.math.pow
 import kotlin.math.round
@@ -64,7 +63,7 @@ class UUIService(
                 user.userID,
                 user.currentOsuMode,
                 LocalDate.now().minusDays(day)
-            ).map { OsuUserInfoDao.fromArchive(it) }.getOrNull()
+            )?.let { OsuUserInfoDao.fromArchive(it) }
 
         val currentMode = OsuMode.getMode(mode.data!!, user.currentOsuMode)
 

@@ -236,7 +236,7 @@ class ExploreService(
                 }
 
                 val filter = MostPlayedBeatmapFilter.filterMostPlayBeatmaps(most, conditions)
-                    .filter { mode == OsuMode.DEFAULT || it.mode == mode }
+                    .filter { it.mode.isEqualOrDefault(mode) }
 
                 if (filter.isEmpty()) {
                     throw NoSuchElementException.MostPlayed()

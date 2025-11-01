@@ -1,18 +1,9 @@
-package com.now.nowbot.model.osu;
+package com.now.nowbot.model.osu
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty
+import java.time.LocalDateTime
 
-import java.time.LocalDateTime;
-
-public class InfoLogStatistics extends Statistics {
+class InfoLogStatistics : Statistics() {
     @JsonProperty("time")
-    LocalDateTime logTime;
-
-    public LocalDateTime getLogTime() {
-        return logTime;
-    }
-
-    public void setLogTime(LocalDateTime logTime) {
-        this.logTime = logTime;
-    }
+    var logTime: LocalDateTime = LocalDateTime.now()
 }

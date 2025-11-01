@@ -1,251 +1,85 @@
-package com.now.nowbot.entity;
+package com.now.nowbot.entity
 
-import com.now.nowbot.model.enums.OsuMode;
-import jakarta.persistence.*;
+import com.now.nowbot.model.enums.OsuMode
+import jakarta.persistence.*
+import java.time.LocalDateTime
 
-import java.time.LocalDateTime;
+@Entity @Table(
+    name = "osu_user_info_archive",
+    indexes = [
+        Index(name = "index_osu_id", columnList = "osu_id"),
+        Index(name = "index_usermod_find", columnList = "osu_id,mode"),
+        Index(name = "index_user_time", columnList = "time")
+    ]
+)
+class OsuUserInfoArchiveLite {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Long? = null
 
-@Entity
-@Table(name = "osu_user_info_archive", indexes = {
-        @Index(name = "index_osu_id", columnList = "osu_id"),
-        @Index(name = "index_usermod_find", columnList = "osu_id,mode"),
-        @Index(name = "index_user_time", columnList = "time")
-})
-public class OsuUserInfoArchiveLite {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @Column(name = "osu_id")
-    private Long osuID;
-    private OsuMode mode;
+    @Column(name = "osu_id") var userID: Long = 0L
 
-    private LocalDateTime time;
+    @Column(name = "mode") var mode: OsuMode = OsuMode.DEFAULT
+
+    @Column(name = "time") var time: LocalDateTime = LocalDateTime.now()
 
     // ',' 分割
     //@Lob
-    @Column(columnDefinition = "TEXT")
-    private String rank_history;
+    @Column(name = "rank_history", columnDefinition = "TEXT") var rankHistory: String? = null
+
     //等级
-    private Integer level_current;
-    private Integer level_progress;
+    @Column(name = "level_current") var levelCurrent: Int = 0
+
+    @Column(name = "level_progress") var levelProgress: Int = 0
+
     //rank
-    private Long global_rank;
-    private Long country_rank;
-    private Double pp;
-    private Double hit_accuracy;
+    @Column(name = "global_rank") var globalRank: Long? = null
 
-    private Long play_count;
-    private Long play_time;
+    @Column(name = "country_rank") var countryRank: Long? = null
 
-    private Long ranked_score;
-    private Long total_score;
-    private Long total_hits;
+    @Column(name = "pp") var pp: Double = 0.0
 
-    private Integer maximum_combo;
-    private Boolean is_ranked;
+    @Column(name = "hit_accuracy") var accuracy: Double = 0.0
 
-    private Integer grade_counts_ss;
-    private Integer grade_counts_ssh;
-    private Integer grade_counts_s;
-    private Integer grade_counts_sh;
-    private Integer grade_counts_a;
+    @Column(name = "play_count") var playCount: Long = 0
 
-    public Long getId() {
-        return id;
-    }
+    @Column(name = "play_time") var playTime: Long = 0
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    @Column(name = "ranked_score") var rankedScore: Long = 0
 
-    public Long getOsuID() {
-        return osuID;
-    }
+    @Column(name = "total_score") var totalScore: Long = 0
 
-    public void setOsuID(Long osuID) {
-        this.osuID = osuID;
-    }
+    @Column(name = "total_hits") var totalHits: Long = 0
 
-    public OsuMode getMode() {
-        return mode;
-    }
+    @Column(name = "maximum_combo") var maximumCombo: Int = 0
 
-    public void setMode(OsuMode mode) {
-        this.mode = mode;
-    }
+    @Column(name = "is_ranked") var isRanked: Boolean = false
 
-    public String getRank_history() {
-        return rank_history;
-    }
+    @Column(name = "grade_counts_ss") var countSS: Int = 0
 
-    public void setRank_history(String rank_history) {
-        this.rank_history = rank_history;
-    }
 
-    public Integer getLevel_current() {
-        return level_current;
-    }
+    @Column(name = "grade_counts_ssh") var countSSH: Int = 0
 
-    public void setLevel_current(Integer level_current) {
-        this.level_current = level_current;
-    }
+    @Column(name = "grade_counts_s") var countS: Int = 0
 
-    public Integer getLevel_progress() {
-        return level_progress;
-    }
+    @Column(name = "grade_counts_sh") var countSH: Int = 0
 
-    public void setLevel_progress(Integer level_progress) {
-        this.level_progress = level_progress;
-    }
+    @Column(name = "grade_counts_a") var countA: Int = 0
 
-    public Long getGlobal_rank() {
-        return global_rank;
-    }
+    @Column(name = "beatmap_playcount") var beatmapPlaycount: Int = 0
 
-    public void setGlobal_rank(Long global_rank) {
-        this.global_rank = global_rank;
-    }
-
-    public Long getCountry_rank() {
-        return country_rank;
-    }
-
-    public void setCountry_rank(Long country_rank) {
-        this.country_rank = country_rank;
-    }
-
-    public Double getPP() {
-        return pp;
-    }
-
-    public void setPP(Double pp) {
-        this.pp = pp;
-    }
-
-    public Double getHit_accuracy() {
-        return hit_accuracy;
-    }
-
-    public void setHit_accuracy(Double hit_accuracy) {
-        this.hit_accuracy = hit_accuracy;
-    }
-
-    public Long getPlay_count() {
-        return play_count;
-    }
-
-    public void setPlay_count(Long play_count) {
-        this.play_count = play_count;
-    }
-
-    public Long getPlay_time() {
-        return play_time;
-    }
-
-    public void setPlay_time(Long play_time) {
-        this.play_time = play_time;
-    }
-
-    public Long getRanked_score() {
-        return ranked_score;
-    }
-
-    public void setRanked_score(Long ranked_score) {
-        this.ranked_score = ranked_score;
-    }
-
-    public Long getTotal_score() {
-        return total_score;
-    }
-
-    public void setTotal_score(Long total_score) {
-        this.total_score = total_score;
-    }
-
-    public Integer getMaximum_combo() {
-        return maximum_combo;
-    }
-
-    public void setMaximum_combo(Integer maximum_combo) {
-        this.maximum_combo = maximum_combo;
-    }
-
-    public Boolean getIs_ranked() {
-        return is_ranked;
-    }
-
-    public void setIs_ranked(Boolean is_ranked) {
-        this.is_ranked = is_ranked;
-    }
-
-    public Integer getGrade_counts_ss() {
-        return grade_counts_ss;
-    }
-
-    public void setGrade_counts_ss(Integer grade_counts_ss) {
-        this.grade_counts_ss = grade_counts_ss;
-    }
-
-    public Integer getGrade_counts_ssh() {
-        return grade_counts_ssh;
-    }
-
-    public void setGrade_counts_ssh(Integer grade_counts_ssh) {
-        this.grade_counts_ssh = grade_counts_ssh;
-    }
-
-    public Integer getGrade_counts_s() {
-        return grade_counts_s;
-    }
-
-    public void setGrade_counts_s(Integer grade_counts_s) {
-        this.grade_counts_s = grade_counts_s;
-    }
-
-    public Integer getGrade_counts_sh() {
-        return grade_counts_sh;
-    }
-
-    public void setGrade_counts_sh(Integer grade_counts_sh) {
-        this.grade_counts_sh = grade_counts_sh;
-    }
-
-    public Integer getGrade_counts_a() {
-        return grade_counts_a;
-    }
-
-    public void setGrade_counts_a(Integer grade_counts_a) {
-        this.grade_counts_a = grade_counts_a;
-    }
-
-    public LocalDateTime getTime() {
-        return time;
-    }
-
-    public void setTime(LocalDateTime time) {
-        this.time = time;
-    }
-
-    public Long getTotal_hits() {
-        return total_hits;
-    }
-
-    public void setTotal_hits(Long total_hits) {
-        this.total_hits = total_hits;
-    }
-
-    public interface InfoArchive {
-        long getOsuId();
-        short getModeShort();
-        long getPlayCount();
-        default OsuMode getMode() {
-            return switch (getModeShort()) {
-                case 0 -> OsuMode.OSU;
-                case 1 -> OsuMode.TAIKO;
-                case 2 -> OsuMode.CATCH;
-                case 3 -> OsuMode.MANIA;
-                default -> OsuMode.DEFAULT;
-            };
+    interface InfoArchive {
+        @get:Column(name = "osu_id")
+        val userID: Long
+        val modeShort: Short
+        val playCount: Long
+        val mode: OsuMode
+            get () {
+                return when (this.modeShort.toInt()) {
+                    0 -> OsuMode.OSU
+                    1 -> OsuMode.TAIKO
+                    2 -> OsuMode.CATCH
+                    3 -> OsuMode.MANIA
+                    else -> OsuMode.DEFAULT
+                }
         }
     }
 }

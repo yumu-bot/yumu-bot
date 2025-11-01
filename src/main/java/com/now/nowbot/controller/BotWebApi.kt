@@ -36,7 +36,6 @@ import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
-import kotlin.jvm.optionals.getOrNull
 import kotlin.math.max
 import kotlin.math.min
 
@@ -813,7 +812,7 @@ import kotlin.math.min
         val bests = scoreApiService.getBestScores(user)
         val historyUser = infoDao.getLastFrom(
             user.userID, mode, LocalDate.now().minusDays(day.toLong())
-        ).map { OsuUserInfoDao.fromArchive(it) }.getOrNull()
+        )?.let { OsuUserInfoDao.fromArchive(it) }
 
         val param = InfoService.InfoParam(user, bests, mode, historyUser, false, 2)
 

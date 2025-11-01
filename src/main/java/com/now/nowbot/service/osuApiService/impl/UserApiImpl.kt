@@ -123,7 +123,7 @@ import java.util.regex.Pattern
                 base.insertHeader(headers, user)
             }.retrieve()
                 .bodyToMono(OsuUser::class.java).map { data ->
-                    userInfoDao.saveUser(data, mode)
+                    userInfoDao.saveUserToday(data, mode)
                     user.userID = data.userID
                     user.username = data.username
                     user.mode = mode
@@ -143,7 +143,7 @@ import java.util.regex.Pattern
             client.get().uri {
                     it.path("users/{data}/{mode}").build("@$name", mode.shortName)
                 }.headers(base::insertHeader).retrieve().bodyToMono(OsuUser::class.java).map { data ->
-                    userInfoDao.saveUser(data, mode)
+                    userInfoDao.saveUserToday(data, mode)
                     data.currentOsuMode = getMode(mode, data.defaultOsuMode)
 
                     Thread.startVirtualThread {
@@ -162,7 +162,7 @@ import java.util.regex.Pattern
                 }.headers(base::insertHeader).retrieve()/*
             .bodyToMono(JsonNode::class.java).map { JacksonUtil.parseObject(it, OsuUser::class.java) }.block()!!
             */.bodyToMono(OsuUser::class.java).map { data: OsuUser ->
-                    userInfoDao.saveUser(data, mode)
+                    userInfoDao.saveUserToday(data, mode)
                     data.currentOsuMode = getMode(mode, data.defaultOsuMode)
 
                     Thread.startVirtualThread {
@@ -223,7 +223,7 @@ import java.util.regex.Pattern
                     val userList = JacksonUtil.parseObjectList(
                         it["users"], MicroUser::class.java
                     )
-                    userInfoDao.saveUsers(userList)
+                    userInfoDao.saveUsersToday(userList)
                     userList
                 }
         }

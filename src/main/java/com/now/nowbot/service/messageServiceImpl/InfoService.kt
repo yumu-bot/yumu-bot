@@ -34,7 +34,6 @@ import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.jvm.optionals.getOrNull
 import kotlin.math.absoluteValue
 
 @Service("INFO")
@@ -195,7 +194,7 @@ class InfoService(
                 user.userID,
                 user.currentOsuMode,
                 LocalDate.now().minusDays(day)
-            ).map { OsuUserInfoDao.fromArchive(it) }.getOrNull()
+            )?.let { OsuUserInfoDao.fromArchive(it) }
 
         val currentMode = OsuMode.getMode(mode.data!!, user.currentOsuMode)
 

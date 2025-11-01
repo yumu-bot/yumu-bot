@@ -36,12 +36,12 @@ class DailyStatisticsService(
         log.info("开始统计全部绑定用户")
         OsuApiBaseService.setPriority(9)
         var offset = 0
-        var usersId: List<Long> = bindDao.getAllUserIdLimit50(offset)
+        var userIDs: List<Long> = bindDao.getAllUserIdLimit50(offset)
         var errorCount = 0
-        while (usersId.isNotEmpty()) {
+        while (userIDs.isNotEmpty()) {
             try {
                 val needSearch = mutableListOf<Pair<Long, OsuMode>>()
-                saveUserInfo(usersId, needSearch)
+                saveUserInfo(userIDs, needSearch)
                 savePlayData(needSearch)
             } catch (e: Exception) {
                 if (errorCount < 3) {
@@ -50,22 +50,22 @@ class DailyStatisticsService(
                     continue
                 } else {
                     log.error("统计用户第${offset / 50}轮连续异常, 退出本轮", e)
-                    log.error("下面 UID 已跳过[\n${usersId.joinToString(",\n")}\n]")
+                    log.error("下面 UID 已跳过[\n${userIDs.joinToString(",\n")}\n]")
                 }
             }
 
-            offset += usersId.size
-            usersId = bindDao.getAllUserIdLimit50(offset)
+            offset += userIDs.size
+            userIDs = bindDao.getAllUserIdLimit50(offset)
         }
     }
 
     private fun saveUserInfo(uidList: List<Long>, needSearch: MutableList<Pair<Long, OsuMode>>) {
         val userInfoList = userApiService.getUsers(uidList, isVariant = true)
-        val yesterdayInfo = userInfoDao.getYesterdayInfo(uidList)
+        val yesterdayInfo = userInfoDao.getFromYesterday(uidList)
         val userMap = userInfoList.associateBy { it.userID }
         for (user in yesterdayInfo) {
             val mode = user.mode
-            val userInfo = userMap[user.osuId] ?: continue
+            val userInfo = userMap[user.userID] ?: continue
             val newPlayCount = when (user.mode) {
                 OsuMode.OSU -> userInfo.rulesets?.osu?.playCount ?: continue
                 OsuMode.TAIKO -> userInfo.rulesets?.taiko?.playCount ?: continue
@@ -76,9 +76,9 @@ class DailyStatisticsService(
                     continue
                 }
             }
-            log.info("用户 ${user.osuId} 模式 $mode playCount: ${user.playCount} -> $newPlayCount")
+            log.info("用户 ${user.userID} 模式 $mode playCount: ${user.playCount} -> $newPlayCount")
             if (user.playCount != newPlayCount) {
-                needSearch.add(user.osuId to mode)
+                needSearch.add(user.userID to mode)
             }
         }
     }
