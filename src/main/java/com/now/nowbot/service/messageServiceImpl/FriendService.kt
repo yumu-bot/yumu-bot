@@ -178,8 +178,8 @@ class FriendService(
     private fun getParam(event: MessageEvent, matcher: Matcher): FriendParam {
         val any: String = matcher.group(FLAG_ANY) ?: ""
 
-        val me = userApiService.refreshUserTokenInstant(bindDao.getBindFromQQOrNull(event.sender.id), isMyself = true)
-        // bindDao.getBindFromQQ(event.sender.id)
+        val me = // userApiService.refreshUserTokenInstant(bindDao.getBindFromQQOrNull(event.sender.id), isMyself = true)
+        bindDao.getBindFromQQ(event.sender.id)
 
         val isMyself = AtomicBoolean(true) // 处理 range
         val mode = getMode(matcher)

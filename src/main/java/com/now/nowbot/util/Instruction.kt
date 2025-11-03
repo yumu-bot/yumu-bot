@@ -285,7 +285,7 @@ enum class Instruction(val pattern: Pattern) {
 
     FRIEND(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("friends?", "f")
-        appendColonCaptureGroup("sort", "[\\-_+1247a-zA-Z]", contentLevel = MORE, prefixLevel = MAYBE)
+        appendColonCaptureGroup("sort", REG_ANYTHING_BUT_NO_SPACE, MORE)
         appendQQ()
         appendUID()
         appendNameAndRange()
