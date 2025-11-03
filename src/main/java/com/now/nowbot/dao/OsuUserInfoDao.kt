@@ -2,6 +2,7 @@ package com.now.nowbot.dao
 
 import com.now.nowbot.entity.OsuUserInfoArchiveLite
 import com.now.nowbot.entity.OsuUserInfoArchiveLite.InfoArchive
+import com.now.nowbot.entity.OsuUserInfoPercentilesKey
 import com.now.nowbot.mapper.OsuUserInfoRepository
 import com.now.nowbot.mapper.OsuUserInfoPercentilesLiteRepository
 import com.now.nowbot.model.enums.OsuMode
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import kotlin.jvm.optionals.getOrNull
 
 @Component
 class OsuUserInfoDao(
@@ -61,10 +63,73 @@ class OsuUserInfoDao(
             "global_rank", "country_rank", "level", "rank_count_score", "play_count", "total_hits", "play_time", "ranked_score", "total_score", "beatmap_playcount", "replays_watched", "maximum_combo"
         )
 
+        val user = percentileRepository.findById(OsuUserInfoPercentilesKey(userID, mode.modeValue)).getOrNull()
+            ?: return (0..11).associate { strings[it] to 0.0 }
+
+        val full = percentileRepository.findAllByMode(mode.modeValue)
+        
+        // 3. 计算每个指标的百分位数
+        val result = listOf(
+                // 对于排名指标：排名越好（数字越小），百分位数越高
+                calculatePercentileForRank(full.mapNotNull { it.globalRank }, user.globalRank ?: Long.MAX_VALUE),
+                calculatePercentileForRank(full.mapNotNull { it.countryRank }, user.countryRank ?: Long.MAX_VALUE),
+
+                // 对于数值指标：数值越大，百分位数越高
+                calculatePercentileForValue(full.map { it.level }, user.level),
+                calculatePercentileForValue(full.map { it.rankCountScore }, user.rankCountScore),
+                calculatePercentileForValue(full.map { it.playCount }, user.playCount),
+                calculatePercentileForValue(full.map { it.totalHits }, user.totalHits),
+                calculatePercentileForValue(full.map { it.playTime }, user.playTime),
+                calculatePercentileForValue(full.map { it.rankedScore }, user.rankedScore),
+                calculatePercentileForValue(full.map { it.totalScore }, user.totalScore),
+                calculatePercentileForValue(full.map { it.beatmapPlaycount }, user.beatmapPlaycount),
+                calculatePercentileForValue(full.map { it.replaysWatched }, user.replaysWatched),
+                calculatePercentileForValue(full.map { it.maximumCombo }, user.maximumCombo)
+            )
+
+        /*
         return percentileRepository.getUserPercentileList(userID, mode.modeValue)
             .mapIndexed { i, it ->
                 strings[i] to it
             }.toMap()
+
+         */
+
+        return result.mapIndexed { i, it ->
+            strings[i] to it
+        }.toMap()
+    }
+
+
+    private fun calculatePercentileForValue(allRanks: List<Int>, targetRank: Int): Double {
+        return calculatePercentileForValue(allRanks.map { it.toLong() }, targetRank.toLong())
+    }
+
+
+    /**
+     * 计算排名指标的百分位数
+     * 排名越好（数字越小），百分位数越高
+     */
+    private fun calculatePercentileForRank(allRanks: List<Long>, targetRank: Long): Double {
+        val validRanks = allRanks.filter { it > 0 }
+        if (validRanks.isEmpty()) return 0.0
+
+        // 计算有多少玩家的排名比目标用户差（排名数字更大）
+        val worsePlayers = validRanks.count { it > targetRank }
+        return worsePlayers.toDouble() / validRanks.size
+    }
+
+    /**
+     * 计算数值指标的百分位数
+     * 数值越大，百分位数越高
+     */
+    private fun calculatePercentileForValue(allValues: List<Long>, targetValue: Long): Double {
+        val validValues = allValues.filter { it > 0 }
+        if (validValues.isEmpty()) return 0.0
+
+        // 计算有多少玩家的数值比目标用户低
+        val lowerPlayers = validValues.count { it < targetValue }
+        return lowerPlayers.toDouble() / validValues.size
     }
 
     fun saveUserToday(user: OsuUser, mode: OsuMode) {
