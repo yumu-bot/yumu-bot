@@ -474,7 +474,9 @@ object UserIDUtil {
 
             val onlyRange = name2.matches(RANGE_ONLY.toRegex())
 
-            if (!onlyRange || (name2.toIntOrNull() ?: -1) > maximum) {
+            val hasOthers = !name2.isBlank() && !onlyRange
+
+            if (hasOthers || (name2.toIntOrNull() ?: Int.MIN_VALUE) > maximum) {
                 isMyself.set(false)
                 return null
             }

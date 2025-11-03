@@ -92,7 +92,7 @@ class BindDao(
         if (qq < 0) {
             return try {
                 getBindUserFromOsuID(-qq)
-            } catch (e: BindException) {
+            } catch (_: BindException) {
                 BindUser(-qq, "unknown")
             }
         }
@@ -140,7 +140,7 @@ class BindDao(
         var liteData: OsuBindUserLite?
         try {
             liteData = bindUserMapper.getByOsuID(userID)
-        } catch (e: IncorrectResultSizeDataAccessException) {
+        } catch (_: IncorrectResultSizeDataAccessException) {
             bindUserMapper.deleteOutdatedByOsuID(userID)
             liteData = bindUserMapper.getByOsuID(userID)
         }
@@ -232,9 +232,9 @@ class BindDao(
         return fromLite(bindUserMapper.getByOsuID(id))
     }
 
-    fun getBindUser(id: Long?): BindUser? {
-        if (id == null) return null
-        return fromLite(bindUserMapper.getByOsuID(id))
+    fun getBindUser(userID: Long?): BindUser? {
+        if (userID == null) return null
+        return fromLite(bindUserMapper.getByOsuID(userID))
     }
 
     fun getSBQQLiteFromUserID(userID: Long): SBQQBindLite? {
@@ -256,7 +256,7 @@ class BindDao(
 
         try {
             liteData = sbBindUserMapper.getUser(userID)
-        } catch (e: IncorrectResultSizeDataAccessException) {
+        } catch (_: IncorrectResultSizeDataAccessException) {
             sbBindUserMapper.deleteOutdatedBind(userID)
             liteData = sbBindUserMapper.getUser(userID)
         }
@@ -269,7 +269,7 @@ class BindDao(
         if (qq < 0) {
             return try {
                 getSBBindUser(-qq)
-            } catch (e: BindException) {
+            } catch (_: BindException) {
                 SBBindUser(-qq, "unknown")
             }
         }
@@ -371,7 +371,7 @@ class BindDao(
         try {
             bindQQMapper.unBind(user.userID)
             return true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return false
         }
     }
@@ -608,7 +608,7 @@ class BindDao(
                 refreshOldUserToken(u, osuGetService)
                 if (u.updateCount > 0) bindUserMapper.clearUpdateCount(u.id)
                 errCount = 0
-            } catch (e: WebClientResponseException.Unauthorized) {
+            } catch (_: WebClientResponseException.Unauthorized) {
                 // 绑定被取消或者过期, 不再尝试
                 log.info("绑定 {} 失败：取消绑定", u.osuName)
                 bindUserMapper.backupBindByOsuID(u.id)
