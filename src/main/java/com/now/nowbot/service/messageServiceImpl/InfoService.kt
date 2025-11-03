@@ -150,17 +150,27 @@ class InfoService(
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<InfoParam>): Boolean {
         val matcher = Instruction.INFO.matcher(messageText)
         val matcher2 = Instruction.WAIFU_INFO.matcher(messageText)
-        val matcher3 = Instruction.TEST_INFO.matcher(messageText)
+        val matcher3 = Instruction.LEGACY_INFO.matcher(messageText)
+        val matcher4 = Instruction.TEST_INFO.matcher(messageText)
 
         if (matcher.find()) {
-            data.value = getParam(event, matcher, 1)
+            data.value = getParam(event, matcher, 3)
             return data.value != null
         } else if (matcher2.find()) {
             data.value = getParam(event, matcher2, 2)
             return data.value != null
         } else if (matcher3.find()) {
-            data.value = getParam(event, matcher3, 3)
+            data.value = getParam(event, matcher3, 1)
             return data.value != null
+        } else if (matcher4.find()) {
+            event.reply("""
+                TEST INFO 已完成任务并下线。感谢您的支持。
+                功能等同于现在的 INFO。
+                
+                要查看老版本的 TEST INFO，可以输入 !IW。
+                要查看更老版本的 INFO，可以输入 !IL。
+                """.trimIndent())
+            return false
         }
 
         return false
@@ -183,7 +193,7 @@ class InfoService(
         val matcher = OfficialInstruction.INFO.matcher(messageText)
 
         if (!matcher.find()) return null
-        return getParam(event, matcher, 2)
+        return getParam(event, matcher, 3)
     }
 
     override fun reply(event: MessageEvent, param: InfoParam): MessageChain = param.getMessageChain()

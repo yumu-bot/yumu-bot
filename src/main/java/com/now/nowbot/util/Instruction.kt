@@ -250,7 +250,13 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     WAIFU_INFO(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(wif[ei]|waifu)\\s*info(rmation)?s?", "wi", "waifu", "wife")
+        appendCommandsIgnoreAll("info(rmation)?s?\\s*(wif[ei]|waifu)", "iw", "waifu", "wife", "i\\s*wanna")
+        appendModeQQUIDName()
+        appendHashCaptureGroup(FLAG_DAY, REG_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
+    }),
+
+    LEGACY_INFO(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("info(rmation)?s?\\s*(legacy)", "il")
         appendModeQQUIDName()
         appendHashCaptureGroup(FLAG_DAY, REG_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
     }),
@@ -284,7 +290,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     FRIEND(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("friends?", "f")
+        appendCommandsIgnoreAll("friends?", "fuck", "f")
         appendColonCaptureGroup("sort", REG_ANYTHING_BUT_NO_SPACE, MORE)
         appendQQ()
         appendUID()
