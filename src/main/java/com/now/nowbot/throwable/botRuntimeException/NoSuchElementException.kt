@@ -65,7 +65,10 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
         NoSuchElementException("这张谱面没有在线排行榜。")
 
     class LeaderboardScore:
-        NoSuchElementException("这张谱面的在线排行榜内没有成绩。")
+        NoSuchElementException("没有找到这张谱面在线排行榜内的成绩。")
+
+    class LeaderboardScoreFiltered(type: String):
+        NoSuchElementException("没有找到这张谱面在线排行榜内的 $type 成绩。")
 
     class LocalBG:
         UnsupportedOperationException("""
@@ -165,9 +168,6 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
 
     class Song(name: Any):
         NoSuchElementException("没有找到歌曲 $name。")
-
-    class SongsFiltered:
-        NoSuchElementException("没有找到歌曲。")
 
     class TakePlayer(name: String? = null):
         NoSuchElementException("没有找到玩家${

@@ -164,8 +164,13 @@ class LeaderBoardService(
             throw IllegalStateException.Fetch("谱面排行榜")
         }
 
-        if (scores.isEmpty())
-            throw NoSuchElementException.LeaderboardScore()
+        if (scores.isEmpty()) {
+            if (param.type === "global" || param.type === null) {
+                throw NoSuchElementException.LeaderboardScore()
+            } else {
+                throw NoSuchElementException.LeaderboardScoreFiltered(param.type)
+            }
+        }
 
         val start = param.range.start.coerceIn(1, scores.size)
         val end = param.range.endInclusive.coerceIn(1, scores.size)
@@ -228,6 +233,7 @@ class LeaderBoardService(
             return when(string?.lowercase()) {
                 "country", "countries", "c" -> "country"
                 "friend", "friends", "f" -> "friend"
+                "team", "clan", "t" -> "team"
                 else -> "global"
             }
         }
