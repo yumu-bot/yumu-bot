@@ -316,6 +316,11 @@ open class OsuUser {
 
     @JsonProperty("replays_watched_counts") fun setReplaysWatchedCount(dataList: List<HashMap<String, Any>>) {
         replaysWatchedCounts = dataList.map { UserMonthly(it["start_date"] as String, it["count"] as Int) }
+
+        this.statistics?.let { stat ->
+            stat.replaysWatchedByOthers =
+                replaysWatchedCounts.sumOf { it.count }
+        }
     }
 
     @JsonProperty("scores_best_count")
@@ -372,6 +377,10 @@ open class OsuUser {
         get() = statistics?.pp ?: field
 
     constructor()
+
+    constructor(statistics: Statistics) {
+        this.statistics = statistics
+    }
 
     constructor(id: Long, pp: Double) {
         this.id = id

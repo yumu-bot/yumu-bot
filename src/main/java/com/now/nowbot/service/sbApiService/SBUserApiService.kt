@@ -1,8 +1,11 @@
 package com.now.nowbot.service.sbApiService
 
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppysb.SBUser
 
 interface SBUserApiService {
+    fun getAvatarByte(user: OsuUser): ByteArray
+
     fun getUserID(username: String): Long?
 
     fun getUserOnlineCount(): Pair<Long, Long>

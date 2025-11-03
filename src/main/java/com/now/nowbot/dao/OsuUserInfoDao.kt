@@ -92,8 +92,8 @@ class OsuUserInfoDao(
                 calculatePercentileForValue(full.map { it.rankedScore }.filter { it > 0 }, stat?.rankedScore),
                 calculatePercentileForValue(full.map { it.totalScore }.filter { it > 0 }, stat?.totalScore),
                 calculatePercentileForValue(full.map { it.beatmapPlaycount }.filter { it > 0 }, user.beatmapPlaycount),
-                calculatePercentileForValue(full.map { it.replaysWatched }.filter { it > 0 }, user.replaysWatchedCounts.size),
-                calculatePercentileForValue(full.map { it.maximumCombo }.filter { it > 0 }, user.maxCombo)
+                calculatePercentileForValue(full.map { it.replaysWatched }.filter { it > 0 }, stat?.replaysWatchedByOthers),
+                calculatePercentileForValue(full.map { it.maximumCombo }.filter { it > 0 }, stat?.maxCombo)
             )
 
         /*

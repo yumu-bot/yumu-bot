@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.Beatmapset
+import com.now.nowbot.model.osu.Covers
 
 data class SBBeatmap(
     @JsonProperty("md5") val md5: String,
@@ -74,7 +75,8 @@ data class SBBeatmap(
         return Beatmapset().apply {
             artist = sb.artist
             title = sb.title
-            beatmapsetID = sb.beatmapID
+            beatmapsetID = sb.beatmapsetID
+            covers = Covers.getCoverFromCacheID(sb.beatmapsetID)
         }
     }
 

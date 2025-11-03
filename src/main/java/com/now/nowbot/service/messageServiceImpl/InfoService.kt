@@ -81,7 +81,7 @@ class InfoService(
                         "best_arr" to BestsArray(bests),
                         "playcount_arr" to PlaycountsArray(user.monthlyPlaycounts),
                         "ranking_arr" to RankingArray(user.rankHistory?.data ?: listOf()),
-                        "highest_rank" to HighestRanking(user.highestRank, user.rankHistory),
+                        "highest_rank" to HighestRanking(user.highestRank, user.rankHistory, user.globalRank),
                         "percentiles" to percentiles,
                         "history_day" to day,
                         "history_user" to historyUser,
@@ -217,7 +217,7 @@ class InfoService(
             bests = async.second
         } else {
             user = try {
-                getUserWithoutRange(event, matcher, getMode(matcher), isMyself)
+                getUserWithoutRange(event, matcher, mode, isMyself)
             } catch (e: BindException) {
                 if (InstructionUtil.isAvoidance(event.textMessage.trim(), "info")) {
                     log.debug("指令退避：I 退避成功")
@@ -344,7 +344,12 @@ class InfoService(
                 val maxEntry = bestsCount.toList().maxByOrNull { it.second }
 
                 max = maxEntry?.second ?: 0
-                time = maxEntry?.first?.format(formatter) ?: "-"
+
+                time = if (max > 0) {
+                    maxEntry?.first?.format(formatter) ?: "-"
+                } else {
+                    "-"
+                }
 
                 week0 = endOfWeek.format(formatter)
                 week4 = endOfWeek.minusWeeks(4).format(formatter)
@@ -417,7 +422,11 @@ class InfoService(
                 val maxEntry = playcountsCount.toList().maxByOrNull { it.second }
 
                 max = maxEntry?.second ?: 0
-                time = maxEntry?.first?.format(formatter2) ?: "-"
+                time = if (max > 0) {
+                    maxEntry?.first?.format(formatter2) ?: "-"
+                } else {
+                    "-"
+                }
 
                 year0 = thisYear.format(formatter3)
                 year1 = thisYear.minusYears(1).format(formatter3)
@@ -584,7 +593,8 @@ class InfoService(
         @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
         internal data class HighestRanking(
             private val highestRank: OsuUser.HighestRank?,
-            private val ranks: OsuUser.RankHistory?
+            private val ranks: OsuUser.RankHistory?,
+            private val globalRank: Long,
         ) {
             val rank: Long
             val time: OffsetDateTime
@@ -593,12 +603,12 @@ class InfoService(
                 if (highestRank != null && highestRank.updatedAt != null) {
                     rank = highestRank.rank
                     time = highestRank.updatedAt
-                } else if (ranks != null) {
+                } else if (ranks != null && ranks.data.isNotEmpty()) {
 
                     // 确保列表有90个元素，不足的用0填充
                     val paddedRanking = ranks.data.toMutableList()
                     while (paddedRanking.size < 90) {
-                        paddedRanking.add(0, Long.MAX_VALUE)
+                        paddedRanking.add(0, 0)
                     }
 
                     rank = paddedRanking.minOrNull() ?: -1
@@ -607,7 +617,7 @@ class InfoService(
 
                     time = OffsetDateTime.now().minusDays(89L - index.toLong())
                 } else {
-                    rank = -1
+                    rank = if (globalRank > 0) globalRank else -1L
                     time = OffsetDateTime.now()
                 }
             }

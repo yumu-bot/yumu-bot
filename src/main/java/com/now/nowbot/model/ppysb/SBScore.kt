@@ -14,39 +14,39 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatterBuilder
 
 data class SBScore(
-    @JsonProperty("id") val scoreID: Long,
+    @field:JsonProperty("id") val scoreID: Long,
 
     /**
      * 在有 beatmap 的 sbscore 里这个就是空的
      */
-    @JsonProperty("map_md5") val md5: String?,
+    @field:JsonProperty("map_md5") val md5: String?,
 
     /**
      * 在有 beatmap 的 sbscore 里这个就是空的
      */
-    @JsonProperty("userid") val userID: Long?,
+    @field:JsonProperty("userid") val userID: Long?,
 
-    @JsonProperty("score") val score: Long,
+    @field:JsonProperty("score") val score: Long,
 
-    @JsonProperty("pp") val pp: Double,
+    @field:JsonProperty("pp") val pp: Double,
 
-    @JsonProperty("acc") val accuracy: Double,
+    @field:JsonProperty("acc") val accuracy: Double,
 
-    @JsonProperty("max_combo") val maxCombo: Int,
+    @field:JsonProperty("max_combo") val maxCombo: Int,
 
     @set:JsonProperty("mods") @get:JsonIgnoreProperties var modInt: Int,
 
-    @JsonProperty("n300") val count300: Int,
+    @field:JsonProperty("n300") val count300: Int,
 
-    @JsonProperty("n100") val count100: Int,
+    @field:JsonProperty("n100") val count100: Int,
 
-    @JsonProperty("n50") val count50: Int,
+    @field:JsonProperty("n50") val count50: Int,
 
-    @JsonProperty("nmiss") val countMiss: Int,
+    @field:JsonProperty("nmiss") val countMiss: Int,
 
-    @JsonProperty("ngeki") val countGeki: Int,
+    @field:JsonProperty("ngeki") val countGeki: Int,
 
-    @JsonProperty("nkatu") val countKatu: Int,
+    @field:JsonProperty("nkatu") val countKatu: Int,
 
     @set:JsonProperty("grade") @get:JsonAlias("rank") var rank: String,
 
@@ -54,48 +54,48 @@ data class SBScore(
 
     @set:JsonProperty("mode") @get:JsonIgnoreProperties var modeByte: Byte,
 
-    @JsonProperty("play_time") var endedTimeString: String,
+    @field:JsonProperty("play_time") var endedTimeString: String,
 
-    @JsonProperty("time_elapsed") val timeElapsed: Long,
+    @field:JsonProperty("time_elapsed") val timeElapsed: Long,
 
-    @JsonProperty("perfect") val perfect: Boolean,
+    @field:JsonProperty("perfect") val perfect: Boolean,
 
-    @JsonProperty("beatmap") val beatmap: SBBeatmap?,
-
-    /**
-     * 仅在获取谱面上的成绩的时候才会存在
-     */
-    @JsonProperty("player_name") val username: String?,
+    @field:JsonProperty("beatmap") val beatmap: SBBeatmap?,
 
     /**
      * 仅在获取谱面上的成绩的时候才会存在
      */
-    @JsonProperty("player_country") val country: String?,
+    @field:JsonProperty("player_name") val username: String?,
 
     /**
      * 仅在获取谱面上的成绩的时候才会存在
      */
-    @JsonProperty("clan_id") val clanID: Long?,
+    @field:JsonProperty("player_country") val country: String?,
 
     /**
      * 仅在获取谱面上的成绩的时候才会存在
      */
-    @JsonProperty("clan_name") val clanName: String?,
+    @field:JsonProperty("clan_id") val clanID: Long?,
 
     /**
      * 仅在获取谱面上的成绩的时候才会存在
      */
-    @JsonProperty("clan_tag") val clanTag: String?,
+    @field:JsonProperty("clan_name") val clanName: String?,
+
+    /**
+     * 仅在获取谱面上的成绩的时候才会存在
+     */
+    @field:JsonProperty("clan_tag") val clanTag: String?,
 
     /**
      * 仅在获取成绩详情的时候才会存在
      */
-    @JsonProperty("client_flags") val clientFlags: String?,
+    @field:JsonProperty("client_flags") val clientFlags: String?,
 
     /**
      * 仅在获取成绩详情的时候才会存在
      */
-    @JsonProperty("online_checksum") val onlineChecksum: String?,
+    @field:JsonProperty("online_checksum") val onlineChecksum: String?,
 
 
     ) {

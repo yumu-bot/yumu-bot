@@ -83,7 +83,7 @@ data class Covers (
             }
         }
 
-        fun getCoverFromCacheID(beatmapsetID: Long, cacheID: Long?): Covers {
+        fun getCoverFromCacheID(beatmapsetID: Long, cacheID: Long? = null): Covers {
 
             val prefix = "https://assets.ppy.sh/beatmaps/${beatmapsetID}/covers/"
 

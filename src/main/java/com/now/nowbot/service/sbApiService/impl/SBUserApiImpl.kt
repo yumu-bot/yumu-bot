@@ -3,6 +3,7 @@ package com.now.nowbot.service.sbApiService.impl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppysb.SBClan
 import com.now.nowbot.model.ppysb.SBStatistics
 import com.now.nowbot.model.ppysb.SBUser
@@ -20,12 +21,28 @@ import java.util.*
 
 @Service
 class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDao): SBUserApiService {
+
+    override fun getAvatarByte(user: OsuUser): ByteArray {
+        return try {
+            request { client ->
+                client.get().uri(user.avatarUrl).retrieve().bodyToMono(ByteArray::class.java)
+            }
+        } catch (_: NetworkException) {
+            log.error("获取玩家 ${user.userID} 头像失败，尝试返回默认头像")
+
+            // 默认头像是个智乃
+            request { client ->
+                client.get().uri("https://a.ppy.sb/").retrieve().bodyToMono(ByteArray::class.java)
+            }
+        }
+    }
+
     override fun getUserID(username: String): Long? {
         data class Result(
-            @JsonProperty("id")
+            @field:JsonProperty("id")
             val id: Long,
 
-            @JsonProperty("name")
+            @field:JsonProperty("name")
             val username: String
         )
 
@@ -39,7 +56,7 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                     .bodyToMono(JsonNode::class.java)
                     .map { parseList<Result>(it, "result", "玩家结果") }
             }.firstOrNull()?.id
-        } catch (e: NetworkException.UserException) {
+        } catch (_: NetworkException.UserException) {
             return null
         }
 
@@ -50,10 +67,10 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
 
     override fun getUserOnlineCount(): Pair<Long, Long> {
         data class Count(
-            @JsonProperty("online")
+            @field:JsonProperty("online")
             val online: Long,
 
-            @JsonProperty("total")
+            @field:JsonProperty("total")
             val total: Long
         )
 
@@ -72,13 +89,13 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
 
     override fun getUser(id: Long?, username: String?, scope: String): SBUser? {
         data class User(
-            @JsonProperty("info")
+            @field:JsonProperty("info")
             val info: SBUser,
 
-            @JsonProperty("clan")
+            @field:JsonProperty("clan")
             val clan: SBClan?,
 
-            @JsonProperty("stats")
+            @field:JsonProperty("stats")
             val stats: Map<String, SBStatistics>
         )
 
@@ -95,7 +112,7 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                     .map { parse<User>(it, "player","玩家信息") }
 
             }
-        } catch (e: NetworkException.UserException) {
+        } catch (_: NetworkException.UserException) {
             return null
         }
 
@@ -111,10 +128,10 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
 
     override fun getUserOnlineStatus(id: Long?, username: String?): Pair<Boolean, Long> {
         data class Status(
-            @JsonProperty("online")
+            @field:JsonProperty("online")
             val online: Boolean,
 
-            @JsonProperty("last_seen")
+            @field:JsonProperty("last_seen")
             val lastSeen: Long
         )
 
@@ -130,7 +147,7 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                     .map { parse<Status>(it, "player_status", "玩家在线状态")
                     }
             }
-        } catch (e: NetworkException.UserException) {
+        } catch (_: NetworkException.UserException) {
             return false to 0L
         }
 
