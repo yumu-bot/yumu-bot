@@ -54,7 +54,7 @@ interface OsuUserInfoPercentilesLiteRepository : JpaRepository<OsuUserInfoPercen
     ): Int
 
     @Query(value = """
-    WITH filtered_data AS (
+    WITH all_users_data AS (
         SELECT * FROM osu_user_info_percent 
         WHERE mode = :mode
         AND global_rank IS NOT NULL AND global_rank > 0
@@ -70,27 +70,40 @@ interface OsuUserInfoPercentilesLiteRepository : JpaRepository<OsuUserInfoPercen
         AND replays_watched > 0
         AND maximum_combo > 0
     ),
-    percentile_data AS (
+    user_percentiles AS (
         SELECT 
-            ARRAY[
-                (1.0 - PERCENT_RANK() OVER (ORDER BY global_rank)),
-                (1.0 - PERCENT_RANK() OVER (ORDER BY country_rank)),
-                PERCENT_RANK() OVER (ORDER BY level),
-                PERCENT_RANK() OVER (ORDER BY rank_count_score),
-                PERCENT_RANK() OVER (ORDER BY play_count),
-                PERCENT_RANK() OVER (ORDER BY total_hits),
-                PERCENT_RANK() OVER (ORDER BY play_time),
-                PERCENT_RANK() OVER (ORDER BY ranked_score),
-                PERCENT_RANK() OVER (ORDER BY total_score),
-                PERCENT_RANK() OVER (ORDER BY beatmap_playcount),
-                PERCENT_RANK() OVER (ORDER BY replays_watched),
-                PERCENT_RANK() OVER (ORDER BY maximum_combo)
-            ] as percentile_array
-        FROM filtered_data
-        WHERE user_id = :userID
+            (1.0 - PERCENT_RANK() OVER (ORDER BY global_rank)) as global_rank_percentile,
+            (1.0 - PERCENT_RANK() OVER (ORDER BY country_rank)) as country_rank_percentile,
+            PERCENT_RANK() OVER (ORDER BY level) as level_percentile,
+            PERCENT_RANK() OVER (ORDER BY rank_count_score) as rank_count_score_percentile,
+            PERCENT_RANK() OVER (ORDER BY play_count) as play_count_percentile,
+            PERCENT_RANK() OVER (ORDER BY total_hits) as total_hits_percentile,
+            PERCENT_RANK() OVER (ORDER BY play_time) as play_time_percentile,
+            PERCENT_RANK() OVER (ORDER BY ranked_score) as ranked_score_percentile,
+            PERCENT_RANK() OVER (ORDER BY total_score) as total_score_percentile,
+            PERCENT_RANK() OVER (ORDER BY beatmap_playcount) as beatmap_playcount_percentile,
+            PERCENT_RANK() OVER (ORDER BY replays_watched) as replays_watched_percentile,
+            PERCENT_RANK() OVER (ORDER BY maximum_combo) as maximum_combo_percentile
+        FROM all_users_data
     )
-    SELECT UNNEST(percentile_array) 
-    FROM percentile_data
+    SELECT 
+        global_rank_percentile,
+        country_rank_percentile, 
+        level_percentile,
+        rank_count_score_percentile,
+        play_count_percentile,
+        total_hits_percentile,
+        play_time_percentile,
+        ranked_score_percentile,
+        total_score_percentile,
+        beatmap_playcount_percentile,
+        replays_watched_percentile,
+        maximum_combo_percentile
+    FROM user_percentiles
+    WHERE EXISTS (
+        SELECT 1 FROM all_users_data WHERE user_id = :userID
+    )
+    LIMIT 1
 """, nativeQuery = true)
     fun getUserPercentileList(userID: Long, mode: Byte): List<Double>
 }
