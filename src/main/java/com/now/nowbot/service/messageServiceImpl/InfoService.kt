@@ -236,7 +236,7 @@ class InfoService(
 
         val currentMode = OsuMode.getMode(mode.data!!, user.currentOsuMode)
 
-        val percentiles = infoDao.getPercentiles(user.userID, user.currentOsuMode)
+        val percentiles = infoDao.getPercentiles(user, user.currentOsuMode)
 
         return InfoParam(user, bests, currentMode, historyUser, isMyself.get(), version, percentiles)
     }
