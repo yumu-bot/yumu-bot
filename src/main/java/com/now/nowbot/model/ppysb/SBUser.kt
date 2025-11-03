@@ -1,5 +1,6 @@
 package com.now.nowbot.model.ppysb
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
@@ -12,6 +13,7 @@ data class SBUser(
     @field:JsonProperty("id") val userID: Long = 0,
     @field:JsonProperty("name") val username: String = "",
     // @field:JsonProperty("safe_name") val safeName: String,
+    @field:JsonAlias("support_level")
     @field:JsonProperty("priv") val privilege: Int = 0,
     @field:JsonProperty("country") val country: String = "",
 
@@ -69,6 +71,10 @@ data class SBUser(
         }
 
         val user = OsuUser(stat).apply {
+            supportLevel = privilege.toByte()
+            isSupporter = privilege > 0
+            hasSupported = privilege > 0
+
             id = sb.userID
             avatarUrl = "https://a.ppy.sb/" + sb.userID
             username = sb.username
