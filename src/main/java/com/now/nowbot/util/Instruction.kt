@@ -249,10 +249,16 @@ enum class Instruction(val pattern: Pattern) {
         appendHashCaptureGroup(FLAG_DAY, REG_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
     }),
 
-    INFO2(CommandPatternBuilder.create {
+    WAIFU_INFO(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("(wif[ei]|waifu)\\s*info(rmation)?s?", "wi", "waifu", "wife")
+        appendModeQQUIDName()
+        appendHashCaptureGroup(FLAG_DAY, REG_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
+    }),
+
+    TEST_INFO(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("testinformation", "testinfo", "ti", "ji", "j", "juice")
         appendModeQQUIDName()
-        appendHashCaptureGroup(FLAG_DAY, REG_NUMBER, MORE, MAYBE)
+        appendHashCaptureGroup(FLAG_DAY, REG_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
     }),
 
     INFO_CARD(CommandPatternBuilder.create {

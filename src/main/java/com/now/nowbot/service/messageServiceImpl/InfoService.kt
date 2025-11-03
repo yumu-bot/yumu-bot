@@ -60,16 +60,32 @@ class InfoService(
         val version: Int = 2,
         val percentiles: Map<String, Double> = mapOf(),
     ) {
-        fun toMap(): Map<String, Any> {
+        fun toMap(): Map<String, Any?> {
             when(this.version) {
                 3 -> {
+                    val day: Long = if (historyUser != null) {
+                        val stat = historyUser.statistics
+
+                        if (stat is InfoLogStatistics) {
+                            ChronoUnit.DAYS.between(stat.logTime.toLocalDate(), LocalDate.now())
+                        } else {
+                            0
+                        }
+                    } else {
+                        0
+                    }
+
                     return mapOf(
                         "user" to user,
+                        "bests" to bests.take(6),
                         "best_arr" to BestsArray(bests),
                         "playcount_arr" to PlaycountsArray(user.monthlyPlaycounts),
                         "ranking_arr" to RankingArray(user.rankHistory?.data ?: listOf()),
                         "highest_rank" to HighestRanking(user.highestRank, user.rankHistory),
                         "percentiles" to percentiles,
+                        "history_day" to day,
+                        "history_user" to historyUser,
+                        "bonus_pp" to getBonus(bests, user)
                     )
                 }
 
@@ -133,13 +149,17 @@ class InfoService(
     @Throws(TipsException::class)
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<InfoParam>): Boolean {
         val matcher = Instruction.INFO.matcher(messageText)
-        val matcher2 = Instruction.INFO2.matcher(messageText)
+        val matcher2 = Instruction.WAIFU_INFO.matcher(messageText)
+        val matcher3 = Instruction.TEST_INFO.matcher(messageText)
 
         if (matcher.find()) {
             data.value = getParam(event, matcher, 1)
             return data.value != null
         } else if (matcher2.find()) {
             data.value = getParam(event, matcher2, 2)
+            return data.value != null
+        } else if (matcher3.find()) {
+            data.value = getParam(event, matcher3, 3)
             return data.value != null
         }
 
@@ -184,7 +204,7 @@ class InfoService(
             )
 
             user = async.first
-            bests = async.second.toList()
+            bests = async.second
         } else {
             user = try {
                 getUserWithoutRange(event, matcher, getMode(matcher), isMyself)
@@ -222,17 +242,26 @@ class InfoService(
     }
 
     private fun InfoParam.getMessageChain(): MessageChain {
-        if (this.version == 2) {
-            try {
-                calculateApiService.applyStarToScores(bests.take(5))
-            } catch (_: Exception) {
-                log.info("玩家信息：获取新谱面星数失败")
-            }
-        }
+        val name: String
 
-        val name = when(version) {
-            1 -> "D"
-            else -> "D2"
+        when(version) {
+            1 -> {
+                name = "D"
+            }
+
+            2 -> {
+                name = "D2"
+                calculateApiService.applyStarToScores(bests.take(6))
+            }
+
+            3 -> {
+                name = "D3"
+                calculateApiService.applyStarToScores(bests.take(6))
+            }
+
+            else -> {
+                name = "D"
+            }
         }
 
         return try {
@@ -291,7 +320,7 @@ class InfoService(
             val week4: String
             val week8: String
 
-            private val formatter = DateTimeFormatter.ofPattern("MM-dd")
+            private val formatter = DateTimeFormatter.ofPattern("M-d")
 
             init {
                 // 获取本周最后一天（周日）
@@ -359,16 +388,19 @@ class InfoService(
             val year1: String
             val year2: String
             val year3: String
+            val quarter: Int
 
-            private val formatter = DateTimeFormatter.ofPattern("yy-MM-dd")
-            private val formatter2 = DateTimeFormatter.ofPattern("yyyy-MM")
+            private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+            private val formatter2 = DateTimeFormatter.ofPattern("yyyy-M")
             private val formatter3 = DateTimeFormatter.ofPattern("yy")
 
             init {
                 val today = LocalDate.now()
                 val thisYear = Year.from(today)
 
-                val playcountsCount = countLastThreeAndQuarterYearFromEndOfYear(monthlies, thisYear)
+                quarter = (today.monthValue - 1) / 3 + 1
+
+                val playcountsCount = countLastThreeAndQuarterYearFromEndOfYear(monthlies, thisYear, quarter)
 
                 count = playcountsCount.map { it.value }
 
@@ -386,8 +418,13 @@ class InfoService(
 
             private fun countLastThreeAndQuarterYearFromEndOfYear(
                 monthlies: List<OsuUser.UserMonthly>,
-                thisYear: Year
+                thisYear: Year,
+                quarter: Int = 1,
             ): Map<YearMonth, Int> {
+                require(quarter in 1..4) {
+                    "季度不满足要求"
+                }
+
                 val latestYearMonth = thisYear.atMonth(12)
 
                 val months = monthlies.associate {
@@ -395,7 +432,7 @@ class InfoService(
                 }
 
                 // 计算 三年又四分之一年 前的日期，3年前的10月开始计时
-                val startDate = thisYear.atMonth(12)
+                val startDate = thisYear.atMonth(quarter * 3)
                     .minusYears(3)
                     .minusMonths(12 - 10)
 
@@ -421,12 +458,11 @@ class InfoService(
             init {
                 statistics = getRankingStatistics()
             }
-
             /**
              * 获取排名上升（数值下降）的区间信息，并过滤掉太短的区间
-             * @param minIntervalLength 最小区间长度（包含的索引数量），默认4表示至少4个索引变化
+             * @param minIntervalLength 最小区间长度（包含的索引数量）
              */
-            fun getRankingImprovementIntervals(minIntervalLength: Int = 4): List<RankingInterval> {
+            private fun getRankingImprovementIntervals(minIntervalLength: Int = 1): List<RankingInterval> {
                 val intervals = mutableListOf<RankingInterval>()
 
                 // 确保列表有90个元素，不足的用0填充
@@ -437,53 +473,54 @@ class InfoService(
 
                 var startIndex = -1
                 var currentImprovement = 0L
+                var lastValidRank: Long? = null
 
-                for (i in 1 until paddedRanking.size) {
-                    val prevRank = paddedRanking[i - 1]
+                for (i in 0 until paddedRanking.size) {
                     val currentRank = paddedRanking[i]
 
-                    // 跳过包含0的情况
-                    if (prevRank == 0L || currentRank == 0L) {
-                        // 如果正在记录区间，结束当前区间
+                    if (currentRank == 0L) {
+                        // 遇到0，结束当前区间
                         if (startIndex != -1) {
-                            val intervalLength = (i - 1) - startIndex + 1
-                            // 只添加长度满足要求的区间
+                            val endIndex = i - 1
+                            val intervalLength = endIndex - startIndex + 1
                             if (intervalLength >= minIntervalLength) {
-                                intervals.add(RankingInterval(startIndex, i - 1, currentImprovement, intervalLength))
+                                intervals.add(RankingInterval(startIndex, endIndex, currentImprovement, intervalLength))
                             }
                             startIndex = -1
                             currentImprovement = 0L
                         }
+                        lastValidRank = null
                         continue
                     }
 
-                    // 检查是否是排名上升（数值下降）
-                    if (currentRank < prevRank) {
-                        // 排名上升：从45名上升到40名（数值从45降到40）
+                    // 检查是否排名上升（数值下降）
+                    if (lastValidRank != null && currentRank < lastValidRank) {
+                        // 排名上升：当前排名比前一个有效排名更高（数值更小）
                         if (startIndex == -1) {
-                            // 开始新的上升区间
+                            // 开始新的上升区间，起始位置是前一个有效点
                             startIndex = i - 1
                         }
-                        currentImprovement += (prevRank - currentRank) // 计算提升的位数
-                    } else {
-                        // 排名下降或持平，结束当前上升区间
-                        if (startIndex != -1) {
-                            val intervalLength = (i - 1) - startIndex + 1
-                            // 只添加长度满足要求的区间
-                            if (intervalLength >= minIntervalLength) {
-                                intervals.add(RankingInterval(startIndex, i - 1, currentImprovement, intervalLength))
-                            }
-                            startIndex = -1
-                            currentImprovement = 0L
+                        currentImprovement += (lastValidRank - currentRank)
+                    } else if (startIndex != -1) {
+                        // 排名没有上升或持平/下降，结束当前区间
+                        val endIndex = i - 1
+                        val intervalLength = endIndex - startIndex
+                        if (intervalLength >= minIntervalLength) {
+                            intervals.add(RankingInterval(startIndex, endIndex, currentImprovement, intervalLength))
                         }
+                        startIndex = -1
+                        currentImprovement = 0L
                     }
+
+                    lastValidRank = currentRank
                 }
 
-                // 处理最后一个区间
+                // 处理最后一个区间（如果数据以上升结束）
                 if (startIndex != -1) {
-                    val intervalLength = paddedRanking.size - 1 - startIndex + 1
+                    val endIndex = paddedRanking.size - 1
+                    val intervalLength = endIndex - startIndex
                     if (intervalLength >= minIntervalLength) {
-                        intervals.add(RankingInterval(startIndex, paddedRanking.size - 1, currentImprovement, intervalLength))
+                        intervals.add(RankingInterval(startIndex, endIndex, currentImprovement, intervalLength))
                     }
                 }
 
@@ -493,7 +530,7 @@ class InfoService(
             /**
              * 获取所有统计信息，包含区间过滤
              */
-            fun getRankingStatistics(minIntervalLength: Int = 4): RankingStatistics {
+            private fun getRankingStatistics(minIntervalLength: Int = 1): RankingStatistics {
                 val intervals = getRankingImprovementIntervals(minIntervalLength)
                 val (bestRanking, worstRanking) = getRankingExtremes()
 
@@ -501,13 +538,13 @@ class InfoService(
                     intervals = intervals,
                     top = bestRanking,
                     bottom = worstRanking,
-                    count = intervals.sumOf { it.improvement },
+                    improvement = intervals.sumOf { it.improvement },
                     intervalMinLength = minIntervalLength
                 )
             }
 
             // 其他方法保持不变...
-            fun getRankingExtremes(): Pair<Long, Long> {
+            private fun getRankingExtremes(): Pair<Long, Long> {
                 val nonZeroRankings = ranking.filter { it > 0L }
                 return if (nonZeroRankings.isEmpty()) {
                     Pair(0L, 0L)
@@ -530,7 +567,7 @@ class InfoService(
             val intervals: List<RankingInterval>,
             val top: Long,
             val bottom: Long,
-            val count: Long,
+            val improvement: Long,
             private val intervalMinLength: Int = 0  // 新增：使用的最小区间长度
         )
 
