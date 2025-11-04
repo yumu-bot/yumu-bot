@@ -72,7 +72,6 @@ data class SBUser(
 
         val user = OsuUser(stat).apply {
             supportLevel = privilege.toByte()
-            isSupporter = privilege > 0
             hasSupported = privilege > 0
 
             id = sb.userID

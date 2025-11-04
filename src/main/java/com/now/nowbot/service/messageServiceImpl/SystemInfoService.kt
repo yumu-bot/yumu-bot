@@ -9,6 +9,13 @@ import com.now.nowbot.util.Instruction
 import org.springframework.stereotype.Service
 import java.lang.management.ManagementFactory
 
+// 不小心写内存泄露了，又new了一块大大的、硬硬的连续内存，一直握着引用没有释放
+// 断断续续露出来的内存碎片撒的到处都是...Jvm酱GC了，世界都好像停了下来...
+// 但是，没有用...内存的引用，好像在别的对象手里呢...
+// Jvm酱的新生代就要被填满了，Jfr里面的内存图也变得红扑扑的...真是可爱呢...
+// Jvm酱又GC了...每次GC都比上一次时间更长，但GC的时间间隔却越来越短...
+// 不过没有用呢...Jvm酱最终也没有逃脱坏掉的命运...看，Jvm酱OOM了呢..
+
 @Service("SYS_INFO")
 class SystemInfoService : MessageService<Boolean> {
     @Throws(Throwable::class) override fun isHandle(

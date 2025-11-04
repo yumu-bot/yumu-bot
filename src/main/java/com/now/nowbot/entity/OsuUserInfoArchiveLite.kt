@@ -33,6 +33,8 @@ class OsuUserInfoArchiveLite {
     //rank
     @Column(name = "global_rank") var globalRank: Long? = null
 
+    @Column(name = "global_rank_percent") var globalRankPercent: Double? = null
+
     @Column(name = "country_rank") var countryRank: Long? = null
 
     @Column(name = "pp") var pp: Double = 0.0

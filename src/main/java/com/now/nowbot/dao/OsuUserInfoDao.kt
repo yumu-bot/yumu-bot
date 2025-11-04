@@ -15,6 +15,8 @@ import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.NavigableSet
+import java.util.TreeSet
 
 @Component
 class OsuUserInfoDao(
@@ -57,11 +59,54 @@ class OsuUserInfoDao(
     }
 
     fun getPercentiles(user: OsuUser, mode: OsuMode): Map<String, Double> {
-        val strings = listOf(
-            "global_rank", "country_rank", "level", "rank_count_score", "play_count", "total_hits", "play_time", "ranked_score", "total_score", "beatmap_playcount", "replays_watched", "maximum_combo"
-        )
+        val globalRankSet = TreeSet<Long>()
+        val countryRankSet = TreeSet<Long>()
+        val levelSet = TreeSet<Int>()
+        val rankCountScoreSet = TreeSet<Int>()
+        val playCountSet = TreeSet<Long>()
+        val totalHitSet = TreeSet<Long>()
+        val playTimeSet = TreeSet<Long>()
+        val rankedScoreSet = TreeSet<Long>()
+        val totalScoreSet = TreeSet<Long>()
+        val beatmapPlaycountSet = TreeSet<Int>()
+        val replaysWatchedSet = TreeSet<Int>()
+        val maximumComboSet = TreeSet<Int>()
 
-        val full = percentileRepository.findAllByMode(mode.modeValue)
+        val all = percentileRepository.findAll()
+
+        all.asSequence().forEach {
+            if (it.mode == mode.modeValue) {
+                if (it.globalRank != null && it.globalRank!! > 0) {
+                    globalRankSet.add(it.globalRank!!)
+                }
+
+                if (it.countryRank != null && it.countryRank!! > 0) {
+                    countryRankSet.add(it.countryRank!!)
+                }
+
+                if (it.level > 0) levelSet.add(it.level)
+
+                if (it.rankCountScore > 0) rankCountScoreSet.add(it.rankCountScore)
+
+                if (it.playCount > 0) playCountSet.add(it.playCount)
+
+                if (it.totalHits > 0) totalHitSet.add(it.totalHits)
+
+                if (it.playTime > 0) playTimeSet.add(it.playTime)
+
+                if (it.rankedScore > 0) rankedScoreSet.add(it.rankedScore)
+
+                if (it.totalScore > 0) totalScoreSet.add(it.totalScore)
+
+                if (it.replaysWatched > 0) replaysWatchedSet.add(it.replaysWatched)
+
+                if (it.maximumCombo > 0) maximumComboSet.add(it.maximumCombo)
+            }
+
+            if (it.beatmapPlaycount > 0) beatmapPlaycountSet.add(it.beatmapPlaycount)
+        }
+
+        val stat = user.statistics
 
         val global = if (user.globalRank <= 0) {
             Long.MAX_VALUE
@@ -75,70 +120,64 @@ class OsuUserInfoDao(
             user.countryRank
         }
 
-        val stat = user.statistics
+        val rankCountScore = 3 * ((stat?.countSS ?: 0) + (stat?.countSSH ?: 0)) + 2 * ((stat?.countSH ?: 0) + (stat?.countS ?: 0)) + (stat?.countA ?: 0)
+
+        val level = user.levelCurrent * 100 + user.levelProgress
         
         // 3. 计算每个指标的百分位数
-        val result = listOf(
-                // 对于排名指标：排名越好（数字越小），百分位数越高
-                calculatePercentileForRank(full.mapNotNull { it.globalRank }.filter { it > 0 }, global),
-                calculatePercentileForRank(full.mapNotNull { it.countryRank }.filter { it > 0 }, country),
+        return mapOf(
+            // 对于排名指标：排名越好（数字越小），百分位数越高
+            "global_rank" to calculatePercentileForNavigableSet(globalRankSet, global, false),
+            "country_rank" to calculatePercentileForNavigableSet(countryRankSet, country, false),
+            "level" to calculatePercentileForNavigableSet(levelSet, level, true),
 
-                // 对于数值指标：数值越大，百分位数越高
-                calculatePercentileForValue(full.map { it.level }.filter { it > 0 }, user.levelCurrent * 100 + user.levelProgress),
-                calculatePercentileForValue(full.map { it.rankCountScore }.filter { it > 0 }, 3 * ((stat?.countSS ?: 0) + (stat?.countSSH ?: 0)) + 2 * ((stat?.countSH ?: 0) + (stat?.countS ?: 0)) + (stat?.countA ?: 0)),
-                calculatePercentileForValue(full.map { it.playCount }.filter { it > 0 }, user.playCount),
-                calculatePercentileForValue(full.map { it.totalHits }.filter { it > 0 }, user.totalHits),
-                calculatePercentileForValue(full.map { it.playTime }.filter { it > 0 }, user.playTime),
-                calculatePercentileForValue(full.map { it.rankedScore }.filter { it > 0 }, stat?.rankedScore),
-                calculatePercentileForValue(full.map { it.totalScore }.filter { it > 0 }, stat?.totalScore),
-                calculatePercentileForValue(full.map { it.beatmapPlaycount }.filter { it > 0 }, user.beatmapPlaycount),
-                calculatePercentileForValue(full.map { it.replaysWatched }.filter { it > 0 }, stat?.replaysWatchedByOthers),
-                calculatePercentileForValue(full.map { it.maximumCombo }.filter { it > 0 }, stat?.maxCombo)
-            )
-
-        /*
-        return percentileRepository.getUserPercentileList(userID, mode.modeValue)
-            .mapIndexed { i, it ->
-                strings[i] to it
-            }.toMap()
-
-         */
-
-        return result.mapIndexed { i, it ->
-            strings[i] to it
-        }.toMap()
+            // 对于数值指标：数值越大，百分位数越高
+            "rank_count_score" to calculatePercentileForNavigableSet(rankCountScoreSet, rankCountScore, true),
+            "play_count" to calculatePercentileForNavigableSet(playCountSet, user.playCount, true),
+            "total_hits" to calculatePercentileForNavigableSet(totalHitSet, user.totalHits, true),
+            "play_time" to calculatePercentileForNavigableSet(playTimeSet, user.playTime, true),
+            "ranked_score" to calculatePercentileForNavigableSet(rankedScoreSet, stat?.rankedScore, true),
+            "total_score" to calculatePercentileForNavigableSet(totalScoreSet, stat?.totalScore, true),
+            "beatmap_playcount" to calculatePercentileForNavigableSet(beatmapPlaycountSet, user.beatmapPlaycount, true),
+            "replays_watched" to calculatePercentileForNavigableSet(replaysWatchedSet, stat?.replaysWatchedByOthers, true),
+            "maximum_combo" to calculatePercentileForNavigableSet(maximumComboSet, stat?.maxCombo, true)
+        )
     }
 
+    private fun calculatePercentileForNavigableSet(
+        sortedSet: NavigableSet<Int>,
+        value: Int?,
+        higherIsBetter: Boolean = true
+    ): Double {
+        if (value == null) return 0.0
 
-    private fun calculatePercentileForValue(allRanks: List<Int>, targetRank: Int?): Double {
-        return calculatePercentileForValue(allRanks.map { it.toLong() }, targetRank?.toLong())
+        return if (higherIsBetter) {
+            // 对于数值越大越好的指标
+            val headSet = sortedSet.headSet(value, true)
+            headSet.size.toDouble() / sortedSet.size
+        } else {
+            // 对于数值越小越好的指标（排名）
+            val tailSet = sortedSet.tailSet(value, true)
+            tailSet.size.toDouble() / sortedSet.size
+        }
     }
 
+    private fun calculatePercentileForNavigableSet(
+        sortedSet: NavigableSet<Long>,
+        value: Long?,
+        higherIsBetter: Boolean = true
+    ): Double {
+        if (value == null) return 0.0
 
-    /**
-     * 计算排名指标的百分位数
-     * 排名越好（数字越小），百分位数越高
-     */
-    private fun calculatePercentileForRank(allRanks: List<Long>, targetRank: Long?): Double {
-        val validRanks = allRanks.filter { it > 0 }
-        if (validRanks.isEmpty() || targetRank == null) return 0.0
-
-        // 计算有多少玩家的排名比目标用户差（排名数字更大）
-        val worsePlayers = validRanks.count { it > targetRank }
-        return worsePlayers.toDouble() / validRanks.size
-    }
-
-    /**
-     * 计算数值指标的百分位数
-     * 数值越大，百分位数越高
-     */
-    private fun calculatePercentileForValue(allValues: List<Long>, targetValue: Long?): Double {
-        val validValues = allValues.filter { it > 0 }
-        if (validValues.isEmpty() || targetValue == null) return 0.0
-
-        // 计算有多少玩家的数值比目标用户低
-        val lowerPlayers = validValues.count { it < targetValue }
-        return lowerPlayers.toDouble() / validValues.size
+        return if (higherIsBetter) {
+            // 对于数值越大越好的指标
+            val headSet = sortedSet.headSet(value, true)
+            headSet.size.toDouble() / sortedSet.size
+        } else {
+            // 对于数值越小越好的指标（排名）
+            val tailSet = sortedSet.tailSet(value, true)
+            tailSet.size.toDouble() / sortedSet.size
+        }
     }
 
     fun saveUserToday(user: OsuUser, mode: OsuMode) {
@@ -255,6 +294,7 @@ class OsuUserInfoDao(
             statistics.countSSH = archive.countSSH
 
             statistics.globalRank = archive.globalRank
+            statistics.globalRankPercent = archive.globalRankPercent
             statistics.countryRank = archive.countryRank
             statistics.totalScore = archive.totalScore
             statistics.totalHits = archive.totalHits
@@ -305,6 +345,7 @@ class OsuUserInfoDao(
             if (statistics == null) return
 
             this.globalRank = statistics.globalRank
+            this.globalRankPercent = statistics.globalRankPercent
             this.countryRank = statistics.countryRank
             this.totalScore = statistics.totalScore ?: 0
             this.rankedScore = statistics.rankedScore ?: 0

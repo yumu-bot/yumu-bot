@@ -57,14 +57,17 @@ open class Statistics : Cloneable {
     @JvmField @JsonProperty("total_hits")
     var totalHits: Long? = null
 
-    @JvmField @JsonProperty("maximum_combo")
+    @JsonProperty("maximum_combo")
     var maxCombo: Int = 0
 
     @JsonProperty("is_ranked")
     var ranked: Boolean? = null
 
-    @JvmField @JsonProperty("global_rank")
+    @JsonProperty("global_rank")
     var globalRank: Long? = null
+
+    @JsonProperty("global_rank_percent")
+    var globalRankPercent: Double? = null
 
     @JsonProperty("replays_watched_by_others")
     var replaysWatchedByOthers: Int = 0
@@ -224,7 +227,7 @@ open class Statistics : Cloneable {
     public override fun clone(): Statistics {
         try {
             return super.clone() as Statistics
-        } catch (e: CloneNotSupportedException) {
+        } catch (_: CloneNotSupportedException) {
             throw AssertionError()
         }
     }
