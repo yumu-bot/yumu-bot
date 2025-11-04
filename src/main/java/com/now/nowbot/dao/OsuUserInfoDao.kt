@@ -24,7 +24,7 @@ class OsuUserInfoDao(
     private val percentileRepository: OsuUserInfoPercentilesLiteRepository
 ) {
 
-    fun percentilesDailyUpsert() {
+    fun percentilesDailyUpsert(): Int {
         log.info("正在更新玩家百分比")
 
         val now = LocalDateTime.now()
@@ -34,9 +34,9 @@ class OsuUserInfoDao(
         log.info("已经获取到 ${users.size} 条数据，正在更新")
 
         users.forEach { upsert(it) }
+
+        return users.size
     }
-
-
 
     fun upsert(info: OsuUserInfoArchiveLite) {
         percentileRepository.upsert(
@@ -54,7 +54,8 @@ class OsuUserInfoDao(
             totalScore = info.totalScore,
             beatmapPlaycount = info.beatmapPlaycount,
             replaysWatched = info.replaysWatched,
-            maximumCombo = info.maximumCombo
+            maximumCombo = info.maximumCombo,
+            achievementsCount = info.achievementsCount
         )
     }
 
@@ -71,6 +72,7 @@ class OsuUserInfoDao(
         val beatmapPlaycountSet = TreeSet<Int>()
         val replaysWatchedSet = TreeSet<Int>()
         val maximumComboSet = TreeSet<Int>()
+        val achievementCountSet = TreeSet<Int>()
 
         val all = percentileRepository.findAll()
 
@@ -104,6 +106,8 @@ class OsuUserInfoDao(
             }
 
             if (it.beatmapPlaycount > 0) beatmapPlaycountSet.add(it.beatmapPlaycount)
+
+            if (it.achievementsCount > 0) achievementCountSet.add(it.achievementsCount)
         }
 
         val stat = user.statistics
@@ -140,7 +144,8 @@ class OsuUserInfoDao(
             "total_score" to calculatePercentileForNavigableSet(totalScoreSet, stat?.totalScore, true),
             "beatmap_playcount" to calculatePercentileForNavigableSet(beatmapPlaycountSet, user.beatmapPlaycount, true),
             "replays_watched" to calculatePercentileForNavigableSet(replaysWatchedSet, stat?.replaysWatchedByOthers, true),
-            "maximum_combo" to calculatePercentileForNavigableSet(maximumComboSet, stat?.maxCombo, true)
+            "maximum_combo" to calculatePercentileForNavigableSet(maximumComboSet, stat?.maxCombo, true),
+            "achievements_count" to calculatePercentileForNavigableSet(achievementCountSet, user.userAchievementsCount, true)
         )
     }
 
@@ -149,7 +154,7 @@ class OsuUserInfoDao(
         value: Int?,
         higherIsBetter: Boolean = true
     ): Double {
-        if (value == null) return 0.0
+        if (value == null || sortedSet.isEmpty()) return 0.0
 
         return if (higherIsBetter) {
             // 对于数值越大越好的指标
@@ -167,7 +172,7 @@ class OsuUserInfoDao(
         value: Long?,
         higherIsBetter: Boolean = true
     ): Double {
-        if (value == null) return 0.0
+        if (value == null || sortedSet.isEmpty()) return 0.0
 
         return if (higherIsBetter) {
             // 对于数值越大越好的指标

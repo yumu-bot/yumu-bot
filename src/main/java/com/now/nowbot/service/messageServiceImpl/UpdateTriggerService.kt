@@ -1,0 +1,102 @@
+package com.now.nowbot.service.messageServiceImpl
+
+import com.now.nowbot.config.Permission
+import com.now.nowbot.dao.OsuUserInfoDao
+import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.divingFishApiService.ChunithmApiService
+import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
+import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.command.FLAG_ANY
+import org.springframework.stereotype.Service
+
+@Service("UPDATE")
+class UpdateTriggerService(
+    private val maimaiApiService: MaimaiApiService,
+    private val chunithmApiService: ChunithmApiService,
+    private val infoDao: OsuUserInfoDao,
+) : MessageService<UpdateTriggerService.UpdateType> {
+
+    enum class UpdateType {
+        MAIMAI, OSU_PERCENT;
+
+        companion object {
+            fun getType(string: String?): UpdateType {
+                return when(string?.trim()) {
+                    "m", "mai", "maimai" -> MAIMAI
+                    "p", "percent", "per" -> OSU_PERCENT
+                    else -> throw UnsupportedOperationException("""
+                        请输入需要更新的种类：
+                        
+                        m -> maimai
+                        p -> osu percent
+                    """.trimIndent())
+                }
+            }
+        }
+    }
+
+    override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: MessageService.DataValue<UpdateType>
+    ): Boolean {
+        val matcher = Instruction.UPDATE.matcher(messageText)
+        if (!matcher.find()) {
+            return false
+        }
+
+        val any: String? = matcher.group(FLAG_ANY)
+
+        if (Permission.isSuperAdmin(event.sender.id)) {
+            data.value = UpdateType.getType(any)
+            return true
+        } else return false
+    }
+
+    override fun handleMessage(event: MessageEvent, param: UpdateType): ServiceCallStatistic? {
+        when(param) {
+            UpdateType.OSU_PERCENT -> Thread.startVirtualThread {
+                event.reply("正在尝试更新玩家百分比数据！")
+                val count = infoDao.percentilesDailyUpsert()
+                event.reply("已更新 $count 条玩家百分比数据。")
+            }
+
+            UpdateType.MAIMAI -> Thread.startVirtualThread {
+                event.reply("正在尝试更新舞萌、中二数据！")
+
+                val startTime = System.currentTimeMillis()
+
+                maimaiApiService.updateMaimaiSongLibraryDatabase()
+                val time1 = System.currentTimeMillis()
+                maimaiApiService.updateMaimaiAliasLibraryDatabase()
+                val time2 = System.currentTimeMillis()
+                maimaiApiService.updateMaimaiRankLibraryDatabase()
+                val time3 = System.currentTimeMillis()
+                maimaiApiService.updateMaimaiFitLibraryDatabase()
+                val time4 = System.currentTimeMillis()
+                chunithmApiService.updateChunithmSongLibraryDatabase()
+                val time5 = System.currentTimeMillis()
+                chunithmApiService.updateChunithmAliasLibraryDatabase()
+
+                val endTime = System.currentTimeMillis()
+
+                event.reply("""
+                更新舞萌、中二节奏数据完成。
+                舞萌歌曲库：${(time1 - startTime) / 1000.0} s
+                舞萌外号库：${(time2 - time1) / 1000.0} s
+                舞萌玩家排名库：${(time3 - time2) / 1000.0} s
+                舞萌拟合定数库：${(time4 - time3) / 1000.0} s
+                中二节奏歌曲数据库：${(time5 - time4) / 1000.0} s
+                中二节奏外号库：${(endTime - time5) / 1000.0} s
+                
+                总耗时：${(endTime - startTime) / 1000.0} s
+                """.trimIndent())
+            }
+        }
+
+        return null
+    }
+}

@@ -72,6 +72,9 @@ class OsuUserInfoPercentilesLite(
     @Column(name = "maximum_combo")
     var maximumCombo: Int = 0,
 
+    @Column(name = "achievements_count")
+    var achievementsCount: Int = 0
+
     ) {
 
     @Suppress("UNUSED")

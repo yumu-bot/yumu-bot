@@ -15,10 +15,10 @@ interface OsuUserInfoPercentilesLiteRepository : JpaRepository<OsuUserInfoPercen
         INSERT INTO osu_user_info_percent 
         (user_id, mode, updated_at, global_rank, country_rank, level, rank_count_score, 
          play_count, total_hits, play_time, ranked_score, total_score, 
-         beatmap_playcount, replays_watched, maximum_combo) 
+         beatmap_playcount, replays_watched, maximum_combo, achievements_count) 
         VALUES (:userID, :mode, :updatedAt, :globalRank, :countryRank, :level, :rankCountScore, 
                 :playCount, :totalHits, :playTime, :rankedScore, :totalScore, 
-                :beatmapPlaycount, :replaysWatched, :maximumCombo) 
+                :beatmapPlaycount, :replaysWatched, :maximumCombo, :achievementsCount) 
         ON CONFLICT (user_id, mode) 
         DO UPDATE SET
             updated_at = EXCLUDED.updated_at,
@@ -33,7 +33,8 @@ interface OsuUserInfoPercentilesLiteRepository : JpaRepository<OsuUserInfoPercen
             total_score = EXCLUDED.total_score,
             beatmap_playcount = EXCLUDED.beatmap_playcount,
             replays_watched = EXCLUDED.replays_watched,
-            maximum_combo = EXCLUDED.maximum_combo
+            maximum_combo = EXCLUDED.maximum_combo,
+            achievements_count = EXCLUDED.achievements_count
         """, nativeQuery = true
     ) fun upsert(
         userID: Long,
@@ -50,7 +51,8 @@ interface OsuUserInfoPercentilesLiteRepository : JpaRepository<OsuUserInfoPercen
         totalScore: Long,
         beatmapPlaycount: Int,
         replaysWatched: Int,
-        maximumCombo: Int
+        maximumCombo: Int,
+        achievementsCount: Int
     ): Int
 
     @Query(value = """

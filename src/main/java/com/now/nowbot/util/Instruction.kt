@@ -93,6 +93,12 @@ enum class Instruction(val pattern: Pattern) {
         )
     }),
 
+    UPDATE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("update", "ut")
+        appendCaptureGroup(FLAG_ANY, REG_ANYTHING, MORE)
+    }),
+
+
     // #2 osu! 成绩指令
     SET_MODE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("set\\s*mode", "mode", "sm", "mo")
@@ -815,11 +821,6 @@ enum class Instruction(val pattern: Pattern) {
         appendNameAnyButNoHash()
         appendHashCaptureGroup(FLAG_VERSION, REG_ANYTHING_BUT_NO_SPACE, contentLevel = MORE, prefixLevel = MAYBE)
     }),
-
-    MAI_UPDATE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("update\\s*mai(mai)?", "um")
-    }),
-
     MAI_SEEK(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mai(mai)?\\s*(seek)", "mk")
         appendCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)

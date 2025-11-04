@@ -65,6 +65,8 @@ class OsuUserInfoArchiveLite {
 
     @Column(name = "beatmap_playcount") var beatmapPlaycount: Int = 0
 
+    @Column(name = "achievements_count") var achievementsCount: Int = 0
+
     @Column(name = "replays_watched")
     var replaysWatched: Int = 0
 
