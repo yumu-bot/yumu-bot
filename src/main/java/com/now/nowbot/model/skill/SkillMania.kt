@@ -210,11 +210,8 @@ class SkillMania(val file: ManiaBeatmapAttributes): Skill() {
         var chord = 0
 
         val key = file.cs.toInt()
-        val noteCategory: MutableList<MutableList<HitObject>> = ArrayList(key)
 
-        for (i in 0..< key) {
-            noteCategory.add(ArrayList())
-        }
+        val noteCategory = List(key) { mutableListOf<HitObject>() }
 
         // 遍历数据，并存储在 noteCategory 中
         for (h in hitObjects) {
@@ -455,6 +452,7 @@ class SkillMania(val file: ManiaBeatmapAttributes): Skill() {
     }
 
     // 获取同轨道之后的物件，使用二分法查询
+    /*
     private fun getAfterNote(now: HitObject, thisColumn: List<HitObject>): HitObject? {
         val n = now.startTime
 
@@ -477,6 +475,20 @@ class SkillMania(val file: ManiaBeatmapAttributes): Skill() {
         }
 
         return thisColumn[max]
+    }
+
+     */
+
+    // 获取同轨道之后的物件，使用二分法查询
+    private fun getAfterNote(now: HitObject, thisColumn: List<HitObject>): HitObject? {
+        val n = now.startTime
+
+        // 使用 binarySearchBy 简化代码
+        val index = thisColumn.binarySearchBy(n) { it.startTime }
+
+        val insertionPoint = if (index >= 0) index + 1 else -index - 1
+
+        return thisColumn.getOrNull(insertionPoint)
     }
 
 
