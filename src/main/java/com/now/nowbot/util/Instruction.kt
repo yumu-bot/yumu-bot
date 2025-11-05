@@ -268,7 +268,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     TEST_INFO(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("testinformation", "testinfo", "ti", "ji", "j", "juice")
+        appendCommandsIgnoreAll("testinformation", "testinfo", "ti")
         appendModeQQUIDName()
         appendHashCaptureGroup(FLAG_DAY, REG_NUMBER, contentLevel = MORE, prefixLevel = MAYBE)
     }),

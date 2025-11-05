@@ -52,6 +52,7 @@ class NewbieRestrictService(
     config: NewbieConfig,
 ): MessageService<Collection<LazerScore>> {
     // 这里放幻数
+    private val local = true
 
     // 新人群、杀手群、执行机器人
     private val newbieGroupID = config.newbieGroup
@@ -95,7 +96,7 @@ class NewbieRestrictService(
                 scores = scoreApiService.getBeatmapScores(map.beatmapID, user.userID, mode)
 
                 beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
-                calculateApiService.applyStarToScores(scores, local = false)
+                calculateApiService.applyStarToScores(scores, local = local)
             } else if (s.find()) {
                 val bid = getBid(s)
                 if (bid == 0L) return false
@@ -108,7 +109,7 @@ class NewbieRestrictService(
 
                 user = getUserWithoutRange(event, s, InstructionObject(mode))
                 scores = listOf(scoreApiService.getBeatMapScore(map.beatmapID, user.userID, mode, mods)?.score ?: return false)
-                calculateApiService.applyStarToScores(scores, local = false)
+                calculateApiService.applyStarToScores(scores, local = local)
             } else if (pr.find()) {
                 val any: String = pr.group(FLAG_ANY) ?: ""
 
@@ -178,7 +179,7 @@ class NewbieRestrictService(
 
                     val pss = scoreApiService.getScore(this.data!!.userID, mode.data, offset, limit, isPass)
 
-                    calculateApiService.applyStarToScores(pss, local = false)
+                    calculateApiService.applyStarToScores(pss, local = local)
                     calculateApiService.applyBeatMapChanges(pss)
 
                     // 检查查到的数据是否为空
@@ -256,7 +257,7 @@ class NewbieRestrictService(
                     }
 
                     val bss = scoreApiService.getBestScores(range2.data!!.userID, mode.data, offset, limit)
-                    calculateApiService.applyStarToScores(bss, local = false)
+                    calculateApiService.applyStarToScores(bss, local = local)
 
                     bss.mapIndexed { index: Int, score: LazerScore -> (index + 1) to score }.toMap()
                 }
@@ -286,7 +287,7 @@ class NewbieRestrictService(
                 constructScore.mods = mods
 
                 scores = listOf(constructScore)
-                calculateApiService.applyStarToScores(scores, local = false)
+                calculateApiService.applyStarToScores(scores, local = local)
             } else if (t.find()) {
                 val mode = getMode(t)
                 val range = getUserWithRange(event, t, mode, AtomicBoolean())
@@ -301,7 +302,7 @@ class NewbieRestrictService(
                 val earlierDay = OffsetDateTime.now().minusDays(dayEnd.toLong())
 
                 scores = bps.filter { it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).isBefore(laterDay) && it.endedTime.withOffsetSameInstant(ZoneOffset.ofHours(8)).isAfter(earlierDay) }
-                calculateApiService.applyStarToScores(scores, local = false)
+                calculateApiService.applyStarToScores(scores, local = local)
             } else if (ba.find()) {
                 /*
                 val mode = getMode(ba)
@@ -392,6 +393,9 @@ class NewbieRestrictService(
             report(isReportable, executorBot, sb.append("但是对方是管理员或群主，无法执行禁言任务。").toString())
             return null
         }
+
+        // 最后保险，确保不乱禁人
+        if (event.subject.id != newbieGroupID) return null
 
         // 情节严重
         if (silence >= 30 * 24 * 60 - 1) {
