@@ -336,6 +336,7 @@ class OsuUserInfoDao(
             archive.playTime = data.playTime
             data.rankHistory?.let { archive.rankHistory = it.data.toString() }
             archive.beatmapPlaycount = data.beatmapPlaycount
+            archive.achievementsCount = data.userAchievementsCount
 
             // 过滤掉非法的游戏模式
             if (mode.isDefault()) {

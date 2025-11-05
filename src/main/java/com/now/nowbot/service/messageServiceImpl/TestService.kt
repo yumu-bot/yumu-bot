@@ -5,14 +5,14 @@ import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.enums.MaiVersion.*
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.util.JacksonUtil
 import org.springframework.stereotype.Service
 import java.nio.file.Files
 import java.nio.file.Path
 
 @Service("TEST")
-class TestService(private val maimaiApiService: MaimaiApiService) :
+class TestService(private val lxMaiApiService: LxMaiApiService) :
         MessageService<String> {
     override fun isHandle(
             event: MessageEvent,
@@ -50,7 +50,9 @@ class TestService(private val maimaiApiService: MaimaiApiService) :
     }
 
     override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
-        val l = maimaiApiService.getMaimaiSongLibrary().associateBy { it.songID }
+        val l = lxMaiApiService.getLxMaiSongs()
+            .sortedByDescending { it.version }
+            .associateBy { it.songID }
 
         fun getVersionInt(maiVersion: MaiVersion): Int {
             return when(maiVersion) {
@@ -94,7 +96,7 @@ class TestService(private val maimaiApiService: MaimaiApiService) :
 
                 entry.first.toString() to mapOf(
                     "name" to s.title,
-                    "version" to getVersionInt(MaiVersion.getVersion(s.info.version))
+                    "version" to getVersionInt(MaiVersion.getVersionFromValue(s.version))
 
                 )
             }
