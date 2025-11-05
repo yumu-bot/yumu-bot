@@ -23,21 +23,9 @@ interface OsuCalculateApiService {
 
     fun applyBeatMapChanges(beatmap: Beatmap?, mods: List<LazerMod>)
 
-    fun applyStarToScore(score: LazerScore) {
-        applyStarToScore(score, local = LOCAL)
-    }
-
     fun applyStarToScore(score: LazerScore, local: Boolean = LOCAL)
 
-    fun applyStarToScores(scores: List<LazerScore>) {
-        applyStarToScores(scores, local = LOCAL)
-    }
-
     fun applyStarToScores(scores: List<LazerScore>, local: Boolean = LOCAL)
-
-    fun applyStarToBeatMap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>) {
-        applyStarToBeatMap(beatmap, mode, mods, local = LOCAL)
-    }
 
     fun applyStarToBeatMap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>, local: Boolean = LOCAL)
 

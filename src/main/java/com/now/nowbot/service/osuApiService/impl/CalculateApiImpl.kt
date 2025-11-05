@@ -241,7 +241,7 @@ import kotlin.math.roundToInt
     }
 
     override fun applyStarToScore(score: LazerScore, local: Boolean) {
-        if (score.beatmapID == 0L || score.mods.isNotAffectStarRating()) {
+        if (score.beatmap.starRating >= 0.10 && (score.beatmapID == 0L || score.mods.isNotAffectStarRating())) {
             return
         }
 

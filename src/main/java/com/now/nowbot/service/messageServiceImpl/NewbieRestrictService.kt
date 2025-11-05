@@ -52,7 +52,7 @@ class NewbieRestrictService(
     config: NewbieConfig,
 ): MessageService<Collection<LazerScore>> {
     // 这里放幻数
-    private val local = true
+    private val local = OsuCalculateApiService.LOCAL
 
     // 新人群、杀手群、执行机器人
     private val newbieGroupID = config.newbieGroup
