@@ -94,8 +94,8 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     UPDATE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("update", "ut")
-        appendCaptureGroup(FLAG_ANY, REG_ANYTHING, MORE)
+        appendCommandsIgnoreAll("update", "ut", "up")
+        appendColonCaptureGroup(FLAG_ANY, REG_ANYTHING, contentLevel = MORE, prefixLevel = MAYBE)
     }),
 
 
