@@ -30,7 +30,7 @@ class UpdateTriggerService(
                 return when(string?.trim()) {
                     "m", "mai", "maimai" -> MAIMAI
                     "l", "lxns", "luoxue", "lady" -> LXNS
-                    "p", "percent", "per" -> OSU_PERCENT
+                    "o", "p", "percent", "per" -> OSU_PERCENT
                     else -> throw UnsupportedOperationException("""
                         请输入需要更新的种类：
                         
