@@ -5,6 +5,7 @@ import com.now.nowbot.config.NewbieConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.service.messageServiceImpl.HelpService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
@@ -29,6 +30,7 @@ class RunTimeService(
     private val newbieService: NewbieService,
     private val maimaiApiService: MaimaiApiService,
     private val chunithmApiService: ChunithmApiService,
+    private val lxMaiApiService: LxMaiApiService,
     private val userApiService: OsuUserApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     @Qualifier("kotlinTaskExecutor")
@@ -140,7 +142,13 @@ class RunTimeService(
         chunithmApiService.updateChunithmAliasLibraryDatabase()
     }
 
-    @Scheduled(cron = "0 2 6 * * *")
+    @Scheduled(cron = "40 1 6 * * *")
+    fun updateLxnsMaiSongLibrary() {
+        log.info("开始执行更新 lxns maimai 歌曲库任务")
+        lxMaiApiService.saveLxMaiSongs()
+    }
+
+    @Scheduled(cron = "20 2 6 * * *")
     fun updateBeatMapTagsLibrary() {
         log.info("开始执行更新谱面玩家标签库任务")
         beatmapApiService.updateBeatmapTagLibraryDatabase()
@@ -294,14 +302,5 @@ class RunTimeService(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(RunTimeService::class.java)
-
-        @JvmStatic
-        @Deprecated("建议替换", replaceWith = ReplaceWith("testNew(s)"))
-        fun test(s: String) {
-        }
-
-        @JvmStatic
-        fun testNew(s: String) {
-        }
     }
 }

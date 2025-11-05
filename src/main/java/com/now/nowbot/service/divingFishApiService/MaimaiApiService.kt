@@ -34,7 +34,7 @@ interface MaimaiApiService {
 
     fun getMaimaiPossibleSong(text: String): MaiSong?
 
-    fun getMaimaiPossibleSongs(text: String): List<MaiSong>?
+    fun getMaimaiPossibleSongs(text: String): List<MaiSong>
 
     fun getMaimaiAliasSong(text: String): MaiSong?
 

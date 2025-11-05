@@ -11,22 +11,22 @@ data class LxCollection(
 
     ) {
     data class CollectionRequired(
-        @JsonProperty("difficulties")
+        @field:JsonProperty("difficulties")
         val difficulties: List<Byte>?,
 
-        @JsonProperty("full_combo")
+        @field:JsonProperty("full_combo")
         val combo: String?,
 
-        @JsonProperty("full_chain")
+        @field:JsonProperty("full_chain")
         val chain: String?,
 
-        @JsonProperty("rank")
+        @field:JsonProperty("rank")
         val rank: String,
 
-        @JsonProperty("collection_required_song")
+        @field:JsonProperty("collection_required_song")
         val songs: CollectionRequiredSong?,
 
-        @JsonProperty("completed")
+        @field:JsonProperty("completed")
         val completed: Boolean?,
 
         )

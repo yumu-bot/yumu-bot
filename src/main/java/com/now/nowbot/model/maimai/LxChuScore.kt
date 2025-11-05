@@ -10,43 +10,43 @@ import kotlin.math.round
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 data class LxChuScore(
-    @JsonProperty("id")
+    @field:JsonProperty("id")
     val id: Long,
 
-    @JsonProperty("song_name")
+    @field:JsonProperty("song_name")
     val title: String,
 
-    @JsonProperty("level")
+    @field:JsonProperty("level")
     val level: String,
 
-    @JsonProperty("level_index")
+    @field:JsonProperty("level_index")
     val index: Byte,
 
-    @JsonProperty("score")
+    @field:JsonProperty("score")
     val score: Int,
 
-    @JsonProperty("rating")
+    @field:JsonProperty("rating")
     val rating: Double,
 
-    @JsonProperty("over_power")
+    @field:JsonProperty("over_power")
     val overPower: Double,
 
-    @JsonProperty("clear")
+    @field:JsonProperty("clear")
     val clear: String?,
 
-    @JsonProperty("full_combo")
+    @field:JsonProperty("full_combo")
     val combo: String?,
 
-    @JsonProperty("full_chain")
+    @field:JsonProperty("full_chain")
     val chain: String?,
 
-    @JsonProperty("rank")
+    @field:JsonProperty("rank")
     val rank: String,
 
-    @JsonProperty("play_time")
+    @field:JsonProperty("play_time")
     val playTime: OffsetDateTime?,
 
-    @JsonProperty("upload_time")
+    @field:JsonProperty("upload_time")
     val uploadTime: OffsetDateTime?,
 
     // BP 多少

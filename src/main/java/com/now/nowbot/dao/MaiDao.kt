@@ -18,6 +18,7 @@ class MaiDao(
     val chuSongLiteRepository: ChuSongLiteRepository,
     val chuChartLiteRepository: ChuChartLiteRepository,
     val chuAliasLiteRepository: ChuAliasLiteRepository,
+    val lxMaiSongLiteRepository: LxMaiSongLiteRepository,
 ) {
     fun saveMaiRanking(ranking: List<MaiRanking>) {
         val ranks = ranking
@@ -64,10 +65,10 @@ class MaiDao(
         return song.toModel()
     }
 
-    fun findMaiSongByTitle(title:String): List<MaiSong>? {
+    fun findMaiSongByTitle(title:String): List<MaiSong> {
         val songs = maiSongLiteRepository.findByQueryTitleLikeIgnoreCase("%$title%")
 
-        if (songs.isNullOrEmpty()) return null
+        if (songs.isNullOrEmpty()) return listOf()
 
         songs.forEach {
             val charts = maiChartLiteRepository
@@ -87,6 +88,23 @@ class MaiDao(
             it.charts = charts
         }
         return songs.map { it.toModel() }
+    }
+
+    @Transactional
+    fun saveLxMaiSongs(songs: List<LxMaiSong>) {
+        lxMaiSongLiteRepository.saveAll(
+            songs.map { LxMaiSongLite.from(it) }
+        )
+    }
+
+    fun findLxMaiSongByID(songID: Int): LxMaiSong? {
+        return lxMaiSongLiteRepository.findById(songID).getOrNull()?.toModel()
+    }
+
+    fun findLxMaiSongByTitle(title: String): List<LxMaiSong> {
+        val songs = lxMaiSongLiteRepository.findByQueryTitleLikeIgnoreCase("%$title%")
+
+        return songs?.map { it.toModel() } ?: listOf()
     }
 
     @Transactional

@@ -9,7 +9,7 @@ import com.now.nowbot.model.maimai.MaiSong
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.service.messageServiceImpl.MaiFindService.MaiFindParam
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.DataUtil
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service
 import java.util.regex.Matcher
 
 @Service("MAI_FIND") class MaiFindService(
-    private val maimaiApiService: MaimaiApiService,
+    private val lxMaiApiService: LxMaiApiService,
     private val imageService: ImageService
 ) : MessageService<MaiFindParam> {
     data class MaiFindParam(
@@ -79,11 +79,10 @@ import java.util.regex.Matcher
 
         val isRange = any.matches(REG_MAI_RANGE.toRegex())
 
-        if (!hasRangeInConditions && !hasCondition && !isRange) {
-            val title = any.trim()
+        if (!hasRangeInConditions && !hasCondition && !isRange && any.isNotEmpty()) {
 
-            val id4Song = if (title.matches(REG_NUMBER_15.toRegex())) {
-                maimaiApiService.getMaimaiSong(title.toLongOrNull() ?: -1L)
+            val id4Song = if (any.matches(REG_NUMBER_15.toRegex())) {
+                lxMaiApiService.getLxMaiSong(any.toLong())?.toMaiSong()
             } else null
 
             // 编号搜歌模式
@@ -91,22 +90,23 @@ import java.util.regex.Matcher
                 songs = listOf(id4Song)
             } else {
                 // 标题搜歌模式
-                val possibles = (
-                        maimaiApiService.getMaimaiPossibleSongs(
-                            DataUtil.getStandardisedString(title)
-                        ) ?: listOf())
-                    .associateBy { it.title.getSimilarity(title) }
+                val possibles = lxMaiApiService.getPossibleMaiSongs(
+                    DataUtil.getStandardisedString(any)
+                )
+                    .associateBy { it.title.getSimilarity(any) }
                     .filter { it.key > 0.4 }
                     .map { it.value }
 
                 songs = possibles.ifEmpty {
                     // 外号模式
-                    maimaiApiService.getMaimaiAliasSongs(title) ?: throw NoSuchElementException.ResultNotAccurate()
+                    lxMaiApiService.getMaiAliasSongs(any).ifEmpty {
+                        throw NoSuchElementException.ResultNotAccurate()
+                    }
                 }
             }
         } else {
             // 常规模式
-            val all = maimaiApiService.getMaimaiSongLibrary()
+            val all = lxMaiApiService.getMaiSongs()
                 .sortedByDescending {
                     if (it.songID > 10000) {
                         (it.songID % 10000) + 10000
@@ -114,6 +114,7 @@ import java.util.regex.Matcher
                         it.songID
                     }
                 }
+                .sortedByDescending { it.info.versionInt }
 
             val difficulties = MaiDifficulty.getDifficulties(matcher.group(FLAG_DIFF))
 

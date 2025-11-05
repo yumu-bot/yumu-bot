@@ -7,6 +7,8 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.service.lxnsApiService.LxMaiApiService
+import com.now.nowbot.service.messageServiceImpl.UpdateTriggerService.UpdateType.*
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_ANY
@@ -15,22 +17,25 @@ import org.springframework.stereotype.Service
 @Service("UPDATE")
 class UpdateTriggerService(
     private val maimaiApiService: MaimaiApiService,
+    private val lxMaiApiService: LxMaiApiService,
     private val chunithmApiService: ChunithmApiService,
     private val infoDao: OsuUserInfoDao,
 ) : MessageService<UpdateTriggerService.UpdateType> {
 
     enum class UpdateType {
-        MAIMAI, OSU_PERCENT;
+        MAIMAI, LXNS, OSU_PERCENT;
 
         companion object {
             fun getType(string: String?): UpdateType {
                 return when(string?.trim()) {
                     "m", "mai", "maimai" -> MAIMAI
+                    "l", "lxns", "luoxue", "lady" -> LXNS
                     "p", "percent", "per" -> OSU_PERCENT
                     else -> throw UnsupportedOperationException("""
                         请输入需要更新的种类：
                         
                         m -> maimai
+                        l -> lxns
                         p -> osu percent
                     """.trimIndent())
                 }
@@ -58,13 +63,13 @@ class UpdateTriggerService(
 
     override fun handleMessage(event: MessageEvent, param: UpdateType): ServiceCallStatistic? {
         when(param) {
-            UpdateType.OSU_PERCENT -> Thread.startVirtualThread {
+            OSU_PERCENT -> Thread.startVirtualThread {
                 event.reply("正在尝试更新玩家百分比数据！")
                 val count = infoDao.percentilesDailyUpsert()
                 event.reply("已更新 $count 条玩家百分比数据。")
             }
 
-            UpdateType.MAIMAI -> Thread.startVirtualThread {
+            MAIMAI -> Thread.startVirtualThread {
                 event.reply("正在尝试更新舞萌、中二数据！")
 
                 val startTime = System.currentTimeMillis()
@@ -91,6 +96,21 @@ class UpdateTriggerService(
                 舞萌拟合定数库：${(time4 - time3) / 1000.0} s
                 中二节奏歌曲数据库：${(time5 - time4) / 1000.0} s
                 中二节奏外号库：${(endTime - time5) / 1000.0} s
+                
+                总耗时：${(endTime - startTime) / 1000.0} s
+                """.trimIndent())
+            }
+
+            LXNS -> {
+
+                event.reply("正在尝试更新落雪数据！")
+
+                val startTime = System.currentTimeMillis()
+                lxMaiApiService.saveLxMaiSongs()
+                val endTime = System.currentTimeMillis()
+
+                event.reply("""
+                更新落雪数据完成。
                 
                 总耗时：${(endTime - startTime) / 1000.0} s
                 """.trimIndent())

@@ -107,7 +107,9 @@ import kotlin.text.Charsets.UTF_8
 
         if (Files.isRegularFile(f)) try {
             return Files.readAllBytes(f)
-        } catch (ignored: IOException) {}
+        } catch (_: IOException) {
+
+        }
 
         return getMaimaiCoverFromAPI(songID)
     }
@@ -135,7 +137,7 @@ import kotlin.text.Charsets.UTF_8
                 it.path("covers/$song.png").build()
             }.retrieve().bodyToMono(ByteArray::class.java)
             }
-        } catch (e: WebClientResponseException.NotFound) {
+        } catch (_: WebClientResponseException.NotFound) {
             request { client -> client.get().uri {
                 it.path("covers/00000.png").build()
             }.retrieve().bodyToMono(ByteArray::class.java)
@@ -406,7 +408,7 @@ import kotlin.text.Charsets.UTF_8
     }
 
     override fun getMaimaiPossibleSong(text: String): MaiSong? {
-        return maiDao.findMaiSongByTitle(text)?.first()/*
+        return maiDao.findMaiSongByTitle(text).firstOrNull()/*
         val s = getMaimaiPossibleSongs(text) ?: return MaiSong()
 
         return s.entries.first().value
@@ -414,7 +416,7 @@ import kotlin.text.Charsets.UTF_8
          */
     }
 
-    override fun getMaimaiPossibleSongs(text: String): List<MaiSong>? {
+    override fun getMaimaiPossibleSongs(text: String): List<MaiSong> {
         val o = maiDao.findMaiSongByTitle(text)
         insertMaimaiAlias(o)
         return o

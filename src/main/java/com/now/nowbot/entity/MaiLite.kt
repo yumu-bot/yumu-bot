@@ -7,6 +7,7 @@ import io.hypersistence.utils.hibernate.type.array.IntArrayType
 import io.hypersistence.utils.hibernate.type.array.StringArrayType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
+import kotlin.math.roundToInt
 
 @Entity(name = "maimai_song")
 @Table(indexes = [Index(name = "mai_title_query", columnList = "query_text")])
@@ -485,3 +486,202 @@ class ChuChartLite(
         }
     }
 }
+
+@Entity
+@Table(
+    name = "lx_maimai_song",
+    indexes = [Index(name = "lx_mai_title_query", columnList = "query_text")]
+)
+class LxMaiSongLite() {
+    @Id
+    var songID: Int? = null
+
+    @Column(columnDefinition = "text")
+    var title: String = ""
+
+    @Column(name = "query_text", columnDefinition = "text")
+    var queryTitle: String = title
+
+    @Column(columnDefinition = "text")
+    var artist: String = ""
+
+    @Column(columnDefinition = "text")
+    var genre: String = ""
+
+    var bpm: Int = 0
+
+    var version: Int = 0
+
+    // 一对多关系
+    @OneToMany(
+        mappedBy = "song",
+        cascade = [CascadeType.ALL],
+        fetch = FetchType.LAZY,
+        orphanRemoval = true,
+        targetEntity = LxMaiDifficultyLite::class
+    )
+    var difficulties: MutableList<LxMaiDifficultyLite> = mutableListOf()
+
+    // 计算属性，按谱面类型过滤
+    val standard: List<LxMaiDifficultyLite>
+        get() = difficulties.filter { it.chartType == "standard" }
+
+    val deluxe: List<LxMaiDifficultyLite>
+        get() = difficulties.filter { it.chartType == "deluxe" }
+
+    val utage: List<LxMaiDifficultyLite>
+        get() = difficulties.filter { it.chartType == "utage" }
+
+    // 便利方法
+    fun addDifficulty(difficulty: LxMaiDifficultyLite) {
+        difficulties.add(difficulty)
+        difficulty.song = this
+    }
+
+    fun addDifficulties(newDifficulties: Collection<LxMaiDifficultyLite>) {
+        newDifficulties.forEach { addDifficulty(it) }
+    }
+
+    fun removeDifficulty(difficulty: LxMaiDifficultyLite) {
+        difficulties.remove(difficulty)
+        difficulty.song = null
+    }
+
+    fun toModel(): LxMaiSong = LxMaiSong().apply {
+        val lite = this@LxMaiSongLite
+
+        songID = lite.songID!!
+        title = lite.title
+        artist = lite.artist
+        genre = lite.genre
+        bpm = lite.bpm
+        version = lite.version
+        difficulties = LxMaiDiff(
+            standard.map { it.toModel() },
+            deluxe.map { it.toModel() },
+            utage.map { it.toModel() },
+        )
+    }
+
+    companion object {
+        fun from(song: LxMaiSong): LxMaiSongLite {
+            val query = DataUtil.getStandardisedString(song.title)
+
+            return LxMaiSongLite().apply {
+                songID = song.songID
+                title = song.title
+                queryTitle = query
+                artist = song.artist
+                genre = song.genre
+                bpm = song.bpm
+                version = song.version
+
+                // 合并所有难度类型// 修复：使用便利方法添加，确保双向关系正确
+                addDifficulties(
+                    listOf(
+                        song.difficulties.standard.map {
+                            LxMaiDifficultyLite.from(it, "standard")
+                        },
+                        song.difficulties.deluxe.map {
+                            LxMaiDifficultyLite.from(it, "deluxe")
+                        },
+                        song.difficulties.utage.map {
+                            LxMaiDifficultyLite.from(it, "utage")
+                        }
+                    ).flatten()
+                )
+            }
+        }
+    }
+}
+
+@Entity
+@Table(name = "lx_maimai_difficulty")
+class LxMaiDifficultyLite() {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long = 0
+
+    // 谱面类型：standard, deluxe, utage
+    @Column(name = "chart_type", columnDefinition = "VARCHAR(10)")
+    var chartType: String = ""
+
+    @Column(columnDefinition = "TEXT")
+    var type: String = ""
+
+    var difficulty: Byte = 0
+
+    @Column(columnDefinition = "VARCHAR(5)")
+    var level: String = ""
+
+    // x10
+    @Column(name = "level_value", columnDefinition = "SMALLINT")
+    var levelValue: Short = 0
+
+    @Column(name = "note_designer")
+    var noteDesigner: String = ""
+
+    var version: Int = 0
+
+    @Type(IntArrayType::class)
+    @Column(columnDefinition = "INTEGER[]")
+    var notes: IntArray = intArrayOf()
+
+    @Column(columnDefinition = "VARCHAR(2)", nullable = true)
+    var kanji: String? = null
+
+    @Column(columnDefinition = "TEXT", nullable = true)
+    var description: String? = null
+
+    @Column(name = "is_buddy", nullable = true)
+    var isBuddy: Boolean? = null
+
+    // 关联字段
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "song_id")
+    var song: LxMaiSongLite? = null
+
+    fun toModel(): LxMaiDifficulty = LxMaiDifficulty().apply {
+        val lite = this@LxMaiDifficultyLite
+        val note = lite.notes
+
+        type = lite.type
+        difficulty = lite.difficulty
+        level = lite.level
+        levelValue = lite.levelValue.toInt() / 10.0
+        noteDesigner = lite.noteDesigner
+        version = lite.version
+        notes = LxMaiNote(
+            note[0], note[1], note[2], note[3], note[4], note[5]
+        )
+        kanji = lite.kanji
+        description = lite.description
+        isBuddy = lite.isBuddy
+    }
+
+    companion object {
+        fun from(diff: LxMaiDifficulty, chartType: String): LxMaiDifficultyLite {
+            return LxMaiDifficultyLite().apply {
+                type = diff.type
+                this.chartType = chartType
+                difficulty = diff.difficulty
+                level = diff.level
+                levelValue = (diff.levelValue * 10.0).roundToInt().toShort()
+                noteDesigner = diff.noteDesigner
+                version = diff.version
+                notes = intArrayOf(
+                    diff.notes.total,
+                    diff.notes.tap,
+                    diff.notes.hold,
+                    diff.notes.slide,
+                    diff.notes.touch,
+                    diff.notes.`break`,
+                )
+                kanji = diff.kanji
+                description = diff.description
+                isBuddy = diff.isBuddy
+            }
+        }
+    }
+}
+

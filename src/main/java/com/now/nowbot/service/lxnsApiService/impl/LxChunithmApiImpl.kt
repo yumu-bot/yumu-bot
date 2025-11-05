@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.model.maimai.LxChuBestScore
 import com.now.nowbot.model.maimai.LxChuUser
-import com.now.nowbot.service.divingFishApiService.impl.LxnsBaseService
 import com.now.nowbot.service.lxnsApiService.LxChunithmApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
@@ -51,15 +50,15 @@ class LxChunithmApiImpl(private val base: LxnsBaseService, private val maiDao: M
     private fun <T> request(request: (WebClient) -> Mono<T>): T {
         return try {
             request(base.lxnsApiWebClient).block()!!
-        } catch (e: WebClientResponseException.BadGateway) {
+        } catch (_: WebClientResponseException.BadGateway) {
             throw NetworkException.LxnsException.BadGateway()
-        } catch (e: WebClientResponseException.Unauthorized) {
+        } catch (_: WebClientResponseException.Unauthorized) {
             throw NetworkException.LxnsException.Unauthorized()
-        } catch (e: WebClientResponseException.Forbidden) {
+        } catch (_: WebClientResponseException.Forbidden) {
             throw NetworkException.LxnsException.Forbidden()
-        } catch (e: ReadTimeoutException) {
+        } catch (_: ReadTimeoutException) {
             throw NetworkException.LxnsException.RequestTimeout()
-        } catch (e: WebClientResponseException.InternalServerError) {
+        } catch (_: WebClientResponseException.InternalServerError) {
             throw NetworkException.LxnsException.InternalServerError()
         } catch (e: Exception) {
             log.error("落雪咖啡屋：获取失败", e)

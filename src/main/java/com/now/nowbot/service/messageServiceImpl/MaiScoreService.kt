@@ -190,9 +190,9 @@ import java.util.regex.Matcher
 
                 val possibles = maimaiApiService
                     .getMaimaiPossibleSongs(DataUtil.getStandardisedString(title))
-                    ?.associateBy { it.title.getSimilarity(title) }
-                    ?.filter { it.key > 0.4 }
-                    ?.maxByOrNull { it.key }?.value
+                    .associateBy { it.title.getSimilarity(title) }
+                    .filter { it.key > 0.4 }
+                    .maxByOrNull { it.key }?.value
 
                 if (possibles != null) {
                     song = possibles

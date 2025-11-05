@@ -1,10 +1,10 @@
 package com.now.nowbot.mapper
 
 import com.now.nowbot.entity.*
-import jakarta.transaction.Transactional
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.transaction.annotation.Transactional
 
 interface MaiSongLiteRepository : JpaRepository<MaiSongLite, Int> {
     fun findByQueryTitleLikeIgnoreCase(queryTitle: String): List<MaiSongLite>?
@@ -56,3 +56,7 @@ interface ChuSongLiteRepository : JpaRepository<ChuSongLite, Int> {
 }
 
 interface ChuChartLiteRepository : JpaRepository<ChuChartLite, Int>
+
+interface LxMaiSongLiteRepository : JpaRepository<LxMaiSongLite, Int> {
+    fun findByQueryTitleLikeIgnoreCase(queryTitle: String): List<LxMaiSongLite>?
+}

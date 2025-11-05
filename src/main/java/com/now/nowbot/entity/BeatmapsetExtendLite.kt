@@ -11,7 +11,7 @@ class BeatmapsetExtendLite (
     val beatmapsetID: Long = -1,
 
     // 一对多关系
-    @OneToMany(mappedBy = "beatmapset", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "beatmapset", cascade = [CascadeType.ALL], fetch = FetchType.LAZY)
     val beatmaps: List<BeatmapExtendLite> = emptyList(),
 
     @Column(name = "artist", columnDefinition = "TEXT")

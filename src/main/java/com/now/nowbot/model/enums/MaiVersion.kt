@@ -4,36 +4,36 @@ import com.now.nowbot.util.command.REG_PLUS
 import com.now.nowbot.util.command.REG_SEPERATOR
 import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
 
-enum class MaiVersion(val full: String, val abbreviation: String, val code: String) {
-    DEFAULT("", "", ""),
-    MAIMAI("maimai", "初", "mai"),
-    PLUS("maimai PLUS", "真", "mai"),
-    GREEN("maimai GreeN", "超", "grn"),
-    GREEN_PLUS("maimai GreeN PLUS", "檄", "grp"),
-    ORANGE("maimai ORANGE", "橙", "org"),
-    ORANGE_PLUS("maimai ORANGE PLUS", "暁", "orp"),
-    PINK("maimai PiNK", "桃", "pnk"),
-    PINK_PLUS("maimai PiNK PLUS", "櫻", "pkp"),
-    MURASAKI("maimai MURASAKi", "紫", "msk"),
-    MURASAKI_PLUS("maimai MURASAKi PLUS", "菫", "msp"),
-    MILK("maimai MiLK", "白", "mlk"),
-    MILK_PLUS("maimai MiLK PLUS", "雪", "mkp"),
-    FINALE("maimai FiNALE", "輝", "fnl"),
-    ALL_FINALE("ALL FiNALE", "舞", "afn"),
-    DX("maimai でらっくす", "熊", "dx"),
-    DX_PLUS("maimai でらっくす PLUS", "華", "dxp"),
-    SPLASH("maimai でらっくす Splash", "爽", "spl"),
-    SPLASH_PLUS("maimai でらっくす Splash PLUS", "煌", "spp"),
-    UNIVERSE("maimai でらっくす UNiVERSE", "宙", "uni"),
-    UNIVERSE_PLUS("maimai でらっくす UNiVERSE PLUS", "星", "unp"),
-    FESTIVAL("maimai でらっくす FESTiVAL", "祭", "fes"),
-    FESTIVAL_PLUS("maimai でらっくす FESTiVAL PLUS", "祝", "fep"),
-    BUDDIES("maimai でらっくす BUDDiES", "双", "bud"),
-    BUDDIES_PLUS("maimai でらっくす BUDDiES PLUS", "宴", "bdp"),
-    PRISM("maimai でらっくす PRiSM", "鏡", "pri"),
-    PRISM_PLUS("maimai でらっくす PRiSM PLUS", "稜", "prp"),
-    CIRCLE("maimai でらっくす CiRCLE", "", "cir"),
-    CIRCLE_PLUS("maimai でらっくす CiRCLE PLUS", "", "cip"),
+enum class MaiVersion(val full: String, val abbreviation: String, val code: String, val value: Int) {
+    DEFAULT("", "", "", 0),
+    MAIMAI("maimai", "初", "mai", 10000),
+    PLUS("maimai PLUS", "真", "mai", 11000),
+    GREEN("maimai GreeN", "超", "grn", 12000),
+    GREEN_PLUS("maimai GreeN PLUS", "檄", "grp", 13000),
+    ORANGE("maimai ORANGE", "橙", "org", 14000),
+    ORANGE_PLUS("maimai ORANGE PLUS", "暁", "orp", 15000),
+    PINK("maimai PiNK", "桃", "pnk", 16000),
+    PINK_PLUS("maimai PiNK PLUS", "櫻", "pkp", 17000),
+    MURASAKI("maimai MURASAKi", "紫", "msk", 18000),
+    MURASAKI_PLUS("maimai MURASAKi PLUS", "菫", "msp", 18500),
+    MILK("maimai MiLK", "白", "mlk", 19000),
+    MILK_PLUS("maimai MiLK PLUS", "雪", "mkp", 19500),
+    FINALE("maimai FiNALE", "輝", "fnl", 19900),
+    ALL_FINALE("ALL FiNALE", "舞", "afn", -1),
+    DX("maimai でらっくす", "熊", "dx", 20000),
+    DX_PLUS("maimai でらっくす PLUS", "華", "dxp", -1),
+    SPLASH("maimai でらっくす Splash", "爽", "spl", 21000),
+    SPLASH_PLUS("maimai でらっくす Splash PLUS", "煌", "spp", -1),
+    UNIVERSE("maimai でらっくす UNiVERSE", "宙", "uni", 22000),
+    UNIVERSE_PLUS("maimai でらっくす UNiVERSE PLUS", "星", "unp", -1),
+    FESTIVAL("maimai でらっくす FESTiVAL", "祭", "fes", 23000),
+    FESTIVAL_PLUS("maimai でらっくす FESTiVAL PLUS", "祝", "fep", -1),
+    BUDDIES("maimai でらっくす BUDDiES", "双", "bud", 24000),
+    BUDDIES_PLUS("maimai でらっくす BUDDiES PLUS", "宴", "bdp", -1),
+    PRISM("maimai でらっくす PRiSM", "鏡", "pri", 25000),
+    PRISM_PLUS("maimai でらっくす PRiSM PLUS", "稜", "prp", -1),
+    CIRCLE("maimai でらっくす CiRCLE", "", "cir", 26000),
+    CIRCLE_PLUS("maimai でらっくす CiRCLE PLUS", "", "cip", -1),
     ;
 
     companion object {
@@ -60,6 +60,19 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
              */
 
             return MaiVersion.entries.firstOrNull { it.abbreviation == abbreviation } ?: DEFAULT
+        }
+
+        fun getVersionFromValue(value: Int): MaiVersion {
+            MaiVersion.entries
+                .reversed()
+                .filter { it.value > 0 }
+                .forEach {
+                    if (value >= it.value) {
+                        return it
+                    }
+            }
+
+            return DEFAULT
         }
 
         fun getVersionListOrNewest(str: String?): List<MaiVersion> {
@@ -95,9 +108,8 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
         @JvmStatic
         fun List<MaiVersion>.listToString(): String {
             return this
-                .filter{it != DEFAULT}
-                .map(MaiVersion::full)
-                .joinToString(separator = ", ", prefix = "[", postfix = "]")
+                .filter { it != DEFAULT }
+                .joinToString(separator = ", ", prefix = "[", postfix = "]", transform = MaiVersion::full)
         }
 
         @JvmStatic

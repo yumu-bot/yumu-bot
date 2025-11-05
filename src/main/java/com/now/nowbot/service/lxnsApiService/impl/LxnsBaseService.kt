@@ -1,4 +1,4 @@
-package com.now.nowbot.service.divingFishApiService.impl
+package com.now.nowbot.service.lxnsApiService.impl
 
 import com.now.nowbot.config.LxnsConfig
 import org.springframework.beans.factory.annotation.Qualifier

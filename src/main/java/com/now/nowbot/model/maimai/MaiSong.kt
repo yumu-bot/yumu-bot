@@ -117,6 +117,8 @@ class MaiSong {
         // 加入 maimai 时的版本
         @JsonProperty("from") var version: String = ""
 
+        @JsonProperty("version") var versionInt: Int = 0
+
         // 歌曲是否为当前版本的新歌
         @JsonProperty("is_new") var current: Boolean = false
     }
