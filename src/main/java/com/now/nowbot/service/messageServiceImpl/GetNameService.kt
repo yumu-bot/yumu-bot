@@ -43,7 +43,8 @@ class GetNameService(private val userApiService: OsuUserApiService) : MessageSer
         // 使用批量获取
         val ids = idStr.mapNotNull { it.toLongOrNull() }
 
-        val nameMap: Map<Long, MicroUser> = ids.chunked(50).map { userApiService.getUsers(it) }.flatten().associateBy { it.userID }
+        val nameMap: Map<Long, MicroUser> = userApiService.getUsers(ids)
+            .associateBy { it.userID }
 
         ids.forEach {
             val user = nameMap[it]

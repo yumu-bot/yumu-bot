@@ -292,6 +292,8 @@ class OsuUserInfoDao(
             val user = OsuUser()
             user.mode = archive.mode.shortName
             user.id = archive.userID
+            user.userAchievementsCount = archive.achievementsCount
+            user.beatmapPlaycount = archive.beatmapPlaycount
 
             val statistics = InfoLogStatistics()
             statistics.countA = archive.countA

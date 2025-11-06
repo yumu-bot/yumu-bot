@@ -348,8 +348,12 @@ open class OsuUser {
     var userAchievements: List<UserAchievement>? = null
 
     @get:JsonProperty("user_achievements_count")
-    val userAchievementsCount: Int
-        get() = userAchievements?.size ?: 0
+    var userAchievementsCount: Int = 0
+        get() = if (field > 0) {
+            field
+        } else {
+            userAchievements?.size ?: 0
+        }
 
     data class UserAchievement(
         @field:JsonProperty("achieved_at") val achievedAt: OffsetDateTime,

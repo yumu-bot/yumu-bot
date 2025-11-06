@@ -310,7 +310,6 @@ import kotlin.math.roundToInt
         val beatmapID = scores.first().beatmapID
         val mode = scores.first().mode.toRosuMode()
 
-
         val closable = ArrayList<AutoCloseable>(scores.size + 1)
         return try {
             val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
