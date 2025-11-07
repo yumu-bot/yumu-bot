@@ -94,7 +94,7 @@ interface ServiceCallStatisticRepository : JpaRepository<ServiceCallStatistic, L
 
     @Query(
         value = """
-            SELECT (param -> 'mais' ->> 0)::bigint as first_bid
+            SELECT (param -> 'mais' ->> 0)::bigint as first_mai
             FROM service_call_stat
             WHERE group_id = :group AND time BETWEEN :from AND :to
                 AND jsonb_exists(param, 'mais')

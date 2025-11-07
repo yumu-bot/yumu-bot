@@ -12,10 +12,6 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup("module", REG_ANYTHING, ANY, MAYBE)
     }),
 
-    REFRESH_HELP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("refresh\\s*help", "rh")
-    }),
-
     // #1 BOT 内部指令
     PING(CommandPatternBuilder.create {
         appendGroup {
@@ -91,11 +87,6 @@ enum class Instruction(val pattern: Pattern) {
             REG_NUMBER,
             ANY
         )
-    }),
-
-    UPDATE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("update", "ut", "ue")
-        appendColonCaptureGroup(FLAG_ANY, REG_ANYTHING, contentLevel = MORE, prefixLevel = MAYBE)
     }),
 
 
@@ -528,11 +519,6 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_DATA, REG_NUMBER_SEPERATOR, MORE)
     }),
 
-    REFRESH_FILE(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("refresh\\s*file", "rf")
-        appendCaptureGroup("bid", REG_NUMBER, MORE)
-    }),
-
     // #5 osu! 比赛指令
     MATCH_LISTENER(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("make\\s*love", "(match)?listen(er)?", "ml", "li")
@@ -791,6 +777,29 @@ enum class Instruction(val pattern: Pattern) {
         appendMatchLevel(ANY)
         appendIgnore()
     }),
+
+    // #10 辅助指令
+
+    REFRESH_HELP(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("refresh\\s*help", "rh")
+    }),
+
+    REFRESH_FILE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("refresh\\s*file", "rf")
+        appendCaptureGroup("bid", REG_NUMBER, MORE)
+    }),
+
+    UPDATE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("update", "ut", "ue")
+        appendColonCaptureGroup(FLAG_ANY, REG_ANYTHING, contentLevel = MORE, prefixLevel = MAYBE)
+    }),
+
+    FETCH(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("fetch", "fh", "fe")
+        appendColonCaptureGroup(FLAG_ANY, REG_ANYTHING, contentLevel = MORE, prefixLevel = MAYBE)
+    }),
+
+
 
     // #11 maimai & CHUNITHM
 

@@ -44,4 +44,10 @@ open class PermissionException(message: String?): TipsRuntimeException(message),
             BlackListException("$qq 权限不足，禁止使用：$service")
     }
 
+    open class TokenBucketException(message: String?): PermissionException(message) {
+        class OutOfToken(service: String, time: String):
+            TokenBucketException("服务 $service 已经超过限制。请等待 $time。")
+
+    }
+
 }

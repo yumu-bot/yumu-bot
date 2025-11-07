@@ -71,7 +71,10 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
 
     open class BindConfirmException(message: String): BindException(message) {
         class ConfirmThis:
-            BindConfirmException("你要绑定此 Bot 吗？回复 OK 确认。\n如果并不是，请无视此条消息。")
+            BindConfirmException("""
+                你要绑定这个机器人吗？回复 OK 确认。
+                如果并不是，请无视此条消息。
+            """.trimIndent())
 
         class NoNeedReBind(id: Long, name: String):
             BindConfirmException("""
@@ -111,19 +114,21 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
         class BindUrl(url: String):
             BindResultException("""
                 $url
-                请在获取六位数的验证码后，回来发送 !bind 验证码 完成绑定。
+                请在获取六位数的验证码后，回来发送 !bi 验证码 完成绑定。
                 """.trimIndent())
 
         class BindSuccess(qq: Long, id: Long, name: String, mode: OsuMode):
             BindResultException("""
                 已将 ($id) $name 绑定到 $qq 上！
                 当前绑定模式为：${mode.fullName}
+                您可以输入 !help 获取简洁的帮助信息。
             """.trimIndent())
 
         class BindSuccessWithMode(mode: OsuMode):
             BindResultException("""
                 已绑定成功！
-                当前绑定模式为：${mode.fullName}
+                当前绑定模式为：${mode.fullName}。
+                您可以输入 !help 获取简洁的帮助信息。
                 """.trimIndent())
     }
 }

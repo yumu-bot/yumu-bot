@@ -57,7 +57,7 @@ data class LxMaiSong(
             difficulties.standard
         }
 
-        val ver = MaiVersion.getVersionFromValue(lx.version)
+        val value = difficulties.maxOf { it.version }
 
         return MaiSong().apply {
             songID = if (isDeluxe) {
@@ -77,9 +77,9 @@ data class LxMaiSong(
                 artist = lx.artist
                 genre = lx.genre
                 bpm = lx.bpm
-                version = ver.full
-                versionInt = lx.version
-                current = lx.version >= MaiVersion.newestVersion.value
+                version = MaiVersion.getVersionFromValue(value).full
+                versionInt = value
+                current = value >= MaiVersion.newestVersion.value
             }
         }
     }

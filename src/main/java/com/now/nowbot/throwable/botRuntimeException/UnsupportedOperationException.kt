@@ -9,6 +9,9 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
     // class AudioNotSafeForWork:
     //    UnsupportedOperationException("这种歌曲，还是有点唱不出口呢。")
 
+    class Invalid():
+        UnsupportedOperationException("非法操作。")
+
     class InvalidMode(mode: OsuMode):
         UnsupportedOperationException("不支持绑定 ${mode.fullName} 这个游戏模式。")
 

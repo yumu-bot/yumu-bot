@@ -156,11 +156,11 @@ class OldAvatarService(
 
         val strings =
             dataStr
-                .trim { it <= ' ' }
+                .trim()
                 .split(REG_SEPERATOR_NO_SPACE.toRegex())
                 .dropLastWhile { it.isEmpty() }
                 .map { it.trim() }
-                .dropWhile { it.isBlank() }
+                .filter { it.isNotBlank() }
                 .distinct()
 
         return if (strings.size == 1) {

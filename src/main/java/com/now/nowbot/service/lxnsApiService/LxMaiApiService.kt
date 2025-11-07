@@ -7,6 +7,9 @@ import com.now.nowbot.model.maimai.MaiSong
 interface LxMaiApiService {
     fun getAudio(songID: Int): ByteArray
 
+    /**
+     * 注意，这个结果没有 10000 段的信息
+     */
     fun getLxMaiSongs(): List<LxMaiSong>
 
     fun saveLxMaiSongs()
