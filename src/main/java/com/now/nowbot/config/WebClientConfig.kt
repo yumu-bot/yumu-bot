@@ -51,9 +51,9 @@ import java.time.Duration
                 }
                 it.type(type).host(config.proxyHost).port(config.proxyPort)
             }
-            .followRedirect(true)
 
-            .responseTimeout(Duration.ofSeconds(15))
+             */
+            .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs { clientDefaultCodecsConfigurer: ClientCodecConfigurer ->
                 clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(
@@ -114,10 +114,7 @@ import java.time.Duration
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
-        val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
-
-            .followRedirect(true)
-            .responseTimeout(Duration.ofSeconds(15))
+        val httpClient = HttpClient.create(connectionProvider)
             .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
@@ -145,9 +142,6 @@ import java.time.Duration
             .pendingAcquireMaxCount(-1)
             .build()
         val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
-
-            .followRedirect(true)
-            .responseTimeout(Duration.ofSeconds(15))
             .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
