@@ -64,6 +64,14 @@ open class NetworkException(message: String?
             override val code = 503
         }
 
+        class GatewayTimeout:
+            RenderModuleException("""
+                504 Gateway Timeout
+                网关超时。
+            """.trimIndent()) {
+            override val code = 504
+        }
+
         class Undefined(e: Throwable):
             RenderModuleException("""
                 渲染模块出现未识别的错误。
@@ -108,6 +116,14 @@ open class NetworkException(message: String?
             override val code = 404
         }
 
+        class RequestTimeout:
+            UserException("""
+                408 Request Timeout
+                玩家连接超时。
+            """.trimIndent()) {
+            override val code = 408
+        }
+
         class UnprocessableEntity:
             UserException("""
                 424 Unprocessable Entity
@@ -124,6 +140,7 @@ open class NetworkException(message: String?
             override val code = 429
         }
 
+        /*
         class TokenExpired:
             UserException("""
                 498 Token Expired/Invalid
@@ -131,6 +148,8 @@ open class NetworkException(message: String?
             """.trimIndent()) {
             override val code = 498
         }
+
+         */
 
         class BadGateWay:
             UserException("""
@@ -146,6 +165,22 @@ open class NetworkException(message: String?
                 请求服务器未上线。
             """.trimIndent()) {
             override val code = 503
+        }
+
+        class GatewayTimeout:
+            MatchException("""
+                504 Gateway Timeout
+                网关超时。
+            """.trimIndent()) {
+            override val code = 504
+        }
+
+        class Undefined(e: Throwable):
+            MatchException("""
+                连接出现未识别的错误。
+                信息如下：${e.message}
+            """.trimIndent()) {
+            override val code = -1
         }
     }
 
@@ -185,6 +220,14 @@ open class NetworkException(message: String?
             override val code = 404
         }
 
+        class RequestTimeout:
+            BeatmapException("""
+                408 Request Timeout
+                谱面连接超时。
+            """.trimIndent()) {
+            override val code = 408
+        }
+
         class TooManyRequests:
             BeatmapException("""
                 429 Too Many Requests
@@ -207,6 +250,22 @@ open class NetworkException(message: String?
                 请求服务器未上线。
             """.trimIndent()) {
             override val code = 503
+        }
+
+        class GatewayTimeout:
+            MatchException("""
+                504 Gateway Timeout
+                网关超时。
+            """.trimIndent()) {
+            override val code = 504
+        }
+
+        class Undefined(e: Throwable):
+            MatchException("""
+                连接出现未识别的错误。
+                信息如下：${e.message}
+            """.trimIndent()) {
+            override val code = -1
         }
     }
 
@@ -245,6 +304,14 @@ open class NetworkException(message: String?
             override val code = 404
         }
 
+        class RequestTimeout:
+            ScoreException("""
+                408 Request Timeout
+                成绩连接超时。
+            """.trimIndent()) {
+            override val code = 408
+        }
+
         class UnprocessableEntity:
             ScoreException("""
                 422 UnprocessableEntity
@@ -275,6 +342,22 @@ open class NetworkException(message: String?
                 请求服务器未上线。
             """.trimIndent()) {
             override val code = 503
+        }
+
+        class GatewayTimeout:
+            ScoreException("""
+                504 Gateway Timeout
+                网关超时。
+            """.trimIndent()) {
+            override val code = 504
+        }
+
+        class Undefined(e: Throwable):
+            ScoreException("""
+                连接出现未识别的错误。
+                信息如下：${e.message}
+            """.trimIndent()) {
+            override val code = -1
         }
     }
 
@@ -313,6 +396,14 @@ open class NetworkException(message: String?
             override val code = 404
         }
 
+        class RequestTimeout:
+            MatchException("""
+                408 Request Timeout
+                比赛连接超时。
+            """.trimIndent()) {
+            override val code = 408
+        }
+
         class TooManyRequests:
             MatchException("""
                 429 Too Many Requests
@@ -335,6 +426,22 @@ open class NetworkException(message: String?
                 请求服务器未上线。
             """.trimIndent()) {
             override val code = 503
+        }
+
+        class GatewayTimeout:
+            MatchException("""
+                504 Gateway Timeout
+                网关超时。
+            """.trimIndent()) {
+            override val code = 504
+        }
+
+        class Undefined(e: Throwable):
+            MatchException("""
+                连接出现未识别的错误。
+                信息如下：${e.message}
+            """.trimIndent()) {
+            override val code = -1
         }
     }
 
@@ -449,6 +556,14 @@ open class NetworkException(message: String?
             override val code = 408
         }
 
+        class TooManyRequests:
+            LxnsException("""
+                429 Too Many Requests
+                落雪请求数已达上限。
+            """.trimIndent()) {
+            override val code = 429
+        }
+
         class InternalServerError:
             LxnsException("""
                 500 Internal Server Error
@@ -463,6 +578,22 @@ open class NetworkException(message: String?
                 和落雪之间的连接出现了问题。
             """.trimIndent()) {
             override val code = 502
+        }
+
+        class ServiceUnavailable:
+            LxnsException("""
+                503 Service Unavailable
+                落雪服务器未上线。
+            """.trimIndent()) {
+            override val code = 503
+        }
+
+        class GatewayTimeout:
+            LxnsException("""
+                504 Gateway Timeout
+                网关超时。
+            """.trimIndent()) {
+            override val code = 504
         }
 
         class Undefined(e: Throwable):

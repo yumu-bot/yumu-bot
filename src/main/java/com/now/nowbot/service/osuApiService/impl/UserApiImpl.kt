@@ -15,6 +15,8 @@ import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationExceptio
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
+import io.netty.channel.unix.Errors
+import io.netty.handler.timeout.ReadTimeoutException
 import kotlinx.io.IOException
 import org.codehaus.plexus.util.StringUtils
 import org.slf4j.LoggerFactory
@@ -364,7 +366,13 @@ import java.util.regex.Pattern
                     throw NetworkException.UserException.ServiceUnavailable()
                 }
 
-                else -> throw NetworkException.UserException(e.message)
+                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                    throw NetworkException.UserException.GatewayTimeout()
+                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
+                    throw NetworkException.UserException.RequestTimeout()
+                } else {
+                    throw NetworkException.UserException.Undefined(e)
+                }
             }
         }
     }

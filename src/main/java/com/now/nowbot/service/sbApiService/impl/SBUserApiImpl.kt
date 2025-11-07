@@ -10,7 +10,10 @@ import com.now.nowbot.model.ppysb.SBUser
 import com.now.nowbot.service.sbApiService.SBUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
+import io.netty.channel.unix.Errors
+import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -193,7 +196,13 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                         throw NetworkException.UserException.ServiceUnavailable()
                     }
 
-                    else -> throw NetworkException.UserException(e.message)
+                    else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                        throw NetworkException.UserException.GatewayTimeout()
+                    } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
+                        throw NetworkException.UserException.RequestTimeout()
+                    } else {
+                        throw NetworkException.UserException.Undefined(e)
+                    }
                 }
             }
     }

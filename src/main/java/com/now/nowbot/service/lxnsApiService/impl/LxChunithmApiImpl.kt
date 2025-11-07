@@ -7,12 +7,15 @@ import com.now.nowbot.model.maimai.LxChuUser
 import com.now.nowbot.service.lxnsApiService.LxChunithmApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
+import io.netty.channel.unix.Errors
 import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 
@@ -50,19 +53,47 @@ class LxChunithmApiImpl(private val base: LxnsBaseService, private val maiDao: M
     private fun <T> request(request: (WebClient) -> Mono<T>): T {
         return try {
             request(base.lxnsApiWebClient).block()!!
-        } catch (_: WebClientResponseException.BadGateway) {
-            throw NetworkException.LxnsException.BadGateway()
-        } catch (_: WebClientResponseException.Unauthorized) {
-            throw NetworkException.LxnsException.Unauthorized()
-        } catch (_: WebClientResponseException.Forbidden) {
-            throw NetworkException.LxnsException.Forbidden()
-        } catch (_: ReadTimeoutException) {
-            throw NetworkException.LxnsException.RequestTimeout()
-        } catch (_: WebClientResponseException.InternalServerError) {
-            throw NetworkException.LxnsException.InternalServerError()
-        } catch (e: Exception) {
-            log.error("落雪咖啡屋：获取失败", e)
-            throw NetworkException.LxnsException.Undefined(e)
+        } catch (e: Throwable) {
+            val ex = e.findCauseOfType<WebClientException>()
+
+            when (ex) {
+                is WebClientResponseException.BadGateway -> {
+                    throw NetworkException.LxnsException.BadGateway()
+                }
+
+                is WebClientResponseException.InternalServerError -> {
+                    throw NetworkException.LxnsException.InternalServerError()
+                }
+
+                is WebClientResponseException.Unauthorized -> {
+                    throw NetworkException.LxnsException.Unauthorized()
+                }
+
+                is WebClientResponseException.Forbidden -> {
+                    throw NetworkException.LxnsException.Forbidden()
+                }
+
+                is WebClientResponseException.NotFound -> {
+                    throw NetworkException.LxnsException.NotFound()
+                }
+
+                is WebClientResponseException.TooManyRequests -> {
+                    throw NetworkException.LxnsException.TooManyRequests()
+                }
+
+                is WebClientResponseException.ServiceUnavailable -> {
+                    throw NetworkException.LxnsException.ServiceUnavailable()
+                }
+
+                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                    throw NetworkException.LxnsException.GatewayTimeout()
+                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
+                    throw NetworkException.LxnsException.RequestTimeout()
+                } else {
+                    log.error("落雪咖啡屋：获取失败", e)
+                    throw NetworkException.LxnsException.Undefined(e)
+                }
+            }
         }
     }
 

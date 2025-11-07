@@ -18,6 +18,8 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
+import io.netty.channel.unix.Errors
+import io.netty.handler.timeout.ReadTimeoutException
 import okhttp3.internal.toImmutableList
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -1122,7 +1124,13 @@ class BeatmapApiImpl(
                     throw NetworkException.BeatmapException.ServiceUnavailable()
                 }
 
-                else -> throw NetworkException.BeatmapException(e.message)
+                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                    throw NetworkException.BeatmapException.GatewayTimeout()
+                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
+                    throw NetworkException.BeatmapException.RequestTimeout()
+                } else {
+                    throw NetworkException.BeatmapException.Undefined(e)
+                }
             }
         }
     }

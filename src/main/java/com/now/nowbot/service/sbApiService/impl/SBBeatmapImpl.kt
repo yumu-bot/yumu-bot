@@ -5,7 +5,10 @@ import com.now.nowbot.model.ppysb.SBBeatmap
 import com.now.nowbot.service.sbApiService.SBBeatmapApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
+import io.netty.channel.unix.Errors
+import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -66,7 +69,13 @@ class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
                     throw NetworkException.BeatmapException.ServiceUnavailable()
                 }
 
-                else -> throw NetworkException.BeatmapException(e.message)
+                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                    throw NetworkException.BeatmapException.GatewayTimeout()
+                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
+                    throw NetworkException.BeatmapException.RequestTimeout()
+                } else {
+                    throw NetworkException.BeatmapException.Undefined(e)
+                }
             }
         }
     }

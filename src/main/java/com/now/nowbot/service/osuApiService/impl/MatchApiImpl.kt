@@ -9,6 +9,8 @@ import com.now.nowbot.model.multiplayer.RoomLeaderBoard
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
+import io.netty.channel.unix.Errors
+import io.netty.handler.timeout.ReadTimeoutException
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientException
@@ -156,7 +158,13 @@ class MatchApiImpl(
                     throw NetworkException.MatchException.ServiceUnavailable()
                 }
 
-                else -> throw NetworkException.MatchException(e.message)
+                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                    throw NetworkException.MatchException.GatewayTimeout()
+                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
+                    throw NetworkException.MatchException.RequestTimeout()
+                } else {
+                    throw NetworkException.MatchException.Undefined(e)
+                }
             }
         }
     }
