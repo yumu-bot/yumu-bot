@@ -303,7 +303,7 @@ import java.util.regex.Matcher
                 songs = listOf(),
                 scores = split.first,
                 cabinet = MaiCabinet.ANY,
-                statistics = MaiScoreStatistics.getStatistics(filteredScores),
+                statistics = MaiScoreStatistics.getStatistics(filteredScores, split.first),
                 page = split.second,
                 maxPage = split.third
             )
