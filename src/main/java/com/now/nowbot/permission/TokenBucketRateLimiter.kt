@@ -14,6 +14,9 @@ class TokenBucketRateLimiter(
     private val tokens = ConcurrentHashMap<String, Double>()
     private val lastRefill = ConcurrentHashMap<String, Instant>()
 
+    /**
+     * 使用一次免费次数（91 并感）。如果没令牌可用则抛出错误
+     */
     @Throws(PermissionException.TokenBucketException.OutOfToken::class)
     fun checkOrThrow(service: String, userID: Long? = null) {
         val tokenKey = if (userID != null) {

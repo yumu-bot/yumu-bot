@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.maimai.MaiSong
+import com.now.nowbot.permission.TokenBucketRateLimiter
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.lxnsApiService.LxMaiApiService
@@ -16,6 +17,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 @Service("MAI_AUDIO")
 class MaiAudioService(
@@ -40,7 +43,7 @@ class MaiAudioService(
 
             if (last != null) {
                 val song = lxMaiApiService.getLxMaiSong(
-                    convertToLxMaiSongID(last.toInt())
+                    convertToLxMaiSongID(last)
                 )?.toMaiSong() ?: throw NoSuchElementException.Song(last)
 
                 data.value = MaiFindService.MaiFindParam(
@@ -58,6 +61,8 @@ class MaiAudioService(
         event: MessageEvent,
         param: MaiFindService.MaiFindParam
     ): ServiceCallStatistic? {
+        tokenBucketRateLimiter.checkOrThrow("MAI_AUDIO", event.subject.id)
+
         val first = param.songs.map { it.songID }.first()
 
         val voice = try {
@@ -84,6 +89,8 @@ class MaiAudioService(
     }
 
     companion object {
+        private val tokenBucketRateLimiter = TokenBucketRateLimiter(3, 30.toDuration(DurationUnit.MINUTES))
+
         private fun getVoiceInfo(songs: List<MaiSong>): String {
             if (songs.isEmpty()) return "没有需要播放的舞萌歌曲。"
 
