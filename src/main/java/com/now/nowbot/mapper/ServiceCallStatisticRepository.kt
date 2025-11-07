@@ -90,4 +90,38 @@ interface ServiceCallStatisticRepository : JpaRepository<ServiceCallStatistic, L
     ) fun getLastAvailableBeatmapsetIDByGroup(
         group: Long, from: LocalDateTime, to: LocalDateTime
     ): Long?
+
+
+    @Query(
+        value = """
+            SELECT (param -> 'mais' ->> 0)::bigint as first_bid
+            FROM service_call_stat
+            WHERE group_id = :group AND time BETWEEN :from AND :to
+                AND jsonb_exists(param, 'mais')
+                AND jsonb_typeof(param -> 'mais') = 'array'
+                AND jsonb_array_length(param -> 'mais') > 0
+                AND param -> 'mais' -> 0 IS NOT NULL
+                ORDER BY CASE WHEN jsonb_array_length(param -> 'mais') = 1 THEN 0 ELSE 1 END ASC, time DESC
+            LIMIT 1;
+        """, nativeQuery = true
+    ) fun getLastAvailableMaiSongIDByGroup(
+        group: Long, from: LocalDateTime, to: LocalDateTime
+    ): Long?
+
+    @Query(
+        value = """
+            SELECT (param -> 'mais' ->> 0)::bigint as first_sid
+            FROM service_call_stat
+            WHERE group_id = :group AND time BETWEEN :from AND :to
+                AND name = :name
+                AND jsonb_exists(param, 'mais')
+                AND jsonb_typeof(param -> 'mais') = 'array'
+                AND jsonb_array_length(param -> 'mais') > 0
+                AND param -> 'mais' -> 0 IS NOT NULL
+                ORDER BY CASE WHEN jsonb_array_length(param -> 'mais') = 1 THEN 0 ELSE 1 END ASC, time DESC
+            LIMIT 1;
+        """, nativeQuery = true
+    ) fun getLastAvailableMaiSongIDByGroupAndName(
+        group: Long, name: String, from: LocalDateTime, to: LocalDateTime
+    ): Long?
 }

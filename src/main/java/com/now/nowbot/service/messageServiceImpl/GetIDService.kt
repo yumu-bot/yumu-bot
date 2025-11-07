@@ -61,12 +61,12 @@ class GetIDService(private val userApiService: OsuUserApiService, private val bi
             }
         }
 
-        val ids = AsyncMethodExecutor.awaitCallableExecute(actions)
+        val ids = AsyncMethodExecutor.awaitBatchCallableExecute(actions)
             .filter { it.second > 0L }
             .toMap()
 
         param.forEach {
-            val id = ids[it]
+            val id = ids[it] ?: -1
 
             sb.append(id).append(',')
         }

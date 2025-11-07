@@ -6,7 +6,6 @@ import com.now.nowbot.model.maimai.LxMaiSong
 import com.now.nowbot.model.maimai.MaiAlias
 import com.now.nowbot.model.maimai.MaiSong
 import com.now.nowbot.service.lxnsApiService.LxMaiApiService
-import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil
@@ -21,6 +20,20 @@ import reactor.core.publisher.Mono
 
 @Service
 class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao): LxMaiApiService {
+
+    override fun getAudio(songID: Int): ByteArray {
+        return request { client ->
+            client.get()
+                .uri {
+                    it.host(base.assetHost ?: return@uri null)
+                        .path("maimai/music/${songID % 10000}.mp3")
+                        .build()
+                }
+                .headers(base::insertDeveloperHeader)
+                .retrieve()
+                .bodyToMono(ByteArray::class.java)
+        }
+    }
 
     override fun getLxMaiSongs(): List<LxMaiSong> {
         val node = request { client -> client.get()
@@ -61,8 +74,8 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
         log.info("舞萌: 落雪歌曲数据库已更新")
     }
 
-    override fun getLxMaiSong(songID: Long): LxMaiSong? {
-        val o = maiDao.findLxMaiSongByID(songID.toInt())
+    override fun getLxMaiSong(songID: Int): LxMaiSong? {
+        val o = maiDao.findLxMaiSongByID(songID)
         insertMaimaiAlias(o)
         return o
     }
@@ -85,7 +98,7 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
         val actions = songs.map {
             return@map AsyncMethodExecutor.Runnable {
                 it.aliases = getMaimaiAlias(it.songID)?.alias
-                it.alias = it.aliases?.minByOrNull { it.length }
+                it.alias = it.aliases?.minByOrNull { alias -> alias.length }
             }
         }
 
@@ -158,41 +171,6 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
     }
 
     companion object {
-
-        private inline fun <reified T> parse(node: JsonNode, field: String, name: String): T {
-            val success = node.get("success").asText("未知")
-
-            if (success != "true") {
-                throw TipsException("""
-                    获取${name}失败。
-                    失败代码：${node.get("code").asInt(-1)}
-                    失败原因：${node.get("message").asText("未知")}
-                    """.trimIndent()
-                )
-            } else try {
-                return JacksonUtil.parseObject(node[field]!!, T::class.java)
-            } catch (e : Exception) {
-                log.error("生成${name}失败。", e)
-                return T::class.objectInstance!!
-            }
-        }
-
-
-        private inline fun <reified T> parseList(node: JsonNode, field: String, name: String): List<T> {
-            val status = node.get("status").asText("未知")
-
-            if (status != "success") {
-                throw TipsException("获取${name}失败。失败提示：${status}")
-            } else try {
-                return JacksonUtil.parseObjectList(node[field], T::class.java)
-            } catch (e : Exception) {
-                log.error("生成${name}失败。", e)
-                return listOf()
-            }
-        }
-
         private val log: Logger = LoggerFactory.getLogger(LxMaiApiService::class.java)
-
     }
-
 }

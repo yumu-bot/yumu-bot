@@ -483,7 +483,7 @@ enum class Instruction(val pattern: Pattern) {
 
     EXPLORE(
         CommandPatternBuilder.create {
-            appendCommandsIgnoreAll("explore", "exp", "e", "find")
+            appendCommandsIgnoreAll("explore", "exp", "e", "find", "search")
             appendColonCaptureGroup(FLAG_TYPE, REG_ANYTHING_BUT_NO_SPACE, MORE)
             appendSpace()
             appendCaptureGroup(FLAG_ANY, REG_ANYTHING_BUT_NO_HASH, MORE)
@@ -502,13 +502,6 @@ enum class Instruction(val pattern: Pattern) {
             appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
         }
     ),
-
-    SEARCH(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("search", "o", "look(up)?")
-        appendColonCaptureGroup(FLAG_MODE, REG_BID_SID, prefixLevel = MAYBE)
-        appendSpace()
-        appendCaptureGroup(FLAG_TEXT, REG_ANYTHING, MORE)
-    }),
 
     RECOMMEND(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("recommend(ed)?", "rec", "e")
@@ -867,6 +860,15 @@ enum class Instruction(val pattern: Pattern) {
         appendQQ()
         appendNameAnyButNoHash()
         appendRange()
+    }),
+
+    MAI_AUDIO(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("mai(mai)?\\s*(audio)", "xa")
+        appendColonCaptureGroup(FLAG_DIFF, REG_ANYTHING_BUT_NO_SPACE, MORE)
+        appendSpace()
+        appendNameAnyButNoHash()
+        appendSpace()
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
     }),
 
     CHU_BP(CommandPatternBuilder.create {

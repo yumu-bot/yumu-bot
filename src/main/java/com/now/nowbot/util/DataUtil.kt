@@ -1210,6 +1210,70 @@ object DataUtil {
     }
 
     /**
+     * 升级版匹配器
+     *
+     * @param assignmentPattern 用于定位匹配的正则，一般就是运算符号（A=B的`=`），如果有其他定位方式，也需要写在这里
+     * @param endPattern 用于匹配部分特殊尾巴的正则，
+     * 举例：!mf v=spl 13，如果 endPattern 设为 null 而不是 REG_RANGE，此时 13 会被拼接到 spl 内。
+     */
+    fun getConditions(
+        input: String?,
+        regexes: List<Regex>,
+        assignmentPattern: String = REG_OPERATOR,
+        endPattern: String? = REG_RANGE,
+        separatorPattern: String = REG_SEPERATOR
+    ) : List<List<String>> {
+        if (input.isNullOrBlank()) return emptyList()
+
+        val result = List(regexes.size) { mutableListOf<String>() }
+        val combinedStrs = mutableListOf<String>()
+
+        // t = cycle hit d =home run artist= kai
+        // [t=cycle hit, d=home run, artist=kai]
+        val words = input.trim()
+            .replace("\\s*(${assignmentPattern})\\s*".toRegex()) { matchResult ->
+                matchResult.groupValues[1]  // 保留原始分隔符
+            }
+            .split("(\\s+(?=\\w+($assignmentPattern)))".toRegex())
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+
+        val lastWord = input.trim().split(separatorPattern.toRegex()).lastOrNull() ?: ""
+
+        if (endPattern != null && lastWord.matches(endPattern.toRegex())) {
+            val l = words.lastOrNull() ?: ""
+
+            if (words.size >= 2) {
+                combinedStrs.addAll(words.dropLast(1))
+            }
+
+            if (l.isNotEmpty() && !l.matches(endPattern.toRegex())) {
+                combinedStrs.add(l.replace("(.*${separatorPattern}\\S*)(\\s*${endPattern})".toRegex()) { matchResult ->
+                    matchResult.groupValues[1].trim()
+                })
+            }
+
+            combinedStrs.addLast(lastWord)
+        } else {
+            combinedStrs.addAll(words)
+        }
+
+
+        for (combined in combinedStrs) {
+            for (index in regexes.indices) {
+                val regex = regexes[index]
+
+                if (combined.matches(regex)) {
+                    result[index].add(combined)
+                    continue
+                }
+            }
+        }
+
+        return result
+    }
+
+    /**
      * 自己写的空格或逗号分隔的匹配器，这样子就可以无所谓匹配顺序了
      * @param regexes 正则表达式。注意，这里的正则需要写得越简洁越好，不然会有大量重复匹配。推荐写成 xxx=yyy 的形式
      * @param noContains 如果不填写，会自动按空格拼接不匹配此正则的字段。
@@ -1220,7 +1284,7 @@ object DataUtil {
     fun paramMatcher(str: String?, regexes: List<Regex>, noContains: Regex? = null, keepWhiteSpace: Boolean = false) : List<List<String>> {
         if (str == null) return emptyList()
 
-        val result = List(regexes.size) { emptyList<String>().toMutableList() }
+        val result = List(regexes.size) { mutableListOf<String>() }
         var matcher = ""
 
         val strs = str.trim().lowercase().split(REG_SEPERATOR.toRegex())

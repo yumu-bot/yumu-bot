@@ -323,6 +323,60 @@ object AsyncMethodExecutor {
         }
     }
 
+    /**
+     * 分批执行，避免 ppy API 限制
+     */
+    fun <T> awaitBatchCallableExecute(
+        works: List<Callable<out T>>,
+        batchSize: Int = 60,
+        latency: Duration = 60.toDuration(DurationUnit.SECONDS),
+        timeout: Duration = 30.toDuration(DurationUnit.SECONDS)
+    ): List<T> {
+        val batches = works.chunked(batchSize)
+        val allResults = mutableListOf<T>()
+
+        ShutdownOnFailure().use { scope ->
+            val batchFutures = batches.mapIndexed { batchIndex, batch ->
+                scope.fork {
+                    // 批次间延迟（第一批不延迟）
+                    if (batchIndex > 0) {
+                        Thread.sleep(latency.inWholeMilliseconds)
+                    }
+
+                    // 处理当前批次
+                    val batchResults = processBatch(batch, timeout)
+                    batchResults
+                }
+            }
+
+            scope.join() // 等待所有批次完成
+            scope.throwIfFailed() // 如果有异常则抛出
+
+            // 收集所有结果
+            batchFutures.forEach { future ->
+                allResults.addAll(future.get())
+            }
+        }
+
+        return allResults
+    }
+
+    private fun <T> processBatch(
+        batch: List<Callable<out T>>,
+        timeout: Duration
+    ): List<T> {
+        return ShutdownOnFailure().use { innerScope ->
+            val futures = batch.map { work ->
+                innerScope.fork(work)
+            }
+
+            innerScope.joinUntil(Instant.now().plusMillis(timeout.inWholeMilliseconds))
+            innerScope.throwIfFailed()
+
+            futures.map { it.get() }
+        }
+    }
+
     /*
     fun <T> awaitCallableExecute(
         works: List<Callable<out T>>,

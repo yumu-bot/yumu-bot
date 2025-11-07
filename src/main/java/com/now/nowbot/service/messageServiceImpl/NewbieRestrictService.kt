@@ -30,7 +30,6 @@ import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.REG_HYPHEN
-import com.now.nowbot.util.command.REG_RANGE
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -132,7 +131,7 @@ class NewbieRestrictService(
 
                 range.setZeroToRange100()
 
-                val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, REG_RANGE.toRegex())
+                val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
                 val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
@@ -213,7 +212,7 @@ class NewbieRestrictService(
                 val range = getUserAndRangeWithBackoff(event, b, mode, isMyself, messageText, "bp")
                 range.setZeroToRange100()
 
-                val conditions = DataUtil.paramMatcher(any, ScoreFilter.entries.map { it.regex }, REG_RANGE.toRegex())
+                val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
                 val rangeInConditions = conditions.lastOrNull()?.firstOrNull()

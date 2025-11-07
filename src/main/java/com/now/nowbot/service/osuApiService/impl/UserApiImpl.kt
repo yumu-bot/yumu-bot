@@ -174,6 +174,28 @@ import java.util.regex.Pattern
         }
     }
 
+    override fun getOsuUsers(ids: List<Long>, mode: OsuMode, batchSize: Int, latencyMillis: Long): List<OsuUser> {
+        require(latencyMillis > 0) {
+            "延迟必须大于 0"
+        }
+
+        val actions = ids.map {
+            Callable {
+                try {
+                    it to getOsuUser(it)
+                } catch (_: Exception) {
+                    it to OsuUser(-1L)
+                }
+            }
+        }
+
+        val results = AsyncMethodExecutor.awaitBatchCallableExecute(actions)
+            .filter { it.second.userID > 0 }
+            .toMap()
+
+        return ids.map { results[it] ?: OsuUser(it) }
+    }
+
     override fun getOsuID(name: String): Long {
         val id = bindDao.getOsuID(name)
         if (id != null) {

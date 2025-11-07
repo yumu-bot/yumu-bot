@@ -12,6 +12,8 @@ class LxnsConfig {
      */
     var url: String? = "https://maimai.lxns.net"
 
+    var assetHost: String? = "assets2.lxns.net"
+
     /**
      * 开发者 token，自己申请
      */

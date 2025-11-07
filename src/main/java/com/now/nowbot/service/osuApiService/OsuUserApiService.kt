@@ -45,6 +45,8 @@ interface OsuUserApiService {
         return getOsuUser(id, OsuMode.DEFAULT)
     }
 
+    fun getOsuUsers(ids: List<Long>, mode: OsuMode, batchSize: Int = 90, latencyMillis: Long = 60000): List<OsuUser>
+
     fun getOsuID(name: String): Long
 
     /**

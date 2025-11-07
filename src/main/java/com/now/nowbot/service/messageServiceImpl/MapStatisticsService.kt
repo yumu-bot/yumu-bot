@@ -134,7 +134,7 @@ class MapStatisticsService(
     }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): MapParam {
-        val conditions = DataUtil.paramMatcher(matcher.group(FLAG_ANY), Filter.entries.map { it.regex })
+        val conditions = DataUtil.getConditions(matcher.group(FLAG_ANY), Filter.entries.map { it.regex })
 
         val id = getBid(matcher)
 

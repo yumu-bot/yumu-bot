@@ -76,6 +76,19 @@ import java.time.LocalDateTime
         }
     }
 
+    fun getLastMaiSongID(
+        groupID: Long,
+        name: String?,
+        from: LocalDateTime,
+        to: LocalDateTime = LocalDateTime.now()
+    ): Long? {
+        return if (name.isNullOrEmpty()) {
+            serviceCallStatisticRepository.getLastAvailableMaiSongIDByGroup(groupID, from, to)
+        } else {
+            serviceCallStatisticRepository.getLastAvailableMaiSongIDByGroupAndName(groupID, name, from, to)
+        }
+    }
+
 
     /*
 

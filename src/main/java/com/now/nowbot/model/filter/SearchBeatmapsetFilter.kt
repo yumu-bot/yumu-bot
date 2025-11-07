@@ -4,18 +4,7 @@ import com.now.nowbot.model.enums.Operator
 import com.now.nowbot.model.enums.Operator.Companion.getText
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.util.DataUtil
-import com.now.nowbot.util.command.LEVEL_MAYBE
-import com.now.nowbot.util.command.LEVEL_MORE
-import com.now.nowbot.util.command.REG_ANYTHING_BUT_NO_SPACE
-import com.now.nowbot.util.command.REG_COLON
-import com.now.nowbot.util.command.REG_MODE
-import com.now.nowbot.util.command.REG_NAME
-import com.now.nowbot.util.command.REG_NUMBER_DECIMAL
-import com.now.nowbot.util.command.REG_NUMBER_MORE
-import com.now.nowbot.util.command.REG_OPERATOR_WITH_SPACE
-import com.now.nowbot.util.command.REG_RANGE
-import com.now.nowbot.util.command.REG_SEPERATOR_NO_SPACE
-import com.now.nowbot.util.command.REG_STAR
+import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
 import kotlin.text.split
 
@@ -29,15 +18,15 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
     SID("((beatmap\\s*)?setid|sid|s|(谱面)?集编号)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
-    TITLE("(title|name|song|t|歌?曲名|歌曲|标题)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    TITLE("(title|name|song|t|歌?曲名|歌曲|标题)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING$LEVEL_MORE)".toRegex()),
 
-    ARTIST("(artist|singer|art|f?a|艺术家|曲师?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    ARTIST("(artist|singer|art|f?a|艺术家|曲师?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
 
-    SOURCE("(source|src|from|f|o|sc|来?源)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    SOURCE("(source|src|from|f|o|sc|来?源)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
 
-    ANY("(any(thing)?|y|任[何意]?(字段|文字)?|[字文])(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    ANY("(any(thing)?|y|任[何意]?(字段|文字)?|[字文])(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
 
-    DIFFICULTY("(difficulty|diff|d|难度名?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    DIFFICULTY("(difficulty|diff|d|难度名?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
 
     STAR("(star|rating|sr|r|星数?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_DECIMAL)$REG_STAR$LEVEL_MAYBE".toRegex()),
 
@@ -51,17 +40,17 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
     LENGTH("(length|drain|time|长度|l)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE($REG_COLON$REG_NUMBER_MORE)?)".toRegex()),
 
-    GENERAL("(general|bool(ean)?|常规?|总览?|布尔值?|值|e)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    GENERAL("(general|bool(ean)?|常规?|总览?|布尔值?|值|e)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
 
     MODE("(mode|模式?|m)(?<n>$REG_OPERATOR_WITH_SPACE$REG_MODE)".toRegex()),
 
-    CATEGORY("(type|category|status|类型?|[分种]类|状态?|v|z)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    CATEGORY("(type|category|status|类型?|[分种]类|状态?|v|z)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
 
-    GENRE("(genre|g|曲?风|风格|流派?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    GENRE("(genre|g|曲?风|风格|流派?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
 
-    LANGUAGE("(languages?|l|曲?风|风格|流派?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    LANGUAGE("(languages?|l|曲?风|风格|流派?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
 
-    RANK("(rank(ing)?|评[价级]?|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_BUT_NO_SPACE$LEVEL_MORE)".toRegex()),
+    RANK("(rank(ing)?|评[价级]?|k)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
 
     RANGE(REG_RANGE.toRegex());
 

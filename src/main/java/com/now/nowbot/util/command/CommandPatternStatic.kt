@@ -224,3 +224,5 @@ val REG_COVER: String = "[A-Za-z@12]"
 @Language("RegExp")
 val REG_2_USER: String = "$REG_USERNAME+\\s*($REG_SEPERATOR_NO_SPACE|\\s+vs\\s+)?\\s*$REG_USERNAME*"
 
+@Language("RegExp")
+val REG_ANYTHING_MORE: String = REG_ANYTHING + LEVEL_MORE

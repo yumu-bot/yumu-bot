@@ -29,7 +29,6 @@ import com.now.nowbot.util.OfficialInstruction
 import com.now.nowbot.util.command.FLAG_ANY
 import com.now.nowbot.util.command.FLAG_PAGE
 import com.now.nowbot.util.command.FLAG_TYPE
-import com.now.nowbot.util.command.REG_RANGE
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
 
@@ -201,7 +200,7 @@ class ExploreService(
             }
 
             BeatmapType.MOST_PLAYED -> {
-                val conditions = DataUtil.paramMatcher(any, MostPlayedBeatmapFilter.entries.map { it.regex }, REG_RANGE.toRegex())
+                val conditions = DataUtil.getConditions(any, MostPlayedBeatmapFilter.entries.map { it.regex })
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
                 val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
@@ -250,7 +249,7 @@ class ExploreService(
             }
 
             else -> {
-                val conditions = DataUtil.paramMatcher(any, BeatmapsetFilter.entries.map { it.regex }, REG_RANGE.toRegex())
+                val conditions = DataUtil.getConditions(any, BeatmapsetFilter.entries.map { it.regex })
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
                 val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
@@ -305,8 +304,7 @@ class ExploreService(
 
         val query: Map<String, Any>
 
-        val conditions = DataUtil.paramMatcher(any, SearchBeatmapsetFilter.entries.map { it.regex }, REG_RANGE.toRegex(),
-            keepWhiteSpace = true)
+        val conditions = DataUtil.getConditions(any, SearchBeatmapsetFilter.entries.map { it.regex })
 
         // 如果不加井号，则有时候范围会被匹配到这里来
         val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
@@ -336,6 +334,8 @@ class ExploreService(
     }
 
     companion object {
+        // private val log: Logger = LoggerFactory.getLogger(ExploreService::class.java)
+
         private fun List<Beatmapset>.sortBeatmapDiff(): List<Beatmapset> {
             if (this.isEmpty()) return this
 

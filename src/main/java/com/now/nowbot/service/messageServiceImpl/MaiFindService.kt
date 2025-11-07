@@ -50,7 +50,7 @@ import java.util.regex.Matcher
             return false
         }
 
-        data.value = getParam(matcher)
+        data.value = getParam(matcher, lxMaiApiService)
         return true
     }
 
@@ -66,82 +66,82 @@ import java.util.regex.Matcher
         }
     }
 
-    private fun getParam(matcher: Matcher): MaiFindParam {
-        val any: String = (matcher.group(FLAG_NAME) ?: "").trim()
-
-        val conditions = DataUtil.paramMatcher(any, MaiSongFilter.entries.map { it.regex }, MaiSongFilter.RANGE.regex)
-
-        val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
-        val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
-        val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
-
-        val songs: List<MaiSong>
-
-        val isRange = any.matches(REG_MAI_RANGE.toRegex())
-
-        if (!hasRangeInConditions && !hasCondition && !isRange && any.isNotEmpty()) {
-
-            val id4Song = if (any.matches(REG_NUMBER_15.toRegex())) {
-                lxMaiApiService.getLxMaiSong(any.toLong())?.toMaiSong()
-            } else null
-
-            // 编号搜歌模式
-            if (id4Song != null) {
-                songs = listOf(id4Song)
-            } else {
-                // 标题搜歌模式
-                val possibles = lxMaiApiService.getPossibleMaiSongs(
-                    DataUtil.getStandardisedString(any)
-                )
-                    .associateBy { it.title.getSimilarity(any) }
-                    .filter { it.key > 0.4 }
-                    .map { it.value }
-
-                songs = possibles.ifEmpty {
-                    // 外号模式
-                    lxMaiApiService.getMaiAliasSongs(any).ifEmpty {
-                        throw NoSuchElementException.ResultNotAccurate()
-                    }
-                }
-            }
-        } else {
-            // 常规模式
-            val all = lxMaiApiService.getMaiSongs()
-                .sortedByDescending {
-                    if (it.songID > 10000) {
-                        (it.songID % 10000) + 10000
-                    } else {
-                        it.songID
-                    }
-                }
-                .sortedByDescending { it.info.versionInt }
-
-            val difficulties = MaiDifficulty.getDifficulties(matcher.group(FLAG_DIFF))
-
-            val filteredSongs = if (hasCondition) {
-                MaiSongFilter.filterSongs(all, conditions, difficulties)
-            } else {
-                all
-            }
-
-            songs = if (hasRangeInConditions) {
-                fitSongInRange(rangeInConditions, filteredSongs, difficulties)
-            } else {
-                filteredSongs
-            }
-
-            if (songs.isEmpty()) {
-                throw NoSuchElementException.ResultNotAccurate()
-            }
-        }
-
-        val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: 1
-        val pages = DataUtil.splitPage(songs, page, maxPerPage = 48)
-
-        return MaiFindParam(pages.first, pages.second, pages.third, songs.size)
-    }
-
     companion object {
+        fun getParam(matcher: Matcher, lxMaiApiService: LxMaiApiService): MaiFindParam {
+            val any: String = (matcher.group(FLAG_NAME) ?: "").trim()
+
+            val conditions = DataUtil.getConditions(any, MaiSongFilter.entries.map { it.regex },
+                endPattern = MaiSongFilter.RANGE.regex.pattern)
+
+            val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
+            val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
+            val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
+
+            val songs: List<MaiSong>
+
+            val isRange = any.matches(REG_MAI_RANGE.toRegex())
+
+            if (!hasRangeInConditions && !hasCondition && !isRange && any.isNotEmpty()) {
+
+                val id4Song = if (any.matches(REG_NUMBER_15.toRegex())) {
+                    lxMaiApiService.getLxMaiSong(any.toInt())?.toMaiSong()
+                } else null
+
+                // 编号搜歌模式
+                if (id4Song != null) {
+                    songs = listOf(id4Song)
+                } else {
+                    // 标题搜歌模式
+                    val possibles = lxMaiApiService.getPossibleMaiSongs(
+                        DataUtil.getStandardisedString(any)
+                    )
+                        .associateBy { it.title.getSimilarity(any) }
+                        .filter { it.key > 0.4 }
+                        .map { it.value }
+
+                    songs = possibles.ifEmpty {
+                        // 外号模式
+                        lxMaiApiService.getMaiAliasSongs(any).ifEmpty {
+                            throw NoSuchElementException.ResultNotAccurate()
+                        }
+                    }
+                }
+            } else {
+                // 常规模式
+                val all = lxMaiApiService.getMaiSongs()
+                    .sortedByDescending {
+                        if (it.songID > 10000) {
+                            (it.songID % 10000) + 10000
+                        } else {
+                            it.songID
+                        }
+                    }
+                    .sortedByDescending { it.info.versionInt }
+
+                val difficulties = MaiDifficulty.getDifficulties(matcher.group(FLAG_DIFF))
+
+                val filteredSongs = if (hasCondition) {
+                    MaiSongFilter.filterSongs(all, conditions, difficulties)
+                } else {
+                    all
+                }
+
+                songs = if (hasRangeInConditions) {
+                    fitSongInRange(rangeInConditions, filteredSongs, difficulties)
+                } else {
+                    filteredSongs
+                }
+
+                if (songs.isEmpty()) {
+                    throw NoSuchElementException.ResultNotAccurate()
+                }
+            }
+
+            val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: 1
+            val pages = DataUtil.splitPage(songs, page, maxPerPage = 48)
+
+            return MaiFindParam(pages.first, pages.second, pages.third, songs.size)
+        }
 
         private fun String?.getSimilarity(other: String?): Double {
             return DataUtil.getStringSimilarity(other, this)

@@ -28,15 +28,17 @@ import java.util.regex.Matcher
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
     data class MaiScoreStatistics(
         val count: Int,
+        val pageRating: Int,
         val totalRating: Int,
         val averageRating: Double,
         val averageAchievement: Double,
         val averageStar: Double,
     ) {
         companion object {
-            fun getStatistics(scores: List<MaiScore>): MaiScoreStatistics {
+            fun getStatistics(scores: List<MaiScore>, thisPageScores: List<MaiScore> = scores): MaiScoreStatistics {
                 return MaiScoreStatistics(
                     count = scores.size,
+                    pageRating = thisPageScores.sumOf { it.rating },
                     totalRating = scores.sumOf { it.rating },
                     averageRating = scores.map { it.rating }.average(),
                     averageAchievement = scores.map { it.achievements }.average(),
@@ -103,10 +105,15 @@ import java.util.regex.Matcher
 
         event.reply(image)
 
-
         return ServiceCallStatistic.building(event) {
+            val mais = if (param.songs.isNotEmpty()) {
+                param.songs.map { it.songID }.distinct()
+            } else {
+                param.scores.map { it.songID }.distinct()
+            }
+
             setParam(mapOf(
-                "mais" to param.songs.map { it.songID }
+                "mais" to mais
             ))
         }
     }
@@ -117,7 +124,8 @@ import java.util.regex.Matcher
 
         val full: MaiBestScore
 
-        val conditions = DataUtil.paramMatcher(any, MaiScoreFilter.entries.map { it.regex }, MaiScoreFilter.RANGE.regex)
+        val conditions = DataUtil.getConditions(any, MaiScoreFilter.entries.map { it.regex },
+            endPattern = MaiScoreFilter.RANGE.regex.pattern)
 
         val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
         val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
