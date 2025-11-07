@@ -58,5 +58,10 @@ interface ChuSongLiteRepository : JpaRepository<ChuSongLite, Int> {
 interface ChuChartLiteRepository : JpaRepository<ChuChartLite, Int>
 
 interface LxMaiSongLiteRepository : JpaRepository<LxMaiSongLite, Int> {
+
+    // 使用 JOIN FETCH 同时加载 difficulties
+    @Query("SELECT m FROM LxMaiSongLite m LEFT JOIN FETCH m.difficulties WHERE m.songID = :songID")
+    fun findBySongID(songID: Int): LxMaiSongLite?
+
     fun findByQueryTitleLikeIgnoreCase(queryTitle: String): List<LxMaiSongLite>?
 }

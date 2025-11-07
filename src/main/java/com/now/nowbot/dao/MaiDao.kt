@@ -98,7 +98,7 @@ class MaiDao(
     }
 
     fun findLxMaiSongByID(songID: Int): LxMaiSong? {
-        return lxMaiSongLiteRepository.findById(songID).getOrNull()?.toModel()
+        return lxMaiSongLiteRepository.findBySongID(songID)?.toModel()
     }
 
     fun findLxMaiSongByTitle(title: String): List<LxMaiSong> {
