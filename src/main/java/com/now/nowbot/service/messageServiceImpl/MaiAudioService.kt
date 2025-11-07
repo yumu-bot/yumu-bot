@@ -62,6 +62,14 @@ class MaiAudioService(
 
         val first = param.songs.map { it.songID }.first()
 
+
+        try {
+            event.reply(getVoiceInfo(param.songs))
+        } catch (e: Exception) {
+            log.error("舞萌试听：发送信息失败", e)
+            throw IllegalStateException.Send("舞萌试听信息")
+        }
+
         val voice = try {
             lxMaiApiService.getAudio(first)
         } catch (e: Exception) {
@@ -70,12 +78,10 @@ class MaiAudioService(
         }
 
         try {
-            event.reply(getVoiceInfo(param.songs))
-
             event.replyVoice(voice)
         } catch (e: Exception) {
-            log.error("舞萌试听：发送失败", e)
-            throw IllegalStateException.Send("舞萌试听")
+            log.error("舞萌试听：发送歌曲失败", e)
+            throw IllegalStateException.Send("舞萌试听歌曲")
         }
 
         return ServiceCallStatistic.building(event) {
