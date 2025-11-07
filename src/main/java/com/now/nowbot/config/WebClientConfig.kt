@@ -51,8 +51,6 @@ import java.time.Duration
                 }
                 it.type(type).host(config.proxyHost).port(config.proxyPort)
             }
-
-             */
             .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs { clientDefaultCodecsConfigurer: ClientCodecConfigurer ->
