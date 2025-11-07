@@ -8,7 +8,6 @@ import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
-import java.util.stream.Collectors
 
 // 完全版本的 beatmapset
 enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
@@ -135,27 +134,31 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                 ARTIST -> fit(operator, s.artist, str) || fit(operator, s.artistUnicode, str)
                 SOURCE -> fit(operator, s.source, str)
                 TAG -> {
-                    // O(n2)操作，使用并行流
-                    val ts = s.tags
-                        .split("\\s+".toRegex())
-                        .dropWhile { it.isEmpty() }
-                        .parallelStream()
-                        .map { fit(operator, it.replace("_", ""), str) }
-                        .collect(Collectors.toCollection(::HashSet))
-                    return ts.contains(element = true)
+                    if (s.tags.isBlank()) {
+                        return false
+                    }
+
+                    // 使用并行流
+                    return s.tags.split("\\s+".toRegex())
+                        .filter { tag -> tag.isNotEmpty() }
+                        .map { tag -> if (tag.contains('_')) tag.replace("_", "") else tag }
+                        .parallelStream()  // 并行处理
+                        .anyMatch { tag ->
+                            fit(operator, tag, str)
+                        }
                 }
                 
                 ANY -> {
-                    // O(n2)操作，使用并行流
-                    val ts = s.tags
-                        .split("\\s+".toRegex())
-                        .dropWhile { it.isEmpty() }
-                        .parallelStream()
-                        .map { fit(operator, it.replace("_", ""), str) }
-                        .collect(Collectors.toCollection(::HashSet))
+                    // 使用并行流
+                    val ts = s.tags.split("\\s+".toRegex())
+                        .filter { tag -> tag.isNotEmpty() }
+                        .map { tag -> if (tag.contains('_')) tag.replace("_", "") else tag }
+                        .parallelStream()  // 并行处理
+                        .anyMatch { tag ->
+                            fit(operator, tag, str)
+                        }
 
-                    fit(operator, s.title, str) || fit(operator, s.titleUnicode, str) || fit(operator, s.artist, str) || fit(operator, s.artistUnicode, str) || fit(operator, s.source, str) 
-                            || ts.contains(element = true)
+                    ts || fit(operator, s.title, str) || fit(operator, s.titleUnicode, str) || fit(operator, s.artist, str) || fit(operator, s.artistUnicode, str) || fit(operator, s.source, str)
                 }
                 GENRE -> fit(operator, s.genreID.toInt(), DataUtil.getGenre(str)?.toInt() ?: return false)
                 LANGUAGE -> fit(operator, s.languageID.toInt(), DataUtil.getLanguage(str)?.toInt() ?: return false)

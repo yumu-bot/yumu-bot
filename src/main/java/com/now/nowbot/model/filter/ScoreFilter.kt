@@ -15,7 +15,6 @@ import java.time.Period
 import java.time.YearMonth
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
-import java.util.stream.Collectors
 import kotlin.math.*
 import kotlin.time.Duration
 
@@ -303,31 +302,31 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                         return false
                     }
 
-                    // O(n2)操作，使用并行流
-                    val ts = it.beatmapset.tags
-                        .split("\\s+".toRegex())
-                        .dropWhile { it.isEmpty() }
-                        .parallelStream()
-                        .map { fit(operator, it.replace("_", ""), str) }
-                        .collect(Collectors.toCollection(::HashSet))
-                    return ts.contains(element = true)
+                    // 使用并行流
+                    return it.beatmapset.tags.split("\\s+".toRegex())
+                        .filter { tag -> tag.isNotEmpty() }
+                        .map { tag -> if (tag.contains('_')) tag.replace("_", "") else tag }
+                        .parallelStream()  // 并行处理
+                        .anyMatch { tag ->
+                            fit(operator, tag, str)
+                        }
                 }
 
                 ANY -> {
-                    // O(n2)操作，使用并行流
-                    val ts = it.beatmapset.tags
-                        .split("\\s+".toRegex())
-                        .dropWhile { it.isEmpty() }
-                        .parallelStream()
-                        .map { fit(operator, it.replace("_", ""), str) }
-                        .collect(Collectors.toCollection(::HashSet))
+                    // 使用并行流
+                    val ts = it.beatmapset.tags.split("\\s+".toRegex())
+                        .filter { tag -> tag.isNotEmpty() }
+                        .map { tag -> if (tag.contains('_')) tag.replace("_", "") else tag }
+                        .parallelStream()  // 并行处理
+                        .anyMatch { tag ->
+                            fit(operator, tag, str)
+                        }
 
-                    fit(operator, it.beatmapset.title, str)
+                    ts || fit(operator, it.beatmapset.title, str)
                             || fit(operator, it.beatmapset.titleUnicode, str)
                             || fit(operator, it.beatmapset.artist, str)
                             || fit(operator, it.beatmapset.artistUnicode, str)
                             || fit(operator, it.beatmapset.source, str)
-                            || ts.contains(element = true)
                 }
 
                 GENRE -> fit(operator, it.beatmapset.genreID.toInt(), DataUtil.getGenre(str)?.toInt() ?: return false)
