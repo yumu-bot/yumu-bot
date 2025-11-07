@@ -7,7 +7,6 @@ import com.now.nowbot.permission.TokenBucketRateLimiter
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.lxnsApiService.LxMaiApiService
-import com.now.nowbot.service.lxnsApiService.LxMaiApiService.Companion.convertToLxMaiSongID
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
@@ -42,9 +41,7 @@ class MaiAudioService(
             val last = dao.getLastMaiSongID(event.subject.id, null, LocalDateTime.now().minusHours(24))
 
             if (last != null) {
-                val song = lxMaiApiService.getLxMaiSong(
-                    convertToLxMaiSongID(last)
-                )?.toMaiSong() ?: throw NoSuchElementException.Song(last)
+                val song = lxMaiApiService.getMaiSong(last.toInt()) ?: throw NoSuchElementException.Song(last)
 
                 data.value = MaiFindService.MaiFindParam(
                     listOf(song), 1, 1, 1

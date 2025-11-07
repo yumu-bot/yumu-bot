@@ -52,6 +52,12 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
         return JacksonUtil.parseObjectList(node["songs"]!!, LxMaiSong::class.java)
     }
 
+    override fun getMaiSong(songID: Int): MaiSong? {
+        val convertedID = LxMaiApiService.convertToLxMaiSongID(songID)
+
+        return getLxMaiSong(convertedID)?.toMaiSong()
+    }
+
     override fun getMaiSongs(): List<MaiSong> {
         val list = getLxMaiSongs()
 
@@ -78,7 +84,9 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
     }
 
     override fun getLxMaiSong(songID: Int): LxMaiSong? {
-        val o = maiDao.findLxMaiSongByID(songID)
+        val convertedID = LxMaiApiService.convertToLxMaiSongID(songID)
+
+        val o = maiDao.findLxMaiSongByID(convertedID)
         insertMaimaiAlias(o)
         return o
     }
@@ -203,5 +211,7 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(LxMaiApiService::class.java)
+
+
     }
 }

@@ -84,9 +84,7 @@ import java.util.regex.Matcher
             if (!hasRangeInConditions && !hasCondition && !isRange && any.isNotEmpty()) {
 
                 val id4Song = if (any.matches(REG_NUMBER_15.toRegex())) {
-                    lxMaiApiService.getLxMaiSong(
-                        LxMaiApiService.convertToLxMaiSongID(any)
-                    )?.toMaiSong()
+                    lxMaiApiService.getMaiSong(any.toInt())
                 } else null
 
                 // 编号搜歌模式
