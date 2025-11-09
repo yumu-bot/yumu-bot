@@ -70,7 +70,7 @@ class SBSetModeService (
 
         val user = try {
             bindDao.getSBBindFromQQ(-event.sender.id, true)
-        } catch (e: BindException) {
+        } catch (_: BindException) {
             val sbUser = userApiService.getUser(-event.sender.id) ?: throw NoSuchElementException.Player()
             val bindUser = SBBindUser(sbUser)
 
@@ -94,26 +94,49 @@ class SBSetModeService (
 
         val info = if (mode == OsuMode.DEFAULT) {
             if (user.mode.isDefault()) {
-                throw TipsException("你没有已绑定的游戏模式。\n请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) / 4(osu relax) / 5(taiko relax) / 6(catch relax) / 8(osu autopilot) 来修改绑定的游戏模式。")
+                throw TipsException("""
+                    你没有已绑定的游戏模式。
+                    请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania) / 4(osu relax) / 5(taiko relax) / 6(catch relax) / 8(osu autopilot) 
+                    来修改绑定的游戏模式。
+                    """.trimIndent())
             } else {
-                if (predeterminedMode.isDefault()) {
-                    "已移除绑定的游戏模式 ${user.mode.fullName}。"
-                } else {
-                    "已移除绑定的游戏模式 ${user.mode.fullName}。\n当前群聊绑定的游戏模式为：${predeterminedMode.fullName}。"
+                if (predeterminedMode.isDefault()) { """
+                    已移除绑定的游戏模式 ${user.mode.fullName}。
+                    注意，移除绑定模式后，将无法统计您的每日数据，影响部分功能使用。
+                    """.trimIndent()
+                } else { """
+                    已移除绑定的游戏模式 ${user.mode.fullName}。
+                    注意，移除绑定模式后，将无法统计您的每日数据，影响部分功能使用。
+                    
+                    当前群聊有绑定游戏模式，但对私服无效。
+                    """.trimIndent()
                 }
             }
             // return MessageChain("未知的游戏模式。请输入 0(osu) / 1(taiko) / 2(catch) / 3(mania)")
         } else if (mode.isEqualOrDefault(user.mode)) {
-            if (predeterminedMode.isDefault()) {
-                "已将绑定的游戏模式修改为：${mode.fullName}。"
-            } else {
-                "已将绑定的游戏模式修改为：${mode.fullName}。\n当前群聊绑定的游戏模式为：${predeterminedMode.fullName}。"
+            if (predeterminedMode.isDefault()) { """
+                已将绑定的游戏模式修改为：${mode.fullName}。
+                
+                当前群聊没有绑定游戏模式。
+                您在这个群聊查询时，会默认返回 ${mode.fullName} 模式下的结果。
+                """.trimIndent()
+            } else { """
+                已将绑定的游戏模式修改为：${mode.fullName}。
+                
+                当前群聊有绑定游戏模式，但对私服无效。
+                因此，您在这个群聊查询时，会默认返回 ${mode.fullName} 模式下的结果。
+                """.trimIndent()
             }
         } else {
-            if (predeterminedMode.isDefault()) {
-                "已将绑定的游戏模式 ${user.mode.fullName} 修改为：${mode.fullName}。"
-            } else {
-                "已将绑定的游戏模式 ${user.mode.fullName} 修改为：${mode.fullName}。\n当前群聊绑定的游戏模式为：${predeterminedMode.fullName}。"
+            if (predeterminedMode.isDefault()) { """
+                已将绑定的游戏模式 ${user.mode.fullName} 修改为：${mode.fullName}。
+                """.trimIndent()
+            } else { """
+                已将绑定的游戏模式 ${user.mode.fullName} 修改为：${mode.fullName}。
+                
+                当前群聊有绑定游戏模式，但对私服无效。
+                因此，您在这个群聊查询时，会默认返回 ${predeterminedMode.fullName} 模式下的结果。
+                """.trimIndent()
             }
         }
 
