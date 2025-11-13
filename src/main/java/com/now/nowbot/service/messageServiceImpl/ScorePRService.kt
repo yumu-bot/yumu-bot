@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
@@ -42,6 +43,7 @@ class ScorePRService(
     private val scoreApiService: OsuScoreApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
+    private val bindDao: BindDao
 ) : MessageService<ScorePRParam>, TencentMessageService<ScorePRParam> {
 
     data class ScorePRParam(val user: OsuUser, val scores: Map<Int, LazerScore>, val isPass: Boolean = false, val isShow: Boolean = false)
@@ -340,10 +342,20 @@ class ScorePRService(
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
+            val name = bindDao.getUserName(this.data!!)
+
             if (isPass) {
-                throw NoSuchElementException.PassedScore(this.data!!.toString(), mode)
+                if (offset > 0) {
+                    throw NoSuchElementException.PassedScoreWithOffset(name, mode, offset)
+                } else {
+                    throw NoSuchElementException.PassedScore(name, mode)
+                }
             } else {
-                throw NoSuchElementException.RecentScore(this.data!!.toString(), mode)
+                if (offset > 0) {
+                    throw NoSuchElementException.RecentScoreWithOffset(name, mode, offset)
+                } else {
+                    throw NoSuchElementException.RecentScore(name, mode)
+                }
             }
         }
 
@@ -381,10 +393,21 @@ class ScorePRService(
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
+            val name = data!!.username
+            val mode = data!!.currentOsuMode
+
             if (isPass) {
-                throw NoSuchElementException.PassedScore(data!!.username, data!!.currentOsuMode)
+                if (offset > 0) {
+                    throw NoSuchElementException.PassedScoreWithOffset(name, mode, offset)
+                } else {
+                    throw NoSuchElementException.PassedScore(name, mode)
+                }
             } else {
-                throw NoSuchElementException.RecentScore(data!!.username, data!!.currentOsuMode)
+                if (offset > 0) {
+                    throw NoSuchElementException.RecentScoreWithOffset(name, mode, offset)
+                } else {
+                    throw NoSuchElementException.RecentScore(name, mode)
+                }
             }
         }
 

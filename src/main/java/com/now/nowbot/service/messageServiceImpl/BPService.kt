@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
@@ -38,6 +39,7 @@ import java.util.regex.Matcher
     private val beatmapApiService: OsuBeatmapApiService,
     private val scoreApiService: OsuScoreApiService,
     private val imageService: ImageService,
+    private val bindDao: BindDao,
 ) : MessageService<BPParam>, TencentMessageService<BPParam> {
 
     data class BPParam(val user: OsuUser, val scores: Map<Int, LazerScore>, val isShow: Boolean)
@@ -254,7 +256,13 @@ import java.util.regex.Matcher
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
-            throw NoSuchElementException.BestScoreWithMode(this.data!!.toString(), mode)
+            val name = bindDao.getUserName(this.data!!)
+
+            if (offset > 0) {
+                throw NoSuchElementException.BestScoreWithModeAndOffset(name, mode, offset)
+            } else {
+                throw NoSuchElementException.BestScoreWithMode(name, mode)
+            }
         }
 
         calculateApiService.applyStarToScores(scores)
@@ -273,11 +281,17 @@ import java.util.regex.Matcher
         val offset: Int = o.first
         val limit: Int = o.second
 
-        val scores = scoreApiService.getBestScores(data!!.userID, mode, offset, limit)
+        val scores = scoreApiService.getBestScores(this.data!!.userID, mode, offset, limit)
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
-            throw NoSuchElementException.BestScoreWithMode(this.data!!.username, mode)
+            val name = this.data!!.username
+
+            if (offset > 0) {
+                throw NoSuchElementException.BestScoreWithModeAndOffset(name, mode, offset)
+            } else {
+                throw NoSuchElementException.BestScoreWithMode(name, mode)
+            }
         }
 
         calculateApiService.applyStarToScores(scores)

@@ -413,12 +413,7 @@ class BindDao(
     }
 
     fun getOsuID(name: String): Long? {
-        return try {
-            osuFindNameMapper.getFirstByNameOrderByIndex(name.uppercase())?.userID
-        } catch (e: Exception) {
-            log.error("get data Error", e)
-            return null
-        }
+        return osuFindNameMapper.getFirstByNameOrderByIndex(name.uppercase())?.userID
     }
 
     fun removeNameToID(userID: Long) {
@@ -431,6 +426,13 @@ class BindDao(
             val x = OsuNameToIDLite(id, name[i], i)
             osuFindNameMapper.save(x)
         }
+    }
+
+    /**
+     * 通过 osuFindNameMapper 获取
+     */
+    fun getUserName(userID: Long): String {
+        return osuFindNameMapper.findById(userID).getOrNull()?.name ?: userID.toString()
     }
 
     fun countNameToID(userID: Long): Int {
@@ -452,14 +454,13 @@ class BindDao(
         }
     }
 
+    fun getSBUserName(userID: Long): String {
+        return sbFindNameMapper.findById(userID).getOrNull()?.name ?: userID.toString()
+    }
+
 
     fun getSBUserID(name: String): Long? {
-        return try {
-            sbFindNameMapper.getFirstByNameOrderByIndex(name.uppercase())?.userID
-        } catch (e: Exception) {
-            log.error("get data Error", e)
-            return null
-        }
+        return sbFindNameMapper.getFirstByNameOrderByIndex(name.uppercase())?.userID
     }
 
     fun removeSBNameToID(userID: Long) {

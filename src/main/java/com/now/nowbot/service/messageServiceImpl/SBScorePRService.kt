@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
@@ -37,6 +38,7 @@ class SBScorePRService(
 
     private val osuCalculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
+    private val bindDao: BindDao
 ): MessageService<ScorePRParam> {
 
     override fun isHandle(
@@ -254,10 +256,20 @@ class SBScorePRService(
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
+            val name = bindDao.getSBUserName(this.data!!)
+
             if (isPass) {
-                throw NoSuchElementException.PassedScore(this.data!!.toString(), mode)
+                if (offset > 0) {
+                    throw NoSuchElementException.PassedScoreWithOffset(name, mode, offset)
+                } else {
+                    throw NoSuchElementException.PassedScore(name, mode)
+                }
             } else {
-                throw NoSuchElementException.RecentScore(this.data!!.toString(), mode)
+                if (offset > 0) {
+                    throw NoSuchElementException.RecentScoreWithOffset(name, mode, offset)
+                } else {
+                    throw NoSuchElementException.RecentScore(name, mode)
+                }
             }
         }
 
@@ -301,10 +313,20 @@ class SBScorePRService(
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
+            val name = data!!.username
+
             if (isPass) {
-                throw NoSuchElementException.PassedScore(data!!.username, mode)
+                if (offset > 0) {
+                    throw NoSuchElementException.PassedScoreWithOffset(name, mode, offset)
+                } else {
+                    throw NoSuchElementException.PassedScore(name, mode)
+                }
             } else {
-                throw NoSuchElementException.RecentScore(data!!.username, mode)
+                if (offset > 0) {
+                    throw NoSuchElementException.RecentScoreWithOffset(name, mode, offset)
+                } else {
+                    throw NoSuchElementException.RecentScore(name, mode)
+                }
             }
         }
 

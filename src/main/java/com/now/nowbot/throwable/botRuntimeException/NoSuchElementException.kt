@@ -34,8 +34,11 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class BestScore(name: String):
         NoSuchElementException("无法获取玩家 $name 的最好成绩...")
 
-    class BestScoreWithMode(name: String, mode: OsuMode):
+    class BestScoreWithMode(name: Any, mode: OsuMode):
         NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 内的最好成绩...")
+
+    class BestScoreWithModeAndOffset(name: Any, mode: OsuMode, offset: Int):
+        NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 内，#$offset 之后的最好成绩...")
 
     class BestScoreFiltered(name: Any):
         NoSuchElementException("无法获取玩家 $name 符合条件的最好成绩...")
@@ -84,6 +87,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
 
     class PassedScore(name: String, mode: OsuMode):
         NoSuchElementException("没有找到玩家 $name 在 ${mode.fullName} 模式内的最近通过成绩。")
+
+    class PassedScoreWithOffset(name: Any, mode: OsuMode, offset: Int):
+        NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 内，#$offset 之后的最近通过成绩...")
 
     class PassedScoreFiltered(name: String, mode: OsuMode):
         NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 模式内符合条件的最近通过成绩...")
@@ -144,6 +150,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
 
     class RecentScore(name: String, mode: OsuMode):
         NoSuchElementException("没有找到玩家 $name 在 ${mode.fullName} 模式内的最近成绩。")
+
+    class RecentScoreWithOffset(name: Any, mode: OsuMode, offset: Int):
+        NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 内，#$offset 之后的最近成绩...")
 
     class RecentScoreFiltered(name: String, mode: OsuMode):
         NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 模式内符合条件的最近成绩...")

@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.BindDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
@@ -43,6 +44,7 @@ class SBBPService(
     private val osuBeatmapApiService: OsuBeatmapApiService,
     private val osuScoreApiService: OsuScoreApiService,
     private val imageService: ImageService,
+    private val bindDao: BindDao,
 ) : MessageService<BPParam> {
     override fun isHandle(event: MessageEvent, messageText: String, data: MessageService.DataValue<BPParam>): Boolean {
         val matcher = Instruction.SB_BP.matcher(messageText)
@@ -240,7 +242,13 @@ class SBBPService(
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
-            throw NoSuchElementException.BestScoreWithMode(this.data!!.toString(), mode)
+            val name = bindDao.getSBUserName(this.data!!)
+
+            if (offset > 0) {
+                throw NoSuchElementException.BestScoreWithModeAndOffset(name, mode, offset)
+            } else {
+                throw NoSuchElementException.BestScoreWithMode(name, mode)
+            }
         }
 
         osuCalculateApiService.applyStarToScores(scores)
@@ -268,7 +276,13 @@ class SBBPService(
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
-            throw NoSuchElementException.BestScoreWithMode(this.data!!.username, mode)
+            val name = this.data!!.username
+
+            if (offset > 0) {
+                throw NoSuchElementException.BestScoreWithModeAndOffset(name, mode, offset)
+            } else {
+                throw NoSuchElementException.BestScoreWithMode(name, mode)
+            }
         }
 
         osuCalculateApiService.applyStarToScores(scores)
