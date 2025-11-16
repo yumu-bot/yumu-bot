@@ -115,7 +115,7 @@ public class NowbotConfig {
         return false;
     }
 
-    // @Bean
+    @Bean
     public JDA getDiscord(List<ListenerAdapter> listenerAdapters, NowbotConfig config, DiscordConfig discordConfig, ThreadPoolTaskExecutor botAsyncExecutor) {
         var discordService = new DiscordService(discordConfig, config, listenerAdapters, botAsyncExecutor);
 
@@ -150,7 +150,7 @@ public class NowbotConfig {
             command.delete().complete();
         }
         for (Method declaredMethod : BotWebApi.class.getDeclaredMethods()) {
-            OpenResource methodAnnotation = declaredMethod.getAnnotation(OpenResource.class);
+            DiscordParam methodAnnotation = declaredMethod.getAnnotation(DiscordParam.class);
             if (methodAnnotation == null) {
                 continue;
             }
@@ -158,7 +158,7 @@ public class NowbotConfig {
             SlashCommandData commandData =
                     Commands.slash((discordConfig.getCommandSuffix() + name).toLowerCase(), methodAnnotation.desp());
             for (Parameter parameter : declaredMethod.getParameters()) {
-                OpenResource parameterAnnotation = parameter.getAnnotation(OpenResource.class);
+                DiscordParam parameterAnnotation = parameter.getAnnotation(DiscordParam.class);
                 if (parameterAnnotation == null) {
                     continue;
                 }
@@ -173,7 +173,7 @@ public class NowbotConfig {
     }
 
     @NotNull
-    private static OptionData getOptionData(Parameter parameter, OpenResource parameterAnnotation) {
+    private static OptionData getOptionData(Parameter parameter, DiscordParam parameterAnnotation) {
         OptionType optionType;
         Class<?> type = parameter.getType();
         if (type.equals(int.class) || type.equals(Integer.class)) {

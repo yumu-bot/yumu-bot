@@ -2,7 +2,7 @@ package com.now.nowbot.controller
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.LoggerContext
-import com.now.nowbot.aop.OpenResource
+import com.now.nowbot.aop.DiscordParam
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.PPMinusDao
 import com.now.nowbot.model.enums.OsuMode
@@ -32,7 +32,6 @@ import org.springframework.lang.NonNull
 import org.springframework.lang.Nullable
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.nio.charset.StandardCharsets
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
@@ -61,11 +60,11 @@ import kotlin.math.min
      * @param playMode 模式，可为空
      * @return image PPM 图片
      */
-    @GetMapping(value = ["san"]) @OpenResource(name = "sn", desp = "查询玩家的 SAN") fun getSan(
-        @OpenResource(
-            name = "name", desp = "第一个玩家的名称", required = true
+    @GetMapping(value = ["san"]) @DiscordParam(name = "sn", description = "查询玩家的 SAN") fun getSan(
+        @DiscordParam(
+            name = "name", description = "第一个玩家的名称", required = true
         ) @RequestParam(value = "name") name: String,
-        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
     ): ResponseEntity<ByteArray> {
         val mode = getMode(playMode)
 
@@ -97,12 +96,12 @@ import kotlin.math.min
      * @param playMode 模式，可为空
      * @return image PPM 图片
      */
-    @GetMapping(value = ["ppm"]) @OpenResource(name = "pm", desp = "查询玩家的 PPM") fun getPPMinus(
-        @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam(
+    @GetMapping(value = ["ppm"]) @DiscordParam(name = "pm", description = "查询玩家的 PPM") fun getPPMinus(
+        @DiscordParam(name = "name", description = "第一个玩家的名称", required = true) @RequestParam(
             value = "name", required = true
         ) name: String,
-        @OpenResource(name = "name2", desp = "第二个玩家的名称") @Nullable @RequestParam("name2") name2: String? = null,
-        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String? = "osu",
+        @DiscordParam(name = "name2", description = "第二个玩家的名称") @Nullable @RequestParam("name2") name2: String? = null,
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String? = "osu",
         @RequestParam(value = "u1", required = false) u1: String? = null
     ): ResponseEntity<ByteArray> {
         if (!name2.isNullOrBlank()) {
@@ -126,7 +125,7 @@ import kotlin.math.min
                     "${name.trim()}-pm.jpg", data.size
                 ), HttpStatus.OK
             )
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw RuntimeException(IllegalStateException.Fetch("PPM4").message)
         }
     }
@@ -139,10 +138,10 @@ import kotlin.math.min
      * @param playMode 模式，可为空
      * @return image PPM 图片
      */
-    @GetMapping(value = ["ppm/vs"]) @OpenResource(name = "pv", desp = "比较玩家的 PPM") fun getPPMinusVS(
-        @OpenResource(name = "name", desp = "第一个玩家的名称", required = true) @RequestParam("name") name: String,
-        @OpenResource(name = "name2", desp = "第二个玩家的名称", required = true) @RequestParam("name2") name2: String,
-        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
+    @GetMapping(value = ["ppm/vs"]) @DiscordParam(name = "pv", description = "比较玩家的 PPM") fun getPPMinusVS(
+        @DiscordParam(name = "name", description = "第一个玩家的名称", required = true) @RequestParam("name") name: String,
+        @DiscordParam(name = "name2", description = "第二个玩家的名称", required = true) @RequestParam("name2") name2: String,
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
     ): ResponseEntity<ByteArray> {
         val mode = getMode(playMode)
 
@@ -161,7 +160,7 @@ import kotlin.math.min
                     "${name.trim()} vs ${name2.trim()}-pv.jpg", data.size
                 ), HttpStatus.OK
             )
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw RuntimeException(IllegalStateException.Fetch("PPM4").message)
         }
     }
@@ -176,21 +175,21 @@ import kotlin.math.min
      * @param r       是否保留重复对局，不传默认保留
      * @return image 比赛结果图片
      */
-    @GetMapping(value = ["match/now"]) @OpenResource(name = "mn", desp = "查询比赛结果")
+    @GetMapping(value = ["match/now"]) @DiscordParam(name = "mn", description = "查询比赛结果")
     @Throws(RuntimeException::class) fun getMatchNow(
-        @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") matchID: Int,
-        @OpenResource(name = "easy-multiplier", desp = "Easy 模组倍率") @Nullable e: Double?,
-        @OpenResource(name = "skip", desp = "跳过开头") @Nullable k: Int?,
-        @OpenResource(name = "ignore", desp = "忽略结尾") @Nullable d: Int?,
-        @OpenResource(name = "delete-low", desp = "删除低分成绩") @Nullable f: Boolean?,
-        @OpenResource(name = "keep-rematch", desp = "保留重复对局") @Nullable r: Boolean?
+        @DiscordParam(name = "matchid", description = "比赛编号", required = true) @RequestParam("id") matchID: Int,
+        @DiscordParam(name = "easy-multiplier", description = "Easy 模组倍率") @Nullable e: Double?,
+        @DiscordParam(name = "skip", description = "跳过开头") @Nullable k: Int?,
+        @DiscordParam(name = "ignore", description = "忽略结尾") @Nullable d: Int?,
+        @DiscordParam(name = "delete-low", description = "删除低分成绩") @Nullable f: Boolean?,
+        @DiscordParam(name = "keep-rematch", description = "保留重复对局") @Nullable r: Boolean?
     ): ResponseEntity<ByteArray> {
         val image: ByteArray
         val match: Match
 
         try {
             match = matchApiService.getMatch(matchID.toLong(), 10)
-        } catch (ex: NetworkException) {
+        } catch (_: NetworkException) {
             throw RuntimeException(IllegalArgumentException.WrongException.MatchID())
         }
 
@@ -223,20 +222,20 @@ import kotlin.math.min
      * @param r       是否保留重复对局，不传默认保留
      * @return image 评分图片
      */
-    @GetMapping(value = ["match/rating"]) @OpenResource(name = "ra", desp = "查询比赛评分") fun getRating(
-        @OpenResource(name = "matchid", desp = "比赛编号", required = true) @RequestParam("id") matchID: Int,
-        @OpenResource(name = "easy-multiplier", desp = "Easy 模组倍率") @Nullable e: Double?,
-        @OpenResource(name = "skip", desp = "跳过开头") @Nullable k: Int?,
-        @OpenResource(name = "ignore", desp = "忽略结尾") @Nullable d: Int?,
-        @OpenResource(name = "delete-low", desp = "删除低分成绩") @Nullable f: Boolean?,
-        @OpenResource(name = "keep-rematch", desp = "保留重复对局") @Nullable r: Boolean?
+    @GetMapping(value = ["match/rating"]) @DiscordParam(name = "ra", description = "查询比赛评分") fun getRating(
+        @DiscordParam(name = "matchid", description = "比赛编号", required = true) @RequestParam("id") matchID: Int,
+        @DiscordParam(name = "easy-multiplier", description = "Easy 模组倍率") @Nullable e: Double?,
+        @DiscordParam(name = "skip", description = "跳过开头") @Nullable k: Int?,
+        @DiscordParam(name = "ignore", description = "忽略结尾") @Nullable d: Int?,
+        @DiscordParam(name = "delete-low", description = "删除低分成绩") @Nullable f: Boolean?,
+        @DiscordParam(name = "keep-rematch", description = "保留重复对局") @Nullable r: Boolean?
     ): ResponseEntity<ByteArray> {
         val image: ByteArray
         val match: Match
 
         try {
             match = matchApiService.getMatch(matchID.toLong(), 10)
-        } catch (ex: WebClientResponseException) {
+        } catch (_: WebClientResponseException) {
             throw RuntimeException(IllegalArgumentException.WrongException.MatchID())
         }
 
@@ -345,7 +344,7 @@ import kotlin.math.min
                             osuUser, scores.first(), "B", beatmapApiService, calculateApiService
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         throw RuntimeException(
                             IllegalStateException.Render("最好成绩")
                         )
@@ -376,7 +375,7 @@ import kotlin.math.min
                             osuUser, scores.first(), "P", beatmapApiService, calculateApiService
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         throw RuntimeException(IllegalStateException.Render("通过成绩")
                         )
                     }
@@ -406,7 +405,7 @@ import kotlin.math.min
                             osuUser, scores.first(), "R", beatmapApiService, calculateApiService
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         throw RuntimeException(IllegalStateException.Render("最近成绩")
                         )
                     }
@@ -472,19 +471,19 @@ import kotlin.math.min
      * @param day      天数，不传默认一天内
      * @return image 今日最好成绩图片
      */
-    @GetMapping(value = ["bp/today"]) @OpenResource(name = "t", desp = "查询今日最好成绩") fun getTodayBP(
-        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
-        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @OpenResource(name = "day", desp = "天数") @Nullable @RequestParam("day") day: Int?
+    @GetMapping(value = ["bp/today"]) @DiscordParam(name = "t", description = "查询今日最好成绩") fun getTodayBP(
+        @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @DiscordParam(name = "day", description = "天数") @Nullable @RequestParam("day") day: Int?
     ): ResponseEntity<ByteArray> {
         return getScore(name, playMode, ScoreType.TodayBP, day, null)
     }
 
-    @GetMapping(value = ["bp/scores"]) @OpenResource(name = "bs", desp = "查询多个最好成绩") fun getBPScores(
-        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
-        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @OpenResource(name = "start", desp = "开始位置") @Nullable @RequestParam("start") start: Int?,
-        @OpenResource(name = "end", desp = "结束位置") @Nullable @RequestParam("end") end: Int?
+    @GetMapping(value = ["bp/scores"]) @DiscordParam(name = "bs", description = "查询多个最好成绩") fun getBPScores(
+        @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @DiscordParam(name = "start", description = "开始位置") @Nullable @RequestParam("start") start: Int?,
+        @DiscordParam(name = "end", description = "结束位置") @Nullable @RequestParam("end") end: Int?
     ): ResponseEntity<ByteArray> {
         return getScore(name, playMode, ScoreType.BP, start, end)
     }
@@ -498,11 +497,11 @@ import kotlin.math.min
      * @param end      结束位置，不传默认等于开始位置
      * @return image 多个最近通过成绩图片
      */
-    @GetMapping(value = ["score/passes"]) @OpenResource(name = "ps", desp = "查询多个最近通过成绩") fun getPassedScores(
-        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
-        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @OpenResource(name = "start", desp = "开始位置") @Nullable @RequestParam("start") start: Int?,
-        @OpenResource(name = "end", desp = "结束位置") @Nullable @RequestParam("end") end: Int?
+    @GetMapping(value = ["score/passes"]) @DiscordParam(name = "ps", description = "查询多个最近通过成绩") fun getPassedScores(
+        @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @DiscordParam(name = "start", description = "开始位置") @Nullable @RequestParam("start") start: Int?,
+        @DiscordParam(name = "end", description = "结束位置") @Nullable @RequestParam("end") end: Int?
     ): ResponseEntity<ByteArray> {
         return getScore(name, playMode, ScoreType.Pass, start, end)
     }
@@ -516,11 +515,11 @@ import kotlin.math.min
      * @param end      结束位置，不传默认等于开始位置
      * @return image 多个最近成绩图片
      */
-    @GetMapping(value = ["score/recents"]) @OpenResource(name = "rs", desp = "查询多个最近成绩") fun getRecentScores(
-        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
-        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @OpenResource(name = "start", desp = "开始位置") @Nullable @RequestParam("start") start: Int?,
-        @OpenResource(name = "end", desp = "结束位置") @Nullable @RequestParam("end") end: Int?
+    @GetMapping(value = ["score/recents"]) @DiscordParam(name = "rs", description = "查询多个最近成绩") fun getRecentScores(
+        @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @DiscordParam(name = "start", description = "开始位置") @Nullable @RequestParam("start") start: Int?,
+        @DiscordParam(name = "end", description = "结束位置") @Nullable @RequestParam("end") end: Int?
     ): ResponseEntity<ByteArray> {
         return getScore(name, playMode, ScoreType.Recent, start, end)
     }
@@ -533,10 +532,10 @@ import kotlin.math.min
      * @param start    开始位置，不传默认 1
      * @return image 最好成绩图片
      */
-    @GetMapping(value = ["bp"]) @OpenResource(name = "b", desp = "查询最好成绩") fun getBPScore(
-        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
-        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @OpenResource(name = "start", desp = "位置") @Nullable @RequestParam("start") start: Int?
+    @GetMapping(value = ["bp"]) @DiscordParam(name = "b", description = "查询最好成绩") fun getBPScore(
+        @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @DiscordParam(name = "start", description = "位置") @Nullable @RequestParam("start") start: Int?
     ): ResponseEntity<ByteArray> {
         return getScore(name, playMode, ScoreType.BP, start, null)
     }
@@ -549,10 +548,10 @@ import kotlin.math.min
      * @param start    开始位置，不传默认 1
      * @return image 最近通过成绩图片
      */
-    @GetMapping(value = ["score/pass"]) @OpenResource(name = "p", desp = "查询最近通过成绩") fun getPassedScore(
-        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
-        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @OpenResource(name = "start", desp = "位置") @Nullable @RequestParam("start") start: Int?
+    @GetMapping(value = ["score/pass"]) @DiscordParam(name = "p", description = "查询最近通过成绩") fun getPassedScore(
+        @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @DiscordParam(name = "start", description = "位置") @Nullable @RequestParam("start") start: Int?
     ): ResponseEntity<ByteArray> {
         return getScore(name, playMode, ScoreType.Pass, start, null)
     }
@@ -565,10 +564,10 @@ import kotlin.math.min
      * @param start    开始位置，不传默认 1
      * @return image 最近成绩图片
      */
-    @GetMapping(value = ["score/recent"]) @OpenResource(name = "r", desp = "查询最近成绩") fun getRecentScore(
-        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
-        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @OpenResource(name = "start", desp = "位置") @Nullable @RequestParam("start") start: Int?
+    @GetMapping(value = ["score/recent"]) @DiscordParam(name = "r", description = "查询最近成绩") fun getRecentScore(
+        @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @DiscordParam(name = "start", description = "位置") @Nullable @RequestParam("start") start: Int?
     ): ResponseEntity<ByteArray> {
         return getScore(name, playMode, ScoreType.Recent, start, null)
     }
@@ -582,11 +581,11 @@ import kotlin.math.min
      * @param mods     模组字符串，可为空
      * @return image 谱面成绩图片
      */
-    @GetMapping(value = ["score"]) @OpenResource(name = "s", desp = "查询玩家谱面成绩") fun getBeatMapScore(
-        @OpenResource(name = "name", desp = "玩家名称", required = true) @RequestParam("name") name: String,
-        @OpenResource(name = "bid", desp = "谱面编号", required = true) @RequestParam("bid") bid: Long,
-        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
-        @OpenResource(name = "mods", desp = "模组") @Nullable @RequestParam("mods") mods: String?
+    @GetMapping(value = ["score"]) @DiscordParam(name = "s", description = "查询玩家谱面成绩") fun getBeatMapScore(
+        @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
+        @DiscordParam(name = "bid", description = "谱面编号", required = true) @RequestParam("bid") bid: Long,
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
+        @DiscordParam(name = "mods", description = "模组") @Nullable @RequestParam("mods") mods: String?
     ): ResponseEntity<ByteArray> {
         val osuUser: OsuUser
 
@@ -604,7 +603,7 @@ import kotlin.math.min
         try {
             osuUser = userApiService.getOsuUser(name)
             uid = osuUser.userID
-        } catch (e: WebClientResponseException.NotFound) {
+        } catch (_: WebClientResponseException.NotFound) {
             throw RuntimeException(NoSuchElementException.Player(name))
         }
 
@@ -619,7 +618,7 @@ import kotlin.math.min
                         break
                     }
                 }
-            } catch (e: WebClientResponseException.NotFound) {
+            } catch (_: WebClientResponseException.NotFound) {
                 throw RuntimeException(IllegalStateException.Fetch("成绩列表"))
             }
         }
@@ -635,7 +634,7 @@ import kotlin.math.min
                 osuUser, score, "S", beatmapApiService, calculateApiService
             )
             image = imageService.getPanel(e5Param.toMap(), "E5")
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw RuntimeException(IllegalStateException.Render("成绩列表"))
         }
         return ResponseEntity(
@@ -652,10 +651,10 @@ import kotlin.math.min
      * @param playMode 模式，可为空
      * @return image 最好成绩分析图片
      */
-    @GetMapping(value = ["bp/analysis"]) @OpenResource(name = "ba", desp = "最好成绩分析")
+    @GetMapping(value = ["bp/analysis"]) @DiscordParam(name = "ba", description = "最好成绩分析")
     @Throws(RuntimeException::class) fun getBPAnalysis(
-        @OpenResource(name = "name", desp = "玩家名称", required = true) @NonNull @RequestParam("name") name: String,
-        @OpenResource(name = "mode", desp = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
+        @DiscordParam(name = "name", description = "玩家名称", required = true) @NonNull @RequestParam("name") name: String,
+        @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?
     ): ResponseEntity<ByteArray> {
         val bests: List<LazerScore>
         val user: OsuUser
@@ -671,7 +670,7 @@ import kotlin.math.min
 
             calculateApiService.applyBeatMapChanges(bests)
             calculateApiService.applyStarToScores(bests)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw RuntimeException(IllegalStateException.Fetch("最好成绩分析"))
         }
 
@@ -692,11 +691,11 @@ import kotlin.math.min
      * @param compare 需要比较的文本，也可以把范围输入到这里来
      * @return String 扔骰子结果
      */
-    @GetMapping(value = ["dice"]) @OpenResource(name = "d", desp = "扔骰子") @Throws(RuntimeException::class)
+    @GetMapping(value = ["dice"]) @DiscordParam(name = "d", description = "扔骰子") @Throws(RuntimeException::class)
     fun getDice(
-        @OpenResource(name = "range", desp = "范围") @RequestParam("range") @Nullable range: Int?,
-        @OpenResource(name = "compare", desp = "需要比较的文本") @RequestParam("compare") @Nullable compare: String?
-    ): ResponseEntity<ByteArray> {
+        @DiscordParam(name = "range", description = "范围") @RequestParam("range") @Nullable range: Int?,
+        @DiscordParam(name = "compare", description = "需要比较的文本") @RequestParam("compare") @Nullable compare: String?
+    ): String {
         var message: String
 
         try {
@@ -707,16 +706,12 @@ import kotlin.math.min
                     val isOnlyNumbers = compare.matches("^[0-9.]+$".toRegex())
 
                     if (isOnlyNumbers) {
-                        try {
-                            val r = DiceService.getRandom(compare.toInt())
+                        val r = DiceService.getRandom(compare.toIntOrNull() ?: 100)
 
-                            message = if (r <= 1) {
-                                String.format("%.2f", r)
-                            } else {
-                                String.format("%.0f", r)
-                            }
-                        } catch (e: NumberFormatException) {
-                            message = DiceService.compare(compare)
+                        message = if (r <= 1) {
+                            String.format("%.2f", r)
+                        } else {
+                            String.format("%.0f", r)
                         }
                     } else {
                         message = DiceService.compare(compare)
@@ -732,11 +727,9 @@ import kotlin.math.min
                 }
             }
 
-            return ResponseEntity(message.toByteArray(StandardCharsets.UTF_8), HttpStatus.OK)
-        } catch (e: DiceException) {
-            return ResponseEntity(
-                String.format("%.0f", DiceService.getRandom(100)).toByteArray(StandardCharsets.UTF_8), HttpStatus.OK
-            )
+            return message
+        } catch (_: DiceException) {
+            return String.format("%.0f", DiceService.getRandom(100))
         } catch (e: Exception) {
             log.error("扔骰子：API 异常", e)
             throw RuntimeException("扔骰子：API 异常")
@@ -754,17 +747,17 @@ import kotlin.math.min
      * @return 谱面信息图片
      * @throws RuntimeException API 出错
      */
-    @GetMapping(value = ["map"]) @OpenResource(name = "m", desp = "获取谱面信息") @Throws(RuntimeException::class)
+    @GetMapping(value = ["map"]) @DiscordParam(name = "m", description = "获取谱面信息") @Throws(RuntimeException::class)
     fun getMapInfo(
-        @OpenResource(name = "bid", desp = "谱面编号") @RequestParam("bid") bid: Long,
-        @OpenResource(name = "mode", desp = "游戏模式") @RequestParam("mode") @Nullable modeStr: String?,
-        @OpenResource(
-            name = "accuracy", desp = "准确率，允许输入 0-10000"
+        @DiscordParam(name = "bid", description = "谱面编号") @RequestParam("bid") bid: Long,
+        @DiscordParam(name = "mode", description = "游戏模式") @RequestParam("mode") @Nullable modeStr: String?,
+        @DiscordParam(
+            name = "accuracy", description = "准确率，允许输入 0-10000"
         ) @RequestParam("accuracy") @Nullable accuracy: Double?,
-        @OpenResource(name = "combo", desp = "连击数") @RequestParam("combo") @Nullable combo: Int?,
-        @OpenResource(name = "miss", desp = "失误数") @RequestParam("miss") @Nullable miss: Int?,
-        @OpenResource(
-            name = "mods", desp = "模组，允许按成对的双字母输入"
+        @DiscordParam(name = "combo", description = "连击数") @RequestParam("combo") @Nullable combo: Int?,
+        @DiscordParam(name = "miss", description = "失误数") @RequestParam("miss") @Nullable miss: Int?,
+        @DiscordParam(
+            name = "mods", description = "模组，允许按成对的双字母输入"
         ) @RequestParam("mods") @Nullable modStr: String?
     ): ResponseEntity<ByteArray> {
 
@@ -800,23 +793,27 @@ import kotlin.math.min
      * @param modeStr 游戏模式
      * @return 玩家信息图片
      */
-    @GetMapping(value = ["info"]) @OpenResource(name = "i", desp = "获取玩家信息") fun getPlayerInfo(
-        @OpenResource(name = "uid", desp = "玩家编号") @RequestParam("uid") @Nullable uid: Long?,
-        @OpenResource(name = "name", desp = "玩家名称") @RequestParam("name") @Nullable name: String?,
-        @OpenResource(name = "mode", desp = "游戏模式") @RequestParam("mode") @Nullable modeStr: String?,
-        @OpenResource(name = "day", desp = "回溯天数") @RequestParam("day") @Nullable day: Int = 1
+    @GetMapping(value = ["info"]) @DiscordParam(name = "i", description = "获取玩家信息") fun getPlayerInfo(
+        @DiscordParam(name = "uid", description = "玩家编号") @RequestParam("uid") @Nullable uid: Long?,
+        @DiscordParam(name = "name", description = "玩家名称") @RequestParam("name") @Nullable name: String?,
+        @DiscordParam(name = "mode", description = "游戏模式") @RequestParam("mode") @Nullable modeStr: String?,
+        @DiscordParam(name = "day", description = "回溯天数") @RequestParam("day") @Nullable day: Long?
     ): ResponseEntity<ByteArray> {
         val user = getPlayerInfoJson(uid, name, modeStr)
         val mode = getMode(modeStr, user.currentOsuMode)
 
-        val bests = scoreApiService.getBestScores(user)
-        val historyUser = infoDao.getLastFrom(
-            user.userID, mode, LocalDate.now().minusDays(day.toLong())
-        )?.let { OsuUserInfoDao.fromArchive(it) }
+        val bests = scoreApiService.getBestScores(user, mode)
 
-        val param = InfoService.InfoParam(user, bests, mode, historyUser, false, 2)
+        val historyUser =
+            infoDao.getLastFrom(
+                user.userID,
+                user.currentOsuMode,
+                LocalDate.now().minusDays(day ?: 1)
+            )?.let { OsuUserInfoDao.fromArchive(it) }
 
-        val image = imageService.getPanel(param.toMap(), "D2")
+        val param = InfoService.InfoParam(user, bests, mode, historyUser, false, 3)
+
+        val image = imageService.getPanel(param.toMap(), "D3")
 
         return ResponseEntity(
             image, getImageHeader(
@@ -832,28 +829,30 @@ import kotlin.math.min
      * @param name 玩家名称
      * @return 谱师信息图片
      */
-    @GetMapping(value = ["info/mapper"]) @OpenResource(name = "im", desp = "获取谱师信息") fun getMapperInfo(
-        @OpenResource(name = "uid", desp = "玩家编号") @RequestParam("uid") @NonNull id: Long,
-        @OpenResource(name = "name", desp = "玩家名称") @RequestParam("name") @Nullable name: String?
+    @GetMapping(value = ["info/mapper"]) @DiscordParam(name = "im", description = "获取谱师信息") fun getMapperInfo(
+        @DiscordParam(name = "uid", description = "玩家编号") @RequestParam("uid") @Nullable id: Long?,
+        @DiscordParam(name = "name", description = "玩家名称") @RequestParam("name") @Nullable name: String?
     ): ResponseEntity<ByteArray> {
+        val userID = id ?: userApiService.getOsuUser(name ?: throw NoSuchElementException.Player()).userID
+
         val query = mapOf(
-            "q" to "creator=${id}", "sort" to "ranked_desc", "s" to "any", "page" to 1
+            "q" to "creator=${userID}", "sort" to "ranked_desc", "s" to "any", "page" to 1
         )
 
         // 这个是补充可能存在的，谱面所有难度都标注了难度作者时，上一个查询会漏掉的谱面
         val query2 = mapOf(
-            "q" to id, "sort" to "ranked_desc", "s" to "any", "page" to 1
+            "q" to userID, "sort" to "ranked_desc", "s" to "any", "page" to 1
         )
 
         val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
             { beatmapApiService.searchBeatmapsetParallel(query) },
             { beatmapApiService.searchBeatmapsetParallel(query2) },
-            { userApiService.getUserRecentActivity(id, 0, 100).filter { it.isMapping } },
-            { userApiService.getOsuUser(id) },
+            { userApiService.getUserRecentActivity(userID, 0, 100).filter { it.isMapping } },
+            { userApiService.getOsuUser(userID) },
         )
 
         val relatedSets = (async.first.first.beatmapsets.toHashSet() + async.first.second.beatmapsets.filter {
-            it.beatmapsetID != id && (it.beatmaps?.all { that -> that.beatmapID != id } ?: true)
+            it.beatmapsetID != userID && (it.beatmaps?.all { that -> that.beatmapID != userID } ?: true)
         }.toHashSet()).asSequence()
 
         val activity = async.second.first
@@ -880,10 +879,10 @@ import kotlin.math.min
      * @param bid 谱面编号
      * @return 提名信息图片
      */
-    @GetMapping(value = ["map/nomination"]) @OpenResource(name = "n", desp = "获取提名信息")
+    @GetMapping(value = ["map/nomination"]) @DiscordParam(name = "n", description = "获取提名信息")
     @Throws(RuntimeException::class) fun getNomination(
-        @OpenResource(name = "sid", desp = "谱面集编号") @RequestParam("sid") @Nullable sid: Int?,
-        @OpenResource(name = "bid", desp = "谱面编号") @RequestParam("bid") @Nullable bid: Int?
+        @DiscordParam(name = "sid", description = "谱面集编号") @RequestParam("sid") @Nullable sid: Int?,
+        @DiscordParam(name = "bid", description = "谱面编号") @RequestParam("bid") @Nullable bid: Int?
     ): ResponseEntity<ByteArray> {
         val param: NominationService.NominationParam
 
@@ -924,9 +923,9 @@ import kotlin.math.min
      *
      * @return 比赛结果文件
      */
-    @GetMapping(value = ["match/rating/csv"]) @OpenResource(name = "ca", desp = "获取比赛结果")
+    @GetMapping(value = ["match/rating/csv"]) @DiscordParam(name = "ca", description = "获取比赛结果")
     @Throws(RuntimeException::class) fun getCsvRating(
-        @OpenResource(name = "match", desp = "比赛编号（逗号分隔）") @RequestParam("match") @Nullable matchIDs: String?
+        @DiscordParam(name = "match", description = "比赛编号（逗号分隔）") @RequestParam("match") @Nullable matchIDs: String?
     ): ResponseEntity<ByteArray> {
         try {
             val sb = StringBuilder()

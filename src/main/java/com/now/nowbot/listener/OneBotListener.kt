@@ -56,7 +56,7 @@ import kotlin.Throws
 //              佛祖保佑       永不宕机     永无BUG                   //
 ////////////////////////////////////////////////////////////////////
 
-@Shiro @Order(9) @Component("OneBotListener") @Suppress("unused")
+@Shiro @Order(9) @Component("OneBotListener") @Suppress("UNUSED")
 class OneBotListener {
     var log: Logger = LoggerFactory.getLogger(OneBotListener::class.java)
 

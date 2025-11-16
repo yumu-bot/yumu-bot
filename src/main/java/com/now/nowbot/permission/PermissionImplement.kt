@@ -20,7 +20,6 @@ import com.now.nowbot.util.ContextUtil
 import com.now.nowbot.util.command.REG_EXCLAMATION
 import com.now.nowbot.util.command.REG_IGNORE
 import com.now.nowbot.util.command.REG_SLASH
-import jakarta.annotation.Resource
 import org.slf4j.LoggerFactory
 import org.springframework.aop.support.AopUtils
 import org.springframework.stereotype.Component
@@ -30,7 +29,10 @@ import java.util.function.BiConsumer
 import java.util.function.Consumer
 
 @Component
-class PermissionImplement : PermissionController {
+class PermissionImplement(
+    private val permissionDao: PermissionDao,
+    private val serviceSwitchMapper: ServiceSwitchMapper,
+) : PermissionController {
     companion object {
         private val log = LoggerFactory.getLogger(PermissionImplement::class.java)
         private val EXECUTOR = Executors.newScheduledThreadPool(Int.MAX_VALUE, AsyncSetting.THREAD_FACTORY)
@@ -44,7 +46,7 @@ class PermissionImplement : PermissionController {
         private val futureMap = ConcurrentHashMap<String, ScheduledFuture<*>>()
 
         private lateinit var superList: Set<Long>
-        private lateinit var testerList: Set<Long>
+        // private lateinit var testerList: Set<Long>
         private lateinit var AllService: PermissionService
 
         private val DICE_REGEX = Regex("^($REG_EXCLAMATION|$REG_SLASH|(?<dice>\\d+))\\s*(?i)(ym)?(dice|roll|d(?!${REG_IGNORE})).*")
@@ -181,11 +183,11 @@ class PermissionImplement : PermissionController {
         }
     }
 
-    @Resource
-    private lateinit var permissionDao: PermissionDao
+    //@Resource
+    //private lateinit var permissionDao: PermissionDao
 
-    @Resource
-    private lateinit var serviceSwitchMapper: ServiceSwitchMapper
+    //@Resource
+    //private lateinit var serviceSwitchMapper: ServiceSwitchMapper
 
     @Suppress("UNCHECKED_CAST")
     fun init(services: Map<String, MessageService<*>>) {
@@ -489,6 +491,7 @@ class PermissionImplement : PermissionController {
         unblockServiceSelf(record.name, record.permission, id, time)
     }
 
+    @Suppress("UNUSED")
     private fun cancelFuture(name: String, future: ScheduledFuture<*>): ScheduledFuture<*>? {
         future.cancel(true)
         return null

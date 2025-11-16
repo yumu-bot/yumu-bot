@@ -19,6 +19,7 @@ class LocalCommandListener {
     fun onMessage(message: String?) {
         val group = LocalGroup()
         val event = Event.GroupMessageEvent(bot, group, message)
+
         try {
             PermissionImplement.onMessage(event, ({ _, x ->
                 when (x) {
@@ -49,7 +50,9 @@ class LocalCommandListener {
             log.debug("异常详细信息:", e)
         }
 
-        if (event.rawMessage.startsWith("/")) {
+        val message = event.rawMessage.trim()
+
+        if (message.startsWith("/") || message.startsWith("\\")) {
             try {
                 PermissionImplement.onTencentMessage(event, (event::reply))
             } catch (e: Exception) {

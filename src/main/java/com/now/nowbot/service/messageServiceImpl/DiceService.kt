@@ -85,7 +85,7 @@ import kotlin.text.trim
         return MessageChain(res.text)
     }
 
-    private fun getParam(matcher: Matcher): DiceParam? {
+    fun splitMatcher(matcher: Matcher): Triple<String?, String?, String?> {
         val dice: String? = if (matcher.namedGroups().containsKey("dice")) {
             matcher.group("dice")
         } else {
@@ -95,54 +95,16 @@ import kotlin.text.trim
         val number: String? = matcher.group("number")
         val text: String? = matcher.group("text")
 
-        if (!text.isNullOrBlank()) { // 如果 dice 有符合，但是并不是 1，选择主动忽视
-            if (!dice.isNullOrBlank() && (dice.toLongOrNull() ?: return null) > 1L) {
-                return null
-            } else if (!number.isNullOrBlank()) {
-                return DiceParam(null, null, (number + text).trim())
-            } else if (text.trim().matches("^$REG_NUMBER_DECIMAL$".toRegex())) {
-                // !roll 4
-                return DiceParam(1L, text.toLongOrNull() ?: 100L, null)
-            } else {
-                return DiceParam(null, null, text.trim())
-            }
-        } else if (!dice.isNullOrBlank()) {
-            val d: Long = dice.toLongOrNull()
-                ?: dice.toDoubleOrNull()?.toLong() ?: throw DiceException.Exceed()
-
-            // 如果 dice 有符合，但是是 0，选择主动忽视（0d2）
-            if (d < 1) {
-                throw DiceException.TooSmall()
-            } else if (d > 100L) {
-                throw DiceException.DiceTooMany(d)
-            }
-
-            val n = if (number.isNullOrBlank().not()) {
-                if (number.contains("-")) {
-                    throw DiceException.Negative()
-                }
-
-                number.toLongOrNull()
-                    ?: number.toDoubleOrNull()?.coerceAtLeast(1.0)?.toLong()
-                    ?: throw DiceException.Exceed()
-            } else {
-                100L
-            }
-
-            return DiceParam(d, n, null)
-        } else if (number.isNullOrBlank().not()) {
-
-            val n = number.toLongOrNull() ?: throw DiceException.Exceed()
-
-            if (n < 0L) {
-                throw DiceException.Negative()
-            }
-
-            return DiceParam(1L, n, null)
-        } else {
-            return DiceParam(1L, 100L, null)
-        }
+        return Triple(number, text, dice)
     }
+
+    private fun getParam(matcher: Matcher): DiceParam? {
+        val (n, t, d) = splitMatcher(matcher)
+
+        return getParam(n, t, d)
+    }
+
+
 
     data class DiceResponse(
         val text: String,
@@ -492,6 +454,57 @@ import kotlin.text.trim
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(DiceService::class.java)
+
+        fun getParam(number: String?, text: String?, dice: String?): DiceParam? {
+
+            if (!text.isNullOrBlank()) { // 如果 dice 有符合，但是并不是 1，选择主动忽视
+                if (!dice.isNullOrBlank() && (dice.toLongOrNull() ?: return null) > 1L) {
+                    return null
+                } else if (!number.isNullOrBlank()) {
+                    return DiceParam(null, null, (number + text).trim())
+                } else if (text.trim().matches("^$REG_NUMBER_DECIMAL$".toRegex())) {
+                    // !roll 4
+                    return DiceParam(1L, text.toLongOrNull() ?: 100L, null)
+                } else {
+                    return DiceParam(null, null, text.trim())
+                }
+            } else if (!dice.isNullOrBlank()) {
+                val d: Long = dice.toLongOrNull()
+                    ?: dice.toDoubleOrNull()?.toLong() ?: throw DiceException.Exceed()
+
+                // 如果 dice 有符合，但是是 0，选择主动忽视（0d2）
+                if (d < 1) {
+                    throw DiceException.TooSmall()
+                } else if (d > 100L) {
+                    throw DiceException.DiceTooMany(d)
+                }
+
+                val n = if (number.isNullOrBlank().not()) {
+                    if (number.contains("-")) {
+                        throw DiceException.Negative()
+                    }
+
+                    number.toLongOrNull()
+                        ?: number.toDoubleOrNull()?.coerceAtLeast(1.0)?.toLong()
+                        ?: throw DiceException.Exceed()
+                } else {
+                    100L
+                }
+
+                return DiceParam(d, n, null)
+            } else if (number.isNullOrBlank().not()) {
+
+                val n = number.toLongOrNull() ?: throw DiceException.Exceed()
+
+                if (n < 0L) {
+                    throw DiceException.Negative()
+                }
+
+                return DiceParam(1L, n, null)
+            } else {
+                return DiceParam(1L, 100L, null)
+            }
+        }
 
         /**
          * 超级复杂™的语言学选择器
