@@ -150,6 +150,10 @@ class MatchApiImpl(
                     throw NetworkException.MatchException.TooManyRequests()
                 }
 
+                is WebClientResponseException.InternalServerError -> {
+                    throw NetworkException.MatchException.InternalServerError()
+                }
+
                 is WebClientResponseException.BadGateway -> {
                     throw NetworkException.MatchException.BadGateway()
                 }

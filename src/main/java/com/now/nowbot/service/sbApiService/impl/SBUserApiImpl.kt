@@ -188,6 +188,10 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                         throw NetworkException.UserException.TooManyRequests()
                     }
 
+                    is WebClientResponseException.InternalServerError -> {
+                        throw NetworkException.UserException.InternalServerError()
+                    }
+
                     is WebClientResponseException.BadGateway -> {
                         throw NetworkException.UserException.BadGateWay()
                     }

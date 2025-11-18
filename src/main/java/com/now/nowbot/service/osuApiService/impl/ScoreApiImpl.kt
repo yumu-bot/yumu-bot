@@ -554,6 +554,10 @@ class ScoreApiImpl(
                     throw NetworkException.ScoreException.TooManyRequests()
                 }
 
+                is WebClientResponseException.InternalServerError -> {
+                    throw NetworkException.ScoreException.InternalServerError()
+                }
+
                 is WebClientResponseException.BadGateway -> {
                     throw NetworkException.ScoreException.BadGateway()
                 }

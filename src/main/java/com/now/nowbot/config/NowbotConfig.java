@@ -115,12 +115,12 @@ public class NowbotConfig {
         return false;
     }
 
-    @Bean
-    public JDA getDiscord(List<ListenerAdapter> listenerAdapters, NowbotConfig config, DiscordConfig discordConfig, ThreadPoolTaskExecutor botAsyncExecutor) {
-        var discordService = new DiscordService(discordConfig, config, listenerAdapters, botAsyncExecutor);
-
-        return discordService.getJDA();
-    }
+//    @Bean
+//    public JDA getDiscord(List<ListenerAdapter> listenerAdapters, NowbotConfig config, DiscordConfig discordConfig, ThreadPoolTaskExecutor botAsyncExecutor) {
+//        var discordService = new DiscordService(discordConfig, config, listenerAdapters, botAsyncExecutor);
+//
+//        return discordService.getJDA();
+//    }
 
     /*
 

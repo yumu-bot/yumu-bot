@@ -43,7 +43,7 @@ open class NetworkException(message: String?
         class InternalServerError:
             RenderModuleException("""
                 500 Internal Server Error
-                渲染模块逻辑错误。
+                渲染模块内部错误。
             """.trimIndent()) {
             override val code = 500
         }
@@ -151,6 +151,14 @@ open class NetworkException(message: String?
 
          */
 
+        class InternalServerError:
+            UserException("""
+                500 Internal Server Error
+                请求服务器内部错误。
+            """.trimIndent()) {
+            override val code = 500
+        }
+
         class BadGateWay:
             UserException("""
                 502 Bad GateWay
@@ -234,6 +242,14 @@ open class NetworkException(message: String?
                 请求数已达上限。
             """.trimIndent()) {
             override val code = 429
+        }
+
+        class InternalServerError:
+            BeatmapException("""
+                500 Internal Server Error
+                请求服务器内部错误。
+            """.trimIndent()) {
+            override val code = 500
         }
 
         class BadGateWay:
@@ -328,6 +344,14 @@ open class NetworkException(message: String?
             override val code = 429
         }
 
+        class InternalServerError:
+            ScoreException("""
+                500 Internal Server Error
+                请求服务器内部错误。
+            """.trimIndent()) {
+            override val code = 500
+        }
+
         class BadGateway:
             ScoreException("""
                 502 Bad GateWay
@@ -410,6 +434,14 @@ open class NetworkException(message: String?
                 请求数已达上限。
             """.trimIndent()) {
             override val code = 429
+        }
+
+        class InternalServerError:
+            MatchException("""
+                500 Internal Server Error
+                请求服务器内部错误。
+            """.trimIndent()) {
+            override val code = 500
         }
 
         class BadGateway:

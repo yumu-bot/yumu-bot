@@ -358,6 +358,10 @@ import java.util.regex.Pattern
                     throw NetworkException.UserException.TooManyRequests()
                 }
 
+                is WebClientResponseException.InternalServerError -> {
+                    throw NetworkException.UserException.InternalServerError()
+                }
+
                 is WebClientResponseException.BadGateway -> {
                     throw NetworkException.UserException.BadGateWay()
                 }
