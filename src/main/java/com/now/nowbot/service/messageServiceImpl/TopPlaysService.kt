@@ -7,6 +7,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
@@ -23,6 +24,7 @@ class TopPlaysService(
     private val userApiService: OsuUserApiService,
     private val bindDao: BindDao,
     private val imageService: ImageService,
+    private val calculateApiService: OsuCalculateApiService,
 ): MessageService<TopPlaysService.TopPlaysParam> {
 
     data class TopPlaysParam(
@@ -106,6 +108,8 @@ class TopPlaysService(
         } else {
             top.scores.drop(50)
         }
+
+        calculateApiService.applyStarToScores(scores)
 
 
         if (scores.isEmpty()) {
