@@ -266,15 +266,9 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     /**
      * [:：](?<mode>mode)。
-     * level 匹配等级。**默认没有或者一个 (?)。注意！**
      */
     fun appendMode() {
-        appendGroup(MAYBE) {
-            appendSpace()
-            append(REG_COLON)
-            appendSpace()
-            appendCaptureGroup(FLAG_MODE, REG_MODE, EXIST)
-        }
+        appendColonCaptureGroup(FLAG_MODE, REG_MODE)
         appendSpace()
     }
 

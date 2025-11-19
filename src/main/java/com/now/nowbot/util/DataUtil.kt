@@ -1598,6 +1598,15 @@ object DataUtil {
         }
     }
 
+    // 反转义字符
+    fun unescapeHTML(str: String): String {
+        return str.replace("&amp;".toRegex(), "&").replace("&lt;".toRegex(), "<").replace("&gt;".toRegex(), ">")
+            .replace("&quot;".toRegex(), "\"").replace("&apos;".toRegex(), "'").replace("&nbsp;".toRegex(), " ")
+
+            .replace("&#038;".toRegex(), "&").replace("&#034;".toRegex(), "\"").replace("&#039;".toRegex(), "'")
+            .replace("&#160;".toRegex(), " ")
+    }
+
     /**
      * 找到底层的目标错误类，如果没找到就返回 null
      */

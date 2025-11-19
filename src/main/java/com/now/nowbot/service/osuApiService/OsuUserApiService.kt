@@ -1,11 +1,12 @@
 package com.now.nowbot.service.osuApiService
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.google.errorprone.annotations.CanIgnoreReturnValue
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
+import com.now.nowbot.service.web.TeamInfo
+import com.now.nowbot.service.web.TopPlays
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.concurrent.ExecutionException
@@ -75,36 +76,6 @@ interface OsuUserApiService {
 
     fun applyUserForBeatmapset(beatmapsets: List<Beatmapset>)
 
-    fun getTeamInfo(id: Int): TeamInfo?
-
-    data class TeamInfo(
-        val id: Int,
-        val name: String,
-        val abbr: String,
-        val formed: String,
-
-        val banner: String,
-        val flag: String,
-
-        val users: List<OsuUser>,
-        val ruleset: OsuMode,
-        val application: String,
-        val available: Int,
-
-        val rank: Int,
-        val pp: Int,
-
-        @field:JsonProperty("ranked_score")
-        val rankedScore: Long,
-
-        @field:JsonProperty("play_count")
-        val playCount: Long,
-
-        val members: Int,
-
-        val description: String
-    )
-
     fun asyncDownloadAvatar(users: List<MicroUser>)
 
     fun asyncDownloadAvatarFromBeatmapsets(beatmapsets: List<Beatmapset>) {
@@ -114,4 +85,11 @@ interface OsuUserApiService {
     }
 
     fun asyncDownloadBackground(users: List<MicroUser>)
+
+    fun getTeamInfo(id: Int): TeamInfo?
+
+    /**
+     * @param page 最大 10 页，最小 1 页
+     */
+    fun getTopPlays(page: Int = 1, mode: OsuMode = OsuMode.OSU): TopPlays?
 }

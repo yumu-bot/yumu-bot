@@ -8,6 +8,7 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.service.web.TeamInfo
 
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
@@ -104,7 +105,7 @@ class TeamService(
         }
     }
 
-    private fun OsuUserApiService.TeamInfo.getImage(page: Int = 1): ByteArray {
+    private fun TeamInfo.getImage(page: Int = 1): ByteArray {
         val split = DataUtil.splitPage(
             users,
             page = page,
@@ -114,7 +115,7 @@ class TeamService(
         return imageService.getPanel(mapOf("team" to this, "page" to split.second, "max_page" to split.third), "A9")
     }
 
-    private fun TeamParam.getTeam(): OsuUserApiService.TeamInfo {
+    private fun TeamParam.getTeam(): TeamInfo {
 
         val team = try {
             userApiService.getTeamInfo(teamID)!!

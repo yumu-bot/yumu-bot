@@ -166,6 +166,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
             试试输入更常见的外号或准确的歌曲编号吧。
         """.trimIndent())
 
+    class Score():
+        NoSuchElementException("没有找到成绩。")
+
     class ScorePeriod:
         NoSuchElementException("""
             这段时间内没有成绩记录。

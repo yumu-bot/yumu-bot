@@ -436,6 +436,15 @@ enum class Instruction(val pattern: Pattern) {
         appendMod()
     }),
 
+    TOP_PLAYS(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("top\\s*plays?", "top", "tp")
+
+        appendMode()
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_12, prefixLevel = MAYBE)
+    }),
+
+
+
     MAP_MINUS(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mapminus", "mm")
         appendMode()
@@ -698,7 +707,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     TEST_PPM(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("testppm", "tp")
+        appendCommandsIgnoreAll("testppm", "te", "tpm")
         appendModeQQUID()
         append2Name()
     }),
