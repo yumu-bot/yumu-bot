@@ -241,7 +241,7 @@ import kotlin.math.roundToInt
     }
 
     override fun applyStarToScore(score: LazerScore, local: Boolean) {
-        if (score.beatmap.starRating >= 0.10 && (score.beatmapID == 0L || score.mods.isNotAffectStarRating())) {
+        if (score.beatmap.starRating >= 0.10 && (score.beatmapID != 0L || score.mods.isNotAffectStarRating())) {
             return
         }
 
@@ -290,17 +290,6 @@ import kotlin.math.roundToInt
         scores.forEach {
             applyStarToScore(it, local)
         }
-
-        /*
-        val actions = scores.map {
-            return@map AsyncMethodExecutor.Runnable {
-                applyStarToScore(it, local)
-            }
-        }
-
-        AsyncMethodExecutor.awaitRunnableExecute(actions)
-
-         */
     }
 
 
