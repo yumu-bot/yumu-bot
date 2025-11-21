@@ -44,9 +44,15 @@ data class SBUser(
     @get:JsonProperty("statistics")
     var statistics: List<SBStatistics> = listOf()
 
+    @get:JsonProperty("avatar_url")
+    var avatarUrl = "https://a.ppy.sb/" + this.userID
+
     fun toOsuUser(mode: OsuMode?): OsuUser {
         val sb = this
-        mode?.let { sb.currentMode = it }
+
+        if (OsuMode.isNotDefaultOrNull(mode)) {
+            sb.currentMode = mode!!
+        }
 
         val code = sb.country.uppercase()
 
@@ -75,7 +81,7 @@ data class SBUser(
             hasSupported = privilege > 0
 
             id = sb.userID
-            avatarUrl = "https://a.ppy.sb/" + sb.userID
+            avatarUrl = sb.avatarUrl
             username = sb.username
             countryCode = code
             country = OsuUser.Country(code, code)
@@ -88,10 +94,8 @@ data class SBUser(
                 team = OsuUser.Team(null, sb.clan.clanID.toInt(), sb.clan.clanName, sb.clan.clanTag)
             }
 
-            val currentOsuMode = if (OsuMode.isDefaultOrNull(mode)) sb.mode else mode!!
-
-            this.defaultOsuMode = sb.mode
-            this.currentOsuMode = currentOsuMode
+            defaultOsuMode = sb.mode
+            currentOsuMode = sb.currentMode
 
             if (sb.customBadgeName != null && sb.customBadgeIcon != null) {
                 badges = listOf(

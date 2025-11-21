@@ -504,7 +504,7 @@ enum class Instruction(val pattern: Pattern) {
     ),
 
     RECOMMEND(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("recommend(ed)?", "rec", "e")
+        appendCommandsIgnoreAll("recommend(ed)?", "rec", "j")
         appendModeQQUIDName()
     }),
 
@@ -843,11 +843,14 @@ enum class Instruction(val pattern: Pattern) {
         appendNameAnyButNoHash()
     }),
 
+    /*
     MAI_SEARCH(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mai(mai)?\\s*search", "mh")
         appendQQ()
         appendNameAnyButNoHash()
     }),
+
+     */
 
     MAI_FIND(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mai(mai)?\\s*find", "mf", "mother\\s*fucker", "mai\\s*song")

@@ -274,7 +274,9 @@ object InstructionUtil {
         } else if (me != null) {
             isMyself.set(true)
             setMode(mode, me.mode)
-            return sbUserApiService.getUser(me.userID) ?: throw BindException.TokenExpiredException.SBYouTokenExpiredException()
+            return sbUserApiService.getUser(me.userID)
+                ?.apply { mode.data?.let { this.currentMode = it } }
+                ?: throw BindException.TokenExpiredException.SBYouTokenExpiredException()
         } else {
             if (isMyself.get()) {
                 throw BindException.TokenExpiredException.SBYouTokenExpiredException()
