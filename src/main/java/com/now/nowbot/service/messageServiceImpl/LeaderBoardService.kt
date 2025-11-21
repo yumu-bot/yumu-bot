@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
@@ -34,6 +35,7 @@ class LeaderBoardService(
     private val calculateApiService: OsuCalculateApiService,
     private val scoreApiService: OsuScoreApiService,
     private val imageService: ImageService,
+    private val infoDao: OsuUserInfoDao,
     private val dao: ServiceCallStatisticsDao,
 ) : MessageService<LeaderBoardParam> {
 
@@ -191,7 +193,9 @@ class LeaderBoardService(
                 OsuUser(score.user)
             }
 
-            val e5Param = ScorePRService.getE5Param(user, score, beatmap, start, "L", beatmapApiService, calculateApiService)
+            val historyUser = infoDao.getHistoryUser(user)
+
+            val e5Param = ScorePRService.getE5Param(user, historyUser, score, beatmap, start, "L", beatmapApiService, calculateApiService)
 
             imageService.getPanel(e5Param.toMap(), "E5")
         } else {

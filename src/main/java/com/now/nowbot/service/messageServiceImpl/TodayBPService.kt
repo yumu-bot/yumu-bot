@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
@@ -38,10 +39,12 @@ class TodayBPService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val userApiService: OsuUserApiService,
     private val calculateApiService: OsuCalculateApiService,
+    private val infoDao: OsuUserInfoDao,
 ) : MessageService<TodayBPParam>, TencentMessageService<TodayBPParam> {
 
     data class TodayBPParam(
         val user: OsuUser,
+        val historyUser: OsuUser? = null,
         val mode: OsuMode,
         val scores: Map<Int, LazerScore>,
         val isToday: Boolean
@@ -152,7 +155,9 @@ class TodayBPService(
             }
         }
 
-        return TodayBPParam(user, mode.data!!, dataMap, isToday)
+        val historyUser = infoDao.getHistoryUser(user)
+
+        return TodayBPParam(user, historyUser, mode.data!!, dataMap, isToday)
     }
 
     fun TodayBPParam.asyncImage() {
@@ -185,7 +190,7 @@ class TodayBPService(
                 val score: LazerScore = pair.second
                 score.ranking = pair.first
 
-                val body = ScorePRService.getE5Param(user, score, "T", beatmapApiService, calculateApiService)
+                val body = ScorePRService.getE5Param(user, historyUser, score, "T", beatmapApiService, calculateApiService)
 
                 MessageChain(imageService.getPanel(body, "E5"))
             }

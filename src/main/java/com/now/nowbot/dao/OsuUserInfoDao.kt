@@ -262,6 +262,15 @@ class OsuUserInfoDao(
         return infoRepository.getLastBetween(userID, mode, LocalDateTime.of(date, LocalTime.MIN), LocalDateTime.of(date, LocalTime.MAX))
     }
 
+    fun getHistoryUser(user: OsuUser, day: Long = 1): OsuUser? {
+        return getLastFrom(
+            user.userID,
+            user.currentOsuMode,
+            LocalDate.now().minusDays(day)
+        )?.let { fromArchive(it) }
+    }
+
+
     /**
      * 取 到那一天为止 最后的数据 (默认向前取一年)
      *

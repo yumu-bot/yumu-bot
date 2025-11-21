@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
@@ -43,13 +44,15 @@ class ScorePRService(
     private val scoreApiService: OsuScoreApiService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
+    private val infoDao: OsuUserInfoDao,
     private val bindDao: BindDao
 ) : MessageService<ScorePRParam>, TencentMessageService<ScorePRParam> {
 
-    data class ScorePRParam(val user: OsuUser, val scores: Map<Int, LazerScore>, val isPass: Boolean = false, val isShow: Boolean = false)
+    data class ScorePRParam(val user: OsuUser, val history: OsuUser? = null, val scores: Map<Int, LazerScore>, val isPass: Boolean = false, val isShow: Boolean = false)
 
     data class PanelE5Param(
         val user: OsuUser,
+        val history: OsuUser? = null,
         val score: LazerScore,
         val position: Int?,
         val density: IntArray,
@@ -59,27 +62,22 @@ class ScorePRService(
         val panel: String,
         val health: Map<Int, Double>? = null,
     ) {
-        fun toMap(): Map<String, Any> {
-            val out = mutableMapOf(
+        fun toMap(): Map<String, Any?> {
+            val out = mapOf(
                 "user" to user,
                 "score" to score,
+                "history_user" to history,
                 "density" to density,
                 "progress" to progress,
                 "original" to original,
                 "attributes" to attributes,
                 "panel" to panel,
-            )
-
-            if (position != null) {
-                out["position"] = position
-            }
-
-            if (health != null) {
-                out["health"] = mapOf(
-                    "time" to health.map { it.key },
-                    "percent" to health.map { it.value }
+                "position" to position,
+                "health" to mapOf(
+                    "time" to health?.map { it.key },
+                    "percent" to health?.map { it.value }
                 )
-            }
+            )
 
             return out
         }
@@ -302,7 +300,9 @@ class ScorePRService(
             }
         }
 
-        return ScorePRParam(user, filteredScores, isPass, isShow)
+        val historyUser = infoDao.getHistoryUser(user)
+
+        return ScorePRParam(user, historyUser, filteredScores, isPass, isShow)
     }
 
 
@@ -442,7 +442,7 @@ class ScorePRService(
                 val score: LazerScore = pair.second
                 score.ranking = pair.first
 
-                val e5 = getE5ParamForFilteredScore(user, score, (if (isPass) "P" else "R"), beatmapApiService, calculateApiService)
+                val e5 = getE5ParamForFilteredScore(user, history, score, (if (isPass) "P" else "R"), beatmapApiService, calculateApiService)
 
                 return MessageChain(imageService.getPanel(e5.toMap(), if (isShow) "E10" else "E5"))
             }
@@ -498,7 +498,7 @@ class ScorePRService(
         private val log: Logger = LoggerFactory.getLogger(ScorePRService::class.java)
 
         // 用于已筛选过的成绩。此时成绩内的谱面是已经计算过的，无需再次计算
-        fun getE5ParamForFilteredScore(user: OsuUser, score: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {
+        fun getE5ParamForFilteredScore(user: OsuUser, history: OsuUser? = null, score: LazerScore, panel: String, beatmapApiService: OsuBeatmapApiService, calculateApiService: OsuCalculateApiService): PanelE5Param {
             val originalBeatMap = beatmapApiService.getBeatmap(score.beatmapID)
 
             beatmapApiService.applyBeatmapExtend(score, originalBeatMap)
@@ -512,24 +512,26 @@ class ScorePRService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(originalBeatMap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            return PanelE5Param(user, score, score.ranking, density, progress, original, attributes, panel)
+            return PanelE5Param(user, history, score, score.ranking, density, progress, original, attributes, panel)
 
         }
 
         // 用于未筛选过的成绩。此时成绩的谱面还需要重新计算
         fun getE5Param(
             user: OsuUser,
+            history: OsuUser? = null,
             score: LazerScore,
             panel: String,
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService
         ): PanelE5Param {
             beatmapApiService.applyBeatmapExtend(score)
-            return getE5ParamAfterExtended(user, score, score.ranking, panel, beatmapApiService, calculateApiService)
+            return getE5ParamAfterExtended(user, history, score, score.ranking, panel, beatmapApiService, calculateApiService)
         }
 
         fun getE5Param(
             user: OsuUser,
+            history: OsuUser? = null,
             score: LazerScore,
             beatmap: Beatmap,
             position: Int? = null,
@@ -538,11 +540,12 @@ class ScorePRService(
             calculateApiService: OsuCalculateApiService,
         ): PanelE5Param {
             beatmapApiService.applyBeatmapExtend(score, beatmap)
-            return getE5ParamAfterExtended(user, score, position ?: score.ranking, panel, beatmapApiService, calculateApiService)
+            return getE5ParamAfterExtended(user, history, score, position ?: score.ranking, panel, beatmapApiService, calculateApiService)
         }
 
         private fun getE5ParamAfterExtended(
             user: OsuUser,
+            history: OsuUser? = null,
             score: LazerScore,
             position: Int? = null,
             panel: String,
@@ -565,7 +568,7 @@ class ScorePRService(
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
             val progress = beatmapApiService.getPlayPercentage(score)
 
-            return PanelE5Param(user, score, position ?: score.ranking, density, progress, original, attributes, panel)
+            return PanelE5Param(user, history, score, position ?: score.ranking, density, progress, original, attributes, panel)
         }
     }
 }

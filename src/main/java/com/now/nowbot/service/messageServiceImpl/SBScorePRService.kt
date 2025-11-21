@@ -210,7 +210,7 @@ class SBScorePRService(
             }
         }
 
-        return ScorePRParam(user, filteredScores, isPass, isShow)
+        return ScorePRParam(user, null, filteredScores, isPass, isShow)
     }
 
 
@@ -365,7 +365,7 @@ class SBScorePRService(
             val score: LazerScore = pair.second
             score.ranking = pair.first
 
-            val e5 = getE5ParamForFilteredScore(user, score, (if (isPass) "P" else "R"), osuBeatmapApiService, osuCalculateApiService)
+            val e5 = getE5ParamForFilteredScore(user, null, score, (if (isPass) "P" else "R"), osuBeatmapApiService, osuCalculateApiService)
 
             return MessageChain(imageService.getPanel(e5.toMap(), if (isShow) "E10" else "E5"))
         }

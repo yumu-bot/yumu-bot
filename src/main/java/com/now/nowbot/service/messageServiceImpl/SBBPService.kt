@@ -199,7 +199,7 @@ class SBBPService(
             throw NoSuchElementException.BestScoreFiltered(user.username)
         }
 
-        return BPParam(user, filteredScores, isShow)
+        return BPParam(user, null, filteredScores, isShow)
     }
 
     private fun <T> InstructionRange<T>.getOffsetAndLimit(
@@ -320,7 +320,7 @@ class SBBPService(
                 val score: LazerScore = pair.second
                 score.ranking = pair.first
 
-                val e5Param = ScorePRService.getE5ParamForFilteredScore(user, score, "B", osuBeatmapApiService, osuCalculateApiService)
+                val e5Param = ScorePRService.getE5ParamForFilteredScore(user, null, score, "B", osuBeatmapApiService, osuCalculateApiService)
 
                 MessageChain(imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5"))
             }

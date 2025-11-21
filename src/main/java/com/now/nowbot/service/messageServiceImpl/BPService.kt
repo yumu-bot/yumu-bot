@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
@@ -39,10 +40,11 @@ import java.util.regex.Matcher
     private val beatmapApiService: OsuBeatmapApiService,
     private val scoreApiService: OsuScoreApiService,
     private val imageService: ImageService,
+    private val infoDao: OsuUserInfoDao,
     private val bindDao: BindDao,
 ) : MessageService<BPParam>, TencentMessageService<BPParam> {
 
-    data class BPParam(val user: OsuUser, val scores: Map<Int, LazerScore>, val isShow: Boolean)
+    data class BPParam(val user: OsuUser, val historyUser: OsuUser? = null, val scores: Map<Int, LazerScore>, val isShow: Boolean)
 
     override fun isHandle(
         event: MessageEvent,
@@ -218,7 +220,9 @@ import java.util.regex.Matcher
             throw NoSuchElementException.BestScoreFiltered(user.username)
         }
 
-        return BPParam(user, filteredScores, isShow)
+        val historyUser = infoDao.getHistoryUser(user)
+
+        return BPParam(user, historyUser, filteredScores, isShow)
     }
 
     private fun <T> InstructionRange<T>.getOffsetAndLimit(
@@ -324,7 +328,7 @@ import java.util.regex.Matcher
                 val score: LazerScore = pair.second
                 score.ranking = pair.first
 
-                val e5Param = ScorePRService.getE5ParamForFilteredScore(user, score, "B", beatmapApiService, calculateApiService)
+                val e5Param = ScorePRService.getE5ParamForFilteredScore(user, historyUser, score, "B", beatmapApiService, calculateApiService)
 
                 MessageChain(imageService.getPanel(e5Param.toMap(), if (isShow) "E10" else "E5"))
             }

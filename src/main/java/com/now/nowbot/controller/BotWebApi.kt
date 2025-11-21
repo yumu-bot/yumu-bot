@@ -341,7 +341,7 @@ import kotlin.math.min
                 } else {
                     try {
                         val e5Param = ScorePRService.getE5Param(
-                            osuUser, scores.first(), "B", beatmapApiService, calculateApiService
+                            osuUser, null, scores.first(), "B", beatmapApiService, calculateApiService
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
                     } catch (_: Exception) {
@@ -372,7 +372,7 @@ import kotlin.math.min
                 } else {
                     try {
                         val e5Param = ScorePRService.getE5Param(
-                            osuUser, scores.first(), "P", beatmapApiService, calculateApiService
+                            osuUser, null, scores.first(), "P", beatmapApiService, calculateApiService
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
                     } catch (_: Exception) {
@@ -402,7 +402,7 @@ import kotlin.math.min
                 } else {
                     try {
                         val e5Param = ScorePRService.getE5Param(
-                            osuUser, scores.first(), "R", beatmapApiService, calculateApiService
+                            osuUser, null, scores.first(), "R", beatmapApiService, calculateApiService
                         )
                         data = imageService.getPanel(e5Param.toMap(), "E5")
                     } catch (_: Exception) {
@@ -631,7 +631,7 @@ import kotlin.math.min
 
         try {
             val e5Param = ScorePRService.getE5Param(
-                osuUser, score, "S", beatmapApiService, calculateApiService
+                osuUser, null, score, "S", beatmapApiService, calculateApiService
             )
             image = imageService.getPanel(e5Param.toMap(), "E5")
         } catch (_: Exception) {

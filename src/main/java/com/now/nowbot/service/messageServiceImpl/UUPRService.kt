@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.BindDao
+import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
@@ -43,6 +44,7 @@ class UUPRService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val userApiService: OsuUserApiService,
+    private val infoDao: OsuUserInfoDao,
     private val bindDao: BindDao
 ) : MessageService<ScorePRParam>, TencentMessageService<ScorePRParam> {
 
@@ -215,7 +217,9 @@ class UUPRService(
             }
         }
 
-        return ScorePRParam(user, filteredScores, isPass, false)
+        val historyUser = infoDao.getHistoryUser(user)
+
+        return ScorePRParam(user, historyUser, filteredScores, isPass, false)
     }
 
     private fun InstructionRange<OsuUser>.getRecentsFromOsuUser(

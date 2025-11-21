@@ -237,12 +237,7 @@ class InfoService(
 
         val day = (matcher.group(FLAG_DAY) ?: "").toLongOrNull() ?: 1L
 
-        val historyUser =
-            infoDao.getLastFrom(
-                user.userID,
-                user.currentOsuMode,
-                LocalDate.now().minusDays(day)
-            )?.let { OsuUserInfoDao.fromArchive(it) }
+        val historyUser = infoDao.getHistoryUser(user, day)
 
         val currentMode = OsuMode.getMode(mode.data!!, user.currentOsuMode)
 

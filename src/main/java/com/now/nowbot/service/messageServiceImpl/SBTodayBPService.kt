@@ -144,7 +144,7 @@ class SBTodayBPService(
             }
         }
 
-        return TodayBPParam(user, mode.data!!, dataMap, isToday)
+        return TodayBPParam(user, null, mode.data!!, dataMap, isToday)
     }
 
     /*
@@ -181,7 +181,7 @@ class SBTodayBPService(
                 val score: LazerScore = pair.second
                 score.ranking = pair.first
 
-                val body = ScorePRService.getE5Param(user, score, "T", osuBeatmapApiService, osuCalculateApiService)
+                val body = ScorePRService.getE5Param(user, null, score, "T", osuBeatmapApiService, osuCalculateApiService)
 
                 MessageChain(imageService.getPanel(body, "E5"))
             }

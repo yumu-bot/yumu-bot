@@ -2,9 +2,9 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
@@ -323,7 +323,7 @@ import java.util.regex.Matcher
             } else {
                 val score = scores.first()
 
-                val e5Param = ScorePRService.getE5Param(user, score, map, null, "S", beatmapApiService, calculateApiService)
+                val e5Param = ScorePRService.getE5Param(user, null, score, map, null, "S", beatmapApiService, calculateApiService)
 
                 asyncDownloadBackground()
 

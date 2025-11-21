@@ -296,6 +296,7 @@ class SBScoreService(
 
                 val e5Param = ScorePRService.getE5Param(
                     user,
+                    null,
                     score,
                     map,
                     null,
