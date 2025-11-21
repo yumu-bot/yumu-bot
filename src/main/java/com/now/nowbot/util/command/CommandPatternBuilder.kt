@@ -124,7 +124,8 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     private fun appendOfficialSBCommandsPrivate(@Language("RegExp") vararg commands: String) {
         appendGroup(EXIST) {
-            append(CHAR_BACK_SLASH)
+            append(CHAR_SLASH)
+            append(CHAR_SLASH)
             appendSpace()
             appendGroup(MAYBE, "ym")
             appendGroup(*commands)
