@@ -56,7 +56,7 @@ data class SBUser(
 
         val code = sb.country.uppercase()
 
-        val bt = sb.statistics.firstOrNull { it.modeByte == sb.mode.modeValue } ?: SBStatistics()
+        val bt = sb.statistics.firstOrNull { it.modeByte == sb.currentMode.modeValue } ?: SBStatistics()
 
         val stat = Statistics().apply {
             totalScore = bt.totalScore
