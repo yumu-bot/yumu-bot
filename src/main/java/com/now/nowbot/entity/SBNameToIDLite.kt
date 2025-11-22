@@ -17,6 +17,7 @@ class SBNameToIDLite {
     @Column(name = "idx")
     private var index: Int? = null
 
+    @Suppress("UNUSED")
     constructor()
 
     constructor(userID: Long?, name: String, index: Int?) {

@@ -522,7 +522,7 @@ object InstructionUtil {
             2 -> {
                 val range = parseRange(split[1])
 
-                InstructionRange(split[0].ifBlank { null }, range.first?.coerceAtMost(maximum), range.second?.coerceAtMost(maximum))
+                InstructionRange(split[0].ifBlank { null }?.trim(), range.first?.coerceAtMost(maximum), range.second?.coerceAtMost(maximum))
             }
 
             1 -> {

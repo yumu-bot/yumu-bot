@@ -287,7 +287,7 @@ class UUPRService(
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
-            val name = bindDao.getUserName(this.data!!)
+            val name = bindDao.getUsername(this.data!!)
 
             if (isPass) {
                 if (offset > 0) {

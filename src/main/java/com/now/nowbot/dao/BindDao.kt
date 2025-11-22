@@ -432,9 +432,10 @@ class BindDao(
     /**
      * 通过 osuFindNameMapper 获取
      */
-    fun getUserName(userID: Long): String {
+    fun getUsername(userID: Long): String {
         return osuFindNameMapper.getUsername(userID) ?: userID.toString()
     }
+
 
     fun countNameToID(userID: Long): Int {
         return osuFindNameMapper.countByUserID(userID)
@@ -452,22 +453,22 @@ class BindDao(
     }
 
     fun getSBUserName(userID: Long): String {
-        return sbFindNameMapper.findById(userID).getOrNull()?.name ?: userID.toString()
+        return sbFindNameMapper.getUsername(userID) ?: userID.toString()
     }
 
-
     fun getSBUserID(name: String): Long? {
-        return sbFindNameMapper.getFirstByNameOrderByIndex(name.uppercase())?.userID
+        return sbFindNameMapper.getUserIDByUsernameIgnoreCase(name)
     }
 
     fun removeSBNameToID(userID: Long) {
         sbFindNameMapper.deleteByUserID(userID)
     }
 
-    fun saveSBNameToID(id: Long, vararg name: String) {
-        if (name.isEmpty()) return
-        for (i in name.indices) {
-            val x = SBNameToIDLite(id, name[i], i)
+    fun saveSBNameToID(id: Long, names: List<String>) {
+        if (names.isEmpty()) return
+
+        names.forEachIndexed { index, name ->
+            val x = SBNameToIDLite(id, name, index)
             sbFindNameMapper.save(x)
         }
     }
@@ -481,13 +482,13 @@ class BindDao(
     }
 
     fun updateSBNameToID(user: SBUser) {
-        val names = listOf(user.username.uppercase())
+        val names = listOf(user.username)
 
         val count = countSBNameToID(user.userID)
 
         if (count == 0 || count != names.size) {
             removeSBNameToID(user.userID)
-            saveSBNameToID(user.userID, *names.toTypedArray())
+            saveSBNameToID(user.userID, names)
         }
     }
 

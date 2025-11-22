@@ -19,5 +19,11 @@ interface SBFindNameMapper : JpaRepository<SBNameToIDLite, Long>, JpaSpecificati
     @Query("select count(*) from SBNameToIDLite o where o.userID = :userID")
     fun countByUserID(userID: Long?): Int
 
-    fun getFirstByNameOrderByIndex(name: String?): SBNameToIDLite?
+    @Query(""" 
+        SELECT o.userID FROM SBNameToIDLite o WHERE o.name ILIKE :name ORDER BY o.index ASC LIMIT 1
+    """)
+    fun getUserIDByUsernameIgnoreCase(name: String?): Long?
+
+    @Query("SELECT o.name FROM SBNameToIDLite o WHERE o.userID = :userID ORDER BY o.index ASC LIMIT 1")
+    fun getUsername(userID: Long?): String?
 }
