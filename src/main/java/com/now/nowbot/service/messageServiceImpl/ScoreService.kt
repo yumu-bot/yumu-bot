@@ -307,7 +307,6 @@ import java.util.regex.Matcher
             if (scores.size > 1 && isMultipleScore) {
                 beatmapApiService.applyBeatmapExtendForSameScore(scores, map)
                 calculateApiService.applyStarToScores(scores)
-                // calculateApiService.applyBeatMapChanges(scores)
 
                 asyncDownloadBackground()
 
@@ -316,7 +315,8 @@ import java.util.regex.Matcher
 
                     "rank" to (1..(scores.size)).toList(),
                     "score" to scores,
-                    "panel" to "SS"
+                    "panel" to "SS",
+                    "compact" to (scores.size >= 50)
                 )
 
                 MessageChain(imageService.getPanel(body, "A5"))

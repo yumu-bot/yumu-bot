@@ -47,14 +47,15 @@ class TodayBPService(
         val historyUser: OsuUser? = null,
         val mode: OsuMode,
         val scores: Map<Int, LazerScore>,
-        val isToday: Boolean
+        val isToday: Boolean,
+        val isCompact: Boolean = false
     )
 
     @Throws(Throwable::class)
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<TodayBPParam>): Boolean {
         val matcher = Instruction.TODAY_BP.matcher(messageText)
         return if (matcher.find()) {
-            data.value = getParam(matcher, event)
+            data.value = getParam(matcher, event, isCompact = false)
             true
         } else {
             false
@@ -86,7 +87,7 @@ class TodayBPService(
     override fun accept(event: MessageEvent, messageText: String): TodayBPParam? {
         val matcher = OfficialInstruction.TODAY_BP.matcher(messageText)
         return if (matcher.find()) {
-            getParam(matcher, event)
+            getParam(matcher, event, isCompact = true)
         } else {
             null
         }
@@ -97,7 +98,7 @@ class TodayBPService(
         return param.getMessageChain()
     }
 
-    private fun getParam(matcher: Matcher, event: MessageEvent): TodayBPParam {
+    private fun getParam(matcher: Matcher, event: MessageEvent, isCompact: Boolean): TodayBPParam {
         val mode = getMode(matcher)
         val isMyself = AtomicBoolean()
 
@@ -157,7 +158,7 @@ class TodayBPService(
 
         val historyUser = infoDao.getHistoryUser(user)
 
-        return TodayBPParam(user, historyUser, mode.data!!, dataMap, isToday)
+        return TodayBPParam(user, historyUser, mode.data!!, dataMap, isToday, isCompact)
     }
 
     fun TodayBPParam.asyncImage() {
@@ -181,6 +182,7 @@ class TodayBPService(
                     "scores" to ss,
                     "rank" to ranks,
                     "panel" to "T",
+                    "compact" to (isCompact && scores.size >= 50)
                 )
 
                 MessageChain(imageService.getPanel(body, "A4"))

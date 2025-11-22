@@ -44,7 +44,13 @@ import java.util.regex.Matcher
     private val bindDao: BindDao,
 ) : MessageService<BPParam>, TencentMessageService<BPParam> {
 
-    data class BPParam(val user: OsuUser, val historyUser: OsuUser? = null, val scores: Map<Int, LazerScore>, val isShow: Boolean)
+    data class BPParam(
+        val user: OsuUser,
+        val historyUser: OsuUser? = null,
+        val scores: Map<Int, LazerScore>,
+        val isShow: Boolean,
+        val isCompact: Boolean = false
+    )
 
     override fun isHandle(
         event: MessageEvent,
@@ -57,7 +63,7 @@ import java.util.regex.Matcher
         val isMultiple = matcher.group("s").isNullOrBlank().not()
         val isShow = matcher.group("w").isNullOrBlank().not()
 
-        val param = getParam(event, messageText, matcher, isMultiple, isShow) ?: return false
+        val param = getParam(event, messageText, matcher, isMultiple, isShow, isCompact = false) ?: return false
 
         data.value = param
         return true
@@ -109,7 +115,7 @@ import java.util.regex.Matcher
             return null
         }
 
-        val param = getParam(event, messageText, matcher, isMultiple, isShow)
+        val param = getParam(event, messageText, matcher, isMultiple, isShow, isCompact = true)
 
         return param
     }
@@ -123,7 +129,7 @@ import java.util.regex.Matcher
      * 封装主获取方法
      * 请在 matcher.find() 后使用
      */
-    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isShow: Boolean): BPParam? {
+    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isShow: Boolean, isCompact: Boolean): BPParam? {
         val any: String = matcher.group(FLAG_ANY) ?: ""
 
         // 避免指令冲突
@@ -222,7 +228,7 @@ import java.util.regex.Matcher
 
         val historyUser = infoDao.getHistoryUser(user)
 
-        return BPParam(user, historyUser, filteredScores, isShow)
+        return BPParam(user, historyUser, filteredScores, isShow, isCompact)
     }
 
     private fun <T> InstructionRange<T>.getOffsetAndLimit(
@@ -318,7 +324,8 @@ import java.util.regex.Matcher
                     "user" to user,
                     "scores" to scores,
                     "rank" to ranks,
-                    "panel" to "BS"
+                    "panel" to "BS",
+                    "compact" to (isCompact && scores.size >= 50)
                 )
 
                 MessageChain(imageService.getPanel(body, "A4"))
