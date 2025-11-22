@@ -19,5 +19,11 @@ interface OsuFindNameMapper : JpaRepository<OsuNameToIDLite, Long>, JpaSpecifica
     @Query("select count(*) from OsuNameToIDLite o where o.userID = :userID")
     fun countByUserID(userID: Long?): Int
 
-    fun getFirstByNameOrderByIndex(name: String?): OsuNameToIDLite?
+    @Query(""" 
+        SELECT o.userID FROM OsuNameToIDLite o WHERE o.name ILIKE :name ORDER BY o.index ASC LIMIT 1
+    """)
+    fun getUserIDByUsernameIgnoreCase(name: String?): Long?
+
+    @Query("SELECT o.name FROM OsuNameToIDLite o WHERE o.userID = :userID ORDER BY o.index ASC LIMIT 1")
+    fun getUsername(userID: Long?): String?
 }

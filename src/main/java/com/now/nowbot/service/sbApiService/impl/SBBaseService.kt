@@ -5,4 +5,4 @@ import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 
 @Service
-class SBBaseService(val webClient: WebClient, @Qualifier("sbApiWebClient") val sbApiWebClient: WebClient)
+class SBBaseService(val webClient: WebClient, @param:Qualifier("sbApiWebClient") val sbApiWebClient: WebClient)

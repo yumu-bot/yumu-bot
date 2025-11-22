@@ -33,7 +33,7 @@ class RunTimeService(
     private val lxMaiApiService: LxMaiApiService,
     private val userApiService: OsuUserApiService,
     private val beatmapApiService: OsuBeatmapApiService,
-    @Qualifier("kotlinTaskExecutor")
+    @param:Qualifier("kotlinTaskExecutor")
     private val taskExecutor: TaskExecutor,
     private val botContainer: BotContainer,
     private val newbieConfig: NewbieConfig
@@ -41,13 +41,13 @@ class RunTimeService(
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
 
     // 每 30 秒刷新一次 token
-    @Scheduled(cron = "0,30 * * * * *")
+    @Scheduled(cron = "0,30 * 0-2,5-23 * * *")
     fun refreshToken() {
         bindDao.refreshOldUserToken(userApiService)
     }
 
     // 每几小时更新一次过期的谱面
-    @Scheduled(cron = "0 0,30 0,1,2,8,9,10,11,12,14,16,18,20 * * *")
+    @Scheduled(cron = "0 0,30 0-2,5-20 * * *")
     fun updateBeatmapExtendFailTimes() {
         beatmapApiService.updateExtendedBeatmapFailTimes()
     }
@@ -179,7 +179,7 @@ class RunTimeService(
     /***
      * 白天输出内存占用信息
      */
-    @Scheduled(cron = "0 0/30 8-18 * * *")
+    @Scheduled(cron = "0 0/30 8-23 * * *")
     fun alive() {
         fun Long.toMega(): Long {
             return this / 1024L / 1024L

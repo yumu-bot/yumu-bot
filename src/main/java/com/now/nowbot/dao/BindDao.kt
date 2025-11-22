@@ -413,17 +413,18 @@ class BindDao(
     }
 
     fun getOsuID(name: String): Long? {
-        return osuFindNameMapper.getFirstByNameOrderByIndex(name.uppercase())?.userID
+        return osuFindNameMapper.getUserIDByUsernameIgnoreCase(name)
     }
 
     fun removeNameToID(userID: Long) {
         osuFindNameMapper.deleteByUserID(userID)
     }
 
-    fun saveNameToID(id: Long, vararg name: String) {
-        if (name.isEmpty()) return
-        for (i in name.indices) {
-            val x = OsuNameToIDLite(id, name[i], i)
+    fun saveNameToID(id: Long, names: List<String>) {
+        if (names.isEmpty()) return
+
+        names.forEachIndexed { index, name ->
+            val x = OsuNameToIDLite(id, name, index)
             osuFindNameMapper.save(x)
         }
     }
@@ -432,7 +433,7 @@ class BindDao(
      * 通过 osuFindNameMapper 获取
      */
     fun getUserName(userID: Long): String {
-        return osuFindNameMapper.findById(userID).getOrNull()?.name ?: userID.toString()
+        return osuFindNameMapper.getUsername(userID) ?: userID.toString()
     }
 
     fun countNameToID(userID: Long): Int {
@@ -440,17 +441,13 @@ class BindDao(
     }
 
     fun updateNameToID(user: OsuUser) {
-        val names = if (user.previousNames.isNullOrEmpty()) {
-            listOf(user.username.uppercase())
-        } else {
-            listOf(user.username.uppercase()) + user.previousNames!!.map { it.uppercase() }
-        }
+        val names = listOf(user.username) + (user.previousNames ?: emptyList())
 
         val count = countNameToID(user.userID)
 
         if (count == 0 || count != names.size) {
             removeNameToID(user.userID)
-            saveNameToID(user.userID, *names.toTypedArray())
+            saveNameToID(user.userID, names)
         }
     }
 

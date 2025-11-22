@@ -8,7 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import java.nio.file.Path
 
 @Service
-class DivingFishBaseService(val webClient: WebClient, @Qualifier("divingFishApiWebClient") val divingFishApiWebClient: WebClient, fishConfig: DivingFishConfig) {
+class DivingFishBaseService(val webClient: WebClient, @param:Qualifier("divingFishApiWebClient") val divingFishApiWebClient: WebClient, fishConfig: DivingFishConfig) {
     // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
     // /home/spring/work/img/ExportFileV3/Maimai
     final val maimaiPath: Path? = fishConfig.maimai

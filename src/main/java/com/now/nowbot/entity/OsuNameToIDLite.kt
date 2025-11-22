@@ -17,10 +17,11 @@ class OsuNameToIDLite {
     @Column(name = "idx")
     private var index: Int? = null
 
+    @Suppress("UNUSED")
     constructor()
 
     constructor(userID: Long?, name: String, index: Int?) {
-        this.name = name.uppercase()
+        this.name = name
         this.userID = userID
         this.index = index
     }

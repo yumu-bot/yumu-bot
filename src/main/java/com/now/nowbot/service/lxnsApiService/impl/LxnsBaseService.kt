@@ -8,7 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import java.nio.file.Path
 
 @Service
-class LxnsBaseService(val webClient: WebClient, @Qualifier("lxnsApiWebClient") val lxnsApiWebClient: WebClient, lxnsConfig: LxnsConfig) {
+class LxnsBaseService(val webClient: WebClient, @param:Qualifier("lxnsApiWebClient") val lxnsApiWebClient: WebClient, lxnsConfig: LxnsConfig) {
     // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
     // /home/spring/work/img/ExportFileV3/Maimai
     final val maimaiPath: Path? = lxnsConfig.maimai

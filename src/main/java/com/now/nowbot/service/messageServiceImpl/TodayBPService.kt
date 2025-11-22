@@ -180,7 +180,7 @@ class TodayBPService(
                     "user" to user,
                     "scores" to ss,
                     "rank" to ranks,
-                    "panel" to "T"
+                    "panel" to "T",
                 )
 
                 MessageChain(imageService.getPanel(body, "A4"))

@@ -48,7 +48,14 @@ class ScorePRService(
     private val bindDao: BindDao
 ) : MessageService<ScorePRParam>, TencentMessageService<ScorePRParam> {
 
-    data class ScorePRParam(val user: OsuUser, val history: OsuUser? = null, val scores: Map<Int, LazerScore>, val isPass: Boolean = false, val isShow: Boolean = false)
+    data class ScorePRParam(
+        val user: OsuUser,
+        val history: OsuUser? = null,
+        val scores: Map<Int, LazerScore>,
+        val isPass: Boolean = false,
+        val isShow: Boolean = false,
+        val isCompact: Boolean = false
+    )
 
     data class PanelE5Param(
         val user: OsuUser,
@@ -98,9 +105,9 @@ class ScorePRService(
 
     @Throws(Throwable::class)
     override fun isHandle(
-            event: MessageEvent,
-            messageText: String,
-            data: DataValue<ScorePRParam>
+        event: MessageEvent,
+        messageText: String,
+        data: DataValue<ScorePRParam>
     ): Boolean {
         val matcher = Instruction.SCORE_PR.matcher(messageText)
         if (!matcher.find()) return false
@@ -118,7 +125,7 @@ class ScorePRService(
                 throw IllegalStateException.ClassCast("最近成绩")
             }
 
-        val param = getParam(event, messageText, matcher, isMultiple, isPass, isShow) ?: return false
+        val param = getParam(event, messageText, matcher, isMultiple, isPass, isShow, isCompact = false) ?: return false
 
         data.value = param
         return true
@@ -193,7 +200,7 @@ class ScorePRService(
             return null
         }
 
-        val param = getParam(event, messageText, matcher, isMultiple, isPass, isShow)
+        val param = getParam(event, messageText, matcher, isMultiple, isPass, isShow, isCompact = true)
 
         return param
     }
@@ -208,7 +215,15 @@ class ScorePRService(
      * 封装主获取方法
      * 请在 matcher.find() 后使用
      */
-    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultiple: Boolean, isPass: Boolean, isShow: Boolean): ScorePRParam? {
+    private fun getParam(
+        event: MessageEvent,
+        messageText: String,
+        matcher: Matcher,
+        isMultiple: Boolean,
+        isPass: Boolean,
+        isShow: Boolean,
+        isCompact: Boolean
+    ): ScorePRParam? {
         val any: String = matcher.group(FLAG_ANY) ?: ""
 
         // 避免指令冲突
@@ -302,7 +317,7 @@ class ScorePRService(
 
         val historyUser = infoDao.getHistoryUser(user)
 
-        return ScorePRParam(user, historyUser, filteredScores, isPass, isShow)
+        return ScorePRParam(user, historyUser, filteredScores, isPass, isShow, isCompact)
     }
 
 
@@ -428,7 +443,8 @@ class ScorePRService(
                     "user" to user,
                     "score" to scores,
                     "rank" to ranks,
-                    "panel" to if (isPass) "PS" else "RS"
+                    "panel" to if (isPass) "PS" else "RS",
+                    "compact" to isCompact
                 )
 
                 calculateApiService.applyPPToScores(scores)
