@@ -316,7 +316,7 @@ import java.util.regex.Matcher
                     "rank" to (1..(scores.size)).toList(),
                     "score" to scores,
                     "panel" to "SS",
-                    "compact" to (scores.size >= 50)
+                    "compact" to (scores.size >= 10)
                 )
 
                 MessageChain(imageService.getPanel(body, "A5"))
