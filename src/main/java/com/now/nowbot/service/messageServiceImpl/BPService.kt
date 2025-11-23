@@ -325,7 +325,7 @@ import java.util.regex.Matcher
                     "scores" to scores,
                     "rank" to ranks,
                     "panel" to "BS",
-                    "compact" to (isCompact && scores.size >= 10)
+                    "compact" to ((isCompact && scores.size >= 10) || scores.size > 100)
                 )
 
                 MessageChain(imageService.getPanel(body, "A4"))

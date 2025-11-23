@@ -51,6 +51,7 @@ import java.util.regex.Matcher
         val mods: List<LazerMod>,
         val isMultipleScore: Boolean,
         val isShow: Boolean = false,
+        val isCompact: Boolean = false,
     )
 
     override fun isHandle(
@@ -83,7 +84,7 @@ import java.util.regex.Matcher
             return false
         }
 
-        data.value = getParam(event, messageText, matcher, isMultipleScore, isShow)
+        data.value = getParam(event, messageText, matcher, isMultipleScore, isShow, isCompact = false)
 
         return true
     }
@@ -132,14 +133,14 @@ import java.util.regex.Matcher
         } else {
             return null
         }
-        return getParam(event, messageText, matcher, isMultipleScore, isShow)
+        return getParam(event, messageText, matcher, isMultipleScore, isShow, isCompact = true)
     }
 
     override fun reply(event: MessageEvent, param: ScoreParam): MessageChain? {
         return param.getMessageChain()
     }
 
-    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultipleScore: Boolean, isShow: Boolean): ScoreParam {
+    private fun getParam(event: MessageEvent, messageText: String, matcher: Matcher, isMultipleScore: Boolean, isShow: Boolean, isCompact: Boolean): ScoreParam {
         val bid = getBid(matcher)
 
         val inputMode = getMode(matcher)
@@ -240,7 +241,7 @@ import java.util.regex.Matcher
                     throw NoSuchElementException.BeatmapScoreFiltered(map.previewName)
                 }
 
-                return ScoreParam(user, map, filtered, currentMode.data!!, mods, isMultipleScore, isShow)
+                return ScoreParam(user, map, filtered, currentMode.data!!, mods, isMultipleScore, isShow, isCompact)
             }
 
             // 备用方法：先获取最近成绩，再获取谱面
@@ -316,7 +317,7 @@ import java.util.regex.Matcher
                     "rank" to (1..(scores.size)).toList(),
                     "score" to scores,
                     "panel" to "SS",
-                    "compact" to (scores.size >= 10)
+                    "compact" to ((isCompact && scores.size >= 10) || scores.size > 100)
                 )
 
                 MessageChain(imageService.getPanel(body, "A5"))

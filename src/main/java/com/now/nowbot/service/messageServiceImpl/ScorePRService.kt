@@ -444,7 +444,7 @@ class ScorePRService(
                     "score" to scores,
                     "rank" to ranks,
                     "panel" to if (isPass) "PS" else "RS",
-                    "compact" to (isCompact && scores.size >= 10)
+                    "compact" to ((isCompact && scores.size >= 10) || scores.size > 100)
                 )
 
                 calculateApiService.applyPPToScores(scores)
