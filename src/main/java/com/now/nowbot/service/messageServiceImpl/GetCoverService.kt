@@ -17,7 +17,6 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
 import okhttp3.internal.toLongOrDefault
@@ -80,14 +79,14 @@ import java.time.LocalDateTime
                 event.replyMessageChain(chain)
             } catch (_: Exception) {
 
-                val receipt = event.reply(NoSuchElementException.LocalBG().message)
+                //val receipt = event.reply(NoSuchElementException.LocalBG().message)
 
                 beatmaps = beatmapApiService.getBeatmaps(param.bids)
                 chain = getBackground(FULL_SIZE, beatmaps)
 
                 event.replyMessageChain(chain)
 
-                receipt.recallIn(30 * 1000L)
+                //receipt.recallIn(30 * 1000L)
             }
         } else {
             beatmaps = beatmapApiService.getBeatmaps(param.bids)
@@ -109,8 +108,6 @@ import java.time.LocalDateTime
         if (param.type == FULL_SIZE) try {
             chain = getRawBackground(param.bids)
         } catch (_: Exception) {
-            // val receipt = event.reply("获取难度背景失败。正在为您获取谱面背景。\n（即 BID 最小的难度的背景，也是官网预览图和谱面预览图内的背景）")
-
             val beatmaps = beatmapApiService.getBeatmaps(param.bids)
             chain = getBackground(FULL_SIZE, beatmaps)
         } else {
