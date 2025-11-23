@@ -477,9 +477,7 @@ import kotlin.text.Charsets.UTF_8
             }.retrieve()
             .bodyToFlux(DataBuffer::class.java)
             .transform { flux ->
-                // 限制总数据量
-                flux.take(100) // 限制数据块数量
-                    .timeout(Duration.ofSeconds(30))
+                flux.timeout(Duration.ofSeconds(30))
             }
             .reduce(ByteArrayOutputStream()) { output, buffer ->
                 // 检查当前总大小
