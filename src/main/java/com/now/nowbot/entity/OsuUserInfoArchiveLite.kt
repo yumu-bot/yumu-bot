@@ -75,12 +75,12 @@ class OsuUserInfoArchiveLite {
 
     interface InfoArchive {
         @get:Column(name = "osu_id")
-        val userID: Long
-        val modeShort: Short
-        val playCount: Long
+        val userID: Long?
+        val modeShort: Short?
+        val playCount: Long?
         val mode: OsuMode
             get () {
-                return when (this.modeShort.toInt()) {
+                return when (this.modeShort?.toInt()) {
                     0 -> OsuMode.OSU
                     1 -> OsuMode.TAIKO
                     2 -> OsuMode.CATCH

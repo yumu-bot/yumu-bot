@@ -32,6 +32,9 @@ interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
                 from (
                     select osu_id, mode, play_count from osu_user_info_archive
                     where osu_id in (:userIDs) and time between :from and :to and pp > 0
+                    and osu_id is not null
+                    and mode is not null
+                    and play_count is not null
                     order by osu_id, mode, play_count asc
                 ) as shadow
                 """, nativeQuery = true

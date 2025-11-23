@@ -84,6 +84,8 @@ class DailyStatisticsService(
         val userMap = userInfoList.associateBy { it.userID }
 
         for (user in yesterdayInfo) {
+            if (user.userID == null) continue
+
             val mode = user.mode
             val userInfo = userMap[user.userID] ?: continue
             val newPlayCount = when (user.mode) {
@@ -96,9 +98,11 @@ class DailyStatisticsService(
                     continue
                 }
             }
+
             log.info("用户 ${user.userID} 模式 $mode playCount: ${user.playCount} -> $newPlayCount")
+
             if (user.playCount != newPlayCount) {
-                needSearch.add(user.userID to mode)
+                needSearch.add(user.userID!! to mode)
             }
         }
     }

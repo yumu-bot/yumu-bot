@@ -28,7 +28,7 @@ import java.time.Duration
 
 @Component @Configuration class WebClientConfig : WebFluxConfigurer {
     override fun configureHttpMessageCodecs(configurer: ServerCodecConfigurer) {
-        configurer.defaultCodecs().maxInMemorySize(20 * 1024 * 1024)
+        configurer.defaultCodecs().maxInMemorySize(24 * 1024 * 1024)
     }
 
     @Bean("osuApiWebClient") @Qualifier("osuApiWebClient") @Primary fun osuApiWebClient(builder: WebClient.Builder, config: NowbotConfig): WebClient {/*
@@ -66,7 +66,8 @@ import java.time.Duration
                 headers.contentType = MediaType.APPLICATION_JSON
                 headers.accept = listOf(MediaType.APPLICATION_JSON)
             }.baseUrl("https://osu.ppy.sh/api/v2/")
-            .codecs { codecs: ClientCodecConfigurer -> codecs.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }.build()
+            .codecs { it.defaultCodecs().maxInMemorySize(24 * 1024 * 1024) }
+            .build()
     }
 
     @Bean("divingFishApiWebClient") @Qualifier("divingFishApiWebClient") fun divingFishApiWebClient(builder: WebClient.Builder, divingFishConfig: DivingFishConfig, config: NowbotConfig): WebClient {
@@ -101,7 +102,7 @@ import java.time.Duration
                 headers.contentType = MediaType.APPLICATION_JSON
                 headers.accept = listOf(MediaType.APPLICATION_JSON)
             }.baseUrl(divingFishConfig.url!!)
-            .codecs { it.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }
+            .codecs { it.defaultCodecs().maxInMemorySize(24 * 1024 * 1024) }
             .filter { request: ClientRequest, next: ExchangeFunction -> this.doRetryFilter(request, next)
             }.build()
     }
@@ -128,7 +129,7 @@ import java.time.Duration
                 headers.contentType = MediaType.APPLICATION_JSON
                 headers.accept = listOf(MediaType.APPLICATION_JSON)
             }.baseUrl(lxnsConfig.url!!)
-            .codecs { it.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }
+            .codecs { it.defaultCodecs().maxInMemorySize(24 * 1024 * 1024) }
             .filter { request: ClientRequest, next: ExchangeFunction -> this.doRetryFilter(request, next)
             }.build()
     }
@@ -155,7 +156,7 @@ import java.time.Duration
                 headers.contentType = MediaType.APPLICATION_JSON
                 headers.accept = listOf(MediaType.APPLICATION_JSON)
             }.baseUrl("http://api.bilibili.com/")
-            .codecs { it.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }
+            .codecs { it.defaultCodecs().maxInMemorySize(24 * 1024 * 1024) }
             .filter { request: ClientRequest, next: ExchangeFunction -> this.doRetryFilter(request, next)
             }.build()
     }
@@ -192,7 +193,7 @@ import java.time.Duration
                 headers.contentType = MediaType.APPLICATION_JSON
                 headers.accept = listOf(MediaType.APPLICATION_JSON)
             }.baseUrl("https://api.ppy.sb/")
-            .codecs { it.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) }
+            .codecs { it.defaultCodecs().maxInMemorySize(24 * 1024 * 1024) }
             .filter { request: ClientRequest, next: ExchangeFunction -> this.doRetryFilter(request, next)
             }.build()
     }
@@ -285,7 +286,8 @@ import java.time.Duration
             )
         }.build()
         return builder.clientConnector(connector).exchangeStrategies(strategies)
-            .codecs { it.defaultCodecs().maxInMemorySize(Int.MAX_VALUE) } .build()
+            .codecs { it.defaultCodecs().maxInMemorySize(24 * 1024 * 1024) }
+            .build()
     }
 
     companion object {

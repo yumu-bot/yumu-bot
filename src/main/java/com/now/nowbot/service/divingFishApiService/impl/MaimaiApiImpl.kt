@@ -13,14 +13,18 @@ import com.now.nowbot.util.JacksonUtil
 import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.core.io.buffer.DataBuffer
+import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.file.Files
+import java.time.Duration
 import java.util.concurrent.Callable
 import kotlin.math.abs
 import kotlin.text.Charsets.UTF_8
@@ -468,8 +472,29 @@ import kotlin.text.Charsets.UTF_8
 
     private val maimaiRankLibraryFromAPI: String
         get() = request { client -> client.get()
-            .uri { it.path("api/maimaidxprober/rating_ranking").build()
-            }.retrieve().bodyToMono(String::class.java)
+            .uri {
+                it.path("api/maimaidxprober/rating_ranking").build()
+            }.retrieve()
+            .bodyToFlux(DataBuffer::class.java)
+            .transform { flux ->
+                // 限制总数据量
+                flux.take(100) // 限制数据块数量
+                    .timeout(Duration.ofSeconds(30))
+            }
+            .reduce(ByteArrayOutputStream()) { output, buffer ->
+                // 检查当前总大小
+                if (output.size() > 24 * 1024 * 1024) {
+                    DataBufferUtils.release(buffer)
+                    throw RuntimeException("响应数据超过 24 MB限制")
+                }
+
+                val bytes = ByteArray(buffer.readableByteCount())
+                buffer.read(bytes)
+                output.write(bytes)
+                DataBufferUtils.release(buffer) // 及时释放内存
+                output
+            }
+            .map { it.toString(UTF_8) }
         }
 
     private val maimaiFitLibraryFromAPI: String
