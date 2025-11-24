@@ -65,7 +65,7 @@ class ScorePRService(
         val density: IntArray,
         val progress: Double,
         val original: Map<String, Any>,
-        val attributes: Any,
+        val attributes: Any?,
         val panel: String,
         val health: Map<Int, Double>? = null,
     ) {
