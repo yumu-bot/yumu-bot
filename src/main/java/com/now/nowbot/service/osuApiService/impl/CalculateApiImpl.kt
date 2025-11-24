@@ -37,7 +37,7 @@ import kotlin.math.roundToInt
 
         val closable = ArrayList<AutoCloseable>(1)
         return try {
-            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
+            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) } ?: return RosuPerformance()
             val objects = beatmap.objects
             val performance = beatmap.createPerformance().apply {
                 isLazer(lazer)
@@ -75,7 +75,7 @@ import kotlin.math.roundToInt
 
         val closable = ArrayList<AutoCloseable>(1)
         return try {
-            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
+            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) } ?: return RosuPerformance()
             beatmap.createPerformance(state).apply {
                 setLazer(lazer)
                 if (change) this.setGameMode(mode)
@@ -102,7 +102,7 @@ import kotlin.math.roundToInt
         } else {
             null
         }
-        val (beatmap, change) = getBeatmap(beatmapID, gameMode) { cache.add(it) }
+        val (beatmap, change) = getBeatmap(beatmapID, gameMode) { cache.add(it) } ?: return emptyList()
         return try {
             accuracy.map { acc ->
                 val performance = beatmap.createPerformance().apply {
@@ -136,7 +136,7 @@ import kotlin.math.roundToInt
             null
         }
         val cache = ArrayList<AutoCloseable>(1)
-        val (beatmap, isConvert) = getBeatmap(beatmapID, gameMode) { cache.add(it) }
+        val (beatmap, isConvert) = getBeatmap(beatmapID, gameMode) { cache.add(it) } ?: return RosuPerformance()
         return try {
             val performance = beatmap.createPerformance().apply {
                 setLazer(isLazer)
@@ -152,7 +152,7 @@ import kotlin.math.roundToInt
     }
 
     /* 1 */
-    override fun getScoreStatisticsWithFullAndPerfectPP(score: LazerScore): RosuPerformance.FullRosuPerformance {
+    override fun getScoreStatisticsWithFullAndPerfectPP(score: LazerScore): RosuPerformance.FullRosuPerformance? {
         val mode = score.mode.toRosuMode()
 
         /**
@@ -204,7 +204,7 @@ import kotlin.math.roundToInt
         val closable = ArrayList<AutoCloseable>(1)
 
         return try {
-            val (beatmap, isConvert) = getBeatmap(beatmapID, mode) { closable.add(it) }
+            val (beatmap, isConvert) = getBeatmap(beatmapID, mode) { closable.add(it) } ?: return null
             val notFC = beatmap.createPerformance(state).apply {
                 setLazer(lazer)
                 setPassedObjects(beatmap.objects)
@@ -302,7 +302,7 @@ import kotlin.math.roundToInt
 
         val closable = ArrayList<AutoCloseable>(scores.size + 1)
         return try {
-            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
+            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) } ?: return mapOf()
 
             scores.map { score ->
                 val mods = score.mods
@@ -369,7 +369,7 @@ import kotlin.math.roundToInt
 
         val closable = ArrayList<AutoCloseable>(1)
         return try {
-            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) }
+            val (beatmap, change) = getBeatmap(beatmapID, mode) { closable.add(it) } ?: return RosuPerformance()
             beatmap.createPerformance(state).apply {
                 setLazer(lazer)
                 if (isNotPass) setHitResultPriority(true)
@@ -383,8 +383,8 @@ import kotlin.math.roundToInt
 
     private fun getBeatmap(
         beatmapID: Long, mode: org.spring.osu.OsuMode, set: (JniBeatmap) -> Unit
-    ): Pair<JniBeatmap, Boolean> {
-        val map = beatmapApiService.getBeatmapFileByte(beatmapID) ?: throw Exception("无法获取谱面文件, 请稍后再试")
+    ): Pair<JniBeatmap, Boolean>? {
+        val map = beatmapApiService.getBeatmapFileByte(beatmapID) ?: return null
         val beatmap = JniBeatmap(map)
         set(beatmap)
         val isConvert = if (beatmap.mode != mode && beatmap.mode == org.spring.osu.OsuMode.Osu) {
@@ -503,7 +503,7 @@ import kotlin.math.roundToInt
         return try {
             val (beatmap, _) = getBeatmap(beatmapID, mode.toRosuMode()) {
                 closeables.add(it)
-            }
+            } ?: return 0.0
 
             val difficulty = beatmap.createDifficulty().apply {
                 closeables.add(this)

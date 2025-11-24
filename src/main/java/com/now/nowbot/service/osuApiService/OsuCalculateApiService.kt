@@ -15,7 +15,7 @@ interface OsuCalculateApiService {
 
     fun getScoreFullComboPP(score: LazerScore): RosuPerformance
 
-    fun getScoreStatisticsWithFullAndPerfectPP(score: LazerScore): RosuPerformance.FullRosuPerformance
+    fun getScoreStatisticsWithFullAndPerfectPP(score: LazerScore): RosuPerformance.FullRosuPerformance?
 
     fun applyBeatMapChanges(score: LazerScore)
 
