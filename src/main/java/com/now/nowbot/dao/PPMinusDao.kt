@@ -23,7 +23,7 @@ class PPMinusDao(private val ppMinusRepository: PPMinusRepository) {
     }
 
     fun getSurroundingPPMinus(user: OsuUser, bests: List<LazerScore>, delta: Int = 500): List<PPMinusLite> {
-        val rawPP = user.pp - DataUtil.getBonusPP(user.pp, bests.map { it.pp })
+        val rawPP = DataUtil.getBestsPP(bests)
 
         val surrounds = ppMinusRepository.findSurroundingByUserID(user.id, rawPP - delta, rawPP + delta, user.currentOsuMode.modeValue)
 

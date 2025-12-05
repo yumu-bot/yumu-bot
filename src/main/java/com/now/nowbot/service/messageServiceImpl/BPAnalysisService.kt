@@ -20,7 +20,6 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
-import com.now.nowbot.util.DataUtil.getBonusPP
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -163,11 +162,10 @@ import kotlin.math.min
             }.sortedByDescending { it.ppCount }
 
             val userPP = user.pp
-            val bonusPP = getBonusPP(userPP, bests.map { it.pp }.toDoubleArray())
+            val rawPP = DataUtil.getBestsPP(bests)
 
             //bpPP + remainPP (bp100之后的) = rawPP
-            val bpPP = bests.sumOf { it.weight!!.pp }
-            val rawPP = (userPP - bonusPP)
+            val bestPP = bests.sumOf { it.weight!!.pp }
 
             val modsAttr: List<Attr>
             run {
@@ -190,7 +188,7 @@ import kotlin.math.min
                 } else {
                     val fcPPSum = fcList.sum()
 
-                    fc = Attr("FC", fcList.size, fcPPSum, (fcPPSum / bpPP))
+                    fc = Attr("FC", fcList.size, fcPPSum, (fcPPSum / bestPP))
                 }
                 rankAttr.add(fc)
                 for (rank in RANK_ARRAY) {
@@ -201,7 +199,7 @@ import kotlin.math.min
                         if (!value.isNullOrEmpty()) {
                             rankPPSum = value.sum()
                             attr = Attr(
-                                rank, value.count(), rankPPSum, (rankPPSum / bpPP)
+                                rank, value.count(), rankPPSum, (rankPPSum / bestPP)
                             )
                         }
                         rankAttr.add(attr)

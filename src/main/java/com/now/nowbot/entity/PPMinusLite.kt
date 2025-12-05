@@ -92,7 +92,7 @@ class PPMinusLite(
 
         lite.userID = user.userID
         lite.userPP = user.pp
-        lite.rawPP = user.pp - DataUtil.getBonusPP(user.pp, bests.map { it.pp })
+        lite.rawPP = DataUtil.getBestsPP(bests)
 
         lite.accuracy = user.accuracy / 100.0
         lite.totalHits = user.totalHits

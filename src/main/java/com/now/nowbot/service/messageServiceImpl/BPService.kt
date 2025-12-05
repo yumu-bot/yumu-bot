@@ -218,6 +218,10 @@ import java.util.regex.Matcher
             scores = range2.getBestsFromOsuUser(mode.data ?: OsuMode.DEFAULT, isMultiple, hasCondition)
         }
 
+        if (scores.size == 200 || user.pp <= 0.0) {
+            user.setEstimatedPP(scores.map { it.value })
+        }
+
         beatmapApiService.applyBeatmapExtend(scores.map { it.value })
 
         val filteredScores = ScoreFilter.filterScores(scores, conditions)

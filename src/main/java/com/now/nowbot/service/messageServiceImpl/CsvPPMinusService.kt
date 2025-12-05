@@ -13,7 +13,7 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
-import com.now.nowbot.util.DataUtil.getBonusPP
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
@@ -64,7 +64,7 @@ class CsvPPMinusService(
                  Callable {
                     try {
                         it to userApiService.getOsuID(it)
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         log.error("CM：获取玩家 {} 编号失败", it)
                         it to -1L
                     }
@@ -268,9 +268,8 @@ class CsvPPMinusService(
                     lengv90 += bp.beatmap.totalLength.toLong()
                 }
             }
-            // bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
-            bonus = getBonusPP(user.pp, bpPPs)
-            rawpp = user.pp - bonus
+            rawpp = DataUtil.getBestsPP(bps)
+            bonus = DataUtil.getBonusPP(rawpp, user.pp)
 
             ppv0 /= 10f
             ppv45 /= 10f

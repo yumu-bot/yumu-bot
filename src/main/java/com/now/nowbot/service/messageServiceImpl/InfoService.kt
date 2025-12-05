@@ -61,6 +61,8 @@ class InfoService(
         val percentiles: Map<String, Double> = mapOf(),
     ) {
         fun toMap(): Map<String, Any?> {
+            user.setEstimatedPP(bests)
+
             when(this.version) {
                 3 -> {
                     val day: Long = if (historyUser != null) {
@@ -85,7 +87,7 @@ class InfoService(
                         "percentiles" to percentiles,
                         "history_day" to day,
                         "history_user" to historyUser,
-                        "bonus_pp" to getBonus(bests, user)
+                        "bonus_pp" to DataUtil.getBonusPP(bests, user.pp)
                     )
                 }
 
@@ -126,7 +128,7 @@ class InfoService(
                     out["user"] = user
                     out["mode"] = mode
                     out["bp-times"] = getBestTimes(bests)
-                    out["bonus_pp"] = getBonus(bests, user)
+                    out["bonus_pp"] = DataUtil.getBonusPP(bests, user.pp)
 
                     if (historyUser != null) {
                         val stat = historyUser.statistics
@@ -304,14 +306,6 @@ class InfoService(
             }
 
             return timeArray
-        }
-
-        private fun getBonus(bests: List<LazerScore>, user: OsuUser): Double {
-            return if (bests.isNotEmpty()) {
-                DataUtil.getBonusPP(user.pp, bests.map { it.pp })
-            } else {
-                0.0
-            }
         }
 
         @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)

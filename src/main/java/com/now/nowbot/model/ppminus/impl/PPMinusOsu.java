@@ -3,21 +3,17 @@ package com.now.nowbot.model.ppminus.impl;
 import com.now.nowbot.model.osu.LazerScore;
 import com.now.nowbot.model.osu.OsuUser;
 import com.now.nowbot.model.ppminus.PPMinus;
+import com.now.nowbot.util.DataUtil;
 
 import java.util.List;
 import java.util.Objects;
 
-import static com.now.nowbot.util.DataUtil.getBonusPP;
-
 public class PPMinusOsu extends PPMinus {
     public PPMinusOsu(OsuUser user, List<LazerScore> bps) {
-        double[] bpPPs = new double[bps.size()];
         for (int i = 0; i < bps.size(); i++) {
             var bp = bps.get(i);
             var bpiPP = Objects.requireNonNull(bp.getWeight()).getPp();
-            var bprPP = bp.getPP();
             bpPP += bpiPP;
-            bpPPs[i] = bprPP; // Math.log10(bp.getWeight().getPP()) / 2; //这个lg /2 是从哪来的？
 
             switch (bp.getRank()) {
                 case "XH", "X" -> xx++;
@@ -42,8 +38,7 @@ public class PPMinusOsu extends PPMinus {
                 lengv90 += bp.getBeatmap().getTotalLength();
             }
         }
-        //bonus = bonusPP(allBpPP, user.getStatistics().getPlayCount());
-        bonus = getBonusPP(user.getPp(), bpPPs);
+        bonus = DataUtil.getBonusPP(bps, user.getPp());
         rawpp = user.getPp() - bonus;
 
         ppv0 /= 10;

@@ -6,6 +6,7 @@ import com.now.nowbot.model.enums.JaChar
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.Statistics
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.command.*
@@ -618,12 +619,76 @@ object DataUtil {
         }
     }
 
-    fun getBonusPP(playerPP: Double, fullPP: List<Double>): Double {
-        return getBonusPP(playerPP, fullPP.toDoubleArray())
+    fun getBestsPP(bests: List<LazerScore>): Double {
+        val weighted = bests.map { it.weight?.pp ?: 0.0 }
+
+        if (weighted.size < 200) {
+            return weighted.sum()
+        }
+
+        // 1. 取后30个数据
+        val last30 = weighted.takeLast(30)
+
+        // 2. 线性拟合 y = ax + b
+        val n = last30.size.toDouble()
+        var sumX = 0.0
+        var sumY = 0.0
+        var sumXY = 0.0
+        var sumX2 = 0.0
+
+        last30.forEachIndexed { index, y ->
+            val x = index.toDouble()
+            sumX += x
+            sumY += y
+            sumXY += x * y
+            sumX2 += x * x
+        }
+
+        val denominator = n * sumX2 - sumX * sumX
+        val a = (n * sumXY - sumX * sumY) / denominator  // 斜率
+        val b = (sumY * sumX2 - sumX * sumXY) / denominator  // 截距
+
+        // 3. 求解零点
+        val zeroPoint = -b / a
+
+        // 4. 坐标转换和求和
+        val originalStartIndex = weighted.size - last30.size
+        val zeroPointInOriginal = zeroPoint + originalStartIndex
+        val endIndex = maxOf(ceil(zeroPointInOriginal).toInt(), 0)
+        val startIndex = 200
+
+        var sum = 0.0
+        for (x in startIndex..endIndex) {
+            val xInFitted = x - originalStartIndex
+            val fittedValue = a * xInFitted + b
+            if (fittedValue > 0) sum += fittedValue
+        }
+
+        return weighted.sum() + sum
+    }
+
+    @JvmStatic
+    fun getBonusPP(bests: List<LazerScore>, userPP: Double): Double {
+        val bestPP = getBestsPP(bests)
+
+        return getBonusPP(bestPP, userPP)
+    }
+
+    fun getBonusPP(bestPP: Double, userPP: Double): Double {
+        val bonusPP = (userPP - bestPP)
+
+        val maxBonusPP = (417.0 - 1.0 / 3.0) * (1.0 - 0.995.pow(1000))
+
+        return bonusPP.coerceIn(0.0, maxBonusPP)
+    }
+
+    fun getBonusPP(beatmapPlaycount: Int = 0): Double {
+        return (417.0 - 1.0 / 3.0) * (1.0 - 0.995.pow(beatmapPlaycount))
     }
 
     /** 计算bonusPP 算法是最小二乘 y = kx + b 输入的PP数组应该是加权之前的数组。 */
     @JvmStatic
+    @Deprecated("请使用传入 LazerScore 的版本")
     fun getBonusPP(playerPP: Double, fullPP: DoubleArray?): Double {
         val bonusPP: Double
         var remainPP = 0.0

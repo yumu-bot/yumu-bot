@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
+import com.now.nowbot.util.DataUtil
 import org.springframework.lang.Nullable
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -273,6 +274,57 @@ open class OsuUser {
     @JsonProperty("mapping_follower_count")
     var mappingFollowerCount: Int = 0
 
+    @JsonProperty("matchmaking_stats")
+    var matchmakingStats: List<MatchmakingStats> = listOf()
+
+    @get:JsonProperty("matchmaking_highest_rank")
+    val matchmakingHighestRank: Int
+        get() = matchmakingStats.minOfOrNull { it.rank } ?: 0
+
+    @get:JsonProperty("matchmaking_rating")
+    val matchmakingRating: Int
+        get() = matchmakingStats.firstOrNull()?.rating ?: 0
+
+    data class MatchmakingStats(
+        @field:JsonProperty("first_placements")
+        var firstPlacements: Int = 0,
+
+        @field:JsonProperty("pool_id")
+        var poolID: Int = 0,
+
+        @field:JsonProperty("rank")
+        var rank: Int = 0,
+
+        @field:JsonProperty("rating")
+        var rating: Int = 0,
+
+        @field:JsonProperty("total_points")
+        var totalPoints: Int = 0,
+
+        @set:JsonProperty("user_id")
+        @get:JsonIgnoreProperties
+        var userID: Long = 0L,
+
+        @field:JsonProperty("pool")
+        var pool: MatchmakingPool = MatchmakingPool()
+    )
+
+    data class MatchmakingPool(
+
+        @field:JsonProperty("id")
+        var poolID: Long = 0L,
+
+        @field:JsonProperty("name")
+        var name: String = "",
+
+        @field:JsonProperty("ruleset_id")
+        var rulesetID: Byte = 0,
+
+        @field:JsonProperty("variant_id")
+        var variantID: Byte = 0,
+    )
+
+
     @JsonIgnoreProperties
     var monthlyPlaycounts: List<UserMonthly> = listOf()
 
@@ -380,6 +432,9 @@ open class OsuUser {
     var pp: Double = 0.0
         get() = statistics?.pp ?: field
 
+    @get:JsonProperty("estimate_pp")
+    var ppEstimate: Double = 0.0
+
     constructor()
 
     constructor(statistics: Statistics) {
@@ -486,6 +541,17 @@ open class OsuUser {
 
     constructor(name: String) {
         this.username = name
+    }
+
+    fun setEstimatedPP(bests: List<LazerScore>) {
+        if (this.pp == 0.0) {
+            val estimateBestsPP = DataUtil.getBestsPP(bests)
+            val estimateBonusPP = DataUtil.getBonusPP(beatmapPlaycount)
+
+            ppEstimate = estimateBestsPP + estimateBonusPP
+        } else {
+            ppEstimate = this.pp
+        }
     }
 
     companion object {

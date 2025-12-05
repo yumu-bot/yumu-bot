@@ -96,7 +96,11 @@ enum class MaiCharter(val japaneses: List<String>, val alias: String) {
 
     KARAMERU_GURUN(listOf("からめる & ぐるん"), "转转"),
 
+    // 可能是 アミノハバキリ
+    SEMENT_TOMORI(listOf("sementomori", "せめんともり", "水泥灯"), "水泥森林"),
+
     COLLAB(listOf("合作だよ", "collab"), "合作"),
+
 
     OTHERS(listOf("-"), "其他"),
 
