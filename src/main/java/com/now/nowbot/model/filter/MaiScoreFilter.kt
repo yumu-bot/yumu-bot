@@ -134,7 +134,7 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
                 ID -> fit(operator, it.songID % 10000L, int.toLong() % 10000L)
 
-                DIFFICULTY -> fitRange(operator, str, it.star)
+                DIFFICULTY -> fitRange(operator, it.star, str)
 
                 DIFFICULTY_NAME -> {
                     val con = MaiDifficulty.getIndex(MaiDifficulty.getDifficulty(str))
@@ -151,10 +151,10 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, dif, con)
                 }
 
-                CABINET -> fit(operator, MaiCabinet.getCabinet(str), MaiCabinet.getCabinet(it.type))
+                CABINET -> fit(operator, MaiCabinet.getCabinet(it.type), MaiCabinet.getCabinet(str))
                 VERSION -> fit(operator,
-                    MaiVersion.getVersionList(it.version).joinToString(" ") { it.abbreviation },
-                    MaiVersion.getVersionList(str).joinToString(" ") { it.abbreviation }
+                    MaiVersion.getVersionList(it.version),
+                    MaiVersion.getVersionList(str),
                 )
                 TITLE -> fit(operator, it.title, str)
                 ALIASES -> {
@@ -239,14 +239,14 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
         /**
          * 公用方法
-         * 检测一个难度是否在输入的难度区间内
+         * 检测 compare 是否在 to 输入的难度区间内
          */
-        fun fitRange(operator: Operator, compare: String?, to: Double): Boolean {
+        fun fitRange(operator: Operator, compare: Double, to: String?): Boolean {
 
-            val intRange = if (compare.isNullOrBlank()) {
+            val intRange = if (to.isNullOrBlank()) {
                 10..150
-            } else if (compare.contains(REG_HYPHEN.toRegex())) {
-                val s = compare.split(REG_HYPHEN.toRegex()).map { it.trim() }
+            } else if (to.contains(REG_HYPHEN.toRegex())) {
+                val s = to.split(REG_HYPHEN.toRegex()).map { it.trim() }
 
                 if (s.size == 2) {
                     val f = parseLevel(s.first(), isAccurate = true)
@@ -260,10 +260,10 @@ enum class MaiScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     parseLevel(s.first(), isAccurate = false)
                 }
             } else {
-                parseLevel(compare)
+                parseLevel(to)
             }
 
-            val t = (to * 10.0).roundToInt()
+            val t = (compare * 10.0).roundToInt()
 
             return when(operator) {
                 Operator.XQ -> t == intRange.first

@@ -85,7 +85,6 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
             }
         }
 
-        @JvmStatic
         fun getVersionList(str: String?): List<MaiVersion> {
             if (str == null) return listOf(DEFAULT)
 

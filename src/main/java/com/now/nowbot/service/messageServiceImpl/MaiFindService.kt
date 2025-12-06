@@ -73,9 +73,9 @@ import java.util.regex.Matcher
             val conditions = DataUtil.getConditions(any, MaiSongFilter.entries.map { it.regex },
                 endPattern = MaiSongFilter.RANGE.regex.pattern)
 
-            val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
-            val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
-            val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
+            val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+            val hasRangeInConditions = rangeInConditions.isNotEmpty()
+            val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 
             val songs: List<MaiSong>
 
@@ -151,7 +151,7 @@ import java.util.regex.Matcher
          * @param difficulties 通过冒号输入的难度
          */
         private fun fitSongInRange(
-            range: String?,
+            ranges: List<String>?,
             songs: List<MaiSong>,
             difficulties: List<MaiDifficulty>
         ): List<MaiSong> {
@@ -160,7 +160,9 @@ import java.util.regex.Matcher
             return songs.filter { s ->
                 val result = s.star.mapIndexed { i: Int, sr: Double ->
                     val isLevel = diffs.isEmpty() || diffs.contains(i) || (s.isUtage && diffs.contains(5))
-                    val inRange = MaiScoreFilter.fitRange(Operator.EQ, range, sr)
+                    val inRange = ranges?.any { range ->
+                        MaiScoreFilter.fitRange(Operator.EQ, sr, range)
+                    } ?: true
 
                     i to (isLevel && inRange)
                 }.filter {
@@ -169,7 +171,7 @@ import java.util.regex.Matcher
                     it.first
                 }
 
-                val boolean = result.isNotEmpty()
+                val boolean = result.isNotEmpty() && result.size >= (ranges?.size ?: 0)
 
                 if (boolean) {
                     s.updateHighlight(result)

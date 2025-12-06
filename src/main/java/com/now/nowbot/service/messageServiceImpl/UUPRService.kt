@@ -143,9 +143,9 @@ class UUPRService(
         val conditions = DataUtil.getConditions(any, ScoreFilter.entries.map { it.regex })
 
         // 如果不加井号，则有时候范围会被匹配到这里来
-        val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
-        val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
-        val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
+        val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+        val hasRangeInConditions = rangeInConditions.isNotEmpty()
+        val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 
         if (hasRangeInConditions.not() && hasCondition.not() && any.isNotBlank()) {
             throw IllegalArgumentException.WrongException.Cabbage()
@@ -154,8 +154,8 @@ class UUPRService(
         val ranges = if (hasRangeInConditions) {
             rangeInConditions
         } else {
-            matcher.group(FLAG_RANGE)
-        }?.split(REG_HYPHEN.toRegex())
+            matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
+        }
 
         val user: OsuUser
         val scores: Map<Int, LazerScore>

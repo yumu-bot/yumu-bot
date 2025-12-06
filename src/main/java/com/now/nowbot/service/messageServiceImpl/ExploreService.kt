@@ -203,9 +203,9 @@ class ExploreService(
                 val conditions = DataUtil.getConditions(any, MostPlayedBeatmapFilter.entries.map { it.regex })
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
-                val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
-                val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
-                val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
+                val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+                val hasRangeInConditions = rangeInConditions.isNotEmpty()
+                val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 
                 val before: Int
                 val after: Int
@@ -241,7 +241,7 @@ class ExploreService(
                     throw NoSuchElementException.MostPlayed()
                 }
 
-                val page2 = rangeInConditions?.toIntOrNull() ?: page
+                val page2 = rangeInConditions.firstOrNull()?.toIntOrNull() ?: page
 
                 val (split, _, maxPage) = DataUtil.splitPage(filter, page2, 20, before * 20, after * 20)
 
@@ -252,9 +252,9 @@ class ExploreService(
                 val conditions = DataUtil.getConditions(any, BeatmapsetFilter.entries.map { it.regex })
 
                 // 如果不加井号，则有时候范围会被匹配到这里来
-                val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
-                val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
-                val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
+                val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+                val hasRangeInConditions = rangeInConditions.isNotEmpty()
+                val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 
                 val before: Int
                 val after: Int
@@ -281,7 +281,7 @@ class ExploreService(
                     throw NoSuchElementException.UserBeatmapset(type.chinese)
                 }
 
-                val page2 = rangeInConditions?.toIntOrNull() ?: page
+                val page2 = rangeInConditions.firstOrNull()?.toIntOrNull() ?: page
 
                 val (split, _, maxPage) = DataUtil.splitPage(filter, page2, 15, before * 15, after * 15)
 
@@ -307,9 +307,9 @@ class ExploreService(
         val conditions = DataUtil.getConditions(any, SearchBeatmapsetFilter.entries.map { it.regex })
 
         // 如果不加井号，则有时候范围会被匹配到这里来
-        val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
-        val hasRangeInConditions = (rangeInConditions.isNullOrEmpty().not())
-        val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
+        val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+        val hasRangeInConditions = rangeInConditions.isNotEmpty()
+        val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 
         if (hasRangeInConditions.not() && hasCondition.not()) {
             // 此时使用最基础的获取

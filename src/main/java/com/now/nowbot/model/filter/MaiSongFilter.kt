@@ -81,34 +81,6 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
             }
         }
 
-        /**
-         * 如果 collection 为空，则返回 fit。否则，返回它们之间的交集
-         */
-        private fun getOrIntersect(collection: List<Pair<MaiSong, List<MaiDifficulty>>>, fit: List<Pair<MaiSong, List<MaiDifficulty>>>): List<Pair<MaiSong, List<MaiDifficulty>>> {
-            if (collection.isEmpty()) {
-                return fit
-            } else {
-                // 根据歌曲名称和难度列表取交集
-                val intersection = collection.filter { col ->
-                    fit.any { f ->
-                        f.first.songID == col.first.songID
-                    }
-                }
-
-                val set = fit.associate { it.first.songID to it.second }
-
-                return intersection.map { pair ->
-                    val new = set[pair.first.songID]
-
-                    if (new != null) {
-                        pair.first to new.toSet().intersect(pair.second.toSet()).toList()
-                    } else {
-                        pair
-                    }
-                }
-            }
-        }
-
         private fun filterConditions(songs: List<MaiSong>, filter: MaiSongFilter, conditions: List<String>): List<Pair<MaiSong, List<MaiDifficulty>>> {
             var collect = listOf<Pair<MaiSong, List<MaiDifficulty>>>()
 
@@ -124,10 +96,11 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                     .filter { it.first }
                     .map { it.third to it.second }
 
-                collect = getOrIntersect(collect, fit)
+                collect = getOrUnion(collect, fit)
             }
 
-            return collect
+            // 过滤掉多条件时部分条件不满足的结果
+            return collect.filter { it.second.size >= conditions.size }
         }
 
         /**
@@ -182,7 +155,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                 DIFFICULTY -> {
                     val result = it.star.mapIndexed{ i, sr ->
-                        val f = MaiScoreFilter.fitRange(operator, str, sr)
+                        val f = MaiScoreFilter.fitRange(operator, sr, str)
 
                         val l = MaiDifficulty.getDifficulty(levelArray.getOrNull(i) ?: -1)
 
@@ -219,7 +192,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                     }
                 }
 
-                CABINET -> fit(operator, MaiCabinet.getCabinet(str), MaiCabinet.getCabinet(it.type)) to default
+                CABINET -> fit(operator, MaiCabinet.getCabinet(it.type), MaiCabinet.getCabinet(str)) to default
                 VERSION -> fit(operator, MaiVersion.getVersionList(it.info.version), MaiVersion.getVersionList(str)) to default
 
                 TITLE -> fit(operator, it.title, str) to default
@@ -359,6 +332,63 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                 }
 
                 else -> false to default
+            }
+        }
+
+
+        /**
+         * 如果 collection 为空，则返回 fit。否则，返回它们之间的交集
+         */
+        private fun getOrIntersect(collection: List<Pair<MaiSong, List<MaiDifficulty>>>, fit: List<Pair<MaiSong, List<MaiDifficulty>>>): List<Pair<MaiSong, List<MaiDifficulty>>> {
+            if (collection.isEmpty()) {
+                return fit
+            } else {
+                // 根据歌曲名称和难度列表取交集
+                val intersection = collection.filter { col ->
+                    fit.any { f ->
+                        f.first.songID == col.first.songID
+                    }
+                }
+
+                val set = fit.associate { it.first.songID to it.second }
+
+                return intersection.map { pair ->
+                    val new = set[pair.first.songID]
+
+                    if (new != null) {
+                        pair.first to new.toSet().intersect(pair.second.toSet()).toList()
+                    } else {
+                        pair
+                    }
+                }
+            }
+        }
+
+        /**
+         * 如果 collection 为空，则返回 fit。否则，返回它们之间的并集
+         */
+        private fun getOrUnion(collection: List<Pair<MaiSong, List<MaiDifficulty>>>, fit: List<Pair<MaiSong, List<MaiDifficulty>>>): List<Pair<MaiSong, List<MaiDifficulty>>> {
+            if (collection.isEmpty()) {
+                return fit
+            } else {
+                // 创建Map便于查找
+                val collectionMap = collection.associateBy { it.first.songID }
+                val fitMap = fit.associateBy { it.first.songID }
+
+                // 获取所有songID的并集
+                val allSongIDs = (collectionMap.keys + fitMap.keys).toSet()
+
+                // 为每首歌合并难度
+                return allSongIDs.map { songID ->
+                    val song = collectionMap[songID]?.first ?: fitMap[songID]!!.first
+
+                    // 合并难度（取并集）
+                    val difficulties1 = collectionMap[songID]?.second ?: emptyList()
+                    val difficulties2 = fitMap[songID]?.second ?: emptyList()
+                    val mergedDifficulties = (difficulties1.toSet() + difficulties2.toSet()).toList()
+
+                    song to mergedDifficulties
+                }.filter { it.second.isNotEmpty() }
             }
         }
     }

@@ -127,8 +127,8 @@ import java.util.regex.Matcher
         val conditions = DataUtil.getConditions(any, MaiScoreFilter.entries.map { it.regex },
             endPattern = MaiScoreFilter.RANGE.regex.pattern)
 
-        val rangeInConditions = conditions.lastOrNull()?.firstOrNull()
-        val hasCondition = conditions.dropLast(1).sumOf { it.size } > 0
+        val rangeInConditions = conditions.lastOrNull() ?: emptyList()
+        val hasCondition = conditions.dropLast(1).any { it.isNotEmpty() }
 
         val qqStr = (matcher.group(FLAG_QQ_ID) ?: "").trim()
 
@@ -311,9 +311,13 @@ import java.util.regex.Matcher
     }
 
     companion object {
-        private fun fitScoreInRange(range: String?, scores: List<MaiScore>): List<MaiScore> {
-            if (range.isNullOrEmpty()) return scores
-            return scores.filter { MaiScoreFilter.fitRange(Operator.EQ, range, it.star) }
+        private fun fitScoreInRange(ranges: List<String>?, scores: List<MaiScore>): List<MaiScore> {
+            if (ranges.isNullOrEmpty()) return scores
+            return scores.filter { score ->
+                ranges.any { range ->
+                    MaiScoreFilter.fitRange(Operator.EQ, score.star, range)
+                }
+            }
         }
 
         private fun fitScoreInDifficulties(difficulty: String?, scores: List<MaiScore>): List<MaiScore> {

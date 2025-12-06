@@ -56,7 +56,7 @@ class MaiSong {
         if (nil) {
             this.highlight = highlight
         } else {
-            val intersect = highlight.toSet().intersect(this.highlight!!.toSet()).toList()
+            val intersect = highlight.toSet().union(this.highlight!!.toSet()).toList()
 
             if (intersect.isNotEmpty()) {
                 this.highlight = intersect
