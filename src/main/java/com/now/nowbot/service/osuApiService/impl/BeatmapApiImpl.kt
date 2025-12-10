@@ -686,6 +686,7 @@ class BeatmapApiImpl(
         val n = score.scoreHit
 
         var playPercentage = beatmapObjectCountMapper.getTimeStampPercentageByBidAndIndex(score.beatmap.beatmapID, n)
+
         if (playPercentage == null) {
             try {
                 getBeatmapObjectGrouping26(score.beatmap)
