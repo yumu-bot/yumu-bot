@@ -645,7 +645,7 @@ enum class Instruction(val pattern: Pattern) {
 
     // #8 辅助指令
     OLD_AVATAR(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(old|osu)?\\s*avatar", "oa")
+        appendCommandsIgnoreAll("(old|osu)?\\s*avatar", "oa", "o")
         appendModeQQUID()
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),
