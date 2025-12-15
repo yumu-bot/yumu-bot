@@ -460,11 +460,11 @@ import kotlin.math.roundToInt
         val mode = beatmap.mode
 
         if (mods.isAffectStarRating()) {
-            beatmap.BPM = applyBPM(beatmap.BPM, mods)
-            beatmap.AR = applyAR(beatmap.AR ?: 0f, mods)
-            beatmap.CS = applyCS(beatmap.CS ?: 0f, mods)
-            beatmap.OD = applyOD(beatmap.OD ?: 0f, mods, mode)
-            beatmap.HP = applyHP(beatmap.HP ?: 0f, mods)
+            beatmap.bpm = applyBPM(beatmap.bpm, mods)
+            beatmap.ar = applyAR(beatmap.ar ?: 0f, mods)
+            beatmap.cs = applyCS(beatmap.cs ?: 0f, mods)
+            beatmap.od = applyOD(beatmap.od ?: 0f, mods, mode)
+            beatmap.hp = applyHP(beatmap.hp ?: 0f, mods)
             beatmap.totalLength = applyLength(beatmap.totalLength, mods)
             beatmap.hitLength = applyLength(beatmap.hitLength, mods)
         }

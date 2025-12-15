@@ -62,13 +62,13 @@ data class Beatmap(
 
     // Extend!
     @field:JsonProperty("accuracy")
-    var OD: Float? = null,
+    var od: Float? = null,
 
     @field:JsonProperty("ar")
-    var AR: Float? = null,
+    var ar: Float? = null,
 
     @field:JsonProperty("bpm")
-    var BPM: Float = 0f,
+    var bpm: Float = 0f,
 
     @field:JsonProperty("convert")
     var convert: Boolean? = null,
@@ -83,13 +83,13 @@ data class Beatmap(
     var spinners: Int? = null,
 
     @field:JsonProperty("cs")
-    var CS: Float? = null,
+    var cs: Float? = null,
 
     @field:JsonProperty("deleted_at")
     var deletedAt: OffsetDateTime? = null,
 
     @field:JsonProperty("drain")
-    var HP: Float? = null,
+    var hp: Float? = null,
 
     @field:JsonProperty("hit_length")
     var hitLength: Int? = null,

@@ -45,15 +45,15 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
         
         if (mod == null || mod.trim {it <= ' '} .isEmpty()) {
             sb.append(String.format("%.2f", b.starRating)).append(',')
-            .append(String.format("%d", b.BPM.roundToInt())).append(',')
+            .append(String.format("%d", b.bpm.roundToInt())).append(',')
             .append(String.format("%d", floor((b.totalLength / 60.0)).roundToInt()))
             .append(':')
             .append(String.format("%02d", (b.totalLength % 60f).roundToInt()))
             .append(',')
             sb.append(b.maxCombo).append(',')
-            .append(b.CS).append(',')
-            .append(b.AR).append(',')
-            .append(b.OD)
+            .append(b.cs).append(',')
+            .append(b.ar).append(',')
+            .append(b.od)
             
             event.reply(sb.toString())
 
@@ -69,15 +69,15 @@ class TestMapService(private val beatmapApiService: OsuBeatmapApiService) : Mess
         val newTotalLength = CalculateApiImpl.applyLength(b.totalLength, mods).toFloat()
         
         sb.append(String.format("%.2f", a.starRating)).append(',')
-        .append(String.format("%d", CalculateApiImpl.applyBPM(b.BPM, mods).roundToInt())).append(',')
+        .append(String.format("%d", CalculateApiImpl.applyBPM(b.bpm, mods).roundToInt())).append(',')
         .append(String.format("%d", floor((newTotalLength / 60.0)).roundToInt()))
         .append(':')
         .append(String.format("%02d", (newTotalLength % 60.0).roundToInt()))
         .append(',')
         sb.append(a.maxCombo).append(',')
-        .append(String.format("%.2f", CalculateApiImpl.applyCS(b.CS!!, mods))).append(',')
-        .append(String.format("%.2f", CalculateApiImpl.applyAR(b.AR!!, mods))).append(',')
-        .append(String.format("%.2f", CalculateApiImpl.applyOD(b.OD!!, mods, b.mode)))
+        .append(String.format("%.2f", CalculateApiImpl.applyCS(b.cs!!, mods))).append(',')
+        .append(String.format("%.2f", CalculateApiImpl.applyAR(b.ar!!, mods))).append(',')
+        .append(String.format("%.2f", CalculateApiImpl.applyOD(b.od!!, mods, b.mode)))
         
         event.reply(sb.toString())
 

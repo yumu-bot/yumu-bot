@@ -24,7 +24,6 @@ import okhttp3.internal.toImmutableList
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.DigestUtils
@@ -1157,17 +1156,17 @@ class BeatmapApiImpl(
             }
 
             // 深拷贝
-            return if (lite.CS != null) {
+            return if (lite.cs != null) {
                 extended.copy().apply {
                     mode = lite.mode
                     starRating = lite.starRating
-                    CS = lite.CS
-                    AR = lite.AR
-                    OD = lite.OD
-                    HP = lite.HP
+                    cs = lite.cs
+                    ar = lite.ar
+                    od = lite.od
+                    hp = lite.hp
                     totalLength = lite.totalLength
                     hitLength = lite.hitLength
-                    BPM = lite.BPM
+                    bpm = lite.bpm
                     convert = lite.convert
                 }
             } else {

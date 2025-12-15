@@ -164,7 +164,7 @@ class UUBAService(
             val length = this.bests.sortCount2(name) { score -> score.beatmap.totalLength }
             val combo = this.bests.sortCount2(name) { score -> score.maxCombo }
             val star = this.bests.sortCount2(name) { score -> score.beatmap.starRating }
-            val bpm = this.bests.sortCount2(name) { score -> score.beatmap.totalLength }
+            val bpm = this.bests.sortCount2(name) { score -> score.beatmap.bpm }
 
             val mapperMap = bests
                 .associateWith { it.beatmap.mapperIDs }
@@ -218,8 +218,8 @@ class UUBAService(
 
             val l = length.toResult { it.toInt().secondsToTime() }
             val c = combo.toResult(suffix = "x") { it.toInt().toString() }
-            val r = star.toResult(suffix = "*") { it.toDouble().round2() }
-            val m = bpm.toResult { it.toDouble().round2() }
+            val r = star.toResult(suffix = "*") { it.toDouble().to2DigitString() }
+            val m = bpm.toResult { it.toDouble().to2DigitString() }
 
             return """
                 $name: $mode
@@ -276,7 +276,7 @@ class UUBAService(
 
         private val df = DecimalFormat("#.##")
 
-        private fun Double.round2(): String {
+        private fun Double.to2DigitString(): String {
             return df.format(this)
         }
 
@@ -304,7 +304,7 @@ class UUBAService(
             if (list.isEmpty()) return "all no-mod."
 
             return list.joinToString("\n") {
-                "${it.index}: ${it.mapCount}x ${it.ppCount.roundToInt()}PP (${it.percent.round2()}%)"
+                "${it.index}: ${it.mapCount}x ${it.ppCount.roundToInt()}PP (${it.percent.to2DigitString()}%)"
             }
         }
     }

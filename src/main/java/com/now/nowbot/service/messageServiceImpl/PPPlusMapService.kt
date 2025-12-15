@@ -92,10 +92,10 @@ class PPPlusMapService(
     private fun Beatmap.addPPPlus(pp: PPPlus, mods: List<LazerMod>) {
         starRating = pp.difficulty?.total ?: 0.0
         if (mods.isNotEmpty()) {
-            CS = CalculateApiImpl.applyCS(CS!!, mods)
-            AR = CalculateApiImpl.applyAR(AR!!, mods)
-            OD = CalculateApiImpl.applyOD(OD!!, mods, OsuMode.OSU)
-            HP = CalculateApiImpl.applyHP(HP!!, mods)
+            cs = CalculateApiImpl.applyCS(cs!!, mods)
+            ar = CalculateApiImpl.applyAR(ar!!, mods)
+            od = CalculateApiImpl.applyOD(od!!, mods, OsuMode.OSU)
+            hp = CalculateApiImpl.applyHP(hp!!, mods)
         }
     }
 }

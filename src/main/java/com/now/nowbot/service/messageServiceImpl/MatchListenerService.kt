@@ -235,7 +235,7 @@ class MatchListenerService(
                 mr.calculate()
 
                 // 需要拓展
-                if (beatmap.CS == null) beatmap = beatmapApiService.getBeatmap(beatmapID)
+                if (beatmap.cs == null) beatmap = beatmapApiService.getBeatmap(beatmapID)
 
                 calculateApiService.applyBeatMapChanges(beatmap, LazerMod.getModsList(event.mods.map { it.acronym }))
 

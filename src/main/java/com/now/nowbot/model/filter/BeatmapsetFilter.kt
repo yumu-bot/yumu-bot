@@ -139,7 +139,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     }
 
                     // 使用并行流
-                    return s.tags.split("\\s+".toRegex())
+                    s.tags.split("\\s+".toRegex())
                         .filter { tag -> tag.isNotEmpty() }
                         .map { tag -> if (tag.contains('_')) tag.replace("_", "") else tag }
                         .parallelStream()  // 并行处理
@@ -175,16 +175,16 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.ranked, DataUtil.getStatusIndex(str) ?: return false)
                 }.toSet().contains(true)
                 AR -> bs.map {
-                    fit(operator, it.AR, double, 2, isRound = true, isInteger = true)
+                    fit(operator, it.ar, double, 2, isRound = true, isInteger = true)
                 }.toSet().contains(true)
                 CS -> bs.map {
-                    fit(operator, it.CS, double, 2, isRound = true, isInteger = true)
+                    fit(operator, it.cs, double, 2, isRound = true, isInteger = true)
                 }.toSet().contains(true)
                 OD -> bs.map {
-                    fit(operator, it.OD, double, 2, isRound = true, isInteger = true)
+                    fit(operator, it.od, double, 2, isRound = true, isInteger = true)
                 }.toSet().contains(true)
                 HP -> bs.map {
-                    fit(operator, it.HP, double, 2, isRound = true, isInteger = true)
+                    fit(operator, it.hp, double, 2, isRound = true, isInteger = true)
                 }.toSet().contains(true)
                 LENGTH -> {
                     val to = time.second.inWholeSeconds
@@ -194,7 +194,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     }.toSet().contains(true)
                 }
                 BPM -> bs.map {
-                    fit(operator, it.BPM.toDouble(), double, 0, isRound = true, isInteger = true)
+                    fit(operator, it.bpm.toDouble(), double, 0, isRound = true, isInteger = true)
                 }.toSet().contains(true)
                 CIRCLE -> bs.map {
                     fit(operator, it.circles!!.toLong(), long, 0, isRound = true, isInteger = true)

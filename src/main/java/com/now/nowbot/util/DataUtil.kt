@@ -274,14 +274,14 @@ object DataUtil {
 
     // 获取谱面的原信息，方便成绩面板使用。请在 applyBeatMapExtend 和 applySRAndPP 之前用。
     fun getOriginal(beatmap: Beatmap): Map<String, Any> {
-        if (beatmap.CS == null) return mapOf()
+        if (beatmap.cs == null) return mapOf()
 
         return mapOf(
-            "cs" to beatmap.CS!!,
-            "ar" to beatmap.AR!!,
-            "od" to beatmap.OD!!,
-            "hp" to beatmap.HP!!,
-            "bpm" to beatmap.BPM,
+            "cs" to beatmap.cs!!,
+            "ar" to beatmap.ar!!,
+            "od" to beatmap.od!!,
+            "hp" to beatmap.hp!!,
+            "bpm" to beatmap.bpm,
             "drain" to beatmap.hitLength!!,
             "total" to beatmap.totalLength,
         )

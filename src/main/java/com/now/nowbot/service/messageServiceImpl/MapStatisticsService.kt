@@ -270,11 +270,11 @@ class MapStatisticsService(
             val original = mutableMapOf<String, Any>()
 
             with(beatmap) {
-                original["cs"] = CS!!
-                original["ar"] = AR!!
-                original["od"] = OD!!
-                original["hp"] = HP!!
-                original["bpm"] = BPM
+                original["cs"] = cs!!
+                original["ar"] = ar!!
+                original["od"] = od!!
+                original["hp"] = hp!!
+                original["bpm"] = bpm
                 original["drain"] = hitLength!!
                 original["total"] = totalLength
             }

@@ -97,11 +97,11 @@ data class SBBeatmap(
             playCount = sb.playCount.toInt()
             passCount = sb.passCount.toInt()
             mode = sb.mode
-            BPM = sb.bpm.toFloat()
-            CS = sb.cs
-            AR = sb.ar
-            OD = sb.od
-            HP = sb.hp
+            this.bpm = sb.bpm.toFloat()
+            this.cs = sb.cs
+            this.ar = sb.ar
+            this.od = sb.od
+            this.hp = sb.hp
             starRating = sb.starRating
         }
     }

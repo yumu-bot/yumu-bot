@@ -165,7 +165,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     }
                 }
 
-                (compare is Int && to is Int) -> return fit(operator, compare.toLong(), to.toLong(), digit, isRound, isInteger)
+                (compare is Int && to is Int) -> fit(operator, compare.toLong(), to.toLong(), digit, isRound, isInteger)
 
                 (compare is Double && to is Double) -> {
                     val c: Double = abs(compare)
@@ -303,7 +303,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     }
 
                     // 使用并行流
-                    return it.beatmapset.tags.split("\\s+".toRegex())
+                    it.beatmapset.tags.split("\\s+".toRegex())
                         .filter { tag -> tag.isNotEmpty() }
                         .map { tag -> if (tag.contains('_')) tag.replace("_", "") else tag }
                         .parallelStream()  // 并行处理
@@ -336,10 +336,10 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
                 STAR -> fit(operator, it.beatmap.starRating, double, digit = 2, isRound = false, isInteger = true)
 
-                AR -> fit(operator, it.beatmap.AR?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
-                CS -> fit(operator, it.beatmap.CS?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
-                OD -> fit(operator, it.beatmap.OD?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
-                HP -> fit(operator, it.beatmap.HP?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
+                AR -> fit(operator, it.beatmap.ar?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
+                CS -> fit(operator, it.beatmap.cs?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
+                OD -> fit(operator, it.beatmap.od?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
+                HP -> fit(operator, it.beatmap.hp?.toDouble() ?: 0.0, double, digit = 2, isRound = true, isInteger = true)
                 PERFORMANCE -> fit(operator, it.pp.roundToLong(), longPlus) //fit(operator, it.pp, double, digit = 0, isRound = true, isInteger = true)
                 RANK -> {
                     val rankArray = arrayOf("F", "D", "C", "B", "A", "S", "SH", "X", "XH")
@@ -369,7 +369,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, compare, to)
                 }
 
-                BPM -> fit(operator, it.beatmap.BPM.toDouble(), double, digit = 2, isRound = true, isInteger = true)
+                BPM -> fit(operator, it.beatmap.bpm.toDouble(), double, digit = 2, isRound = true, isInteger = true)
                 ACCURACY -> {
                     val acc = when {
                         double > 10000.0 || double <= 0.0 -> throw IllegalArgumentException.WrongException.Henan()
