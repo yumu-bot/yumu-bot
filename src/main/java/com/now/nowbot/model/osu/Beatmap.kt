@@ -1,5 +1,6 @@
 package com.now.nowbot.model.osu
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -61,7 +62,8 @@ data class Beatmap(
     var tags: List<Tag>? = null,
 
     // Extend!
-    @field:JsonProperty("accuracy")
+    @field:JsonProperty("od")
+    @field:JsonAlias("accuracy")
     var od: Float? = null,
 
     @field:JsonProperty("ar")
@@ -88,7 +90,8 @@ data class Beatmap(
     @field:JsonProperty("deleted_at")
     var deletedAt: OffsetDateTime? = null,
 
-    @field:JsonProperty("drain")
+    @field:JsonProperty("hp")
+    @field:JsonAlias("drain")
     var hp: Float? = null,
 
     @field:JsonProperty("hit_length")
