@@ -28,6 +28,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.Semaphore
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.LockSupport
 import kotlin.math.min
 
@@ -104,12 +106,14 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @param:Qualifier("os
         var request: (WebClient) -> Mono<T>
     ) :
         Comparable<RequestTask<*>> {
+
         var time: Int = nowTime
-        private var toManyRequests: Boolean = false
+        private var is429: AtomicBoolean = AtomicBoolean(false)
         private var retry: Short = 0
 
         fun run(client: WebClient) {
             request(client)
+                .timeout(Duration.ofSeconds(30))
                 .subscribe(
                     { value: T -> future.complete(value) },
                     { e: Throwable -> this.onError(e) }
@@ -120,13 +124,17 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @param:Qualifier("os
 
         private fun onError(e: Throwable) {
             if (retry >= MAX_RETRY) {
-                future.completeExceptionally(e)
+                if (!future.isDone) {
+                    future.completeExceptionally(e)
+                }
+                return // 没返回怎么停下来啊你这 429 不是把 ppy 的老冯按地上摩擦吗
+
             }
 
             when (e) {
                 is WebClientResponseException.TooManyRequests -> {
                     log.info("出现 429 错误")
-                    toManyRequests = true
+                    is429.set(true)
                     TASKS.add(this)
                 }
 
@@ -142,11 +150,11 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @param:Qualifier("os
         }
 
         private fun onComplete() {
-            if (toManyRequests) {
+            if (is429.get()) {
                 log.info("请求过多, 触发退避")
-                limiter.onTooManyRequests(TOO_MANY_REQUESTS_COUNT++)
-            } else if (TOO_MANY_REQUESTS_COUNT > 0) {
-                TOO_MANY_REQUESTS_COUNT = 0
+                limiter.onTooManyRequests(TOO_MANY_REQUESTS_COUNT.getAndIncrement())
+            } else if (TOO_MANY_REQUESTS_COUNT.get() > 0) {
+                TOO_MANY_REQUESTS_COUNT.set(0)
             }
         }
 
@@ -160,7 +168,7 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @param:Qualifier("os
         }
 
         companion object {
-            private var TOO_MANY_REQUESTS_COUNT = 0
+            private var TOO_MANY_REQUESTS_COUNT = AtomicInteger(0)
             private val nowTime: Int
                 get() = // seconds since 2025-01-01
                     (System.currentTimeMillis() / 1000 - 1735660800).toInt()

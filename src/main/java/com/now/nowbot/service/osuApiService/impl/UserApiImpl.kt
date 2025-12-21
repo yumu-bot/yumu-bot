@@ -84,21 +84,21 @@ import java.util.concurrent.Callable
         }
 
         if (!user.isAuthorized) {
-            throw BindException.Oauth2Exception.UpgradeException()
+            throw BindException.Oauth2Exception.NeedUpgrade()
         }
 
         if (user.isExpired) {
             try {
                 base.refreshUserToken(user, false)
             } catch (_: Exception) {
-                throw BindException.Oauth2Exception.RefreshException()
+                throw BindException.Oauth2Exception.NeedRefresh()
             }
         }
 
         val result = bindDao.getBindUser(user.userID)!!
 
         if (!user.isAuthorized) {
-            throw BindException.Oauth2Exception.RefreshException()
+            throw BindException.Oauth2Exception.NeedRefresh()
         }
 
         return result

@@ -14,9 +14,9 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 
 object YumuServer : YumuService {
@@ -24,7 +24,7 @@ object YumuServer : YumuService {
 
     override suspend fun onCommand(param: Command.Request): Command.Response {
         val channel = Channel<Command.Response>(0, BufferOverflow.DROP_LATEST)
-        val scope = CoroutineScope(coroutineContext)
+        val scope = CoroutineScope(currentCoroutineContext())
         val contact = Contact(param.uid) {
             scope.launch { channel.send(it) }
         }
@@ -50,7 +50,7 @@ object YumuServer : YumuService {
             .partition { it is TextMessage }
         var text = textList.joinToString { it.toString() }
         if (text.contains("(!bi)")) {
-            text = BindException.TokenExpiredException.OfficialTokenExpiredException().message!!
+            text = BindException.TokenExpiredException.OfficialTokenExpired().message!!
         }
         var image: String? = null
         var isUrl = false

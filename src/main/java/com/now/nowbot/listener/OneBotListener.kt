@@ -22,10 +22,11 @@ import org.springframework.core.codec.DecodingException
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import org.springframework.web.client.UnknownHttpStatusCodeException
-import java.lang.Boolean
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeoutException
+import kotlin.Exception
 import kotlin.IllegalArgumentException
 import kotlin.Int
 import kotlin.String
@@ -90,7 +91,7 @@ class OneBotListener {
         val event = com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent)
         // if (event.getGroup().getId() != 746671531) return;
         if (event.sender.id == 365246692L) {
-            ContextUtil.setContext("isTest", Boolean.TRUE)
+            ContextUtil.setContext("isTest", java.lang.Boolean.TRUE)
         }
         try {
             PermissionImplement.onMessage(event) { event: MessageEvent, e: Throwable -> this.errorHandle(event, e) }
@@ -100,32 +101,38 @@ class OneBotListener {
     }
 
     fun errorHandle(event: MessageEvent, e: Throwable) {
-        if (e is BotException) {
-            // 有些网络请求异常被包装在这里
-            if (e.hasImage()) {
-                event.reply(e.image)
-            } else {
-                event.reply(e.message).recallIn(RECALL_TIME.toLong())
-            }
-        } else if (e is SocketTimeoutException || e is ConnectException || e is UnknownHttpStatusCodeException) {
-            log.info("连接超时:", e)
-            event.reply("请求超时 (HTTP 408 Request Timeout)\n可能是 Bot 达到了 API 请求上限。\n请稍后再试。").recallIn(
-                RECALL_TIME.toLong()
-            )
-        } else if (e is LogException) {
-            log.info(e.message)
-        } else if (e is ExecutionException) {
-            event.reply(MessageChain(e.cause!!.message!!))
-        } else if (e is IllegalArgumentException) {
-            log.error("正则异常", e)
-        } else if (e is DecodingException) {
-            log.error("JSON 解码异常", e)
-        } else {
-            if (Permission.isSuperAdmin(event.getSender().getId())) {
-                event.reply(e.message).recallIn(RECALL_TIME.toLong())
-            }
-            log.error("捕捉其他异常", e)
+        when (e) {
+            is BotException -> handleBotException(event, e)
+            is SocketTimeoutException,
+            is ConnectException,
+            is TimeoutException,
+            is UnknownHttpStatusCodeException, -> handleNetworkException(event, e)
+            is LogException -> log.info(e.message)
+            is ExecutionException -> event.reply(MessageChain(e.cause!!.message!!))
+            is IllegalArgumentException -> log.error("正则异常", e)
+            is DecodingException -> log.error("JSON 解码异常", e)
+            else -> handleOtherException(event, e)
         }
+    }
+
+    private fun handleBotException(event: MessageEvent, e: BotException) {
+        if (e.hasImage()) {
+            event.reply(e.image)
+        } else {
+            event.reply(e.message).recallIn(RECALL_TIME.toLong())
+        }
+    }
+
+    private fun handleNetworkException(event: MessageEvent, e: Exception) {
+        log.info("连接超时：", e)
+        event.reply("请求超时。").recallIn(RECALL_TIME.toLong())
+    }
+
+    private fun handleOtherException(event: MessageEvent, e: Throwable) {
+        if (Permission.isSuperAdmin(event.sender.id)) {
+            event.reply(e.message).recallIn(RECALL_TIME.toLong())
+        }
+        log.error("捕捉其他异常：", e)
     }
 
     companion object {

@@ -7,23 +7,23 @@ import com.now.nowbot.throwable.TipsRuntimeException
 open class BindException(message: String) : TipsRuntimeException(message), BotException {
 
     open class TokenExpiredException(message: String): BindException(message) {
-        class YouTokenExpiredException:
+        class YourTokenExpired:
             TokenExpiredException("你的令牌失效或是没有绑定。请授权。(!bi)")
-        class UserTokenExpiredException:
+        class UserTokenExpired:
             TokenExpiredException("该玩家的令牌失效或是没有绑定。请提醒对方授权。(!bi)")
-        class SBYouTokenExpiredException:
+        class SBYourTokenExpired:
             TokenExpiredException("你没有绑定偏偏要上班。请授权。(?bi)")
-        class SBUserTokenExpiredException:
+        class SBUserTokenExpired:
             TokenExpiredException("该玩家没有绑定偏偏要上班。请提醒对方授权。(?bi)")
-        class OfficialTokenExpiredException:
-            TokenExpiredException("你的令牌失效或是没有绑定。请重新授权。(/bind osu username)")
+        class OfficialTokenExpired:
+            TokenExpiredException("你的令牌失效或是没有绑定。请重新授权。(/bind username)")
     }
 
 
     open class Oauth2Exception(message: String): BindException(message) {
-        class UpgradeException:
+        class NeedUpgrade:
             Oauth2Exception("你需要完成 Oauth2 绑定（不是名称绑定）才能使用这个功能或这类查询。")
-        class RefreshException:
+        class NeedRefresh:
             Oauth2Exception("你的 Oauth2 令牌已经完全过期，无法刷新。请尝试重新完成 Oauth2 绑定（不是名称绑定）。")
     }
 
@@ -70,7 +70,7 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
     }
 
     open class BindConfirmException(message: String): BindException(message) {
-        class ConfirmThis:
+        class NeedConfirm:
             BindConfirmException("""
                 你要绑定这个机器人吗？回复 OK 确认。
                 如果并不是，请无视此条消息。

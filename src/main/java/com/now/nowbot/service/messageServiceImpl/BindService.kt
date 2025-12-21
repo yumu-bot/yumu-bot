@@ -16,11 +16,13 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.ASyncMessageUtil
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
@@ -73,7 +75,7 @@ import java.util.function.Predicate
 
         if (!isYmBot && !isCaptcha) {
             // 提问
-            val receipt = event.reply(BindException.BindConfirmException.ConfirmThis())
+            val receipt = event.reply(BindException.BindConfirmException.NeedConfirm())
 
             val lock = ASyncMessageUtil.getLock(event, 30L * 1000)
             val ev = lock.get()
@@ -210,8 +212,9 @@ import java.util.function.Predicate
 
                 event.reply(BindException.BindConfirmException.NoNeedReBind(bindUser.userID, bindUser.username))
             } catch (e: Exception) {
-                if (e.message?.contains("403") == true)
-                event.reply(BindException.BindConfirmException.NeedReBind(bindUser.userID, bindUser.username))
+                if (e.findCauseOfType<WebClientResponseException.Forbidden>() != null) {
+                    event.reply(BindException.BindConfirmException.NeedReBind(bindUser.userID, bindUser.username))
+                }
             }
 
             try {
@@ -221,7 +224,8 @@ import java.util.function.Predicate
                     event.reply(BindException.BindReceiveException.ReceiveRefused())
                     return
                 }
-            } catch (ignored: Exception) { // 如果符合，直接允许绑定
+            } catch (_: Exception) { // 如果符合，直接允许绑定
+
             }
         }
 

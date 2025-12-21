@@ -89,9 +89,9 @@ object InstructionUtil {
         }
 
         if (isMyself.get()) {
-            throw BindException.TokenExpiredException.YouTokenExpiredException()
+            throw BindException.TokenExpiredException.YourTokenExpired()
         } else {
-            throw BindException.TokenExpiredException.UserTokenExpiredException()
+            throw BindException.TokenExpiredException.UserTokenExpired()
         }
     }
 
@@ -276,12 +276,12 @@ object InstructionUtil {
             setMode(mode, me.mode)
             return sbUserApiService.getUser(me.userID)
                 ?.apply { mode.data?.let { this.currentMode = it } }
-                ?: throw BindException.TokenExpiredException.SBYouTokenExpiredException()
+                ?: throw BindException.TokenExpiredException.SBYourTokenExpired()
         } else {
             if (isMyself.get()) {
-                throw BindException.TokenExpiredException.SBYouTokenExpiredException()
+                throw BindException.TokenExpiredException.SBYourTokenExpired()
             } else {
-                throw BindException.TokenExpiredException.SBUserTokenExpiredException()
+                throw BindException.TokenExpiredException.SBUserTokenExpired()
             }
         }
     }
@@ -474,7 +474,7 @@ object InstructionUtil {
 
         if (g.isNullOrEmpty()) {
             if (myBind == null) {
-                throw BindException.TokenExpiredException.YouTokenExpiredException()
+                throw BindException.TokenExpiredException.YourTokenExpired()
             }
 
             setMode(mode, myBind.mode, event)
