@@ -1,6 +1,6 @@
 package com.now.nowbot.service.osuApiService
 
-import RoomInfo
+import com.now.nowbot.model.multiplayer.RoomInfo
 import com.now.nowbot.model.match.MatchLobby
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.multiplayer.Room

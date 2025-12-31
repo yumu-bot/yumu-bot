@@ -144,7 +144,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                     val diff = result.filter { it.first }.map { it.second }
 
-                    return if (diff.isEmpty()) {
+                    if (diff.isEmpty()) {
                         false to default
                     } else {
                         true to diff
@@ -166,7 +166,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                         it.second
                     }
 
-                    return if (result.isEmpty()) {
+                    if (result.isEmpty()) {
                         false to default
                     } else {
                         true to result
@@ -185,7 +185,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                     val diff = result.filter { it.first }.map { MaiDifficulty.getDifficulty(it.second) }
 
-                    return if (diff.isEmpty()) {
+                    if (diff.isEmpty()) {
                         false to default
                     } else {
                         true to diff
@@ -199,7 +199,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
                 ALIASES -> {
                     val a = it.aliases ?: listOf()
 
-                    return a.map { alias ->
+                    a.map { alias ->
                         fit(operator, alias, str)
                     }.toSet().contains(true) to default
                 }
@@ -230,7 +230,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                     val diff = result.filter { it.first }.map { it.second }
 
-                    return if (diff.isEmpty()) {
+                    if (diff.isEmpty()) {
                         false to default
                     } else {
                         true to diff
@@ -250,7 +250,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                     val diff = result.filter { it.first }.map { it.second }
 
-                    return if (diff.isEmpty()) {
+                    if (diff.isEmpty()) {
                         false to default
                     } else {
                         true to diff
@@ -269,7 +269,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                     val diff = result.filter { it.first }.map { it.second }
 
-                    return if (diff.isEmpty()) {
+                    if (diff.isEmpty()) {
                         false to default
                     } else {
                         true to diff
@@ -288,7 +288,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                     val diff = result.filter { it.first }.map { it.second }
 
-                    return if (diff.isEmpty()) {
+                    if (diff.isEmpty()) {
                         false to default
                     } else {
                         true to diff
@@ -307,7 +307,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                     val diff = result.filter { it.first }.map { it.second }
 
-                    return if (diff.isEmpty()) {
+                    if (diff.isEmpty()) {
                         false to default
                     } else {
                         true to diff
@@ -324,7 +324,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                     val diff = result.filter { it.first }.map { it.second }
 
-                    return if (diff.isEmpty()) {
+                    if (diff.isEmpty()) {
                         false to default
                     } else {
                         true to diff

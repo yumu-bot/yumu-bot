@@ -10,8 +10,8 @@ class PPPlus {
     @JvmRecord
     data class Stats(
         @JvmField val aim: Double = 0.0,
-        @JvmField @JsonProperty("jumpAim") val jumpAim: Double = 0.0,
-        @JvmField @JsonProperty("flowAim") val flowAim: Double = 0.0,
+        @JvmField @field:JsonProperty("jumpAim") val jumpAim: Double = 0.0,
+        @JvmField @field:JsonProperty("flowAim") val flowAim: Double = 0.0,
         @JvmField val precision: Double = 0.0,
         @JvmField val speed: Double = 0.0,
         @JvmField val stamina: Double = 0.0,

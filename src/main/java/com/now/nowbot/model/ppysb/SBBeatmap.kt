@@ -9,43 +9,43 @@ import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.model.osu.Covers
 
 data class SBBeatmap(
-    @JsonProperty("md5") val md5: String,
+    @field:JsonProperty("md5") val md5: String,
 
-    @JsonProperty("id") val beatmapID: Long,
+    @field:JsonProperty("id") val beatmapID: Long,
 
-    @JsonProperty("set_id") val beatmapsetID: Long,
+    @field:JsonProperty("set_id") val beatmapsetID: Long,
 
-    @JsonProperty("artist") val artist: String,
+    @field:JsonProperty("artist") val artist: String,
 
-    @JsonProperty("title") val title: String,
+    @field:JsonProperty("title") val title: String,
 
-    @JsonProperty("version") val difficultyName: String,
+    @field:JsonProperty("version") val difficultyName: String,
 
-    @JsonProperty("last_update") val lastUpdated: String,
+    @field:JsonProperty("last_update") val lastUpdated: String,
 
-    @JsonProperty("total_length") val totalLength: Int,
+    @field:JsonProperty("total_length") val totalLength: Int,
 
-    @JsonProperty("max_combo") val maxCombo: Int,
+    @field:JsonProperty("max_combo") val maxCombo: Int,
 
     @set:JsonProperty("status") @get:JsonIgnoreProperties var statusByte: Byte,
 
-    @JsonProperty("plays") val playCount: Long,
+    @field:JsonProperty("plays") val playCount: Long,
 
-    @JsonProperty("passes") val passCount: Long,
+    @field:JsonProperty("passes") val passCount: Long,
 
     @set:JsonProperty("mode") @get:JsonIgnoreProperties var modeByte: Byte,
 
-    @JsonProperty("bpm") val bpm: Double,
+    @field:JsonProperty("bpm") val bpm: Double,
 
-    @JsonProperty("cs") val cs: Float,
+    @field:JsonProperty("cs") val cs: Float,
 
-    @JsonProperty("ar") val ar: Float,
+    @field:JsonProperty("ar") val ar: Float,
 
-    @JsonProperty("od") val od: Float,
+    @field:JsonProperty("od") val od: Float,
 
-    @JsonProperty("hp") val hp: Float,
+    @field:JsonProperty("hp") val hp: Float,
 
-    @JsonProperty("diff") val starRating: Double,
+    @field:JsonProperty("diff") val starRating: Double,
 ) {
 
     @get:JsonProperty("status") val status: String

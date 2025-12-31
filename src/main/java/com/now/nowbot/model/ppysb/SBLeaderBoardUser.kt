@@ -3,55 +3,55 @@ package com.now.nowbot.model.ppysb
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class SBLeaderBoardUser(
-    @JsonProperty("player_id")
+    @field:JsonProperty("player_id")
     val userID: Long,
 
-    @JsonProperty("name")
+    @field:JsonProperty("name")
     val username: String,
 
-    @JsonProperty("country")
+    @field:JsonProperty("country")
     val country: String,
 
-    @JsonProperty("tscore")
+    @field:JsonProperty("tscore")
     val totalScore: Long,
 
-    @JsonProperty("rscore")
+    @field:JsonProperty("rscore")
     val rankedScore: Long,
 
-    @JsonProperty("pp")
+    @field:JsonProperty("pp")
     val pp: Int,
 
-    @JsonProperty("plays")
+    @field:JsonProperty("plays")
     val playCount: Long,
 
-    @JsonProperty("playtime")
+    @field:JsonProperty("playtime")
     val playTime: Long,
 
-    @JsonProperty("acc")
+    @field:JsonProperty("acc")
     val accuracy: Double,
 
-    @JsonProperty("xh_count")
+    @field:JsonProperty("xh_count")
     val countSSH: Int,
 
-    @JsonProperty("x_count")
+    @field:JsonProperty("x_count")
     val countSS: Int,
 
-    @JsonProperty("sh_count")
+    @field:JsonProperty("sh_count")
     val countSH: Int,
 
-    @JsonProperty("s_count")
+    @field:JsonProperty("s_count")
     val countS: Int,
 
-    @JsonProperty("a_count")
+    @field:JsonProperty("a_count")
     val countA: Int,
 
-    @JsonProperty("clan_id")
+    @field:JsonProperty("clan_id")
     val clanID: Int?,
 
-    @JsonProperty("clan_name")
+    @field:JsonProperty("clan_name")
     val clanName: String?,
 
-    @JsonProperty("clan_tag")
+    @field:JsonProperty("clan_tag")
     val clanTag: String?,
 ) {
     override fun equals(other: Any?): Boolean {

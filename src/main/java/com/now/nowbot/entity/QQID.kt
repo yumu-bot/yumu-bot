@@ -1,49 +1,21 @@
-package com.now.nowbot.entity;
+package com.now.nowbot.entity
 
-import jakarta.persistence.*;
+import jakarta.persistence.*
 
 @Entity
 @Table(name = "qq_id")
-public class QQID {
+class QQID {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    var id: Long? = null
 
     //true group   |    false friend
     @Column(name = "type")
-    private Boolean isGroup;
-    private Long permissionId;
-    private Long QQ;
+    var isGroup: Boolean? = null
 
-    public Long getId() {
-        return id;
-    }
+    @Column(name = "permission_id")
+    var permissionID: Long? = null
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Boolean getGroup() {
-        return isGroup;
-    }
-
-    public void setGroup(Boolean group) {
-        isGroup = group;
-    }
-
-    public Long getPermissionId() {
-        return permissionId;
-    }
-
-    public void setPermissionId(Long permissionId) {
-        permissionId = permissionId;
-    }
-
-    public Long getQQ() {
-        return QQ;
-    }
-
-    public void setQQ(Long QQ) {
-        this.QQ = QQ;
-    }
+    @Column(name = "qq")
+    var QQ: Long? = null
 }

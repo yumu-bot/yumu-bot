@@ -147,7 +147,7 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("retries") var retries: Float? = null,
+            @field:JsonProperty("retries") var retries: Float? = null,
         )
 
         init {
@@ -217,8 +217,8 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("speed_change") var speedChange: Float? = null,
-            @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
+            @field:JsonProperty("speed_change") var speedChange: Float? = null,
+            @field:JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
         )
 
         init {
@@ -262,7 +262,7 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("speed_change") var speedChange: Float? = null,
+            @field:JsonProperty("speed_change") var speedChange: Float? = null,
         )
 
         init {
@@ -323,7 +323,7 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("restart") var restart: Boolean? = null,
+            @field:JsonProperty("restart") var restart: Boolean? = null,
         )
 
         init {
@@ -365,7 +365,7 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("restart") var restart: Boolean? = null,
+            @field:JsonProperty("restart") var restart: Boolean? = null,
         )
 
         init {
@@ -417,8 +417,8 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("speed_change") var speedChange: Float? = null,
-            @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
+            @field:JsonProperty("speed_change") var speedChange: Float? = null,
+            @field:JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
         )
 
         init {
@@ -462,7 +462,7 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("speed_change") var speedChange: Float? = null,
+            @field:JsonProperty("speed_change") var speedChange: Float? = null,
         )
 
         init {
@@ -505,7 +505,7 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("only_fade_approach_circles") var onlyFadeApproachCircles: Boolean? = null,
+            @field:JsonProperty("only_fade_approach_circles") var onlyFadeApproachCircles: Boolean? = null,
         )
 
         init {
@@ -568,9 +568,9 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("follow_delay") var followDelay: Float? = null,
-            @JsonProperty("size_multiplier") var sizeMultiplier: Float? = null,
-            @JsonProperty("combo_based_size") var comboBasedSize: Boolean? = null,
+            @field:JsonProperty("follow_delay") var followDelay: Float? = null,
+            @field:JsonProperty("size_multiplier") var sizeMultiplier: Float? = null,
+            @field:JsonProperty("combo_based_size") var comboBasedSize: Boolean? = null,
         )
 
         init {
@@ -670,9 +670,9 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("minimum_accuracy") var minimumAccuracy: Float? = null,
-            @JsonProperty("accuracy_judge_mode") var accuracyJudgeMode: String? = null,
-            @JsonProperty("restart") var restart: Boolean? = null,
+            @field:JsonProperty("minimum_accuracy") var minimumAccuracy: Float? = null,
+            @field:JsonProperty("accuracy_judge_mode") var accuracyJudgeMode: String? = null,
+            @field:JsonProperty("restart") var restart: Boolean? = null,
         )
 
         init {
@@ -726,8 +726,8 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("seed") var seed: Float? = null,
-            @JsonProperty("metronome") var metronome: Boolean? = null,
+            @field:JsonProperty("seed") var seed: Float? = null,
+            @field:JsonProperty("metronome") var metronome: Boolean? = null,
         )
 
         init {
@@ -831,13 +831,13 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("circle_size") var circleSize: Float? = null,
-            @JsonProperty("approach_rate") var approachRate: Float? = null,
-            @JsonProperty("drain_rate") var drainRate: Float? = null,
-            @JsonProperty("overall_difficulty") var overallDifficulty: Float? = null,
-            @JsonProperty("extended_limits") var extendedLimits: Boolean? = null,
-            @JsonProperty("scroll_speed") var scrollSpeed: Float? = null,
-            @JsonProperty("hard_rock_offsets") var hardRockOffsets: Boolean? = null,
+            @field:JsonProperty("circle_size") var circleSize: Float? = null,
+            @field:JsonProperty("approach_rate") var approachRate: Float? = null,
+            @field:JsonProperty("drain_rate") var drainRate: Float? = null,
+            @field:JsonProperty("overall_difficulty") var overallDifficulty: Float? = null,
+            @field:JsonProperty("extended_limits") var extendedLimits: Boolean? = null,
+            @field:JsonProperty("scroll_speed") var scrollSpeed: Float? = null,
+            @field:JsonProperty("hard_rock_offsets") var hardRockOffsets: Boolean? = null,
         )
 
         init {
@@ -925,11 +925,11 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("no_slider_head_accuracy") var noSliderHeadAccuracy: Boolean? = null,
-            @JsonProperty("classic_note_lock") var classicNoteLock: Boolean? = null,
-            @JsonProperty("always_play_tail_sample") var alwaysPlayTailSample: Boolean? = null,
-            @JsonProperty("fade_hit_circle_early") var fadeHitCircleEarly: Boolean? = null,
-            @JsonProperty("classic_health") var classicHealth: Boolean? = null,
+            @field:JsonProperty("no_slider_head_accuracy") var noSliderHeadAccuracy: Boolean? = null,
+            @field:JsonProperty("classic_note_lock") var classicNoteLock: Boolean? = null,
+            @field:JsonProperty("always_play_tail_sample") var alwaysPlayTailSample: Boolean? = null,
+            @field:JsonProperty("fade_hit_circle_early") var fadeHitCircleEarly: Boolean? = null,
+            @field:JsonProperty("classic_health") var classicHealth: Boolean? = null,
         )
 
         init {
@@ -985,8 +985,8 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("angle_sharpness") var angleSharpness: Float? = null,
-            @JsonProperty("seed") var seed: Float? = null,
+            @field:JsonProperty("angle_sharpness") var angleSharpness: Float? = null,
+            @field:JsonProperty("seed") var seed: Float? = null,
         )
 
         init {
@@ -1029,7 +1029,7 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("reflection") var reflection: String? = null,
+            @field:JsonProperty("reflection") var reflection: String? = null,
         )
 
         init {
@@ -1234,7 +1234,7 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("strength") var strength: Float? = null,
+            @field:JsonProperty("strength") var strength: Float? = null,
         )
 
         init {
@@ -1294,7 +1294,7 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("start_scale") var startScale: Float? = null,
+            @field:JsonProperty("start_scale") var startScale: Float? = null,
         )
 
         init {
@@ -1336,7 +1336,7 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("start_scale") var startScale: Float? = null,
+            @field:JsonProperty("start_scale") var startScale: Float? = null,
         )
 
         init {
@@ -1398,9 +1398,9 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("initial_rate") var initialRate: Float? = null,
-            @JsonProperty("final_rate") var finalRate: Float? = null,
-            @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
+            @field:JsonProperty("initial_rate") var initialRate: Float? = null,
+            @field:JsonProperty("final_rate") var finalRate: Float? = null,
+            @field:JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
         )
 
         init {
@@ -1465,9 +1465,9 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("initial_rate") var initialRate: Float? = null,
-            @JsonProperty("final_rate") var finalRate: Float? = null,
-            @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
+            @field:JsonProperty("initial_rate") var initialRate: Float? = null,
+            @field:JsonProperty("final_rate") var finalRate: Float? = null,
+            @field:JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
         )
 
         init {
@@ -1539,8 +1539,8 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("spin_speed") var spinSpeed: Float? = null,
-            @JsonProperty("direction") var direction: String? = null,
+            @field:JsonProperty("spin_speed") var spinSpeed: Float? = null,
+            @field:JsonProperty("direction") var direction: String? = null,
         )
 
         init {
@@ -1593,8 +1593,8 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("scale") var scale: Float? = null,
-            @JsonProperty("style") var style: String? = null,
+            @field:JsonProperty("scale") var scale: Float? = null,
+            @field:JsonProperty("style") var style: String? = null,
         )
 
         init {
@@ -1667,10 +1667,10 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("inverse_muting") var inverseMuting: Boolean? = null,
-            @JsonProperty("enable_metronome") var enableMetronome: Boolean? = null,
-            @JsonProperty("mute_combo_count") var muteComboCount: Float? = null,
-            @JsonProperty("affects_hit_sounds") var affectsHitSounds: Boolean? = null,
+            @field:JsonProperty("inverse_muting") var inverseMuting: Boolean? = null,
+            @field:JsonProperty("enable_metronome") var enableMetronome: Boolean? = null,
+            @field:JsonProperty("mute_combo_count") var muteComboCount: Float? = null,
+            @field:JsonProperty("affects_hit_sounds") var affectsHitSounds: Boolean? = null,
         )
 
         init {
@@ -1715,7 +1715,7 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("hidden_combo_count") var hiddenComboCount: Float? = null,
+            @field:JsonProperty("hidden_combo_count") var hiddenComboCount: Float? = null,
         )
 
         init {
@@ -1757,7 +1757,7 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("attraction_strength") var attractionStrength: Float? = null,
+            @field:JsonProperty("attraction_strength") var attractionStrength: Float? = null,
         )
 
         init {
@@ -1800,7 +1800,7 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("repulsion_strength") var repulsionStrength: Float? = null,
+            @field:JsonProperty("repulsion_strength") var repulsionStrength: Float? = null,
         )
 
         init {
@@ -1853,8 +1853,8 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("initial_rate") var initialRate: Float? = null,
-            @JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
+            @field:JsonProperty("initial_rate") var initialRate: Float? = null,
+            @field:JsonProperty("adjust_pitch") var adjustPitch: Boolean? = null,
         )
 
         init {
@@ -1962,8 +1962,8 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("max_depth") var maxDepth: Float? = null,
-            @JsonProperty("show_approach_circles") var showApproachCircles: Boolean? = null,
+            @field:JsonProperty("max_depth") var maxDepth: Float? = null,
+            @field:JsonProperty("show_approach_circles") var showApproachCircles: Boolean? = null,
         )
 
         init {
@@ -2045,8 +2045,8 @@ sealed class LazerMod {
 
 
         private data class Value(
-            @JsonProperty("max_size_combo_count") var maxSizeComboCount: Int? = null,
-            @JsonProperty("max_cursor_size") var maxCursorSize: Float? = null,
+            @field:JsonProperty("max_size_combo_count") var maxSizeComboCount: Int? = null,
+            @field:JsonProperty("max_cursor_size") var maxCursorSize: Float? = null,
         )
 
         companion object : Mod {
@@ -2148,9 +2148,9 @@ sealed class LazerMod {
         }
 
         private data class Value(
-            @JsonProperty("one_third_conversion") var oneThirdConversion: Boolean = false,
-            @JsonProperty("one_sixth_conversion") var oneSixthConversion: Boolean = true,
-            @JsonProperty("one_eighth_conversion") var oneEighthConversion: Boolean = false,
+            @field:JsonProperty("one_third_conversion") var oneThirdConversion: Boolean = false,
+            @field:JsonProperty("one_sixth_conversion") var oneSixthConversion: Boolean = true,
+            @field:JsonProperty("one_eighth_conversion") var oneEighthConversion: Boolean = false,
         )
 
         @get:JsonIgnore
@@ -2285,8 +2285,8 @@ sealed class LazerMod {
             }
 
         private data class Value(
-            @JsonProperty("coverage") var coverage: Float? = null,
-            @JsonProperty("direction") var direction: String? = null,
+            @field:JsonProperty("coverage") var coverage: Float? = null,
+            @field:JsonProperty("direction") var direction: String? = null,
         )
 
         init {

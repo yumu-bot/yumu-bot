@@ -1,25 +1,23 @@
-package com.now.nowbot.mapper;
+package com.now.nowbot.mapper
 
-import com.now.nowbot.entity.QQID;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import com.now.nowbot.entity.QQID
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import java.beans.Transient
 
-import java.beans.Transient;
-import java.util.List;
-
-public interface QQIDMapper extends JpaRepository<QQID, Long>, JpaSpecificationExecutor<QQID> {
-    List<QQID> getByPermissionId(Long permissionId);
+interface QQIDMapper : JpaRepository<QQID?, Long?>, JpaSpecificationExecutor<QQID> {
+    fun getByPermissionID(permissionID: Long?): List<QQID>
 
     @Modifying
     @Transient
-    void deleteQQIDByPermissionIdAndIsGroupAndQQ(Long permissionId, Boolean isGroup, Long QQ);
+    fun deleteQQIDByPermissionIDAndIsGroupAndQQ(permissionID: Long?, isGroup: Boolean?, QQ: Long?)
 
     @Modifying
     @Transient
-    void deleteQQIDByPermissionIdAndIsGroup(Long permissionId, Boolean isGroup);
+    fun deleteQQIDByPermissionIDAndIsGroup(permissionID: Long?, isGroup: Boolean?)
 
-    @Query("select id.QQ from QQID id where id.isGroup=true and id.permissionId=:pid")
-    List<Long> getQQIDByPermissionId(Long pid);
+    @Query("select id.QQ from QQID id where id.isGroup = true and id.permissionID = :pid")
+    fun getQQIDByPermissionID(pid: Long?): List<Long>
 }

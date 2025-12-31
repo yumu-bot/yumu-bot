@@ -10,64 +10,64 @@ import java.time.OffsetDateTime
  * 等于 MatchRound
  */
 data class Playlist(
-    @JsonProperty("id")
+    @field:JsonProperty("id")
     val listID: Long,
 
-    @JsonProperty("room_id")
+    @field:JsonProperty("room_id")
     val roomID: Long,
 
-    @JsonProperty("beatmap_id")
+    @field:JsonProperty("beatmap_id")
     val beatmapID: Long,
 
-    @JsonProperty("created_at")
+    @field:JsonProperty("created_at")
     val createdTime: OffsetDateTime,
 
-    @JsonProperty("ruleset_id")
+    @field:JsonProperty("ruleset_id")
     val rulesetID: Byte,
 
-    @JsonProperty("allowed_mods")
+    @field:JsonProperty("allowed_mods")
     val allowedMods: List<LazerMod>,
 
-    @JsonProperty("required_mods")
+    @field:JsonProperty("required_mods")
     val requiredMods: List<LazerMod>,
 
-    @JsonProperty("freestyle")
+    @field:JsonProperty("freestyle")
     val freestyle: Boolean,
 
-    @JsonProperty("expired")
+    @field:JsonProperty("expired")
     val expired: Boolean,
 
-    @JsonProperty("owner_id")
+    @field:JsonProperty("owner_id")
     val ownerID: Long,
 
-    @JsonProperty("playlist_order")
+    @field:JsonProperty("playlist_order")
     val order: Int,
 
-    @JsonProperty("played_at")
+    @field:JsonProperty("played_at")
     val playedTime: OffsetDateTime,
 
     // 只有 room/xxx/events 有
-    @JsonProperty("details")
+    @field:JsonProperty("details")
     val details: PlaylistDetail?,
 
     // 只有 room/xxx/events 有
-    @JsonProperty("scores")
+    @field:JsonProperty("scores")
     val scores: List<LazerScore>?,
 
     // 只有 room/xxx 有
-    @JsonProperty("beatmap")
+    @field:JsonProperty("beatmap")
     val beatmap: Beatmap?,
 
     ) {
 
     data class PlaylistDetail(
-        @JsonProperty("teams")
+        @field:JsonProperty("teams")
         val teams: String?,
 
-        @JsonProperty("room_type")
+        @field:JsonProperty("room_type")
         val roomType: String,
 
-        @JsonProperty("started_at")
+        @field:JsonProperty("started_at")
         val startedTime: OffsetDateTime,
     )
 

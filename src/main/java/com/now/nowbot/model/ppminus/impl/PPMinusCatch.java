@@ -86,7 +86,10 @@ public class PPMinusCatch extends PPMinus {
         {
             double rBPV = ppv0 / (ppv90 + 5);
             double rBPD = ppv0 == 0 ? 0 : (rawpp / ppv0);
-            double LPI = pp > 1000 ? 1 : Math.pow(pp / 1000D, 0.5D); // low PP index 低pp指数 过低PP会导致ptt异常偏高，故需补正。
+            double LPI;
+            // low PP index 低pp指数 过低PP会导致ptt异常偏高，故需补正。
+            if (pp > 1000) LPI = 1;
+            else LPI = Math.pow(pp / 1000D, 0.5D);
 
             double BPD; // BP density BP密度
             if (rBPD == 0) {
@@ -238,7 +241,10 @@ public class PPMinusCatch extends PPMinus {
 
         // 3.8 理智SAN sanity 0-1.2
         {
-            double LPI = pp > 1000 ? 1 : Math.pow(pp / 1000D, 0.5D); // low PP index 低pp指数 过低PP会导致rSAN异常偏高，故需补正。
+            double LPI;
+            // low PP index 低pp指数 过低PP会导致ptt异常偏高，故需补正。
+            if (pp > 1000) LPI = 1;
+            else LPI = Math.pow(pp / 1000D, 0.5D);
 
             double PCI = Math.pow(ppv0 * 30 / (pc + 100), 0.8D); // play count index PC因子
 

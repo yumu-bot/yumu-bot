@@ -1,6 +1,5 @@
 package com.now.nowbot.model.multiplayer
 
-import RoomInfo
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.Beatmapset
@@ -8,49 +7,49 @@ import com.now.nowbot.model.osu.MicroUser
 import java.time.OffsetDateTime
 
 data class Room(
-    @JsonProperty("beatmaps")
+    @field:JsonProperty("beatmaps")
     val beatmaps: List<Beatmap>,
 
-    @JsonProperty("beatmapsets")
+    @field:JsonProperty("beatmapsets")
     val beatmapsets: List<Beatmapset>,
 
-    @JsonProperty("current_playlist_item_id")
+    @field:JsonProperty("current_playlist_item_id")
     val currentEventID: Long?,
 
-    @JsonProperty("events")
+    @field:JsonProperty("events")
     val events: List<RoomEvent>,
 
-    @JsonProperty("first_event_id")
+    @field:JsonProperty("first_event_id")
     val firstEventID: Long,
 
-    @JsonProperty("latest_event_id")
+    @field:JsonProperty("latest_event_id")
     val latestEventID: Long,
 
-    @JsonProperty("playlist_items")
+    @field:JsonProperty("playlist_items")
     val items: List<Playlist>,
 
-    @JsonProperty("room")
+    @field:JsonProperty("room")
     val roomInfo: RoomInfo,
 
-    @JsonProperty("users")
+    @field:JsonProperty("users")
     val users: List<MicroUser>
 
     ) {
 
     data class RoomEvent(
-        @JsonProperty("id")
+        @field:JsonProperty("id")
         val eventID: Long,
 
-        @JsonProperty("created_at")
+        @field:JsonProperty("created_at")
         val createdTime: OffsetDateTime,
 
-        @JsonProperty("event_type")
+        @field:JsonProperty("event_type")
         val eventType: String,
 
-        @JsonProperty("playlist_item_id")
+        @field:JsonProperty("playlist_item_id")
         val itemID: Long?,
 
-        @JsonProperty("user_id")
+        @field:JsonProperty("user_id")
         val userID: Long?,
     ) {
         val type: EventType

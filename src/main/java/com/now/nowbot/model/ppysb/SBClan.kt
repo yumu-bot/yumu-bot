@@ -6,26 +6,26 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class SBClan(
-    @JsonProperty("id") val clanID: Long = 0,
+    @field:JsonProperty("id") val clanID: Long = 0,
 
-    @JsonProperty("name") val clanName: String = "",
+    @field:JsonProperty("name") val clanName: String = "",
 
-    @JsonProperty("tag") val clanTag: String = "",
+    @field:JsonProperty("tag") val clanTag: String = "",
 
-    @JsonProperty("members") val members: List<SBClanMember> = listOf(),
+    @field:JsonProperty("members") val members: List<SBClanMember> = listOf(),
 
     ) {
     data class SBClanMember(
-        @JsonProperty("id") val userID: Long,
+        @field:JsonProperty("id") val userID: Long,
 
-        @JsonProperty("name") val username: String,
+        @field:JsonProperty("name") val username: String,
 
-        @JsonProperty("country") val country: String,
+        @field:JsonProperty("country") val country: String,
 
         /**
          * Member, Owner
          */
-        @JsonProperty("rank") @JsonAlias("role") val role: String,
+        @field:JsonProperty("rank") @JsonAlias("role") val role: String,
     )
 
     override fun equals(other: Any?): Boolean {
