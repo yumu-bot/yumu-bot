@@ -25,12 +25,14 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.LockSupport
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.min
 
 @Service
@@ -133,9 +135,19 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @param:Qualifier("os
 
             when (e) {
                 is WebClientResponseException.TooManyRequests -> {
-                    log.info("出现 429 错误")
                     is429.set(true)
-                    TASKS.add(this)
+                    retry++
+
+                    // 优先使用API返回的Retry-After头部
+                    val waitSeconds = e.headers["Retry-After"]?.firstOrNull()?.toLongOrNull()
+                        ?: calculateExponentialBackoff(retry) // 默认退避策略
+
+                    log.info("出现 429 错误，等待 {} 秒后重试", waitSeconds)
+
+                    Thread.startVirtualThread {
+                        Thread.sleep(waitSeconds * 1000L)
+                        TASKS.add(this@RequestTask)
+                    }
                 }
 
                 is WebClientRequestException -> {
@@ -147,6 +159,13 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @param:Qualifier("os
                     future.completeExceptionally(e)
                 }
             }
+        }
+
+
+        private fun calculateExponentialBackoff(retry: Short): Long {
+            // 指数退避: 16... 最大512秒
+            val baseDelay = 16L shl min(retry.toInt(), 5)
+            return minOf(baseDelay, 512L)
         }
 
         private fun onComplete() {
@@ -175,12 +194,16 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @param:Qualifier("os
         }
     }
 
-    internal class RateLimiter(var rate: Int, max: Int) {
+    internal class RateLimiter(var rate: Int, max: Int, private val minuteLimit: Int = 800) {
         var out: Int = -1
         private var semaphore: Semaphore = Semaphore(max)
+        private val minuteRequests = ConcurrentLinkedDeque<Long>() // 存储最近一分钟的请求时间戳
+        private val minuteLock = ReentrantLock()
 
         init {
             Thread.startVirtualThread { this.run() }
+            // 每分钟清理一次过期记录
+            Thread.startVirtualThread { this.cleanup() }
         }
 
         fun run() {
@@ -190,7 +213,23 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @param:Qualifier("os
             }
         }
 
-        @Throws(InterruptedException::class) fun acquire() {
+        private fun cleanup() {
+            while (IocAllReadyRunner.APP_ALIVE) {
+                Thread.sleep(30000) // 每30秒清理一次
+                val oneMinuteAgo = System.currentTimeMillis() - 60000
+                minuteLock.lock()
+                try {
+                    while (minuteRequests.isNotEmpty() && minuteRequests.first < oneMinuteAgo) {
+                        minuteRequests.pollFirst()
+                    }
+                } finally {
+                    minuteLock.unlock()
+                }
+            }
+        }
+
+        @Throws(InterruptedException::class)
+        fun acquire(): Boolean {
             if (out >= 0) {
                 val seconds = min(2 * out + 1, 10)
                 log.info("请求触发退避, 等待时间: {} 秒", seconds)
@@ -199,8 +238,44 @@ class OsuApiBaseService(@Lazy private val bindDao: BindDao, @param:Qualifier("os
                 val permits = semaphore.availablePermits()
                 if (permits > 1) semaphore.acquire(permits - 1)
             }
+
+            // 检查分钟限制
+            if (!checkMinuteLimit()) {
+                return false
+            }
+
             semaphore.acquire()
+            return true
         }
+
+
+        private fun checkMinuteLimit(): Boolean {
+            minuteLock.lock()
+            try {
+                val now = System.currentTimeMillis()
+                val oneMinuteAgo = now - 60000
+
+                // 清理过期记录
+                while (minuteRequests.isNotEmpty() && minuteRequests.first < oneMinuteAgo) {
+                    minuteRequests.pollFirst()
+                }
+
+                // 检查是否超限
+                if (minuteRequests.size >= minuteLimit) {
+                    val oldestTime = minuteRequests.first
+                    val waitTime = 61000 - (now - oldestTime) // 等到最早请求满1分钟后
+                    log.warn("分钟请求数已达上限(${minuteLimit} / min)，等待 $waitTime ms")
+                    Thread.sleep(waitTime)
+                    return checkMinuteLimit() // 递归检查
+                }
+
+                minuteRequests.addLast(now)
+                return true
+            } finally {
+                minuteLock.unlock()
+            }
+        }
+
 
         fun onTooManyRequests(n: Int) {
             out = n + 1
