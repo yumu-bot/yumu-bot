@@ -125,7 +125,7 @@ import kotlin.text.trim
 
                 // 单次匹配 !d, 1d100 和多次匹配 20d100
                 if (param.dice == 1L || param.dice == null) {
-                    val r = getRandom<Long?>(param.number)
+                    val r = getRandom(param.number)
                     val format = if ((r < 1f)) "%.2f" else "%.0f"
                     val result = String.format(format, r)
 
@@ -513,7 +513,7 @@ import kotlin.text.trim
          * @return 返回随机一个子项
          * @throws DiceException 错
          */
-        @JvmStatic @Throws(DiceException::class) fun compare(str: String?): String {
+        @Throws(DiceException::class) fun compare(str: String?): String {
             val s = transferApostrophe(str)
 
             val result = getRandom()
@@ -1020,26 +1020,53 @@ import kotlin.text.trim
             return m1 && m2
         }
 
-        @JvmStatic fun getRandom() : Double {
-            return getRandom(0)
-        }
-
         /**
          * 获取随机数。
          *
          * @param range 范围
-         * @param T 数字的子类
          * @return 如果范围大于 1，返回 1-范围内的数（Double 的整数），其他则返回 0-1 之间的小数。
          */
-        @JvmStatic fun <T : Number?> getRandom(range: T): Double {
-            val r = range.toString().toIntOrNull() ?: (range?.toDouble() ?: 1.0).roundToInt()
+        fun getRandom(range: Number? = null): Double {
+            val r = range?.toDouble() ?: 0.0
 
-            return if (r > 1) {
-                Random.nextInt(1, r + 1).toDouble()
+            return if (r > 1.0) {
+                val intRange = r.toInt()
+                if (intRange > 0) {
+                    (1..intRange).random().toDouble()
+                } else {
+                    Random.nextDouble()
+                }
             } else {
                 Random.nextDouble()
             }
         }
+
+        private val YOURS_CN = "你们?".toRegex()
+
+        private val YOURS_EN = "(?i)\\byours?\\b".toRegex()
+
+        private val YOU_EN = "(?i)\\byou\\b".toRegex()
+
+        private val ME_EN = "(?i)\\b([Ii]|me)\\b".toRegex()
+
+        private val MY_EN = "(?i)\\bmy\\b".toRegex()
+
+        private val MINE_EN = "(?i)\\bmine\\b".toRegex()
+
+        private val STILL_CN = "(还|仍然|依旧)不?(?=([是要能]|可以))".toRegex()
+
+        private val WE_CN = "我(?=们)?".toRegex()
+
+        // 阿耶来唻了价也罗给的般则连不呸哪哇 不匹配，删去其他语气助词
+        private val AUXILIARY_WORD = "[啊呃欸呀哟欤呕噢呦嘢哦吧呗啵啦嘞哩咧咯啰喽吗嘛嚜呢呐呵兮噻哉矣焉]|[罢否乎][?？!！。.\\s]?$".toRegex()
+
+        private val PUNCTUATION_MARK = "[?？!！。.\\s]$".toRegex()
+
+        private val RESTRICT_WORD = "[习習]近平|[习習]?总书记|主席|国家|政治|反动|反?共(产党)?|[国國]民[党黨]|天安[門门]|极[左右](主义)?|革命|(社会)?主义|自由|解放|中[華华]民[国國]|情趣|迪克|高潮|色[诱情欲色]|擦边|露出|[蛇射受授吞]精|潮喷|成人|性交|小?男娘|小?南梁|做爱|后入|药娘|怀孕|生殖器|寄吧|几把|鸡[鸡巴]|[精卵]子|[精爱]液|子宫|阴[茎蒂唇囊道]|[逼Bb阴吊叼批肛]毛|搞基|出?脚本|[Rr]-?18|18\\s?禁|LGBT".toRegex()
+
+        private val RESTRICT_CHAR = "[黨党吊批逼操肏肛杀穴屁萎猥]".toRegex()
+
+        private val OTTO = "((电?[棍昆滚])|otto)\\s*的?\\s*((老?[木母]亲?)|([妈老]?妈)|(mom)|(mother))".toRegex()
 
         /**
          * 改变主宾格，删除语气助词，和谐违禁词
@@ -1051,38 +1078,39 @@ import kotlin.text.trim
             val s = recoveryApostrophe(str ?: "")
 
             return s.trim() // 换人称
-                .replace("你们?".toRegex(), "雨沐")
-                .replace("(?i)\\syours?\\s".toRegex(), " yumu's ")
-                .replace("(?i)\\syou\\s".toRegex(), " yumu ")
-                .replace("我们".toRegex(), "你们")
-                .replace("我".toRegex(), "你")
-                .replace("(?i)\\s([Ii]|me)\\s".toRegex(), " you ")
-                .replace("(?i)\\smy\\s".toRegex(), " your ")
-                .replace("(?i)\\smine\\s".toRegex(), " yours ")
-                .replace(
-                    "[啊呃欸呀哟欤呕噢呦嘢哦吧呗啵啦嘞哩咧咯啰喽吗嘛嚜呢呐呵兮噻哉矣焉]|[罢否乎][?？!！。.\\s]?$".toRegex(),
-                    "",
-                ) // 阿耶来唻了价也罗给的般则连不呸哪哇 不匹配，删去其他语气助词
-                // 换句末符号
-
-                .replace("[?？!！。.\\s]$".toRegex(), "")
-                .replace(
-                    "[习習]近平|[习習]?总书记|主席|国家|政治|反动|反?共(产党)?|[国國]民[党黨]|天安[門门]|极[左右](主义)?|革命|(社会)?主义|自由|解放|中[華华]民[国國]|情趣|迪克|高潮|色[诱情欲色]|擦边|露出|[蛇射受授吞]精|潮喷|成人|性交|小?男娘|小?南梁|做爱|后入|药娘|怀孕|生殖器|寄吧|几把|鸡[鸡巴]|[精卵]子|[精爱]液|子宫|阴[茎蒂唇囊道]|[逼Bb阴吊叼批肛]毛|搞基|出?脚本|[Rr]-?18|18\\s?禁|LGBT".toRegex(),
-                    "[和谐]",
-                )
-                .replace("[黨党吊批逼操肏肛杀穴屁萎猥]".toRegex(), "○")
-                .replace("((电?[棍昆滚])|otto)\\s*的?\\s*((老?[木母]亲?)|([妈老]?妈)|(mom)|(mother))".toRegex(), "    ")
+                .replace(YOURS_CN, "雨沐")
+                .replace(WE_CN, "你")
+                .replace(STILL_CN, "")
+                .replace(YOURS_EN, "yumu's")
+                .replace(YOU_EN, "yumu")
+                .replace(ME_EN, "you")
+                .replace(MY_EN, "your")
+                .replace(MINE_EN, "yours")
+                .replace(AUXILIARY_WORD, "")
+                .replace(PUNCTUATION_MARK, "")
+                .replace(RESTRICT_WORD, "[和谐]")
+                .replace(RESTRICT_CHAR, "○")
+                .replace(OTTO, "    ")
         }
+
+        private val APOSTROPHE = "'".toRegex()
+
+        private val APOSTROPHE_SKIP = ("\\" + "'").toRegex()
+
+        private val QUOTATION = "\"".toRegex()
+
+        private val QUOTATION_SKIP = ("\\" + "\"").toRegex()
 
         // 避免撇号影响结果，比如 It's time to go bed
         private fun transferApostrophe(s: String?): String {
-            return (s ?: "").trim().replace("'".toRegex(), "\\" + "'").replace("\"".toRegex(), "\\" + "\"")
+            return (s ?: "").trim().replace(APOSTROPHE, "\\" + "'")
+                .replace(QUOTATION, "\\" + "\"")
         }
 
         // 把撇号影响的结果转换回去，比如 It's time to go bed
         private fun recoveryApostrophe(s: String?): String {
-            return (s ?: "").trim().replace(("\\" + "'").toRegex(), "'")
-                .replace(("\\" + "\"").toRegex(), "\"")
+            return (s ?: "").trim().replace(APOSTROPHE_SKIP, "'")
+                .replace(QUOTATION_SKIP, "\"")
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.now.nowbot.qq.onebot.event
 
-import com.mikuac.shiro.common.utils.ShiroUtils
 import com.mikuac.shiro.core.Bot
 import com.mikuac.shiro.dto.event.message.GroupMessageEvent
 import com.mikuac.shiro.dto.event.message.MessageEvent
@@ -9,10 +8,8 @@ import com.mikuac.shiro.model.ArrayMsg
 import com.now.nowbot.qq.message.*
 import com.now.nowbot.qq.onebot.contact.Contact
 import com.now.nowbot.qq.onebot.contact.Group
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.net.MalformedURLException
-import java.net.URL
+import java.net.URI
 
 open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot),
     com.now.nowbot.qq.event.MessageEvent {
@@ -46,11 +43,10 @@ open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot),
     }
 
     companion object {
-        private val log: Logger = LoggerFactory.getLogger("msg")
 
         @JvmStatic
-        fun getMessageChain(msgs: List<ArrayMsg>): MessageChain {
-            val msg = msgs.map {
+        fun getMessageChain(messages: List<ArrayMsg>): MessageChain {
+            val msg = messages.map {
                 return@map when (it.type) {
                     MsgTypeEnum.at -> {
                         val qqStr = it.getStringData("qq")
@@ -70,10 +66,10 @@ open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot),
 
                     MsgTypeEnum.image -> {
                         try {
-                            ImageMessage(URL(it.getStringData("url")))
-                        } catch (e: MalformedURLException) {
+                            ImageMessage(URI.create(it.getStringData("url")).toURL())
+                        } catch (_: MalformedURLException) {
                             TextMessage("[图片;加载异常]")
-                        } catch (e: IllegalArgumentException) {
+                        } catch (_: IllegalArgumentException) {
                             TextMessage("[图片;加载异常]")
                         }
                     }
@@ -87,9 +83,9 @@ open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot),
             return MessageChain(msg)
         }
 
-        private fun decode(m: String): String {
-            return ShiroUtils.unescape(m)
-        }
+//        private fun decode(m: String): String {
+//            return ShiroUtils.unescape(m)
+//        }
 
         private fun decodeArr(m: String): String {
             return m

@@ -875,14 +875,6 @@ enum class Instruction(val pattern: Pattern) {
         appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, contentLevel = MAYBE, prefixLevel = MAYBE)
     }),
 
-    // 必须放在其他 mai 指令后面
-    MAI_BP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("mai(mai)?\\s*(best|best50|b50)?", "mb", "x")
-        appendQQ()
-        appendNameAnyButNoHash()
-        appendRange()
-    }),
-
     MAI_AUDIO(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mai(mai)?\\s*(audio)", "xa")
         appendColonCaptureGroup(FLAG_DIFF, REG_ANYTHING_BUT_NO_SPACE, MORE)
@@ -890,6 +882,14 @@ enum class Instruction(val pattern: Pattern) {
         appendNameAnyButNoHash()
         appendSpace()
         appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_1_100, MAYBE)
+    }),
+
+    // 必须放在其他 mai 指令后面
+    MAI_BP(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("mai(mai)?\\s*(best|best50|b50)?(?!(full\\s?combo)|(fc)|(all\\s?)?perfect|(ap)|find|dist(ribution)?|seek|version|score|song)", "mb", "x")
+        appendQQ()
+        appendNameAnyButNoHash()
+        appendRange()
     }),
 
     CHU_BP(CommandPatternBuilder.create {
