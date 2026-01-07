@@ -63,6 +63,6 @@ interface LxMaiSongLiteRepository : JpaRepository<LxMaiSongLite, Int> {
     @Query("SELECT s FROM LxMaiSongLite s LEFT JOIN FETCH s.difficulties WHERE s.songID = :songID")
     fun findBySongID(songID: Int): LxMaiSongLite?
 
-    @Query("SELECT s FROM LxMaiSongLite s LEFT JOIN FETCH s.difficulties WHERE LOWER(s.queryTitle) LIKE LOWER(CONCAT('%', :queryTitle, '%'))")
-    fun findByQueryTitleLikeIgnoreCase(queryTitle: String): List<LxMaiSongLite>?
+    @Query("SELECT s FROM LxMaiSongLite s LEFT JOIN FETCH s.difficulties WHERE s.queryTitle ILIKE CONCAT('%', :queryTitle, '%')")
+    fun findByQueryTitleLikeIgnoreCase(queryTitle: String): List<LxMaiSongLite>
 }

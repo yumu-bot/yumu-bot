@@ -36,7 +36,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.min
 
 @Service
-class OsuApiBaseService(@Lazy private val bindDao: BindDao, @param:Qualifier("osuApiWebClient") val osuApiWebClient: WebClient, osuConfig: OsuConfig, yumuConfig: YumuConfig) {
+class OsuApiBaseService(@param:Lazy private val bindDao: BindDao, @param:Qualifier("osuApiWebClient") val osuApiWebClient: WebClient, osuConfig: OsuConfig, yumuConfig: YumuConfig) {
     @JvmField final val oauthId: Int
     @JvmField final val redirectUrl: String
     @JvmField final val oauthToken: String

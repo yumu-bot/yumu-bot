@@ -100,7 +100,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
             }
 
             // 过滤掉多条件时部分条件不满足的结果
-            return collect.filter { it.second.size >= conditions.size }
+            return collect.filter { it.second.isEmpty() || (it.second.size >= conditions.size) }
         }
 
         /**

@@ -135,14 +135,13 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
 
     ;
     companion object {
-        @JvmStatic
         // 获取平假名片假名的罗马音，日文汉字就算了，那个要上 API
         fun getRomanized(japanese: String?): String {
             if (japanese.isNullOrEmpty()) {
                 return ""
             }
 
-            if (hasJapanese(japanese).not()) {
+            if (!hasJapanese(japanese)) {
                 return japanese
             }
 
@@ -228,12 +227,30 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
             return sb.toString()
         }
 
-        private fun hasJapanese(char: CharSequence): Boolean {
-            return char.contains(Regex("[\u3040-\u30ff]"))
+        private val JAPANESE_RANGES = listOf(
+            0x3040..0x309F,  // 平假名
+            0x30A0..0x30FF,  // 片假名
+            0x31F0..0x31FF,  // 片假名扩展（小写假名等）
+            0xFF66..0xFF9F,  // 半角片假名
+            //0x4E00..0x9FFF,  // CJK统一汉字（包含日文汉字）
+            //0x3400..0x4DBF,  // CJK扩展A
+            //0x3000..0x303F,  // CJK符号和标点
+            0xFF00..0xFFEF,  // 全角ASCII及全角标点
+        )
+
+        private fun hasJapanese(charSequence: CharSequence): Boolean {
+            // 遍历检查每个字符
+            for (i in 0 until charSequence.length) {
+                val code = charSequence[i].code
+                if (JAPANESE_RANGES.any { code in it }) {
+                    return true
+                }
+            }
+            return false
         }
 
         private fun hasJapanese(char: Char): Boolean {
-            return char.toString().matches(Regex("[\u3040-\u30ff]"))
+            return JAPANESE_RANGES.any { char.code in it }
         }
 
         // 促音 さっき -> Sakki
@@ -252,15 +269,17 @@ enum class JaChar(val hiragana: String, val katakana: String, val romanized: Str
         }
 
         private fun isEqual(char: Char, jaChar: JaChar): Boolean {
-            return isEqual(char.toString(), jaChar)
+            if (jaChar.hiragana.length > 1 || jaChar.katakana.length > 1) return false
+
+            return (jaChar.hiragana.contains(char) || jaChar.katakana.contains(char))
         }
 
         private fun isEqual(char: Char, jaChars: List<JaChar>): Boolean {
-            for (j in jaChars) {
-                if (isEqual(char.toString(), j)) return true
-            }
+            val str = char.toString()
 
-            return false
+            return jaChars.any { ja ->
+                isEqual(str, ja)
+            }
         }
 
         private fun isEqual(str: String, jaChar: JaChar): Boolean {

@@ -102,9 +102,9 @@ class MaiDao(
     }
 
     fun findLxMaiSongByTitle(title: String): List<LxMaiSong> {
-        val songs = lxMaiSongLiteRepository.findByQueryTitleLikeIgnoreCase("%$title%")
+        val songs = lxMaiSongLiteRepository.findByQueryTitleLikeIgnoreCase(title)
 
-        return songs?.map { it.toModel() } ?: listOf()
+        return songs.map { it.toModel() }
     }
 
     @Transactional

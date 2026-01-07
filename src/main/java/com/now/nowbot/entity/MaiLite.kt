@@ -492,7 +492,7 @@ class ChuChartLite(
     name = "lx_maimai_song",
     indexes = [Index(name = "lx_mai_title_query", columnList = "query_text")]
 )
-class LxMaiSongLite() {
+class LxMaiSongLite {
     @Id
     var songID: Int? = null
 
@@ -597,7 +597,7 @@ class LxMaiSongLite() {
 
 @Entity
 @Table(name = "lx_maimai_difficulty")
-class LxMaiDifficultyLite() {
+class LxMaiDifficultyLite {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0
@@ -627,7 +627,7 @@ class LxMaiDifficultyLite() {
     @Column(columnDefinition = "INTEGER[]")
     var notes: IntArray = intArrayOf()
 
-    @Column(columnDefinition = "VARCHAR(2)", nullable = true)
+    @Column(columnDefinition = "VARCHAR(4)", nullable = true)
     var kanji: String? = null
 
     @Column(columnDefinition = "TEXT", nullable = true)
