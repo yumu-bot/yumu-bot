@@ -70,7 +70,10 @@ class UpdateTriggerService(
             }
 
             MAIMAI -> Thread.startVirtualThread {
-                event.reply("正在尝试更新舞萌、中二数据！")
+                event.reply("""
+                    正在尝试更新舞萌、中二数据！
+                    注意，这不会更新落雪歌曲数据库。
+                    """.trimIndent())
 
                 val startTime = System.currentTimeMillis()
 

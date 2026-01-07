@@ -272,12 +272,19 @@ import java.util.regex.Matcher
 
             full = maimaiApiService.getMaimaiFullScores(qq)
 
-            val scores = full.records
+            val sorted = full.records
                 .sortedByDescending { it.rating }
-                .mapIndexed { i: Int, score: MaiScore ->
-                    score.position = i + 1
-                    score
+
+            val scores = if (conditions[11].isNotEmpty()) {
+                sorted.sortedByDescending {
+                    it.achievements
                 }
+            } else {
+                sorted
+            }.mapIndexed { i: Int, score: MaiScore ->
+                score.position = i + 1
+                score
+            }
 
             maimaiApiService.insertSongData(scores)
             maimaiApiService.insertMaimaiAliasForScore(scores)

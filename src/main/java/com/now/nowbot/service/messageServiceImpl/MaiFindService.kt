@@ -99,12 +99,15 @@ import java.util.regex.Matcher
                         .filter { it.key > 0.4 }
                         .map { it.value }
 
-                    songs = possibles.ifEmpty {
-                        // 外号模式
-                        lxMaiApiService.getMaiAliasSongs(any).ifEmpty {
-                            throw NoSuchElementException.ResultNotAccurate()
+                    songs = possibles.sortedByDescending { it.info.versionInt }
+                        .ifEmpty {
+                            // 外号模式
+                            lxMaiApiService.getMaiAliasSongs(any)
+                                .sortedByDescending { it.info.versionInt }
+                                .ifEmpty {
+                                    throw NoSuchElementException.ResultNotAccurate()
+                                }
                         }
-                    }
                 }
             } else {
                 // 常规模式
