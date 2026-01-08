@@ -216,7 +216,7 @@ class FriendService(
                 }
             }
 
-            if (qq != null) {
+            if (qq != null || uid != null) {
                 if (qq == event.sender.id || uid == me.userID) {
                     throw TipsException("你自己与你自己就是最好的朋友。")
                 } else {
