@@ -17,6 +17,7 @@ import com.now.nowbot.service.messageServiceImpl.FriendService.Companion.SortTyp
 import com.now.nowbot.service.messageServiceImpl.FriendService.FriendParam
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
@@ -24,6 +25,7 @@ import com.now.nowbot.util.*
 import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.InstructionUtil.getUserWithRange
 import com.now.nowbot.util.command.FLAG_ANY
+import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.FLAG_RANGE
 import com.now.nowbot.util.command.FLAG_UID
 import com.now.nowbot.util.command.REG_HYPHEN
@@ -203,9 +205,23 @@ class FriendService(
         }
 
         if (id.data == me.userID) {
-            if (event.hasAt() && event.target == event.sender.id
-                || matcher.group(FLAG_UID)?.toLongOrNull() == me.userID) {
-                throw TipsException("你自己与你自己就是最好的朋友。")
+            val qq = matcher.group(FLAG_QQ_ID)?.toLongOrNull()
+            val uid = matcher.group(FLAG_UID)?.toLongOrNull()
+
+            if (event.hasAt()) {
+                if (event.target == event.sender.id) {
+                    throw TipsException("你自己与你自己就是最好的朋友。")
+                } else {
+                    throw BindException.TokenExpiredException.UserTokenExpired()
+                }
+            }
+
+            if (qq != null) {
+                if (qq == event.sender.id || uid == me.userID) {
+                    throw TipsException("你自己与你自己就是最好的朋友。")
+                } else {
+                    throw BindException.TokenExpiredException.UserTokenExpired()
+                }
             }
 
             // 好友列表模式
