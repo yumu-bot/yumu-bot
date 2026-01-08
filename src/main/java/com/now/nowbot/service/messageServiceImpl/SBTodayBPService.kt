@@ -132,11 +132,6 @@ class SBTodayBPService(
         }.filterNotNull().toMap()
 
         if (dataMap.isEmpty()) {
-            /*
-            if (!user.isActive) {
-                throw NoSuchElementException.PlayerInactive(user.username)
-            } else
-             */
             if (isToday) {
                 throw NoSuchElementException.TodayBestScore(user.username)
             } else {
@@ -169,6 +164,7 @@ class SBTodayBPService(
 
                 val body = mapOf(
                     "user" to user,
+                    "history_user" to historyUser,
                     "scores" to ss,
                     "rank" to ranks,
                     "panel" to "T"

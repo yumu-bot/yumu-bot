@@ -347,6 +347,7 @@ class SBScorePRService(
 
             val body = mapOf(
                 "user" to user,
+                "history_user" to history,
                 "score" to scores,
                 "rank" to ranks,
                 "panel" to if (isPass) "PS" else "RS"

@@ -326,6 +326,7 @@ import java.util.regex.Matcher
 
                 val body = mapOf(
                     "user" to user,
+                    "history_user" to historyUser,
                     "scores" to scores,
                     "rank" to ranks,
                     "panel" to "BS",

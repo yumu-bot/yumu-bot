@@ -179,6 +179,7 @@ class TodayBPService(
 
                 val body = mapOf(
                     "user" to user,
+                    "history_user" to historyUser,
                     "scores" to ss,
                     "rank" to ranks,
                     "panel" to "T",
