@@ -2719,10 +2719,16 @@ sealed class LazerMod {
         fun getModsListFromModInt(modInt: Int): List<LazerMod> {
             val list = List(31) { it }
 
+            val i = if (modInt and Nightcore.value != 0 && modInt and DoubleTime.value != 0) {
+                modInt and DoubleTime.value.inv()
+            } else {
+                modInt
+            }
+
             return list.mapNotNull {
                 val value = 1 shl it
 
-                if (modInt and value != 0) {
+                if (i and value != 0) {
                     getModFromIndex(it)
                 } else {
                     null

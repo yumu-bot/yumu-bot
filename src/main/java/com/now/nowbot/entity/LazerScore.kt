@@ -88,7 +88,7 @@ class LazerScoreLite(
             this.legacyScoreID = lite.legacyScoreId
             this.userID = lite.userId
             this.beatmapID = lite.beatmapId
-            this.mods = JacksonUtil.parseObjectList(lite.mods, LazerMod::class.java)
+            this.mods = LazerMod.getModsList(lite.mods)
             this.pp = lite.pp.toDouble()
             this.lazerAccuracy = lite.accuracy.toDouble()
             this.maxCombo = lite.maxCombo
