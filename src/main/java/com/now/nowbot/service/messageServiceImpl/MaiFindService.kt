@@ -140,7 +140,7 @@ import java.util.regex.Matcher
                 }
             }
 
-            lxMaiApiService.insertMaimaiAlias(songs)
+            lxMaiApiService.insertMaimaiAliasForMaiSong(songs)
 
             val page = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: 1
             val pages = DataUtil.splitPage(songs, page, maxPerPage = 48)

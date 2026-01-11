@@ -116,7 +116,7 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
         AsyncMethodExecutor.awaitRunnableExecute(actions)
     }
 
-    override fun insertMaimaiAlias(songs: List<MaiSong>?) {
+    override fun insertMaimaiAliasForMaiSong(songs: List<MaiSong>?) {
         if (songs.isNullOrEmpty()) return
 
         val actions = songs.map {
