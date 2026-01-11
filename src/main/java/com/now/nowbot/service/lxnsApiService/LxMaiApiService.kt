@@ -22,6 +22,8 @@ interface LxMaiApiService {
 
     fun insertMaimaiAlias(songs: List<LxMaiSong>?)
 
+    fun insertMaimaiAlias(songs: List<MaiSong>?)
+
     fun getMaiSong(songID: Int): MaiSong?
 
     fun getMaiSongs(): List<MaiSong>
