@@ -1500,7 +1500,7 @@ object DataUtil {
         }
     }
 
-    private val NO_LETTER_REGEX = "[A-Za-z\\-/\\\\:：]".toRegex()
+    private val HAS_LETTER_REGEX = "[A-Za-z\\-/\\\\:：]".toRegex()
 
     /**
      * 结合三种方法获取时间段
@@ -1511,7 +1511,7 @@ object DataUtil {
      * @param unit 如果不填，则在没有单位的时候，默认将其判定为秒数。也可以自己改成天数。
      */
     fun parseTime(input: String, mode: Boolean? = null, unit: DurationUnit = DurationUnit.SECONDS): Pair<Period, Duration> {
-        val noLetter = ! input.contains(NO_LETTER_REGEX)
+        val noLetter = ! input.contains(HAS_LETTER_REGEX)
 
         val letter = parseLetterTime(input)
         val colon = parseColonTime(input, mode)
@@ -1596,11 +1596,20 @@ object DataUtil {
             }
         }
 
-        if (! input.contains(NO_LETTER_REGEX)) {
+        if (! input.contains(HAS_LETTER_REGEX)) {
             val number = input.toIntOrNull() ?: 0
+            val now = LocalDateTime.now()
 
             when (number) {
-                in 2007..<2100 -> years += (LocalDateTime.now().year - number)
+                in 2007..<2100 -> {
+                    years += (LocalDateTime.now().year - number)
+                    months += now.monthValue
+                    duration +=
+                        (now.dayOfMonth.toDuration(DurationUnit.DAYS) +
+                                now.minute.toDuration(DurationUnit.MINUTES) +
+                                now.second.toDuration(DurationUnit.SECONDS)
+                                )
+                }
                 else -> duration += number.toDuration(unit)
             }
         }
