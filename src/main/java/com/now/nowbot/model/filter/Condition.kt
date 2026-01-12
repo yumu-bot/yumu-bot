@@ -3,6 +3,7 @@ package com.now.nowbot.model.filter
 import com.now.nowbot.util.DataUtil
 import java.time.Period
 import kotlin.time.Duration
+import kotlin.time.DurationUnit
 
 /**
  * @param mode
@@ -18,7 +19,7 @@ data class Condition(
     val long: Long = condition.toLongOrNull() ?: -1L
     val int: Int = condition.toIntOrNull() ?: -1
     val double: Double = condition.toDoubleOrNull() ?: -1.0
-    val time: Pair<Period, Duration> = DataUtil.parseTime(condition, mode = mode)
+    val time: Pair<Period, Duration> = DataUtil.parseTime(input = condition, mode = mode, unit = DurationUnit.DAYS)
     val hasDecimal = condition.contains(".")
     val boolean = when(condition) {
         "真", "是", "正确", "对", "t", "true", "y", "yes", "" -> true

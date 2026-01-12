@@ -21,7 +21,7 @@ import kotlin.time.Duration
 enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
     CREATOR("(creator|host|c|谱师|作者|谱|主)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
-    GUEST("((gder|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
+    GUEST("((gd(er)?|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
     BID("((beatmap\\s*)?id|bid|b|(谱面)?编?号)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
@@ -99,7 +99,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
 
     CLIENT("(client|z|v|version|版本?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_ANYTHING_MORE)".toRegex()),
 
-    CREATED_TIME("((created)?\\s*(at|time)|creat(ed)?\\s*(at|time)?|创建(时间)?|ct|ca)(?<n>$REG_OPERATOR_WITH_SPACE$REG_TIME)".toRegex()),
+    CREATED_TIME("(date|(created|score)?\\s*(at|time)|creat(ed)?\\s*(at|time)?|(成绩(创建)?|创建)?(时间)?|st|ct|ca|ti)(?<n>$REG_OPERATOR_WITH_SPACE$REG_TIME)".toRegex()),
 
     RANGE(REG_RANGE.toRegex());
     
@@ -598,8 +598,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     !(fit(Operator.GE, compare, too) && fit(Operator.LE, compare, too + delta))
                 }
             } else {
-                // 注意，要在这里取反：因为 >2d，其实是指 2 天前并且更早的结果
-                fit(operator, -compare, -too)
+                fit(operator, compare, too)
             }
         }
 

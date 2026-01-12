@@ -18,6 +18,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.Period
+import java.time.temporal.ChronoUnit
 import kotlin.math.*
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -456,12 +457,12 @@ object DataUtil {
 
         val gainAcc = weight * (wGreat - wBad)
 
-        for (i in 0 until nBad) {
+        repeat(nBad) {
             g++
             b--
             c += gainAcc
 
-            if (c >= aimingAcc) break
+            if (c >= aimingAcc) return@repeat
         }
 
         return Exchange(g, b, currentAcc)
@@ -1499,6 +1500,8 @@ object DataUtil {
         }
     }
 
+    private val NO_LETTER_REGEX = "[A-Za-z\\-/\\\\:：]".toRegex()
+
     /**
      * 结合三种方法获取时间段
      * @param mode
@@ -1508,10 +1511,21 @@ object DataUtil {
      * @param unit 如果不填，则在没有单位的时候，默认将其判定为秒数。也可以自己改成天数。
      */
     fun parseTime(input: String, mode: Boolean? = null, unit: DurationUnit = DurationUnit.SECONDS): Pair<Period, Duration> {
+        val noLetter = ! input.contains(NO_LETTER_REGEX)
+
         val letter = parseLetterTime(input)
         val colon = parseColonTime(input, mode)
         val hyphen = parseHyphenOrSlashTime(input)
-        val sec = parseSecondTime(input, unit)
+        val sec = if (noLetter) {
+            val number = input.toIntOrNull() ?: 0
+
+            when(number) {
+                in 2007 ..< 2100 -> Duration.ZERO // 这部分交给 parseLetterTime 处理
+                else -> parseAnyTime(input, unit)
+            }
+        } else {
+            parseAnyTime(input, unit)
+        }
 
         // 年月
         val period = Period.of(
@@ -1530,11 +1544,26 @@ object DataUtil {
      * 如果只有数字，那就默认是秒数
      * - 也可以自己修改
      */
-    fun parseSecondTime(input: String, unit: DurationUnit = DurationUnit.SECONDS): Duration {
+    fun parseAnyTime(input: String, unit: DurationUnit = DurationUnit.SECONDS): Duration {
         return if (input.matches("\\d+".toRegex())) {
             (input.toIntOrNull() ?: 0).toDuration(unit)
         } else {
             Duration.ZERO
+        }
+    }
+
+    fun parseAnyTime(input: String, unit: ChronoUnit = ChronoUnit.YEARS): Period {
+        return if (input.matches("\\d+".toRegex())) {
+            val i = (input.toIntOrNull() ?: 0)
+
+            when(unit) {
+                ChronoUnit.YEARS -> Period.of(i, 0, 0)
+                ChronoUnit.MONTHS -> Period.of(0, i, 0)
+                ChronoUnit.DAYS -> Period.of(0, 0, i)
+                else -> Period.ZERO
+            }
+        } else {
+            Period.ZERO
         }
     }
 
@@ -1544,7 +1573,7 @@ object DataUtil {
      * - 123y2434mo1345d1413h12334m5383s
      * @return Duration：日时分秒，Period：年月
      */
-    fun parseLetterTime(input: String): Pair<Period, Duration> {
+    fun parseLetterTime(input: String, unit: DurationUnit = DurationUnit.SECONDS): Pair<Period, Duration> {
         var duration = Duration.ZERO
         var years = 0
         var months = 0
@@ -1553,9 +1582,9 @@ object DataUtil {
 
         pattern.findAll(input.replace("\\s+".toRegex(), "")).forEach { matchResult ->
             val value = matchResult.groupValues[1].toLongOrNull() ?: 0L
-            val unit = matchResult.groupValues[2]
+            val u = matchResult.groupValues[2]
 
-            when (unit) {
+            when (u) {
                 "y", "yr", "year", "years", "年" -> years += value.toInt()
                 "o", "mo", "month", "months", "月" -> months += value.toInt()
                 "d", "dy" , "day", "days", "日", "天" -> duration += value.toDuration(DurationUnit.DAYS)
@@ -1563,7 +1592,16 @@ object DataUtil {
                 "m", "mi", "min", "minute", "minutes", "分", "分钟" -> duration += value.toDuration(DurationUnit.MINUTES)
                 "s", "se", "sec", "second", "seconds", "秒" -> duration += value.toDuration(DurationUnit.SECONDS)
 
-                else -> duration += value.toDuration(DurationUnit.SECONDS)
+                else -> duration += value.toDuration(unit)
+            }
+        }
+
+        if (! input.contains(NO_LETTER_REGEX)) {
+            val number = input.toIntOrNull() ?: 0
+
+            when (number) {
+                in 2007..<2100 -> years += (LocalDateTime.now().year - number)
+                else -> duration += number.toDuration(unit)
             }
         }
 

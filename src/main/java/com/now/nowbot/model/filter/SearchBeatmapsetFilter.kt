@@ -12,7 +12,7 @@ import kotlin.text.split
 enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
     CREATOR("(creator|host|c|h|谱师|作者|谱|主)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
-    GUEST("((gder|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
+    GUEST("((gd(er)?|guest\\s*diff(er)?)|mapper|guest|g?u|客串?(谱师)?)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
 
     BID("((beatmap\\s*)?id|bid|b|(谱面)?编?号)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NUMBER_MORE)".toRegex()),
 
@@ -148,7 +148,7 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                         else -> null
                     }
 
-                    return listOfNotNull(con)
+                    listOfNotNull(con)
                 }
             }
         }
