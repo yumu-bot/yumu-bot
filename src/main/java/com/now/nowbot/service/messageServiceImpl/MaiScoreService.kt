@@ -275,7 +275,7 @@ import java.util.regex.Matcher
             val sorted = full.records
                 .sortedByDescending { it.rating }
 
-            val scores = if (conditions[11].isNotEmpty()) {
+            val scores = if (conditions.size >= 11 && conditions[11].isNotEmpty()) {
                 sorted.sortedByDescending {
                     it.achievements
                 }
