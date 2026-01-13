@@ -36,9 +36,9 @@ class HelpService(
             // "hydrantbot", "hydrant", "hydro", "hy", "xfs", "xf", "~", "消防栓" -> "hydrantbot"
             // "cabbage", "白菜", "baicai", "妈船", "妈船？", "mothership", "mother ship", "bc" -> "cabbagebot"
 
-            "" -> ""
+            "", null -> ""
 
-            // 未收录的返回空，有的机器人他的帮助是 !帮助 2 这样的，会串台
+            // 未收录的参数，返回空，有的机器人他的帮助是 !帮助 2 这样的，会串台
             else -> null
         }
     }
