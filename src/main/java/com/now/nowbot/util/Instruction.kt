@@ -13,7 +13,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     SIMPLIFIED_HELP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("help", "helps", "帮助", "h")
+        appendCommandsIgnoreAll("help", "helps", "帮助")
         appendCaptureGroup("module", REG_ANYTHING, ANY, MAYBE)
     }),
 
@@ -914,7 +914,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.UPDATE) continue
+        if (i != Instruction.SIMPLIFIED_HELP) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

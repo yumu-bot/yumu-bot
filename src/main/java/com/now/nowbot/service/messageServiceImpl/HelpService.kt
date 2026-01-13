@@ -64,7 +64,7 @@ class HelpService(
             data.value = HelpParam(module.ifBlank { "GUIDE" })
             return true
         } else if (m2.find()) {
-            val module = getModule(m.group("module")) ?: return false
+            val module = getModule(m2.group("module")) ?: return false
 
             data.value = HelpParam(module.ifBlank { "SIMPLIFIED_GUIDE" })
             return true
