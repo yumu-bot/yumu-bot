@@ -6,7 +6,6 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.lxnsApiService.LxMaiApiService
-import com.now.nowbot.service.messageServiceImpl.HelpService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import org.slf4j.Logger
@@ -25,7 +24,6 @@ import java.lang.management.ManagementFactory
 @Service
 class RunTimeService(
     private val dailyStatisticsService: DailyStatisticsService,
-    private val helpService: HelpService,
     private val bindDao: BindDao,
     private val newbieService: NewbieService,
     private val maimaiApiService: MaimaiApiService,
@@ -62,12 +60,6 @@ class RunTimeService(
     @Scheduled(cron = "0 50 3 * * *")
     fun collectPercentiles() {
         dailyStatisticsService.collectPercentiles()
-    }
-
-    // 每天凌晨3点59清除过期的缓存
-    @Scheduled(cron = "0 59 3 * * *")
-    fun clearCache() {
-        helpService.clearExpiredCache()
     }
 
     // 每天凌晨4点统计新人群用户信息

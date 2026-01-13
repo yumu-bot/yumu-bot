@@ -1,11 +1,42 @@
 package com.now.nowbot.service
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import org.springframework.stereotype.Service
-import java.time.LocalDateTime
-import kotlin.time.Duration
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.TimeUnit
 
+@Service
+// 用 Caffeine 作缓存，不自己维护 Map
+class ImageCacheProvider {
+    // 定义一个 Caffeine 缓存实例
+    private val imageCache: Cache<String, ByteArray> = Caffeine.newBuilder()
+        .expireAfterWrite(1, TimeUnit.DAYS)
+        .maximumWeight(10 * 1024 * 1024)
+        .weigher { _: String, value: ByteArray -> value.size }
+        .softValues() // 别 OOM 了
+        .build()
+
+    fun getImage(name: String, fetch: () -> ByteArray?): ByteArray? {
+        val result = imageCache.get(name) {
+            fetch() ?: NOT_FOUND
+        }
+
+        return if (result === NOT_FOUND) null else result
+    }
+
+    fun removeFromCache(name: String) = imageCache.invalidate(name)
+
+    fun clearCache() = imageCache.invalidateAll()
+
+    fun getCacheInfo(): ConcurrentMap<String, ByteArray> = imageCache.asMap()
+
+    companion object {
+        private val NOT_FOUND = ByteArray(0)
+    }
+}
+
+/*
 @Service
 class ImageCacheProvider {
     private val imageCache = mutableMapOf<String, Pair<LocalDateTime, ByteArray>>()
@@ -69,3 +100,5 @@ class ImageCacheProvider {
         return imageCache.mapValues { it.value.first }
     }
 }
+
+ */

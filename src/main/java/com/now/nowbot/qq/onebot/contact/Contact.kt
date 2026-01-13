@@ -34,7 +34,7 @@ open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
     override fun sendMessage(msg: MessageChain): OneBotMessageReceipt {
         try {
             ifNewBot
-        } catch (e: NullPointerException) {
+        } catch (_: NullPointerException) {
             Contact.log.error("获取 bot 信息为空, 可能为返回数据超时, 但是仍然尝试发送")
         } catch (e: LogException) {
             Contact.log.error("无法获取 bot, 放弃发送消息：{}", msg.rawMessage, e)
@@ -79,7 +79,7 @@ open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
             }
         }
 
-        if (d != null && d.data != null && d.data!!.messageId != null) {
+        if (d?.data?.messageId != null) {
             return OneBotMessageReceipt.create(bot, d.data!!.messageId, this)
         } else {
             if (msg.messageList.first() is ImageMessage) {
@@ -87,7 +87,7 @@ open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
                     "发送消息：账号 {} 在 {} 发送图片时获取回执失败。发送图片状态：{}",
                     bot!!.selfId,
                     id,
-                    bot!!.canSendImage()?.status ?: "无法获取"
+                    if (bot!!.canSendImage()?.status != null) "正常" else "无法获取"
                 )
             } else {
                 Contact.log.error("发送消息：账号 {} 在 {} 发送 {} 时获取回执失败。", bot!!.selfId, id, getMsg4Chain(msg))
@@ -119,7 +119,7 @@ open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
         } catch (e: SessionCloseException) {
             Contact.log.error("Shiro 框架：失去与 Bot 实例的连接", e)
             return false
-        } catch (e: NullPointerException) {
+        } catch (_: NullPointerException) {
             // com.now.nowbot.qq.contact.Contact
             // 获取bot信息为空, 可能为返回数据超时, 但是仍然尝试发送
             return false

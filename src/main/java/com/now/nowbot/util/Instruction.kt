@@ -8,6 +8,11 @@ import java.util.regex.Pattern
 enum class Instruction(val pattern: Pattern) {
     // #0 调出帮助
     HELP(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("h")
+        appendCaptureGroup("module", REG_ANYTHING, ANY, MAYBE)
+    }),
+
+    SIMPLIFIED_HELP(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("help", "helps", "帮助", "h")
         appendCaptureGroup("module", REG_ANYTHING, ANY, MAYBE)
     }),

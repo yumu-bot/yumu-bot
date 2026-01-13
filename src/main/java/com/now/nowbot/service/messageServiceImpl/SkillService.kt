@@ -18,6 +18,7 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import org.springframework.stereotype.Service
 import java.util.concurrent.Callable
@@ -77,7 +78,7 @@ import kotlin.math.sqrt
 
         return if (param.isVs) {
             ServiceCallStatistic.builds(event,
-                userIDs = listOf(param.me.userID, param.other!!.userID),
+                userIDs = listOf(param.me.userID, param.other?.userID ?: throw NoSuchElementException.Player()),
                 modes = listOf(param.mode)
             )
         } else {
