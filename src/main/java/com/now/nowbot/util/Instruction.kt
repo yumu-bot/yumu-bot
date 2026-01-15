@@ -835,7 +835,7 @@ enum class Instruction(val pattern: Pattern) {
         appendSpace()
         appendQQ()
         appendNameAnyButNoHash()
-        appendHashCaptureGroup(FLAG_VERSION, REG_ANYTHING_BUT_NO_SPACE, contentLevel = MORE, prefixLevel = MAYBE)
+        appendHashCaptureGroup(FLAG_VERSION, REG_ANYTHING, contentLevel = MORE, prefixLevel = MAYBE)
     }),
     MAI_SEEK(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mai(mai)?\\s*(seek)", "mk")
@@ -914,7 +914,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.SIMPLIFIED_HELP) continue
+        if (i != Instruction.MAI_VERSION) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

@@ -8,7 +8,6 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.time.Duration
 
 @Service
 class DailyStatisticsService(
@@ -17,6 +16,24 @@ class DailyStatisticsService(
     private val userInfoDao: OsuUserInfoDao,
     private val bindDao: BindDao,
 ) {
+
+    object SimpleRateLimiter {
+        private var nextAvailableTime = System.currentTimeMillis()
+
+        @Synchronized
+        fun sync(qps: Int = 8) {
+            val interval = 1000 / qps
+
+            val now = System.currentTimeMillis()
+            if (now < nextAvailableTime) {
+                val sleepTime = nextAvailableTime - now
+                Thread.sleep(sleepTime)
+                nextAvailableTime += interval
+            } else {
+                nextAvailableTime = now + interval
+            }
+        }
+    }
 
     /**
      * 统计任务包括 user info 以及 scores
@@ -45,40 +62,53 @@ class DailyStatisticsService(
     fun runTask() {
         log.info("开始统计全部绑定用户")
         OsuApiBaseService.setPriority(9)
+
         var offset = 0
-        var userIDs: List<Long> = bindDao.getAllUserIdLimit50(offset)
         var errorCount = 0
-        var sleepCount = 0
-        while (userIDs.isNotEmpty()) {
+
+        while (true) {
+            val userIDs = bindDao.getAllUserIdLimit50(offset)
+            if (userIDs.isEmpty()) break
+
             try {
                 val needSearch = mutableListOf<Pair<Long, OsuMode>>()
+
+                // 内部已包含 SimpleRateLimiter.sync()
                 saveUserInfo(userIDs, needSearch)
+
+                // 内部已包含 SimpleRateLimiter.sync()
                 savePlayData(needSearch)
+
+                // 执行成功：重置错误计数，移动位移
+                errorCount = 0
+                offset += userIDs.size
+
             } catch (e: Exception) {
-                if (errorCount < 2) {
-                    log.error("统计用户第${offset / 50}轮出现异常, 正在重试...", e)
-                    errorCount++
-                    continue
+                val errorMsg = e.message ?: ""
+                if (errorMsg.contains("429")) {
+                    // 核心修改：遇到429绝对不要立即重试或增加offset
+                    log.error("触发 API 限速(429)，虚拟线程进入深度冷却...")
+                    // 遇到429时，即便有频率限制也说明额度耗尽，建议至少休息 30-60s
+                    Thread.sleep(60_000)
+                    continue // 原地重试，不增加 offset
+                }
+
+                errorCount++
+                if (errorCount < 3) {
+                    log.warn("第 ${offset / 50} 轮异常，尝试第 $errorCount 次重试", e)
+                    Thread.sleep(2000) // 普通异常轻微休息
                 } else {
-                    log.error("统计用户第${offset / 50}轮连续异常, 退出本轮", e)
-                    log.error("下面 UID 已跳过[\n${userIDs.joinToString(",")}\n]")
+                    // 连续多次失败，为了保证任务继续，跳过这 50 个用户
+                    log.error("第 ${offset / 50} 轮连续失败，跳过 UIDs: $userIDs")
+                    offset += userIDs.size
                     errorCount = 0
-                    sleepCount++
-                    Thread.sleep(Duration.ofMinutes(3))
                 }
             }
-
-            if (sleepCount > 3) {
-                log.error("统计用户第${offset / 50}轮连续异常, 终止获取！")
-                break
-            }
-
-            offset += userIDs.size
-            userIDs = bindDao.getAllUserIdLimit50(offset)
         }
     }
 
     private fun saveUserInfo(userIDs: List<Long>, needSearch: MutableList<Pair<Long, OsuMode>>) {
+        SimpleRateLimiter.sync()
         val userInfoList = userApiService.getUsers(userIDs, isVariant = true)
         val yesterdayInfo = userInfoDao.getFromYesterday(userIDs)
         val userMap = userInfoList.associateBy { it.userID }
@@ -109,7 +139,8 @@ class DailyStatisticsService(
 
     private fun savePlayData(data: MutableList<Pair<Long, OsuMode>>) {
         for ((uid, mode) in data) {
-            log.info("save $uid $mode")
+            // log.info("save $uid $mode")
+            SimpleRateLimiter.sync()
             scoreApiService.getRecentScore(uid, mode, 0, 999)
         }
     }

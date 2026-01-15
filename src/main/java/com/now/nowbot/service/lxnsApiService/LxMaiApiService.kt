@@ -1,5 +1,6 @@
 package com.now.nowbot.service.lxnsApiService
 
+import com.now.nowbot.model.maimai.LxMaiCollection
 import com.now.nowbot.model.maimai.LxMaiSong
 import com.now.nowbot.model.maimai.MaiAlias
 import com.now.nowbot.model.maimai.MaiSong
@@ -13,6 +14,8 @@ interface LxMaiApiService {
     fun getLxMaiSongs(): List<LxMaiSong>
 
     fun saveLxMaiSongs()
+
+    fun saveLxMaiCollections()
 
     fun getLxMaiSong(songID: Int): LxMaiSong?
 
@@ -33,6 +36,8 @@ interface LxMaiApiService {
     fun getMaiAliasSongs(text: String): List<MaiSong>
 
     fun getMaiAliasLibrary(): Map<Int, List<String>>
+
+    fun getLxMaiCollection(type: String = "plate", types: String = "plates"): List<LxMaiCollection>
 
     companion object {
 

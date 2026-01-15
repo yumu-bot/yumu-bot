@@ -1,5 +1,6 @@
 package com.now.nowbot.model.maimai
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonProperty
 import kotlin.math.floor
 import kotlin.math.max
@@ -16,9 +17,10 @@ class ChuBestScore {
     @JsonProperty("records") var records: Records = Records()
 
     data class Records(
-        @JsonProperty("b30") val best30: List<ChuScore> = listOf(),
-        @JsonProperty("n20") val new20: List<ChuScore> = listOf(),
-        @JsonProperty("s10") val selection10: List<ChuScore> = listOf(),
+        @field:JsonProperty("b30") val best30: List<ChuScore> = listOf(),
+        @field:JsonProperty("n20") val new20: List<ChuScore> = listOf(),
+        @field:JsonAlias("r10")
+        @field:JsonProperty("s10") val selection10: List<ChuScore> = listOf(),
     )
 
     // 在查分器里的名字

@@ -5,6 +5,7 @@ import com.now.nowbot.mapper.*
 import com.now.nowbot.model.maimai.*
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import kotlin.collections.forEach
 import kotlin.jvm.optionals.getOrNull
 
 @Component
@@ -19,6 +20,8 @@ class MaiDao(
     val chuChartLiteRepository: ChuChartLiteRepository,
     val chuAliasLiteRepository: ChuAliasLiteRepository,
     val lxMaiSongLiteRepository: LxMaiSongLiteRepository,
+    val lxMaiCollectionLiteRepository: LxMaiCollectionLiteRepository,
+    val lxMaiCollectionSongLiteRepository: LxMaiCollectionRequiredSongLiteRepository
 ) {
     fun saveMaiRanking(ranking: List<MaiRanking>) {
         val ranks = ranking
@@ -88,6 +91,35 @@ class MaiDao(
             it.charts = charts
         }
         return songs.map { it.toModel() }
+    }
+
+    @Transactional
+    fun saveLxMaiCollections(collections: List<LxMaiCollection>) {
+        // 这是一个局部缓存，用于确保本次 saveAll 过程中，对象在内存中是唯一的
+        val songCache = mutableMapOf<Int, LxMaiCollectionRequiredSongLite>()
+
+        // 1. 收集本次 API 数据中所有的 songID
+        val allSongIDs = collections
+            .flatMap { it.required ?: emptyList() }
+            .flatMap { it.songs ?: emptyList() }
+            .map { it.songID }
+            .distinct()
+
+        // 2. 预先从数据库查出已经存在的歌曲，存入缓存
+        lxMaiCollectionSongLiteRepository.findAllById(allSongIDs).forEach {
+            songCache[it.songID!!] = it
+        }
+
+        // 3. 正常执行转换（from 方法内部会优先使用 cache 里的 Managed 对象）
+        val entities = collections.map {
+            LxMaiCollectionLite.from(it, songCache)
+        }
+
+        lxMaiCollectionLiteRepository.saveAll(entities)
+    }
+
+    fun findLxMaiCollections(type: String = "plate"): List<LxMaiCollection> {
+        return lxMaiCollectionLiteRepository.findByType(type).map { it.toModel() }
     }
 
     @Transactional

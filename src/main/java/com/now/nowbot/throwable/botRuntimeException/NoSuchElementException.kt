@@ -79,6 +79,24 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
             （如果不同难度用的不同背景，则只能获取到预览图、官网可见的那个背景）
         """.trimIndent())
 
+    class MaiCollection:
+        NoSuchElementException("数据库里没有找到这个收藏品。")
+
+    class MaiPlateShinShou:
+        NoSuchElementException("""
+            真代没有将牌。
+            SSS 的充分必要条件是完美无缺 (AP)，即真神牌。
+        """.trimIndent())
+
+    class MaiPlateType:
+        NoSuchElementException("""
+            没有找到这个牌子类别。
+            请输入“极”、“将”、“神”、“舞舞”。
+        """.trimIndent())
+
+    class MaiVersion:
+        NoSuchElementException("没有找到这个游戏版本。")
+
     class MatchRound:
         NoSuchElementException("没有找到比赛里的对局。")
 

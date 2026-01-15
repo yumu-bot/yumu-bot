@@ -1,28 +1,180 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.enums.MaiDifficulty
 import com.now.nowbot.model.enums.MaiVersion
-import com.now.nowbot.model.enums.MaiVersion.Companion.listToString
-import com.now.nowbot.model.maimai.MaiBestScore
-import com.now.nowbot.model.maimai.MaiScore
-import com.now.nowbot.model.maimai.MaiScoreSimplified
-import com.now.nowbot.model.maimai.MaiVersionScore
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.command.*
+import com.now.nowbot.util.command.FLAG_NAME
+import com.now.nowbot.util.command.FLAG_QQ_ID
+import com.now.nowbot.util.command.FLAG_VERSION
 import org.springframework.stereotype.Service
 
 @Service("MAI_VERSION")
 class MaiVersionScoreService(
-        val maimaiApiService: MaimaiApiService,
-        val imageService: ImageService
+    val maiDao: MaiDao,
+    val imageService: ImageService
 ) : MessageService<MaiVersionScoreService.MaiVersionParam> {
+
+    data class MaiVersionParam(
+        val name: String?,
+        val qq: Long?,
+        val version: MaiVersion,
+        val plate: PlateType,
+        val isMyself: Boolean = false
+    )
+
+    override fun isHandle(
+        event: MessageEvent,
+        messageText: String,
+        data: MessageService.DataValue<MaiVersionParam>
+    ): Boolean {
+        val matcher = Instruction.MAI_VERSION.matcher(messageText)
+
+        if (!matcher.find()) {
+            return false
+        }
+
+        val nameStr: String = matcher.group(FLAG_NAME)?.trim() ?: ""
+
+        val versionStr: String = matcher.group(FLAG_VERSION)?.trim() ?: ""
+
+        val qq = if (event.hasAt()) {
+            event.target
+        } else {
+            matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.id
+        }
+        if (qq == event.sender.id) {
+            if (nameStr.isNotEmpty()) {
+                if (versionStr.isNotEmpty()) {
+                    val (v, p) = getPairStr(versionStr)
+                    val (version, plate) = getPair(v, p)
+
+                    data.value = MaiVersionParam(nameStr, null, version, plate, isMyself = false)
+                } else {
+                    val (v, p) = getPairStr(nameStr)
+                    val (version, plate) = getPair(v, p)
+
+                    data.value = MaiVersionParam(null, qq, version, plate, isMyself = true)
+                }
+            } else {
+                if (versionStr.isNotEmpty()) {
+                    val (v, p) = getPairStr(versionStr)
+                    val (version, plate) = getPair(v, p)
+
+                    data.value = MaiVersionParam(null, qq, version, plate, isMyself = true)
+                } else {
+                    data.value = MaiVersionParam(null, qq, MaiVersion.newestVersion, PlateType.SHOU, isMyself = true)
+                }
+            }
+        } else {
+            val (v, p) = getPairStr(nameStr + versionStr)
+            val (version, plate) = getPair(v, p)
+
+            data.value = MaiVersionParam(null, qq, version, plate, isMyself = false)
+        }
+
+        return true
+    }
+
+    override fun handleMessage(
+        event: MessageEvent,
+        param: MaiVersionParam
+    ): ServiceCallStatistic? {
+
+        return null
+    }
+
+    private fun getSongList(version: MaiVersion, plate: PlateType): List<Int> {
+        val c = maiDao.findLxMaiCollections("plate")
+            .firstOrNull {
+                it.name.equals(version.abbreviation + plate.character, true)
+            } ?: throw NoSuchElementException.MaiCollection()
+
+        return c.required?.firstOrNull()?.songs?.map { it.songID }
+            ?: throw NoSuchElementException.MaiCollection()
+    }
+
+    companion object {
+        private val plateTypeRegex = Regex("^(.*?)(ap|fc|sss|fsd|f?dx|舞舞|[神将极極])\\s*$")
+
+        fun getPair(versionStr: String, plateStr: String): Pair<MaiVersion, PlateType> {
+            var version = MaiVersion.getVersion(versionStr)
+
+            if (version == MaiVersion.DEFAULT) {
+                throw NoSuchElementException.MaiVersion()
+            }
+
+            if (version == MaiVersion.MAIMAI) {
+                version = MaiVersion.PLUS
+            }
+
+            val plate = PlateType.getPlateType(
+                plateStr.ifEmpty {
+                    throw NoSuchElementException.MaiPlateType()
+                }
+            )
+
+            if (version == MaiVersion.PLUS && plate == PlateType.SHOU) {
+                throw NoSuchElementException.MaiPlateShinShou()
+            }
+
+            return version to plate
+        }
+
+        fun getPairStr(input: String): Pair<String, String> {
+            val matchResult = plateTypeRegex.find(input)
+
+            return if (matchResult != null) {
+                val main = matchResult.groupValues[1]
+                val suffix = matchResult.groupValues[2]
+
+                main to suffix
+            } else {
+                throw NoSuchElementException.MaiVersion()
+            }
+        }
+
+        enum class PlateType(val character: String) {
+            GOKU("極"), // 极=fc
+            SHIN("神"), // 神=ap
+            MAIMAI("舞舞"), // 舞=fdx
+            SHOU("将"), // 将=sss
+            ;
+
+            companion object {
+                fun getPlateType(input: String = ""): PlateType {
+                    return when(input.lowercase().trim()) {
+                        "fc", "極", "极" -> GOKU
+                        "ap", "神" -> SHIN
+                        "fsd", "fdx", "dx", "舞舞" -> MAIMAI
+                        "" -> throw NoSuchElementException.MaiPlateType()
+                        else -> SHOU
+                    }
+                }
+            }
+        }
+
+
+        fun removeSpecificSuffixes(input: String): String {
+            val suffixes = listOf("ap", "fc", "sss", "神", "舞", "将", "极", "")
+            var result = input
+            // 只移除一次，找到第一个匹配的就停止
+            for (suffix in suffixes) {
+                if (result.endsWith(suffix)) {
+                    result = result.removeSuffix(suffix)
+                    break
+                }
+            }
+            return result
+        }
+    }
+
+    /*
+
 
     data class MaiVersionParam(
             val name: String?,
@@ -195,4 +347,6 @@ class MaiVersionScoreService(
             }
         }
     }
+
+     */
 }

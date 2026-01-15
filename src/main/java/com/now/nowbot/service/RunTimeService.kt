@@ -139,6 +139,12 @@ class RunTimeService(
         lxMaiApiService.saveLxMaiSongs()
     }
 
+    @Scheduled(cron = "0 2 6 * * *")
+    fun updateLxnsMaiCollectionLibrary() {
+        log.info("开始执行更新 lxns maimai 收藏库任务")
+        lxMaiApiService.saveLxMaiCollections()
+    }
+
     @Scheduled(cron = "20 2 6 * * *")
     fun updateBeatMapTagsLibrary() {
         log.info("开始执行更新谱面玩家标签库任务")

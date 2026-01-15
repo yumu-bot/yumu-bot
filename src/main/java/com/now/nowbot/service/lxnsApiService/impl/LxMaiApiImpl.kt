@@ -2,11 +2,13 @@ package com.now.nowbot.service.lxnsApiService.impl
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.dao.MaiDao
+import com.now.nowbot.model.maimai.LxMaiCollection
 import com.now.nowbot.model.maimai.LxMaiSong
 import com.now.nowbot.model.maimai.MaiAlias
 import com.now.nowbot.model.maimai.MaiSong
 import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.DataUtil.findCauseOfType
@@ -81,6 +83,38 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
 
         maiDao.saveLxMaiSongs(songs)
         log.info("舞萌: 落雪歌曲数据库已更新")
+    }
+
+    override fun saveLxMaiCollections() {
+        val plates = getLxMaiCollection("plate", "plates")
+
+        maiDao.saveLxMaiCollections(plates)
+
+        Thread.startVirtualThread {
+            Thread.sleep(1000)
+        }.join()
+
+        val trophies = getLxMaiCollection("trophy", "trophies")
+
+        maiDao.saveLxMaiCollections(trophies)
+
+        Thread.startVirtualThread {
+            Thread.sleep(1000)
+        }.join()
+
+        val icons = getLxMaiCollection("icon", "icons")
+
+        maiDao.saveLxMaiCollections(icons)
+
+        Thread.startVirtualThread {
+            Thread.sleep(1000)
+        }.join()
+
+        val frames = getLxMaiCollection("frame", "frames")
+
+        maiDao.saveLxMaiCollections(frames)
+
+        log.info("舞萌: 落雪收藏数据库已更新")
     }
 
     override fun getLxMaiSong(songID: Int): LxMaiSong? {
@@ -169,6 +203,30 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
 
             result.map { it.first.toMaiSong() }
         }
+    }
+
+    override fun getLxMaiCollection(type: String, types: String): List<LxMaiCollection> {
+
+        val node = request { client -> client.get()
+            .uri {
+                it.path("api/v0/maimai/${type}/list")
+                    .queryParam("required", true)
+                    .build() }
+            .headers(base::insertDeveloperHeader)
+            .retrieve()
+            .bodyToMono(JsonNode::class.java)
+        }
+
+        val body = if (node.has(types)) {
+            node[types]
+        } else {
+            throw NoSuchElementException.Data()
+        }
+
+        return JacksonUtil.parseObjectList(body, LxMaiCollection::class.java)
+            .map { it.type = type
+                it
+            }
     }
 
     /**

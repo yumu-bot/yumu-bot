@@ -7,6 +7,7 @@ import io.hypersistence.utils.hibernate.type.array.IntArrayType
 import io.hypersistence.utils.hibernate.type.array.StringArrayType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
+import java.io.Serializable
 import kotlin.math.roundToInt
 
 @Entity(name = "maimai_song")
@@ -680,6 +681,247 @@ class LxMaiDifficultyLite {
                 kanji = diff.kanji
                 description = diff.description
                 isBuddy = diff.isBuddy
+            }
+        }
+    }
+}
+
+data class LxMaiCollectionID(
+    var type: String = "",
+    var collectionID: Int = 0
+) : Serializable
+
+@Entity
+@Table(
+    name = "lx_maimai_collection",
+    indexes = [
+        Index(name = "idx_maimai_collection_name", columnList = "name"),
+        Index(name = "idx_maimai_collection_type", columnList = "type"),
+    ]
+)
+@IdClass(LxMaiCollectionID::class)
+class LxMaiCollectionLite {
+
+    // 用于把不同类型的收藏品放在一起
+    @Id
+    @Column(name = "type")
+    var type: String = ""
+
+    @Id
+    @Column(name = "collection_id", columnDefinition = "int")
+    var collectionID: Int = 0
+
+    @Column(name = "name", columnDefinition = "text")
+    var name: String = ""
+
+    @Column(name = "color", columnDefinition = "int2")
+    var color: Short = 0
+
+    @Column(name = "description", columnDefinition = "text", nullable = true)
+    var description: String? = null
+
+    @Column(name = "genre", columnDefinition = "text", nullable = true)
+    var genre: String? = null
+
+    @OneToMany(
+        mappedBy = "collection",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true,
+        targetEntity = LxMaiCollectionRequiredLite::class,
+    )
+    var required: MutableList<LxMaiCollectionRequiredLite> = mutableListOf()
+
+    fun toModel(type: String? = null): LxMaiCollection = LxMaiCollection().apply {
+        val lite = this@LxMaiCollectionLite
+
+        this.type = type?.takeIf { it.isNotBlank() } ?: lite.type
+        collectionID = lite.collectionID
+        name = lite.name
+        color = colorConvertToModel(lite.color)
+        description = lite.description
+        genre = lite.genre
+        required = lite.required.map { it.toModel() }.ifEmpty { null }
+    }
+
+    companion object {
+        fun from(
+            collection: LxMaiCollection,
+            songCache: MutableMap<Int, LxMaiCollectionRequiredSongLite> = mutableMapOf()
+        ): LxMaiCollectionLite {
+            val parent = LxMaiCollectionLite().apply {
+                type = collection.type
+                collectionID = collection.collectionID
+                name = collection.name
+                color = colorConvertToEntity(collection.color)
+                description = collection.description
+                genre = collection.genre
+            }
+
+            // 关键修正：建立双向绑定
+            parent.required = collection.required?.map {
+                LxMaiCollectionRequiredLite.from(it, songCache).apply {
+                    this.collection = parent // 这里必须赋值，否则数据库里对应外键就是空的
+                }
+            }?.toMutableList() ?: mutableListOf()
+
+            return parent
+        }
+
+        fun colorConvertToModel(color: Short): String? {
+            val colors = listOf(null, "normal", "bronze",
+                "silver", "gold", "rainbow")
+
+            return if (color in 0..5) {
+                colors[color.toInt()]
+            } else null
+        }
+
+        fun colorConvertToEntity(color: String?): Short {
+            return when(color) {
+                null -> 0
+                "normal" -> 1
+                "bronze" -> 2
+                "silver" -> 3
+                "gold" -> 4
+                "rainbow" -> 5
+                else -> 0
+            }
+        }
+    }
+}
+
+@Entity
+@Table(
+    name = "lx_maimai_collection_required",
+)
+class LxMaiCollectionRequiredLite {
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    var requiredID: Int = 0
+
+    @Column(columnDefinition = "int2")
+    var difficulties: Short = 0
+
+    @Column(columnDefinition = "text", nullable = true)
+    var rate: String? = null
+
+    @Column(columnDefinition = "text", nullable = true)
+    var combo: String? = null
+
+    @Column(columnDefinition = "text", nullable = true)
+    var sync: String? = null
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumns(
+        JoinColumn(name = "type", referencedColumnName = "type"),
+        JoinColumn(name = "collection_id", referencedColumnName = "collection_id")
+    )
+    var collection: LxMaiCollectionLite? = null
+
+    @ManyToMany(
+        cascade = [CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH],
+        targetEntity = LxMaiCollectionRequiredSongLite::class
+    )
+    @JoinTable(
+        name = "lx_maimai_collection_middle", // 中间表名称
+        joinColumns = [JoinColumn(name = "required_id")], // 当前表在中间表的外键
+        inverseJoinColumns = [JoinColumn(name = "song_id")] // 对方表在中间表的外键
+    )
+    var songs: MutableList<LxMaiCollectionRequiredSongLite> = mutableListOf()
+
+    fun toModel(): LxMaiCollectionRequired = LxMaiCollectionRequired().apply {
+        val lite = this@LxMaiCollectionRequiredLite
+
+        difficulties = difficultiesConvertToModel(lite.difficulties)
+        rate = lite.rate
+        combo = lite.combo
+        sync = lite.sync
+        songs = lite.songs.map { it.toModel() }.ifEmpty { null }
+    }
+
+    companion object {
+        fun from(
+            required: LxMaiCollectionRequired,
+            songCache: MutableMap<Int, LxMaiCollectionRequiredSongLite> = mutableMapOf()
+        ): LxMaiCollectionRequiredLite {
+            return LxMaiCollectionRequiredLite().apply {
+                difficulties = difficultiesConvertToEntity(required.difficulties)
+                rate = required.rate
+                combo = required.combo
+                sync = required.sync
+                songs = required.songs?.map {
+                    // 关键：从池里取，取不到才 new
+                    songCache.getOrPut(it.songID) {
+                        LxMaiCollectionRequiredSongLite.from(it)
+                    }
+                }?.toMutableList() ?: mutableListOf()
+            }
+        }
+
+        fun difficultiesConvertToModel(diff: Short?): Set<Int>? {
+
+            if (diff == null || diff.toInt() == 0) return null
+
+            val result = mutableSetOf<Int>()
+            val value = diff.toInt()
+            for (i in 0..5) {
+                // 检查第 i 位是否为 1
+                if ((value and (1 shl i)) != 0) {
+                    result.add(i)
+                }
+            }
+            return result
+        }
+
+        fun difficultiesConvertToEntity(diff: Set<Int>?): Short {
+            if (diff.isNullOrEmpty()) {
+                return 0
+            }
+
+            var mask = 0
+            for (d in diff) {
+                // 只要是在 0-5 范围内，就按位左移
+                if (d in 0..5) {
+                    mask = mask or (1 shl d)
+                }
+            }
+            return mask.toShort()
+        }
+    }
+}
+
+
+@Entity
+@Table(
+    name = "lx_maimai_collection_required_song",
+)
+class LxMaiCollectionRequiredSongLite {
+    @Id
+    var songID: Int? = null
+
+    @Column(name = "title", columnDefinition = "text")
+    var title: String = ""
+
+    @Column(name = "type", columnDefinition = "text")
+    var type: String = ""
+
+    @ManyToMany(mappedBy = "songs")
+    var required: MutableList<LxMaiCollectionRequiredLite> = mutableListOf()
+
+    fun toModel(): LxMaiCollectionRequiredSong = LxMaiCollectionRequiredSong().apply {
+        val lite = this@LxMaiCollectionRequiredSongLite
+
+        songID = lite.songID!!
+        title = lite.title
+        type = lite.type
+    }
+
+    companion object {
+        fun from(song: LxMaiCollectionRequiredSong): LxMaiCollectionRequiredSongLite {
+            return LxMaiCollectionRequiredSongLite().apply {
+                songID = song.songID
+                title = song.title
+                type = song.type
             }
         }
     }
