@@ -10,18 +10,18 @@ import kotlin.jvm.optionals.getOrNull
 
 @Component
 class MaiDao(
-    val maiSongLiteRepository: MaiSongLiteRepository,
-    val maiChartLiteRepository: MaiChartLiteRepository,
-    val maiFitChartLiteRepository: MaiFitChartLiteRepository,
-    val maiFitDiffLiteRepository: MaiFitDiffLiteRepository,
-    val maiRankLiteRepository: MaiRankLiteRepository,
-    val maiAliasLiteRepository: MaiAliasLiteRepository,
-    val chuSongLiteRepository: ChuSongLiteRepository,
-    val chuChartLiteRepository: ChuChartLiteRepository,
-    val chuAliasLiteRepository: ChuAliasLiteRepository,
-    val lxMaiSongLiteRepository: LxMaiSongLiteRepository,
-    val lxMaiCollectionLiteRepository: LxMaiCollectionLiteRepository,
-    val lxMaiCollectionSongLiteRepository: LxMaiCollectionRequiredSongLiteRepository
+    private val maiSongLiteRepository: MaiSongLiteRepository,
+    private val maiChartLiteRepository: MaiChartLiteRepository,
+    private val maiFitChartLiteRepository: MaiFitChartLiteRepository,
+    private val maiFitDiffLiteRepository: MaiFitDiffLiteRepository,
+    private val maiRankLiteRepository: MaiRankLiteRepository,
+    private val maiAliasLiteRepository: MaiAliasLiteRepository,
+    private val chuSongLiteRepository: ChuSongLiteRepository,
+    private val chuChartLiteRepository: ChuChartLiteRepository,
+    private val chuAliasLiteRepository: ChuAliasLiteRepository,
+    private val lxMaiSongLiteRepository: LxMaiSongLiteRepository,
+    private val lxMaiCollectionLiteRepository: LxMaiCollectionLiteRepository,
+    private val lxMaiCollectionSongLiteRepository: LxMaiCollectionRequiredSongLiteRepository
 ) {
     fun saveMaiRanking(ranking: List<MaiRanking>) {
         val ranks = ranking
@@ -118,8 +118,9 @@ class MaiDao(
         lxMaiCollectionLiteRepository.saveAll(entities)
     }
 
+    @Transactional
     fun findLxMaiCollections(type: String = "plate"): List<LxMaiCollection> {
-        return lxMaiCollectionLiteRepository.findByType(type).map { it.toModel() }
+        return lxMaiCollectionLiteRepository.findAllByType(type).map { it.toModel() }
     }
 
     @Transactional

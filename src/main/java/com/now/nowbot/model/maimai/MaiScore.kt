@@ -1,5 +1,6 @@
 package com.now.nowbot.model.maimai
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
 class MaiScore {
@@ -80,4 +81,8 @@ class MaiScore {
     @get:JsonProperty("is_utage")
     val isUtage: Boolean
         get() = this.songID >= 100000
+
+    @get:JsonIgnoreProperties
+    val independentID
+        get() = this.songID * 10 + this.index
 }

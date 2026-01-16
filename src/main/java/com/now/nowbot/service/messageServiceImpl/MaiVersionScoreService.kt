@@ -1,23 +1,70 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.MaiVersion
+import com.now.nowbot.model.maimai.MaiBestScore
+import com.now.nowbot.model.maimai.MaiScore
+import com.now.nowbot.model.maimai.MaiSong
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.FLAG_VERSION
 import org.springframework.stereotype.Service
+import kotlin.collections.fold
 
 @Service("MAI_VERSION")
 class MaiVersionScoreService(
     val maiDao: MaiDao,
+    val maimaiApiService: MaimaiApiService,
     val imageService: ImageService
 ) : MessageService<MaiVersionScoreService.MaiVersionParam> {
+
+    data class MaiVersionResponse(
+        @field:JsonProperty("user")
+        val user: MaiBestScore.User,
+
+        @field:JsonProperty("plate_list")
+        val plateList: List<MaiPlateList> = listOf(),
+
+        // ALL 15 14+ 14 13+ 13 12+
+        @field:JsonProperty("chart_count")
+        val chartCount: List<Int> = listOf(),
+    )
+
+    data class MaiPlateList(
+        @field:JsonProperty("star")
+        val star: String = "",
+
+        @field:JsonProperty("progress")
+        val progress: List<MaiPlateProgress> = listOf(),
+    )
+
+    data class MaiPlateProgress(
+        @field:JsonProperty("title")
+        val title: String = "",
+
+        @field:JsonProperty("song_id")
+        val songID: Int = 0,
+
+        @field:JsonProperty("star")
+        val star: Double = 0.0,
+
+        @field:JsonProperty("score")
+        val score: MaiScore? = null,
+
+        @field:JsonProperty("required")
+        val required: String = "",
+
+        @field:JsonProperty("completed")
+        val completed: Boolean = false,
+    )
 
     data class MaiVersionParam(
         val name: String?,
@@ -85,21 +132,106 @@ class MaiVersionScoreService(
         param: MaiVersionParam
     ): ServiceCallStatistic? {
 
-        return null
+        val songs = getSongList(param.version, param.plate)
+
+        val full = if (param.qq != null) {
+            maimaiApiService.getMaimaiFullScores(param.qq)
+        } else {
+            maimaiApiService.getMaimaiFullScores(param.name!!)
+        }
+
+        val user = full.getUser()
+
+        val scores = full.records
+
+        val plates = parseList(songs, param.plate, scores)
+
+        val res = MaiVersionResponse(user, plates, listOf(songs.size * 4) + plates.map { it.progress.size })
+
+        val image = imageService.getPanel(res, "MV")
+
+        event.reply(image)
+
+        return ServiceCallStatistic.building(event)
     }
 
-    private fun getSongList(version: MaiVersion, plate: PlateType): List<Int> {
+    private fun getSongList(version: MaiVersion, plate: PlateType): List<MaiSong> {
         val c = maiDao.findLxMaiCollections("plate")
             .firstOrNull {
                 it.name.equals(version.abbreviation + plate.character, true)
             } ?: throw NoSuchElementException.MaiCollection()
 
-        return c.required?.firstOrNull()?.songs?.map { it.songID }
-            ?: throw NoSuchElementException.MaiCollection()
+        val req = c.required?.firstOrNull() ?: throw NoSuchElementException.MaiCollection()
+
+        val songs = (req.songs ?: listOf()).mapNotNull {
+            maiDao.findLxMaiSongByID(it.songID)?.toMaiSong(
+                it.type.equals("dx", true)
+            )
+        }
+
+        return songs
+    }
+
+    private fun parseList(songs: List<MaiSong>, plate: PlateType, scores: List<MaiScore>): List<MaiPlateList> {
+        val starMap = mapOf(
+            "15" to 15.0..< 15.001,
+            "14+" to 14.6 ..< 15.0,
+            "14" to 14.0 ..< 14.6,
+            "13+" to 13.6 ..< 14.0,
+            "13" to 13.0 ..< 13.6,
+            "12+" to 12.6 ..< 13.0,
+        )
+
+        val bestScores: Map<Long, MaiScore> = scores
+            .fold(mutableMapOf<Long, MaiScore>()) { acc, score ->
+                val currentMax = acc[score.independentID]
+                // 如果该 ID 还没记录，或者当前成绩更高，则更新 Map
+                if (currentMax == null || score.achievements > currentMax.achievements) {
+                    acc[score.independentID] = score
+                }
+
+                acc
+            }.values.associateBy { it.independentID }
+
+        val groupedSongs = starMap.mapValues { entry ->
+            val ss = songs.filter { song ->
+                val star = (song.star.getOrNull(3) ?: 0.0)
+
+                star in entry.value
+            }
+
+            val ps = ss.map { song ->
+                val score = bestScores[song.songID * 10L + 3]
+                val completed = isCompleted(plate, score)
+
+                MaiPlateProgress(song.title, song.songID, (song.star.getOrNull(3) ?: 0.0), score, plate.required, completed)
+            }
+
+            ps.sortedByDescending { it.star }
+        }
+
+        val pl = groupedSongs.map {
+            MaiPlateList(it.key, it.value)
+        }
+
+        return pl
     }
 
     companion object {
         private val plateTypeRegex = Regex("^(.*?)(ap|fc|sss|fsd|f?dx|舞舞|[神将极極])\\s*$")
+        private val baShouRegex = Regex("[霸覇]者?|all\\s*finale|afn|fnl+")
+
+        private fun isCompleted(plate: PlateType, score: MaiScore?): Boolean {
+            if (score == null) return false
+
+            return when(plate) {
+                PlateType.GOKU -> score.combo.isNotEmpty()
+                PlateType.SHIN -> score.combo == "ap" || score.combo == "app"
+                PlateType.MAIMAI -> score.sync == "fsd" || score.sync == "fsdp"
+                PlateType.SHOU -> score.achievements >= 100.0
+                PlateType.HASHA -> true
+            }
+        }
 
         fun getPair(versionStr: String, plateStr: String): Pair<MaiVersion, PlateType> {
             var version = MaiVersion.getVersion(versionStr)
@@ -126,6 +258,10 @@ class MaiVersionScoreService(
         }
 
         fun getPairStr(input: String): Pair<String, String> {
+            if (input.contains(baShouRegex)) {
+                return "allfinale" to "覇"
+            }
+
             val matchResult = plateTypeRegex.find(input)
 
             return if (matchResult != null) {
@@ -138,11 +274,12 @@ class MaiVersionScoreService(
             }
         }
 
-        enum class PlateType(val character: String) {
-            GOKU("極"), // 极=fc
-            SHIN("神"), // 神=ap
-            MAIMAI("舞舞"), // 舞=fdx
-            SHOU("将"), // 将=sss
+        enum class PlateType(val character: String, val required: String) {
+            GOKU("極", "fc"), // 极=fc
+            SHIN("神", "ap"), // 神=ap
+            MAIMAI("舞舞", "fdx"), // 舞=fdx
+            SHOU("将", "sss"), // 将=sss
+            HASHA("覇", "pass") // 覇
             ;
 
             companion object {
@@ -151,25 +288,12 @@ class MaiVersionScoreService(
                         "fc", "極", "极" -> GOKU
                         "ap", "神" -> SHIN
                         "fsd", "fdx", "dx", "舞舞" -> MAIMAI
+                        "覇", "覇者", "霸", "霸者" -> HASHA
                         "" -> throw NoSuchElementException.MaiPlateType()
                         else -> SHOU
                     }
                 }
             }
-        }
-
-
-        fun removeSpecificSuffixes(input: String): String {
-            val suffixes = listOf("ap", "fc", "sss", "神", "舞", "将", "极", "")
-            var result = input
-            // 只移除一次，找到第一个匹配的就停止
-            for (suffix in suffixes) {
-                if (result.endsWith(suffix)) {
-                    result = result.removeSuffix(suffix)
-                    break
-                }
-            }
-            return result
         }
     }
 

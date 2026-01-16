@@ -8,6 +8,7 @@ import io.hypersistence.utils.hibernate.type.array.StringArrayType
 import jakarta.persistence.*
 import org.hibernate.annotations.Type
 import java.io.Serializable
+import kotlin.collections.toMutableSet
 import kotlin.math.roundToInt
 
 @Entity(name = "maimai_song")
@@ -729,7 +730,7 @@ class LxMaiCollectionLite {
         orphanRemoval = true,
         targetEntity = LxMaiCollectionRequiredLite::class,
     )
-    var required: MutableList<LxMaiCollectionRequiredLite> = mutableListOf()
+    var required: MutableSet<LxMaiCollectionRequiredLite> = mutableSetOf()
 
     fun toModel(type: String? = null): LxMaiCollection = LxMaiCollection().apply {
         val lite = this@LxMaiCollectionLite
@@ -762,7 +763,7 @@ class LxMaiCollectionLite {
                 LxMaiCollectionRequiredLite.from(it, songCache).apply {
                     this.collection = parent // 这里必须赋值，否则数据库里对应外键就是空的
                 }
-            }?.toMutableList() ?: mutableListOf()
+            }?.toMutableSet() ?: mutableSetOf()
 
             return parent
         }
@@ -827,7 +828,7 @@ class LxMaiCollectionRequiredLite {
         joinColumns = [JoinColumn(name = "required_id")], // 当前表在中间表的外键
         inverseJoinColumns = [JoinColumn(name = "song_id")] // 对方表在中间表的外键
     )
-    var songs: MutableList<LxMaiCollectionRequiredSongLite> = mutableListOf()
+    var songs: MutableSet<LxMaiCollectionRequiredSongLite> = mutableSetOf()
 
     fun toModel(): LxMaiCollectionRequired = LxMaiCollectionRequired().apply {
         val lite = this@LxMaiCollectionRequiredLite
@@ -854,7 +855,7 @@ class LxMaiCollectionRequiredLite {
                     songCache.getOrPut(it.songID) {
                         LxMaiCollectionRequiredSongLite.from(it)
                     }
-                }?.toMutableList() ?: mutableListOf()
+                }?.toMutableSet() ?: mutableSetOf()
             }
         }
 

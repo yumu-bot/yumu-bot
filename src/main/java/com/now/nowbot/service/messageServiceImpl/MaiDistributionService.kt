@@ -116,7 +116,7 @@ import kotlin.math.min
 
         try {
             event.reply(image)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             throw IllegalStateException.Send("舞萌拟合")
         }
 
@@ -134,7 +134,7 @@ import kotlin.math.min
             val chartData = getChartData(scores, maimaiApiService)
 
             return scores.map {
-                val chart = chartData[it.songID * 10 + it.index] ?: ChartData()
+                val chart = chartData[it.independentID] ?: ChartData()
                 val rating = getDistsRating(it, chart)
 
                 return@map MaiDistScore(it, chart, rating)
@@ -147,7 +147,7 @@ import kotlin.math.min
 
             val actions = scores.map {
                 Callable {
-                    it.songID * 10 + it.index to
+                    it.independentID to
                             (maimaiApiService.getMaimaiChartData(it.songID).getOrNull(it.index) ?: ChartData())
                     }
                 }

@@ -1,6 +1,7 @@
 package com.now.nowbot.mapper
 
 import com.now.nowbot.entity.*
+import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -69,11 +70,11 @@ interface LxMaiSongLiteRepository : JpaRepository<LxMaiSongLite, Int> {
 
 interface LxMaiCollectionLiteRepository: JpaRepository<LxMaiCollectionLite, LxMaiCollectionID> {
 
-    @Query("SELECT c FROM LxMaiCollectionLite c LEFT JOIN FETCH c.required WHERE c.type = :type")
-    fun findByType(type: String): List<LxMaiCollectionLite>
+    @EntityGraph(attributePaths = ["required", "required.songs"])
+    fun findAllByType(type: String): List<LxMaiCollectionLite>
 
-    @Query("SELECT c FROM LxMaiCollectionLite c LEFT JOIN FETCH c.required WHERE c.name = :name")
-    fun findByName(name: String): List<LxMaiCollectionLite>
+    @EntityGraph(attributePaths = ["required", "required.songs"])
+    fun findAllByName(name: String): List<LxMaiCollectionLite>
 }
 
 interface LxMaiCollectionRequiredSongLiteRepository: JpaRepository<LxMaiCollectionRequiredSongLite, Int> {
