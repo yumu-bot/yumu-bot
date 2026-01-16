@@ -96,18 +96,18 @@ class MaiDao(
     @Transactional
     fun saveLxMaiCollections(collections: List<LxMaiCollection>) {
         // 这是一个局部缓存，用于确保本次 saveAll 过程中，对象在内存中是唯一的
-        val songCache = mutableMapOf<Int, LxMaiCollectionRequiredSongLite>()
+        val songCache = mutableMapOf<LxMaiCollectionRequiredSongID, LxMaiCollectionRequiredSongLite>()
 
         // 1. 收集本次 API 数据中所有的 songID
         val allSongIDs = collections
             .flatMap { it.required ?: emptyList() }
             .flatMap { it.songs ?: emptyList() }
-            .map { it.songID }
+            .map { LxMaiCollectionRequiredSongID(it.songID, it.type) }
             .distinct()
 
         // 2. 预先从数据库查出已经存在的歌曲，存入缓存
         lxMaiCollectionSongLiteRepository.findAllById(allSongIDs).forEach {
-            songCache[it.songID!!] = it
+            songCache[LxMaiCollectionRequiredSongID(it.songID!!, it.type)] = it
         }
 
         // 3. 正常执行转换（from 方法内部会优先使用 cache 里的 Managed 对象）

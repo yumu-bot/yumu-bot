@@ -77,6 +77,6 @@ interface LxMaiCollectionLiteRepository: JpaRepository<LxMaiCollectionLite, LxMa
     fun findAllByName(name: String): List<LxMaiCollectionLite>
 }
 
-interface LxMaiCollectionRequiredSongLiteRepository: JpaRepository<LxMaiCollectionRequiredSongLite, Int> {
+interface LxMaiCollectionRequiredSongLiteRepository: JpaRepository<LxMaiCollectionRequiredSongLite, LxMaiCollectionRequiredSongID> {
 
 }

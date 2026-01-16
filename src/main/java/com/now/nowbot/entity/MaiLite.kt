@@ -688,8 +688,13 @@ class LxMaiDifficultyLite {
 }
 
 data class LxMaiCollectionID(
-    var type: String = "",
-    var collectionID: Int = 0
+    val type: String = "",
+    val collectionID: Int = 0
+) : Serializable
+
+data class LxMaiCollectionRequiredSongID(
+    val songID: Int = 0,
+    val type: String = ""
 ) : Serializable
 
 @Entity
@@ -747,7 +752,7 @@ class LxMaiCollectionLite {
     companion object {
         fun from(
             collection: LxMaiCollection,
-            songCache: MutableMap<Int, LxMaiCollectionRequiredSongLite> = mutableMapOf()
+            songCache: MutableMap<LxMaiCollectionRequiredSongID, LxMaiCollectionRequiredSongLite> = mutableMapOf()
         ): LxMaiCollectionLite {
             val parent = LxMaiCollectionLite().apply {
                 type = collection.type
@@ -826,7 +831,11 @@ class LxMaiCollectionRequiredLite {
     @JoinTable(
         name = "lx_maimai_collection_middle", // 中间表名称
         joinColumns = [JoinColumn(name = "required_id")], // 当前表在中间表的外键
-        inverseJoinColumns = [JoinColumn(name = "song_id")] // 对方表在中间表的外键
+        inverseJoinColumns = [
+            // 这里必须对应 SongLite 的两个联合主键
+            JoinColumn(name = "song_id", referencedColumnName = "song_id"),
+            JoinColumn(name = "song_type", referencedColumnName = "type")
+        ] // 对方表在中间表的外键
     )
     var songs: MutableSet<LxMaiCollectionRequiredSongLite> = mutableSetOf()
 
@@ -843,7 +852,7 @@ class LxMaiCollectionRequiredLite {
     companion object {
         fun from(
             required: LxMaiCollectionRequired,
-            songCache: MutableMap<Int, LxMaiCollectionRequiredSongLite> = mutableMapOf()
+            songCache: MutableMap<LxMaiCollectionRequiredSongID, LxMaiCollectionRequiredSongLite> = mutableMapOf()
         ): LxMaiCollectionRequiredLite {
             return LxMaiCollectionRequiredLite().apply {
                 difficulties = difficultiesConvertToEntity(required.difficulties)
@@ -852,7 +861,7 @@ class LxMaiCollectionRequiredLite {
                 sync = required.sync
                 songs = required.songs?.map {
                     // 关键：从池里取，取不到才 new
-                    songCache.getOrPut(it.songID) {
+                    songCache.getOrPut(LxMaiCollectionRequiredSongID(it.songID, it.type)) {
                         LxMaiCollectionRequiredSongLite.from(it)
                     }
                 }?.toMutableSet() ?: mutableSetOf()
@@ -896,13 +905,17 @@ class LxMaiCollectionRequiredLite {
 @Table(
     name = "lx_maimai_collection_required_song",
 )
+@IdClass(LxMaiCollectionRequiredSongID::class)
 class LxMaiCollectionRequiredSongLite {
+
     @Id
+    @Column(name = "song_id")
     var songID: Int? = null
 
     @Column(name = "title", columnDefinition = "text")
     var title: String = ""
 
+    @Id
     @Column(name = "type", columnDefinition = "text")
     var type: String = ""
 

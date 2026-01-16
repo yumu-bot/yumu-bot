@@ -156,9 +156,15 @@ class MaiVersionScoreService(
     }
 
     private fun getSongList(version: MaiVersion, plate: PlateType): List<MaiSong> {
+        val collectionName = if (version == MaiVersion.ALL_FINALE && plate == PlateType.HASHA) {
+            "覇者"
+        } else {
+            version.abbreviation + plate.character
+        }
+
         val c = maiDao.findLxMaiCollections("plate")
             .firstOrNull {
-                it.name.equals(version.abbreviation + plate.character, true)
+                it.name.equals(collectionName, true)
             } ?: throw NoSuchElementException.MaiCollection()
 
         val req = c.required?.firstOrNull() ?: throw NoSuchElementException.MaiCollection()
