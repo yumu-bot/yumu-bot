@@ -294,7 +294,7 @@ class MaiVersionScoreService(
                         "fc", "極", "极" -> GOKU
                         "ap", "神" -> SHIN
                         "fsd", "fdx", "dx", "舞舞" -> MAIMAI
-                        "覇", "覇者", "霸", "霸者" -> HASHA
+                        "pass", "覇", "覇者", "霸", "霸者" -> HASHA
                         "" -> throw NoSuchElementException.MaiPlateType()
                         else -> SHOU
                     }

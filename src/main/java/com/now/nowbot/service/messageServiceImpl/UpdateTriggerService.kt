@@ -110,11 +110,15 @@ class UpdateTriggerService(
 
                 val startTime = System.currentTimeMillis()
                 lxMaiApiService.saveLxMaiSongs()
+                val time1 = System.currentTimeMillis()
+                lxMaiApiService.saveLxMaiCollections()
                 val endTime = System.currentTimeMillis()
 
                 event.reply("""
                 更新落雪数据完成。
                 
+                歌曲数据库：${(time1 - startTime) / 1000.0} s
+                收藏库：${(endTime - time1) / 1000.0} s
                 总耗时：${(endTime - startTime) / 1000.0} s
                 """.trimIndent())
             }
