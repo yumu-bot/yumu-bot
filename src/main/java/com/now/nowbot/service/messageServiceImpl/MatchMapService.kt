@@ -42,7 +42,7 @@ class MatchMapService(
     data class PanelE7Param(
         val match: MatchRating,
         val mode: OsuMode,
-        val mods: List<String>,
+        val mods: List<LazerMod>,
         val players: List<MicroUser>,
         val beatmap: Beatmap,
         val density: IntArray,
@@ -150,17 +150,19 @@ class MatchMapService(
 
             val original = DataUtil.getOriginal(beatmap)
 
+            val mods = LazerMod.getModsList(round.mods)
+
             calculateApiService.applyStarToBeatMap(
                 beatmap,
                 mode,
-                LazerMod.getModsList(round.mods)
+                mods
             )
 
             val density = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
 
             val players = getPlayersBeforeRoundStart(param.match, eventID)
 
-            return PanelE7Param(mr, mode, round.mods, players, beatmap, density, original)
+            return PanelE7Param(mr, mode, mods, players, beatmap, density, original)
         }
 
 
@@ -184,13 +186,13 @@ class MatchMapService(
                         "player-joined" -> {
                             try {
                                 playerSet.add(e.userID)
-                            } catch (ignored: Exception) {}
+                            } catch (_: Exception) {}
                         }
 
                         "player-left" -> {
                             try {
                                 playerSet.remove(e.userID)
-                            } catch (ignored: Exception) {}
+                            } catch (_: Exception) {}
                         }
                     }
                 }

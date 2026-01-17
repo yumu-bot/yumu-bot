@@ -118,7 +118,14 @@ class MaiDao(
         lxMaiCollectionLiteRepository.saveAll(entities)
     }
 
-    @Transactional
+    fun getLxMaiPlateIDMap(): Map<String, Int> {
+        return lxMaiCollectionLiteRepository.findAllByType("plate")
+            .map { it.toModel() }
+            .filter { it.genre?.equals("実績") == true &&
+                    it.description?.contains("全曲/BASIC～MASTER") == true }
+            .associate { it.name to it.collectionID }
+    }
+
     fun findLxMaiCollections(type: String = "plate"): List<LxMaiCollection> {
         return lxMaiCollectionLiteRepository.findAllByType(type).map { it.toModel() }
     }

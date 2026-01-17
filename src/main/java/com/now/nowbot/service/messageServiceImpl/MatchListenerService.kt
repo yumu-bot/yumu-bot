@@ -102,7 +102,7 @@ class MatchListenerService(
                 match =
                     try {
                         matchApiService.getMatch(param.id)
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         throw MatchListenerException(
                             MatchListenerException.Type.ML_MatchID_NotFound
                         )
@@ -204,7 +204,7 @@ class MatchListenerService(
         }
 
         override fun onStart() {
-            for (i in 0..5) {
+            repeat(6) {
                 val firstEvent = match.events.first()
                 if (firstEvent.type == Match.EventType.MatchCreated) return
                 match += matchApiService.getMatchBefore(matchID, firstEvent.eventID)
@@ -237,14 +237,14 @@ class MatchListenerService(
                 // 需要拓展
                 if (beatmap.cs == null) beatmap = beatmapApiService.getBeatmap(beatmapID)
 
-                calculateApiService.applyBeatMapChanges(beatmap, LazerMod.getModsList(event.mods.map { it.acronym }))
+                calculateApiService.applyBeatMapChanges(beatmap, mods)
 
                 val objectGroup = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
                 val e7 =
                     PanelE7Param(
                         mr,
                         mode,
-                        mods.map { it.acronym },
+                        mods,
                         users,
                         beatmap,
                         objectGroup,

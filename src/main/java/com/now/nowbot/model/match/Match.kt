@@ -95,7 +95,7 @@ data class Match(
 
         @get:JsonIgnore
         val maxScore: Long
-            get() = scores.maxOf { it.score }.toLong()
+            get() = scores.maxOf { it.score }
 
         @get:JsonProperty("winning_team")
         val winningTeam: String?
@@ -182,124 +182,6 @@ data class Match(
             }
         }
     }
-
-    /*
-    fun toMatch(): LegacyMatch {
-        val match = LegacyMatch()
-        match.players = this.players
-        match.currentGameID = this.currentGameID
-        match.firstEventID = this.firstEventID
-        match.latestEventID = this.latestEventID
-
-        val t = LegacyMatch.MatchStat()
-        t.matchID = this.id
-        t.name = this.name
-        t.startTime = this.startTime
-        t.endTime = this.endTime
-        match.matchStat = t
-
-        val es = mutableListOf<LegacyMatch.MatchEvent>()
-
-        for (me in this.events) {
-            val e = LegacyMatch.MatchEvent()
-
-            val r = LegacyMatch.MatchRound()
-
-            if (me.round != null) {
-                val g = me.round
-
-                val ss = mutableListOf<LegacyMatch.MatchScore>()
-
-                for (ms in g.scores) {
-                    val s = LegacyMatch.MatchScore()
-
-                    val mt = ms.playerStat
-                    val pt = LegacyMatch.MatchScore.PlayerStat(mt.slot, mt.team, mt.pass)
-                    s.playerStat = pt
-
-                    s.pp = ms.pp
-                    s.score = ms.score
-                    s.rank = ms.rank
-                    s.bestID = ms.bestID
-                    s.userID = ms.userID
-                    s.scoreID = ms.scoreID
-                    s.passed = ms.passed
-                    s.accuracy = ms.accuracy
-                    s.maxCombo = ms.maxCombo
-                    s.mode = ms.mode
-                    s.modeInt = ms.modeInt
-                    s.mods = ms.mods.toTypedArray()
-                    s.perfect = ms.perfect // s.ranking = null
-                    s.rank = ms.rank
-                    s.replay = ms.replay
-                    s.statistics = ms.statistics // s.timestamp = ms.time
-                    s.type = ms.type
-
-                    ss.add(s)
-                }
-                r.scores = ss
-                r.mods = g.mods
-                r.mode = g.mode.shortname
-                r.startTime = g.startTime
-                r.endTime = g.endTime
-                r.beatmap = g.beatmap
-                r.beatmapID = g.beatmapID
-                r.modInt = OsuMod.getModsValueFromAcronyms(g.mods)
-                r.scoringType = g.scoringType
-                r.teamType = g.teamType
-                r.roundID = g.roundID.toInt()
-
-                run {
-                    val isVs = (g.teamType == "team-vs")
-
-                    val total =
-                        g.scores.map(MatchScore::score).filter { it > 10000 }.stream().reduce(0) { a, b -> a + b }
-                            .toLong()
-
-                    val red = if (isVs) {
-                        g.scores.stream().filter { it.playerStat.team == "red" }.map(MatchScore::score)
-                            .filter { it > 10000 }.reduce(0) { a, b -> a + b }.toLong()
-                    } else {
-                        0L
-                    }
-
-                    val blue = if (isVs) {
-                        g.scores.filter { it.playerStat.team == "blue" }.map(MatchScore::score).filter { it > 10000 }
-                            .stream().reduce(0) { a, b -> a + b }.toLong()
-                    } else {
-                        0L
-                    }
-
-                    val isRedWin = isVs && red > blue
-                    val isBlueWin = isVs && red < blue
-
-                    r.teamScore = LegacyMatch.MatchRound.TeamScore(total, red, blue)
-                    r.winningTeam = if (isBlueWin) "blue"
-                    else if (isRedWin) "red" else if (isVs) null else "none"
-                    r.winningTeamScore = if (isBlueWin) blue
-                    else if (isRedWin) red
-                    else if (isVs) blue
-                    else {
-                        (g.scores.maxOfOrNull(MatchScore::score) ?: 0).toLong()
-                    }
-                }
-            }
-            e.userID = me.userID
-            e.eventID = me.eventID
-            e.round = r
-            e.timestamp = me.timestamp
-
-            e.detail = LegacyMatch.MatchEvent.Detail(me.detail.type, me.detail.text)
-
-            es.add(e)
-        }
-
-        match.events = es
-
-        return match
-    }
-
-     */
 
     operator fun plusAssign(match: Match) {
         // 更新玩家

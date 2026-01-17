@@ -1,8 +1,8 @@
 package com.now.nowbot.model.match
 
-import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.MicroUser
 import java.time.OffsetDateTime
 
@@ -29,7 +29,7 @@ interface MatchAdapter {
         var beatmap: Beatmap,
         val start: OffsetDateTime,
         val mode: OsuMode,
-        val mods: List<OsuMod>,
+        val mods: List<LazerMod>,
         val isTeamVS: Boolean,
         val teamType:String,
         val users: List<MicroUser>,

@@ -1,8 +1,8 @@
 package com.now.nowbot.model.match
 
-import com.now.nowbot.model.enums.OsuMod
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.match.Match.EventType
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
@@ -174,7 +174,7 @@ class MatchListener(
                     beatmap!!,
                     startTime,
                     mode,
-                    mods.map { OsuMod.getModFromAcronym(it) },
+                    LazerMod.getModsList(mods),
                     isTeamVS,
                     teamType,
                     user
