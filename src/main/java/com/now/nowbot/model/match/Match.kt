@@ -231,36 +231,26 @@ data class Match(
     companion object {
         fun Match.append(m: Match) {
             if (m.events.isEmpty()) return
-            // 合并事件
 
-            if (this.events.first().eventID > m.events.last().eventID) {
-                // 新事件在前
-                this.events.addAll(0, m.events)
-            } else if (events.last().eventID < m.events.first().eventID) {
-                // 新事件在后
-                this.events.addAll(m.events)
-            } else if (events.first().eventID > m.events.first().eventID) {
-                // 在中间
-                events.removeIf { e: MatchEvent -> e.eventID <= m.events.last().eventID }
-                this.events.addAll(0, m.events)
-            } else if (events.last().eventID < m.events.last().eventID) {
-                // 在中间
-                events.removeIf { e: MatchEvent -> e.eventID >= m.events.first().eventID }
-                this.events.addAll(m.events)
-            }
+            // --- 事件合并 ---
+            // 将现有事件和新事件合并，按 ID 去重，并重新排序
+            val combinedEvents = (this.events + m.events)
+                .distinctBy { it.eventID }
+                .sortedBy { it.eventID }
 
-            if (this.players.isEmpty()) {
-                this.players.addAll(m.players)
-            } else {
-                val p = m.players.subtract(this.players.toSet())
+            this.events.clear()
+            this.events.addAll(combinedEvents)
 
-                this.players.addAll(p)
-            }
+            // --- 玩家合并 (处理 val players) ---
+            val newUniquePlayers = (this.players + m.players).distinct()
+            this.players.clear()
+            this.players.addAll(newUniquePlayers)
 
-            //更新状态
+            // --- 状态更新 ---
             this.statistics = m.statistics
             this.latestEventID = m.latestEventID
-            this.firstEventID = m.firstEventID
+            // 确保 firstEventID 始终反映当前内存中最顶端的事件
+            this.firstEventID = this.events.firstOrNull()?.eventID ?: m.firstEventID
         }
     }
 }

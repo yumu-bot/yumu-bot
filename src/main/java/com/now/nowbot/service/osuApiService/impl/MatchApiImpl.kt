@@ -11,6 +11,8 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import io.netty.channel.unix.Errors
 import io.netty.handler.timeout.ReadTimeoutException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientException
@@ -38,23 +40,43 @@ class MatchApiImpl(
     }
 
     override fun getMatch(matchID: Long, times: Int): Match {
-        var l = times
-        var eventId: Long
-        val match: Match = getMatch(matchID)
-        do {
-            val newMatch = getMatchBefore(matchID, match.events.first().eventID)
+        var remaining = times
+        val match: Match = getMatchFromAPI(matchID)
+
+        while (remaining > 0) {
+            // 1. 记录当前最旧（最小）的 ID
+            val currentFirstID = match.events.firstOrNull()?.eventID ?: break
+
+            // 2. 尝试获取比当前最小 ID 更早的数据
+            val newMatch = getMatchBefore(matchID, currentFirstID)
+
+            // 3. 执行追加逻辑
             match.append(newMatch)
-            eventId = match.events.first().eventID
-        } while (match.firstEventID != eventId && --l >= 0)
+
+            // 4. 获取追加后的最小 ID
+            val earlierID = match.events.firstOrNull()?.eventID
+
+            log.info("remaning:${remaining}, id: ${earlierID}")
+
+            // 【核心停止逻辑】：
+            // 如果追加后的最小 ID 依然等于追加前的 ID，
+            // 或者 newMatch 为空，说明已经溯源到顶了。
+            if (earlierID == null || earlierID >= currentFirstID) {
+                break
+            }
+
+            remaining--
+        }
+
         return match
     }
 
     override fun getMatchBefore(matchID: Long, eventID: Long): Match {
-        return getMatch(matchID, eventID, 0)
+        return getMatchFromAPI(matchID, eventID, 0)
     }
 
     override fun getMatchAfter(matchID: Long, eventID: Long): Match {
-        return getMatch(matchID, 0, eventID)
+        return getMatchFromAPI(matchID, 0, eventID)
     }
 
     override fun getRoom(roomID: Long): Room {
@@ -87,7 +109,7 @@ class MatchApiImpl(
         }
     }
 
-    private fun getMatch(mid: Long): Match {
+    private fun getMatchFromAPI(mid: Long): Match {
         return request { client ->
             client.get()
                 .uri("matches/{mid}", mid)
@@ -104,7 +126,7 @@ class MatchApiImpl(
         }
     }
 
-    private fun getMatch(mid: Long, before: Long, after: Long): Match {
+    private fun getMatchFromAPI(mid: Long, before: Long, after: Long): Match {
         return request { client ->
             client.get()
                 .uri {
@@ -171,5 +193,9 @@ class MatchApiImpl(
                 }
             }
         }
+    }
+
+    companion object {
+        private val log: Logger = LoggerFactory.getLogger(MatchApiImpl::class.java)
     }
 }
