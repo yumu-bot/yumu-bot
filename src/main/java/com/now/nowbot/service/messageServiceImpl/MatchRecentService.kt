@@ -160,6 +160,7 @@ class MatchRecentService(
             e5.toMap()
         } else {
             beatmapApiService.applyBeatmapExtend(playerScores)
+            calculateApiService.applyPPToScores(playerScores)
 
             mapOf(
                 "user" to user,
