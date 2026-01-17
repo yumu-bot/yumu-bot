@@ -33,14 +33,22 @@ class MaiVersionScoreService(
         @field:JsonProperty("plate_list")
         val plateList: List<MaiPlateList> = listOf(),
 
-        // ALL 15 14+ 14 13+ 13 12+
-        @field:JsonProperty("chart_count")
-        val chartCount: List<Int> = listOf(),
+        @field:JsonProperty("count")
+        val count: Int = 0,
+
+        @field:JsonProperty("finished")
+        val finished: Int = 0,
     )
 
     data class MaiPlateList(
         @field:JsonProperty("star")
         val star: String = "",
+
+        @field:JsonProperty("count")
+        val count: Int = 0,
+
+        @field:JsonProperty("finished")
+        val finished: Int = 0,
 
         @field:JsonProperty("progress")
         val progress: List<MaiPlateProgress> = listOf(),
@@ -52,6 +60,9 @@ class MaiVersionScoreService(
 
         @field:JsonProperty("song_id")
         val songID: Int = 0,
+
+        @field:JsonProperty("index")
+        val index: Byte = 0,
 
         @field:JsonProperty("star")
         val star: Double = 0.0,
@@ -146,7 +157,7 @@ class MaiVersionScoreService(
 
         val plates = parseList(songs, param.plate, scores)
 
-        val res = MaiVersionResponse(user, plates, listOf(songs.size * 4) + plates.map { it.progress.size })
+        val res = MaiVersionResponse(user, plates, plates.sumOf { it.count }, plates.sumOf { it.finished })
 
         val image = imageService.getPanel(res, "MV")
 
@@ -186,42 +197,71 @@ class MaiVersionScoreService(
             "13+" to 13.6 ..< 14.0,
             "13" to 13.0 ..< 13.6,
             "12+" to 12.6 ..< 13.0,
+            "12-" to 0.0 ..< 12.6
+            // 如果需要统计更低难度，可以在此继续添加区间
         )
 
+        // 1. 预处理最高分：保持不变，依然使用 independentID 作为 Key
         val bestScores: Map<Long, MaiScore> = scores
-            .fold(mutableMapOf<Long, MaiScore>()) { acc, score ->
+            .fold(mutableMapOf()) { acc, score ->
                 val currentMax = acc[score.independentID]
-                // 如果该 ID 还没记录，或者当前成绩更高，则更新 Map
                 if (currentMax == null || score.achievements > currentMax.achievements) {
                     acc[score.independentID] = score
                 }
-
                 acc
-            }.values.associateBy { it.independentID }
-
-        val groupedSongs = starMap.mapValues { entry ->
-            val ss = songs.filter { song ->
-                val star = (song.star.getOrNull(3) ?: 0.0)
-
-                star in entry.value
             }
 
-            val ps = ss.map { song ->
-                val score = bestScores[song.songID * 10L + 3]
-                val completed = isCompleted(plate, score)
+        // 2. 扁平化所有歌曲的难度：将一首歌转为多个 (Song, DifficultyIndex) 对象
+        val allDifficultyEntries = songs.flatMap { song ->
+            song.star.mapIndexed { index, star ->
+                if (star > 0 && index in 0..3) {
+                    IndexedSong(song, index.toByte(), star)
+                } else null
+            }.filterNotNull()
+        }
 
-                MaiPlateProgress(song.title, song.songID, (song.star.getOrNull(3) ?: 0.0), score, plate.required, completed)
+        // 3. 根据 starMap 分组并构造结果
+        val resultList = starMap.map { (label, range) ->
+            val progressList = allDifficultyEntries
+                .filter { it.star in range } // 落在当前分数段
+                .map { entry ->
+                    // 计算 independentID: 歌曲ID * 10 + 难度索引
+                    val independentID = entry.song.songID * 10L + entry.index
+                    val score = bestScores[independentID]
+                    val completed = isCompleted(plate, score)
+
+                    MaiPlateProgress(
+                        entry.song.title,
+                        entry.song.songID,
+                        entry.index,
+                        entry.star,
+                        score,
+                        plate.required,
+                        completed
+                    )
+                }
+                .sortedByDescending { it.star } // 同一分段内按具体定数降序
+                .sortedBy { it.completed }
+
+            // 2. 在这里提取统计信息（示例：完成数 / 总数）
+            val finishedCount = progressList.count { it.completed }
+            val totalCount = progressList.size
+
+            // 3. 针对 "12-" 分组，返回空列表，其他分组保留数据
+            val finalProgress = if (label == "12-") {
+                emptyList()
+            } else {
+                progressList
             }
 
-            ps.sortedByDescending { it.star }
+            MaiPlateList(label, totalCount, finishedCount, finalProgress)
         }
 
-        val pl = groupedSongs.map {
-            MaiPlateList(it.key, it.value)
-        }
-
-        return pl
+        return resultList
     }
+
+    // 辅助类，用于承载扁平化后的数据
+    private data class IndexedSong(val song: MaiSong, val index: Byte, val star: Double)
 
     companion object {
         private val plateTypeRegex = Regex("^(.*?)(ap|fc|sss|fsd|f?dx|舞舞|[神将极極])\\s*$")
