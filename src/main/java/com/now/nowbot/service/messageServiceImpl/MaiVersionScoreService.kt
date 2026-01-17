@@ -105,6 +105,7 @@ class MaiVersionScoreService(
         } else {
             matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.id
         }
+
         if (qq == event.sender.id) {
             if (nameStr.isNotEmpty()) {
                 if (versionStr.isNotEmpty()) {

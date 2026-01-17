@@ -63,6 +63,14 @@ import java.time.LocalDateTime
 
      */
 
+    fun getLastMatchID(
+        groupID: Long,
+        from: LocalDateTime,
+        to: LocalDateTime = LocalDateTime.now()
+    ): Long? {
+        return serviceCallStatisticRepository.getLastAvailableMatchIDByGroup(groupID, from, to)
+    }
+
     fun getLastBeatmapID(
         groupID: Long,
         name: String?,

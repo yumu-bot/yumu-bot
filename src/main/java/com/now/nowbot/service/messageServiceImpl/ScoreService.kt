@@ -197,7 +197,7 @@ import java.util.regex.Matcher
             val beforeBeatmapID = dao.getLastBeatmapID(
                 groupID = event.subject.id,
                 name = "SCORE",
-                from = LocalDateTime.now().minusMinutes(5L)
+                from = LocalDateTime.now().minusMinutes(2L)
             ) ?: dao.getLastBeatmapID(
                 groupID = event.subject.id,
                 name = null,

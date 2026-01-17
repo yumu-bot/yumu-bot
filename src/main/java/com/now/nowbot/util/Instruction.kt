@@ -583,7 +583,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     MATCH_ROUND(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("(match)?rounds?", "mr", "ro")
+        appendCommandsIgnoreAll("(match)?\\s*rounds?", "ro")
         appendMatchID()
         appendSpace()
         appendCaptureGroup("round", REG_NUMBER, MORE)
@@ -592,9 +592,15 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     MATCH_NOW(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("monitornow", "matchnow", "mn")
+        appendCommandsIgnoreAll("monitor\\s*now", "match\\s*now", "mn")
         appendMatchID()
         appendMatchParam()
+    }),
+
+    MATCH_RECENT(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("match\\s*recents?", "mr")
+        appendModeQQUIDName()
+        appendHashCaptureGroup(FLAG_MATCHID, REG_ANYTHING, MAYBE)
     }),
 
     MAP_POOL(CommandPatternBuilder.create {

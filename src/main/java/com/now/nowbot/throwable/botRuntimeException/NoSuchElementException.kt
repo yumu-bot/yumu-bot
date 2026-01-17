@@ -97,6 +97,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class MaiVersion:
         NoSuchElementException("没有找到这个游戏版本。")
 
+    class Match:
+        NoSuchElementException("没有找到比赛。")
+
     class MatchRound:
         NoSuchElementException("没有找到比赛里的对局。")
 
@@ -174,6 +177,9 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
 
     class RecentScoreFiltered(name: String, mode: OsuMode):
         NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 模式内符合条件的最近成绩...")
+
+    class RecentMatchScore(name: String, mode: OsuMode):
+        NoSuchElementException("没有找到玩家 $name 在 ${mode.fullName} 模式内的最近比赛成绩。")
 
     class Result:
         NoSuchElementException("没有找到结果！")
