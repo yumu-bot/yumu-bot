@@ -64,9 +64,9 @@ class MatchRecentService(
         }
 
         return if (uid != null) {
-            if (nameStr.matches(REG_NUMBER_6_9)) {
+            if (nameStr.matches(REG_NUMBER_7_9)) {
                 MatchRecentParam(null, null, uid, nameStr.toLong())
-            } else if (name2Str.matches(REG_NUMBER_6_9)) {
+            } else if (name2Str.matches(REG_NUMBER_7_9)) {
                 MatchRecentParam(null, null, uid, name2Str.toLong())
             } else if (beforeMatchID != null) {
                 MatchRecentParam(null, null, uid, beforeMatchID)
@@ -75,21 +75,21 @@ class MatchRecentService(
             }
         } else if (qq == event.sender.id) {
             if (nameStr.isNotEmpty()) {
-                if (nameStr.matches(REG_NUMBER_6_9)) {
+                if (nameStr.matches(REG_NUMBER_7_9)) {
                     if (name2Str.isNotEmpty()) {
                         MatchRecentParam(name2Str, null, null, nameStr.toLong())
                     } else {
                         MatchRecentParam(null, qq, null, nameStr.toLong(), true)
                     }
-                } else if (name2Str.matches(REG_NUMBER_6_9)) {
+                } else if (name2Str.matches(REG_NUMBER_7_9)) {
                     MatchRecentParam(nameStr, null, null, name2Str.toLong())
                 } else if (beforeMatchID != null) {
-                    MatchRecentParam(null, qq, null, beforeMatchID, true)
+                    MatchRecentParam(nameStr, null, null, beforeMatchID, true)
                 } else {
                     throw NoSuchElementException.Match()
                 }
             } else {
-                if (name2Str.matches(REG_NUMBER_6_9)) {
+                if (name2Str.matches(REG_NUMBER_7_9)) {
                     MatchRecentParam(null, qq, null, name2Str.toLong(), true)
                 } else if (beforeMatchID != null) {
                     MatchRecentParam(null, qq, null, beforeMatchID, true)
@@ -98,9 +98,9 @@ class MatchRecentService(
                 }
             }
         } else {
-            if (nameStr.matches(REG_NUMBER_6_9)) {
+            if (nameStr.matches(REG_NUMBER_7_9)) {
                 MatchRecentParam(null, qq, null, nameStr.toLong())
-            } else if (name2Str.matches(REG_NUMBER_6_9)) {
+            } else if (name2Str.matches(REG_NUMBER_7_9)) {
                 MatchRecentParam(null, qq, null, name2Str.toLong())
             } else if (beforeMatchID != null) {
                 MatchRecentParam(null, qq, null, beforeMatchID)
@@ -219,6 +219,6 @@ class MatchRecentService(
     companion object {
         private val log = LoggerFactory.getLogger(MatchRecentService::class.java)
 
-        private val REG_NUMBER_6_9 = Regex("\\d{6,9}")
+        private val REG_NUMBER_7_9 = Regex("\\d{7,9}")
     }
 }
