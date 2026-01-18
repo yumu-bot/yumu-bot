@@ -215,6 +215,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "un",
                 "uv",
                 "uni",
+                "unv",
                 "1.2",
                 "宙",
                 "舞萌dx2022",
@@ -369,7 +370,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                             return v
                         }
                     }
-                    return DEFAULT
+                    DEFAULT
                 }
             }
         }

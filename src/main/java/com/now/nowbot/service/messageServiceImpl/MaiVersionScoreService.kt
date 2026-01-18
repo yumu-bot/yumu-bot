@@ -163,8 +163,7 @@ class MaiVersionScoreService(
             maimaiApiService.getMaimaiFullScores(param.name!!)
         }
 
-        val plateID = maiDao.getLxMaiPlateIDMap()[plateName] ?: 0
-        val user = full.getUser(plateID = plateID)
+        val user = full.getUser(maiDao)
 
         val scores = full.records
 
@@ -177,10 +176,10 @@ class MaiVersionScoreService(
         val finished12 = plates.findLast { it.star == "12-" }?.finished ?: 0
 
         val res = MaiVersionResponse(user,
-            plateID,
+            maiDao.getLxMaiPlateIDMap()[plateName] ?: 0,
             plates,
-            countSum,
-            finishedSum,
+            countSum - count12,
+            finishedSum - finished12,
             count12, finished12
         )
 
