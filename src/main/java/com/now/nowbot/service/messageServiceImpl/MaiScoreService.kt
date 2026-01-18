@@ -2,6 +2,7 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
+import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.*
 import com.now.nowbot.model.filter.MaiScoreFilter
@@ -23,6 +24,7 @@ import java.util.regex.Matcher
 @Service("MAI_SCORE") class MaiScoreService(
     private val maimaiApiService: MaimaiApiService,
     private val imageService: ImageService,
+    private val maiDao: MaiDao
 ) : MessageService<MaiScoreService.MaiScoreParam> {
 
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
@@ -247,7 +249,7 @@ import java.util.regex.Matcher
                 val version = if (song.isDeluxe) MaiCabinet.DX else MaiCabinet.SD
 
                 return MaiScoreParam(
-                    user = full.getUser(), songs = listOf(song), scores = scores, cabinet = version
+                    user = full.getUser(maiDao), songs = listOf(song), scores = scores, cabinet = version
                 )
             } else if (scores.isNotEmpty() && cabinet == MaiCabinet.ANY) {
                 // 有两种谱面，有成绩，没有规定难度。此时取玩家成绩最好的那个
@@ -255,7 +257,7 @@ import java.util.regex.Matcher
 
                 val songs = listOf(song, anotherResult).filter { it.isDeluxe == isDX }
 
-                return MaiScoreParam(user = full.getUser(), songs = songs, scores = scores.filter { it.isDeluxe == isDX }, cabinet = MaiCabinet.ANY
+                return MaiScoreParam(user = full.getUser(maiDao), songs = songs, scores = scores.filter { it.isDeluxe == isDX }, cabinet = MaiCabinet.ANY
                 )
             } else {
                 // 有两种谱面，但是没有成绩
@@ -263,7 +265,7 @@ import java.util.regex.Matcher
 
                 val songs = listOf(song, anotherResult).filter { it.isDeluxe == isDX }
 
-                return MaiScoreParam(user = full.getUser(), songs = songs, scores = scores.filter { it.isDeluxe == isDX }, cabinet = MaiCabinet.ANY)
+                return MaiScoreParam(user = full.getUser(maiDao), songs = songs, scores = scores.filter { it.isDeluxe == isDX }, cabinet = MaiCabinet.ANY)
             }
 
         } else {
@@ -300,13 +302,13 @@ import java.util.regex.Matcher
             )
 
             if (filteredScores.isEmpty()) {
-                throw NoSuchElementException.BestScoreFiltered(full.getUser().name ?: qq.toString())
+                throw NoSuchElementException.BestScoreFiltered(full.getUser(maiDao).name ?: qq.toString())
             }
 
             val split = DataUtil.splitPage(filteredScores, page, 50)
 
             return MaiScoreParam(
-                user = full.getUser(),
+                user = full.getUser(maiDao),
                 songs = listOf(),
                 scores = split.first,
                 cabinet = MaiCabinet.ANY,

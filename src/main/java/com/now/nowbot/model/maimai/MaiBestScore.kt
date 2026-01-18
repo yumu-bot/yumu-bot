@@ -1,7 +1,7 @@
 package com.now.nowbot.model.maimai
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.now.nowbot.model.enums.MaiVersion
+import com.now.nowbot.dao.MaiDao
 
 class MaiBestScore {
     // 看用户段位信息，其中0-10对应初学者-十段，11-20对应真初段-真十段，21-22对应真皆传-里皆传
@@ -36,26 +36,27 @@ class MaiBestScore {
     // 在查分器里的名字
     @JsonProperty("username") var probername: String = ""
 
-    @JvmRecord
     data class User(
-            val name: String? = null,
-            val probername: String? = null,
-            val dan: Int? = null,
-            val plate: String? = null,
-            val rating: Int? = null,
-            val base: Int? = null,
-            val additional: Int? = null,
-            val platename: String? = null,
+        val name: String? = null,
+        @field:JsonProperty("probername") val proberName: String? = null,
+        val dan: Int? = null,
+        val plate: String? = null,
+        val rating: Int? = null,
+        val base: Int? = null,
+        val additional: Int? = null,
+        @field:JsonProperty("plate_id") var plateID: Int = 0
     )
 
-    fun getUser(): User {
+    fun getUser(maiDao: MaiDao? = null, plateID: Int? = null): User {
         val best35 = this.charts.standard.sumOf { it.rating }
         val best15 = this.charts.deluxe.sumOf { it.rating }
-        val plateName = getPlateName(this.plate)
 
-        return User(this.name, this.probername, this.dan, this.plate, this.rating, best35, best15, plateName)
+        val plate = plateID ?: maiDao?.getLxMaiPlateIDMap()[this.plate] ?: 0
+
+        return User(this.name, this.probername, this.dan, this.plate, this.rating, best35, best15, plate)
     }
 
+    /*
     private fun getPlateName(plate: String?) : String {
         if (plate == null || plate.length < 2) return ""
 
@@ -75,14 +76,6 @@ class MaiBestScore {
         }
 
         return code + rank
-    }
-
-    /*
-    class PlateJsonDeserializer : JsonDeserializer<String?>() {
-        @Throws(IOException::class)
-        override fun deserialize(p: JsonParser, text: DeserializationContext): String {
-            return p.text ?: ""
-        }
     }
 
      */

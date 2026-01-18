@@ -5,6 +5,7 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.match.Match
+import com.now.nowbot.model.match.Match.Companion.append
 import com.now.nowbot.model.match.MatchAdapter
 import com.now.nowbot.model.match.MatchListener
 import com.now.nowbot.model.match.MatchRating
@@ -207,7 +208,7 @@ class MatchListenerService(
             repeat(6) {
                 val firstEvent = match.events.first()
                 if (firstEvent.type == Match.EventType.MatchCreated) return
-                match += matchApiService.getMatchBefore(matchID, firstEvent.eventID)
+                match.append(matchApiService.getMatchBefore(matchID, firstEvent.eventID))
             }
         }
 

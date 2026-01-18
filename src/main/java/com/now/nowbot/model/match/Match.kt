@@ -10,12 +10,11 @@ import java.time.OffsetDateTime
 import kotlin.math.max
 
 data class Match(
-    @JsonProperty("match") var statistics: MatchStat,
-    val events: MutableList<MatchEvent>,
-    @JsonProperty("users")
-    val players: MutableList<MicroUser>,
-    @JsonProperty("first_event_id") var firstEventID: Long,
-    @JsonProperty("latest_event_id") var latestEventID: Long,
+    @field:JsonProperty("match") var statistics: MatchStat,
+    @field:JsonProperty("events") val events: MutableList<MatchEvent>,
+    @field:JsonProperty("users") val players: MutableList<MicroUser>,
+    @field:JsonProperty("first_event_id") var firstEventID: Long,
+    @field:JsonProperty("latest_event_id") var latestEventID: Long,
 ) {
     @get:JsonProperty("is_match_end")
     val isMatchEnd: Boolean
@@ -37,18 +36,18 @@ data class Match(
     val endTime by statistics::endTime
 
     data class MatchStat(
-        @JsonProperty("id") val matchID: Long,
-        @JsonProperty("start_time") val startTime: OffsetDateTime,
-        @JsonProperty("end_time") val endTime: OffsetDateTime?,
+        @field:JsonProperty("id") val matchID: Long,
+        @field:JsonProperty("start_time") val startTime: OffsetDateTime,
+        @field:JsonProperty("end_time") val endTime: OffsetDateTime?,
         var name: String,
     )
 
     data class MatchEvent(
-        @JsonProperty("id") val eventID: Long,
-        @JsonProperty("detail") val detail: MatchEventDetail,
-        @JsonProperty("timestamp") val timestamp: OffsetDateTime,
-        @JsonProperty("user_id") val userID: Long?,
-        @JsonProperty("game") val round: MatchRound?,
+        @field:JsonProperty("id") val eventID: Long,
+        @field:JsonProperty("detail") val detail: MatchEventDetail,
+        @field:JsonProperty("timestamp") val timestamp: OffsetDateTime,
+        @field:JsonProperty("user_id") val userID: Long?,
+        @field:JsonProperty("game") val round: MatchRound?,
     ) {
         val type: EventType
             get() = EventType.getType(detail.type)
@@ -58,16 +57,16 @@ data class Match(
     }
 
     data class MatchEventDetail(
-        @JsonProperty("type") val type: String,
-        @JsonProperty("text") val text: String?,
+        @field:JsonProperty("type") val type: String,
+        @field:JsonProperty("text") val text: String?,
     )
 
     data class MatchRound(
-        @JsonProperty("id") val roundID: Long,
-        @JsonProperty("beatmap") var beatmap: Beatmap?,
-        @JsonProperty("beatmap_id") val beatmapID: Long,
-        @JsonProperty("start_time") val startTime: OffsetDateTime,
-        @JsonProperty("end_time") val endTime: OffsetDateTime?,
+        @field:JsonProperty("id") val roundID: Long,
+        @field:JsonProperty("beatmap") var beatmap: Beatmap?,
+        @field:JsonProperty("beatmap_id") val beatmapID: Long,
+        @field:JsonProperty("start_time") val startTime: OffsetDateTime,
+        @field:JsonProperty("end_time") val endTime: OffsetDateTime?,
         val modeInt: Int,
         val mods: List<String>,
         var scores: List<LazerScore>,
@@ -81,17 +80,23 @@ data class Match(
         val isTeamVS: Boolean
             get() = teamType == "team-vs" || teamType == "tag-team-vs"
 
+        // 预计算得分，避免多次访问时重复 filter + sum
+        private val teamScores by lazy {
+            scores.groupBy { it.playerStat?.team }
+                .mapValues { (_, scoreList) -> scoreList.sumOf { it.score } }
+        }
+
         @get:JsonProperty("red_team_score")
         val redTeamScore: Long
-            get() = getTeamScore("red")
+            get() = teamScores["red"] ?: 0L
 
         @get:JsonProperty("blue_team_score")
         val blueTeamScore: Long
-            get() = getTeamScore("blue")
+            get() = teamScores["blue"] ?: 0L
 
         @get:JsonProperty("total_team_score")
         val totalTeamScore: Long
-            get() = getTeamScore(null)
+            get() = scores.sumOf { it.score }
 
         @get:JsonIgnore
         val maxScore: Long
@@ -133,34 +138,6 @@ data class Match(
         }
     }
 
-    // 2025 05 30 这个类被归并了
-    /*
-    data class MatchScore(
-        @JsonProperty("match") val playerStat: MatchScorePlayerStat,
-        @JsonProperty("best_id") val bestID: Long,
-        @JsonProperty("user_id") val userID: Long,
-        @JsonProperty("id") val scoreID: Long,
-        @JsonProperty("accuracy") val accuracy: Double?,
-        @JsonProperty("max_combo") val maxCombo: Int,
-        @JsonProperty("mode") val mode: String,
-        @JsonProperty("mode_int") val modeInt: Int,
-        val mods: List<LazerMod>,
-        val passed: Boolean,
-        val perfect: Boolean,
-        val replay: Boolean,
-        val pp: Double,
-        val rank: String,
-        var score: Int,
-        val statistics: Statistics,
-        val type: String,
-    ) {
-        // 自己设
-        var user: MicroUser? = null
-        var ranking: Int? = null
-    }
-
-     */
-
     enum class EventType(val value: String) {
         PlayerJoined("player-joined"),
         PlayerKicked("player-kicked"),
@@ -179,51 +156,6 @@ data class Match(
                 MatchDisbanded.value -> MatchDisbanded
                 MatchCreated.value -> MatchCreated
                 else -> Other
-            }
-        }
-    }
-
-    operator fun plusAssign(match: Match) {
-        // 更新玩家
-        if (match.players.isNotEmpty()) {
-            val userSet = players.map { it.userID }.toSet()
-            val newUsers = match.players.filter { it.userID in userSet }
-            players.addAll(newUsers)
-        }
-
-        // 更新状态
-        statistics = match.statistics
-        latestEventID = match.latestEventID
-        firstEventID = match.firstEventID
-
-        if (match.events.isEmpty()) return
-
-        // 处理空 score 对局
-        val lastGame = this.events.lastOrNull {it.round != null}
-
-        if (lastGame?.round?.scores?.isEmpty() == true) {
-            val replacer = match.events.lastOrNull { r -> lastGame.eventID == r.eventID }
-            if (replacer != null) {
-                val index = this.events.indexOf(lastGame)
-                this.events[index] = replacer
-            }
-        }
-
-        when {
-            // 插入新事件
-            events.last().eventID < match.events.first().eventID -> {
-                events.addAll(match.events)
-            } // 插入旧事件
-            events.first().eventID > match.events.last().eventID -> {
-                events.addAll(0, match.events)
-            } // 中间插入
-            events.last().eventID < match.events.last().eventID -> {
-                events.removeIf { it.eventID >= match.events.first().eventID }
-                events.addAll(match.events)
-            } // 中间插入
-            events.first().eventID > match.events.first().eventID -> {
-                events.removeIf { it.eventID <= match.events.last().eventID }
-                events.addAll(0, match.events)
             }
         }
     }

@@ -178,8 +178,11 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class RecentScoreFiltered(name: String, mode: OsuMode):
         NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 模式内符合条件的最近成绩...")
 
-    class RecentMatchScore(name: String, mode: OsuMode):
-        NoSuchElementException("没有找到玩家 $name 在 ${mode.fullName} 模式内的最近比赛成绩。")
+    class RecentMatchScore(name: String, matchID: Long):
+        NoSuchElementException("""
+            没有找到玩家 $name 在比赛 $matchID 内的最近成绩。
+            如果要查询您的比赛，可能需要提供新的比赛 ID。
+            """.trimIndent())
 
     class Result:
         NoSuchElementException("没有找到结果！")

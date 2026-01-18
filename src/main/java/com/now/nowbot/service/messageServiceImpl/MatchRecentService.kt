@@ -16,6 +16,7 @@ import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
+import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MATCHID
 import com.now.nowbot.util.command.FLAG_NAME
@@ -44,6 +45,34 @@ class MatchRecentService(
         val matchID: Long,
         val isMyself: Boolean = false
     )
+
+    override fun isHandle(
+        event: MessageEvent, messageText: String, data: DataValue<MatchRecentParam>
+    ): Boolean {
+        val matcher = Instruction.MATCH_RECENT.matcher(messageText)
+        if (!matcher.find()) {
+            return false
+        }
+
+        data.value = getParam(event, matcher)
+        return true
+    }
+
+    override fun handleMessage(event: MessageEvent, param: MatchRecentParam): ServiceCallStatistic? {
+        val image = param.getImage()
+        try {
+            event.reply(image)
+        } catch (e: Exception) {
+            log.error("比赛最近成绩：发送失败", e)
+            throw IllegalStateException.Send("比赛最近成绩")
+        }
+
+        return ServiceCallStatistic.building(event) {
+            setParam(mapOf(
+                "mids" to listOf(param.matchID)
+            ))
+        }
+    }
 
     private fun getParam(event: MessageEvent, matcher: Matcher): MatchRecentParam {
         val beforeMatchID = dao.getLastMatchID(
@@ -111,7 +140,7 @@ class MatchRecentService(
     }
 
     private fun MatchRecentParam.getImage(): ByteArray {
-        val match = matchApiService.getMatch(this.matchID)
+        val match = matchApiService.getMatch(matchID)
 
         val rounds = match.events.mapNotNull { event ->
             event.round
@@ -121,7 +150,11 @@ class MatchRecentService(
             val ss = round.scores
             val b = round.beatmap ?: Beatmap(beatmapID = round.beatmapID)
 
-            ss.forEach { s -> s.beatmap = b }
+            ss.forEach { s ->
+                s.beatmap = b
+                b.beatmapset?.let { s.beatmapset = it }
+                s.beatmapID = round.beatmapID
+            }
 
             ss
         }
@@ -147,7 +180,7 @@ class MatchRecentService(
         }.take(50)
 
         if (playerScores.isEmpty()) {
-            throw NoSuchElementException.RecentMatchScore(user.username, user.currentOsuMode)
+            throw NoSuchElementException.RecentMatchScore(user.username, matchID)
         }
 
         val body = if (playerScores.size == 1) {
@@ -160,7 +193,11 @@ class MatchRecentService(
             e5.toMap()
         } else {
             beatmapApiService.applyBeatmapExtend(playerScores)
-            calculateApiService.applyPPToScores(playerScores)
+
+            AsyncMethodExecutor.awaitPairCallableExecute(
+                { calculateApiService.applyStarToScores(playerScores) },
+                { calculateApiService.applyPPToScores(playerScores) }
+            )
 
             mapOf(
                 "user" to user,
@@ -186,34 +223,6 @@ class MatchRecentService(
         }
 
         return image
-    }
-
-    override fun isHandle(
-        event: MessageEvent, messageText: String, data: DataValue<MatchRecentParam>
-    ): Boolean {
-        val matcher = Instruction.MATCH_RECENT.matcher(messageText)
-        if (!matcher.find()) {
-            return false
-        }
-
-        data.value = getParam(event, matcher)
-        return true
-    }
-
-    override fun handleMessage(event: MessageEvent, param: MatchRecentParam): ServiceCallStatistic? {
-        val image = param.getImage()
-        try {
-            event.reply(image)
-        } catch (e: Exception) {
-            log.error("比赛最近成绩：发送失败", e)
-            throw IllegalStateException.Send("比赛最近成绩")
-        }
-
-        return ServiceCallStatistic.building(event) {
-            setParam(mapOf(
-                "mids" to listOf(param.matchID)
-            ))
-        }
     }
 
     companion object {

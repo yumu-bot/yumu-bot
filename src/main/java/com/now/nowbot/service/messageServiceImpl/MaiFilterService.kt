@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.maimai.MaiBestScore
 import com.now.nowbot.model.maimai.MaiScore
@@ -17,7 +18,11 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Service("MAI_FILTER")
-class MaiFilterService(private val maimaiApiService: MaimaiApiService, private val imageService: ImageService): MessageService<MaiFilterService.MaiFilterParam> {
+class MaiFilterService(
+    private val maimaiApiService: MaimaiApiService,
+    private val imageService: ImageService,
+    private val maiDao: MaiDao
+): MessageService<MaiFilterService.MaiFilterParam> {
 
     data class MaiFilterParam(
         val user: MaiBestScore.User,
@@ -69,30 +74,30 @@ class MaiFilterService(private val maimaiApiService: MaimaiApiService, private v
         val page: Int
 
         if (!qqStr.isNullOrBlank()) {
-            user = maimaiApiService.getMaimaiBest50(qqStr.toLongOrNull() ?: event.sender.id).getUser()
+            user = maimaiApiService.getMaimaiBest50(qqStr.toLongOrNull() ?: event.sender.id).getUser(maiDao)
             page = pageStr?.toIntOrNull() ?: 1
         } else if (!nameStr.isNullOrBlank()) {
             if (nameStr.matches("\\w+\\s+$REG_NUMBER_1_100".toRegex())) {
                 val names = nameStr.split("\\s+".toRegex())
 
-                user = maimaiApiService.getMaimaiBest50(names.first()).getUser()
+                user = maimaiApiService.getMaimaiBest50(names.first()).getUser(maiDao)
                 page = names.last().toIntOrNull() ?: 1
 
             } else if (nameStr.matches(REG_NUMBER_1_100.toRegex())) {
 
-                user = maimaiApiService.getMaimaiBest50(event.sender.id).getUser()
+                user = maimaiApiService.getMaimaiBest50(event.sender.id).getUser(maiDao)
                 page = nameStr.trim().toIntOrNull() ?: 1
 
             } else {
-                user = maimaiApiService.getMaimaiBest50(nameStr.trim()).getUser()
+                user = maimaiApiService.getMaimaiBest50(nameStr.trim()).getUser(maiDao)
                 page = pageStr?.toIntOrNull() ?: 1
             }
         } else {
-            user = maimaiApiService.getMaimaiBest50(event.sender.id).getUser()
+            user = maimaiApiService.getMaimaiBest50(event.sender.id).getUser(maiDao)
             page = pageStr?.toIntOrNull() ?: 1
         }
 
-        val scores = maimaiApiService.getMaimaiFullScores(user.probername!!).records.filter {
+        val scores = maimaiApiService.getMaimaiFullScores(user.proberName!!).records.filter {
             if (type == "ap") {
                 it.combo == "ap"
             } else {

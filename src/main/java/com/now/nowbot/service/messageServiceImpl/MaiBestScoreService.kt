@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.maimai.MaiBestScore
 import com.now.nowbot.model.maimai.MaiFit.ChartData
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service
 class MaiBestScoreService(
     private val maimaiApiService: MaimaiApiService,
     private val imageService: ImageService,
+    private val maiDao: MaiDao
 ) : MessageService<MaiBestScoreService.MaiBestScoreParam> {
 
     data class MaiBestScoreParam(val name: String?, val qq: Long?, val range: InstructionRange<Int>, val isMyself: Boolean = false)
@@ -134,7 +136,7 @@ class MaiBestScoreService(
         val charts = implementScore(param.range, scores, maimaiApiService = maimaiApiService)
         val isMultipleScore = charts.deluxe.size + charts.standard.size > 1
 
-        val user = scores.getUser()
+        val user = scores.getUser(maiDao)
 
         val image =
             if (isMultipleScore) {

@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.entity.ServiceCallStatistic
+import com.now.nowbot.model.enums.MaiPlateType
 import com.now.nowbot.model.enums.MaiVersion
 import com.now.nowbot.model.maimai.MaiBestScore
 import com.now.nowbot.model.maimai.MaiScore
@@ -30,14 +31,23 @@ class MaiVersionScoreService(
         @field:JsonProperty("user")
         val user: MaiBestScore.User,
 
+        @field:JsonProperty("plate")
+        val plateID: Int = 0,
+
         @field:JsonProperty("plate_list")
         val plateList: List<MaiPlateList> = listOf(),
 
-        @field:JsonProperty("count")
-        val count: Int = 0,
+        @field:JsonProperty("count_15")
+        val count15: Int = 0,
 
-        @field:JsonProperty("finished")
-        val finished: Int = 0,
+        @field:JsonProperty("finished_15")
+        val finished15: Int = 0,
+
+        @field:JsonProperty("count_12")
+        val count12: Int = 0,
+
+        @field:JsonProperty("finished_12")
+        val finished12: Int = 0,
     )
 
     data class MaiPlateList(
@@ -81,7 +91,7 @@ class MaiVersionScoreService(
         val name: String?,
         val qq: Long?,
         val version: MaiVersion,
-        val plate: PlateType,
+        val plate: MaiPlateType,
         val isMyself: Boolean = false
     )
 
@@ -126,7 +136,7 @@ class MaiVersionScoreService(
 
                     data.value = MaiVersionParam(null, qq, version, plate, isMyself = true)
                 } else {
-                    data.value = MaiVersionParam(null, qq, MaiVersion.newestVersion, PlateType.SHOU, isMyself = true)
+                    data.value = MaiVersionParam(null, qq, MaiVersion.newestVersion, MaiPlateType.SHOU, isMyself = true)
                 }
             }
         } else {
@@ -143,8 +153,9 @@ class MaiVersionScoreService(
         event: MessageEvent,
         param: MaiVersionParam
     ): ServiceCallStatistic? {
+        val plateName = MaiPlateType.getPlateName(param.version, param.plate)
 
-        val songs = getSongList(param.version, param.plate)
+        val songs = getSongList(plateName)
 
         val full = if (param.qq != null) {
             maimaiApiService.getMaimaiFullScores(param.qq)
@@ -152,13 +163,26 @@ class MaiVersionScoreService(
             maimaiApiService.getMaimaiFullScores(param.name!!)
         }
 
-        val user = full.getUser()
+        val plateID = maiDao.getLxMaiPlateIDMap()[plateName] ?: 0
+        val user = full.getUser(plateID = plateID)
 
         val scores = full.records
 
         val plates = parseList(songs, param.plate, scores)
 
-        val res = MaiVersionResponse(user, plates, plates.sumOf { it.count }, plates.sumOf { it.finished })
+        val countSum = plates.sumOf { it.count }
+        val finishedSum = plates.sumOf { it.finished }
+
+        val count12 = plates.findLast { it.star == "12-" }?.count ?: 0
+        val finished12 = plates.findLast { it.star == "12-" }?.finished ?: 0
+
+        val res = MaiVersionResponse(user,
+            plateID,
+            plates,
+            countSum,
+            finishedSum,
+            count12, finished12
+        )
 
         val image = imageService.getPanel(res, "MV")
 
@@ -167,13 +191,7 @@ class MaiVersionScoreService(
         return ServiceCallStatistic.building(event)
     }
 
-    private fun getSongList(version: MaiVersion, plate: PlateType): List<MaiSong> {
-        val collectionName = if (version == MaiVersion.ALL_FINALE && plate == PlateType.HASHA) {
-            "覇者"
-        } else {
-            version.abbreviation + plate.character
-        }
-
+    private fun getSongList(collectionName: String): List<MaiSong> {
         val c = maiDao.findLxMaiCollections("plate")
             .firstOrNull {
                 it.name.equals(collectionName, true)
@@ -190,7 +208,7 @@ class MaiVersionScoreService(
         return songs
     }
 
-    private fun parseList(songs: List<MaiSong>, plate: PlateType, scores: List<MaiScore>): List<MaiPlateList> {
+    private fun parseList(songs: List<MaiSong>, plate: MaiPlateType, scores: List<MaiScore>): List<MaiPlateList> {
         val starMap = mapOf(
             "15" to 15.0..< 15.001,
             "14+" to 14.6 ..< 15.0,
@@ -199,7 +217,6 @@ class MaiVersionScoreService(
             "13" to 13.0 ..< 13.6,
             "12+" to 12.6 ..< 13.0,
             "12-" to 0.0 ..< 12.6
-            // 如果需要统计更低难度，可以在此继续添加区间
         )
 
         // 1. 预处理最高分：保持不变，依然使用 independentID 作为 Key
@@ -229,7 +246,7 @@ class MaiVersionScoreService(
                     // 计算 independentID: 歌曲ID * 10 + 难度索引
                     val independentID = entry.song.songID * 10L + entry.index
                     val score = bestScores[independentID]
-                    val completed = isCompleted(plate, score)
+                    val completed = MaiPlateType.isCompleted(plate, score)
 
                     MaiPlateProgress(
                         entry.song.title,
@@ -261,48 +278,12 @@ class MaiVersionScoreService(
         return resultList
     }
 
-    // 辅助类，用于承载扁平化后的数据
-    private data class IndexedSong(val song: MaiSong, val index: Byte, val star: Double)
-
     companion object {
         private val plateTypeRegex = Regex("^(.*?)(ap|fc|sss|fsd|f?dx|舞舞|[神将极極])\\s*$")
         private val baShouRegex = Regex("[霸覇]者?|all\\s*finale|afn|fnl+")
 
-        private fun isCompleted(plate: PlateType, score: MaiScore?): Boolean {
-            if (score == null) return false
-
-            return when(plate) {
-                PlateType.GOKU -> score.combo.isNotEmpty()
-                PlateType.SHIN -> score.combo == "ap" || score.combo == "app"
-                PlateType.MAIMAI -> score.sync == "fsd" || score.sync == "fsdp"
-                PlateType.SHOU -> score.achievements >= 100.0
-                PlateType.HASHA -> true
-            }
-        }
-
-        fun getPair(versionStr: String, plateStr: String): Pair<MaiVersion, PlateType> {
-            var version = MaiVersion.getVersion(versionStr)
-
-            if (version == MaiVersion.DEFAULT) {
-                throw NoSuchElementException.MaiVersion()
-            }
-
-            if (version == MaiVersion.MAIMAI) {
-                version = MaiVersion.PLUS
-            }
-
-            val plate = PlateType.getPlateType(
-                plateStr.ifEmpty {
-                    throw NoSuchElementException.MaiPlateType()
-                }
-            )
-
-            if (version == MaiVersion.PLUS && plate == PlateType.SHOU) {
-                throw NoSuchElementException.MaiPlateShinShou()
-            }
-
-            return version to plate
-        }
+        // 辅助类，用于承载扁平化后的数据
+        private data class IndexedSong(val song: MaiSong, val index: Byte, val star: Double)
 
         fun getPairStr(input: String): Pair<String, String> {
             if (input.contains(baShouRegex)) {
@@ -321,203 +302,28 @@ class MaiVersionScoreService(
             }
         }
 
-        enum class PlateType(val character: String, val required: String) {
-            GOKU("極", "fc"), // 极=fc
-            SHIN("神", "ap"), // 神=ap
-            MAIMAI("舞舞", "fdx"), // 舞=fdx
-            SHOU("将", "sss"), // 将=sss
-            HASHA("覇", "pass") // 覇
-            ;
+        fun getPair(versionStr: String, plateStr: String): Pair<MaiVersion, MaiPlateType> {
+            var version = MaiVersion.getVersion(versionStr)
 
-            companion object {
-                fun getPlateType(input: String = ""): PlateType {
-                    return when(input.lowercase().trim()) {
-                        "fc", "極", "极" -> GOKU
-                        "ap", "神" -> SHIN
-                        "fsd", "fdx", "dx", "舞舞" -> MAIMAI
-                        "pass", "覇", "覇者", "霸", "霸者" -> HASHA
-                        "" -> throw NoSuchElementException.MaiPlateType()
-                        else -> SHOU
-                    }
+            if (version == MaiVersion.DEFAULT) {
+                throw NoSuchElementException.MaiVersion()
+            }
+
+            if (version == MaiVersion.MAIMAI) {
+                version = MaiVersion.PLUS
+            }
+
+            val plate = MaiPlateType.getPlateType(
+                plateStr.ifEmpty {
+                    throw NoSuchElementException.MaiPlateType()
                 }
-            }
-        }
-    }
-
-    /*
-
-
-    data class MaiVersionParam(
-            val name: String?,
-            val qq: Long?,
-            val difficulty: MaiDifficulty,
-            val versions: List<MaiVersion>,
-            val page: Int,
-            val isMyself: Boolean = false
-    )
-
-    @JvmRecord
-    data class PanelMA2Param(
-        val user: MaiBestScore.User,
-        val scores: List<MaiScore>,
-        val versions: List<String>,
-        val page: Int = 1,
-        val maxPage: Int = 1
-    ) {
-        fun toMap(): Map<String, Any> {
-            return mapOf(
-                "user" to user,
-                "scores" to scores,
-                "versions" to versions,
-                "page" to page,
-                "max_page" to maxPage,
-                "panel" to "MV"
             )
+
+            if (version == MaiVersion.PLUS && plate == MaiPlateType.SHOU) {
+                throw NoSuchElementException.MaiPlateShinShou()
+            }
+
+            return version to plate
         }
     }
-
-    override fun isHandle(
-            event: MessageEvent,
-            messageText: String,
-            data: MessageService.DataValue<MaiVersionParam>
-    ): Boolean {
-        val matcher = Instruction.MAI_VERSION.matcher(messageText)
-
-        if (!matcher.find()) {
-            return false
-        }
-
-        val difficulty = MaiDifficulty.getDifficulty(matcher.group(FLAG_DIFF))
-
-        val nameStr: String = matcher.group(FLAG_NAME)?.trim()  ?: ""
-        val versionStr: String = matcher.group(FLAG_VERSION)?.trim() ?: ""
-        val qq = if (event.hasAt()) {
-            event.target
-        } else {
-            matcher.group(FLAG_QQ_ID)?.toLongOrNull()
-        }
-
-        val hasName = nameStr.isNotEmpty()
-        val hasVersion = versionStr.isNotEmpty()
-        val hasPageInVersionStr = hasVersion && versionStr.matches(REG_NUMBER_1_100.toRegex())
-        val hasVersionInNameStr = hasName && MaiVersion.getVersionList(matcher.group(FLAG_VERSION)).contains(MaiVersion.DEFAULT)
-
-        val page = if (hasPageInVersionStr) {
-            versionStr.toIntOrNull() ?: 1
-        } else {
-            1
-        }
-
-        val versions: List<MaiVersion>
-
-        if (qq != null) {
-            versions = if (hasVersionInNameStr) {
-                MaiVersion.getVersionListOrNewest(versionStr)
-            } else {
-                MaiVersion.getVersionListOrNewest(nameStr)
-            }
-
-            data.value = MaiVersionParam(null, qq, difficulty, versions, page, false)
-        } else if (hasName) {
-            if (hasVersionInNameStr) {
-                versions = MaiVersion.getVersionListOrNewest(nameStr)
-
-                data.value = MaiVersionParam(null, event.sender.id, difficulty, versions, page, false)
-            } else if (hasVersion) {
-                versions = MaiVersion.getVersionListOrNewest(versionStr)
-
-                data.value = MaiVersionParam(nameStr, null, difficulty, versions, page, false)
-            } else {
-                versions = listOf(MaiVersion.newestVersion)
-
-                data.value = MaiVersionParam(nameStr, null, difficulty, versions, page, false)
-            }
-        } else {
-            versions = if (hasVersion) {
-                MaiVersion.getVersionListOrNewest(versionStr)
-            } else {
-                listOf(MaiVersion.newestVersion)
-            }
-
-            data.value = MaiVersionParam(null, event.sender.id, difficulty, versions, page, false)
-        }
-
-        return true
-    }
-
-    override fun handleMessage(event: MessageEvent, param: MaiVersionParam): ServiceCallStatistic? {
-        val vs = getVersionScores(param.qq, param.name, param.versions, maimaiApiService)
-
-        if (vs.scores.isEmpty()) {
-            throw NoSuchElementException.VersionScore(param.versions.listToString())
-        }
-
-        /*
-
-        if (vs.scores.size > 240 && param.versions.size > 1) {
-            throw IllegalArgumentException.ExceedException.Version()
-        } else if (vs.scores.size > 300 && param.difficulty == MaiDifficulty.DEFAULT) {
-            throw IllegalArgumentException.ExceedException.VersionDifficulty()
-        }
-         */
-
-        val full = getFullScore(param.qq, param.name, maimaiApiService)
-
-        val user = full.getUser()
-        val scores = MaiScoreSimplified.parseMaiScoreList(full.records, vs.scores).filter {
-            MaiDifficulty.getDifficulty(it.index).equalDefault(param.difficulty)
-        }
-
-        maimaiApiService.insertSongData(scores)
-        maimaiApiService.insertMaimaiAliasForScore(scores)
-        maimaiApiService.insertPosition(scores, 0)
-
-        val page = DataUtil.splitPage(scores, param.page, 50)
-
-        val image = imageService.getPanel(
-            PanelMA2Param(user, page.first, MaiVersion.getNameList(param.versions), page.second, page.third).toMap(), "MA")
-
-        event.reply(image)
-
-        return ServiceCallStatistic.building(event) {
-            setParam(mapOf(
-                "mais" to vs.scores.map { it.songID }
-            ))
-        }
-    }
-
-    companion object {
-
-        @JvmStatic
-        fun getFullScore(
-            qq: Long?,
-            name: String?,
-            maimaiApiService: MaimaiApiService,
-        ): MaiBestScore {
-            return if (qq != null) {
-                maimaiApiService.getMaimaiFullScores(qq)
-            } else if (!name.isNullOrBlank()) {
-                maimaiApiService.getMaimaiFullScores(name)
-            } else {
-                throw NoSuchElementException.Player()
-            }
-        }
-
-        fun getVersionScores(
-            qq: Long?,
-            name: String?,
-            version: List<MaiVersion>,
-            maimaiApiService: MaimaiApiService,
-        ): MaiVersionScore {
-            return if (qq != null) {
-                maimaiApiService.getMaimaiScoreByVersion(qq, version)
-            } else if (!name.isNullOrBlank()) {
-                maimaiApiService.getMaimaiScoreByVersion(name, version)
-            } else {
-                throw NoSuchElementException.Player()
-            }
-        }
-    }
-
-     */
 }

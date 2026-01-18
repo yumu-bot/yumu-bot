@@ -56,8 +56,6 @@ class MatchApiImpl(
             // 4. 获取追加后的最小 ID
             val earlierID = match.events.firstOrNull()?.eventID
 
-            log.info("remaning:${remaining}, id: ${earlierID}")
-
             // 【核心停止逻辑】：
             // 如果追加后的最小 ID 依然等于追加前的 ID，
             // 或者 newMatch 为空，说明已经溯源到顶了。
@@ -82,7 +80,7 @@ class MatchApiImpl(
     override fun getRoom(roomID: Long): Room {
         return request { client ->
             client.get()
-                .uri("rooms/{room}/events", roomID)
+                .uri("rooms/${roomID}/events", )
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(Room::class.java)
@@ -92,7 +90,7 @@ class MatchApiImpl(
     override fun getRoomInfo(roomID: Long): RoomInfo {
         return request { client ->
             client.get()
-                .uri("rooms/{room}", roomID)
+                .uri("rooms/${roomID}")
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(RoomInfo::class.java)
@@ -102,39 +100,32 @@ class MatchApiImpl(
     override fun getRoomLeaderboard(roomID: Long): RoomLeaderBoard {
         return request { client ->
             client.get()
-                .uri("rooms/{room}/leaderboard", roomID)
+                .uri("rooms/${roomID}/leaderboard")
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(RoomLeaderBoard::class.java)
         }
     }
 
-    private fun getMatchFromAPI(mid: Long): Match {
+    private fun getMatchFromAPI(matchID: Long): Match {
         return request { client ->
             client.get()
-                .uri("matches/{mid}", mid)
+                .uri("matches/${matchID}")
                 .headers(base::insertHeader)
                 .retrieve()
             .bodyToMono(Match::class.java)
-            /*
-            .bodyToMono(JsonNode::class.java)
-            .map {
-                JacksonUtil.parseObject(it, Match::class.java)
-            }
-
-             */
         }
     }
 
-    private fun getMatchFromAPI(mid: Long, before: Long, after: Long): Match {
+    private fun getMatchFromAPI(matchID: Long, before: Long, after: Long): Match {
         return request { client ->
             client.get()
                 .uri {
-                    it.path("matches/{mid}")
+                    it.path("matches/${matchID}")
                     if (before != 0L) it.queryParam("before", before)
                     if (after != 0L) it.queryParam("after", after)
                     it.queryParam("limit", 100)
-                    it.build(mid)
+                    it.build()
                 }
                 .headers(base::insertHeader)
                 .retrieve()
@@ -193,9 +184,5 @@ class MatchApiImpl(
                 }
             }
         }
-    }
-
-    companion object {
-        private val log: Logger = LoggerFactory.getLogger(MatchApiImpl::class.java)
     }
 }

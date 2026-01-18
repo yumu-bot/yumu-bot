@@ -1,6 +1,7 @@
 package com.now.nowbot.service.messageServiceImpl
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.now.nowbot.dao.MaiDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.maimai.MaiBestScore
 import com.now.nowbot.model.maimai.MaiFit.ChartData
@@ -22,7 +23,9 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.min
 
 @Service("MAI_DIST") class MaiDistributionService(
-    private val maimaiApiService: MaimaiApiService, private val imageService: ImageService
+    private val maimaiApiService: MaimaiApiService,
+    private val imageService: ImageService,
+    private val maiDao: MaiDao,
 ) : MessageService<MaiDistributionService.MaiDistParam> {
 
     data class MaiDistParam(val qq: Long?, val name: String?, val isMySelf: Boolean = false)
@@ -110,7 +113,7 @@ import kotlin.math.min
             it.chart.fit > 0.0
         }
 
-        val body = PanelMDParam(best.getUser(), deluxe, standard, rating, count, size)
+        val body = PanelMDParam(best.getUser(maiDao), deluxe, standard, rating, count, size)
 
         val image = imageService.getPanel(body.toMap(), "MD")
 

@@ -1,5 +1,6 @@
 package com.now.nowbot.model.match
 
+import com.now.nowbot.model.match.Match.Companion.append
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.match.Match.EventType
 import com.now.nowbot.model.osu.LazerMod
@@ -76,7 +77,7 @@ class MatchListener(
             parseUsers(newMatch.events, newMatch.players)
             addUsers(newMatch.events)
 
-            match += newMatch
+            match.append(newMatch)
 
             onAllEvent(newMatch.events)
             if (newMatch.isMatchEnd) stop(StopType.MATCH_END)
