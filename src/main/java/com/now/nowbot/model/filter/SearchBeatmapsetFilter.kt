@@ -113,7 +113,7 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                         CS -> "q" to "cs${op}${text}"
                         OD -> "q" to "od${op}${text}"
                         HP -> "q" to "hp${op}${text}"
-                        LENGTH -> "q" to "length${op}\"\"${text}\"\""
+                        LENGTH -> "q" to "length${op}${text}"
                         ANY -> "q" to text
                         MODE -> "m" to OsuMode.getMode(text).modeValue.toString()
                         CATEGORY -> {
