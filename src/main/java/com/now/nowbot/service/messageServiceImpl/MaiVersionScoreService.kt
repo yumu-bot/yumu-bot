@@ -12,6 +12,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
@@ -167,7 +168,7 @@ class MaiVersionScoreService(
 
         val scores = full.records
 
-        val plates = parseList(songs, param.plate, scores)
+        val plates = parseList(songs, param.version, param.plate, scores)
 
         val countSum = plates.sumOf { it.count }
         val finishedSum = plates.sumOf { it.finished }
@@ -175,8 +176,10 @@ class MaiVersionScoreService(
         val count12 = plates.findLast { it.star == "12-" }?.count ?: 0
         val finished12 = plates.findLast { it.star == "12-" }?.finished ?: 0
 
+        val plateID = maiDao.getLxMaiPlateIDMap()[plateName] ?: 0
+
         val res = MaiVersionResponse(user,
-            maiDao.getLxMaiPlateIDMap()[plateName] ?: 0,
+            plateID,
             plates,
             countSum - count12,
             finishedSum - finished12,
@@ -190,13 +193,10 @@ class MaiVersionScoreService(
         return ServiceCallStatistic.building(event)
     }
 
-    private fun getSongList(collectionName: String): List<MaiSong> {
-        val c = maiDao.findLxMaiCollections("plate")
-            .firstOrNull {
-                it.name.equals(collectionName, true)
-            } ?: throw NoSuchElementException.MaiCollection()
+    private fun getSongList(plateName: String): List<MaiSong> {
+        val plate = maiDao.getLxMaiPlate(plateName) ?: throw NoSuchElementException.MaiCollection()
 
-        val req = c.required?.firstOrNull() ?: throw NoSuchElementException.MaiCollection()
+        val req = plate.required?.firstOrNull() ?: throw NoSuchElementException.MaiCollection()
 
         val songs = (req.songs ?: listOf()).mapNotNull {
             maiDao.findLxMaiSongByID(it.songID)?.toMaiSong(
@@ -207,7 +207,13 @@ class MaiVersionScoreService(
         return songs
     }
 
-    private fun parseList(songs: List<MaiSong>, plate: MaiPlateType, scores: List<MaiScore>): List<MaiPlateList> {
+    private fun parseList(songs: List<MaiSong>, version: MaiVersion, plate: MaiPlateType, scores: List<MaiScore>): List<MaiPlateList> {
+        val mai = if (version === MaiVersion.ALL_FINALE) {
+            4
+        } else{
+            3
+        }
+
         val starMap = mapOf(
             "15" to 15.0..< 15.001,
             "14+" to 14.6 ..< 15.0,
@@ -231,7 +237,7 @@ class MaiVersionScoreService(
         // 2. 扁平化所有歌曲的难度：将一首歌转为多个 (Song, DifficultyIndex) 对象
         val allDifficultyEntries = songs.flatMap { song ->
             song.star.mapIndexed { index, star ->
-                if (star > 0 && index in 0..3) {
+                if (star > 0 && index in 0..mai) {
                     IndexedSong(song, index.toByte(), star)
                 } else null
             }.filterNotNull()
@@ -279,7 +285,7 @@ class MaiVersionScoreService(
 
     companion object {
         private val plateTypeRegex = Regex("^(.*?)(ap|fc|sss|fsd|f?dx|舞舞|[神将极極])\\s*$")
-        private val baShouRegex = Regex("[霸覇]者?|all\\s*finale|afn|fnl+")
+        private val baShouRegex = Regex("[霸覇]者?|all\\s*finale|afn|fnl\\+")
 
         // 辅助类，用于承载扁平化后的数据
         private data class IndexedSong(val song: MaiSong, val index: Byte, val star: Double)
@@ -297,7 +303,7 @@ class MaiVersionScoreService(
 
                 main to suffix
             } else {
-                throw NoSuchElementException.MaiVersion()
+                throw IllegalArgumentException.WrongException.MaiVersionPlate()
             }
         }
 

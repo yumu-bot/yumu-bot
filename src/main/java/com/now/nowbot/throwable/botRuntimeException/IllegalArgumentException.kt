@@ -57,6 +57,12 @@ open class IllegalArgumentException(message: String?): TipsRuntimeException(mess
         class MatchID:
             WrongException("请输入正确的比赛编号 (MID)！")
 
+        class MaiVersionPlate:
+            NoSuchElementException("""
+                请输入正确的游戏版本与牌子种类组合！
+                如：舞神、堇将、splsss 等。
+            """.trimIndent())
+
         class Mod:
             WrongException("请输入正确的模组！")
 

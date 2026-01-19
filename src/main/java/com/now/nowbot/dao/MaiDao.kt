@@ -122,8 +122,15 @@ class MaiDao(
         return lxMaiCollectionLiteRepository.findAllByType("plate")
             .map { it.toModel() }
             .filter { it.genre?.equals("実績") == true &&
-                    it.description?.contains("全曲/BASIC～MASTER") == true }
+                    it.description?.contains("全曲/BASIC～") == true }
             .associate { it.name to it.collectionID }
+    }
+    fun getLxMaiPlate(plate: String): LxMaiCollection? {
+        return lxMaiCollectionLiteRepository.findAllByType("plate")
+            .map { it.toModel() }
+            .filter { it.genre?.equals("実績") == true &&
+                    it.description?.contains("全曲/BASIC～") == true }
+            .firstOrNull { it.name.equals(plate, true) }
     }
 
     fun findLxMaiCollections(type: String = "plate"): List<LxMaiCollection> {
