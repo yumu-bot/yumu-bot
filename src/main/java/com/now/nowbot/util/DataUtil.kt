@@ -1603,7 +1603,7 @@ object DataUtil {
             when (number) {
                 in 2007..<2100 -> {
                     years += (LocalDateTime.now().year - number)
-                    months += now.monthValue
+                    months += (now.monthValue - 1)
                     duration +=
                         (now.dayOfMonth.toDuration(DurationUnit.DAYS) +
                                 now.minute.toDuration(DurationUnit.MINUTES) +

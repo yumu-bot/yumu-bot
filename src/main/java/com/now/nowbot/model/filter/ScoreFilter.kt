@@ -599,6 +599,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     !(fit(Operator.GE, compare, too) && fit(Operator.LE, compare, too + delta))
                 }
             } else {
+
                 fit(operator, compare, too)
             }
         }

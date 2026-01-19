@@ -67,13 +67,13 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
             // 最后一个筛选条件无需匹配
             val con = conditions
                 .dropLast(1)
-                .mapIndexed { index, strings ->
+                .flatMapIndexed { index, strings ->
                     if (strings.isNotEmpty()) {
                         filterConditions(el[index], strings)
                     } else {
                         listOf()
                     }
-                }.flatten()
+                }
 
             val pairs: List<Pair<String, Any>> = overwrite.toList() + con + overwritten.toList()
 
@@ -100,20 +100,20 @@ enum class SearchBeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
 
                 else -> {
                     val con: Pair<String, String>? = when(filter) {
-                        CREATOR -> "q" to "creator=\"${text}\""
-                        GUEST -> "q" to "creator=\"${text}\""
+                        CREATOR -> "q" to "creator=\"\"${text}\"\""
+                        GUEST -> "q" to "creator=\"\"${text}\"\""
                         BID -> "q" to text
                         SID -> "q" to text
-                        TITLE -> "q" to "title=\"${text}\""
-                        ARTIST -> "q" to "artist=\"${text}\""
-                        SOURCE -> "q" to "source=\"${text}\""
-                        DIFFICULTY -> "q" to "difficulty=\"${text}\""
-                        STAR -> "q" to "star${op}\"${text}\""
-                        AR -> "q" to "ar${op}\"${text}\""
-                        CS -> "q" to "cs${op}\"${text}\""
-                        OD -> "q" to "od${op}\"${text}\""
-                        HP -> "q" to "hp${op}\"${text}\""
-                        LENGTH -> "q" to "length${op}\"${text}\""
+                        TITLE -> "q" to "title=\"\"${text}\"\""
+                        ARTIST -> "q" to "artist=\"\"${text}\"\""
+                        SOURCE -> "q" to "source=\"\"${text}\"\""
+                        DIFFICULTY -> "q" to "difficulty=\"\"${text}\"\""
+                        STAR -> "q" to "star${op}${text}"
+                        AR -> "q" to "ar${op}${text}"
+                        CS -> "q" to "cs${op}${text}"
+                        OD -> "q" to "od${op}${text}"
+                        HP -> "q" to "hp${op}${text}"
+                        LENGTH -> "q" to "length${op}\"\"${text}\"\""
                         ANY -> "q" to text
                         MODE -> "m" to OsuMode.getMode(text).modeValue.toString()
                         CATEGORY -> {
