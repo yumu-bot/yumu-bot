@@ -254,7 +254,7 @@ import kotlin.math.floor
         val mode = InstructionUtil.getMode(matcher)
         val id = UserIDUtil.getUserIDWithoutRange(event, matcher, mode)
 
-        val bindUser = bindDao.getBindUser(event.sender.id)
+        val bindUser = bindDao.getBindFromQQOrNull(event.sender.id)
         val nameStr = (matcher.group(FLAG_NAME) ?: "").trim()
 
         var user: OsuUser?

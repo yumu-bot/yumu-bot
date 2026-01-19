@@ -6,7 +6,7 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 enum class MaiPlateType(val character: String, val required: String) {
     GOKU("極", "fc"), // 极=fc
     SHIN("神", "ap"), // 神=ap
-    MAIMAI("舞舞", "fdx"), // 舞=fdx
+    MAIMAI("舞舞", "fsd"), // 舞=fdx
     SHOU("将", "sss"), // 将=sss
     HASHA("覇", "pass") // 覇
     ;
