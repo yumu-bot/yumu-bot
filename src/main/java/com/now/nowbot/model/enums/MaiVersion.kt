@@ -39,12 +39,10 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
     companion object {
         val newestVersion = PRISM // 当前最新版本
 
-        @JvmStatic
         fun getNameList(versions: List<MaiVersion>): List<String> {
             return versions.map(MaiVersion::full)
         }
 
-        @JvmStatic
         fun getCodeList(versions: List<MaiVersion>): List<String> {
             return versions.map(MaiVersion::code)
         }
@@ -104,14 +102,12 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
             return out.toList()
         }
 
-        @JvmStatic
         fun List<MaiVersion>.listToString(): String {
             return this
                 .filter { it != DEFAULT }
                 .joinToString(separator = ", ", prefix = "[", postfix = "]", transform = MaiVersion::full)
         }
 
-        @JvmStatic
         fun getVersion(str: String?): MaiVersion {
             if (str == null) return DEFAULT
 
@@ -209,6 +205,7 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "un+",
                 "uv+",
                 "uni+",
+                "unv+",
                 "星",
                 "1.25" -> UNIVERSE_PLUS
                 "universe",
@@ -365,8 +362,10 @@ enum class MaiVersion(val full: String, val abbreviation: String, val code: Stri
                 "0.1",
                 "0.10" -> MAIMAI
                 else -> {
+                    val long = str.toIntOrNull()
+
                     for (v in entries) {
-                        if (str == v.full || str == v.abbreviation) {
+                        if (str == v.full || str == v.abbreviation || long == v.value) {
                             return v
                         }
                     }

@@ -14,10 +14,10 @@ enum class MaiPlateType(val character: String, val required: String) {
     companion object {
         fun getPlateType(input: String = ""): MaiPlateType {
             return when(input.lowercase().trim()) {
-                "fc", "極", "极" -> GOKU
-                "ap", "神" -> SHIN
-                "fsd", "fdx", "dx", "舞舞" -> MAIMAI
-                "pass", "覇", "覇者", "霸", "霸者" -> HASHA
+                "fc", "極", "combo", "极" -> GOKU
+                "ap", "perfect", "神" -> SHIN
+                "fsd", "fdx", "sync", "舞舞" -> MAIMAI
+                "pass", "clear", "覇", "覇者", "霸", "霸者" -> HASHA
                 "" -> throw NoSuchElementException.MaiPlateType()
                 else -> SHOU
             }
@@ -28,8 +28,8 @@ enum class MaiPlateType(val character: String, val required: String) {
 
             return when(plate) {
                 GOKU -> score.combo.isNotEmpty()
-                SHIN -> score.combo == "ap" || score.combo == "app"
-                MAIMAI -> score.sync == "fsd" || score.sync == "fsdp"
+                SHIN -> score.combo.startsWith('a')
+                MAIMAI -> score.combo.startsWith("fs")
                 SHOU -> score.achievements >= 100.0
                 HASHA -> score.achievements >= 80.0
             }

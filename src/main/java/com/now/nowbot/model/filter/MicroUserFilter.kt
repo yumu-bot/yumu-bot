@@ -100,7 +100,7 @@ enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
             val double = condition.double
             val boolean = condition.boolean
             val str = condition.condition
-            val time = condition.time
+            val days = condition.days
 
             // 一般这个数据都很大。如果输入很小的数，会自动给你乘 1k
             val longPlus = if (long in 1..< 100) {
@@ -119,7 +119,7 @@ enum class MicroUserFilter(@param:Language("RegExp") val regex: Regex) {
                 SUPPORTER -> fit(operator, it.isSupporter, boolean)
                 LAST_VISIT -> fitTime(operator,
                     it.lastVisitTime?.toEpochSecond(ZoneOffset.ofHours(8)),
-                    time)
+                    days)
                 PM_ONLY -> fit(operator, it.pmFriendsOnly, boolean)
                 COUNTRY -> if (str.length <= 2) {
                     fit(operator, it.country?.code, str)

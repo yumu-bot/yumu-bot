@@ -19,7 +19,8 @@ data class Condition(
     val long: Long = condition.toLongOrNull() ?: -1L
     val int: Int = condition.toIntOrNull() ?: -1
     val double: Double = condition.toDoubleOrNull() ?: -1.0
-    val time: Pair<Period, Duration> = DataUtil.parseTime(input = condition, mode = mode, unit = DurationUnit.DAYS)
+    val days: Pair<Period, Duration> = DataUtil.parseTime(input = condition, mode = mode, unit = DurationUnit.DAYS)
+    val seconds: Pair<Period, Duration> = DataUtil.parseTime(input = condition, mode = mode, unit = DurationUnit.SECONDS)
     val hasDecimal = condition.contains(".")
     val boolean = when(condition) {
         "真", "是", "正确", "对", "t", "true", "y", "yes", "" -> true

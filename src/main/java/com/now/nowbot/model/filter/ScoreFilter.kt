@@ -263,7 +263,8 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             val double = condition.double
             val str = condition.condition
             val dec = condition.hasDecimal
-            val time = condition.time
+            val days = condition.days
+            val seconds = condition.seconds
 
             // 一般这个数据都很大。如果输入很小的数，会自动给你乘 1k
             val longPlus = if (long in 1..< 100) {
@@ -364,7 +365,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 LENGTH -> {
                     val compare = it.beatmap.totalLength.toLong()
 
-                    val to = time.second.inWholeSeconds
+                    val to = seconds.second.inWholeSeconds
 
                     fit(operator, compare, to)
                 }
@@ -466,7 +467,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     else -> !it.isLazer
                 }
 
-                CREATED_TIME -> fitTime(operator, it.endedTime.toEpochSecond(), time)
+                CREATED_TIME -> fitTime(operator, it.endedTime.toEpochSecond(), days)
 
                 else -> false
             }

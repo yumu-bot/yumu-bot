@@ -77,7 +77,7 @@ enum class MostPlayedBeatmapFilter(@param:Language("RegExp") val regex: Regex) {
         private fun fitMostPlayedBeatmap(b: Beatmap, operator: Operator, filter: MostPlayedBeatmapFilter, condition: Condition): Boolean {
             val long = condition.long
             val double = condition.double
-            val time = condition.time
+            val seconds = condition.seconds
             val str = condition.condition
 
             val s = b.beatmapset!!
@@ -105,7 +105,7 @@ enum class MostPlayedBeatmapFilter(@param:Language("RegExp") val regex: Regex) {
                 LENGTH -> {
                     val compare = b.totalLength.toLong()
 
-                    val to = time.second.inWholeSeconds
+                    val to = seconds.second.inWholeSeconds
 
                     fit(operator, compare, to)
                 }

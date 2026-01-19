@@ -104,7 +104,8 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
         private fun fitBeatmapsets(s: Beatmapset, operator: Operator, filter: BeatmapsetFilter, condition: Condition): Boolean {
             val long = condition.long
             val double = condition.double
-            val time = condition.time
+            val days = condition.days
+            val seconds = condition.seconds
             val str = condition.condition
 
             // 一般这个数据都很大。如果输入很小的数，会自动给你乘 1k
@@ -187,7 +188,7 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     fit(operator, it.hp, double, 2, isRound = true, isInteger = true)
                 }.toSet().contains(true)
                 LENGTH -> {
-                    val to = time.second.inWholeSeconds
+                    val to = seconds.second.inWholeSeconds
 
                     bs.map {
                         fit(operator, it.totalLength.toLong(), to)
@@ -216,8 +217,8 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                         }
                     }.toSet().contains(true)
                 }
-                CREATED_TIME -> fitTime(operator, s.submittedDate.toEpochSecond(), time)
-                RANKED_TIME -> fitTime(operator, s.rankedDate?.toEpochSecond() ?: return false, time)
+                CREATED_TIME -> fitTime(operator, s.submittedDate.toEpochSecond(), days)
+                RANKED_TIME -> fitTime(operator, s.rankedDate?.toEpochSecond() ?: return false, days)
                 PLAY_COUNT -> fit(operator, s.playCount, longPlus)
                 FAVOURITE -> fit(operator, s.favouriteCount, long)
 
