@@ -684,8 +684,12 @@ class BindDao(
         return osuGroupConfigRepository.findById(event.subject.id).getOrNull()?.mainMode ?: OsuMode.DEFAULT
     }
 
-    fun getAllUserIdLimit50(start: Int): List<Long> {
-        return bindUserMapper.getAllBindUserIdLimit50(start)
+    fun getBindUserIDsFrom(start: Int = 0): List<Long> {
+        return bindUserMapper.getBindUserIDs(start)
+    }
+
+    fun getNextBindUserIDs(lastID: Long = -1L): List<Long> {
+        return bindUserMapper.getNextBindUserIDs(lastID)
     }
 
     fun getAllQQBindUser(qqs: Collection<Long>): List<QQBindLite.QQUser> {

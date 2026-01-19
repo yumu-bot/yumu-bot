@@ -6,8 +6,10 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClientResponseException
 
 @Service
 class DailyStatisticsService(
@@ -16,36 +18,6 @@ class DailyStatisticsService(
     private val userInfoDao: OsuUserInfoDao,
     private val bindDao: BindDao,
 ) {
-
-    object SimpleRateLimiter {
-        private var nextAvailableTime = System.currentTimeMillis()
-
-        @Synchronized
-        fun sync(qps: Int = 8) {
-            val interval = 1000 / qps
-
-            val now = System.currentTimeMillis()
-            if (now < nextAvailableTime) {
-                val sleepTime = nextAvailableTime - now
-                Thread.sleep(sleepTime)
-                nextAvailableTime += interval
-            } else {
-                nextAvailableTime = now + interval
-            }
-        }
-    }
-
-    /**
-     * 统计任务包括 user info 以及 scores
-     */
-    fun collectInfoAndScores() {
-        Thread.startVirtualThread {
-            val startTime = System.currentTimeMillis()
-            runTask()
-            val endTime = System.currentTimeMillis()
-            log.info("统计全部绑定用户完成, 耗时: ${(endTime - startTime) / 1000} s")
-        }
-    }
 
     fun collectPercentiles() {
         Thread.startVirtualThread {
@@ -56,51 +28,79 @@ class DailyStatisticsService(
         }
     }
 
-    /**
-     * 统计任务包括 user info 以及 scores
-     */
+
+    fun collectInfoAndScores() {
+        Thread.startVirtualThread {
+            val startTime = System.currentTimeMillis()
+            // 在进入任务前统一设置优先级
+            OsuApiBaseService.setPriority(9)
+            OsuApiBaseService.updateGlobalQps(4)
+
+            try {
+                runTask()
+            } finally {
+                // 任务结束后清除优先级，防止影响当前线程后续逻辑
+                OsuApiBaseService.updateGlobalQps(8)
+                OsuApiBaseService.clearPriority()
+            }
+            val endTime = System.currentTimeMillis()
+            log.info("统计全部绑定用户完成, 耗时: ${(endTime - startTime) / 1000} s")
+        }
+    }
+
     fun runTask() {
         log.info("开始统计全部绑定用户")
-        OsuApiBaseService.setPriority(9)
 
-        var offset = 0
+        var lastID = -1L
         var errorCount = 0
+        var continuous429Count = 0
 
         while (true) {
-            val userIDs = bindDao.getAllUserIdLimit50(offset)
+            // 使用游标查询，避开 offset 漂移
+            val userIDs = bindDao.getNextBindUserIDs(lastID)
             if (userIDs.isEmpty()) break
 
             try {
                 val needSearch = mutableListOf<Pair<Long, OsuMode>>()
 
-                // 内部已包含 SimpleRateLimiter.sync()
                 saveUserInfo(userIDs, needSearch)
-
-                // 内部已包含 SimpleRateLimiter.sync()
                 savePlayData(needSearch)
 
-                // 执行成功：重置错误计数，移动位移
+                // 成功后逻辑
+                lastID = userIDs.lastOrNull() ?: Long.MAX_VALUE
                 errorCount = 0
-                offset += userIDs.size
+                continuous429Count = 0
+
+                log.info("已处理至 UID: $lastID")
 
             } catch (e: Exception) {
-                val errorMsg = e.message ?: ""
-                if (errorMsg.contains("429")) {
-                    // 核心修改：遇到429绝对不要立即重试或增加offset
-                    log.error("触发 API 限速(429)，虚拟线程进入深度冷却...")
-                    // 遇到429时，即便有频率限制也说明额度耗尽，建议至少休息 30-60s
-                    Thread.sleep(60_000)
-                    continue // 原地重试，不增加 offset
+                val is429 = e.findCauseOfType<WebClientResponseException.TooManyRequests>()
+
+                if (is429 != null) {
+                    continuous429Count++
+
+                    // 指数级增加冷却时间：1min, 2min, 4min... 最大 32min
+                    val waitTime = minOf(60_000L * (1 shl (continuous429Count - 1)), 1920_000L)
+
+                    log.error("API 限速中 (第 $continuous429Count 次)。冷却 ${waitTime / 60000} 分钟...")
+
+                    if (continuous429Count > 6) {
+                        log.error("连续触发 429 次数过多，可能触发了 IP 封禁或长期限制，终止今日任务。")
+                        break
+                    }
+
+                    Thread.sleep(waitTime)
+                    continue
                 }
 
+                // 处理非 429 的普通异常（如 500, Timeout 等）
                 errorCount++
                 if (errorCount < 3) {
-                    log.warn("第 ${offset / 50} 轮异常，尝试第 $errorCount 次重试", e)
-                    Thread.sleep(2000) // 普通异常轻微休息
+                    log.warn("批次 [ID > $lastID] 发生异常，尝试第 $errorCount 次重试", e)
+                    Thread.sleep(5000)
                 } else {
-                    // 连续多次失败，为了保证任务继续，跳过这 50 个用户
-                    log.error("第 ${offset / 50} 轮连续失败，跳过 UIDs: $userIDs")
-                    offset += userIDs.size
+                    log.error("批次 [ID > $lastID] 连续失败 3 次，跳过该批次防止死循环。用户清单: $userIDs")
+                    lastID = userIDs.last() // 关键：强制移动游标，跳过这 50 个用户
                     errorCount = 0
                 }
             }
@@ -108,39 +108,33 @@ class DailyStatisticsService(
     }
 
     private fun saveUserInfo(userIDs: List<Long>, needSearch: MutableList<Pair<Long, OsuMode>>) {
-        SimpleRateLimiter.sync()
+
         val userInfoList = userApiService.getUsers(userIDs, isVariant = true)
         val yesterdayInfo = userInfoDao.getFromYesterday(userIDs)
         val userMap = userInfoList.associateBy { it.userID }
 
         for (user in yesterdayInfo) {
-            if (user.userID == null) continue
+            val uid = user.userID ?: continue
+            val userInfo = userMap[uid] ?: continue
 
-            val mode = user.mode
-            val userInfo = userMap[user.userID] ?: continue
             val newPlayCount = when (user.mode) {
-                OsuMode.OSU -> userInfo.rulesets?.osu?.playCount ?: continue
-                OsuMode.TAIKO -> userInfo.rulesets?.taiko?.playCount ?: continue
-                OsuMode.CATCH -> userInfo.rulesets?.fruits?.playCount ?: continue
-                OsuMode.MANIA -> userInfo.rulesets?.mania?.playCount ?: continue
-                else -> {
-                    log.error("统计用户出现异常: 数据库中出现 default mode")
-                    continue
-                }
-            }
-
-            log.info("用户 ${user.userID} 模式 $mode playCount: ${user.playCount} -> $newPlayCount")
+                OsuMode.OSU -> userInfo.rulesets?.osu?.playCount
+                OsuMode.TAIKO -> userInfo.rulesets?.taiko?.playCount
+                OsuMode.CATCH -> userInfo.rulesets?.fruits?.playCount
+                OsuMode.MANIA -> userInfo.rulesets?.mania?.playCount
+                else -> null
+            } ?: continue
 
             if (user.playCount != newPlayCount) {
-                needSearch.add(user.userID!! to mode)
+                needSearch.add(uid to user.mode)
             }
         }
     }
 
-    private fun savePlayData(data: MutableList<Pair<Long, OsuMode>>) {
+    private fun savePlayData(data: List<Pair<Long, OsuMode>>) {
         for ((uid, mode) in data) {
-            // log.info("save $uid $mode")
-            SimpleRateLimiter.sync()
+            // 这里也不再需要 sync()。
+            // 循环会迅速向底层 TASKS 队列塞入请求，底层会根据 QPS 限制慢慢发。
             scoreApiService.getRecentScore(uid, mode, 0, 999)
         }
     }

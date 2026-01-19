@@ -28,12 +28,9 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.PriorityBlockingQueue
-import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.LockSupport
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.math.min
+import java.util.concurrent.atomic.AtomicLong
 
 @Service
 class OsuApiBaseService(@param:Lazy private val bindDao: BindDao, @param:Qualifier("osuApiWebClient") val osuApiWebClient: WebClient, osuConfig: OsuConfig, yumuConfig: YumuConfig) {
@@ -91,11 +88,12 @@ class OsuApiBaseService(@param:Lazy private val bindDao: BindDao, @param:Qualifi
     fun runTask() {
         while (IocAllReadyRunner.APP_ALIVE) {
             try {
-                limiter.acquire()
-                val task = TASKS.take()
-                Thread.startVirtualThread {
-                    task.run(osuApiWebClient)
-                }
+                val task = TASKS.take() // 阻塞获取高优先级任务
+                limiter.acquire()      // 严格限流等待
+
+                // 直接执行，不要再 startVirtualThread，否则 limiter 无法控制瞬时并发
+                task.run(osuApiWebClient)
+
             } catch (e: InterruptedException) {
                 log.error("请求队列异常", e)
             }
@@ -134,19 +132,17 @@ class OsuApiBaseService(@param:Lazy private val bindDao: BindDao, @param:Qualifi
             }
 
             when (e) {
+                // 在 RequestTask 的 onError 中
                 is WebClientResponseException.TooManyRequests -> {
-                    is429.set(true)
                     retry++
+                    this.time = nowTime // 更新时间戳，使其在同优先级中排到后面
+                    limiter.onTooManyRequests() // 通知限流器冷却
 
-                    // 优先使用API返回的Retry-After头部
-                    val waitSeconds = e.headers["Retry-After"]?.firstOrNull()?.toLongOrNull()
-                        ?: calculateExponentialBackoff(retry) // 默认退避策略
-
-                    log.info("出现 429 错误，等待 {} 秒后重试", waitSeconds)
+                    val waitSeconds = e.headers["Retry-After"]?.firstOrNull()?.toLongOrNull() ?: 30L
 
                     Thread.startVirtualThread {
                         Thread.sleep(waitSeconds * 1000L)
-                        TASKS.add(this@RequestTask)
+                        TASKS.offer(this@RequestTask)
                     }
                 }
 
@@ -161,17 +157,11 @@ class OsuApiBaseService(@param:Lazy private val bindDao: BindDao, @param:Qualifi
             }
         }
 
-
-        private fun calculateExponentialBackoff(retry: Short): Long {
-            // 指数退避: 16... 最大512秒
-            val baseDelay = 16L shl min(retry.toInt(), 5)
-            return minOf(baseDelay, 512L)
-        }
-
         private fun onComplete() {
             if (is429.get()) {
                 log.info("请求过多, 触发退避")
-                limiter.onTooManyRequests(TOO_MANY_REQUESTS_COUNT.getAndIncrement())
+                TOO_MANY_REQUESTS_COUNT.getAndIncrement()
+                limiter.onTooManyRequests()
             } else if (TOO_MANY_REQUESTS_COUNT.get() > 0) {
                 TOO_MANY_REQUESTS_COUNT.set(0)
             }
@@ -194,91 +184,61 @@ class OsuApiBaseService(@param:Lazy private val bindDao: BindDao, @param:Qualifi
         }
     }
 
-    internal class RateLimiter(var rate: Int, max: Int, private val minuteLimit: Int = 800) {
-        var out: Int = -1
-        private var semaphore: Semaphore = Semaphore(max)
-        private val minuteRequests = ConcurrentLinkedDeque<Long>() // 存储最近一分钟的请求时间戳
-        private val minuteLock = ReentrantLock()
+    internal class RateLimiter(initialQps: Int, private val minuteLimit: Int = 800) {
+        // 使用 AtomicInteger 确保线程安全
+        private val qps = AtomicInteger(initialQps)
 
-        init {
-            Thread.startVirtualThread { this.run() }
-            // 每分钟清理一次过期记录
-            Thread.startVirtualThread { this.cleanup() }
+        // 记录下一次允许执行的最早时间戳
+        private val nextAvailableTime = AtomicLong(System.currentTimeMillis())
+        private val minuteRequests = ConcurrentLinkedDeque<Long>()
+
+        // 新增：动态修改 QPS 的方法
+        fun setQps(newQps: Int) {
+            if (newQps <= 0) return
+            log.info("API 限流器 QPS 调整为: $newQps")
+            qps.set(newQps)
         }
 
-        fun run() {
-            while (IocAllReadyRunner.APP_ALIVE) {
-                LockSupport.parkNanos(Duration.ofSeconds(1).toNanos())
-                semaphore.release(rate)
-            }
-        }
+        fun acquire() {
+            val now = System.currentTimeMillis()
+            // 动态获取当前的 interval
+            val interval = 1000L / qps.get()
 
-        private fun cleanup() {
-            while (IocAllReadyRunner.APP_ALIVE) {
-                Thread.sleep(30000) // 每30秒清理一次
-                val oneMinuteAgo = System.currentTimeMillis() - 60000
-                minuteLock.lock()
-                try {
-                    while (minuteRequests.isNotEmpty() && minuteRequests.first < oneMinuteAgo) {
-                        minuteRequests.pollFirst()
-                    }
-                } finally {
-                    minuteLock.unlock()
+            // 1. 处理 QPS 限制
+            while (true) {
+                val lastScheduled = nextAvailableTime.get()
+                val executionTime = maxOf(now, lastScheduled)
+                if (nextAvailableTime.compareAndSet(lastScheduled, executionTime + interval)) {
+                    val delay = executionTime - now
+                    if (delay > 0) Thread.sleep(delay)
+                    break
                 }
             }
-        }
 
-        @Throws(InterruptedException::class)
-        fun acquire(): Boolean {
-            if (out >= 0) {
-                val seconds = min(2 * out + 1, 10)
-                log.info("请求触发退避, 等待时间: {} 秒", seconds)
-                LockSupport.parkNanos(Duration.ofSeconds(seconds.toLong()).toNanos())
-                out = -1
-                val permits = semaphore.availablePermits()
-                if (permits > 1) semaphore.acquire(permits - 1)
-            }
+            // 2. 处理分钟总量限制
+            synchronized(minuteRequests) {
+                val currentNow = System.currentTimeMillis()
+                val oneMinuteAgo = currentNow - 60000
 
-            // 检查分钟限制
-            if (!checkMinuteLimit()) {
-                return false
-            }
-
-            semaphore.acquire()
-            return true
-        }
-
-
-        private fun checkMinuteLimit(): Boolean {
-            minuteLock.lock()
-            try {
-                val now = System.currentTimeMillis()
-                val oneMinuteAgo = now - 60000
-
-                // 清理过期记录
-                while (minuteRequests.isNotEmpty() && minuteRequests.first < oneMinuteAgo) {
+                // 清理过期
+                while (minuteRequests.isNotEmpty() && minuteRequests.peekFirst() < oneMinuteAgo) {
                     minuteRequests.pollFirst()
                 }
 
-                // 检查是否超限
                 if (minuteRequests.size >= minuteLimit) {
-                    val oldestTime = minuteRequests.first
-                    val waitTime = 61000 - (now - oldestTime) // 等到最早请求满1分钟后
-                    log.warn("分钟请求数已达上限(${minuteLimit} / min)，等待 $waitTime ms")
-                    Thread.sleep(waitTime)
-                    return checkMinuteLimit() // 递归检查
+                    val waitTime = 60000 - (currentNow - minuteRequests.peekFirst())
+                    if (waitTime > 0) {
+                        log.warn("触发分钟限流，睡眠 {} ms", waitTime)
+                        Thread.sleep(waitTime)
+                    }
                 }
-
-                minuteRequests.addLast(now)
-                return true
-            } finally {
-                minuteLock.unlock()
+                minuteRequests.addLast(System.currentTimeMillis())
             }
         }
 
-
-        fun onTooManyRequests(n: Int) {
-            out = n + 1
+        // 当 429 发生时，强制推迟下一次可用时间
+        fun onTooManyRequests() {
+            nextAvailableTime.set(System.currentTimeMillis() + 60000) // 遇到 429 直接冷却 1 分钟
         }
     }
 
@@ -404,10 +364,14 @@ class OsuApiBaseService(@param:Lazy private val bindDao: BindDao, @param:Qualifi
 
         private const val DEFAULT_PRIORITY = 5
         private const val MAX_RETRY = 3
-        private val limiter = RateLimiter(1, 20)
+
+        private val limiter = RateLimiter(8, 600)
 
         private val TASKS = PriorityBlockingQueue<RequestTask<*>>()
 
+        fun updateGlobalQps(newQps: Int) {
+            limiter.setQps(newQps)
+        }
 
         fun hasPriority(): Boolean {
             return ContextUtil.getContext(
