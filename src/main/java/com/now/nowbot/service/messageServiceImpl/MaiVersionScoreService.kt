@@ -285,7 +285,7 @@ class MaiVersionScoreService(
 
     companion object {
         private val plateTypeRegex = Regex("^(.*?)(ap|fc|sss|fsd|f?dx|舞舞|[神将极極])\\s*$")
-        private val baShouRegex = Regex("[霸覇]者?|all\\s*finale|afn|fnl\\+")
+        private val baShouRegex = Regex("[霸覇]者?|((all\\s*finale|afn|fnl\\+|all)\\s*(clear|pass|play))|全?制霸")
 
         // 辅助类，用于承载扁平化后的数据
         private data class IndexedSong(val song: MaiSong, val index: Byte, val star: Double)
