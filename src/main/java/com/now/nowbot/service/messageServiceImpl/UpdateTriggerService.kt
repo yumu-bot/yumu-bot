@@ -9,7 +9,6 @@ import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.service.messageServiceImpl.UpdateTriggerService.UpdateType.*
-import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_ANY
@@ -20,14 +19,11 @@ class UpdateTriggerService(
     private val maimaiApiService: MaimaiApiService,
     private val lxMaiApiService: LxMaiApiService,
     private val chunithmApiService: ChunithmApiService,
-    private val beatmapApiService: OsuBeatmapApiService,
     private val infoDao: OsuUserInfoDao,
 ) : MessageService<UpdateTriggerService.UpdateType> {
 
     enum class UpdateType {
-        MAIMAI, LXNS, OSU_PERCENT, TAG
-
-        ;
+        MAIMAI, LXNS, OSU_PERCENT;
 
         companion object {
             fun getType(string: String?): UpdateType {
@@ -35,14 +31,12 @@ class UpdateTriggerService(
                     "m", "mai", "maimai" -> MAIMAI
                     "l", "lxns", "luoxue", "lady" -> LXNS
                     "o", "p", "percent", "per" -> OSU_PERCENT
-                    "t", "tag" -> TAG
                     else -> throw UnsupportedOperationException("""
                         请输入需要更新的种类：
                         
                         m -> maimai
                         l -> lxns
                         p -> osu percent
-                        t -> osu tag
                     """.trimIndent())
                 }
             }
@@ -125,20 +119,6 @@ class UpdateTriggerService(
                 
                 歌曲数据库：${(time1 - startTime) / 1000.0} s
                 收藏库：${(endTime - time1) / 1000.0} s
-                总耗时：${(endTime - startTime) / 1000.0} s
-                """.trimIndent())
-            }
-
-            TAG -> {
-                event.reply("正在尝试更新谱面玩家标签库！")
-
-                val startTime = System.currentTimeMillis()
-                beatmapApiService.updateBeatmapTagLibraryDatabase()
-                val endTime = System.currentTimeMillis()
-
-                event.reply("""
-                更新谱面玩家标签库完成。
-                
                 总耗时：${(endTime - startTime) / 1000.0} s
                 """.trimIndent())
             }

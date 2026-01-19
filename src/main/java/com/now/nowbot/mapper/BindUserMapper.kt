@@ -87,9 +87,5 @@ interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificatio
     fun countAllByOsuID(osuID: Long): Int
 
     @Query("select u.osuID from OsuBindUserLite u order by u.osuID limit 50 offset :offset")
-    fun getBindUserIDs(offset: Int): List<Long>
-
-    // 查找 osuID 大于 lastID 的前 50 个，按 osuID 升序排列
-    @Query("select u.osuID from OsuBindUserLite u where u.osuID > :lastID order by u.osuID limit 50")
-    fun getNextBindUserIDs(lastID: Long): List<Long>
+    fun getAllBindUserIdLimit50(offset: Int): List<Long>
 }
