@@ -74,6 +74,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
             }.map { r ->
                 val highlight = r.second
                     .map { diff -> MaiDifficulty.getIndex(diff) }
+                    .toSet()
 
                 r.first.updateHighlight(highlight)
 

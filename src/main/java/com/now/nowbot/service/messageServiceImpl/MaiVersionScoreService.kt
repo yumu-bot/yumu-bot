@@ -168,7 +168,7 @@ class MaiVersionScoreService(
 
         val scores = full.records
 
-        val plates = parseList(songs, param.version, param.plate, scores)
+        val plates = parseList(songs, param.plate, scores)
 
         val countSum = plates.sumOf { it.count }
         val finishedSum = plates.sumOf { it.finished }
@@ -193,26 +193,35 @@ class MaiVersionScoreService(
         return ServiceCallStatistic.building(event)
     }
 
+    /**
+     * @return 注意，里面的 highlight 即为需要筛选的难度
+     */
     private fun getSongList(plateName: String): List<MaiSong> {
         val plate = maiDao.getLxMaiPlate(plateName) ?: throw NoSuchElementException.MaiCollection()
 
-        val req = plate.required?.firstOrNull() ?: throw NoSuchElementException.MaiCollection()
-
-        val songs = (req.songs ?: listOf()).mapNotNull {
-            maiDao.findLxMaiSongByID(it.songID)?.toMaiSong(
-                it.type.equals("dx", true)
-            )
+        val mai = (plate.required ?: listOf()).flatMap { collection ->
+            val diffs = collection.difficulties ?: emptySet()
+            collection.songs?.map { it to diffs } ?: emptyList()
         }
+            .groupBy { (song, _) -> song.songID to song.type }
+            .mapNotNull { (identity, pairs) ->
+                val (songID, type) = identity
 
-        return songs
+                val maiSong = maiDao.findLxMaiSongByID(songID)?.toMaiSong(
+                    type.equals("dx", true)
+                )
+
+                val mergedHighlights = pairs.flatMapTo(mutableSetOf()) { it.second }
+
+                maiSong?.highlight = mergedHighlights
+
+                maiSong
+            }
+
+        return mai
     }
 
-    private fun parseList(songs: List<MaiSong>, version: MaiVersion, plate: MaiPlateType, scores: List<MaiScore>): List<MaiPlateList> {
-        val mai = if (version === MaiVersion.ALL_FINALE) {
-            4
-        } else{
-            3
-        }
+    private fun parseList(songs: List<MaiSong>, plate: MaiPlateType, scores: List<MaiScore>): List<MaiPlateList> {
 
         val starMap = mapOf(
             "15" to 15.0..< 15.001,
@@ -237,7 +246,7 @@ class MaiVersionScoreService(
         // 2. 扁平化所有歌曲的难度：将一首歌转为多个 (Song, DifficultyIndex) 对象
         val allDifficultyEntries = songs.flatMap { song ->
             song.star.mapIndexed { index, star ->
-                if (star > 0 && index in 0..mai) {
+                if (star > 0 && (song.highlight.isNullOrEmpty() || index in song.highlight!!)) {
                     IndexedSong(song, index.toByte(), star)
                 } else null
             }.filterNotNull()

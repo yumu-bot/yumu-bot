@@ -45,10 +45,10 @@ class MaiSong {
         get() = this.songID >= 100000
 
     // 自己设置，可以高亮的难度，按 0-4 排布。如果是 null，则会全部显示（也包括宴会场）
-    @JsonProperty("highlight") var highlight: List<Int>? = null
+    @JsonProperty("highlight") var highlight: Set<Int>? = null
     
     @JsonIgnoreProperties
-    fun updateHighlight(highlight: List<Int>) {
+    fun updateHighlight(highlight: Set<Int>) {
         val hil = highlight.isEmpty()
         if (hil) return
 
@@ -56,7 +56,7 @@ class MaiSong {
         if (nil) {
             this.highlight = highlight
         } else {
-            val intersect = highlight.toSet().union(this.highlight!!.toSet()).toList()
+            val intersect = highlight.union(this.highlight!!)
 
             if (intersect.isNotEmpty()) {
                 this.highlight = intersect

@@ -179,7 +179,7 @@ import java.util.regex.Matcher
                 val boolean = result.isNotEmpty() && result.size >= (ranges?.size ?: 0)
 
                 if (boolean) {
-                    s.updateHighlight(result)
+                    s.updateHighlight(result.toSet())
                 }
 
                 boolean

@@ -31,7 +31,7 @@ enum class MaiPlateType(val character: String, val required: String) {
                 SHIN -> score.combo == "ap" || score.combo == "app"
                 MAIMAI -> score.sync == "fsd" || score.sync == "fsdp"
                 SHOU -> score.achievements >= 100.0
-                HASHA -> true
+                HASHA -> score.achievements >= 80.0
             }
         }
 
