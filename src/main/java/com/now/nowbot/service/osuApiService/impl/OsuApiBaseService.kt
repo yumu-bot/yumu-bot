@@ -98,23 +98,18 @@ class OsuApiBaseService(
 
     fun runTask() {
         while (IocAllReadyRunner.APP_ALIVE) {
-            try {
-                // 1. 预检队列头部的任务，但不取出
-                val nextTask = TASKS.peek()
-                val taskPriority = nextTask?.priority ?: DEFAULT_PRIORITY
+            val task = TASKS.take()
+            val priority = task.priority
 
-                // 2. 根据该任务的优先级进行 acquire
-                // 如果是后台任务 (priority > 5)，limiter 内部可以实施更严格的检查
-                limiter.acquire(taskPriority)
-
-                // 3. 正式取出并执行
-                val task = TASKS.take()
-                Thread.ofVirtual().start {
-                    task.run(osuApiWebClient)
-                }
-            } catch (_: InterruptedException) {
-                if (!IocAllReadyRunner.APP_ALIVE) break
+            // 关键逻辑：如果是后台任务，必须先过一遍极慢的 backgroundLimiter
+            if (priority > 5) {
+                backgroundLimiter.acquire(priority)
             }
+
+            // 然后再过全局 limiter (确保不突破总配额)
+            limiter.acquire(priority)
+
+            Thread.ofVirtual().start { task.run(osuApiWebClient) }
         }
     }
 
@@ -265,18 +260,16 @@ class OsuApiBaseService(
             val now = System.currentTimeMillis()
 
             if (now < coolingDownUntil) {
-                // 情况 A：高优先级任务 (前台用户)
+                val waitTime = coolingDownUntil - now
                 if (priority <= 5) {
-                    val waitTime = coolingDownUntil - now
-                    log.warn("前台请求排队等待冷却结束: {}ms", waitTime)
+                    if (waitTime > 25000) { // 如果要等 5 秒以上
+                        log.error("API 熔断时间过长，为了保住前台响应，直接熔断该请求")
+                        throw RuntimeException("请求超时。请等待一会后重试。")
+                    }
                     Thread.sleep(waitTime + 100)
-                }
-                // 情况 B：低优先级任务 (后台统计)
-                else {
-                    // 后台任务不仅要等冷却，还要在冷却结束后多观察 5 秒（防止刚恢复又被后台打挂）
-                    val totalWait = (coolingDownUntil - now) + 5000L
-                    log.info("后台任务进入静默期，推迟执行...")
-                    Thread.sleep(totalWait)
+                } else {
+                    // 后台任务随便等
+                    Thread.sleep(waitTime + 30000)
                 }
             }
 
@@ -335,13 +328,14 @@ class OsuApiBaseService(
 
             if (nextWindow > coolingDownUntil) {
                 coolingDownUntil = nextWindow
-                burstSemaphore.drainPermits() // 必须清空
+                burstSemaphore.drainPermits()
                 log.error("触发熔断并增加惩罚时间，直到：{}", Instant.ofEpochMilli(nextWindow).atOffset(ZoneOffset.ofHours(8)))
             }
         }
 
         fun onTooManyRequests(n: Int) {
             backoffMultiplier = n + 1
+            burstSemaphore.drainPermits()
         }
     }
 
@@ -469,6 +463,7 @@ class OsuApiBaseService(
         private const val MAX_RETRY = 3
 
         private val limiter = RateLimiter(8, 10, 600)
+        private val backgroundLimiter = RateLimiter(1, 2, 100)
 
         private val TASKS = PriorityBlockingQueue<RequestTask<*>>()
 

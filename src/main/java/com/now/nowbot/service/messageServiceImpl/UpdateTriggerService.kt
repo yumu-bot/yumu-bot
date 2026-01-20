@@ -4,6 +4,7 @@ import com.now.nowbot.config.Permission
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.qq.event.MessageEvent
+import com.now.nowbot.service.DailyStatisticsService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
@@ -19,11 +20,12 @@ class UpdateTriggerService(
     private val maimaiApiService: MaimaiApiService,
     private val lxMaiApiService: LxMaiApiService,
     private val chunithmApiService: ChunithmApiService,
+    private val dailyStatisticsService: DailyStatisticsService,
     private val infoDao: OsuUserInfoDao,
 ) : MessageService<UpdateTriggerService.UpdateType> {
 
     enum class UpdateType {
-        MAIMAI, LXNS, OSU_PERCENT;
+        MAIMAI, LXNS, OSU_PERCENT, OSU_DAILY;
 
         companion object {
             fun getType(string: String?): UpdateType {
@@ -31,6 +33,7 @@ class UpdateTriggerService(
                     "m", "mai", "maimai" -> MAIMAI
                     "l", "lxns", "luoxue", "lady" -> LXNS
                     "o", "p", "percent", "per" -> OSU_PERCENT
+                    "d", "daily" -> OSU_DAILY
                     else -> throw UnsupportedOperationException("""
                         请输入需要更新的种类：
                         
@@ -119,6 +122,19 @@ class UpdateTriggerService(
                 
                 歌曲数据库：${(time1 - startTime) / 1000.0} s
                 收藏库：${(endTime - time1) / 1000.0} s
+                总耗时：${(endTime - startTime) / 1000.0} s
+                """.trimIndent())
+            }
+
+            OSU_DAILY -> {
+                event.reply("正在尝试更新 osu! 每日数据！")
+                val startTime = System.currentTimeMillis()
+                dailyStatisticsService.collectInfoAndScores()
+                val endTime = System.currentTimeMillis()
+
+                event.reply("""
+                更新 osu! 每日数据完成。
+                
                 总耗时：${(endTime - startTime) / 1000.0} s
                 """.trimIndent())
             }
