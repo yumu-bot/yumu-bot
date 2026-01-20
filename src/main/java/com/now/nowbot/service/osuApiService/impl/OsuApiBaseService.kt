@@ -203,10 +203,10 @@ class OsuApiBaseService(
         }
 
         override fun compareTo(other: RequestTask<*>): Int {
-            return getPriority() - other.getPriority()
+            return getPriorityValue() - other.getPriorityValue()
         }
 
-        private fun getPriority(): Int {
+        private fun getPriorityValue(): Int {
             return (3600 * priority) + time
         }
 

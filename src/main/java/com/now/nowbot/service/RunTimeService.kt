@@ -50,8 +50,8 @@ class RunTimeService(
         beatmapApiService.updateExtendedBeatmapFailTimes()
     }
 
-    // 每天凌晨2点15统计用户信息
-    @Scheduled(cron = "0 39 2 * * *")
+    // 每天凌晨2点46统计用户信息
+    @Scheduled(cron = "0 46 2 * * *")
     fun collectInfoAndScores() {
         dailyStatisticsService.collectInfoAndScores()
     }
