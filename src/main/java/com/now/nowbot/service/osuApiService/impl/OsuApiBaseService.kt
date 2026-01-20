@@ -37,9 +37,9 @@ class OsuApiBaseService(
     osuConfig: OsuConfig,
     yumuConfig: YumuConfig
 ) {
-    @JvmField final val oauthId: Int
-    @JvmField final val redirectUrl: String
-    @JvmField final val oauthToken: String
+    final val oauthId: Int
+    final val redirectUrl: String
+    final val oauthToken: String
 
     private val priorityEnvironment: String = "osu-api-priority"
 
@@ -149,25 +149,22 @@ class OsuApiBaseService(
 
             when (e) {
                 is WebClientResponseException.TooManyRequests -> {
-                    is429.set(true)
-                    retry++
 
-                    val waitSeconds = e.headers["Retry-After"]?.toString()?.toLongOrNull()
-                        ?: calculateExponentialBackoff(retry)
+                    val retryAfterStr = e.headers.getFirst("Retry-After")
+                    val waitSeconds = retryAfterStr?.toLongOrNull() ?: calculateExponentialBackoff(retry)
 
-                    // 立即通知限流器熔断全局请求
+                    // 1. 先同步状态
                     limiter.onTooManyRequests(waitSeconds)
 
-                    log.info("API 429 Limit: 任务进入重试队列，等待 {}s", waitSeconds)
-
-                    Thread.ofVirtual().start {
-                        try {
-                            // 2. 当前任务多等一会再放回队列，避开峰值
-                            Thread.sleep(waitSeconds * 1000L + 500)
+                    // 2. 检查：如果此时已经在熔断，且我还没到 MAX_RETRY，就悄悄回队列，别打印 Retry 日志了
+                    if (retry < MAX_RETRY) {
+                        retry++
+                        Thread.ofVirtual().start {
+                            // 比熔断时间多等一秒，确保消费者先启动
+                            Thread.sleep(waitSeconds * 1000L + 1000)
                             TASKS.add(this@RequestTask)
-                        } catch (interrupted: InterruptedException) {
-                            future.completeExceptionally(interrupted)
                         }
+                        return // 直接返回，屏蔽掉后面的 log.info
                     }
                 }
                 is WebClientRequestException -> {
@@ -330,7 +327,11 @@ class OsuApiBaseService(
             // 只有当新的冷却时间更晚时才更新（防止多个 429 冲突导致的抖动）
             if (nextWindow > coolingDownUntil) {
                 coolingDownUntil = nextWindow
+
+                burstSemaphore.drainPermits()
+
                 log.error("收到 429！触发全局熔断，冷却直到：{}", java.time.Instant.ofEpochMilli(nextWindow))
+
             }
         }
 
@@ -462,8 +463,7 @@ class OsuApiBaseService(
         private const val DEFAULT_PRIORITY = 5
         private const val MAX_RETRY = 3
 
-        // 初始化限流器：每秒 2 个请求 (Refill)，最大爆发 20，每分钟最多 800
-        private val limiter = RateLimiter(2, 20, 800)
+        private val limiter = RateLimiter(8, 10, 600)
 
         private val TASKS = PriorityBlockingQueue<RequestTask<*>>()
 
