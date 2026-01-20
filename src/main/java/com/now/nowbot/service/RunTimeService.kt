@@ -39,31 +39,31 @@ class RunTimeService(
     //@Scheduled(cron = "0(秒) 0(分) 0(时) *(日) *(月) *(周) *(年,可选)")  '/'步进
 
     // 每 30 秒刷新一次 token
-    @Scheduled(cron = "0,30 * 0-2,5-23 * * *")
+    @Scheduled(cron = "0,30 * 0-1,6-23 * * *")
     fun refreshToken() {
         bindDao.refreshOldUserToken(userApiService)
     }
 
     // 每几小时更新一次过期的谱面
-    @Scheduled(cron = "0 0,30 0-2,5-20 * * *")
+    @Scheduled(cron = "0 15,45 0-1,6-23 * * *")
     fun updateBeatmapExtendFailTimes() {
         beatmapApiService.updateExtendedBeatmapFailTimes()
     }
 
-    // 每天凌晨3点统计用户信息
-    @Scheduled(cron = "0 0 3 * * *")
+    // 每天凌晨2点30统计用户信息
+    @Scheduled(cron = "0 30 2 * * *")
     fun collectInfoAndScores() {
         dailyStatisticsService.collectInfoAndScores()
     }
 
-    // 每天凌晨3点50统计玩家百分比
-    @Scheduled(cron = "0 50 3 * * *")
+    // 每天凌晨4点20统计玩家百分比
+    @Scheduled(cron = "0 20 4 * * *")
     fun collectPercentiles() {
         dailyStatisticsService.collectPercentiles()
     }
 
-    // 每天凌晨4点统计新人群用户信息
-    @Scheduled(cron = "0 0 4 * * *")
+    // 每天凌晨4点30统计新人群用户信息
+    @Scheduled(cron = "0 30 4 * * *")
     fun statisticNewbieInfo() {
         val bot = botContainer.robots[newbieConfig.yumuBot] ?: botContainer.robots[newbieConfig.hydrantBot]
         if (bot == null) {
@@ -133,19 +133,19 @@ class RunTimeService(
         chunithmApiService.updateChunithmAliasLibraryDatabase()
     }
 
-    @Scheduled(cron = "40 1 6 * * *")
+    @Scheduled(cron = "0 2 6 * * *")
     fun updateLxnsMaiSongLibrary() {
         log.info("开始执行更新 lxns maimai 歌曲库任务")
         lxMaiApiService.saveLxMaiSongs()
     }
 
-    @Scheduled(cron = "0 2 6 * * *")
+    @Scheduled(cron = "20 2 6 * * *")
     fun updateLxnsMaiCollectionLibrary() {
         log.info("开始执行更新 lxns maimai 收藏库任务")
         lxMaiApiService.saveLxMaiCollections()
     }
 
-    @Scheduled(cron = "20 2 6 * * *")
+    @Scheduled(cron = "40 2 6 * * *")
     fun updateBeatMapTagsLibrary() {
         log.info("开始执行更新谱面玩家标签库任务")
         beatmapApiService.updateBeatmapTagLibraryDatabase()

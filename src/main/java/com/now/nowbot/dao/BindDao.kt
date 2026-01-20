@@ -521,7 +521,7 @@ class BindDao(
             val u = user
             if (updateUserSet.remove(u.id)) return
 
-            if (ObjectUtils.isEmpty(u.refreshToken)) {
+            if (u.refreshToken.isNullOrBlank()) {
                 bindUserMapper.backupBindByOsuID(u.osuID)
                 return
             }

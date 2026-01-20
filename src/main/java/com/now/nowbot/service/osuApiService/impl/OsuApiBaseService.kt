@@ -24,19 +24,19 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import java.time.Duration
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.PriorityBlockingQueue
-import java.util.concurrent.Semaphore
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.math.min
 
 @Service
-class OsuApiBaseService(@param:Lazy private val bindDao: BindDao, @param:Qualifier("osuApiWebClient") val osuApiWebClient: WebClient, osuConfig: OsuConfig, yumuConfig: YumuConfig) {
+class OsuApiBaseService(
+    @param:Lazy private val bindDao: BindDao,
+    @param:Qualifier("osuApiWebClient") val osuApiWebClient: WebClient,
+    osuConfig: OsuConfig,
+    yumuConfig: YumuConfig
+) {
     @JvmField final val oauthId: Int
     @JvmField final val redirectUrl: String
     @JvmField final val oauthToken: String
@@ -56,124 +56,145 @@ class OsuApiBaseService(@param:Lazy private val bindDao: BindDao, @param:Qualifi
     private val isExpired: Boolean
         get() = System.currentTimeMillis() > time
 
-    @PostConstruct fun init() {
-        Thread.startVirtualThread {
+    @PostConstruct
+    fun init() {
+        // 使用虚拟线程启动消费者，名称方便调试
+        Thread.ofVirtual().name("osu-api-consumer").start {
             runTask()
         }
     }
 
-    @Throws(ExecutionException::class)
+    /**
+     * 发送请求
+     * 支持 StructuredTaskScope，如果 Scope 关闭导致线程中断，会抛出异常并尝试取消 Future
+     */
     fun <T> request(request: (WebClient) -> Mono<T>): T {
-
-        /*
-        throw WebClientResponseException.create(403,
-            "Forbidden",
-            HttpHeaders.EMPTY,
-            "{\"error\":\"forbidden_testing\"}".toByteArray(),
-            null)
-
-         */
-
         val future = CompletableFuture<T>()
         val priority = ContextUtil.getContext(
             priorityEnvironment, DEFAULT_PRIORITY,
             Int::class.java
-        )
+        ) ?: DEFAULT_PRIORITY
+
         val task = RequestTask(priority, future, request)
         TASKS.offer(task)
+
         try {
+            // 兼容 StructuredTaskScope：如果外部取消或超时，get() 会抛出 InterruptedException
             return future.get()
         } catch (e: InterruptedException) {
-            throw RuntimeException(e)
+            // 响应中断：尝试取消 Future，并不再重试
+            future.cancel(true)
+            Thread.currentThread().interrupt() // 恢复中断状态
+            throw RuntimeException("OsuApi request interrupted", e)
+        } catch (e: ExecutionException) {
+            // 解包 ExecutionException，抛出原始异常
+            val cause = e.cause
+            if (cause is RuntimeException) throw cause
+            throw RuntimeException(cause)
         }
     }
 
     fun runTask() {
         while (IocAllReadyRunner.APP_ALIVE) {
             try {
+                // 1. 获取令牌 (阻塞直到允许通行)
                 limiter.acquire()
+
+                // 2. 取出任务 (阻塞直到有任务)
                 val task = TASKS.take()
-                Thread.startVirtualThread {
+
+                // 3. 在新的虚拟线程中执行网络请求，避免阻塞消费者循环
+                Thread.ofVirtual().start {
                     task.run(osuApiWebClient)
                 }
             } catch (e: InterruptedException) {
-                log.error("请求队列异常", e)
+                log.error("API 消费者线程被中断", e)
+                // 恢复中断并退出循环（视情况而定，通常服务应保持运行）
+                if (!IocAllReadyRunner.APP_ALIVE) break
             }
         }
     }
 
+    // --- 内部类：请求任务 ---
     internal class RequestTask<T>(
         private var priority: Int,
         private var future: CompletableFuture<T>,
         var request: (WebClient) -> Mono<T>
-    ) :
-        Comparable<RequestTask<*>> {
+    ) : Comparable<RequestTask<*>> {
 
         var time: Int = nowTime
         private var is429: AtomicBoolean = AtomicBoolean(false)
         private var retry: Short = 0
 
         fun run(client: WebClient) {
+            // 如果 Future 已经被取消（例如调用方超时），则不再执行
+            if (future.isDone || future.isCancelled) return
+
             request(client)
                 .timeout(Duration.ofSeconds(30))
                 .subscribe(
                     { value: T -> future.complete(value) },
-                    { e: Throwable -> this.onError(e) }
-                ) {
-                    this.onComplete()
-                }
+                    { e: Throwable -> this.onError(e) },
+                    { this.onComplete() }
+                )
         }
 
         private fun onError(e: Throwable) {
-            if (retry >= MAX_RETRY) {
-                if (!future.isDone) {
-                    future.completeExceptionally(e)
-                }
-                return // 没返回怎么停下来啊你这 429 不是把 ppy 的老冯按地上摩擦吗
+            if (future.isDone || future.isCancelled) return
 
+            if (retry >= MAX_RETRY) {
+                future.completeExceptionally(e)
+                return
             }
 
             when (e) {
                 is WebClientResponseException.TooManyRequests -> {
                     is429.set(true)
                     retry++
+                    val waitSeconds = e.headers["Retry-After"]?.toString()?.toLongOrNull()
+                        ?: calculateExponentialBackoff(retry)
 
-                    // 优先使用API返回的Retry-After头部
-                    val waitSeconds = e.headers["Retry-After"]?.firstOrNull()?.toLongOrNull()
-                        ?: calculateExponentialBackoff(retry) // 默认退避策略
+                    log.info("API 429 Limit: Waiting {}s to retry. (Retry $retry/$MAX_RETRY)", waitSeconds)
 
-                    log.info("出现 429 错误，等待 {} 秒后重试", waitSeconds)
-
-                    Thread.startVirtualThread {
-                        Thread.sleep(waitSeconds * 1000L)
-                        TASKS.add(this@RequestTask)
+                    // 使用虚拟线程处理重试等待，不阻塞 Netty 线程
+                    Thread.ofVirtual().start {
+                        try {
+                            Thread.sleep(waitSeconds * 1000L)
+                            // 重新加入队列头部（或者根据原优先级加入）
+                            TASKS.add(this@RequestTask)
+                        } catch (interrupted: InterruptedException) {
+                            future.completeExceptionally(interrupted)
+                        }
                     }
                 }
-
                 is WebClientRequestException -> {
+                    // 网络层面的错误（连接超时等），重试
                     retry++
+                    log.warn("Network error, retrying... ($retry/$MAX_RETRY)")
                     TASKS.add(this)
                 }
-
                 else -> {
                     future.completeExceptionally(e)
                 }
             }
         }
 
-
         private fun calculateExponentialBackoff(retry: Short): Long {
-            // 指数退避: 16... 最大512秒
             val baseDelay = 16L shl min(retry.toInt(), 5)
             return minOf(baseDelay, 512L)
         }
 
         private fun onComplete() {
             if (is429.get()) {
-                log.info("请求过多, 触发退避")
                 limiter.onTooManyRequests(TOO_MANY_REQUESTS_COUNT.getAndIncrement())
-            } else if (TOO_MANY_REQUESTS_COUNT.get() > 0) {
-                TOO_MANY_REQUESTS_COUNT.set(0)
+            } else {
+                // 成功请求后逐渐减少计数
+                if (TOO_MANY_REQUESTS_COUNT.get() > 0) {
+                    // 简单的减少策略，避免并发 CAS 竞争太激烈
+                    if (ThreadLocalRandom.current().nextBoolean()) {
+                        TOO_MANY_REQUESTS_COUNT.decrementAndGet()
+                    }
+                }
             }
         }
 
@@ -182,103 +203,120 @@ class OsuApiBaseService(@param:Lazy private val bindDao: BindDao, @param:Qualifi
         }
 
         private fun getPriority(): Int {
-            // 用于对比, 优先级 * (一个大数 n + 时间), 这个数字大到不可能存在两个请求的时间超过 n 秒
             return (3600 * priority) + time
         }
 
         companion object {
             private var TOO_MANY_REQUESTS_COUNT = AtomicInteger(0)
             private val nowTime: Int
-                get() = // seconds since 2025-01-01
-                    (System.currentTimeMillis() / 1000 - 1735660800).toInt()
+                get() = (System.currentTimeMillis() / 1000 - 1735660800).toInt()
         }
     }
 
-    internal class RateLimiter(var rate: Int, max: Int, private val minuteLimit: Int = 800) {
-        var out: Int = -1
-        private var semaphore: Semaphore = Semaphore(max)
-        private val minuteRequests = ConcurrentLinkedDeque<Long>() // 存储最近一分钟的请求时间戳
+    // --- 内部类：重构后的 RateLimiter ---
+    /**
+     * 令牌桶 + 滑动窗口限流器
+     * 修复了原版 Semaphore 无限增长和锁内睡眠的问题
+     */
+    internal class RateLimiter(
+        private val permitsPerSecond: Int, // 每秒填充速率
+        private val maxBurst: Int,         // 最大桶容量
+        private val minuteLimit: Int = 800 // 分钟硬限制
+    ) {
+        // 用于退避（Backoff）的时间乘数
+        @Volatile var backoffMultiplier: Int = -1
+
+        // 1. 瞬时/秒级限流：使用 Semaphore，但严格控制 release
+        private val burstSemaphore = Semaphore(maxBurst)
+
+        // 2. 分钟级限流：使用队列记录时间戳
+        private val minuteRequests = ConcurrentLinkedDeque<Long>()
         private val minuteLock = ReentrantLock()
 
         init {
-            Thread.startVirtualThread { this.run() }
-            // 每分钟清理一次过期记录
-            Thread.startVirtualThread { this.cleanup() }
-        }
+            // 启动填充线程
+            Thread.ofVirtual().name("rate-limiter-refill").start {
+                while (IocAllReadyRunner.APP_ALIVE) {
+                    try {
+                        // 均匀填充，例如 5 req/s -> 每 200ms 填充 1 个
+                        // 这里的 1 req/s -> 1000ms
+                        val interval = 1000L / permitsPerSecond
+                        Thread.sleep(interval)
 
-        fun run() {
-            while (IocAllReadyRunner.APP_ALIVE) {
-                LockSupport.parkNanos(Duration.ofSeconds(1).toNanos())
-                semaphore.release(rate)
-            }
-        }
-
-        private fun cleanup() {
-            while (IocAllReadyRunner.APP_ALIVE) {
-                Thread.sleep(30000) // 每30秒清理一次
-                val oneMinuteAgo = System.currentTimeMillis() - 60000
-                minuteLock.lock()
-                try {
-                    while (minuteRequests.isNotEmpty() && minuteRequests.first < oneMinuteAgo) {
-                        minuteRequests.pollFirst()
+                        // 关键修复：只有在未满时才释放，防止无限积攒
+                        if (burstSemaphore.availablePermits() < maxBurst) {
+                            burstSemaphore.release()
+                        }
+                    } catch (_: InterruptedException) {
+                        break
                     }
-                } finally {
-                    minuteLock.unlock()
                 }
             }
         }
 
         @Throws(InterruptedException::class)
-        fun acquire(): Boolean {
-            if (out >= 0) {
-                val seconds = min(2 * out + 1, 10)
-                log.info("请求触发退避, 等待时间: {} 秒", seconds)
-                LockSupport.parkNanos(Duration.ofSeconds(seconds.toLong()).toNanos())
-                out = -1
-                val permits = semaphore.availablePermits()
-                if (permits > 1) semaphore.acquire(permits - 1)
+        fun acquire() {
+            // 1. 处理 429 退避逻辑
+            if (backoffMultiplier >= 0) {
+                val waitSec = min(2 * backoffMultiplier + 1, 10)
+                log.info("429 Backoff active: pausing for {}s", waitSec)
+                Thread.sleep(waitSec * 1000L)
+                backoffMultiplier = -1
+
+                // 退避结束后消耗掉部分许可，避免瞬时爆发再次触发 429
+                val drain = burstSemaphore.availablePermits()
+                if (drain > 1) burstSemaphore.acquire(drain - 1)
             }
 
-            // 检查分钟限制
-            if (!checkMinuteLimit()) {
-                return false
-            }
+            // 2. 检查分钟级限流 (Sliding Window)
+            checkMinuteLimitBlocking()
 
-            semaphore.acquire()
-            return true
+            // 3. 获取令牌 (阻塞等待)
+            burstSemaphore.acquire()
         }
 
+        private fun checkMinuteLimitBlocking() {
+            while (true) {
+                var sleepTime: Long
 
-        private fun checkMinuteLimit(): Boolean {
-            minuteLock.lock()
-            try {
-                val now = System.currentTimeMillis()
-                val oneMinuteAgo = now - 60000
+                // 仅在计算检查时加锁，不在锁内 sleep
+                minuteLock.lock()
 
-                // 清理过期记录
-                while (minuteRequests.isNotEmpty() && minuteRequests.first < oneMinuteAgo) {
-                    minuteRequests.pollFirst()
+                try {
+                    val now = System.currentTimeMillis()
+                    val oneMinuteAgo = now - 60000
+
+                    // 清理过期记录
+                    while (!minuteRequests.isEmpty() && minuteRequests.peekFirst() < oneMinuteAgo) {
+                        minuteRequests.pollFirst()
+                    }
+
+                    if (minuteRequests.size < minuteLimit) {
+                        // 未超限，记录当前时间并通行
+                        minuteRequests.addLast(now)
+                        return
+                    } else {
+                        // 已超限，计算需要等待的时间
+                        val oldest = minuteRequests.peekFirst()
+                        // 如果 oldest 异常为空（并发边缘情况），默认等 1秒
+                        sleepTime = if (oldest != null) (oldest + 60000) - now else 1000L
+                        // 防止计算出负数
+                        if (sleepTime < 0) sleepTime = 0
+                    }
+                } finally {
+                    minuteLock.unlock()
                 }
 
-                // 检查是否超限
-                if (minuteRequests.size >= minuteLimit) {
-                    val oldestTime = minuteRequests.first
-                    val waitTime = 61000 - (now - oldestTime) // 等到最早请求满1分钟后
-                    log.warn("分钟请求数已达上限(${minuteLimit} / min)，等待 $waitTime ms")
-                    Thread.sleep(waitTime)
-                    return checkMinuteLimit() // 递归检查
+                // 在锁外睡眠
+                if (sleepTime > 0) {
+                    if (sleepTime > 1000) log.warn("分钟限流生效，等待 {} ms", sleepTime)
+                    Thread.sleep(sleepTime + 20) // 多睡 20ms 以确保过期
                 }
-
-                minuteRequests.addLast(now)
-                return true
-            } finally {
-                minuteLock.unlock()
             }
         }
-
 
         fun onTooManyRequests(n: Int) {
-            out = n + 1
+            backoffMultiplier = n + 1
         }
     }
 
@@ -404,29 +442,16 @@ class OsuApiBaseService(@param:Lazy private val bindDao: BindDao, @param:Qualifi
 
         private const val DEFAULT_PRIORITY = 5
         private const val MAX_RETRY = 3
-        private val limiter = RateLimiter(1, 20)
+
+        // 初始化限流器：每秒 2 个请求 (Refill)，最大爆发 20，每分钟最多 800
+        private val limiter = RateLimiter(2, 20, 800)
 
         private val TASKS = PriorityBlockingQueue<RequestTask<*>>()
 
+        fun hasPriority(): Boolean = ContextUtil.getContext("osu-api-priority", Int::class.java) != null
 
-        fun hasPriority(): Boolean {
-            return ContextUtil.getContext(
-                "osu-api-priority",
-                Int::class.java
-            ) != null
-        }
+        fun setPriority(priority: Int) = ContextUtil.setContext("osu-api-priority", priority)
 
-        /**
-         * 借助线程变量设置后续请求的优先级, 如果使用线程池, 务必在请求结束后调用 [.clearPriority] 方法
-         *
-         * @param priority 默认为 5, 越低越优先, 相同优先级先来后到
-         */
-        @JvmStatic fun setPriority(priority: Int) {
-            ContextUtil.setContext("osu-api-priority", priority)
-        }
-
-        fun clearPriority() {
-            ContextUtil.setContext("osu-api-priority", null)
-        }
+        fun clearPriority() = ContextUtil.setContext("osu-api-priority", null)
     }
 }
