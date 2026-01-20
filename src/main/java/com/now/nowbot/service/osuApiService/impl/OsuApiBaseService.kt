@@ -462,8 +462,8 @@ class OsuApiBaseService(
         private const val DEFAULT_PRIORITY = 5
         private const val MAX_RETRY = 3
 
-        private val limiter = RateLimiter(8, 10, 600)
-        private val backgroundLimiter = RateLimiter(1, 2, 100)
+        private val limiter = RateLimiter(5, 5, 300)
+        private val backgroundLimiter = RateLimiter(1, 1, 100)
 
         private val TASKS = PriorityBlockingQueue<RequestTask<*>>()
 
