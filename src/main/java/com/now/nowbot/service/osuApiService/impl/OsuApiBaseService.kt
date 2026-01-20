@@ -151,16 +151,19 @@ class OsuApiBaseService(
                 is WebClientResponseException.TooManyRequests -> {
                     is429.set(true)
                     retry++
+
                     val waitSeconds = e.headers["Retry-After"]?.toString()?.toLongOrNull()
                         ?: calculateExponentialBackoff(retry)
 
-                    log.info("API 429 Limit: Waiting {}s to retry. (Retry $retry/$MAX_RETRY)", waitSeconds)
+                    // 立即通知限流器熔断全局请求
+                    limiter.onTooManyRequests(waitSeconds)
 
-                    // 使用虚拟线程处理重试等待，不阻塞 Netty 线程
+                    log.info("API 429 Limit: 任务进入重试队列，等待 {}s", waitSeconds)
+
                     Thread.ofVirtual().start {
                         try {
-                            Thread.sleep(waitSeconds * 1000L)
-                            // 重新加入队列头部（或者根据原优先级加入）
+                            // 2. 当前任务多等一会再放回队列，避开峰值
+                            Thread.sleep(waitSeconds * 1000L + 500)
                             TASKS.add(this@RequestTask)
                         } catch (interrupted: InterruptedException) {
                             future.completeExceptionally(interrupted)
@@ -225,6 +228,8 @@ class OsuApiBaseService(
     ) {
         // 用于退避（Backoff）的时间乘数
         @Volatile var backoffMultiplier: Int = -1
+        // 全局冷却截止时间戳（毫秒）
+        @Volatile private var coolingDownUntil: Long = 0
 
         // 1. 瞬时/秒级限流：使用 Semaphore，但严格控制 release
         private val burstSemaphore = Semaphore(maxBurst)
@@ -256,22 +261,26 @@ class OsuApiBaseService(
 
         @Throws(InterruptedException::class)
         fun acquire() {
-            // 1. 处理 429 退避逻辑
-            if (backoffMultiplier >= 0) {
-                val waitSec = min(2 * backoffMultiplier + 1, 10)
-                log.info("429 Backoff active: pausing for {}s", waitSec)
-                Thread.sleep(waitSec * 1000L)
-                backoffMultiplier = -1
-
-                // 退避结束后消耗掉部分许可，避免瞬时爆发再次触发 429
-                val drain = burstSemaphore.availablePermits()
-                if (drain > 1) burstSemaphore.acquire(drain - 1)
+            // 1. 全局冷却检查 (针对 429 熔断)
+            val now = System.currentTimeMillis()
+            if (now < coolingDownUntil) {
+                val sleepTime = coolingDownUntil - now
+                log.warn("API 处于熔断冷却期，强制等待 {} ms", sleepTime)
+                Thread.sleep(sleepTime + 100) // 多睡 100ms 避开临界点
             }
 
-            // 2. 检查分钟级限流 (Sliding Window)
+            // 2. 处理旧的退避逻辑 (如果还有在使用)
+            if (backoffMultiplier >= 0) {
+                val waitSec = min(2 * backoffMultiplier + 1, 10).toLong()
+                Thread.sleep(waitSec * 1000L)
+                backoffMultiplier = -1
+                burstSemaphore.drainPermits() // 清空令牌桶，强制重新生成
+            }
+
+            // 3. 检查分钟级限流 (Sliding Window)
             checkMinuteLimitBlocking()
 
-            // 3. 获取令牌 (阻塞等待)
+            // 4. 获取令牌 (阻塞等待)
             burstSemaphore.acquire()
         }
 
@@ -312,6 +321,16 @@ class OsuApiBaseService(
                     if (sleepTime > 1000) log.warn("分钟限流生效，等待 {} ms", sleepTime)
                     Thread.sleep(sleepTime + 20) // 多睡 20ms 以确保过期
                 }
+            }
+        }
+
+        // 修改：由计数器改为具体的时间窗熔断
+        fun onTooManyRequests(waitSeconds: Long) {
+            val nextWindow = System.currentTimeMillis() + (waitSeconds * 1000L)
+            // 只有当新的冷却时间更晚时才更新（防止多个 429 冲突导致的抖动）
+            if (nextWindow > coolingDownUntil) {
+                coolingDownUntil = nextWindow
+                log.error("收到 429！触发全局熔断，冷却直到：{}", java.time.Instant.ofEpochMilli(nextWindow))
             }
         }
 
