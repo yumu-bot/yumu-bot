@@ -51,7 +51,7 @@ class RunTimeService(
     }
 
     // 每天凌晨2点15统计用户信息
-    @Scheduled(cron = "0 23 2 * * *")
+    @Scheduled(cron = "0 39 2 * * *")
     fun collectInfoAndScores() {
         dailyStatisticsService.collectInfoAndScores()
     }

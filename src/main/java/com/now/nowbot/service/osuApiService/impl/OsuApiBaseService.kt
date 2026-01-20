@@ -24,6 +24,8 @@ import org.springframework.web.reactive.function.client.WebClientRequestExceptio
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import java.time.Duration
+import java.time.Instant
+import java.time.ZoneOffset
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -97,19 +99,20 @@ class OsuApiBaseService(
     fun runTask() {
         while (IocAllReadyRunner.APP_ALIVE) {
             try {
-                // 1. 获取令牌 (阻塞直到允许通行)
-                limiter.acquire()
+                // 1. 预检队列头部的任务，但不取出
+                val nextTask = TASKS.peek()
+                val taskPriority = nextTask?.priority ?: DEFAULT_PRIORITY
 
-                // 2. 取出任务 (阻塞直到有任务)
+                // 2. 根据该任务的优先级进行 acquire
+                // 如果是后台任务 (priority > 5)，limiter 内部可以实施更严格的检查
+                limiter.acquire(taskPriority)
+
+                // 3. 正式取出并执行
                 val task = TASKS.take()
-
-                // 3. 在新的虚拟线程中执行网络请求，避免阻塞消费者循环
                 Thread.ofVirtual().start {
                     task.run(osuApiWebClient)
                 }
-            } catch (e: InterruptedException) {
-                log.error("API 消费者线程被中断", e)
-                // 恢复中断并退出循环（视情况而定，通常服务应保持运行）
+            } catch (_: InterruptedException) {
                 if (!IocAllReadyRunner.APP_ALIVE) break
             }
         }
@@ -117,12 +120,13 @@ class OsuApiBaseService(
 
     // --- 内部类：请求任务 ---
     internal class RequestTask<T>(
-        private var priority: Int,
+        var priority: Int,
         private var future: CompletableFuture<T>,
         var request: (WebClient) -> Mono<T>
     ) : Comparable<RequestTask<*>> {
 
         var time: Int = nowTime
+
         private var is429: AtomicBoolean = AtomicBoolean(false)
         private var retry: Short = 0
 
@@ -257,21 +261,23 @@ class OsuApiBaseService(
         }
 
         @Throws(InterruptedException::class)
-        fun acquire() {
-            // 1. 全局冷却检查 (针对 429 熔断)
+        fun acquire(priority: Int = 5) {
             val now = System.currentTimeMillis()
-            if (now < coolingDownUntil) {
-                val sleepTime = coolingDownUntil - now
-                log.warn("API 处于熔断冷却期，强制等待 {} ms", sleepTime)
-                Thread.sleep(sleepTime + 100) // 多睡 100ms 避开临界点
-            }
 
-            // 2. 处理旧的退避逻辑 (如果还有在使用)
-            if (backoffMultiplier >= 0) {
-                val waitSec = min(2 * backoffMultiplier + 1, 10).toLong()
-                Thread.sleep(waitSec * 1000L)
-                backoffMultiplier = -1
-                burstSemaphore.drainPermits() // 清空令牌桶，强制重新生成
+            if (now < coolingDownUntil) {
+                // 情况 A：高优先级任务 (前台用户)
+                if (priority <= 5) {
+                    val waitTime = coolingDownUntil - now
+                    log.warn("前台请求排队等待冷却结束: {}ms", waitTime)
+                    Thread.sleep(waitTime + 100)
+                }
+                // 情况 B：低优先级任务 (后台统计)
+                else {
+                    // 后台任务不仅要等冷却，还要在冷却结束后多观察 5 秒（防止刚恢复又被后台打挂）
+                    val totalWait = (coolingDownUntil - now) + 5000L
+                    log.info("后台任务进入静默期，推迟执行...")
+                    Thread.sleep(totalWait)
+                }
             }
 
             // 3. 检查分钟级限流 (Sliding Window)
@@ -323,15 +329,14 @@ class OsuApiBaseService(
 
         // 修改：由计数器改为具体的时间窗熔断
         fun onTooManyRequests(waitSeconds: Long) {
-            val nextWindow = System.currentTimeMillis() + (waitSeconds * 1000L)
-            // 只有当新的冷却时间更晚时才更新（防止多个 429 冲突导致的抖动）
+            // 额外惩罚 5 秒，确保完全越过 API 的封锁窗口
+            val penalty = 5000L
+            val nextWindow = System.currentTimeMillis() + (waitSeconds * 1000L) + penalty
+
             if (nextWindow > coolingDownUntil) {
                 coolingDownUntil = nextWindow
-
-                burstSemaphore.drainPermits()
-
-                log.error("收到 429！触发全局熔断，冷却直到：{}", java.time.Instant.ofEpochMilli(nextWindow))
-
+                burstSemaphore.drainPermits() // 必须清空
+                log.error("触发熔断并增加惩罚时间，直到：{}", Instant.ofEpochMilli(nextWindow).atOffset(ZoneOffset.ofHours(8)))
             }
         }
 
@@ -466,6 +471,8 @@ class OsuApiBaseService(
         private val limiter = RateLimiter(8, 10, 600)
 
         private val TASKS = PriorityBlockingQueue<RequestTask<*>>()
+
+        fun getTaskQueueSize(): Int = TASKS.size
 
         fun hasPriority(): Boolean = ContextUtil.getContext("osu-api-priority", Int::class.java) != null
 

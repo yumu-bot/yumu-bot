@@ -64,8 +64,8 @@ class DailyStatisticsService(
                     allTasks.add(subtask)
 
                     offset += userIDs.size
-                    // 控制投递速度，防止内存中堆积过多的等待任务
-                    if (offset % 500 == 0) Thread.sleep(100)
+
+                    Thread.sleep(2000)
                 }
 
                 // 等待所有任务完成（底层 API Base 会控制实际执行频率）
@@ -81,6 +81,12 @@ class DailyStatisticsService(
 
     private fun processUserBatch(userIDs: List<Long>) {
         try {
+            // 动态背压：如果底层待处理任务太多，这里直接阻塞，不往里塞任务了
+            while (OsuApiBaseService.getTaskQueueSize() > 40) {
+                log.debug("底层任务积压，后台投递暂停...")
+                Thread.sleep(3000)
+            }
+
             val needSearch = mutableListOf<Pair<Long, OsuMode>>()
 
             // 1. 获取用户信息 (内部会调用 ApiBase.request)
