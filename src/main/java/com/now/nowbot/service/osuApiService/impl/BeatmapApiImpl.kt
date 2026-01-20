@@ -924,29 +924,6 @@ class BeatmapApiImpl(
         if (notExistScores.isNotEmpty()) {
             applyBeatmapExtendFromAPI(notExistScores)
         }
-
-        /*
-        val exists = scores.mapNotNull {
-            try {
-                BeatmapDao.fromBeatmapLite(beatmapDao.getBeatMapLite(it.beatmapID))
-            } catch (e: Exception) {
-                null
-            }
-        }
-
-        val notExistIDs = scores.map { it.beatmapID }.toSet() - exists.map { it.beatmapID }.toSet()
-
-        val notExists = getBeatmaps(notExistIDs)
-
-        val extended = (exists + notExists).associateBy { it.beatmapID }
-
-        scores.forEach { score ->
-            extended[score.beatmapID]?.let {
-                applyBeatmapExtend(score, it)
-            }
-        }
-
-         */
     }
 
     override fun applyBeatmapExtend(score: LazerScore) {
@@ -1057,10 +1034,21 @@ class BeatmapApiImpl(
             beatmapDao.updateFailTimeByBeatmapID(it.beatmapID, it.failTimes?.toString())
         }
 
-        val result2 = news.sumOf {
-            val set = it.beatmapset!!
+        val result2 = news
+            .distinctBy { it.beatmapsetID }
+            .sumOf {
+                val set = it.beatmapset!!
 
-            beatmapDao.updateFailTimeByBeatmapsetID(it.beatmapsetID, set.favouriteCount, set.offset, set.playCount, set.spotlight, set.trackID, set.discussionLocked, set.rating, set.ratings.toTypedArray())
+                beatmapDao.updateFailTimeByBeatmapsetID(
+                    it.beatmapsetID,
+                    set.favouriteCount,
+                    set.offset,
+                    set.playCount,
+                    set.spotlight,
+                    set.trackID,
+                    set.discussionLocked,
+                    set.rating,
+                    set.ratings.toTypedArray())
         }
 
         log.info("自动更新扩展谱面：已更新 $result($result2) 张谱面。")

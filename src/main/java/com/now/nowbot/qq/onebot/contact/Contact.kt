@@ -83,14 +83,13 @@ open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
             return OneBotMessageReceipt.create(bot, d.data!!.messageId, this)
         } else {
             if (msg.messageList.first() is ImageMessage) {
-                Contact.log.error(
-                    "发送消息：账号 {} 在 {} 发送图片时获取回执失败。发送图片状态：{}",
-                    bot!!.selfId,
-                    id,
-                    if (bot!!.canSendImage()?.status != null) "正常" else "无法获取"
-                )
+                if (bot!!.canSendImage()?.status != null) {
+                    Contact.log.info("发送消息：账号 ${bot!!.selfId} 在 $id 发送图片时获取回执失败。发送图片状态：正常")
+                } else {
+                    Contact.log.info("发送消息：账号 ${bot!!.selfId} 在 $id 发送图片时获取回执失败。发送图片状态：无法获取")
+                }
             } else {
-                Contact.log.error("发送消息：账号 {} 在 {} 发送 {} 时获取回执失败。", bot!!.selfId, id, getMsg4Chain(msg))
+                Contact.log.info("发送消息：账号 ${bot!!.selfId} 在 $id 发送此消息时获取回执失败：\n${getMsg4Chain(msg)}")
             }
 
             return OneBotMessageReceipt.create()

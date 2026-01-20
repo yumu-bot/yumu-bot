@@ -21,6 +21,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botException.MatchListenerException
 import com.now.nowbot.throwable.botException.MatchRoundException
+import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.DataUtil.getOriginal
@@ -281,7 +282,9 @@ class MatchListenerService(
                 )
 
                 // 其实这个就是 game
-                val round = mr.rounds.last { it.roundID == game.roundID }
+                val round = mr.rounds.lastOrNull { it.roundID == game.roundID }
+                    ?: mr.rounds.lastOrNull()
+                    ?: throw NoSuchElementException.MatchRound()
 
                 calculateApiService.applyBeatMapChanges(round.beatmap, LazerMod.getModsList(round.mods))
 
