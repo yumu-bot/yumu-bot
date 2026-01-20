@@ -13,15 +13,17 @@ import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_NAME
+import com.now.nowbot.util.command.FLAG_OPERATE
 import com.now.nowbot.util.command.FLAG_QQ_GROUP
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import org.springframework.stereotype.Service
 
 @Service("BAN")
-class BanService(private val permission: Permission, private val imageService: ImageService) :
-    MessageService<BanParam> {
+class BanService(
+    private val permission: Permission,
+    private val imageService: ImageService
+): MessageService<BanParam> {
 
-    @JvmRecord
     data class BanParam(val qq: Long?, val name: String?, val operate: String, val isUser: Boolean)
 
     override fun isHandle(
@@ -32,18 +34,18 @@ class BanService(private val permission: Permission, private val imageService: I
         val matcher = Instruction.BAN.matcher(messageText)
         if (!matcher.find()) return false
 
-        val qq: String? = matcher.group(FLAG_QQ_ID)
-        val group: String? = matcher.group(FLAG_QQ_GROUP)
-        val name: String? = matcher.group(FLAG_NAME)
-        val operate = matcher.group("operate")
+        val qq: Long? = matcher.group(FLAG_QQ_ID)?.toLongOrNull()
+        val group: Long? = matcher.group(FLAG_QQ_GROUP)?.toLongOrNull()
+        val name: String = matcher.group(FLAG_NAME)?: ""
+        val operate = matcher.group(FLAG_OPERATE) ?: ""
 
         data.value = if (event.hasAt()) {
             BanParam(event.target, null, operate, true)
-        } else if (!(qq.isNullOrBlank())) {
-            BanParam(qq.toLongOrNull(), null, operate, true)
-        } else if (!(group.isNullOrBlank())) {
-            BanParam(group.toLongOrNull(), null, operate, false)
-        } else if (!(name.isNullOrBlank())) {
+        } else if (qq != null) {
+            BanParam(qq, null, operate, true)
+        } else if (group != null) {
+            BanParam(group, null, operate, false)
+        } else if (name.isNotBlank()) {
             BanParam(null, name, operate, true)
         } else {
             BanParam(null, null, operate, false)

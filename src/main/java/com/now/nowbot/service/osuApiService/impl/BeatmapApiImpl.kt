@@ -1045,6 +1045,14 @@ class BeatmapApiImpl(
             return -1
         }
 
+        // 有图被 nuke 了
+        if (news.size != ids.size && news.isNotEmpty()) {
+            val nuked = ids.toSet().subtract(news.map { it.beatmapID }.toSet())
+
+            beatmapDao.deleteExtendedBeatmapAndSet(nuked)
+            log.warn("自动更新扩展谱面：删除了无法从官网获取的疑似下架谱面：${nuked.joinToString(", ")}")
+        }
+
         val result = news.sumOf {
             beatmapDao.updateFailTimeByBeatmapID(it.beatmapID, it.failTimes?.toString())
         }

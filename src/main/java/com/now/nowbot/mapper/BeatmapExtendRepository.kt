@@ -23,7 +23,7 @@ interface BeatmapExtendRepository: JpaRepository<BeatmapExtendLite, Long> {
     @Query(value = "SELECT EXISTS(SELECT 1 FROM osu_extend_beatmap WHERE beatmap_id = :beatmapID)", nativeQuery = true)
     fun existsByBeatmapID(@Param("beatmapID") beatmapID: Long): Boolean
 
-    // 按创建时间升序获取需要更新的记录
+    // 按更新时间升序获取需要更新的记录
     @Query(value = "SELECT e FROM BeatmapExtendLite e WHERE e.updatedAt < :time ORDER BY e.updatedAt ASC LIMIT :limit")
     fun findByUpdateAtAscend(time: LocalDateTime, limit: Int): List<BeatmapExtendLite>
 
@@ -46,6 +46,11 @@ interface BeatmapsetExtendLiteRepository : JpaRepository<BeatmapsetExtendLite, L
     // 按创建时间升序获取需要更新的记录
     @Query(value = "SELECT e FROM BeatmapsetExtendLite e WHERE e.updatedAt < :time ORDER BY e.updatedAt ASC LIMIT :limit")
     fun findByUpdateAtAscend(time: LocalDateTime, limit: Int): List<BeatmapsetExtendLite>
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM BeatmapsetExtendLite WHERE beatmapsetID IN :beatmapIDs")
+    fun deleteAllByBeatmapIDs(beatmapIDs: Iterable<Long>)
 
     // 批量更新字段
     @Modifying

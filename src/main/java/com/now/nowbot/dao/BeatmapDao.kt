@@ -19,6 +19,7 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.Tag
 import com.now.nowbot.util.JacksonUtil
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.*
@@ -101,8 +102,14 @@ class BeatmapDao(
         return extendBeatmapRepository.updateFailTimeByBeatmapID(beatmapID, fail)
     }
 
+    @Transactional
+    fun deleteExtendedBeatmapAndSet(beatmapIDs: Iterable<Long>) {
+        extendBeatmapRepository.deleteAllById(beatmapIDs)
+        extendBeatmapSetRepository.deleteAllByBeatmapIDs(beatmapIDs)
+    }
+
     fun saveExtendedBeatmap(beatmaps: List<Beatmap>) {
-        beatmaps.map { saveExtendedBeatmap(it) }
+        beatmaps.forEach { saveExtendedBeatmap(it) }
     }
 
     fun saveExtendedBeatmap(beatmap: Beatmap) {

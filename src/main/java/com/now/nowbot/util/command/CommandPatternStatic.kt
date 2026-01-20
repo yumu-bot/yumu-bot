@@ -45,6 +45,7 @@ const val FLAG_TYPE: String = "type"
 const val FLAG_TIME: String = "time"
 const val FLAG_TEXT: String = "text"
 const val FLAG_ANY: String = "any"
+const val FLAG_OPERATE: String = "operate"
 
 @Language("RegExp")
 val REG_CAPS_INSENSITIVE: String = "(?i)"
