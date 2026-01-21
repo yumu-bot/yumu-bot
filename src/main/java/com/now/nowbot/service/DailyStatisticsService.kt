@@ -24,7 +24,7 @@ class DailyStatisticsService(
     private val lastRequestTime = AtomicLong(0L)  // 原子变量，记录最后请求时间
 
     // 简单的速率限制方法
-    private fun waitForRateLimit(intervalMillis: Long = 4000) {
+    private fun waitForRateLimit(intervalMillis: Long = 1000) {
         while (true) {
             val now = System.currentTimeMillis()
             val last = lastRequestTime.get()
@@ -100,8 +100,9 @@ class DailyStatisticsService(
         val needSearch = mutableListOf<Pair<Long, OsuMode>>()
 
         // 1. 获取用户信息 (这是 1 次 API 请求)
-        waitForRateLimit()
+        waitForRateLimit(8000)
         val userInfoList = userApiService.getUsers(users = userIDs, isVariant = true, isBackground = true)
+
         val yesterdayInfo = userInfoDao.getFromYesterday(userIDs)
         val userMap = userInfoList.associateBy { it.userID }
 
@@ -126,7 +127,7 @@ class DailyStatisticsService(
         // 2. 串行获取成绩 (这是 N 次 API 请求)
         for ((uid, mode) in needSearch) {
             try {
-                waitForRateLimit()
+                waitForRateLimit(4000)
                 scoreApiService.getRecentScore(uid, mode, 0, 999, isBackground = true)
 
             } catch (e: Exception) {
