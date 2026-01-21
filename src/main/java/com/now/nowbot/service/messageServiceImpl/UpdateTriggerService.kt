@@ -10,6 +10,7 @@ import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.service.messageServiceImpl.UpdateTriggerService.UpdateType.*
+import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_ANY
@@ -73,10 +74,12 @@ class UpdateTriggerService(
             }
 
             MAIMAI -> Thread.startVirtualThread {
-                event.reply("""
+                event.reply(
+                    """
                     正在尝试更新舞萌、中二数据！
                     注意，这不会更新落雪歌曲数据库。
-                    """.trimIndent())
+                    """.trimIndent()
+                )
 
                 val startTime = System.currentTimeMillis()
 
@@ -94,7 +97,8 @@ class UpdateTriggerService(
 
                 val endTime = System.currentTimeMillis()
 
-                event.reply("""
+                event.reply(
+                    """
                 更新舞萌、中二节奏数据完成。
                 舞萌歌曲库：${(time1 - startTime) / 1000.0} s
                 舞萌外号库：${(time2 - time1) / 1000.0} s
@@ -104,7 +108,8 @@ class UpdateTriggerService(
                 中二节奏外号库：${(endTime - time5) / 1000.0} s
                 
                 总耗时：${(endTime - startTime) / 1000.0} s
-                """.trimIndent())
+                """.trimIndent()
+                )
             }
 
             LXNS -> {
@@ -117,26 +122,30 @@ class UpdateTriggerService(
                 lxMaiApiService.saveLxMaiCollections()
                 val endTime = System.currentTimeMillis()
 
-                event.reply("""
+                event.reply(
+                    """
                 更新落雪数据完成。
                 
                 歌曲数据库：${(time1 - startTime) / 1000.0} s
                 收藏库：${(endTime - time1) / 1000.0} s
                 总耗时：${(endTime - startTime) / 1000.0} s
-                """.trimIndent())
+                """.trimIndent()
+                )
             }
 
             OSU_DAILY -> {
-                event.reply("正在尝试更新 osu! 每日数据！")
-                val startTime = System.currentTimeMillis()
-                dailyStatisticsService.collectInfoAndScores()
-                val endTime = System.currentTimeMillis()
+                if (!Permission.isSuperAdmin(event.sender.id)) {
+                    throw PermissionException.DeniedException.BelowSuperAdministrator()
+                }
 
-                event.reply("""
-                更新 osu! 每日数据完成。
-                
-                总耗时：${(endTime - startTime) / 1000.0} s
-                """.trimIndent())
+                val startTime = System.currentTimeMillis()
+
+                event.reply("已提交更新指令，系统正在后台处理...")
+                dailyStatisticsService.collectInfoAndScores {
+                    val endTime = System.currentTimeMillis()
+                    event.reply("每日数据更新已完成，耗时：${(endTime - startTime) / 1000.0} s")
+                }
+
             }
         }
 

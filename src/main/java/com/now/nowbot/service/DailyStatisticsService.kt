@@ -9,6 +9,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 @Service
@@ -18,16 +19,23 @@ class DailyStatisticsService(
     private val userInfoDao: OsuUserInfoDao,
     private val bindDao: BindDao,
 ) {
+    private val isRunning = AtomicBoolean(false)
 
-    /**
-     * 统计任务包括 user info 以及 scores
-     */
-    fun collectInfoAndScores() {
+    fun collectInfoAndScores(callback: () -> Unit) {
+        if (!isRunning.compareAndSet(false, true)) {
+            log.warn("任务已在运行中，跳过本次触发")
+            return
+        }
+
         Thread.ofVirtual().name("DailyStat-Main").start {
-            val startTime = System.currentTimeMillis()
-            runTask()
-            val endTime = System.currentTimeMillis()
-            log.info("统计全部绑定用户完成, 共耗时: ${(endTime - startTime) / 1000} s")
+            try {
+                runTask()
+                callback()
+            } catch (e: Exception) {
+                log.error("任务失败", e)
+            } finally {
+                isRunning.set(false)
+            }
         }
     }
 
@@ -56,24 +64,22 @@ class DailyStatisticsService(
             if (userIDs.isEmpty()) break
 
 
-            log.info("获取到第 ${count.incrementAndGet()} 批用户：${userIDs.size} 个")
+            log.info("获取到第 ${count.incrementAndGet()} 批用户：${userIDs.size} 个，开头：${userIDs.firstOrNull()}，末尾：${userIDs.lastOrNull()}")
 
             try {
                 // 执行该批次：这里面的请求现在是一个接一个发的
-                processUserBatch(userIDs)
+                val processed = processUserBatch(userIDs)
 
                 offset += userIDs.size
 
                 // 批次间强制休息，给 API 喘息时间
-                log.info("第 ${count.get()} 批次用户已更新完成。")
-                Thread.sleep(2000)
+                log.info("第 ${count.get()} 批次用户已更新完成：${processed} 条更新。")
             } catch (e: Exception) {
-                log.error("处理批次 ${count.get()} 时发生异常，休息 10 秒后继续", e)
-                Thread.sleep(10000)
+                log.error("处理批次 ${count.get()} 时发生异常。", e)
             }
         }
     }
-    private fun processUserBatch(userIDs: List<Long>) {
+    private fun processUserBatch(userIDs: List<Long>): Int {
         val needSearch = mutableListOf<Pair<Long, OsuMode>>()
 
         // 1. 获取用户信息 (这是 1 次 API 请求)
@@ -106,11 +112,13 @@ class DailyStatisticsService(
                 scoreApiService.getRecentScore(uid, mode, 0, 999)
 
                 // 每个成绩请求之间强制间隔，极大地降低 429 风险
-                Thread.sleep(1000)
+                Thread.sleep(500)
             } catch (e: Exception) {
                 log.warn("获取用户 $uid 成绩失败: ${e.message}")
             }
         }
+
+        return needSearch.size
     }
 
     companion object {

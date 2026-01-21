@@ -97,19 +97,60 @@ class OsuApiBaseService(
     }
 
     fun runTask() {
+        // 使用虚拟线程启动消费者（通常在 init 或 PostConstruct 中已经启动）
+        // 这里的逻辑必须是非阻塞的
         while (IocAllReadyRunner.APP_ALIVE) {
-            val task = TASKS.take()
+            try {
+                // 1. 获取任务 (如果队列为空则等待，这是唯一的阻塞点)
+                val task = TASKS.take()
+
+                // 2. 立即分发给虚拟线程执行
+                // 不要在主循环里调用 limiter.acquire()，否则会阻塞下一个高优先级任务的获取
+                Thread.ofVirtual().start {
+                    executeTask(task)
+                }
+            } catch (_: InterruptedException) {
+                break
+            } catch (e: Exception) {
+                log.error("OsuApi 任务分发异常", e)
+            }
+        }
+    }
+
+    private fun <T> executeTask(task: RequestTask<T>) {
+        val isBackground = task.priority > 5
+
+        if (isBackground) {
+            backgroundInFlightLimiter.acquire()
+        }
+
+        try {
             val priority = task.priority
 
-            // 关键逻辑：如果是后台任务，必须先过一遍极慢的 backgroundLimiter
+            // 1. 后台任务限流 (耗时操作移到了这里，不再阻塞主分发循环)
             if (priority > 5) {
+                // 如果是后台任务，先获取极慢的后台令牌
                 backgroundLimiter.acquire(priority)
             }
 
-            // 然后再过全局 limiter (确保不突破总配额)
+            // 2. 全局限流 (确保不突破总配额)
+            // 因为 backgroundLimiter 很慢，后台任务到这一步很慢
+            // 而前台任务跳过了第一步，会直接竞争这一步，从而获得优先权
             limiter.acquire(priority)
 
-            Thread.ofVirtual().start { task.run(osuApiWebClient) }
+            // 3. 执行请求
+            task.run(osuApiWebClient)
+
+        } catch (_: Exception) {
+            // 处理在等待令牌期间发生的异常（如中断）
+            // 如果 future 还没完成，需要异常结束它，否则调用方会一直等到超时
+            // task.run 内部处理了大部分异常，但如果在 acquire 期间挂了，需要补救
+            // 由于 RequestTask 内部逻辑较封闭，这里通常不需要额外操作，
+            // 除非 acquire 抛出异常导致 run 没执行。
+        } finally {
+            if (isBackground) {
+                backgroundInFlightLimiter.release()
+            }
         }
     }
 
@@ -462,12 +503,14 @@ class OsuApiBaseService(
         private const val DEFAULT_PRIORITY = 5
         private const val MAX_RETRY = 3
 
-        private val limiter = RateLimiter(5, 5, 300)
-        private val backgroundLimiter = RateLimiter(1, 1, 100)
+        private val limiter = RateLimiter(10, 2, 600)
+        private val backgroundLimiter = RateLimiter(2, 2, 120)
+
+        // 限制同时处于 "等待API响应" 或 "等待限流令牌" 状态的后台任务最多 50 个
+        // 防止一次性把几千个用户的任务全塞进虚拟线程，导致内存占用过高
+        private val backgroundInFlightLimiter = Semaphore(50)
 
         private val TASKS = PriorityBlockingQueue<RequestTask<*>>()
-
-        fun getTaskQueueSize(): Int = TASKS.size
 
         fun hasPriority(): Boolean = ContextUtil.getContext("osu-api-priority", Int::class.java) != null
 
