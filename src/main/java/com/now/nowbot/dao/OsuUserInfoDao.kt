@@ -244,11 +244,10 @@ class OsuUserInfoDao(
             .forEach { user ->
                 val today = getLastToday(user.userID, user.mode, now)
 
-                if (today != null && user.playCount > 0 && today.playCount == user.playCount) {
-                    return
+                if (today == null || (user.playCount != 0L && today.playCount != user.playCount)) {
+                    infoRepository.save(user)
                 }
 
-                infoRepository.save(user)
             }
     }
 
@@ -292,6 +291,18 @@ class OsuUserInfoDao(
     private fun getFromUserIDsYesterday(userIDs: List<Long>): List<InfoArchive> {
         val time = LocalDate.now().minusDays(1)
         return infoRepository.getFromUserIDs(userIDs, LocalDateTime.of(time, LocalTime.MIN), LocalDateTime.of(time, LocalTime.MAX))
+    }
+
+    fun getPlayCountsFromUserIDBeforeToday(userID: Long): List<Long> {
+        val time = LocalDateTime.of(LocalDate.now().minusDays(1), LocalTime.MAX)
+        val year = time.minusYears(1)
+
+        val osu = infoRepository.getLastBetween(userID, OsuMode.OSU, year, time)?.playCount ?: 0L
+        val taiko = infoRepository.getLastBetween(userID, OsuMode.TAIKO, year, time)?.playCount ?: 0L
+        val catch = infoRepository.getLastBetween(userID, OsuMode.CATCH, year, time)?.playCount ?: 0L
+        val mania = infoRepository.getLastBetween(userID, OsuMode.MANIA, year, time)?.playCount ?: 0L
+
+        return listOf(osu, taiko, catch, mania)
     }
 
     companion object {

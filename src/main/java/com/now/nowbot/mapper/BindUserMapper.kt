@@ -86,6 +86,6 @@ interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificatio
 
     fun countAllByOsuID(osuID: Long): Int
 
-    @Query("select u.osuID from OsuBindUserLite u order by u.osuID limit 50 offset :offset")
-    fun getAllBindUserIdLimit50(offset: Int): List<Long>
+    @Query("select u from OsuBindUserLite u order by u.osuID limit 50 offset :offset")
+    fun getAllBindUserLimit50(offset: Int): List<OsuBindUserLite>
 }

@@ -3,7 +3,9 @@ package com.now.nowbot.service
 import com.now.nowbot.config.IocAllReadyRunner
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
+import com.now.nowbot.model.BindUser
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import org.slf4j.LoggerFactory
@@ -48,7 +50,7 @@ class DailyStatisticsService(
 
         Thread.ofVirtual().name("DailyStat-Main").start {
             try {
-                runTask()
+                collectingBindUser()
                 callback()
             } catch (e: Exception) {
                 log.error("任务失败", e)
@@ -67,75 +69,76 @@ class DailyStatisticsService(
         }
     }
 
-    /**
-     * 统计任务包括 user info 以及 scores
-     */
-    fun runTask() {
+    fun collectingBindUser() {
         log.info("开始串行统计全部绑定用户")
 
-        var offset = 0
+        val offset = AtomicInteger(0)
         val count = AtomicInteger(0)
 
         while (IocAllReadyRunner.APP_ALIVE) {
             // 获取一批用户
-            val userIDs = bindDao.getAllUserIdLimit50(offset)
-            if (userIDs.isEmpty()) break
-
-            log.info("获取到第 ${count.incrementAndGet()} 批用户：${userIDs.size} 个，开头：${userIDs.firstOrNull()}，末尾：${userIDs.lastOrNull()}")
+            val users = bindDao.getBindUsersLimit50(offset.get())
+            if (users.isEmpty()) break
 
             try {
-                // 执行该批次：这里面的请求现在是一个接一个发的
-                val processed = processUserBatch(userIDs)
-
-                offset += userIDs.size
-
-                // 批次间强制休息，给 API 喘息时间
+                val processed = collectingUsers(users)
                 log.info("第 ${count.get()} 批次用户已更新完成：${processed} 条更新。")
+                offset.addAndGet(users.size)
             } catch (e: Exception) {
-                log.error("处理批次 ${count.get()} 时发生异常。", e)
+                log.error("处理批次 ${count.get()} 时发生异常：", e)
             }
         }
+
+        log.info("统计全部绑定用户已完成")
     }
-    private fun processUserBatch(userIDs: List<Long>): Int {
-        val needSearch = mutableListOf<Pair<Long, OsuMode>>()
 
-        // 1. 获取用户信息 (这是 1 次 API 请求)
+    private fun collectingUsers(users: List<BindUser>): Int {
+        val ids = users.map { it.userID }
+
         waitForRateLimit(8000)
-        val userInfoList = userApiService.getUsers(users = userIDs, isVariant = true, isBackground = true)
+        val stats = userApiService.getUsers(users = ids, isVariant = true, isBackground = true)
 
-        val yesterdayInfo = userInfoDao.getFromYesterday(userIDs)
-        val userMap = userInfoList.associateBy { it.userID }
+        val needUpdate = stats.flatMap { micro ->
+            val plays = userInfoDao.getPlayCountsFromUserIDBeforeToday(micro.userID)
 
-        for (user in yesterdayInfo) {
-            val uid = user.userID ?: continue
-            val mode = user.mode
-            val currentInfo = userMap[uid] ?: continue
+            val currents = listOf(
+                micro.rulesets?.osu?.playCount ?: 0L,
+                micro.rulesets?.taiko?.playCount ?: 0L,
+                micro.rulesets?.fruits?.playCount ?: 0L,
+                micro.rulesets?.mania?.playCount ?: 0L,
+            )
 
-            val newPlayCount = when (mode) {
-                OsuMode.OSU -> currentInfo.rulesets?.osu?.playCount
-                OsuMode.TAIKO -> currentInfo.rulesets?.taiko?.playCount
-                OsuMode.CATCH -> currentInfo.rulesets?.fruits?.playCount
-                OsuMode.MANIA -> currentInfo.rulesets?.mania?.playCount
-                else -> null
-            }
+            plays.mapIndexed { index, pc ->
+                val current = currents[index]
+                val changed = current != pc
 
-            if (newPlayCount != null && user.playCount != newPlayCount) {
-                needSearch.add(uid to mode)
+                val mode = OsuMode.getMode(index)
+
+                Triple(micro, mode, changed)
+            }.filter {
+                it.third
+            }.map {
+                it.first to it.second
             }
         }
 
-        // 2. 串行获取成绩 (这是 N 次 API 请求)
-        for ((uid, mode) in needSearch) {
+        val size = updatingUsers(needUpdate)
+
+        return size
+    }
+
+    private fun updatingUsers(needUpdate: List<Pair<MicroUser, OsuMode>>): Int {
+        needUpdate.forEach { (user, mode) ->
             try {
                 waitForRateLimit(4000)
-                scoreApiService.getRecentScore(uid, mode, 0, 999, isBackground = true)
-
+                scoreApiService.getRecentScore(user.userID, mode, 0, 999, isBackground = true)
+                log.info("正在刷新用户 ${user.username} 的 ${mode.shortName} 模式成绩...")
             } catch (e: Exception) {
-                log.warn("获取用户 $uid 成绩失败: ${e.message}")
+                log.warn("获取用户 ${user.username} 成绩失败: ${e.message}")
             }
         }
 
-        return needSearch.size
+        return needUpdate.size
     }
 
     companion object {
