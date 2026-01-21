@@ -64,7 +64,6 @@ class DailyStatisticsService(
             val userIDs = bindDao.getAllUserIdLimit50(offset)
             if (userIDs.isEmpty()) break
 
-
             log.info("获取到第 ${count.incrementAndGet()} 批用户：${userIDs.size} 个，开头：${userIDs.firstOrNull()}，末尾：${userIDs.lastOrNull()}")
 
             try {
@@ -79,6 +78,8 @@ class DailyStatisticsService(
             } catch (e: Exception) {
                 log.error("处理批次 ${count.get()} 时发生异常。", e)
                 Thread.sleep(10000)
+            } finally {
+                Thread.sleep(1000)
             }
         }
     }
