@@ -55,6 +55,7 @@ class DailyStatisticsService(
         log.info("开始串行统计全部绑定用户")
         OsuApiBaseService.setPriority(9)
 
+
         var offset = 0
         val count = AtomicInteger(0)
 
@@ -74,8 +75,10 @@ class DailyStatisticsService(
 
                 // 批次间强制休息，给 API 喘息时间
                 log.info("第 ${count.get()} 批次用户已更新完成：${processed} 条更新。")
+                Thread.sleep(500)
             } catch (e: Exception) {
                 log.error("处理批次 ${count.get()} 时发生异常。", e)
+                Thread.sleep(10000)
             }
         }
     }
