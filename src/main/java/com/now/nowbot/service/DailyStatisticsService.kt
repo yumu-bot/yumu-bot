@@ -21,7 +21,7 @@ class DailyStatisticsService(
 ) {
     private val isRunning = AtomicBoolean(false)
 
-    fun collectInfoAndScores(callback: () -> Unit) {
+    fun collectInfoAndScores(callback: () -> Unit = {}) {
         if (!isRunning.compareAndSet(false, true)) {
             log.warn("任务已在运行中，跳过本次触发")
             return
