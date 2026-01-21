@@ -121,7 +121,7 @@ class ScoreApiImpl(
         return if (limit <= 100) {
             getBests(id, mode, offset, limit)
         } else {
-            return getBests(id, mode, offset, 100) + getBests(id, mode, offset + 100, limit - 100)
+            getBests(id, mode, offset, 100) + getBests(id, mode, offset + 100, limit - 100)
         }
     }
 
@@ -157,8 +157,9 @@ class ScoreApiImpl(
         mode: OsuMode?,
         offset: Int,
         limit: Int,
+        isBackground: Boolean
     ): List<LazerScore> {
-        return getRecent(uid, mode, true, offset, limit)!!
+        return getRecent(uid, mode, true, offset, limit, isBackground)!!
     }
 
     override fun getScore(scoreID: Long): LazerScore {
@@ -502,8 +503,9 @@ class ScoreApiImpl(
         includeFails: Boolean,
         offset: Int,
         limit: Int,
+        isBackground: Boolean = false
     ): List<LazerScore>? {
-        return request { client ->
+        return request(isBackground) { client ->
             client.get()
                 .uri { uriBuilder: UriBuilder ->
                     uriBuilder
@@ -527,9 +529,9 @@ class ScoreApiImpl(
     /**
      * 错误包装
      */
-    private fun <T> request(request: (WebClient) -> Mono<T>): T {
+    private fun <T> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
         return try {
-            base.request(request)
+            base.request(isBackground, request)
         } catch (e: Throwable) {
             val ex = e.findCauseOfType<WebClientException>()
 

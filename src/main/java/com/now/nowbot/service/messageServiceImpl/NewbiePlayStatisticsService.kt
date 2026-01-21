@@ -120,7 +120,7 @@ class NewbiePlayStatisticsService(
     }
 
     private fun handleList(): String {
-        return newbieService.getAlList(ppFormat)
+        return newbieService.getStatisticsList(ppFormat)
     }
 
     private fun getRankString(i: Int) = if (i > 0) {

@@ -13,7 +13,6 @@ import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -143,14 +142,14 @@ class NewbieService(
 
     fun dailyTask(users: List<Long>) {
         log.info("开始执行新人群统计任务")
-        OsuApiBaseService.setPriority(15)
-        users.chunked(50) { usersId ->
-            for (uid in usersId) {
-                log.info("统计 [$uid] 的数据")
-                val dailyStatistic = getDailyStatistic(uid, LocalDate.now().minusDays(1))
-                val pp = (osuUserInfoDao.getLast(uid, OsuMode.OSU)?.pp ?: 0.0).toFloat()
+
+        users.chunked(50) { userIDs ->
+            for (userID in userIDs) {
+                log.info("统计 [$userID] 的数据")
+                val dailyStatistic = getDailyStatistic(userID, LocalDate.now().minusDays(1))
+                val pp = (osuUserInfoDao.getLast(userID, OsuMode.OSU)?.pp ?: 0.0).toFloat()
                 val saveData = NewbiePlayCount(
-                    uid = uid.toInt(),
+                    uid = userID.toInt(),
                     pp = pp,
                     date = dailyStatistic.date,
                     playTime = 0,
@@ -163,7 +162,7 @@ class NewbieService(
         }
     }
 
-    fun getAlList(format: DecimalFormat): String {
+    fun getStatisticsList(format: DecimalFormat): String {
         val pc = newbiePlayCountRepository.getDailyTop5PlayCount()
         val tth = newbiePlayCountRepository.getDailyTop5TotalHits()
         val pp = newbiePlayCountRepository.getDailyTop5pp()

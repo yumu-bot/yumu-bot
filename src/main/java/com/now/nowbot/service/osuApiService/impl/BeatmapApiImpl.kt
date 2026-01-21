@@ -1086,9 +1086,9 @@ class BeatmapApiImpl(
     /**
      * 错误包装
      */
-    private fun <T> request(request: (WebClient) -> Mono<T>): T {
+    private fun <T> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
         return try {
-            base.request(request)
+            base.request(isBackground, request)
         } catch (e: Throwable) {
             val ex = e.findCauseOfType<WebClientException>()
 

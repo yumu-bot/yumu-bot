@@ -78,7 +78,7 @@ class MatchApiImpl(
     override fun getRoom(roomID: Long): Room {
         return request { client ->
             client.get()
-                .uri("rooms/${roomID}/events", )
+                .uri("rooms/${roomID}/events")
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(Room::class.java)
@@ -134,9 +134,9 @@ class MatchApiImpl(
     /**
      * 错误包装
      */
-    private fun <T> request(request: (WebClient) -> Mono<T>): T {
+    private fun <T> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
         return try {
-            base.request(request)
+            base.request(isBackground, request)
         } catch (e: Throwable) {
             val ex = e.findCauseOfType<WebClientException>()
 

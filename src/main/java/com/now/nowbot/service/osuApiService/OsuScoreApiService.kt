@@ -101,7 +101,7 @@ interface OsuScoreApiService {
         limit: Int,
     ): List<LazerScore>
 
-    fun getRecentScore(uid: Long, mode: OsuMode?, offset: Int, limit: Int): List<LazerScore>
+    fun getRecentScore(uid: Long, mode: OsuMode?, offset: Int, limit: Int, isBackground: Boolean = false): List<LazerScore>
 
     fun getRecentScore(user: OsuUser): List<LazerScore> {
         return getRecentScore(user.userID, user.currentOsuMode, 0, 100)

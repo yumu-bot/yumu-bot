@@ -21,7 +21,6 @@ import com.now.nowbot.util.JacksonUtil
 import io.netty.channel.unix.Errors
 import io.netty.handler.timeout.ReadTimeoutException
 import kotlinx.io.IOException
-import org.codehaus.plexus.util.StringUtils
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
@@ -55,16 +54,17 @@ import java.util.concurrent.Callable
     // 用来确认玩家是否存在于服务器，而无需使用 API 请求。
     override fun isPlayerExist(name: String): Boolean {
         val response = request { client ->
-            client.get().uri("https://osu.ppy.sh/users/{name}", name).headers(base::insertHeader).retrieve()
+            client.get().uri("https://osu.ppy.sh/users/@{name}", name)
+                .headers(base::insertHeader).retrieve()
                 .bodyToMono(String::class.java).onErrorReturn("")
         }
 
-        return StringUtils.isNotEmpty(response)
+        return response.isNotBlank()
     }
 
     override fun getOauthUrl(state: String, full: Boolean): String {
         return UriComponentsBuilder.fromUriString("https://osu.ppy.sh/oauth/authorize")
-            .queryParam("client_id", base.oauthId).queryParam("redirect_uri", base.redirectUrl)
+            .queryParam("client_id", base.oauthID).queryParam("redirect_uri", base.redirectUrl)
             .queryParam("response_type", "code").queryParam(
                 "scope", if (full) "chat.read chat.write chat.write_manage forum.write friends.read identify public"
                 else "friends.read identify public"
@@ -105,7 +105,7 @@ import java.util.concurrent.Callable
     }
 
     override fun refreshUserToken(user: BindUser): String? {
-        if (!user.isAuthorized) return base.botToken
+        if (!user.isAuthorized) return base.getBotToken()
         return base.refreshUserToken(user, false)
     }
 
@@ -117,6 +117,8 @@ import java.util.concurrent.Callable
         user.username = o.username
         user.mode = o.currentOsuMode
     }
+
+
 
     override fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser {
         if (!user.isAuthorized) return getOsuUser(user.userID, mode)
@@ -163,9 +165,8 @@ import java.util.concurrent.Callable
         return request { client ->
             client.get().uri {
                     it.path("users/{id}/{mode}").build(id, mode.shortName)
-                }.headers(base::insertHeader).retrieve()/*
-            .bodyToMono(JsonNode::class.java).map { JacksonUtil.parseObject(it, OsuUser::class.java) }.block()!!
-            */.bodyToMono(OsuUser::class.java).map { data: OsuUser ->
+                }.headers(base::insertHeader).retrieve()
+                .bodyToMono(OsuUser::class.java).map { data: OsuUser ->
                     userInfoDao.saveUserToday(data, mode)
                     data.currentOsuMode = getMode(mode, data.defaultOsuMode)
 
@@ -222,16 +223,20 @@ import java.util.concurrent.Callable
      * @param users 注意, 单次请求数量无限制
      * @param isVariant 是否获取玩家的多模式信息
      */
-    override fun <T : Number> getUsers(users: Iterable<T>, isVariant: Boolean): List<MicroUser> {
-        val idChunk = users.chunked(50)
+    override fun <T : Number> getUsers(users: Collection<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
+        if (users.size <= 50) {
+            return getUsersPrivate(users = users, isVariant = isVariant, isBackground = isBackground)
+        } else {
+            val idChunk = users.chunked(50)
 
-        val callables = idChunk.map {
-            Callable {
-                getUsersPrivate(it, isVariant = isVariant)
+            val callables = idChunk.map {
+                Callable {
+                    getUsersPrivate(it, isVariant = isVariant, isBackground = isBackground)
+                }
             }
-        }
 
-        return AsyncMethodExecutor.awaitCallableExecute(callables).flatten()
+            return AsyncMethodExecutor.awaitCallableExecute(callables).flatten()
+        }
     }
 
     /**
@@ -240,8 +245,8 @@ import java.util.concurrent.Callable
      * @param users 注意, 单次请求数量必须小于50
      * @param isVariant 是否获取玩家的多模式信息
      */
-    private fun <T : Number> getUsersPrivate(users: Iterable<T>, isVariant: Boolean): List<MicroUser> {
-        return request { client ->
+    private fun <T : Number> getUsersPrivate(users: Iterable<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
+        return request(isBackground) { client ->
             client.get().uri {
                     it.path("users").queryParam("ids[]", users.toList())
                         .queryParam("include_variant_statistics", isVariant).build()
@@ -333,9 +338,9 @@ import java.util.concurrent.Callable
     /**
      * 错误包装
      */
-    private fun <T> request(request: (WebClient) -> Mono<T>): T {
+    private fun <T> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
         return try {
-            base.request(request)
+            base.request(isBackground, request)
         } catch (e: Throwable) {
             val ex = e.findCauseOfType<WebClientException>()
 

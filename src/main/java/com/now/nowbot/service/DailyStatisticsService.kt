@@ -6,7 +6,6 @@ import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicBoolean
@@ -53,8 +52,6 @@ class DailyStatisticsService(
      */
     fun runTask() {
         log.info("开始串行统计全部绑定用户")
-        OsuApiBaseService.setPriority(9)
-
 
         var offset = 0
         val count = AtomicInteger(0)
@@ -87,7 +84,7 @@ class DailyStatisticsService(
         val needSearch = mutableListOf<Pair<Long, OsuMode>>()
 
         // 1. 获取用户信息 (这是 1 次 API 请求)
-        val userInfoList = userApiService.getUsers(userIDs, isVariant = true)
+        val userInfoList = userApiService.getUsers(users = userIDs, isVariant = true, isBackground = true)
         val yesterdayInfo = userInfoDao.getFromYesterday(userIDs)
         val userMap = userInfoList.associateBy { it.userID }
 
@@ -113,7 +110,7 @@ class DailyStatisticsService(
         for ((uid, mode) in needSearch) {
             try {
                 // 这里不要再套任何线程池或 fork，直接顺序调用
-                scoreApiService.getRecentScore(uid, mode, 0, 999)
+                scoreApiService.getRecentScore(uid, mode, 0, 999, isBackground = true)
 
                 // 每个成绩请求之间强制间隔，极大地降低 429 风险
                 Thread.sleep(500)

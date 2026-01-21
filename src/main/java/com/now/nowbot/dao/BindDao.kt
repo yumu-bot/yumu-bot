@@ -17,7 +17,6 @@ import com.now.nowbot.model.ppysb.SBUser
 import com.now.nowbot.qq.contact.Group
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-import com.now.nowbot.service.osuApiService.impl.OsuApiBaseService.Companion.setPriority
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.BindException.BindIllegalArgumentException.IllegalQQ
 import com.now.nowbot.throwable.botRuntimeException.BindException.NotBindException.UserNotBind
@@ -553,8 +552,7 @@ class BindDao(
         val now = System.currentTimeMillis()
         var succeedCount = 0
         var users: MutableList<OsuBindUserLite>
-        // 降低更新 token 时的优先级
-        setPriority(10)
+
         // 更新暂时没失败过的
         while ((bindUserMapper.getOldBindUser(now).also { users = it.toMutableList() }).isNotEmpty()) {
             try {
