@@ -71,10 +71,8 @@ class DailyStatisticsService(
 
                 // 批次间强制休息，给 API 喘息时间
                 log.info("第 ${count.get()} 批次用户已更新完成：${processed} 条更新。")
-                Thread.sleep(500)
             } catch (e: Exception) {
                 log.error("处理批次 ${count.get()} 时发生异常。", e)
-                Thread.sleep(10000)
             } finally {
                 Thread.sleep(1000)
             }
@@ -112,10 +110,11 @@ class DailyStatisticsService(
                 // 这里不要再套任何线程池或 fork，直接顺序调用
                 scoreApiService.getRecentScore(uid, mode, 0, 999, isBackground = true)
 
-                // 每个成绩请求之间强制间隔，极大地降低 429 风险
-                Thread.sleep(500)
             } catch (e: Exception) {
                 log.warn("获取用户 $uid 成绩失败: ${e.message}")
+            } finally {
+                // 每个成绩请求之间强制间隔，极大地降低 429 风险
+                Thread.sleep(1000)
             }
         }
 

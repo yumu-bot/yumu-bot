@@ -43,10 +43,11 @@ class OsuApiBaseService(
         private val log: Logger = LoggerFactory.getLogger(OsuApiBaseService::class.java)
 
         // API 限制常量
-        private const val GLOBAL_QUOTA_PER_MINUTE = 600
-        private const val GLOBAL_QUOTA_PER_SECOND = 6
+        private const val GLOBAL_QUOTA_PER_MINUTE = 300
         private const val FOREGROUND_QUOTA_PER_SECOND = 5
+        private const val FOREGROUND_BURST_PER_SECOND = 6
         private const val BACKGROUND_QUOTA_PER_SECOND = 1
+        private const val BACKGROUND_BURST_PER_SECOND = 1
         private const val MAX_IN_FLIGHT_REQUESTS = 50
         private const val REQUEST_TIMEOUT_SECONDS = 30L
         private const val MAX_RETRIES = 3
@@ -155,14 +156,14 @@ class OsuApiBaseService(
         // 限流器
         private val foregroundLimiter = AdaptiveRateLimiter(
             baseQuotaPerSecond = FOREGROUND_QUOTA_PER_SECOND,
-            burstCapacity = FOREGROUND_QUOTA_PER_SECOND * 2,
-            maxQuotaPerMinute = GLOBAL_QUOTA_PER_MINUTE / 2
+            burstCapacity = FOREGROUND_BURST_PER_SECOND,
+            maxQuotaPerMinute = FOREGROUND_QUOTA_PER_SECOND * 60
         )
 
         private val backgroundLimiter = AdaptiveRateLimiter(
             baseQuotaPerSecond = BACKGROUND_QUOTA_PER_SECOND,
-            burstCapacity = BACKGROUND_QUOTA_PER_SECOND,
-            maxQuotaPerMinute = GLOBAL_QUOTA_PER_MINUTE / 2
+            burstCapacity = BACKGROUND_BURST_PER_SECOND,
+            maxQuotaPerMinute = BACKGROUND_QUOTA_PER_SECOND * 60
         )
 
         // 并发控制
