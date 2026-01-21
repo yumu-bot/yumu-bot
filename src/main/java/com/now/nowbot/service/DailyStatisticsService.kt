@@ -24,7 +24,7 @@ class DailyStatisticsService(
     private val lastRequestTime = AtomicLong(0L)  // 原子变量，记录最后请求时间
 
     // 简单的速率限制方法
-    private fun waitForRateLimit(intervalMillis: Long = 2000) {
+    private fun waitForRateLimit(intervalMillis: Long = 4000) {
         while (true) {
             val now = System.currentTimeMillis()
             val last = lastRequestTime.get()

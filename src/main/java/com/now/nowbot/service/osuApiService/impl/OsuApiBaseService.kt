@@ -26,6 +26,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneOffset
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
@@ -365,13 +366,13 @@ class OsuApiBaseService(
                 backgroundCircuitBreakerState.set(CircuitBreakerState.OPEN)
                 backgroundLimiter.reset()
                 log.warn("Background API rate limited. Background circuit breaker OPEN until {}",
-                    Instant.ofEpochMilli(waitUntil))
+                    Instant.ofEpochMilli(waitUntil).atOffset(ZoneOffset.ofHours(8)))
             } else {
                 lastForeground429Time.set(waitUntil)
                 foregroundCircuitBreakerState.set(CircuitBreakerState.OPEN)
                 foregroundLimiter.reset()
                 log.warn("Foreground API rate limited. Foreground circuit breaker OPEN until {}",
-                    Instant.ofEpochMilli(waitUntil))
+                    Instant.ofEpochMilli(waitUntil).atOffset(ZoneOffset.ofHours(8)))
             }
         }
 
