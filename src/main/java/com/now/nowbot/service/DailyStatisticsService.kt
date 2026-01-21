@@ -73,7 +73,8 @@ class DailyStatisticsService(
         log.info("开始串行统计全部绑定用户")
 
         val offset = AtomicInteger(0)
-        val count = AtomicInteger(0)
+        val count = AtomicInteger(1)
+        val total = AtomicInteger(0)
 
         while (IocAllReadyRunner.APP_ALIVE) {
             // 获取一批用户
@@ -82,14 +83,17 @@ class DailyStatisticsService(
 
             try {
                 val processed = collectingUsers(users)
-                log.info("第 ${count.get()} 批次用户已更新完成：${processed} 条更新。")
+
+                log.info("第 ${count.get()} 批次用户已更新完成：${processed} 条，总计 ${total.addAndGet(processed)} 条更新。")
                 offset.addAndGet(users.size)
             } catch (e: Exception) {
-                log.error("处理批次 ${count.get()} 时发生异常：", e)
+                log.error("第 ${count.get()} 批次发生异常：", e)
             }
+
+            count.getAndIncrement()
         }
 
-        log.info("统计全部绑定用户已完成")
+        log.info("统计全部绑定用户已完成，总计 ${total.get()} 条更新。")
     }
 
     private fun collectingUsers(users: List<BindUser>): Int {

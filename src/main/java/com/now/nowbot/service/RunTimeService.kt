@@ -56,14 +56,14 @@ class RunTimeService(
         dailyStatisticsService.collectInfoAndScores()
     }
 
-    // 每天凌晨4点20统计玩家百分比
-    @Scheduled(cron = "0 20 4 * * *")
+    // 每天凌晨5点20统计玩家百分比
+    @Scheduled(cron = "0 20 5 * * *")
     fun collectPercentiles() {
         dailyStatisticsService.collectPercentiles()
     }
 
-    // 每天凌晨4点30统计新人群用户信息
-    @Scheduled(cron = "0 30 4 * * *")
+    // 每天凌晨5点30统计新人群用户信息
+    @Scheduled(cron = "0 30 5 * * *")
     fun statisticNewbieInfo() {
         val bot = botContainer.robots[newbieConfig.yumuBot] ?: botContainer.robots[newbieConfig.hydrantBot]
         if (bot == null) {
