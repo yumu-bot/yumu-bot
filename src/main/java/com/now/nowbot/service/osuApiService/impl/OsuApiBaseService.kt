@@ -504,7 +504,7 @@ class OsuApiBaseService(
         private const val MAX_RETRY = 3
 
         private val limiter = RateLimiter(10, 2, 600)
-        private val backgroundLimiter = RateLimiter(2, 2, 120)
+        private val backgroundLimiter = RateLimiter(1, 1, 30)
 
         // 限制同时处于 "等待API响应" 或 "等待限流令牌" 状态的后台任务最多 50 个
         // 防止一次性把几千个用户的任务全塞进虚拟线程，导致内存占用过高
