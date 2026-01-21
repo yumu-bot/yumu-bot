@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
 @Service
 class DailyStatisticsService(
@@ -19,6 +20,25 @@ class DailyStatisticsService(
     private val bindDao: BindDao,
 ) {
     private val isRunning = AtomicBoolean(false)
+
+    private val lastRequestTime = AtomicLong(0L)  // 原子变量，记录最后请求时间
+
+    // 简单的速率限制方法
+    private fun waitForRateLimit(intervalMillis: Long = 2000) {
+        while (true) {
+            val now = System.currentTimeMillis()
+            val last = lastRequestTime.get()
+            val elapsed = now - last
+
+            if (elapsed >= intervalMillis) {
+                if (lastRequestTime.compareAndSet(last, now)) {
+                    return
+                }
+            } else {
+                Thread.sleep(intervalMillis - elapsed)
+            }
+        }
+    }
 
     fun collectInfoAndScores(callback: () -> Unit = {}) {
         if (!isRunning.compareAndSet(false, true)) {
@@ -73,8 +93,6 @@ class DailyStatisticsService(
                 log.info("第 ${count.get()} 批次用户已更新完成：${processed} 条更新。")
             } catch (e: Exception) {
                 log.error("处理批次 ${count.get()} 时发生异常。", e)
-            } finally {
-                Thread.sleep(1000)
             }
         }
     }
@@ -82,6 +100,7 @@ class DailyStatisticsService(
         val needSearch = mutableListOf<Pair<Long, OsuMode>>()
 
         // 1. 获取用户信息 (这是 1 次 API 请求)
+        waitForRateLimit()
         val userInfoList = userApiService.getUsers(users = userIDs, isVariant = true, isBackground = true)
         val yesterdayInfo = userInfoDao.getFromYesterday(userIDs)
         val userMap = userInfoList.associateBy { it.userID }
@@ -107,14 +126,11 @@ class DailyStatisticsService(
         // 2. 串行获取成绩 (这是 N 次 API 请求)
         for ((uid, mode) in needSearch) {
             try {
-                // 这里不要再套任何线程池或 fork，直接顺序调用
+                waitForRateLimit()
                 scoreApiService.getRecentScore(uid, mode, 0, 999, isBackground = true)
 
             } catch (e: Exception) {
                 log.warn("获取用户 $uid 成绩失败: ${e.message}")
-            } finally {
-                // 每个成绩请求之间强制间隔，极大地降低 429 风险
-                Thread.sleep(1000)
             }
         }
 

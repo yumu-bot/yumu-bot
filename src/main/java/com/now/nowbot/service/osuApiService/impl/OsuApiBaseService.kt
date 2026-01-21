@@ -153,7 +153,7 @@ class OsuApiBaseService(
             if (priorityCompare != 0) priorityCompare else a.createdAt.compareTo(b.createdAt)
         }
 
-        // 限流器
+        // 限流器 - 分开前台和后台
         private val foregroundLimiter = AdaptiveRateLimiter(
             baseQuotaPerSecond = FOREGROUND_QUOTA_PER_SECOND,
             burstCapacity = FOREGROUND_BURST_PER_SECOND,
@@ -170,30 +170,39 @@ class OsuApiBaseService(
         private val inFlightCounter = AtomicLong(0)
         private val semaphore = Semaphore(MAX_IN_FLIGHT_REQUESTS)
 
-        // 全局配额跟踪（分钟级别）
-        private val minuteQuotaTracker = SlidingWindowQuotaTracker(
+        // 全局配额跟踪（分钟级别）- 前台后台分开统计
+        private val foregroundMinuteQuotaTracker = SlidingWindowQuotaTracker(
             windowSizeMillis = 60_000L,
-            maxRequests = GLOBAL_QUOTA_PER_MINUTE
+            maxRequests = (GLOBAL_QUOTA_PER_MINUTE * 0.8).toInt() // 前台分配80%
         )
 
-        // 熔断器状态
-        private val circuitBreakerState = AtomicReference(CircuitBreakerState.CLOSED)
-        private val last429Time = AtomicLong(0)
+        private val backgroundMinuteQuotaTracker = SlidingWindowQuotaTracker(
+            windowSizeMillis = 60_000L,
+            maxRequests = (GLOBAL_QUOTA_PER_MINUTE * 0.2).toInt() // 后台分配20%
+        )
+
+        // 分开的熔断器状态 - 前台和后台独立
+        private val foregroundCircuitBreakerState = AtomicReference(CircuitBreakerState.CLOSED)
+        private val backgroundCircuitBreakerState = AtomicReference(CircuitBreakerState.CLOSED)
+        private val lastForeground429Time = AtomicLong(0)
+        private val lastBackground429Time = AtomicLong(0)
 
         init {
             // 启动消费者线程
             Thread.ofVirtual().name("osu-api-scheduler").start {
                 while (IocAllReadyRunner.APP_ALIVE) {
                     try {
-                        // 检查熔断器
-                        checkCircuitBreaker()
-
                         // 从队列中获取任务（阻塞）
                         val task = taskQueue.take()
 
                         // 检查任务是否已超时
                         if (isTaskExpired(task)) {
                             task.completeExceptionally(TimeoutException("Request timeout before execution"))
+                            continue
+                        }
+
+                        // 检查对应任务类型的熔断器
+                        if (shouldSkipDueToCircuitBreaker(task)) {
                             continue
                         }
 
@@ -211,6 +220,30 @@ class OsuApiBaseService(
             }
         }
 
+        private fun shouldSkipDueToCircuitBreaker(task: ApiRequestTask<*>): Boolean {
+            val circuitBreaker = if (task.isBackground) backgroundCircuitBreakerState else foregroundCircuitBreakerState
+
+            if (circuitBreaker.get() == CircuitBreakerState.OPEN) {
+                val last429Time = if (task.isBackground) lastBackground429Time.get() else lastForeground429Time.get()
+                val waitTime = last429Time - System.currentTimeMillis()
+
+                if (waitTime > 0) {
+                    // 将任务重新放回队列，等待熔断器恢复
+                    Thread.ofVirtual().start {
+                        Thread.sleep(min(waitTime, 1000L)) // 最多等待1秒再重试
+                        if (!task.timedOut) {
+                            taskQueue.put(task)
+                        }
+                    }
+                    return true
+                } else {
+                    // 熔断器时间已过，关闭熔断器
+                    circuitBreaker.set(CircuitBreakerState.CLOSED)
+                }
+            }
+            return false
+        }
+
         fun <T> submit(
             request: (WebClient) -> Mono<T>,
             isBackground: Boolean,
@@ -226,17 +259,19 @@ class OsuApiBaseService(
                 timeoutSeconds = timeout
             )
 
-            // 立即检查熔断器
-            if (circuitBreakerState.get() == CircuitBreakerState.OPEN) {
-                val waitUntil = last429Time.get()
-                val waitTime = waitUntil - System.currentTimeMillis()
+            // 检查对应类型的熔断器
+            val circuitBreaker = if (isBackground) backgroundCircuitBreakerState else foregroundCircuitBreakerState
+            val last429Time = if (isBackground) lastBackground429Time.get() else lastForeground429Time.get()
+
+            if (circuitBreaker.get() == CircuitBreakerState.OPEN) {
+                val waitTime = last429Time - System.currentTimeMillis()
                 if (waitTime > 0) {
                     task.completeExceptionally(
-                        RuntimeException("API circuit breaker open. Retry after ${waitTime}ms")
+                        RuntimeException("${if (isBackground) "Background" else "Foreground"} API circuit breaker open. Retry after ${waitTime}ms")
                     )
                     return future
                 } else {
-                    circuitBreakerState.set(CircuitBreakerState.CLOSED)
+                    circuitBreaker.set(CircuitBreakerState.CLOSED)
                 }
             }
 
@@ -264,8 +299,9 @@ class OsuApiBaseService(
             try {
                 inFlightCounter.incrementAndGet()
 
-                // 选择限流器
+                // 选择限流器和配额跟踪器
                 val limiter = if (task.isBackground) backgroundLimiter else foregroundLimiter
+                val minuteQuotaTracker = if (task.isBackground) backgroundMinuteQuotaTracker else foregroundMinuteQuotaTracker
 
                 // 等待配额（带超时）
                 val waitResult = limiter.acquireWithTimeout(task.remainingTimeMillis())
@@ -274,9 +310,9 @@ class OsuApiBaseService(
                     return
                 }
 
-                // 检查全局分钟配额
+                // 检查对应类型的分钟配额
                 if (!minuteQuotaTracker.tryAcquire()) {
-                    task.completeExceptionally(RuntimeException("Global minute quota exceeded"))
+                    task.completeExceptionally(RuntimeException("${if (task.isBackground) "Background" else "Foreground"} minute quota exceeded"))
                     return
                 }
 
@@ -296,7 +332,7 @@ class OsuApiBaseService(
                 return
             }
 
-            task.request(osuApiWebClient)
+            task.request(this@OsuApiBaseService.osuApiWebClient)
                 .timeout(Duration.ofMillis(remainingTime))
                 .subscribe(
                     { result -> task.complete(result) },
@@ -307,7 +343,7 @@ class OsuApiBaseService(
         private fun <T> handleRequestError(task: ApiRequestTask<T>, error: Throwable) {
             when (error) {
                 is WebClientResponseException.TooManyRequests -> {
-                    handle429Error(error)
+                    handle429Error(task, error)
                     task.retryOrFail(error)
                 }
                 is WebClientRequestException -> {
@@ -320,28 +356,39 @@ class OsuApiBaseService(
             }
         }
 
-        private fun handle429Error(error: WebClientResponseException.TooManyRequests) {
+        private fun <T> handle429Error(task: ApiRequestTask<T>, error: WebClientResponseException.TooManyRequests) {
             val retryAfter = error.headers.getFirst("Retry-After")?.toLongOrNull() ?: 5L
             val waitUntil = System.currentTimeMillis() + (retryAfter * 1000) + 5000 // 额外5秒缓冲
 
-            last429Time.set(waitUntil)
-            circuitBreakerState.set(CircuitBreakerState.OPEN)
-
-            // 清空限流器令牌
-            foregroundLimiter.reset()
-            backgroundLimiter.reset()
-
-            log.warn("API rate limited. Circuit breaker OPEN until {}",
-                Instant.ofEpochMilli(waitUntil))
+            if (task.isBackground) {
+                lastBackground429Time.set(waitUntil)
+                backgroundCircuitBreakerState.set(CircuitBreakerState.OPEN)
+                backgroundLimiter.reset()
+                log.warn("Background API rate limited. Background circuit breaker OPEN until {}",
+                    Instant.ofEpochMilli(waitUntil))
+            } else {
+                lastForeground429Time.set(waitUntil)
+                foregroundCircuitBreakerState.set(CircuitBreakerState.OPEN)
+                foregroundLimiter.reset()
+                log.warn("Foreground API rate limited. Foreground circuit breaker OPEN until {}",
+                    Instant.ofEpochMilli(waitUntil))
+            }
         }
 
-        private fun checkCircuitBreaker() {
-            val state = circuitBreakerState.get()
-            if (state == CircuitBreakerState.OPEN) {
-                val waitUntil = last429Time.get()
-                if (System.currentTimeMillis() >= waitUntil) {
-                    circuitBreakerState.set(CircuitBreakerState.CLOSED)
-                    log.info("Circuit breaker CLOSED")
+        private fun checkCircuitBreakers() {
+            // 检查前台熔断器
+            if (foregroundCircuitBreakerState.get() == CircuitBreakerState.OPEN) {
+                if (System.currentTimeMillis() >= lastForeground429Time.get()) {
+                    foregroundCircuitBreakerState.set(CircuitBreakerState.CLOSED)
+                    log.info("Foreground circuit breaker CLOSED")
+                }
+            }
+
+            // 检查后台熔断器
+            if (backgroundCircuitBreakerState.get() == CircuitBreakerState.OPEN) {
+                if (System.currentTimeMillis() >= lastBackground429Time.get()) {
+                    backgroundCircuitBreakerState.set(CircuitBreakerState.CLOSED)
+                    log.info("Background circuit breaker CLOSED")
                 }
             }
         }
