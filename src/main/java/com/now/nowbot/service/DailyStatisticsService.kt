@@ -84,7 +84,7 @@ class DailyStatisticsService(
             try {
                 val processed = collectingUsers(users)
 
-                log.info("第 ${count.get()} 批次用户已更新完成：${processed} 条，总计 ${total.addAndGet(processed)} 条更新。")
+                log.info("第 ${count.get()} 批次用户已更新完成：${processed.first} 条，总计 ${total.addAndGet(processed.first)} 条更新，包含了 ${processed.second} 条成绩。")
                 offset.addAndGet(users.size)
             } catch (e: Exception) {
                 log.error("第 ${count.get()} 批次发生异常：", e)
@@ -96,10 +96,10 @@ class DailyStatisticsService(
         log.info("统计全部绑定用户已完成，总计 ${total.get()} 条更新。")
     }
 
-    private fun collectingUsers(users: List<BindUser>): Int {
+    private fun collectingUsers(users: List<BindUser>): Pair<Int, Int> {
         val ids = users.map { it.userID }
 
-        waitForRateLimit(8000)
+        waitForRateLimit(6000)
         val stats = userApiService.getUsers(users = ids, isVariant = true, isBackground = true)
 
         val needUpdate = stats.flatMap { micro ->
@@ -126,23 +126,26 @@ class DailyStatisticsService(
             }
         }
 
-        val size = updatingUsers(needUpdate)
+        val scoreCount = updatingUsers(needUpdate)
 
-        return size
+        return needUpdate.size to scoreCount
     }
 
     private fun updatingUsers(needUpdate: List<Pair<MicroUser, OsuMode>>): Int {
+        val scoreCount = AtomicInteger(0)
+
         needUpdate.forEach { (user, mode) ->
             try {
-                waitForRateLimit(4000)
-                scoreApiService.getRecentScore(user.userID, mode, 0, 999, isBackground = true)
-                log.info("正在刷新用户 ${user.username} 的 ${mode.shortName} 模式成绩...")
+                waitForRateLimit(3000)
+                val count = scoreApiService.getRecentScore(user.userID, mode, 0, 999, isBackground = true).size
+                log.info("正在刷新用户 ${user.username} ${mode.shortName} 模式的 $count 条成绩...")
+                scoreCount.addAndGet(count)
             } catch (e: Exception) {
                 log.warn("获取用户 ${user.username} 成绩失败: ${e.message}")
             }
         }
 
-        return needUpdate.size
+        return scoreCount.get()
     }
 
     companion object {
