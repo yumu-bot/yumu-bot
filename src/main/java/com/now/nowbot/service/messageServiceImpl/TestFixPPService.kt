@@ -17,6 +17,7 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.DataUtil.splitString
 import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
@@ -185,7 +186,7 @@ import kotlin.math.roundToInt
             }
         }
 
-        log.info("TP：修补最好成绩成功，耗时：${(System.currentTimeMillis() - time) / 1000} 秒")
+        log.info("TP：修补最好成绩成功，耗时：${DataUtil.time2HMS(System.currentTimeMillis() - time)}")
 
         event.reply(sb.toString().removeSuffix(", "))
 

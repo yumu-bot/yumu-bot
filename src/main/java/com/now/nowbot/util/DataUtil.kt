@@ -602,13 +602,24 @@ object DataUtil {
         return out.trimEnd('.') + unit
     }
 
-    fun time2HourAndMinute(time: Long): String {
-        if (time < 3600000) {
-            return String.format("%dM", time / 60000)
+    fun time2HMS(millis: Long): String {
+        return when(val sec = millis / 1000L) {
+            in 0 ..< 60 -> {
+                "${sec}s"
+            }
+            in 60 ..< 3600 -> {
+                val m = sec / 60
+                val s = sec % 60
+                "${m}m ${s}s"
+            }
+
+            else -> {
+                val h = sec / 3600
+                val m = (sec % 3600) / 60
+                val s = sec % 60
+                "${h}h ${m}m ${s}s"
+            }
         }
-        val h = time / 3600000
-        val m = (time % 3600000) / 60000
-        return String.format("%dH%dM", h, m)
     }
 
     fun getPlayedRankedMapCount(bonusPP: Double): Int {

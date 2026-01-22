@@ -12,6 +12,7 @@ import com.now.nowbot.service.lxnsApiService.LxMaiApiService
 import com.now.nowbot.service.messageServiceImpl.UpdateTriggerService.UpdateType.*
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException
+import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_ANY
 import org.springframework.stereotype.Service
@@ -100,14 +101,14 @@ class UpdateTriggerService(
                 event.reply(
                     """
                 更新舞萌、中二节奏数据完成。
-                舞萌歌曲库：${(time1 - startTime) / 1000.0} s
-                舞萌外号库：${(time2 - time1) / 1000.0} s
-                舞萌玩家排名库：${(time3 - time2) / 1000.0} s
-                舞萌拟合定数库：${(time4 - time3) / 1000.0} s
-                中二节奏歌曲数据库：${(time5 - time4) / 1000.0} s
-                中二节奏外号库：${(endTime - time5) / 1000.0} s
+                舞萌歌曲库：${DataUtil.time2HMS(time1 - startTime)}
+                舞萌外号库：${DataUtil.time2HMS(time2 - time1)}
+                舞萌玩家排名库：${DataUtil.time2HMS(time3 - time2)}
+                舞萌拟合定数库：${DataUtil.time2HMS(time4 - time3)}
+                中二节奏歌曲数据库：${DataUtil.time2HMS(time5 - time4)}
+                中二节奏外号库：${DataUtil.time2HMS(endTime - time5)}
                 
-                总耗时：${(endTime - startTime) / 1000.0} s
+                总耗时：${DataUtil.time2HMS(endTime - startTime)}
                 """.trimIndent()
                 )
             }
@@ -126,9 +127,9 @@ class UpdateTriggerService(
                     """
                 更新落雪数据完成。
                 
-                歌曲数据库：${(time1 - startTime) / 1000.0} s
-                收藏库：${(endTime - time1) / 1000.0} s
-                总耗时：${(endTime - startTime) / 1000.0} s
+                歌曲数据库：${DataUtil.time2HMS(time1 - startTime)}
+                收藏库：${DataUtil.time2HMS(endTime - time1)}
+                总耗时：${DataUtil.time2HMS(endTime - startTime)}
                 """.trimIndent()
                 )
             }
@@ -143,7 +144,7 @@ class UpdateTriggerService(
                 event.reply("已提交更新指令，系统正在后台处理...")
                 dailyStatisticsService.collectInfoAndScores {
                     val endTime = System.currentTimeMillis()
-                    event.reply("每日数据更新已完成，耗时：${(endTime - startTime) / 1000.0} s")
+                    event.reply("每日数据更新已完成，耗时：${DataUtil.time2HMS(endTime - startTime)}")
                 }
 
             }

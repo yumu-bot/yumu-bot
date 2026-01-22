@@ -8,6 +8,7 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
+import com.now.nowbot.util.DataUtil
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.atomic.AtomicBoolean
@@ -65,16 +66,19 @@ class DailyStatisticsService(
             val startTime = System.currentTimeMillis()
             userInfoDao.percentilesDailyUpsert()
             val endTime = System.currentTimeMillis()
-            log.info("更新玩家百分比完成, 耗时: ${(endTime - startTime) / 1000} s")
+            log.info("更新玩家百分比完成, 耗时: ${DataUtil.time2HMS(endTime - startTime)}")
         }
     }
 
     fun collectingBindUser() {
         log.info("开始串行统计全部绑定用户")
 
+        val startTime = System.currentTimeMillis()
+
         val offset = AtomicInteger(0)
-        val count = AtomicInteger(1)
-        val total = AtomicInteger(0)
+        val batch = AtomicInteger(1)
+        val count = AtomicInteger(0)
+        val score = AtomicInteger(0)
 
         while (IocAllReadyRunner.APP_ALIVE) {
             // 获取一批用户
@@ -82,24 +86,30 @@ class DailyStatisticsService(
             if (users.isEmpty()) break
 
             try {
-                val processed = collectingUsers(users)
+                val (t, s) = collectingUsers(users)
 
-                log.info("第 ${count.get()} 批次用户已更新完成：${processed.first} 条，总计 ${total.addAndGet(processed.first)} 条更新，包含了 ${processed.second} 条成绩。")
+                log.info("""
+                    第 ${batch.get()} 批用户已更新完成：
+                    需要更新：$t 人，总计 ${count.addAndGet(t)} 人，
+                    其中包含：$s 条成绩，总计 ${score.addAndGet(s)} 条。
+                    """.trimIndent())
                 offset.addAndGet(users.size)
             } catch (e: Exception) {
-                log.error("第 ${count.get()} 批次发生异常：", e)
+                log.error("第 ${batch.get()} 批次发生异常：", e)
             }
 
-            count.getAndIncrement()
+            batch.getAndIncrement()
         }
 
-        log.info("统计全部绑定用户已完成，总计 ${total.get()} 条更新。")
+        val endTime = System.currentTimeMillis()
+
+        log.info("统计已完成，耗时： ${DataUtil.time2HMS(endTime - startTime)}")
     }
 
     private fun collectingUsers(users: List<BindUser>): Pair<Int, Int> {
         val ids = users.map { it.userID }
 
-        waitForRateLimit(6000)
+        waitForRateLimit(5000)
         val stats = userApiService.getUsers(users = ids, isVariant = true, isBackground = true)
 
         val needUpdate = stats.flatMap { micro ->
@@ -136,12 +146,12 @@ class DailyStatisticsService(
 
         needUpdate.forEach { (user, mode) ->
             try {
-                waitForRateLimit(3000)
+                waitForRateLimit(2500)
                 val count = scoreApiService.getRecentScore(user.userID, mode, 0, 999, isBackground = true).size
-                log.info("正在刷新用户 ${user.username} ${mode.shortName} 模式的 $count 条成绩...")
+                log.info("正在刷新 ${user.username}：${mode.shortName} 模式的 $count 条成绩...")
                 scoreCount.addAndGet(count)
             } catch (e: Exception) {
-                log.warn("获取用户 ${user.username} 成绩失败: ${e.message}")
+                log.warn("获取 ${user.username} 成绩失败: ${e.message}")
             }
         }
 
