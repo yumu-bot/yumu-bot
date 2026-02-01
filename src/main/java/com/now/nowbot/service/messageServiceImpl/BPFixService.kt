@@ -114,6 +114,10 @@ class BPFixService(
             page = range.start ?: 1
         }
 
+        if (scores.size == 200 || user.pp <= 0.0) {
+            user.setEstimatedPP(scores.map { it.value })
+        }
+
         if (scores.isEmpty()) {
             throw NoSuchElementException.BestScore(user.username)
         }
