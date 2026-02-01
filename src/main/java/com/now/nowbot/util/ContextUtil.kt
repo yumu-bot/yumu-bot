@@ -1,55 +1,59 @@
-package com.now.nowbot.util;
+package com.now.nowbot.util
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentHashMap
 
-public class ContextUtil {
-    static ThreadLocal<Map<String, Object>> threadLocalService = new ThreadLocal<>();
+object ContextUtil {
+    var threadLocalService: ThreadLocal<MutableMap<String, Any>> = ThreadLocal<MutableMap<String, Any>>()
 
-    public static <T> T getContext(String name, Class<T> tClass){
-        if (threadLocalService.get() == null || threadLocalService.get().get(name) == null) return null;
-        Object obj = threadLocalService.get().get(name);
+    @JvmStatic
+    fun <T> getContext(name: String?, tClass: Class<T>): T? {
+        if (threadLocalService.get() == null || threadLocalService.get()!![name] == null) return null
+        val obj = threadLocalService.get()!![name]
         // 判断 obj 是否是 t 类型的实例
-        if (!tClass.isInstance(obj)) return null;
-        return tClass.cast( threadLocalService.get().get(name) );
+        if (!tClass.isInstance(obj)) return null
+        return tClass.cast(threadLocalService.get()!![name])
     }
 
-    public static <T> T getContext(String name, T def, Class<T> tClass) {
-        if (threadLocalService.get() == null || threadLocalService.get().get(name) == null) return def;
-        Object obj = threadLocalService.get().get(name);
+    @JvmStatic
+    fun <T> getContext(name: String?, def: T?, tClass: Class<T>): T? {
+        if (threadLocalService.get() == null || threadLocalService.get()!![name] == null) return def
+        val obj = threadLocalService.get()!![name]
         // 判断 obj 是否是 t 类型的实例
-        if (! tClass.isInstance(obj)) return def;
-        return tClass.cast(threadLocalService.get().get(name));
+        if (!tClass.isInstance(obj)) return def
+        return tClass.cast(threadLocalService.get()!![name])
     }
 
-    public static void setContext(String name, Object o){
-        if (threadLocalService.get() == null){
-            threadLocalService.set(new ConcurrentHashMap<>());
+    @JvmStatic
+    fun setContext(name: String?, o: Any?) {
+        if (threadLocalService.get() == null) {
+            threadLocalService.set(ConcurrentHashMap<String, Any>())
         }
         if (o == null) {
-            threadLocalService.get().remove(name);
-            if (threadLocalService.get().isEmpty()) {
-                threadLocalService.remove();
+            threadLocalService.get()!!.remove(name)
+            if (threadLocalService.get()!!.isEmpty()) {
+                threadLocalService.remove()
             }
         } else {
-            threadLocalService.get().put(name, o);
+            name?.let { threadLocalService.get()!!.put(it, o)}
         }
     }
 
-    public static boolean isTestUser() {
-        return getContext("isTest", Boolean.FALSE, Boolean.class);
+    val isTestUser
+        get() = getContext(
+            "isTest",
+            java.lang.Boolean.FALSE,
+            Boolean::class.java
+        )!!
+
+    @JvmStatic
+    val isBreakAop
+        get() = getContext("break aop", Any::class.java) != null
+
+    fun breakAop() {
+        setContext("break aop", Any())
     }
 
-    public static boolean isBreakAop() {
-        return ContextUtil.getContext("break aop", Object.class) != null;
+    fun remove() {
+        threadLocalService.remove()
     }
-
-    public static void breakAop(){
-        ContextUtil.setContext("break aop", new Object());
-    }
-
-    public static void remove(){
-        threadLocalService.remove();
-    }
-
 }

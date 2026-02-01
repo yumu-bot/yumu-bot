@@ -11,8 +11,8 @@ import kotlin.math.max
 
 data class Match(
     @field:JsonProperty("match") var statistics: MatchStat,
-    @field:JsonProperty("events") val events: MutableList<MatchEvent>,
-    @field:JsonProperty("users") val players: MutableList<MicroUser>,
+    @field:JsonProperty("events") var events: List<MatchEvent>,
+    @field:JsonProperty("users") var players: List<MicroUser>,
     @field:JsonProperty("first_event_id") var firstEventID: Long,
     @field:JsonProperty("latest_event_id") var latestEventID: Long,
 ) {
@@ -160,29 +160,15 @@ data class Match(
         }
     }
 
-    companion object {
-        fun Match.append(m: Match) {
-            if (m.events.isEmpty()) return
+    // 扩展函数风格：可以直接通过 matchA.append(matchB) 调用
+    fun append(m: Match) {
+        if (m.events.isEmpty()) return
+        this.events = (this.events + m.events).distinctBy { it.eventID }.sortedBy { it.eventID }
 
-            // --- 事件合并 ---
-            // 将现有事件和新事件合并，按 ID 去重，并重新排序
-            val combinedEvents = (this.events + m.events)
-                .distinctBy { it.eventID }
-                .sortedBy { it.eventID }
+        this.players = (this.players + m.players).distinctBy { it.userID }
 
-            this.events.clear()
-            this.events.addAll(combinedEvents)
-
-            // --- 玩家合并 (处理 val players) ---
-            val newUniquePlayers = (this.players + m.players).distinct()
-            this.players.clear()
-            this.players.addAll(newUniquePlayers)
-
-            // --- 状态更新 ---
-            this.statistics = m.statistics
-            this.latestEventID = m.latestEventID
-            // 确保 firstEventID 始终反映当前内存中最顶端的事件
-            this.firstEventID = this.events.firstOrNull()?.eventID ?: m.firstEventID
-        }
+        this.statistics = m.statistics
+        this.latestEventID = m.latestEventID
+        this.firstEventID = this.events.firstOrNull()?.eventID ?: m.firstEventID
     }
 }

@@ -5,7 +5,6 @@ import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.match.Match
-import com.now.nowbot.model.match.Match.Companion.append
 import com.now.nowbot.model.match.MatchAdapter
 import com.now.nowbot.model.match.MatchListener
 import com.now.nowbot.model.match.MatchRating
@@ -200,7 +199,7 @@ class MatchListenerService(
             messageEvent.reply(message)
             val lock =
                 ASyncMessageUtil.getLock(messageEvent.subject.id, null, 60 * 1000) {
-                    it.rawMessage.equals(matchID.toString())
+                    it?.rawMessage?.contains(matchID.toString()) == true
                 }
             return lock.get() != null
         }

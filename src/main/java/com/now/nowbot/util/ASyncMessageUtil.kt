@@ -1,240 +1,151 @@
-package com.now.nowbot.util;
+package com.now.nowbot.util
 
+import com.now.nowbot.qq.event.GroupMessageEvent
+import com.now.nowbot.qq.event.MessageEvent
+import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.Condition
+import java.util.concurrent.locks.ReentrantLock
 
-import com.now.nowbot.qq.event.GroupMessageEvent;
-import com.now.nowbot.qq.event.MessageEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
-
-public class ASyncMessageUtil {
-
-    private static final Long      OFF_TIME = 60 * 60 * 1000L;
-    private static final Set<Lock> lockList = new CopyOnWriteArraySet<>();
+object ASyncMessageUtil {
+    private const val OFF_TIME = 60 * 60 * 1000L
+    private val lockList: MutableSet<Lock?> = CopyOnWriteArraySet<Lock?>()
 
     /**
      * 指定群聊跟发送人的锁
-     *
+     * 
      */
-    public static Lock getLock(long group, long send) {
-        return getLock(group, send, OFF_TIME, null);
+    fun getLock(group: Long, send: Long): Lock {
+        return getLock(group, send, OFF_TIME, null)
     }
 
-    private static final Logger log = LoggerFactory.getLogger(ASyncMessageUtil.class);
-
-    public static Lock getLock(Long group, Long send, long offTime, Function<MessageEvent, Boolean> check) {
-        return new OLock(group, send, offTime, check);
+    fun getLock(group: Long?, send: Long?, offTime: Long, check: ((MessageEvent?) -> Boolean)? = null): Lock {
+        return OLock(group, send, offTime, check)
     }
 
-    public static Lock getLock(MessageEvent event, long offTime) {
-        return getLock(event, offTime, null);
+    fun getLock(event: MessageEvent, offTime: Long): Lock {
+        return getLock(event, offTime, null)
     }
 
-    public static Lock getLock(MessageEvent event) {
-        if (event instanceof GroupMessageEvent g) {
-            return getLock(g.getGroup().getId(), g.getSender().getId());
+    fun getLock(event: MessageEvent): Lock {
+        if (event is GroupMessageEvent) {
+            return getLock(event.group.id, event.sender.id)
         }
-        return getSenderLock(event.getSender().getId());
+        return getSenderLock(event.sender.id)
     }
 
-    public static Lock getLock(MessageEvent event, long offTime, Function<MessageEvent, Boolean> check) {
-        if (event instanceof GroupMessageEvent g) {
-            return getLock(g.getGroup().getId(), g.getSender().getId(), offTime, check);
+    fun getLock(event: MessageEvent, offTime: Long, check: ((MessageEvent?) -> Boolean)? = null): Lock {
+        if (event is GroupMessageEvent) {
+            return getLock(event.group.id, event.sender.id, offTime, check)
         }
-        return getSenderLock(event.getSender().getId(), offTime, check);
+        return getSenderLock(event.sender.id, offTime, check)
     }
 
-    public static Lock getSenderLock(long send, Long offTime, Function<MessageEvent, Boolean> check) {
-        return new OLock(null, send, offTime, check);
+    fun getSenderLock(send: Long, offTime: Long, check: ((MessageEvent?) -> Boolean)? = null): Lock {
+        return OLock(null, send, offTime, check)
     }
 
     /**
      * 指定发送人的锁(无论哪个群)
-     *
+     * 
      */
-    public static Lock getSenderLock(long send) {
-        return getSenderLock(send, OFF_TIME, null);
+    fun getSenderLock(send: Long): Lock {
+        return getSenderLock(send, OFF_TIME, null)
     }
 
     /**
      * 指定群的锁,无论发送人
-     *
+     * 
      */
-    public static Lock getGroupLock(long group) {
-        return getGroupLock(group, OFF_TIME);
+    fun getGroupLock(group: Long): Lock {
+        return getGroupLock(group, OFF_TIME)
     }
 
-    public static Lock getGroupLock(long group, Long offTime) {
-        return new OLock(group, null, offTime, null);
+    fun getGroupLock(group: Long, offTime: Long): Lock {
+        return OLock(group, null, offTime, null)
     }
 
     /**
      * 在event监听使用
-     *
+     * 
      */
-    public static void put(MessageEvent message) {
-        lockList.forEach(lock -> lock.checkAdd(message));
+    fun put(message: MessageEvent?) {
+        lockList.forEach { 
+            it!!.checkAdd(message)
+        }
     }
 
-    public interface Lock {
-        void checkAdd(MessageEvent message);
+    fun check(message: MessageEvent?, group: Long?, send: Long?): Boolean {
+        return when(message) {
+            is GroupMessageEvent -> {
+                if (send == null) {
+                    message.subject.id == group
+                } else {
+                    message.subject.id == group && message.sender.id == send
+                }
+            }
 
-        MessageEvent get();
+            null -> false
+
+            else -> (group == null && message.sender.id == send)
+        }
     }
 
-    static boolean check(MessageEvent message, Long group, Long send) {
-        return (group == null && message.getSender().getId() == send) ||
-                (send == null && message instanceof GroupMessageEvent && message.getSubject().getId() == group) ||
-                (message instanceof GroupMessageEvent && message.getSubject().getId() == group && message.getSender().getId() == send);
+    fun remove(lock: Lock?) {
+        lockList.remove(lock)
     }
 
-    static void remove(Lock lock) {
-        lockList.remove(lock);
+    fun add(lock: Lock?) {
+        lockList.add(lock)
     }
 
-    static void add(Lock lock) {
-        lockList.add(lock);
+    interface Lock {
+        fun checkAdd(message: MessageEvent?)
+
+        fun get(): MessageEvent?
     }
 }
+
 // 使用BlockingQueue实现的锁 有可能会出现内存泄漏
-class BLock implements ASyncMessageUtil.Lock {
-    Long                                      group;
-    Long                                      send;
-    long                                      off;
-    Optional<Function<MessageEvent, Boolean>> checkOpt;
-    BlockingQueue<MessageEvent>               queue;
-
-    public BLock(Long group, Long send, long offTime, Function<MessageEvent, Boolean> check) {
-        this.group = group;
-        this.send = send;
-        this.off = offTime;
-        this.checkOpt = Optional.ofNullable(check);
-        queue = new ArrayBlockingQueue<>(1);
-    }
-
-    @Override
-    public void checkAdd(MessageEvent message) {
-        if (ASyncMessageUtil.check(message, this.group, this.send) &&
-                checkOpt.map(f -> f.apply(message)).orElse(true) &&
-                Objects.nonNull(queue)) {
-            queue.add(message);
-        }
-    }
-
-    @Override
-    public MessageEvent get() {
-        ASyncMessageUtil.add(this);
-        try {
-            return queue.poll(off, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            return null;
-        } finally {
-            ASyncMessageUtil.remove(this);
-            queue = null;
-        }
-    }
-}
 
 // 使用LockSupport实现的锁 不会释放锁, 但是性能最好
-class NLock implements ASyncMessageUtil.Lock {
-    Long                                      group;
-    Long                                      send;
-    long                                      off    = 0;
-    MessageEvent                              msg;
-    Optional<Function<MessageEvent, Boolean>> checkOpt;
-    Thread                                    thread = null;
-
-    public NLock(Long group, Long send, long offTime, Function<MessageEvent, Boolean> check) {
-        this.group = group;
-        this.send = send;
-        this.off = offTime;
-        this.checkOpt = Optional.ofNullable(check);
-    }
-
-    @Override
-    public void checkAdd(MessageEvent message) {
-        if (ASyncMessageUtil.check(message, this.group, this.send) &&
-                checkOpt.map(f -> f.apply(message)).orElse(true)) {
-            this.msg = message;
-            LockSupport.unpark(thread);
-        }
-    }
-
-    @Override
-    public MessageEvent get() {
-        ASyncMessageUtil.add(this);
-        try {
-            thread = Thread.currentThread();
-            LockSupport.parkUntil(System.currentTimeMillis() + off);
-            thread = null;
-            return msg;
-        } finally {
-            ASyncMessageUtil.remove(this);
-        }
-    }
-}
 
 // 使用ReentrantLock实现的锁 综合最佳
-class OLock implements ASyncMessageUtil.Lock {
-    private static final ReentrantLock reentrantLock = new ReentrantLock();
+internal class OLock(var group: Long?, var send: Long?, var offTime: Long = 0, var check: ((MessageEvent?) -> Boolean)? = null) :
+    ASyncMessageUtil.Lock {
+    var event: MessageEvent? = null
+    val condition: Condition = reentrantLock.newCondition()
 
-    Long                                      group;
-    Long                                      send;
-    long                                      off = 0;
-    MessageEvent                              msg;
-    Optional<Function<MessageEvent, Boolean>> checkOpt;
-    final Condition condition;
-
-    public OLock(Long group, Long send, long offTime, Function<MessageEvent, Boolean> check) {
-        this.group = group;
-        this.send = send;
-        this.off = offTime;
-        this.checkOpt = Optional.ofNullable(check);
-        condition = reentrantLock.newCondition();
-    }
-
-    @Override
-    public void checkAdd(MessageEvent message) {
-        if (ASyncMessageUtil.check(message, this.group, this.send) &&
-                checkOpt.map(f -> f.apply(message)).orElse(true)) {
-            reentrantLock.lock();
+    override fun checkAdd(message: MessageEvent?) {
+        if (ASyncMessageUtil.check(message, this.group, this.send) && check?.invoke(message) == true) {
+            reentrantLock.lock()
             try {
-                this.msg = message;
-                condition.signalAll();
+                this.event = message
+                condition.signalAll()
             } finally {
-                reentrantLock.unlock();
+                reentrantLock.unlock()
             }
         }
     }
 
-    @Override
-    @SuppressWarnings({"ResultOfMethodCallIgnored"})
-    public MessageEvent get() {
-        ASyncMessageUtil.add(this);
+    override fun get(): MessageEvent? {
+        ASyncMessageUtil.add(this)
         try {
-            reentrantLock.lock();
-            if (msg == null) {
-                condition.await(off, TimeUnit.MILLISECONDS);
+            reentrantLock.lock()
+            if (event == null) {
+                condition.await(offTime, TimeUnit.MILLISECONDS)
             }
-            return msg;
-        } catch (InterruptedException e) {
-            return null;
+            return event
+        } catch (_: InterruptedException) {
+            return null
         } finally {
-            reentrantLock.unlock();
-            ASyncMessageUtil.remove(this);
-            msg = null;
+            reentrantLock.unlock()
+            ASyncMessageUtil.remove(this)
+            event = null
         }
     }
 
+    companion object {
+        private val reentrantLock = ReentrantLock()
+    }
 }

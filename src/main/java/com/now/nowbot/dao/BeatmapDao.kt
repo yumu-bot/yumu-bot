@@ -90,8 +90,8 @@ class BeatmapDao(
         return extendBeatmapSetRepository.findByUpdateAtAscend(time, limit)
     }
 
-    fun updateFailTimeByBeatmapsetID(beatmapsetID: Long, favouriteCount: Long, recommendOffset: Short, playCount: Long, spotlight: Boolean, trackID: Int?, discussionLocked: Boolean, rating: Float, ratings: Array<Int>): Int {
-        return extendBeatmapSetRepository.updateFailTimeByBeatmapsetID(beatmapsetID, favouriteCount, recommendOffset, playCount, spotlight, trackID, discussionLocked, rating, ratings)
+    fun updateFailTimeByBeatmapsetID(beatmapsetID: Long, animeCover: Boolean, favouriteCount: Long, recommendOffset: Short, playCount: Long, spotlight: Boolean, trackID: Int?, discussionLocked: Boolean, rating: Float, ratings: Array<Int>): Int {
+        return extendBeatmapSetRepository.updateFailTimeByBeatmapsetID(beatmapsetID, animeCover, favouriteCount, recommendOffset, playCount, spotlight, trackID, discussionLocked, rating, ratings)
     }
 
     fun findMapByUpdateAtAscend(time: LocalDateTime, limit: Int = 500): List<BeatmapExtendLite> {
@@ -133,6 +133,7 @@ class BeatmapDao(
         } else {
             val set = BeatmapsetExtendLite(
                 beatmapsetID = s.beatmapsetID,
+                animeCover = s.animeCover,
                 artist = s.artist,
                 artistUnicode = s.artistUnicode,
                 coverID = s.covers.cover
@@ -215,6 +216,7 @@ class BeatmapDao(
         }
 
         score.beatmapset.apply {
+            animeCover = x.animeCover
             artist = x.artist
             artistUnicode = x.artistUnicode
             covers = Covers.getCoverFromCacheID(x.beatmapsetID, x.coverID)
@@ -298,6 +300,7 @@ class BeatmapDao(
         }
 
         val set = (from.beatmapset ?: Beatmapset()).apply {
+            animeCover = x.animeCover
             artist = x.artist
             artistUnicode = x.artistUnicode
             covers = Covers.getCoverFromCacheID(x.beatmapsetID, x.coverID)

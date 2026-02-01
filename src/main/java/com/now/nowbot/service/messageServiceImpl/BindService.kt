@@ -80,7 +80,7 @@ import java.util.function.Predicate
             val lock = ASyncMessageUtil.getLock(event, 30L * 1000)
             val ev = lock.get()
 
-            if (ev.rawMessage.uppercase().contains("OK").not()) {
+            if (ev == null || ev.rawMessage.uppercase().contains("OK").not()) {
                 return false
             }
 

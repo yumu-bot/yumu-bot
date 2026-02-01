@@ -8,46 +8,46 @@ import kotlin.math.roundToInt
 
 data class LazerStatistics(
     // M 320
-    @JsonProperty("perfect") var perfect: Int = 0,
+    @field:JsonProperty("perfect") var perfect: Int = 0,
 
     // O、T、C、M 300
-    @JsonProperty("great") var great: Int = 0,
+    @field:JsonProperty("great") var great: Int = 0,
 
     // M 200
-    @JsonProperty("good") var good: Int = 0,
+    @field:JsonProperty("good") var good: Int = 0,
 
     // T、M 100
-    @JsonProperty("ok") var ok: Int = 0,
+    @field:JsonProperty("ok") var ok: Int = 0,
 
     // O、M 50
-    @JsonProperty("meh") var meh: Int = 0,
+    @field:JsonProperty("meh") var meh: Int = 0,
 
     // O、T、C、M 0
-    @JsonProperty("miss") var miss: Int = 0,
+    @field:JsonProperty("miss") var miss: Int = 0,
 
     // ?
-    @JsonProperty("ignore_hit") var ignoreHit: Int = 0,
-    @JsonProperty("ignore_miss") var ignoreMiss: Int = 0,
+    @field:JsonProperty("ignore_hit") var ignoreHit: Int = 0,
+    @field:JsonProperty("ignore_miss") var ignoreMiss: Int = 0,
 
     // O SliderTick、C Large Droplet (medium)
-    @JsonProperty("large_tick_hit") var largeTickHit: Int = 0,
-    @JsonProperty("large_tick_miss") var largeTickMiss: Int = 0,
+    @field:JsonProperty("large_tick_hit") var largeTickHit: Int = 0,
+    @field:JsonProperty("large_tick_miss") var largeTickMiss: Int = 0,
 
     // C Small Droplet (small)
-    @JsonProperty("small_tick_hit") var smallTickHit: Int = 0,
-    @JsonProperty("small_tick_miss") var smallTickMiss: Int = 0,
+    @field:JsonProperty("small_tick_hit") var smallTickHit: Int = 0,
+    @field:JsonProperty("small_tick_miss") var smallTickMiss: Int = 0,
 
     // O SliderTail
-    @JsonProperty("slider_tail_hit") var sliderTailHit: Int = 0,
+    @field:JsonProperty("slider_tail_hit") var sliderTailHit: Int = 0,
 
     // O Spinner Bonus、T Spinner Drumroll、C Banana
-    @JsonProperty("large_bonus") var largeBonus: Int = 0,
+    @field:JsonProperty("large_bonus") var largeBonus: Int = 0,
 
     // O Spinner Base
-    @JsonProperty("small_bonus") var smallBonus: Int = 0,
+    @field:JsonProperty("small_bonus") var smallBonus: Int = 0,
 
     // 仅 MAX 有
-    @JsonProperty("legacy_combo_increase") var legacyComboIncrease: Int = 0,
+    @field:JsonProperty("legacy_combo_increase") var legacyComboIncrease: Int = 0,
 ) {
     fun getTotalHits(mode: OsuMode) = when (mode) {
         OSU -> great + ok + meh + miss

@@ -57,6 +57,7 @@ interface BeatmapsetExtendLiteRepository : JpaRepository<BeatmapsetExtendLite, L
     @Transactional
     @Query("""
         UPDATE osu_extend_beatmapset SET 
+        anime_cover = :animeCover,
         favourite_count = :favouriteCount,
         recommend_offset = :recommendOffset,
         play_count = :playCount,
@@ -68,6 +69,6 @@ interface BeatmapsetExtendLiteRepository : JpaRepository<BeatmapsetExtendLite, L
         updated_at = CURRENT_TIMESTAMP
         WHERE beatmapset_id = :beatmapsetID
         """, nativeQuery = true)
-    fun updateFailTimeByBeatmapsetID(@Param("beatmapsetID") beatmapsetID: Long, favouriteCount: Long, recommendOffset: Short, playCount: Long, spotlight: Boolean, trackID: Int?, discussionLocked: Boolean, rating: Float, ratings: Array<Int>): Int
+    fun updateFailTimeByBeatmapsetID(@Param("beatmapsetID") beatmapsetID: Long, animeCover: Boolean, favouriteCount: Long, recommendOffset: Short, playCount: Long, spotlight: Boolean, trackID: Int?, discussionLocked: Boolean, rating: Float, ratings: Array<Int>): Int
 
 }

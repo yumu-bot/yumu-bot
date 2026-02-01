@@ -1,4 +1,4 @@
-package com.now.nowbot.util;
+package com.now.nowbot.util.skia;
 
 import com.now.nowbot.config.NowbotConfig;
 import io.github.humbleui.skija.*;

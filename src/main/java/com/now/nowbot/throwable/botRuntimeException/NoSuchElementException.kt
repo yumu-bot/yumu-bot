@@ -184,6 +184,12 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
             如果要查询您的比赛，可能需要提供新的比赛 ID。
             """.trimIndent())
 
+    class RecentMatchScoreFiltered(name: String, matchID: Long):
+        NoSuchElementException("""
+            没有找到玩家 $name 在比赛 $matchID 内的指定最近成绩。
+            请修改要查询的成绩位次，或不输入位次。
+            """.trimIndent())
+
     class Result:
         NoSuchElementException("没有找到结果！")
 

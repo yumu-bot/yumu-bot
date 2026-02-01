@@ -1041,6 +1041,7 @@ class BeatmapApiImpl(
 
                 beatmapDao.updateFailTimeByBeatmapsetID(
                     it.beatmapsetID,
+                    set.animeCover,
                     set.favouriteCount,
                     set.offset,
                     set.playCount,

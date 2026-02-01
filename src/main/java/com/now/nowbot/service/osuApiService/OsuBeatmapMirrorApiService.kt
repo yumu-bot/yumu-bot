@@ -16,18 +16,16 @@ import java.nio.file.Path
     private val url = beatmapMirrorConfig.url
 
     fun getOsuFile(bid: Long): String? {
-        return null
-        // TODO 谱面镜像站修好之前，这个都要忽视掉
 
         if (url.isNullOrEmpty()) return null
 
         return try {
-            val str = webClient.get().uri(url!!) {
+            val str = webClient.get().uri(url) {
                 it.path("/api/file/map/osufile/{bid}").build(bid)}
                 .retrieve()
                 .bodyToMono(String::class.java).block()!!
 
-            val first20 = str.trim().take(20)
+            val first20 = str.trimStart().take(20)
 
             if (first20.startsWith("osu file format")) {
                 str

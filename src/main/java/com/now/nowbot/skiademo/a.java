@@ -1,7 +1,7 @@
 //package com.now.nowbot.skiademo;
 //
-//import com.now.nowbot.util.SkiaCanvasUtil;
-//import com.now.nowbot.util.SkiaImageUtil;
+//import com.now.nowbot.util.skia.SkiaCanvasUtil;
+//import com.now.nowbot.util.skia.SkiaImageUtil;
 //import io.github.humbleui.skija.*;
 //import io.github.humbleui.types.Point;
 //import io.github.humbleui.types.RRect;

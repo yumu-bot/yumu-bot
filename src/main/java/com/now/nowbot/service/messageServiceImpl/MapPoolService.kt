@@ -86,7 +86,8 @@ import java.time.Duration
                 val lock = ASyncMessageUtil.getLock(event)
                 val newEvent = lock.get()
 
-                val n: Int = newEvent.rawMessage.toIntOrNull() ?: throw TipsException("输入错误")
+                val n: Int = (newEvent ?: throw TipsException("输入超时"))
+                    .rawMessage.toIntOrNull() ?: throw TipsException("输入错误")
 
                 if (n !in 1..result.size) throw TipsException("输入错误")
 
@@ -137,9 +138,9 @@ import java.time.Duration
                 if (json.has("data")) JacksonUtil.parseObject(json["data"], Pool::class.java)
                 else null
             }.block(Duration.ofSeconds(30))
-        } catch (e: HttpClientErrorException.NotFound) {
+        } catch (_: HttpClientErrorException.NotFound) {
             null
-        } catch (e: WebClientResponseException.NotFound) {
+        } catch (_: WebClientResponseException.NotFound) {
             null
         }
     }

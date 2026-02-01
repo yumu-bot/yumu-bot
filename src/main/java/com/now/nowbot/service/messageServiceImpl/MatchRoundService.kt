@@ -22,7 +22,6 @@ import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.util.regex.Matcher
 
 @Service("MATCH_ROUND") class MatchRoundService(
@@ -50,7 +49,7 @@ import java.util.regex.Matcher
                 val image = imageService.getPanelA6(md, "help")
                 event.reply(image)
                 return null
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 throw MatchRoundException(MatchRoundException.Type.MR_Instructions)
             }
         }
@@ -78,7 +77,7 @@ import java.util.regex.Matcher
                     val image = imageService.getPanelA6(md, "help")
                     event.reply(image)
                     return null
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     throw MatchRoundException(MatchRoundException.Type.MR_Instructions)
                 }
             }
@@ -133,18 +132,7 @@ import java.util.regex.Matcher
         var i = index
         val hasKeyword = !keyword.isNullOrBlank()
 
-        val match: Match
-        try {
-            match = matchApiService.getMatch(matchID.toLong(), 10)
-        } catch (e: WebClientResponseException) {
-            throw MatchRoundException(MatchRoundException.Type.MR_MatchID_NotFound)
-        }
-
-        while (match.firstEventID != match.events.first().eventID) {
-            val events: List<Match.MatchEvent> = matchApiService.getMatch(matchID.toLong(), 10).events
-            if (events.isEmpty()) throw MatchRoundException(MatchRoundException.Type.MR_Round_Empty)
-            match.events.addAll(0, events)
-        }
+        val match: Match = matchApiService.getMatch(matchID.toLong(), 10)
 
         //获取所有轮的游戏
         val mr = MatchRating(
@@ -161,7 +149,7 @@ import java.util.regex.Matcher
             } else {
                 try {
                     getRoundIndexFromKeyWord(rounds, i.toString())
-                } catch (e: NumberFormatException) {
+                } catch (_: NumberFormatException) {
                     throw MatchRoundException(MatchRoundException.Type.MR_Round_NotFound)
                 }
             }
@@ -202,7 +190,7 @@ import java.util.regex.Matcher
                 try {
                     beatmap = infoList[i].beatmap
                     if (beatmap == null) continue
-                } catch (ignored: NullPointerException) {
+                } catch (_: NullPointerException) {
                     continue
                 }
 
@@ -215,7 +203,7 @@ import java.util.regex.Matcher
                             .contains(word) || beatmap.difficultyName.lowercase().contains(word))) {
                         return i
                     }
-                } catch (ignored: Exception) { //continue;
+                } catch (_: Exception) { //continue;
                 }
             }
 

@@ -3,6 +3,7 @@ package com.now.nowbot.model.osu
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.yumu.core.extensions.isNotNull
+import jakarta.persistence.Column
 import org.springframework.lang.Nullable
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -10,6 +11,9 @@ import java.time.format.DateTimeFormatterBuilder
 import kotlin.math.max
 
 class Beatmapset {
+    @Column(name = "anime_cover")
+    var animeCover: Boolean = false
+
     @JsonProperty("artist")
     var artist: String = ""
 

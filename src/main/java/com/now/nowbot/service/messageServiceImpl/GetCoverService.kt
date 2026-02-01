@@ -20,11 +20,14 @@ import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
 import okhttp3.internal.toLongOrDefault
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.net.URI
 import java.nio.file.Files
 import java.time.LocalDateTime
 
+// GET_BG
 @Service("GET_COVER") class GetCoverService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val beatmapMirrorApiService: OsuBeatmapMirrorApiService,
@@ -185,5 +188,7 @@ import java.time.LocalDateTime
 
             return builder.build()
         }
+
+        private val log: Logger = LoggerFactory.getLogger(GetCoverService::class.java)
     }
 }

@@ -160,17 +160,7 @@ import java.util.regex.Matcher
 
         @NonNull @Throws(MRAException::class) private fun getEasyMultiplier(matcher: Matcher): Double {
             val easyStr = matcher.group("easy") ?: ""
-            var easy = 1.0
-
-            if (easyStr.isNotBlank()) {
-                try {
-                    easy = easyStr.toDouble()
-                } catch (e: NullPointerException) {
-                    throw MRAException(MRAException.Type.RATING_Parameter_EasyError)
-                } catch (e: NumberFormatException) {
-                    throw MRAException(MRAException.Type.RATING_Parameter_EasyError)
-                }
-            }
+            val easy = easyStr.toDoubleOrNull() ?: 1.0
 
             if (easy > 10.0) throw MRAException(MRAException.Type.RATING_Parameter_EasyTooLarge)
             if (easy < 0.0) throw MRAException(MRAException.Type.RATING_Parameter_EasyTooSmall)
@@ -188,7 +178,8 @@ import java.util.regex.Matcher
                     try {
                         r = s.toInt()
                         remove.add(r)
-                    } catch (ignored: NumberFormatException) {
+                    } catch (_: NumberFormatException) {
+
                     }
                 }
             }
@@ -224,20 +215,7 @@ import java.util.regex.Matcher
             val easy = getEasyMultiplier(matcher)
             val isUU = matcher.namedGroups().containsKey("uu") && matcher.group("uu") != null
 
-            val match: Match
-            try {
-                match = matchApiService.getMatch(matchID, 10)
-            } catch (e: Exception) {
-                log.error("查询比赛 $matchID 错误", e)
-
-                throw MRAException(MRAException.Type.RATING_Match_NotFound)
-            }
-
-            while (match.firstEventID != match.events.first().eventID) {
-                val events = matchApiService.getMatch(matchID, 10).events
-                if (events.isEmpty()) throw MRAException(MRAException.Type.RATING_Round_Empty)
-                match.events.addAll(0, events)
-            }
+            val match: Match = matchApiService.getMatch(matchID, 10)
 
             return MuRatingPanelParam(match, MatchRating.RatingParam(skip, ignore, remove, easy, failed, rematch), isUU)
         }
@@ -254,18 +232,7 @@ import java.util.regex.Matcher
             beatmapApiService: OsuBeatmapApiService,
             calculateApiService: OsuCalculateApiService,
         ): MatchRating {
-            val match: Match
-            try {
-                match = matchApiService.getMatch(matchID, 10)
-            } catch (e: Exception) {
-                throw MRAException(MRAException.Type.RATING_Match_NotFound)
-            }
-
-            while (match.firstEventID != match.events.first().eventID) {
-                val events = matchApiService.getMatch(matchID, 10).events
-                if (events.isEmpty()) throw MRAException(MRAException.Type.RATING_Round_Empty)
-                match.events.addAll(0, events)
-            }
+            val match: Match = matchApiService.getMatch(matchID, 10)
 
             val param = MuRatingPanelParam(match, MatchRating.RatingParam(skip, ignore, remove, easy, failed, rematch), false)
 
