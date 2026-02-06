@@ -9,6 +9,9 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
     // class AudioNotSafeForWork:
     //    UnsupportedOperationException("这种歌曲，还是有点唱不出口呢。")
 
+    class ExpiredOauthBind:
+        UnsupportedOperationException("如果要使用这个功能，您需要重新使用 Oauth2 绑定 (!bi)。")
+
     class Invalid():
         UnsupportedOperationException("非法操作。")
 
@@ -21,7 +24,7 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
     class NotSupporter:
         UnsupportedOperationException("如果要使用这个功能，您需要成为 osu!supporter。")
 
-    class NotOauthBind:
+    class NoOauthBind:
         UnsupportedOperationException("如果要使用这个功能，您需要使用 Oauth2 绑定 (!bi)。")
 
     class NoQQ(operation: String):

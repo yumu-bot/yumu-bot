@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.OsuUser
+import java.time.Duration
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 class BindUser {
@@ -62,7 +63,10 @@ class BindUser {
         setTimeToNow()
     }
 
-    val isAuthorized: Boolean
+    /**
+     * 有 token 也可能是过期的，如果想判断是否过期，请使用 isTokenAvailable
+     */
+    val hasToken: Boolean
         // 是否绑定过
         get() = !accessToken.isNullOrBlank() && !refreshToken.isNullOrBlank()
 
@@ -75,11 +79,24 @@ class BindUser {
         return time!!
     }
 
-    val isExpired: Boolean
-        get() = !isNotExpired
+    /**
+     * - true: 没有过期
+     * - false: 可能过期，但可能可以用（三天之内撒了你
+     * - null: 无效，或是已经过期很久
+     */
+    val isTokenAvailable: Boolean?
+        get() {
+            val now = System.currentTimeMillis()
 
-    val isNotExpired: Boolean
-        get() = time != null && System.currentTimeMillis() < time!!
+            return if (!hasToken || time == null || now >= (time!! + Duration.ofDays(3).toSeconds())) {
+                null
+            } else {
+                now < time!!
+            }
+        }
+
+    val isExpired: Boolean
+        get() = time == null || System.currentTimeMillis() >= time!!
 
 
     // 重写 equals 必须要重写 hashCode, 如果别的地方使用 HashSet/HashMap 会炸
@@ -97,7 +114,7 @@ class BindUser {
     }
 
     override fun toString(): String {
-        return "BindUser(isExpired=$isExpired, isAuthorized=$isAuthorized, mode=$mode, time=$time, refreshToken=$refreshToken, accessToken=$accessToken, userID=$userID, username='$username', baseID=$baseID)"
+        return "BindUser(baseID=$baseID, username='$username', userID=$userID, accessToken=$accessToken, refreshToken=$refreshToken, time=$time, mode=$mode, hasToken=$hasToken, isTokenAvailable=$isTokenAvailable, isExpired=$isExpired)"
     }
 
     companion object {

@@ -8,8 +8,8 @@ import com.now.nowbot.model.osu.*
 import com.now.nowbot.service.web.TeamInfo
 import com.now.nowbot.service.web.TopPlays
 import com.now.nowbot.throwable.botRuntimeException.BindException
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.util.concurrent.ExecutionException
 
 interface OsuUserApiService {
     fun getAvatarByte(user: OsuUser): ByteArray
@@ -24,7 +24,7 @@ interface OsuUserApiService {
 
     @Throws(BindException::class) fun refreshUserTokenInstant(user: BindUser?, isMyself: Boolean = false): BindUser
 
-    @CanIgnoreReturnValue @Throws(ExecutionException::class) fun refreshUserToken(user: BindUser): String?
+    @CanIgnoreReturnValue @Throws(NetworkException.UserException::class) fun refreshUserToken(user: BindUser): String?
 
     @Throws(WebClientResponseException::class) fun refreshUserTokenFirst(user: BindUser)
 

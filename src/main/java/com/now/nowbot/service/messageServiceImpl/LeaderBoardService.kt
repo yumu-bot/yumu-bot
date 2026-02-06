@@ -150,8 +150,12 @@ class LeaderBoardService(
 
         val mode = OsuMode.getConvertableMode(param.mode, beatmap.mode)
 
-        if (bindUser?.isAuthorized != true && (param.mods.isNotEmpty() || param.type != "global")) {
-            throw UnsupportedOperationException.NotOauthBind()
+        if (bindUser?.isTokenAvailable == null && (param.mods.isNotEmpty() || param.type != "global")) {
+            if (bindUser?.hasToken == true) {
+                throw UnsupportedOperationException.ExpiredOauthBind()
+            } else {
+                throw UnsupportedOperationException.NoOauthBind()
+            }
         }
 
         val scores: List<LazerScore> = try {
@@ -160,7 +164,11 @@ class LeaderBoardService(
             throw UnsupportedOperationException.NotSupporter()
         } catch (e: NetworkException.ScoreException.Unauthorized) {
             log.error("谱面排行榜：玩家掉绑", e)
-            throw UnsupportedOperationException.NotOauthBind()
+            if (bindUser?.hasToken == true) {
+                throw UnsupportedOperationException.ExpiredOauthBind()
+            } else {
+                throw UnsupportedOperationException.NoOauthBind()
+            }
         } catch (e: Exception) {
             log.error("谱面排行榜：获取失败", e)
             throw IllegalStateException.Fetch("谱面排行榜")

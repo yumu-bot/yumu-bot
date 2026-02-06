@@ -200,7 +200,7 @@ import java.util.function.Predicate
         //检查是否已经绑定
         val qqBindLite = bindDao.getQQLiteFromQQ(qq)
 
-        if (qqBindLite != null && qqBindLite.bindUser!!.isAuthorized) {
+        if (qqBindLite != null && qqBindLite.bindUser!!.hasToken) {
             bindUser = qqBindLite.bindUser!!
 
             try {
@@ -246,7 +246,7 @@ import java.util.function.Predicate
         if (isCaptcha) {
             val uid = bindDao.verifyCaptcha(name)
             val bu = bindDao.getBindUser(uid)
-            if (bu != null && bu.isAuthorized) {
+            if (bu != null && bu.hasToken) {
                 val mode = userApiService.getOsuUser(bu.userID).currentOsuMode
 
                 bindDao.bindQQ(qq, bu)

@@ -264,7 +264,7 @@ class FriendService(
             // 亲密好友模式
             val other = bindDao.getBindUser(id.data)
 
-            if (other != null && other.isAuthorized && other.isExpired) {
+            if (other != null && other.isTokenAvailable != true) {
                 val t = try {
                     userApiService.refreshUserToken(other)
                 } catch (_: Exception) {
@@ -276,7 +276,7 @@ class FriendService(
                 }
             }
 
-            if (other == null || !other.isAuthorized) {
+            if (other == null || other.isTokenAvailable == null) {
                 // 对方未绑定模式
                 val others = getUserWithRange(event, matcher, InstructionObject(other?.mode ?: OsuMode.DEFAULT), isMyself).data!!
 
@@ -292,7 +292,7 @@ class FriendService(
                 val followed = target?.isMutual
 
                 return FriendPairParam(async.first, others, FriendPairStatistics(
-                    userBind = me.isAuthorized,
+                    userBind = me.isTokenAvailable != null,
                     partnerBind = false,
                     isFollowing = following,
                     isFollowed = followed,
@@ -316,8 +316,8 @@ class FriendService(
                 val followed = friends.second.find { it.targetID == me.userID } != null
 
                 return FriendPairParam(users.first, users.second, FriendPairStatistics(
-                    userBind = me.isAuthorized,
-                    partnerBind = other.isAuthorized,
+                    userBind = me.isTokenAvailable != null,
+                    partnerBind = other.isTokenAvailable != null,
                     isFollowing = following,
                     isFollowed = followed,
                     userFollowing = friends.first.size,

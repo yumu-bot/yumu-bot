@@ -21,6 +21,7 @@ import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.BindException.BindIllegalArgumentException.IllegalQQ
 import com.now.nowbot.throwable.botRuntimeException.BindException.NotBindException.UserNotBind
 import com.now.nowbot.throwable.botRuntimeException.BindException.NotBindException.YouNotBind
+import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.IncorrectResultSizeDataAccessException
@@ -31,7 +32,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.jvm.optionals.getOrNull
@@ -534,7 +534,8 @@ class BindDao(
         if (user != null) {
             val u = user
             if (updateUserSet.remove(u.id)) return
-            if (ObjectUtils.isEmpty(u.refreshToken)) {
+
+            if (u.refreshToken.isNullOrBlank()) {
                 bindUserMapper.backupBindByOsuID(u.osuID)
                 return
             }
@@ -630,16 +631,14 @@ class BindDao(
             try {
                 userApiService.refreshUserToken(fromLite(u)!!)
                 return true
-            } catch(e: ExecutionException) {
-                when(e.cause) {
+            } catch(ue: NetworkException.UserException) {
+                when(ue) {
 
-                    is WebClientResponseException.Unauthorized -> {
-                        log.info("刷新用户令牌：更新 {} 令牌失败, token 失效, 绑定取消", u.osuName)
-                        bindUserMapper.backupBindByOsuID(u.osuID)
+                    is NetworkException.UserException.Unauthorized -> {
                         return false
                     }
 
-                    is WebClientResponseException.Forbidden -> {
+                    is NetworkException.UserException.Forbidden -> {
                         log.info("刷新用户令牌：更新 {} 令牌失败, 可能被识别为滥用 API 而禁止访问", u.osuName)
                         return false
                     }
@@ -654,15 +653,14 @@ class BindDao(
                                 "刷新用户令牌：更新 {} 令牌失败, 第 {} 次重试失败, 放弃更新。错误原因：",
                                 u.osuName,
                                 badRequest,
-                                e
+                                ue
                             )
                             return false
                         }
                     }
                 }
-
-            } catch (e1: Throwable) {
-                log.error("刷新用户令牌：神秘错误: ", e1)
+            } catch (e: Throwable) {
+                log.error("刷新用户令牌：神秘错误: ", e)
                 return false
             }
         }

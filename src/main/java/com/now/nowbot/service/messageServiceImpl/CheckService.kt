@@ -63,6 +63,12 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
         val baseID = qb?.osuUser?.id ?: "未知"
         val join = qb?.osuUser?.joinDate?.format(formatter) ?: "未知"
 
+        val available = when(param.isTokenAvailable){
+            true -> "有效"
+            false -> "过期，但或许有效"
+            null -> "无效"
+        }
+
         val result = """
             玩家 ${param.username} 的绑定信息：
             
@@ -72,8 +78,8 @@ class CheckService(private val bindDao: BindDao): MessageService<BindUser> {
             绑定时间：${join}
             游戏模式：${param.mode.fullName}
             
-            绑定状态：${if (param.isAuthorized) "链接绑定" else "玩家名绑定"}
-            令牌状态：${if (param.isNotExpired) "有效" else "无效"}
+            绑定类型：${if (param.hasToken) "链接" else "玩家名"}
+            令牌状态：${available}
             令牌过期时间：${timeStr}
         """.trimIndent()
 

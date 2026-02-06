@@ -83,7 +83,7 @@ import java.util.concurrent.Callable
             }
         }
 
-        if (!user.isAuthorized) {
+        if (user.isTokenAvailable == null) {
             throw BindException.Oauth2Exception.NeedUpgrade()
         }
 
@@ -97,7 +97,7 @@ import java.util.concurrent.Callable
 
         val result = bindDao.getBindUser(user.userID)!!
 
-        if (!user.isAuthorized) {
+        if (user.isTokenAvailable == null) {
             throw BindException.Oauth2Exception.NeedRefresh()
         }
 
@@ -105,7 +105,7 @@ import java.util.concurrent.Callable
     }
 
     override fun refreshUserToken(user: BindUser): String? {
-        if (!user.isAuthorized) return base.getBotToken()
+        if (user.isTokenAvailable == null) return base.getBotToken()
         return base.refreshUserToken(user, false)
     }
 
@@ -121,7 +121,7 @@ import java.util.concurrent.Callable
 
 
     override fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser {
-        if (!user.isAuthorized) return getOsuUser(user.userID, mode)
+        if (user.isTokenAvailable == null) return getOsuUser(user.userID, mode)
 
         return request { client -> client
             .get().uri("me/{mode}", mode.shortName)
@@ -261,7 +261,13 @@ import java.util.concurrent.Callable
     }
 
     override fun getFriendList(user: BindUser): List<LazerFriend> {
-        if (!user.isAuthorized) throw UnsupportedOperationException.NotOauthBind()
+        if (user.isTokenAvailable == null) {
+            if (user.hasToken) {
+                throw UnsupportedOperationException.ExpiredOauthBind()
+            } else {
+                throw UnsupportedOperationException.NoOauthBind()
+            }
+        }
 
         return request { client ->
             client.get().uri("friends")
