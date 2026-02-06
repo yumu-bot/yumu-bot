@@ -1,7 +1,7 @@
 package com.now.nowbot.model.ppysb
 
 import com.fasterxml.jackson.annotation.JsonAlias
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
@@ -34,7 +34,7 @@ data class SBScore(
 
     @field:JsonProperty("max_combo") val maxCombo: Int,
 
-    @set:JsonProperty("mods") @get:JsonIgnoreProperties var modInt: Int,
+    @set:JsonProperty("mods") @get:JsonIgnore var modInt: Int,
 
     @field:JsonProperty("n300") val count300: Int,
 
@@ -50,9 +50,9 @@ data class SBScore(
 
     @set:JsonProperty("grade") @get:JsonAlias("rank") var rank: String,
 
-    @set:JsonProperty("status") @get:JsonIgnoreProperties var statusByte: Byte,
+    @set:JsonProperty("status") @get:JsonIgnore var statusByte: Byte,
 
-    @set:JsonProperty("mode") @get:JsonIgnoreProperties var modeByte: Byte,
+    @set:JsonProperty("mode") @get:JsonIgnore var modeByte: Byte,
 
     @field:JsonProperty("play_time") var endedTimeString: String,
 
@@ -191,7 +191,7 @@ data class SBScore(
             else -> "graveyard"
         }
 
-    @get:JsonIgnoreProperties val endedTime: OffsetDateTime
+    @get:JsonIgnore val endedTime: OffsetDateTime
         get() = LocalDateTime.parse(endedTimeString, formatter).atOffset(ZoneOffset.ofHours(8))
 
     fun toLazerScore(): LazerScore {

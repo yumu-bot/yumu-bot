@@ -1,6 +1,7 @@
 package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -20,13 +21,13 @@ class KudosuHistory {
     var amount: Int? = null
     var model: String? = null
 
-    @JsonIgnoreProperties
+    @get:JsonIgnore
     var created: LocalDateTime? = null
 
-    @JsonIgnoreProperties
+    @get:JsonIgnore
     var giver: Giver? = null
 
-    @JsonIgnoreProperties
+    @get:JsonIgnore
     var post: Post? = null
 
     @JsonProperty("created") fun setCreated(time: String) {

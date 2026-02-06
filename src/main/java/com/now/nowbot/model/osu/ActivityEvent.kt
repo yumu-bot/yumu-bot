@@ -96,7 +96,7 @@ class ActivityEvent {
     @JsonProperty("id")
     var eventID: Long = 0
 
-    @JsonIgnore
+    @get:JsonIgnore
     var type: EventType? = null
 
     @JsonProperty("type") fun setType(type: String?) {

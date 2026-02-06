@@ -1,7 +1,7 @@
 package com.now.nowbot.model.ppysb
 
 import com.fasterxml.jackson.annotation.JsonAlias
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
@@ -10,7 +10,7 @@ data class SBStatistics(
     @field:JsonProperty("id")
     var id: Long = 0L,
 
-    @set:JsonProperty("mode") @get:JsonIgnoreProperties var modeByte: Byte = 0,
+    @set:JsonProperty("mode") @get:JsonIgnore var modeByte: Byte = 0,
 
     @get:JsonProperty("total_score")
     @field:JsonAlias("tscore")

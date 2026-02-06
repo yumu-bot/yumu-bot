@@ -1,62 +1,62 @@
 package com.now.nowbot.model.bili
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.util.JacksonUtil
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
 class BiliDanmaku {
-    @JsonProperty("code")
+    @field:JsonProperty("code")
     var code: Int = -1
 
-    @JsonProperty("message")
+    @field:JsonProperty("message")
     var message: String = ""
 
     // 无实义
-    // @JsonProperty("ttl")
+    // @field:JsonProperty("ttl")
     //  var total: Int = 1
 
     // 如果为空，则请检查当前的 code
-    @JsonProperty("data")
+    @field:JsonProperty("data")
     var data: DanmakuData? = null
 
     data class DanmakuData(
-        @JsonProperty("admin")
+        @field:JsonProperty("admin")
         val admin: List<Danmaku>,
 
-        @JsonProperty("room")
+        @field:JsonProperty("room")
         val room: List<Danmaku>,
     )
 
     data class Danmaku(
-        @JsonProperty("text")
+        @field:JsonProperty("text")
         val text: String,
 
         @set:JsonProperty("dm_type")
         @get:JsonProperty("type")
         var type: String,
 
-        @JsonProperty("uid")
+        @field:JsonProperty("uid")
         val id: Long,
 
-        @JsonProperty("nickname")
+        @field:JsonProperty("nickname")
         val name: String,
 
-        @JsonProperty("uname_color")
+        @field:JsonProperty("uname_color")
         val nameColor: String,
 
         @set:JsonProperty("timeline")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var timeline: OffsetDateTime = OffsetDateTime.now(),
 
-        @JsonProperty("isadmin")
+        @field:JsonProperty("isadmin")
         val admin: Byte,
 
-        @JsonProperty("vip")
+        @field:JsonProperty("vip")
         val VIP: Byte,
 
-        @JsonProperty("svip")
+        @field:JsonProperty("svip")
         val SVIP: Byte,
 
         /**
@@ -74,13 +74,13 @@ class BiliDanmaku {
          */
 
         @set:JsonProperty("rank")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var rankInt: Int,
 
-        @JsonProperty("rnd")
+        @field:JsonProperty("rnd")
         val randomSeed: Int,
 
-        @JsonProperty("user_title")
+        @field:JsonProperty("user_title")
         val title: String,
 
         /**
@@ -97,17 +97,15 @@ class BiliDanmaku {
          *         },
          */
 
-        @JsonProperty("voice_dm_info")
+        @field:JsonProperty("voice_dm_info")
         val voiceDirectMessage: VoiceDirectMessage,
 
-        @JsonProperty("emoticon")
+        @field:JsonProperty("emoticon")
         val exclusiveEmotion: ExclusiveEmotion,
 
-
         @set:JsonProperty("emots")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var emotionMap: Map<String, String>
-
 
     ) {
         @get:JsonProperty("timeline")
@@ -124,26 +122,26 @@ class BiliDanmaku {
             get() = emotionMap.mapNotNull {
                 try {
                     JacksonUtil.parseObject(it.value, Emotion::class.java)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     null
                 }
             }
     }
 
     data class VoiceDirectMessage(
-        @JsonProperty("voice_url")
+        @field:JsonProperty("voice_url")
         val url: String,
 
-        @JsonProperty("file_format")
+        @field:JsonProperty("file_format")
         val format: String,
 
-        @JsonProperty("text")
+        @field:JsonProperty("text")
         val text: String,
 
-        @JsonProperty("file_duration")
+        @field:JsonProperty("file_duration")
         val fileDuration: Long,
 
-        @JsonProperty("file_id")
+        @field:JsonProperty("file_id")
         val fileID: String,
     )
 
@@ -151,61 +149,61 @@ class BiliDanmaku {
      * 房间独有表情
      */
     data class ExclusiveEmotion(
-        @JsonProperty("id")
+        @field:JsonProperty("id")
         val id: Int,
 
-        @JsonProperty("emoticon_unique")
+        @field:JsonProperty("emoticon_unique")
         val unique: String,
 
-        @JsonProperty("text")
+        @field:JsonProperty("text")
         val text: String,
 
-        @JsonProperty("perm")
+        @field:JsonProperty("perm")
         val permission: Byte,
 
-        @JsonProperty("url")
+        @field:JsonProperty("url")
         val url: String,
 
-        @JsonProperty("in_player_area")
+        @field:JsonProperty("in_player_area")
         val inPlayerArea: Byte,
 
-        @JsonProperty("bulge_display")
+        @field:JsonProperty("bulge_display")
         val bulgeDisplay: Byte,
 
-        @JsonProperty("is_dynamic")
+        @field:JsonProperty("is_dynamic")
         val dynamic: Byte,
 
-        @JsonProperty("height")
+        @field:JsonProperty("height")
         val height: Int,
 
-        @JsonProperty("width")
+        @field:JsonProperty("width")
         val width: Int,
 
     )
 
     data class Emotion(
-        @JsonProperty("count")
+        @field:JsonProperty("count")
         val count: Int,
 
-        @JsonProperty("descript")
+        @field:JsonProperty("descript")
         val description: String,
 
-        @JsonProperty("emoji")
+        @field:JsonProperty("emoji")
         val emoji: String,
 
-        @JsonProperty("emoticon_id")
+        @field:JsonProperty("emoticon_id")
         val id: Int,
 
-        @JsonProperty("emoticon_unique")
+        @field:JsonProperty("emoticon_unique")
         val unique: String,
 
-        @JsonProperty("url")
+        @field:JsonProperty("url")
         val url: String,
 
-        @JsonProperty("height")
+        @field:JsonProperty("height")
         val height: Int,
 
-        @JsonProperty("width")
+        @field:JsonProperty("width")
         val width: Int,
         )
 

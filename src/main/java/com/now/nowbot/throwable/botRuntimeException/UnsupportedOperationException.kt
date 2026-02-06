@@ -10,7 +10,10 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
     //    UnsupportedOperationException("这种歌曲，还是有点唱不出口呢。")
 
     class ExpiredOauthBind:
-        UnsupportedOperationException("如果要使用这个功能，您需要重新使用 Oauth2 绑定 (!bi)。")
+        UnsupportedOperationException("""
+            您的 Oauth2 绑定已经过期。
+            如果要使用这个功能，您需要重新使用 Oauth2 绑定 (!bi)。
+        """.trimIndent())
 
     class Invalid():
         UnsupportedOperationException("非法操作。")

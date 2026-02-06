@@ -32,7 +32,7 @@ class Score {
     @JsonProperty("id")
     var scoreID: Long? = null
 
-    @JsonIgnoreProperties
+    @JsonIgnore
     var mode: OsuMode? = null
 
     @JsonProperty("mode_int")
@@ -69,7 +69,7 @@ class Score {
 
     var type: String? = null
 
-    @get:JsonIgnoreProperties
+    @get:JsonIgnore
     val legacy: Boolean
         get() = type != null && type != "solo_score" //目前只看见有这个类别，mp 房也是这个类别
 

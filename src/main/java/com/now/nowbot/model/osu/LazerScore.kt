@@ -1,7 +1,6 @@
 package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
@@ -89,7 +88,7 @@ open class LazerScore(
     var passed: Boolean = false,
 
     @set:JsonProperty("pp")
-    @get:JsonIgnoreProperties
+    @get:JsonIgnore
     var ppDouble: Double? = 0.0,
 
     @field:JsonProperty("ruleset_id")
@@ -108,7 +107,7 @@ open class LazerScore(
     ) {
 
     @get:JsonProperty("pp")
-    @set:JsonIgnoreProperties
+    @set:JsonIgnore
     var pp: Double = 0.0
         get() = ppDouble ?: 0.0
         set(value) {
@@ -116,7 +115,7 @@ open class LazerScore(
             ppDouble = value
         }
 
-    @JsonIgnoreProperties
+    @JsonIgnore
     fun getPP(): Double {
         return this.pp
     }

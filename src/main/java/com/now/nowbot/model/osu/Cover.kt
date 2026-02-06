@@ -1,6 +1,7 @@
 package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -14,7 +15,7 @@ class Cover {
     var url: String? = null
 
     @set:JsonProperty("id")
-    @get:JsonIgnoreProperties
+    @get:JsonIgnore
     var idStr: String? = null
 
     @get:JsonProperty("id")
@@ -24,15 +25,6 @@ class Cover {
         } else {
             null
         }
-
-
-    constructor()
-
-    constructor(custom: String, url: String, id: Int) {
-        this.custom = custom
-        this.url = url
-        this.idStr = id.toString()
-    }
 
     override fun toString(): String {
         return "Cover(custom=$custom, url=$url, id=$id)"

@@ -31,7 +31,7 @@ class MaiBestScore {
     var rating: Int? = 0
 
     // 没有用
-    // @JsonIgnoreProperties("user_general_data")
+    // @get:JsonIgnore("user_general_data")
     // String general;
     // 在查分器里的名字
     @JsonProperty("username") var probername: String = ""

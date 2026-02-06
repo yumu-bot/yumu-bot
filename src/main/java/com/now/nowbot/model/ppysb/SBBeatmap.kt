@@ -1,6 +1,6 @@
 package com.now.nowbot.model.ppysb
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.*
@@ -27,13 +27,13 @@ data class SBBeatmap(
 
     @field:JsonProperty("max_combo") val maxCombo: Int,
 
-    @set:JsonProperty("status") @get:JsonIgnoreProperties var statusByte: Byte,
+    @set:JsonProperty("status") @get:JsonIgnore var statusByte: Byte,
 
     @field:JsonProperty("plays") val playCount: Long,
 
     @field:JsonProperty("passes") val passCount: Long,
 
-    @set:JsonProperty("mode") @get:JsonIgnoreProperties var modeByte: Byte,
+    @set:JsonProperty("mode") @get:JsonIgnore var modeByte: Byte,
 
     @field:JsonProperty("bpm") val bpm: Double,
 

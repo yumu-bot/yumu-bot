@@ -1,12 +1,13 @@
 package com.now.nowbot.model.maimai
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.util.JacksonUtil
 
 class MaiSong {
-    @JsonIgnoreProperties var songID: Int = 0
+    @get:JsonIgnore
+    var songID: Int = 0
 
     @JsonProperty("id") private fun setSongID(node: JsonNode) {
         this.songID = JacksonUtil.parseObject(node, String::class.java).toInt()
@@ -47,7 +48,7 @@ class MaiSong {
     // 自己设置，可以高亮的难度，按 0-4 排布。如果是 null，则会全部显示（也包括宴会场）
     @JsonProperty("highlight") var highlight: Set<Int>? = null
     
-    @JsonIgnoreProperties
+    @JsonIgnore
     fun updateHighlight(highlight: Set<Int>) {
         val hil = highlight.isEmpty()
         if (hil) return
@@ -66,7 +67,7 @@ class MaiSong {
 
     class MaiChart {
         // 物件数量
-        @JsonIgnoreProperties var notes: MaiNote = MaiNote()
+        @get:JsonIgnore var notes: MaiNote = MaiNote()
 
         @get:JsonProperty val dxScore: Int
             get() = 3 * notes.total

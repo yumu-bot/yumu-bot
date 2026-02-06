@@ -1,6 +1,6 @@
 package com.now.nowbot.model.osu
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.yumu.core.extensions.isNotNull
 import jakarta.persistence.Column
@@ -369,7 +369,7 @@ class Beatmapset {
     }
 
     //获取最高难度
-    @JsonIgnoreProperties
+    @JsonIgnore
     fun getTopDiff(last: Int = 1): Beatmap? {
         return beatmaps?.sortedByDescending { it.starRating }?.getOrNull(last - 1)
     }

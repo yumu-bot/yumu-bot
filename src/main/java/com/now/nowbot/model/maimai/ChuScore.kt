@@ -1,6 +1,6 @@
 package com.now.nowbot.model.maimai
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 
 class ChuScore {
@@ -35,11 +35,14 @@ class ChuScore {
     @get:JsonProperty("alias") var alias: String? = null
 
     // BP 多少
-    @JsonIgnoreProperties var position: Int = 0
+    @set:JsonIgnore
+    var position: Int = 0
 
     // 自己拿
-    @JsonIgnoreProperties var artist: String = ""
+    @set:JsonIgnore
+    var artist: String = ""
 
     // 自己拿
-    @JsonIgnoreProperties var charter: String = ""
+    @set:JsonIgnore
+    var charter: String = ""
 }

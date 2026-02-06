@@ -1,6 +1,6 @@
 package com.now.nowbot.model.bili
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.util.DataUtil
 import java.net.URLDecoder
@@ -47,7 +47,7 @@ class BiliUser {
         val signature: String = "",
 
         @set:JsonProperty("rank")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var rankInt: Int,
 
         // 等级，6 级最高
@@ -247,7 +247,7 @@ class BiliUser {
         val name: String,
 
         @set:JsonProperty("medal_color")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var colorInt: Int,
 
         /**
@@ -272,15 +272,15 @@ class BiliUser {
         val intimacyToday: Int = 0,
 
         @set:JsonProperty("medal_color_start")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var colorStartInt: Int,
 
         @set:JsonProperty("medal_color_end")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var colorEndInt: Int,
 
         @set:JsonProperty("medal_color_border")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var colorBorderInt: Int,
 
         /**
@@ -360,7 +360,7 @@ class BiliUser {
         val status: Byte,
 
         @set:JsonProperty("due_date")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var dueDateNumber: Long,
 
         /**
@@ -409,7 +409,7 @@ class BiliUser {
         val tvPayType: Byte,
 
         @set:JsonProperty("tv_due_date")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var tvDueDateNumber: Long,
 
         @field:JsonProperty("avatar_icon")
@@ -485,7 +485,7 @@ class BiliUser {
          * 简体版图片链接，供 bot 使用
          */
         @set:JsonProperty("img_label_uri_hans_static")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var simplifiedImageUrl: String,
     ) {
 
@@ -581,7 +581,7 @@ class BiliUser {
          * 获取条件
          */
         @set:JsonProperty("condition")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var conditionStr: String,
     ) {
         @get:JsonProperty("condition")
@@ -766,11 +766,11 @@ class BiliUser {
         val id: Int,
 
         @set:JsonProperty("l_img")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var image: String,
 
         @set:JsonProperty("l_200h_img")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var image200: String,
     ) {
         @get:JsonProperty("url")

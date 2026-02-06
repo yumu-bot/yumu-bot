@@ -1,12 +1,12 @@
 package com.now.nowbot.model.osu
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class Tag(
     @JsonProperty("id") var id: Int = 0,
 
-    @set:JsonProperty("name") @get:JsonIgnoreProperties var name: String = "",
+    @set:JsonProperty("name") @get:JsonIgnore var name: String = "",
 
     @JsonProperty("ruleset_id") var rulesetID: Byte? = null,
 

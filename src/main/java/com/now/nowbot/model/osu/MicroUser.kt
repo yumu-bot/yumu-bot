@@ -42,7 +42,7 @@ class MicroUser : Comparable<MicroUser> {
     @JsonProperty("last_visit")
     var lastVisitString: String? = null
 
-    @get:JsonIgnoreProperties
+    @get:JsonIgnore
     val lastVisitTime: LocalDateTime?
         get() {
             if (lastVisitString != null) return LocalDateTime.parse(lastVisitString!!, formatter)

@@ -385,7 +385,7 @@ enum class OfficialInstruction(val pattern: Pattern) {
     }),
 
     OLD_AVATAR_CARD(CommandPatternBuilder.create {
-        appendOfficialCommandsIgnoreAll("oc", "old\\s*(avatar\\s*)?card")
+        appendOfficialCommandsIgnoreAll("oc", "(old|osu)?\\s*(avatar\\s*)?card")
         appendModeQQUID()
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),

@@ -1,6 +1,7 @@
 package com.now.nowbot.model.osu
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -27,8 +28,8 @@ open class OsuUser {
 
     //不要动这个
     var id: Long = 0L
-    
-    @get:JsonIgnoreProperties
+
+    @get:JsonProperty("user_id")
     val userID: Long
         get() = id
 
@@ -98,7 +99,7 @@ open class OsuUser {
     @JsonProperty("playmode")
     var mode: String = ""
 
-    @set:JsonIgnoreProperties
+    @set:JsonIgnore
     @get:JsonProperty("mode")
     var currentOsuMode: OsuMode = OsuMode.DEFAULT
         get() = if (rankHistory != null) {
@@ -302,7 +303,7 @@ open class OsuUser {
         var totalPoints: Int = 0,
 
         @set:JsonProperty("user_id")
-        @get:JsonIgnoreProperties
+        @get:JsonIgnore
         var userID: Long = 0L,
 
         @field:JsonProperty("pool")
@@ -325,7 +326,7 @@ open class OsuUser {
     )
 
 
-    @JsonIgnoreProperties
+    @get:JsonIgnore
     var monthlyPlaycounts: List<UserMonthly> = listOf()
 
     @JsonProperty("monthly_playcounts") fun setMonthlyPlayCount(dataList: List<HashMap<String, Any>>) {
@@ -338,7 +339,7 @@ open class OsuUser {
     var nominatedCount: Int = 0
 
     // 暂时不用这个类，字符太多了
-    @get:JsonIgnoreProperties
+    @get:JsonIgnore
     var page: Page? = null
 
     data class Page(val html: String, val raw: String)
@@ -363,7 +364,7 @@ open class OsuUser {
     @JsonProperty("ranked_beatmapset_count")
     var rankedCount: Int = 0
 
-    @JsonIgnoreProperties
+    @get:JsonIgnore
     var replaysWatchedCounts: List<UserMonthly> = listOf()
 
     @JsonProperty("replays_watched_counts") fun setReplaysWatchedCount(dataList: List<HashMap<String, Any>>) {

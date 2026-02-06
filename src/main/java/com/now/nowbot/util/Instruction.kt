@@ -667,6 +667,18 @@ enum class Instruction(val pattern: Pattern) {
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
     }),
 
+    SB_OLD_AVATAR(CommandPatternBuilder.create {
+        appendSBCommandsIgnoreAll("(old|osu)?\\s*avatar", "oa", "o")
+        appendModeQQUID()
+        appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
+    }),
+
+    SB_OLD_AVATAR_CARD(CommandPatternBuilder.create {
+        appendSBCommandsIgnoreAll("(old|osu)?\\s*(card|chicken)", "oc")
+        appendModeQQUID()
+        appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, ANY)
+    }),
+
     OSU_AVATAR_PROFILE(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(old|osu)?\\s*profile", "op")
     }),

@@ -1,6 +1,6 @@
 package com.now.nowbot.model.maimai
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
@@ -50,7 +50,8 @@ data class LxChuScore(
     val uploadTime: OffsetDateTime?,
 
     // BP 多少
-    @JsonIgnoreProperties var position: Int = 0
+    @set:JsonIgnore
+    var position: Int = 0
 ) {
     fun toChuScore(song: ChuSong?): ChuScore {
         val lx = this

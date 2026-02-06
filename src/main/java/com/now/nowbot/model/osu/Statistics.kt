@@ -81,19 +81,19 @@ open class Statistics : Cloneable {
     @get:JsonProperty("level_progress")
     var levelProgress: Int = 0
 
-    @JsonIgnoreProperties
+    @get:JsonIgnore
     var countSS: Int = 0
 
-    @JsonIgnoreProperties
+    @get:JsonIgnore
     var countSSH: Int = 0
 
-    @JsonIgnoreProperties
+    @get:JsonIgnore
     var countS: Int = 0
 
-    @JsonIgnoreProperties
+    @get:JsonIgnore
     var countSH: Int = 0
 
-    @JsonIgnoreProperties
+    @get:JsonIgnore
     var countA: Int = 0
     
     @JsonProperty("level") fun setLevel(map: Map<String, Int>) {
@@ -215,11 +215,11 @@ open class Statistics : Cloneable {
         return out
     }
 
-    @get:JsonIgnoreProperties
+    @get:JsonIgnore
     val nonNull: Boolean
         get() = countGeki != null && count300 != null && countKatu != null && count100 != null && count50 != null && countMiss != null
 
-    @get:JsonIgnoreProperties
+    @get:JsonIgnore
     val isNull: Boolean
         get() = this.nonNull.not()
 
