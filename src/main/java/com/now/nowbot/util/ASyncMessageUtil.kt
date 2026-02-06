@@ -111,13 +111,20 @@ object ASyncMessageUtil {
 // 使用LockSupport实现的锁 不会释放锁, 但是性能最好
 
 // 使用ReentrantLock实现的锁 综合最佳
-internal class OLock(var group: Long?, var send: Long?, var offTime: Long = 0, var check: ((MessageEvent?) -> Boolean)? = null) :
-    ASyncMessageUtil.Lock {
-    var event: MessageEvent? = null
-    val condition: Condition = reentrantLock.newCondition()
+internal class OLock(
+    var group: Long?,
+    var send: Long?,
+    var offTime: Long = 0,
+    var check: ((MessageEvent?) -> Boolean)? = null
+) : ASyncMessageUtil.Lock {
+
+    private var event: MessageEvent? = null
+    private val condition: Condition = reentrantLock.newCondition()
 
     override fun checkAdd(message: MessageEvent?) {
-        if (ASyncMessageUtil.check(message, this.group, this.send) && check?.invoke(message) == true) {
+        val checkPassed = check?.invoke(message) ?: true
+
+        if (ASyncMessageUtil.check(message, this.group, this.send) && checkPassed) {
             reentrantLock.lock()
             try {
                 this.event = message
@@ -130,11 +137,19 @@ internal class OLock(var group: Long?, var send: Long?, var offTime: Long = 0, v
 
     override fun get(): MessageEvent? {
         ASyncMessageUtil.add(this)
+        reentrantLock.lock()
+
         try {
-            reentrantLock.lock()
-            if (event == null) {
-                condition.await(offTime, TimeUnit.MILLISECONDS)
+            var remainingNanos = TimeUnit.MILLISECONDS.toNanos(offTime)
+
+            while (event == null) {
+                if (remainingNanos <= 0L) {
+                    break
+                }
+
+                remainingNanos = condition.awaitNanos(remainingNanos)
             }
+
             return event
         } catch (_: InterruptedException) {
             return null
@@ -146,6 +161,8 @@ internal class OLock(var group: Long?, var send: Long?, var offTime: Long = 0, v
     }
 
     companion object {
+        // 对应 Java 的 static final ReentrantLock
+        // 所有 OLock 实例共用这一把大锁，这与 Java 逻辑一致
         private val reentrantLock = ReentrantLock()
     }
 }
