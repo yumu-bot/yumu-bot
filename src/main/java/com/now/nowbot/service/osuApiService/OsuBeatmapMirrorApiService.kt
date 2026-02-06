@@ -25,12 +25,12 @@ import java.nio.file.Path
                 .retrieve()
                 .bodyToMono(String::class.java).block()!!
 
-            val first20 = str.trimStart().take(20)
+            val first20 = str.trimStart().take(100)
 
             if (first20.startsWith("osu file format")) {
                 str
             } else {
-                log.error("谱面镜像站：谱面 $bid 文件损坏！\n谱面前 20 位是：$first20")
+                log.error("谱面镜像站：谱面 $bid 文件损坏！\n谱面前 100 位是：$first20")
                 null
             }
         } catch (e: Exception) {
