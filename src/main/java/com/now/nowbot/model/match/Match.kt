@@ -160,15 +160,38 @@ data class Match(
         }
     }
 
-    // 扩展函数风格：可以直接通过 matchA.append(matchB) 调用
-    fun append(m: Match) {
-        if (m.events.isEmpty()) return
-        this.events = (this.events + m.events).distinctBy { it.eventID }.sortedBy { it.eventID }
+    fun append(new: Match) {
+        if (new.events.isEmpty()) return
 
-        this.players = (this.players + m.players).distinctBy { it.userID }
+        // 1. 合并玩家： userID 相同的，保留最新的（m 中的）
+        val allPlayers = (this.players + new.players)
+            .associateBy { it.userID } // 后加入的会覆盖前面的
+            .values
+            .toList()
+        this.players = allPlayers
 
-        this.statistics = m.statistics
-        this.latestEventID = m.latestEventID
-        this.firstEventID = this.events.firstOrNull()?.eventID ?: m.firstEventID
+        // 2. 合并事件：先排除掉掉 ID 冲突的旧事件，再添加新事件
+        val newEventIDs = new.events.map { it.eventID }.toSet()
+        val filteredOldEvents = this.events.filterNot { it.eventID in newEventIDs }
+
+        val combinedEvents = (filteredOldEvents + new.events).sortedBy { it.eventID }
+
+        // 3. 找回你的“空分替换”特殊处理逻辑
+        // 如果之前的最后一个事件是空分，且新数据里有同 ID 的更新，上述 filterNot 已经处理了替换
+        // 但如果逻辑更复杂（比如需要特定 round 匹配），需在此处补充
+
+        this.events = combinedEvents
+
+        // 4. 智能更新状态：只有当新数据更“新”时才更新 latest
+        if (new.latestEventID > this.latestEventID) {
+            this.statistics = new.statistics
+            this.latestEventID = new.latestEventID
+        }
+
+        // 5. 确保 firstEventID 始终是绝对最小值
+        val currentFirst = this.events.firstOrNull()?.eventID
+        if (currentFirst != null) {
+            this.firstEventID = minOf(this.firstEventID, currentFirst)
+        }
     }
 }
