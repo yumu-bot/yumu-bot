@@ -325,15 +325,23 @@ import kotlin.time.toDuration
             throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
         }
 
-        val user = if (userID != null) {
-            userApiService.getOsuUser(userID, inputMode.data!!)
-        } else {
-            InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score")
-        }
-
         val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
-        val scores = scoreApiService.getBeatmapScores(beforeBeatmapID, user.userID, mode)
+        val user: OsuUser
+        val scores: List<LazerScore>
+
+        if (userID != null) {
+            val async = AsyncMethodExecutor.awaitPairCallableExecute(
+                { userApiService.getOsuUser(userID, inputMode.data!!)},
+                { scoreApiService.getBeatmapScores(beforeBeatmapID, userID, mode)}
+            )
+
+            user = async.first
+            scores = async.second
+        } else {
+            user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, inputMode, AtomicBoolean(true), messageText, "score")
+            scores = scoreApiService.getBeatmapScores(beforeBeatmapID, user.userID, mode)
+        }
 
         return ScoreData(user, map, scores, mode)
     }
