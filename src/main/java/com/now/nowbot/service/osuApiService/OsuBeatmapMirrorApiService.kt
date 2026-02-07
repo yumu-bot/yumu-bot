@@ -15,15 +15,16 @@ class OsuBeatmapMirrorApiService(
     beatmapMirrorConfig: BeatmapMirrorConfig
 ) {
     private val url = beatmapMirrorConfig.url
+    private val token = beatmapMirrorConfig.token ?: "unknown"
 
     fun getOsuFile(bid: Long): String? {
 
         if (url.isNullOrEmpty()) return null
 
         return try {
-            val str = webClient.get().uri(url) {
-                it.path("/api/mirror/beatmap/osufile/{bid}").build(bid)
-            }
+            val str = webClient.get()
+                .uri(url) { it.path("/api/mirror/beatmap/osufile/{bid}").build(bid) }
+                .header("X-TOKEN", token)
                 .retrieve()
                 .bodyToMono(String::class.java).block()!!
 
@@ -46,7 +47,10 @@ class OsuBeatmapMirrorApiService(
         if (url.isNullOrEmpty()) return null
 
         try {
-            val localPath = webClient.get().uri(url) { it.path("/api/mirror/fileName/bg/{bid}").build(bid) }.retrieve()
+            val localPath = webClient.get()
+                .uri(url) { it.path("/api/mirror/fileName/bg/{bid}").build(bid) }
+                .header("X-TOKEN", token)
+                .retrieve()
                 .bodyToMono(String::class.java).block()!!
             val path = Path.of(localPath)
 
