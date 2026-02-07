@@ -301,7 +301,7 @@ class FriendService(
                 ))
             } else {
                 // 对方已绑定模式
-                val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
+                val async = AsyncMethodExecutor.awaitQuadCallableExecute(
                     { userApiService.getOsuUser(me) },
                     { userApiService.getOsuUser(other) },
                     { userApiService.getFriendList(me) },

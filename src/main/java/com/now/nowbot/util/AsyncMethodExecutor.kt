@@ -50,7 +50,9 @@ object AsyncMethodExecutor {
     fun <T : Any> execute(supplier: Supplier<T>, key: Any, defaultValue: T?): T? {
         reentrantLock.lock()
         val hasLock = locks.containsKey(key)
-        val lock = locks.computeIfAbsent(key) { reentrantLock.newCondition() }
+        val lock = locks.computeIfAbsent(key) {
+            reentrantLock.newCondition()
+        }
         reentrantLock.unlock()
         return if (hasLock) {
             waitForResult(lock, key, defaultValue)
@@ -87,7 +89,7 @@ object AsyncMethodExecutor {
                 throw result
             }
             return result as T
-        } catch (ignore: InterruptedException) {
+        } catch (_: InterruptedException) {
             return getDefault.get()
         } finally {
             countDownLock?.countDown()
@@ -422,7 +424,7 @@ object AsyncMethodExecutor {
         }
     }
 
-    fun <T, U, V, W> awaitQuadSupplierExecute(
+    fun <T, U, V, W> awaitQuadCallableExecute(
         work: Callable<out T>,
         work2: Callable<out U>,
         work3: Callable<out V>,
@@ -437,6 +439,21 @@ object AsyncMethodExecutor {
             virtualPool.joinUntil(Instant.now().plusMillis(timeout.inWholeMilliseconds))
             virtualPool.throwIfFailed()
             return (r1.get() to r2.get()) to (r3.get() to r4.get())
+        }
+    }
+
+    fun <X> awaitListCallableExecute(works: List<Callable<out X>>, timeout: Duration = 30.toDuration(DurationUnit.SECONDS)): List<X> {
+        if (works.isEmpty()) return emptyList()
+
+        ShutdownOnFailure().use { virtualPool ->
+            val forks = works.map { work ->
+                virtualPool.fork(work)
+            }
+
+            virtualPool.joinUntil(Instant.now().plusMillis(timeout.inWholeMilliseconds))
+            virtualPool.throwIfFailed()
+
+            return forks.map { task -> task.get() }
         }
     }
 
@@ -469,8 +486,7 @@ object AsyncMethodExecutor {
                     taskThreads.forEach {
                         try {
                             it.interrupt()
-                        } catch (ignore: Exception) {
-                        }
+                        } catch (_: Exception) {}
                     }
                     phaser.forceTermination()
                 } finally {

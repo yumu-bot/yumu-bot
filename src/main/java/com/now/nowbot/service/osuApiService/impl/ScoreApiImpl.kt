@@ -226,7 +226,7 @@ class ScoreApiImpl(
         bid: Long,
         uid: Long,
         mode: OsuMode?,
-        mods: Iterable<LazerMod?>,
+        mods: Collection<LazerMod?>,
     ): BeatmapUserScore? {
 
         val uri = Function { n: Int? ->
@@ -256,7 +256,7 @@ class ScoreApiImpl(
         bid: Long,
         user: BindUser,
         mode: OsuMode,
-        mods: Iterable<LazerMod?>,
+        mods: Collection<LazerMod>,
     ): BeatmapUserScore? {
         if (user.isTokenAvailable == null) {
             return getBeatMapScore(bid, user.userID, mode, mods)
@@ -319,7 +319,7 @@ class ScoreApiImpl(
         bindUser: BindUser?,
         bid: Long,
         mode: OsuMode?,
-        mods: Iterable<LazerMod>?,
+        mods: Collection<LazerMod>?,
         type: String?,
         legacy: Boolean
     ): List<LazerScore> {

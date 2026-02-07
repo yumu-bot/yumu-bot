@@ -113,7 +113,14 @@ import java.util.function.Predicate
             } else {
                 bindQQ(event, me)
             }
-            return ServiceCallStatistic.building(event)
+            return ServiceCallStatistic.building(event) {
+                setParam(
+                    mapOf(
+                        "qqs" to listOf(me),
+                        "operate" to listOf(if (param.unbind) "u" else "b")
+                    )
+                )
+            }
         }
 
         // 超管使用量少, 所以相关分支靠后
@@ -122,15 +129,36 @@ import java.util.function.Predicate
             if (param.unbind) {
                 if (param.name.isNotBlank()) {
                     unbindName(param.name)
+                    return ServiceCallStatistic.building(event) {
+                        setParam(mapOf(
+                            "names" to listOf(param.name),
+                            "operate" to listOf("u")
+                            ))
+                    }
                 } else {
                     unbindQQ(param.qq)
                 }
             } else if (param.name.isNotBlank()) {
                 bindQQName(event, param.name, param.qq, param.isCaptcha)
+                return ServiceCallStatistic.building(event) {
+                    setParam(mapOf(
+                        "qqs" to listOf(param.qq),
+                        "names" to listOf(param.name),
+                        "operate" to listOf("b")
+                    ))
+                }
             } else if (param.at) {
                 bindQQAt(event, param.qq)
             }
-            return ServiceCallStatistic.building(event)
+
+            return ServiceCallStatistic.building(event) {
+                setParam(
+                    mapOf(
+                        "qqs" to listOf(param.qq),
+                        "operate" to listOf(if (param.unbind) "u" else "b")
+                    )
+                )
+            }
         }
 
         // bi ub 但是不是自己, 也不是超管

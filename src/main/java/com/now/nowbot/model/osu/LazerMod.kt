@@ -2931,18 +2931,19 @@ sealed class LazerMod {
         /**
          * 用于在 URI 链接中加一组模组
          */
-        @JvmStatic
-        fun setMods(builder: UriBuilder, mods: Iterable<LazerMod?>?) {
-            if (mods == null) return
+        fun setMods(builder: UriBuilder, mods: Collection<LazerMod?>?) {
+            if (mods.isNullOrEmpty()) return
 
-            for (mod in mods) {
-                if (mod is NoMod) {
-                    builder.queryParam("mods[]", "NM")
-                    return
-                }
+            val filtered = mods.filterNotNull()
+
+            // 先检查是否有 NoMod
+            if (filtered.any { it is NoMod }) {
+                builder.queryParam("mods[]", "NM")
+                return
             }
 
-            mods.filterNotNull().forEach { builder.queryParam("mods[]", it.acronym) }
+            // 否则添加所有 mods
+            filtered.forEach { builder.queryParam("mods[]", it.acronym) }
         }
     }
 }

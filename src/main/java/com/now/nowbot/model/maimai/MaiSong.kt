@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.util.JacksonUtil
 
 class MaiSong {
-    @get:JsonIgnore
+    @set:JsonIgnore
+    @get:JsonProperty("song_id")
     var songID: Int = 0
 
-    @JsonProperty("id") private fun setSongID(node: JsonNode) {
+    @JsonProperty("id")
+    private fun setSongID(node: JsonNode) {
         this.songID = JacksonUtil.parseObject(node, String::class.java).toInt()
     }
 

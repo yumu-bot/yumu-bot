@@ -263,7 +263,7 @@ import kotlin.math.max
                     "q" to id, "sort" to "ranked_desc", "s" to "any", "page" to 1
                 )
 
-                val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
+                val async = AsyncMethodExecutor.awaitQuadCallableExecute(
                     { beatmapApiService.searchBeatmapsetParallel(query) },
                     { beatmapApiService.searchBeatmapsetParallel(query2) },
                     { userApiService.getUserRecentActivity(id, 0, 100).filter { it.isMapping } },

@@ -128,7 +128,7 @@ import kotlin.math.sqrt
 
                 mode = inputMode.data!!
 
-                val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
+                val async = AsyncMethodExecutor.awaitQuadCallableExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
                     { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
@@ -158,7 +158,7 @@ import kotlin.math.sqrt
 
                 mode = inputMode.data!!
 
-                val async = AsyncMethodExecutor.awaitQuadSupplierExecute(
+                val async = AsyncMethodExecutor.awaitQuadCallableExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
                     { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
