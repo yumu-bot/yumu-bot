@@ -151,16 +151,6 @@ interface OsuScoreApiService {
         }
     }
 
-    fun asyncDownloadBackgroundFromScores(score: LazerScore, type: Iterable<CoverType>) {
-        type.forEach {
-            asyncDownloadBackgroundFromScores(listOf(score), it)
-        }
-    }
-
-    fun asyncDownloadBackgroundFromScores(score: LazerScore, type: CoverType? = CoverType.COVER) {
-        asyncDownloadBackgroundFromScores(listOf(score), type)
-    }
-
 
     fun getReplay(score: LazerScore): Replay?
 }
