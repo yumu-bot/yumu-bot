@@ -2828,7 +2828,7 @@ sealed class LazerMod {
             val newStr = acronyms.uppercase()
                 .replace("$REG_SPACE$LEVEL_MORE".toRegex(), "")
             if (newStr.length % 2 != 0) {
-                throw ModsException.CharNotPaired()
+                throw ModsException.CharNotPaired(newStr)
             }
             val list = newStr.chunked(2)
             return list
