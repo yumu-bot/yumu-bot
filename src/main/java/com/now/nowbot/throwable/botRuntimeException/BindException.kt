@@ -76,15 +76,21 @@ open class BindException(message: String) : TipsRuntimeException(message), BotEx
                 如果并不是，请无视此条消息。
             """.trimIndent())
 
-        class NoNeedReBind(id: Long, name: String):
+        class MaybeAvailable(id: Long, name: String):
             BindConfirmException("""
             您已绑定 ($id) $name，但是令牌可能还没有失效。
             如果要改绑，请回复 OK。
             """.trimIndent())
 
-        class NeedReBind(id: Long, name: String):
+        class StillAvailable(id: Long, name: String):
             BindConfirmException("""
-            您已绑定 ($id) $name，但是令牌已经失效。
+            您已绑定 ($id) $name，但是令牌依旧有效。
+            如果要改绑，请回复 OK。
+            """.trimIndent())
+
+        class Unavailable(id: Long, name: String):
+            BindConfirmException("""
+            您已绑定 ($id) $name，但是没有有效的 Oauth2 绑定令牌，或是令牌已经失效。
             如果要改绑，请回复 OK。
             """.trimIndent())
 

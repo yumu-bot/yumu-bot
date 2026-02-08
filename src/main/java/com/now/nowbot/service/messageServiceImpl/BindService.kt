@@ -235,13 +235,29 @@ import java.util.function.Predicate
                 osuUser = userApiService.getOsuUser(bindUser, OsuMode.DEFAULT)
 
                 if (osuUser.userID != bindUser.userID) {
+                    log.error("""
+                        绑定：玩家数据不匹配：
+                        绑定玩家：${bindUser.userID}，osu! 玩家：${osuUser.userID}
+                        """.trimIndent())
                     throw RuntimeException()
                 }
 
-                event.reply(BindException.BindConfirmException.NoNeedReBind(bindUser.userID, bindUser.username))
+                event.reply(
+                    when (bindUser.isTokenAvailable) {
+                        true -> BindException.BindConfirmException.StillAvailable(bindUser.userID, bindUser.username)
+                        false -> BindException.BindConfirmException.MaybeAvailable(bindUser.userID, bindUser.username)
+                        null -> BindException.BindConfirmException.Unavailable(bindUser.userID, bindUser.username)
+                    }
+                )
+
+                if (bindUser.isTokenAvailable == true) {
+                    event.reply(BindException.BindConfirmException.StillAvailable(bindUser.userID, bindUser.username))
+                } else {
+                    event.reply(BindException.BindConfirmException.MaybeAvailable(bindUser.userID, bindUser.username))
+                }
             } catch (e: Exception) {
                 if (e.findCauseOfType<WebClientResponseException.Forbidden>() != null) {
-                    event.reply(BindException.BindConfirmException.NeedReBind(bindUser.userID, bindUser.username))
+                    event.reply(BindException.BindConfirmException.Unavailable(bindUser.userID, bindUser.username))
                 }
             }
 
