@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.ScoreDao
@@ -142,10 +143,24 @@ class RecentBestService(
         val scores = this.map { it.toLazerScore() }
 
         beatmapApiService.applyBeatmapExtend(scores)
+        beatmapApiService.applyVersion(scores)
         calculateApiService.applyBeatMapChanges(scores)
         calculateApiService.applyStarToScores(scores)
 
-        return scores.sortedByDescending { it.pp }.take(50)
+        return scores.sortedByDescending {
+            return@sortedByDescending when(it.rank) {
+                "F" -> -1
+                "D" -> 0
+                "C" -> 1
+                "B" -> 2
+                "A" -> 3
+                "S" -> 4
+                "SH" -> 5
+                "SS", "X" -> 6
+                "SSH", "XH" -> 7
+                else -> -1
+            }
+        }.sortedByDescending { it.pp }.take(50)
     }
 
     private fun RecentBestParam.getImage(): ByteArray {

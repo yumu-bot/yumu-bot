@@ -54,14 +54,10 @@ class BeatmapDao(
         return beatmapsetRepository.save(fromMapSetModel(beatmapset))
     }
 
-    fun getBeatMapLite(id: Int): BeatmapLite {
-        return getBeatMapLite(id.toLong())
-    }
-
-    fun getBeatMapLite(id: Long): BeatmapLite {
+    fun getBeatMapLite(id: Long): BeatmapLite? {
         val lite = beatmapRepository.findById(id)
         if (lite.isEmpty) {
-            throw NullPointerException("not found")
+            return null
         }
         return lite.get()
     }

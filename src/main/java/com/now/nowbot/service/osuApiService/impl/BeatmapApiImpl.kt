@@ -474,15 +474,37 @@ class BeatmapApiImpl(
     override fun getBeatmapFromDatabase(bid: Long): Beatmap {
         try {
             val lite = beatmapDao.getBeatMapLite(bid)
-            return BeatmapDao.fromBeatmapLite(lite)
+            return BeatmapDao.fromBeatmapLite(lite!!)
         } catch (_: Exception) {
             return getBeatmap(bid)
         }
     }
 
+    override fun applyVersion(scores: List<LazerScore>) {
+        val existSet = scores.mapNotNull { s ->
+            val b = beatmapDao.getBeatMapLite(s.beatmapID)
+
+            b?.let {
+                s.beatmap.difficultyName = b.version
+                s.beatmap.starRating = b.difficultyRating.toDouble()
+                s.beatmap.beatmapID = b.id
+            }
+
+            b?.id
+        }.toSet()
+
+        val notExistScores = scores.filterNot { it.beatmapID in existSet }
+
+        if (notExistScores.isNotEmpty()) {
+            applyBeatmapExtendFromAPI(notExistScores)
+        }
+    }
+
+
+
     override fun isNotOverRating(bid: Long): Boolean {
         try {
-            val map = beatmapDao.getBeatMapLite(bid)
+            val map = beatmapDao.getBeatMapLite(bid)!!
             return map.status.equals("ranked", ignoreCase = true) && map.difficultyRating <= 5.7
         } catch (_: Exception) {
         }

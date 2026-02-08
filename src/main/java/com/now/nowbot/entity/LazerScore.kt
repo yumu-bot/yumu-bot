@@ -2,6 +2,7 @@ package com.now.nowbot.entity
 
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.LazerMod.Companion.containsHidden
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.util.JacksonUtil
@@ -83,12 +84,43 @@ class LazerScoreLite(
     fun toLazerScore(): LazerScore {
         val lite = this
 
+        val mods = LazerMod.getModsList(lite.mods)
+
+        val rank = if (!lite.passed) {
+            "F"
+        } else if (pp > 0.0 && lite.rank != null) {
+            lite.rank.toString()
+        } else {
+            when(lite.mode.toInt()) {
+                0, 1, 3 -> when(lite.accuracy) {
+                    in 1.0..1.001 -> if (mods.containsHidden()) "XH" else "X"
+                    in 0.95..1.0 -> if (mods.containsHidden()) "SH" else "S"
+                    in 0.9..0.95 -> "A"
+                    in 0.8..0.9 -> "B"
+                    in 0.7..0.8 -> "C"
+                    else -> "D"
+                }
+
+                2 -> when(lite.accuracy) {
+                    in 1.0..1.001 -> if (mods.containsHidden()) "XH" else "X"
+                    in 0.98..1.0 -> if (mods.containsHidden()) "SH" else "S"
+                    in 0.94..0.98 -> "A"
+                    in 0.9..0.94 -> "B"
+                    in 0.85..0.9 -> "C"
+                    else -> "D"
+                }
+
+                else -> "F"
+            }
+        }
+
         return LazerScore().apply {
             this.scoreID = lite.id
             this.legacyScoreID = lite.legacyScoreId
             this.userID = lite.userId
             this.beatmapID = lite.beatmapId
-            this.mods = LazerMod.getModsList(lite.mods)
+            this.beatmap.beatmapID = lite.beatmapId
+            this.mods = mods
             this.pp = lite.pp.toDouble()
             this.lazerAccuracy = lite.accuracy.toDouble()
             this.maxCombo = lite.maxCombo
@@ -99,7 +131,7 @@ class LazerScoreLite(
             this.legacyScore = lite.legacyScore.toLong()
             this.score = lite.lazerScore.toLong()
             this.mode = OsuMode.getMode(lite.mode)
-            this.rank = lite.rank?.toString() ?: "F"
+            this.rank = rank
         }
     }
 
@@ -119,7 +151,7 @@ class LazerScoreLite(
         }
 
         companion object {
-            fun fromString(str: String) = when (str.uppercase()) {
+            fun fromString(str: String) = when (str.trim().uppercase()) {
                 "F" -> F
                 "D" -> D
                 "C" -> C
@@ -127,8 +159,8 @@ class LazerScoreLite(
                 "A" -> A
                 "S" -> S
                 "SH" -> SH
-                "X" -> X
-                "XH" -> XH
+                "X", "SS" -> X
+                "XH", "SSH" -> XH
                 else -> F
             }
         }
