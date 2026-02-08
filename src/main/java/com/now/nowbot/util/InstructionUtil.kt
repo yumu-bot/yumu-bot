@@ -593,87 +593,6 @@ object InstructionUtil {
 
     }
 
-    /** 内部方法, 解析'#'后的 range */
-    /*
-    fun parseNameAndRangeHasHash(text: String): LinkedList<InstructionRange<String>> {
-        val ranges = LinkedList<InstructionRange<String>>()
-        var hashIndex: Int = text.indexOf(CHAR_HASH)
-        if (hashIndex < 0) {
-            hashIndex = text.indexOf(CHAR_HASH_FULL)
-        }
-        var nameStr: String? = text.take(hashIndex).trim()
-        if (nameStr.isNullOrBlank()) nameStr = null
-        val rangeStr = text.drop(hashIndex + 1).trim()
-        val rangeInt = parseRange(rangeStr)
-        ranges.add(InstructionRange(nameStr, rangeInt[0], rangeInt[1]))
-        return ranges
-    }
-
-     */
-
-    /** 内部方法, 解析 name 与 range */
-    /*
-    fun parseNameAndRangeWithoutHash(text: String): LinkedList<InstructionRange<String>> {
-        val ranges = LinkedList<InstructionRange<String>>()
-        var tempRange = InstructionRange(text, null, null) // 保底 只有名字
-        ranges.push(tempRange)
-        var index = text.length - 1
-        var i = 0
-        var tempChar = '0' // 第一个 range
-        while (index >= 0 && isNumber(text[index].also { tempChar = it })) {
-            index--
-            i++
-        }
-
-        // 对于 末尾无数字 / 数字大于3位 / 实际名称小于最小值 认为无 range
-        if (i !in 1..3 || index < OSU_MIN_INDEX) {
-            return ranges
-        }
-        val rangeN = text.drop(index + 1).trim().toInt()
-        tempRange = InstructionRange(text.take(index + 1).trim(), rangeN, null)
-        ranges.push(tempRange)
-        if (tempChar != '-' && tempChar != '－' && tempChar != ' ') { // 对应末尾不是 - 或者 空格, 直接忽略剩余 range
-            // 优先认为紧贴的数字是名字的一部分, 也就是目前结果集的第一个
-            tempRange = ranges.pollLast()
-            ranges.push(tempRange)
-            return ranges
-        }
-
-        do {
-            index--
-        } while (text[index] == ' ')
-
-        // 第二组数字
-        i = 0
-
-        while (index >= 0 && isNumber(text[index].also { tempChar = it })) {
-            index--
-            i++
-        }
-
-        if (i !in 1..3 || index < OSU_MIN_INDEX) { // 与上面同理
-            return ranges
-        }
-
-        tempRange = InstructionRange(
-            text.take(index + 1).trim(),
-            rangeN,
-            text.drop(index + 1).take(i).toInt(),
-        )
-
-        if (tempChar != ' ') { // 优先认为紧贴的数字是名字的一部分, 交换位置
-            val temp = ranges.poll()
-            ranges.push(tempRange)
-            ranges.push(temp)
-        } else {
-            ranges.push(tempRange)
-        }
-
-        return ranges
-    }
-
-     */
-
     /** 内部方法 */
     private fun parseRange(text: String): Pair<Int?, Int?> {
         val range = try {
@@ -980,7 +899,7 @@ data class InstructionRange<T>(var data: T? = null, var start: Int? = null, var 
     // 30: 0, 2-30：1, 32-30：29
     fun getDayStart(default: Int = 0): Int {
         return if (fullRange()) {
-            max(min(start!!, end!!) - 1, default)
+            max(min(start!!, end!!) - 1, 0)
         } else {
             default
         }
@@ -989,9 +908,9 @@ data class InstructionRange<T>(var data: T? = null, var start: Int? = null, var 
     // 30: 30, 2-30：30, 32-30：32
     fun getDayEnd(default: Int = 1): Int {
         return if (fullRange()) {
-            max(max(start!!, end!!), default)
+            max(max(start!!, end!!), 1)
         } else if (halfRange()) {
-            max(start!!, default)
+            max(start!!, 1)
         } else {
             default
         }

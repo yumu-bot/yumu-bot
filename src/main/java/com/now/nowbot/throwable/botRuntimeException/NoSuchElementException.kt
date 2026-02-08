@@ -169,6 +169,15 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
             你可能把谱面号和玩家名输反了。
             """.trimIndent())
 
+    class RecentBestNoRecorded(name: String):
+        NoSuchElementException("玩家 $name 可能没有绑定，因此没有最近记录成绩。")
+
+    class RecentBest(name: String, mode: OsuMode):
+        NoSuchElementException("没有找到玩家 $name 在 ${mode.fullName} 模式内的最近记录成绩。")
+
+    class RecentBestFiltered(name: String, mode: OsuMode):
+        NoSuchElementException("无法获取玩家 $name 在 ${mode.fullName} 模式内表现尚可的最近记录成绩...")
+
     class RecentScore(name: String, mode: OsuMode):
         NoSuchElementException("没有找到玩家 $name 在 ${mode.fullName} 模式内的最近成绩。")
 

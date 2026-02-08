@@ -128,6 +128,11 @@ enum class Instruction(val pattern: Pattern) {
         appendRange()
     }),
 
+    RECENT_BEST(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("recents?\\s*bests?|rbs?|red\\s*bull")
+        appendModeQQUIDNameRange()
+    }),
+
     SB_SCORE_PR(CommandPatternBuilder.create {
         appendSBCommandsIgnoreAll("(?<pass>(pass(?!s)(?<es>es)?|p)|(?<recent>(recent|r)))((?<s>s)|(?<w>(show|w)))?")
         appendModeQQUIDSBNameRange()

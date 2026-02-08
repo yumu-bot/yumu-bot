@@ -160,23 +160,6 @@ class PopularService(
             throw UnsupportedOperationException.NotGroup()
         }
 
-        /*
-        if (!Permission.isSuperAdmin(event.sender.id)) return false
-
-         */
-
-        /*
-        // TODO 临时做的次数限制
-        val now = LocalDateTime.now()
-        val before = now.minusSeconds(5)
-        val result = serviceCallRepository.countBetween(before, now)
-
-        if (result.map { it.service }.count { it.contains("POPULAR".toRegex()) } > 0) {
-            throw UnsupportedOperationException("等一会再查询吧...")
-        }
-
-         */
-
         val group = matcher.group(FLAG_QQ_GROUP)?.toLongOrNull()
         val ranges = matcher.group(FLAG_RANGE)?.split(REG_HYPHEN.toRegex())
 
