@@ -84,7 +84,11 @@ class LazerScoreLite(
     fun toLazerScore(): LazerScore {
         val lite = this
 
-        val mods = LazerMod.getModsList(lite.mods)
+        val mods = if (lite.mods.isNullOrBlank()) {
+            listOf<LazerMod>()
+        } else {
+            JacksonUtil.parseObjectList(lite.mods, LazerMod::class.java)
+        }
 
         val rank = if (!lite.passed) {
             "F"
