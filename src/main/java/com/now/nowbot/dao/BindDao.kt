@@ -629,7 +629,7 @@ class BindDao(
 
         while (true) {
             try {
-                userApiService.refreshUserToken(fromLite(u)!!)
+                userApiService.getUserTokenOrBotToken(fromLite(u)!!)
                 return true
             } catch(ue: NetworkException.UserException) {
                 when(ue) {

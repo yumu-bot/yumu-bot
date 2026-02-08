@@ -266,7 +266,7 @@ class FriendService(
 
             if (other != null && other.isTokenAvailable != true) {
                 val t = try {
-                    userApiService.refreshUserToken(other)
+                    userApiService.getUserTokenOrBotToken(other)
                 } catch (_: Exception) {
                     log.info("${other.userID} 的令牌刷新失败，已过期。")
                 }

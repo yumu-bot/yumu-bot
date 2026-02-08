@@ -104,9 +104,13 @@ import java.util.concurrent.Callable
         return result
     }
 
-    override fun refreshUserToken(user: BindUser): String? {
-        if (user.isTokenAvailable == null) return base.getBotToken()
-        return base.refreshUserToken(user, false)
+    override fun getUserTokenOrBotToken(user: BindUser): String? {
+        // 这里需要有效的
+        return if (user.hasToken) {
+            base.refreshUserToken(user, false)
+        } else {
+            base.getBotToken()
+        }
     }
 
     override fun refreshUserTokenFirst(user: BindUser) {

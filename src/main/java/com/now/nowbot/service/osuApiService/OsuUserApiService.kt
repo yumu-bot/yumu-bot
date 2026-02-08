@@ -24,7 +24,7 @@ interface OsuUserApiService {
 
     @Throws(BindException::class) fun refreshUserTokenInstant(user: BindUser?, isMyself: Boolean = false): BindUser
 
-    @CanIgnoreReturnValue @Throws(NetworkException.UserException::class) fun refreshUserToken(user: BindUser): String?
+    @CanIgnoreReturnValue @Throws(NetworkException.UserException::class) fun getUserTokenOrBotToken(user: BindUser): String?
 
     @Throws(WebClientResponseException::class) fun refreshUserTokenFirst(user: BindUser)
 
