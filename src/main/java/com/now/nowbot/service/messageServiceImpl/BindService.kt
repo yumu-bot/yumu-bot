@@ -249,12 +249,6 @@ import java.util.function.Predicate
                         null -> BindException.BindConfirmException.Unavailable(bindUser.userID, bindUser.username)
                     }
                 )
-
-                if (bindUser.isTokenAvailable == true) {
-                    event.reply(BindException.BindConfirmException.StillAvailable(bindUser.userID, bindUser.username))
-                } else {
-                    event.reply(BindException.BindConfirmException.MaybeAvailable(bindUser.userID, bindUser.username))
-                }
             } catch (e: Exception) {
                 if (e.findCauseOfType<WebClientResponseException.Forbidden>() != null) {
                     event.reply(BindException.BindConfirmException.Unavailable(bindUser.userID, bindUser.username))

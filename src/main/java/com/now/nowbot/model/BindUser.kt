@@ -88,7 +88,7 @@ class BindUser {
         get() {
             val now = System.currentTimeMillis()
 
-            return if (!hasToken || time == null || now >= (time!! + Duration.ofDays(3).toSeconds())) {
+            return if (!hasToken || time == null || now >= (time!! + Duration.ofDays(6).toSeconds())) {
                 null
             } else {
                 now < time!!
