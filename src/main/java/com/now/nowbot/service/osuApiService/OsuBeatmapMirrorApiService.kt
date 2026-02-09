@@ -28,7 +28,7 @@ class OsuBeatmapMirrorApiService(
                 .retrieve()
                 .bodyToMono(String::class.java).block()!!
 
-            val sub = str.substringAfter("osu")
+            val sub = str.replaceBefore("osu", "")
 
             if (sub.startsWith("osu file format")) {
                 sub
