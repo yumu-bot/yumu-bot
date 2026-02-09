@@ -154,8 +154,7 @@ open class LazerScore(
     }
 
     @get:JsonProperty("is_lazer")
-    val isLazer: Boolean
-        get() = buildID != null && buildID > 0L
+    var isLazer: Boolean = buildID != null && buildID > 0L
 
     @field:JsonProperty("mods")
     var mods: List<LazerMod> = listOf()
