@@ -53,7 +53,7 @@ data class Beatmap(
     var maxCombo: Int? = 0,
 
     @set:JsonProperty("top_tag_ids")
-    @get:JsonIgnoreProperties
+    @get:JsonIgnore
     var tagIDs: List<TagData>? = null,
 
     // 自己设

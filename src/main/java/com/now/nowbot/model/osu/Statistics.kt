@@ -81,19 +81,24 @@ open class Statistics : Cloneable {
     @get:JsonProperty("level_progress")
     var levelProgress: Int = 0
 
-    @get:JsonIgnore
+    @set:JsonIgnore
+    @get:JsonProperty("count_ss")
     var countSS: Int = 0
 
-    @get:JsonIgnore
+    @set:JsonIgnore
+    @get:JsonProperty("count_ssh")
     var countSSH: Int = 0
 
-    @get:JsonIgnore
+    @set:JsonIgnore
+    @get:JsonProperty("count_s")
     var countS: Int = 0
 
-    @get:JsonIgnore
+    @set:JsonIgnore
+    @get:JsonProperty("count_sh")
     var countSH: Int = 0
 
-    @get:JsonIgnore
+    @set:JsonIgnore
+    @get:JsonProperty("count_a")
     var countA: Int = 0
     
     @JsonProperty("level") fun setLevel(map: Map<String, Int>) {
