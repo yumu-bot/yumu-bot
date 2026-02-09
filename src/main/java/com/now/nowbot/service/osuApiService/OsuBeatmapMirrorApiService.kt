@@ -28,12 +28,12 @@ class OsuBeatmapMirrorApiService(
                 .retrieve()
                 .bodyToMono(String::class.java).block()!!
 
-            val first20 = str.trimStart().take(100)
+            val sub = str.substringAfter("osu")
 
-            if (first20.startsWith("osu file format")) {
-                str
+            if (sub.startsWith("osu file format")) {
+                sub
             } else {
-                log.error("谱面镜像站：谱面 $bid 文件损坏！\n谱面前 100 位是：$first20")
+                log.error("谱面镜像站：谱面 $bid 文件损坏！\n谱面前 100 位是：${sub.take(100)}")
                 null
             }
         } catch (e: Exception) {

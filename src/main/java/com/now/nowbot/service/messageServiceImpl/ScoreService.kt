@@ -399,7 +399,8 @@ import kotlin.time.toDuration
         }
 
         // 成绩筛选机制：取 pp x 星数 最好的
-        val better = scores.maxBy { it.pp * it.beatmap.starRating }
+        val better = scores.maxByOrNull { it.pp * it.beatmap.starRating }
+            ?: throw NoSuchElementException.BeatmapScore(map.beatmapset!!.previewName)
 
         receipt.recall()
         receipt2?.recall()

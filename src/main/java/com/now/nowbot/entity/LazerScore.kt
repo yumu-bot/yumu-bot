@@ -85,7 +85,7 @@ class LazerScoreLite(
         val lite = this
 
         val mods = if (lite.mods.isNullOrBlank()) {
-            listOf<LazerMod>()
+            emptyList<LazerMod>()
         } else {
             JacksonUtil.parseObjectList(lite.mods, LazerMod::class.java)
         }
