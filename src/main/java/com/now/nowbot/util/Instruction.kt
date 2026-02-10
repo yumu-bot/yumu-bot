@@ -453,8 +453,6 @@ enum class Instruction(val pattern: Pattern) {
         appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_12, prefixLevel = MAYBE)
     }),
 
-
-
     MAP_MINUS(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("mapminus", "mm")
         appendMode()
@@ -523,6 +521,19 @@ enum class Instruction(val pattern: Pattern) {
         appendMode()
         appendQQGroup(maybe = true)
         appendRange()
+    }),
+
+    GET_MAP(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("get\\s*beatmap", "get\\s*map", "ga")
+        appendID()
+        appendMod()
+    }),
+
+    GET_NEWBIE_MAP(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(beat)?map", "get\\s*new", "gw")
+        appendMode()
+        appendID()
+        appendMod()
     }),
 
     GET_BG(CommandPatternBuilder.create {
@@ -756,12 +767,6 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("testfix", "tf")
         appendMode()
         appendCaptureGroup(FLAG_DATA, REG_USERNAME_SEPERATOR, MORE)
-    }),
-
-    TEST_MAP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("testmap", "testdiff", "td")
-        appendID()
-        appendMod()
     }),
 
     TEST_TAIKO_SR_CALCULATE(CommandPatternBuilder.create {
