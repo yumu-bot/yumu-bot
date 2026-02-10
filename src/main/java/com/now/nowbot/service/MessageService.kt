@@ -16,5 +16,4 @@ interface MessageService<T> {
     class DataValue<T> {
         var value: T? = null
     }
-
 }

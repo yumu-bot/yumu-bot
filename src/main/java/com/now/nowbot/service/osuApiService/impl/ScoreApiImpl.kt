@@ -4,15 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.BindUser
-import com.now.nowbot.model.osu.LazerMod
-import com.now.nowbot.model.osu.Replay
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.osu.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.Covers.Companion.CoverType.*
 import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
-import com.now.nowbot.model.enums.OsuMode
-import com.now.nowbot.model.osu.BeatmapUserScore
-import com.now.nowbot.model.osu.Covers
-import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
@@ -37,7 +33,15 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
 import java.util.function.Function
+import kotlin.text.Charsets
 import kotlin.text.HexFormat
+import kotlin.text.isBlank
+import kotlin.text.isNullOrBlank
+import kotlin.text.replace
+import kotlin.text.split
+import kotlin.text.toByteArray
+import kotlin.text.toHexString
+import kotlin.text.toLongOrNull
 
 @Service
 class ScoreApiImpl(
@@ -465,6 +469,7 @@ class ScoreApiImpl(
                 .retrieve()
                 .bodyToFlux(LazerScore::class.java)
                 .collectList()
+                .doOnNext(scoreDao::saveScoreAsync)
         }
     }
 
