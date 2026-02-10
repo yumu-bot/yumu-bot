@@ -79,6 +79,7 @@ class GetMapService(
             sid="${b.beatmapsetID}"
             preview="${b.previewName}"
             star="${"%.2f".format(b.starRating)}"
+            max="${b.maxCombo}"
             />
         """.trimIndent()
 

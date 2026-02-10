@@ -727,7 +727,7 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     GROUP_STATISTICS(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("groupstat(s)?", "groupstatistic(s)?", "统计(超限)?", "gs")
+        appendCommandsIgnoreAll("groupstat(s)?", "groupstatistic(s)?", "统计(超限)?", "gg")
         appendColonCaptureGroup("group", "[nah]|((新人|进阶|高阶)群)", prefixLevel = MAYBE)
     }),
 
