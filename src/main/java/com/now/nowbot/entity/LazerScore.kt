@@ -1,5 +1,4 @@
 package com.now.nowbot.entity
-
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerMod.Companion.containsHidden
@@ -8,9 +7,7 @@ import com.now.nowbot.model.osu.LazerStatistics
 import com.now.nowbot.util.JacksonUtil
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType
 import jakarta.persistence.*
-import org.hibernate.annotations.JdbcType
 import org.hibernate.annotations.Type
-import org.hibernate.dialect.PostgreSQLEnumJdbcType
 import java.io.Serializable
 import java.time.OffsetDateTime
 
@@ -58,9 +55,8 @@ class LazerScoreLite(
 
     var mode: Short,
 
-    @Enumerated
-    @JdbcType(value = PostgreSQLEnumJdbcType::class)
-    var rank: Rank?,
+    @Column(name = "rank_byte")
+    var rankByte: Byte,
 ) {
     constructor(score: LazerScore) : this(
         score.scoreID,
@@ -78,8 +74,10 @@ class LazerScoreLite(
         score.legacyScore?.toInt() ?: 0,
         score.score.toInt(),
         score.mode.modeValue.toShort(),
-        Rank.fromString(score.rank)
+        rankToByte(score.rank)
     )
+
+
 
     fun toLazerScore(): LazerScore {
         val lite = this
@@ -92,8 +90,8 @@ class LazerScoreLite(
 
         val rank = if (!lite.passed) {
             "F"
-        } else if (pp > 0.0 && lite.rank != null) {
-            lite.rank.toString()
+        } else if (lite.rankByte > 0) {
+            byteToRank(lite.rankByte)
         } else {
             when(lite.mode.toInt()) {
                 0, 1, 3 -> when(lite.accuracy) {
@@ -140,33 +138,34 @@ class LazerScoreLite(
         }
     }
 
-    enum class Rank {
-        F, D, C, B, A, S, SH, X, XH, ;
-
-        override fun toString() = when (this) {
-            F -> "F"
-            D -> "D"
-            C -> "C"
-            B -> "B"
-            A -> "A"
-            S -> "S"
-            SH -> "SH"
-            X -> "X"
-            XH -> "XH"
+    companion object {
+        fun rankToByte(rank: String): Byte {
+            return when(rank.trim().uppercase()) {
+                "F" -> 0
+                "D" -> 1
+                "C" -> 2
+                "B" -> 3
+                "A" -> 4
+                "S" -> 5
+                "SH" -> 6
+                "X", "SS" -> 7
+                "XH", "SSH" -> 8
+                else -> 0
+            }
         }
 
-        companion object {
-            fun fromString(str: String) = when (str.trim().uppercase()) {
-                "F" -> F
-                "D" -> D
-                "C" -> C
-                "B" -> B
-                "A" -> A
-                "S" -> S
-                "SH" -> SH
-                "X", "SS" -> X
-                "XH", "SSH" -> XH
-                else -> F
+        fun byteToRank(byte: Byte): String {
+            return when(byte.toInt()) {
+                0 -> "F"
+                1 -> "D"
+                2 -> "C"
+                3 -> "B"
+                4 -> "A"
+                5 -> "S"
+                6 -> "SH"
+                7 -> "X"
+                8 ->"XH"
+                else -> "F"
             }
         }
     }

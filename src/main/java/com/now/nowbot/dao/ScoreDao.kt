@@ -98,6 +98,11 @@ class ScoreDao(
         } catch (e: Exception) {
             log.error("统计成绩中存储 beatmap 异常", e)
         }
+
+        if (score.maximumStatistics.great == 0 && score.mode != OsuMode.MANIA) {
+            log.warn("Score ${score.scoreID} 缺少统计数据，Rank 计算可能不准")
+        }
+
         val data = LazerScoreLite(score)
         val statisticList: List<ScoreStatisticLite>
         val statistic = ScoreStatisticLite.createByScore(score)
