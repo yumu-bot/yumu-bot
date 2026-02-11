@@ -3,6 +3,7 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
@@ -27,7 +28,7 @@ import kotlin.text.trim
 @Service("GET_MAP")
 class GetMapService(
     private val beatmapApiService: OsuBeatmapApiService,
-    private val calculateApiService: OsuCalculateApiService
+    private val calculateApiService: OsuCalculateApiService,
 ) : MessageService<GetMapService.GetMapParam> {
 
     abstract class GetMapParam
@@ -37,10 +38,15 @@ class GetMapService(
         val mod: String?
     ): GetMapParam()
 
-    data class NewbieParam(
+    data class NewbieMapParam(
         val beatmapID: Long,
         val mode: OsuMode,
         val mods: List<LazerMod>
+    ): GetMapParam()
+
+    data class NewbiePlayerParam(
+        val user: OsuUser,
+        val mode: OsuMode,
     ): GetMapParam()
 
     private fun getPoolParam(matcher: Matcher): PoolParam {
@@ -50,15 +56,39 @@ class GetMapService(
         return PoolParam(bid, mod)
     }
 
-    private fun getNewbieParam(matcher: Matcher): NewbieParam {
+    private fun getNewbieMapParam(matcher: Matcher): NewbieMapParam {
         val mode = InstructionUtil.getMode(matcher)
         val bid = matcher.group(FLAG_ID).toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
         val mod = InstructionUtil.getMod(matcher)
 
-        return NewbieParam(bid, mode.data!!, mod)
+        return NewbieMapParam(bid, mode.data!!, mod)
     }
 
-    private fun NewbieParam.getNewbieComponent(): String {
+    private fun getNewbiePlayerParam(event: MessageEvent, matcher: Matcher): NewbiePlayerParam {
+
+        val mode = InstructionUtil.getMode(matcher)
+        val user = InstructionUtil.getUserWithoutRange(event, matcher, mode)
+
+        return NewbiePlayerParam(user, mode.data!!)
+    }
+
+    private fun NewbiePlayerParam.getNewbiePlayerComponent(): String {
+        return """
+            <Player 
+              id="${user.userID}"
+              name="${user.username}"
+              country="${user.countryRank}"
+              global="${user.globalRank}"
+              from="${user.countryCode}"
+              accuracy="${"%.2f".format(user.accuracy).toDouble()}"
+              level="${user.levelCurrent}"
+              progress="${user.levelProgress}"
+              performance="${user.pp.roundToInt()}"
+            />
+        """.trimIndent()
+    }
+
+    private fun NewbieMapParam.getNewbieMapComponent(): String {
         val b = try {
             beatmapApiService.getBeatmap(beatmapID)
         } catch (_: NetworkException.BeatmapException.NotFound) {
@@ -137,11 +167,16 @@ class GetMapService(
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<GetMapParam>): Boolean {
         val m = Instruction.GET_MAP.matcher(messageText)
         val m2 = Instruction.GET_NEWBIE_MAP.matcher(messageText)
+        val m3 = Instruction.GET_NEWBIE_PLAYER.matcher(messageText)
+
         if (m.find()) {
             data.value = getPoolParam(m)
             return true
         } else if (m2.find()) {
-            data.value = getNewbieParam(m2)
+            data.value = getNewbieMapParam(m2)
+            return true
+        } else if (m3.find()) {
+            data.value = getNewbiePlayerParam(event, m3)
             return true
         }
 
@@ -151,7 +186,8 @@ class GetMapService(
     override fun handleMessage(event: MessageEvent, param: GetMapParam): ServiceCallStatistic? {
         when(param) {
             is PoolParam -> event.reply(param.getMapPoolText())
-            is NewbieParam -> event.reply(param.getNewbieComponent())
+            is NewbieMapParam -> event.reply(param.getNewbieMapComponent())
+            is NewbiePlayerParam -> event.reply(param.getNewbiePlayerComponent())
         }
 
         return null

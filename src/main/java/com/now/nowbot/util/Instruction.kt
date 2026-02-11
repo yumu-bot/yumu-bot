@@ -530,10 +530,15 @@ enum class Instruction(val pattern: Pattern) {
     }),
 
     GET_NEWBIE_MAP(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(beat)?map", "get\\s*new", "gw")
+        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(beat)?map", "get\\s*map", "gw")
         appendMode()
         appendID()
         appendMod()
+    }),
+
+    GET_NEWBIE_PLAYER(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(user|player)", "get\\s*(user|player)", "gu")
+        appendModeQQUIDName()
     }),
 
     GET_BG(CommandPatternBuilder.create {
