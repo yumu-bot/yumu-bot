@@ -1,19 +1,24 @@
 package com.now.nowbot.model.maimai
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.JsonNode
-import com.now.nowbot.util.JacksonUtil
 
 class MaiSong {
-    @set:JsonIgnore
-    @get:JsonProperty("song_id")
-    var songID: Int = 0
 
-    @JsonProperty("id")
-    private fun setSongID(node: JsonNode) {
-        this.songID = JacksonUtil.parseObject(node, String::class.java).toInt()
+    @JsonProperty("song_id")
+    @JsonAlias("id")
+    fun setSongIDFromAny(value: Any) { // 接收 Any 类型
+        this.songID = when (value) {
+            is Int -> value
+            is String -> value.toIntOrNull() ?: 0
+            else -> 0
+        }
     }
+
+    @get:JsonProperty("song_id")
+    @set:JsonIgnore
+    var songID: Int = 0
 
     // 曲名
     @JsonProperty("title") var title: String = ""
