@@ -10,7 +10,7 @@ open class PermissionException(message: String?): TipsRuntimeException(message),
             DeniedException("权限不足！只有开发者或超级管理员可以使用此功能！")
 
         class BelowGroupAdministrator:
-            DeniedException("权限不足！只有群聊管理员或群主（或开发者）可以使用此功能！！")
+            DeniedException("权限不足！只有群聊管理员或群主（包括开发者）可以使用此功能！！")
     }
 
     open class RoleException(message: String?): PermissionException(message) {

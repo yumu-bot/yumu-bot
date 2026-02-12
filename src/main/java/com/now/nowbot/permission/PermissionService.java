@@ -18,6 +18,19 @@ public class PermissionService {
     private final Set<Long> groupSelfBlackList;
     private       boolean enable = true;
 
+    @Override
+    public String toString() {
+        return "PermissionService{" +
+                "isGroupWhite=" + isGroupWhite +
+                ", isUserWhite=" + isUserWhite +
+                ", userSet=" + userSet +
+                ", groupList=" + groupList +
+                ", userList=" + userList +
+                ", groupSelfBlackList=" + groupSelfBlackList +
+                ", enable=" + enable +
+                '}';
+    }
+
     public PermissionService(boolean isGroupWhite, boolean isUserWhite, boolean userSet, List<Long> groups, List<Long> users, List<Long> groupSelfBlock) {
         this.isGroupWhite = isGroupWhite;
         this.isUserWhite = isUserWhite;
@@ -45,12 +58,11 @@ public class PermissionService {
             if (userList.contains(qq)) return false;
         }
         if (Objects.nonNull(group) && isGroupWhite) {
-            if (! groupList.contains(group)) return false;
+            return groupList.contains(group);
         } else {
             if (groupList.contains(group)) return false;
-            if (Objects.nonNull(groupSelfBlackList) && groupSelfBlackList.contains(group)) return false;
+            return Objects.isNull(groupSelfBlackList) || !groupSelfBlackList.contains(group);
         }
-        return true;
     }
 
     public void setEnable(boolean enable) {
@@ -73,6 +85,10 @@ public class PermissionService {
         groupList.remove(id);
     }
 
+    public void deleteAllGroup() {
+        groupList.clear();
+    }
+
     public void addSelfGroup(Long id) {
         if (Objects.nonNull(groupSelfBlackList)) groupSelfBlackList.add(id);
     }
@@ -87,6 +103,10 @@ public class PermissionService {
 
     public void deleteUser(Long id) {
         userList.remove(id);
+    }
+
+    public void deleteAllUser() {
+        userList.clear();
     }
 
     public boolean isGroupWhite() {

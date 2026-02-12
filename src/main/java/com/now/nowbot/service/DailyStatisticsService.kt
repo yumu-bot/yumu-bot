@@ -138,7 +138,7 @@ class DailyStatisticsService(
 
         val scoreCount = updatingUsers(needUpdate)
 
-        return needUpdate.size to scoreCount
+        return needUpdate.map { it.first.userID }.toSet().size to scoreCount
     }
 
     private fun updatingUsers(needUpdate: List<Pair<MicroUser, OsuMode>>): Int {

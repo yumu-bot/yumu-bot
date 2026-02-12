@@ -12,7 +12,6 @@ import com.now.nowbot.qq.contact.GroupContact;
 import com.now.nowbot.qq.enums.Role;
 import com.now.nowbot.qq.event.MessageEvent;
 import com.now.nowbot.service.MessageService;
-import com.now.nowbot.service.messageServiceImpl.ServiceSwitchService;
 import com.now.nowbot.throwable.TipsRuntimeException;
 import com.now.nowbot.util.ContextUtil;
 import org.slf4j.Logger;
@@ -368,7 +367,7 @@ public class Permission {
      * 单功能开关
      */
     public static boolean isServiceClose(String name) {
-        return OFF_SERVICE.contains(name) && !name.equals(ServiceSwitchService.SWITCH_SERVICE_NAME);
+        return OFF_SERVICE.contains(name) && !name.equals("SWITCH");
     }
 
     public boolean addUser(String name, Long id) {

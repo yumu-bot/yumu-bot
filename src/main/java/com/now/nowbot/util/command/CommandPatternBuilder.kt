@@ -134,7 +134,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
 
     /**
      * 加 qq=(?<qq>\d+) 的匹配。
-     * @param maybe 如果设置为真，则可以只匹配数字作为群号，不需要输入 group=
+     * @param maybe 如果设置为真，则可以只匹配数字作为群号，不需要输入 qq=
      */
     fun appendQQ(maybe: Boolean = false) {
         appendGroup(MAYBE) {

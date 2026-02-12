@@ -162,13 +162,14 @@ class PermissionImplement(
             val servicePermission = record.permission
             val globalPermission = AllService
 
+
             return if (event is GroupMessageEvent) {
                 val gid = event.group.id
                 val uid = event.sender.id
-                !globalPermission.check(gid, uid) || !servicePermission.check(gid, uid)
+                ! (globalPermission.check(gid, uid) && servicePermission.check(gid, uid))
             } else {
                 val uid = event.sender.id
-                !globalPermission.check(null, uid) || !servicePermission.check(null, uid)
+                ! (globalPermission.check(null, uid) && servicePermission.check(null, uid))
             }
         }
 
@@ -178,8 +179,8 @@ class PermissionImplement(
                     return PermissionRecord.fromEntry(key to value)
                 }
             }
-            log.debug("未找到对应的服务 {}, {}", name, permissionMap.size)
-            throw RuntimeException("未找到对应的服务")
+            // log.debug("没有找到对应的服务 {}, {}", name, permissionMap.size)
+            throw RuntimeException("没有找到这个服务")
         }
     }
 
@@ -455,6 +456,70 @@ class PermissionImplement(
         unblockService(record.name, record.permission, id, false, time)
     }
 
+    override fun clear(isGroup: Boolean, id: Long, time: Long?) {
+        val perm = AllService
+
+        val index = if (isGroup) "g" else "u"
+        val key = "$GLOBAL_PERMISSION:${index}0"
+        if (time != null && time > 0) {
+            futureMap[key] = EXECUTOR.schedule({ restrict(isGroup, id, time) }, time, TimeUnit.MILLISECONDS)
+        } else {
+            futureMap.computeIfPresent(key, this::cancelFuture)
+        }
+
+        val all = servicesMap.map { it.key } + GLOBAL_PERMISSION
+
+        all.forEach { name ->
+            if (isGroup) {
+                if (perm.isGroupWhite) {
+                    permissionDao.deleteGroup(name, PermissionType.GROUP_W, id)
+                } else {
+                    permissionDao.deleteGroup(name, PermissionType.GROUP_B, id)
+                }
+                perm.deleteGroup(id)
+            } else {
+                if (perm.isUserWhite) {
+                    permissionDao.deleteUser(name, PermissionType.FRIEND_W, id)
+                } else {
+                    permissionDao.deleteUser(name, PermissionType.FRIEND_B, id)
+                }
+                perm.deleteUser(id)
+            }
+        }
+    }
+
+    override fun restrict(isGroup: Boolean, id: Long, time: Long?) {
+        val perm = AllService
+
+        val index = if (isGroup) "g" else "u"
+        val key = "$GLOBAL_PERMISSION:${index}0"
+        if (time != null && time > 0) {
+            futureMap[key] = EXECUTOR.schedule({ clear(isGroup, id, time) }, time, TimeUnit.MILLISECONDS)
+        } else {
+            futureMap.computeIfPresent(key, this::cancelFuture)
+        }
+
+        val all = servicesMap.map { it.key } + GLOBAL_PERMISSION
+
+        all.forEach { name ->
+            if (isGroup) {
+                if (perm.isGroupWhite) {
+                    permissionDao.addGroup(name, PermissionType.GROUP_W, id)
+                } else {
+                    permissionDao.addGroup(name, PermissionType.GROUP_B, id)
+                }
+                perm.addGroup(id)
+            } else {
+                if (perm.isUserWhite) {
+                    permissionDao.addUser(name, PermissionType.FRIEND_W, id)
+                } else {
+                    permissionDao.addUser(name, PermissionType.FRIEND_B, id)
+                }
+                perm.addUser(id)
+            }
+        }
+    }
+
     override fun ignoreAll(id: Long) {
         blockServiceSelf(GLOBAL_PERMISSION, AllService, id, null)
     }
@@ -497,9 +562,11 @@ class PermissionImplement(
         return null
     }
 
+    /**
+     * 全局的在 queryGlobal 查看
+     */
     override fun queryAllBlock(): List<PermissionController.LockRecord> {
-        val result = ArrayList<PermissionController.LockRecord>(permissionMap.size + 1)
-        result.add(queryGlobal())
+        val result = ArrayList<PermissionController.LockRecord>(permissionMap.size)
         permissionMap.forEach { (name, p) ->
             result.add(
                 PermissionController.LockRecord(

@@ -97,16 +97,19 @@ interface PermissionController {
 
     fun queryAllBlock(): List<LockRecord>
 
-    fun queryGlobal(): LockRecord?
+    fun queryGlobal(): LockRecord
 
-    fun queryBlock(service: String): LockRecord?
+    fun queryBlock(service: String): LockRecord
 
-    @JvmRecord
     data class LockRecord(
-        val name: String?,
+        val name: String,
         val enable: Boolean,
-        val groups: MutableSet<Long?>?,
-        val users: MutableSet<Long?>?,
-        val ignores: MutableSet<Long?>?
+        val groups: Set<Long>,
+        val users: Set<Long>,
+        val ignores: Set<Long>
     )
+
+    fun clear(isGroup: Boolean, id: Long, time: Long?)
+
+    fun restrict(isGroup: Boolean, id: Long, time: Long?)
 }

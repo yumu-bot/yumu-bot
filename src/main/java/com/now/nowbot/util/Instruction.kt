@@ -57,20 +57,29 @@ enum class Instruction(val pattern: Pattern) {
 
     SERVICE_SWITCH_ON(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(switch|service)\\s*on", "so")
-        appendColonCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, MORE, MAYBE)
-        appendCaptureGroup(FLAG_TYPE, "\\D", MORE)
+        appendQQGroup(true)
+        appendQQ(false)
+        appendCaptureGroup(FLAG_SERVICE, "[^\\d#＃]", MORE)
+        appendSpace()
+        appendHashCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
     }),
 
     SERVICE_SWITCH_OFF(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(switch|service)\\s*off", "sf")
-        appendColonCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, MORE, MAYBE)
-        appendCaptureGroup(FLAG_TYPE, "\\D", MORE)
+        appendQQGroup(true)
+        appendQQ(false)
+        appendCaptureGroup(FLAG_SERVICE, "[^\\d#＃]", MORE)
+        appendSpace()
+        appendHashCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
     }),
 
     SERVICE_SWITCH_LIST(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(switch|service)\\s*list", "sl")
-        appendColonCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, MORE, MAYBE)
-        appendCaptureGroup(FLAG_TYPE, "\\D", MORE)
+        appendQQGroup(true)
+        appendQQ(false)
+        appendCaptureGroup(FLAG_SERVICE, "\\D", MORE)
+        appendSpace()
+        appendHashCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
     }),
 
     ECHO(CommandPatternBuilder.create {
