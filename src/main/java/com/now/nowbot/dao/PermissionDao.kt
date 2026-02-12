@@ -1,70 +1,72 @@
-package com.now.nowbot.dao;
+package com.now.nowbot.dao
 
-import com.now.nowbot.entity.PermissionLite;
-import com.now.nowbot.entity.QQID;
-import com.now.nowbot.mapper.PermissionMapper;
-import com.now.nowbot.mapper.QQIDMapper;
-import com.now.nowbot.permission.PermissionType;
-import jakarta.annotation.Resource;
-import org.springframework.stereotype.Component;
-
-import java.util.List;
+import com.now.nowbot.entity.PermissionLite
+import com.now.nowbot.entity.QQID
+import com.now.nowbot.mapper.PermissionMapper
+import com.now.nowbot.mapper.QQIDMapper
+import com.now.nowbot.permission.PermissionType
+import org.springframework.stereotype.Component
 
 @Component
-public class PermissionDao {
-    @Resource
-    PermissionMapper permissionMapper;
-    @Resource
-    QQIDMapper qqMapper;
+class PermissionDao(
+    private val permissionMapper: PermissionMapper,
+    private val qqMapper: QQIDMapper
+) {
 
-    public List<Long> getQQList(String service, PermissionType type){
-        var perm = permissionMapper.getByServiceAndType(service, type);
-        if(perm == null){
-            perm = permissionMapper.save(new PermissionLite(service, type));
-        }
-        return qqMapper.getByPermissionID(perm.getId()).stream().map(QQID::getQQ).toList();
-    }
-    public void addGroup(String service, PermissionType type, Long id){
-        Long pid = permissionMapper.getId(service, type);
-        var data = new QQID();
-        data.setGroup(true);
-        data.setPermissionID(pid);
-        data.setQQ(id);
-        qqMapper.saveAndFlush(data);
+    /**
+     * 是用户还是群取决于 type
+     */
+    fun getQQs(service: String?, type: PermissionType?): List<Long> {
+        val perm = permissionMapper.getByServiceAndType(service, type) ?: permissionMapper.save(PermissionLite(service, type))
+        return qqMapper.getByPermissionID(perm.id)
+            .filter {
+                when(type) {
+                    PermissionType.GROUP_SELF_B, PermissionType.GROUP_B, PermissionType.GROUP_W -> it.isGroup == true
+                    else -> it.isGroup != true
+                }
+            }
+            .mapNotNull { it.QQ }
     }
 
-    public List<Long> queryGroup(String service, PermissionType type) {
-        var pid = permissionMapper.getId(service, type);
-        return qqMapper.getQQIDByPermissionID(pid);
+    fun addGroup(service: String, type: PermissionType?, id: Long?) {
+        val pid = permissionMapper.getPermissionID(service, type)
+        val data = QQID()
+        data.isGroup = true
+        data.permissionID = pid
+        data.QQ = id
+        qqMapper.saveAndFlush(data)
     }
 
-    public void deleteGroup(String service, PermissionType type, Long id){
-        Long pid = permissionMapper.getId(service, type);
-        qqMapper.deleteQQIDByPermissionIDAndIsGroupAndQQ(pid,true,id);
+    fun getGroups(service: String, type: PermissionType): List<Long> {
+        val pid = permissionMapper.getPermissionID(service, type)
+        return qqMapper.getGroupByPermissionID(pid)
     }
 
-    // QQIDMapper
-    public void deleteGroupAll(String service, PermissionType type) {
-        Long pid = permissionMapper.getId(service, type);
-        qqMapper.deleteQQIDByPermissionIDAndIsGroup(pid, true);
+    fun deleteGroup(service: String?, type: PermissionType?, id: Long?) {
+        val pid = permissionMapper.getPermissionID(service, type)
+        qqMapper.deleteQQIDByPermissionIDAndIsGroupAndQQ(pid, true, id)
     }
 
-    public void addUser(String service, PermissionType type, Long id){
-        Long pid = permissionMapper.getId(service, type);
-        var data = new QQID();
-        data.setGroup(false);
-        data.setPermissionID(pid);
-        data.setQQ(id);
-        qqMapper.saveAndFlush(data);
+    fun addUser(service: String?, type: PermissionType?, id: Long?) {
+        val pid = permissionMapper.getPermissionID(service, type)
+        val data = QQID()
+        data.isGroup = false
+        data.permissionID = pid
+        data.QQ = id
+        qqMapper.saveAndFlush(data)
     }
 
-    public void deleteUser(String service, PermissionType type, Long id){
-        Long pid = permissionMapper.getId(service, type);
-        qqMapper.deleteQQIDByPermissionIDAndIsGroupAndQQ(pid,false,id);
+    fun deleteUser(service: String?, type: PermissionType?, id: Long?) {
+        val pid = permissionMapper.getPermissionID(service, type)
+        qqMapper.deleteQQIDByPermissionIDAndIsGroupAndQQ(pid, false, id)
     }
 
-    public void deleteUserAll(String service, PermissionType type){
-        Long pid = permissionMapper.getId(service, type);
-        qqMapper.deleteQQIDByPermissionIDAndIsGroup(pid,false);
+    fun deleteQQAll(qq: Long, isGroup: Boolean) {
+        qqMapper.deleteQQIDByQQAndIsGroup(qq, isGroup)
+    }
+
+    fun deleteAllQQ(service: String?, type: PermissionType?) {
+        val pid = permissionMapper.getPermissionID(service, type)
+        qqMapper.deleteQQIDByPermissionID(pid)
     }
 }

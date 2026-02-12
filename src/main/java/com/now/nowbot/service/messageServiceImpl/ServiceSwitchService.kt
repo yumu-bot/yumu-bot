@@ -240,7 +240,7 @@ class ServiceSwitchService(
 
         val does = when(operate) {
             OFF -> "关闭"
-            ON -> "启动"
+            ON -> "开启"
             else -> "查看"
         }
 
@@ -252,7 +252,7 @@ class ServiceSwitchService(
                 操作对象：${target}
                 操作服务：所有
                 
-                如果不想${does}所有服务，也可以尝试按组来${does}。
+                如果不想${does}所有服务，也可以尝试按类别来${does}。
             """.trimIndent())
 
             val lock = ASyncMessageUtil.getLock(event, 30 * 1000L)
@@ -321,33 +321,43 @@ class ServiceSwitchService(
 
 
     private fun SwitchParam.handle(): MessageChain {
-        // TODO 全解模式
 
         return when(this.operate) {
             ON -> when(this.target) {
-                Target.QQ -> {
+                Target.QQ -> if (this.services.isEmpty()) {
+                    controller.clearUser(this.id!!)
+
+                    MessageChain("操作已完成：开启用户 ${this.id} 的所有服务")
+                } else {
                     this.services.forEach { serv ->
                         controller.unblockUser(serv, this.id!!)
                     }
 
-                    MessageChain("操作已完成：启动用户 ${this.id} 的 ${services.joinToString(", ")} 服务")
+                    MessageChain("操作已完成：开启用户 ${this.id} 的 ${services.joinToString(", ")} 服务")
                 }
-                Target.GROUP -> {
+                Target.GROUP -> if (this.services.isEmpty()) {
+                    controller.clearGroup(this.id!!)
+
+                    MessageChain("操作已完成：开启群聊 ${this.id} 的所有服务")
+                } else {
                     this.services.forEach { serv ->
                         controller.unblockGroup(serv, this.id!!)
                     }
 
-                    MessageChain("操作已完成：启动群聊 ${this.id} 的 ${services.joinToString(", ")} 服务")
+                    MessageChain("操作已完成：开启群聊 ${this.id} 的 ${services.joinToString(", ")} 服务")
                 }
-                null -> {
+                null -> if (this.services.isEmpty()) {
+                    full.forEach { serv ->
+                        controller.serviceSwitch(serv, true)
+                    }
+
+                    MessageChain("操作已完成：开启所有服务")
+                } else {
                     this.services.forEach { serv ->
                         controller.serviceSwitch(serv, true)
                     }
-                    if (this.services.size > 50) {
-                        MessageChain("操作已完成：启动所有服务")
-                    } else {
-                        MessageChain("操作已完成：启动 ${services.joinToString(", ")} 服务")
-                    }
+
+                    MessageChain("操作已完成：开启 ${services.joinToString(", ")} 服务")
                 }
             }
             OFF -> when(this.target) {
@@ -389,6 +399,7 @@ class ServiceSwitchService(
             }
 
             LIST -> {
+                val global = controller.queryGlobal()
                 val all = controller.queryAllBlock()
 
                 val filtered = when (this.target) {
@@ -397,7 +408,7 @@ class ServiceSwitchService(
                     null -> all.sortedBy { it.name }.sortedBy { it.enable }
                 }
 
-                val markdown = getStatisticsList(filtered, this.target)
+                val markdown = getStatisticsList(filtered, global)
 
                 val image = try {
                     imageService.getPanelA6(markdown, "switch")
@@ -411,40 +422,44 @@ class ServiceSwitchService(
         }
     }
 
-    private fun getStatisticsList(list: List<PermissionController.LockRecord>, target: Target?): String {
+    private fun getStatisticsList(list: List<PermissionController.LockRecord>, global: PermissionController.LockRecord): String {
         val sb = StringBuilder()
-
-        val isUser = target == Target.QQ
-
-        val targetStr = if (isUser) {
-            "用户"
-        } else {
-            "群聊"
-        }
 
         sb.append("## 服务列表\n")
 
         sb.append("""
             
-            | 状态 | 服务名 | 无法使用的${targetStr} |
-            | :-: | :-- | :-- |
+            | 状态 | 服务名 | 无法使用的群聊 | 无法使用的用户
+            | :-: | :-- | :-- | :-- |
             
             """.trimIndent()
         )
 
+        val gs = global.groups.take(5).joinToString(", ")
+        val us = global.users.take(5).joinToString(", ")
+
+        sb.append("| ")
+            .append("*")
+            .append(" | ")
+            .append("GLOBAL")
+            .append(" | ")
+            .append(gs)
+            .append(" | ")
+            .append(us)
+            .append(" |\n")
+
         list.forEach {
-            val show = if (isUser) {
-                it.users
-            } else {
-                it.groups
-            }.take(5).joinToString(", ")
+            val gss = it.groups.take(5).joinToString(", ")
+            val uss = it.users.take(5).joinToString(", ")
 
             sb.append("| ")
                 .append(if (it.enable) "ON" else "OFF")
                 .append(" | ")
                 .append(it.name)
                 .append(" | ")
-                .append(show)
+                .append(gss)
+                .append(" | ")
+                .append(uss)
                 .append(" |\n")
         }
 

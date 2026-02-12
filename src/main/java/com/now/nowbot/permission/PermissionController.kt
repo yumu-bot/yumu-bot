@@ -109,7 +109,7 @@ interface PermissionController {
         val ignores: Set<Long>
     )
 
-    fun clear(isGroup: Boolean, id: Long, time: Long?)
+    fun clearUser(id: Long)
 
-    fun restrict(isGroup: Boolean, id: Long, time: Long?)
+    fun clearGroup(id: Long)
 }

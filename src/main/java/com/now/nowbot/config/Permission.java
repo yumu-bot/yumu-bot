@@ -161,13 +161,13 @@ public class Permission {
         //初始化全局名单
         assert permissionDao != null;
 
-        var whiteUserList = permissionDao.getQQList(PERMISSION_ALL, PermissionType.FRIEND_W);
-        var whiteGroupList = permissionDao.getQQList(PERMISSION_ALL, PermissionType.GROUP_W);
+        var whiteUserList = permissionDao.getQQs(PERMISSION_ALL, PermissionType.FRIEND_W);
+        var whiteGroupList = permissionDao.getQQs(PERMISSION_ALL, PermissionType.GROUP_W);
         WHITELIST = new PermissionParam(new HashSet<>(whiteUserList), new HashSet<>(whiteGroupList));
         WHITELIST.setWhite(true);
 
-        var blackUserList = permissionDao.getQQList(PERMISSION_ALL, PermissionType.FRIEND_B);
-        var blackGroupList = permissionDao.getQQList(PERMISSION_ALL, PermissionType.GROUP_B);
+        var blackUserList = permissionDao.getQQs(PERMISSION_ALL, PermissionType.FRIEND_B);
+        var blackGroupList = permissionDao.getQQs(PERMISSION_ALL, PermissionType.GROUP_B);
         BLACKLIST = new PermissionParam(new HashSet<>(blackUserList), new HashSet<>(blackGroupList));
         BLACKLIST.setWhite(false);
 
@@ -228,17 +228,17 @@ public class Permission {
                     // 存放好友名单
                     if ($beansCheck.friend()) {
                         if ($beansCheck.isWhite()) {
-                            user = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_W));
+                            user = Set.copyOf(permissionDao.getQQs(name, PermissionType.FRIEND_W));
                         } else {
-                            user = Set.copyOf(permissionDao.getQQList(name, PermissionType.FRIEND_B));
+                            user = Set.copyOf(permissionDao.getQQs(name, PermissionType.FRIEND_B));
                         }
                     }
                     // 存放群聊名单
                     if ($beansCheck.group()) {
                         if ($beansCheck.isWhite()) {
-                            group = Set.copyOf(permissionDao.getQQList(name, PermissionType.GROUP_W));
+                            group = Set.copyOf(permissionDao.getQQs(name, PermissionType.GROUP_W));
                         } else {
-                            group = Set.copyOf(permissionDao.getQQList(name, PermissionType.GROUP_B));
+                            group = Set.copyOf(permissionDao.getQQs(name, PermissionType.GROUP_B));
                         }
                     }
                     //写入存储对象
@@ -454,6 +454,6 @@ public class Permission {
 
         var type = param.isWhite() ? PermissionType.GROUP_W : PermissionType.GROUP_B;
         param.getGroupList().clear();
-        permissionDao.deleteGroupAll(name, type);
+        permissionDao.deleteAllQQ(name, type);
     }
 }
