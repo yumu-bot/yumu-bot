@@ -55,13 +55,22 @@ enum class Instruction(val pattern: Pattern) {
         appendName()
     }),
 
-    SERVICE_SWITCH(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("switch", "sh")
-        appendColonCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, MORE)
-        appendSpace()
-        appendCaptureGroup("service", REG_WORD, MORE)
-        appendSpace()
-        appendCaptureGroup("operate", REG_WORD, MORE)
+    SERVICE_SWITCH_ON(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("(switch|service)\\s*on", "so")
+        appendColonCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, MORE, MAYBE)
+        appendCaptureGroup(FLAG_TYPE, "\\D", MORE)
+    }),
+
+    SERVICE_SWITCH_OFF(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("(switch|service)\\s*off", "sf")
+        appendColonCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, MORE, MAYBE)
+        appendCaptureGroup(FLAG_TYPE, "\\D", MORE)
+    }),
+
+    SERVICE_SWITCH_LIST(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("(switch|service)\\s*list", "sl")
+        appendColonCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, MORE, MAYBE)
+        appendCaptureGroup(FLAG_TYPE, "\\D", MORE)
     }),
 
     ECHO(CommandPatternBuilder.create {
@@ -947,7 +956,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.MAI_VERSION) continue
+        if (i != Instruction.SERVICE_SWITCH_ON) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

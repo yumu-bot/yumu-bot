@@ -33,7 +33,7 @@ class UpdateTriggerService(
             fun getType(string: String?): UpdateType {
                 return when(string?.trim()) {
                     "m", "mai", "maimai" -> MAIMAI
-                    "l", "lxns", "luoxue", "lady" -> LXNS
+                    "l", "lx", "lxns", "luoxue", "lady" -> LXNS
                     "o", "p", "percent", "per" -> OSU_PERCENT
                     "d", "daily" -> OSU_DAILY
                     else -> throw UnsupportedOperationException("""

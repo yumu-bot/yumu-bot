@@ -497,7 +497,7 @@ class PermissionImplement(
         return null
     }
 
-    override fun queryAllBlock(): List<PermissionController.LockRecord?>? {
+    override fun queryAllBlock(): List<PermissionController.LockRecord> {
         val result = ArrayList<PermissionController.LockRecord>(permissionMap.size + 1)
         result.add(queryGlobal())
         permissionMap.forEach { (name, p) ->
@@ -524,8 +524,8 @@ class PermissionImplement(
         )
     }
 
-    override fun queryBlock(name: String): PermissionController.LockRecord {
-        val p = getService(name)
+    override fun queryBlock(service: String): PermissionController.LockRecord {
+        val p = getService(service)
 
         return PermissionController.LockRecord(
             p.name,

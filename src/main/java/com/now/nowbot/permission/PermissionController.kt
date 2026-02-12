@@ -1,111 +1,112 @@
-package com.now.nowbot.permission;
+package com.now.nowbot.permission
 
-import java.util.List;
-import java.util.Set;
-
-public interface PermissionController {
-
+interface PermissionController {
     /**
      * 功能开关控制
-     *
+     * 
      * @param name 名
      * @param open true:开; false:关
      */
-    void serviceSwitch(String name, boolean open);
+    fun serviceSwitch(name: String, open: Boolean)
 
     /**
      * 功能开关控制
-     *
+     * 
      * @param name 名
      * @param open true:开; false:关
      * @param time 到指定时间撤销修改
      */
-    void serviceSwitch(String name, boolean open, Long time);
+    fun serviceSwitch(name: String, open: Boolean, time: Long?)
 
     /**
      * 拉黑群
-     *
+     * 
      * @param id 群id
      */
-    void blockGroup(Long id);
+    fun blockGroup(id: Long)
 
     /**
      * 拉黑群一段时间
-     *
+     * 
      * @param id   群id
      * @param time 时间, 单位毫秒
      */
-    void blockGroup(Long id, Long time);
+    fun blockGroup(id: Long, time: Long?)
 
-    void blockGroup(String service, Long id);
+    fun blockGroup(service: String, id: Long)
 
-    void blockGroup(String service, Long id, Long time);
+    fun blockGroup(service: String, id: Long, time: Long?)
 
-    void unblockGroup(Long id);
+    fun unblockGroup(id: Long)
 
-    void unblockGroup(String service, Long id);
+    fun unblockGroup(service: String, id: Long)
 
-    void unblockGroup(String service, Long id, Long time);
+    fun unblockGroup(service: String, id: Long, time: Long?)
 
     /**
      * 拉黑个人
-     *
+     * 
      * @param id qq
      */
-    void blockUser(Long id);
+    fun blockUser(id: Long)
 
     /**
      * 拉黑个人一段时间
-     *
+     * 
      * @param id   qq
      * @param time 多少时间
      */
-    void blockUser(Long id, Long time);
+    fun blockUser(id: Long, time: Long?)
 
-    void blockUser(String service, Long id);
+    fun blockUser(service: String, id: Long)
 
-    void blockUser(String service, Long id, Long time);
+    fun blockUser(service: String, id: Long, time: Long?)
 
-    void unblockUser(Long id);
+    fun unblockUser(id: Long)
 
-    void unblockUser(String service, Long id);
+    fun unblockUser(service: String, id: Long)
 
-    void unblockUser(String service, Long id, Long time);
+    fun unblockUser(service: String, id: Long, time: Long?)
 
     /* ****************************************************************** */
-
     /**
      * 忽略群
-     *
+     * 
      * @param id 群号
      */
-    void ignoreAll(Long id);
+    fun ignoreAll(id: Long)
 
-    void ignoreAll(Long id, Long time);
+    fun ignoreAll(id: Long, time: Long?)
 
-    void ignoreAll(String service, Long id);
+    fun ignoreAll(service: String, id: Long)
 
-    void ignoreAll(String service, Long id, Long time);
+    fun ignoreAll(service: String, id: Long, time: Long?)
 
     /**
      * 取消忽略群
-     *
+     * 
      * @param id 群号
      */
-    void unignoreAll(Long id);
+    fun unignoreAll(id: Long)
 
-    void unignoreAll(Long id, Long time);
+    fun unignoreAll(id: Long, time: Long?)
 
-    void unignoreAll(String service, Long id);
+    fun unignoreAll(service: String, id: Long)
 
-    void unignoreAll(String service, Long id, Long time);
+    fun unignoreAll(service: String, id: Long, time: Long?)
 
-    List<LockRecord> queryAllBlock();
+    fun queryAllBlock(): List<LockRecord>
 
-    LockRecord queryGlobal();
+    fun queryGlobal(): LockRecord?
 
-    LockRecord queryBlock(String service);
+    fun queryBlock(service: String): LockRecord?
 
-    record LockRecord(String name, boolean enable, Set<Long> groups, Set<Long> users, Set<Long> ignores) {
-    }
+    @JvmRecord
+    data class LockRecord(
+        val name: String?,
+        val enable: Boolean,
+        val groups: MutableSet<Long?>?,
+        val users: MutableSet<Long?>?,
+        val ignores: MutableSet<Long?>?
+    )
 }

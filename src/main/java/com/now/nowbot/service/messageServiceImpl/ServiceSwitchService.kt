@@ -37,10 +37,8 @@ class ServiceSwitchService(
         messageText: String,
         data: DataValue<SwitchParam>
     ): Boolean {
-        val m = Instruction.SERVICE_SWITCH.matcher(messageText)
-        if (!m.find()) {
-            return false
-        }
+        val m = Instruction.SERVICE_SWITCH_ON.matcher(messageText)
+        return false
 
         if (!Permission.isSuperAdmin(event.sender.id)) {
             throw PermissionException.DeniedException.BelowSuperAdministrator()
@@ -94,7 +92,7 @@ class ServiceSwitchService(
     // @CheckPermission(isSuperAdmin = true)
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: SwitchParam): ServiceCallStatistic? {
-        val service = param.serviceName
+        val service = param.serviceName!!
         val group = param.groupID
 
         when (param.operation) {
@@ -168,8 +166,8 @@ class ServiceSwitchService(
     private val serviceListMarkdown: String
         get() {
             // 这里的状态很复杂, 每个服务有三个id list(群, qq, ignore的群)
-            val data = controller.queryAllBlock()
-            val service1 = data.first()
+            val data = controller.queryAllBlock()!!
+            val service1 = data.first()!!
             // 是否为开启状态
             service1.enable
 
