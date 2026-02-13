@@ -203,25 +203,16 @@ class PermissionImplement(
         GlobalService = PermissionService(false, false, false, globalGroupList, globalUserList, emptyList())
 
         // 初始化顺序
-        val sortServiceMap = HashMap<String, Int>()
-        services.forEach { (name, service) ->
+        services.asSequence().sortedByDescending { it.key }.forEach { (name, service) ->
             servicesMap[name] = service
+
+            if (service is TencentMessageService<*>) {
+                @Suppress("UNCHECKED_CAST")
+                serviceMap4TX[name] = service as TencentMessageService<Any>
+            }
+
             refreshPermissionCache(name)
         }
-
-        sortServiceMap.entries
-            .sortedByDescending { it.value }
-            .map { it.key }
-            .forEach { name ->
-                val service = services[name]?.apply {
-                    servicesMap[name] = this
-                }
-
-                if (service is TencentMessageService<*>) {
-                    @Suppress("UNCHECKED_CAST")
-                    serviceMap4TX[name] = service as TencentMessageService<Any>
-                }
-            }
 
         // 初始化暗杀名单
         superList = setOf(732713726L, 3228981717L, 1340691940L, 3145729213L, 365246692L, 2480557535L, 1968035918L, 2429299722L, 447503971L, LOCAL_GROUP_ID)

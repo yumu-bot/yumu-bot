@@ -33,15 +33,15 @@ class ServiceSwitchService(
 
     enum class ServiceType(private val typeAlias: List<String>, val services: List<String>) {
         BOT(listOf("b", "bot", "内部", "机器"),
-            listOf("help", "ping", "bind", "ban", "switch", "service_count", "check")
+            listOf("help", "ping", "bind", "switch", "service_count", "login", "echo", "check", "update", "fetch", "refresh_file")
         ),
 
         SCORE(listOf("s", "scores", "成绩", "分数"),
-            listOf("set_mode", "sb_set_mode", "set_group_mode", "score_pr", "sb_score_pr", "score", "sb_score", "bp", "sb_bp", "today_bp", "sb_today_bp", "bp_analysis", "bp_analysis_legacy", "bp_fix", "top_plays")
+            listOf("set_mode", "sb_set_mode", "set_group_mode", "score_pr", "sb_score_pr", "pr_card", "uu_pr", "score", "sb_score", "uu_score", "bp", "sb_bp", "today_bp", "sb_today_bp", "bp_analysis", "uu_ba", "bp_analysis_legacy", "bp_fix", "top_plays", "recent_best")
         ),
 
         PLAYER(listOf("p", "player", "players", "user", "users", "玩家", "用户"),
-            listOf("info", "i_mapper", "friend", "mutual", "skill", "pp_minus", "team", "badge", "guest_difficulty", "get_id", "get_name", "pp_plus")
+            listOf("info", "info_card", "uu_info", "i_mapper", "friend", "mutual", "skill", "pp_minus", "team", "badge", "guest_difficulty", "get_id", "get_name", "pp_plus")
         ),
 
         BEATMAP(listOf("b", "beatmap", "maps", "beatmaps", "谱面", "图"),
