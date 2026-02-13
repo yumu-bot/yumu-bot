@@ -214,9 +214,12 @@ import kotlin.time.toDuration
 
         val m = data.mods?.ifEmpty { mods } ?: mods
 
+        val preSelectAcronymSet = m.map { it.acronym }.toSet()
+
         val filtered = data.scores.filter { score ->
-            score.mods.map { it.acronym }.toSet() ==
-                    m.map { it.acronym }.toSet()
+            val scoreAcronymSet = score.mods.map { it.acronym }.toSet()
+
+            scoreAcronymSet.containsAll(preSelectAcronymSet)
         }
 
         if (filtered.isEmpty()) {
@@ -376,7 +379,7 @@ import kotlin.time.toDuration
             val works = b4.map {
                 Callable {
                     try {
-                        scoreApiService.getBeatMapScore(it.beatmapID, user.userID, mode, mods)
+                        scoreApiService.getBeatmapScore(it.beatmapID, user.userID, mode, mods)
                     } catch (_: Exception) {
                         null
                     }

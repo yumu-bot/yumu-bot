@@ -9,8 +9,8 @@ import java.time.OffsetDateTime
 @JsonIgnoreProperties(ignoreUnknown = true) @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 class ActivityEvent {
     data class Achievement(
-        @JsonProperty("icon_url") val url: String,
-        @JsonProperty("id") val achievementID: Int,
+        @field:JsonProperty("icon_url") val url: String,
+        @field:JsonProperty("id") val achievementID: Int,
         val name: String,
         val grouping: String,
         val ordering: String,
@@ -20,9 +20,9 @@ class ActivityEvent {
         val instructions: String?
     )
 
-    data class EventBeatMap(
+    data class EventBeatmap(
         val title: String,
-        @JsonProperty("url")
+        @field:JsonProperty("url")
         val url: String?
     ) {
         @get:JsonProperty("id")
@@ -30,10 +30,10 @@ class ActivityEvent {
             get() = url?.replace("/b/", "")?.toLongOrNull() ?: 0L
     }
 
-    data class EventBeatMapSet(
+    data class EventBeatmapset(
         val title: String,
 
-        @JsonProperty("url")
+        @field:JsonProperty("url")
         val url: String?
     ) {
         @get:JsonProperty("id")
@@ -42,12 +42,13 @@ class ActivityEvent {
     }
 
     data class EventUser(
-        @JsonProperty("username")
+        @field:JsonProperty("username")
         val name: String,
 
-        @JsonProperty("url")
+        @field:JsonProperty("url")
         val url: String?,
-        @JsonProperty("previous_username")
+
+        @field:JsonProperty("previous_username")
         val previousUsername: String?
     ) {
         @get:JsonProperty("id")
@@ -126,10 +127,10 @@ class ActivityEvent {
     var user: EventUser? = null
 
     @JsonProperty("beatmap")
-    var beatmap: EventBeatMap? = null
+    var beatmap: EventBeatmap? = null
 
     @JsonProperty("beatmapset")
-    var beatmapSet: EventBeatMapSet? = null
+    var beatmapSet: EventBeatmapset? = null
 
     val isMapping: Boolean
         get() = type == EventType.BeatmapsetApprove

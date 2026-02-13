@@ -302,7 +302,7 @@ import kotlin.math.sqrt
 
             scoreApiService.asyncDownloadBackgroundFromScores(s10, CoverType.LIST)
 
-            calculateApiService.applyBeatMapChanges(s10)
+            calculateApiService.applyBeatmapChanges(s10)
             calculateApiService.applyStarToScores(s10)
 
             s10.map { SkillScore(it, skillMap[it.beatmapID]?.values ?: listOf()) }

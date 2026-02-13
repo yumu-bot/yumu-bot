@@ -329,7 +329,7 @@ import kotlin.math.min
                 for (i in offset..(offset + limit)) ranks.add(i + 1)
 
                 if (isMultipleScore) {
-                    calculateApiService.applyBeatMapChanges(scores)
+                    calculateApiService.applyBeatmapChanges(scores)
                     calculateApiService.applyStarToScores(scores)
 
                     data = imageService.getPanel(
@@ -356,7 +356,7 @@ import kotlin.math.min
             ScoreType.Pass -> {
                 scores = scoreApiService.getPassedScore(osuUser.userID, mode, offset, limit)
 
-                calculateApiService.applyBeatMapChanges(scores)
+                calculateApiService.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
 
                 val ranks = ((offset + 1)..scores.size).toList()
@@ -386,7 +386,7 @@ import kotlin.math.min
             ScoreType.Recent -> {
                 scores = scoreApiService.getPassedScore(osuUser.userID, mode, offset, limit)
 
-                calculateApiService.applyBeatMapChanges(scores)
+                calculateApiService.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
 
                 if (isMultipleScore) {
@@ -417,7 +417,7 @@ import kotlin.math.min
                 scores = scoreApiService.getScore(osuUser.userID, mode, offset, 1, true)
                 val score: LazerScore = scores.first()
 
-                calculateApiService.applyBeatMapChanges(scores)
+                calculateApiService.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
 
                 data = imageService.getPanelGamma(score)
@@ -428,7 +428,7 @@ import kotlin.math.min
                 scores = scoreApiService.getScore(osuUser.userID, mode, offset, 1, false)
                 val score: LazerScore = scores.first()
 
-                calculateApiService.applyBeatMapChanges(scores)
+                calculateApiService.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
 
                 data = imageService.getPanelGamma(score)
@@ -448,7 +448,7 @@ import kotlin.math.min
                 val ranks = bests.map { it.key }
                 scores = bests.map { it.value }
 
-                calculateApiService.applyBeatMapChanges(scores)
+                calculateApiService.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)
 
                 data = imageService.getPanel(
@@ -581,7 +581,7 @@ import kotlin.math.min
      * @param mods     模组字符串，可为空
      * @return image 谱面成绩图片
      */
-    @GetMapping(value = ["score"]) @DiscordParam(name = "s", description = "查询玩家谱面成绩") fun getBeatMapScore(
+    @GetMapping(value = ["score"]) @DiscordParam(name = "s", description = "查询玩家谱面成绩") fun getBeatmapScore(
         @DiscordParam(name = "name", description = "玩家名称", required = true) @RequestParam("name") name: String,
         @DiscordParam(name = "bid", description = "谱面编号", required = true) @RequestParam("bid") bid: Long,
         @DiscordParam(name = "mode", description = "游戏模式") @Nullable @RequestParam("mode") playMode: String?,
@@ -608,7 +608,7 @@ import kotlin.math.min
         }
 
         if (mods.isNullOrBlank()) {
-            score = scoreApiService.getBeatMapScore(bid, uid, mode)!!.score
+            score = scoreApiService.getBeatmapScore(bid, uid, mode)!!.score
         } else {
             try {
                 scoreList = scoreApiService.getBeatmapScores(bid, uid, mode)
@@ -668,7 +668,7 @@ import kotlin.math.min
             bests = scoreApiService.getBestScores(uid, mode)
             mappers = userApiService.getUsers(bests.flatMap { it.beatmap.mapperIDs }.toSet())
 
-            calculateApiService.applyBeatMapChanges(bests)
+            calculateApiService.applyBeatmapChanges(bests)
             calculateApiService.applyStarToScores(bests)
         } catch (_: Exception) {
             throw RuntimeException(IllegalStateException.Fetch("最好成绩分析"))
@@ -985,7 +985,7 @@ import kotlin.math.min
      * @param bid 谱面编号
      * @return BeatMap JSON
      */
-    @GetMapping(value = ["map/json"]) fun getBeatMapInfoJson(
+    @GetMapping(value = ["map/json"]) fun getBeatmapInfoJson(
         @RequestParam("bid") @Nullable bid: Long?
     ): Beatmap {
         return if (bid != null) {
@@ -996,7 +996,7 @@ import kotlin.math.min
     }
 
     /**
-     * 获取谱面的附加信息 Attr JSON
+     * 获取谱面的附加信息 Attribute JSON
      *
      * @param bid  谱面编号
      * @param mods 模组字符串，通过逗号分隔

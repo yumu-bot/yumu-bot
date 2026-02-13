@@ -60,7 +60,7 @@ public class BeatmapLite {
 
     @ManyToOne()
     @JoinColumn(name = "map_id")
-    MapSetLite mapSet;
+    BeatmapsetLite mapSet;
 
     public BeatmapLite() {
     }
@@ -277,11 +277,11 @@ public class BeatmapLite {
         this.ranked = ranked;
     }
 
-    public MapSetLite getMapSet() {
+    public BeatmapsetLite getMapSet() {
         return mapSet;
     }
 
-    public void setMapSet(MapSetLite mapSet) {
+    public void setMapSet(BeatmapsetLite mapSet) {
         this.mapSet = mapSet;
     }
 
@@ -293,7 +293,7 @@ public class BeatmapLite {
         this.md5 = md5;
     }
 
-    public Beatmap toBeatMap(){
+    public Beatmap toBeatmap(){
         var b = new Beatmap();
         b.setBeatmapID(getId());
         b.setBeatmapsetID(getBeatmapsetId());

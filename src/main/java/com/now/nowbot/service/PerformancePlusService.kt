@@ -37,8 +37,8 @@ import java.util.concurrent.ConcurrentHashMap
 ) {
     private val osuPath: Path = Path.of(config.osuFilePath)
 
-    fun getMapPerformancePlus(beatmapId: Long, modList: List<LazerMod?>?): PPPlus? {
-        checkFile(beatmapId)
+    fun getMapPerformancePlus(beatmapID: Long, modList: List<LazerMod?>?): PPPlus? {
+        checkFile(beatmapID)
         val mods: Optional<String>
         if (modList.isNullOrEmpty()) {
             mods = Optional.empty()
@@ -46,15 +46,15 @@ import java.util.concurrent.ConcurrentHashMap
             val s = JacksonUtil.toJson(modList)
             mods = Optional.of(URLEncoder.encode(s, StandardCharsets.UTF_8))
         }
-        val p = performancePlusLiteRepository.findBeatMapPPPById(beatmapId)
-        if (p.isPresent) {
+        val p = performancePlusLiteRepository.findBeatmapPPPlusByBeatmapID(beatmapID)
+        if (p != null) {
             val result = PPPlus()
-            result.difficulty = p.get().toStats()
+            result.difficulty = p.toStats()
             return result
         }
         return webClient.get().uri { u: UriBuilder ->
                 u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/calculation")
-                    .queryParam("BeatmapId", beatmapId).queryParamIfPresent("Mods", mods).build()
+                    .queryParam("BeatmapId", beatmapID).queryParamIfPresent("Mods", mods).build()
             }.retrieve().bodyToMono(PPPlus::class.java).block()
     }
 
@@ -118,7 +118,7 @@ import java.util.concurrent.ConcurrentHashMap
 
     @Throws(TipsException::class) fun getScorePerformancePlus(scores: Iterable<LazerScore>): List<PPPlus> {
         val scoreIDs = scores.map { it.scoreID }
-        val ppPlusList = performancePlusLiteRepository.findScorePPP(scoreIDs)
+        val ppPlusList = performancePlusLiteRepository.findScorePPPlus(scoreIDs)
         val ppPlusMap = ppPlusList.associateBy { it.id }
 
         // 挑选出没有记录的 score

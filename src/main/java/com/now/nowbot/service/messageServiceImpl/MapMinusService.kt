@@ -108,7 +108,7 @@ import kotlin.math.absoluteValue
         val fileStr: String
         val map: Beatmap = beatmapApiService.getBeatmap(param.bid)
 
-        calculateApiService.applyStarToBeatMap(map, param.mode, param.mods)
+        calculateApiService.applyStarToBeatmap(map, param.mode, param.mods)
 
         val isChangedRating = param.mods.isAffectStarRating()
 

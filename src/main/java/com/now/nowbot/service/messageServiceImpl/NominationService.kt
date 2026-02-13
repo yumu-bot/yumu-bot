@@ -176,7 +176,7 @@ import kotlin.math.floor
             }
 
             try {
-                d = discussionApiService.getBeatMapSetDiscussion(id)
+                d = discussionApiService.getBeatmapsetDiscussion(id)
             } catch (e: Exception) {
                 log.error("提名信息：讨论区获取失败", e)
                 throw IllegalStateException.Fetch("讨论区")

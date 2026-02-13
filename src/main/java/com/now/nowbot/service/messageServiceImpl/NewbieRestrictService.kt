@@ -107,7 +107,7 @@ class NewbieRestrictService(
                 val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
                 user = getUserWithoutRange(event, s, InstructionObject(mode))
-                scores = listOf(scoreApiService.getBeatMapScore(map.beatmapID, user.userID, mode, mods)?.score ?: return false)
+                scores = listOf(scoreApiService.getBeatmapScore(map.beatmapID, user.userID, mode, mods)?.score ?: return false)
                 calculateApiService.applyStarToScores(scores, local = local)
             } else if (pr.find()) {
                 val any: String = pr.group(FLAG_ANY) ?: ""
@@ -179,7 +179,7 @@ class NewbieRestrictService(
                     val pss = scoreApiService.getScore(this.data!!.userID, mode.data, offset, limit, isPass)
 
                     calculateApiService.applyStarToScores(pss, local = local)
-                    calculateApiService.applyBeatMapChanges(pss)
+                    calculateApiService.applyBeatmapChanges(pss)
 
                     // 检查查到的数据是否为空
                     if (pss.isEmpty()) {

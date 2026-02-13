@@ -138,7 +138,7 @@ class MatchRating(
             if (it.beatmap != null) {
                 val b = beatmapApiService.getBeatmapFromDatabase(it.beatmapID)
 
-                calculateApiService.applyStarToBeatMap(b, it.mode, LazerMod.getModsList(it.mods))
+                calculateApiService.applyStarToBeatmap(b, it.mode, LazerMod.getModsList(it.mods))
 
                 it.beatmap = b
             }
@@ -552,8 +552,8 @@ class MatchRating(
                 .filter { it.round?.beatmap != null }
                 .map { it.round!! }
                 .forEach {
-                    calculateApiService.applyBeatMapChanges(it.beatmap, LazerMod.getModsList(it.mods))
-                    calculateApiService.applyStarToBeatMap(it.beatmap, it.mode, LazerMod.getModsList(it.mods))
+                    calculateApiService.applyBeatmapChanges(it.beatmap, LazerMod.getModsList(it.mods))
+                    calculateApiService.applyStarToBeatmap(it.beatmap, it.mode, LazerMod.getModsList(it.mods))
                 }
         }
     }

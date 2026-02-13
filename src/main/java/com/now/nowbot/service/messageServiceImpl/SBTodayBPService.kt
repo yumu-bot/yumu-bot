@@ -157,7 +157,7 @@ class SBTodayBPService(
                 val ss = scores.map { it.value }
 
                 AsyncMethodExecutor.awaitTripleCallableExecute(
-                    { osuCalculateApiService.applyBeatMapChanges(ss) },
+                    { osuCalculateApiService.applyBeatmapChanges(ss) },
                     { osuCalculateApiService.applyStarToScores(ss) },
                     { osuBeatmapApiService.applyBeatmapExtend(ss) }
                 )

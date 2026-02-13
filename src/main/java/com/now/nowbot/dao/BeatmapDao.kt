@@ -5,7 +5,7 @@ import com.now.nowbot.entity.BeatmapExtendLite
 import com.now.nowbot.entity.BeatmapLite
 import com.now.nowbot.entity.BeatmapLite.BeatmapHitLengthResult
 import com.now.nowbot.entity.BeatmapsetExtendLite
-import com.now.nowbot.entity.MapSetLite
+import com.now.nowbot.entity.BeatmapsetLite
 import com.now.nowbot.entity.TagLite
 import com.now.nowbot.mapper.BeatmapExtendRepository
 import com.now.nowbot.mapper.BeatmapRepository
@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import java.util.*
 
 @Component
 class BeatmapDao(
@@ -50,11 +49,11 @@ class BeatmapDao(
         beatmapRepository.saveAll(s)
     }
 
-    fun saveMapSet(beatmapset: Beatmapset): MapSetLite {
+    fun saveMapSet(beatmapset: Beatmapset): BeatmapsetLite {
         return beatmapsetRepository.save(fromMapSetModel(beatmapset))
     }
 
-    fun getBeatMapLite(id: Long): BeatmapLite? {
+    fun getBeatmapLite(id: Long): BeatmapLite? {
         val lite = beatmapRepository.findById(id)
         if (lite.isEmpty) {
             return null
@@ -62,15 +61,15 @@ class BeatmapDao(
         return lite.get()
     }
 
-    fun getBeatMapSetLite(id: Long): Optional<MapSetLite> {
-        return beatmapRepository.getMapSetByBid(id)
+    fun getBeatmapsetLite(id: Long): BeatmapsetLite? {
+        return beatmapRepository.getBeatmapsetByBid(id)
     }
 
-    fun getBeatMapSetLite(id: Int): Optional<MapSetLite> {
-        return getBeatMapSetLite(id.toLong())
+    fun getBeatmapsetLite(id: Int): BeatmapsetLite? {
+        return getBeatmapsetLite(id.toLong())
     }
 
-    fun getBeatMapsHitLength(ids: Collection<Long>): List<BeatmapHitLengthResult> {
+    fun getBeatmapHitLength(ids: Collection<Long>): List<BeatmapHitLengthResult> {
         return beatmapRepository.getBeatmapHitLength(ids)
     }
 
@@ -369,14 +368,14 @@ class BeatmapDao(
 
     companion object {
         fun fromBeatmapLite(bl: BeatmapLite): Beatmap {
-            val b = bl.toBeatMap()
-            b.beatmapset = fromBeatMapSetLite(bl.mapSet)
+            val b = bl.toBeatmap()
+            b.beatmapset = fromBeatmapSetLite(bl.mapSet)
             return b
         }
 
         fun fromBeatmapModel(b: Beatmap): BeatmapLite {
             val s = BeatmapLite(b)
-            var mapSet: MapSetLite? = null
+            var mapSet: BeatmapsetLite? = null
             if (b.beatmapset != null) {
                 mapSet = fromMapSetModel(b.beatmapset!!)
             }
@@ -384,7 +383,7 @@ class BeatmapDao(
             return s
         }
 
-        private fun fromBeatMapSetLite(set: MapSetLite): Beatmapset {
+        private fun fromBeatmapSetLite(set: BeatmapsetLite): Beatmapset {
             val s = Beatmapset()
             s.beatmapsetID = set.id.toLong()
             s.creatorID = set.mapperId.toLong()
@@ -407,8 +406,8 @@ class BeatmapDao(
             return s
         }
 
-        fun fromMapSetModel(mapSet: Beatmapset): MapSetLite {
-            val s = MapSetLite()
+        fun fromMapSetModel(mapSet: Beatmapset): BeatmapsetLite {
+            val s = BeatmapsetLite()
             s.id = Math.toIntExact(mapSet.beatmapsetID)
             s.card = mapSet.covers.card2x
             s.cover = mapSet.covers.cover2x

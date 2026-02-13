@@ -59,8 +59,8 @@ class NewbieService(
             return -1f
         }
 
-        val start = calculateApiService.getBeatMapStarRating(bid, OsuMode.OSU, mods).toFloat()
-        return start
+        val star = calculateApiService.getBeatmapStar(bid, OsuMode.OSU, mods)
+        return star.toFloat()
     }
 
     fun getDailyStatistic(userId: Long, date: LocalDate): ScoreDailyStatistic {

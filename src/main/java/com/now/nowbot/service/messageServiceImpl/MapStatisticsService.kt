@@ -295,7 +295,7 @@ class MapStatisticsService(
 
             beatmap.starRating = attributes.stars ?: beatmap.starRating
 
-            calculateApiService.applyBeatMapChanges(beatmap, expected.mods)
+            calculateApiService.applyBeatmapChanges(beatmap, expected.mods)
 
             return imageService.getPanel(
                 PanelE6Param(user, beatmap, density, original, attributes, pp, expected)

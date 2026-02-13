@@ -174,7 +174,7 @@ class ScoreApiImpl(
         }
     }
 
-    override fun getBeatMapScore(bid: Long, uid: Long, mode: OsuMode?): BeatmapUserScore? {
+    override fun getBeatmapScore(bid: Long, uid: Long, mode: OsuMode?): BeatmapUserScore? {
         return retryOn404<BeatmapUserScore>(
             { uriBuilder: UriBuilder ->
                 uriBuilder
@@ -194,12 +194,12 @@ class ScoreApiImpl(
         )
     }
 
-    override fun getBeatMapScore(
+    override fun getBeatmapScore(
         bid: Long,
         user: BindUser,
         mode: OsuMode?,
     ): BeatmapUserScore? {
-        if (user.isTokenAvailable == null) return getBeatMapScore(bid, user.userID, mode)
+        if (user.isTokenAvailable == null) return getBeatmapScore(bid, user.userID, mode)
         return retryOn404<BeatmapUserScore>(
             {
                 it.path("beatmaps/{bid}/scores/users/{uid}").queryParam("legacy_only", 0)
@@ -226,7 +226,7 @@ class ScoreApiImpl(
         )
     }
 
-    override fun getBeatMapScore(
+    override fun getBeatmapScore(
         bid: Long,
         uid: Long,
         mode: OsuMode?,
@@ -256,14 +256,14 @@ class ScoreApiImpl(
         )
     }
 
-    override fun getBeatMapScore(
+    override fun getBeatmapScore(
         bid: Long,
         user: BindUser,
         mode: OsuMode,
         mods: Collection<LazerMod>,
     ): BeatmapUserScore? {
         if (user.isTokenAvailable == null) {
-            return getBeatMapScore(bid, user.userID, mode, mods)
+            return getBeatmapScore(bid, user.userID, mode, mods)
         }
         val uri = Function { n: Int? ->
             Function { uriBuilder: UriBuilder ->

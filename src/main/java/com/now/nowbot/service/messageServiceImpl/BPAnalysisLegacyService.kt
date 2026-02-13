@@ -50,7 +50,7 @@ class BPAnalysisLegacyService(
                 {
                     val ss = scoreApiService.getBestScores(id, mode.data!!)
 
-                    calculateApiService.applyBeatMapChanges(ss)
+                    calculateApiService.applyBeatmapChanges(ss)
                     calculateApiService.applyStarToScores(ss)
 
                     ss
@@ -63,7 +63,7 @@ class BPAnalysisLegacyService(
             user = getUserWithoutRange(event, matcher, mode, isMyself)
             bests = scoreApiService.getBestScores(user.userID, mode.data)
 
-            calculateApiService.applyBeatMapChanges(bests)
+            calculateApiService.applyBeatmapChanges(bests)
             calculateApiService.applyStarToScores(bests)
         }
 

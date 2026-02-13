@@ -321,7 +321,7 @@ class PopularService(
             val count = entry.value.size
             val percent = count * 1.0 / scores.size
 
-            Attr(entry.key, count, percent)
+            Attribute(entry.key, count, percent)
         }.sortedByDescending { attr -> attr.count }
 
          */

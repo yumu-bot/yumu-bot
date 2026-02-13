@@ -1,6 +1,6 @@
 package com.now.nowbot.model.beatmapParse;
 
-import com.now.nowbot.entity.BeatMapFileLite;
+import com.now.nowbot.entity.BeatmapFileLite;
 import com.now.nowbot.model.beatmapParse.parse.*;
 import com.now.nowbot.model.enums.OsuMode;
 import org.slf4j.Logger;
@@ -28,17 +28,17 @@ public class OsuFile {
         return new OsuFile(read);
     }
 
-    public static BeatMapFileLite parseInfo(BufferedReader read) throws IOException {
+    public static BeatmapFileLite parseInfo(BufferedReader read) throws IOException {
         var versionStr = read.readLine();
         if (versionStr == null || !versionStr.trim().startsWith("osu file format v")) {
             log.error("解析错误,文件无效 第一行为:{}", versionStr);
             throw new RuntimeException("解析错误,文件无效");
         }
         if (versionStr.endsWith("v3")) {
-            var bf = new BeatMapFileLite();
+            // var bf = new BeatmapFileLite();
             throw new RuntimeException("不支持v3版本的解析");
         }
-        var bf = new BeatMapFileLite();
+        var bf = new BeatmapFileLite();
         HashMap<String, String> info = new HashMap<>(5);
         info.put("AudioFilename", null);
         info.put("Mode", null);
@@ -72,7 +72,7 @@ public class OsuFile {
             bf.setAudio(info.get("AudioFilename"));
         }
         if (info.get("Mode") != null) {
-            bf.setMode(Integer.parseInt(info.get("Mode")));
+            bf.setModeInt(Integer.parseInt(info.get("Mode")));
         }
         if (info.get("BeatmapID") != null) {
             bf.setBid(Long.parseLong(info.get("BeatmapID")));
@@ -85,7 +85,7 @@ public class OsuFile {
         return bf;
     }
 
-    private void parseV3(BeatMapFileLite bf, BufferedReader read) throws IOException {
+    private void parseV3(BeatmapFileLite bf, BufferedReader read) throws IOException {
         String line;
         while ((line = read.readLine()) != null){
             if (line.startsWith("AudioFilename")) {
@@ -138,7 +138,6 @@ public class OsuFile {
      * 逐行读取
      *
      * @param read osu file
-     * @throws {@link IOException} io exception
      */
     @SuppressWarnings("")
     OsuFile(BufferedReader read) throws IOException {
@@ -158,6 +157,7 @@ public class OsuFile {
         String line;
         // 逐行
         while ((line = read.readLine()) != null && line.isBlank()) ;
+
         if (line != null && line.startsWith("[General]")) {
             // 读取 General 块
             parseGeneral(read);

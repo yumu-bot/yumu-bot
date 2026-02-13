@@ -53,7 +53,7 @@ import kotlin.math.min
             val t6: List<LazerScore> = bests.take(6)
             val b5: List<LazerScore> = bests.takeLast(bpSize - max((bpSize - 5).toDouble(), 0.0).toInt())
 
-            val beatmapList: MutableList<BeatMap4BA> = ArrayList(bpSize)
+            val beatmapList: MutableList<BeatmapAnalysis> = ArrayList(bpSize)
             val modsPPMap: MultiValueMap<String, Double> = LinkedMultiValueMap()
             val rankMap: MultiValueMap<String, Double> = LinkedMultiValueMap()
 
@@ -71,7 +71,7 @@ import kotlin.math.min
                 }
 
                 run {
-                    val ba = BeatMap4BA(
+                    val ba = BeatmapAnalysis(
                         i + 1,
                         b.totalLength,
                         best.maxCombo,
@@ -103,11 +103,11 @@ import kotlin.math.min
             }
 
             // 0 length; 1 combo; 2 star; 3 bpm
-            val summary: HashMap<String, List<BeatMap4BA>> = HashMap(4)
+            val summary: HashMap<String, List<BeatmapAnalysis>> = HashMap(4)
 
-            fun <T : Comparable<T>> sortCount(name: String, sortedBy: (BeatMap4BA) -> T) {
-                val sortList: List<BeatMap4BA> = beatmapList.sortedByDescending(sortedBy)
-                val stat: ArrayList<BeatMap4BA> = ArrayList(3)
+            fun <T : Comparable<T>> sortCount(name: String, sortedBy: (BeatmapAnalysis) -> T) {
+                val sortList: List<BeatmapAnalysis> = beatmapList.sortedByDescending(sortedBy)
+                val stat: ArrayList<BeatmapAnalysis> = ArrayList(3)
                 stat.add(sortList.first())
                 stat.add(sortList[bpSize / 2])
                 stat.add(sortList[bpSize - 1])
@@ -167,42 +167,42 @@ import kotlin.math.min
             //bpPP + remainPP (bp100之后的) = rawPP
             val bestPP = bests.sumOf { it.weight!!.pp }
 
-            val modsAttr: List<Attr>
+            val modsAttribute: List<Attribute>
             run {
-                val modsAttrTmp: MutableList<Attr> = ArrayList(modsPPMap.size)
+                val modsAttributeTmp: MutableList<Attribute> = ArrayList(modsPPMap.size)
                 modsPPMap.forEach { (mod: String, value: MutableList<Double?>) ->
-                    val attr = Attr(
+                    val attribute = Attribute(
                         mod, value.filterNotNull().size, value.filterNotNull().sum(), (value.size * 1.0 / modsSum)
                     )
-                    modsAttrTmp.add(attr)
+                    modsAttributeTmp.add(attribute)
                 }
-                modsAttr = modsAttrTmp.sortedByDescending { it.ppCount }
+                modsAttribute = modsAttributeTmp.sortedByDescending { it.ppCount }
             }
 
-            val rankAttr: MutableList<Attr?> = ArrayList(rankMap.size)
+            val rankAttribute: MutableList<Attribute?> = ArrayList(rankMap.size)
             run {
                 val fcList = rankMap.remove("FC")
-                val fc: Attr
+                val fc: Attribute
                 if (fcList.isNullOrEmpty()) {
-                    fc = Attr("FC", 0, 0.0, 0.0)
+                    fc = Attribute("FC", 0, 0.0, 0.0)
                 } else {
                     val fcPPSum = fcList.sum()
 
-                    fc = Attr("FC", fcList.size, fcPPSum, (fcPPSum / bestPP))
+                    fc = Attribute("FC", fcList.size, fcPPSum, (fcPPSum / bestPP))
                 }
-                rankAttr.add(fc)
+                rankAttribute.add(fc)
                 for (rank in RANK_ARRAY) {
                     if (rankMap.containsKey(rank)) {
                         val value = rankMap[rank]
                         var rankPPSum: Double
-                        var attr: Attr? = null
+                        var attribute: Attribute? = null
                         if (!value.isNullOrEmpty()) {
                             rankPPSum = value.sum()
-                            attr = Attr(
+                            attribute = Attribute(
                                 rank, value.count(), rankPPSum, (rankPPSum / bestPP)
                             )
                         }
-                        rankAttr.add(attr)
+                        rankAttribute.add(attribute)
                     }
                 }
             }
@@ -224,8 +224,8 @@ import kotlin.math.min
                     "rank_arr" to rankList,
                     "rank_elect_arr" to rankSort,
                     "bp_length_arr" to lengthList,
-                    "mods_attr" to modsAttr,
-                    "rank_attr" to rankAttr,
+                    "mods_attr" to modsAttribute,
+                    "rank_attr" to rankAttribute,
                     "pp_raw" to rawPP,
                     "pp" to userPP,
                     "game_mode" to bests.first().mode,
@@ -248,8 +248,8 @@ import kotlin.math.min
                         "time_arr" to timeList,
                         "time_dist_arr" to timeDist,
 
-                        "mods_attr" to modsAttr,
-                        "rank_attr" to rankAttr,
+                        "mods_attr" to modsAttribute,
+                        "rank_attr" to rankAttribute,
 
                         "pp_sum" to ppSum,
                         "client_count" to clientCount,
@@ -314,7 +314,7 @@ import kotlin.math.min
                 {
                     val ss = scoreApiService.getBestScores(id, mode.data!!)
 
-                    calculateApiService.applyBeatMapChanges(ss)
+                    calculateApiService.applyBeatmapChanges(ss)
                     calculateApiService.applyStarToScores(ss)
 
                     ss
@@ -327,7 +327,7 @@ import kotlin.math.min
             user = getUserWithoutRange(event, matcher, mode, isMyself)
             bests = scoreApiService.getBestScores(user.userID, mode.data)
 
-            calculateApiService.applyBeatMapChanges(bests)
+            calculateApiService.applyBeatmapChanges(bests)
             calculateApiService.applyStarToScores(bests)
         }
 
@@ -375,7 +375,7 @@ import kotlin.math.min
             @field:JsonProperty("pp_count") val ppCount: Float
         )
 
-        data class BeatMap4BA(
+        data class BeatmapAnalysis(
             val ranking: Int,
             val length: Int,
             val combo: Int,
@@ -386,7 +386,7 @@ import kotlin.math.min
             val mods: List<LazerMod>
         )
 
-        data class Attr(
+        data class Attribute(
             val index: String,
             @param:JsonProperty("map_count") val mapCount: Int,
             @param:JsonProperty("pp_count") val ppCount: Double,

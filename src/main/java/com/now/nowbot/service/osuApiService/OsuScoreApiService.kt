@@ -107,13 +107,13 @@ interface OsuScoreApiService {
         return getRecentScore(user.userID, user.currentOsuMode, 0, 100)
     }
 
-    fun getBeatMapScore(bid: Long, uid: Long, mode: OsuMode?): BeatmapUserScore?
+    fun getBeatmapScore(bid: Long, uid: Long, mode: OsuMode?): BeatmapUserScore?
 
-    fun getBeatMapScore(bid: Long, user: BindUser, mode: OsuMode?): BeatmapUserScore?
+    fun getBeatmapScore(bid: Long, user: BindUser, mode: OsuMode?): BeatmapUserScore?
 
-    fun getBeatMapScore(bid: Long, uid: Long, mode: OsuMode?, mods: Collection<LazerMod?>): BeatmapUserScore?
+    fun getBeatmapScore(bid: Long, uid: Long, mode: OsuMode?, mods: Collection<LazerMod?>): BeatmapUserScore?
 
-    fun getBeatMapScore(
+    fun getBeatmapScore(
         bid: Long,
         user: BindUser,
         mode: OsuMode,

@@ -10,10 +10,10 @@ import java.util.*
 @Service
 class DiscussionApiImpl(var base: OsuApiBaseService) : OsuDiscussionApiService {
     //sort默认id_desc，即最新的在前。也可以是 id_asc
-    override fun getBeatMapDiscussion(
+    override fun getBeatmapDiscussion(
         bid: Long?,
         sid: Long?,
-        status: BeatMapSetStatus?,
+        status: BeatmapSetStatus?,
         limit: Int?,
         types: List<String>?,
         onlyResolved: Boolean?,
@@ -23,9 +23,9 @@ class DiscussionApiImpl(var base: OsuApiBaseService) : OsuDiscussionApiService {
     ): Discussion {
         var count = 0
         val discussion =
-            getBeatMapDiscussion(bid, sid, status, limit, types, onlyResolved, page, sort, uid, null)
+            getBeatmapDiscussion(bid, sid, status, limit, types, onlyResolved, page, sort, uid, null)
         while (discussion.cursorString.isNullOrEmpty().not() && count++ < 10) {
-            val other = getBeatMapDiscussion(
+            val other = getBeatmapDiscussion(
                 bid, sid, status, limit, types, onlyResolved, page, sort, uid, discussion.cursorString
             )
 
@@ -35,10 +35,10 @@ class DiscussionApiImpl(var base: OsuApiBaseService) : OsuDiscussionApiService {
         return discussion
     }
 
-    fun getBeatMapDiscussion(
+    fun getBeatmapDiscussion(
         bid: Long?,
         sid: Long?,
-        status: BeatMapSetStatus?,
+        status: BeatmapSetStatus?,
         limit: Int?,
         types: List<String>?,
         onlyResolved: Boolean?,
@@ -74,7 +74,7 @@ class DiscussionApiImpl(var base: OsuApiBaseService) : OsuDiscussionApiService {
         }
     }
 
-    enum class BeatMapSetStatus {
+    enum class BeatmapSetStatus {
         all, ranked, qualified, disqualified, never_qualified,
     }
 }

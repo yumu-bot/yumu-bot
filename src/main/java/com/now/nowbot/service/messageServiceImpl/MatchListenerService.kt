@@ -154,7 +154,7 @@ class MatchListenerService(
         with(game) {
             if (beatmap != null) {
                 beatmap = beatmapApiService.getBeatmap(beatmapID)
-                calculateApiService.applyStarToBeatMap(beatmap!!, mode, LazerMod.getModsList(mods))
+                calculateApiService.applyStarToBeatmap(beatmap!!, mode, LazerMod.getModsList(mods))
             } else {
                 val b = Beatmap()
                 b.beatmapID = beatmapID
@@ -238,7 +238,7 @@ class MatchListenerService(
                 // 需要拓展
                 if (beatmap.cs == null) beatmap = beatmapApiService.getBeatmap(beatmapID)
 
-                calculateApiService.applyBeatMapChanges(beatmap, mods)
+                calculateApiService.applyBeatmapChanges(beatmap, mods)
 
                 val objectGroup = beatmapApiService.getBeatmapObjectGrouping26(beatmap)
                 val e7 =
@@ -285,7 +285,7 @@ class MatchListenerService(
                     ?: mr.rounds.lastOrNull()
                     ?: throw NoSuchElementException.MatchRound()
 
-                calculateApiService.applyBeatMapChanges(round.beatmap, LazerMod.getModsList(round.mods))
+                calculateApiService.applyBeatmapChanges(round.beatmap, LazerMod.getModsList(round.mods))
 
                 // 手动调位置
                 if (round.scores.size > 2) {

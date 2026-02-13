@@ -64,7 +64,7 @@ class ScorePRCardService(
         }
 
         calculateApiService.applyPPToScore(score)
-        calculateApiService.applyBeatMapChanges(score)
+        calculateApiService.applyBeatmapChanges(score)
         calculateApiService.applyStarToScore(score)
 
         data.value = PRCardParam(score)

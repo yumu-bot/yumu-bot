@@ -261,28 +261,28 @@ import kotlin.math.roundToInt
         }
     }
 
-    override fun applyStarToBeatMap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>, local: Boolean) {
+    override fun applyStarToBeatmap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>, local: Boolean) {
         if (beatmap == null || beatmap.mode.isNotConvertAble(mode)) return
 
         // Local 无法计算转谱星级
         if (beatmap.mode.isConvertAble(mode)) {
-            applyStarToBeatMapFromOfficial(beatmap, mode, mods)
+            applyStarToBeatmapFromOfficial(beatmap, mode, mods)
             return
         }
 
         if (beatmap.starRating >= 0.10 && mods.isNotAffectStarRating()) return
 
         if (local) {
-            applyStarToBeatMapFromLocal(beatmap, mode, mods)
+            applyStarToBeatmapFromLocal(beatmap, mode, mods)
 
             if (beatmap.starRating < 0.10) {
-                applyStarToBeatMapFromOfficial(beatmap, mode, mods)
+                applyStarToBeatmapFromOfficial(beatmap, mode, mods)
             }
         } else {
-            applyStarToBeatMapFromOfficial(beatmap, mode, mods)
+            applyStarToBeatmapFromOfficial(beatmap, mode, mods)
 
             if (beatmap.starRating < 0.10) {
-                applyStarToBeatMapFromLocal(beatmap, mode, mods)
+                applyStarToBeatmapFromLocal(beatmap, mode, mods)
             }
         }
     }
@@ -412,7 +412,7 @@ import kotlin.math.roundToInt
         }
     }
 
-    private fun applyStarToBeatMapFromOfficial(beatmap: Beatmap, mode: OsuMode, mods: List<LazerMod>) {
+    private fun applyStarToBeatmapFromOfficial(beatmap: Beatmap, mode: OsuMode, mods: List<LazerMod>) {
         try {
             val sr = beatmapApiService.getAttributes(beatmap.beatmapID, mode, mods)
                 .starRating
@@ -449,12 +449,12 @@ import kotlin.math.roundToInt
         AsyncMethodExecutor.awaitRunnableExecute(actions)
     }
 
-    override fun applyBeatMapChanges(score: LazerScore) {
-        applyBeatMapChanges(score.beatmap, score.mods)
+    override fun applyBeatmapChanges(score: LazerScore) {
+        applyBeatmapChanges(score.beatmap, score.mods)
     }
 
     // 应用四维的变化 4 dimensions
-    override fun applyBeatMapChanges(beatmap: Beatmap?, mods: List<LazerMod>) {
+    override fun applyBeatmapChanges(beatmap: Beatmap?, mods: List<LazerMod>) {
         if (beatmap == null || beatmap.beatmapID == 0L) return
 
         val mode = beatmap.mode
@@ -470,10 +470,10 @@ import kotlin.math.roundToInt
         }
     }
 
-    override fun applyBeatMapChanges(scores: List<LazerScore>) {
+    override fun applyBeatmapChanges(scores: List<LazerScore>) {
         val actions = scores.map {
             return@map AsyncMethodExecutor.Runnable {
-                applyBeatMapChanges(it)
+                applyBeatmapChanges(it)
             }
         }
 
@@ -481,14 +481,14 @@ import kotlin.math.roundToInt
     }
 
     private fun applyStarToScoreFromLocal(score: LazerScore) {
-        applyStarToBeatMapFromLocal(score.beatmap, score.mode, score.mods)
+        applyStarToBeatmapFromLocal(score.beatmap, score.mode, score.mods)
     }
 
-    private fun applyStarToBeatMapFromLocal(beatmap: Beatmap, mode: OsuMode, mods: List<LazerMod>) {
-        beatmap.starRating = getBeatMapStarRating(beatmap.beatmapID, mode, mods, beatmap.hasLeaderBoard)
+    private fun applyStarToBeatmapFromLocal(beatmap: Beatmap, mode: OsuMode, mods: List<LazerMod>) {
+        beatmap.starRating = getBeatmapStar(beatmap.beatmapID, mode, mods, beatmap.hasLeaderBoard)
     }
 
-    override fun getBeatMapStarRating(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>, hasLeaderBoard: Boolean): Double {
+    override fun getBeatmapStar(beatmapID: Long, mode: OsuMode, mods: List<LazerMod>, hasLeaderBoard: Boolean): Double {
         val isValueMod = mods.isValueMod()
 
         if (isValueMod) {

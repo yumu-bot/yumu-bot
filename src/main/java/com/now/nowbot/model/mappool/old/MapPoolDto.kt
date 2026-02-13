@@ -47,8 +47,8 @@ class MapPoolDto(
 
             pool.beatmaps.map { b ->
                 AsyncMethodExecutor.Runnable {
-                    calculateApiService.applyBeatMapChanges(b, listOf(mod))
-                    calculateApiService.applyStarToBeatMap(b, mode, listOf(mod))
+                    calculateApiService.applyBeatmapChanges(b, listOf(mod))
+                    calculateApiService.applyStarToBeatmap(b, mode, listOf(mod))
                 }
             }
         }.flatten())

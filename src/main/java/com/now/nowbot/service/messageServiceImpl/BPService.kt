@@ -280,7 +280,7 @@ import java.util.regex.Matcher
         }
 
         calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyBeatMapChanges(scores)
+        calculateApiService.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
@@ -309,7 +309,7 @@ import java.util.regex.Matcher
         }
 
         calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyBeatMapChanges(scores)
+        calculateApiService.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }

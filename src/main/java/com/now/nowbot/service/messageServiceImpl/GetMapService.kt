@@ -101,7 +101,7 @@ class GetMapService(
             }
         }
 
-        calculateApiService.applyStarToBeatMap(b, OsuMode.getConvertableMode(mode, b.mode), mods)
+        calculateApiService.applyStarToBeatmap(b, OsuMode.getConvertableMode(mode, b.mode), mods)
 
         return """
             <Beatmap

@@ -74,7 +74,7 @@ import java.time.LocalDateTime
             throw UnsupportedOperationException.OnlyMania()
         }
 
-        calculateApiService.applyStarToBeatMap(map, param.mode, param.mods)
+        calculateApiService.applyStarToBeatmap(map, param.mode, param.mods)
 
         val file = try {
             OsuFile.getInstance(fileStr)

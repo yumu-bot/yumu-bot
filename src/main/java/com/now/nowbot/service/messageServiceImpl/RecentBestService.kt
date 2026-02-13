@@ -1,6 +1,5 @@
 package com.now.nowbot.service.messageServiceImpl
 
-import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.ScoreDao
@@ -144,7 +143,7 @@ class RecentBestService(
 
         beatmapApiService.applyBeatmapExtend(scores)
         beatmapApiService.applyVersion(scores)
-        calculateApiService.applyBeatMapChanges(scores)
+        calculateApiService.applyBeatmapChanges(scores)
         calculateApiService.applyStarToScores(scores)
 
         return scores.sortedByDescending {

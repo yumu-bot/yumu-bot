@@ -161,8 +161,8 @@ import java.util.regex.Matcher
 
         val round = rounds[i]
 
-        calculateApiService.applyBeatMapChanges(round.beatmap, LazerMod.getModsList(round.mods))
-        calculateApiService.applyStarToBeatMap(round.beatmap, round.mode, LazerMod.getModsList(round.mods))
+        calculateApiService.applyBeatmapChanges(round.beatmap, LazerMod.getModsList(round.mods))
+        calculateApiService.applyStarToBeatmap(round.beatmap, round.mode, LazerMod.getModsList(round.mods))
 
         if (round.scores.size > 2) {
             round.scores = round.scores.sortedByDescending { it.score }

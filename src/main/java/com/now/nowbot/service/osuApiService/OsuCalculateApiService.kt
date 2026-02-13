@@ -17,17 +17,17 @@ interface OsuCalculateApiService {
 
     fun getScoreStatisticsWithFullAndPerfectPP(score: LazerScore): RosuPerformance.FullRosuPerformance?
 
-    fun applyBeatMapChanges(score: LazerScore)
+    fun applyBeatmapChanges(score: LazerScore)
 
-    fun applyBeatMapChanges(scores: List<LazerScore>)
+    fun applyBeatmapChanges(scores: List<LazerScore>)
 
-    fun applyBeatMapChanges(beatmap: Beatmap?, mods: List<LazerMod>)
+    fun applyBeatmapChanges(beatmap: Beatmap?, mods: List<LazerMod>)
 
     fun applyStarToScore(score: LazerScore, local: Boolean = LOCAL)
 
     fun applyStarToScores(scores: List<LazerScore>, local: Boolean = LOCAL)
 
-    fun applyStarToBeatMap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>, local: Boolean = LOCAL)
+    fun applyStarToBeatmap(beatmap: Beatmap?, mode: OsuMode, mods: List<LazerMod>, local: Boolean = LOCAL)
 
     fun applyPPToScore(score: LazerScore)
 
@@ -55,7 +55,7 @@ interface OsuCalculateApiService {
         accuracy: Double
     ): RosuPerformance
 
-    fun getBeatMapStarRating(
+    fun getBeatmapStar(
         beatmapID: Long,
         mode: OsuMode,
         mods: List<LazerMod>,

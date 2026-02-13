@@ -152,7 +152,7 @@ class MatchMapService(
 
             val mods = LazerMod.getModsList(round.mods)
 
-            calculateApiService.applyStarToBeatMap(
+            calculateApiService.applyStarToBeatmap(
                 beatmap,
                 mode,
                 mods

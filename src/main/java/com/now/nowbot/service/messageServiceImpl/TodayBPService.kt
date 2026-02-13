@@ -173,7 +173,7 @@ class TodayBPService(
                 val ss = scores.map { it.value }
 
                 AsyncMethodExecutor.awaitPairCallableExecute(
-                    { calculateApiService.applyBeatMapChanges(ss) },
+                    { calculateApiService.applyBeatmapChanges(ss) },
                     { calculateApiService.applyStarToScores(ss) }
                 )
 

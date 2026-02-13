@@ -11,7 +11,7 @@ import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
-import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.Companion.Attr
+import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.Companion.Attribute
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
@@ -100,7 +100,7 @@ class UUBAService(
                 {
                     val ss = scoreApiService.getBestScores(id, mode.data!!)
 
-                    calculateApiService.applyBeatMapChanges(ss)
+                    calculateApiService.applyBeatmapChanges(ss)
                     calculateApiService.applyStarToScores(ss)
 
                     ss
@@ -113,7 +113,7 @@ class UUBAService(
             user = getUserWithoutRange(event, matcher, mode, isMyself)
             bests = scoreApiService.getBestScores(user.userID, mode.data)
 
-            calculateApiService.applyBeatMapChanges(bests)
+            calculateApiService.applyBeatmapChanges(bests)
             calculateApiService.applyStarToScores(bests)
         }
 
@@ -204,16 +204,16 @@ class UUBAService(
                 }
             }
 
-            val modsAttr: List<Attr> = run {
-                val modsAttrTmp: MutableList<Attr> = ArrayList(modsPPMap.size)
+            val modsAttribute: List<Attribute> = run {
+                val modsAttributeTmp: MutableList<Attribute> = ArrayList(modsPPMap.size)
                 modsPPMap.forEach { (mod: String, value: MutableList<Double?>) ->
-                    val attr = Attr(
+                    val attribute = Attribute(
                         mod, value.filterNotNull().size, value.filterNotNull().sum(), value.filterNotNull().average()
                     )
-                    modsAttrTmp.add(attr)
+                    modsAttributeTmp.add(attribute)
                 }
 
-                modsAttrTmp.sortedByDescending { it.ppCount }
+                modsAttributeTmp.sortedByDescending { it.ppCount }
             }
 
             val l = length.toResult { it.toInt().secondsToTime() }
@@ -235,7 +235,7 @@ class UUBAService(
                 ---
                 [bpm]: ${m.first}
                 ${m.second}
-            """.trimIndent() + "\n---\n[mappers]:\n" + mapperList.mapperToLine(5) + "\n---\n[mods]:\n" + modsAttr.attrToLine(5)
+            """.trimIndent() + "\n---\n[mappers]:\n" + mapperList.mapperToLine(5) + "\n---\n[mods]:\n" + modsAttribute.attrToLine(5)
         }
 
         /**
@@ -294,7 +294,7 @@ class UUBAService(
             }
         }
 
-        private fun List<Attr>.attrToLine(take: Int = -1): String {
+        private fun List<Attribute>.attrToLine(take: Int = -1): String {
             val list = if (take > 0) {
                 this.take(take)
             } else {

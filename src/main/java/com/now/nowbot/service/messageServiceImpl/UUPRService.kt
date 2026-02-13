@@ -246,7 +246,7 @@ class UUPRService(
         val scores = scoreApiService.getScore(data!!.userID, mode, offset, limit, isPass)
 
         calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyBeatMapChanges(scores)
+        calculateApiService.applyBeatmapChanges(scores)
 
         // 检查查到的数据是否为空
         if (scores.isEmpty()) {
@@ -305,7 +305,7 @@ class UUPRService(
         }
 
         calculateApiService.applyStarToScores(scores)
-        calculateApiService.applyBeatMapChanges(scores)
+        calculateApiService.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }

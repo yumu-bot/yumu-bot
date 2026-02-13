@@ -83,7 +83,7 @@ class SBInfoService(
         }
 
         AsyncMethodExecutor.awaitPairCallableExecute(
-            { calculateApiService.applyBeatMapChanges(bests.take(6)) },
+            { calculateApiService.applyBeatmapChanges(bests.take(6)) },
             { calculateApiService.applyStarToScores(bests.take(6)) }
         )
 

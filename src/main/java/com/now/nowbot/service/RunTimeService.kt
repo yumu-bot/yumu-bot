@@ -146,7 +146,7 @@ class RunTimeService(
     }
 
     @Scheduled(cron = "40 2 6 * * *")
-    fun updateBeatMapTagsLibrary() {
+    fun updateBeatmapTagsLibrary() {
         log.info("开始执行更新谱面玩家标签库任务")
         beatmapApiService.updateBeatmapTagLibraryDatabase()
     }

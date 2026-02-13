@@ -179,7 +179,6 @@ class Beatmapset {
     )
 
     @JsonProperty("beatmaps")
-    // 这里的 beatmaps 类内的 BeatMapSet 是半残品，要什么属性自己写在下面
     var beatmaps: List<Beatmap>? = null
         get() {
             if (!field.isNullOrEmpty()) {

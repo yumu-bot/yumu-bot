@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 @Table(name = "osu_mapset", indexes = {
         @Index(name = "raw", columnList = "map_id")
 })
-public class MapSetLite {
+public class BeatmapsetLite {
     @Id
     @Column(name = "map_id")
     private Integer id;

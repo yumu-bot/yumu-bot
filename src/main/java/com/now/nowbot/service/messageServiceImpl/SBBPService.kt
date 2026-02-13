@@ -252,7 +252,7 @@ class SBBPService(
         }
 
         osuCalculateApiService.applyStarToScores(scores)
-        osuCalculateApiService.applyBeatMapChanges(scores)
+        osuCalculateApiService.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
@@ -286,7 +286,7 @@ class SBBPService(
         }
 
         osuCalculateApiService.applyStarToScores(scores)
-        osuCalculateApiService.applyBeatMapChanges(scores)
+        osuCalculateApiService.applyBeatmapChanges(scores)
 
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
