@@ -91,7 +91,7 @@ class GetItemsService(
             in 100.0..1000.0 -> rawAccuracy / 10.0
             in 0.0..1.0 -> rawAccuracy * 100
             else -> rawAccuracy // 其他情况保持原样，或根据需要设置默认值
-        } 
+        }
 
         // 格式化为：0~100内的小数，保留两位，转为String
         val accuracy = "%.2f".format(normalizedAccuracy.coerceIn(0.0, 100.0))
@@ -165,46 +165,30 @@ class GetItemsService(
 
         calculateApiService.applyStarToBeatmap(b, OsuMode.getConvertableMode(mode, b.mode), mods)
 
-        val mods = if (this.mods.isEmpty()) {
-            ""
-        } else {
-            "mods=\"${this.mods.joinToString("") { it.acronym.uppercase() }}\""
-        }
+        val displayCombos = this.combo.isNotEmpty() && this.accuracy.isNotEmpty()
 
-        if (this.combo.isNotEmpty() && this.accuracy.isNotEmpty()) {
-            return """
-                <Score
-                  bid=${b.beatmapID}
-                  sid=${b.beatmapsetID}
-                  preview="${b.previewName}"
-                  star=${"%.2f".format(b.starRating)}
-                  max=${b.maxCombo}
-                  mode="${b.mode.charName}"
-                  accuracy=${this.accuracy}
-                  combo=${this.combo}
-                  rank="${this.rank.ifEmpty { "F" }.lowercase()}"
-                  performance=${this.pp.ifEmpty { "0" }}
-                  $mods
-                />
-            """.trimIndent()
-        } else {
-            return """
-                <Score
-                  bid=${b.beatmapID}
-                  sid=${b.beatmapsetID}
-                  preview="${b.previewName}"
-                  star=${"%.2f".format(b.starRating)}
-                  max=${b.maxCombo}
-                  mode="${b.mode.charName}"
-                  rank="${this.rank.ifEmpty { "F" }.lowercase()}"
-                  performance=${this.pp.ifEmpty { "0" }}
-                  $mods
-                />
-            """.trimIndent()
-        }
+        val attributes = listOfNotNull(
+            "bid=${b.beatmapID}",
+            "sid=${b.beatmapsetID}",
+            "preview=\"${b.previewName}\"",
+            "star=${"%.2f".format(b.starRating)}",
+            "max=${b.maxCombo}",
+            "mode=\"${b.mode.charName}\"",
+            if (displayCombos) "accuracy=${this.accuracy}" else null,
+            if (displayCombos) "combo=${this.combo}" else null,
+            "rank=\"${this.rank.ifEmpty { "F" }.lowercase()}\"",
+            "performance=${this.pp.ifEmpty { "0" }}",
+            if (this.mods.isNotEmpty()) "mods=\"${this.mods.joinToString("") { it.acronym.uppercase() }}\"" else null
+        )
 
+        val indent = "  " // 你想要的缩进，比如 2 个空格
+        val content = attributes.joinToString("\n$indent")
 
-
+        return """
+            <Score
+            $indent$content
+            />
+            """.trim()
     }
 
     private fun PoolParam.getMapPoolText(): String {
