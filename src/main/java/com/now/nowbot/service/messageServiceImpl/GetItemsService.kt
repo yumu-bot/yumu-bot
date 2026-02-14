@@ -183,7 +183,7 @@ class GetItemsService(
 
         return """
             <Score
-            ${attributes.joinToString("\n              ")}
+              ${attributes.joinToString("\n              ")}
             />
             """.trimIndent()
     }
