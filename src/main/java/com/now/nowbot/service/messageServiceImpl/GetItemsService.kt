@@ -185,7 +185,7 @@ class GetItemsService(
             <Score
             ${attributes.joinToString("\n              ")}
             />
-            """.trim()
+            """.trimIndent()
     }
 
     private fun PoolParam.getMapPoolText(): String {
