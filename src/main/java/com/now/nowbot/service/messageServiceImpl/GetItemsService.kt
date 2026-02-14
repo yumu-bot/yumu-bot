@@ -156,29 +156,31 @@ class GetItemsService(
         if (this.combo.isNotEmpty() && this.accuracy.isNotEmpty()) {
             return """
                 <Score
-                bid=${b.beatmapID}
-                sid=${b.beatmapsetID}
-                preview="${b.previewName}"
-                star=${"%.2f".format(b.starRating)}
-                max=${b.maxCombo}
-                mode="${b.mode.charName}"
-                accuracy=${this.accuracy}
-                combo=${this.combo}
-                rank="${this.rank.ifEmpty { "F" }.lowercase()}"
-                performance=${this.pp.ifEmpty { "0" }}
+                  bid=${b.beatmapID}
+                  sid=${b.beatmapsetID}
+                  preview="${b.previewName}"
+                  star=${"%.2f".format(b.starRating)}
+                  max=${b.maxCombo}
+                  mode="${b.mode.charName}"
+                  accuracy=${this.accuracy}
+                  combo=${this.combo}
+                  rank="${this.rank.ifEmpty { "F" }.lowercase()}"
+                  performance=${this.pp.ifEmpty { "0" }}
+                  mods="${this.mods.joinToString("") { it.acronym.uppercase() }}"
                 />
             """.trimIndent()
         } else {
             return """
                 <Score
-                bid=${b.beatmapID}
-                sid=${b.beatmapsetID}
-                preview="${b.previewName}"
-                star=${"%.2f".format(b.starRating)}
-                max=${b.maxCombo}
-                mode="${b.mode.charName}"
-                rank="${this.rank.ifEmpty { "F" }.lowercase()}"
-                performance=${this.pp.ifEmpty { "0" }}
+                  bid=${b.beatmapID}
+                  sid=${b.beatmapsetID}
+                  preview="${b.previewName}"
+                  star=${"%.2f".format(b.starRating)}
+                  max=${b.maxCombo}
+                  mode="${b.mode.charName}"
+                  rank="${this.rank.ifEmpty { "F" }.lowercase()}"
+                  performance=${this.pp.ifEmpty { "0" }}
+                  mods="${this.mods.joinToString("") { it.acronym.uppercase() }}"
                 />
             """.trimIndent()
         }
