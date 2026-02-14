@@ -181,12 +181,9 @@ class GetItemsService(
             if (this.mods.isNotEmpty()) "mods=\"${this.mods.joinToString("") { it.acronym.uppercase() }}\"" else null
         )
 
-        val indent = "  " // 你想要的缩进，比如 2 个空格
-        val content = attributes.joinToString("\n$indent")
-
         return """
             <Score
-            $indent$content
+            ${attributes.joinToString("\n              ")}
             />
             """.trim()
     }
