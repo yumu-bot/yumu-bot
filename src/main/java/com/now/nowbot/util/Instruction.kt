@@ -564,7 +564,7 @@ enum class Instruction(val pattern: Pattern) {
         appendSpace()
         appendCaptureGroup("pp", "($REG_NUMBER_DECIMAL)", MAYBE)
         appendSpace()
-        appendCaptureGroup("rank", "([ABCDFSXHabcdfsxh]{1,3})", MAYBE)
+        appendCaptureGroup("rank", "(ssh|ss|sh|[abcdsx])", MAYBE)
         appendSpace()
         appendMod()
     }),
@@ -980,7 +980,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.SERVICE_SWITCH_ON) continue
+        if (i != Instruction.GET_NEWBIE_SCORE) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }
