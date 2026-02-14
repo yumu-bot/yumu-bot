@@ -98,15 +98,15 @@ class GetItemsService(
     private fun NewbiePlayerParam.getNewbiePlayerComponent(): String {
         return """
             <Player 
-              id="${user.userID}"
+              id=${user.userID}
               name="${user.username}"
-              country="${user.countryRank}"
-              global="${user.globalRank}"
+              country=${user.countryRank}
+              global=${user.globalRank}
               from="${user.countryCode}"
-              accuracy="${"%.2f".format(user.accuracy).toDouble()}"
-              level="${user.levelCurrent}"
-              progress="${user.levelProgress}"
-              performance="${user.pp.roundToInt()}"
+              accuracy=${"%.2f".format(user.accuracy).toDouble()}
+              level=${user.levelCurrent}
+              progress=${user.levelProgress}
+              performance=${user.pp.roundToInt()}
             />
         """.trimIndent()
     }
@@ -128,11 +128,11 @@ class GetItemsService(
 
         return """
             <Beatmap
-            bid="${b.beatmapID}"
-            sid="${b.beatmapsetID}"
+            bid=${b.beatmapID}
+            sid=${b.beatmapsetID}
             preview="${b.previewName}"
-            star="${"%.2f".format(b.starRating)}"
-            max="${b.maxCombo}"
+            star=${"%.2f".format(b.starRating)}
+            max=${b.maxCombo}
             />
         """.trimIndent()
 
@@ -156,30 +156,30 @@ class GetItemsService(
         if (this.combo.isNotEmpty() && this.accuracy.isNotEmpty()) {
             return """
                 <Score
-                bid="${b.beatmapID}"
-                sid="${b.beatmapsetID}"
+                bid=${b.beatmapID}
+                sid=${b.beatmapsetID}
                 preview="${b.previewName}"
-                star="${"%.2f".format(b.starRating)}"
-                max="${b.maxCombo}"
+                star=${"%.2f".format(b.starRating)}
+                max=${b.maxCombo}
                 mode="${b.mode.charName}"
                 accuracy=${this.accuracy}
                 combo=${this.combo}
                 rank="${this.rank.ifEmpty { "F" }.lowercase()}"
                 performance=${this.pp.ifEmpty { "0" }}
-            />
+                />
             """.trimIndent()
         } else {
             return """
                 <Score
-                bid="${b.beatmapID}"
-                sid="${b.beatmapsetID}"
+                bid=${b.beatmapID}
+                sid=${b.beatmapsetID}
                 preview="${b.previewName}"
-                star="${"%.2f".format(b.starRating)}"
-                max="${b.maxCombo}"
+                star=${"%.2f".format(b.starRating)}
+                max=${b.maxCombo}
                 mode="${b.mode.charName}"
                 rank="${this.rank.ifEmpty { "F" }.lowercase()}"
                 performance=${this.pp.ifEmpty { "0" }}
-            />
+                />
             """.trimIndent()
         }
 
