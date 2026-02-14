@@ -87,9 +87,10 @@ class GetItemsService(
 
         // 标准化逻辑
         val normalizedAccuracy = when (rawAccuracy) {
-            in 1000.0..10000.0 -> rawAccuracy / 100.0
-            in 100.0..1000.0 -> rawAccuracy / 10.0
-            in 0.0..1.0 -> rawAccuracy * 100
+            in 0.0.. 1.0 -> rawAccuracy * 100
+            in 1.0 .. 100.0 -> rawAccuracy
+            in 100.0 .. 1000.0 -> rawAccuracy / 10.0
+            in 1000.0.. 10000.0 -> rawAccuracy / 100.0
             else -> rawAccuracy // 其他情况保持原样，或根据需要设置默认值
         }
 
@@ -140,11 +141,11 @@ class GetItemsService(
 
         return """
             <Beatmap
-            bid=${b.beatmapID}
-            sid=${b.beatmapsetID}
-            preview="${b.previewName}"
-            star=${"%.2f".format(b.starRating)}
-            max=${b.maxCombo}
+              bid=${b.beatmapID}
+              sid=${b.beatmapsetID}
+              preview="${b.previewName}"
+              star=${"%.2f".format(b.starRating)}
+              max=${b.maxCombo}
             />
         """.trimIndent()
 
