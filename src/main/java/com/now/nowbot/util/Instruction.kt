@@ -554,6 +554,21 @@ enum class Instruction(val pattern: Pattern) {
         appendMod()
     }),
 
+    GET_NEWBIE_SCORE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("get\\s*new(bie)?\\s*score", "get\\s*score", "gx")
+        appendMode()
+        appendID()
+        appendCaptureGroup("accuracy", "($REG_NUMBER_DECIMAL)", MAYBE)
+        appendSpace()
+        appendCaptureGroup("combo", "($REG_NUMBER_DECIMAL)", MAYBE)
+        appendSpace()
+        appendCaptureGroup("pp", "($REG_NUMBER_DECIMAL)", MAYBE)
+        appendSpace()
+        appendCaptureGroup("rank", "([ABCDFSXHabcdfsxh]{1,3})", MAYBE)
+        appendSpace()
+        appendMod()
+    }),
+
     GET_NEWBIE_PLAYER(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("get\\s*new(bie)?\\s*(user|player)", "get\\s*(user|player)", "gu")
         appendModeQQUIDName()

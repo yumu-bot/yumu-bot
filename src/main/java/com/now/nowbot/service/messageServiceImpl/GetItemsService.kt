@@ -25,29 +25,39 @@ import kotlin.math.roundToInt
 import kotlin.text.split
 import kotlin.text.trim
 
-@Service("GET_MAP")
-class GetMapService(
+@Service("GET_ITEMS")
+class GetItemsService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
-) : MessageService<GetMapService.GetMapParam> {
+) : MessageService<GetItemsService.GetItemsParam> {
 
-    abstract class GetMapParam
+    abstract class GetItemsParam
 
     data class PoolParam(
         val beatmapID: Long,
         val mod: String?
-    ): GetMapParam()
+    ): GetItemsParam()
 
-    data class NewbieMapParam(
+    data class NewbieBeatmapParam(
         val beatmapID: Long,
         val mode: OsuMode,
         val mods: List<LazerMod>
-    ): GetMapParam()
+    ): GetItemsParam()
+
+    data class NewbieScoreParam(
+        val beatmapID: Long,
+        val mode: OsuMode,
+        val mods: List<LazerMod>,
+        val accuracy: String,
+        val combo: String,
+        val pp: String,
+        val rank: String,
+    ): GetItemsParam()
 
     data class NewbiePlayerParam(
         val user: OsuUser,
         val mode: OsuMode,
-    ): GetMapParam()
+    ): GetItemsParam()
 
     private fun getPoolParam(matcher: Matcher): PoolParam {
         val bid = matcher.group(FLAG_ID).toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
@@ -56,12 +66,25 @@ class GetMapService(
         return PoolParam(bid, mod)
     }
 
-    private fun getNewbieMapParam(matcher: Matcher): NewbieMapParam {
+    private fun getNewbieBeatmapParam(matcher: Matcher): NewbieBeatmapParam {
         val mode = InstructionUtil.getMode(matcher)
         val bid = matcher.group(FLAG_ID).toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
         val mod = InstructionUtil.getMod(matcher)
 
-        return NewbieMapParam(bid, mode.data!!, mod)
+        return NewbieBeatmapParam(bid, mode.data!!, mod)
+    }
+
+    private fun getNewbieScoreParam(matcher: Matcher): NewbieScoreParam {
+        val mode = InstructionUtil.getMode(matcher)
+        val bid = matcher.group(FLAG_ID).toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
+        val mod = InstructionUtil.getMod(matcher)
+
+        val accuracy = matcher.group("accuracy") ?: ""
+        val combo = matcher.group("combo") ?: ""
+        val pp = matcher.group("pp") ?: ""
+        val rank = matcher.group("rank") ?: ""
+
+        return NewbieScoreParam(bid, mode.data!!, mod, accuracy, combo, pp, rank)
     }
 
     private fun getNewbiePlayerParam(event: MessageEvent, matcher: Matcher): NewbiePlayerParam {
@@ -88,7 +111,7 @@ class GetMapService(
         """.trimIndent()
     }
 
-    private fun NewbieMapParam.getNewbieMapComponent(): String {
+    private fun NewbieBeatmapParam.getNewbieBeatmapComponent(): String {
         val b = try {
             beatmapApiService.getBeatmap(beatmapID)
         } catch (_: NetworkException.BeatmapException.NotFound) {
@@ -112,6 +135,55 @@ class GetMapService(
             max="${b.maxCombo}"
             />
         """.trimIndent()
+
+    }
+
+    private fun NewbieScoreParam.getNewbieScoreComponent(): String {
+        val b = try {
+            beatmapApiService.getBeatmap(beatmapID)
+        } catch (_: NetworkException.BeatmapException.NotFound) {
+            try {
+                val s = beatmapApiService.getBeatmapset(beatmapID)
+
+                s.getTopDiff()!!
+            } catch (e: NetworkException.BeatmapException) {
+                throw e
+            }
+        }
+
+        calculateApiService.applyStarToBeatmap(b, OsuMode.getConvertableMode(mode, b.mode), mods)
+
+        if (this.combo.isNotEmpty() && this.accuracy.isNotEmpty()) {
+            return """
+                <Score
+                bid="${b.beatmapID}"
+                sid="${b.beatmapsetID}"
+                preview="${b.previewName}"
+                star="${"%.2f".format(b.starRating)}"
+                max="${b.maxCombo}"
+                mode="${b.mode.charName}"
+                accuracy=${this.accuracy}
+                combo=${this.combo}
+                rank="${this.rank.ifEmpty { "F" }.lowercase()}"
+                performance=${this.pp.ifEmpty { "0" }}
+            />
+            """.trimIndent()
+        } else {
+            return """
+                <Score
+                bid="${b.beatmapID}"
+                sid="${b.beatmapsetID}"
+                preview="${b.previewName}"
+                star="${"%.2f".format(b.starRating)}"
+                max="${b.maxCombo}"
+                mode="${b.mode.charName}"
+                rank="${this.rank.ifEmpty { "F" }.lowercase()}"
+                performance=${this.pp.ifEmpty { "0" }}
+            />
+            """.trimIndent()
+        }
+
+
 
     }
 
@@ -164,30 +236,35 @@ class GetMapService(
         return sb.toString()
     }
     
-    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<GetMapParam>): Boolean {
+    override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<GetItemsParam>): Boolean {
         val m = Instruction.GET_MAP.matcher(messageText)
         val m2 = Instruction.GET_NEWBIE_MAP.matcher(messageText)
         val m3 = Instruction.GET_NEWBIE_PLAYER.matcher(messageText)
+        val m4 = Instruction.GET_NEWBIE_SCORE.matcher(messageText)
 
         if (m.find()) {
             data.value = getPoolParam(m)
             return true
         } else if (m2.find()) {
-            data.value = getNewbieMapParam(m2)
+            data.value = getNewbieBeatmapParam(m2)
             return true
         } else if (m3.find()) {
             data.value = getNewbiePlayerParam(event, m3)
+            return true
+        } else if (m4.find()) {
+            data.value = getNewbieScoreParam(m4)
             return true
         }
 
         return false
     }
 
-    override fun handleMessage(event: MessageEvent, param: GetMapParam): ServiceCallStatistic? {
+    override fun handleMessage(event: MessageEvent, param: GetItemsParam): ServiceCallStatistic? {
         when(param) {
             is PoolParam -> event.reply(param.getMapPoolText())
-            is NewbieMapParam -> event.reply(param.getNewbieMapComponent())
+            is NewbieBeatmapParam -> event.reply(param.getNewbieBeatmapComponent())
             is NewbiePlayerParam -> event.reply(param.getNewbiePlayerComponent())
+            is NewbieScoreParam -> event.reply(param.getNewbieScoreComponent())
         }
 
         return null

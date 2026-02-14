@@ -281,10 +281,10 @@ import kotlin.time.toDuration
 
     // 备用方法：先获取最近成绩，再获取谱面
     private fun getFromRecentScore(userID: Long?, inputMode: InstructionObject<OsuMode>, event: MessageEvent, messageText: String, matcher: Matcher): ScoreData {
-        val receipt = event.reply("""
+        event.reply("""
             没有获取到 24 小时内的可用谱面。
             正在查询您最近成绩所属的谱面上的最好成绩。
-        """.trimIndent())
+        """.trimIndent()).recallIn(60 * 1000)
 
         val recent: LazerScore
         val user: OsuUser
@@ -315,8 +315,6 @@ import kotlin.time.toDuration
         val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
         val scores = scoreApiService.getBeatmapScores(recent.beatmapID, user.userID, mode)
-
-        receipt.recall()
 
         return ScoreData(user, map, scores, mode)
     }
@@ -357,16 +355,19 @@ import kotlin.time.toDuration
             这可能需要一段时间。
         """.trimIndent())
 
+        receipt.recallIn(60 * 1000)
+
         val set = beatmapApiService.getBeatmapset(map.beatmapsetID)
 
         val maps = (set.beatmaps ?: listOf()).dropWhile { it.beatmapID == map.beatmapID }
 
-        val receipt2 = if (maps.size >= 16) {
+        if (maps.size >= 16) {
+            receipt.recall()
             event.reply("""
-                这个谱面含有大量难度。
+                检测到此谱面含有大量难度。
                 因此，只会尝试查询主难度往下 16 个难度内的成绩。
-            """.trimIndent())
-        } else null
+            """.trimIndent()).recallIn(60 * 1000)
+        }
 
         val beatmaps = maps.sortedByDescending { it.starRating }
             .take(16)
@@ -400,9 +401,6 @@ import kotlin.time.toDuration
                 Thread.sleep(3.toDuration(DurationUnit.SECONDS).inWholeMilliseconds)
             }
         }
-
-        receipt.recall()
-        receipt2?.recall()
 
         // 成绩筛选机制：取 pp x 星数 最好的
         val better = scores.maxByOrNull { it.pp * it.beatmap.starRating }

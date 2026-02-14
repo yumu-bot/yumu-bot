@@ -3,16 +3,16 @@ package com.now.nowbot.model.enums
 import org.springframework.lang.Nullable
 import java.util.*
 
-enum class OsuMode(@JvmField val fullName: String, @JvmField val shortName: String, @JvmField val modeValue: Byte) {
-    OSU("osu!standard", "osu", 0),
-    TAIKO("osu!taiko", "taiko", 1),
-    CATCH("osu!catch", "fruits", 2),
-    MANIA("osu!mania", "mania", 3),
-    DEFAULT("default", "", -1),
-    OSU_RELAX("osu!standard relax", "osu", 4),
-    TAIKO_RELAX("osu!taiko relax", "taiko", 5),
-    CATCH_RELAX("osu!catch relax", "fruits", 6),
-    OSU_AUTOPILOT("osu!standard autopilot", "osu", 8),
+enum class OsuMode(val fullName: String, val shortName: String, val charName: String, val modeValue: Byte) {
+    OSU("osu!standard", "osu", "o", 0),
+    TAIKO("osu!taiko", "taiko", "t", 1),
+    CATCH("osu!catch", "fruits", "c", 2),
+    MANIA("osu!mania", "mania", "m", 3),
+    DEFAULT("default", "", "", -1),
+    OSU_RELAX("osu!standard relax", "osu", "o", 4),
+    TAIKO_RELAX("osu!taiko relax", "taiko", "t",  5),
+    CATCH_RELAX("osu!catch relax", "fruits", "c",  6),
+    OSU_AUTOPILOT("osu!standard autopilot", "osu", "o",  8),
 
     ;
 
