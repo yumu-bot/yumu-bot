@@ -79,10 +79,22 @@ class GetItemsService(
         val bid = matcher.group(FLAG_ID).toLongOrNull() ?: throw IllegalArgumentException.WrongException.BeatmapID()
         val mod = InstructionUtil.getMod(matcher)
 
-        val accuracy = matcher.group("accuracy") ?: ""
         val combo = matcher.group("combo") ?: ""
         val pp = matcher.group("pp") ?: ""
         val rank = matcher.group("rank") ?: ""
+
+        val rawAccuracy = matcher.group("accuracy")?.toDoubleOrNull() ?: 0.0
+
+        // 标准化逻辑
+        val normalizedAccuracy = when (rawAccuracy) {
+            in 1000.0..10000.0 -> rawAccuracy / 100.0
+            in 100.0..1000.0 -> rawAccuracy / 10.0
+            in 0.0..1.0 -> rawAccuracy * 100
+            else -> rawAccuracy // 其他情况保持原样，或根据需要设置默认值
+        } 
+
+        // 格式化为：0~100内的小数，保留两位，转为String
+        val accuracy = "%.2f".format(normalizedAccuracy.coerceIn(0.0, 100.0))
 
         return NewbieScoreParam(bid, mode.data!!, mod, accuracy, combo, pp, rank)
     }
@@ -153,6 +165,12 @@ class GetItemsService(
 
         calculateApiService.applyStarToBeatmap(b, OsuMode.getConvertableMode(mode, b.mode), mods)
 
+        val mods = if (this.mods.isEmpty()) {
+            ""
+        } else {
+            "mods=\"${this.mods.joinToString("") { it.acronym.uppercase() }}\""
+        }
+
         if (this.combo.isNotEmpty() && this.accuracy.isNotEmpty()) {
             return """
                 <Score
@@ -166,7 +184,7 @@ class GetItemsService(
                   combo=${this.combo}
                   rank="${this.rank.ifEmpty { "F" }.lowercase()}"
                   performance=${this.pp.ifEmpty { "0" }}
-                  mods="${this.mods.joinToString("") { it.acronym.uppercase() }}"
+                  $mods
                 />
             """.trimIndent()
         } else {
@@ -180,7 +198,7 @@ class GetItemsService(
                   mode="${b.mode.charName}"
                   rank="${this.rank.ifEmpty { "F" }.lowercase()}"
                   performance=${this.pp.ifEmpty { "0" }}
-                  mods="${this.mods.joinToString("") { it.acronym.uppercase() }}"
+                  $mods
                 />
             """.trimIndent()
         }
