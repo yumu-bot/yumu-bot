@@ -33,7 +33,7 @@ class ServiceSwitchService(
 
     enum class ServiceType(private val typeAlias: List<String>, val services: List<String>) {
         BOT(listOf("b", "bot", "内部", "机器"),
-            listOf("help", "ping", "bind", "switch", "service_count", "login", "echo", "check", "update", "fetch", "refresh_file")
+            listOf("help", "ping", "bind", "switch", "revoke", "echo", "service_count", "login", "check", "update", "fetch", "refresh_file")
         ),
 
         SCORE(listOf("s", "scores", "成绩", "分数"),

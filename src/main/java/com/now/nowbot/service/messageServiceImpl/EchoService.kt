@@ -40,7 +40,7 @@ class EchoService(
         val any = (matcher.group(FLAG_ANY) ?: "").trim()
 
         val bot = botContainer.robots[executorBotID]
-            ?: throw UnsupportedOperationException.BotOperation.Offline()
+            ?: throw UnsupportedOperationException.BotOperation.BotMainOffline()
 
         val contact: Contact
         var message: MessageChain
@@ -99,7 +99,11 @@ class EchoService(
     @ServiceLimit(cooldownMillis = 15000)
     @CheckPermission(isSuperAdmin = true)
     override fun handleMessage(event: MessageEvent, param: EchoParam): ServiceCallStatistic? {
-        param.contact.sendMessage(param.message)
+        try {
+            param.contact.sendMessage(param.message)
+        } catch (e: Exception) {
+            log.error("回声：发送失败", e)
+        }
 
         return ServiceCallStatistic.building(event)
     }

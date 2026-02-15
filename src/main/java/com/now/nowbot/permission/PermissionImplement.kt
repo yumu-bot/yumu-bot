@@ -84,30 +84,32 @@ class PermissionImplement(
                 return
             }
 
-            servicesMap.forEach { (serviceName, service) ->
+            val messageText = textMessage.trim()
+
+            for ((name, service) in servicesMap) {
                 try {
-                    // 服务截止
                     if (checkStopListener()) {
-                        return@forEach
+                        break
                     }
-                    // super 用户不受检查
-                    // 是否在黑名单内
-                    if (!isSuper(event.sender.contactID) && isBlock(serviceName, event)) {
-                        // 被黑名单禁止
-                        log.debug("黑名单禁止, 请求功能: {} ,请求人: {}", serviceName, event.sender.contactID)
-                        return@forEach
+
+                    if (!isSuper(event.sender.contactID) && isBlock(name, event)) {
+                        log.debug("黑名单禁止，请求功能: {}，请求人: {}", name, event.sender.contactID)
+                        continue
                     }
 
                     @Suppress("UNCHECKED_CAST")
                     val typedService = service as MessageService<Any>
-
                     val data = MessageService.DataValue<Any>()
 
-                    if (typedService.isHandle(event, textMessage.trim(), data)) {
+                    if (typedService.isHandle(event, messageText, data)) {
                         typedService.handleMessage(event, data.value!!)
+                        // 触发后直接跳出循环
+                        break
                     }
                 } catch (e: Throwable) {
                     errorHandle.accept(event, e)
+                    // 处理完错误后也直接跳出循环
+                    break
                 }
             }
         }

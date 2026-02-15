@@ -3,6 +3,7 @@ package com.now.nowbot.throwable.botRuntimeException
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.TipsRuntimeException
+import com.now.nowbot.throwable.botRuntimeException.PermissionException.GroupException
 
 open class UnsupportedOperationException(message: String?): TipsRuntimeException(message), BotException {
 
@@ -11,10 +12,16 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
 
     open class BotOperation(message: String?): UnsupportedOperationException(message) {
 
-        class MessageUnavailable(messageID: Any):
-            BotOperation("无法获取消息 $messageID")
+        class SenderUnavailable():
+            BotOperation("无法获取消息的发送者。")
 
-        class Offline:
+        class MessageUnavailable(messageID: Any):
+            BotOperation("无法获取消息 $messageID。")
+
+        class BotOffline:
+            BotOperation("这个机器人并未上线。")
+
+        class BotMainOffline:
             BotOperation("主机器人并未上线。")
 
         class NotFriend(userID: Any):
@@ -23,6 +30,11 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
         class NotInGroup(groupID: Any):
             BotOperation("机器人不在 $groupID 群组中，无法发送消息。")
 
+        class MustReply :
+            BotOperation("必须选中回复的消息，机器人才会尝试撤回。")
+
+        class Overtime:
+            GroupException("无法操作，因为超过 2 分钟了。")
 
     }
 
@@ -32,8 +44,8 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
             如果要使用这个功能，您需要重新使用 Oauth2 绑定 (!bi)。
         """.trimIndent())
 
-    class Invalid():
-        UnsupportedOperationException("非法操作。")
+//    class Invalid:
+//        UnsupportedOperationException("非法操作。")
 
     class InvalidMode(mode: OsuMode):
         UnsupportedOperationException("不支持绑定 ${mode.fullName} 这个游戏模式。")
@@ -46,12 +58,6 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
 
     class NoOauthBind:
         UnsupportedOperationException("如果要使用这个功能，您需要使用 Oauth2 绑定 (!bi)。")
-
-    class NoQQ(operation: String):
-        UnsupportedOperationException("""
-            $operation 操作必须输入 qq！
-            格式：!sp $operation qq=114514 / group=1919810
-        """.trimIndent())
 
     class OnlyStandard:
         UnsupportedOperationException("抱歉，本功能暂不支持除 Standard 模式以外的谱面！")

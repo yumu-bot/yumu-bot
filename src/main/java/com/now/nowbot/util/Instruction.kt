@@ -87,6 +87,10 @@ enum class Instruction(val pattern: Pattern) {
         }
     }),
 
+    REVOKE(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("revoke", "rv", "撤回")
+    }),
+
     SERVICE_COUNT(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("servicecount", "统计服务调用", "sc")
         appendCaptureGroup(FLAG_TIME,

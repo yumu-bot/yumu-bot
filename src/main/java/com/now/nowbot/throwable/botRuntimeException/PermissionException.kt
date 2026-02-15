@@ -5,6 +5,17 @@ import com.now.nowbot.throwable.TipsRuntimeException
 
 open class PermissionException(message: String?): TipsRuntimeException(message), BotException {
 
+    open class GroupException(message: String?): PermissionException(message) {
+        class BelowGroupAdministrator:
+            GroupException("权限不足！只有机器人属于群聊管理员或群主才可以撤回其他人的消息！")
+
+        class BelowGroupOwner:
+            GroupException("权限不足！只有机器人属于群聊管理员或群主才可以撤回其他人的消息！")
+
+        class NotGroupOwner:
+            GroupException("权限不足！只有群主才可以撤回自己的消息！")
+    }
+
     open class DeniedException(message: String?): PermissionException(message) {
         class BelowSuperAdministrator:
             DeniedException("权限不足！只有开发者或超级管理员可以使用此功能！")
