@@ -96,27 +96,27 @@ class MatchRecentService(
         val qq = if (event.hasAt()) {
             event.target
         } else {
-            matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.id
+            matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.contactID
         }
 
         val (maybeMatchID, name, count) = parse2Text(nameStr, name2Str)
 
         val matchID = maybeMatchID ?: dao.getLastMatchID(
-            groupID = event.subject.id,
+            groupID = event.subject.contactID,
             from = LocalDateTime.now().minusHours(24L)
         ) ?: throw IllegalArgumentException.WrongException.MatchID()
 
         return if (userID != null) {
-            val isMyself = bindDao.getBindFromQQOrNull(event.sender.id)?.userID == userID
+            val isMyself = bindDao.getBindFromQQOrNull(event.sender.contactID)?.userID == userID
 
             MatchRecentParam(null, null, userID, matchID, count, isMyself)
         } else if (!name.isNullOrBlank()) {
             val myID = bindDao.getOsuID(name)
-            val isMyself = bindDao.getBindFromQQOrNull(event.sender.id)?.userID == myID && myID != null
+            val isMyself = bindDao.getBindFromQQOrNull(event.sender.contactID)?.userID == myID && myID != null
 
             MatchRecentParam(name, null, null, matchID, count, isMyself)
         } else {
-            val isMyself = qq == event.sender.id
+            val isMyself = qq == event.sender.contactID
 
             MatchRecentParam(null, qq, null, matchID, count, isMyself)
         }

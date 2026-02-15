@@ -74,7 +74,7 @@ class MaiFilterService(
         val page: Int
 
         if (!qqStr.isNullOrBlank()) {
-            user = maimaiApiService.getMaimaiBest50(qqStr.toLongOrNull() ?: event.sender.id).getUser(maiDao)
+            user = maimaiApiService.getMaimaiBest50(qqStr.toLongOrNull() ?: event.sender.contactID).getUser(maiDao)
             page = pageStr?.toIntOrNull() ?: 1
         } else if (!nameStr.isNullOrBlank()) {
             if (nameStr.matches("\\w+\\s+$REG_NUMBER_1_100".toRegex())) {
@@ -85,7 +85,7 @@ class MaiFilterService(
 
             } else if (nameStr.matches(REG_NUMBER_1_100.toRegex())) {
 
-                user = maimaiApiService.getMaimaiBest50(event.sender.id).getUser(maiDao)
+                user = maimaiApiService.getMaimaiBest50(event.sender.contactID).getUser(maiDao)
                 page = nameStr.trim().toIntOrNull() ?: 1
 
             } else {
@@ -93,7 +93,7 @@ class MaiFilterService(
                 page = pageStr?.toIntOrNull() ?: 1
             }
         } else {
-            user = maimaiApiService.getMaimaiBest50(event.sender.id).getUser(maiDao)
+            user = maimaiApiService.getMaimaiBest50(event.sender.contactID).getUser(maiDao)
             page = pageStr?.toIntOrNull() ?: 1
         }
 

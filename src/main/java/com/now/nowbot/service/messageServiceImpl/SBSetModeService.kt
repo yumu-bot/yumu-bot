@@ -40,7 +40,7 @@ class SBSetModeService (
         val qq = m.group(FLAG_QQ_ID)?.toLongOrNull()
         val name = m.group(FLAG_NAME)?.trim()
 
-        val isSuper = Permission.isSuperAdmin(event.sender.id)
+        val isSuper = Permission.isSuperAdmin(event.sender.contactID)
 
         data.value = if (qq != null && isSuper) {
             SBSetModeParam(mode, bindDao.getSBBindFromQQ(qq, false))
@@ -49,7 +49,7 @@ class SBSetModeService (
                 ?: throw IllegalArgumentException.WrongException.PlayerName()
             SBSetModeParam(mode, bindDao.getSBBindUser(id))
         } else {
-            SBSetModeParam(mode, bindDao.getSBBindFromQQ(event.sender.id, true))
+            SBSetModeParam(mode, bindDao.getSBBindFromQQ(event.sender.contactID, true))
         }
         return true
     }
@@ -69,9 +69,9 @@ class SBSetModeService (
         val mode = OsuMode.getMode(m.group(FLAG_MODE))
 
         val user = try {
-            bindDao.getSBBindFromQQ(-event.sender.id, true)
+            bindDao.getSBBindFromQQ(-event.sender.contactID, true)
         } catch (_: BindException) {
-            val sbUser = userApiService.getUser(-event.sender.id) ?: throw NoSuchElementException.Player()
+            val sbUser = userApiService.getUser(-event.sender.contactID) ?: throw NoSuchElementException.Player()
             val bindUser = SBBindUser(sbUser)
 
             bindDao.saveBind(bindUser)!!

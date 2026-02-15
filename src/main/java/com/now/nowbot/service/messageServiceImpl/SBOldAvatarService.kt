@@ -94,7 +94,7 @@ class SBOldAvatarService(
         } else if (name.isNotBlank()) {
             OAParam(null, null, name.trim(), at = false, isMyself = false, mode = mode, version = version)
         } else {
-            OAParam(event.sender.id, null, null, at = false, isMyself = true, mode = mode, version = version)
+            OAParam(event.sender.contactID, null, null, at = false, isMyself = true, mode = mode, version = version)
         }
     }
 

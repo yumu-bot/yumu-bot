@@ -9,6 +9,23 @@ open class UnsupportedOperationException(message: String?): TipsRuntimeException
     // class AudioNotSafeForWork:
     //    UnsupportedOperationException("这种歌曲，还是有点唱不出口呢。")
 
+    open class BotOperation(message: String?): UnsupportedOperationException(message) {
+
+        class MessageUnavailable(messageID: Any):
+            BotOperation("无法获取消息 $messageID")
+
+        class Offline:
+            BotOperation("主机器人并未上线。")
+
+        class NotFriend(userID: Any):
+            BotOperation("机器人不是 $userID 的好友，无法发送消息。")
+
+        class NotInGroup(groupID: Any):
+            BotOperation("机器人不在 $groupID 群组中，无法发送消息。")
+
+
+    }
+
     class ExpiredOauthBind:
         UnsupportedOperationException("""
             您的 Oauth2 绑定已经过期。

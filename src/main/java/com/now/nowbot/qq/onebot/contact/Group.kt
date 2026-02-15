@@ -1,89 +1,97 @@
-package com.now.nowbot.qq.onebot.contact;
+package com.now.nowbot.qq.onebot.contact
 
-import com.mikuac.shiro.core.Bot;
-import com.mikuac.shiro.dto.action.common.ActionData;
-import com.mikuac.shiro.dto.action.response.DownloadFileResp;
-import com.now.nowbot.qq.contact.GroupContact;
-import com.now.nowbot.util.QQMsgUtil;
+import com.mikuac.shiro.core.Bot
+import com.mikuac.shiro.dto.action.common.ActionData
+import com.mikuac.shiro.dto.action.response.DownloadFileResp
+import com.mikuac.shiro.dto.action.response.GroupMemberInfoResp
+import com.now.nowbot.qq.contact.Contact.Companion.log
+import com.now.nowbot.qq.contact.Group
+import com.now.nowbot.util.QQMsgUtil.botInLocal
+import com.now.nowbot.util.QQMsgUtil.byte2str
+import com.now.nowbot.util.QQMsgUtil.getFilePubUrl
+import com.now.nowbot.util.QQMsgUtil.getFileUrl
+import com.now.nowbot.util.QQMsgUtil.removeFileUrl
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-public class Group extends Contact implements com.now.nowbot.qq.contact.Group {
-    String name = null;
-
-    public Group(Bot bot, long id) {
-        super(bot, id);
+class Group : Contact, Group {
+    override var name: String? = null
+    get() = field ?: try {
+        val data = bot.getGroupInfo(contactID, false).getData()
+        data.groupName
+    } catch (_: Exception) {
+        log.error("获取群名 $contactID 失败")
+        "unknown group"
     }
 
-    public Group(Bot bot, long id, String name) {
-        super(bot, id);
-        this.name = name;
+    constructor(bot: Bot, groupID: Long) : super(bot, groupID)
+
+    constructor(bot: Bot, groupID: Long, name: String?) : super(bot, groupID) {
+        this.name = name
     }
 
-    @Override
-    public String getName() {
-        if (name != null) return name;
-        try {
-            var data = bot.getGroupInfo(getId(), false).getData();
-            return data.getGroupName();
-        } catch (Exception e) {
-            log.error("获取群名{}失败", getId());
-            return "unknown group";
+    override val isAdmin: Boolean
+        get() {
+            val data = bot.getGroupMemberInfo(contactID, bot.selfId, false).getData()
+            return data.role == "owner" || data.role == "admin"
         }
+
+    override fun getUser(qq: Long): com.now.nowbot.qq.contact.GroupContact {
+        val data = bot.getGroupMemberInfo(contactID, qq, false).getData()
+        return GroupContact(bot, data.userId, this.contactID, data.nickname, data.role)
     }
 
-    @Override
-    public boolean isAdmin() {
-        var data = bot.getGroupMemberInfo(getId(), bot.getSelfId(), false).getData();
-        return data.getRole().equals("owner") || data.getRole().equals("admin");
-    }
+    override val allUser: List<GroupContact>
+        get() {
+            val data = bot.getGroupMemberList(contactID).getData()
+            return data.mapNotNull { f: GroupMemberInfoResp? ->
+                f?.let {
+                    GroupContact(
+                        bot,
+                        f.userId,
+                        this.contactID,
+                        f.nickname,
+                        f.role
+                    )
+                }
+            }
+        }
 
-    @Override
-    public GroupContact getUser(long qq) {
-        var data = bot.getGroupMemberInfo(getId(), qq, false).getData();
-        return new com.now.nowbot.qq.onebot.contact.GroupContact(bot, data.getUserId(), data.getNickname(), data.getRole(), this.getId());
-    }
-
-    @Override
-    public List<? extends GroupContact> getAllUser() {
-        var data = bot.getGroupMemberList(getId()).getData();
-        return data.stream().map(f -> new com.now.nowbot.qq.onebot.contact.GroupContact(bot, f.getUserId(), f.getNickname(), f.getRole(), this.getId())).toList();
-    }
-
-    @Override
-    public void sendFile(byte[] data, String name) {
-        String url;
-        if (QQMsgUtil.botInLocal(bot.getSelfId())) {
-            url = QQMsgUtil.getFileUrl(data, name);
+    override fun sendFile(data: ByteArray, name: String) {
+        val url = if (botInLocal(bot.selfId)) {
+            getFileUrl(data, name)
         } else {
-            url = QQMsgUtil.getFilePubUrl(data, name);
+            getFilePubUrl(data, name)
         }
+
         try {
-            ActionData<DownloadFileResp> rep = null;
-            for (int i = 0; i < 5; i++) {
-                rep = bot.customRawRequest(() -> "download_file", Map.of(
-                        "name", name,
-                        "base64", QQMsgUtil.byte2str(data) //框架说这里要加 base64://，但是看起来加了会直接跑到文件里？
-                ), DownloadFileResp.class);
-                if (rep != null) break;
-            }
-            if (Objects.isNull(rep) || Objects.isNull(rep.getData())) {
-                rep = bot.downloadFile(url);
-            }
+            var rep: ActionData<DownloadFileResp?>? = null
 
-            if (Objects.isNull(rep.getData())) {
-                log.error("发送文件失败: 客户端不支持接收文件");
-                return;
+            repeat(5) { // 执行 0 到 4，共 5 次
+                if (rep != null) return@repeat // 如果已经成功，跳过后续尝试
+
+                rep = bot.customRawRequest(
+                    { "download_file" },
+                    mapOf(
+                        "name" to name,
+                        "base64" to byte2str(data)
+                    ),
+                    DownloadFileResp::class.java
+                )
             }
 
-            bot.uploadGroupFile(getId(), rep.getData().getFile(), name);
-        } catch (Exception e) {
-            log.error("文件上传错误", e);
+            if (rep == null || rep.data == null) {
+                rep = bot.downloadFile(url)
+            }
 
+            if (rep.data == null) {
+                log.error("发送文件失败: 客户端不支持接收文件")
+                return
+            }
+
+            bot.uploadGroupFile(contactID, rep.data!!.file, name)
+        } catch (e: Exception) {
+            log.error("文件上传错误", e)
         } finally {
-            QQMsgUtil.removeFileUrl(url);
+            removeFileUrl(url)
         }
     }
 }

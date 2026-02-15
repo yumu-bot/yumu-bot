@@ -1,63 +1,56 @@
-package com.now.nowbot.qq.onebot;
+package com.now.nowbot.qq.onebot
 
-import com.mikuac.shiro.core.Bot;
-import com.now.nowbot.qq.contact.Contact;
-import com.now.nowbot.qq.message.MessageReceipt;
-import com.now.nowbot.qq.message.ReplyMessage;
+import com.mikuac.shiro.core.Bot
+import com.now.nowbot.qq.message.MessageReceipt
+import com.now.nowbot.qq.message.ReplyMessage
+import com.now.nowbot.qq.onebot.contact.Contact
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
-import java.util.Objects;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+class OneBotMessageReceipt private constructor() : MessageReceipt() {
+    var messageID: Int = 0
+    var bot: Bot? = null
+    var contact: Contact? = null
 
-public class OneBotMessageReceipt extends MessageReceipt {
-    private static final ScheduledExecutorService executor;
-
-    static {
-        var threadFactory = Thread.ofVirtual().name("v-OneBotMessageReceipt", 50).factory();
-        executor = Executors.newScheduledThreadPool(Integer.MAX_VALUE, threadFactory);
+    override fun recall() {
+        bot?.deleteMsg(messageID) ?: return
     }
 
-    int mid;
-    Bot bot;
-    com.now.nowbot.qq.onebot.contact.Contact contact;
-
-    private OneBotMessageReceipt() {
+    override fun recallIn(time: Long) {
+        bot?.let {
+            executor.schedule({
+                it.deleteMsg(messageID)
+            }, time, TimeUnit.MILLISECONDS)
+        }
     }
 
-    public static OneBotMessageReceipt create(Bot bot, int mid, com.now.nowbot.qq.onebot.contact.Contact contact) {
-        var r = new OneBotMessageReceipt();
-        r.mid = mid;
-        r.bot = bot;
-        r.contact = contact;
-        return r;
+    override fun getTarget(): com.now.nowbot.qq.contact.Contact? {
+        return contact
     }
 
-    public static OneBotMessageReceipt create() {
-        return new OneBotMessageReceipt();
+    override fun reply(): ReplyMessage {
+        return ReplyMessage(messageID.toLong())
     }
 
-    @Override
-    public void recall() {
-        if (Objects.isNull(bot)) return;
-        bot.deleteMsg(mid);
-    }
+    companion object {
+        private val executor: ScheduledExecutorService
 
-    @Override
-    public void recallIn(long time) {
-        if (Objects.isNull(bot)) return;
-        executor.schedule(() -> {
-            bot.deleteMsg(mid);
-        }, time, TimeUnit.MILLISECONDS);
-    }
+        init {
+            val threadFactory = Thread.ofVirtual().name("v-OneBotMessageReceipt", 50).factory()
+            executor = Executors.newScheduledThreadPool(Int.MAX_VALUE, threadFactory)
+        }
 
-    @Override
-    public Contact getTarget() {
-        return contact;
-    }
+        fun create(bot: Bot, messageID: Int, contact: Contact?): OneBotMessageReceipt {
+            val r = OneBotMessageReceipt()
+            r.messageID = messageID
+            r.bot = bot
+            r.contact = contact
+            return r
+        }
 
-    @Override
-    public ReplyMessage reply() {
-        return new ReplyMessage(mid);
+        fun create(): OneBotMessageReceipt {
+            return OneBotMessageReceipt()
+        }
     }
 }

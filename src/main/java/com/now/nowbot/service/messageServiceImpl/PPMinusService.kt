@@ -208,7 +208,7 @@ import java.util.regex.Matcher
             m3
         } else return false
 
-        val ver = if (event.subject.id == killerGroup && !isVs) {
+        val ver = if (event.subject.contactID == killerGroup && !isVs) {
             -1
         } else {
             version

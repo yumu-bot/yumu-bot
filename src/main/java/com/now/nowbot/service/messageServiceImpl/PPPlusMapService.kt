@@ -45,7 +45,7 @@ class PPPlusMapService(
             return false
         }
         val bid = bidStr.toLongOrNull()
-            ?: dao.getLastBeatmapID(event.subject.id, null, LocalDateTime.now().minusHours(24L))
+            ?: dao.getLastBeatmapID(event.subject.contactID, null, LocalDateTime.now().minusHours(24L))
             ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
         val mods = LazerMod.getModsList(matcher.group(FLAG_MOD))

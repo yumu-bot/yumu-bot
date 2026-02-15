@@ -72,10 +72,6 @@ class CsvInfoService(private val userApiService: OsuUserApiService) : MessageSer
                     throw CsvInfoException(CsvInfoException.Type.CI_Fetch_TooManyRequest, s)
                 }
 
-                if (event.subject != null) {
-                    event.reply(CsvInfoException.Type.CI_Fetch_ReachThreshold.message)
-                }
-
                 try {
                     Thread.sleep(10000)
                 } catch (e1: InterruptedException) {

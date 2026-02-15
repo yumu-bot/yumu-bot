@@ -142,7 +142,7 @@ class MapStatisticsService(
 
         if (id == 0L) {
             bid = dao.getLastBeatmapID(
-                groupID = event.subject.id,
+                groupID = event.subject.contactID,
                 name = null,
                 from = LocalDateTime.now().minusHours(24L)
             ) ?: 0L

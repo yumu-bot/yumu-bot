@@ -1,7 +1,7 @@
-package com.now.nowbot.qq.event;
+package com.now.nowbot.qq.event
 
-import com.now.nowbot.qq.Bot;
+import com.now.nowbot.qq.Bot
 
-public interface Event {
-    Bot getBot();
+interface Event {
+    val bot: Bot?
 }

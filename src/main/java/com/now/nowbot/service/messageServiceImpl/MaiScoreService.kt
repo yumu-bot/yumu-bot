@@ -137,7 +137,7 @@ import java.util.regex.Matcher
         val qq = if (event.hasAt()) {
             event.target
         } else {
-            qqStr.toLongOrNull() ?: event.sender.id
+            qqStr.toLongOrNull() ?: event.sender.contactID
         }
 
         val cabinet = MaiCabinet.getCabinet(matcher.group(FLAG_VERSION))

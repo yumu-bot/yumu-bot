@@ -1,4 +1,3 @@
-package com.now.nowbot.qq.contact;
+package com.now.nowbot.qq.contact
 
-public interface Friend extends Contact {
-}
+interface Friend : Contact

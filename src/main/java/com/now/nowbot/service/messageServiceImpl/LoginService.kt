@@ -19,7 +19,7 @@ class LoginService(private val bindDao: BindDao) : MessageService<String> {
             while (true) {
                 try {
                     Thread.sleep(Duration.ofSeconds(120))
-                } catch (ignore: InterruptedException) {
+                } catch (_: InterruptedException) {
                 }
                 val t = System.currentTimeMillis()
                 LOGIN_USER_MAP.entries.removeIf { entry: MutableMap.MutableEntry<String, LoginUser> ->
@@ -40,7 +40,7 @@ class LoginService(private val bindDao: BindDao) : MessageService<String> {
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: String): ServiceCallStatistic? {
-        val qq = event.sender.id
+        val qq = event.sender.contactID
         val u = bindDao.getBindFromQQ(qq)
         var code: String?
         // 防止key重复, 循环构造随机字符串

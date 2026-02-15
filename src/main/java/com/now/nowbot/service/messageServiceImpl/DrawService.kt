@@ -36,7 +36,7 @@ class DrawService(
         event: MessageEvent,
         param: Matcher
     ): ServiceCallStatistic? {
-        val bindUser = bindDao.getBindFromQQ(event.sender.id, true)
+        val bindUser = bindDao.getBindFromQQ(event.sender.contactID, true)
 
         var times = 1
         if (param.group("d") != null) {

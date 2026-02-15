@@ -177,11 +177,11 @@ class ServiceSwitchService(
                 return null
             }
         } else {
-            if (qq != null && qq != event.sender.id) {
+            if (qq != null && qq != event.sender.contactID) {
                 throw TipsException("""
                     权限不足！只有超级管理员拥有控制其他 QQ 用户的权限。
                 """.trimIndent())
-            } else if (group != null && group != event.subject.id) {
+            } else if (group != null && group != event.subject.contactID) {
                 throw TipsException("""
                     权限不足！只有超级管理员拥有控制其他 QQ 群聊的权限。
                 """.trimIndent())
@@ -194,11 +194,11 @@ class ServiceSwitchService(
 
                 if (level == Level.USER) {
                     // 普通用户只能控制自己
-                    return Target.QQ to event.sender.id
+                    return Target.QQ to event.sender.contactID
                 } else {
-                    if (qq == event.sender.id) {
+                    if (qq == event.sender.contactID) {
                         return Target.QQ to qq
-                    } else if (group == event.subject.id) {
+                    } else if (group == event.subject.contactID) {
                         return Target.GROUP to group
                     }
 
@@ -217,9 +217,9 @@ class ServiceSwitchService(
                     receipt.recall()
 
                     return if (ev != null && ev.rawMessage.contains("1", ignoreCase = true)) {
-                        Target.GROUP to event.subject.id
+                        Target.GROUP to event.subject.contactID
                     } else if (ev != null && ev.rawMessage.contains("2", ignoreCase = true)) {
-                        Target.QQ to event.sender.id
+                        Target.QQ to event.sender.contactID
                     } else if (ev == null) {
                         throw TipsException("确认超时。")
                     } else {

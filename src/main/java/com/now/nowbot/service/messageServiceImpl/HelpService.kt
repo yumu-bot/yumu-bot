@@ -52,7 +52,7 @@ class HelpService(
         val m2 = Instruction.SIMPLIFIED_HELP.matcher(messageText)
         val mr = Instruction.REFRESH_HELP.matcher(messageText)
 
-        if (mr.find() && Permission.isSuperAdmin(event.sender.id)) {
+        if (mr.find() && Permission.isSuperAdmin(event.sender.contactID)) {
             imageCacheProvider.clearCache()
             event.reply("已清除所有帮助文档的图片缓存。")
             return false
@@ -87,7 +87,7 @@ class HelpService(
         }
 
         try {
-            event.reply(image)
+            event.reply(image!!)
         } catch (e: Exception) {
             log.error("帮助文档：发送失败", e)
             throw IllegalStateException.Send("帮助文档")

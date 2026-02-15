@@ -1,25 +1,19 @@
-package com.now.nowbot.qq.onebot.contact;
+package com.now.nowbot.qq.onebot.contact
 
-import com.mikuac.shiro.core.Bot;
-import com.now.nowbot.qq.enums.Role;
+import com.mikuac.shiro.core.Bot
+import com.now.nowbot.qq.contact.GroupContact
+import com.now.nowbot.qq.enums.Role
 
-public class GroupContact extends Contact implements com.now.nowbot.qq.contact.GroupContact {
-    long groupId;
-    Role role;
+/**
+ * 群发起私聊
+ */
+class GroupContact(bot: Bot, userID: Long, groupID: Long, name: String?, role: String? = null) : Contact(bot, userID), GroupContact {
+    var groupID: Long
+    override var role: Role?
 
-    public GroupContact(Bot bot, long id, String name, String role, long groupId) {
-        super(bot, id);
-        setName(name);
-        this.groupId = groupId;
-        this.role = Role.fromString(role);
-    }
-
-    long getGroupId() {
-        return groupId;
-    }
-
-    @Override
-    public Role getRole() {
-        return role;
+    init {
+        this.name = name
+        this.groupID = groupID
+        this.role = Role.getRole(role)
     }
 }

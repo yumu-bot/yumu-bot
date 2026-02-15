@@ -8,14 +8,7 @@ import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 
-open class LocalContact : Contact {
-    override fun getId(): Long {
-        return -17064371
-    }
-
-    override fun getName(): String? {
-        return null
-    }
+open class LocalContact(override val contactID: Long = 1340691940, override val name: String? = null) : Contact {
 
     override fun sendMessage(msg: MessageChain): MessageReceipt {
         val contact = this
@@ -57,7 +50,7 @@ open class LocalContact : Contact {
                     try {
                         Thread.sleep(time)
                         recall()
-                    } catch (ignored: InterruptedException) { }
+                    } catch (_: InterruptedException) { }
                 }
             }
 
@@ -78,7 +71,7 @@ open class LocalContact : Contact {
             val nPath = path.resolve(name)
             Files.write(nPath, data)
             return nPath.toAbsolutePath().toString()
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             Contact.log.info("保存文件：创建文件夹 {} 失败", path.toAbsolutePath())
             return "err"
         }
@@ -95,7 +88,7 @@ open class LocalContact : Contact {
             )
             Files.write(nPath, data)
             return nPath.toAbsolutePath().toString()
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             Contact.log.info("下载文件：创建文件夹 {} 失败", path.toAbsolutePath())
             return "err"
         }
@@ -108,7 +101,7 @@ open class LocalContact : Contact {
             val nPath: Path = path.resolve("${System.currentTimeMillis()}.jpg")
             Files.copy(source, nPath)
             return nPath.toAbsolutePath().toString()
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             Contact.log.info("复制文件：创建文件夹 {} 失败", path.toAbsolutePath())
             return "err"
         }

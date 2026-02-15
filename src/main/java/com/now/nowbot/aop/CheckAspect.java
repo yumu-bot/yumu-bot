@@ -56,7 +56,7 @@ public class CheckAspect {
 
     static final List<MessageEvent> workList = new CopyOnWriteArrayList<>();
 
-    //所有实现MessageService的HandMessage方法切入点
+    //所有实现 MessageService 的 HandMessage 方法切入点
     @Pointcut("within(com.now.nowbot.service.MessageService+) &&  execution(* handleMessage(com.now.nowbot.qq.event.MessageEvent, ..))")
     public void servicePoint() {
     }
@@ -96,7 +96,7 @@ public class CheckAspect {
 
     @Before("servicePoint() && @annotation(ServiceLimit)")
     public Object serviceLimit(JoinPoint point, ServiceLimit ServiceLimit) {
-        var limit = ServiceLimit.limit();
+        var limit = ServiceLimit.cooldownMillis();
         if (limit == 0) return point.getArgs();
         var now = System.currentTimeMillis();
         var time = SERVICE_LIMIT_MAP.getOrDefault(ServiceLimit, 0L);
@@ -120,7 +120,7 @@ public class CheckAspect {
         var event = (MessageEvent) args[0];
         var name = Service.value();
 
-        var qq = event.getSender().getId();
+        var qq = event.getSender().getContactID();
 
         if (Permission.isSuperAdmin(qq)) {
             //超管无视任何限制
@@ -128,7 +128,7 @@ public class CheckAspect {
         }
         //超管权限判断
         if (CheckPermission.isGroupAdmin()) {
-            if (event.getSender() instanceof GroupContact groupUser && !(groupUser.getRole().equals(Role.ADMIN) || groupUser.getRole().equals(Role.OWNER))) {
+            if (event.getSender() instanceof GroupContact groupUser && !(Objects.equals(groupUser.getRole(), Role.ADMIN) || Objects.equals(groupUser.getRole(), Role.OWNER))) {
                 throw new PermissionException.RoleException.NormalUserUseAdminService(name, qq);
             }
         }
@@ -145,14 +145,14 @@ public class CheckAspect {
             if (CheckPermission.friend() && !permission.hasUser(name, qq)) {
                 throw new PermissionException.WhiteListException.UserFilter(name, qq);
             }
-            if (CheckPermission.group() && event instanceof GroupMessageEvent g && !permission.hasGroup(name, g.getGroup().getId())) {
+            if (CheckPermission.group() && event instanceof GroupMessageEvent g && !permission.hasGroup(name, g.getGroup().getContactID())) {
                 throw new PermissionException.WhiteListException.GroupFilter(name, qq);
             }
         } else {
             if (CheckPermission.friend() && permission.hasUser(name, qq)) {
                 throw new PermissionException.BlackListException.UserFilter(name, qq);
             }
-            if (CheckPermission.group() && event instanceof GroupMessageEvent g && permission.hasGroup(name, g.getGroup().getId())) {
+            if (CheckPermission.group() && event instanceof GroupMessageEvent g && permission.hasGroup(name, g.getGroup().getContactID())) {
                 throw new PermissionException.BlackListException.GroupFilter(name, qq);
             }
         }
@@ -168,18 +168,18 @@ public class CheckAspect {
         var event = (MessageEvent) args[0];
 
         var name = Service.value();
-        var qq = event.getSender().getId();
+        var qq = event.getSender().getContactID();
 //        var name = AopUtils.getTargetClass(point.getTarget()).getAnnotation(Service.class).value();
 
         if (Permission.isSuperAdmin(qq)) {
             //超管无视任何限制
             return args;
         }
-        if (permission.isAllWhite() && permission.containsAllW(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null)) {
+        if (permission.isAllWhite() && permission.containsAllW(event instanceof GroupMessageEvent g ? g.getGroup().getContactID() : null)) {
             return args;
         }
         // 群跟人的id进行全局黑名单校验
-        else if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getId() : null, qq)) {
+        else if (permission.containsAll(event instanceof GroupMessageEvent g ? g.getGroup().getContactID() : null, qq)) {
             return args;
         }
         throw new PermissionException.BlackListException.Blocked(name, qq);
@@ -217,10 +217,10 @@ public class CheckAspect {
             name = ser.value();
         }
         if (pjp.getArgs()[0] instanceof MessageEvent e) {
-            if (e.getSubject().getId() < 0) {
-                log.debug("官方bot [uid {}] 调用 -> {}", -e.getSender().getId(), name);
+            if (e.getSubject().getContactID() < 0) {
+                log.debug("官方bot [uid {}] 调用 -> {}", -e.getSender().getContactID(), name);
             } else {
-                log.debug("{} 调用 -> {}", e.getSender().getId(), name);
+                log.debug("{} 调用 -> {}", e.getSender().getContactID(), name);
             }
         }
         Object result = null;

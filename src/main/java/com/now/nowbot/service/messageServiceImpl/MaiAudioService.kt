@@ -38,7 +38,7 @@ class MaiAudioService(
         val any: String = (matcher.group(FLAG_NAME) ?: "").trim()
 
         if (any.isBlank()) {
-            val last = dao.getLastMaiSongID(event.subject.id, null, LocalDateTime.now().minusHours(24))
+            val last = dao.getLastMaiSongID(event.subject.contactID, null, LocalDateTime.now().minusHours(24))
 
             if (last != null) {
                 val song = lxMaiApiService.getMaiSong(last.toInt()) ?: throw NoSuchElementException.Song(last)
@@ -58,7 +58,7 @@ class MaiAudioService(
         event: MessageEvent,
         param: MaiFindService.MaiFindParam
     ): ServiceCallStatistic? {
-        tokenBucketRateLimiter.checkOrThrow("MAI_AUDIO", event.subject.id)
+        tokenBucketRateLimiter.checkOrThrow("MAI_AUDIO", event.subject.contactID)
 
         val first = param.songs.map { it.songID }.first()
 

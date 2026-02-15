@@ -53,7 +53,7 @@ class NewbiePlayStatisticsService(
         val type = SearchType.fromString(messageText) ?: return false
 
         // 活动已停止
-        if (Permission.isSuperAdmin(event.sender.id).not()) {
+        if (Permission.isSuperAdmin(event.sender.contactID).not()) {
             val endTime = OffsetDateTime.of(2025, 3, 1, 0, 0, 0, 0, ZoneOffset.ofHours(8))
             val now = OffsetDateTime.now()
 
@@ -69,10 +69,10 @@ class NewbiePlayStatisticsService(
     //    @CheckPermission(isSuperAdmin = true)
     override fun handleMessage(event: MessageEvent, param: SearchType): ServiceCallStatistic? {
         if (event !is GroupMessageEvent) return null
-        val gid = event.group.id
+        val gid = event.group.contactID
         if (gid != newbieConfig.newbieGroup && gid != newbieConfig.killerGroup) return null
 
-        val bind = bindDao.getBindFromQQ(event.sender.id, true)
+        val bind = bindDao.getBindFromQQ(event.sender.contactID, true)
         val message = when (param) {
             SearchType.DAY -> handleDay(bind)
             SearchType.HISTORY -> handleHistory(bind)

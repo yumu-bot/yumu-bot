@@ -46,7 +46,7 @@ class PrivateMessageService(private val userApiService: OsuUserApiService, priva
         event: MessageEvent,
         param: PMParam
     ): ServiceCallStatistic? {
-        val bindUser = bindDao.getBindFromQQ(event.sender.id, true)
+        val bindUser = bindDao.getBindFromQQ(event.sender.contactID, true)
         val json: JsonNode = try {
             getJson(param, bindUser)
         } catch (_: WebClientResponseException.Forbidden) {

@@ -68,7 +68,7 @@ class OneBotListener {
         messageServiceMap = beanMap
     }
 
-    @GroupMessageHandler @Async fun handle(bot: Bot?, onebotEvent: GroupMessageEvent) {
+    @GroupMessageHandler @Async fun handle(bot: Bot, onebotEvent: GroupMessageEvent) {
         val groupId = onebotEvent.groupId
         // val message = ShiroUtils.unescape(onebotEvent.message)
         val messageId = String.format(
@@ -90,7 +90,7 @@ class OneBotListener {
         if (nowTime - onebotEvent.time > 30) return
         val event = com.now.nowbot.qq.onebot.event.GroupMessageEvent(bot, onebotEvent)
         // if (event.getGroup().getId() != 746671531) return;
-        if (event.sender.id == 365246692L) {
+        if (event.sender.contactID == 365246692L) {
             ContextUtil.setContext("isTest", java.lang.Boolean.TRUE)
         }
         try {
@@ -117,9 +117,9 @@ class OneBotListener {
 
     private fun handleBotException(event: MessageEvent, e: BotException) {
         if (e.hasImage()) {
-            event.reply(e.image)
+            event.reply(e.image!!)
         } else {
-            event.reply(e.message).recallIn(RECALL_TIME.toLong())
+            event.reply(e.message ?: return).recallIn(RECALL_TIME.toLong())
         }
     }
 
@@ -129,8 +129,8 @@ class OneBotListener {
     }
 
     private fun handleOtherException(event: MessageEvent, e: Throwable) {
-        if (Permission.isSuperAdmin(event.sender.id)) {
-            event.reply(e.message).recallIn(RECALL_TIME.toLong())
+        if (Permission.isSuperAdmin(event.sender.contactID)) {
+            event.reply(e).recallIn(RECALL_TIME.toLong())
         }
         log.error("捕捉其他异常：", e)
     }

@@ -45,7 +45,7 @@ class ServiceCountService(
         val matcher = Instruction.SERVICE_COUNT.matcher(messageText)
         if (!matcher.find()) return false
 
-        if (!Permission.isSuperAdmin(event.sender.id)) {
+        if (!Permission.isSuperAdmin(event.sender.contactID)) {
             return false
         }
 

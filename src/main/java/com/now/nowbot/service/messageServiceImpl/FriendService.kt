@@ -180,7 +180,7 @@ class FriendService(
         val any: String = matcher.group(FLAG_ANY) ?: ""
 
         val me = // userApiService.refreshUserTokenInstant(bindDao.getBindFromQQOrNull(event.sender.id), isMyself = true)
-        bindDao.getBindFromQQ(event.sender.id)
+        bindDao.getBindFromQQ(event.sender.contactID)
 
         val isMyself = AtomicBoolean(true) // 处理 range
         val mode = getMode(matcher)
@@ -209,7 +209,7 @@ class FriendService(
             val uid = matcher.group(FLAG_UID)?.toLongOrNull()
 
             if (event.hasAt()) {
-                if (event.target == event.sender.id) {
+                if (event.target == event.sender.contactID) {
                     throw TipsException("你自己与你自己就是最好的朋友。")
                 } else {
                     throw BindException.TokenExpiredException.UserTokenExpired()
@@ -217,7 +217,7 @@ class FriendService(
             }
 
             if (qq != null || uid != null) {
-                if (qq == event.sender.id || uid == me.userID) {
+                if (qq == event.sender.contactID || uid == me.userID) {
                     throw TipsException("你自己与你自己就是最好的朋友。")
                 } else {
                     throw BindException.TokenExpiredException.UserTokenExpired()

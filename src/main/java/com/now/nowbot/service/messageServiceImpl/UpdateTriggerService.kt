@@ -60,7 +60,7 @@ class UpdateTriggerService(
 
         val any: String? = matcher.group(FLAG_ANY)
 
-        if (Permission.isSuperAdmin(event.sender.id)) {
+        if (Permission.isSuperAdmin(event.sender.contactID)) {
             data.value = UpdateType.getType(any)
             return true
         } else return false
@@ -135,7 +135,7 @@ class UpdateTriggerService(
             }
 
             OSU_DAILY -> {
-                if (!Permission.isSuperAdmin(event.sender.id)) {
+                if (!Permission.isSuperAdmin(event.sender.contactID)) {
                     throw PermissionException.DeniedException.BelowSuperAdministrator()
                 }
 

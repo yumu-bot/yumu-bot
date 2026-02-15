@@ -76,13 +76,13 @@ class SetGroupModeService (
         val isNotGroupAdmin = Permission.isGroupAdmin(event).not()
 
         val group = if (param.group != null) {
-            if (isSuperAdmin || param.group == event.subject.id) {
+            if (isSuperAdmin || param.group == event.subject.contactID) {
                 param.group
             } else {
                 throw PermissionException.DeniedException.BelowSuperAdministrator()
             }
         } else if (event.subject is Group) {
-            event.subject.id
+            event.subject.contactID
         } else {
             // 必须群聊
             throw UnsupportedOperationException.NotGroup()

@@ -60,7 +60,7 @@ class MatchMapService(
         val matcher = Instruction.TEST_MATCH_START.matcher(messageText)
         if (!matcher.find()) return false
 
-        if (!Permission.isSuperAdmin(event.sender.id)) {
+        if (!Permission.isSuperAdmin(event.sender.contactID)) {
             throw PermissionException.DeniedException.BelowSuperAdministrator()
         }
 

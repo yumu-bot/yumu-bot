@@ -50,7 +50,7 @@ import java.util.function.Predicate
         val m = Instruction.BIND.matcher(messageText)
         if (!m.find()) return false
 
-        val qq = m.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.id
+        val qq = m.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.contactID
 
         val nameStr = (m.group(FLAG_NAME) ?: "").trim()
 
@@ -88,7 +88,7 @@ import java.util.function.Predicate
         }
 
         val isUnbind = m.group("un") != null || m.group("ub") != null
-        val isSuper = Permission.isSuperAdmin(event.sender.id)
+        val isSuper = Permission.isSuperAdmin(event.sender.contactID)
         val isFull = m.group("full") != null
 
         val param = if (event.hasAt()) { // bi/ub @
@@ -103,7 +103,7 @@ import java.util.function.Predicate
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: BindParam): ServiceCallStatistic? {
-        val me = event.sender.id
+        val me = event.sender.contactID
 
         if (me == param.qq) {
             if (param.unbind) {
@@ -298,7 +298,7 @@ import java.util.function.Predicate
         val ql = bindDao.getQQLiteFromQQ(qq)
 
         if (ql != null) {
-            if (ql.qq == event.sender.id) {
+            if (ql.qq == event.sender.contactID) {
                 throw BindException.BoundException.YouBound()
             } else {
                 throw BindException.BoundException.UserBound(name, ql.qq!!)
@@ -310,7 +310,7 @@ import java.util.function.Predicate
         val qb = bindDao.getQQLiteFromUserID(ou.userID)
 
         if (qb != null) {
-            if (qb.qq == event.sender.id) {
+            if (qb.qq == event.sender.contactID) {
                 throw BindException.BoundException.YouBound()
             } else {
                 throw BindException.BoundException.UserBound(name, qb.qq!!)

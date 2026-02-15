@@ -67,7 +67,7 @@ class NewbieRestrictService(
         data: MessageService.DataValue<Collection<LazerScore>>
     ): Boolean {
         // TODO 测试的时候记得别忘了取消注释这个
-        if (event.subject !is Group || event.subject.id != newbieGroupID) return false
+        if (event.subject !is Group || event.subject.contactID != newbieGroupID) return false
 
         val ss = Instruction.SCORES.matcher(messageText)
         val s = Instruction.SCORE.matcher(messageText)
@@ -336,14 +336,14 @@ class NewbieRestrictService(
 
         val criminal = event.sender
 
-        val criminalUsername = bindDao.getBindFromQQOrNull(criminal.id)?.username ?: "未绑定"
+        val criminalUsername = bindDao.getBindFromQQOrNull(criminal.contactID)?.username ?: "未绑定"
 
         val username = score.user.username
 
-        val count7 = newbieDao.getRestrictedCountWithin(criminal.id, 7L * 24 * 60 * 60 * 1000)
-        val duration7 = getTime(newbieDao.getRestrictedDurationWithin(criminal.id, 7L * 24 * 60 * 60 * 1000) / 60000)
+        val count7 = newbieDao.getRestrictedCountWithin(criminal.contactID, 7L * 24 * 60 * 60 * 1000)
+        val duration7 = getTime(newbieDao.getRestrictedDurationWithin(criminal.contactID, 7L * 24 * 60 * 60 * 1000) / 60000)
 
-        val t = newbieDao.getRestricted(criminal.id)
+        val t = newbieDao.getRestricted(criminal.contactID)
         val count = t.size
         val duration = getTime(t.sumOf { it.duration ?: 0L } / 60000)
 
@@ -375,7 +375,7 @@ class NewbieRestrictService(
             .append("最近五次星数：[${final5}]。").append('\n').append('\n')
 
         try {
-            newbieDao.saveRestricted(criminal.id, sr, System.currentTimeMillis(), min(silence * 60000L, 7L * 24 * 60 * 60 * 1000))
+            newbieDao.saveRestricted(criminal.contactID, sr, System.currentTimeMillis(), min(silence * 60000L, 7L * 24 * 60 * 60 * 1000))
         } catch (e: Throwable) {
             log.error(sb.append("但是保存记录失败了。").toString(), e)
         }
@@ -394,18 +394,18 @@ class NewbieRestrictService(
         }
 
         // 最后保险，确保不乱禁人
-        if (event.subject.id != newbieGroupID) return null
+        if (event.subject.contactID != newbieGroupID) return null
 
         // 情节严重
         if (silence >= 30 * 24 * 60 - 1) {
             report(isReportable, executorBot, sb.append("情节严重，已按最大时间禁言。").toString())
 
-            executorBot.setGroupBan(newbieGroupID, event.sender.id, (30 * 24 * 60 - 1) * 60)
+            executorBot.setGroupBan(newbieGroupID, event.sender.contactID, (30 * 24 * 60 - 1) * 60)
                 ?: report(isReportable, executorBot, sb.append("但是机器人执行禁言任务失败了。").toString())
         } else {
             report(isReportable, executorBot, sb.append("正在执行禁言任务。").toString())
 
-            executorBot.setGroupBan(newbieGroupID, event.sender.id, (silence * 60).toInt())
+            executorBot.setGroupBan(newbieGroupID, event.sender.contactID, (silence * 60).toInt())
                 ?: report(isReportable, executorBot, sb.append("但是机器人执行禁言任务失败了。").toString())
         }
 

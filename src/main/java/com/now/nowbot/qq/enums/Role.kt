@@ -1,13 +1,16 @@
-package com.now.nowbot.qq.enums;
+package com.now.nowbot.qq.enums
 
-public enum Role {
+enum class Role {
     OWNER, ADMIN, MEMBER;
-    public static Role fromString(String s) {
-        return switch (s) {
-            case "owner" -> OWNER;
-            case "admin" -> ADMIN;
-            case null, default -> MEMBER;
-            //case "member" -> MEMBER;
-        };
+
+    companion object {
+        fun getRole(s: String?): Role {
+            return when (s?.trim()?.lowercase()) {
+                "owner" -> OWNER
+                "admin" -> ADMIN
+                null -> MEMBER
+                else -> MEMBER
+            }
+        }
     }
 }

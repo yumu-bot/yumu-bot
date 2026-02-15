@@ -43,7 +43,7 @@ class SetModeService (
         val qq = m.group(FLAG_QQ_ID)?.toLongOrNull()
         val name = m.group(FLAG_NAME)?.trim()
 
-        val isSuper = Permission.isSuperAdmin(event.sender.id)
+        val isSuper = Permission.isSuperAdmin(event.sender.contactID)
 
         data.value = if (qq != null && isSuper) {
             SetModeParam(mode, bindDao.getBindFromQQ(qq, false))
@@ -52,7 +52,7 @@ class SetModeService (
                 ?: throw IllegalArgumentException.WrongException.PlayerName()
             SetModeParam(mode, user)
         } else {
-            SetModeParam(mode, bindDao.getBindFromQQ(event.sender.id, true))
+            SetModeParam(mode, bindDao.getBindFromQQ(event.sender.contactID, true))
         }
         return true
     }
@@ -70,10 +70,10 @@ class SetModeService (
 
         val mode = OsuMode.getMode(m.group(FLAG_MODE))
 
-        val user = bindDao.getBindUserFromOsuIDOrNull(-event.sender.id)
+        val user = bindDao.getBindUserFromOsuIDOrNull(-event.sender.contactID)
             ?:
         run {
-            val osuUser = userApiService.getOsuUser(-event.sender.id)
+            val osuUser = userApiService.getOsuUser(-event.sender.contactID)
             val bindUser = BindUser()
             with(bindUser) {
                 this.userID = osuUser.id

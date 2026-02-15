@@ -4,13 +4,13 @@ class ReplyMessage : Message {
     val id: Long
     val text: String?
 
-    constructor(messageId: Long) {
-        id = messageId
+    constructor(messageID: Long) {
+        id = messageID
         this.text = null
     }
 
-    constructor(messageId: Long, text: String?) {
-        id = messageId
+    constructor(messageID: Long, text: String?) {
+        id = messageID
         this.text = text
     }
 

@@ -92,9 +92,9 @@ class PermissionImplement(
                     }
                     // super 用户不受检查
                     // 是否在黑名单内
-                    if (!isSuper(event.sender.id) && isBlock(serviceName, event)) {
+                    if (!isSuper(event.sender.contactID) && isBlock(serviceName, event)) {
                         // 被黑名单禁止
-                        log.debug("黑名单禁止, 请求功能: {} ,请求人: {}", serviceName, event.sender.id)
+                        log.debug("黑名单禁止, 请求功能: {} ,请求人: {}", serviceName, event.sender.contactID)
                         return@forEach
                     }
 
@@ -166,11 +166,11 @@ class PermissionImplement(
 
 
             return if (event is GroupMessageEvent) {
-                val gid = event.group.id
-                val uid = event.sender.id
+                val gid = event.group.contactID
+                val uid = event.sender.contactID
                 ! (globalPermission.check(gid, uid) && servicePermission.check(gid, uid))
             } else {
-                val uid = event.sender.id
+                val uid = event.sender.contactID
                 ! (globalPermission.check(null, uid) && servicePermission.check(null, uid))
             }
         }

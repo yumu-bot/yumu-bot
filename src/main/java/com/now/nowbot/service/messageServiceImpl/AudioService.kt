@@ -47,7 +47,7 @@ class AudioService(
         val id = idStr?.toLongOrNull()
             ?: run {
                 val last = dao.getLastBeatmapID(
-                    groupID = event.subject.id,
+                    groupID = event.subject.contactID,
                     name = null,
                     from = LocalDateTime.now().minusHours(24L)
                 )

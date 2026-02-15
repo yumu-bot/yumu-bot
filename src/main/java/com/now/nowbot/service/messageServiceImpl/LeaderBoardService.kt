@@ -98,7 +98,7 @@ class LeaderBoardService(
 
     @Throws(Throwable::class)
     override fun handleMessage(event: MessageEvent, param: LeaderBoardParam): ServiceCallStatistic? {
-        val bindUser = bindDao.getBindFromQQOrNull(event.sender.id)
+        val bindUser = bindDao.getBindFromQQOrNull(event.sender.contactID)
 
         val beatmap: Beatmap =
             if (param.bid == null) {
@@ -108,7 +108,7 @@ class LeaderBoardService(
 
                 // 进阶备用方法：先获取之前大家使用的 bid，然后尝试获取谱面
                 val beforeBeatmapID = dao.getLastBeatmapID(
-                    groupID = event.subject.id,
+                    groupID = event.subject.contactID,
                     name = null,
                     from = LocalDateTime.now().minusHours(24L)
                 )

@@ -74,7 +74,7 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
         NoSuchElementException("没有找到这张谱面在线排行榜内的 $type 成绩。")
 
     class LocalBG:
-        UnsupportedOperationException("""
+        NoSuchElementException("""
             获取本地镜像站的单一难度背景失败，正在为您获取谱面背景。
             （如果不同难度用的不同背景，则只能获取到预览图、官网可见的那个背景）
         """.trimIndent())

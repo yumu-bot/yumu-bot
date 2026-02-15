@@ -1,15 +1,13 @@
-package com.now.nowbot.qq.contact;
+package com.now.nowbot.qq.contact
 
-import java.util.List;
+interface Group : Contact {
+    override val name: String?
 
-public interface Group extends Contact {
-    String getName();
+    val isAdmin: Boolean
 
-    boolean isAdmin();
+    val allUser: List<GroupContact>
 
-    GroupContact getUser(long qq);
+    fun getUser(qq: Long): GroupContact
 
-    List<? extends GroupContact> getAllUser();
-
-    void sendFile(byte[] data, String name);
+    fun sendFile(data: ByteArray, name: String)
 }

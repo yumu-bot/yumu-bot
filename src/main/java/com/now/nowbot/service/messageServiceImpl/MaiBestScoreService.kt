@@ -115,7 +115,7 @@ class MaiBestScoreService(
                 }
             } else if (Regex("\\d{1,3}").matches(name)) {
                 data.value =
-                    MaiBestScoreParam(null, event.sender.id, InstructionRange(null, name.toInt(), null))
+                    MaiBestScoreParam(null, event.sender.contactID, InstructionRange(null, name.toInt(), null))
                 return true
             }
 
@@ -125,7 +125,7 @@ class MaiBestScoreService(
         } else if (event.hasAt()) {
             data.value = MaiBestScoreParam(null, event.target, range)
         } else {
-            data.value = MaiBestScoreParam(null, event.sender.id, range, true)
+            data.value = MaiBestScoreParam(null, event.sender.contactID, range, true)
         }
 
         return true

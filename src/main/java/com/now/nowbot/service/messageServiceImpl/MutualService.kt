@@ -42,7 +42,7 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
                 name.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                     .map { this.name2Mutual(name) }
             } else {
-                mutableListOf(qq2Mutual(event.sender.id))
+                mutableListOf(qq2Mutual(event.sender.contactID))
             }
 
         data.value = users
@@ -73,7 +73,7 @@ class MutualService(private val userApiService: OsuUserApiService, private val b
         try {
             val id = userApiService.getOsuID(name)
             return MutualParam(id, null, name)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return MutualParam(null, null, "$name : 找不到玩家或网络错误！")
         }
     }

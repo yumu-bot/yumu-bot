@@ -1,49 +1,53 @@
-package com.now.nowbot.qq.contact;
+package com.now.nowbot.qq.contact
 
-import com.now.nowbot.qq.message.MessageChain;
-import com.now.nowbot.qq.message.MessageReceipt;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
+import com.now.nowbot.qq.message.MessageReceipt
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.net.URL
 
-import java.net.URL;
-import java.util.List;
+interface Contact {
+    val contactID: Long
 
-public interface Contact {
-    Logger log = LoggerFactory.getLogger(Contact.class);
+    val name: String?
 
-    long getId();
+    fun sendMessage(msg: MessageChain): MessageReceipt
 
-    String getName();
-
-    MessageReceipt sendMessage(MessageChain msg);
-
-    default MessageReceipt sendMessage(String msg) {
-        var m = new MessageChain.MessageChainBuilder().addText(msg).build();
-        return sendMessage(m);
+    fun sendMessage(msg: String): MessageReceipt {
+        val m = MessageChainBuilder().addText(msg).build()
+        return sendMessage(m)
     }
 
-    default MessageReceipt sendText(String msg) {
-        return sendMessage(new MessageChain.MessageChainBuilder().addText(msg).build());
+    fun sendText(msg: String): MessageReceipt {
+        return sendMessage(MessageChainBuilder().addText(msg).build())
     }
 
-    default MessageReceipt sendImage(URL url) {
-        return sendMessage(new MessageChain.MessageChainBuilder().addImage(url).build());
+    fun sendImage(url: URL): MessageReceipt {
+        return sendMessage(MessageChainBuilder().addImage(url).build())
     }
 
-    default MessageReceipt sendImage(byte[] data) {
-        return sendMessage(new MessageChain.MessageChainBuilder().addImage(data).build());
+    fun sendImage(data: ByteArray): MessageReceipt {
+        return sendMessage(MessageChainBuilder().addImage(data).build())
     }
 
-    default MessageReceipt sendVoice(byte[] data) {
-        return sendMessage(new MessageChain.MessageChainBuilder().addVoice(data).build());
+    fun sendVoice(data: ByteArray): MessageReceipt {
+        return sendMessage(MessageChainBuilder().addVoice(data).build())
     }
 
-    default void recall(MessageReceipt msg){
+    fun recall(msg: MessageReceipt) {
         try {
-            msg.recall();
-        } catch (Exception ignore) {}
+            msg.recall()
+        } catch (_: Exception) {
+
+        }
     }
-    default void recallIn(MessageReceipt msg , long time){
-        msg.recallIn(time);
+
+    fun recallIn(msg: MessageReceipt, time: Long) {
+        msg.recallIn(time)
+    }
+
+    companion object {
+        val log: Logger = LoggerFactory.getLogger(Contact::class.java)
     }
 }

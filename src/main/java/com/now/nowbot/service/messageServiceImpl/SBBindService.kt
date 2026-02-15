@@ -42,7 +42,7 @@ class SBBindService(
         val m = Instruction.SB_BIND.matcher(messageText)
         if (!m.find()) return false
 
-        val qq = m.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.id
+        val qq = m.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.contactID
 
         val isUnbind = m.group("un") != null || m.group("ub") != null
 
@@ -50,7 +50,7 @@ class SBBindService(
         val id = nameStr?.toLongOrNull()
         val name = if (id == null) nameStr else null
 
-        val isSuper = Permission.isSuperAdmin(event.sender.id)
+        val isSuper = Permission.isSuperAdmin(event.sender.contactID)
 
         data.value = if (event.hasAt()) {
             BindParam(event.target, id, name, true, isUnbind, isSuper)
@@ -62,7 +62,7 @@ class SBBindService(
     }
 
     override fun handleMessage(event: MessageEvent, param: BindParam): ServiceCallStatistic? {
-        val me = event.sender.id
+        val me = event.sender.contactID
 
         if (me == param.qq) {
             if (param.isUnbind) {

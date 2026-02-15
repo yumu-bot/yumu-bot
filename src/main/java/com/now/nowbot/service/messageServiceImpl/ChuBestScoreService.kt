@@ -114,7 +114,7 @@ class ChuBestScoreService(
                 }
             } else if (Regex("\\d{1,3}").matches(name)) {
                 data.value =
-                    ChuBestScoreParam(null, event.sender.id, InstructionRange(null, name.toInt(), null))
+                    ChuBestScoreParam(null, event.sender.contactID, InstructionRange(null, name.toInt(), null))
                 return true
             }
 
@@ -124,7 +124,7 @@ class ChuBestScoreService(
         } else if (event.hasAt()) {
             data.value = ChuBestScoreParam(null, event.target, range)
         } else {
-            data.value = ChuBestScoreParam(null, event.sender.id, range, true)
+            data.value = ChuBestScoreParam(null, event.sender.contactID, range, true)
         }
 
         return true
@@ -134,7 +134,7 @@ class ChuBestScoreService(
         val lxUser = if (param.qq != null) {
             try {
                 lxChunithmApiService.getUser(param.qq)
-            } catch (e: NetworkException) {
+            } catch (_: NetworkException) {
                 null
             }
         } else null

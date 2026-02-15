@@ -677,7 +677,7 @@ class BindDao(
             return OsuMode.DEFAULT
         }
 
-        return osuGroupConfigRepository.findById(event.subject.id).getOrNull()?.mainMode ?: OsuMode.DEFAULT
+        return osuGroupConfigRepository.findById(event.subject.contactID).getOrNull()?.mainMode ?: OsuMode.DEFAULT
     }
 
     fun getBindUsersLimit50(offset: Int): List<BindUser> {

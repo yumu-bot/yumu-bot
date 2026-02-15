@@ -18,7 +18,7 @@ class LocalCommandListener {
 
     fun onMessage(message: String?) {
         val group = LocalGroup()
-        val event = Event.GroupMessageEvent(bot, group, message)
+        val event = Event.GroupMessageEvent(bot, group, message ?: return)
 
         try {
             PermissionImplement.onMessage(event, ({ _, x ->

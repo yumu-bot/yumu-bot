@@ -360,7 +360,7 @@ public class Permission {
     }
 
     public static boolean isSuperAdmin(MessageEvent event) {
-        return superSet.contains(event.getSender().getId());
+        return superSet.contains(event.getSender().getContactID());
     }
 
     /**
@@ -403,8 +403,7 @@ public class Permission {
         if (bot == null) return false;
         Group group;
         if ((group = bot.getGroup(groupID)) == null) return false;
-        GroupContact botMyself;
-        if ((botMyself = group.getUser(bot.getBotID())) == null) return false;
+        GroupContact botMyself = group.getUser(bot.getBotID());
         return botMyself.getRole() == Role.ADMIN || botMyself.getRole() == Role.OWNER;
     }
 
@@ -418,13 +417,12 @@ public class Permission {
         if (bot == null) return false;
         Group group;
         if ((group = bot.getGroup(groupID)) == null) return false;
-        GroupContact member;
-        if ((member = group.getUser(qq)) == null) return false;
+        GroupContact member = group.getUser(qq);
         return member.getRole() == Role.ADMIN || member.getRole() == Role.OWNER;
     }
 
     public static boolean isGroupAdmin(MessageEvent event) {
-        return isGroupAdmin(event.getBot(), event.getSubject().getId(), event.getSender().getId()) || isSuperAdmin(event.getSender().getId());
+        return isGroupAdmin(event.getBot(), event.getSubject().getContactID(), event.getSender().getContactID()) || isSuperAdmin(event.getSender().getContactID());
     }
 
     public static boolean isCommonUser(MessageEvent event) {

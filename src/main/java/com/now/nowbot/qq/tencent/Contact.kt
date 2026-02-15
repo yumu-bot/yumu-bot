@@ -10,25 +10,25 @@ import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.qq.message.ReplyMessage
 import com.yumu.model.packages.Command
 
-class Contact(val UID: Long, val send:(Command.Response) -> Unit) : Group, GroupContact, Stranger {
-    override fun getId() = -UID
+class Contact(val userID: Long, val send:(Command.Response) -> Unit) : Group, GroupContact, Stranger {
+    override val contactID = -userID
 
-    override fun getName() = "QQ用户"
+    override val name = "QQ用户"
 
     override fun sendMessage(msg: MessageChain): MessageReceipt {
         send(YumuServer.messageToResponse(msg))
         return FakeReceipt
     }
 
-    override fun getRole() = Role.MEMBER
+    override val role = Role.MEMBER
 
-    override fun isAdmin() = false
+    override val isAdmin = false
 
     override fun getUser(qq: Long): GroupContact = this
 
-    override fun getAllUser(): MutableList<out GroupContact> = mutableListOf(this)
+    override val allUser: List<GroupContact> = mutableListOf(this)
 
-    override fun sendFile(data: ByteArray?, name: String?) {
+    override fun sendFile(data: ByteArray, name: String) {
         sendText("无法发送文件哦.")
     }
 

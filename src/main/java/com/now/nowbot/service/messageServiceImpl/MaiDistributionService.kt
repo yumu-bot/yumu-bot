@@ -71,12 +71,12 @@ import kotlin.math.min
         } else if (qqStr.isNotBlank()) {
             qqStr.toLong()
         } else {
-            event.sender.id
+            event.sender.contactID
         }
 
         if (nameStr.isNotBlank()) {
             data.value = MaiDistParam(null, nameStr, false)
-        } else if (qq == event.sender.id) {
+        } else if (qq == event.sender.contactID) {
             data.value = MaiDistParam(qq, null, true)
         } else {
             data.value = MaiDistParam(qq, null, false)

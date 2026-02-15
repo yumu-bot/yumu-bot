@@ -73,7 +73,7 @@ object InstructionUtil {
 
         val async = AsyncMethodExecutor.awaitPairCallableExecute(
             { getOsuUser(event, matcher, mode, isMyself) },
-            { bindDao.getBindFromQQOrNull(event.sender.id) }
+            { bindDao.getBindFromQQOrNull(event.sender.contactID) }
         )
 
         user = async.first
@@ -134,7 +134,7 @@ object InstructionUtil {
         } catch (e: BindException) {
             if (isMyself.get() && isAvoidance(messageText, *ignores)) {
                 throw LogException(
-                    "${event.sender.id} 触发了退避指令：${ignores.joinToString(", ")}"
+                    "${event.sender.contactID} 触发了退避指令：${ignores.joinToString(", ")}"
                 )
             } else {
                 throw e
@@ -263,7 +263,7 @@ object InstructionUtil {
         val user = getSBUser(event, matcher, mode, isMyself)
 
         val me: SBBindUser? = try {
-            bindDao.getSBBindFromQQ(event.sender.id, true)
+            bindDao.getSBBindFromQQ(event.sender.contactID, true)
         } catch (_: Exception) {
             null
         }
@@ -325,7 +325,7 @@ object InstructionUtil {
         } catch (e: BindException) {
             if (isMyself.get() && isAvoidance(messageText, *ignores)) {
                 throw LogException(
-                    "${event.sender.id} 触发了退避指令：${ignores.joinToString(", ")}"
+                    "${event.sender.contactID} 触发了退避指令：${ignores.joinToString(", ")}"
                 )
             } else {
                 throw e
@@ -431,7 +431,7 @@ object InstructionUtil {
     ): List<OsuUser> {
         require(matcher.namedGroups().containsKey(FLAG_2_USER)) { "Matcher 中不包含 u2 分组" }
 
-        val myBind = bindDao.getBindFromQQOrNull(event.sender.id)
+        val myBind = bindDao.getBindFromQQOrNull(event.sender.contactID)
 
         setMode(mode, myBind?.mode ?: OsuMode.DEFAULT, event)
 
@@ -505,7 +505,7 @@ object InstructionUtil {
 
             return listOf(you, they)
         } else {
-            val bind = bindDao.getBindFromQQ(event.sender.id, true)
+            val bind = bindDao.getBindFromQQ(event.sender.contactID, true)
 
             setMode(mode, bind.mode, event)
             return listOf(getOsuUser(bind, mode.data))

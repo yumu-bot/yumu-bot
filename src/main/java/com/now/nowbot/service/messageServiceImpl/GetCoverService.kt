@@ -55,7 +55,7 @@ import java.time.LocalDateTime
         }
 
         val bids = if (dataStr.isNullOrBlank()) {
-            val last = dao.getLastBeatmapID(event.subject.id, null, LocalDateTime.now().minusHours(24L))
+            val last = dao.getLastBeatmapID(event.subject.contactID, null, LocalDateTime.now().minusHours(24L))
 
             if (last != null) {
                 listOf(last)

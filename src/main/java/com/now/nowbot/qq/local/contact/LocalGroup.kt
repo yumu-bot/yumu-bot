@@ -1,39 +1,27 @@
-package com.now.nowbot.qq.local.contact;
+package com.now.nowbot.qq.local.contact
 
-import com.now.nowbot.qq.enums.Role;
+import com.now.nowbot.qq.contact.Contact
+import com.now.nowbot.qq.contact.Group
+import com.now.nowbot.qq.enums.Role
 
-import java.util.List;
+class LocalGroup : LocalContact(), Group {
+    override val isAdmin: Boolean
+        get() = true
 
-public class LocalGroup extends LocalContact implements com.now.nowbot.qq.contact.Group {
-    public LocalGroup() {
+    override fun getUser(qq: Long): com.now.nowbot.qq.contact.GroupContact {
+        return GroupContact()
     }
 
-    @Override
-    public boolean isAdmin() {
-        return true;
+    override val allUser: List<GroupContact>
+        get() = listOf()
+
+    override fun sendFile(data: ByteArray, name: String) {
+        val path = super.saveFile(name, data)
+        Contact.log.info("bot: 发送文件 {}", path)
     }
 
-    @Override
-    public com.now.nowbot.qq.contact.GroupContact getUser(long qq) {
-        return new GroupContact();
-    }
-
-    @Override
-    public List<? extends com.now.nowbot.qq.contact.GroupContact> getAllUser() {
-        return List.of();
-    }
-
-    @Override
-    public void sendFile(byte[] data, String name) {
-        var path = super.saveFile(name, data);
-        log.info("bot: 发送文件 {}", path);
-    }
-
-    static class GroupContact extends LocalContact implements com.now.nowbot.qq.contact.GroupContact {
-
-        @Override
-        public Role getRole() {
-            return Role.ADMIN;
-        }
+    class GroupContact : LocalContact(), com.now.nowbot.qq.contact.GroupContact {
+        override val role: Role
+            get() = Role.ADMIN
     }
 }

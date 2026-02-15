@@ -72,7 +72,7 @@ object UserIDUtil {
 
         val async = AsyncMethodExecutor.awaitPairCallableExecute(
             { getUserID(event, matcher, mode, isMyself, maximum) },
-            { bindDao.getBindFromQQOrNull(event.sender.id) }
+            { bindDao.getBindFromQQOrNull(event.sender.contactID) }
         )
 
         userID = async.first
@@ -108,7 +108,7 @@ object UserIDUtil {
             { getSBUserID(event, matcher, mode, isMyself) },
             {
                 try {
-                    bindDao.getSBBindFromQQ(event.sender.id, true)
+                    bindDao.getSBBindFromQQ(event.sender.contactID, true)
                 } catch (_: BindException) {
                     null
                 }
@@ -150,7 +150,7 @@ object UserIDUtil {
             "Matcher 中不包含 u2 分组"
         }
 
-        val me = bindDao.getBindFromQQOrNull(event.sender.id)
+        val me = bindDao.getBindFromQQOrNull(event.sender.contactID)
 
         setMode(mode, me?.mode ?: OsuMode.DEFAULT, event)
 
@@ -190,7 +190,7 @@ object UserIDUtil {
                 return yourID to theyID
             }
             else -> {
-                val bind = bindDao.getBindFromQQ(event.sender.id, true)
+                val bind = bindDao.getBindFromQQ(event.sender.contactID, true)
 
                 setMode(mode, bind.mode, event)
                 return bind.userID to null
@@ -278,7 +278,7 @@ object UserIDUtil {
 
             isMyself.set(true)
 
-            val me = bindDao.getBindFromQQ(event.sender.id)
+            val me = bindDao.getBindFromQQ(event.sender.contactID)
             setMode(mode, me.mode, event)
 
             return InstructionRange(me.userID, range.first, range.second)
@@ -361,7 +361,7 @@ object UserIDUtil {
 
             isMyself.set(true)
 
-            val me = bindDao.getSBBindFromQQ(event.sender.id, true)
+            val me = bindDao.getSBBindFromQQ(event.sender.contactID, true)
             setMode(mode, me.mode, null)
 
             return InstructionRange(me.userID, range.first, range.second)
@@ -440,7 +440,7 @@ object UserIDUtil {
         }
 
         if (qq != 0L) {
-            isMyself.set(qq == event.sender.id)
+            isMyself.set(qq == event.sender.contactID)
 
             val sb = bindDao.getBindFromQQOrNull(qq)
 
@@ -508,7 +508,7 @@ object UserIDUtil {
         }
 
         if (qq != 0L) {
-            isMyself.set(qq == event.sender.id)
+            isMyself.set(qq == event.sender.contactID)
 
             try {
                 val sb = bindDao.getSBBindFromQQ(qq, isMyself.get())

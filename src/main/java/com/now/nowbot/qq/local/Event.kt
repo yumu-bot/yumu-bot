@@ -1,75 +1,47 @@
-package com.now.nowbot.qq.local;
+package com.now.nowbot.qq.local
 
-import com.now.nowbot.qq.Bot;
-import com.now.nowbot.qq.contact.Contact;
-import com.now.nowbot.qq.contact.Group;
-import com.now.nowbot.qq.local.contact.LocalGroup;
-import com.now.nowbot.qq.message.MessageChain;
-import com.now.nowbot.qq.message.TextMessage;
+import com.now.nowbot.qq.Bot
+import com.now.nowbot.qq.contact.Contact
+import com.now.nowbot.qq.contact.Group
+import com.now.nowbot.qq.event.Event
+import com.now.nowbot.qq.local.contact.LocalGroup
+import com.now.nowbot.qq.message.MessageChain
+import com.now.nowbot.qq.message.TextMessage
 
-import java.util.List;
+open class Event internal constructor(override val bot: Bot?) : Event {
 
-public class Event implements com.now.nowbot.qq.event.Event {
-    private final com.now.nowbot.qq.local.Bot bot;
+    open class MessageEvent internal constructor(
+        private val localBot: com.now.nowbot.qq.local.Bot?,
+        val group: LocalGroup,
+        override val textMessage: String,
+    ) : Event, com.now.nowbot.qq.event.MessageEvent {
+        override val bot: Bot?
+            get() = localBot
 
-    Event(com.now.nowbot.qq.local.Bot b) {
-        bot = b;
+        override val subject: Contact
+            get() = group
+
+        override val sender: Contact
+            get() = group
+
+        override val message
+            get() = MessageChain(listOf(TextMessage(this.textMessage)))
+
+        override val rawMessage: String
+            get() = textMessage
     }
 
-    @Override
-    public Bot getBot() {
-        return bot;
-    }
+    class GroupMessageEvent(val localBot: com.now.nowbot.qq.local.Bot?, group: LocalGroup, message: String) :
+        MessageEvent(localBot, group, message), com.now.nowbot.qq.event.GroupMessageEvent {
 
-    static public class MessageEvent extends Event implements com.now.nowbot.qq.event.MessageEvent {
-        private final LocalGroup group;
-        private final String     message;
+        override val bot: Bot?
+            get() = localBot
 
-        MessageEvent(com.now.nowbot.qq.local.Bot b, LocalGroup group, String message) {
-            super(b);
-            this.group = group;
-            this.message = message;
-        }
+        override val subject: Group
+            get() = group
 
-        @Override
-        public Contact getSubject() {
-            return group;
-        }
-
-        @Override
-        public Contact getSender() {
-            return group;
-        }
-
-        @Override
-        public MessageChain getMessage() {
-            return new MessageChain(List.of(new TextMessage(message)));
-        }
-
-        @Override
-        public String getRawMessage() {
-            return message;
-        }
-
-        @Override
-        public String getTextMessage() {
-            return message;
-        }
-    }
-
-    static public class GroupMessageEvent extends MessageEvent implements com.now.nowbot.qq.event.GroupMessageEvent {
-
-        public GroupMessageEvent(com.now.nowbot.qq.local.Bot b, LocalGroup group, String message) {
-            super(b, group, message);
-        }
-
-        @Override
-        public Group getGroup() {
-            return super.group;
-        }
-
-        public Group getSubject() {
-            return super.group;
+        override fun getGroup(): Group {
+            return super.group
         }
     }
 }

@@ -57,8 +57,7 @@ enum class Instruction(val pattern: Pattern) {
 
     SERVICE_SWITCH_ON(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(switch|service)\\s*on", "so")
-        appendQQGroup(true)
-        appendQQ(false)
+        appendQQOrQQGroup()
         appendCaptureGroup(FLAG_SERVICE, "[^\\d#＃]", MORE)
         appendSpace()
         appendHashCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
@@ -66,8 +65,7 @@ enum class Instruction(val pattern: Pattern) {
 
     SERVICE_SWITCH_OFF(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(switch|service)\\s*off", "sf")
-        appendQQGroup(true)
-        appendQQ(false)
+        appendQQOrQQGroup()
         appendCaptureGroup(FLAG_SERVICE, "[^\\d#＃]", MORE)
         appendSpace()
         appendHashCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
@@ -75,16 +73,18 @@ enum class Instruction(val pattern: Pattern) {
 
     SERVICE_SWITCH_LIST(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("(switch|service)\\s*list", "sl")
-        appendQQGroup(true)
-        appendQQ(false)
+        appendQQOrQQGroup()
         appendCaptureGroup(FLAG_SERVICE, "\\D", MORE)
         appendSpace()
         appendHashCaptureGroup(FLAG_NAME, REG_ANYTHING, MORE)
     }),
 
     ECHO(CommandPatternBuilder.create {
-        append("#echo ")
-        appendCaptureGroup(FLAG_ANY, ".*", EXIST, EXIST)
+        append("(#echo\\s*|([!！]\\s*(ym)?(echo|e[co])(?![A-Za-z\\-_])))")
+        appendSpace()
+        appendQQOrQQGroup(true, MORE) {
+            appendCaptureGroup(FLAG_ANY, "(?:(?!(?:group[＝=])?\\d{6,10}\\b).)+", EXIST, EXIST)
+        }
     }),
 
     SERVICE_COUNT(CommandPatternBuilder.create {
@@ -132,8 +132,8 @@ enum class Instruction(val pattern: Pattern) {
         appendCommandsIgnoreAll("(set)?\\s*group\\s*mode", "gm")
         appendColonCaptureGroup(FLAG_MODE, REG_MODE, prefixLevel = MAYBE)
         appendSpace()
-        appendQQ(maybe = true)
-        appendQQGroup(maybe = true)
+        appendQQ(isDefaultGroup = true)
+        appendQQGroup(isDefaultGroup = true)
     }),
 
     SCORE_PR(CommandPatternBuilder.create {
@@ -537,7 +537,7 @@ enum class Instruction(val pattern: Pattern) {
     POPULAR(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("popular\\s*(group)?", "pu", "pg")
         appendMode()
-        appendQQGroup(maybe = true)
+        appendQQGroup(isDefaultGroup = true)
         appendRange()
     }),
 
@@ -980,7 +980,7 @@ enum class Instruction(val pattern: Pattern) {
 // 检查正则
 fun main() {
     for (i in Instruction.entries) {
-        if (i != Instruction.GET_NEWBIE_SCORE) continue
+        if (i != Instruction.ECHO) continue
 
         println("${i.name}: ${i.pattern.pattern()}")
     }

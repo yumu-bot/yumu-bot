@@ -29,16 +29,16 @@ object ASyncMessageUtil {
 
     fun getLock(event: MessageEvent): Lock {
         if (event is GroupMessageEvent) {
-            return getLock(event.group.id, event.sender.id)
+            return getLock(event.group.contactID, event.sender.contactID)
         }
-        return getSenderLock(event.sender.id)
+        return getSenderLock(event.sender.contactID)
     }
 
     fun getLock(event: MessageEvent, offTime: Long, check: ((MessageEvent?) -> Boolean)? = null): Lock {
         if (event is GroupMessageEvent) {
-            return getLock(event.group.id, event.sender.id, offTime, check)
+            return getLock(event.group.contactID, event.sender.contactID, offTime, check)
         }
-        return getSenderLock(event.sender.id, offTime, check)
+        return getSenderLock(event.sender.contactID, offTime, check)
     }
 
     fun getSenderLock(send: Long, offTime: Long, check: ((MessageEvent?) -> Boolean)? = null): Lock {
@@ -79,15 +79,15 @@ object ASyncMessageUtil {
         return when(message) {
             is GroupMessageEvent -> {
                 if (send == null) {
-                    message.subject.id == group
+                    message.subject.contactID == group
                 } else {
-                    message.subject.id == group && message.sender.id == send
+                    message.subject.contactID == group && message.sender.contactID == send
                 }
             }
 
             null -> false
 
-            else -> (group == null && message.sender.id == send)
+            else -> (group == null && message.sender.contactID == send)
         }
     }
 

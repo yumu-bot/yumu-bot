@@ -3,6 +3,7 @@ package com.now.nowbot.util.command
 import org.intellij.lang.annotations.Language
 import java.util.regex.Pattern
 import com.now.nowbot.util.command.MatchLevel.*
+import kotlin.collections.joinToString
 
 class CommandPatternBuilder private constructor(start: String? = null) {
 
@@ -133,22 +134,6 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
-     * 加 qq=(?<qq>\d+) 的匹配。
-     * @param maybe 如果设置为真，则可以只匹配数字作为群号，不需要输入 qq=
-     */
-    fun appendQQ(maybe: Boolean = false) {
-        appendGroup(MAYBE) {
-            append("($FLAG_QQ_ID)")
-            if (maybe) append(LEVEL_MAYBE)
-            append(REG_EQUAL)
-            if (maybe) append(LEVEL_MAYBE)
-            // qq起码5位
-            appendCaptureGroup(FLAG_QQ_ID, REG_NUMBER, MORE, EXIST)
-        }
-        appendSpace()
-    }
-
-    /**
      * 加 (?<id>\d+) 的匹配。
      */
     fun appendID() {
@@ -157,17 +142,68 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
-     * group=(?<group>\d+)
-     * @param maybe 如果设置为真，则可以只匹配数字作为群号，不需要输入 group=
+     * @param isDefaultGroup 如果为真，则只输入号码的时候默认为群
+     * @param bodyLevel 如果是 (?: A | B | C)，必须要改成 + 号（MORE
+     * @param function 和前面的同级匹配，但是靠后匹配，此时会优先匹配 isDefaultGroup 的内容
      */
-    fun appendQQGroup(maybe: Boolean = false) {
-        appendGroup(MAYBE) {
-            append("($FLAG_QQ_GROUP)")
-            if (maybe) append(LEVEL_MAYBE)
-            append(REG_EQUAL)
-            if (maybe) append(LEVEL_MAYBE)
-            appendCaptureGroup(FLAG_QQ_GROUP, REG_NUMBER, MORE, EXIST)
+    fun appendQQOrQQGroup(isDefaultGroup: Boolean = true, bodyLevel: MatchLevel = EXIST, function: CommandPatternBuilder.() -> Unit = {}) {
+        appendNonCaptureGroup(bodyLevel) {
+            appendQQGroup(isDefaultGroup, EXIST)
+            append(CHAR_SEPARATOR)
+            appendQQ(!isDefaultGroup, EXIST)
+            append(CHAR_SEPARATOR)
+            function()
         }
+    }
+
+    /**
+     * 加 qq=(?<qq>\d+) 的匹配。
+     * @param isDefaultGroup 如果设置为真，则可以只匹配数字作为群号，不需要输入 qq=
+     * @param bodyLevel 一般不动它，在 (?: A | B | C) 的时候才需要改成 EXIST
+     */
+    fun appendQQ(isDefaultGroup: Boolean = false, bodyLevel: MatchLevel = MAYBE) {
+
+        append(CHAR_GROUP_START)
+        appendNonCaptureGroup(
+            if (isDefaultGroup) {
+                MAYBE
+            } else {
+                EXIST
+            }
+        ) {
+            append(FLAG_QQ_ID)
+            append(REG_EQUAL)
+        }
+
+        appendCaptureGroup(FLAG_QQ_ID, REG_QQ, EXIST, EXIST)
+        append(CHAR_GROUP_END)
+        appendMatchLevel(bodyLevel)
+
+        appendSpace()
+    }
+
+    /**
+     * group=(?<group>\d+)
+     * @param isDefaultGroup 如果设置为真，则可以只匹配数字作为群号，不需要输入 group=
+     * @param bodyLevel 一般不动它，在 (?: A | B | C) 的时候才需要改成 EXIST
+     */
+    fun appendQQGroup(isDefaultGroup: Boolean = false, bodyLevel: MatchLevel = MAYBE) {
+        append(CHAR_GROUP_START)
+        appendNonCaptureGroup(
+            if (isDefaultGroup) {
+                MAYBE
+            } else {
+                EXIST
+            }
+        ) {
+            append(FLAG_QQ_GROUP)
+            append(REG_EQUAL)
+        }
+
+        appendCaptureGroup(FLAG_QQ_GROUP, REG_QQ, EXIST, EXIST)
+        append(CHAR_GROUP_END)
+        appendMatchLevel(bodyLevel)
+
         appendSpace()
     }
 
@@ -496,6 +532,32 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     }
 
     /**
+     * 添加一个非捕获租，它的结构是 (?:...)
+     */
+    fun appendNonCaptureGroup(level: MatchLevel = EXIST, @Language("RegExp") vararg strs: String) {
+        append(CHAR_GROUP_START)
+        append(CHAR_QUESTION)
+        append(CHAR_HASH)
+        appendSeparator(*strs)
+        append(CHAR_GROUP_END)
+        appendMatchLevel(level)
+        appendSpace()
+    }
+
+    /**
+     * 添加一个非捕获租，它的结构是 (?:...)
+     */
+    fun appendNonCaptureGroup(level: MatchLevel = EXIST, function: CommandPatternBuilder.() -> Unit) {
+        append(CHAR_GROUP_START)
+        append(CHAR_QUESTION)
+        append(CHAR_COLON)
+        function()
+        append(CHAR_GROUP_END)
+        appendMatchLevel(level)
+        appendSpace()
+    }
+
+    /**
      * 添加一个捕获组, 展开后就是 (? < name >...)?。
      * @param flag 组名
      * @param str 正则
@@ -538,6 +600,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
         appendCaptureGroup(flag, str, EXIST, MAYBE)
     }
 
+
     /**
      * 创建一个组, 展开后就是 (...)
      * @param group 执行一段添加组的操作
@@ -555,7 +618,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
      */
     fun appendGroup(level: MatchLevel = EXIST, @Language("RegExp") vararg strs: String) {
         append(CHAR_GROUP_START)
-        appendSeperator(*strs)
+        appendSeparator(*strs)
         append(CHAR_GROUP_END)
         appendMatchLevel(level)
     }
@@ -571,7 +634,7 @@ class CommandPatternBuilder private constructor(start: String? = null) {
     /**
      * 用分隔符来将多个隔开。a, b, c -> **a|b|c**
      */
-    fun appendSeperator(@Language("RegExp") vararg strs: String) {
+    fun appendSeparator(@Language("RegExp") vararg strs: String) {
         append(strs.joinToString(CHAR_SEPARATOR.toString()))
     }
 

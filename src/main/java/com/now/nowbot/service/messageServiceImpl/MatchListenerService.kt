@@ -51,7 +51,7 @@ class MatchListenerService(
 
         val id = matcher.group("matchid")?.toLongOrNull()
         val skip = matcher.group("skip")?.toIntOrNull() ?: 0
-        val isSuper = Permission.isSuperAdmin(event.sender.id)
+        val isSuper = Permission.isSuperAdmin(event.sender.contactID)
 
         if (operate == Operation.STOP) {
             if (id == null) {
@@ -60,7 +60,7 @@ class MatchListenerService(
                     event.reply(MatchListenerException(MatchListenerException.Type.ML_Listen_StopAll))
                     return false
                 } else {
-                    stopGroupListener(event.subject.id, false)
+                    stopGroupListener(event.subject.contactID, false)
                     event.reply(MatchListenerException(MatchListenerException.Type.ML_Listen_StopGroup))
                     return false
                 }
@@ -87,7 +87,7 @@ class MatchListenerService(
 
         when (param.operate) {
             Operation.INFO -> {
-                val list = listenerData.filter { it.groupID == event.group.id }.map { it.listener.matchID }
+                val list = listenerData.filter { it.groupID == event.group.contactID }.map { it.listener.matchID }
                 val message =
                     if (list.isEmpty()) {
                         MatchListenerException.Type.ML_Info_NoListener.message
@@ -120,15 +120,15 @@ class MatchListenerService(
             }
 
             Operation.STOP -> {
-                cancelListener(event.group.id, param.id, Permission.isSuperAdmin(event.sender.id))
+                cancelListener(event.group.contactID, param.id, Permission.isSuperAdmin(event.sender.contactID))
             }
 
             else -> {}
         }
 
         registerListener(
-            event.group.id,
-            event.sender.id,
+            event.group.contactID,
+            event.sender.contactID,
             MatchListenerImplement(
                 beatmapApiService,
                 matchApiService,
@@ -198,7 +198,7 @@ class MatchListenerService(
                     .trimIndent()
             messageEvent.reply(message)
             val lock =
-                ASyncMessageUtil.getLock(messageEvent.subject.id, null, 60 * 1000) {
+                ASyncMessageUtil.getLock(messageEvent.subject.contactID, null, 60 * 1000) {
                     it?.rawMessage?.contains(matchID.toString()) == true
                 }
             return lock.get() != null
@@ -219,7 +219,7 @@ class MatchListenerService(
         override fun onGameStart(event: MatchAdapter.GameStartEvent) =
             with(event) {
                 if (!isTeamVS && !hasNext()) {
-                    cancelListener(messageEvent.subject.id, matchID, false)
+                    cancelListener(messageEvent.subject.contactID, matchID, false)
                 }
 
                 val isSkipping = skip >= match.events.count { it.round != null }
@@ -317,7 +317,7 @@ class MatchListenerService(
         override fun onMatchEnd(type: MatchListener.StopType) {
             if (type == MatchListener.StopType.SERVER_REBOOT || type == MatchListener.StopType.USER_STOP) return
 
-            cancelListener(messageEvent.subject.id, matchID, false)
+            cancelListener(messageEvent.subject.contactID, matchID, false)
 
             val message =
                 String.format(
@@ -339,7 +339,7 @@ class MatchListenerService(
                 is TipsRuntimeException -> {
                     // 监听提示, 忽略
                     log.error(e) { "比赛监听：提示" }
-                    messageEvent.reply(e.message)
+                    messageEvent.reply(e)
                     return
                 }
 
@@ -355,13 +355,13 @@ class MatchListenerService(
             if (other !is MatchListenerImplement) return false
 
             if (matchID != other.matchID) return false
-            if (messageEvent.subject.id != other.messageEvent.subject.id) return false
+            if (messageEvent.subject.contactID != other.messageEvent.subject.contactID) return false
 
             return true
         }
 
         override fun hashCode(): Int {
-            var result = messageEvent.subject.id.hashCode()
+            var result = messageEvent.subject.contactID.hashCode()
             result = 31 * result + matchID.hashCode()
             return result
         }

@@ -15,6 +15,8 @@ const val CHAR_GROUP_START: Char = '('
 const val CHAR_GROUP_END: Char = ')'
 const val CHAR_SLASH: Char = '/'
 const val CHAR_BACK_SLASH: Char = '\\'
+const val CHAR_COLON: Char = ':'
+const val CHAR_QUESTION: Char = '?'
 
 const val LEVEL_MAYBE: Char = '?'
 const val LEVEL_ANY: Char = '*'
@@ -98,6 +100,9 @@ val REG_NUMBER_15: String = "\\d{1,5}"
  */
 @Language("RegExp")
 val REG_NUMBER: String = "\\d"
+
+@Language("RegExp")
+val REG_QQ: String = "\\d{6,10}"
 
 @Language("RegExp")
 val REG_NUMBER_MORE: String = "\\d+"

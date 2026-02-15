@@ -96,8 +96,8 @@ class ServiceCallStatistic(
             }
             val result = ServiceCallStatistic(
                 param = param,
-                userID = event.sender.id,
-                groupID = event.subject.id,
+                userID = event.sender.contactID,
+                groupID = event.subject.contactID,
             )
             result.other()
             return result

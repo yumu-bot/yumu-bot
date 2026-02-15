@@ -8,22 +8,22 @@ import com.now.nowbot.qq.message.MessageChain
 
 class Event(
     val user: com.now.nowbot.qq.tencent.Contact,
-    val message: String
+    val messageString: String
 ) : GroupMessageEvent {
     val chain by lazy {
-        MessageChain(message)
+        MessageChain(messageString)
     }
 
-    override fun getBot(): Bot? = null
+    override val bot: Bot? = null
 
-    override fun getSubject(): Group = user
+    override val message: MessageChain = chain
 
-    override fun getSender(): Contact = user
+    override val subject: Group = user
 
-    override fun getMessage(): MessageChain = chain
+    override val sender: Contact = user
 
-    override fun getRawMessage(): String = message
+    override val rawMessage: String = messageString
 
-    override fun getTextMessage(): String = message
+    override val textMessage: String = messageString
 
 }

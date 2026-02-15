@@ -74,7 +74,7 @@ class TopPlaysService(
     private fun getParam(event: MessageEvent, matcher: Matcher): TopPlaysParam {
         val page = matcher.group(FLAG_PAGE)?.toIntOrNull()?.coerceIn(1, 20) ?: 1
 
-        val user = bindDao.getBindFromQQOrNull(event.sender.id)
+        val user = bindDao.getBindFromQQOrNull(event.sender.contactID)
 
         val mode = OsuMode.getMode(
             OsuMode.getMode(matcher.group(FLAG_MODE)),

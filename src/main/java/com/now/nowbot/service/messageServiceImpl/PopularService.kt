@@ -171,11 +171,11 @@ class PopularService(
 
         if (ranges == null) {
             if (group == null) {
-                groupID = event.subject.id
+                groupID = event.subject.contactID
                 start = 0
                 end = 1
             } else if (group < 1e6) {
-                groupID = event.subject.id
+                groupID = event.subject.contactID
                 start = 0
                 end = (group.toInt()).coerceAtLeast(2)
             } else {
@@ -184,11 +184,11 @@ class PopularService(
                 end = 1
             }
         } else if (ranges.size == 2) {
-            groupID = group ?: event.subject.id
+            groupID = group ?: event.subject.contactID
             start = 0
             end = ranges.firstOrNull()?.toIntOrNull() ?: 1
         } else {
-            groupID = group ?: event.subject.id
+            groupID = group ?: event.subject.contactID
             start = ranges.firstOrNull()?.toIntOrNull() ?: 0
             end = ranges.lastOrNull()?.toIntOrNull() ?: 1
         }
@@ -203,12 +203,12 @@ class PopularService(
 
     override fun handleMessage(event: MessageEvent, param: PopularParam): ServiceCallStatistic? {
 
-        val me = bindDao.getBindFromQQOrNull(event.sender.id)
+        val me = bindDao.getBindFromQQOrNull(event.sender.contactID)
 
         val mode = OsuMode.getMode(param.mode, me?.mode, bindDao.getGroupModeConfig(event))
 
         val bot = try {
-            botContainer.robots[event.bot.botID] ?: throw TipsException("流行谱面：机器人为空")
+            botContainer.robots[event.bot!!.botID] ?: throw TipsException("流行谱面：机器人为空")
         } catch (e: Exception) {
             log.info("流行谱面：机器人为空", e)
             throw NoSuchElementException("机器人实例为空。")

@@ -11,40 +11,34 @@ import com.now.nowbot.qq.onebot.contact.Group
 import java.net.MalformedURLException
 import java.net.URI
 
-open class MessageEvent(val event: MessageEvent, bot: Bot?) : Event(bot),
-    com.now.nowbot.qq.event.MessageEvent {
-    override fun getSubject(): Contact {
-        if (event is GroupMessageEvent) {
-            return Group(bot.trueBot, event.groupId)
-        }
-        return Contact(bot.trueBot, event.userId)
-    }
-
-    override fun getSender(): Contact {
-        return if (event is GroupMessageEvent) {
-            Group(bot.trueBot, event.sender.userId)
+open class MessageEvent(val event: MessageEvent, bot: Bot): Event(bot), com.now.nowbot.qq.event.MessageEvent {
+    override val subject: Contact
+        get() = if (event is GroupMessageEvent) {
+            Group(bot!!.trueBot, event.groupId)
         } else {
-            Contact(bot.trueBot, event.userId)
+            Contact(bot!!.trueBot, event.userId)
         }
-    }
 
-    override fun getMessage(): MessageChain {
-        return getMessageChain(event.arrayMsg)
-    }
+    override val sender : Contact
+        get() = if (event is GroupMessageEvent) {
+            Group(bot!!.trueBot, event.sender.userId)
+        } else {
+            Contact(bot!!.trueBot, event.userId)
+        }
 
-    override fun getRawMessage(): String {
-        return event.rawMessage
-    }
+    override val message: MessageChain
+        get() = getMessageChain(event.arrayMsg)
 
-    override fun getTextMessage(): String {
-        return message.messageList
+    override val rawMessage: String
+        get() = event.rawMessage
+
+    override val textMessage: String
+        get() = message.messageList
             .filterIsInstance<TextMessage>()
             .joinToString("") { it.toString() }
-    }
 
     companion object {
 
-        @JvmStatic
         fun getMessageChain(messages: List<ArrayMsg>): MessageChain {
             val msg = messages.map {
                 return@map when (it.type) {

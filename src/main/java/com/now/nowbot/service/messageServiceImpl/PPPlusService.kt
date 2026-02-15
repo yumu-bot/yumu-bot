@@ -44,7 +44,7 @@ class PPPlusService(
         val a1 = matcher.group("area1")?.ifBlank { null }
         val a2 = matcher.group("area2")?.ifBlank { null }
 
-        val me = bindDao.getBindFromQQ(event.sender.id, true)
+        val me = bindDao.getBindFromQQ(event.sender.contactID, true)
 
         try {
             when (cmd.lowercase()) {

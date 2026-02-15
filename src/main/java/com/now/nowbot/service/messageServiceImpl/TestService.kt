@@ -18,7 +18,7 @@ class TestService(
         messageText: String,
         data: MessageService.DataValue<String>
     ): Boolean {
-        if (messageText.contains("!yuumu") && Permission.isSuperAdmin(event.sender.id)) {
+        if (messageText.contains("!yuumu") && Permission.isSuperAdmin(event.sender.contactID)) {
             data.value = messageText.replace("!yuumu", "")
             return true
         } else {

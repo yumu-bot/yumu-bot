@@ -114,10 +114,10 @@ class MaiVersionScoreService(
         val qq = if (event.hasAt()) {
             event.target
         } else {
-            matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.id
+            matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.contactID
         }
 
-        if (qq == event.sender.id) {
+        if (qq == event.sender.contactID) {
             if (nameStr.isNotEmpty()) {
                 if (versionStr.isNotEmpty()) {
                     val (v, p) = getPairStr(versionStr)

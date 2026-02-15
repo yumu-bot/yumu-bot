@@ -17,28 +17,19 @@ object QQMsgUtil {
     private var LocalUrl: String? = null
     private var PublicUrl: String? = null
 
-    @JvmStatic fun init(yumuConfig: YumuConfig) {
+    fun init(yumuConfig: YumuConfig) {
         LocalBotList = yumuConfig.privateDevice
         LocalUrl = "${yumuConfig.privateUrl}/pub/file/%s"
         PublicUrl = "${yumuConfig.publicUrl}/pub/file/%s"
     }
 
-    @JvmStatic fun byte2str(data: ByteArray?): String {
+    fun byte2str(data: ByteArray?): String {
         if (Objects.isNull(data)) return ""
         return base64Util.encodeToString(data)
     }
 
     inline fun <reified T : Message> getType(msg: MessageChain, clazz: Class<T>): T? {
         return msg.messageList.filter { clazz.isAssignableFrom(it.javaClass) }.filterIsInstance<T>().firstOrNull()
-    }
-
-    @Deprecated("replace with MessageChain()", ReplaceWith("MessageChain()", "com/now/nowbot/qq/message/MessageChain.kt"))
-    fun getImage(image: ByteArray): MessageChain {
-        return MessageChainBuilder().addImage(image).build()
-    }
-    @Deprecated("replace with MessageChain()", ReplaceWith("MessageChain()", "com/now/nowbot/qq/message/MessageChain.kt"))
-    fun getTextAndImage(text: String, image: ByteArray): MessageChain {
-        return MessageChainBuilder().addText(text).addImage(image).build()
     }
 
     fun getImages(images: List<ByteArray>): List<MessageChain> {
@@ -91,7 +82,7 @@ object QQMsgUtil {
         from.sendMessage(MessageChainBuilder().addImage(image).addText(text).build())
     }
 
-    fun sendGroupFile(event: MessageEvent, name: String?, data: ByteArray?) {
+    fun sendGroupFile(event: MessageEvent, name: String?, data: ByteArray) {
         val from = event.subject
 
         if (from is Group) {
@@ -99,36 +90,36 @@ object QQMsgUtil {
         }
     }
 
-    fun sendGroupFile(group: Group, name: String?, data: ByteArray?) {
-        group.sendFile(data, name)
+    fun sendGroupFile(group: Group, name: String?, data: ByteArray) {
+        group.sendFile(data, name?: "Yumu-file")
     }
 
-    @JvmStatic fun getFileUrl(data: ByteArray, name: String?): String {
+    fun getFileUrl(data: ByteArray, name: String?): String {
         val key = UUID.randomUUID().toString()
         FILE_DATA[key] = FileData(name, ByteBuffer.wrap(data))
         return String.format(LocalUrl!!, key)
     }
 
-    @JvmStatic fun getFilePubUrl(data: ByteArray, name: String?): String {
+    fun getFilePubUrl(data: ByteArray, name: String?): String {
         val key = UUID.randomUUID().toString()
         FILE_DATA[key] = FileData(name, ByteBuffer.wrap(data))
         return String.format(PublicUrl!!, key)
     }
 
-    @JvmStatic fun getFileData(key: String): FileData? {
+    fun getFileData(key: String): FileData? {
         return FILE_DATA[key]
     }
 
-    @JvmStatic fun removeFileUrl(url: String) {
+    fun removeFileUrl(url: String) {
         val index = url.lastIndexOf("/pub/file") + 10
         val key = url.substring(index)
         println(key)
         FILE_DATA.remove(key)
     }
 
-    @JvmStatic fun botInLocal(botQQ: Long): Boolean {
+    fun botInLocal(botQQ: Long): Boolean {
         return LocalBotList!!.contains(botQQ)
     }
 
-    @JvmRecord data class FileData(val name: String?, val bytes: ByteBuffer)
+    data class FileData(val name: String?, val bytes: ByteBuffer)
 }

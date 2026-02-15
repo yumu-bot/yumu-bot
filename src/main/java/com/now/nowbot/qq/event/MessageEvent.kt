@@ -1,134 +1,141 @@
-package com.now.nowbot.qq.event;
+package com.now.nowbot.qq.event
 
-import com.now.nowbot.qq.contact.Contact;
-import com.now.nowbot.qq.contact.Group;
-import com.now.nowbot.qq.message.*;
-import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException;
-import org.springframework.lang.Nullable;
+import com.now.nowbot.qq.contact.Contact
+import com.now.nowbot.qq.contact.Group
+import com.now.nowbot.qq.message.*
+import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
+import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationException.NotGroup
+import java.net.URL
 
-import java.net.URL;
-import java.util.Optional;
+interface MessageEvent : Event {
+    val subject: Contact
 
-public interface MessageEvent extends Event{
-    Contact getSubject();
+    val sender: Contact
 
-    Contact getSender();
+    val message: MessageChain
 
-    MessageChain getMessage();
-
-    default MessageReceipt reply(MessageChain message) {
-        return getSubject().sendMessage(message);
+    fun reply(message: MessageChain): MessageReceipt {
+        return this.subject.sendMessage(message)
     }
 
-    default MessageReceipt reply(String message) {
-        return getSubject().sendMessage(message);
+    fun reply(message: String): MessageReceipt {
+        return this.subject.sendMessage(message)
     }
 
-    default MessageReceipt reply(Exception e) {
-        return getSubject().sendMessage(e.getMessage());
+    fun reply(e: Throwable): MessageReceipt {
+        return this.subject.sendMessage(e.message ?: "")
     }
 
-    default MessageReceipt reply(byte[] image) {
-        return getSubject().sendImage(image);
+    fun reply(image: ByteArray): MessageReceipt {
+        return this.subject.sendImage(image)
     }
 
-    default MessageReceipt reply(byte[] image, String message) {
-        return getSubject().sendMessage(new MessageChain.MessageChainBuilder().addImage(image).addText(message).build());
+    fun reply(image: ByteArray?, message: String): MessageReceipt {
+        return this.subject.sendMessage(MessageChainBuilder().addImage(image).addText(message).build())
     }
 
-    default MessageReceipt reply(URL url) {
-        return getSubject().sendImage(url);
+    fun reply(url: URL): MessageReceipt {
+        return this.subject.sendImage(url)
     }
 
-    default MessageReceipt replyVoice(byte[] voice) {
-        return getSubject().sendVoice(voice);
+    fun replyVoice(voice: ByteArray): MessageReceipt {
+        return this.subject.sendVoice(voice)
     }
 
-    default MessageReceipt replyInGroup(MessageChain message) {
-        if (getSubject() instanceof Group group) {
-            return group.sendMessage(message);
+    fun replyInGroup(message: MessageChain): MessageReceipt {
+        val sub = this.subject
+
+        if (sub is Group) {
+            return sub.sendMessage(message)
         } else {
-            throw new UnsupportedOperationException.NotGroup();
+            throw NotGroup()
         }
     }
 
-    default MessageReceipt replyInGroup(String message) {
-        if (getSubject() instanceof Group group) {
-            return group.sendMessage(message);
+    fun replyInGroup(message: String): MessageReceipt {
+        val sub = this.subject
+
+        if (sub is Group) {
+            return sub.sendMessage(message)
         } else {
-            throw new UnsupportedOperationException.NotGroup();
+            throw NotGroup()
         }
     }
 
-    default MessageReceipt replyInGroup(Exception e) {
-        if (getSubject() instanceof Group group) {
-            return group.sendMessage(e.getMessage());
+    fun replyInGroup(e: Exception): MessageReceipt {
+        val sub = this.subject
+
+        if (sub is Group) {
+            return sub.sendMessage(e.message ?: "")
         } else {
-            throw new UnsupportedOperationException.NotGroup();
+            throw NotGroup()
         }
     }
 
-    default MessageReceipt replyInGroup(byte[] image) {
-        if (getSubject() instanceof Group group) {
-            return group.sendImage(image);
+    fun replyInGroup(image: ByteArray): MessageReceipt {
+        val sub = this.subject
+
+        if (sub is Group) {
+            return sub.sendImage(image)
         } else {
-            throw new UnsupportedOperationException.NotGroup();
+            throw NotGroup()
         }
     }
 
-    default MessageReceipt replyInGroup(URL image) {
-        if (getSubject() instanceof Group group) {
-            return group.sendImage(image);
+    fun replyInGroup(image: URL): MessageReceipt {
+        val sub = this.subject
+
+        if (sub is Group) {
+            return sub.sendImage(image)
         } else {
-            throw new UnsupportedOperationException.NotGroup();
+            throw NotGroup()
         }
     }
 
-    default void replyFileInGroup(byte[] data, @Nullable String name) {
-        if (getSubject() instanceof Group group) {
-            group.sendFile(data, Optional.ofNullable(name).orElse("Yumu-file"));
+    fun replyFileInGroup(data: ByteArray, name: String?) {
+        val sub = this.subject
+
+        if (sub is Group) {
+            sub.sendFile(data, name ?: "Yumu-file")
         } else {
-            throw new UnsupportedOperationException.NotGroup();
+            throw NotGroup()
         }
     }
 
-    String getRawMessage();
+    val rawMessage: String
 
-    String getTextMessage();
+    val textMessage: String
 
-    // 这个太常用了，所以写进来了，本来是 QQMsgUtil 的 getType
-    @Nullable
-    @SuppressWarnings("unchecked")
-    private static <T extends Message> T getMessageType(MessageEvent event, Class<T> T) {
-        return (T) event.getMessage().getMessageList().stream().filter(m -> T.isAssignableFrom(m.getClass())).findFirst().orElse(null);
+    val image: ImageMessage?
+        get() = getMessageType<ImageMessage>()
+
+    fun hasImage(): Boolean {
+        return this.image != null
     }
 
-    @Nullable
-    default ImageMessage getImage() {
-        return getMessageType(this, ImageMessage.class);
+    val at: AtMessage?
+        get() = getMessageType<AtMessage>()
+
+    fun hasAt(): Boolean {
+        return this.at != null
     }
 
-    default boolean hasImage() {
-        return getImage() != null;
+    val replyMessage: ReplyMessage?
+        get() = getMessageType<ReplyMessage>()
+
+    fun hasReply(): Boolean {
+        return this.replyMessage != null
     }
 
-    @Nullable
-    default AtMessage getAt() {
-        return getMessageType(this, AtMessage.class);
-    }
+    val target: Long
+        get() = this.at?.target ?: 0L
 
-    default boolean hasAt() {
-        return getAt() != null;
-    }
-
-    @Nullable
-    default ReplyMessage getReplyMessage() { return getMessageType(this, ReplyMessage.class); }
-
-    default long getTarget() {
-        if (getAt() != null) {
-            return getAt().getTarget();
-        } else {
-            return 0L;
+    companion object {
+        // 这个太常用了，所以写进来了，本来是 QQMsgUtil 的 getType
+        private inline fun <reified T : Message> MessageEvent.getMessageType(): T? {
+            return this.message.messageList
+                .filterIsInstance<T>()
+                .firstOrNull()
         }
     }
 }

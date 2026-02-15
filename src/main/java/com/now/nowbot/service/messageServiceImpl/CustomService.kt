@@ -66,7 +66,7 @@ class CustomService(
         val operate = CustomOperate.getOperate(matcher.group("operate"))
         val type = UserProfile.UserProfileType.getType(matcher.group("type"))
 
-        val id = bindDao.getBindFromQQ(event.sender.id).userID
+        val id = bindDao.getBindFromQQ(event.sender.contactID).userID
 
         return when (operate) {
             ADD -> if (event.hasImage() && !event.image?.path.isNullOrEmpty()) {

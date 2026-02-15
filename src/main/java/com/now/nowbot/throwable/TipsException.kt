@@ -1,19 +1,17 @@
 package com.now.nowbot.throwable
 
 open class TipsException : Exception, BotException {
-    override var message: String? = null
+    override var message: String? = ""
         get() {
-            return if (field != null) {
-                field!!
-            } else {
+            return field?.ifBlank {
                 super.message!!
-            }
+            } ?: super.message!!
         }
     final override var image: ByteArray? = null
 
     constructor()
 
-    constructor(message: String?) {
+    constructor(message: String) {
         this.message = message
     }
 

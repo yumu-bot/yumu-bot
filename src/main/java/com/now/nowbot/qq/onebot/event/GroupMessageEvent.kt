@@ -1,28 +1,26 @@
-package com.now.nowbot.qq.onebot.event;
+package com.now.nowbot.qq.onebot.event
 
-import com.mikuac.shiro.core.Bot;
-import com.now.nowbot.qq.onebot.contact.Group;
-import com.now.nowbot.qq.onebot.contact.Contact;
-import com.now.nowbot.qq.onebot.contact.GroupContact;
+import com.mikuac.shiro.core.Bot
+import com.mikuac.shiro.dto.event.message.GroupMessageEvent
+import com.now.nowbot.qq.onebot.contact.Group
+import com.now.nowbot.qq.onebot.contact.GroupContact
 
-public class GroupMessageEvent extends MessageEvent implements com.now.nowbot.qq.event.GroupMessageEvent {
-    com.mikuac.shiro.dto.event.message.GroupMessageEvent event;
-    public GroupMessageEvent(Bot bot, com.mikuac.shiro.dto.event.message.GroupMessageEvent event) {
-        super(event, bot);
-        this.event = event;
+class GroupMessageEvent(bot: Bot, val groupEvent: GroupMessageEvent) : MessageEvent(
+    groupEvent, bot
+), com.now.nowbot.qq.event.GroupMessageEvent {
+    override fun getGroup(): Group {
+        return Group(bot!!.trueBot, groupEvent.groupId)
     }
 
-    @Override
-    public Group getGroup() {
-        return new Group(getBot().getTrueBot(), event.getGroupId());
-    }
+    override val sender: GroupContact
+        get() = GroupContact(
+            bot!!.trueBot,
+            groupEvent.sender.userId,
+            groupEvent.groupId,
+            groupEvent.sender.nickname,
+            groupEvent.sender.role
+        )
 
-    public GroupContact getSender() {
-        return new GroupContact(getBot().getTrueBot(), event.getSender().getUserId(), event.getSender().getNickname(), event.getSender().getRole(), event.getGroupId());
-    }
-
-    @Override
-    public Group getSubject() {
-        return new Group(getBot().getTrueBot(), event.getGroupId());
-    }
+    override val subject: Group
+        get() = Group(bot!!.trueBot, groupEvent.groupId)
 }

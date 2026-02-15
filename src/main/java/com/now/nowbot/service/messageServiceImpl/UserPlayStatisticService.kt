@@ -24,7 +24,7 @@ class UserPlayStatisticService(
         if (!matcher.find()) {
             return false
         }
-        data.value = event.sender.id
+        data.value = event.sender.contactID
         return true
     }
 

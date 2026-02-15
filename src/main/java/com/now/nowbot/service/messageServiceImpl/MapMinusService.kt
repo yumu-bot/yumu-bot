@@ -88,7 +88,7 @@ import kotlin.math.absoluteValue
         val modsList: List<LazerMod> = LazerMod.getModsList(matcher.group(FLAG_MOD))
 
         val bid = matcher.group("bid")?.toLongOrNull()
-            ?: dao.getLastBeatmapID(event.subject.id, name = null, LocalDateTime.now().minusHours(24))
+            ?: dao.getLastBeatmapID(event.subject.contactID, name = null, LocalDateTime.now().minusHours(24))
             ?: throw IllegalArgumentException.WrongException.BeatmapID()
 
         val rate = matcher.group("rate")?.toDoubleOrNull() ?: 1.0

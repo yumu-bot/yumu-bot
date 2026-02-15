@@ -16,20 +16,9 @@ import com.now.nowbot.qq.onebot.OneBotMessageReceipt
 import com.now.nowbot.throwable.botRuntimeException.LogException
 import com.now.nowbot.util.QQMsgUtil
 
-open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
-    private var username: String? = null
+open class Contact(var bot: Bot, override val contactID: Long = 0L) : Contact {
 
-    override fun getId(): Long {
-        return id
-    }
-
-    override fun getName(): String {
-        return username!!
-    }
-
-    protected fun setName(name: String?) {
-        this.username = name
-    }
+    override var name: String?  = "Unknown"
 
     override fun sendMessage(msg: MessageChain): OneBotMessageReceipt {
         try {
@@ -45,37 +34,37 @@ open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
 
         when (this) {
             is Group -> {
-                d = bot!!.customRawRequest(
+                d = bot.customRawRequest(
                     { "send_group_msg" }, mapOf<String, Any>(
-                        "group_id" to getId(),
+                        "group_id" to contactID,
                         "message" to getMsgJson(msg),
                         "auto_escape" to false
                     ), MsgId::class.java
                 )
-                id = getId()
+                id = contactID
             }
 
             is GroupContact -> {
-                d = bot!!.customRawRequest(
+                d = bot.customRawRequest(
                     { "send_private_msg" }, mapOf<String, Any>(
-                        "group_id" to this.getGroupId(),
-                        "user_id" to this.getId(),
+                        "group_id" to this.groupID,
+                        "user_id" to this.contactID,
                         "message" to getMsgJson(msg),
                         "auto_escape" to false
                     ), MsgId::class.java
                 )
-                id = this.groupId
+                id = this.groupID
             }
 
             else -> {
-                d = bot!!.customRawRequest(
+                d = bot.customRawRequest(
                     { "send_private_msg" }, mapOf<String, Any>(
-                        "user_id" to getId(),
+                        "user_id" to contactID,
                         "message" to getMsgJson(msg),
                         "auto_escape" to false
                     ), MsgId::class.java
                 )
-                id = getId()
+                id = contactID
             }
         }
 
@@ -83,11 +72,11 @@ open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
             return OneBotMessageReceipt.create(bot, d.data!!.messageId, this)
         } else {
             if (msg.messageList.any { it is ImageMessage }) {
-                val status = if (bot!!.canSendImage()?.status != null) "正常" else "无法获取"
+                val status = if (bot.canSendImage()?.status != null) "正常" else "无法获取"
 
-                Contact.log.info("发送消息：账号 ${bot!!.selfId} 在 $id 发送图片时获取回执失败。发送图片状态：$status")
+                Contact.log.info("发送消息：账号 ${bot.selfId} 在 $id 发送图片时获取回执失败。发送图片状态：$status")
             } else {
-                Contact.log.info("发送消息：账号 ${bot!!.selfId} 在 $id 发送此消息时获取回执失败：\n${getMsg4Chain(msg).take(100)}")
+                Contact.log.info("发送消息：账号 ${bot.selfId} 在 $id 发送此消息时获取回执失败：\n${getMsg4Chain(msg).take(100)}")
             }
 
             return OneBotMessageReceipt.create()
@@ -96,7 +85,7 @@ open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
 
     private fun testBot(): Boolean {
         val info: ActionData<LoginInfoResp> = try {
-            bot!!.loginInfo
+            bot.loginInfo
         } catch (e: NullPointerException) {
             Contact.log.error("Shiro 框架：无法获取 Bot 实例的登录信息", e)
             return false
@@ -132,8 +121,8 @@ open class Contact(@JvmField var bot: Bot?, @JvmField val id: Long) : Contact {
         get() {
             if (testBot()) {
                 return
-            } else if (OneBotConfig.getBotContainer().robots.containsKey(bot!!.selfId)) {
-                bot = OneBotConfig.getBotContainer().robots[bot!!.selfId]
+            } else if (OneBotConfig.getBotContainer().robots.containsKey(bot.selfId)) {
+                bot = OneBotConfig.getBotContainer().robots[bot.selfId] ?: return
                 if (testBot()) { return }
             }
             // 移除冗余
