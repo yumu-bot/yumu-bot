@@ -68,9 +68,14 @@ open class MessageEvent(val event: MessageEvent, bot: Bot): Event(bot), com.now.
                         }
                     }
 
-                    else -> TextMessage(
-                        String.format("[%s;不支持的操作类型]", it.type ?: MsgTypeEnum.unknown)
-                    )
+                    else -> {
+                        val message = "[${it.type ?: MsgTypeEnum.unknown}]: 不支持的操作类型"
+                        val detail = "$message\n${it.data.toPrettyString()}"
+
+                        com.now.nowbot.qq.contact.Contact.log.info(detail)
+
+                        TextMessage(message)
+                    }
                 }
             }
 
