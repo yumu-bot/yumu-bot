@@ -1,6 +1,5 @@
 package com.now.nowbot.model.maimai
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 
 class ChuScore {
@@ -32,17 +31,18 @@ class ChuScore {
     @JsonProperty("title") var title: String = ""
 
     // 曲名外号，需要自己设置
-    @get:JsonProperty("alias") var alias: String? = null
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    var alias: String? = null
 
     // BP 多少
-    @set:JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     var position: Int = 0
 
     // 自己拿
-    @set:JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     var artist: String = ""
 
     // 自己拿
-    @set:JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     var charter: String = ""
 }

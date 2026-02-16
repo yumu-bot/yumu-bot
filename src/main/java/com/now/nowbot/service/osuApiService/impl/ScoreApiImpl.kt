@@ -32,6 +32,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
+import java.util.concurrent.RejectedExecutionException
 import java.util.function.Function
 import kotlin.text.Charsets
 import kotlin.text.HexFormat
@@ -122,11 +123,20 @@ class ScoreApiImpl(
         offset: Int,
         limit: Int,
     ): List<LazerScore> {
-        return if (limit <= 100) {
-            getBests(id, mode, offset, limit)
-        } else {
-            getBests(id, mode, offset, 100) + getBests(id, mode, offset + 100, limit - 100)
+        val step = 100
+
+        if (limit <= step) {
+            return getBests(id, mode, offset, limit)
         }
+
+        // 使用你现有的工具方法进行并发
+        val result = AsyncMethodExecutor.awaitPairCallableExecute(
+            { getBests(id, mode, offset, step) },
+            { getBests(id, mode, offset + step, limit - step) }
+        )
+
+        // result.first 是前 100 条，result.second 是后 100 条
+        return result.first + result.second
     }
 
     override fun getPassedScore(
@@ -577,7 +587,9 @@ class ScoreApiImpl(
                     throw NetworkException.ScoreException.ServiceUnavailable()
                 }
 
-                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                else -> if (e.findCauseOfType<RejectedExecutionException>() != null) {
+                    throw NetworkException.ScoreException.TooManyRequests()
+                } else if (e.findCauseOfType<Errors.NativeIoException>() != null) {
                     throw NetworkException.ScoreException.GatewayTimeout()
                 } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
                     throw NetworkException.ScoreException.RequestTimeout()

@@ -44,9 +44,9 @@ class OsuApiBaseService(
         private val log: Logger = LoggerFactory.getLogger(OsuApiBaseService::class.java)
 
         // API 限制常量
-        private const val GLOBAL_QUOTA_PER_MINUTE = 300
-        private const val FOREGROUND_QUOTA_PER_SECOND = 5
-        private const val FOREGROUND_BURST_PER_SECOND = 6
+        private const val GLOBAL_QUOTA_PER_MINUTE = 800
+        private const val FOREGROUND_QUOTA_PER_SECOND = 8
+        private const val FOREGROUND_BURST_PER_SECOND = 10
         private const val BACKGROUND_QUOTA_PER_SECOND = 1
         private const val BACKGROUND_BURST_PER_SECOND = 1
         private const val MAX_IN_FLIGHT_REQUESTS = 50
@@ -376,24 +376,6 @@ class OsuApiBaseService(
             }
         }
 
-        private fun checkCircuitBreakers() {
-            // 检查前台熔断器
-            if (foregroundCircuitBreakerState.get() == CircuitBreakerState.OPEN) {
-                if (System.currentTimeMillis() >= lastForeground429Time.get()) {
-                    foregroundCircuitBreakerState.set(CircuitBreakerState.CLOSED)
-                    log.info("Foreground circuit breaker CLOSED")
-                }
-            }
-
-            // 检查后台熔断器
-            if (backgroundCircuitBreakerState.get() == CircuitBreakerState.OPEN) {
-                if (System.currentTimeMillis() >= lastBackground429Time.get()) {
-                    backgroundCircuitBreakerState.set(CircuitBreakerState.CLOSED)
-                    log.info("Background circuit breaker CLOSED")
-                }
-            }
-        }
-
         private fun isTaskExpired(task: ApiRequestTask<*>): Boolean {
             return System.currentTimeMillis() > task.createdAt + (task.timeoutSeconds * 1000)
         }
@@ -439,10 +421,10 @@ class OsuApiBaseService(
                 Thread.ofVirtual().start {
                     Thread.sleep(backoffMillis)
                     // 重新加入队列（如果还有时间）
-                    if (remainingTimeMillis() > 1000 && !timedOut) {
+                    // if (remainingTimeMillis() > 1000 && !timedOut) {
                         // 这里需要重新加入任务队列，但为了简化，我们直接重新执行
                         // 在实际实现中，应该有一个方法将任务重新放入队列
-                    }
+                    // }
                 }
             } else {
                 completeExceptionally(error)
@@ -454,7 +436,7 @@ class OsuApiBaseService(
     private class AdaptiveRateLimiter(
         private val baseQuotaPerSecond: Int,
         private val burstCapacity: Int,
-        private val maxQuotaPerMinute: Int
+        maxQuotaPerMinute: Int
     ) {
         private val tokens = AtomicLong(burstCapacity.toLong())
         private val lastRefillTime = AtomicLong(System.currentTimeMillis())
@@ -551,7 +533,7 @@ class OsuApiBaseService(
 
     // 熔断器状态
     private enum class CircuitBreakerState {
-        CLOSED, OPEN, HALF_OPEN
+        CLOSED, OPEN, // HALF_OPEN
     }
 
     fun refreshUserToken(user: BindUser, firstBind: Boolean): String {
