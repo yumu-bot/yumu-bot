@@ -255,7 +255,7 @@ import kotlin.math.sqrt
 
             Callable {
                 try {
-                    val file = OsuFile.getInstance(it.second)
+                    val file = OsuFile.getInstance(it.second ?: "")
 
                     id to Skill.getInstance(
                         file,

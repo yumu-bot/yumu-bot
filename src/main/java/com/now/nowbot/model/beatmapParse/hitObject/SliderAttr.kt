@@ -1,48 +1,42 @@
-package com.now.nowbot.model.beatmapParse.hitObject;
+package com.now.nowbot.model.beatmapParse.hitObject
 
-import java.util.List;
-
-public class SliderAttr {
+class SliderAttr {
     // 像素长度
-    float length;
+    var length: Float = 0f
+
     // 重复次数 (折返点)
-    int repeats;
+    var repeats: Int = 0
+
     // 控制点
-    List<SilderPoint> controlPoints;
-    List<Integer> sounds;
+    var controlPoints: List<SliderPoint> = listOf()
+
+    var sounds: List<Int> = listOf()
 }
 
-class SilderPoint extends Point {
-    PointType type;
-    public SilderPoint(int x, int y) {
-        super(x, y);
-        type = null;
-    }
+class SliderPoint(x: Int, y: Int) : Point(x, y) {
+    var type: PointType? = null
 }
 
-enum PointType {
+enum class PointType(val type: Int) {
     Catmull(0),
     Bezier(1),
     Linear(2),
     PerfectCircle(3),
     ;
-    final int type;
 
-    PointType(int i) {
-        type = i;
-    }
+    companion object {
+        fun fromStr(s: String): PointType {
+            if (s.isEmpty()) return fromChar('*')
+            return fromChar(s.get(0))
+        }
 
-    static PointType fromStr(String s) {
-        if (s.isEmpty()) return fromChar('*');
-        return fromChar(s.charAt(0));
-    }
-
-    static PointType fromChar(char s) {
-        return switch (s) {
-            case 'L' -> Linear;
-            case 'B' -> Bezier;
-            case 'P' -> PerfectCircle;
-            default -> Catmull;
-        };
+        fun fromChar(s: Char): PointType {
+            return when (s) {
+                'L' -> Linear
+                'B' -> Bezier
+                'P' -> PerfectCircle
+                else -> Catmull
+            }
+        }
     }
 }

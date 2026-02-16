@@ -29,8 +29,8 @@ import java.util.regex.Matcher
 
         val files = bids.filter { it != -1L }.map {
                 try {
-                    OsuFile.getInstance(beatmapApiService.getBeatmapFileString(it))
-                } catch (e: Exception) {
+                    OsuFile.getInstance(beatmapApiService.getBeatmapFileString(it) ?: "")
+                } catch (_: Exception) {
                     OsuFile.getInstance("")
                 }
             }

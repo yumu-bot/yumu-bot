@@ -115,7 +115,7 @@ abstract class Skill {
         fun getInstance(file: OsuFile, mode: OsuMode, clockRate: Double = 1.0): Skill {
             return when(mode) {
                 OsuMode.MANIA -> {
-                    val f = file.mania
+                    val f = file.getMania()
                     f.clockRate = clockRate
 
                     SkillMania(f)

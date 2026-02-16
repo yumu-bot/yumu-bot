@@ -1,425 +1,297 @@
-package com.now.nowbot.model.beatmapParse.parse;
+package com.now.nowbot.model.beatmapParse.parse
 
-import com.now.nowbot.model.beatmapParse.HitObject;
-import com.now.nowbot.model.beatmapParse.Timing;
-import com.now.nowbot.model.beatmapParse.hitObject.HitObjectPosition;
-import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType;
-import com.now.nowbot.model.beatmapParse.timing.TimingEffect;
-import com.now.nowbot.model.beatmapParse.timing.TimingSampleSet;
-import com.now.nowbot.model.enums.OsuMode;
-import com.now.nowbot.util.ContextUtil;
-import org.springframework.util.CollectionUtils;
+import com.now.nowbot.model.beatmapParse.HitObject
+import com.now.nowbot.model.beatmapParse.Timing
+import com.now.nowbot.model.beatmapParse.hitObject.HitObjectPosition
+import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType
+import com.now.nowbot.model.beatmapParse.timing.TimingEffect
+import com.now.nowbot.model.beatmapParse.timing.TimingSampleSet
+import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.util.ContextUtil
+import com.now.nowbot.util.ContextUtil.setContext
+import java.io.BufferedReader
+import java.util.*
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
+open class OsuBeatmapAttributes(read: BufferedReader, general: BeatmapGeneral?) {
+    var clockRate: Double = 1.0
+        set(clockRate) {
+            field = clockRate
 
-@SuppressWarnings("all")
-public class OsuBeatmapAttributes {
-    static final double HIT_WINDOW_OSU_MAX = 80;
-    static final double HIT_WINDOW_OSU_MID = 50;
-    static final double HIT_WINDOW_OSU_MIN = 20;
+            if (clockRate != 1.0 && clockRate > 0.0) {
+                this.length = (this.length / clockRate).toInt()
 
-    static final double HIT_WINDOW_TAIKO_MAX = 50;
-    static final double HIT_WINDOW_TAIKO_MID = 35;
-    static final double HIT_WINDOW_TAIKO_MIN = 20;
+                for (h in hitObjects) {
+                    h.startTime = (h.startTime / clockRate).toInt()
+                    h.endTime = (h.endTime / clockRate).toInt()
+                }
 
-    static final double AR_MS_MAX = 1800;
-    static final double AR_MS_MID = 1200;
-    static final double AR_MS_MIN = 450;
+                for (t in timings) {
+                    t.beatLength /= clockRate
+                    t.bpm *= clockRate
+                    t.startTime /= (t.startTime / clockRate).toInt()
+                }
+            }
+        }
 
-    protected double clockRate = 1d;
+    var version: Int = 14
 
-    protected Integer version;
+    var circleCount: Int = 0
+    var sliderCount: Int = 0
+    var spinnerCount: Int = 0
 
-    protected Integer circleCount;
-    protected Integer sliderCount;
-    protected Integer spinnerCount;
+    protected var mode: OsuMode = OsuMode.DEFAULT
 
-    protected OsuMode mode;
+    var ar: Double = 0.0
+    var cs: Double = 0.0
+    var od: Double = 0.0
+    var hp: Double = 0.0
 
-    protected Double AR;
-    protected Double CS;
-    protected Double OD;
-    protected Double HP;
+    var sliderBaseVelocity: Double = 1.0
+    var sliderTickRate: Double = 1.0
+    var sliderMultiplier: Double = 1.0
+    var stackLeniency: Double = -1.0
 
-    protected Double sliderBaseVelocity;
-    protected Double sliderTickRate;
-    protected Double sliderMultiplier;
-    protected Double stackLeniency = -1D;
+    var length: Int = 0
 
-    protected int length = 0;
+    var hitObjects: MutableList<HitObject> = LinkedList<HitObject>()
 
-    List<HitObject> hitObjects = new LinkedList<>();
+    var timings: MutableList<Timing> = LinkedList<Timing>()
 
-    List<Timing> timings = new LinkedList<>();
+    fun parseDifficulty(line: String) {
+        val entity: Array<String?> = line.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        if (entity.size == 2) {
+            val key = entity[0]!!.trim { it <= ' ' }
+            val value = entity[1]!!.trim { it <= ' ' }
 
-    private static String THREAD_KEY = "R6a8s4d/*9";
-
-    void parseDifficulty(String line) {
-        var entity = line.split(":");
-        if (entity.length == 2) {
-            var key = entity[0].trim();
-            var val = entity[1].trim();
-
-            switch (key) {
-                case "ApproachRate" -> AR = Double.parseDouble(val);
-                case "OverallDifficulty" -> OD = Double.parseDouble(val);
-                case "CircleSize" -> CS = Double.parseDouble(val);
-                case "HPDrainRate" -> HP = Double.parseDouble(val);
-                case "SliderTickRate" -> sliderTickRate = Double.parseDouble(val);
-                case "SliderMultiplier" -> sliderMultiplier = Double.parseDouble(val);
+            when (key) {
+                "ApproachRate" -> this.ar = value.toDouble()
+                "OverallDifficulty" -> this.od = value.toDouble()
+                "CircleSize" -> this.cs = value.toDouble()
+                "HPDrainRate" -> this.hp = value.toDouble()
+                "SliderTickRate" -> sliderTickRate = value.toDouble()
+                "SliderMultiplier" -> sliderMultiplier = value.toDouble()
             }
         }
     }
 
-    void parseTiming(String line) {
-        var entity = line.split(",");
-        if (entity.length < 8) throw new RuntimeException("解析 [TimingPoints] 错误");
+    fun parseTiming(line: String) {
+        val entity: Array<String> = line.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        if (entity.size < 8) throw RuntimeException("解析 [TimingPoints] 错误")
 
-        int startTime = (int) Math.floor(Double.parseDouble(entity[0]));
-        Double beatLength = Double.parseDouble(entity[1]);
-        int meter = Integer.parseInt(entity[2]); //节拍
-        TimingSampleSet timingSampleSet = TimingSampleSet.getType(Integer.parseInt(entity[3]));
-        int sampleParameter = Integer.parseInt(entity[4]);
-        int volume = Integer.parseInt(entity[5]);
-        boolean isRedLine = Boolean.parseBoolean(entity[6]);
-        TimingEffect effect = TimingEffect.getType(Integer.parseInt(entity[7]));
+        val startTime = floor(entity[0].toDouble()).toInt()
+        val beatLength = entity[1].toDouble()
+        val meter = entity[2].toInt() //节拍
+        val timingSampleSet = TimingSampleSet.getType(entity[3].toInt())
+        val sampleParameter = entity[4].toInt()
+        val volume = entity[5].toInt()
+        val isRedLine = entity[6].toBoolean()
+        val effect = TimingEffect.getType(entity[7].toInt())
 
-        var obj = new Timing(startTime, beatLength, meter, timingSampleSet, sampleParameter, volume, isRedLine, effect);
-        timings.add(obj);
+        val obj = Timing(startTime, beatLength, meter, timingSampleSet, sampleParameter, volume, isRedLine, effect)
+        timings.add(obj)
     }
 
     /**
      * 逐行读取
-     *
+     * 
      * @param read    osu file
      * @param general 元信息
-     * @throws io exception {@link IOException}
      */
-    public OsuBeatmapAttributes(BufferedReader read, BeatmapGeneral general) throws IOException {
-        String line;
-        String section = "";
+    init {
+        var line: String?
+        var section: String? = ""
         // 逐行
-        while ((line = read.readLine()) != null) {
-            if (line.startsWith("[")) {
-                section = line;
-                line = read.readLine();
+        while ((read.readLine().also { line = it }) != null) {
+            if (line!!.startsWith("[")) {
+                section = line
+                line = read.readLine()
             }
-            if (line == null || line.isBlank()) { //空谱面会 null
-                continue;
+            if (line.isNullOrBlank()) { //空谱面会 null
+                continue
             }
-            switch (section) {
-                case "[Difficulty]" -> {
+            when (section) {
+                "[Difficulty]" -> {
                     // 读取 Difficulty 块
-                    parseDifficulty(line);
+                    parseDifficulty(line)
                 }
-                case "[TimingPoints]" -> {
+
+                "[TimingPoints]" -> {
                     // 读取 TimingPoints 块
-                    parseTiming(line);
+                    parseTiming(line)
                 }
-                case "[HitObjects]" -> {
+
+                "[HitObjects]" -> {
                     // 读取 HitObjects 块
-                    parseHitObject(line);
+                    parseHitObject(line)
                 }
             }
         }
-        if (! CollectionUtils.isEmpty(hitObjects)) {
-            length = hitObjects.getLast().getEndTime() - hitObjects.getFirst().getStartTime();
+
+        if (hitObjects.isNotEmpty()) {
+            length = (hitObjects.last().endTime - hitObjects.first().startTime)
         }
     }
 
-    public Integer getVersion() {
-        return version;
-    }
+    val isConverted: Boolean
+        get() = this.javaClass != OsuBeatmapAttributes::class.java && mode == OsuMode.OSU
 
-    public void setVersion(Integer version) {
-        this.version = version;
-    }
-
-    public Integer getCircleCount() {
-        return circleCount;
-    }
-
-    public void setCircleCount(Integer circleCount) {
-        this.circleCount = circleCount;
-    }
-
-    public Integer getSliderCount() {
-        return sliderCount;
-    }
-
-    public void setSliderCount(Integer sliderCount) {
-        this.sliderCount = sliderCount;
-    }
-
-    public Integer getSpinnerCount() {
-        return spinnerCount;
-    }
-
-    public void setSpinnerCount(Integer spinnerCount) {
-        this.spinnerCount = spinnerCount;
-    }
-
-    public OsuMode getMode() {
-        return mode;
-    }
-
-    public void setMode(OsuMode mode) {
-        this.mode = mode;
-    }
-
-    public Double getAR() {
-        return AR;
-    }
-
-    public void setAR(Double AR) {
-        this.AR = AR;
-    }
-
-    public Double getCS() {
-        return CS;
-    }
-
-    public void setCS(Double CS) {
-        this.CS = CS;
-    }
-
-    public Double getOD() {
-        return OD;
-    }
-
-    public void setOD(Double OD) {
-        this.OD = OD;
-    }
-
-    public Double getHP() {
-        return HP;
-    }
-
-    public void setHP(Double HP) {
-        this.HP = HP;
-    }
-
-    public Double getSliderBaseVelocity() {
-        return sliderBaseVelocity;
-    }
-
-    public void setSliderBaseVelocity(Double sliderBaseVelocity) {
-        this.sliderBaseVelocity = sliderBaseVelocity;
-    }
-
-    public Double getSliderTickRate() {
-        return sliderTickRate;
-    }
-
-    public void setSliderTickRate(Double sliderTickRate) {
-        this.sliderTickRate = sliderTickRate;
-    }
-
-    public Double getSliderMultiplier() {
-        return sliderMultiplier;
-    }
-
-    public void setSliderMultiplier(Double sliderMultiplier) {
-        this.sliderMultiplier = sliderMultiplier;
-    }
-
-    public Double getStackLeniency() {
-        return stackLeniency;
-    }
-
-    public void setStackLeniency(Double stackLeniency) {
-        this.stackLeniency = stackLeniency;
-    }
-
-    public List<HitObject> getHitObjects() {
-        return hitObjects;
-    }
-
-    public void setHitObjects(List<HitObject> hitObjects) {
-        this.hitObjects = hitObjects;
-    }
-
-    public List<Timing> getTimings() {
-        return timings;
-    }
-
-    public void setTimings(List<Timing> timings) {
-        this.timings = timings;
-    }
-
-    public int getLength() {
-        return length;
-    }
-
-    public void setLength(int length) {
-        this.length = length;
-    }
-
-    public boolean isConverted() {
-        return this.getClass() != OsuBeatmapAttributes.class && mode == OsuMode.OSU;
-    }
-
-    public double getClockRate() {
-        return clockRate;
-    }
-
-    // 备注：这个倍率假如说是 DT 给的 1.5 倍，作用在图上，就是图被缩短（除法）了。
-    public void setClockRate(double clockRate) {
-        this.clockRate = clockRate;
-
-        if (clockRate != 1d && clockRate > 0d) {
-            this.setLength((int) (this.getLength() / clockRate));
-
-            for (var h : hitObjects) {
-                h.setStartTime((int) (h.getStartTime() / clockRate));
-                h.setEndTime((int) (h.getEndTime() / clockRate));
-            }
-
-            for (var t : timings) {
-                t.setBeatLength(t.getBeatLength() / clockRate);
-                t.setBpm(t.getBpm() * clockRate);
-                t.setStartTime((int) (t.getStartTime() / clockRate));
-            }
-        }
-    }
-
-    public double getArHitWindow(int mods, double clockRate) {
-        double arValue = getAR();
-        if ((mods & 1 << 4) != 0) {
-            arValue = Math.min(arValue * 1.4, 10d);
-        } else if ((mods & 1 << 1) != 0) {
-            arValue *= 0.5;
+    fun getArHitWindow(mods: Int, clockRate: Double): Double {
+        var arValue: Double = this.ar
+        if ((mods and (1 shl 4)) != 0) {
+            arValue = min(arValue * 1.4, 10.0)
+        } else if ((mods and (1 shl 1)) != 0) {
+            arValue *= 0.5
         }
 
-        return difficultyRange(arValue, AR_MS_MIN, AR_MS_MID, AR_MS_MAX) / clockRate;
+        return difficultyRange(arValue, AR_MS_MIN, AR_MS_MID, AR_MS_MAX) / clockRate
     }
 
-    public double getOdHitWindow(int mods, double clockRate) {
-        double odValue = getOD();
-        if ((mods & 1 << 4) != 0) {
-            odValue = Math.min(odValue * 1.4, 10d);
-        } else if ((mods & 1 << 1) != 0) {
-            odValue *= 0.5;
+    fun getOdHitWindow(mods: Int, clockRate: Double): Double {
+        var odValue: Double = this.od
+        if ((mods and (1 shl 4)) != 0) {
+            odValue = min(odValue * 1.4, 10.0)
+        } else if ((mods and (1 shl 1)) != 0) {
+            odValue *= 0.5
         }
-        double window = 0;
-        switch (mode) {
-            case OSU, CATCH -> {
+        var window = 0.0
+        when (mode) {
+            OsuMode.OSU, OsuMode.CATCH -> {
                 window = difficultyRange(
-                        odValue,
-                        HIT_WINDOW_OSU_MAX,
-                        HIT_WINDOW_OSU_MID,
-                        HIT_WINDOW_OSU_MIN
-                ) / clockRate;
+                    odValue,
+                    HIT_WINDOW_OSU_MAX,
+                    HIT_WINDOW_OSU_MID,
+                    HIT_WINDOW_OSU_MIN
+                ) / clockRate
             }
-            case TAIKO -> {
+
+            OsuMode.TAIKO -> {
                 window = difficultyRange(
-                        odValue,
-                        HIT_WINDOW_TAIKO_MAX,
-                        HIT_WINDOW_TAIKO_MID,
-                        HIT_WINDOW_TAIKO_MIN
-                ) / clockRate;
+                    odValue,
+                    HIT_WINDOW_TAIKO_MAX,
+                    HIT_WINDOW_TAIKO_MID,
+                    HIT_WINDOW_TAIKO_MIN
+                ) / clockRate
             }
-            case MANIA -> {
-                if (!isConverted()) {
-                    window = 34.0 + 3.0 * (Math.min(10, Math.max(0,(10.0 - getOD()))));
-                } else if (getOD() > 4) {
-                    window = 34;
+
+            OsuMode.MANIA -> {
+                window = if (!this.isConverted) {
+                    34.0 + 3.0 * (min(10.0, max(0.0, (10.0 - this.od))))
+                } else if (this.od > 4) {
+                    34.0
                 } else {
-                    window = 47;
+                    47.0
                 }
-                if ((mods & 1 << 4) != 0) {
-                    window /= 1.4;
-                } else if ((mods & 1 << 1) != 0) {
-                    window *= 1.4;
+
+                if ((mods and (1 shl 4)) != 0) {
+                    window /= 1.4
+                } else if ((mods and (1 shl 1)) != 0) {
+                    window *= 1.4
                 }
-            }/*
-            case null, default -> {
-                throw new RuntimeException("?");
             }
-            */
+
+            else -> {}
         }
-        return Math.ceil((window * Math.floor(clockRate)) / clockRate);
+        return ceil((window * floor(clockRate)) / clockRate)
     }
 
-    private double difficultyRange(double difficulty, double min, double mid, double max) {
+    private fun difficultyRange(difficulty: Double, min: Double, mid: Double, max: Double): Double {
         if (difficulty > 5) {
-            return mid + (max - mid) * (difficulty - 5) / 5;
-        } else if (difficulty < 5){
-            return mid - (mid - min) * (5 - difficulty) / 5;
+            return mid + (max - mid) * (difficulty - 5) / 5
+        } else if (difficulty < 5) {
+            return mid - (mid - min) * (5 - difficulty) / 5
         } else {
-            return mid;
+            return mid
         }
     }
 
-    void parseHitObject(String line) {
+    fun parseHitObject(line: String) {
         // line 就是 '320,192,153921,1,0,0:0:0:0:' 这种格式的字符串
-        var entity = line.split(",");
-        if (entity.length < 4) throw new RuntimeException("解析 [HitObjects] 错误");
+        val entity: Array<String?> = line.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        if (entity.size < 4) throw RuntimeException("解析 [HitObjects] 错误")
         // 解析类型
-        var type = HitObjectType.getType(Integer.parseInt(entity[3]));
-        var startTime = Integer.parseInt(entity[2]);
-        var hit = new HitObject();
-        hit.setType(type);
+        val type = HitObjectType.getType(entity[3]!!.toInt())
+        val startTime = entity[2]!!.toInt()
+        val hit = HitObject()
+        hit.type = type
 
-        switch (type) {
-            // 普通泡泡
-            case CIRCLE -> {
-                int x = Integer.parseInt(entity[0]);
-                int y = Integer.parseInt(entity[1]);
-                hit.setPosition(new HitObjectPosition(x, y));
-                hit.setStartTime(startTime);
+        when (type) {
+            HitObjectType.CIRCLE -> {
+                val x = entity[0]!!.toInt()
+                val y = entity[1]!!.toInt()
+                hit.position = HitObjectPosition(x, y)
+                hit.startTime = startTime
                 // 普通泡泡没有结束时间
-                hit.setEndTime(startTime);
+                hit.endTime = startTime
             }
-            // 滑条
-            case SLIDER -> {
-                int x = Integer.parseInt(entity[0]);
-                int y = Integer.parseInt(entity[1]);
+
+            HitObjectType.SLIDER -> {
+                val x = entity[0]!!.toInt()
+                val y = entity[1]!!.toInt()
                 // 滑条计算 time = length / (SliderMultiplier * 100 * SV) * beatLength
-                double length = Double.parseDouble(entity[7]);
-                double sliderMultiplier = getSliderMultiplier();
-                var timing = getBeforeTiming(startTime);
-                int sliderTime;
-                if (timing.isRedLine()) {
-                    sliderTime = (int) Math.round(length / (sliderMultiplier * 100 * 1) * timing.getBeatLength());
+                val length = entity[7]!!.toDouble()
+                val sliderMultiplier = this.sliderMultiplier
+                val timing = getBeforeTiming(startTime)
+                val sliderTime: Int
+                if (timing.isRedLine) {
+                    sliderTime = (length / (sliderMultiplier * 100 * 1) * timing.beatLength).roundToInt()
                 } else {
-                    double sv = timing.getBeatLength() / - 100;
-                    sliderTime = (int) Math.round(length / (sliderMultiplier * 100 * sv) * timing.getBeatLength());
+                    val sv = timing.beatLength / -100
+                    sliderTime = (length / (sliderMultiplier * 100 * sv) * timing.beatLength).roundToInt()
                 }
-                hit.setPosition(new HitObjectPosition(x, y));
-                hit.setStartTime(startTime);
-                hit.setEndTime(startTime + sliderTime);
+                hit.position = HitObjectPosition(x, y)
+                hit.startTime = startTime
+                hit.endTime = startTime + sliderTime
             }
-            // 转盘
-            case SPINNER -> {
-                hit.setPosition(new HitObjectPosition(256, 192));
-                hit.setStartTime(startTime);
-                hit.setEndTime(Integer.parseInt(entity[5]));
+
+            HitObjectType.SPINNER -> {
+                hit.position = HitObjectPosition(256, 192)
+                hit.startTime = startTime
+                hit.endTime = entity[5]!!.toInt()
             }
-            // mania 长条
-            case LONGNOTE -> {
-                int x = Integer.parseInt(entity[0]);
-                // 骂娘的长条不看 y (does not affect holds. It defaults to the centre of the playfield)
-                hit.setPosition(new HitObjectPosition(x, 192));
-                hit.setStartTime(startTime);
-                hit.setEndTime(Integer.parseInt(entity[5].split(":")[0]));
+
+            HitObjectType.LONGNOTE -> {
+                val x = entity[0]!!.toInt()
+                // 骂娘的长条不看 y (does not affect holds. It defaults to the center of the playfield)
+                hit.position = HitObjectPosition(x, 192)
+                hit.startTime = startTime
+                hit.endTime = entity[5]!!.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0].toInt()
             }
+
+            else -> {}
         }
-        hitObjects.add(hit);
+        hitObjects.add(hit)
     }
 
-    private Timing getBeforeTiming(int time) {
-        int n = ContextUtil.getContext(THREAD_KEY, 0, Integer.class);
-        int size = timings.size();
-        if (n >= (size - 1)) return timings.get(n);
-        int i = n;
-        while (i < (size - 1) && timings.get(i).getStartTime() < time) {
-            i++;
+    private fun getBeforeTiming(time: Int): Timing {
+        val n = ContextUtil.getContext(THREAD_KEY, 0, Int::class.java)!!
+        val size = timings.size
+        if (n >= (size - 1)) return timings[n]
+        var i = n
+        while (i < (size - 1) && timings[i].startTime < time) {
+            i++
         }
-        ContextUtil.setContext(THREAD_KEY, i);
-        return timings.get(i);
+        setContext(THREAD_KEY, i)
+        return timings[i]
+    }
+
+    companion object {
+        const val HIT_WINDOW_OSU_MAX: Double = 80.0
+        const val HIT_WINDOW_OSU_MID: Double = 50.0
+        const val HIT_WINDOW_OSU_MIN: Double = 20.0
+
+        const val HIT_WINDOW_TAIKO_MAX: Double = 50.0
+        const val HIT_WINDOW_TAIKO_MID: Double = 35.0
+        const val HIT_WINDOW_TAIKO_MIN: Double = 20.0
+
+        const val AR_MS_MAX: Double = 1800.0
+        const val AR_MS_MID: Double = 1200.0
+        const val AR_MS_MIN: Double = 450.0
+
+        private const val THREAD_KEY = "R6a8s4d/*9"
     }
 }

@@ -1,62 +1,52 @@
-package com.now.nowbot.model.beatmapParse.hitObject;
+package com.now.nowbot.model.beatmapParse.hitObject
 
-public class Point {
-    int x;
-    int y;
-    public Point(){
-        x = 0;
-        y = 0;
-    }
-    public Point(int x, int y){
-        this.x = x;
-        this.y = y;
-    }
-    public double dotMultiply(Point other){
-        return Math.fma(x, other.x, y * other.y);
-    }
-    public double distance(){
-        return Math.sqrt(dotMultiply(this));
-    }
-    public Point normalize(){
-        return this.divide(this.distance());
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
+
+open class Point {
+    var x: Int
+    var y: Int
+
+    constructor() {
+        x = 0
+        y = 0
     }
 
-    public Point plus(int x, int y){
-        return new Point(this.x + x, this.y + y);
+    constructor(x: Int, y: Int) {
+        this.x = x
+        this.y = y
     }
 
-    public Point minus(int x, int y){
-        return new Point(this.x - x, this.y - y);
+    fun dotMultiply(other: Point): Int {
+        return x * other.x + y * other.y
+
     }
 
-    public Point multiply(double multiplier){
-        return new Point((int) Math.round(x * multiplier), (int) Math.round(y * multiplier));
+    fun distance(): Double {
+        return sqrt(dotMultiply(this).toDouble())
     }
 
-    public Point divide(double divisor){
-        if (divisor != 0) {
-            return new Point((int) Math.round(x / divisor), (int) Math.round(y / divisor));
+    fun normalize(): Point {
+        return this.divide(this.distance())
+    }
+
+    fun plus(x: Int, y: Int): Point {
+        return Point(this.x + x, this.y + y)
+    }
+
+    fun minus(x: Int, y: Int): Point {
+        return Point(this.x - x, this.y - y)
+    }
+
+    fun multiply(multiplier: Double): Point {
+        return Point((x * multiplier).roundToInt(), (y * multiplier).roundToInt())
+    }
+
+    fun divide(divisor: Double): Point {
+        if (divisor != 0.0) {
+            return Point((x / divisor).roundToInt(), (y / divisor).roundToInt())
+        } else {
+            throw RuntimeException("除数为0")
         }
-        else {
-            throw new RuntimeException("除数为0");
-        }
     }
-
-
-    public double getX() {
-        return x;
-    }
-
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    public double getY() {
-        return y;
-    }
-
-    public void setY(int y) {
-        this.y = y;
-    }
-
 }
