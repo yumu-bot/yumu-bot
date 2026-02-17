@@ -12,7 +12,6 @@ import kotlin.math.pow
 class SkillMania6(val file: ManiaBeatmapAttributes) : Skill() {
 
     // --- 1. 核心数据结构 ---
-
     data class ManiaAction(
         val startTime: Int,
         val objects: List<HitObject>
@@ -70,9 +69,9 @@ class SkillMania6(val file: ManiaBeatmapAttributes) : Skill() {
         }
 
         // 检查特定轨道是否正在被占用
-        fun isColumnOccupied(column: Int, currentTime: Int): Boolean {
-            return columnBusyUntil[column] > currentTime
-        }
+//        fun isColumnOccupied(column: Int, currentTime: Int): Boolean {
+//            return columnBusyUntil[column] > currentTime
+//        }
     }
 
     object HandWeightConfig {
@@ -148,6 +147,9 @@ class SkillMania6(val file: ManiaBeatmapAttributes) : Skill() {
             val delta = if (prev != null) (curr.startTime - prev.startTime).coerceAtLeast(1) else 1000
             val speedFactor = 1000f / delta
 
+            // 定义临时列表收集这一拍内所有的 Precision 因子
+            val precisionFactors = mutableListOf<Float>()
+
             var currentRC = 0f
             var currentLN = 0f
             var currentSP = 0f
@@ -187,7 +189,7 @@ class SkillMania6(val file: ManiaBeatmapAttributes) : Skill() {
                             currentSP += speedFactor * weight
                             // Precision (Grace)
                             if (delta < 30) {
-                                currentPR += speedFactor * weight * affectedByOD(file.od.toFloat())
+                                precisionFactors.add(speedFactor * weight * affectedByOD(file.od.toFloat()))
                             }
                         }
                     }
@@ -201,7 +203,9 @@ class SkillMania6(val file: ManiaBeatmapAttributes) : Skill() {
                         val weight = interferenceMatrix[col][obj.column]
                         val releaseVal = speedFactor * weight * 0.8f
                         currentLN += releaseVal
-                        currentPR += releaseVal * 0.5f * affectedByOD(file.od.toFloat())
+
+                        // 收集因子 1: Release 精度风险
+                        precisionFactors.add(releaseVal * 0.5f * affectedByOD(file.od.toFloat()))
                     }
                 }
             }
@@ -212,9 +216,16 @@ class SkillMania6(val file: ManiaBeatmapAttributes) : Skill() {
                 if (nextAction != null) {
                     val tailDelta = abs(nextAction.startTime - ln.endTime).coerceAtLeast(1)
                     if (tailDelta < 80) {
-                        currentPR += (1000f / tailDelta) * 0.5f
+                        precisionFactors.add((1000f / tailDelta) * 0.5f)
                     }
                 }
+            }
+
+            // --- 核心：对 currentPR 应用闵可夫斯基和 ---
+            if (precisionFactors.isNotEmpty()) {
+                val p = 2f
+                val pSum = precisionFactors.map { it.pow(p) }.sum().pow(1f / p)
+                currentPR = pSum
             }
 
             // 存入瞬时值
@@ -229,12 +240,12 @@ class SkillMania6(val file: ManiaBeatmapAttributes) : Skill() {
 
         // 3. 聚合计算：使用降序衰减模型
         // 这种方式让 10% 的爆发段贡献 50% 以上的分数，同时长图会有更多的有效项累加
-        skillValues[0] = aggregateStrains(rcStrains) * 1f   // RC
-        skillValues[1] = aggregateStrains(lnStrains) * 1f   // LN
-        skillValues[2] = aggregateStrains(coStrains) * 1f   // CO
-        skillValues[3] = aggregateStrains(stStrains) * 1f   // ST
-        skillValues[4] = aggregateStrains(spStrains) * 1f   // SP
-        skillValues[5] = aggregateStrains(prStrains) * 1f   // PR
+        skillValues[0] = powerLaw(aggregateStrains(rcStrains), 0.020582044f, 0.89293796f)   // RC
+        skillValues[1] = powerLaw(aggregateStrains(lnStrains), 0.07853669f, 0.6232433f)   // LN
+        skillValues[2] = powerLaw(aggregateStrains(coStrains), 0.02896592f, 1.0093521f)   // CO
+        skillValues[3] = powerLaw(aggregateStrains(stStrains), 0.0034666888f, 1.5944985f)    // ST
+        skillValues[4] = powerLaw(aggregateStrains(spStrains), 0.026827838f, 0.6576119f)  // SP
+        skillValues[5] = powerLaw(aggregateStrains(prStrains), 8.917264E-8f, 1.8425027f)   // PR
         skillValues[6] = 0f // SV 留空
 
         // 4. 应用长度补偿因子
@@ -242,6 +253,10 @@ class SkillMania6(val file: ManiaBeatmapAttributes) : Skill() {
         for (i in skillValues.indices) {
             skillValues[i] *= lengthFactor
         }
+    }
+
+    private fun powerLaw(x: Float, a: Float, power: Float): Float {
+        return a * x.pow(power)
     }
 
     /**
@@ -260,6 +275,7 @@ class SkillMania6(val file: ManiaBeatmapAttributes) : Skill() {
             weight *= decay
             if (weight < 0.001f) break
         }
+
         return total
     }
 
@@ -306,12 +322,25 @@ class SkillMania6(val file: ManiaBeatmapAttributes) : Skill() {
         get() = skillValues.toList()
     override val star: Float
         get() {
-            // 使用 p=3 的闵可夫斯基和，能让突出的单项技能更显著地拉高星级
-            val p = 3.0
-            val sum = values.take(6).sumOf { it.toDouble().pow(p) }
-            val rawStar = sum.pow(1.0 / p).toFloat()
+            if (values.all { it <= 0f }) return 0f
 
-            // 最终修正：SR = 基础星级 * (1 + 0.1 * SV难度)
-            return rawStar * (1f + skillValues[6] * 0.1f)
+            // 1. 选取前6项（排除 SV）
+            val mainSkills = values.take(6).map { it.toDouble() }
+
+            // 2. 使用 p=2 (欧几里得范数) 替代 p=3，降低极端值的影响
+            val p = 2.0
+            val sum = mainSkills.sumOf { it.pow(p) }
+            var rawStar = sum.pow(1.0 / p).toFloat()
+
+            // 3. 应用全局缩放系数 (根据你目前的 values 强度，这个值通常在 0.5 - 0.8 之间)
+            // 这个系数需要你根据具体的谱面表现来微调
+            val globalScaling = 0.6f
+            rawStar *= globalScaling
+
+            // 4. SV 的影响通常是边际递减的，改用对数或较小的线性加成
+            // 1 + 0.1 * SV 可能还是太高，建议降为 0.05
+            val svBonus = 1f + (skillValues[6] * 0.05f)
+
+            return rawStar * svBonus
         }
 }

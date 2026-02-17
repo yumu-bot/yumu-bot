@@ -1,13 +1,12 @@
-package com.now.nowbot.qq.event;
+package com.now.nowbot.qq.event
 
-import com.now.nowbot.qq.contact.Group;
-import com.now.nowbot.qq.contact.Contact;
+import com.now.nowbot.qq.contact.Contact
+import com.now.nowbot.qq.contact.Group
 
-public interface GroupMessageEvent extends MessageEvent{
-    Group getSubject();
-    Contact getSender();
+interface GroupMessageEvent : MessageEvent {
+    override val subject: Group
+    override val sender: Contact
 
-    default Group getGroup() {
-        return getSubject();
-    }
+    val group: Group
+        get() = subject
 }

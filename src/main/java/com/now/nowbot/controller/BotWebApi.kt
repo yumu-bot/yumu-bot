@@ -5,12 +5,15 @@ import ch.qos.logback.classic.LoggerContext
 import com.now.nowbot.aop.DiscordParam
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.dao.PPMinusDao
+import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.enums.OsuMode.Companion.getMode
 import com.now.nowbot.model.mappool.old.MapPoolDto
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchRating
 import com.now.nowbot.model.osu.*
+import com.now.nowbot.model.skill.SkillMania
+import com.now.nowbot.model.skill.SkillMania6
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.messageServiceImpl.*
 import com.now.nowbot.service.osuApiService.*
@@ -24,6 +27,7 @@ import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.parseRange2Limit
 import com.now.nowbot.util.DataUtil.parseRange2Offset
+import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.QQMsgUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -39,7 +43,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 @RestController @ResponseBody
-@CrossOrigin("http://localhost:5173", "https://siyuyuko.github.io", "https://a.yasunaori.be")
+@CrossOrigin("*")
+//@CrossOrigin("http://localhost:5173", "https://siyuyuko.github.io", "https://a.yasunaori.be")
 @RequestMapping(value = ["/pub"], method = [RequestMethod.GET]) class BotWebApi(
     private val userApiService: OsuUserApiService,
     private val matchApiService: OsuMatchApiService,
@@ -49,7 +54,7 @@ import kotlin.math.min
     private val imageService: ImageService,
     private val discussionApiService: OsuDiscussionApiService,
     private val infoDao: OsuUserInfoDao,
-    private val ppMinusDao: PPMinusDao
+    private val ppMinusDao: PPMinusDao,
 ) {
 
     /**
@@ -1130,6 +1135,32 @@ import kotlin.math.min
         log.error("error")
 
         return "ok - " + l.levelStr
+    }
+
+    @GetMapping(value = ["skill4"]) fun getSkill4(
+        @RequestParam("beatmap_id") beatmapID: Long
+    ): String {
+
+        val file = beatmapApiService.getBeatmapFileString(beatmapID)
+
+        val f = OsuFile.getInstance(file!!).getMania()
+
+        val skill = SkillMania(f)
+
+        return JacksonUtil.toJson(skill)
+    }
+
+    @GetMapping(value = ["skill"]) fun getSkill6(
+        @RequestParam("beatmap_id") beatmapID: Long
+    ): String {
+
+        val file = beatmapApiService.getBeatmapFileString(beatmapID)
+
+        val f = OsuFile.getInstance(file!!).getMania()
+
+        val skill = SkillMania6(f)
+
+        return JacksonUtil.toJson(skill)
     }
 
     companion object {

@@ -12,17 +12,17 @@ open class Event internal constructor(override val bot: Bot?) : Event {
 
     open class MessageEvent internal constructor(
         private val localBot: com.now.nowbot.qq.local.Bot?,
-        val group: LocalGroup,
+        val localGroup: LocalGroup,
         override val textMessage: String,
     ) : Event, com.now.nowbot.qq.event.MessageEvent {
         override val bot: Bot?
             get() = localBot
 
         override val subject: Contact
-            get() = group
+            get() = localGroup
 
         override val sender: Contact
-            get() = group
+            get() = localGroup
 
         override val message
             get() = MessageChain(listOf(TextMessage(this.textMessage)))
@@ -31,17 +31,13 @@ open class Event internal constructor(override val bot: Bot?) : Event {
             get() = textMessage
     }
 
-    class GroupMessageEvent(val localBot: com.now.nowbot.qq.local.Bot?, group: LocalGroup, message: String) :
-        MessageEvent(localBot, group, message), com.now.nowbot.qq.event.GroupMessageEvent {
+    class GroupMessageEvent(val localBot: com.now.nowbot.qq.local.Bot?, localGroup: LocalGroup, message: String) :
+        MessageEvent(localBot, localGroup, message), com.now.nowbot.qq.event.GroupMessageEvent {
 
         override val bot: Bot?
             get() = localBot
 
         override val subject: Group
-            get() = group
-
-        override fun getGroup(): Group {
-            return super.group
-        }
+            get() = localGroup
     }
 }

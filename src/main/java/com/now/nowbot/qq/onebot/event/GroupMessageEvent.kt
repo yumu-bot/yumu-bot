@@ -8,9 +8,8 @@ import com.now.nowbot.qq.onebot.contact.GroupContact
 class GroupMessageEvent(bot: Bot, val groupEvent: GroupMessageEvent) : MessageEvent(
     groupEvent, bot
 ), com.now.nowbot.qq.event.GroupMessageEvent {
-    override fun getGroup(): Group {
-        return Group(bot!!.trueBot, groupEvent.groupId)
-    }
+    override val group: com.now.nowbot.qq.contact.Group
+        get() = Group(bot!!.trueBot, groupEvent.groupId)
 
     override val sender: GroupContact
         get() = GroupContact(
