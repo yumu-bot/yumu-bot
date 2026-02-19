@@ -88,19 +88,6 @@ abstract class Skill {
             .sortedDescending()
             .mapIndexed { index, it -> it * 0.95.pow(index) }
             .sum().toFloat()
-
-        /*
-
-        val nonZero = values.filter { it > 1e-4 }
-
-        if (nonZero.isEmpty()) return 0f
-
-        val threeQuarter = nonZero.sorted()[nonZero.size * 3 / 4]
-        val bonus = log10(nonZero.size / 60f + 1) + 1
-
-        return (0.8f * threeQuarter + 0.2f * nonZero.max()) * bonus
-
-         */
     }
 
     /**

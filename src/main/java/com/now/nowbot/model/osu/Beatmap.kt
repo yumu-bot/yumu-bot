@@ -201,8 +201,7 @@ data class Beatmap(
     )
 
     @get:JsonProperty("mapper_ids")
-    val mapperIDs: List<Long>
-        get() = owners?.map { it.userID } ?: listOf(mapperID)
+    val mapperIDs: List<Long> = owners?.map { it.userID } ?: listOf(mapperID)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -1,17 +1,5 @@
-package com.now.nowbot.model.beatmapParse.parse;
+package com.now.nowbot.model.beatmapParse.parse
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import java.io.BufferedReader
 
-public class CatchBeatmapAttributes extends OsuBeatmapAttributes {
-    /**
-     * 逐行读取
-     *
-     * @param read    osu file
-     * @param general 元信息
-     * @throws io exception {@link IOException}
-     */
-    public CatchBeatmapAttributes(BufferedReader read, BeatmapGeneral general) throws IOException {
-        super(read, general);
-    }
-}
+class CatchBeatmapAttributes(read: BufferedReader, general: BeatmapGeneral?) : OsuBeatmapAttributes(read, general)

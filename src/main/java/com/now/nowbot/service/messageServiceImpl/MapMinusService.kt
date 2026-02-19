@@ -8,8 +8,7 @@ import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.osu.LazerMod.Companion.isAffectStarRating
-import com.now.nowbot.model.skill.SkillType
-import com.now.nowbot.model.skill.Skill
+import com.now.nowbot.model.skill.Skill6
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.message.MessageChain.MessageChainBuilder
@@ -134,23 +133,23 @@ import kotlin.math.absoluteValue
             param.rate
         }
 
-        val mapMinus = Skill.getInstance(
+        val mapMinus = Skill6(
             file,
             param.mode,
             clockRate,
         )
 
-        val type = SkillType.getType(mapMinus)
+        // val type = SkillType.getType(mapMinus)
 
         if ((clockRate - 1.0).absoluteValue <= 1e-4) {
-            skillDao.saveAndUpdateSkill(map, param.mode, mapMinus)
+            // skillDao.saveAndUpdateSkill(map, param.mode, mapMinus)
         }
 
         val body = mapOf(
             "beatmap" to map,
             "map_minus" to mapMinus,
-            "type" to type.keys.first().name,
-            "type_percent" to type.values.first()
+            "type" to "null",//type.keys.first().name,
+            "type_percent" to 0//type.values.first()
         )
 
         return imageService.getPanel(body, "B2")

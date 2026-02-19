@@ -781,8 +781,8 @@ enum class Instruction(val pattern: Pattern) {
         appendColonCaptureGroup("type", REG_WORD, contentLevel = MORE, prefixLevel = MAYBE)
     }),
 
-    TEST_MAP_MINUS(CommandPatternBuilder.create {
-        appendCommandsIgnoreAll("testmapminus", "testmm", "tmm", "tn")
+    TEST_SKILL(CommandPatternBuilder.create {
+        appendCommandsIgnoreAll("testskill", "tl")
         appendMode()
         appendCaptureGroup(FLAG_DATA, REG_NUMBER_SEPERATOR, MORE)
     }),

@@ -43,8 +43,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 @RestController @ResponseBody
-@CrossOrigin("*")
-//@CrossOrigin("http://localhost:5173", "https://siyuyuko.github.io", "https://a.yasunaori.be")
+// @CrossOrigin("*")
+@CrossOrigin("http://localhost:5173", "http://localhost:8388", "https://siyuyuko.github.io", "https://a.yasunaori.be")
 @RequestMapping(value = ["/pub"], method = [RequestMethod.GET]) class BotWebApi(
     private val userApiService: OsuUserApiService,
     private val matchApiService: OsuMatchApiService,
@@ -1150,7 +1150,7 @@ import kotlin.math.min
         return JacksonUtil.toJson(skill)
     }
 
-    @GetMapping(value = ["skill"]) fun getSkill6(
+    @GetMapping(value = ["skill6"]) fun getSkill6(
         @RequestParam("beatmap_id") beatmapID: Long
     ): String {
 

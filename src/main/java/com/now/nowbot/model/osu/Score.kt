@@ -82,7 +82,7 @@ class Score {
         @JsonProperty("pp") val weightedPP: Float
     ) {
         val index: Int
-            get() = (ln((percentage / 100).toDouble()) / ln(0.95)).roundToInt()
+            get() = (ln((percentage / 100.0)) / ln(0.95)).roundToInt()
     }
 
     @JsonProperty("beatmap")

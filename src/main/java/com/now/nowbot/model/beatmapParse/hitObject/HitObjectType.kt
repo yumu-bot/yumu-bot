@@ -1,45 +1,23 @@
-package com.now.nowbot.model.beatmapParse.hitObject;
+package com.now.nowbot.model.beatmapParse.hitObject
 
-public enum HitObjectType{
-    DEFAULT("default",0),
-    CIRCLE("circle",1),
-    SLIDER("slider",2),
-    SPINNER("spinner",8),
-    LONGNOTE("longnote",128);
-    String type_name;
-    int type_value;
+enum class HitObjectType(var value: Int) {
+    DEFAULT(0),
+    CIRCLE(1),
+    SLIDER(2),
+    SPINNER(8),
+    LONGNOTE(128);
 
-    HitObjectType(String name, int value) {
-        type_name = name;
-        type_value = value;
+    override fun toString(): String {
+        return name.lowercase()
     }
 
-    public static HitObjectType getType(int value) {
-        if ((value & 0b1) == 1) return CIRCLE;
-        else if ((value >> 1 & 0b1) == 1) return SLIDER;
-        else if ((value >> 3 & 0b1) == 1) return SPINNER;
-        else if ((value >> 7 & 0b1) == 1) return LONGNOTE;
-        else return DEFAULT;
-    }
-
-    @Override
-    public String toString() {
-        return type_name;
-    }
-
-    public String getName() {
-        return type_name;
-    }
-
-    public void setName(String name) {
-        this.type_name = name;
-    }
-
-    public int getValue() {
-        return type_value;
-    }
-
-    public void setValue(int value) {
-        this.type_value = value;
+    companion object {
+        fun getType(value: Int): HitObjectType = when {
+            (value and 1) != 0 -> CIRCLE
+            (value and 2) != 0 -> SLIDER
+            (value and 8) != 0 -> SPINNER
+            (value and 128) != 0 -> LONGNOTE
+            else -> DEFAULT
+        }
     }
 }

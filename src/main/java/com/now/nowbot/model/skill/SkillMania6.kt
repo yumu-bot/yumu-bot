@@ -1,346 +1,862 @@
 package com.now.nowbot.model.skill
 
 import com.now.nowbot.model.beatmapParse.HitObject
-import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType.*
+import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType
 import com.now.nowbot.model.beatmapParse.parse.ManiaBeatmapAttributes
-import kotlin.math.abs
-import kotlin.math.exp
-import kotlin.math.log10
+import com.now.nowbot.model.skill.SkillMania6.Hand.*
+import com.now.nowbot.model.skill.SkillMania6.Finger.*
+import kotlin.math.ln
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.pow
 
-class SkillMania6(val file: ManiaBeatmapAttributes) : Skill() {
+class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true, spaceStyle: Byte = 2) : Skill6() {
 
-    // --- 1. 核心数据结构 ---
-    data class ManiaAction(
-        val startTime: Int,
-        val objects: List<HitObject>
-    ) {
-        // val columnMask: Int = objects.fold(0) { mask, obj -> mask or (1 shl obj.column) }
-        val count: Int = objects.size
-    }
+    private val totalKey: Int = attr.cs.toInt()
 
-    data class Finger(
-        val hand: Int,    // 0: 左手, 1: 右手
-        val type: Int,    // 0-4 分别代表小指到大拇指
-        val isThumb: Boolean = type == 4
-    )
-
-    object ManiaLayout {
-        fun getFingerMapping(keyCount: Int): List<Finger> {
-            return when (keyCount) {
-                1 -> listOf(Finger(1, 4))
-                2 -> listOf(Finger(0, 3), Finger(1, 3))
-                3 -> listOf(Finger(0, 3), Finger(1, 4), Finger(1, 3))
-                4 -> listOf(Finger(0, 2), Finger(0, 3), Finger(1, 3), Finger(1, 2))
-                5 -> listOf(Finger(0, 2), Finger(0, 3), Finger(1, 4), Finger(1, 3), Finger(1, 2))
-                6 -> listOf(Finger(0, 1), Finger(0, 2), Finger(0, 3), Finger(1, 3), Finger(1, 2), Finger(1, 1))
-                7 -> listOf(Finger(0, 1), Finger(0, 2), Finger(0, 3), Finger(1, 4), Finger(1, 3), Finger(1, 2), Finger(1, 1))
-                8 -> listOf(Finger(0, 0)) + getFingerMapping(7)
-                9 -> getFingerMapping(4) + listOf(Finger(1, 4)) + getFingerMapping(4)
-                10 -> listOf(Finger(0, 0), Finger(0, 1), Finger(0, 2), Finger(0, 3), Finger(0, 4),
-                    Finger(1, 4), Finger(1, 3), Finger(1, 2), Finger(1, 1), Finger(1, 0))
-                else -> List(keyCount) { Finger(it % 2, it / 2) }
-            }
-        }
-    }
-
-    /**
-     * 手部状态追踪器：记录每个轨道的实时物理状态
-     */
-    class HandStateTracker(keyCount: Int) {
-        // 记录每个轨道被占据到什么时候（用于处理 LN）
-        val columnBusyUntil = IntArray(keyCount) { -1 }
-        // 记录每个轨道上一次点击的时间（用于计算 Jack）
-        val lastTapTime = IntArray(keyCount) { -1 }
-
-        fun update(action: ManiaAction) {
-            for (obj in action.objects) {
-                lastTapTime[obj.column] = obj.startTime
-                if (obj.type == LONGNOTE) {
-                    columnBusyUntil[obj.column] = obj.endTime
-                }
-            }
-        }
-
-        // 获取当前正在按住（Holding）的轨道数量
-        fun getHoldingCount(currentTime: Int): Int {
-            return columnBusyUntil.count { it > currentTime }
-        }
-
-        // 检查特定轨道是否正在被占用
-//        fun isColumnOccupied(column: Int, currentTime: Int): Boolean {
-//            return columnBusyUntil[column] > currentTime
-//        }
-    }
-
-    object HandWeightConfig {
-        /**
-         * 同手手指干涉权重表
-         * 索引说明：0:小, 1:无, 2:中, 3:食, 4:拇
-         */
-        private val weightTable = arrayOf(
-            //          小(0)  无(1)  中(2)  食(3)  拇(4)
-            floatArrayOf(0.0f, 1.8f, 1.6f, 1.2f, 1.4f), // 小指 (0)
-            floatArrayOf(1.8f, 0.0f, 1.4f, 1.0f, 1.2f), // 无指 (1)
-            floatArrayOf(1.6f, 1.4f, 0.0f, 1.0f, 1.2f), // 中指 (2)
-            floatArrayOf(1.2f, 1.0f, 1.0f, 0.0f, 1.2f), // 食指 (3)
-            floatArrayOf(1.4f, 1.2f, 1.2f, 1.2f, 0.0f)  // 拇指 (4)
-        )
-
-        fun getWeight(f1: Int, f2: Int): Float {
-            return weightTable[f1][f2]
-        }
-    }
-
-    /**
-     * 难度矩阵：定义轨道间的物理联系
-     */
-    private fun generateMatrix(keyCount: Int): Array<FloatArray> {
-        val fingers = ManiaLayout.getFingerMapping(keyCount)
-        val matrix = Array(keyCount) { FloatArray(keyCount) }
-
-        for (i in 0 until keyCount) {
-            for (j in 0 until keyCount) {
-                val f1 = fingers[i]
-                val f2 = fingers[j]
-
-                matrix[i][j] = if (f1.hand != f2.hand) {
-                    0.8f // 跨手固定权重
-                } else {
-                    // 同手查表
-                    HandWeightConfig.getWeight(f1.type, f2.type)
-                }
-            }
-        }
-        return matrix
-    }
-
-    // --- 2. 状态变量与初始化 ---
-
-    private val actions: List<ManiaAction> = groupObjectsToActions(file.hitObjects)
-    private val keyCount = file.cs.toInt()
-    private val tracker = HandStateTracker(keyCount)
-    private val interferenceMatrix = generateMatrix(keyCount)
-
-    private val skillValues = FloatArray(7) { 0f }
+    private val sortedNotes: MutableList<HitObject> = attr.hitObjects
 
     init {
-        if (actions.isNotEmpty()) calculate()
+        sortedNotes.sortBy { it.column }
+        sortedNotes.sortBy { it.startTime }
     }
 
-    // --- 3. 计算引擎 ---
+    private enum class Hand {
+        LEFT, RIGHT, BOTH
+    }
 
-    private fun calculate() {
-        // 1. 初始化各维度的瞬时应力列表
-        val rcStrains = mutableListOf<Float>()
-        val lnStrains = mutableListOf<Float>()
-        val coStrains = mutableListOf<Float>()
-        val stStrains = mutableListOf<Float>()
-        val spStrains = mutableListOf<Float>()
-        val prStrains = mutableListOf<Float>()
+    private enum class Finger {
+        THUMB,
+        INDEX,
+        MIDDLE,
+        RING,
+        PINKY;
 
-        // 2. 遍历 Action 流计算瞬时应力
-        for (i in actions.indices) {
-            val curr = actions[i]
-            val prev = actions.getOrNull(i - 1)
-            val delta = if (prev != null) (curr.startTime - prev.startTime).coerceAtLeast(1) else 1000
-            val speedFactor = 1000f / delta
+        companion object {
+            // 相同键本来用不到，但是有些多 K 可能存在同键不同指的情况
+            private val gestureResults = arrayOf(
+                1.0,
+                1.1, 1.0,
+                1.1, 1.0, 1.0,
+                1.2, 1.2, 1.4, 1.0,
+                1.4, 1.2, 1.6, 1.8, 1.0
+            )
 
-            // 定义临时列表收集这一拍内所有的 Precision 因子
-            val precisionFactors = mutableListOf<Float>()
+            // 获取不同手指交互时的难度增益
+            fun getGestureBonus(f1: Finger, f2: Finger): Double {
+                val i = maxOf(f1.ordinal, f2.ordinal)
+                val j = minOf(f1.ordinal, f2.ordinal)
 
-            var currentRC = 0f
-            var currentLN = 0f
-            var currentSP = 0f
-            var currentPR = 0f
-
-            // --- A. Coordination (协调性) ---
-            val holdingCount = tracker.getHoldingCount(curr.startTime)
-            if (holdingCount > 0 && curr.count > 0) {
-                coStrains.add((holdingCount * curr.count) * 1.5f)
+                // 三角阵索引公式
+                val index = (i * (i + 1)) / 2 + j
+                return gestureResults[index]
             }
-
-            // --- B. 模式与速度判定 (Rice, Speed, Shield, ReverseShield) ---
-            if (prev != null) {
-                for (currObj in curr.objects) {
-                    for (prevObj in prev.objects) {
-                        val isSameColumn = currObj.column == prevObj.column
-                        val weight = interferenceMatrix[currObj.column][prevObj.column]
-
-                        if (isSameColumn) {
-                            val interval = (currObj.startTime - prevObj.startTime).coerceAtLeast(1)
-                            val jackSpeed = 1000f / interval
-                            when {
-                                // Shield
-                                prevObj.type == LONGNOTE -> {
-                                    val releaseToPress = (currObj.startTime - prevObj.endTime).coerceAtLeast(1)
-                                    currentLN += (1000f / releaseToPress) * 1.5f
-                                }
-                                // Reverse Shield
-                                prevObj.type == CIRCLE && currObj.type == LONGNOTE -> {
-                                    currentLN += jackSpeed * 1.3f
-                                }
-                                // Normal Jack
-                                else -> currentRC += jackSpeed * 1.2f
-                            }
-                        } else {
-                            // Stream / Trill
-                            currentSP += speedFactor * weight
-                            // Precision (Grace)
-                            if (delta < 30) {
-                                precisionFactors.add(speedFactor * weight * affectedByOD(file.od.toFloat()))
-                            }
-                        }
-                    }
-                }
-            }
-
-            // --- C. Release & Tail (Release, Delayed Tail) ---
-            for (col in 0 until keyCount) {
-                if (tracker.columnBusyUntil[col] == curr.startTime) {
-                    curr.objects.forEach { obj ->
-                        val weight = interferenceMatrix[col][obj.column]
-                        val releaseVal = speedFactor * weight * 0.8f
-                        currentLN += releaseVal
-
-                        // 收集因子 1: Release 精度风险
-                        precisionFactors.add(releaseVal * 0.5f * affectedByOD(file.od.toFloat()))
-                    }
-                }
-            }
-
-            // --- D. Tail Precision ---
-            curr.objects.filter { it.type == LONGNOTE }.forEach { ln ->
-                val nextAction = actions.getOrNull(i + 1)
-                if (nextAction != null) {
-                    val tailDelta = abs(nextAction.startTime - ln.endTime).coerceAtLeast(1)
-                    if (tailDelta < 80) {
-                        precisionFactors.add((1000f / tailDelta) * 0.5f)
-                    }
-                }
-            }
-
-            // --- 核心：对 currentPR 应用闵可夫斯基和 ---
-            if (precisionFactors.isNotEmpty()) {
-                val p = 2f
-                val pSum = precisionFactors.map { it.pow(p) }.sum().pow(1f / p)
-                currentPR = pSum
-            }
-
-            // 存入瞬时值
-            rcStrains.add(currentRC)
-            lnStrains.add(currentLN)
-            spStrains.add(currentSP)
-            prStrains.add(currentPR)
-            stStrains.add(curr.count.toFloat()) // Stamina/Density 基础值
-
-            tracker.update(curr)
-        }
-
-        // 3. 聚合计算：使用降序衰减模型
-        // 这种方式让 10% 的爆发段贡献 50% 以上的分数，同时长图会有更多的有效项累加
-        skillValues[0] = powerLaw(aggregateStrains(rcStrains), 0.020582044f, 0.89293796f)   // RC
-        skillValues[1] = powerLaw(aggregateStrains(lnStrains), 0.07853669f, 0.6232433f)   // LN
-        skillValues[2] = powerLaw(aggregateStrains(coStrains), 0.02896592f, 1.0093521f)   // CO
-        skillValues[3] = powerLaw(aggregateStrains(stStrains), 0.0034666888f, 1.5944985f)    // ST
-        skillValues[4] = powerLaw(aggregateStrains(spStrains), 0.026827838f, 0.6576119f)  // SP
-        skillValues[5] = powerLaw(aggregateStrains(prStrains), 8.917264E-8f, 1.8425027f)   // PR
-        skillValues[6] = 0f // SV 留空
-
-        // 4. 应用长度补偿因子
-        val lengthFactor = getLengthFactor(file.length)
-        for (i in skillValues.indices) {
-            skillValues[i] *= lengthFactor
         }
     }
 
-    private fun powerLaw(x: Float, a: Float, power: Float): Float {
-        return a * x.pow(power)
+    private enum class Type {
+        RICE, LN
     }
 
     /**
-     * 降序衰减聚合函数
-     * Σ (Strain\[i] * 0.95^i)
+     * 最小的计量单位：一次操作（List<ManiaAction>）
      */
-    private fun aggregateStrains(strains: MutableList<Float>): Float {
-        if (strains.isEmpty()) return 0f
-        val sorted = strains.filter { it > 0 }.sortedDescending()
-        var total = 0f
-        var weight = 1.0f
-        val decay = 0.95f // 越接近 1.0，长图加成越高；越小，则越看重爆发
+    private data class ManiaAction(
+        val finger: Finger,
+        val hand: Hand,
+        val column: Int,
+        val startTime: Int,
+        val endTime: Int,
+        val type: Type,
+    )
 
-        for (s in sorted) {
-            total += s * weight
-            weight *= decay
-            if (weight < 0.001f) break
-        }
-
-        return total
+    private fun getSpacePair(spaceStyle: Byte): Pair<Hand, Finger> {
+        return when (spaceStyle) {
+            2.toByte() -> RIGHT
+            1.toByte() -> LEFT
+            else -> BOTH
+        } to THUMB
     }
 
-    /**
-     * 长度修正因子：log 曲线，奖励耐力，惩罚超短图
-     */
-    private fun getLengthFactor(millis: Int): Float {
-        val seconds = millis / 1000f
-        return if (seconds < 30) {
-            0.6f + 0.4f * (seconds / 30f)
+    private val playStyle: List<Pair<Hand, Finger>> = when (totalKey) {
+        1 -> listOf(BOTH to THUMB)
+        2 -> listOf(
+            LEFT to INDEX,
+            RIGHT to INDEX,
+        )
+
+        3 -> listOf(
+            LEFT to INDEX,
+            getSpacePair(spaceStyle),
+            RIGHT to INDEX,
+        )
+
+        4 -> listOf(
+            LEFT to MIDDLE,
+            LEFT to INDEX,
+            RIGHT to INDEX,
+            RIGHT to MIDDLE,
+        )
+
+        5 -> listOf(
+            LEFT to MIDDLE,
+            LEFT to INDEX,
+            getSpacePair(spaceStyle),
+            RIGHT to INDEX,
+            RIGHT to MIDDLE,
+        )
+
+        6 -> listOf(
+            LEFT to RING,
+            LEFT to MIDDLE,
+            LEFT to INDEX,
+            RIGHT to INDEX,
+            RIGHT to MIDDLE,
+            RIGHT to RING,
+        )
+
+        7 -> listOf(
+            LEFT to RING,
+            LEFT to MIDDLE,
+            LEFT to INDEX,
+            getSpacePair(spaceStyle),
+            RIGHT to INDEX,
+            RIGHT to MIDDLE,
+            RIGHT to RING,
+        )
+
+        8 -> if (isIIDXStyle) {
+            when (spaceStyle) {
+                2.toByte() -> {
+                    listOf(
+                        RIGHT to PINKY,
+                        LEFT to RING,
+                        LEFT to MIDDLE,
+                        LEFT to INDEX,
+                        getSpacePair(spaceStyle),
+                        RIGHT to INDEX,
+                        RIGHT to MIDDLE,
+                        RIGHT to RING,
+                    )
+                }
+
+                else -> listOf(
+                    LEFT to PINKY,
+                    LEFT to RING,
+                    LEFT to MIDDLE,
+                    LEFT to INDEX,
+                    getSpacePair(spaceStyle),
+                    RIGHT to INDEX,
+                    RIGHT to MIDDLE,
+                    RIGHT to RING,
+                )
+            }
         } else {
-            // 在 30s 时为 1.0，在 300s(5min) 时约为 1.15
-            0.85f + 0.15f * log10(seconds / 3f)
-        }.coerceIn(0.1f, 1.5f)
+            listOf(
+                LEFT to PINKY,
+                LEFT to RING,
+                LEFT to MIDDLE,
+                LEFT to INDEX,
+                RIGHT to INDEX,
+                RIGHT to MIDDLE,
+                RIGHT to RING,
+                RIGHT to PINKY,
+            )
+        }
+
+        9 -> listOf(
+            LEFT to PINKY,
+            LEFT to RING,
+            LEFT to MIDDLE,
+            LEFT to INDEX,
+            getSpacePair(spaceStyle),
+            RIGHT to INDEX,
+            RIGHT to MIDDLE,
+            RIGHT to RING,
+            RIGHT to PINKY,
+        )
+
+        10 -> listOf(
+            LEFT to PINKY,
+            LEFT to RING,
+            LEFT to MIDDLE,
+            LEFT to INDEX,
+            LEFT to THUMB,
+            RIGHT to THUMB,
+            RIGHT to INDEX,
+            RIGHT to MIDDLE,
+            RIGHT to RING,
+            RIGHT to PINKY,
+        )
+
+        // 10K2S
+        12 -> listOf(
+            LEFT to PINKY,
+            LEFT to PINKY,
+            LEFT to RING,
+            LEFT to MIDDLE,
+            LEFT to INDEX,
+            LEFT to THUMB,
+            RIGHT to THUMB,
+            RIGHT to INDEX,
+            RIGHT to MIDDLE,
+            RIGHT to RING,
+            RIGHT to PINKY,
+            RIGHT to PINKY,
+        )
+
+        14 -> when (spaceStyle) {
+
+            // DP 14
+            1.toByte() -> listOf(
+                LEFT to PINKY,
+                LEFT to RING,
+                LEFT to PINKY,
+                LEFT to MIDDLE,
+                LEFT to THUMB,
+                LEFT to INDEX,
+                LEFT to THUMB,
+
+                RIGHT to THUMB,
+                RIGHT to INDEX,
+                RIGHT to THUMB,
+                RIGHT to MIDDLE,
+                RIGHT to PINKY,
+                RIGHT to RING,
+                RIGHT to PINKY,
+            )
+
+            // EZ2AC 14
+            else -> listOf(
+                LEFT to PINKY,
+                LEFT to RING,
+                LEFT to MIDDLE,
+                LEFT to INDEX,
+                LEFT to THUMB,
+
+                BOTH to INDEX,
+                BOTH to INDEX,
+                BOTH to INDEX,
+                BOTH to INDEX,
+
+                RIGHT to THUMB,
+                RIGHT to INDEX,
+                RIGHT to MIDDLE,
+                RIGHT to RING,
+                RIGHT to PINKY,
+            )
+        }
+
+        16 -> when (spaceStyle) {
+
+            // DP 16
+            1.toByte() -> listOf(
+                LEFT to PINKY,
+                LEFT to PINKY,
+                LEFT to RING,
+                LEFT to PINKY,
+                LEFT to MIDDLE,
+                LEFT to THUMB,
+                LEFT to INDEX,
+                LEFT to THUMB,
+
+                RIGHT to THUMB,
+                RIGHT to INDEX,
+                RIGHT to THUMB,
+                RIGHT to MIDDLE,
+                RIGHT to PINKY,
+                RIGHT to RING,
+                RIGHT to PINKY,
+                RIGHT to PINKY,
+            )
+
+            // EZ2AC 16
+            else -> listOf(
+                LEFT to PINKY,
+                LEFT to PINKY,
+                LEFT to RING,
+                LEFT to MIDDLE,
+                LEFT to INDEX,
+                LEFT to THUMB,
+
+                BOTH to INDEX,
+                BOTH to INDEX,
+                BOTH to INDEX,
+                BOTH to INDEX,
+
+                RIGHT to THUMB,
+                RIGHT to INDEX,
+                RIGHT to MIDDLE,
+                RIGHT to RING,
+                RIGHT to PINKY,
+                RIGHT to PINKY,
+            )
+        }
+
+        18 -> when (spaceStyle) {
+            // 10K8K
+            1.toByte() -> listOf(
+                LEFT to PINKY,
+                LEFT to RING,
+                LEFT to MIDDLE,
+                LEFT to INDEX,
+
+                LEFT to PINKY,
+                LEFT to RING,
+                LEFT to MIDDLE,
+                LEFT to INDEX,
+                LEFT to THUMB,
+
+                RIGHT to THUMB,
+                RIGHT to INDEX,
+                RIGHT to MIDDLE,
+                RIGHT to RING,
+                RIGHT to PINKY,
+
+                RIGHT to INDEX,
+                RIGHT to MIDDLE,
+                RIGHT to RING,
+                RIGHT to PINKY,
+            )
+
+            // 9K9K
+            else -> listOf(
+                LEFT to PINKY,
+                LEFT to PINKY,
+                LEFT to RING,
+                LEFT to RING,
+                LEFT to MIDDLE,
+                LEFT to MIDDLE,
+                LEFT to INDEX,
+                LEFT to INDEX,
+                LEFT to THUMB,
+
+                RIGHT to THUMB,
+                RIGHT to INDEX,
+                RIGHT to INDEX,
+                RIGHT to MIDDLE,
+                RIGHT to MIDDLE,
+                RIGHT to RING,
+                RIGHT to RING,
+                RIGHT to PINKY,
+                RIGHT to PINKY,
+            )
+        }
+
+        else -> List(totalKey) { BOTH to INDEX }
     }
 
-    // --- 4. 辅助函数 ---
+    /**
+     * @param sortedObjects 这里的物件必须按时间以及大小排序
+     */
+    private fun objectsToActions(
+        sortedObjects: List<HitObject>,
+        threshold: Double = frac8
+    ): List<List<ManiaAction>> {
+        if (sortedObjects.isEmpty()) return emptyList()
 
-    private fun groupObjectsToActions(hitObjects: List<HitObject>): List<ManiaAction> {
-        if (hitObjects.isEmpty()) return emptyList()
-        val actions = mutableListOf<ManiaAction>()
-        var currentGroup = mutableListOf<HitObject>()
-        for (obj in hitObjects) {
-            if (currentGroup.isEmpty() || obj.startTime - currentGroup[0].startTime <= 3) {
-                currentGroup.add(obj)
-            } else {
-                actions.add(ManiaAction(currentGroup[0].startTime, currentGroup))
-                currentGroup = mutableListOf(obj)
+        val actions = mutableListOf<List<ManiaAction>>()
+        val currentBatch = mutableListOf<HitObject>()
+
+        for (obj in sortedObjects) {
+            if (currentBatch.isEmpty()) {
+                currentBatch.add(obj)
+                continue
             }
+
+            // 核心判定逻辑：
+            // 1. 轨道是否重复
+            val isTrackConflict = currentBatch.any { it.column == obj.column }
+            // 2. 时间差是否超过了当前组内最大的时间（即最后一个音符的时间）
+            val isTimeOut = (obj.startTime - (currentBatch.last().startTime)) > threshold
+
+            if (isTrackConflict || isTimeOut) {
+                // 归纳当前组
+                actions.add(batchToAction(currentBatch))
+                currentBatch.clear()
+            }
+
+            currentBatch.add(obj)
         }
-        actions.add(ManiaAction(currentGroup[0].startTime, currentGroup))
+
+        // 处理收尾
+        if (currentBatch.isNotEmpty()) {
+            actions.add(batchToAction(currentBatch))
+        }
+
         return actions
     }
 
-    private fun affectedByOD(od: Float): Float {
-        return exp(max(od - 7f, 0f) / 2f)
+    private fun batchToAction(batch: MutableList<HitObject>): List<ManiaAction> {
+        return batch.map { hit ->
+
+            val ps = playStyle[hit.column]
+            val type = if (hit.type == HitObjectType.CIRCLE ||
+                (hit.endTime - hit.startTime) <= frac12
+            ) {
+                Type.RICE
+            } else {
+                Type.LN
+            }
+
+            // 将太短的 ln 看成 rice
+            val endTime = if (type == Type.RICE) {
+                hit.startTime
+            } else {
+                hit.endTime
+            }
+
+            ManiaAction(
+                ps.second,
+                ps.first,
+                hit.column,
+                hit.startTime,
+                endTime,
+                type
+            )
+        }
     }
 
-    override val names = listOf("Rice", "LN", "Coordination", "Stamina", "Speed", "Precision", "SV")
-    override val abbreviates = listOf("RC", "LN", "CO", "ST", "SP", "PR", "SV")
-    override val values
-        get() = skillValues.toList()
-    override val bases
-        get() = skillValues.toList()
-    override val star: Float
-        get() {
-            if (values.all { it <= 0f }) return 0f
+    enum class NoteType {
+        STREAM, BRACKET, JACK, // Rice, S, B, J
+        RELEASE, SHIELD, REVERSE_SHIELD, // LN, R, E, V
+        HAND_LOCK, OVERLAP, // CO, H, O
+        GRACE, DELAYED_TAIL, // PR, G, Y
+        CHORD, TRILL, BURST, // SP, C, T, U
+        FATIGUE // ST, F
+        ;
 
-            // 1. 选取前6项（排除 SV）
-            val mainSkills = values.take(6).map { it.toDouble() }
+        val index: Int = ordinal
 
-            // 2. 使用 p=2 (欧几里得范数) 替代 p=3，降低极端值的影响
-            val p = 2.0
-            val sum = mainSkills.sumOf { it.pow(p) }
-            var rawStar = sum.pow(1.0 / p).toFloat()
+        val eval: List<List<Double>> = listOf(
+            listOf(3.0, 0.5), listOf(3.5, 0.8), listOf(3.0, 0.5),
 
-            // 3. 应用全局缩放系数 (根据你目前的 values 强度，这个值通常在 0.5 - 0.8 之间)
-            // 这个系数需要你根据具体的谱面表现来微调
-            val globalScaling = 0.6f
-            rawStar *= globalScaling
+            listOf(2.55, 0.615), listOf(4.24, 0.457), listOf(4.865, 0.53),
 
-            // 4. SV 的影响通常是边际递减的，改用对数或较小的线性加成
-            // 1 + 0.1 * SV 可能还是太高，建议降为 0.05
-            val svBonus = 1f + (skillValues[6] * 0.05f)
+            listOf(3.633, 0.332), listOf(3.5, 0.282),
 
-            return rawStar * svBonus
+            listOf(2.0, 0.606), listOf(0.69, 1.15),
+
+            listOf(0.7, 1.2), listOf(0.5, 1.0), listOf(0.05, 0.95),
+
+            listOf(0.002, 0.886)
+        )
+    }
+
+    private fun noteDataToSubValue(grouped: List<NoteData>): List<Double> {
+        return NoteType.entries.map { type ->
+            val e = type.eval[type.index]
+
+            if (type != NoteType.BURST) {
+                grouped.map { noteData ->
+                    noteData.get(type)
+                }.aggregate().eval(e.getOrNull(0) ?: 1.0, e.getOrNull(1) ?: 1.0)
+            } else {
+                (grouped.maxOfOrNull { noteData -> noteData.get(NoteType.BURST) } ?: 0.0).eval(e.getOrNull(0) ?: 1.0, e.getOrNull(1) ?: 1.0)
+            }
         }
+    }
+
+    private fun groupingNoteData(allNotes: List<NoteData>): List<NoteData> {
+        if (allNotes.isEmpty()) return emptyList()
+
+        val windowSize = calculateUnit
+
+        // 1. 找到时间的边界
+        val startTime = allNotes.minOf { it.time }
+        val endTime = allNotes.maxOf { it.time }
+
+        // 2. 先按 Index 分组，方便后续查找
+        val groupedMap = allNotes.groupBy { it.time / windowSize }
+
+        // 3. 按照时间轴从开始到结束，生成完整的窗口列表
+        val startWindow = startTime / windowSize
+        val endWindow = endTime / windowSize
+
+        val result = mutableListOf<NoteData>()
+
+        for (windowIndex in startWindow..endWindow) {
+            val notesInWindow = groupedMap[windowIndex]
+
+            if (notesInWindow == null) {
+                // --- 处理空段落 ---
+                // 创建一个“零值”或“空值”的 NoteData
+                val emptyData = NoteData().apply {
+                    time = windowIndex * windowSize
+                    // 这里不需要 add 或 divide，保持默认初始状态即可
+                }
+                result.add(emptyData)
+            } else {
+                // --- 处理有数据的段落 ---
+                val sumData = NoteData().apply {
+                    time = windowIndex * windowSize
+                }
+
+                for (note in notesInWindow) {
+                    sumData.add(note)
+                }
+
+                val count = notesInWindow.size.toDouble()
+                if (count > 0) {
+                    sumData.divide(count)
+                }
+                result.add(sumData)
+            }
+        }
+
+        return result
+    }
+
+    private fun actionsToNoteData(actions: List<List<ManiaAction>>): List<NoteData> {
+        val legacy: MutableList<ManiaAction> = mutableListOf()
+        var burstBefore = 0.0
+        var fatigueBefore = 0.0
+
+        return actions.zipWithNext { it, after ->
+            val minStartTime = it.minOfOrNull { it.startTime } ?: 0
+
+            legacy.removeIf { l -> l.endTime < minStartTime }
+
+            val (data, ly) = calculate(
+                it, legacy, after, burstBefore, fatigueBefore
+            )
+
+            burstBefore = data.burst
+            fatigueBefore = data.fatigue
+
+            legacy.addAll(ly)
+
+            data
+        }
+    }
+
+    /**
+     * @param actionBefore 可能遗漏的前一个操作的 ln 操作，当且仅当这个 ln 的持续时间长于 actionAfter 的触发时间时
+     */
+    private fun calculate(
+        action: List<ManiaAction>,
+        actionBefore: List<ManiaAction>,
+        actionAfter: List<ManiaAction>,
+        burstBefore: Double = 0.0,
+        fatigueBefore: Double = 0.0,
+    ): Pair<NoteData, List<ManiaAction>> {
+        val data = NoteData()
+        val legacy = mutableListOf<ManiaAction>()
+
+        val afterEndTimeMax = actionAfter.maxOfOrNull { it.endTime } ?: 0
+        val afterStartTimeMax = actionAfter.maxOfOrNull { it.startTime } ?: 0
+        val startTimeMax = action.maxOfOrNull { it.startTime } ?: 0
+        val startTimeMin = action.minOfOrNull { it.startTime } ?: 0
+
+        val chord = action.size
+        val chordBonus = calculateChord(chord, totalKey)
+
+        // 分键操作
+        action.forEach {
+            val leftBefore: ManiaAction? = actionBefore.find { lb ->
+                lb.column == it.column - 1
+            }
+
+            val leftAfter: ManiaAction? = actionAfter.find { la ->
+                la.column == it.column - 1
+            }
+
+            val itAfter: ManiaAction? = actionAfter.find { ia ->
+                ia.column == it.column
+            }
+
+            val rightBefore: ManiaAction? = actionBefore.find { rb ->
+                rb.column == it.column + 1
+            }
+
+            val rightAfter: ManiaAction? = actionAfter.find { ra ->
+                ra.column == it.column + 1
+            }
+
+            // 先收拾遗产
+
+            if (leftBefore != null) {
+                data.add(calculateAsideRelease(it, leftBefore))
+            }
+
+            if (rightBefore != null) {
+                data.add(calculateAsideRelease(it, rightBefore))
+            }
+
+            if (itAfter != null) {
+                data.add(
+                    calculateAfter(it, itAfter)
+                )
+            } else {
+                if (leftAfter != null) {
+                    data.add(
+                        calculateAsideHit(it, leftAfter, chordBonus)
+                    )
+
+                    if (rightAfter != null) {
+                        // 双不为 null
+                        data.add(
+                            calculateBothSide(it, leftAfter, rightAfter)
+                        )
+                    }
+                }
+
+                if (rightAfter != null) {
+                    data.add(
+                        calculateAsideHit(it, rightAfter, chordBonus)
+                    )
+                }
+            }
+
+            if (leftAfter != null) {
+                data.add(calculateAsideRelease(it, leftAfter))
+            }
+
+            if (rightAfter != null) {
+                data.add(calculateAsideRelease(it, rightAfter))
+            }
+
+            if (it.type == Type.LN) {
+                // LN
+                // 可能有遗产
+                if (it.endTime - frac8 > afterEndTimeMax) {
+                    legacy.add(it)
+                }
+            }
+        }
+
+        action.zipWithNext { it, next ->
+            if (next.type == Type.LN) {
+                data.add(calculateAsideRelease(it, next))
+            }
+        }
+
+        // 集合操作
+        val graceDelta = startTimeMax - startTimeMin
+
+        if (graceDelta >= frac8 && chord > 1) {
+            action.zipWithNext { a, b ->
+                data.grace += (a.startTime - b.startTime).exponent(frac8, frac4)
+            }
+        }
+
+        // 耐力和爆发操作
+        val delta = afterStartTimeMax - startTimeMax
+
+        val burstDecay = 0.5.pow((delta / 1000.0) / BURST_RECOVERY_HALF_LIFE)
+        val fatigueDecay = 0.5.pow((delta / 1000.0) / FATIGUE_RECOVERY_HALF_LIFE)
+
+        data.fatigue = fatigueBefore * fatigueDecay + chordBonus
+        data.burst = burstBefore * burstDecay + chordBonus
+
+        data.chord = chordBonus / totalKey
+
+        data.time = startTimeMin
+
+        return data to legacy
+    }
+
+    private fun calculateAfter(it: ManiaAction, after: ManiaAction): NoteData {
+        val data = NoteData()
+
+        if (it.type == Type.RICE) {
+            if (after.type == Type.RICE) {
+                data.jack += (after.startTime - it.startTime)
+                    .inverse(frac2, frac1, frac16)
+            } else {
+                data.reverseShield += (after.startTime - it.startTime)
+                    .inverse(frac2, frac1, frac16)
+            }
+        } else {
+            data.shield += (after.startTime - it.endTime)
+                .inverse(frac4, frac1, frac16)
+        }
+
+        return data
+    }
+
+    /**
+     * 要求：后面不能有音符，和 calcAfter 相对
+     */
+    private fun calculateAsideHit(it: ManiaAction, aside: ManiaAction, chordBonus: Double): NoteData {
+        val data = NoteData()
+
+        val bonus = Finger.getGestureBonus(
+            it.finger, aside.finger
+        )
+
+        if (it.hand != aside.hand) {
+            data.trill += chordBonus * (aside.startTime - it.startTime).exponent(frac4, frac1)
+        } else {
+            data.stream += bonus * (aside.startTime - it.startTime).exponent(frac4, frac1)
+        }
+
+        return data
+    }
+
+    /**
+     * @param aside 必须是 ln
+     */
+    private fun calculateAsideRelease(it: ManiaAction, aside: ManiaAction): NoteData {
+        val data = NoteData()
+
+        val bonus = Finger.getGestureBonus(
+            it.finger, aside.finger
+        )
+
+        if (it.type == Type.RICE) {
+            val isIn = aside.endTime - frac8 > it.startTime && aside.startTime + frac8 < it.startTime
+
+            data.handLock += if (isIn) {
+                bonus
+            } else {
+                0.0
+            }
+        } else {
+            val overlap = min(aside.endTime, it.endTime) - max(aside.startTime, it.startTime)
+
+            if (overlap > 0) {
+                data.overlap += overlap.approach(frac2)
+            }
+
+            data.grace += (aside.startTime - it.startTime).exponent(frac8, frac4)
+
+            if (aside.type == Type.LN) {
+                data.release += (aside.endTime - it.endTime).exponent(frac4, frac1)
+                data.delayedTail += (aside.endTime - it.endTime).exponent(frac6, frac3)
+            }
+        }
+
+        return data
+    }
+
+    private fun calculateBothSide(it: ManiaAction, left: ManiaAction, right: ManiaAction): NoteData {
+        val data = NoteData()
+
+        val min = min(left.startTime, right.startTime)
+
+        if (min > it.startTime + frac16) {
+            data.bracket += (min - it.startTime).exponent(frac4, frac1)
+        }
+
+        return data
+    }
+
+    private fun calculateChord(chord: Int, totalKey: Int = 1): Double {
+        if (chord !in 1..totalKey) return 0.0
+
+        // 满足：f(1) = 1.0, f(6) = 3.0
+        val cv = ln(chord + B) * K
+
+        return if (chord == totalKey && totalKey > 4) {
+            cv * 0.8
+        } else {
+            cv
+        }
+    }
+
+    data class NoteData(
+        // 使用数组存储所有值
+        private val values: DoubleArray =
+            DoubleArray(NoteType.entries.size) { 0.0 },
+    ) {
+        // 这个是定位用的
+        var time: Int = 0
+
+        // 使用属性委托
+        var stream: Double by ArrayDelegate(NoteType.STREAM)
+        var bracket: Double by ArrayDelegate(NoteType.BRACKET)
+        var jack: Double by ArrayDelegate(NoteType.JACK)
+
+        var release: Double by ArrayDelegate(NoteType.RELEASE)
+        var shield: Double by ArrayDelegate(NoteType.SHIELD)
+        var reverseShield: Double by ArrayDelegate(NoteType.REVERSE_SHIELD)
+
+        var handLock: Double by ArrayDelegate(NoteType.HAND_LOCK)
+        var overlap: Double by ArrayDelegate(NoteType.OVERLAP)
+
+        var grace: Double by ArrayDelegate(NoteType.GRACE)
+        var delayedTail: Double by ArrayDelegate(NoteType.DELAYED_TAIL)
+
+        var chord: Double by ArrayDelegate(NoteType.CHORD)
+        var trill: Double by ArrayDelegate(NoteType.TRILL)
+        var burst: Double by ArrayDelegate(NoteType.BURST)
+
+        var fatigue: Double by ArrayDelegate(NoteType.FATIGUE)
+
+        fun add(other: NoteData): NoteData {
+            for (i in values.indices) {
+                this.values[i] += other.values[i]
+            }
+            return this
+        }
+
+        fun divide(divisor: Double): NoteData {
+            for (i in values.indices) {
+                this.values[i] /= divisor
+            }
+            return this
+        }
+
+
+        fun clear(): NoteData {
+            this.values.fill(0.0)
+            return this
+        }
+
+        fun flatten(): List<Double> {
+            return values.toList()
+        }
+
+        fun get(field: NoteType): Double {
+            return values[field.index]
+        }
+
+        // 内部类：实现属性委托，让访问 values[index] 像访问成员变量一样快
+        private class ArrayDelegate(val field: NoteType) {
+            operator fun getValue(thisRef: NoteData, property: Any?): Double = thisRef.values[field.index]
+            operator fun setValue(thisRef: NoteData, property: Any?, value: Double) {
+                thisRef.values[field.index] = value
+            }
+        }
+    }
+
+    private val acts = objectsToActions(sortedNotes)
+
+    private val data = actionsToNoteData(acts)
+
+    private val group = groupingNoteData(data)
+
+    override val bases: List<Double> = noteDataToSubValue(group)
+
+    override val skills: List<Double>
+        get() = listOf(
+            listOf(bases[0], bases[1], bases[2]).sortAndSum(),
+            listOf(bases[3], bases[4], bases[5]).sortAndSum(),
+            listOf(bases[6], bases[7]).sortAndSum(),
+            listOf(bases[8], bases[9]).sortAndSum(),
+            listOf(bases[10], bases[11], bases[12]).sortAndSum(),
+            bases[13]
+        )
+    override val names: List<String>
+        get() = arrayListOf("rice", "long note", "coordination", "precision", "speed", "stamina", "speed variation")
+    override val abbreviates: List<String>
+        get() = arrayListOf("RC", "LN", "CO", "PR", "SP", "ST", "SV")
+    override val rating: Double
+        get() {
+            val sortedValues = skills.take(6).sortedDescending()
+            if (sortedValues[0] <= 0) return 0.0
+
+            val final = sortedValues.take(3).sortAndSum() + 0.1 * sortedValues.drop(3).average()
+
+            return final
+        }
+
+    companion object {
+        private const val B = 0.176
+        private val K = 1.0 / ln(1.0 + B)
+
+        private const val FATIGUE_RECOVERY_HALF_LIFE = 20.0
+        private const val BURST_RECOVERY_HALF_LIFE = 2.0
+    }
 }

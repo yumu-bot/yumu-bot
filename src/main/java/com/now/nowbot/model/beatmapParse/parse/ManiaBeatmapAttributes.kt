@@ -4,9 +4,12 @@ import java.io.BufferedReader
 
 class ManiaBeatmapAttributes(reader: BufferedReader, general: BeatmapGeneral?) : OsuBeatmapAttributes(reader, general) {
     init {
+        val cs = cs.toInt()
+
         for (line in hitObjects) {
-            val column: Int = getColumn(line.position.x, cs.toInt())
-            line.column = column
+            line.column = getColumn(
+                line.position.x, cs
+            )
         }
     }
 
