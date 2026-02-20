@@ -11,6 +11,8 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.throwable.BotException
+import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.ContextUtil
 import com.now.nowbot.util.command.REG_EXCLAMATION
@@ -42,8 +44,8 @@ class PermissionImplement(
 
         private val superService = CopyOnWriteArraySet<String>()
         private val permissionMap = LinkedHashMap<String, PermissionService>()
-        private val servicesMap = LinkedHashMap<String, MessageService<*>>()
-        private val serviceMap4TX = LinkedHashMap<String, TencentMessageService<*>>()
+        private val servicesMap = LinkedHashMap<String, MessageService<Any>>()
+        private val serviceMap4TX = LinkedHashMap<String, TencentMessageService<Any>>()
         private val futureMap = ConcurrentHashMap<String, ScheduledFuture<*>>()
 
         private lateinit var superList: Set<Long>
@@ -100,12 +102,10 @@ class PermissionImplement(
                         continue
                     }
 
-                    @Suppress("UNCHECKED_CAST")
-                    val typedService = service as MessageService<Any>
                     val data = MessageService.DataValue<Any>()
 
-                    if (typedService.isHandle(event, messageText, data)) {
-                        typedService.handleMessage(event, data.value!!)
+                    if (service.isHandle(event, messageText, data)) {
+                        service.handleMessage(event, data.value!!)
                         // 触发后，直接跳出循环
 
                         if (!DUPLICATE_SERVICES.contains(name)) {
@@ -127,37 +127,38 @@ class PermissionImplement(
                 return
             }
 
-            log.info("DEBUG: 开始处理消息, 内容: [$textMessage]") // 确认函数进来了
+            //log.info("DEBUG: 开始处理消息, 内容: [$textMessage]") // 确认函数进来了
 
             val trim = textMessage.trim()
 
             for ((name, service) in serviceMap4TX) {
                 try {
                     val data = service.accept(event, trim) ?: continue
-                    log.info("DEBUG: 匹配到 Service: $name") // 确认哪个 Service 领了任务
+                    // log.info("DEBUG: 匹配到 Service: $name") // 确认哪个 Service 领了任务
 
-                    @Suppress("UNCHECKED_CAST")
-                    val typedService = service as TencentMessageService<Any>
-                    val reply = typedService.reply(event, data) ?: MessageChain("无响应")
+                    val reply = service.reply(event, data) ?: MessageChain("服务 $name 无响应。")
 
                     // 关键点：保护回调函数
                     try {
                         onMessage.accept(reply)
-                        log.info("DEBUG: 消息发送成功")
+                        //log.info("DEBUG: 消息发送成功")
                     } catch (callbackEx: Throwable) {
-                        log.error("回调函数 onMessage.accept 崩溃了!", callbackEx)
+                        log.error("腾讯消息类：回复失败", callbackEx)
                     }
                     return
                 } catch (e: Throwable) {
-                    log.error("Service处理异常 [$name]: ", e)
-                    // 这里建议给用户一个反馈，而不是 continue
-                    onMessage.accept(MessageChain("处理出错: ${e.message}"))
+                    if (e is BotException) {
+                        onMessage.accept(MessageChain(e))
+                    } else {
+                        log.error("腾讯消息类：神秘错误", e)
+                        onMessage.accept(MessageChain("服务 $name 出现未识别的错误。"))
+                    }
                     return
                 }
             }
 
-            log.info("DEBUG: 循环结束，未匹配任何指令")
-            onMessage.accept(MessageChain("未找到指令"))
+            // log.info("DEBUG: 循环结束，未匹配任何指令")
+            onMessage.accept(MessageChain(IllegalArgumentException.WrongException.Instruction(trim)))
         }
 
         private fun checkStopListener(): Boolean {
@@ -207,17 +208,20 @@ class PermissionImplement(
 
     @Suppress("UNCHECKED_CAST")
     fun init(services: Map<String, MessageService<*>>) {
+        // 清除脏数据
+        servicesMap.clear()
+        serviceMap4TX.clear()
+
         // 初始化全局服务控制
         val globalGroupList = permissionDao.getQQs(GLOBAL_PERMISSION, PermissionType.GROUP_B)
         val globalUserList = permissionDao.getQQs(GLOBAL_PERMISSION, PermissionType.FRIEND_B)
         GlobalService = PermissionService(false, false, false, globalGroupList, globalUserList, emptyList())
 
         // 初始化顺序
-        services.asSequence().sortedByDescending { it.key }.forEach { (name, service) ->
-            servicesMap[name] = service
+        services.asSequence().sortedBy { it.key }.forEach { (name, service) ->
+            servicesMap[name] = service as MessageService<Any>
 
             if (service is TencentMessageService<*>) {
-                @Suppress("UNCHECKED_CAST")
                 serviceMap4TX[name] = service as TencentMessageService<Any>
             }
 
