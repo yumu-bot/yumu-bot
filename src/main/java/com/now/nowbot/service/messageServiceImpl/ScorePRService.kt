@@ -125,6 +125,7 @@ class ScorePRService(
                 throw IllegalStateException.ClassCast("最近成绩")
             }
 
+
         val param = getParam(event, messageText, matcher, isMultiple, isPass, isShow, isCompact = false) ?: return false
 
         data.value = param
