@@ -6,8 +6,11 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import java.io.IOException
+import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 
 @Service("OsuBeatmapMirrorApiService")
 class OsuBeatmapMirrorApiService(
@@ -54,6 +57,22 @@ class OsuBeatmapMirrorApiService(
                 .bodyToMono(String::class.java).block()!!
             val path = Path.of(localPath)
 
+            var ready = false
+
+            @Suppress("UNUSED")
+            for (i in 1..10) {
+                if (Files.exists(path) && !isFileLocked(path) && Files.size(path) > 0) {
+                    ready = true
+                    break
+                }
+                Thread.sleep(200)
+            }
+
+            if (!ready) {
+                log.error("获取谱面 $bid 背景失败: 文件可能损坏或下载超时")
+                return null
+            }
+
             if (Files.isRegularFile(path)) {
                 return path
             }
@@ -68,5 +87,17 @@ class OsuBeatmapMirrorApiService(
 
     companion object {
         private val log: Logger = LoggerFactory.getLogger(OsuBeatmapMirrorApiService::class.java)
+
+
+        private fun isFileLocked(path: Path): Boolean {
+            return try {
+                // 尝试以写模式打开，如果被其他进程占用会抛出异常
+                FileChannel.open(path, StandardOpenOption.WRITE).use {
+                    false // 没锁住，可以访问
+                }
+            } catch (_: IOException) {
+                true // 文件正在被另一个进程使用（下载中）
+            }
+        }
     }
 }
