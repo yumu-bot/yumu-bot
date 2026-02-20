@@ -35,6 +35,12 @@ class PermissionImplement(
         private val log = LoggerFactory.getLogger(PermissionImplement::class.java)
         private val EXECUTOR = Executors.newScheduledThreadPool(Int.MAX_VALUE, AsyncSetting.THREAD_FACTORY)
         const val GLOBAL_PERMISSION = "PERMISSION_ALL"
+
+        /**
+         * 这是允许多次匹配的服务，其他服务只匹配一次
+         */
+        val DUPLICATE_SERVICES = setOf("NEWBIE_RESTRICT")
+
         private const val LOCAL_GROUP_ID = -10086L
 
         private val superService = CopyOnWriteArraySet<String>()
@@ -103,8 +109,11 @@ class PermissionImplement(
 
                     if (typedService.isHandle(event, messageText, data)) {
                         typedService.handleMessage(event, data.value!!)
-                        // 触发后直接跳出循环
-                        break
+                        // 触发后，直接跳出循环
+
+                        if (!DUPLICATE_SERVICES.contains(name)) {
+                            break
+                        }
                     }
                 } catch (e: Throwable) {
                     errorHandle.accept(event, e)
@@ -121,7 +130,7 @@ class PermissionImplement(
                 return
             }
 
-            for ((_, service) in serviceMap4TX) {
+            for ((name, service) in serviceMap4TX) {
                 var reply: MessageChain?
 
                 try {
@@ -130,6 +139,10 @@ class PermissionImplement(
                     @Suppress("UNCHECKED_CAST")
                     val typedService = service as TencentMessageService<Any>
                     reply = typedService.reply(event, data)
+
+                    if (!DUPLICATE_SERVICES.contains(name)) {
+                        break
+                    }
                 } catch (e: Throwable) {
                     reply = when (e) {
                         is BotException -> MessageChain(e.message ?: "错误")
