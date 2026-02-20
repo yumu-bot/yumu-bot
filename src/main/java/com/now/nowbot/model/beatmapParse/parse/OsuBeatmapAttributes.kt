@@ -33,7 +33,7 @@ open class OsuBeatmapAttributes(read: BufferedReader, general: BeatmapGeneral?) 
                 for (t in timings) {
                     t.beatLength /= clockRate
                     t.bpm *= clockRate
-                    t.startTime /= (t.startTime / clockRate).toInt()
+                    t.startTime = (t.startTime / clockRate).toInt()
                 }
             }
         }

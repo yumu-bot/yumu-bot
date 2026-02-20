@@ -422,14 +422,14 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
         RELEASE, SHIELD, REVERSE_SHIELD, // LN, R, E, V
         HAND_LOCK, OVERLAP, // CO, H, O
         GRACE, DELAYED_TAIL, // PR, G, Y
-        CHORD, TRILL, BURST, // SP, C, T, U
+        TRILL, BURST, // SP, C, T, U
         FATIGUE // ST, F
         ;
 
         val index: Int = ordinal
 
         val eval: List<List<Double>> = listOf(
-            listOf(3.0, 0.5), listOf(3.5, 0.8), listOf(3.0, 0.5),
+            listOf(0.9, 1.0), listOf(3.0, 1.0), listOf(3.18, 0.325),
 
             listOf(2.55, 0.615), listOf(4.24, 0.457), listOf(4.865, 0.53),
 
@@ -437,7 +437,7 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
 
             listOf(2.0, 0.606), listOf(0.69, 1.15),
 
-            listOf(0.7, 1.2), listOf(0.5, 1.0), listOf(0.05, 0.95),
+            listOf(5.854e-03, -1.608e-01, 1.564e+00, -7.297e-01), listOf(0.05, 0.95),
 
             listOf(0.002, 0.886)
         )
@@ -447,12 +447,22 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
         return NoteType.entries.map { type ->
             val e = type.eval[type.index]
 
-            if (type != NoteType.BURST) {
+            if (type == NoteType.TRILL) {
+                // https://curve.fit/BIdo3Jm7/single/20260220104536
                 grouped.map { noteData ->
                     noteData.get(type)
-                }.aggregate().eval(e.getOrNull(0) ?: 1.0, e.getOrNull(1) ?: 1.0)
+                }.aggregate().cubic(
+                    e.getOrNull(0) ?: 1.0,
+                    e.getOrNull(1) ?: 1.0,
+                    e.getOrNull(2) ?: 1.0,
+                    e.getOrNull(3) ?: 1.0
+                )
+            } else if (type != NoteType.BURST) {
+                grouped.map { noteData ->
+                    noteData.get(type)
+                }.aggregate().square(e.getOrNull(0) ?: 1.0, e.getOrNull(1) ?: 1.0)
             } else {
-                (grouped.maxOfOrNull { noteData -> noteData.get(NoteType.BURST) } ?: 0.0).eval(e.getOrNull(0) ?: 1.0, e.getOrNull(1) ?: 1.0)
+                (grouped.maxOfOrNull { noteData -> noteData.get(NoteType.BURST) } ?: 0.0).square(e.getOrNull(0) ?: 1.0, e.getOrNull(1) ?: 1.0)
             }
         }
     }
@@ -649,8 +659,6 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
         data.fatigue = fatigueBefore * fatigueDecay + chordBonus
         data.burst = burstBefore * burstDecay + chordBonus
 
-        data.chord = chordBonus / totalKey
-
         data.time = startTimeMin
 
         return data to legacy
@@ -778,7 +786,6 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
         var grace: Double by ArrayDelegate(NoteType.GRACE)
         var delayedTail: Double by ArrayDelegate(NoteType.DELAYED_TAIL)
 
-        var chord: Double by ArrayDelegate(NoteType.CHORD)
         var trill: Double by ArrayDelegate(NoteType.TRILL)
         var burst: Double by ArrayDelegate(NoteType.BURST)
 
@@ -835,8 +842,8 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
             listOf(bases[3], bases[4], bases[5]).sortAndSum(),
             listOf(bases[6], bases[7]).sortAndSum(),
             listOf(bases[8], bases[9]).sortAndSum(),
-            listOf(bases[10], bases[11], bases[12]).sortAndSum(),
-            bases[13]
+            listOf(bases[10], bases[11]).sortAndSum(),
+            bases[12]
         )
     override val names: List<String>
         get() = arrayListOf("rice", "long note", "coordination", "precision", "speed", "stamina", "speed variation")
@@ -847,7 +854,7 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
             val sortedValues = skills.take(6).sortedDescending()
             if (sortedValues[0] <= 0) return 0.0
 
-            val final = sortedValues.take(3).sortAndSum() + 0.1 * sortedValues.drop(3).average()
+            val final = sortedValues.take(3).sortAndSum() + 0.1 * sortedValues.drop(3).sortAndSum()
 
             return final
         }

@@ -151,8 +151,15 @@ sealed class Skill6 {
     /**
      * 评估算法，将一系列值按 y = a(cx)^b + d 来化成一个值。x 是求和算法算出来的值。
      */
-    protected fun Double.eval(a: Double = 1.0, b: Double = 1.0, c: Double = 1.0, d: Double = 0.0): Double {
+    protected fun Double.square(a: Double = 1.0, b: Double = 1.0, c: Double = 1.0, d: Double = 0.0): Double {
         return a * (c * this).pow(b) + d
+    }
+
+    /**
+     * 三次多项式算法，这适用于前期增长变慢后期变快的场景
+     */
+    protected fun Double.cubic(a: Double = 1.0, b: Double = 1.0, c: Double = 1.0, d: Double = 0.0): Double {
+        return a * this.pow(3) + b * this.pow(2) + c * this + d
     }
 
 }
