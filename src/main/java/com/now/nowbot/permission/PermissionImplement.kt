@@ -130,6 +130,8 @@ class PermissionImplement(
                 return
             }
 
+            log.info("腾讯机器人：调用指令 $textMessage")
+
             for ((name, service) in serviceMap4TX) {
                 var reply: MessageChain?
 
@@ -196,7 +198,7 @@ class PermissionImplement(
                     return PermissionRecord.fromEntry(key to value)
                 }
             }
-            log.info("没有找到对应的服务 {}, {}", name, permissionMap.size)
+            log.warn("没有找到对应的服务 {}, {}", name, permissionMap.size)
             throw RuntimeException("没有找到这个服务")
         }
     }
