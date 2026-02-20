@@ -26,6 +26,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.regex.Matcher
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 
 @Service("PP_MINUS") class PPMinusService(
     private val scoreApiService: OsuScoreApiService,
@@ -144,7 +146,13 @@ import java.util.regex.Matcher
                     val statistics: Map<String, Any> = mapOf("is_vs" to (other != null), "mode_int" to mode.modeValue)
 
                     val body = mutableMapOf(
-                        "users" to cardA1s, "my" to cardB1, "stat" to statistics, "count" to my.count, "delta" to my.delta, "panel" to "PM4"
+                        "users" to cardA1s,
+                        "my" to cardB1,
+                        "my_oii" to getOsuImprovementIndicator(me),
+                        "stat" to statistics,
+                        "count" to my.count,
+                        "delta" to my.delta,
+                        "panel" to "PM4",
                     )
 
                     if (other != null && other.id == 17064371L) {
@@ -471,6 +479,18 @@ import java.util.regex.Matcher
             for (i in valueFields) {
                 i.isAccessible = true
                 i[minus] = value
+            }
+        }
+
+        // https://github.com/ferryhmm/oii
+        private fun getOsuImprovementIndicator(user: OsuUser): Double {
+            val expectedPT = -12 + 0.0781 * user.pp + 6.01e-6 * user.pp * user.pp
+            val playHours = user.playTime.seconds.toDouble(DurationUnit.HOURS)
+
+            return if (playHours > 0.0) {
+                expectedPT / playHours
+            } else {
+                0.0
             }
         }
     }

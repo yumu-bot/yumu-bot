@@ -55,6 +55,7 @@ class OsuApiBaseService(
     }
 
     // Token 管理（简化版）
+    @Volatile
     private var botAccessToken: String? = null
     private var tokenExpiresAt: Long = 0
 
@@ -98,7 +99,12 @@ class OsuApiBaseService(
     fun getBotToken(): String {
         val now = System.currentTimeMillis()
         if (now >= tokenExpiresAt || botAccessToken == null) {
-            refreshBotToken()
+            synchronized(this) {
+                // 再次检查，防止在等待锁的过程中其他线程已经刷新好了
+                if (now >= tokenExpiresAt || botAccessToken == null) {
+                    refreshBotToken()
+                }
+            }
         }
         return botAccessToken!!
     }

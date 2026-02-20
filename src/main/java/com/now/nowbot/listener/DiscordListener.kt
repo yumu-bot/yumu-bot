@@ -144,9 +144,9 @@ class BotInviteHelper {
             return inviteUrl
         }
 
-    companion object {
-        private val log = LoggerFactory.getLogger(BotInviteHelper::class.java)
-    }
+//    companion object {
+//        private val log = LoggerFactory.getLogger(BotInviteHelper::class.java)
+//    }
 }
 
 @Component
@@ -161,7 +161,7 @@ class GatewayMonitor : ListenerAdapter() {
     }
 
     override fun onStatusChange(event: StatusChangeEvent) {
-        log.info("🔄 状态变更: ${event.oldStatus} -> ${event.newStatus}")
+        log.debug("🔄 状态变更: ${event.oldStatus} -> ${event.newStatus}")
     }
 
     override fun onException(event: ExceptionEvent) {

@@ -5,6 +5,7 @@ import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType
 import com.now.nowbot.model.beatmapParse.parse.ManiaBeatmapAttributes
 import com.now.nowbot.model.skill.SkillMania6.Hand.*
 import com.now.nowbot.model.skill.SkillMania6.Finger.*
+import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
@@ -433,11 +434,13 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
 
             listOf(2.55, 0.615), listOf(4.24, 0.457), listOf(4.865, 0.53),
 
-            listOf(3.633, 0.332), listOf(3.5, 0.282),
+            // H https://curve.fit/BIdo3Jm7/single/20260220130201
+            // O https://curve.fit/BIdo3Jm7/single/20260220134111
+            listOf(5.515, 0.229), listOf(3.274, 0.474),
 
             listOf(2.0, 0.606), listOf(0.69, 1.15),
 
-            listOf(5.854e-03, -1.608e-01, 1.564e+00, -7.297e-01), listOf(0.05, 0.95),
+            listOf(2.872e-03, -7.493e-02, 8.433e-01, 9.253e-01), listOf(0.05, 0.95),
 
             listOf(0.002, 0.886)
         )
@@ -448,7 +451,8 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
             val e = type.eval[type.index]
 
             if (type == NoteType.TRILL) {
-                // https://curve.fit/BIdo3Jm7/single/20260220104536
+                // https://curve.fit/BIdo3Jm7/single/20260220104536 // 这个太大了
+                // https://curve.fit/BIdo3Jm7/single/20260220125117
                 grouped.map { noteData ->
                     noteData.get(type)
                 }.aggregate().cubic(
@@ -723,8 +727,12 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
         } else {
             val overlap = min(aside.endTime, it.endTime) - max(aside.startTime, it.startTime)
 
+            val sameStart = abs(aside.startTime - it.startTime) <= frac4
+
+            val sameStartPunishment = if (sameStart) 0.5 else 1.0
+
             if (overlap > 0) {
-                data.overlap += overlap.approach(frac2)
+                data.overlap += overlap.exponent(frac2, 3 * frac2) * sameStartPunishment
             }
 
             data.grace += (aside.startTime - it.startTime).exponent(frac8, frac4)
@@ -836,6 +844,9 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
 
     override val bases: List<Double> = noteDataToSubValue(group)
 
+    override val graphs: List<List<Double>>
+        get() = group.map { it.flatten() }
+
     override val skills: List<Double>
         get() = listOf(
             listOf(bases[0], bases[1], bases[2]).sortAndSum(),
@@ -845,6 +856,7 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
             listOf(bases[10], bases[11]).sortAndSum(),
             bases[12]
         )
+
     override val names: List<String>
         get() = arrayListOf("rice", "long note", "coordination", "precision", "speed", "stamina", "speed variation")
     override val abbreviates: List<String>
@@ -854,10 +866,22 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
             val sortedValues = skills.take(6).sortedDescending()
             if (sortedValues[0] <= 0) return 0.0
 
-            val final = sortedValues.take(3).sortAndSum() + 0.1 * sortedValues.drop(3).sortAndSum()
+            val final = sortedValues.take(3).sortAndSum()
 
             return final
         }
+
+    override val dan: Map<String, Any>
+        get() {
+            val reform = getReformDan(skills[0], skills[4], skills[5])
+
+            return mapOf(
+                "reform_level" to reform.first,
+                "reform_grade" to reform.second,
+            )
+        }
+
+
 
     companion object {
         private const val B = 0.176
@@ -865,5 +889,57 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
 
         private const val FATIGUE_RECOVERY_HALF_LIFE = 20.0
         private const val BURST_RECOVERY_HALF_LIFE = 2.0
+
+        private val regularDanGrade = listOf(
+            1.8, 2.7, 3.6,
+            4.0, 4.2, 4.5, 4.7, 5.0,
+            5.4, 5.8, 6.2, 6.6, 7.2,
+            7.8, 8.6, 9.4, 10.2, 11.0
+        )
+
+        private val regularDan = listOf(
+            "I1", "I2", "I3",
+            "1", "2", "3", "4", "5",
+            "6", "7", "8", "9", "10",
+            "A", "B", "G", "D", "E"
+        )
+
+        fun getReformDan(rice: Double, stamina: Double, speed: Double): Pair<Double, String> {
+            val sorted = listOf(rice, stamina, speed).sortedDescending()
+            val sum =  0.6 * sorted[0] + 0.3 * sorted[1] + 0.1 * sorted[2]
+
+            val grades = regularDanGrade
+
+            // 1. 找到 sum 应该插入的位置索引
+            // count 会告诉我们有多少个元素小于 sum
+            val count = grades.count { sum >= it }
+            val baseGrade = (count - 3).toDouble()
+
+            // 2. 确定当前区间的左右边界，用于计算小数部分
+            val lower = if ((count - 1) < 0) 0.0 else grades[count - 1]
+            val upper = if (count >= grades.size) {
+                return baseGrade to "E"
+            } else {
+                grades[count]
+            }
+
+            // 3. 计算线性偏移 (0.0 到 1.0 之间)
+            val fraction = (sum - lower) / (upper - lower)
+
+            val plus = if (fraction in 0.5..< 1.0) {
+                "+"
+            } else {
+                ""
+            }
+
+            val name = if ((count - 1) < 0) {
+                "-"
+            } else {
+                regularDan[count - 1] + plus
+            }
+
+            // 4. 结合整数和小数 (保留一位小数或直接相加)
+            return (baseGrade + fraction) to name
+        }
     }
 }

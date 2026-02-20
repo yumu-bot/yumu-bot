@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.osu.Covers.Companion.CoverType
@@ -7,7 +8,8 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
-import com.now.nowbot.model.skill.Skill
+import com.now.nowbot.model.skill.Skill6
+import com.now.nowbot.model.skill.SkillMania6.Companion.getReformDan
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -42,7 +44,13 @@ import kotlin.math.sqrt
         val mode: OsuMode
     )
 
-    data class SkillScore(val score: LazerScore, val skill: List<Float>)
+    data class SkillScore(
+        val score: LazerScore,
+        val skill: List<Double>,
+
+        @get:JsonProperty("skill_sum")
+        val skillSum: Double
+    )
 
     override fun isHandle(
         event: MessageEvent,
@@ -208,8 +216,8 @@ import kotlin.math.sqrt
     private fun SkillParam.getImage(): ByteArray {
         val hasOthers = other != null
 
-        val my: Map<Long, Skill?>
-        val others: Map<Long, Skill?>?
+        val my: Map<Long, Skill6?>
+        val others: Map<Long, Skill6?>?
 
         if (hasOthers) {
             val async = AsyncMethodExecutor.awaitPairCallableExecute(
@@ -239,7 +247,7 @@ import kotlin.math.sqrt
         return image
     }
 
-    private fun getSkillMap(bests: List<LazerScore>?): Map<Long, Skill?> {
+    private fun getSkillMap(bests: List<LazerScore>?): Map<Long, Skill6?> {
         if (bests.isNullOrEmpty()) return mapOf()
 
         val actions = bests.map {
@@ -257,7 +265,7 @@ import kotlin.math.sqrt
                 try {
                     val file = OsuFile.getInstance(it.second ?: "")
 
-                    id to Skill.getInstance(
+                    id to Skill6(
                         file,
                         OsuMode.MANIA,
                         LazerMod.getModSpeedForStarCalculate(it.first.mods).toDouble()
@@ -276,21 +284,21 @@ import kotlin.math.sqrt
     private fun getBody(
         user: OsuUser,
         bests: List<LazerScore>,
-        skillMap: Map<Long, Skill?>,
+        skillMap: Map<Long, Skill6?>,
         isMyself: Boolean = false,
         isShowScores: Boolean = true,
     ): Map<String, Any> {
-        val skills = List(8) { mutableListOf<Double>() }
+        val weightedSkills = List(8) { mutableListOf<Double>() }
 
         bests.forEach {
-            val values = skillMap[it.beatmapID]?.values ?: listOf()
+            val skills = skillMap[it.beatmapID]?.skills ?: listOf()
 
-            for (i in values.indices) {
-                skills[i].add(values[i] * nerfByAccuracy(it))
+            for (i in skills.indices) {
+                weightedSkills[i].add(skills[i] * nerfByAccuracy(it))
             }
         }
 
-        val skill = skills.map {
+        val skills = weightedSkills.map {
             it.sortedDescending().mapIndexed { i, v ->
                 val percent: Double = (0.95).pow(i)
                 v * percent
@@ -305,24 +313,40 @@ import kotlin.math.sqrt
             calculateApiService.applyBeatmapChanges(s10)
             calculateApiService.applyStarToScores(s10)
 
-            s10.map { SkillScore(it, skillMap[it.beatmapID]?.values ?: listOf()) }
+            s10.map {
+                val skills = skillMap[it.beatmapID]?.skills ?: listOf()
+
+                val sorted = skills.take(6).sortedDescending()
+                val total = (0.6 * sorted[0] + 0.3 * sorted[1] + 0.1 * sorted[2])
+
+                SkillScore(it, skills, total) }
         } else {
             listOf()
         }
 
-        val kSort = skill.take(6).sortedDescending()
-        val total = kSort[0] * 0.5f + kSort[1] * 0.3f + kSort[2] * 0.2f + kSort[3] * 0.1f + kSort[4] * 0.05f
+        val sorted = skills.take(6).sortedDescending()
+        val total = (0.6 * sorted[0] + 0.3 * sorted[1] + 0.1 * sorted[2])
+//        val total = kSort[0] * 0.5f + kSort[1] * 0.3f + kSort[2] * 0.2f + kSort[3] * 0.1f + kSort[4] * 0.05f
+
+        val reform = getReformDan(skills[0], skills[4], skills[5])
+
+        val dan = mapOf(
+            "reform_level" to reform.first,
+            "reform_grade" to reform.second,
+        )
 
         return if (isMyself) mapOf(
             "user" to user,
-            "skill" to skill,
+            "skill" to skills,
             "scores" to scores,
             "total" to total,
+            "dan" to dan,
         ) else mapOf(
             "vs_user" to user,
-            "vs_skill" to skill,
+            "vs_skill" to skills,
             "vs_scores" to scores,
             "vs_total" to total,
+            "vs_dan" to dan,
         )
     }
 
@@ -330,7 +354,7 @@ import kotlin.math.sqrt
         // private const val STAR_DIVISOR = 3.6
 
         // 用于求和并归一化
-        private const val DIVISOR = 16.0 // (1 - (0.95).pow(100)) / 0.05 // 19.88158941559331949
+        private const val DIVISOR = 18.0 // (1 - (0.95).pow(100)) / 0.05 // 19.88158941559331949
 
         private fun nerfByAccuracy(score: LazerScore): Double {
             return when (score.mode) {

@@ -1,5 +1,6 @@
 package com.now.nowbot.model.skill
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.now.nowbot.model.beatmapParse.OsuFile
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.throwable.TipsException
@@ -31,6 +32,11 @@ sealed class Skill6 {
     abstract val names: List<String>
 
     abstract val abbreviates: List<String>
+
+    abstract val dan: Map<String, Any>
+
+    @get:JsonIgnore
+    abstract val graphs: List<List<Double>>
 
     abstract val rating: Double
 

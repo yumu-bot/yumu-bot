@@ -42,7 +42,9 @@ import java.util.regex.Matcher
         val sb = StringBuilder()
 
         skills.forEach {
-            sb.append(it.bases.joinToString(",")).append('\n')
+            //sb.append(it.graphs.joinToString("\n") { sub -> sub.joinToString(",") })
+            sb.append(it.rating).append(",").append(it.skills.joinToString(",")).append("\n")
+            //sb.append(it.bases.joinToString(",")).append('\n')
         }
 
         event.replyFileInGroup(sb.toString().toByteArray(), bids.first().toString() + "s.csv")
