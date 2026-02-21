@@ -895,7 +895,7 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
             val sorted = skills.take(6).sortedDescending()
             if (sorted[0] <= 0) return 0.0
 
-            val final = sorted[1] * 0.5 + sorted[2] * 0.3 + sorted[3] * 0.2
+            val final = sorted[1] * 0.6 + sorted[2] * 0.4 + sorted[3] * 0.2
 
             return final
         }
