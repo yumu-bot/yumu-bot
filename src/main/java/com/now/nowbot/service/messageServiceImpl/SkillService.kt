@@ -318,7 +318,7 @@ import kotlin.math.sqrt
                 val skills = skillMap[it.beatmapID]?.skills ?: listOf()
 
                 val sorted = skills.take(6).sortedDescending()
-                val total = (0.6 * sorted[0] + 0.3 * sorted[1] + 0.1 * sorted[2])
+                val total = (0.5 * sorted[1] + 0.3 * sorted[2] + 0.2 * sorted[3])
 
                 SkillScore(it, skills, total) }
         } else {
@@ -326,7 +326,7 @@ import kotlin.math.sqrt
         }
 
         val sorted = skills.take(6).sortedDescending()
-        val total = (0.6 * sorted[0] + 0.3 * sorted[1] + 0.1 * sorted[2])
+        val total = (0.5 * sorted[1] + 0.3 * sorted[2] + 0.2 * sorted[3])
 
         val dan = getDan(skills) + getDan(skills, DanType.LN)
 
