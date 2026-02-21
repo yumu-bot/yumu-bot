@@ -892,10 +892,10 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
         get() = arrayListOf("RC", "ST", "SP", "LN", "CO", "PR", "SV")
     override val rating: Double
         get() {
-            val sortedValues = skills.take(6).sortedDescending()
-            if (sortedValues[0] <= 0) return 0.0
+            val sorted = skills.take(6).sortedDescending()
+            if (sorted[0] <= 0) return 0.0
 
-            val final = sortedValues.take(3).sortAndSum()
+            val final = sorted[1] * 0.5 + sorted[2] * 0.3 + sorted[3] * 0.2
 
             return final
         }
