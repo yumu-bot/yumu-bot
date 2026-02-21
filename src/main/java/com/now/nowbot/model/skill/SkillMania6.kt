@@ -900,7 +900,7 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
             return final
         }
 
-    override val dan: Map<String, Any> = getDan(skills, DanType.REFORM)
+    override val dan: Map<String, Any> = getDan(skills, DanType.REFORM) + getDan(skills, DanType.LN)
 
 
     companion object {
