@@ -7,6 +7,7 @@ abstract class Dan(
     val grade: List<String>,
     val max: Double?,
     val offset: Int = 0,
+    val use: List<Int>
 )
 
 enum class DanType {
@@ -15,17 +16,17 @@ enum class DanType {
     fun getDan(): Dan = when (this) {
         REFORM -> ReformDan()
         LN -> LnDan()
-        else -> ReformDan()
+        REGULAR -> ReformDan()
     }
 }
 
 class LnDan : Dan(
     "ln",
     listOf(
-        0.0, 5.5,
-        6.0, 6.3, 6.6, 7.1, 7.8,
-        8.4, 8.9, 9.4, 9.8, 10.4,
-        11.4, 12.4, 13.1, 13.7
+        0.0, 5.0,
+        5.5, 6.0, 6.5, 7.0, 7.5,
+        8.0, 8.5, 9.0, 9.5, 10.0,
+        10.8, 11.6, 12.4, 13.0
 
         ),
     listOf(
@@ -36,18 +37,18 @@ class LnDan : Dan(
         "G", "A", "Z", "S",
     ),
     14.5,
-    -1
+    -1,
+    listOf(4, 5, 6)
 )
 
 class ReformDan : Dan(
     "reform",
     listOf(
-        0.0, 1.6, 2.7, 3.8,
-        4.2, 4.5, 4.8, 5.1, 5.3,
-        5.5, 5.8, 6.2, 6.8, 7.3,
-        7.8, 8.5, 9.1, 9.7, 10.3,
-        10.9, 11.5,
-
+        0.0, 1.5, 2.5, 3.5,
+        3.9, 4.2, 4.5, 4.8, 5.1,
+        5.4, 5.7, 6.0, 6.5, 7.0,
+        7.5, 8.0, 8.5, 9.0, 9.5,
+        10.0, 10.5,
     ),
     listOf(
         "-",
@@ -58,17 +59,17 @@ class ReformDan : Dan(
         "Z", "H"
     ),
     12.0,
-    -3
+    -3,
+    listOf(1, 2, 3)
 )
 
 fun getDan(
     skills: List<Double>,
     danType: DanType = DanType.REFORM,
 ): Map<String, Any> {
-    val sorted = skills.take(3).sortedDescending()
-    val sum = 0.6 * sorted[0] + 0.3 * sorted[1] + 0.1 * sorted[2]
-
     val dan = danType.getDan()
+    val sorted = dan.use.mapNotNull { skills.getOrNull(it - 1) }.sortedDescending()
+    val sum = 0.5 * sorted[0] + 0.3 * sorted[1] + 0.2 * sorted[2]
 
     val boundary = dan.boundary
     val grades = dan.grade
