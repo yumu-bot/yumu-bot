@@ -99,7 +99,7 @@ abstract class Skill {
     }
 
     companion object {
-        fun getInstance(file: OsuFile, mode: OsuMode, clockRate: Double = 1.0): Skill {
+        operator fun invoke(file: OsuFile, mode: OsuMode, clockRate: Double = 1.0): Skill {
             return when(mode) {
                 OsuMode.MANIA -> {
                     val f = file.getMania()

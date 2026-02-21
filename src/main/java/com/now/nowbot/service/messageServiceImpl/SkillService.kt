@@ -8,8 +8,9 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
+import com.now.nowbot.model.skill.DanType
 import com.now.nowbot.model.skill.Skill6
-import com.now.nowbot.model.skill.SkillMania6.Companion.getReformDan
+import com.now.nowbot.model.skill.getDan
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -263,7 +264,7 @@ import kotlin.math.sqrt
 
             Callable {
                 try {
-                    val file = OsuFile.getInstance(it.second ?: "")
+                    val file = OsuFile(it.second ?: "")
 
                     id to Skill6(
                         file,
@@ -326,14 +327,8 @@ import kotlin.math.sqrt
 
         val sorted = skills.take(6).sortedDescending()
         val total = (0.6 * sorted[0] + 0.3 * sorted[1] + 0.1 * sorted[2])
-//        val total = kSort[0] * 0.5f + kSort[1] * 0.3f + kSort[2] * 0.2f + kSort[3] * 0.1f + kSort[4] * 0.05f
 
-        val reform = getReformDan(skills[0], skills[4], skills[5])
-
-        val dan = mapOf(
-            "reform_level" to reform.first,
-            "reform_grade" to reform.second,
-        )
+        val dan = getDan(skills) + getDan(skills, DanType.LN)
 
         return if (isMyself) mapOf(
             "user" to user,

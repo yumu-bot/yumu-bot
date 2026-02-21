@@ -1143,7 +1143,7 @@ import kotlin.math.min
 
         val file = beatmapApiService.getBeatmapFileString(beatmapID)
 
-        val f = OsuFile.getInstance(file!!).getMania()
+        val f = OsuFile(file!!).getMania()
 
         val skill = SkillMania(f)
 
@@ -1156,7 +1156,7 @@ import kotlin.math.min
 
         val file = beatmapApiService.getBeatmapFileString(beatmapID)
 
-        val f = OsuFile.getInstance(file!!).getMania()
+        val f = OsuFile(file!!).getMania()
 
         val skill = SkillMania6(f)
 

@@ -5,11 +5,13 @@ import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType
 import com.now.nowbot.model.beatmapParse.parse.ManiaBeatmapAttributes
 import com.now.nowbot.model.skill.SkillMania6.Hand.*
 import com.now.nowbot.model.skill.SkillMania6.Finger.*
+import org.slf4j.LoggerFactory
 import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.sqrt
 
 class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true, spaceStyle: Byte = 2) : Skill6() {
 
@@ -23,7 +25,17 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
     }
 
     private enum class Hand {
-        LEFT, RIGHT, BOTH
+        LEFT, RIGHT, BOTH;
+
+        companion object {
+            fun getHandPunishment(it: Hand, that: Hand): Double {
+                return if (it == that && it != BOTH) {
+                    1.0
+                } else {
+                    0.5
+                }
+            }
+        }
     }
 
     private enum class Finger {
@@ -420,29 +432,41 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
 
     enum class NoteType {
         STREAM, BRACKET, JACK, // Rice, S, B, J
+        FATIGUE, // ST, F
+        TRILL, BURST, // SP, C, T, U
         RELEASE, SHIELD, REVERSE_SHIELD, // LN, R, E, V
         HAND_LOCK, OVERLAP, // CO, H, O
         GRACE, DELAYED_TAIL, // PR, G, Y
-        TRILL, BURST, // SP, C, T, U
-        FATIGUE // ST, F
         ;
 
         val index: Int = ordinal
 
         val eval: List<List<Double>> = listOf(
-            listOf(0.9, 1.0), listOf(3.0, 1.0), listOf(3.18, 0.325),
+            // S https://curve.fit/BIdo3Jm7/single/20260221115943
+            // B https://curve.fit/BIdo3Jm7/single/20260221120019
+            // J https://curve.fit/BIdo3Jm7/single/20260221120103
+            listOf(1.461e+00, 5.878e-01), listOf(2.993e+00, 5.712e-01), listOf(2.188e+00, 5.928e-01),
 
-            listOf(2.55, 0.615), listOf(4.24, 0.457), listOf(4.865, 0.53),
+            // F https://curve.fit/BIdo3Jm7/single/20260221113539
+            listOf(1.310e-02, 9.376e-01),
 
-            // H https://curve.fit/BIdo3Jm7/single/20260220130201
-            // O https://curve.fit/BIdo3Jm7/single/20260220134111
-            listOf(5.515, 0.229), listOf(3.274, 0.474),
+            // T https://curve.fit/BIdo3Jm7/single/20260221060743
+            // U https://curve.fit/BIdo3Jm7/single/20260221060902
+            listOf(1.593e+00, 3.964e-01), listOf(1.307e-01, 8.938e-01),
 
-            listOf(2.0, 0.606), listOf(0.69, 1.15),
+            // R https://curve.fit/BIdo3Jm7/single/20260221113635
+            // E https://curve.fit/BIdo3Jm7/single/20260221113733
+            // V https://curve.fit/BIdo3Jm7/single/20260221113928
+            listOf(4.384e+00, 4.746e-01), listOf(4.466e+00, 4.170e-01), listOf(3.596e+00, 5.749e-01),
 
-            listOf(2.872e-03, -7.493e-02, 8.433e-01, 9.253e-01), listOf(0.05, 0.95),
+            // H https://curve.fit/BIdo3Jm7/single/20260221112433
+            // O https://curve.fit/BIdo3Jm7/single/20260221112543
 
-            listOf(0.002, 0.886)
+            listOf(3.264e+00, 3.434e-01), listOf(5.536e+00, 3.438e-01),
+
+            // G https://curve.fit/BIdo3Jm7/single/20260221114128
+            // Y https://curve.fit/BIdo3Jm7/single/20260221114305
+            listOf(1.423e+00, 6.051e-01), listOf(4.510e+00, 4.033e-01),
         )
     }
 
@@ -450,23 +474,26 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
         return NoteType.entries.map { type ->
             val e = type.eval[type.index]
 
-            if (type == NoteType.TRILL) {
-                // https://curve.fit/BIdo3Jm7/single/20260220104536 // 这个太大了
-                // https://curve.fit/BIdo3Jm7/single/20260220125117
-                grouped.map { noteData ->
-                    noteData.get(type)
-                }.aggregate().cubic(
-                    e.getOrNull(0) ?: 1.0,
-                    e.getOrNull(1) ?: 1.0,
-                    e.getOrNull(2) ?: 1.0,
-                    e.getOrNull(3) ?: 1.0
-                )
-            } else if (type != NoteType.BURST) {
-                grouped.map { noteData ->
-                    noteData.get(type)
-                }.aggregate().square(e.getOrNull(0) ?: 1.0, e.getOrNull(1) ?: 1.0)
-            } else {
-                (grouped.maxOfOrNull { noteData -> noteData.get(NoteType.BURST) } ?: 0.0).square(e.getOrNull(0) ?: 1.0, e.getOrNull(1) ?: 1.0)
+            when (type) {
+                NoteType.BURST -> {
+                    (grouped.maxOfOrNull { noteData -> noteData.get(NoteType.BURST) } ?: 0.0)
+                        .square(
+                            e.getOrNull(0) ?: 1.0,
+                            e.getOrNull(1) ?: 1.0
+                        )
+                }
+                NoteType.FATIGUE -> {
+                    (grouped.maxOfOrNull { noteData -> noteData.get(NoteType.FATIGUE) } ?: 0.0)
+                        .square(
+                        e.getOrNull(0) ?: 1.0,
+                        e.getOrNull(1) ?: 1.0
+                        )
+                }
+                else -> {
+                    grouped.map { noteData ->
+                        noteData.get(type)
+                    }.aggregate().square(e.getOrNull(0) ?: 1.0, e.getOrNull(1) ?: 1.0)
+                }
             }
         }
     }
@@ -528,36 +555,34 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
 
         return actions.zipWithNext { it, after ->
             val minStartTime = it.minOfOrNull { it.startTime } ?: 0
+            val columnSet = it.map { a -> a.column }.toSet()
 
-            legacy.removeIf { l -> l.endTime < minStartTime }
+            legacy.removeIf { l -> l.endTime < (minStartTime + frac16) || l.column in columnSet }
 
-            val (data, ly) = calculate(
+            val data = calculate(
                 it, legacy, after, burstBefore, fatigueBefore
             )
 
+            legacy.addAll(it.filter { it.type == Type.LN })
+
             burstBefore = data.burst
             fatigueBefore = data.fatigue
-
-            legacy.addAll(ly)
 
             data
         }
     }
 
     /**
-     * @param actionBefore 可能遗漏的前一个操作的 ln 操作，当且仅当这个 ln 的持续时间长于 actionAfter 的触发时间时
+     * @param activeHoldings 可能遗漏的前一个操作的 ln 操作，当且仅当这个 ln 的持续时间长于 actionAfter 的触发时间时
      */
     private fun calculate(
         action: List<ManiaAction>,
-        actionBefore: List<ManiaAction>,
+        activeHoldings: List<ManiaAction>,
         actionAfter: List<ManiaAction>,
         burstBefore: Double = 0.0,
         fatigueBefore: Double = 0.0,
-    ): Pair<NoteData, List<ManiaAction>> {
+    ):NoteData {
         val data = NoteData()
-        val legacy = mutableListOf<ManiaAction>()
-
-        val afterEndTimeMax = actionAfter.maxOfOrNull { it.endTime } ?: 0
         val afterStartTimeMax = actionAfter.maxOfOrNull { it.startTime } ?: 0
         val startTimeMax = action.maxOfOrNull { it.startTime } ?: 0
         val startTimeMin = action.minOfOrNull { it.startTime } ?: 0
@@ -567,34 +592,31 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
 
         // 分键操作
         action.forEach {
-            val leftBefore: ManiaAction? = actionBefore.find { lb ->
-                lb.column == it.column - 1
+
+            val leftAfterList: List<ManiaAction> = actionAfter.filter { la ->
+                la.column < it.column
             }
 
-            val leftAfter: ManiaAction? = actionAfter.find { la ->
-                la.column == it.column - 1
+            val leftAfter: ManiaAction? = leftAfterList.maxByOrNull { la ->
+                la.column
             }
 
             val itAfter: ManiaAction? = actionAfter.find { ia ->
                 ia.column == it.column
             }
 
-            val rightBefore: ManiaAction? = actionBefore.find { rb ->
-                rb.column == it.column + 1
+            val rightAfterList: List<ManiaAction> = actionAfter.filter { ra ->
+                ra.column > it.column
             }
 
-            val rightAfter: ManiaAction? = actionAfter.find { ra ->
-                ra.column == it.column + 1
+            val rightAfter: ManiaAction? = rightAfterList.minByOrNull { ra ->
+                ra.column
             }
 
-            // 先收拾遗产
-
-            if (leftBefore != null) {
-                data.add(calculateAsideRelease(it, leftBefore))
-            }
-
-            if (rightBefore != null) {
-                data.add(calculateAsideRelease(it, rightBefore))
+            // 1. 只处理遗产：当前 Hit 与 之前已经在按住的 LN 产生的冲突
+            activeHoldings.forEach { holding ->
+                // 这里包含了 AsideRelease, Overlap, HandLock 等
+                data.add(calculateAsideRelease(it, holding))
             }
 
             if (itAfter != null) {
@@ -602,46 +624,35 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
                     calculateAfter(it, itAfter)
                 )
             } else {
-                if (leftAfter != null) {
+                leftAfterList.forEach { la ->
                     data.add(
-                        calculateAsideHit(it, leftAfter, chordBonus)
-                    )
-
-                    if (rightAfter != null) {
-                        // 双不为 null
-                        data.add(
-                            calculateBothSide(it, leftAfter, rightAfter)
-                        )
-                    }
-                }
-
-                if (rightAfter != null) {
-                    data.add(
-                        calculateAsideHit(it, rightAfter, chordBonus)
+                        calculateAsideHit(it, la, action.size, leftAfterList.size, chordBonus, totalKey)
                     )
                 }
-            }
 
-            if (leftAfter != null) {
-                data.add(calculateAsideRelease(it, leftAfter))
-            }
+                rightAfterList.forEach { ra ->
+                    data.add(
+                        calculateAsideHit(it, ra, action.size, rightAfterList.size, chordBonus, totalKey)
+                    )
+                }
 
-            if (rightAfter != null) {
-                data.add(calculateAsideRelease(it, rightAfter))
-            }
-
-            if (it.type == Type.LN) {
-                // LN
-                // 可能有遗产
-                if (it.endTime - frac8 > afterEndTimeMax) {
-                    legacy.add(it)
+                if (leftAfter != null && rightAfter != null) {
+                    // 双不为 null
+                    data.add(
+                        calculateBothSide(it, leftAfter, rightAfter)
+                    )
                 }
             }
+
+        // --- 【删掉这里】 ---
+        // leftAfterList.forEach { la -> data.add(calculateAsideRelease(it, la)) }
+        // rightAfterList.forEach { ra -> data.add(calculateAsideRelease(it, ra)) }
+        // 因为这些 la 和 ra 在下一帧作为 it 时，会通过 activeHoldings 找回现在的 it
         }
 
-        action.zipWithNext { it, next ->
-            if (next.type == Type.LN) {
-                data.add(calculateAsideRelease(it, next))
+        action.zipWithNext { a, b ->
+            if (a.type == Type.LN || b.type == Type.LN) {
+                data.add(calculateAsideRelease(a, b))
             }
         }
 
@@ -665,7 +676,7 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
 
         data.time = startTimeMin
 
-        return data to legacy
+        return data
     }
 
     private fun calculateAfter(it: ManiaAction, after: ManiaAction): NoteData {
@@ -690,18 +701,22 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
     /**
      * 要求：后面不能有音符，和 calcAfter 相对
      */
-    private fun calculateAsideHit(it: ManiaAction, aside: ManiaAction, chordBonus: Double): NoteData {
+    private fun calculateAsideHit(it: ManiaAction, aside: ManiaAction, itChord: Int, asideChord: Int, chordBonus: Double, totalKey: Int): NoteData {
         val data = NoteData()
 
         val bonus = Finger.getGestureBonus(
             it.finger, aside.finger
         )
 
-        if (it.hand != aside.hand) {
+        val punishment = Hand.getHandPunishment(it.hand, aside.hand)
+
+        if (it.hand != aside.hand && (itChord + asideChord > 2 || totalKey < 4)) {
             data.trill += chordBonus * (aside.startTime - it.startTime).exponent(frac4, frac1)
         } else {
-            data.stream += bonus * (aside.startTime - it.startTime).exponent(frac4, frac1)
+            data.stream += bonus * punishment * (aside.startTime - it.startTime).exponent(frac4, frac1)
         }
+
+        data.grace += (aside.startTime - it.startTime).exponent(frac8, frac4)
 
         return data
     }
@@ -712,36 +727,50 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
     private fun calculateAsideRelease(it: ManiaAction, aside: ManiaAction): NoteData {
         val data = NoteData()
 
+        if (aside.type != Type.LN) {
+            return data
+        }
+
         val bonus = Finger.getGestureBonus(
             it.finger, aside.finger
         )
 
         if (it.type == Type.RICE) {
-            val isIn = aside.endTime - frac8 > it.startTime && aside.startTime + frac8 < it.startTime
+            val endDelta = aside.endTime - it.startTime
+            val startDelta = it.startTime - aside.startTime
+
+            val isIn = endDelta > 0 && startDelta > 0
+
+            val delta = sqrt(endDelta.approach(frac2) * startDelta.approach(frac2))
 
             data.handLock += if (isIn) {
-                bonus
+                bonus * delta
             } else {
                 0.0
             }
         } else {
-            val overlap = min(aside.endTime, it.endTime) - max(aside.startTime, it.startTime)
+            // 只看相邻轨道和同手
+            if (abs(aside.column - it.column) == 1 && it.hand == aside.hand) {
+                val pressDelta = abs(aside.startTime - it.startTime)
+                val releaseDelta = abs(aside.endTime - it.endTime)
+                val changeDelta = min(it.endTime, aside.endTime) - max(it.startTime, aside.startTime)
 
-            val sameStart = abs(aside.startTime - it.startTime) <= frac4
+                val delta = if (changeDelta <= 0) {
+                    0
+                } else {
+                    (pressDelta * releaseDelta * changeDelta * 1.0).pow(1.0/3.0).toInt()
+                }
 
-            val sameStartPunishment = if (sameStart) 0.5 else 1.0
+                val overlap = delta.exponent(frac2, 3 * frac2)
 
-            if (overlap > 0) {
-                data.overlap += overlap.exponent(frac2, 3 * frac2) * sameStartPunishment
+                data.overlap += overlap
             }
 
-            data.grace += (aside.startTime - it.startTime).exponent(frac8, frac4)
-
-            if (aside.type == Type.LN) {
-                data.release += (aside.endTime - it.endTime).exponent(frac4, frac1)
-                data.delayedTail += (aside.endTime - it.endTime).exponent(frac6, frac3)
-            }
+            data.release += (aside.endTime - it.endTime).exponent(frac4, frac1)
+            data.delayedTail += (aside.endTime - it.endTime).exponent(frac6, frac3)
         }
+
+        //
 
         return data
     }
@@ -761,10 +790,10 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
     private fun calculateChord(chord: Int, totalKey: Int = 1): Double {
         if (chord !in 1..totalKey) return 0.0
 
-        // 满足：f(1) = 1.0, f(6) = 3.0
+        // 满足：f(1) = 1.0, f(6) = 1.5
         val cv = ln(chord + B) * K
 
-        return if (chord == totalKey && totalKey > 4) {
+        return if (chord == totalKey && totalKey >= 4) {
             cv * 0.8
         } else {
             cv
@@ -784,6 +813,11 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
         var bracket: Double by ArrayDelegate(NoteType.BRACKET)
         var jack: Double by ArrayDelegate(NoteType.JACK)
 
+        var fatigue: Double by ArrayDelegate(NoteType.FATIGUE)
+
+        var trill: Double by ArrayDelegate(NoteType.TRILL)
+        var burst: Double by ArrayDelegate(NoteType.BURST)
+
         var release: Double by ArrayDelegate(NoteType.RELEASE)
         var shield: Double by ArrayDelegate(NoteType.SHIELD)
         var reverseShield: Double by ArrayDelegate(NoteType.REVERSE_SHIELD)
@@ -793,11 +827,6 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
 
         var grace: Double by ArrayDelegate(NoteType.GRACE)
         var delayedTail: Double by ArrayDelegate(NoteType.DELAYED_TAIL)
-
-        var trill: Double by ArrayDelegate(NoteType.TRILL)
-        var burst: Double by ArrayDelegate(NoteType.BURST)
-
-        var fatigue: Double by ArrayDelegate(NoteType.FATIGUE)
 
         fun add(other: NoteData): NoteData {
             for (i in values.indices) {
@@ -850,17 +879,17 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
     override val skills: List<Double>
         get() = listOf(
             listOf(bases[0], bases[1], bases[2]).sortAndSum(),
-            listOf(bases[3], bases[4], bases[5]).sortAndSum(),
-            listOf(bases[6], bases[7]).sortAndSum(),
-            listOf(bases[8], bases[9]).sortAndSum(),
-            listOf(bases[10], bases[11]).sortAndSum(),
-            bases[12]
+            bases[3],
+            listOf(bases[4], bases[5]).sortAndSum(),
+            listOf(bases[6], bases[7], bases[8]).sortAndSum(),
+            listOf(bases[9], bases[10]).sortAndSum(),
+            listOf(bases[11], bases[12]).sortAndSum(),
         )
 
     override val names: List<String>
-        get() = arrayListOf("rice", "long note", "coordination", "precision", "speed", "stamina", "speed variation")
+        get() = arrayListOf("rice", "stamina", "speed", "long note", "coordination", "precision", "speed variation")
     override val abbreviates: List<String>
-        get() = arrayListOf("RC", "LN", "CO", "PR", "SP", "ST", "SV")
+        get() = arrayListOf("RC", "ST", "SP", "LN", "CO", "PR", "SV")
     override val rating: Double
         get() {
             val sortedValues = skills.take(6).sortedDescending()
@@ -871,75 +900,16 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
             return final
         }
 
-    override val dan: Map<String, Any>
-        get() {
-            val reform = getReformDan(skills[0], skills[4], skills[5])
-
-            return mapOf(
-                "reform_level" to reform.first,
-                "reform_grade" to reform.second,
-            )
-        }
-
+    override val dan: Map<String, Any> = getDan(skills, DanType.REFORM)
 
 
     companion object {
         private const val B = 0.176
-        private val K = 1.0 / ln(1.0 + B)
+        private val K = 0.5 / ln(1.0 + B)
 
         private const val FATIGUE_RECOVERY_HALF_LIFE = 20.0
         private const val BURST_RECOVERY_HALF_LIFE = 2.0
 
-        private val regularDanGrade = listOf(
-            1.8, 2.7, 3.6,
-            4.0, 4.2, 4.5, 4.7, 5.0,
-            5.4, 5.8, 6.2, 6.6, 7.2,
-            7.8, 8.6, 9.4, 10.2, 11.0
-        )
-
-        private val regularDan = listOf(
-            "I1", "I2", "I3",
-            "1", "2", "3", "4", "5",
-            "6", "7", "8", "9", "10",
-            "A", "B", "G", "D", "E"
-        )
-
-        fun getReformDan(rice: Double, stamina: Double, speed: Double): Pair<Double, String> {
-            val sorted = listOf(rice, stamina, speed).sortedDescending()
-            val sum =  0.6 * sorted[0] + 0.3 * sorted[1] + 0.1 * sorted[2]
-
-            val grades = regularDanGrade
-
-            // 1. 找到 sum 应该插入的位置索引
-            // count 会告诉我们有多少个元素小于 sum
-            val count = grades.count { sum >= it }
-            val baseGrade = (count - 3).toDouble()
-
-            // 2. 确定当前区间的左右边界，用于计算小数部分
-            val lower = if ((count - 1) < 0) 0.0 else grades[count - 1]
-            val upper = if (count >= grades.size) {
-                return baseGrade to "E"
-            } else {
-                grades[count]
-            }
-
-            // 3. 计算线性偏移 (0.0 到 1.0 之间)
-            val fraction = (sum - lower) / (upper - lower)
-
-            val plus = if (fraction in 0.5..< 1.0) {
-                "+"
-            } else {
-                ""
-            }
-
-            val name = if ((count - 1) < 0) {
-                "-"
-            } else {
-                regularDan[count - 1] + plus
-            }
-
-            // 4. 结合整数和小数 (保留一位小数或直接相加)
-            return (baseGrade + fraction) to name
-        }
+        private val log = LoggerFactory.getLogger(SkillMania6::class.java)
     }
 }

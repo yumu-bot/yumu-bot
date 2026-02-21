@@ -122,7 +122,7 @@ import kotlin.math.absoluteValue
         }
 
         val file = try {
-            OsuFile.getInstance(fileStr)
+            OsuFile(fileStr)
         } catch (_: NullPointerException) {
             throw IllegalStateException.Fetch("谱面文件")
         }

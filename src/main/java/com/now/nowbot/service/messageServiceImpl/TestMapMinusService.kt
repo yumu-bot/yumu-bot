@@ -26,12 +26,13 @@ import java.util.regex.Matcher
 
     override fun handleMessage(event: MessageEvent, param: Matcher): ServiceCallStatistic? {
         val bids = param.group("data").split(REG_SEPERATOR.toRegex()).map { it.toLongOrNull() ?: -1L }
+        val mode = OsuMode.getMode(param.group("mode")).modeValue
 
         val files = bids.filter { it != -1L }.map {
                 try {
-                    OsuFile.getInstance(beatmapApiService.getBeatmapFileString(it) ?: "")
+                    OsuFile(beatmapApiService.getBeatmapFileString(it) ?: "")
                 } catch (_: Exception) {
-                    OsuFile.getInstance("")
+                    OsuFile("")
                 }
             }
 
@@ -41,13 +42,41 @@ import java.util.regex.Matcher
 
         val sb = StringBuilder()
 
-        skills.forEach {
-            //sb.append(it.graphs.joinToString("\n") { sub -> sub.joinToString(",") })
-            sb.append(it.rating).append(",").append(it.skills.joinToString(",")).append("\n")
-            //sb.append(it.bases.joinToString(",")).append('\n')
+        when (mode.toInt()) {
+
+
+            2 -> {
+                // 写入表头
+                sb.append("S,B,J,F,T,U,R,E,V,H,O,G,Y\n")
+
+                skills.forEach { skill ->
+                    // 遍历 graphs 中的每一行 (row)
+                    val rowsString = skill.graphs.joinToString("\n") { row -> row.joinToString(",") }
+
+                    sb.append(rowsString).append("\n\n") // 写入重组后的所有行，技能之间留空行
+                }
+            }
+
+            1 -> skills.forEach {
+                sb.append(it.rating).append(",")
+                    .append(it.skills.take(6).joinToString(",")).append('\n')
+            }
+
+            else -> {
+                sb.append("S,B,J,F,T,U,R,E,V,H,O,G,Y\n")
+                skills.forEach {
+                    sb.append(it.bases.joinToString(",")).append('\n')
+                }
+            }
         }
 
-        event.replyFileInGroup(sb.toString().toByteArray(), bids.first().toString() + "s.csv")
+        val m = when (mode.toInt()) {
+            1 -> "skills"
+            2 -> "graph"
+            else -> "base"
+        }
+
+        event.replyFileInGroup(sb.toString().toByteArray(),  "${bids.first()}(${m}).csv")
 
         return null
     }

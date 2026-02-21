@@ -77,12 +77,12 @@ import java.time.LocalDateTime
         calculateApiService.applyStarToBeatmap(map, param.mode, param.mods)
 
         val file = try {
-            OsuFile.getInstance(fileStr)
+            OsuFile(fileStr)
         } catch (_: NullPointerException) {
             throw IllegalStateException.Fetch("谱面文件")
         }
 
-        val mapMinus = Skill.getInstance(
+        val mapMinus = Skill(
             file,
             param.mode,
             if (isChangedRating) {

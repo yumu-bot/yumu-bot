@@ -94,24 +94,14 @@ class OsuFile @Throws(IOException::class) constructor(private val reader: Buffer
         /**
          * 对应 Java 的 OsuFile.getInstance(String osuFileStr)
          */
-        @JvmStatic
         @Throws(IOException::class)
-        fun getInstance(osuFileStr: String): OsuFile {
+        operator fun invoke(osuFileStr: String): OsuFile {
             val reader = BufferedReader(
                 java.io.InputStreamReader(
                     java.io.ByteArrayInputStream(osuFileStr.toByteArray(java.nio.charset.StandardCharsets.UTF_8))
                 )
             )
             return OsuFile(reader)
-        }
-
-        /**
-         * 对应 Java 的 OsuFile.getInstance(BufferedReader read)
-         */
-        @JvmStatic
-        @Throws(IOException::class)
-        fun getInstance(read: BufferedReader): OsuFile {
-            return OsuFile(read)
         }
 
 
