@@ -28,9 +28,20 @@ object SkillUtil {
         return (0.6 * sorted[1] + 0.4 * sorted[2] + 0.2 * sorted[3])
     }
 
-    fun collectScoreSkills(skills: List<List<Double>>): List<Double> {
-        return skills.map { skillList ->
-            skillList.sortedDescending().foldIndexed(0.0) { i, acc, v ->
+    fun collectScoreSkills(scores: List<List<Double>>): List<Double> {
+        if (scores.isEmpty()) return List(6) { 0.0 }
+
+        // 1. 获取技能维度的数量（即每一行 List 的长度）
+        val skillCount = scores.first().size
+
+        // 2. 将数据从“按谱面排列”转换为“按技能维度排列” (转置)
+        val skillColumns = (0 until skillCount).map { colIndex ->
+            scores.map { row -> row[colIndex] }
+        }
+
+        // 3. 对转置后的每一列（同一种技能的所有得分）进行加权计算
+        return skillColumns.map { skills ->
+            skills.sortedDescending().foldIndexed(0.0) { i, acc, v ->
                 val percent = if (i < FastPower095.MAX_EXP) {
                     FastPower095.pow(i)
                 } else {

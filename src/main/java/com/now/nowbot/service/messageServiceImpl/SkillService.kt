@@ -286,15 +286,14 @@ import kotlin.math.sqrt
         isMyself: Boolean = false,
         isShowScores: Boolean = true,
     ): Map<String, Any> {
-        val weightedSkills = List(8) { mutableListOf<Double>() }
+        val weightedMap = bests.mapNotNull { b ->
+            val skills = skillMap[b.beatmapID]?.skills
 
-        bests.forEach {
-            val skills = skillMap[it.beatmapID]?.skills ?: listOf()
+            val nerf = nerfByAccuracy(b)
+            skills?.let { b.beatmapID to skills.map { it * nerf } }
+        }.toMap()
 
-            for (i in skills.indices) {
-                weightedSkills[i].add(skills[i] * nerfByAccuracy(it))
-            }
-        }
+        val weightedSkills = weightedMap.map { it.value }
 
         val skills = SkillUtil.collectScoreSkills(weightedSkills)
 
@@ -318,7 +317,7 @@ import kotlin.math.sqrt
 
         val userRating = SkillUtil.getMapSkillRating(skills)
 
-        val dan = getDanFromBests(weightedSkills, bests)
+        val dan = getDanFromBests(weightedMap, bests)
 
         return if (isMyself) mapOf(
             "user" to user,

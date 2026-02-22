@@ -34,41 +34,30 @@ fun getDanFromFavor(skills: List<Double>, favor: List<DanType>): Map<String, Any
  * 会根据成绩 key 占比，返回最高的段位
  */
 fun getDanFromBests(
-    weightedSkills: List<List<Double>>,
+    weightedMap: Map<Long, List<Double>>,
     bests: List<LazerScore>,
 ): Map<String, Any> {
+    val (key4, key7) = bests.partition { (it.beatmap.cs ?: 4.0f) < 5.5f }
 
-    val (key4Indexes, key7Indexes) = bests.indices.partition { i ->
-        (bests[i].beatmap.cs ?: 4f) < 5.5f
-    }
+    val key4Set = key4.map { it.beatmapID }.toSet()
+    val key7Set = key7.map { it.beatmapID }.toSet()
+
 
     val key4Skills = SkillUtil.collectScoreSkills(
-        weightedSkills.map { column ->
-            if (column.isEmpty()) {
-                emptyList()
-            } else {
-                key4Indexes.map { rowIndex ->
-                    column[rowIndex]
-                }
-            }
-        }
+        weightedMap.filter { (k, _) ->
+            k in key4Set
+        }.map { it.value }
     )
 
     val key7Skills = SkillUtil.collectScoreSkills(
-        weightedSkills.map { column ->
-            if (column.isEmpty()) {
-                emptyList()
-            } else {
-                key7Indexes.map { rowIndex ->
-                    column[rowIndex]
-                }
-            }
-        }
+        weightedMap.filter { (k, _) ->
+            k in key7Set
+        }.map { it.value }
     )
 
     val isPrefer4Key = SkillUtil.getMapSkillRating(key4Skills) >= SkillUtil.getMapSkillRating(key7Skills)
 
-    val totalSkills = SkillUtil.collectScoreSkills(weightedSkills)
+    val totalSkills = SkillUtil.collectScoreSkills(weightedMap.map { it.value })
 
     return if (isPrefer4Key) {
         getDanFromFavor(totalSkills, listOf(DanType.REFORM, DanType.UNDERJOY_LN))
