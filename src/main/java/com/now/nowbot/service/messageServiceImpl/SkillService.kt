@@ -8,9 +8,8 @@ import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
-import com.now.nowbot.model.skill.DanType
 import com.now.nowbot.model.skill.Skill6
-import com.now.nowbot.model.skill.getDan
+import com.now.nowbot.model.skill.getDanFromBests
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
@@ -21,12 +20,10 @@ import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.*
 import org.springframework.stereotype.Service
 import java.util.concurrent.Callable
 import java.util.regex.Matcher
-import kotlin.math.pow
 import kotlin.math.sqrt
 
 @Service("SKILL") class SkillService(
@@ -85,9 +82,9 @@ import kotlin.math.sqrt
             throw IllegalStateException.Send("技巧分析")
         }
 
-        return if (param.isVs) {
+        return if (param.other != null) {
             ServiceCallStatistic.builds(event,
-                userIDs = listOf(param.me.userID, param.other?.userID ?: throw NoSuchElementException.Player()),
+                userIDs = listOf(param.me.userID, param.other.userID),
                 modes = listOf(param.mode)
             )
         } else {
@@ -159,7 +156,7 @@ import kotlin.math.sqrt
                 other = if (users.size == 2) users.last() else null
 
                 myBests = scoreApiService.getBestScores(me.userID, mode, 0, 100)
-                otherBests = if (other != null) scoreApiService.getBestScores(other.userID, mode, 0, 100) else null
+                otherBests = other?.let { scoreApiService.getBestScores(other.userID, mode, 0, 100) }
             }
         } else {
             if (ids.first != null && ids.second != null) {
@@ -299,12 +296,7 @@ import kotlin.math.sqrt
             }
         }
 
-        val skills = weightedSkills.map {
-            it.sortedDescending().mapIndexed { i, v ->
-                val percent: Double = (0.95).pow(i)
-                v * percent
-            }.sum() / DIVISOR
-        }
+        val skills = SkillUtil.collectScoreSkills(weightedSkills)
 
         val scores: List<SkillScore> = if (isShowScores) {
             val s10 = bests.take(10)
@@ -317,39 +309,34 @@ import kotlin.math.sqrt
             s10.map {
                 val skills = skillMap[it.beatmapID]?.skills ?: listOf()
 
-                val sorted = skills.take(6).sortedDescending()
-                val total = (0.6 * sorted[1] + 0.4 * sorted[2] + 0.2 * sorted[3])
+                val scoreRating = SkillUtil.getMapSkillRating(skills)
 
-                SkillScore(it, skills, total) }
+                SkillScore(it, skills, scoreRating) }
         } else {
             listOf()
         }
 
-        val sorted = skills.take(6).sortedDescending()
-        val total = (0.6 * sorted[1] + 0.4 * sorted[2] + 0.2 * sorted[3])
+        val userRating = SkillUtil.getMapSkillRating(skills)
 
-        val dan = getDan(skills) + getDan(skills, DanType.LN)
+        val dan = getDanFromBests(weightedSkills, bests)
 
         return if (isMyself) mapOf(
             "user" to user,
             "skill" to skills,
             "scores" to scores,
-            "total" to total,
+            "total" to userRating,
             "dan" to dan,
         ) else mapOf(
             "vs_user" to user,
             "vs_skill" to skills,
             "vs_scores" to scores,
-            "vs_total" to total,
+            "vs_total" to userRating,
             "vs_dan" to dan,
         )
     }
 
-    companion object { // 用于控制最后的星数
-        // private const val STAR_DIVISOR = 3.6
+    companion object {
 
-        // 用于求和并归一化
-        private const val DIVISOR = 18.0 // (1 - (0.95).pow(100)) / 0.05 // 19.88158941559331949
 
         private fun nerfByAccuracy(score: LazerScore): Double {
             return when (score.mode) {

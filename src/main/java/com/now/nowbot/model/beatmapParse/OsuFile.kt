@@ -21,7 +21,11 @@ class OsuFile @Throws(IOException::class) constructor(private val reader: Buffer
         val versionInt = if (versionStr != null && versionStr.trim().startsWith("osu file format v")) {
             versionStr.substring(17).trim().toInt()
         } else {
-            throw RuntimeException("解析错误,文件无效")
+            throw RuntimeException("""
+                osu 谱面解析：文件无效。
+                第一排的内容是：
+                $versionStr
+                """.trimIndent())
         }
 
         this.general = BeatmapGeneral(versionInt)

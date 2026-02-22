@@ -13,6 +13,8 @@ import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.context.event.ApplicationReadyEvent
+import org.springframework.context.event.EventListener
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
@@ -638,5 +640,17 @@ class OsuApiBaseService(
         }
 
         return accessToken
+    }
+
+    @EventListener(ApplicationReadyEvent::class)
+    fun onApplicationReady() {
+        Thread.ofVirtual().start {
+            try {
+                val t = getBotToken()
+                log.info("成功获取到 osu! 提供给机器人的令牌：${t.take(10)}...")
+            } catch (e: Exception) {
+                log.error("获取令牌失败：", e)
+            }
+        }
     }
 }

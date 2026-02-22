@@ -274,15 +274,17 @@ class BeatmapApiImpl(
     }
 
     override fun getBeatmap(bid: Long): Beatmap {
-        return request { client ->
+        val beatmap = request { client ->
             client.get()
                 .uri("beatmaps/{bid}", bid)
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(Beatmap::class.java)
-                .doOnNext(beatmapDao::saveMap)
-                .doOnNext(beatmapDao::saveExtendedBeatmap)
         }
+
+        beatmapDao.saveBeatmapAndSaveExtendAsync(beatmap)
+
+        return beatmap
     }
 
     override fun getBeatmaps(ids: Iterable<Long>): List<Beatmap> {
@@ -461,14 +463,17 @@ class BeatmapApiImpl(
     }
 
     override fun getBeatmapset(sid: Long): Beatmapset {
-        return request { client ->
+        val beatmapset = request { client ->
             client.get()
                 .uri("beatmapsets/{sid}", sid)
                 .headers(base::insertHeader)
                 .retrieve()
                 .bodyToMono(Beatmapset::class.java)
-                .doOnNext(beatmapDao::saveMapSet)
         }
+
+        beatmapDao.saveBeatmapsetAsync(beatmapset)
+
+        return beatmapset
     }
 
     override fun getBeatmapFromDatabase(bid: Long): Beatmap {

@@ -5,7 +5,7 @@ import com.now.nowbot.model.beatmapParse.hitObject.HitObjectType
 import com.now.nowbot.model.beatmapParse.parse.ManiaBeatmapAttributes
 import com.now.nowbot.model.skill.SkillMania6.Hand.*
 import com.now.nowbot.model.skill.SkillMania6.Finger.*
-import org.slf4j.LoggerFactory
+import com.now.nowbot.util.SkillUtil
 import kotlin.math.abs
 import kotlin.math.ln
 import kotlin.math.max
@@ -891,16 +891,9 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
     override val abbreviates: List<String>
         get() = arrayListOf("RC", "ST", "SP", "LN", "CO", "PR", "SV")
     override val rating: Double
-        get() {
-            val sorted = skills.take(6).sortedDescending()
-            if (sorted[0] <= 0) return 0.0
+        get() = SkillUtil.getMapSkillRating(skills)
 
-            val final = sorted[1] * 0.6 + sorted[2] * 0.4 + sorted[3] * 0.2
-
-            return final
-        }
-
-    override val dan: Map<String, Any> = getDan(skills, DanType.REFORM) + getDan(skills, DanType.LN)
+    override val dan: Map<String, Any> = getDanFromBeatmap(skills, totalKey)
 
 
     companion object {
@@ -910,6 +903,6 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
         private const val FATIGUE_RECOVERY_HALF_LIFE = 20.0
         private const val BURST_RECOVERY_HALF_LIFE = 2.0
 
-        private val log = LoggerFactory.getLogger(SkillMania6::class.java)
+        // private val log = LoggerFactory.getLogger(SkillMania6::class.java)
     }
 }

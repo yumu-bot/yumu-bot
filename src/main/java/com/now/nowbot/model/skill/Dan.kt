@@ -1,5 +1,8 @@
 package com.now.nowbot.model.skill
 
+import com.now.nowbot.model.osu.LazerScore
+import com.now.nowbot.util.SkillUtil
+
 abstract class Dan(
     val name: String,
     val boundary: List<Double>,
@@ -10,36 +13,136 @@ abstract class Dan(
     val use: List<Int>
 )
 
-enum class DanType {
-    REFORM, REGULAR, LN;
+data class DanResult(
+    val name: String,
+    val level: Double,
+    val grade: String,
+)
 
-    fun getDan(): Dan = when (this) {
-        REFORM -> ReformDan()
-        LN -> LnDan()
-        REGULAR -> ReformDan()
+fun DanResult.toDynamicMap(): Map<String, Any>  {
+    return mapOf(
+        this.name to this
+    )
+}
+
+
+fun getDanFromFavor(skills: List<Double>, favor: List<DanType>): Map<String, Any> {
+    return favor.map { getDanResult(skills, it).toDynamicMap() }.reduce { a, b -> a + b }
+}
+
+/**
+ * 会根据成绩 key 占比，返回最高的段位
+ */
+fun getDanFromBests(
+    weightedSkills: List<List<Double>>,
+    bests: List<LazerScore>,
+): Map<String, Any> {
+
+    val (key4Indexes, key7Indexes) = bests.indices.partition { i ->
+        (bests[i].beatmap.cs ?: 4f) < 5.5f
+    }
+
+    val key4Skills = SkillUtil.collectScoreSkills(
+        weightedSkills.map { column ->
+            if (column.isEmpty()) {
+                emptyList()
+            } else {
+                key4Indexes.map { rowIndex ->
+                    column[rowIndex]
+                }
+            }
+        }
+    )
+
+    val key7Skills = SkillUtil.collectScoreSkills(
+        weightedSkills.map { column ->
+            if (column.isEmpty()) {
+                emptyList()
+            } else {
+                key7Indexes.map { rowIndex ->
+                    column[rowIndex]
+                }
+            }
+        }
+    )
+
+    val isPrefer4Key = SkillUtil.getMapSkillRating(key4Skills) >= SkillUtil.getMapSkillRating(key7Skills)
+
+    val totalSkills = SkillUtil.collectScoreSkills(weightedSkills)
+
+    return if (isPrefer4Key) {
+        getDanFromFavor(totalSkills, listOf(DanType.REFORM, DanType.UNDERJOY_LN))
+    } else {
+        getDanFromFavor(totalSkills, listOf(DanType.REGULAR, DanType.JINJIN_LN))
     }
 }
 
-class LnDan : Dan(
-    "ln",
-    listOf(
-        0.0, 5.0,
-        5.5, 6.0, 6.5, 7.0, 7.5,
-        8.0, 8.5, 9.0, 9.5, 10.0,
-        10.8, 11.6, 12.4, 13.0
+fun getDanFromBeatmap(skills: List<Double>, cs: Number? = null): Map<String, Any> {
+    return if ((cs?.toDouble() ?: 4.0) < 5.5) {
+        getDanFromFavor(skills, listOf(DanType.REFORM, DanType.UNDERJOY_LN))
+    } else {
+        getDanFromFavor(skills, listOf(DanType.REGULAR, DanType.JINJIN_LN))
+    }
+}
 
-        ),
-    listOf(
-        "-",
-        "0",
-        "1", "2", "3", "4", "5",
-        "6", "7", "8", "9", "10",
-        "G", "A", "Z", "S",
-    ),
-    14.5,
-    -1,
-    listOf(4, 5, 6)
-)
+fun getDanResult(
+    skills: List<Double>,
+    danType: DanType = DanType.REFORM,
+): DanResult {
+    val dan = danType.getDan()
+    val sorted = dan.use.mapNotNull { skills.getOrNull(it - 1) }.sortedDescending()
+    val sum = 0.5 * sorted[0] + 0.3 * sorted[1] + 0.2 * sorted[2]
+
+    val boundary = dan.boundary
+    val grades = dan.grade
+    val name = dan.name
+    val baseGradeOffset = dan.offset
+
+    // 1. 找到 sum 应该落入的区间索引
+    // indexOfLast 会找到最后一个小于等于 sum 的边界。
+    // coerceAtLeast(0) 确保哪怕传入了极端的负数，也会 fallback 到最低区间
+    val index = boundary.indexOfLast { sum >= it }.coerceAtLeast(0)
+
+    // 2. 根据索引计算 baseGrade
+    val baseGrade = index + baseGradeOffset
+
+    // 3. 处理达到或超过最高级的情况
+    if (sum >= (dan.max ?: Double.MAX_VALUE)) {
+        return DanResult(name, (boundary.size + baseGradeOffset).toDouble(), grades.last() + "+")
+    } else if (index >= boundary.size - 1) {
+        return DanResult(name, baseGrade.toDouble(), grades.last())
+    }
+
+    // 4. 确定当前区间的左右边界
+    val lower = boundary[index]
+    val upper = boundary[index + 1]
+
+    // 5. 计算线性偏移 (0.0 到 1.0 之间)
+    val fraction = (sum - lower) / (upper - lower)
+
+    val plus = if (fraction in 0.5 ..< 1.0) "+" else ""
+
+    // 6. 组合名称 (消除了硬编码的 "-")
+    val grade = if (index == 0) {
+        grades[index] // 最低等级通常不加 "+"
+    } else {
+        grades[index] + plus
+    }
+
+    // 7. 返回结果
+    return DanResult(name, (baseGrade + fraction), grade)
+}
+
+enum class DanType {
+    REFORM, UNDERJOY_LN, REGULAR, JINJIN_LN;
+
+    fun getDan(): Dan = when (this) {
+        REFORM -> ReformDan()
+        UNDERJOY_LN -> UnderjoyLnDan()
+        REGULAR -> JinjinRegularDan()
+        JINJIN_LN -> JinjinLnDan()
+    }
+}
 
 class ReformDan : Dan(
     "reform",
@@ -63,59 +166,62 @@ class ReformDan : Dan(
     listOf(1, 2, 3)
 )
 
-fun getDan(
-    skills: List<Double>,
-    danType: DanType = DanType.REFORM,
-): Map<String, Any> {
-    val dan = danType.getDan()
-    val sorted = dan.use.mapNotNull { skills.getOrNull(it - 1) }.sortedDescending()
-    val sum = 0.5 * sorted[0] + 0.3 * sorted[1] + 0.2 * sorted[2]
+class JinjinRegularDan : Dan(
+    "regular",
+    listOf(
+        0.0, 5.0,
+        5.5, 6.0, 6.5, 7.0, 7.5,
+        8.0, 8.5, 9.0, 9.4, 9.8,
+        10.2, 10.6, 11.0, 11.8
+    ),
+    listOf(
+        "-",
+        "0",
+        "1", "2", "3", "4", "5",
+        "6", "7", "8", "9", "10",
+        "G", "A", "Z", "S",
+    ),
+    12.4,
+    -1,
+    listOf(1, 2, 3)
+)
 
-    val boundary = dan.boundary
-    val grades = dan.grade
-    val name = dan.name
-    val baseGradeOffset = dan.offset
+class UnderjoyLnDan : Dan(
+    "underjoy",
+    listOf(
+        0.0,
+        4.0, 4.5, 5.0, 5.5, 6.0,
+        6.5, 7.0, 7.4, 7.7, 8.0,
+        8.3, 8.6, 8.8
+    ),
+    listOf(
+        "-",
+        "1", "2", "3", "4", "5",
+        "6", "7", "8", "9", "10",
+        "11", "12", "13"
+    ),
+    9.0,
+    0,
+    listOf(4, 5, 6)
+)
 
-    // 1. 找到 sum 应该落入的区间索引
-    // indexOfLast 会找到最后一个小于等于 sum 的边界。
-    // coerceAtLeast(0) 确保哪怕传入了极端的负数，也会 fallback 到最低区间
-    val index = boundary.indexOfLast { sum >= it }.coerceAtLeast(0)
+class JinjinLnDan : Dan(
+    "ln",
+    listOf(
+        0.0, 5.0,
+        5.5, 6.0, 6.5, 7.0, 7.5,
+        8.0, 8.5, 9.0, 9.5, 10.0,
+        10.8, 11.6, 12.4, 13.0
 
-    // 2. 根据索引计算 baseGrade
-    val baseGrade = index + baseGradeOffset
-
-    // 3. 处理达到或超过最高级的情况
-    if (sum >= (dan.max ?: Double.MAX_VALUE)) {
-        return mapOf(
-            "${name}_level" to boundary.size + baseGradeOffset,
-            "${name}_grade" to grades.last() + "+",
-        )
-    } else if (index >= boundary.size - 1) {
-        return mapOf(
-            "${name}_level" to baseGrade,
-            "${name}_grade" to grades.last(),
-        )
-    }
-
-    // 4. 确定当前区间的左右边界
-    val lower = boundary[index]
-    val upper = boundary[index + 1]
-
-    // 5. 计算线性偏移 (0.0 到 1.0 之间)
-    val fraction = (sum - lower) / (upper - lower)
-
-    val plus = if (fraction in 0.5 ..< 1.0) "+" else ""
-
-    // 6. 组合名称 (消除了硬编码的 "-")
-    val grade = if (index == 0) {
-        grades[index] // 最低等级通常不加 "+"
-    } else {
-        grades[index] + plus
-    }
-
-    // 7. 返回结果
-    return mapOf(
-        "${name}_level" to (baseGrade + fraction),
-        "${name}_grade" to grade,
-    )
-}
+        ),
+    listOf(
+        "-",
+        "0",
+        "1", "2", "3", "4", "5",
+        "6", "7", "8", "9", "10",
+        "G", "A", "Z", "S",
+    ),
+    14.5,
+    -1,
+    listOf(4, 5, 6)
+)

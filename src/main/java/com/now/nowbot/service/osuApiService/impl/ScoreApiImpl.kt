@@ -465,7 +465,7 @@ class ScoreApiImpl(
         offset: Int,
         limit: Int,
     ): List<LazerScore> {
-        return request { client ->
+        val bests = request { client ->
             client.get()
                 .uri {
                     it.path("users/{uid}/scores/best")
@@ -479,8 +479,14 @@ class ScoreApiImpl(
                 .retrieve()
                 .bodyToFlux(LazerScore::class.java)
                 .collectList()
-                .doOnNext(scoreDao::saveScoreAsync)
+            //.doOnNext(scoreDao::saveScoreAsync)
+            // 这里使用的是 netty 的线程，这些线程通常只负责网络并发；
+            // 如果将其用于数据库的读写，会直接卡死请求
         }
+
+        scoreDao.saveScoreAsync(bests)
+
+        return bests
     }
 
     private fun getRecent(
@@ -490,7 +496,7 @@ class ScoreApiImpl(
         offset: Int,
         limit: Int,
     ): List<LazerScore> {
-        return request { client ->
+        val recents = request { client ->
             client.get()
                 .uri { uriBuilder: UriBuilder ->
                     uriBuilder
@@ -508,8 +514,11 @@ class ScoreApiImpl(
                 .retrieve()
                 .bodyToFlux(LazerScore::class.java)
                 .collectList()
-                .doOnNext(scoreDao::saveScoreAsync)
         }
+
+        scoreDao.saveScoreAsync(recents)
+
+        return recents
     }
 
     private fun getRecent(
@@ -520,7 +529,7 @@ class ScoreApiImpl(
         limit: Int,
         isBackground: Boolean = false
     ): List<LazerScore>? {
-        return request(isBackground) { client ->
+        val recents = request(isBackground) { client ->
             client.get()
                 .uri { uriBuilder: UriBuilder ->
                     uriBuilder
@@ -536,8 +545,11 @@ class ScoreApiImpl(
                 .retrieve()
                 .bodyToFlux(LazerScore::class.java)
                 .collectList()
-                .doOnNext(scoreDao::saveScoreAsync)
         }
+
+        scoreDao.saveScoreAsync(recents)
+
+        return recents
     }
 
 

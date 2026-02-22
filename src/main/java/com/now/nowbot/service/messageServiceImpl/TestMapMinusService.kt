@@ -7,6 +7,7 @@ import com.now.nowbot.model.skill.Skill6
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
+import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.REG_SEPERATOR
 import org.springframework.stereotype.Service
@@ -31,8 +32,10 @@ import java.util.regex.Matcher
         val files = bids.filter { it != -1L }.map {
                 try {
                     OsuFile(beatmapApiService.getBeatmapFileString(it) ?: "")
-                } catch (_: Exception) {
-                    OsuFile("")
+                } catch (e: Exception) {
+
+
+                    throw TipsException("测试技巧：获取 $it 文件出错。出错原因：\n${e}")
                 }
             }
 

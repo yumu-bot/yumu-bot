@@ -166,21 +166,23 @@ import java.util.concurrent.Callable
     }
 
     override fun getOsuUser(id: Long, mode: OsuMode): OsuUser {
-        return request { client ->
+        val data = request { client ->
             client.get().uri {
-                    it.path("users/{id}/{mode}").build(id, mode.shortName)
-                }.headers(base::insertHeader).retrieve()
-                .bodyToMono(OsuUser::class.java).map { data: OsuUser ->
-                    userInfoDao.saveUserToday(data, mode)
-                    data.currentOsuMode = getMode(mode, data.defaultOsuMode)
+                it.path("users/{id}/{mode}").build(id, mode.shortName)
+            }.headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(OsuUser::class.java)
+        } // 执行到这里，数据已经回到了虚拟线程
 
-                    Thread.startVirtualThread {
-                        bindDao.updateNameToID(data)
-                    }
+        // 以下逻辑在虚拟线程中执行，不会卡死 Netty
+        userInfoDao.saveUserToday(data, mode)
+        data.currentOsuMode = getMode(mode, data.defaultOsuMode)
 
-                    data
-                }
+        Thread.startVirtualThread {
+            bindDao.updateNameToID(data)
         }
+
+        return data
     }
 
     override fun getOsuUsers(ids: List<Long>, mode: OsuMode, batchSize: Int, latencyMillis: Long): List<OsuUser> {

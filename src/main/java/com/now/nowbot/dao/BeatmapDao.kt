@@ -18,6 +18,8 @@ import com.now.nowbot.model.osu.Covers
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.Tag
 import com.now.nowbot.util.JacksonUtil
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -31,26 +33,51 @@ class BeatmapDao(
     private val extendBeatmapRepository: BeatmapExtendRepository,
     private val extendBeatmapSetRepository: BeatmapsetExtendLiteRepository,
 ) {
-    fun saveMap(beatmap: Beatmap): BeatmapLite {
-        val mapSet = beatmap.beatmapset
-        if (mapSet != null) {
-            beatmapsetRepository.save(fromMapSetModel(mapSet))
+    fun saveBeatmapAndSaveExtendAsync(beatmap: Beatmap) {
+        Thread.startVirtualThread {
+            try {
+                saveBeatmap(beatmap)
+            } catch (e: Exception) {
+                log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面失败：", e)
+            }
+            try {
+                saveExtendedBeatmap(beatmap)
+            } catch (e: Exception) {
+                log.warn("谱面数据访问对象层：保存 ${beatmap.beatmapID} 谱面的扩充信息失败：", e)
+            }
+        }
+    }
+
+    fun saveBeatmapsetAsync(beatmapset: Beatmapset) {
+        Thread.startVirtualThread {
+            try {
+                saveBeatmapset(beatmapset)
+            } catch (e: Exception) {
+                log.warn("谱面数据访问对象层：保存 ${beatmapset.beatmapsetID} 谱面集失败：", e)
+            }
+        }
+    }
+
+    fun saveBeatmap(beatmap: Beatmap): BeatmapLite {
+        val set = beatmap.beatmapset
+        if (set != null) {
+            beatmapsetRepository.save(fromBeatmapsetModel(set))
         }
         return beatmapRepository.save(fromBeatmapModel(beatmap))
     }
 
-    fun saveAllMapSet(beatmapset: List<Beatmapset>) {
-        val s = beatmapset.map { fromMapSetModel(it) }
+    fun saveBeatmapsets(beatmapset: List<Beatmapset>) {
+        val s = beatmapset.map { fromBeatmapsetModel(it) }
         beatmapsetRepository.saveAll(s)
     }
 
-    fun saveAllMap(beatmap: List<Beatmap>) {
+    fun saveBeatmaps(beatmap: List<Beatmap>) {
         val s = beatmap.map { fromBeatmapModel(it) }
         beatmapRepository.saveAll(s)
     }
 
-    fun saveMapSet(beatmapset: Beatmapset): BeatmapsetLite {
-        return beatmapsetRepository.save(fromMapSetModel(beatmapset))
+    fun saveBeatmapset(beatmapset: Beatmapset): BeatmapsetLite {
+        return beatmapsetRepository.save(fromBeatmapsetModel(beatmapset))
     }
 
     fun getBeatmapLite(id: Long): BeatmapLite? {
@@ -369,7 +396,7 @@ class BeatmapDao(
     companion object {
         fun fromBeatmapLite(bl: BeatmapLite): Beatmap {
             val b = bl.toBeatmap()
-            b.beatmapset = fromBeatmapSetLite(bl.mapSet)
+            b.beatmapset = fromBeatmapsetLite(bl.mapSet)
             return b
         }
 
@@ -377,13 +404,13 @@ class BeatmapDao(
             val s = BeatmapLite(b)
             var mapSet: BeatmapsetLite? = null
             if (b.beatmapset != null) {
-                mapSet = fromMapSetModel(b.beatmapset!!)
+                mapSet = fromBeatmapsetModel(b.beatmapset!!)
             }
             s.mapSet = mapSet
             return s
         }
 
-        private fun fromBeatmapSetLite(set: BeatmapsetLite): Beatmapset {
+        private fun fromBeatmapsetLite(set: BeatmapsetLite): Beatmapset {
             val s = Beatmapset()
             s.beatmapsetID = set.id.toLong()
             s.creatorID = set.mapperId.toLong()
@@ -406,7 +433,7 @@ class BeatmapDao(
             return s
         }
 
-        fun fromMapSetModel(mapSet: Beatmapset): BeatmapsetLite {
+        fun fromBeatmapsetModel(mapSet: Beatmapset): BeatmapsetLite {
             val s = BeatmapsetLite()
             s.id = Math.toIntExact(mapSet.beatmapsetID)
             s.card = mapSet.covers.card2x
@@ -432,5 +459,7 @@ class BeatmapDao(
 
             return s
         }
+
+        private val log: Logger = LoggerFactory.getLogger(BeatmapDao::class.java)
     }
 }

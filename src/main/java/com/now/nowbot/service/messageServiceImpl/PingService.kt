@@ -50,14 +50,17 @@ import java.util.regex.Matcher
     fun getMessageChain(): MessageChain {
         Surface.makeRaster(ImageInfo.makeN32Premul(648, 648)).use {
             val canvas = it.canvas
+            val path = Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("help-ping.png")
+
             try {
-                val file = Files.readAllBytes(
-                    Path.of(NowbotConfig.EXPORT_FILE_PATH).resolve("help-ping.png")
-                )
+                val file = Files.readAllBytes(path)
                 val background = Image.makeDeferredFromEncodedBytes(file)
                 canvas.drawImage(background, 0f, 0f)
-            } catch (e: IOException) {
-                log.error("没有 Ping 底图呢...", e)
+            } catch (_: IOException) {
+                log.error("""
+                    没有 Ping 底图呢...
+                    请确保你拥有 $path 这张底图！
+                    """.trimIndent())
                 return MessageChain("小沐收到！")
             }
 

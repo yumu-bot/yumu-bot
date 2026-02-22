@@ -64,28 +64,30 @@ class ScoreDao(
     }
 
 
-    @Transactional
-    fun saveScoreAsync(scoreList: List<LazerScore>) {
+    // 不可以在 @Transactional 内使用虚拟线程
+    // 可能会导致事务失效、数据库连接泄露等疑难杂症
+    // @Transactional
+    fun saveScoreAsync(scores: List<LazerScore>) {
         Thread.startVirtualThread {
             try {
-                saveScore(scoreList)
+                saveScores(scores)
             } catch (e: Throwable) {
-                log.error("save score error", e)
+                log.error("成绩数据访问对象层：保存成绩时发生错误：", e)
             }
         }
     }
 
     @Transactional
-    fun saveScore(scoreList: List<LazerScore>) {
-        if (scoreList.isEmpty()) {
+    fun saveScores(scores: List<LazerScore>) {
+        if (scores.isEmpty()) {
             return
         }
-        if (scoreList.size == 1) {
-            saveScore(scoreList.first())
+        if (scores.size == 1) {
+            saveScore(scores.first())
             return
         }
-        val mode = scoreList.first().mode
-        saveScore(scoreList, mode)
+        val mode = scores.first().mode
+        saveScores(scores, mode)
     }
 
     fun saveScore(score: LazerScore) {
@@ -93,8 +95,8 @@ class ScoreDao(
             return
         }
         try {
-            beatmapDao.saveMapSet(score.beatmapset)
-            beatmapDao.saveMap(score.beatmap)
+            beatmapDao.saveBeatmapset(score.beatmapset)
+            beatmapDao.saveBeatmap(score.beatmap)
         } catch (e: Exception) {
             log.error("统计成绩中存储 beatmap 异常", e)
         }
@@ -115,20 +117,20 @@ class ScoreDao(
         scoreStatisticRepository.saveAll(statisticList)
     }
 
-    private fun saveScore(scoreList: List<LazerScore>, mode: OsuMode) {
-        if (scoreList.isEmpty()) return
+    private fun saveScores(scores: List<LazerScore>, mode: OsuMode) {
+        if (scores.isEmpty()) return
 
-        val scoreIdList = scoreList.map { it.scoreID }.toSet()
+        val scoreIdList = scores.map { it.scoreID }.toSet()
         val alreadySaveScoreId = scoreRepository.getRecordId(scoreIdList)
 
-        val filteredScoreList = scoreList.filterNot { alreadySaveScoreId.contains(it.scoreID) }
+        val filteredScoreList = scores.filterNot { alreadySaveScoreId.contains(it.scoreID) }
         if (filteredScoreList.isEmpty()) return
 
         try {
             val set = filteredScoreList.map { it.beatmapset }
-            beatmapDao.saveAllMapSet(set)
+            beatmapDao.saveBeatmapsets(set)
             val map = filteredScoreList.map { it.beatmap }
-            beatmapDao.saveAllMap(map)
+            beatmapDao.saveBeatmaps(map)
         } catch (e: Exception) {
             log.error("统计成绩中存储 beatmap 异常", e)
         }
@@ -149,22 +151,22 @@ class ScoreDao(
         scoreRepository.saveAll(scoreLiteList)
     }
 
-    fun getUserAllScoreTime(userId: Long): List<OffsetDateTime> {
+    fun getUserAllScoreTime(userID: Long): List<OffsetDateTime> {
         val start = ZonedDateTime
             .of(LocalDateTime.of(2025, 1, 1, 0, 0), ZoneOffset.systemDefault())
             .toOffsetDateTime()
         val end = ZonedDateTime
             .now(ZoneOffset.systemDefault())
             .toOffsetDateTime()
-        return scoreRepository.getUserAllScoreTime(userId, start, end, PageRequest.ofSize(500))
+        return scoreRepository.getUserAllScoreTime(userID, start, end, PageRequest.ofSize(500))
     }
 
-    fun getUserRankedScore(id: Long, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite> {
-        return scoreRepository.getUserRankedScore(id, mode, start, end)
+    fun getUserRankedScore(userID: Long, mode: Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite> {
+        return scoreRepository.getUserRankedScore(userID, mode, start, end)
     }
 
-    fun getUsersRankedScore(ids: Iterable<Long>, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite> {
-        return scoreRepository.getUsersRankedScore(ids, mode, start, end)
+    fun getUsersRankedScore(userIDs: Iterable<Long>, mode:Byte, start: OffsetDateTime, end: OffsetDateTime): List<LazerScoreLite> {
+        return scoreRepository.getUsersRankedScore(userIDs, mode, start, end)
     }
 
     fun getStatisticsMap(scores: Iterable<LazerScoreLite>): Map<Long, LazerStatistics> {
@@ -174,7 +176,6 @@ class ScoreDao(
     }
 
     companion object {
-        @JvmStatic
         private val log = LoggerFactory.getLogger(ScoreDao::class.java)
     }
 
