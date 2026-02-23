@@ -53,7 +53,10 @@ class OsuBeatmapMirrorApiService(
 
         try {
             val localPath = webClient.get()
-                .uri(url) { it.path("/api/mirror/fileName/bg/{bid}").build(bid) }
+                .uri(url) {
+                    it.path("/api/mirror/fileName/bg/{bid}")
+                        .build(bid)
+                }
                 .header("X-TOKEN", token)
                 .retrieve()
                 .bodyToMono(String::class.java)
@@ -91,7 +94,7 @@ class OsuBeatmapMirrorApiService(
             log.warn("获取谱面 $bid 背景失败: 文件 [$localPath] 不存在")
             return null
         } catch (e: WebClientResponseException) {
-            log.error("获取谱面 $bid 背景失败：${e.statusCode}")
+            log.warn("获取谱面 $bid 背景失败：${e.statusCode}")
             return null
         }
     }

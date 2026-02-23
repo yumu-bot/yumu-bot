@@ -5,6 +5,7 @@ import com.now.nowbot.dao.PPMinusDao
 import com.now.nowbot.entity.PPMinusLite
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
+import com.now.nowbot.model.enums.OsuMode.*
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
@@ -29,7 +30,8 @@ import java.util.regex.Matcher
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
-@Service("PP_MINUS") class PPMinusService(
+@Service("PP_MINUS")
+class PPMinusService(
     private val scoreApiService: OsuScoreApiService,
     private val userApiService: OsuUserApiService,
     private val ppMinusDao: PPMinusDao,
@@ -49,7 +51,7 @@ import kotlin.time.DurationUnit
         val version: Int = 4
     ) {
         fun toMap(dao: PPMinusDao): Map<String, Any> {
-            when(version) {
+            when (version) {
                 2 -> {
                     val my: PPMinus
                     val others: PPMinus?
@@ -83,7 +85,7 @@ import kotlin.time.DurationUnit
                         "ACC" to my.value1,
                         "PTT" to my.value2,
                         "STA" to my.value3,
-                        (if (mode == OsuMode.MANIA) "PRE" else "STB") to my.value4,
+                        (if (mode == MANIA) "PRE" else "STB") to my.value4,
                         "EFT" to my.value5,
                         "STH" to my.value6,
                         "OVA" to my.value7,
@@ -93,7 +95,7 @@ import kotlin.time.DurationUnit
                         "ACC" to others!!.value1,
                         "PTT" to others.value2,
                         "STA" to others.value3,
-                        (if (mode == OsuMode.MANIA) "PRE" else "STB") to others.value4,
+                        (if (mode == MANIA) "PRE" else "STB") to others.value4,
                         "EFT" to others.value5,
                         "STH" to others.value6,
                         "OVA" to others.value7,
@@ -138,7 +140,16 @@ import kotlin.time.DurationUnit
                     if (other != null) cardA1s.add(other)
 
                     val titles =
-                        listOf("ACC", "PTT", "STA", if (mode == OsuMode.MANIA) "PRE" else "STB", "EFT", "STH", "OVA", "SAN")
+                        listOf(
+                            "ACC",
+                            "PTT",
+                            "STA",
+                            if (mode == MANIA) "PRE" else "STB",
+                            "EFT",
+                            "STH",
+                            "OVA",
+                            "SAN"
+                        )
                     val cardB1 = my.values.mapIndexed { i, it -> titles[i] to it }.toMap()
 
                     val cardB2 = others?.values?.mapIndexed { i, it -> titles[i] to it }?.toMap()
@@ -157,7 +168,7 @@ import kotlin.time.DurationUnit
 
                     if (other != null && other.id == 17064371L) {
                         body["others"] = List(others!!.values.size) { i -> titles[i] to 999 }.toMap()
-                    } else if (cardB2 != null)  {
+                    } else if (cardB2 != null) {
                         body["others"] = cardB2
                     }
 
@@ -173,7 +184,7 @@ import kotlin.time.DurationUnit
                         "ACC" to my.value1,
                         "PTT" to my.value2,
                         "STA" to my.value3,
-                        (if (mode == OsuMode.MANIA) "PRE" else "STB") to my.value4,
+                        (if (mode == MANIA) "PRE" else "STB") to my.value4,
                         "EFT" to my.value5,
                         "STH" to my.value6,
                         "OVA" to my.value7,
@@ -227,7 +238,8 @@ import kotlin.time.DurationUnit
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: PPMinusParam): ServiceCallStatistic? {
+    @Throws(Throwable::class)
+    override fun handleMessage(event: MessageEvent, param: PPMinusParam): ServiceCallStatistic? {
         val image = param.getPPMImage()
 
         try {
@@ -238,12 +250,14 @@ import kotlin.time.DurationUnit
         }
 
         return if (param.isVs) {
-            ServiceCallStatistic.builds(event,
+            ServiceCallStatistic.builds(
+                event,
                 userIDs = listOf(param.me.userID, param.other!!.userID),
                 modes = listOf(param.mode)
             )
         } else {
-            ServiceCallStatistic.build(event,
+            ServiceCallStatistic.build(
+                event,
                 userID = param.me.userID,
                 mode = param.mode
             )
@@ -281,7 +295,7 @@ import kotlin.time.DurationUnit
 
 
     fun PPMinusParam.getPPMImage(): ByteArray {
-        return when(version) {
+        return when (version) {
             2, 4 -> imageService.getPanel(this.toMap(ppMinusDao), "B1")
             else -> imageService.getPanel(this.toMap(ppMinusDao), "Gamma")
         }
@@ -303,7 +317,7 @@ import kotlin.time.DurationUnit
                 // 双人模式
 
                 mode = if (version == -1) {
-                    OsuMode.OSU
+                    OSU
                 } else {
                     inputMode.data!!
                 }
@@ -325,7 +339,7 @@ import kotlin.time.DurationUnit
                 val users = InstructionUtil.get2User(event, matcher, inputMode, true)
 
                 mode = if (version == -1) {
-                    OsuMode.OSU
+                    OSU
                 } else {
                     users.first().currentOsuMode
                 }
@@ -341,7 +355,7 @@ import kotlin.time.DurationUnit
                 // 双人模式
 
                 mode = if (version == -1) {
-                    OsuMode.OSU
+                    OSU
                 } else {
                     inputMode.data!!
                 }
@@ -363,7 +377,7 @@ import kotlin.time.DurationUnit
                 // 单人模式
 
                 mode = if (version == -1) {
-                    OsuMode.OSU
+                    OSU
                 } else {
                     inputMode.data!!
                 }
@@ -385,7 +399,7 @@ import kotlin.time.DurationUnit
                 val users = InstructionUtil.get2User(event, matcher, inputMode, false)
 
                 mode = if (version == -1) {
-                    OsuMode.OSU
+                    OSU
                 } else {
                     users.first().currentOsuMode
                 }
@@ -482,9 +496,32 @@ import kotlin.time.DurationUnit
             }
         }
 
-        // https://github.com/ferryhmm/oii
+        /**
+         * https://github.com/ferryhmm/oii
+         */
         private fun getOsuImprovementIndicator(user: OsuUser): Double {
-            val expectedPT = -12 + 0.0781 * user.pp + 6.01e-6 * user.pp * user.pp
+            val pp = user.pp
+
+            val expectedPT = when (user.currentOsuMode) {
+                OSU, OSU_AUTOPILOT, OSU_RELAX -> {
+                    -12.0 + 0.0781 * pp + 6.01E-6 * pp * pp
+                }
+
+                TAIKO, TAIKO_RELAX -> {
+                    -1.08 + 0.0179 * pp + 1.65E-06 * pp * pp
+                }
+
+                CATCH, CATCH_RELAX -> {
+                    -4.14 + 0.0458 * pp + 2.38E-06 * pp * pp
+                }
+
+                MANIA -> {
+                    -0.601 + 0.0321 * pp + 7.69E-07 * pp * pp
+                }
+
+                DEFAULT -> -12.0 + 0.0781 * pp + 6.01E-6 * pp * pp
+            }
+
             val playHours = user.playTime.seconds.toDouble(DurationUnit.HOURS)
 
             return if (playHours > 0.0) {
