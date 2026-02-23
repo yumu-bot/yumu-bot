@@ -406,9 +406,10 @@ import kotlin.time.toDuration
         val better = scores.maxByOrNull { it.pp * it.beatmap.starRating }
             ?: throw NoSuchElementException.BeatmapScore(map.beatmapset!!.previewName)
 
-        val beatmap = better.beatmap.apply { this.beatmapset = map.beatmapset }
+        // better 的 beatmap 可能和上面的不一样，并且没有 max combo
+        beatmapApiService.applyBeatmapExtend(better)
 
-        return ScoreData(user, beatmap, listOf(better), mode)
+        return ScoreData(user, better.beatmap, listOf(better), mode)
     }
 
     private fun ScoreParam.asyncDownloadBackground() {
