@@ -6,11 +6,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import reactor.core.publisher.Mono
 import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.time.Duration
 
 @Service("OsuBeatmapMirrorApiService")
 class OsuBeatmapMirrorApiService(
@@ -54,7 +56,16 @@ class OsuBeatmapMirrorApiService(
                 .uri(url) { it.path("/api/mirror/fileName/bg/{bid}").build(bid) }
                 .header("X-TOKEN", token)
                 .retrieve()
-                .bodyToMono(String::class.java).block()!!
+                .bodyToMono(String::class.java)
+                .timeout(Duration.ofSeconds(5))
+                .onErrorResume { Mono.empty() }
+                .block()
+
+            if (localPath == null) {
+                log.warn("获取谱面 $bid 背景失败: 获取本地路径超时，可能是镜像站没有启动")
+                return null
+            }
+
             val path = Path.of(localPath)
 
             var ready = false
@@ -69,7 +80,7 @@ class OsuBeatmapMirrorApiService(
             }
 
             if (!ready) {
-                log.error("获取谱面 $bid 背景失败: 文件可能损坏或下载超时")
+                log.warn("获取谱面 $bid 背景失败: 文件可能损坏或下载超时")
                 return null
             }
 
@@ -77,7 +88,7 @@ class OsuBeatmapMirrorApiService(
                 return path
             }
 
-            log.error("获取谱面 $bid 背景失败: 文件 [$localPath] 不存在")
+            log.warn("获取谱面 $bid 背景失败: 文件 [$localPath] 不存在")
             return null
         } catch (e: WebClientResponseException) {
             log.error("获取谱面 $bid 背景失败：${e.statusCode}")

@@ -42,17 +42,16 @@ fun getDanFromBests(
     val key4Set = key4.map { it.beatmapID }.toSet()
     val key7Set = key7.map { it.beatmapID }.toSet()
 
-
     val key4Skills = SkillUtil.collectScoreSkills(
-        weightedMap.filter { (k, _) ->
-            k in key4Set
-        }.map { it.value }
+        weightedMap.mapNotNull { (k, v) ->
+            if (k in key4Set) v else null
+        }
     )
 
     val key7Skills = SkillUtil.collectScoreSkills(
-        weightedMap.filter { (k, _) ->
-            k in key7Set
-        }.map { it.value }
+        weightedMap.mapNotNull { (k, v) ->
+            if (k in key7Set) v else null
+        }
     )
 
     val isPrefer4Key = SkillUtil.getMapSkillRating(key4Skills) >= SkillUtil.getMapSkillRating(key7Skills)
@@ -60,23 +59,23 @@ fun getDanFromBests(
     val totalSkills = SkillUtil.collectScoreSkills(weightedMap.map { it.value })
 
     return if (isPrefer4Key) {
-        getDanFromFavor(totalSkills, listOf(DanType.REFORM, DanType.UNDERJOY_LN))
+        getDanFromFavor(totalSkills, listOf(DanType.DDMYTHICAL_REFORM, DanType.UNDERJOY_LN))
     } else {
-        getDanFromFavor(totalSkills, listOf(DanType.REGULAR, DanType.JINJIN_LN))
+        getDanFromFavor(totalSkills, listOf(DanType.JINJIN_REGULAR, DanType.JINJIN_LN))
     }
 }
 
 fun getDanFromBeatmap(skills: List<Double>, cs: Number? = null): Map<String, Any> {
     return if ((cs?.toDouble() ?: 4.0) < 5.5) {
-        getDanFromFavor(skills, listOf(DanType.REFORM, DanType.UNDERJOY_LN))
+        getDanFromFavor(skills, listOf(DanType.DDMYTHICAL_REFORM, DanType.UNDERJOY_LN))
     } else {
-        getDanFromFavor(skills, listOf(DanType.REGULAR, DanType.JINJIN_LN))
+        getDanFromFavor(skills, listOf(DanType.JINJIN_REGULAR, DanType.JINJIN_LN))
     }
 }
 
 fun getDanResult(
     skills: List<Double>,
-    danType: DanType = DanType.REFORM,
+    danType: DanType = DanType.DDMYTHICAL_REFORM,
 ): DanResult {
     val dan = danType.getDan()
     val sorted = dan.use.mapNotNull { skills.getOrNull(it - 1) }.sortedDescending()
@@ -123,17 +122,17 @@ fun getDanResult(
 }
 
 enum class DanType {
-    REFORM, UNDERJOY_LN, REGULAR, JINJIN_LN;
+    DDMYTHICAL_REFORM, UNDERJOY_LN, JINJIN_REGULAR, JINJIN_LN;
 
     fun getDan(): Dan = when (this) {
-        REFORM -> ReformDan()
+        DDMYTHICAL_REFORM -> DDMythicalReformDan()
         UNDERJOY_LN -> UnderjoyLnDan()
-        REGULAR -> JinjinRegularDan()
+        JINJIN_REGULAR -> JinjinRegularDan()
         JINJIN_LN -> JinjinLnDan()
     }
 }
 
-class ReformDan : Dan(
+class DDMythicalReformDan : Dan(
     "reform",
     listOf(
         0.0, 1.5, 2.5, 3.5,
