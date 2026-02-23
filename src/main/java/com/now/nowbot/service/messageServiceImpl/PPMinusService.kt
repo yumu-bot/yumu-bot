@@ -497,7 +497,7 @@ class PPMinusService(
         }
 
         /**
-         * https://github.com/ferryhmm/oii
+         * https://github.com/ferryhmm/oii/blob/main/analysis/data/01-12-2025/analysis.md
          */
         private fun getOsuImprovementIndicator(user: OsuUser): Double {
             val pp = user.pp

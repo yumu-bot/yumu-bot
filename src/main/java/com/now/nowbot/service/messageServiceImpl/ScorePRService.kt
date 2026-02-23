@@ -15,6 +15,7 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.NewbieRestrictService
 import com.now.nowbot.service.messageServiceImpl.ScorePRService.ScorePRParam
 import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScore
 import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScores
@@ -45,7 +46,8 @@ class ScorePRService(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val infoDao: OsuUserInfoDao,
-    private val bindDao: BindDao
+    private val bindDao: BindDao,
+    private val restrict: NewbieRestrictService,
 ) : MessageService<ScorePRParam>, TencentMessageService<ScorePRParam> {
 
     data class ScorePRParam(
@@ -127,6 +129,8 @@ class ScorePRService(
 
 
         val param = getParam(event, messageText, matcher, isMultiple, isPass, isShow, isCompact = false) ?: return false
+
+        restrict.checkAsync(event, param.scores)
 
         data.value = param
         return true

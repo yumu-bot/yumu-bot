@@ -12,6 +12,7 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.NewbieRestrictService
 import com.now.nowbot.service.messageServiceImpl.TodayBPService.TodayBPParam
 import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScore
 import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScores
@@ -40,6 +41,8 @@ class TodayBPService(
     private val userApiService: OsuUserApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val infoDao: OsuUserInfoDao,
+
+    private val restrict: NewbieRestrictService,
 ) : MessageService<TodayBPParam>, TencentMessageService<TodayBPParam> {
 
     data class TodayBPParam(
@@ -54,12 +57,17 @@ class TodayBPService(
     @Throws(Throwable::class)
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<TodayBPParam>): Boolean {
         val matcher = Instruction.TODAY_BP.matcher(messageText)
-        return if (matcher.find()) {
-            data.value = getParam(matcher, event, isCompact = false)
-            true
-        } else {
-            false
+
+        if (!matcher.find()) {
+            return false
         }
+
+        val param = getParam(matcher, event, isCompact = false)
+
+        restrict.checkAsync(event, param.scores)
+
+        data.value = param
+        return true
     }
 
     @Throws(Throwable::class)

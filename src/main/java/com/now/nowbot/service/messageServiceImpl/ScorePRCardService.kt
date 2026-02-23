@@ -8,6 +8,7 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.NewbieRestrictService
 import com.now.nowbot.service.messageServiceImpl.ScorePRCardService.PRCardParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
@@ -30,14 +31,14 @@ class ScorePRCardService(
     private val imageService: ImageService,
     private val scoreApiService: OsuScoreApiService,
     private val beatmapApiService: OsuBeatmapApiService,
-    private val calculateApiService: OsuCalculateApiService
+    private val calculateApiService: OsuCalculateApiService,
+    private val restrict: NewbieRestrictService
 
     ) : MessageService<PRCardParam>, TencentMessageService<PRCardParam> {
-    @JvmRecord
+
     data class PRCardParam(val score: LazerScore)
 
 
-    @Throws(Throwable::class)
     override fun isHandle(event: MessageEvent, messageText: String, data: DataValue<PRCardParam>): Boolean {
         val matcher = Instruction.PR_CARD.matcher(messageText)
         if (!matcher.find()) return false
@@ -55,6 +56,7 @@ class ScorePRCardService(
         } else {
             throw IllegalStateException.ClassCast("迷你")
         }
+
         if (range.data == null) throw NoSuchElementException.Player()
 
         score = if (scores.isNotEmpty()) {
@@ -66,6 +68,8 @@ class ScorePRCardService(
         calculateApiService.applyPPToScore(score)
         calculateApiService.applyBeatmapChanges(score)
         calculateApiService.applyStarToScore(score)
+
+        restrict.checkAsync(event, score)
 
         data.value = PRCardParam(score)
         return true

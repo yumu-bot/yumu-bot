@@ -14,6 +14,7 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.NewbieRestrictService
 import com.now.nowbot.service.messageServiceImpl.BPService.BPParam
 import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScore
 import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScores
@@ -42,6 +43,7 @@ import java.util.regex.Matcher
     private val imageService: ImageService,
     private val infoDao: OsuUserInfoDao,
     private val bindDao: BindDao,
+    private val restrict: NewbieRestrictService,
 ) : MessageService<BPParam>, TencentMessageService<BPParam> {
 
     data class BPParam(
@@ -64,6 +66,8 @@ import java.util.regex.Matcher
         val isShow = matcher.group("w").isNullOrBlank().not()
 
         val param = getParam(event, messageText, matcher, isMultiple, isShow, isCompact = false) ?: return false
+
+        restrict.checkAsync(event, param.scores)
 
         data.value = param
         return true

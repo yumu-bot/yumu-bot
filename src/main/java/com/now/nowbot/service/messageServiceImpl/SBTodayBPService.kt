@@ -9,6 +9,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.NewbieRestrictService
 import com.now.nowbot.service.messageServiceImpl.TodayBPService.TodayBPParam
 import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScore
 import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScores
@@ -41,6 +42,7 @@ class SBTodayBPService(
     private val osuCalculateApiService: OsuCalculateApiService,
     private val osuScoreApiService: OsuScoreApiService,
     private val imageService: ImageService,
+    private val restrict: NewbieRestrictService,
 
     ) : MessageService<TodayBPParam> {
     override fun isHandle(
@@ -49,12 +51,17 @@ class SBTodayBPService(
         data: MessageService.DataValue<TodayBPParam>
     ): Boolean {
         val matcher = Instruction.SB_TODAY_BP.matcher(messageText)
-        return if (matcher.find()) {
-            data.value = getParam(matcher, event)
-            true
-        } else {
-            false
+
+        if (!matcher.find()) {
+            return false
         }
+
+        val param = getParam(matcher, event)
+
+        restrict.checkAsync(event, param.scores)
+
+        data.value = param
+        return true
     }
 
     override fun handleMessage(event: MessageEvent, param: TodayBPParam): ServiceCallStatistic? {

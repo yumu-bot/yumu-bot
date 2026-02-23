@@ -14,6 +14,7 @@ import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
+import com.now.nowbot.service.NewbieRestrictService
 import com.now.nowbot.service.messageServiceImpl.ScoreService.ScoreParam
 import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScore
 import com.now.nowbot.service.messageServiceImpl.UUPRService.Companion.getUUScores
@@ -43,7 +44,8 @@ import kotlin.time.toDuration
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
-    private val dao: ServiceCallStatisticsDao
+    private val dao: ServiceCallStatisticsDao,
+    private val restrict: NewbieRestrictService,
 ) : MessageService<ScoreParam>, TencentMessageService<ScoreParam> {
 
     data class ScoreParam(
@@ -96,7 +98,11 @@ import kotlin.time.toDuration
             return false
         }
 
-        data.value = getParam(event, messageText, matcher, isMultipleScore, isShow, isCompact = false)
+        val param = getParam(event, messageText, matcher, isMultipleScore, isShow, isCompact = false)
+
+        restrict.checkAsync(event, param.scores)
+
+        data.value = param
 
         return true
     }

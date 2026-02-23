@@ -35,16 +35,11 @@ class PermissionImplement(
         private val EXECUTOR = Executors.newScheduledThreadPool(Int.MAX_VALUE, AsyncSetting.THREAD_FACTORY)
         const val GLOBAL_PERMISSION = "PERMISSION_ALL"
 
-        /**
-         * 这是允许多次匹配的服务，其他服务只匹配一次
-         */
-        val DUPLICATE_SERVICES = setOf("NEWBIE_RESTRICT")
-
         private const val LOCAL_GROUP_ID = -10086L
 
         private val superService = CopyOnWriteArraySet<String>()
         private val permissionMap = LinkedHashMap<String, PermissionService>()
-        private val servicesMap = LinkedHashMap<String, MessageService<Any>>()
+        private val serviceMap = LinkedHashMap<String, MessageService<Any>>()
         private val serviceMap4TX = LinkedHashMap<String, TencentMessageService<Any>>()
         private val futureMap = ConcurrentHashMap<String, ScheduledFuture<*>>()
 
@@ -91,7 +86,7 @@ class PermissionImplement(
 
             val messageText = textMessage.trim()
 
-            for ((name, service) in servicesMap) {
+            for ((name, service) in serviceMap) {
                 try {
                     if (checkStopListener()) {
                         break
@@ -108,9 +103,7 @@ class PermissionImplement(
                         service.handleMessage(event, data.value!!)
                         // 触发后，直接跳出循环
 
-                        if (!DUPLICATE_SERVICES.contains(name)) {
-                            break
-                        }
+                        break
                     }
                 } catch (e: Throwable) {
                     errorHandle.accept(event, e)
@@ -209,7 +202,7 @@ class PermissionImplement(
     @Suppress("UNCHECKED_CAST")
     fun init(services: Map<String, MessageService<*>>) {
         // 清除脏数据
-        servicesMap.clear()
+        serviceMap.clear()
         serviceMap4TX.clear()
 
         // 初始化全局服务控制
@@ -219,7 +212,7 @@ class PermissionImplement(
 
         // 初始化顺序
         services.asSequence().sortedBy { it.key }.forEach { (name, service) ->
-            servicesMap[name] = service as MessageService<Any>
+            serviceMap[name] = service as MessageService<Any>
 
             if (service is TencentMessageService<*>) {
                 serviceMap4TX[name] = service as TencentMessageService<Any>
@@ -284,7 +277,7 @@ class PermissionImplement(
             return
         }
 
-        val service = servicesMap[name] ?: return
+        val service = serviceMap[name] ?: return
         when (val type = resolveServiceType(name, service)) {
             is ServiceType.Super -> {
                 superService.add(name)
@@ -305,7 +298,7 @@ class PermissionImplement(
      * 全局刷新，非必要别用
      */
     fun refreshAllPermissions() {
-        servicesMap.keys.forEach { name ->
+        serviceMap.keys.forEach { name ->
             refreshPermissionCache(name)
         }
     }

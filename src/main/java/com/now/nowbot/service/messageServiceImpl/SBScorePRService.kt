@@ -11,6 +11,7 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.service.NewbieRestrictService
 import com.now.nowbot.service.messageServiceImpl.ScorePRService.Companion.getE5ParamForFilteredScore
 import com.now.nowbot.service.messageServiceImpl.ScorePRService.ScorePRParam
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
@@ -38,7 +39,8 @@ class SBScorePRService(
 
     private val osuCalculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
-    private val bindDao: BindDao
+    private val bindDao: BindDao,
+    private val restrict: NewbieRestrictService,
 ): MessageService<ScorePRParam> {
 
     override fun isHandle(
@@ -63,6 +65,8 @@ class SBScorePRService(
             }
 
         val param = getParam(event, messageText, matcher, isMultiple, isPass, isShow) ?: return false
+
+        restrict.checkAsync(event, param.scores)
 
         data.value = param
         return true
