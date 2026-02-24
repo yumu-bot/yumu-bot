@@ -12,6 +12,8 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.MessageService
+import com.now.nowbot.throwable.TipsException
+import com.now.nowbot.throwable.TipsRuntimeException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.ContextUtil
@@ -141,9 +143,12 @@ class PermissionImplement(
                     return
                 } catch (e: Throwable) {
                     val ex = e.findCauseOfType<TipsException>()
+                    val er = e.findCauseOfType<TipsRuntimeException>()
                     
                     if (ex != null) {
                         onMessage.accept(MessageChain(e))
+                    } else if (er != null) {
+                        onMessage.accept(MessageChain(er))
                     } else {
                         log.error("腾讯消息类：神秘错误", e)
                         onMessage.accept(MessageChain("服务 $name 出现未识别的错误。"))
