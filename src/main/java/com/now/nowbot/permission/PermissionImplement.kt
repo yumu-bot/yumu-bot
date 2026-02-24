@@ -12,7 +12,6 @@ import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.qq.message.MessageChain
 import com.now.nowbot.qq.tencent.TencentMessageService
 import com.now.nowbot.service.MessageService
-import com.now.nowbot.throwable.BotException
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.ContextUtil
@@ -141,7 +140,7 @@ class PermissionImplement(
                     }
                     return
                 } catch (e: Throwable) {
-                    val ex = e.findCauseOfType<BotException>()
+                    val ex = e.findCauseOfType<TipsException>()
                     
                     if (ex != null) {
                         onMessage.accept(MessageChain(e))
