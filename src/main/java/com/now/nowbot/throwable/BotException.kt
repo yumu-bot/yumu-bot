@@ -1,7 +1,7 @@
 package com.now.nowbot.throwable
 
-interface BotException {
-    val message: String?
+interface BotException: Throwable {
+    override val message: String?
 
     fun hasImage(): Boolean {
         return false
