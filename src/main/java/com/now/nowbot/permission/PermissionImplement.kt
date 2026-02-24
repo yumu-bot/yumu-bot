@@ -146,7 +146,7 @@ class PermissionImplement(
                     val er = e.findCauseOfType<TipsRuntimeException>()
                     
                     if (ex != null) {
-                        onMessage.accept(MessageChain(e))
+                        onMessage.accept(MessageChain(ex))
                     } else if (er != null) {
                         onMessage.accept(MessageChain(er))
                     } else {
