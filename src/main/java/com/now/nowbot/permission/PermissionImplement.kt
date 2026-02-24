@@ -1,5 +1,6 @@
 package com.now.nowbot.permission
 
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.aop.CheckPermission
 import com.now.nowbot.config.AsyncSetting
 import com.now.nowbot.config.Permission
