@@ -140,7 +140,9 @@ class PermissionImplement(
                     }
                     return
                 } catch (e: Throwable) {
-                    if (e is BotException) {
+                    val ex = e.findCauseOfType<BotException>()
+                    
+                    if (ex != null) {
                         onMessage.accept(MessageChain(e))
                     } else {
                         log.error("腾讯消息类：神秘错误", e)
