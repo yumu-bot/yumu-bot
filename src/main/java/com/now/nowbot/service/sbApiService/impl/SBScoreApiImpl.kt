@@ -14,9 +14,8 @@ import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import reactor.core.publisher.Mono
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
 import java.util.*
 import kotlin.math.min
 
@@ -46,11 +45,6 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
 
         return request { client ->
             client.get().uri {
-
-                if (!mods.isNullOrEmpty()) {
-                    it.queryParam("mods", LazerMod.getModsValue(mods))
-                }
-
                 it.path("/v1/get_player_scores")
                     .queryParam("scope", scope) // recent, best
                     .queryParamIfPresent("id", Optional.ofNullable(id))
@@ -59,10 +53,15 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
                     .queryParam("limit", size)
                     .queryParamIfPresent("include_loved", Optional.ofNullable(includeLoved))
                     .queryParamIfPresent("include_failed", Optional.ofNullable(includeFailed))
-                    .build()
-            }.retrieve().bodyToMono(JsonNode::class.java).map {
+
+                if (!mods.isNullOrEmpty()) {
+                    it.queryParam("mods", LazerMod.getModsValue(mods))
+                }
+
+                it.build()
+            }.retrieve().body(JsonNode::class.java)?.let {
                 parseList<SBScore>(it, "scores", "玩家成绩")
-            }
+            } ?: listOf()
         }
             .drop(off)
     }
@@ -89,63 +88,49 @@ class SBScoreApiImpl(private val base: SBBaseService): SBScoreApiService {
 
         return request { client ->
             client.get().uri {
-
-                if (!mods.isNullOrEmpty()) {
-                    it.queryParam("mods", LazerMod.getModsValue(mods))
-                }
-
                 it.path("/v1/get_map_scores")
                     .queryParam("scope", scope) // recent, best
                     .queryParamIfPresent("id", Optional.ofNullable(id))
                     .queryParamIfPresent("md5", Optional.ofNullable(md5))
                     .queryParamIfPresent("mode", Optional.ofNullable(modeValue))
                     .queryParam("limit", size)
-                    .build()
-            }.retrieve().bodyToMono(JsonNode::class.java).map {
+
+                if (!mods.isNullOrEmpty()) {
+                    it.queryParam("mods", LazerMod.getModsValue(mods))
+                }
+
+                it.build()
+            }.retrieve().body(JsonNode::class.java)?.let {
                 parseList<SBScore>(it, "scores", "谱面成绩")
-            }
+            } ?: listOf()
         }.drop(off)
     }
 
     /**
      * 错误包装
      */
-    private fun <T> request(request: (WebClient) -> Mono<T>): T {
+    private fun <T> request(request: (RestClient) -> T): T {
         return try {
-            request(base.sbApiWebClient).block()!!
-        } catch (e: Throwable) {
-            when (e.cause) {
-                is WebClientResponseException.BadRequest -> {
-                    throw NetworkException.ScoreException.BadRequest()
+            request(base.sbApiRestClient)
+        } catch (e: Exception) {
+            val cause = e as? RestClientResponseException ?: e.cause
+            if (cause is RestClientResponseException) {
+                when (cause.statusCode.value()) {
+                    400 -> throw NetworkException.ScoreException.BadRequest()
+                    401 -> throw NetworkException.ScoreException.Unauthorized()
+                    403 -> throw NetworkException.ScoreException.Forbidden()
+                    404 -> throw NetworkException.ScoreException.NotFound()
+                    422 -> throw NetworkException.UserException.UnprocessableEntity()
+                    503 -> throw NetworkException.ScoreException.ServiceUnavailable()
                 }
+            }
 
-                is WebClientResponseException.Unauthorized -> {
-                    throw NetworkException.ScoreException.Unauthorized()
-                }
-
-                is WebClientResponseException.Forbidden -> {
-                    throw NetworkException.ScoreException.Forbidden()
-                }
-
-                is WebClientResponseException.NotFound -> {
-                    throw NetworkException.ScoreException.NotFound()
-                }
-
-                is WebClientResponseException.UnprocessableEntity -> {
-                    throw NetworkException.UserException.UnprocessableEntity()
-                }
-
-                is WebClientResponseException.ServiceUnavailable -> {
-                    throw NetworkException.ScoreException.ServiceUnavailable()
-                }
-
-                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                    throw NetworkException.ScoreException.GatewayTimeout()
-                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
-                    throw NetworkException.ScoreException.RequestTimeout()
-                } else {
-                    throw NetworkException.ScoreException.Undefined(e)
-                }
+            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                throw NetworkException.ScoreException.GatewayTimeout()
+            } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
+                throw NetworkException.ScoreException.RequestTimeout()
+            } else {
+                throw NetworkException.ScoreException.Undefined(e)
             }
         }
     }

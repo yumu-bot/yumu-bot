@@ -17,8 +17,6 @@ import jakarta.annotation.Resource
 import org.slf4j.LoggerFactory
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.system.ApplicationHome
-import org.springframework.boot.web.context.WebServerApplicationContext
-import org.springframework.boot.web.embedded.tomcat.TomcatWebServer
 import org.springframework.context.ApplicationContext
 import org.springframework.core.env.Environment
 import org.springframework.core.io.DefaultResourceLoader
@@ -39,9 +37,6 @@ class IocAllReadyRunner(
     }
 
     private val log = LoggerFactory.getLogger("IocAllReadyRunner")
-
-    @Resource
-    private lateinit var webServerApplicationContext: WebServerApplicationContext
 
     @Resource(name = "mainExecutor")
     private lateinit var executor: Executor
@@ -69,12 +64,6 @@ class IocAllReadyRunner(
         permission.init(applicationContext)
 
         //        initFountWidth()
-
-        (webServerApplicationContext.webServer as TomcatWebServer)
-            .tomcat
-            .connector
-            .protocolHandler
-            .executor = executor
 
         Runtime.getRuntime().addShutdownHook(Thread({
             APP_ALIVE = false

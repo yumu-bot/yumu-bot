@@ -30,7 +30,7 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
         return request { client ->
             client.get()
                 .uri {
-                    it.host(base.assetHost ?: return@uri null)
+                    it.host(base.assetHost)
                         .path("maimai/music/${songID % 10000}.mp3")
                         .build()
                 }
@@ -233,7 +233,7 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
      * 错误包装
      */
     @Throws(NetworkException::class)
-    private fun <T> request(request: (WebClient) -> Mono<T>): T {
+    private fun <T: Any> request(request: (WebClient) -> Mono<T>): T {
         return try {
             request(base.lxnsApiWebClient).block()!!
         } catch (e: Throwable) {

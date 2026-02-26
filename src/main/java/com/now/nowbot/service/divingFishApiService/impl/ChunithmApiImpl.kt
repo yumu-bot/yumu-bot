@@ -314,7 +314,7 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
      * 错误包装
      */
     @Throws(NetworkException::class)
-    private fun <T> request(request: (WebClient) -> Mono<T>): T {
+    private fun <T: Any> request(request: (WebClient) -> Mono<T>): T {
         return try {
             request(base.divingFishApiWebClient).block()!!
         } catch (_: WebClientResponseException.BadRequest) {

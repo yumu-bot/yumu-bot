@@ -12,25 +12,25 @@ import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.BAParam
 import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.Companion.Attribute
+import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.Companion.Mapper
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
-import com.now.nowbot.util.*
+import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.InstructionUtil.getUserWithoutRange
+import com.now.nowbot.util.OfficialInstruction
+import com.now.nowbot.util.UserIDUtil
 import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import java.text.DecimalFormat
-import java.util.ArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.collections.component1
-import kotlin.collections.component2
-import com.now.nowbot.service.messageServiceImpl.BPAnalysisService.Companion.Mapper
 import kotlin.math.roundToInt
 
 @Service("UU_BA")
@@ -206,7 +206,7 @@ class UUBAService(
 
             val modsAttribute: List<Attribute> = run {
                 val modsAttributeTmp: MutableList<Attribute> = ArrayList(modsPPMap.size)
-                modsPPMap.forEach { (mod: String, value: MutableList<Double?>) ->
+                modsPPMap.forEach { (mod: String, value: MutableList<Double>) ->
                     val attribute = Attribute(
                         mod, value.filterNotNull().size, value.filterNotNull().sum(), value.filterNotNull().average()
                     )

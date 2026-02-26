@@ -47,7 +47,7 @@ class GroupStatisticsService(
             .uri(GET_BINDING, qq)
             .retrieve()
             .bodyToMono(JsonNode::class.java)
-            .handle { json: JsonNode, sink: SynchronousSink<Long?> ->
+            .handle { json: JsonNode, sink: SynchronousSink<Long> ->
                 if (!json.hasNonNull("userId")) {
                     sink.error(WebClientResponseException.create(404, "NOT FOUND", HttpHeaders(), byteArrayOf(), null))
                     return@handle
@@ -183,7 +183,7 @@ class GroupStatisticsService(
             } catch (err: WebClientResponseException.NotFound) {
                 //这个err不需要记录下来 修改了日志等级, 默认不记录
                 log.debug("统计 {} 未找到: {}", qq, err.message)
-                if (err.message.contains("bleatingsheep.org")) {
+                if (err.message!!.contains("bleatingsheep.org")) {
                     errMap[qq] = "未绑定"
                 } else {
                     errMap[qq] = "osu信息查询不到, 可能已删号"

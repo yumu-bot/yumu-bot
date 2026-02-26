@@ -251,11 +251,14 @@ import java.util.concurrent.Callable
      * @param users 注意, 单次请求数量必须小于50
      * @param isVariant 是否获取玩家的多模式信息
      */
-    private fun <T : Number> getUsersPrivate(users: Iterable<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
+    private inline fun <T : Number> getUsersPrivate(users: Iterable<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
         return request(isBackground) { client ->
             client.get().uri {
-                    it.path("users").queryParam("ids[]", users.toList())
-                        .queryParam("include_variant_statistics", isVariant).build()
+                val ids = users.map { it -> it.toLong() }.toList()
+                    it.path("users")
+                        .queryParam("ids[]", *ids.toTypedArray())
+                        .queryParam("include_variant_statistics", isVariant)
+                        .build()
                 }.headers(base::insertHeader).retrieve().bodyToMono(JsonNode::class.java).map {
                     val userList = JacksonUtil.parseObjectList(
                         it["users"], MicroUser::class.java
@@ -350,7 +353,7 @@ import java.util.concurrent.Callable
     /**
      * 错误包装
      */
-    private fun <T> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
+    private fun <T: Any> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
         return try {
             base.request(isBackground, request)
         } catch (e: Throwable) {
