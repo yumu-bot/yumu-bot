@@ -863,6 +863,50 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
                 thisRef.values[field.index] = value
             }
         }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as NoteData
+
+            if (time != other.time) return false
+            if (!values.contentEquals(other.values)) return false
+            if (stream != other.stream) return false
+            if (bracket != other.bracket) return false
+            if (jack != other.jack) return false
+            if (fatigue != other.fatigue) return false
+            if (trill != other.trill) return false
+            if (burst != other.burst) return false
+            if (release != other.release) return false
+            if (shield != other.shield) return false
+            if (reverseShield != other.reverseShield) return false
+            if (handLock != other.handLock) return false
+            if (overlap != other.overlap) return false
+            if (grace != other.grace) return false
+            if (delayedTail != other.delayedTail) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = time
+            result = 31 * result + values.contentHashCode()
+            result = 31 * result + stream.hashCode()
+            result = 31 * result + bracket.hashCode()
+            result = 31 * result + jack.hashCode()
+            result = 31 * result + fatigue.hashCode()
+            result = 31 * result + trill.hashCode()
+            result = 31 * result + burst.hashCode()
+            result = 31 * result + release.hashCode()
+            result = 31 * result + shield.hashCode()
+            result = 31 * result + reverseShield.hashCode()
+            result = 31 * result + handLock.hashCode()
+            result = 31 * result + overlap.hashCode()
+            result = 31 * result + grace.hashCode()
+            result = 31 * result + delayedTail.hashCode()
+            return result
+        }
     }
 
     private val acts = objectsToActions(sortedNotes)
@@ -889,7 +933,7 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
     override val names: List<String>
         get() = arrayListOf("rice", "stamina", "speed", "long note", "coordination", "precision", "speed variation")
     override val abbreviates: List<String>
-        get() = arrayListOf("RC", "ST", "SP", "LN", "CO", "PR", "SV")
+        get() = abbr
     override val rating: Double
         get() = SkillUtil.getMapSkillRating(skills)
 
@@ -897,6 +941,8 @@ class SkillMania6(attr: ManiaBeatmapAttributes, val isIIDXStyle: Boolean = true,
 
 
     companion object {
+        val abbr: List<String>
+            get() = arrayListOf("RC", "ST", "SP", "LN", "CO", "PR", "SV")
         private const val B = 0.176
         private val K = 0.5 / ln(1.0 + B)
 

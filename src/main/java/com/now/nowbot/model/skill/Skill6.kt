@@ -23,6 +23,13 @@ sealed class Skill6 {
                 else -> throw TipsException("仅 mania 可用！")
             }
         }
+
+        fun getAbbr(mode: OsuMode): List<String> {
+            return when(mode) {
+                OsuMode.MANIA -> SkillMania6.abbr
+                else -> listOf()
+            }
+        }
     }
 
     abstract val skills: List<Double>

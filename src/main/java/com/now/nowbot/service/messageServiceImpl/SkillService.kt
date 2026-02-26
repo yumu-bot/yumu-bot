@@ -322,12 +322,14 @@ import kotlin.math.sqrt
         return if (isMyself) mapOf(
             "user" to user,
             "skill" to skills,
+            "abbreviates" to Skill6.getAbbr(user.currentOsuMode),
             "scores" to scores,
             "total" to userRating,
             "dan" to dan,
         ) else mapOf(
             "vs_user" to user,
             "vs_skill" to skills,
+            "vs_abbreviates" to Skill6.getAbbr(user.currentOsuMode),
             "vs_scores" to scores,
             "vs_total" to userRating,
             "vs_dan" to dan,
