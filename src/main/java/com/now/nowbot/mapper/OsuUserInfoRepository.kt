@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 interface OsuUserInfoRepository : JpaRepository<OsuUserInfoArchiveLite, Long>,
-    JpaSpecificationExecutor<OsuUserInfoArchiveLite?> {
+    JpaSpecificationExecutor<OsuUserInfoArchiveLite> {
 
     @Query(
         value = """

@@ -17,9 +17,8 @@ import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import reactor.core.publisher.Mono
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
 import java.util.*
 
 @Service
@@ -28,14 +27,14 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
     override fun getAvatarByte(user: OsuUser): ByteArray {
         return try {
             request { client ->
-                client.get().uri(user.avatarUrl).retrieve().bodyToMono(ByteArray::class.java)
+                client.get().uri(user.avatarUrl).retrieve().body(ByteArray::class.java)!!
             }
         } catch (_: NetworkException) {
             log.error("获取玩家 ${user.userID} 头像失败，尝试返回默认头像")
 
             // 默认头像是个智乃
             request { client ->
-                client.get().uri("https://a.ppy.sb/").retrieve().bodyToMono(ByteArray::class.java)
+                client.get().uri("https://a.ppy.sb/").retrieve().body(ByteArray::class.java)!!
             }
         }
     }
@@ -56,8 +55,9 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                     .queryParam("q", username)
                     .build()
                 }.retrieve()
-                    .bodyToMono(JsonNode::class.java)
-                    .map { parseList<Result>(it, "result", "玩家结果") }
+                    .body(JsonNode::class.java)?.let {
+                        parseList<Result>(it, "result", "玩家结果")
+                    } ?: listOf()
             }.firstOrNull()?.id
         } catch (_: NetworkException.UserException) {
             return null
@@ -82,8 +82,9 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                 .path("/v1/search_players")
                 .build()
             }.retrieve()
-                .bodyToMono(JsonNode::class.java)
-                .map { parse<Count>(it, "counts", "玩家在线数量") }
+                .body(JsonNode::class.java)?.let {
+                    parse<Count>(it, "counts", "玩家在线数量")
+                }!!
         }
 
         return count.online to count.total
@@ -111,8 +112,9 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                         .queryParam("scope", scope.ifEmpty { "all" })
                         .build()
                 }.retrieve()
-                    .bodyToMono(JsonNode::class.java)
-                    .map { parse<User>(it, "player","玩家信息") }
+                    .body(JsonNode::class.java)?.let {
+                        parse<User>(it, "player","玩家信息")
+                    }!!
 
             }
         } catch (_: NetworkException.UserException) {
@@ -146,9 +148,9 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                     .queryParamIfPresent("name", Optional.ofNullable(username))
                     .build()
                 }.retrieve()
-                    .bodyToMono(JsonNode::class.java)
-                    .map { parse<Status>(it, "player_status", "玩家在线状态")
-                    }
+                    .body(JsonNode::class.java)?.let {
+                        parse<Status>(it, "player_status", "玩家在线状态")
+                    }!!
             }
         } catch (_: NetworkException.UserException) {
             return false to 0L
@@ -156,59 +158,37 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
 
         return count.online to count.lastSeen
     }
-        /**
-         * 错误包装
-         */
-        private fun <T> request(request: (WebClient) -> Mono<T>): T {
-            return try {
-                request(base.sbApiWebClient).block()!!
-            } catch (e: Throwable) {
-                when (e.cause) {
-                    is WebClientResponseException.BadRequest -> {
-                        throw NetworkException.UserException.BadRequest()
-                    }
 
-                    is WebClientResponseException.Unauthorized -> {
-                        throw NetworkException.UserException.Unauthorized()
-                    }
-
-                    is WebClientResponseException.Forbidden -> {
-                        throw NetworkException.UserException.Forbidden()
-                    }
-
-                    is WebClientResponseException.NotFound -> {
-                        throw NetworkException.UserException.NotFound()
-                    }
-
-                    is WebClientResponseException.UnprocessableEntity -> {
-                        throw NetworkException.UserException.UnprocessableEntity()
-                    }
-
-                    is WebClientResponseException.TooManyRequests -> {
-                        throw NetworkException.UserException.TooManyRequests()
-                    }
-
-                    is WebClientResponseException.InternalServerError -> {
-                        throw NetworkException.UserException.InternalServerError()
-                    }
-
-                    is WebClientResponseException.BadGateway -> {
-                        throw NetworkException.UserException.BadGateWay()
-                    }
-
-                    is WebClientResponseException.ServiceUnavailable -> {
-                        throw NetworkException.UserException.ServiceUnavailable()
-                    }
-
-                    else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                        throw NetworkException.UserException.GatewayTimeout()
-                    } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
-                        throw NetworkException.UserException.RequestTimeout()
-                    } else {
-                        throw NetworkException.UserException.Undefined(e)
-                    }
+    /**
+     * 错误包装
+     */
+    private fun <T> request(request: (RestClient) -> T): T {
+        return try {
+            request(base.sbApiRestClient)
+        } catch (e: Exception) {
+            val cause = e as? RestClientResponseException ?: e.cause
+            if (cause is RestClientResponseException) {
+                when (cause.statusCode.value()) {
+                    400 -> throw NetworkException.UserException.BadRequest()
+                    401 -> throw NetworkException.UserException.Unauthorized()
+                    403 -> throw NetworkException.UserException.Forbidden()
+                    404 -> throw NetworkException.UserException.NotFound()
+                    422 -> throw NetworkException.UserException.UnprocessableEntity()
+                    429 -> throw NetworkException.UserException.TooManyRequests()
+                    500 -> throw NetworkException.UserException.InternalServerError()
+                    502 -> throw NetworkException.UserException.BadGateWay()
+                    503 -> throw NetworkException.UserException.ServiceUnavailable()
                 }
             }
+
+            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                throw NetworkException.UserException.GatewayTimeout()
+            } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
+                throw NetworkException.UserException.RequestTimeout()
+            } else {
+                throw NetworkException.UserException.Undefined(e)
+            }
+        }
     }
 
     companion object {

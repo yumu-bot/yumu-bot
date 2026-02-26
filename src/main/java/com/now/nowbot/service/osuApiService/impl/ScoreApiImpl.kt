@@ -34,15 +34,8 @@ import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.RejectedExecutionException
 import java.util.function.Function
-import kotlin.text.Charsets
 import kotlin.text.HexFormat
-import kotlin.text.isBlank
-import kotlin.text.isNullOrBlank
-import kotlin.text.replace
-import kotlin.text.split
-import kotlin.text.toByteArray
 import kotlin.text.toHexString
-import kotlin.text.toLongOrNull
 
 @Service
 class ScoreApiImpl(
@@ -243,7 +236,7 @@ class ScoreApiImpl(
         mods: Collection<LazerMod?>,
     ): BeatmapUserScore? {
 
-        val uri = Function { n: Int? ->
+        val uri = Function { n: Int ->
             Function { uriBuilder: UriBuilder ->
                 uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}")
@@ -275,7 +268,7 @@ class ScoreApiImpl(
         if (user.isTokenAvailable == null) {
             return getBeatmapScore(bid, user.userID, mode, mods)
         }
-        val uri = Function { n: Int? ->
+        val uri = Function { n: Int ->
             Function { uriBuilder: UriBuilder ->
                 uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}")
@@ -556,7 +549,7 @@ class ScoreApiImpl(
     /**
      * 错误包装
      */
-    private fun <T> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
+    private fun <T: Any> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
         return try {
             base.request(isBackground, request)
         } catch (e: Throwable) {
@@ -612,7 +605,7 @@ class ScoreApiImpl(
         }
     }
 
-    private inline fun <reified T> retryOn404(
+    private inline fun <reified T: Any> retryOn404(
         uri: Function<UriBuilder, URI>,
         crossinline headers: HttpHeaders.() -> Unit,
         retry: Function<UriBuilder, URI>,

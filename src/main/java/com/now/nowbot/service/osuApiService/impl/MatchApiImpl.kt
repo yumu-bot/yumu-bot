@@ -1,9 +1,9 @@
 package com.now.nowbot.service.osuApiService.impl
 
-import com.now.nowbot.model.multiplayer.RoomInfo
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchLobby
 import com.now.nowbot.model.multiplayer.Room
+import com.now.nowbot.model.multiplayer.RoomInfo
 import com.now.nowbot.model.multiplayer.RoomLeaderBoard
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
@@ -133,7 +133,7 @@ class MatchApiImpl(
     /**
      * 错误包装
      */
-    private fun <T> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
+    private fun <T: Any> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
         return try {
             base.request(isBackground, request)
         } catch (e: Throwable) {

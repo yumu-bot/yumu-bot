@@ -8,10 +8,10 @@ import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.BeatmapObjectCountLite
 import com.now.nowbot.mapper.BeatmapObjectCountMapper
 import com.now.nowbot.model.BindUser
-import com.now.nowbot.model.osu.Covers.Companion.CoverType
-import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
+import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
@@ -45,7 +45,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
-import kotlin.collections.set
 import kotlin.math.min
 
 @Service
@@ -308,11 +307,11 @@ class BeatmapApiImpl(
      */
     private fun getBeatmapsPrivate(ids: Iterable<Long>): List<Beatmap> {
         return request { client ->
+            val ids = ids.map { id -> id.toString() }
             client.get()
                 .uri {
                     it.path("beatmaps")
-                    it.queryParam("ids[]", ids.map { id -> id.toString()})
-
+                    it.queryParam("ids[]", *ids.toTypedArray())
                     it.build()
                 }
                 .headers(base::insertHeader)
@@ -329,7 +328,7 @@ class BeatmapApiImpl(
         } else {
             val times = (limit / 100).coerceAtLeast(1)
 
-            val works = (0..< times).map { i ->
+            val works = (0..<times).map { i ->
                 val of = offset + (i * 100)
                 val li = min(100, limit - (i * 100))
 
@@ -348,11 +347,12 @@ class BeatmapApiImpl(
     private fun getUserBeatmapsetPrivate(id: Long, type: String, offset: Int, limit: Int): List<Beatmapset> {
         return request { client ->
             client.get()
-                .uri { it
-                    .path("/users/${id}/beatmapsets/${type}")
-                    .queryParam("offset", offset)
-                    .queryParam("limit", limit)
-                    .build()
+                .uri {
+                    it
+                        .path("/users/${id}/beatmapsets/${type}")
+                        .queryParam("offset", offset)
+                        .queryParam("limit", limit)
+                        .build()
                 }
                 .headers(base::insertHeader)
                 .retrieve()
@@ -367,7 +367,7 @@ class BeatmapApiImpl(
         } else {
             val times = (limit / 100).coerceAtLeast(1)
 
-            val works = (0..< times).map { i ->
+            val works = (0..<times).map { i ->
                 val of = offset + (i * 100)
                 val li = min(100, limit - (i * 100))
 
@@ -399,11 +399,12 @@ class BeatmapApiImpl(
 
         val node = request { client ->
             client.get()
-                .uri { it
-                    .path("/users/${id}/beatmapsets/most_played")
-                    .queryParam("offset", offset)
-                    .queryParam("limit", limit)
-                    .build()
+                .uri {
+                    it
+                        .path("/users/${id}/beatmapsets/most_played")
+                        .queryParam("offset", offset)
+                        .queryParam("limit", limit)
+                        .build()
                 }
                 .headers(base::insertHeader)
                 .retrieve()
@@ -504,7 +505,6 @@ class BeatmapApiImpl(
             applyBeatmapExtendFromAPI(notExistScores)
         }
     }
-
 
 
     override fun isNotOverRating(bid: Long): Boolean {
@@ -754,13 +754,13 @@ class BeatmapApiImpl(
                 .onErrorReturn(AttributesResponse())
                 .map { it.attributes }
 
-                /*
-                .bodyToMono(JsonNode::class.java)
-                .mapNotNull {
-                    JacksonUtil.parseObject(it["attributes"], BeatmapDifficultyAttributes::class.java)
-                }
+            /*
+            .bodyToMono(JsonNode::class.java)
+            .mapNotNull {
+                JacksonUtil.parseObject(it["attributes"], BeatmapDifficultyAttributes::class.java)
+            }
 
-                 */
+             */
         }
     }
 
@@ -864,7 +864,7 @@ class BeatmapApiImpl(
                         val index = tried.get() * quantity + i
 
                         map[index] = search
-                }
+                    }
 
                 tried.getAndIncrement()
 
@@ -998,19 +998,20 @@ class BeatmapApiImpl(
     }
 
     private val beatmapTagLibraryFromAPI: JsonNode
-        get() = request { client -> client.get()
-            .uri {
-                it.path("tags").build()
-            }.headers(base::insertHeader)
-            .retrieve()
-            .bodyToMono(JsonNode::class.java)
+        get() = request { client ->
+            client.get()
+                .uri {
+                    it.path("tags").build()
+                }.headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(JsonNode::class.java)
         }
 
-                /*
-            .map { JacksonUtil.parseObjectList(it["tags"], Tag::class.java) }
-            .flatten()
+    /*
+.map { JacksonUtil.parseObjectList(it["tags"], Tag::class.java) }
+.flatten()
 
-                 */
+     */
 
     override fun updateBeatmapTagLibraryDatabase() {
         val tags = JacksonUtil.parseObjectList(beatmapTagLibraryFromAPI["tags"], Tag::class.java)
@@ -1076,8 +1077,9 @@ class BeatmapApiImpl(
                     set.trackID,
                     set.discussionLocked,
                     set.rating,
-                    set.ratings.toTypedArray())
-        }
+                    set.ratings.toTypedArray()
+                )
+            }
 
         log.info("自动更新扩展谱面：已更新 $result($result2) 张谱面。")
 
@@ -1105,7 +1107,7 @@ class BeatmapApiImpl(
     /**
      * 错误包装
      */
-    private fun <T> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
+    private fun <T : Any> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
         return try {
             base.request(isBackground, request)
         } catch (e: Throwable) {

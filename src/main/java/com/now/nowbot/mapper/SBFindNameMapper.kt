@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.transaction.annotation.Transactional
 
 interface SBFindNameMapper : JpaRepository<SBNameToIDLite, Long>, JpaSpecificationExecutor<SBNameToIDLite> {
-    override fun <S : SBNameToIDLite?> saveAll(iterable: Iterable<S>): List<S>
+    override fun <S : SBNameToIDLite> saveAll(iterable: Iterable<S>): List<S>
 
     @Modifying @Transactional @Query("delete from SBNameToIDLite o where o.name = :name")
     fun deleteByName(name: String?)

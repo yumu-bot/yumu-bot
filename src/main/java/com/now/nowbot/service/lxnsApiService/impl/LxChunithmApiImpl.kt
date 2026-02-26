@@ -50,7 +50,7 @@ class LxChunithmApiImpl(private val base: LxnsBaseService, private val maiDao: M
      * 错误包装
      */
     @Throws(NetworkException::class)
-    private fun <T> request(request: (WebClient) -> Mono<T>): T {
+    private fun <T: Any> request(request: (WebClient) -> Mono<T>): T {
         return try {
             request(base.lxnsApiWebClient).block()!!
         } catch (e: Throwable) {

@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Component
 
 @Component
-interface UserProfileRepository : JpaRepository<UserProfileLite?, Long?> {
+interface UserProfileRepository : JpaRepository<UserProfileLite, Long> {
     @Cacheable(value = ["user_profile"], key = "#aLong")
     fun findTopById(aLong: Long): UserProfileLite?
 }

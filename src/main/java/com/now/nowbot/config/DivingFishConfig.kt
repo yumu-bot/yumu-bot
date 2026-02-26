@@ -11,9 +11,9 @@ class DivingFishConfig {
     /**
      * 接口路径, 一般不用改
      */
-    var url: String? = "https://www.diving-fish.com"
+    var url: String = "https://www.diving-fish.com"
 
-    var token: String? = ""
+    var token: String = ""
 
     // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
     // /home/spring/work/img/ExportFileV3/Maimai

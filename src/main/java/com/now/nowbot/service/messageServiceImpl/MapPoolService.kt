@@ -15,8 +15,8 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.ASyncMessageUtil
-import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.command.FLAG_NAME
 import org.slf4j.Logger
@@ -25,10 +25,14 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.bodyToMono
 import org.springframework.web.util.UriComponentsBuilder
 import java.time.Duration
+import java.util.*
+import kotlin.jvm.optionals.getOrNull
 
-@Service("MAP_POOL") class MapPoolService(
+@Service("MAP_POOL")
+class MapPoolService(
     private val imageService: ImageService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
@@ -40,7 +44,8 @@ import java.time.Duration
 
     data class PoolParam(val id: Int, val name: String?, val mode: OsuMode)
 
-    @Throws(TipsException::class) override fun isHandle(
+    @Throws(TipsException::class)
+    override fun isHandle(
         event: MessageEvent,
         messageText: String,
         data: DataValue<PoolParam>,
@@ -66,7 +71,8 @@ import java.time.Duration
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: PoolParam): ServiceCallStatistic? {
+    @Throws(Throwable::class)
+    override fun handleMessage(event: MessageEvent, param: PoolParam): ServiceCallStatistic? {
         if (param.name.isNullOrBlank().not()) {
             val result = searchByName(param.name)
             if (result.isEmpty()) throw TipsException("未找到名称包含 ${param.name} 的图池")
@@ -117,7 +123,7 @@ import java.time.Duration
             UriComponentsBuilder.fromUriString(url).path("/api/public/searchPool").queryParam("poolName", name).build()
                 .toUri()
         }.headers {
-            it.addIfAbsent("AuthorizationX", token)
+            it.add("AuthorizationX", token)
         }.retrieve().bodyToMono(JsonNode::class.java).block(Duration.ofSeconds(30)) ?: return emptyList()
 
         return nodeOpt.map { node: JsonNode ->
@@ -129,15 +135,29 @@ import java.time.Duration
         if (url == null) return null
 
         return try {
-            webClient.get().uri {
-                UriComponentsBuilder.fromUriString(url).path("/api/public/searchPool").queryParam("poolId", id).build()
-                    .toUri()
-            }.headers {
-                it.addIfAbsent("AuthorizationX", token)
-            }.retrieve().bodyToMono(JsonNode::class.java).map { json: JsonNode ->
-                if (json.has("data")) JacksonUtil.parseObject(json["data"], Pool::class.java)
-                else null
-            }.block(Duration.ofSeconds(30))
+            val r = webClient
+                .get()
+                .uri {
+                    UriComponentsBuilder
+                        .fromUriString(url)
+                        .path("/api/public/searchPool")
+                        .queryParam("poolId", id)
+                        .build()
+                        .toUri()
+                }
+                .headers {
+                    it.add("AuthorizationX", token)
+                }
+                .retrieve()
+                .bodyToMono<JsonNode>()
+                .map<Optional<Pool>> { json: JsonNode ->
+                    if (json.has("data")) {
+                        Optional.of(JacksonUtil.parseObject(json["data"], Pool::class.java))
+                    } else {
+                        Optional.empty<Pool>()
+                    }
+                }.block(Duration.ofSeconds(30))
+            return r!!.getOrNull()
         } catch (_: HttpClientErrorException.NotFound) {
             null
         } catch (_: WebClientResponseException.NotFound) {

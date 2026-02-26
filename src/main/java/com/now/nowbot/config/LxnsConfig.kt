@@ -10,9 +10,9 @@ class LxnsConfig {
     /**
      * 接口路径, 一般不用改
      */
-    var url: String? = "https://maimai.lxns.net"
+    var url: String = "https://maimai.lxns.net"
 
-    var assetHost: String? = "assets2.lxns.net"
+    var assetHost: String = "assets2.lxns.net"
 
     /**
      * 开发者 token，自己申请

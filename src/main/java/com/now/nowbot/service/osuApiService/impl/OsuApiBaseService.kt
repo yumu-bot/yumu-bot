@@ -79,7 +79,7 @@ class OsuApiBaseService(
     private val requestScheduler = RequestScheduler()
 
     // 供外部使用的 API
-    fun <T> submitRequest(
+    fun <T: Any> submitRequest(
         request: (WebClient) -> Mono<T>,
         isBackground: Boolean = false,
         priority: Int = if (isBackground) 10 else 1
@@ -93,7 +93,7 @@ class OsuApiBaseService(
     }
 
     // 兼容 StructuredTaskScope
-    fun <T> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
+    fun <T: Any> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
         return submitRequest(request, isBackground).get()
     }
 
@@ -253,7 +253,7 @@ class OsuApiBaseService(
             return false
         }
 
-        fun <T> submit(
+        fun <T: Any> submit(
             request: (WebClient) -> Mono<T>,
             isBackground: Boolean,
             priority: Int,
@@ -298,7 +298,7 @@ class OsuApiBaseService(
             return future
         }
 
-        private fun <T> executeTask(task: ApiRequestTask<T>) {
+        private fun <T: Any> executeTask(task: ApiRequestTask<T>) {
             // 获取执行许可
             if (!semaphore.tryAcquire()) {
                 task.completeExceptionally(RejectedExecutionException("Too many concurrent requests"))
@@ -334,7 +334,7 @@ class OsuApiBaseService(
             }
         }
 
-        private fun <T> executeActualRequest(task: ApiRequestTask<T>) {
+        private fun <T: Any> executeActualRequest(task: ApiRequestTask<T>) {
             val remainingTime = task.remainingTimeMillis()
             if (remainingTime <= 0) {
                 task.completeExceptionally(TimeoutException("No time left for request"))
@@ -349,7 +349,7 @@ class OsuApiBaseService(
                 )
         }
 
-        private fun <T> handleRequestError(task: ApiRequestTask<T>, error: Throwable) {
+        private fun <T: Any> handleRequestError(task: ApiRequestTask<T>, error: Throwable) {
             when (error) {
                 is WebClientResponseException.TooManyRequests -> {
                     handle429Error(task, error)
@@ -365,7 +365,7 @@ class OsuApiBaseService(
             }
         }
 
-        private fun <T> handle429Error(task: ApiRequestTask<T>, error: WebClientResponseException.TooManyRequests) {
+        private fun <T: Any> handle429Error(task: ApiRequestTask<T>, error: WebClientResponseException.TooManyRequests) {
             val retryAfter = error.headers.getFirst("Retry-After")?.toLongOrNull() ?: 5L
             val waitUntil = System.currentTimeMillis() + (retryAfter * 1000) + 5000 // 额外5秒缓冲
 
@@ -390,7 +390,7 @@ class OsuApiBaseService(
     }
 
     // 请求任务封装
-    private data class ApiRequestTask<T>(
+    private data class ApiRequestTask<T: Any>(
         val request: (WebClient) -> Mono<T>,
         val future: CompletableFuture<T>,
         val isBackground: Boolean,

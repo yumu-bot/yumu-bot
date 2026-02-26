@@ -22,7 +22,7 @@ class FileController(private val webClient: WebClient, mirrorConfig: BeatmapMirr
             "info" -> {
                 val data: JsonNode = try {
                     webClient.get().uri("${url}/api/map/getBeatMapInfo/${bid}").headers {
-                        it.addIfAbsent("AuthorizationX", token)
+                        it.add("AuthorizationX", token)
                     }.retrieve().bodyToMono(JsonNode::class.java).block()!!
                 } catch (e: Exception) {
                     return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON)
@@ -37,7 +37,7 @@ class FileController(private val webClient: WebClient, mirrorConfig: BeatmapMirr
                     webClient.get().uri(
                         "${url}/api/file/map/bg/${bid}"
                     ).headers {
-                        it.addIfAbsent("AuthorizationX", token)
+                        it.add("AuthorizationX", token)
                     }.retrieve().bodyToMono(ByteArray::class.java).block()!!
                 } catch (e: Exception) {
                     return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON)

@@ -17,7 +17,7 @@ class LxnsBaseService(val webClient: WebClient, @param:Qualifier("lxnsApiWebClie
     // /home/spring/work/img/ExportFileV3/Chunithm
     final val chunithmPath: Path?  = lxnsConfig.chunithm
 
-    final val assetHost: String? = lxnsConfig.assetHost
+    final val assetHost: String = lxnsConfig.assetHost
 
     // 这里写 token 相关的
     init {
