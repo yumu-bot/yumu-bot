@@ -4,18 +4,22 @@ import com.now.nowbot.config.LxnsConfig
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.client.RestClient
 import java.nio.file.Path
 
 @Service
-class LxnsBaseService(val webClient: WebClient, @param:Qualifier("lxnsApiWebClient") val lxnsApiWebClient: WebClient, lxnsConfig: LxnsConfig) {
+class LxnsBaseService(
+    @param:Qualifier("lxnsApiRestClient")
+    val lxnsApiRestClient: RestClient,
+    lxnsConfig: LxnsConfig
+) {
     // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
     // /home/spring/work/img/ExportFileV3/Maimai
     final val maimaiPath: Path? = lxnsConfig.maimai
 
     // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Chunithm
     // /home/spring/work/img/ExportFileV3/Chunithm
-    final val chunithmPath: Path?  = lxnsConfig.chunithm
+    final val chunithmPath: Path? = lxnsConfig.chunithm
 
     final val assetHost: String = lxnsConfig.assetHost
 

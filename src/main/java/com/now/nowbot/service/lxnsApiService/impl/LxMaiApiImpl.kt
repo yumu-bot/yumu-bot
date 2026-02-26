@@ -13,18 +13,21 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
-import io.netty.channel.unix.Errors
-import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientException
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import reactor.core.publisher.Mono
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.client.body
+import java.io.IOException
+import java.net.SocketTimeoutException
+import java.util.concurrent.TimeoutException
 
 @Service
-class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao): LxMaiApiService {
+class LxMaiApiImpl(
+    private val base: LxnsBaseService,
+    private val maiDao: MaiDao
+) : LxMaiApiService {
 
     override fun getAudio(songID: Int): ByteArray {
         return request { client ->
@@ -36,19 +39,21 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
                 }
                 .headers(base::insertDeveloperHeader)
                 .retrieve()
-                .bodyToMono(ByteArray::class.java)
+                .body<ByteArray>()!!
         }
     }
 
     override fun getLxMaiSongs(): List<LxMaiSong> {
-        val node = request { client -> client.get()
-            .uri {
-                it.path("api/v0/maimai/song/list")
-                    .queryParam("notes", true)
-                    .build() }
-            .headers(base::insertDeveloperHeader)
-            .retrieve()
-            .bodyToMono(JsonNode::class.java)
+        val node = request { client ->
+            client.get()
+                .uri {
+                    it.path("api/v0/maimai/song/list")
+                        .queryParam("notes", true)
+                        .build()
+                }
+                .headers(base::insertDeveloperHeader)
+                .retrieve()
+                .body<JsonNode>()!!
         }
 
         return JacksonUtil.parseObjectList(node["songs"]!!, LxMaiSong::class.java)
@@ -207,14 +212,16 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
 
     override fun getLxMaiCollection(type: String, types: String): List<LxMaiCollection> {
 
-        val node = request { client -> client.get()
-            .uri {
-                it.path("api/v0/maimai/${type}/list")
-                    .queryParam("required", true)
-                    .build() }
-            .headers(base::insertDeveloperHeader)
-            .retrieve()
-            .bodyToMono(JsonNode::class.java)
+        val node = request { client ->
+            client.get()
+                .uri {
+                    it.path("api/v0/maimai/${type}/list")
+                        .queryParam("required", true)
+                        .build()
+                }
+                .headers(base::insertDeveloperHeader)
+                .retrieve()
+                .body<JsonNode>()!!
         }
 
         val body = if (node.has(types)) {
@@ -224,7 +231,8 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
         }
 
         return JacksonUtil.parseObjectList(body, LxMaiCollection::class.java)
-            .map { it.type = type
+            .map {
+                it.type = type
                 it
             }
     }
@@ -233,45 +241,31 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
      * 错误包装
      */
     @Throws(NetworkException::class)
-    private fun <T: Any> request(request: (WebClient) -> Mono<T>): T {
+    private fun <T : Any> request(request: (RestClient) -> T): T {
         return try {
-            request(base.lxnsApiWebClient).block()!!
+            request(base.lxnsApiRestClient)
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<WebClientException>()
+            val ex = e.findCauseOfType<RestClientResponseException>()
 
-            when (ex) {
-                is WebClientResponseException.BadGateway -> {
-                    throw NetworkException.LxnsException.BadGateway()
+            if (ex != null) {
+                when (ex.statusCode.value()) {
+                    502 -> throw NetworkException.LxnsException.BadGateway()
+                    500 -> throw NetworkException.LxnsException.InternalServerError()
+                    401 -> throw NetworkException.LxnsException.Unauthorized()
+                    403 -> throw NetworkException.LxnsException.Forbidden()
+                    404 -> throw NetworkException.LxnsException.NotFound()
+                    429 -> throw NetworkException.LxnsException.TooManyRequests()
+                    503 -> throw NetworkException.LxnsException.ServiceUnavailable()
+                    else -> {
+                        log.error("落雪咖啡屋：获取失败", e)
+                        throw NetworkException.LxnsException.Undefined(e)
+                    }
                 }
-
-                is WebClientResponseException.InternalServerError -> {
-                    throw NetworkException.LxnsException.InternalServerError()
-                }
-
-                is WebClientResponseException.Unauthorized -> {
-                    throw NetworkException.LxnsException.Unauthorized()
-                }
-
-                is WebClientResponseException.Forbidden -> {
-                    throw NetworkException.LxnsException.Forbidden()
-                }
-
-                is WebClientResponseException.NotFound -> {
-                    throw NetworkException.LxnsException.NotFound()
-                }
-
-                is WebClientResponseException.TooManyRequests -> {
-                    throw NetworkException.LxnsException.TooManyRequests()
-                }
-
-                is WebClientResponseException.ServiceUnavailable -> {
-                    throw NetworkException.LxnsException.ServiceUnavailable()
-                }
-
-                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                    throw NetworkException.LxnsException.GatewayTimeout()
-                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
+            } else {
+                if (e.findCauseOfType<SocketTimeoutException>() != null || e.findCauseOfType<TimeoutException>() != null) {
                     throw NetworkException.LxnsException.RequestTimeout()
+                } else if (e.findCauseOfType<IOException>() != null) {
+                    throw NetworkException.LxnsException.GatewayTimeout()
                 } else {
                     log.error("落雪咖啡屋：获取失败", e)
                     throw NetworkException.LxnsException.Undefined(e)

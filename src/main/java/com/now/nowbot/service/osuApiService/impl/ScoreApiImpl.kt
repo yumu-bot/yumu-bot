@@ -14,18 +14,15 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
-import io.netty.channel.unix.Errors
-import io.netty.handler.timeout.ReadTimeoutException
 import okio.IOException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientException
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.client.body
 import org.springframework.web.util.UriBuilder
-import reactor.core.publisher.Mono
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -93,11 +90,10 @@ class ScoreApiImpl(
             Files.readAllBytes(path.resolve(hex))
         } else {
             try {
-                val image = base.osuApiWebClient.get()
+                val image = base.osuApiRestClient.get()
                     .uri(url)
                     .retrieve()
-                    .bodyToMono(ByteArray::class.java)
-                    .block()!!
+                    .body<ByteArray>()!!
 
                 if (Files.isDirectory(path) && Files.isWritable(path)) {
                     Files.write(path.resolve(hex), image)
@@ -173,7 +169,7 @@ class ScoreApiImpl(
         return request { client ->
             client.get().uri {
                 it.path("scores/{scoreID}").build(scoreID)
-            }.headers(base::insertHeader).retrieve().bodyToMono(LazerScore::class.java)
+            }.headers(base::insertHeader).retrieve().body<LazerScore>()!!
         }
     }
 
@@ -290,7 +286,7 @@ class ScoreApiImpl(
     override fun getBeatmapScores(bid: Long, user: BindUser, mode: OsuMode?): List<LazerScore> {
         if (user.isTokenAvailable == null) getBeatmapScores(bid, user.userID, mode)
 
-        return request { client ->
+        val json = request { client ->
             client.get()
                 .uri {
                     it.path("beatmaps/{bid}/scores/users/{uid}/all")
@@ -301,13 +297,13 @@ class ScoreApiImpl(
                     base.insertHeader(headers, user)
                 }
                 .retrieve()
-                .bodyToMono(JsonNode::class.java)
-                .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
+                .body<JsonNode>()!!
         }
+        return JacksonUtil.parseObjectList(json["scores"], LazerScore::class.java)
     }
 
     override fun getBeatmapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore> {
-        return request { client ->
+        val json = request { client ->
             client.get()
                 .uri {
                     it.path("beatmaps/{bid}/scores/users/{uid}/all")
@@ -317,9 +313,9 @@ class ScoreApiImpl(
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(JsonNode::class.java)
-                .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
+                .body<JsonNode>()!!
         }
+        return JacksonUtil.parseObjectList(json["scores"], LazerScore::class.java)
     }
 
     override fun getLeaderBoardScore(
@@ -330,7 +326,7 @@ class ScoreApiImpl(
         type: String?,
         legacy: Boolean
     ): List<LazerScore> {
-        return request { client -> client.get()
+        val json = request { client -> client.get()
             .uri {
                 it.path("beatmaps/{bid}/scores")
                     .queryParam("legacy_only", if (legacy) 1 else 0)
@@ -348,9 +344,9 @@ class ScoreApiImpl(
                 }
             }
             .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
+            .body<JsonNode>()!!
         }
+        return JacksonUtil.parseObjectList(json["scores"], LazerScore::class.java)
     }
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -405,7 +401,7 @@ class ScoreApiImpl(
                                 }
                                 .headers(base::insertHeader)
                                 .retrieve()
-                                .bodyToMono(ByteArray::class.java)
+                                .body<ByteArray>()!!
                         }
                     } catch (e: Exception) {
                         log.error("异步下载谱面图片：任务失败\n", e)
@@ -429,20 +425,15 @@ class ScoreApiImpl(
         if (score.replay && score.scoreID > 0L) {
             return try {
                 request { client ->
-                    client.get()
+                    val buf = client.get()
                         .uri {
                             it.path("scores/{score}/download")
                                 .build(score.scoreID)
                         }
                         .headers(base::insertHeader)
                         .retrieve()
-                        .bodyToMono(ByteBuffer::class.java)
-                        .map { Replay(it) }
-                    /*
-                    .bodyToMono(JsonNode::class.java)
-                    .map { JacksonUtil.parseObject(it, Replay::class.java) }
-
-                     */
+                        .body<ByteBuffer>()!!
+                    Replay(buf)
                 }
             } catch (_: Exception) {
                 return null
@@ -470,11 +461,7 @@ class ScoreApiImpl(
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToFlux(LazerScore::class.java)
-                .collectList()
-            //.doOnNext(scoreDao::saveScoreAsync)
-            // 这里使用的是 netty 的线程，这些线程通常只负责网络并发；
-            // 如果将其用于数据库的读写，会直接卡死请求
+                .body<List<LazerScore>>()!!
         }
 
         scoreDao.saveScoreAsync(bests)
@@ -505,8 +492,7 @@ class ScoreApiImpl(
                     base.insertHeader(headers, user)
                 }
                 .retrieve()
-                .bodyToFlux(LazerScore::class.java)
-                .collectList()
+                .body<List<LazerScore>>()!!
         }
 
         scoreDao.saveScoreAsync(recents)
@@ -536,8 +522,7 @@ class ScoreApiImpl(
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToFlux(LazerScore::class.java)
-                .collectList()
+                .body<List<LazerScore>>()!!
         }
 
         scoreDao.saveScoreAsync(recents)
@@ -549,56 +534,62 @@ class ScoreApiImpl(
     /**
      * 错误包装
      */
-    private fun <T: Any> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
+    private fun <T: Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
         return try {
             base.request(isBackground, request)
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<WebClientException>()
+            val ex = e.findCauseOfType<RestClientResponseException>()
 
-            when (ex) {
-                is WebClientResponseException.BadRequest -> {
+            when {
+                ex == null -> {
+                    throw NetworkException.ScoreException.Undefined(e)
+                }
+
+                ex.statusCode == org.springframework.http.HttpStatus.BAD_REQUEST -> {
                     throw NetworkException.ScoreException.BadRequest()
                 }
 
-                is WebClientResponseException.Unauthorized -> {
+                ex.statusCode == org.springframework.http.HttpStatus.UNAUTHORIZED -> {
                     throw NetworkException.ScoreException.Unauthorized()
                 }
 
-                is WebClientResponseException.Forbidden -> {
+                ex.statusCode == org.springframework.http.HttpStatus.FORBIDDEN -> {
                     throw NetworkException.ScoreException.Forbidden()
                 }
 
-                is WebClientResponseException.NotFound -> {
+                ex.statusCode == org.springframework.http.HttpStatus.NOT_FOUND -> {
                     throw NetworkException.ScoreException.NotFound()
                 }
 
-                is WebClientResponseException.TooManyRequests -> {
+                ex.statusCode == org.springframework.http.HttpStatus.TOO_MANY_REQUESTS -> {
                     throw NetworkException.ScoreException.TooManyRequests()
                 }
 
-                is WebClientResponseException.InternalServerError -> {
+                ex.statusCode == org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR -> {
                     throw NetworkException.ScoreException.InternalServerError()
                 }
 
-                is WebClientResponseException.BadGateway -> {
+                ex.statusCode == org.springframework.http.HttpStatus.BAD_GATEWAY -> {
                     throw NetworkException.ScoreException.BadGateway()
                 }
 
-                is WebClientResponseException.UnprocessableEntity -> {
+                ex.statusCode == org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY -> {
                     throw NetworkException.ScoreException.UnprocessableEntity()
                 }
 
-                is WebClientResponseException.ServiceUnavailable -> {
+                ex.statusCode == org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE -> {
                     throw NetworkException.ScoreException.ServiceUnavailable()
                 }
 
-                else -> if (e.findCauseOfType<RejectedExecutionException>() != null) {
+                e.findCauseOfType<RejectedExecutionException>() != null -> {
                     throw NetworkException.ScoreException.TooManyRequests()
-                } else if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                }
+                
+                e.findCauseOfType<java.net.SocketException>() != null -> {
                     throw NetworkException.ScoreException.GatewayTimeout()
-                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
-                    throw NetworkException.ScoreException.RequestTimeout()
-                } else {
+                }
+
+                else -> {
                     throw NetworkException.ScoreException.Undefined(e)
                 }
             }
@@ -618,7 +609,7 @@ class ScoreApiImpl(
                         h -> headers(h)
                     }
                     .retrieve()
-                    .bodyToMono(T::class.java)
+                    .body<T>()!!
             }
         } catch (_: NetworkException.ScoreException.NotFound) {
             request { client ->
@@ -628,7 +619,7 @@ class ScoreApiImpl(
                         h -> headers(h)
                     }
                     .retrieve()
-                    .bodyToMono(T::class.java)
+                    .body<T>()!!
             }
         }
     }

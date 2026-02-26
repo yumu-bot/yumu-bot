@@ -4,9 +4,9 @@ import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -36,7 +36,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.collections.last
 
 @Service("UU_PR")
 class UUPRService(
@@ -338,11 +337,10 @@ class UUPRService(
         val d = UUScore(score, beatmapApiService, calculateApiService)
 
         val img = try {
-            osuApiWebClient.get()
+            base.osuApiRestClient.get()
                 .uri(d.url ?: "")
                 .retrieve()
-                .bodyToMono(ByteArray::class.java)
-                .block()
+                .body<ByteArray>()
         } catch (_: Exception) {
             try {
                 Files.readAllBytes(Path.of(System.getenv("EXPORT_FILE_V3") + "avatar_guest.jpg"))

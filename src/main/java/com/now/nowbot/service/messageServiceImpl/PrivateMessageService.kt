@@ -14,7 +14,7 @@ import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.JacksonUtil
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.HttpClientErrorException
 import java.util.*
 import java.util.regex.Pattern
 
@@ -49,7 +49,7 @@ class PrivateMessageService(private val userApiService: OsuUserApiService, priva
         val bindUser = bindDao.getBindFromQQ(event.sender.contactID, true)
         val json: JsonNode = try {
             getJson(param, bindUser)
-        } catch (_: WebClientResponseException.Forbidden) {
+        } catch (_: HttpClientErrorException.Forbidden) {
             throw TipsException("权限不足")
         }
         event.reply(getCodeImage(JacksonUtil.objectToJsonPretty(json)))

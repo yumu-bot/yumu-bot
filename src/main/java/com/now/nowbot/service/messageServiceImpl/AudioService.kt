@@ -15,15 +15,15 @@ import com.now.nowbot.util.Instruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientException
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.client.body
 import java.time.LocalDateTime
 
 @Service("AUDIO")
 class AudioService(
     private val beatmapApiService: OsuBeatmapApiService,
-    private val osuApiWebClient: WebClient,
+    private val osuApiRestClient: RestClient,
     private val dao: ServiceCallStatisticsDao,
 ) : MessageService<AudioParam> {
 
@@ -118,18 +118,18 @@ class AudioService(
          */
     }
 
-    @Throws(WebClientResponseException::class)
+    @Throws(RestClientResponseException::class)
     private fun getVoice(sid: Number): ByteArray {
         val url = "https://b.ppy.sh/preview/${sid}.mp3"
 
-        return osuApiWebClient.get().uri(url).retrieve().bodyToMono(ByteArray::class.java).block()!!
+        return osuApiRestClient.get().uri(url).retrieve().body<ByteArray>()!!
     }
 
     private fun getVoiceFromSID(sid: Long): ByteArray? {
 
         return try {
             getVoice(sid)
-        } catch (_: WebClientException) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -144,7 +144,7 @@ class AudioService(
 
         return try {
             getVoice(b.beatmapsetID)
-        } catch (_: WebClientException) {
+        } catch (_: Exception) {
             null
         }
     }

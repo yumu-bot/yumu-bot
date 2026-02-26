@@ -13,7 +13,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.util.Objects;
 
@@ -62,7 +62,7 @@ public class BindController {
                     user.getMode().getShortName(),
                     "绑定成功!"
             );
-        } catch (WebClientResponseException e) {
+        } catch (RestClientResponseException e) {
             log.error("绑定时异常", e);
             result = new BindResponse(
                     -1,
@@ -156,7 +156,7 @@ public class BindController {
               .append("\n<br/>")
               .append("[mode]：0 osu(standard)，1 taiko，2 catch，3 mania")
             ;
-        } catch (HttpClientErrorException.BadRequest | WebClientResponseException.BadRequest e) {
+        } catch (HttpClientErrorException.BadRequest e) {
             log.error("绑定时异常：400", e);
             sb.append("出现异常。但您大概已经绑定成功。这可能是回执的问题。")
                     .append('\n')
