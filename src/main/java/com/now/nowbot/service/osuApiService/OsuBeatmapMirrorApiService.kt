@@ -3,20 +3,21 @@ package com.now.nowbot.service.osuApiService
 import com.now.nowbot.config.BeatmapMirrorConfig
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import reactor.core.publisher.Mono
+import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.body
 import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.time.Duration
 
 @Service("OsuBeatmapMirrorApiService")
 class OsuBeatmapMirrorApiService(
-    private val webClient: WebClient,
+    @field:Qualifier("restClient")
+    private val restClient: RestClient,
     beatmapMirrorConfig: BeatmapMirrorConfig
 ) {
     private val url = beatmapMirrorConfig.url
@@ -27,11 +28,11 @@ class OsuBeatmapMirrorApiService(
         if (url.isNullOrEmpty()) return null
 
         return try {
-            val str = webClient.get()
+            val str = restClient.get()
                 .uri(url) { it.path("/api/mirror/beatmap/osufile/{bid}").build(bid) }
                 .header("X-TOKEN", token)
                 .retrieve()
-                .bodyToMono(String::class.java).block()!!
+                .body<String>()!!
 
             val sub = str.replaceBefore("osu", "")
 
@@ -52,17 +53,14 @@ class OsuBeatmapMirrorApiService(
         if (url.isNullOrEmpty()) return null
 
         try {
-            val localPath = webClient.get()
+            val localPath = restClient.get()
                 .uri(url) {
                     it.path("/api/mirror/fileName/bg/{bid}")
                         .build(bid)
                 }
                 .header("X-TOKEN", token)
                 .retrieve()
-                .bodyToMono(String::class.java)
-                .timeout(Duration.ofSeconds(5))
-                .onErrorResume { Mono.empty() }
-                .block()
+                .body<String>()
 
             if (localPath == null) {
                 log.warn("获取谱面 $bid 背景失败: 获取本地路径超时，可能是镜像站没有启动")
@@ -93,7 +91,7 @@ class OsuBeatmapMirrorApiService(
 
             log.warn("获取谱面 $bid 背景失败: 文件 [$localPath] 不存在")
             return null
-        } catch (e: WebClientResponseException) {
+        } catch (e: HttpClientErrorException) {
             log.warn("获取谱面 $bid 背景失败：${e.statusCode}")
             return null
         }

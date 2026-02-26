@@ -10,6 +10,7 @@ import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.web.client.body
 
 @Service
 class BiliApiServiceImpl(
@@ -25,7 +26,7 @@ class BiliApiServiceImpl(
         }
             .headers(base::insertJSONHeader)
             .retrieve()
-            .bodyToMono(JsonNode::class.java).block()!!
+            .body<JsonNode>()!!
 
         return parse(node, id, "直播主")
     }
@@ -40,8 +41,7 @@ class BiliApiServiceImpl(
         }
             .headers(base::insertJSONHeader)
             .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .block()!!
+            .body<JsonNode>()!!
 
         return parse(node, id, "账号信息")
     }
@@ -56,17 +56,16 @@ class BiliApiServiceImpl(
         }
             .headers(base::insertJSONHeader)
             .retrieve()
-            .bodyToMono(JsonNode::class.java).block()!!
+            .body<JsonNode>()!!
 
         return parse(node, roomID, "直播间最近弹幕")
     }
 
     override fun getImage(url: String): ByteArray {
-        val avatar: ByteArray? = base.webClient.get()
+        val avatar: ByteArray? = base.biliApiWebClient.get()
             .uri(url)
             .retrieve()
-            .bodyToMono(ByteArray::class.java)
-            .block()
+            .body<ByteArray>()
 
         return avatar ?: throw TipsException("获取图片失败。")
     }

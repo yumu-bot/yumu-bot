@@ -2,12 +2,12 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.config.Permission
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.osu.LazerMod
-import com.now.nowbot.model.osu.Beatmap
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchAdapter
 import com.now.nowbot.model.match.MatchListener
 import com.now.nowbot.model.match.MatchRating
+import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.qq.event.GroupMessageEvent
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -27,7 +27,7 @@ import com.now.nowbot.util.DataUtil.getOriginal
 import com.now.nowbot.util.Instruction
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.RestClientResponseException
 import kotlin.math.max
 import kotlin.math.min
 
@@ -255,7 +255,7 @@ class MatchListenerService(
                 val image =
                     try {
                         imageService.getPanel(e7, "E7")
-                    } catch (e: WebClientResponseException) {
+                    } catch (e: RestClientResponseException) {
                         log.error(e) { "获取图片失败" }
                         throw TipsRuntimeException(
                             String.format(
@@ -330,7 +330,7 @@ class MatchListenerService(
 
         override fun onError(e: Throwable) {
             when(e) {
-                is WebClientResponseException -> {
+                is RestClientResponseException -> {
                     // 网络错误, 忽略
                     log.error(e) { "比赛监听：网络错误" }
                     return

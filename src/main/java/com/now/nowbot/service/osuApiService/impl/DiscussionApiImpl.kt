@@ -3,7 +3,8 @@ package com.now.nowbot.service.osuApiService.impl
 import com.now.nowbot.model.osu.Discussion
 import com.now.nowbot.service.osuApiService.OsuDiscussionApiService
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.body
 import org.springframework.web.util.UriBuilder
 import java.util.*
 
@@ -47,7 +48,7 @@ class DiscussionApiImpl(var base: OsuApiBaseService) : OsuDiscussionApiService {
         uid: Long?,
         cursor: String?
     ): Discussion {
-        return base.request { client: WebClient ->
+        return base.request { client: RestClient ->
             client
                 .get()
                 .uri { u: UriBuilder ->
@@ -70,7 +71,7 @@ class DiscussionApiImpl(var base: OsuApiBaseService) : OsuDiscussionApiService {
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(Discussion::class.java)
+                .body<Discussion>()!!
         }
     }
 

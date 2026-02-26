@@ -18,11 +18,10 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpHeaders
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import reactor.core.publisher.SynchronousSink
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.body
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -31,7 +30,8 @@ import java.util.*
 
 @Service("GROUP_STATISTICS")
 class GroupStatisticsService(
-    private val osuApiWebClient: WebClient,
+    @param:Qualifier("osuApiRestClient")
+    private val osuApiRestClient: RestClient,
     private val bots: BotContainer,
     private val userApiService: OsuUserApiService,
     private val newbieConfig: NewbieConfig,
@@ -43,36 +43,40 @@ class GroupStatisticsService(
         if (UserCache.containsKey(qq)) {
             return UserCache[qq]
         }
-        val id = osuApiWebClient.get()
-            .uri(GET_BINDING, qq)
-            .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .handle { json: JsonNode, sink: SynchronousSink<Long> ->
-                if (!json.hasNonNull("userId")) {
-                    sink.error(WebClientResponseException.create(404, "NOT FOUND", HttpHeaders(), byteArrayOf(), null))
-                    return@handle
-                }
-                sink.next(json["osuId"].asLong())
-            }
-            .block()
+        val json = try {
+            osuApiRestClient.get()
+                .uri(GET_BINDING, qq)
+                .retrieve()
+                .body<JsonNode>()
+        } catch (e: Exception) {
+            null
+        }
+
+        if (json == null || !json.hasNonNull("userId")) {
+            UserCache[qq] = null
+            return null
+        }
+
+        val id = json["osuId"].asLong()
         UserCache[qq] = id
         return id
     }
 
     fun getOsuBp1(osuId: Long): Float {
-        return osuApiWebClient.get()
-            .uri(GET_BP_URL, osuId)
-            .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .handle { json: JsonNode, sink: SynchronousSink<Double> ->
-                if (!json.isArray || json.isEmpty) {
-                    sink.error(WebClientResponseException.create(404, "NOT FOUND", HttpHeaders(), byteArrayOf(), null))
-                    return@handle
-                }
-                val b1 = json[0]
-                sink.next(b1["pp"].asDouble(0.0))
-            }
-            .block()!!.toFloat()
+        val json = try {
+            osuApiRestClient.get()
+                .uri(GET_BP_URL, osuId)
+                .retrieve()
+                .body<JsonNode>()
+        } catch (e: Exception) {
+            null
+        }
+
+        if (json == null || !json.isArray || json.isEmpty) {
+            return 0f
+        }
+
+        return json[0]["pp"].asDouble(0.0).toFloat()
     }
 
     @Throws(Throwable::class) override fun isHandle(
@@ -180,10 +184,11 @@ class GroupStatisticsService(
                 nowOsuId[id] = qq
                 usersBP1[qq] = bp1
                 log.debug("统计 {} 信息获取成功. bp1 {}pp", qq, bp1)
-            } catch (err: WebClientResponseException.NotFound) {
+            } catch (err: Exception) {
                 //这个err不需要记录下来 修改了日志等级, 默认不记录
-                log.debug("统计 {} 未找到: {}", qq, err.message)
-                if (err.message!!.contains("bleatingsheep.org")) {
+                val message = err.message ?: ""
+                log.debug("统计 {} 未找到: {}", qq, message)
+                if (message.contains("bleatingsheep.org")) {
                     errMap[qq] = "未绑定"
                 } else {
                     errMap[qq] = "osu信息查询不到, 可能已删号"

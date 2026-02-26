@@ -13,8 +13,8 @@ import com.now.nowbot.model.UserProfile.UserProfileType.*
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
-import com.now.nowbot.service.messageServiceImpl.CustomService.CustomParam
 import com.now.nowbot.service.messageServiceImpl.CustomService.CustomOperate.*
+import com.now.nowbot.service.messageServiceImpl.CustomService.CustomParam
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.ASyncMessageUtil
@@ -22,8 +22,10 @@ import com.now.nowbot.util.Instruction
 import okio.IOException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.body
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -31,7 +33,8 @@ import java.util.regex.Matcher
 
 @Service("CUSTOM")
 class CustomService(
-    private val webClient: WebClient,
+    @field:Qualifier("restClient")
+    private val restClient: RestClient,
     private val bindDao: BindDao,
     private val userProfileRepository: UserProfileRepository,
         // todo: 等待数据迁移后使用
@@ -128,10 +131,10 @@ class CustomService(
         val path = FILE_DIV_PATH.resolve(fileName)
 
         val imgBytes: ByteArray = if (param.url != null) try {
-            webClient
+            restClient
                 .get()
                 .uri(param.url).retrieve()
-                .bodyToMono(ByteArray::class.java).block()!!
+                .body<ByteArray>()!!
 
         } catch (_: Exception) {
             throw IllegalStateException.Fetch("自定义图片")

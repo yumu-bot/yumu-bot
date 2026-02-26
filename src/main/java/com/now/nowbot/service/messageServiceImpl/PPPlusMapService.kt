@@ -2,9 +2,9 @@ package com.now.nowbot.service.messageServiceImpl
 
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.PPPlus
 import com.now.nowbot.qq.event.MessageEvent
 import com.now.nowbot.service.ImageService
@@ -20,7 +20,7 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_BID
 import com.now.nowbot.util.command.FLAG_MOD
 import com.yumu.core.constants.log
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.HttpClientErrorException
 import java.time.LocalDateTime
 
 //@Service("PP_PLUS_MAP")
@@ -67,7 +67,7 @@ class PPPlusMapService(
         val pp = try {
             performancePlusService.getMapPerformancePlus(param.bid, param.mods)!!
         } catch (e: Exception) {
-            if (e is WebClientResponseException) {
+            if (e is HttpClientErrorException) {
                 log.error { e.responseBodyAsString }
             } else {
                 log.error { e.message }

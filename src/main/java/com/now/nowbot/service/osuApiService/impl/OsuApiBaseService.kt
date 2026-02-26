@@ -8,8 +8,6 @@ import com.now.nowbot.dao.BindDao
 import com.now.nowbot.model.BindUser
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
-import io.netty.channel.unix.Errors
-import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -20,13 +18,10 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
-import org.springframework.web.reactive.function.BodyInserters
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientException
-import org.springframework.web.reactive.function.client.WebClientRequestException
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import reactor.core.publisher.Mono
-import java.time.Duration
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.client.body
+import java.io.IOException
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.concurrent.*
@@ -37,7 +32,7 @@ import kotlin.math.min
 
 @Service
 class OsuApiBaseService(
-    @param:Qualifier("osuApiWebClient") val osuApiWebClient: WebClient,
+    @param:Qualifier("osuApiRestClient") val osuApiRestClient: RestClient,
     private val bindDao: BindDao,
     osuConfig: OsuConfig,
     yumuConfig: YumuConfig
@@ -80,7 +75,7 @@ class OsuApiBaseService(
 
     // 供外部使用的 API
     fun <T: Any> submitRequest(
-        request: (WebClient) -> Mono<T>,
+        request: (RestClient) -> T,
         isBackground: Boolean = false,
         priority: Int = if (isBackground) 10 else 1
     ): CompletableFuture<T> {
@@ -93,7 +88,7 @@ class OsuApiBaseService(
     }
 
     // 兼容 StructuredTaskScope
-    fun <T: Any> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
+    fun <T: Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
         return submitRequest(request, isBackground).get()
     }
 
@@ -123,9 +118,9 @@ class OsuApiBaseService(
                 .uri("https://osu.ppy.sh/oauth/token")
                 .accept(MediaType.APPLICATION_JSON)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(BodyInserters.fromFormData(body))
+                .body(body)
                 .retrieve()
-                .bodyToMono(JsonNode::class.java)
+                .body<JsonNode>()!!
         }, isBackground = false).get()
 
         botAccessToken = result["access_token"].asText()
@@ -254,7 +249,7 @@ class OsuApiBaseService(
         }
 
         fun <T: Any> submit(
-            request: (WebClient) -> Mono<T>,
+            request: (RestClient) -> T,
             isBackground: Boolean,
             priority: Int,
             timeout: Long
@@ -341,21 +336,23 @@ class OsuApiBaseService(
                 return
             }
 
-            task.request(this@OsuApiBaseService.osuApiWebClient)
-                .timeout(Duration.ofMillis(remainingTime))
-                .subscribe(
-                    { result -> task.complete(result) },
-                    { error -> handleRequestError(task, error) }
-                )
+            try {
+                val result = task.request(this@OsuApiBaseService.osuApiRestClient)
+                task.complete(result)
+            } catch (error: Throwable) {
+                handleRequestError(task, error)
+            }
         }
 
         private fun <T: Any> handleRequestError(task: ApiRequestTask<T>, error: Throwable) {
             when (error) {
-                is WebClientResponseException.TooManyRequests -> {
-                    handle429Error(task, error)
+                is RestClientResponseException -> {
+                    if (error.statusCode.value() == 429) {
+                        handle429Error(task, error)
+                    }
                     task.retryOrFail(error)
                 }
-                is WebClientRequestException -> {
+                is IOException -> {
                     // 网络错误可重试
                     task.retryOrFail(error)
                 }
@@ -365,8 +362,8 @@ class OsuApiBaseService(
             }
         }
 
-        private fun <T: Any> handle429Error(task: ApiRequestTask<T>, error: WebClientResponseException.TooManyRequests) {
-            val retryAfter = error.headers.getFirst("Retry-After")?.toLongOrNull() ?: 5L
+        private fun <T: Any> handle429Error(task: ApiRequestTask<T>, error: RestClientResponseException) {
+            val retryAfter = error.responseHeaders?.getFirst("Retry-After")?.toLongOrNull() ?: 5L
             val waitUntil = System.currentTimeMillis() + (retryAfter * 1000) + 5000 // 额外5秒缓冲
 
             if (task.isBackground) {
@@ -391,7 +388,7 @@ class OsuApiBaseService(
 
     // 请求任务封装
     private data class ApiRequestTask<T: Any>(
-        val request: (WebClient) -> Mono<T>,
+        val request: (RestClient) -> T,
         val future: CompletableFuture<T>,
         val isBackground: Boolean,
         val priority: Int,
@@ -556,59 +553,62 @@ class OsuApiBaseService(
         val body = MultiValueMap.fromSingleValue(b)
 
         val s = try {
-            request { client: WebClient ->
+            request { client: RestClient ->
                 client
                     .post()
                     .uri("https://osu.ppy.sh/oauth/token")
                     .accept(MediaType.APPLICATION_JSON)
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .body(BodyInserters.fromFormData(body))
+                    .body(body)
                     .retrieve()
-                    .bodyToMono(JsonNode::class.java)
+                    .body<JsonNode>()!!
             }
         } catch (e: Exception) {
-            val ex = e.findCauseOfType<WebClientException>()
+            val ex = e.findCauseOfType<RestClientResponseException>()
 
-            when (ex) {
-                is WebClientResponseException.BadRequest -> {
+            when {
+                ex == null -> {
+                    throw NetworkException.UserException.Undefined(e)
+                }
+                ex.statusCode == org.springframework.http.HttpStatus.BAD_REQUEST -> {
                     throw NetworkException.UserException.BadRequest()
                 }
 
-                is WebClientResponseException.Unauthorized -> {
+                ex.statusCode == org.springframework.http.HttpStatus.UNAUTHORIZED -> {
                     bindDao.backupBind(user.userID)
                     log.info("更新令牌失败：令牌过期，退回到名称绑定：${user.userID}", e)
                     throw NetworkException.UserException.Unauthorized()
                 }
 
-                is WebClientResponseException.Forbidden -> {
+                ex.statusCode == org.springframework.http.HttpStatus.FORBIDDEN -> {
                     throw NetworkException.UserException.Forbidden()
                 }
 
-                is WebClientResponseException.NotFound -> {
+                ex.statusCode == org.springframework.http.HttpStatus.NOT_FOUND -> {
                     throw NetworkException.UserException.NotFound()
                 }
 
-                is WebClientResponseException.TooManyRequests -> {
+                ex.statusCode == org.springframework.http.HttpStatus.TOO_MANY_REQUESTS -> {
                     throw NetworkException.UserException.TooManyRequests()
                 }
 
-                is WebClientResponseException.InternalServerError -> {
+                ex.statusCode == org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR -> {
                     throw NetworkException.UserException.InternalServerError()
                 }
 
-                is WebClientResponseException.BadGateway -> {
+                ex.statusCode == org.springframework.http.HttpStatus.BAD_GATEWAY -> {
                     throw NetworkException.UserException.BadGateWay()
                 }
 
-                is WebClientResponseException.ServiceUnavailable -> {
+                ex.statusCode == org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE -> {
                     throw NetworkException.UserException.ServiceUnavailable()
                 }
 
-                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                e.findCauseOfType<java.net.SocketException>() != null -> {
                     throw NetworkException.UserException.GatewayTimeout()
-                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
-                    throw NetworkException.UserException.RequestTimeout()
-                } else {
+                }
+                
+                else -> {
                     throw NetworkException.UserException.Undefined(e)
                 }
             }
@@ -618,15 +618,11 @@ class OsuApiBaseService(
         val refreshToken: String
         val time: Long
 
-        if (s != null) {
-            accessToken = s["access_token"].asText()
-            user.accessToken = accessToken
-            refreshToken = s["refresh_token"].asText()
-            user.refreshToken = refreshToken
-            time = user.setTimeToAfter(s["expires_in"].asLong() * 1000)
-        } else {
-            throw RuntimeException("更新 Oauth 令牌, 接口格式错误")
-        }
+        accessToken = s["access_token"].asText()
+        user.accessToken = accessToken
+        refreshToken = s["refresh_token"].asText()
+        user.refreshToken = refreshToken
+        time = user.setTimeToAfter(s["expires_in"].asLong() * 1000)
 
         if (firstBind) {
             bindDao.saveBind(BindUser().apply {

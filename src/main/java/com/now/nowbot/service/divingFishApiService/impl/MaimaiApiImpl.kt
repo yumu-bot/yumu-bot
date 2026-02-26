@@ -10,21 +10,15 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.JacksonUtil
-import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.core.io.buffer.DataBuffer
-import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import org.springframework.web.util.UriBuilder
-import reactor.core.publisher.Mono
-import java.io.ByteArrayOutputStream
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.client.body
 import java.io.IOException
 import java.nio.file.Files
-import java.time.Duration
 import java.util.concurrent.Callable
 import kotlin.math.abs
 import kotlin.text.Charsets.UTF_8
@@ -55,21 +49,25 @@ import kotlin.text.Charsets.UTF_8
     override fun getMaimaiBest50(qq: Long): MaiBestScore {
         val b = MaimaiBestQQRequestBody(qq, true)
 
-        return request { client -> client.post().uri { uriBuilder: UriBuilder ->
-                    uriBuilder.path("api/maimaidxprober/query/player").build()
-                }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestQQRequestBody::class.java)
-                .headers(base::insertJSONHeader).retrieve()
-                .bodyToMono(MaiBestScore::class.java)
+        return request { client ->
+            client.post().uri("api/maimaidxprober/query/player")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(b)
+                .headers(base::insertJSONHeader)
+                .retrieve()
+                .body<MaiBestScore>()!!
         }
     }
 
     override fun getMaimaiBest50(username: String): MaiBestScore {
         val b = MaimaiBestNameRequestBody(username, true)
 
-        return request { client -> client.post().uri { uriBuilder: UriBuilder ->
-                    uriBuilder.path("api/maimaidxprober/query/player").build()
-                }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiBestNameRequestBody::class.java)
-                .retrieve().bodyToMono(MaiBestScore::class.java)
+        return request { client ->
+            client.post().uri("api/maimaidxprober/query/player")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(b)
+                .retrieve()
+                .body<MaiBestScore>()!!
         }
     }
 
@@ -78,12 +76,13 @@ import kotlin.text.Charsets.UTF_8
     ): MaiVersionScore {
         val b = MaimaiVersionNameRequestBody(username, getNameList(versions))
 
-        return request { client -> client.post().uri { uriBuilder: UriBuilder ->
-                    uriBuilder.path("api/maimaidxprober/query/plate").build()
-                }.contentType(MediaType.APPLICATION_JSON).body(Mono.just(b), MaimaiVersionNameRequestBody::class.java)
+        return request { client ->
+            client.post().uri("api/maimaidxprober/query/plate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(b)
                 .headers(base::insertJSONHeader)
                 .retrieve()
-                .bodyToMono(MaiVersionScore::class.java)
+                .body<MaiVersionScore>()!!
         }
     }
 
@@ -92,16 +91,13 @@ import kotlin.text.Charsets.UTF_8
     ): MaiVersionScore {
         val b = MaimaiVersionQQRequestBody(qq, getNameList(versions))
 
-        return request { client -> client
-            .post().uri { it
-                .path("api/maimaidxprober/query/plate")
-                .build()
-            }
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(Mono.just(b), MaimaiVersionQQRequestBody::class.java)
-            .headers(base::insertJSONHeader)
-            .retrieve()
-            .bodyToMono(MaiVersionScore::class.java)
+        return request { client ->
+            client.post().uri("api/maimaidxprober/query/plate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(b)
+                .headers(base::insertJSONHeader)
+                .retrieve()
+                .body<MaiVersionScore>()!!
         }
     }
 
@@ -137,14 +133,20 @@ import kotlin.text.Charsets.UTF_8
     override fun getMaimaiCoverFromAPI(songID: Long): ByteArray {
         val song = getStandardisedSongID(songID)
         val cover = try {
-            request { client -> client.get().uri {
-                it.path("covers/$song.png").build()
-            }.retrieve().bodyToMono(ByteArray::class.java)
+            request { client ->
+                client.get().uri("covers/$song.png")
+                    .retrieve()
+                    .body<ByteArray>()!!
             }
-        } catch (_: WebClientResponseException.NotFound) {
-            request { client -> client.get().uri {
-                it.path("covers/00000.png").build()
-            }.retrieve().bodyToMono(ByteArray::class.java)
+        } catch (e: RestClientResponseException) {
+            if (e.statusCode.value() == 404) {
+                request { client ->
+                    client.get().uri("covers/00000.png")
+                        .retrieve()
+                        .body<ByteArray>()!!
+                }
+            } else {
+                throw e
             }
         }
 
@@ -364,50 +366,48 @@ import kotlin.text.Charsets.UTF_8
     }
 
     @Throws(
-        WebClientResponseException.Forbidden::class, WebClientResponseException.BadGateway::class
+        RestClientResponseException::class
     ) override fun getMaimaiSongScore(qq: Long, songID: Int): MaiScore {
         return MaiScore()
     }
 
     @Throws(
-        WebClientResponseException.Forbidden::class, WebClientResponseException.BadGateway::class
+        RestClientResponseException::class
     ) override fun getMaimaiSongsScore(qq: Long, songIDs: List<Int>): List<MaiScore> {
         return listOf()
     }
 
     @Throws(
-        WebClientResponseException.Forbidden::class, WebClientResponseException.BadGateway::class
+        RestClientResponseException::class
     ) override fun getMaimaiSongScore(username: String, songID: Int): MaiScore {
         return MaiScore()
     }
 
     @Throws(
-        WebClientResponseException.Forbidden::class, WebClientResponseException.BadGateway::class
+        RestClientResponseException::class
     ) override fun getMaimaiSongsScore(username: String, songIDs: List<Int>): List<MaiScore> {
         return listOf()
     }
 
     @Throws(
-        WebClientResponseException.Forbidden::class, WebClientResponseException.BadGateway::class
+        RestClientResponseException::class
     ) override fun getMaimaiFullScores(qq: Long): MaiBestScore {
-        return request { client -> client
-            .get().uri { it
-                .path("api/maimaidxprober/dev/player/records")
-                .queryParam("qq", qq)
-                .build()
-            }.headers(base::insertDeveloperHeader)
-            .retrieve()
-            .bodyToMono(MaiBestScore::class.java)
+        return request { client ->
+            client.get().uri { it.path("api/maimaidxprober/dev/player/records").queryParam("qq", qq).build() }
+                .headers(base::insertDeveloperHeader)
+                .retrieve()
+                .body<MaiBestScore>()!!
         }
     }
 
     @Throws(
-        WebClientResponseException.Forbidden::class, WebClientResponseException.BadGateway::class
+        RestClientResponseException::class
     ) override fun getMaimaiFullScores(username: String): MaiBestScore {
-        return request { client -> client
-            .get().uri { it.path("api/maimaidxprober/dev/player/records").queryParam("username", username).build()
-            }.headers(base::insertDeveloperHeader).retrieve()
-            .bodyToMono(MaiBestScore::class.java)
+        return request { client ->
+            client.get().uri { it.path("api/maimaidxprober/dev/player/records").queryParam("username", username).build() }
+                .headers(base::insertDeveloperHeader)
+                .retrieve()
+                .body<MaiBestScore>()!!
         }
     }
 
@@ -465,46 +465,31 @@ import kotlin.text.Charsets.UTF_8
     }
 
     private val maimaiSongLibraryFromAPI: String
-        get() = request { client -> client.get()
-            .uri { it.path("api/maimaidxprober/music_data").build()
-            }.retrieve().bodyToMono(String::class.java)
+        get() = request { client ->
+            client.get().uri("api/maimaidxprober/music_data")
+                .retrieve()
+                .body<String>()!!
         }
 
     private val maimaiRankLibraryFromAPI: String
-        get() = request { client -> client.get()
-            .uri {
-                it.path("api/maimaidxprober/rating_ranking").build()
-            }.retrieve()
-            .bodyToFlux(DataBuffer::class.java)
-            .transform { flux ->
-                flux.timeout(Duration.ofSeconds(30))
-            }
-            .reduce(ByteArrayOutputStream()) { output, buffer ->
-                // 检查当前总大小
-                if (output.size() > 24 * 1024 * 1024) {
-                    DataBufferUtils.release(buffer)
-                    throw RuntimeException("响应数据超过 24 MB限制")
-                }
-
-                val bytes = ByteArray(buffer.readableByteCount())
-                buffer.read(bytes)
-                output.write(bytes)
-                DataBufferUtils.release(buffer) // 及时释放内存
-                output
-            }
-            .map { it.toString(UTF_8) }
+        get() = request { client ->
+            client.get().uri("api/maimaidxprober/rating_ranking")
+                .retrieve()
+                .body<String>()!!
         }
 
     private val maimaiFitLibraryFromAPI: String
-        get() = request { client -> client.get()
-            .uri { it.path("api/maimaidxprober/chart_stats").build()
-            }.retrieve().bodyToMono(String::class.java)
+        get() = request { client ->
+            client.get().uri("api/maimaidxprober/chart_stats")
+                .retrieve()
+                .body<String>()!!
         }
 
     private val maimaiAliasLibraryFromAPI: String
-        get() = request { client -> client.get()
-            .uri { it.scheme("https").host("maimai.lxns.net").replacePath("api/v0/maimai/alias/list").build()
-            }.retrieve().bodyToMono(String::class.java)
+        get() = request { client ->
+            client.get().uri("https://maimai.lxns.net/api/v0/maimai/alias/list")
+                .retrieve()
+                .body<String>()!!
         }
 
     private fun <T> parseFile(fileName: String, clazz: Class<T>): T? {
@@ -562,21 +547,22 @@ import kotlin.text.Charsets.UTF_8
      * 错误包装
      */
     @Throws(NetworkException::class)
-    private fun <T: Any> request(request: (WebClient) -> Mono<T>): T {
+    private fun <T : Any> request(request: (RestClient) -> T): T {
         return try {
-            request(base.divingFishApiWebClient).block()!!
-        } catch (_: WebClientResponseException.BadRequest) {
-            throw NetworkException.DivingFishException.BadRequest()
-        } catch (_: WebClientResponseException.Unauthorized) {
-            throw NetworkException.DivingFishException.Unauthorized()
-        } catch (_: WebClientResponseException.Forbidden) {
-            throw NetworkException.DivingFishException.Forbidden()
-        } catch (_: ReadTimeoutException) {
-            throw NetworkException.DivingFishException.RequestTimeout()
-        } catch (_: WebClientResponseException.InternalServerError) {
-            throw NetworkException.DivingFishException.InternalServerError()
-        } catch (_: WebClientResponseException.BadGateway) {
-            throw NetworkException.DivingFishException.BadGateway()
+            request(base.divingFishApiRestClient)
+        } catch (e: RestClientResponseException) {
+            when (e.statusCode.value()) {
+                400 -> throw NetworkException.DivingFishException.BadRequest()
+                401 -> throw NetworkException.DivingFishException.Unauthorized()
+                403 -> throw NetworkException.DivingFishException.Forbidden()
+                408 -> throw NetworkException.DivingFishException.RequestTimeout()
+                500 -> throw NetworkException.DivingFishException.InternalServerError()
+                502 -> throw NetworkException.DivingFishException.BadGateway()
+                else -> {
+                    log.error("水鱼查分器：获取失败", e)
+                    throw NetworkException.DivingFishException.Undefined(e)
+                }
+            }
         } catch (e: Exception) {
             log.error("水鱼查分器：获取失败", e)
             throw NetworkException.DivingFishException.Undefined(e)

@@ -18,7 +18,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.RestClientResponseException
 import java.nio.charset.StandardCharsets
 
 @Service("CSV_INFO")
@@ -64,7 +64,7 @@ class CsvInfoService(private val userApiService: OsuUserApiService) : MessageSer
                 val o = userApiService.getOsuUser(s, param.mode)
                 users.add(o)
                 sb.append('\n').append(o.toCSV())
-            } catch (e: WebClientResponseException.TooManyRequests) {
+            } catch (e: HttpClientErrorException.TooManyRequests) {
                 fetchUserFail++
 
                 if (fetchUserFail > 3) {
@@ -81,7 +81,7 @@ class CsvInfoService(private val userApiService: OsuUserApiService) : MessageSer
             } catch (e: HttpClientErrorException) {
                 log.error("玩家信息表：网络因素无法获取", e)
                 sb.append('\n').append(s).append(',').append(-1)
-            } catch (e: WebClientResponseException) {
+            } catch (e: RestClientResponseException) {
                 log.error("玩家信息表：网络因素无法获取", e)
                 sb.append('\n').append(s).append(',').append(-1)
             } catch (e: Exception) {

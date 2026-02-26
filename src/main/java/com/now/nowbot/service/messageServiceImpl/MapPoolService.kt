@@ -21,22 +21,20 @@ import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.command.FLAG_NAME
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import org.springframework.web.reactive.function.client.bodyToMono
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.body
 import org.springframework.web.util.UriComponentsBuilder
-import java.time.Duration
-import java.util.*
-import kotlin.jvm.optionals.getOrNull
 
 @Service("MAP_POOL")
 class MapPoolService(
     private val imageService: ImageService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
-    private val webClient: WebClient,
+    @field:Qualifier("restClient")
+    private val restClient: RestClient,
     beatmapMirrorConfig: BeatmapMirrorConfig
 ) : MessageService<PoolParam> {
     private val url = beatmapMirrorConfig.url
@@ -119,12 +117,12 @@ class MapPoolService(
     fun searchByName(name: String): List<Pool> {
         if (url == null) return emptyList()
 
-        val nodeOpt = webClient.get().uri {
+        val nodeOpt = restClient.get().uri {
             UriComponentsBuilder.fromUriString(url).path("/api/public/searchPool").queryParam("poolName", name).build()
                 .toUri()
         }.headers {
             it.add("AuthorizationX", token)
-        }.retrieve().bodyToMono(JsonNode::class.java).block(Duration.ofSeconds(30)) ?: return emptyList()
+        }.retrieve().body<JsonNode>() ?: return emptyList()
 
         return nodeOpt.map { node: JsonNode ->
             JacksonUtil.parseObjectList(node["data"], Pool::class.java)
@@ -135,7 +133,7 @@ class MapPoolService(
         if (url == null) return null
 
         return try {
-            val r = webClient
+            val json = restClient
                 .get()
                 .uri {
                     UriComponentsBuilder
@@ -149,18 +147,14 @@ class MapPoolService(
                     it.add("AuthorizationX", token)
                 }
                 .retrieve()
-                .bodyToMono<JsonNode>()
-                .map<Optional<Pool>> { json: JsonNode ->
-                    if (json.has("data")) {
-                        Optional.of(JacksonUtil.parseObject(json["data"], Pool::class.java))
-                    } else {
-                        Optional.empty<Pool>()
-                    }
-                }.block(Duration.ofSeconds(30))
-            return r!!.getOrNull()
+                .body<JsonNode>()
+                ?: return null
+            return if (json.has("data")) {
+                JacksonUtil.parseObject(json["data"], Pool::class.java)
+            } else {
+                null
+            }
         } catch (_: HttpClientErrorException.NotFound) {
-            null
-        } catch (_: WebClientResponseException.NotFound) {
             null
         }
     }
