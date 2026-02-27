@@ -7,33 +7,33 @@ import java.time.OffsetDateTime
 
 @JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
 class BeatmapsetDiscussionPost(
-    @JsonProperty("beatmapset_discussion_id")
+    @field:JsonProperty("beatmapset_discussion_id")
     val discussionID: Long,
 
-    @JsonProperty("created_at")
+    @field:JsonProperty("created_at")
     val createdAt: OffsetDateTime,
 
-    @JsonProperty("deleted_at")
+    @field:JsonProperty("deleted_at")
     val deletedAt: OffsetDateTime?,
 
-    @JsonProperty("deleted_by_id")
+    @field:JsonProperty("deleted_by_id")
     val deletedBy: Long,
 
-    @JsonProperty("id")
+    @field:JsonProperty("id")
     val postID: Long,
 
-    @JsonProperty("last_editor_id")
+    @field:JsonProperty("last_editor_id")
     val lastEditorID: Long,
 
-    @JsonProperty("message")
+    @field:JsonProperty("message")
     val message: String,
 
-    @JsonProperty("system")
+    @field:JsonProperty("system")
     val system: Boolean,
 
-    @JsonProperty("updated_at")
+    @field:JsonProperty("updated_at")
     val updatedAt: OffsetDateTime,
 
-    @JsonProperty("user_id")
+    @field:JsonProperty("user_id")
     val userID: Long,
 )

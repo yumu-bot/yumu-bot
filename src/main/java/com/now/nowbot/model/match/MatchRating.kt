@@ -19,7 +19,7 @@ class MatchRating(
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
 
-    @JsonProperty("is_skipping")
+    @field:JsonProperty("is_skipping")
     val skipping: Boolean = false
 ) {
     @JsonIgnore

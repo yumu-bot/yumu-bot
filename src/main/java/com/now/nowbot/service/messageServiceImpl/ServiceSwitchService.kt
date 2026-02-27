@@ -241,7 +241,7 @@ class ServiceSwitchService(
         val does = when(operate) {
             OFF -> "关闭"
             ON -> "开启"
-            else -> "查看"
+            // else -> "查看"
         }
 
         if (ii.isEmpty()) {

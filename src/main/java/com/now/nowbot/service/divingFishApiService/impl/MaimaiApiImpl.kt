@@ -29,21 +29,20 @@ import kotlin.text.Charsets.UTF_8
 ) : MaimaiApiService {
     private val path = base.maimaiPath!!
 
-    @JvmRecord private data class MaimaiBestQQRequestBody(val qq: Long, val b50: Boolean)
+    private data class MaimaiBestQQRequestBody(val qq: Long, val b50: Boolean)
 
-    @JvmRecord private data class MaimaiBestNameRequestBody(val username: String, val b50: Boolean)
+    private data class MaimaiBestNameRequestBody(val username: String, val b50: Boolean)
 
-    @JvmRecord private data class MaimaiVersionQQRequestBody(
+    private data class MaimaiVersionQQRequestBody(
         val qq: Long, val version: List<String>
     )
 
-    @JvmRecord private data class MaimaiVersionNameRequestBody(
+    private data class MaimaiVersionNameRequestBody(
         val username: String, val version: List<String>
     )
 
-    @JvmRecord //傻逼吧外面怎么还有一层
     private data class MaimaiAliasResponseBody(
-        @JsonProperty("aliases") val aliases: List<MaiAlias>
+        @field:JsonProperty("aliases") val aliases: List<MaiAlias>
     )
 
     override fun getMaimaiBest50(qq: Long): MaiBestScore {

@@ -10,25 +10,25 @@ import com.now.nowbot.util.JacksonUtil
 
 @JsonInclude(JsonInclude.Include.NON_NULL) @JsonIgnoreProperties(ignoreUnknown = true)
 data class Discussion(
-    @JsonProperty("beatmaps")
+    @field:JsonProperty("beatmaps")
     var beatmaps: List<Beatmap>? = null,
 
-    @JsonProperty("reviews_config")
+    @field:JsonProperty("reviews_config")
     var reviewsConfig: ReviewsConfig,
 
-    @JsonProperty("users")
+    @field:JsonProperty("users")
     var users: List<OsuUser> = listOf(),
 
-    @JsonProperty("discussions")
+    @field:JsonProperty("discussions")
     var discussions: List<DiscussionDetails> = listOf(),
 
-    @JsonProperty("included_discussions")
+    @field:JsonProperty("included_discussions")
     var includedDiscussions: List<DiscussionDetails> = listOf(),
 
-    @JsonProperty("cursor")
+    @field:JsonProperty("cursor")
     var cursor: Cursor? = null,
 
-    @JsonProperty("cursor_string")
+    @field:JsonProperty("cursor_string")
     var cursorString: String? = null,
 ) {
     @JsonIgnore
@@ -43,13 +43,13 @@ data class Discussion(
     }
 
     data class ReviewsConfig(
-        @JsonProperty("max_blocks")
+        @field:JsonProperty("max_blocks")
         val maxBlocks: Int
     )
 
     data class Cursor(
-        @JsonProperty("page") val page: Int,
-        @JsonProperty("limit") val limit: Int,
+        @field:JsonProperty("page") val page: Int,
+        @field:JsonProperty("limit") val limit: Int,
     )
 
     fun mergeDiscussion(that: Discussion, sort: String?) {

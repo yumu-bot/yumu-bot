@@ -25,10 +25,10 @@ class Kudosu {
     var giver: Giver? = null
 
     data class Giver(
-        @JsonProperty("url")
+        @field:JsonProperty("url")
         var url: String? = "",
 
-        @JsonProperty("username")
+        @field:JsonProperty("username")
         var name: String = ""
     )
 
@@ -37,19 +37,19 @@ class Kudosu {
 
     data class Post(
         // 贴子的链接
-        @JsonProperty("url")
+        @field:JsonProperty("url")
         var url: String? = null,
 
         // 歌名 [难度名]
-        @JsonProperty("title")
+        @field:JsonProperty("title")
         var title: String = ""
     )
 
-    @JsonProperty("details")
+    @field:JsonProperty("details")
     var details: Details? = null
 
     data class Details(
-        @JsonProperty("url")
+        @field:JsonProperty("url")
         var event: String? = null,
     )
 }

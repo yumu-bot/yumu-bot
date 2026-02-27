@@ -23,7 +23,6 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.OfficialInstruction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.lang.NonNull
 import org.springframework.stereotype.Service
 import java.util.*
 import java.util.regex.Matcher
@@ -158,7 +157,7 @@ import java.util.regex.Matcher
     companion object {
         private val log: Logger = LoggerFactory.getLogger(MuRatingService::class.java)
 
-        @NonNull @Throws(MRAException::class) private fun getEasyMultiplier(matcher: Matcher): Double {
+        @Throws(MRAException::class) private fun getEasyMultiplier(matcher: Matcher): Double {
             val easyStr = matcher.group("easy") ?: ""
             val easy = easyStr.toDoubleOrNull() ?: 1.0
 
@@ -167,7 +166,7 @@ import java.util.regex.Matcher
             return easy
         }
 
-        @NonNull private fun getIntegers(matcher: Matcher): List<Int> {
+        private fun getIntegers(matcher: Matcher): List<Int> {
             val removeStrArr = matcher.group("remove")
             val remove: MutableList<Int> = mutableListOf()
 

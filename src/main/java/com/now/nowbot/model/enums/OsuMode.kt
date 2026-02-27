@@ -1,6 +1,5 @@
 package com.now.nowbot.model.enums
 
-import org.springframework.lang.Nullable
 import java.util.*
 
 enum class OsuMode(val fullName: String, val shortName: String, val charName: String, val modeValue: Byte) {
@@ -101,7 +100,7 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
             return selfMode ?: DEFAULT
         }
 
-        @JvmStatic fun getMode(@Nullable name: String?): OsuMode {
+        @JvmStatic fun getMode(name: String?): OsuMode {
             return when (name?.replace(" ", "")?.trim()?.lowercase()) {
                 "taiko", "t", "1", "osu!taiko" -> TAIKO
                 "catch", "catchthebeat", "ctb", "c", "fruits", "fruit", "f", "2", "osu!catch" -> CATCH
@@ -116,7 +115,7 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
             }
         }
 
-        @JvmStatic fun getMode(@Nullable num: Number?): OsuMode {
+        @JvmStatic fun getMode(num: Number?): OsuMode {
             return when (num?.toInt()) {
                 0 -> OSU
                 1 -> TAIKO
@@ -130,11 +129,11 @@ enum class OsuMode(val fullName: String, val shortName: String, val charName: St
             }
         }
 
-        @JvmStatic fun isDefaultOrNull(@Nullable mode: OsuMode?): Boolean {
+        @JvmStatic fun isDefaultOrNull(mode: OsuMode?): Boolean {
             return mode == null || mode == DEFAULT
         }
 
-        @JvmStatic fun isNotDefaultOrNull(@Nullable mode: OsuMode?): Boolean {
+        @JvmStatic fun isNotDefaultOrNull(mode: OsuMode?): Boolean {
             return isDefaultOrNull(mode).not()
         }
 

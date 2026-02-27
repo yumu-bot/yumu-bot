@@ -7,67 +7,67 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
 class BiliStreamer {
-    @JsonProperty("code")
+    @field:JsonProperty("code")
     var code: Int = -1
 
-    @JsonProperty("message")
+    @field:JsonProperty("message")
     var message: String = ""
 
     // 如果为空，则请检查当前的 code
-    @JsonProperty("data")
+    @field:JsonProperty("data")
     var data: StreamerData? = null
 
     data class StreamerData(
-        @JsonProperty("info")
+        @field:JsonProperty("info")
         val info: StreamerInfo,
 
-        @JsonProperty("exp")
+        @field:JsonProperty("exp")
         val experience: StreamerExperience,
 
-        @JsonProperty("follower_num")
+        @field:JsonProperty("follower_num")
         val followerCount: Long,
 
-        @JsonProperty("room_id")
+        @field:JsonProperty("room_id")
         val roomID: Long,
 
-        @JsonProperty("medal_name")
+        @field:JsonProperty("medal_name")
         val medalName: String,
 
-        @JsonProperty("glory_count")
+        @field:JsonProperty("glory_count")
         val gloryCount: Int,
 
         // 头像挂件编号
-        @JsonProperty("pendant")
+        @field:JsonProperty("pendant")
         val pendant: String,
 
-        @JsonProperty("link_group_num")
+        @field:JsonProperty("link_group_num")
         val linkGroup: Long,
 
-        @JsonProperty("room_news")
+        @field:JsonProperty("room_news")
         val news: RoomNews,
     )
 
     data class StreamerInfo(
-        @JsonProperty("uid")
+        @field:JsonProperty("uid")
         val id: Long,
 
-        @JsonProperty("uname")
+        @field:JsonProperty("uname")
         val username: String,
 
-        @JsonProperty("face")
+        @field:JsonProperty("face")
         val avatar: String,
 
-        @JsonProperty("official_verify")
+        @field:JsonProperty("official_verify")
         val officialVerify: StreamerOfficialVerify,
 
-        @JsonProperty("gender")
+        @field:JsonProperty("gender")
         val gender: Byte,
     )
     data class StreamerOfficialVerify(
-        @JsonProperty("type")
+        @field:JsonProperty("type")
         val type: Byte,
 
-        @JsonProperty("desc")
+        @field:JsonProperty("desc")
         val description: String,
     ) {
         @get:JsonProperty("is_verify")
@@ -76,22 +76,22 @@ class BiliStreamer {
     }
 
     data class StreamerExperience(
-        @JsonProperty("master_level")
+        @field:JsonProperty("master_level")
         val masterLevel: StreamerMasterLevel
     )
 
 
     data class StreamerMasterLevel(
-        @JsonProperty("level")
+        @field:JsonProperty("level")
         val level: Byte,
 
         @set:JsonProperty("color")
         var colorInt: Int,
 
-        @JsonProperty("current")
+        @field:JsonProperty("current")
         val current: List<Int>,
 
-        @JsonProperty("next")
+        @field:JsonProperty("next")
         val next: List<Int>
     ) {
         @get:JsonProperty("color")
@@ -100,7 +100,7 @@ class BiliStreamer {
     }
 
     data class RoomNews(
-        @JsonProperty("content")
+        @field:JsonProperty("content")
         val content: String,
 
         @set:JsonProperty("ctime")

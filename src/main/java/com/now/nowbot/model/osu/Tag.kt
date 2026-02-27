@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class Tag(
-    @JsonProperty("id") var id: Int = 0,
+    @field:JsonProperty("id") var id: Int = 0,
 
     @set:JsonProperty("name") @get:JsonIgnore var name: String = "",
 
-    @JsonProperty("ruleset_id") var rulesetID: Byte? = null,
+    @field:JsonProperty("ruleset_id") var rulesetID: Byte? = null,
 
-    @JsonProperty("description") var description: String = "",
+    @field:JsonProperty("description") var description: String = "",
 ) {
     @get:JsonProperty("category") val category: String
         get() = name.split("/").firstOrNull() ?: "undefined"

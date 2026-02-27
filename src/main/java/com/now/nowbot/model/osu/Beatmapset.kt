@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.yumu.core.extensions.isNotNull
 import jakarta.persistence.Column
-import org.springframework.lang.Nullable
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatterBuilder
@@ -32,7 +31,7 @@ class Beatmapset {
     @JsonProperty("genre_id")
     var genreID: Byte = 0
 
-    @Nullable
+    @JsonProperty("hype")
     var hype: Hype? = null
 
     data class Hype(val current: Int, val required: Int)
