@@ -202,7 +202,7 @@ class SBScorePRService(
             scores = range2.getRecentsFromSBUser(rx, isMultiple, hasCondition, isPass)
         }
 
-        osuBeatmapApiService.applyBeatmapExtend(scores.map { it.value })
+        osuBeatmapApiService.applyBeatmapExtend(scores)
 
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
@@ -346,8 +346,8 @@ class SBScorePRService(
 
     private fun ScorePRParam.getMessageChain(): MessageChain {
         if (scores.size > 1) {
-            val ranks = scores.map { it.key }
-            val scores = scores.map { it.value }
+            val ranks = scores.keys
+            val scores = scores.values
 
             val body = mapOf(
                 "user" to user,

@@ -185,7 +185,7 @@ class ServiceCountService(
                 sb.append('\n')
         }
 
-        sb.append("| 0 | 总计和平均 | ${list.size} | ${avs.map { it.value }.average().roundToSec()}s | ${mds.map { it.value }.average().roundToSec()}s | ${mxs.map { it.value }.average().roundToSec()}s | ${mis.map { it.value }.average().roundToSec()}s |")
+        sb.append("| 0 | 总计和平均 | ${list.size} | ${avs.values.average().roundToSec()}s | ${mds.values.average().roundToSec()}s | ${mxs.values.average().roundToSec()}s | ${mis.values.average().roundToSec()}s |")
 
         return sb.toString()
     }
@@ -260,7 +260,7 @@ class ServiceCountService(
 
         val stickiness = String.format("%.1f", dauTotal * 100.0 / mauTotal.coerceAtLeast(1)) + "%"
 
-        sb.append("| 0 | 总计和平均 | ${list.size} | ${avs.map { it.value }.average().roundToSec()}s | ${mds.map { it.value }.average().roundToSec()}s | ${mxs.map { it.value }.average().roundToSec()}s | ${mis.map { it.value }.average().roundToSec()}s |  | $mauTotal | $stickiness |")
+        sb.append("| 0 | 总计和平均 | ${list.size} | ${avs.values.average().roundToSec()}s | ${mds.values.average().roundToSec()}s | ${mxs.values.average().roundToSec()}s | ${mis.values.average().roundToSec()}s |  | $mauTotal | $stickiness |")
 
         return sb.toString()
     }

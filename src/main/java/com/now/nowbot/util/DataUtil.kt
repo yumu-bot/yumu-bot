@@ -27,31 +27,35 @@ import kotlin.time.toDuration
 object DataUtil {
     private val log: Logger = LoggerFactory.getLogger(DataUtil::class.java)
 
-    var TORUS_REGULAR: Typeface? = null
-        get() {
-            if (field == null || field!!.isClosed) {
-                try {
-                    field = Typeface.makeFromFile("${NowbotConfig.FONT_PATH}Torus-Regular.ttf")
-                } catch (e: Exception) {
-                    log.error("未读取到目标字体:Torus-Regular.ttf", e)
-                    field = Typeface.makeDefault()
-                }
+    val TORUS_REGULAR: Typeface by lazy {
+        val fontPath = "${NowbotConfig.FONT_PATH}Torus-Regular.ttf"
+        try {
+            val file = java.io.File(fontPath)
+            if (!file.exists()) {
+                throw java.io.FileNotFoundException("字体文件不存在: $fontPath")
             }
-            return field
+            Typeface.makeFromFile(file.absolutePath)
+        } catch (e: Exception) {
+            log.warn("读取目标字体失败: Torus-Regular.ttf，将使用系统默认字体", e)
+            Typeface.makeDefault()
         }
+    }
 
-    var TORUS_SEMIBOLD: Typeface? = null
-        get() {
-            if (field == null || field!!.isClosed) {
-                try {
-                    field = Typeface.makeFromFile("${NowbotConfig.FONT_PATH}Torus-SemiBold.ttf")
-                } catch (e: Exception) {
-                    log.error("未读取到目标字体:Torus-SemiBold.ttf", e)
-                    field = Typeface.makeDefault()
-                }
+    /*
+
+    val TORUS_SEMIBOLD: Typeface by lazy {
+        val fontPath = "${NowbotConfig.FONT_PATH}Torus-SemiBold.ttf"
+        try {
+            val file = java.io.File(fontPath)
+            if (!file.exists()) {
+                throw java.io.FileNotFoundException("字体文件不存在: $fontPath")
             }
-            return field
+            Typeface.makeFromFile(file.absolutePath)
+        } catch (e: Exception) {
+            log.error("读取目标字体失败: Torus-SemiBold.ttf，将使用系统默认字体", e)
+            Typeface.makeDefault()
         }
+    }
 
     var PUHUITI: Typeface? = null
         get() {
@@ -93,6 +97,8 @@ object DataUtil {
             }
             return field
         }
+
+     */
 
     fun int2hex(color: Int): String {
         return "#" + color.toString(16).padStart(6, '0')
@@ -631,7 +637,7 @@ object DataUtil {
         }
     }
 
-    fun getBestsPP(bests: List<LazerScore>): Double {
+    fun getBestsPP(bests: Collection<LazerScore>): Double {
         val weighted = bests.map { it.weight?.pp ?: 0.0 }
 
         if (weighted.size < 200) {
@@ -1416,7 +1422,7 @@ object DataUtil {
     /**
      * 一个将列表转换成 markdown 语法的表的方法。
      * 这在列表很大的时候很实用。
-     * @param list 含有某个类的列表
+     * @param items 含有某个类的列表
      * @param page 当前页面，默认为 1
      * @param supplier 将这个类（行）拆分成不同列的闭包
      * @param heading 表头，格式是
@@ -1424,25 +1430,38 @@ object DataUtil {
      * | :-- | :-: |
      * @param maxPerPage 一页中最多存在的行数。
      */
-    fun <T, U> getMarkDownChartFromList(list: List<T>, page: Int = 1, supplier: (T) -> List<U>, heading: String = """
-                | 标题1 | 标题2 |
-                | :-- | :-: |
-                """.trimIndent(), maxPerPage: Int = 50): String {
+    fun <T, U> getMarkDownChart(
+        items: Iterable<T>, // 接收 Iterable
+        page: Int = 1,
+        supplier: (T) -> List<U>,
+        heading: String = """
+            | 标题1 | 标题2 |
+            | :-- | :-: |
+            """.trimIndent(),
+        maxPerPage: Int = 50
+    ): String {
 
-        if (list.isEmpty()) throw NoSuchElementException.Result()
+        val totalCount = items.count() // Collection 子类会直接返回 size，O(1)
+        if (totalCount == 0) {
+            throw NoSuchElementException.Result()
+        }
 
         val sb = StringBuilder()
-        sb.append(heading).append('\n') // 导入表头
+        sb.append(heading).append('\n')
 
-        val maxPage = ceil(list.size * 1.0 / maxPerPage).roundToInt()
+        // 计算总页数
+        val maxPage = ceil(totalCount.toDouble() / maxPerPage).toInt()
+        val currentPage = max(1, min(page, maxPage))
 
-        val start = max(min(page, maxPage) * maxPerPage - maxPerPage, 0)
-        val end = min(min(page, maxPage) * maxPerPage, list.size)
+        // 核心优化：使用序列操作进行分页处理
+        // 这样即使 list 很大，也不会产生多余的集合拷贝
+        val pageData = items.asSequence()
+            .drop((currentPage - 1) * maxPerPage)
+            .take(maxPerPage)
 
-        for (i in start..< end) {
-            val row = list[i]
-            val columns = supplier(row)
-
+        for (row in pageData) {
+            val columns = supplier.invoke(row)
+            sb.append("| ")
             for (c in columns) {
                 sb.append(c).append(" | ")
             }
@@ -1450,8 +1469,7 @@ object DataUtil {
             sb.append('\n')
         }
 
-
-        sb.append("\n\n第 ${min(page, maxPage)} 页，共 $maxPage 页")
+        sb.append("\n\n第 $currentPage 页，共 $maxPage 页")
 
         return sb.toString()
     }

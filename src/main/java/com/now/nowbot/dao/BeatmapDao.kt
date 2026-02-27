@@ -66,18 +66,29 @@ class BeatmapDao(
         return beatmapRepository.save(fromBeatmapModel(beatmap))
     }
 
-    fun saveBeatmapsets(beatmapset: List<Beatmapset>) {
-        val s = beatmapset.map { fromBeatmapsetModel(it) }
-        beatmapsetRepository.saveAll(s)
-    }
+    fun saveBeatmaps(beatmaps: Collection<Beatmap>) {
+        val exists =
+            beatmapsetRepository.findAllById(beatmaps.map {
+                it.beatmapID.toInt()
+            }).map { it.id }.toSet()
 
-    fun saveBeatmaps(beatmap: List<Beatmap>) {
-        val s = beatmap.map { fromBeatmapModel(it) }
+        val s = beatmaps.filterNot { it.beatmapsetID.toInt() in exists }.map { fromBeatmapModel(it) }
+
         beatmapRepository.saveAll(s)
     }
 
     fun saveBeatmapset(beatmapset: Beatmapset): BeatmapsetLite {
         return beatmapsetRepository.save(fromBeatmapsetModel(beatmapset))
+    }
+
+    fun saveBeatmapsets(beatmapsets: Collection<Beatmapset>) {
+        val exists =
+            beatmapsetRepository.findAllById(beatmapsets.map {
+                it.beatmapsetID.toInt()
+            }).map { it.id }.toSet()
+
+        val s = beatmapsets.filterNot { it.beatmapsetID.toInt() in exists }.map { fromBeatmapsetModel(it) }
+        beatmapsetRepository.saveAll(s)
     }
 
     fun getBeatmapLite(id: Long): BeatmapLite? {

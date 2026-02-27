@@ -287,14 +287,14 @@ import kotlin.math.roundToInt
         }
     }
 
-    override fun applyStarToScores(scores: List<LazerScore>, local: Boolean) {
+    override fun applyStarToScores(scores: Collection<LazerScore>, local: Boolean) {
         scores.forEach {
             applyStarToScore(it, local)
         }
     }
 
 
-    private fun getScoresPPWithSameBeatmap(scores: List<LazerScore>): Map<Long, RosuPerformance> {
+    private fun getScoresPPWithSameBeatmap(scores: Collection<LazerScore>): Map<Long, RosuPerformance> {
         if (scores.isEmpty()) return emptyMap()
 
         val beatmapID = scores.first().beatmapID
@@ -429,7 +429,7 @@ import kotlin.math.roundToInt
         }
     }
 
-    override fun applyPPToScoresWithSameBeatmap(scores: List<LazerScore>) {
+    override fun applyPPToScoresWithSameBeatmap(scores: Collection<LazerScore>) {
         val noPPs = scores.filter { it.pp <= 1e-4 }
 
         val attrs = getScoresPPWithSameBeatmap(noPPs)
@@ -439,7 +439,7 @@ import kotlin.math.roundToInt
         }
     }
 
-    override fun applyPPToScores(scores: List<LazerScore>) {
+    override fun applyPPToScores(scores: Collection<LazerScore>) {
         val actions = scores.map {
             return@map AsyncMethodExecutor.Runnable {
                 applyPPToScore(it)
@@ -470,7 +470,7 @@ import kotlin.math.roundToInt
         }
     }
 
-    override fun applyBeatmapChanges(scores: List<LazerScore>) {
+    override fun applyBeatmapChanges(scores: Collection<LazerScore>) {
         val actions = scores.map {
             return@map AsyncMethodExecutor.Runnable {
                 applyBeatmapChanges(it)

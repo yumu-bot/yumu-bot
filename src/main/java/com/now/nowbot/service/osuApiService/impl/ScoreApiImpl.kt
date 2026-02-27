@@ -1,6 +1,5 @@
 package com.now.nowbot.service.osuApiService.impl
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.BindUser
@@ -13,7 +12,6 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
-import com.now.nowbot.util.JacksonUtil
 import io.netty.channel.unix.Errors
 import io.netty.handler.timeout.ReadTimeoutException
 import okio.IOException
@@ -33,7 +31,6 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.RejectedExecutionException
-import java.util.function.Function
 import kotlin.text.Charsets
 import kotlin.text.HexFormat
 import kotlin.text.isBlank
@@ -186,16 +183,14 @@ class ScoreApiImpl(
 
     override fun getBeatmapScore(bid: Long, uid: Long, mode: OsuMode?): BeatmapUserScore? {
         return retryOn404<BeatmapUserScore>(
-            { uriBuilder: UriBuilder ->
-                uriBuilder
+            { it
                     .path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", 0)
                     .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                     .build(bid, uid)
             },
             { base.insertHeader(this) },
-            { uriBuilder: UriBuilder ->
-                uriBuilder
+            { it
                     .path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", 1)
                     .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
@@ -243,26 +238,22 @@ class ScoreApiImpl(
         mods: Collection<LazerMod?>,
     ): BeatmapUserScore? {
 
-        val uri = Function { n: Int? ->
-            Function { uriBuilder: UriBuilder ->
-                uriBuilder
-                    .path("beatmaps/{bid}/scores/users/{uid}")
-                    .queryParam("legacy_only", n)
-
-                if (OsuMode.isNotDefaultOrNull(mode)) {
-                    uriBuilder.queryParam("mode", OsuMode.getQueryName(mode))
+        fun buildUri(legacyOnly: Int) = { builder: UriBuilder ->
+            builder.path("beatmaps/{bid}/scores/users/{uid}")
+                .queryParam("legacy_only", legacyOnly)
+                .apply {
+                    if (OsuMode.isNotDefaultOrNull(mode)) {
+                        queryParam("mode", OsuMode.getQueryName(mode))
+                    }
+                    LazerMod.setMods(this, mods)
                 }
-
-                LazerMod.setMods(uriBuilder, mods)
-                uriBuilder.build(bid, uid)
-            }
+                .build(bid, uid)
         }
+
         return retryOn404<BeatmapUserScore>(
-            uri.apply(0),
-            {
-                base.insertHeader(this)
-            },
-            uri.apply(1),
+            uri = buildUri(legacyOnly = 0),
+            headers = { base.insertHeader(this) },
+            retry = buildUri(legacyOnly = 1)
         )
     }
 
@@ -275,27 +266,32 @@ class ScoreApiImpl(
         if (user.isTokenAvailable == null) {
             return getBeatmapScore(bid, user.userID, mode, mods)
         }
-        val uri = Function { n: Int? ->
-            Function { uriBuilder: UriBuilder ->
-                uriBuilder
-                    .path("beatmaps/{bid}/scores/users/{uid}")
-                    .queryParam("legacy_only", n)
-                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                LazerMod.setMods(uriBuilder, mods)
-                uriBuilder.build(bid, user.userID)
-            }
+
+        fun buildUri(legacyOnly: Int) = { builder: UriBuilder ->
+            builder.path("beatmaps/{bid}/scores/users/{uid}")
+                .queryParam("legacy_only", legacyOnly)
+                .apply {
+                    if (OsuMode.isNotDefaultOrNull(mode)) {
+                        queryParam("mode", OsuMode.getQueryName(mode))
+                    }
+                    LazerMod.setMods(this, mods)
+                }
+                .build(bid, user.userID)
         }
+
         return retryOn404<BeatmapUserScore>(
-            uri.apply(0),
-            {
-                base.insertHeader(this, user)
-            },
-            uri.apply(1),
+            uri = buildUri(legacyOnly = 0),
+            headers = { base.insertHeader(this, user) },
+            retry = buildUri(legacyOnly = 1)
         )
     }
 
+    data class BeatmapScoreResponse(val scores: List<LazerScore>)
+
     override fun getBeatmapScores(bid: Long, user: BindUser, mode: OsuMode?): List<LazerScore> {
-        if (user.isTokenAvailable == null) getBeatmapScores(bid, user.userID, mode)
+        if (user.isTokenAvailable == null) {
+            getBeatmapScores(bid, user.userID, mode)
+        }
 
         return request { client ->
             client.get()
@@ -308,9 +304,10 @@ class ScoreApiImpl(
                     base.insertHeader(headers, user)
                 }
                 .retrieve()
-                .bodyToMono(JsonNode::class.java)
-                .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
-        }
+                .bodyToMono(BeatmapScoreResponse::class.java)
+//                .bodyToMono(JsonNode::class.java)
+//                .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
+        }.scores
     }
 
     override fun getBeatmapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore> {
@@ -324,9 +321,8 @@ class ScoreApiImpl(
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(JsonNode::class.java)
-                .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
-        }
+                .bodyToMono(BeatmapScoreResponse::class.java)
+        }.scores
     }
 
     override fun getLeaderBoardScore(
@@ -355,9 +351,8 @@ class ScoreApiImpl(
                 }
             }
             .retrieve()
-            .bodyToMono(JsonNode::class.java)
-            .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
-        }
+            .bodyToMono(BeatmapScoreResponse::class.java)
+        }.scores
     }
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -433,30 +428,26 @@ class ScoreApiImpl(
     }
 
     override fun getReplay(score: LazerScore): Replay? {
-        if (score.replay && score.scoreID > 0L) {
-            return try {
-                request { client ->
-                    client.get()
-                        .uri {
-                            it.path("scores/{score}/download")
-                                .build(score.scoreID)
-                        }
-                        .headers(base::insertHeader)
-                        .retrieve()
-                        .bodyToMono(ByteBuffer::class.java)
-                        .map { Replay(it) }
-                    /*
-                    .bodyToMono(JsonNode::class.java)
-                    .map { JacksonUtil.parseObject(it, Replay::class.java) }
-
-                     */
-                }
-            } catch (_: Exception) {
-                return null
-            }
+        if (!score.replay || score.scoreID <= 0L) {
+            return null
         }
 
-        return null
+        val byte: ByteBuffer? = try {
+            request { client ->
+                client.get()
+                    .uri {
+                        it.path("scores/{score}/download")
+                            .build(score.scoreID)
+                    }
+                    .headers(base::insertHeader)
+                    .retrieve()
+                    .bodyToMono(ByteBuffer::class.java)
+            }
+        } catch (_: Exception) {
+            return null
+        }
+
+        return Replay(byte ?: return null)
     }
 
     private fun getBests(
@@ -612,31 +603,26 @@ class ScoreApiImpl(
         }
     }
 
-    private inline fun <reified T> retryOn404(
-        uri: Function<UriBuilder, URI>,
-        crossinline headers: HttpHeaders.() -> Unit,
-        retry: Function<UriBuilder, URI>,
+    private inline fun <reified T : Any> retryOn404(
+        noinline uri: (UriBuilder) -> URI,
+        noinline headers: HttpHeaders.() -> Unit,
+        noinline retry: (UriBuilder) -> URI,
     ): T {
+        // 提取公共逻辑为内部函数或变量
+        val call = { target: (UriBuilder) -> URI ->
+            request { client ->
+                client.get()
+                    .uri(target)
+                    .headers(headers)
+                    .retrieve()
+                    .bodyToMono(T::class.java)
+            }
+        }
+
         return try {
-            request { client ->
-                client.get()
-                    .uri(uri)
-                    .headers {
-                        h -> headers(h)
-                    }
-                    .retrieve()
-                    .bodyToMono(T::class.java)
-            }
+            call(uri)
         } catch (_: NetworkException.ScoreException.NotFound) {
-            request { client ->
-                client.get()
-                    .uri(retry)
-                    .headers {
-                        h -> headers(h)
-                    }
-                    .retrieve()
-                    .bodyToMono(T::class.java)
-            }
+            call(retry)
         }
     }
 

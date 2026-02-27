@@ -115,11 +115,12 @@ import java.util.concurrent.Callable
 
     override fun refreshUserTokenFirst(user: BindUser) {
         base.refreshUserToken(user, true)
-        val o = getOsuUser(user)
-        val uid = o.userID
-        user.userID = uid
-        user.username = o.username
-        user.mode = o.currentOsuMode
+//        getOsuUser(user).apply {
+//            val uid = this.userID
+//            user.userID = uid
+//            user.username = this.username
+//            user.mode = this.currentOsuMode
+//        }
     }
 
 
@@ -127,42 +128,46 @@ import java.util.concurrent.Callable
     override fun getOsuUser(user: BindUser, mode: OsuMode): OsuUser {
         if (user.isTokenAvailable == null) return getOsuUser(user.userID, mode)
 
-        return request { client -> client
+        val data = request { client -> client
             .get().uri("me/{mode}", mode.shortName)
             .headers { headers ->
                 base.insertHeader(headers, user)
             }.retrieve()
-                .bodyToMono(OsuUser::class.java).map { data ->
-                    userInfoDao.saveUserToday(data, mode)
-                    user.userID = data.userID
-                    user.username = data.username
-                    user.mode = mode
-                    data.currentOsuMode = getMode(mode, data.defaultOsuMode)
-
-                    Thread.startVirtualThread {
-                        bindDao.updateNameToID(data)
-                    }
-
-                    data
-                }
+            .bodyToMono(OsuUser::class.java)
+        }.apply {
+            user.userID = this.userID
+            user.username = this.username
+            user.mode = mode
+            this.currentOsuMode = getMode(mode, this.defaultOsuMode)
         }
+
+        Thread.startVirtualThread {
+            userInfoDao.saveUserToday(data, mode)
+            bindDao.updateNameToID(data)
+        }
+
+        return data
     }
 
     override fun getOsuUser(name: String, mode: OsuMode): OsuUser {
-        return request { client ->
-            client.get().uri {
-                    it.path("users/{data}/{mode}").build("@$name", mode.shortName)
-                }.headers(base::insertHeader).retrieve().bodyToMono(OsuUser::class.java).map { data ->
-                    userInfoDao.saveUserToday(data, mode)
-                    data.currentOsuMode = getMode(mode, data.defaultOsuMode)
-
-                    Thread.startVirtualThread {
-                        bindDao.updateNameToID(data)
-                    }
-
-                    data
+        val user = request { client ->
+            client.get()
+                .uri { it.path("users/{data}/{mode}")
+                    .build("@$name", mode.shortName)
                 }
+                .headers(base::insertHeader)
+                .retrieve()
+                .bodyToMono(OsuUser::class.java)
+        }.apply {
+            this.currentOsuMode = getMode(mode, this.defaultOsuMode)
         }
+
+        Thread.startVirtualThread {
+            userInfoDao.saveUserToday(user, mode)
+            bindDao.updateNameToID(user)
+        }
+
+        return user
     }
 
     override fun getOsuUser(id: Long, mode: OsuMode): OsuUser {
@@ -175,10 +180,9 @@ import java.util.concurrent.Callable
         } // 执行到这里，数据已经回到了虚拟线程
 
         // 以下逻辑在虚拟线程中执行，不会卡死 Netty
-        userInfoDao.saveUserToday(data, mode)
-        data.currentOsuMode = getMode(mode, data.defaultOsuMode)
-
         Thread.startVirtualThread {
+            userInfoDao.saveUserToday(data, mode)
+            data.currentOsuMode = getMode(mode, data.defaultOsuMode)
             bindDao.updateNameToID(data)
         }
 

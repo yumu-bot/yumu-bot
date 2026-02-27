@@ -115,7 +115,7 @@ class BPFixService(
         }
 
         if (scores.size == 200 || user.pp <= 0.0) {
-            user.setEstimatedPP(scores.map { it.value })
+            user.updateEstimatedPP(scores)
         }
 
         if (scores.isEmpty()) {
@@ -132,8 +132,8 @@ class BPFixService(
 
         val playerPP = user.pp
 
-        beatmapApiService.applyBeatmapExtend(bestsMap.map { it.value })
-        calculateApiService.applyStarToScores(bestsMap.map { it.value })
+        beatmapApiService.applyBeatmapExtend(bestsMap)
+        calculateApiService.applyStarToScores(bestsMap)
 
         //before bp sum
 

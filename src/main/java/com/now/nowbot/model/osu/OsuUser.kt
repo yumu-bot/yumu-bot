@@ -544,7 +544,13 @@ open class OsuUser {
         this.username = name
     }
 
-    fun setEstimatedPP(bests: List<LazerScore>) {
+    @JsonIgnore
+    fun updateEstimatedPP(bestMap: Map<*, LazerScore>) {
+        updateEstimatedPP(bestMap.values)
+    }
+
+    @JsonIgnore
+    fun updateEstimatedPP(bests: Collection<LazerScore>) {
         if (this.pp == 0.0) {
             val estimateBestsPP = DataUtil.getBestsPP(bests)
             val estimateBonusPP = DataUtil.getBonusPP(beatmapPlaycount)

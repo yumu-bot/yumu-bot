@@ -355,7 +355,7 @@ class Beatmapset {
 
     @get:JsonProperty("preview_name")
     val previewName: String
-        get() = this.artist + " - " + this.title + " (" + this.creator + ") [" + this.beatmapsetID + "]"
+        get() = this.artist + " - " + this.title + " (" + this.creator + ")"
 
     override fun equals(other: Any?): Boolean {
         if (other !is Beatmapset) return false

@@ -97,7 +97,7 @@ import java.util.regex.Matcher
                     )
                         .associateBy { it.title.getSimilarity(any) }
                         .filter { it.key > 0.4 }
-                        .map { it.value }
+                        .values
 
                     songs = possibles.sortedByDescending { it.info.versionInt }
                         .ifEmpty {

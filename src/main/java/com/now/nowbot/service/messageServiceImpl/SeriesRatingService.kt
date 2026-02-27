@@ -136,7 +136,7 @@ class SeriesRatingService(
         return ServiceCallStatistic.building(event) {
             setParam(mapOf(
                 "mids" to sr.matches.map { it.id },
-                "uids" to sr.players.map { it.key }.distinct(),
+                "uids" to sr.players.keys.distinct(),
                 "bids" to sr.rounds.map { it.beatmapID }.distinct(),
                 "sids" to sr.rounds.mapNotNull { it.beatmap?.beatmapsetID }.distinct(),
                 "modes" to sr.rounds.map { it.mode.modeValue }.distinct()

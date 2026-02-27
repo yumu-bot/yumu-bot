@@ -240,8 +240,8 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     val c = compare.filterNotNull().groupingBy { it }.eachCount()
                     val t = to.filterNotNull().groupingBy { it }.eachCount()
 
-                    val cs = c.map { it.key }.toHashSet()
-                    val ts = t.map { it.key }.toHashSet()
+                    val cs = c.keys.toHashSet()
+                    val ts = t.keys.toHashSet()
 
                     when (operator) {
                         Operator.XQ -> cs == ts

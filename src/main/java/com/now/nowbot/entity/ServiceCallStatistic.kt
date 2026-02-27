@@ -61,10 +61,10 @@ class ServiceCallStatistic(
          */
         fun builds(
             event: MessageEvent,
-            beatmapIDs: List<Long>? = null,
-            beatmapsetIDs: List<Long>? = null,
-            userIDs: List<Long>? = null,
-            modes: List<OsuMode>? = null
+            beatmapIDs: Collection<Long>? = null,
+            beatmapsetIDs: Collection<Long>? = null,
+            userIDs: Collection<Long>? = null,
+            modes: Collection<OsuMode>? = null
         ): ServiceCallStatistic {
             val map = mapOf(
                 "bids" to beatmapIDs,

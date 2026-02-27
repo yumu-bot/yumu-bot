@@ -195,7 +195,7 @@ class SBBPService(
             scores = range2.getBestsFromSBUser(rx, isMultiple, hasCondition)
         }
 
-        osuBeatmapApiService.applyBeatmapExtend(scores.map { it.value })
+        osuBeatmapApiService.applyBeatmapExtend(scores)
 
         val filteredScores = ScoreFilter.filterScores(scores, conditions)
 
@@ -295,20 +295,17 @@ class SBBPService(
         return scores.mapIndexed { index, score -> (index + offset + 1) to score }.toMap()
     }
 
-    /*
     private fun BPParam.asyncImage() = run {
-        scoreApiService.asyncDownloadBackground(scores.values, listOf(CoverType.COVER, CoverType.LIST))
+        osuScoreApiService.asyncDownloadBackgroundFromScores(scores.values, listOf(CoverType.COVER, CoverType.LIST))
     }
-
-     */
 
     private fun BPParam.getMessageChain(): MessageChain {
         return try {
             if (scores.size > 1) {
-                val ranks = scores.map { it.key }
-                val scores = scores.map { it.value }
+                val ranks = scores.keys
+                val scores = scores.values
 
-                osuBeatmapApiService.applyBeatmapExtend(scores)
+                // osuBeatmapApiService.applyBeatmapExtend(scores)
 
                 val body = mapOf(
                     "user" to user,

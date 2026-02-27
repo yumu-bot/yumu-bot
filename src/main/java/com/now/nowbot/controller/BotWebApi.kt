@@ -315,7 +315,7 @@ import kotlin.math.min
         val mode = getMode(playMode)
 
         val osuUser = userApiService.getOsuUser(name.trim(), mode)
-        val scores: List<LazerScore>
+        val scores: Collection<LazerScore>
 
         val offset = parseRange2Offset(start, end)
         val limit = parseRange2Limit(start, end)
@@ -450,8 +450,8 @@ import kotlin.math.min
 
                 //scoreList = BPList.stream().filter(s -> dayBefore.isBefore(s.getCreateTime())).toList();
 
-                val ranks = bests.map { it.key }
-                scores = bests.map { it.value }
+                val ranks = bests.keys
+                scores = bests.values
 
                 calculateApiService.applyBeatmapChanges(scores)
                 calculateApiService.applyStarToScores(scores)

@@ -136,9 +136,9 @@ import kotlin.math.sqrt
 
                 val async = AsyncMethodExecutor.awaitQuadCallableExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
+                    { scoreApiService.getBestScores(ids.first!!, mode) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
-                    { scoreApiService.getBestScores(ids.second!!, mode, 0, 100) },
+                    { scoreApiService.getBestScores(ids.second!!, mode) },
                 )
 
                 me = async.first.first
@@ -155,8 +155,8 @@ import kotlin.math.sqrt
                 me = users.first()
                 other = if (users.size == 2) users.last() else null
 
-                myBests = scoreApiService.getBestScores(me.userID, mode, 0, 100)
-                otherBests = other?.let { scoreApiService.getBestScores(other.userID, mode, 0, 100) }
+                myBests = scoreApiService.getBestScores(me.userID, mode)
+                otherBests = other?.let { scoreApiService.getBestScores(other.userID, mode) }
             }
         } else {
             if (ids.first != null && ids.second != null) {
@@ -166,9 +166,9 @@ import kotlin.math.sqrt
 
                 val async = AsyncMethodExecutor.awaitQuadCallableExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
+                    { scoreApiService.getBestScores(ids.first!!, mode) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
-                    { scoreApiService.getBestScores(ids.second!!, mode, 0, 100) },
+                    { scoreApiService.getBestScores(ids.second!!, mode) },
                 )
 
                 me = async.first.first
@@ -184,7 +184,7 @@ import kotlin.math.sqrt
 
                 val async = AsyncMethodExecutor.awaitPairCallableExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode, 0, 100) },
+                    { scoreApiService.getBestScores(ids.first!!, mode) },
                 )
 
                 me = async.first
@@ -203,8 +203,8 @@ import kotlin.math.sqrt
                 me = users.first()
                 other = if (users.size == 2) users.last() else null
 
-                myBests = scoreApiService.getBestScores(me.userID, mode, 0, 100)
-                otherBests = if (other != null) scoreApiService.getBestScores(other.userID, mode, 0, 100) else null
+                myBests = scoreApiService.getBestScores(me.userID, mode)
+                otherBests = if (other != null) scoreApiService.getBestScores(other.userID, mode) else null
             }
         }
 
@@ -289,13 +289,16 @@ import kotlin.math.sqrt
         val weightedMap = bests.mapNotNull { b ->
             val skills = skillMap[b.beatmapID]?.skills
 
-            val nerf = nerfByAccuracy(b)
-            skills?.let { b.beatmapID to skills.map { it * nerf } }
+            skills?.let {
+                val nerf = nerfByAccuracy(b)
+
+                b.beatmapID to skills.map { it * nerf }
+            }
         }.toMap()
 
-        val weightedSkills = weightedMap.map { it.value }
+        val weightedSkills = weightedMap.values
 
-        val skills = SkillUtil.collectScoreSkills(weightedSkills)
+        val skills = SkillUtil.collectScoreSkills(weightedSkills.take(100))
 
         val scores: List<SkillScore> = if (isShowScores) {
             val s10 = bests.take(10)

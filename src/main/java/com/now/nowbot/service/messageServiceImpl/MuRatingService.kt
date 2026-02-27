@@ -97,7 +97,7 @@ import java.util.regex.Matcher
         return ServiceCallStatistic.building(event) {
             setParam(mapOf(
                 "mids" to listOf(mr.match.id),
-                "uids" to mr.players.map { it.key }.distinct(),
+                "uids" to mr.players.keys.distinct(),
                 "bids" to mr.rounds.map { it.beatmapID }.distinct(),
                 "sids" to mr.rounds.mapNotNull { it.beatmap?.beatmapsetID }.distinct(),
                 "modes" to mr.rounds.map { it.mode.modeValue }.distinct()
