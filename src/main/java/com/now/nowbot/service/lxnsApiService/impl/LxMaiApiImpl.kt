@@ -14,7 +14,6 @@ import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import io.netty.channel.unix.Errors
-import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -22,6 +21,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
+import java.util.concurrent.ExecutionException
 
 @Service
 class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao): LxMaiApiService {
@@ -267,15 +267,15 @@ class LxMaiApiImpl(private val base: LxnsBaseService, private val maiDao: MaiDao
                 is WebClientResponseException.ServiceUnavailable -> {
                     throw NetworkException.LxnsException.ServiceUnavailable()
                 }
+            }
 
-                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                    throw NetworkException.LxnsException.GatewayTimeout()
-                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
-                    throw NetworkException.LxnsException.RequestTimeout()
-                } else {
-                    log.error("落雪咖啡屋：获取失败", e)
-                    throw NetworkException.LxnsException.Undefined(e)
-                }
+            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                throw NetworkException.LxnsException.GatewayTimeout()
+            } else if (e.findCauseOfType<ExecutionException>() != null) {
+                throw NetworkException.LxnsException.RequestTimeout()
+            } else {
+                log.error("落雪咖啡屋：获取失败", e)
+                throw NetworkException.LxnsException.Undefined(e)
             }
         }
     }

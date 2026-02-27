@@ -9,12 +9,12 @@ import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import io.netty.channel.unix.Errors
-import io.netty.handler.timeout.ReadTimeoutException
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
+import java.util.concurrent.ExecutionException
 
 @Service
 class MatchApiImpl(
@@ -171,14 +171,14 @@ class MatchApiImpl(
                 is WebClientResponseException.ServiceUnavailable -> {
                     throw NetworkException.MatchException.ServiceUnavailable()
                 }
+            }
 
-                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                    throw NetworkException.MatchException.GatewayTimeout()
-                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
-                    throw NetworkException.MatchException.RequestTimeout()
-                } else {
-                    throw NetworkException.MatchException.Undefined(e)
-                }
+            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                throw NetworkException.MatchException.GatewayTimeout()
+            } else if (e.findCauseOfType<ExecutionException>() != null) {
+                throw NetworkException.MatchException.RequestTimeout()
+            } else {
+                throw NetworkException.MatchException.Undefined(e)
             }
         }
     }

@@ -202,7 +202,7 @@ enum class MaiSongFilter(@param:Language("RegExp") val regex: Regex) {
 
                     a.map { alias ->
                         fit(operator, alias, str)
-                    }.toSet().contains(true) to default
+                    }.contains(true) to default
                 }
 
                 ARTIST -> fit(operator, it.info.artist, str) to default

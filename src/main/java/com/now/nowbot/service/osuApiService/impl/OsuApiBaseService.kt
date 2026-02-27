@@ -9,7 +9,6 @@ import com.now.nowbot.model.BindUser
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import io.netty.channel.unix.Errors
-import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -606,7 +605,7 @@ class OsuApiBaseService(
 
                 else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
                     throw NetworkException.UserException.GatewayTimeout()
-                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
+                } else if (e.findCauseOfType<ExecutionException>() != null) {
                     throw NetworkException.UserException.RequestTimeout()
                 } else {
                     throw NetworkException.UserException.Undefined(e)

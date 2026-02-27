@@ -77,7 +77,6 @@ enum class MostPlayedBeatmapFilter(@param:Language("RegExp") val regex: Regex) {
         private fun fitMostPlayedBeatmap(b: Beatmap, operator: Operator, filter: MostPlayedBeatmapFilter, condition: Condition): Boolean {
             val long = condition.long
             val double = condition.double
-            val seconds = condition.seconds
             val str = condition.condition
 
             val s = b.beatmapset!!
@@ -103,11 +102,9 @@ enum class MostPlayedBeatmapFilter(@param:Language("RegExp") val regex: Regex) {
                 DIFFICULTY -> fit(operator, b.difficultyName, str)
                 STAR -> fit(operator, b.starRating, double, digit = 2, isRound = false, isInteger = true)
                 LENGTH -> {
-                    val compare = b.totalLength.toLong()
+                    val seconds = str.filter { it.isDigit() }.toLongOrNull() ?: return false
 
-                    val to = seconds.second.inWholeSeconds
-
-                    fit(operator, compare, to)
+                    fit(operator, b.totalLength.toLong(), seconds)
                 }
                 MODE -> fit(operator, b.mode.modeValue.toInt(), OsuMode.getMode(str).modeValue.toInt())
                 CATEGORY -> fit(operator, DataUtil.getStatus(b.status), DataUtil.getStatus(str))

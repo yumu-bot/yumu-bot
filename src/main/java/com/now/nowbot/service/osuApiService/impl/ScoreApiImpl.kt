@@ -13,7 +13,6 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import io.netty.channel.unix.Errors
-import io.netty.handler.timeout.ReadTimeoutException
 import okio.IOException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -30,6 +29,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.RejectedExecutionException
 import kotlin.text.Charsets
 import kotlin.text.HexFormat
@@ -589,16 +589,16 @@ class ScoreApiImpl(
                 is WebClientResponseException.ServiceUnavailable -> {
                     throw NetworkException.ScoreException.ServiceUnavailable()
                 }
+            }
 
-                else -> if (e.findCauseOfType<RejectedExecutionException>() != null) {
-                    throw NetworkException.ScoreException.TooManyRequests()
-                } else if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                    throw NetworkException.ScoreException.GatewayTimeout()
-                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
-                    throw NetworkException.ScoreException.RequestTimeout()
-                } else {
-                    throw NetworkException.ScoreException.Undefined(e)
-                }
+            if (e.findCauseOfType<RejectedExecutionException>() != null) {
+                throw NetworkException.ScoreException.TooManyRequests()
+            } else if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                throw NetworkException.ScoreException.GatewayTimeout()
+            } else if (e.findCauseOfType<ExecutionException>() != null) {
+                throw NetworkException.ScoreException.RequestTimeout()
+            } else {
+                throw NetworkException.ScoreException.Undefined(e)
             }
         }
     }

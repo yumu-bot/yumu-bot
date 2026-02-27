@@ -19,7 +19,6 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import io.netty.channel.unix.Errors
-import io.netty.handler.timeout.ReadTimeoutException
 import kotlinx.io.IOException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -33,6 +32,7 @@ import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
 
 @Service class UserApiImpl(
     private val base: OsuApiBaseService, private val bindDao: BindDao, private val userInfoDao: OsuUserInfoDao
@@ -392,14 +392,14 @@ import java.util.concurrent.Callable
                 is WebClientResponseException.ServiceUnavailable -> {
                     throw NetworkException.UserException.ServiceUnavailable()
                 }
+            }
 
-                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                    throw NetworkException.UserException.GatewayTimeout()
-                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
-                    throw NetworkException.UserException.RequestTimeout()
-                } else {
-                    throw NetworkException.UserException.Undefined(e)
-                }
+            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                throw NetworkException.UserException.GatewayTimeout()
+            } else if (e.findCauseOfType<ExecutionException>() != null) {
+                throw NetworkException.UserException.RequestTimeout()
+            } else {
+                throw NetworkException.UserException.Undefined(e)
             }
         }
     }

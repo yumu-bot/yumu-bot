@@ -8,6 +8,7 @@ import com.now.nowbot.model.osu.Beatmapset
 import com.now.nowbot.util.DataUtil
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
+import java.time.ZoneOffset
 
 // 完全版本的 beatmapset
 enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
@@ -104,8 +105,6 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
         private fun fitBeatmapsets(s: Beatmapset, operator: Operator, filter: BeatmapsetFilter, condition: Condition): Boolean {
             val long = condition.long
             val double = condition.double
-            val days = condition.days
-            val seconds = condition.seconds
             val str = condition.condition
 
             // 一般这个数据都很大。如果输入很小的数，会自动给你乘 1k
@@ -124,12 +123,12 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                     
                     bs.map { 
                         fit(operator, it.mapperID, long) 
-                    }.toSet().contains(true)
+                    }.contains(true)
                 }
                 
                 BID -> bs.map {
                     fit(operator, it.beatmapID, long)
-                }.toSet().contains(true)
+                }.contains(true)
                 SID -> fit(operator, s.beatmapsetID, long)
                 TITLE -> fit(operator, s.title, str) || fit(operator, s.titleUnicode, str)
                 ARTIST -> fit(operator, s.artist, str) || fit(operator, s.artistUnicode, str)
@@ -165,47 +164,47 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                 LANGUAGE -> fit(operator, s.languageID.toInt(), DataUtil.getLanguage(str)?.toInt() ?: return false)
                 DIFFICULTY -> bs.map {
                     fit(operator, it.difficultyName, str)
-                }.toSet().contains(true)
+                }.contains(true)
                 STAR -> bs.map {
                     fit(operator, it.starRating, double, digit = 2, isRound = false, isInteger = true)
-                }.toSet().contains(true)
+                }.contains(true)
                 MODE -> bs.map {
                     fit(operator, it.modeInt!!, OsuMode.getMode(str).modeValue)
-                }.toSet().contains(true)
+                }.contains(true)
                 CATEGORY -> bs.map {
                     fit(operator, it.ranked, DataUtil.getStatusIndex(str) ?: return false)
-                }.toSet().contains(true)
+                }.contains(true)
                 AR -> bs.map {
                     fit(operator, it.ar, double, 2, isRound = true, isInteger = true)
-                }.toSet().contains(true)
+                }.contains(true)
                 CS -> bs.map {
                     fit(operator, it.cs, double, 2, isRound = true, isInteger = true)
-                }.toSet().contains(true)
+                }.contains(true)
                 OD -> bs.map {
                     fit(operator, it.od, double, 2, isRound = true, isInteger = true)
-                }.toSet().contains(true)
+                }.contains(true)
                 HP -> bs.map {
                     fit(operator, it.hp, double, 2, isRound = true, isInteger = true)
-                }.toSet().contains(true)
+                }.contains(true)
                 LENGTH -> {
-                    val to = seconds.second.inWholeSeconds
+                    val seconds = str.filter { it.isDigit() }.toLongOrNull() ?: return false
 
                     bs.map {
-                        fit(operator, it.totalLength.toLong(), to)
-                    }.toSet().contains(true)
+                        fit(operator, it.totalLength.toLong(), seconds)
+                    }.contains(true)
                 }
                 BPM -> bs.map {
                     fit(operator, it.bpm.toDouble(), double, 0, isRound = true, isInteger = true)
-                }.toSet().contains(true)
+                }.contains(true)
                 CIRCLE -> bs.map {
                     fit(operator, it.circles!!.toLong(), long, 0, isRound = true, isInteger = true)
-                }.toSet().contains(true)
+                }.contains(true)
                 SLIDER -> bs.map {
                     fit(operator, it.sliders!!.toLong(), long, 0, isRound = true, isInteger = true)
-                }.toSet().contains(true)
+                }.contains(true)
                 SPINNER -> bs.map {
                     fit(operator, it.spinners!!.toLong(), long, 0, isRound = true, isInteger = true)
-                }.toSet().contains(true)
+                }.contains(true)
                 TOTAL -> {
                     bs.map {
                         val total = it.totalNotes
@@ -215,10 +214,10 @@ enum class BeatmapsetFilter(@param:Language("RegExp") val regex: Regex) {
                         } else {
                             fit(operator, total, long)
                         }
-                    }.toSet().contains(true)
+                    }.contains(true)
                 }
-                CREATED_TIME -> fitTime(operator, s.submittedDate.toEpochSecond(), days)
-                RANKED_TIME -> fitTime(operator, s.rankedDate?.toEpochSecond() ?: return false, days)
+                CREATED_TIME -> fitTime(operator, s.submittedDate.atZoneSameInstant(ZoneOffset.UTC).toEpochSecond(), str)
+                RANKED_TIME -> fitTime(operator, s.rankedDate?.atZoneSameInstant(ZoneOffset.UTC)?.toEpochSecond() ?: return false, str)
                 PLAY_COUNT -> fit(operator, s.playCount, longPlus)
                 FAVOURITE -> fit(operator, s.favouriteCount, long)
 

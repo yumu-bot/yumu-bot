@@ -19,7 +19,6 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import io.netty.channel.unix.Errors
-import io.netty.handler.timeout.ReadTimeoutException
 import okhttp3.internal.toImmutableList
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -42,6 +41,7 @@ import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
@@ -1143,14 +1143,14 @@ class BeatmapApiImpl(
                 is WebClientResponseException.ServiceUnavailable -> {
                     throw NetworkException.BeatmapException.ServiceUnavailable()
                 }
+            }
 
-                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                    throw NetworkException.BeatmapException.GatewayTimeout()
-                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
-                    throw NetworkException.BeatmapException.RequestTimeout()
-                } else {
-                    throw NetworkException.BeatmapException.Undefined(e)
-                }
+            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                throw NetworkException.BeatmapException.GatewayTimeout()
+            } else if (e.findCauseOfType<ExecutionException>() != null) {
+                throw NetworkException.BeatmapException.RequestTimeout()
+            } else {
+                throw NetworkException.BeatmapException.Undefined(e)
             }
         }
     }

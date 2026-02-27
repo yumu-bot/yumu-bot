@@ -523,21 +523,21 @@ import kotlin.math.roundToInt
     companion object {
         private val log: Logger = LoggerFactory.getLogger(Companion::class.java)
 
-        @JvmStatic fun getMillisFromAR(ar: Float): Float = when {
+        fun getMillisFromAR(ar: Float): Float = when {
             ar > 11f -> 300f
             ar > 5f -> 1200 - (150 * (ar - 5))
             ar > 0f -> 1800 - (120 * ar)
             else -> 1800f
         }
 
-        @JvmStatic fun getARFromMillis(ms: Float): Float = when {
+        fun getARFromMillis(ms: Float): Float = when {
             ms < 300 -> 11f
             ms < 1200 -> 5 + (1200 - ms) / 150f
             ms < 2400 -> (1800 - ms) / 120f
             else -> -5f
         }
 
-        @JvmStatic fun applyAR(ar: Float, mods: List<LazerMod>): Float {
+        fun applyAR(ar: Float, mods: List<LazerMod>): Float {
             var a = ar
 
             for (mod in mods) {
@@ -564,7 +564,7 @@ import kotlin.math.roundToInt
             return a.roundToDigits2()
         }
 
-        @JvmStatic fun getMillisFromOD(od: Float, mode: OsuMode): Float = when (mode) {
+        fun getMillisFromOD(od: Float, mode: OsuMode): Float = when (mode) {
             OsuMode.TAIKO -> when {
                 od > 11 -> 17f
                 else -> 50 - 3 * od
@@ -581,12 +581,12 @@ import kotlin.math.roundToInt
             }
         }
 
-        @JvmStatic fun getODFromMillis(ms: Float): Float = when {
+        fun getODFromMillis(ms: Float): Float = when {
             ms < 14 -> 11f
             else -> (80 - ms) / 6f
         }
 
-        @JvmStatic fun applyOD(od: Float, mods: List<LazerMod>, mode: OsuMode): Float {
+        fun applyOD(od: Float, mods: List<LazerMod>, mode: OsuMode): Float {
             var o = od
             if (mods.contains(LazerMod.HardRock)) {
                 o = (o * 1.4f).coerceIn(0f, 10f)
@@ -617,7 +617,7 @@ import kotlin.math.roundToInt
             return o.roundToDigits2()
         }
 
-        @JvmStatic fun applyCS(cs: Float, mods: List<LazerMod>): Float {
+        fun applyCS(cs: Float, mods: List<LazerMod>): Float {
             var c = cs
 
             for (mod in mods) {
@@ -635,7 +635,7 @@ import kotlin.math.roundToInt
             return c.coerceIn(0f, 10f).roundToDigits2()
         }
 
-        @JvmStatic fun applyHP(hp: Float, mods: List<LazerMod>): Float {
+        fun applyHP(hp: Float, mods: List<LazerMod>): Float {
             var h = hp
 
             for (mod in mods) {
@@ -653,11 +653,11 @@ import kotlin.math.roundToInt
             return h.coerceIn(0f, 10f).roundToDigits2()
         }
 
-        @JvmStatic fun applyBPM(bpm: Float?, mods: List<LazerMod>): Float {
+        fun applyBPM(bpm: Float?, mods: List<LazerMod>): Float {
             return ((bpm ?: 0f) * LazerMod.getModSpeed(mods)).roundToDigits2()
         }
 
-        @JvmStatic fun applyLength(length: Int?, mods: List<LazerMod>): Int {
+        fun applyLength(length: Int?, mods: List<LazerMod>): Int {
             return ((length ?: 0).toDouble() / LazerMod.getModSpeed(mods)).roundToInt()
         }
 

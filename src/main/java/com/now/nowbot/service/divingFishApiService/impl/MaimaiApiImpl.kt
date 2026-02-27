@@ -9,8 +9,9 @@ import com.now.nowbot.service.divingFishApiService.MaimaiApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
-import io.netty.handler.timeout.ReadTimeoutException
+import io.netty.channel.unix.Errors
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.buffer.DataBuffer
@@ -26,6 +27,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.time.Duration
 import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
 import kotlin.math.abs
 import kotlin.text.Charsets.UTF_8
 
@@ -35,21 +37,21 @@ import kotlin.text.Charsets.UTF_8
 ) : MaimaiApiService {
     private val path = base.maimaiPath!!
 
-    @JvmRecord private data class MaimaiBestQQRequestBody(val qq: Long, val b50: Boolean)
+    private data class MaimaiBestQQRequestBody(val qq: Long, val b50: Boolean)
 
-    @JvmRecord private data class MaimaiBestNameRequestBody(val username: String, val b50: Boolean)
+    private data class MaimaiBestNameRequestBody(val username: String, val b50: Boolean)
 
-    @JvmRecord private data class MaimaiVersionQQRequestBody(
+    private data class MaimaiVersionQQRequestBody(
         val qq: Long, val version: List<String>
     )
 
-    @JvmRecord private data class MaimaiVersionNameRequestBody(
+    private data class MaimaiVersionNameRequestBody(
         val username: String, val version: List<String>
     )
 
-    @JvmRecord //傻逼吧外面怎么还有一层
+    //傻逼吧外面怎么还有一层
     private data class MaimaiAliasResponseBody(
-        @JsonProperty("aliases") val aliases: List<MaiAlias>
+        @field:JsonProperty("aliases") val aliases: List<MaiAlias>
     )
 
     override fun getMaimaiBest50(qq: Long): MaiBestScore {
@@ -565,21 +567,53 @@ import kotlin.text.Charsets.UTF_8
     private fun <T> request(request: (WebClient) -> Mono<T>): T {
         return try {
             request(base.divingFishApiWebClient).block()!!
-        } catch (_: WebClientResponseException.BadRequest) {
-            throw NetworkException.DivingFishException.BadRequest()
-        } catch (_: WebClientResponseException.Unauthorized) {
-            throw NetworkException.DivingFishException.Unauthorized()
-        } catch (_: WebClientResponseException.Forbidden) {
-            throw NetworkException.DivingFishException.Forbidden()
-        } catch (_: ReadTimeoutException) {
-            throw NetworkException.DivingFishException.RequestTimeout()
-        } catch (_: WebClientResponseException.InternalServerError) {
-            throw NetworkException.DivingFishException.InternalServerError()
-        } catch (_: WebClientResponseException.BadGateway) {
-            throw NetworkException.DivingFishException.BadGateway()
-        } catch (e: Exception) {
-            log.error("水鱼查分器：获取失败", e)
-            throw NetworkException.DivingFishException.Undefined(e)
+        } catch (e: Throwable) {
+            when (e.cause) {
+                is WebClientResponseException.BadRequest -> {
+                    throw NetworkException.DivingFishException.BadRequest()
+                }
+
+                is WebClientResponseException.Unauthorized -> {
+                    throw NetworkException.DivingFishException.Unauthorized()
+                }
+
+                is WebClientResponseException.Forbidden -> {
+                    throw NetworkException.DivingFishException.Forbidden()
+                }
+
+                is WebClientResponseException.NotFound -> {
+                    throw NetworkException.DivingFishException.NotFound()
+                }
+
+//                is WebClientResponseException.UnprocessableEntity -> {
+//                    throw NetworkException.DivingFishException.UnprocessableEntity()
+//                }
+
+//                is WebClientResponseException.TooManyRequests -> {
+//                    throw NetworkException.DivingFishException.TooManyRequests()
+//                }
+
+                is WebClientResponseException.InternalServerError -> {
+                    throw NetworkException.DivingFishException.InternalServerError()
+                }
+
+//                is WebClientResponseException.BadGateway -> {
+//                    throw NetworkException.DivingFishException.BadGateWay()
+//                }
+
+//                is WebClientResponseException.ServiceUnavailable -> {
+//                    throw NetworkException.DivingFishException.ServiceUnavailable()
+//                }
+            }
+
+            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                throw NetworkException.DivingFishException.GatewayTimeout()
+            } else if (e.findCauseOfType<ExecutionException>() != null) {
+                throw NetworkException.DivingFishException.RequestTimeout()
+            } else {
+                log.error("水鱼查分器：获取失败", e)
+                throw NetworkException.DivingFishException.Undefined(e)
+            }
         }
     }
 

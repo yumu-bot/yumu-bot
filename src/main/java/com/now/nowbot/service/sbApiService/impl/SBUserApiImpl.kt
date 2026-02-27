@@ -13,7 +13,6 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import io.netty.channel.unix.Errors
-import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -21,6 +20,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import java.util.*
+import java.util.concurrent.ExecutionException
 
 @Service
 class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDao): SBUserApiService {
@@ -199,14 +199,14 @@ class SBUserApiImpl(private val base: SBBaseService, private val bindDao: BindDa
                     is WebClientResponseException.ServiceUnavailable -> {
                         throw NetworkException.UserException.ServiceUnavailable()
                     }
+                }
 
-                    else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                        throw NetworkException.UserException.GatewayTimeout()
-                    } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
-                        throw NetworkException.UserException.RequestTimeout()
-                    } else {
-                        throw NetworkException.UserException.Undefined(e)
-                    }
+                if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                    throw NetworkException.UserException.GatewayTimeout()
+                } else if (e.findCauseOfType<ExecutionException>() != null) {
+                    throw NetworkException.UserException.RequestTimeout()
+                } else {
+                    throw NetworkException.UserException.Undefined(e)
                 }
             }
     }

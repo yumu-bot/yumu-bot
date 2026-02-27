@@ -8,7 +8,6 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import io.netty.channel.unix.Errors
-import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -16,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import java.util.*
+import java.util.concurrent.ExecutionException
 
 @Service
 class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
@@ -72,14 +72,14 @@ class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
                 is WebClientResponseException.ServiceUnavailable -> {
                     throw NetworkException.BeatmapException.ServiceUnavailable()
                 }
+            }
 
-                else -> if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                    throw NetworkException.BeatmapException.GatewayTimeout()
-                } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
-                    throw NetworkException.BeatmapException.RequestTimeout()
-                } else {
-                    throw NetworkException.BeatmapException.Undefined(e)
-                }
+            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                throw NetworkException.BeatmapException.GatewayTimeout()
+            } else if (e.findCauseOfType<ExecutionException>() != null) {
+                throw NetworkException.BeatmapException.RequestTimeout()
+            } else {
+                throw NetworkException.BeatmapException.Undefined(e)
             }
         }
     }

@@ -4,19 +4,16 @@ import com.now.nowbot.model.enums.Operator
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.LazerMod
 import com.now.nowbot.model.osu.LazerScore
-
 import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
 import com.now.nowbot.util.DataUtil
+import com.now.nowbot.util.TimeParser
 import com.now.nowbot.util.command.*
 import org.intellij.lang.annotations.Language
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.Period
-import java.time.YearMonth
+import java.time.Instant
 import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
 import kotlin.math.*
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 
 enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
     CREATOR("(creator|host|c|谱师|作者|谱|主)(?<n>$REG_OPERATOR_WITH_SPACE$REG_NAME)".toRegex()),
@@ -263,8 +260,6 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
             val double = condition.double
             val str = condition.condition
             val dec = condition.hasDecimal
-            val days = condition.days
-            val seconds = condition.seconds
 
             // 一般这个数据都很大。如果输入很小的数，会自动给你乘 1k
             val longPlus = if (long in 1..< 100) {
@@ -363,11 +358,9 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 }
 
                 LENGTH -> {
-                    val compare = it.beatmap.totalLength.toLong()
+                    val seconds = str.filter { it.isDigit() }.toLongOrNull() ?: return false
 
-                    val to = seconds.second.inWholeSeconds
-
-                    fit(operator, compare, to)
+                    fit(operator, it.beatmap.totalLength.toLong(), seconds)
                 }
 
                 BPM -> fit(operator, it.beatmap.bpm.toDouble(), double, digit = 2, isRound = true, isInteger = true)
@@ -467,7 +460,7 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                     else -> !it.isLazer
                 }
 
-                CREATED_TIME -> fitTime(operator, it.endedTime.toEpochSecond(), days)
+                CREATED_TIME -> fitTime(operator, it.endedTime.atZoneSameInstant(ZoneOffset.UTC).toEpochSecond(), str)
 
                 else -> false
             }
@@ -494,9 +487,53 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 fit(operator, compare.toInt(), t.toInt())
             }
         }
+
+        fun fitTime(operator: Operator, compare: Long?, to: String): Boolean {
+            // = ==
+            val isWithInMode = operator == Operator.EQ || operator == Operator.NE
+
+            // <= >=
+            val isShiftMode = (operator == Operator.GE || operator == Operator.LE || operator == Operator.XQ)
+
+            val too: Long
+            val nowUtc = Instant.now() // 获取当前 UTC 时间的 Instant
+            val delta: Duration
+
+            if (isShiftMode) {
+                // 2. 移动日期模式：用户输入的是 "300s" 或 "2d" 这种长度
+                val parsed = TimeParser.parseDuration(to, "d", TimeParser.ColonMode.HOUR_MIN)
+
+                delta = 1.days
+                // 直接在当前 UTC 时间戳上减去时长
+                too = nowUtc.epochSecond - parsed.duration.inWholeSeconds
+            } else {
+                // 1. 绝对日期模式：用户输入的是 "22-11-22" 这种格式
+                // 我们先解析成本地日期时间，然后指定它为 UTC 偏移的时间
+                val parsed = TimeParser.parseBackwards(to, "d", TimeParser.ColonMode.HOUR_MIN)
+
+                delta = TimeParser.getDeltaFromUnit(parsed.time, parsed.unit)
+                // 将解析出的 LocalDateTime 视为 UTC 时间并转为秒
+                too = parsed.time.toEpochSecond(ZoneOffset.UTC)
+            }
+
+            return if (isWithInMode) {
+                // 区域日期模式，从目标时间到目标时间 + 输入的最小单位的时间
+
+                if (operator != Operator.NE) {
+                    fit(Operator.GE, compare, too) && fit(Operator.LE, compare, too + delta.inWholeSeconds)
+                } else {
+                    !(fit(Operator.GE, compare, too) && fit(Operator.LE, compare, too + delta.inWholeSeconds))
+                }
+            } else {
+
+                fit(operator, compare, too)
+            }
+        }
+
         /**
          * 时间筛选器升级
          */
+        /*
         fun fitTime(operator: Operator, compare: Long?, to: Pair<Period, Duration>): Boolean {
             if (compare == null) return false
 
@@ -603,6 +640,8 @@ enum class ScoreFilter(@param:Language("RegExp") val regex: Regex) {
                 fit(operator, compare, too)
             }
         }
+
+         */
 
         fun fitMod(operator: Operator, compare: String, to: List<LazerMod>): Boolean {
             val com = LazerMod.getModsList(compare)

@@ -9,8 +9,9 @@ import com.now.nowbot.model.maimai.ChuSong
 import com.now.nowbot.service.divingFishApiService.ChunithmApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
+import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
-import io.netty.handler.timeout.ReadTimeoutException
+import io.netty.channel.unix.Errors
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
@@ -20,6 +21,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono
 import java.io.IOException
 import java.nio.file.Files
+import java.util.concurrent.ExecutionException
 import kotlin.text.Charsets.UTF_8
 
 @Service
@@ -74,9 +76,9 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
             val cover = getChunithmCoverFromAPI(songID)
 
             Files.write(path, cover)
-        } catch (e : IOException) {
+        } catch (_ : IOException) {
             log.info("chunithm: 写入封面 $songID 失败")
-        } catch (e : Exception) {
+        } catch (_ : Exception) {
             log.info("chunithm: 下载封面 $songID 失败")
         }
     }
@@ -88,7 +90,7 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
         if (Files.isRegularFile(path))
                 try {
                     return Files.readAllBytes(path)
-                } catch (ignored: IOException) {}
+                } catch (_: IOException) {}
 
         return getChunithmCoverFromAPI(songID)
     }
@@ -101,12 +103,12 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
                     it.scheme("https").host("assets2.lxns.net").path("chunithm/jacket/${song}.png").build()
                 }.retrieve().bodyToMono(ByteArray::class.java)
             }
-        } catch (e: NetworkException.DivingFishException.NotFound) {
+        } catch (_: NetworkException.DivingFishException.NotFound) {
             val path = path.resolve("Cover").resolve("0.png")
 
             return try {
                 Files.readAllBytes(path)
-            } catch (e: IOException) {
+            } catch (_: IOException) {
                 byteArrayOf()
             }
         }
@@ -317,21 +319,53 @@ class ChunithmApiImpl(private val base: DivingFishBaseService, private val maiDa
     private fun <T> request(request: (WebClient) -> Mono<T>): T {
         return try {
             request(base.divingFishApiWebClient).block()!!
-        } catch (_: WebClientResponseException.BadRequest) {
-            throw NetworkException.DivingFishException.BadRequest()
-        } catch (_: WebClientResponseException.BadGateway) {
-            throw NetworkException.DivingFishException.BadGateway()
-        } catch (_: WebClientResponseException.Unauthorized) {
-            throw NetworkException.DivingFishException.Unauthorized()
-        } catch (_: WebClientResponseException.Forbidden) {
-            throw NetworkException.DivingFishException.Forbidden()
-        } catch (_: ReadTimeoutException) {
-            throw NetworkException.DivingFishException.RequestTimeout()
-        } catch (_: WebClientResponseException.InternalServerError) {
-            throw NetworkException.DivingFishException.InternalServerError()
-        } catch (e: Exception) {
-            log.error("水鱼查分器：获取失败", e)
-            throw NetworkException.DivingFishException.Undefined(e)
+        } catch (e: Throwable) {
+            when (e.cause) {
+                is WebClientResponseException.BadRequest -> {
+                    throw NetworkException.DivingFishException.BadRequest()
+                }
+
+                is WebClientResponseException.Unauthorized -> {
+                    throw NetworkException.DivingFishException.Unauthorized()
+                }
+
+                is WebClientResponseException.Forbidden -> {
+                    throw NetworkException.DivingFishException.Forbidden()
+                }
+
+                is WebClientResponseException.NotFound -> {
+                    throw NetworkException.DivingFishException.NotFound()
+                }
+
+//                is WebClientResponseException.UnprocessableEntity -> {
+//                    throw NetworkException.DivingFishException.UnprocessableEntity()
+//                }
+
+//                is WebClientResponseException.TooManyRequests -> {
+//                    throw NetworkException.DivingFishException.TooManyRequests()
+//                }
+
+                is WebClientResponseException.InternalServerError -> {
+                    throw NetworkException.DivingFishException.InternalServerError()
+                }
+
+//                is WebClientResponseException.BadGateway -> {
+//                    throw NetworkException.DivingFishException.BadGateWay()
+//                }
+
+//                is WebClientResponseException.ServiceUnavailable -> {
+//                    throw NetworkException.DivingFishException.ServiceUnavailable()
+//                }
+            }
+
+            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
+                throw NetworkException.DivingFishException.GatewayTimeout()
+            } else if (e.findCauseOfType<ExecutionException>() != null) {
+                throw NetworkException.DivingFishException.RequestTimeout()
+            } else {
+                log.error("水鱼查分器：获取失败", e)
+                throw NetworkException.DivingFishException.Undefined(e)
+            }
         }
     }
 
