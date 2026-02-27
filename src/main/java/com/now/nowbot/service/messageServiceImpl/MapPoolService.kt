@@ -15,24 +15,26 @@ import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuCalculateApiService
 import com.now.nowbot.throwable.TipsException
 import com.now.nowbot.util.ASyncMessageUtil
-import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.Instruction
+import com.now.nowbot.util.InstructionUtil.getMode
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.command.FLAG_NAME
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.body
 import org.springframework.web.util.UriComponentsBuilder
-import java.time.Duration
 
-@Service("MAP_POOL") class MapPoolService(
+@Service("MAP_POOL")
+class MapPoolService(
     private val imageService: ImageService,
     private val beatmapApiService: OsuBeatmapApiService,
     private val calculateApiService: OsuCalculateApiService,
-    private val webClient: WebClient,
+    @field:Qualifier("restClient")
+    private val restClient: RestClient,
     beatmapMirrorConfig: BeatmapMirrorConfig
 ) : MessageService<PoolParam> {
     private val url = beatmapMirrorConfig.url
@@ -40,7 +42,8 @@ import java.time.Duration
 
     data class PoolParam(val id: Int, val name: String?, val mode: OsuMode)
 
-    @Throws(TipsException::class) override fun isHandle(
+    @Throws(TipsException::class)
+    override fun isHandle(
         event: MessageEvent,
         messageText: String,
         data: DataValue<PoolParam>,
@@ -66,7 +69,8 @@ import java.time.Duration
         return true
     }
 
-    @Throws(Throwable::class) override fun handleMessage(event: MessageEvent, param: PoolParam): ServiceCallStatistic? {
+    @Throws(Throwable::class)
+    override fun handleMessage(event: MessageEvent, param: PoolParam): ServiceCallStatistic? {
         if (param.name.isNullOrBlank().not()) {
             val result = searchByName(param.name)
             if (result.isEmpty()) throw TipsException("未找到名称包含 ${param.name} 的图池")
@@ -113,12 +117,12 @@ import java.time.Duration
     fun searchByName(name: String): List<Pool> {
         if (url == null) return emptyList()
 
-        val nodeOpt = webClient.get().uri {
+        val nodeOpt = restClient.get().uri {
             UriComponentsBuilder.fromUriString(url).path("/api/public/searchPool").queryParam("poolName", name).build()
                 .toUri()
         }.headers {
-            it.addIfAbsent("AuthorizationX", token)
-        }.retrieve().bodyToMono(JsonNode::class.java).block(Duration.ofSeconds(30)) ?: return emptyList()
+            it.add("AuthorizationX", token)
+        }.retrieve().body<JsonNode>() ?: return emptyList()
 
         return nodeOpt.map { node: JsonNode ->
             JacksonUtil.parseObjectList(node["data"], Pool::class.java)
@@ -129,18 +133,28 @@ import java.time.Duration
         if (url == null) return null
 
         return try {
-            webClient.get().uri {
-                UriComponentsBuilder.fromUriString(url).path("/api/public/searchPool").queryParam("poolId", id).build()
-                    .toUri()
-            }.headers {
-                it.addIfAbsent("AuthorizationX", token)
-            }.retrieve().bodyToMono(JsonNode::class.java).map { json: JsonNode ->
-                if (json.has("data")) JacksonUtil.parseObject(json["data"], Pool::class.java)
-                else null
-            }.block(Duration.ofSeconds(30))
+            val json = restClient
+                .get()
+                .uri {
+                    UriComponentsBuilder
+                        .fromUriString(url)
+                        .path("/api/public/searchPool")
+                        .queryParam("poolId", id)
+                        .build()
+                        .toUri()
+                }
+                .headers {
+                    it.add("AuthorizationX", token)
+                }
+                .retrieve()
+                .body<JsonNode>()
+                ?: return null
+            return if (json.has("data")) {
+                JacksonUtil.parseObject(json["data"], Pool::class.java)
+            } else {
+                null
+            }
         } catch (_: HttpClientErrorException.NotFound) {
-            null
-        } catch (_: WebClientResponseException.NotFound) {
             null
         }
     }

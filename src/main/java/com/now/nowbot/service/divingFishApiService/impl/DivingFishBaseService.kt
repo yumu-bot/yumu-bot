@@ -4,18 +4,21 @@ import com.now.nowbot.config.DivingFishConfig
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.client.RestClient
 import java.nio.file.Path
 
 @Service
-class DivingFishBaseService(val webClient: WebClient, @param:Qualifier("divingFishApiWebClient") val divingFishApiWebClient: WebClient, fishConfig: DivingFishConfig) {
+class DivingFishBaseService(
+    @param:Qualifier("divingFishApiRestClient") val divingFishApiRestClient: RestClient,
+    fishConfig: DivingFishConfig
+) {
     // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Maimai
     // /home/spring/work/img/ExportFileV3/Maimai
     final val maimaiPath: Path? = fishConfig.maimai
 
     // D:/App2/[Projects]/yumu-bot-run/img/ExportFileV3/Chunithm
     // /home/spring/work/img/ExportFileV3/Chunithm
-    final val chunithmPath: Path?  = fishConfig.chunithm
+    final val chunithmPath: Path? = fishConfig.chunithm
 
     // 这里写 token 相关的
     init {
@@ -28,14 +31,14 @@ class DivingFishBaseService(val webClient: WebClient, @param:Qualifier("divingFi
     private lateinit var requestService: RequestService
 
     @PostConstruct fun init() {
-        requestService = RequestService(divingFishApiWebClient, "diving-api-priority")
+        requestService = RequestService(divingFishApiRestClient, "diving-api-priority")
         Thread.startVirtualThread {
             requestService.runTask()
         }
     }
 
     @Throws(ExecutionException::class)
-    fun <T> request(request: (WebClient) -> Mono<T>): T {
+    fun <T> request(request: (RestClient) -> T): T {
         return requestService.request(request)
     }
 
@@ -54,8 +57,6 @@ class DivingFishBaseService(val webClient: WebClient, @param:Qualifier("divingFi
         if (headers == null) return
         headers["Content-Type"] = "application/json"
     }
-
-
 
 
     companion object {

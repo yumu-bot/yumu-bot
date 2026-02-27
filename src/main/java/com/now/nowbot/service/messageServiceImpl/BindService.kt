@@ -12,18 +12,17 @@ import com.now.nowbot.qq.message.MessageReceipt
 import com.now.nowbot.service.MessageService
 import com.now.nowbot.service.MessageService.DataValue
 import com.now.nowbot.service.osuApiService.OsuUserApiService
-
 import com.now.nowbot.throwable.botRuntimeException.BindException
 import com.now.nowbot.throwable.botRuntimeException.PermissionException
 import com.now.nowbot.util.ASyncMessageUtil
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.Instruction
-import com.now.nowbot.util.command.*
+import com.now.nowbot.util.command.FLAG_NAME
+import com.now.nowbot.util.command.FLAG_QQ_ID
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import java.util.*
+import org.springframework.web.client.HttpClientErrorException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 
@@ -250,7 +249,7 @@ import java.util.function.Predicate
                     }
                 )
             } catch (e: Exception) {
-                if (e.findCauseOfType<WebClientResponseException.Forbidden>() != null) {
+                if (e.findCauseOfType<HttpClientErrorException.Forbidden>() != null) {
                     event.reply(BindException.BindConfirmException.Unavailable(bindUser.userID, bindUser.username))
                 }
             }

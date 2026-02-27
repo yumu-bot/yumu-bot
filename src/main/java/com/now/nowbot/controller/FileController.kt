@@ -2,28 +2,39 @@ package com.now.nowbot.controller
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.config.BeatmapMirrorConfig
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.body
 import org.springframework.web.multipart.MultipartFile
-import org.springframework.web.reactive.function.client.WebClient
 
-@RestController @RequestMapping(value = ["/pub"], method = [RequestMethod.GET])
+@RestController
+@RequestMapping(value = ["/pub"], method = [RequestMethod.GET])
 @CrossOrigin("http://localhost:5173", "https://siyuyuko.github.io")
-class FileController(private val webClient: WebClient, mirrorConfig: BeatmapMirrorConfig) {
+class FileController(
+    @field:Qualifier("restClient")
+    private val restClient: RestClient,
+    mirrorConfig: BeatmapMirrorConfig
+) {
     private final val token: String? = mirrorConfig.token
     private final val url = mirrorConfig.url
 
-    @GetMapping("/api/{type}/{bid}") fun download(
+    @GetMapping("/api/{type}/{bid}")
+    fun download(
         @PathVariable("type") type: String, @PathVariable("bid") bid: Long?
     ): ResponseEntity<*> {
 
-        return when(type) {
+        return when (type) {
             "info" -> {
                 val data: JsonNode = try {
-                    webClient.get().uri("${url}/api/map/getBeatMapInfo/${bid}").headers {
-                        it.addIfAbsent("AuthorizationX", token)
-                    }.retrieve().bodyToMono(JsonNode::class.java).block()!!
+                    restClient
+                        .get()
+                        .uri("${url}/api/map/getBeatMapInfo/${bid}")
+                        .headers { it.add("AuthorizationX", token) }
+                        .retrieve()
+                        .body<JsonNode>()!!
                 } catch (e: Exception) {
                     return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON)
                         .body(mapOf("code" to 400, "message" to e.message))
@@ -34,11 +45,12 @@ class FileController(private val webClient: WebClient, mirrorConfig: BeatmapMirr
 
             "background" -> {
                 val data: ByteArray = try {
-                    webClient.get().uri(
-                        "${url}/api/file/map/bg/${bid}"
-                    ).headers {
-                        it.addIfAbsent("AuthorizationX", token)
-                    }.retrieve().bodyToMono(ByteArray::class.java).block()!!
+                    restClient
+                        .get()
+                        .uri("${url}/api/file/map/bg/${bid}")
+                        .headers { it.add("AuthorizationX", token) }
+                        .retrieve()
+                        .body<ByteArray>()!!
                 } catch (e: Exception) {
                     return ResponseEntity.status(400).contentType(MediaType.APPLICATION_JSON)
                         .body(mapOf("code" to 400, "message" to e.message))

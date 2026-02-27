@@ -3,10 +3,10 @@ package com.now.nowbot.service.messageServiceImpl
 import com.now.nowbot.dao.BindDao
 import com.now.nowbot.dao.OsuUserInfoDao
 import com.now.nowbot.entity.ServiceCallStatistic
-import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.filter.ScoreFilter
 import com.now.nowbot.model.osu.Beatmap
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.qq.event.MessageEvent
@@ -505,11 +505,10 @@ class ScorePRService(
 
         val d = UUScore(score, beatmapApiService, calculateApiService)
 
-        val imgBytes = osuApiWebClient.get()
+        val imgBytes = base.osuApiRestClient.get()
             .uri(d.url ?: "")
             .retrieve()
-            .bodyToMono(ByteArray::class.java)
-            .block()!!
+            .body<ByteArray>()!!
 
         return MessageChain(d.scoreLegacyOutput, imgBytes)
     }

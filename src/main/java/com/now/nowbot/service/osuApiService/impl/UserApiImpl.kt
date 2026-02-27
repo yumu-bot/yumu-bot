@@ -18,21 +18,18 @@ import com.now.nowbot.throwable.botRuntimeException.UnsupportedOperationExceptio
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
-import io.netty.channel.unix.Errors
 import kotlinx.io.IOException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientException
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.client.body
 import org.springframework.web.util.UriComponentsBuilder
-import reactor.core.publisher.Mono
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.Callable
-import java.util.concurrent.ExecutionException
 
 @Service class UserApiImpl(
     private val base: OsuApiBaseService, private val bindDao: BindDao, private val userInfoDao: OsuUserInfoDao
@@ -40,23 +37,27 @@ import java.util.concurrent.ExecutionException
     override fun getAvatarByte(user: OsuUser): ByteArray {
         return try {
             request { client ->
-                client.get().uri(user.avatarUrl).retrieve().bodyToMono(ByteArray::class.java)
+                client.get().uri(user.avatarUrl).retrieve().body<ByteArray>()!!
             }
         } catch (_: NetworkException) {
             log.error("获取玩家 ${user.userID} 头像失败，尝试返回默认头像")
 
             request { client ->
-                client.get().uri("https://a.ppy.sh/").retrieve().bodyToMono(ByteArray::class.java)
+                client.get().uri("https://a.ppy.sh/").retrieve().body<ByteArray>()!!
             }
         }
     }
 
     // 用来确认玩家是否存在于服务器，而无需使用 API 请求。
     override fun isPlayerExist(name: String): Boolean {
-        val response = request { client ->
-            client.get().uri("https://osu.ppy.sh/users/@{name}", name)
-                .headers(base::insertHeader).retrieve()
-                .bodyToMono(String::class.java).onErrorReturn("")
+        val response = try {
+            request { client ->
+                client.get().uri("https://osu.ppy.sh/users/@{name}", name)
+                    .headers(base::insertHeader).retrieve()
+                    .body<String>() ?: ""
+            }
+        } catch (e: Exception) {
+            ""
         }
 
         return response.isNotBlank()
@@ -115,12 +116,11 @@ import java.util.concurrent.ExecutionException
 
     override fun refreshUserTokenFirst(user: BindUser) {
         base.refreshUserToken(user, true)
-//        getOsuUser(user).apply {
-//            val uid = this.userID
-//            user.userID = uid
-//            user.username = this.username
-//            user.mode = this.currentOsuMode
-//        }
+        val o = getOsuUser(user)
+        val uid = o.userID
+        user.userID = uid
+        user.username = o.username
+        user.mode = o.currentOsuMode
     }
 
 
@@ -133,16 +133,16 @@ import java.util.concurrent.ExecutionException
             .headers { headers ->
                 base.insertHeader(headers, user)
             }.retrieve()
-            .bodyToMono(OsuUser::class.java)
-        }.apply {
-            user.userID = this.userID
-            user.username = this.username
-            user.mode = mode
-            this.currentOsuMode = getMode(mode, this.defaultOsuMode)
+                .body<OsuUser>()!!
         }
 
+        userInfoDao.saveUserToday(data, mode)
+        user.userID = data.userID
+        user.username = data.username
+        user.mode = mode
+        data.currentOsuMode = getMode(mode, data.defaultOsuMode)
+
         Thread.startVirtualThread {
-            userInfoDao.saveUserToday(data, mode)
             bindDao.updateNameToID(data)
         }
 
@@ -150,24 +150,19 @@ import java.util.concurrent.ExecutionException
     }
 
     override fun getOsuUser(name: String, mode: OsuMode): OsuUser {
-        val user = request { client ->
-            client.get()
-                .uri { it.path("users/{data}/{mode}")
-                    .build("@$name", mode.shortName)
-                }
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToMono(OsuUser::class.java)
-        }.apply {
-            this.currentOsuMode = getMode(mode, this.defaultOsuMode)
+        val data = request { client ->
+            client.get().uri {
+                    it.path("users/{data}/{mode}").build("@$name", mode.shortName)
+                }.headers(base::insertHeader).retrieve().body<OsuUser>()!!
         }
+        userInfoDao.saveUserToday(data, mode)
+        data.currentOsuMode = getMode(mode, data.defaultOsuMode)
 
         Thread.startVirtualThread {
-            userInfoDao.saveUserToday(user, mode)
-            bindDao.updateNameToID(user)
+            bindDao.updateNameToID(data)
         }
 
-        return user
+        return data
     }
 
     override fun getOsuUser(id: Long, mode: OsuMode): OsuUser {
@@ -176,13 +171,14 @@ import java.util.concurrent.ExecutionException
                 it.path("users/{id}/{mode}").build(id, mode.shortName)
             }.headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(OsuUser::class.java)
+                .body<OsuUser>()!!
         } // 执行到这里，数据已经回到了虚拟线程
 
         // 以下逻辑在虚拟线程中执行，不会卡死 Netty
+        userInfoDao.saveUserToday(data, mode)
+        data.currentOsuMode = getMode(mode, data.defaultOsuMode)
+
         Thread.startVirtualThread {
-            userInfoDao.saveUserToday(data, mode)
-            data.currentOsuMode = getMode(mode, data.defaultOsuMode)
             bindDao.updateNameToID(data)
         }
 
@@ -256,18 +252,21 @@ import java.util.concurrent.ExecutionException
      * @param isVariant 是否获取玩家的多模式信息
      */
     private fun <T : Number> getUsersPrivate(users: Iterable<T>, isVariant: Boolean, isBackground: Boolean): List<MicroUser> {
-        return request(isBackground) { client ->
+        val data = request(isBackground) { client ->
             client.get().uri {
-                    it.path("users").queryParam("ids[]", users.toList())
-                        .queryParam("include_variant_statistics", isVariant).build()
-                }.headers(base::insertHeader).retrieve().bodyToMono(JsonNode::class.java).map {
-                    val userList = JacksonUtil.parseObjectList(
-                        it["users"], MicroUser::class.java
-                    )
-                    userInfoDao.saveUsersToday(userList)
-                    userList
-                }
+                val ids = users.map { it -> it.toLong() }.toList()
+                    it.path("users")
+                        .queryParam("ids[]", *ids.toTypedArray())
+                        .queryParam("include_variant_statistics", isVariant)
+                        .build()
+                }.headers(base::insertHeader).retrieve().body<JsonNode>()!!
         }
+
+        val userList = JacksonUtil.parseObjectList(
+            data["users"], MicroUser::class.java
+        )
+        userInfoDao.saveUsersToday(userList)
+        return userList
     }
 
     override fun getFriendList(user: BindUser): List<LazerFriend> {
@@ -279,23 +278,24 @@ import java.util.concurrent.ExecutionException
             }
         }
 
-        return request { client ->
+        val json = request { client ->
             client.get().uri("friends")
                 .headers { headers ->
                     base.insertHeader(headers, user)
                 }
-                .retrieve().bodyToFlux(LazerFriend::class.java)
-                .collectList()
+                .retrieve().body<JsonNode>()!!
         }
+        return JacksonUtil.parseObjectList(json, LazerFriend::class.java)
     }
 
     override fun getUserRecentActivity(id: Long, offset: Int, limit: Int): List<ActivityEvent> {
-        return request { client ->
+        val json = request { client ->
             client.get().uri {
                     it.path("users/{userId}/recent_activity").queryParam("offset", offset).queryParam("limit", limit)
                         .build(id)
-                }.headers(base::insertHeader).retrieve().bodyToFlux(ActivityEvent::class.java).collectList()
+                }.headers(base::insertHeader).retrieve().body<JsonNode>()!!
         }
+        return JacksonUtil.parseObjectList(json, ActivityEvent::class.java)
     }
 
     override fun getUserKudosu(user: BindUser): KudosuHistory {
@@ -303,7 +303,7 @@ import java.util.concurrent.ExecutionException
             client.get().uri("users/{uid}/kudosu").headers { headers ->
                 base.insertHeader(headers, user)
             }.retrieve()
-                .bodyToMono(KudosuHistory::class.java)
+                .body<KudosuHistory>()!!
         }
     }
 
@@ -312,8 +312,8 @@ import java.util.concurrent.ExecutionException
         return request { client ->
             client.post().uri("chat/new").headers { headers ->
                 base.insertHeader(headers, sender)
-            }.bodyValue(body).retrieve()
-                .bodyToMono(JsonNode::class.java)
+            }.body(body).retrieve()
+                .body<JsonNode>()!!
         }
     }
 
@@ -323,7 +323,7 @@ import java.util.concurrent.ExecutionException
                     it.path("chat/ack").queryParamIfPresent("since", Optional.ofNullable(since)).build()
                 }.headers { headers ->
                 base.insertHeader(headers, user)
-            }.retrieve().bodyToMono(JsonNode::class.java)
+            }.retrieve().body<JsonNode>()!!
         }
     }
 
@@ -332,7 +332,7 @@ import java.util.concurrent.ExecutionException
             client.get().uri("chat/channels/{channel}/messages?since={since}", channel, since)
                 .headers { headers ->
                     base.insertHeader(headers, sender)
-                }.retrieve().bodyToMono(JsonNode::class.java)
+                }.retrieve().body<JsonNode>()!!
         }
     }
 
@@ -354,69 +354,73 @@ import java.util.concurrent.ExecutionException
     /**
      * 错误包装
      */
-    private fun <T> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
+    private fun <T: Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
         return try {
             base.request(isBackground, request)
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<WebClientException>()
+            val ex = e.findCauseOfType<RestClientResponseException>()
 
-            when (ex) {
-                is WebClientResponseException.BadRequest -> {
+            when {
+                ex == null -> {
+                    throw  NetworkException.UserException.Undefined(e)
+                }
+
+                ex.statusCode == org.springframework.http.HttpStatus.BAD_REQUEST -> {
                     throw NetworkException.UserException.BadRequest()
                 }
 
-                is WebClientResponseException.Unauthorized -> {
+                ex.statusCode == org.springframework.http.HttpStatus.UNAUTHORIZED -> {
                     throw NetworkException.UserException.Unauthorized()
                 }
 
-                is WebClientResponseException.Forbidden -> {
+                ex.statusCode == org.springframework.http.HttpStatus.FORBIDDEN -> {
                     throw NetworkException.UserException.Forbidden()
                 }
 
-                is WebClientResponseException.NotFound -> {
+                ex.statusCode == org.springframework.http.HttpStatus.NOT_FOUND -> {
                     throw NetworkException.UserException.NotFound()
                 }
 
-                is WebClientResponseException.TooManyRequests -> {
+                ex.statusCode == org.springframework.http.HttpStatus.TOO_MANY_REQUESTS -> {
                     throw NetworkException.UserException.TooManyRequests()
                 }
 
-                is WebClientResponseException.InternalServerError -> {
+                ex.statusCode == org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR -> {
                     throw NetworkException.UserException.InternalServerError()
                 }
 
-                is WebClientResponseException.BadGateway -> {
+                ex.statusCode == org.springframework.http.HttpStatus.BAD_GATEWAY -> {
                     throw NetworkException.UserException.BadGateWay()
                 }
 
-                is WebClientResponseException.ServiceUnavailable -> {
+                ex.statusCode == org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE -> {
                     throw NetworkException.UserException.ServiceUnavailable()
                 }
-            }
 
-            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                throw NetworkException.UserException.GatewayTimeout()
-            } else if (e.findCauseOfType<ExecutionException>() != null) {
-                throw NetworkException.UserException.RequestTimeout()
-            } else {
-                throw NetworkException.UserException.Undefined(e)
+                e.findCauseOfType<java.net.SocketException>() != null -> {
+                    throw NetworkException.UserException.GatewayTimeout()
+                }
+
+                else -> {
+                    throw NetworkException.UserException.Undefined(e)
+                }
             }
         }
     }
 
     override fun getTeamInfo(id: Int): TeamInfo? {
-        val html = base.request { client: WebClient ->
-            client.get().uri("https://osu.ppy.sh/teams/{id}", id).retrieve().bodyToMono(String::class.java)
+        val html = base.request { client: RestClient ->
+            client.get().uri("https://osu.ppy.sh/teams/{id}", id).retrieve().body<String>()!!
         }
 
         return parseTeamInfo(id, html)
     }
 
     override fun getTopPlays(page: Int, mode: OsuMode): TopPlays? {
-        val html = base.request { client: WebClient ->
+        val html = base.request { client: RestClient ->
             client.get()
                 .uri("https://osu.ppy.sh/rankings/top-plays/${mode.shortName}?page=${page}#scores").
-                retrieve().bodyToMono(String::class.java)
+                retrieve().body<String>()!!
         }
 
         return parseTopPlays(html)
@@ -452,9 +456,9 @@ import java.util.concurrent.ExecutionException
                     val replacePath = url.replace("https://a.ppy.sh/", "")
 
                     val image = try {
-                        base.osuApiWebClient.get().uri {
+                        base.osuApiRestClient.get().uri {
                                 it.scheme("https").host("a.ppy.sh").replacePath(replacePath).build()
-                            }.headers(base::insertHeader).retrieve().bodyToMono(ByteArray::class.java).block()!!
+                            }.headers(base::insertHeader).retrieve().body<ByteArray>()!!
                     } catch (e: Exception) {
                         log.error("异步下载头像：任务失败\n", e)
                         return@Runnable
@@ -503,9 +507,9 @@ import java.util.concurrent.ExecutionException
                     val replacePath = url.replace("https://assets.ppy.sh/", "")
 
                     val image = try {
-                        base.osuApiWebClient.get().uri {
+                        base.osuApiRestClient.get().uri {
                                 it.scheme("https").host("assets.ppy.sh").replacePath(replacePath).build()
-                            }.headers(base::insertHeader).retrieve().bodyToMono(ByteArray::class.java).block()!!
+                            }.headers(base::insertHeader).retrieve().body<ByteArray>()!!
                     } catch (e: Exception) {
                         log.error("异步下载背景：任务失败\n", e)
                         return@Runnable

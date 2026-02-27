@@ -8,14 +8,13 @@ import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
 import io.netty.channel.unix.Errors
+import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import reactor.core.publisher.Mono
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
 import java.util.*
-import java.util.concurrent.ExecutionException
 
 @Service
 class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
@@ -28,55 +27,36 @@ class SBBeatmapImpl(private val base: SBBaseService): SBBeatmapApiService {
                 .queryParamIfPresent("md5", Optional.ofNullable(md5))
                 .build()
             }.retrieve()
-                .bodyToMono(JsonNode::class.java)
-                .map { parse<SBBeatmap>(it, "map", "谱面信息") }
+                .body(JsonNode::class.java)?.let {
+                    parse<SBBeatmap>(it, "map", "谱面信息")
+                }!!
         }
     }
 
     /**
      * 错误包装
      */
-    private fun <T> request(request: (WebClient) -> Mono<T>): T {
+    private fun <T> request(request: (RestClient) -> T): T {
         return try {
-            request(base.sbApiWebClient).block()!!
-        } catch (e: Throwable) {
-            when (e.cause) {
-                is WebClientResponseException.BadRequest -> {
-                    throw NetworkException.BeatmapException.BadRequest()
-                }
-
-                is WebClientResponseException.Unauthorized -> {
-                    throw NetworkException.BeatmapException.Unauthorized()
-                }
-
-                is WebClientResponseException.Forbidden -> {
-                    throw NetworkException.BeatmapException.Forbidden()
-                }
-
-                is WebClientResponseException.NotFound -> {
-                    throw NetworkException.BeatmapException.NotFound()
-                }
-
-                is WebClientResponseException.TooManyRequests -> {
-                    throw NetworkException.BeatmapException.TooManyRequests()
-                }
-
-                is WebClientResponseException.InternalServerError -> {
-                    throw NetworkException.BeatmapException.InternalServerError()
-                }
-
-                is WebClientResponseException.BadGateway -> {
-                    throw NetworkException.BeatmapException.BadGateWay()
-                }
-
-                is WebClientResponseException.ServiceUnavailable -> {
-                    throw NetworkException.BeatmapException.ServiceUnavailable()
+            request(base.sbApiRestClient)
+        } catch (e: Exception) {
+            val cause = e as? RestClientResponseException ?: e.cause
+            if (cause is RestClientResponseException) {
+                when (cause.statusCode.value()) {
+                    400 -> throw NetworkException.BeatmapException.BadRequest()
+                    401 -> throw NetworkException.BeatmapException.Unauthorized()
+                    403 -> throw NetworkException.BeatmapException.Forbidden()
+                    404 -> throw NetworkException.BeatmapException.NotFound()
+                    429 -> throw NetworkException.BeatmapException.TooManyRequests()
+                    500 -> throw NetworkException.BeatmapException.InternalServerError()
+                    502 -> throw NetworkException.BeatmapException.BadGateWay()
+                    503 -> throw NetworkException.BeatmapException.ServiceUnavailable()
                 }
             }
 
             if (e.findCauseOfType<Errors.NativeIoException>() != null) {
                 throw NetworkException.BeatmapException.GatewayTimeout()
-            } else if (e.findCauseOfType<ExecutionException>() != null) {
+            } else if (e.findCauseOfType<ReadTimeoutException>() != null) {
                 throw NetworkException.BeatmapException.RequestTimeout()
             } else {
                 throw NetworkException.BeatmapException.Undefined(e)

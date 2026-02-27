@@ -17,12 +17,9 @@ import com.now.nowbot.model.skill.SkillMania6
 import com.now.nowbot.service.ImageService
 import com.now.nowbot.service.messageServiceImpl.*
 import com.now.nowbot.service.osuApiService.*
-import com.now.nowbot.throwable.botRuntimeException.DiceException
 import com.now.nowbot.throwable.botException.MRAException
 import com.now.nowbot.throwable.botException.MapPoolException
-import com.now.nowbot.throwable.botRuntimeException.IllegalArgumentException
-import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
-import com.now.nowbot.throwable.botRuntimeException.NetworkException
+import com.now.nowbot.throwable.botRuntimeException.*
 import com.now.nowbot.throwable.botRuntimeException.NoSuchElementException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.parseRange2Limit
@@ -35,7 +32,8 @@ import org.springframework.http.*
 import org.springframework.lang.NonNull
 import org.springframework.lang.Nullable
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.RestClientResponseException
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
@@ -240,7 +238,7 @@ import kotlin.math.min
 
         try {
             match = matchApiService.getMatch(matchID.toLong(), 10)
-        } catch (_: WebClientResponseException) {
+        } catch (_: RestClientResponseException) {
             throw RuntimeException(IllegalArgumentException.WrongException.MatchID())
         }
 
@@ -608,7 +606,7 @@ import kotlin.math.min
         try {
             osuUser = userApiService.getOsuUser(name)
             uid = osuUser.userID
-        } catch (_: WebClientResponseException.NotFound) {
+        } catch (_: HttpClientErrorException.NotFound) {
             throw RuntimeException(NoSuchElementException.Player(name))
         }
 
@@ -623,7 +621,7 @@ import kotlin.math.min
                         break
                     }
                 }
-            } catch (_: WebClientResponseException.NotFound) {
+            } catch (_: HttpClientErrorException.NotFound) {
                 throw RuntimeException(IllegalStateException.Fetch("成绩列表"))
             }
         }

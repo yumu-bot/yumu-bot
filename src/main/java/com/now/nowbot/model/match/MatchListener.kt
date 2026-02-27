@@ -1,8 +1,8 @@
 package com.now.nowbot.model.match
 
-import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.model.match.Match.EventType
 import com.now.nowbot.model.osu.LazerMod
+import com.now.nowbot.model.osu.MicroUser
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import org.slf4j.LoggerFactory
 import java.util.concurrent.Executors
@@ -57,19 +57,22 @@ class MatchListener(
 
             // 现在有对局正在进行中
             if (newMatch.currentGameID != null) {
-                val gameEvent = newMatch.events.last { it.round != null }
+                val gameEvent = newMatch.events.lastOrNull { it.round != null }
                 var isAbort = false
                 if (nowGameID != null && newMatch.currentGameID != nowGameID) {
                     nowGameID = newMatch.currentGameID
                     isAbort = true
                 }
-                if (nowEventID == gameEvent.eventID - 1 && isAbort.not()) {
+                if (gameEvent != null && nowEventID == gameEvent.eventID - 1 && isAbort.not()) {
                     return
-                } else {
+                } else if (gameEvent != null) {
                     nowEventID = gameEvent.eventID - 1
+                } else {
+                    nowEventID = newMatch.latestEventID
                 }
             } else {
                 nowEventID = newMatch.latestEventID
+                nowGameID = null
             }
 
             // 先添加新玩家，再添加新对局
@@ -196,7 +199,10 @@ class MatchListener(
         eventListener.forEach { it.onMatchEnd(type) }
     }
 
-    private fun isStart() = future?.isDone?.not() == true
+    private fun isStart(): Boolean {
+        val f = future
+        return f != null && !f.isDone && !f.isCancelled
+    }
 
     private fun addUsers(events: List<Match.MatchEvent>) {
         events

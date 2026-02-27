@@ -5,8 +5,8 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.1</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <version>4.0.3</version>
+        <relativePath/>
     </parent>
     <groupId>com.now</groupId>
     <artifactId>nowbot</artifactId>
@@ -40,7 +40,7 @@
     <properties>
         <java.version>21</java.version>
         <skipTests>false</skipTests>
-        <kotlin.version>2.0.20</kotlin.version>
+        <kotlin.version>2.3.0</kotlin.version>
     </properties>
     <dependencies>
 
@@ -50,7 +50,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-aop</artifactId>
+            <artifactId>spring-boot-starter-aspectj</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -74,17 +74,14 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.retry</groupId>
-            <artifactId>spring-retry</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webflux</artifactId>
-        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
@@ -95,6 +92,13 @@
             <groupId>com.mikuac</groupId>
             <artifactId>shiro</artifactId>
             <version>2.4.6</version>
+            <!-- 排除引入的版本冲突-->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -149,8 +153,10 @@
         </dependency>
         <dependency>
             <groupId>io.hypersistence</groupId>
-            <artifactId>hypersistence-utils-hibernate-63</artifactId>
-            <version>3.7.6</version>
+            <!-- 要跟 https://github.com/vladmihalcea/hypersistence-utils 中对准版本 -->
+            <!-- 使用 mvn dependency:tree -Dverbose -Dincludes=org.hibernate:hibernate-core 查看 -->
+            <artifactId>hypersistence-utils-hibernate-71</artifactId>
+            <version>3.15.2</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
@@ -212,7 +218,7 @@
         <dependency>
             <groupId>io.github.git-commit-id</groupId>
             <artifactId>git-commit-id-maven-plugin</artifactId>
-            <version>9.0.0</version>
+            <version>9.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
@@ -267,7 +273,8 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <generateGitPropertiesFilename>${project.build.outputDirectory}/build-info.json</generateGitPropertiesFilename>
+                    <generateGitPropertiesFilename>${project.build.outputDirectory}/build-info.json
+                    </generateGitPropertiesFilename>
                     <dateFormat>yyyy-MM-dd HH:mm:ss</dateFormat>
                     <generateGitPropertiesFile>true</generateGitPropertiesFile>
                     <includeOnlyProperties>

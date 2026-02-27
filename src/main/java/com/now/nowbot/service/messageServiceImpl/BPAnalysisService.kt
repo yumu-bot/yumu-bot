@@ -170,7 +170,7 @@ import kotlin.math.min
             val modsAttribute: List<Attribute>
             run {
                 val modsAttributeTmp: MutableList<Attribute> = ArrayList(modsPPMap.size)
-                modsPPMap.forEach { (mod: String, value: MutableList<Double?>) ->
+                modsPPMap.forEach { (mod: String, value: MutableList<Double>) ->
                     val attribute = Attribute(
                         mod, value.filterNotNull().size, value.filterNotNull().sum(), (value.size * 1.0 / modsSum)
                     )

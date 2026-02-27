@@ -3,7 +3,7 @@ package com.now.nowbot.config;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -16,7 +16,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 
@@ -50,6 +49,10 @@ public class NowbotConfig {
      */
     public static String IMGBUFFER_PATH;
     public static int    PORT;
+
+    /**
+     * 不再支持 socket5, 临时不删
+     */
     @Value("${spring.proxy.type:'HTTP'}")
     public        String proxyType;
     @Value("${spring.proxy.host:'localhost'}")
@@ -68,12 +71,12 @@ public class NowbotConfig {
 
     @Bean
     @Primary
-    public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
-        ObjectMapper mapper = builder.createXmlMapper(false).build();
-//        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        mapper.registerModule(new Jdk8Module()).setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
-              .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-        return mapper;
+    public ObjectMapper jacksonObjectMapper() {
+        return JsonMapper
+                .builder()
+                .serializationInclusion(JsonInclude.Include.NON_EMPTY)
+                .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                .build();
     }
 
     public static ApplicationContext applicationContext;

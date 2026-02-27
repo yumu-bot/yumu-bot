@@ -8,17 +8,16 @@ import com.now.nowbot.dao.BeatmapDao
 import com.now.nowbot.entity.BeatmapObjectCountLite
 import com.now.nowbot.mapper.BeatmapObjectCountMapper
 import com.now.nowbot.model.BindUser
-import com.now.nowbot.model.osu.Covers.Companion.CoverType
-import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
 import com.now.nowbot.model.enums.OsuMode
 import com.now.nowbot.model.osu.*
+import com.now.nowbot.model.osu.Covers.Companion.CoverType
+import com.now.nowbot.model.osu.Covers.Companion.CoverType.Companion.getString
 import com.now.nowbot.service.osuApiService.OsuBeatmapApiService
 import com.now.nowbot.service.osuApiService.OsuBeatmapMirrorApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
 import com.now.nowbot.util.JacksonUtil
-import io.netty.channel.unix.Errors
 import okhttp3.internal.toImmutableList
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -27,10 +26,9 @@ import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.util.DigestUtils
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientException
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import reactor.core.publisher.Mono
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.client.body
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -41,11 +39,9 @@ import java.time.OffsetDateTime
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
-import kotlin.collections.set
 import kotlin.math.min
 
 @Service
@@ -56,7 +52,7 @@ class BeatmapApiImpl(
     private val beatmapMirrorApiService: OsuBeatmapMirrorApiService,
     private val beatmapObjectCountMapper: BeatmapObjectCountMapper,
 
-    @param:Qualifier("proxyClient") private val proxyClient: WebClient,
+    @param:Qualifier("proxyRestClient") private val proxyClient: RestClient,
 ) : OsuBeatmapApiService {
 
     private val osuDir: Path = Path.of(config.osuFilePath)
@@ -109,11 +105,10 @@ class BeatmapApiImpl(
             Files.readAllBytes(path.resolve(hex))
         } else {
             try {
-                val image = base.osuApiWebClient.get()
+                val image = base.osuApiRestClient.get()
                     .uri(url)
                     .retrieve()
-                    .bodyToMono(ByteArray::class.java)
-                    .block()!!
+                    .body<ByteArray>()!!
 
                 if (Files.isDirectory(path) && Files.isWritable(path)) {
                     Files.write(path.resolve(hex), image)
@@ -157,10 +152,9 @@ class BeatmapApiImpl(
                 client.get()
                     .uri("https://osu.ppy.sh/osu/{bid}", bid)
                     .retrieve()
-                    .bodyToMono(String::class.java)
-                    .onErrorReturn("")
+                    .body<String>() ?: ""
             }
-        } catch (e: WebClientResponseException) {
+        } catch (e: RestClientResponseException) {
             log.error("osu 谱面 API：请求官网谱面失败: ", e)
             return null
         }
@@ -279,7 +273,7 @@ class BeatmapApiImpl(
                 .uri("beatmaps/{bid}", bid)
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(Beatmap::class.java)
+                .body<Beatmap>()!!
         }
 
         beatmapDao.saveBeatmapAndSaveExtendAsync(beatmap)
@@ -307,19 +301,19 @@ class BeatmapApiImpl(
      * @param ids 注意，单次请求量必须小于等于 50
      */
     private fun getBeatmapsPrivate(ids: Iterable<Long>): List<Beatmap> {
-        return request { client ->
+        val json = request { client ->
+            val idsStr = ids.map { id -> id.toString() }
             client.get()
                 .uri {
                     it.path("beatmaps")
-                    it.queryParam("ids[]", ids.map { id -> id.toString()})
-
+                    it.queryParam("ids[]", *idsStr.toTypedArray())
                     it.build()
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(JsonNode::class.java)
-                .map { JacksonUtil.parseObjectList(it["beatmaps"], Beatmap::class.java) }
+                .body<JsonNode>()!!
         }
+        return JacksonUtil.parseObjectList(json["beatmaps"], Beatmap::class.java)
     }
 
     override fun getUserBeatmapset(id: Long, type: String, offset: Int, limit: Int): List<Beatmapset> {
@@ -329,7 +323,7 @@ class BeatmapApiImpl(
         } else {
             val times = (limit / 100).coerceAtLeast(1)
 
-            val works = (0..< times).map { i ->
+            val works = (0..<times).map { i ->
                 val of = offset + (i * 100)
                 val li = min(100, limit - (i * 100))
 
@@ -346,19 +340,20 @@ class BeatmapApiImpl(
 
 
     private fun getUserBeatmapsetPrivate(id: Long, type: String, offset: Int, limit: Int): List<Beatmapset> {
-        return request { client ->
+        val json = request { client ->
             client.get()
-                .uri { it
-                    .path("/users/${id}/beatmapsets/${type}")
-                    .queryParam("offset", offset)
-                    .queryParam("limit", limit)
-                    .build()
+                .uri {
+                    it
+                        .path("/users/${id}/beatmapsets/${type}")
+                        .queryParam("offset", offset)
+                        .queryParam("limit", limit)
+                        .build()
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToFlux(Beatmapset::class.java)
-                .collectList()
+                .body<JsonNode>()!!
         }
+        return JacksonUtil.parseObjectList(json, Beatmapset::class.java)
     }
 
     override fun getUserMostPlayedBeatmaps(id: Long, offset: Int, limit: Int): List<Beatmap> {
@@ -367,7 +362,7 @@ class BeatmapApiImpl(
         } else {
             val times = (limit / 100).coerceAtLeast(1)
 
-            val works = (0..< times).map { i ->
+            val works = (0..<times).map { i ->
                 val of = offset + (i * 100)
                 val li = min(100, limit - (i * 100))
 
@@ -399,24 +394,25 @@ class BeatmapApiImpl(
 
         val node = request { client ->
             client.get()
-                .uri { it
-                    .path("/users/${id}/beatmapsets/most_played")
-                    .queryParam("offset", offset)
-                    .queryParam("limit", limit)
-                    .build()
+                .uri {
+                    it
+                        .path("/users/${id}/beatmapsets/most_played")
+                        .queryParam("offset", offset)
+                        .queryParam("limit", limit)
+                        .build()
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(JsonNode::class.java)
+                .body<JsonNode>()!!
         }
 
         val most = JacksonUtil.parseObjectList(node, MostPlayed::class.java)
 
-        return most.map { (beatmapID, count, beatmap, beatmapset) ->
-            beatmap.copy().apply {
-                this.beatmapset = beatmapset
-                this.beatmapID = beatmapID
-                this.currentPlayCount = count
+        return most.map { mp ->
+            mp.beatmap.copy().apply {
+                this.beatmapset = mp.beatmapset
+                this.beatmapID = mp.beatmapID
+                this.currentPlayCount = mp.count
             }
         }
     }
@@ -436,7 +432,7 @@ class BeatmapApiImpl(
             set.beatmapsetID to (set.beatmaps ?: listOf()).map { b -> b.beatmapID }
         }
 
-        val bids = map.values.flatten()
+        val bids = map.flatMap { it.value }
 
         val beatmaps = getBeatmaps(bids)
 
@@ -468,7 +464,7 @@ class BeatmapApiImpl(
                 .uri("beatmapsets/{sid}", sid)
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(Beatmapset::class.java)
+                .body<Beatmapset>()!!
         }
 
         beatmapDao.saveBeatmapsetAsync(beatmapset)
@@ -485,7 +481,7 @@ class BeatmapApiImpl(
         }
     }
 
-    override fun applyVersion(scores: Collection<LazerScore>) {
+    override fun applyVersion(scores: List<LazerScore>) {
         val existSet = scores.mapNotNull { s ->
             val b = beatmapDao.getBeatmapLite(s.beatmapID)
 
@@ -506,7 +502,6 @@ class BeatmapApiImpl(
     }
 
 
-
     override fun isNotOverRating(bid: Long): Boolean {
         try {
             val map = beatmapDao.getBeatmapLite(bid)!!
@@ -517,8 +512,12 @@ class BeatmapApiImpl(
         try {
             val map = getBeatmap(bid)
             return map.status.equals("ranked", ignoreCase = true) && map.starRating <= 5.7
-        } catch (_: WebClientResponseException.NotFound) {
-            return false
+        } catch (e: Exception) {
+            val ex = e.findCauseOfType<RestClientResponseException>()
+            if (ex?.statusCode == org.springframework.http.HttpStatus.NOT_FOUND) {
+                return false
+            }
+            throw e
         }
     }
 
@@ -744,37 +743,39 @@ class BeatmapApiImpl(
             body["mods"] = modsInt
         }
 
-        return request { client ->
-            client.post()
-                .uri("beatmaps/{id}/attributes", id)
-                .headers(base::insertHeader)
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(AttributesResponse::class.java)
-                .onErrorReturn(AttributesResponse())
-                .map { it.attributes }
-
-                /*
-                .bodyToMono(JsonNode::class.java)
-                .mapNotNull {
-                    JacksonUtil.parseObject(it["attributes"], BeatmapDifficultyAttributes::class.java)
-                }
-
-                 */
+        return try {
+            request { client ->
+                client.post()
+                    .uri("beatmaps/{id}/attributes", id)
+                    .headers(base::insertHeader)
+                    .body(body)
+                    .retrieve()
+                    .body<AttributesResponse>()!!.attributes
+            }
+        } catch (e: Exception) {
+            BeatmapDifficultyAttributes()
         }
     }
 
     override fun lookupBeatmap(checksum: String?, filename: String?, id: Long?): JsonNode? {
-        return request { client ->
-            client.get().uri {
-                it.path("beatmapsets/lookup")
-                    .queryParamIfPresent("checksum", Optional.ofNullable(checksum))
-                    .queryParamIfPresent("filename", Optional.ofNullable(filename))
-                    .queryParamIfPresent("id", Optional.ofNullable(id)).build()
+        return try {
+            request { client ->
+                client.get().uri {
+                    it.path("beatmapsets/lookup")
+                        .queryParamIfPresent("checksum", Optional.ofNullable(checksum))
+                        .queryParamIfPresent("filename", Optional.ofNullable(filename))
+                        .queryParamIfPresent("id", Optional.ofNullable(id)).build()
+                }
+                    .headers(base::insertHeader)
+                    .retrieve()
+                    .body<JsonNode>()!!
             }
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToMono(JsonNode::class.java)
+        } catch (e: Exception) {
+            val ex = e.findCauseOfType<RestClientResponseException>()
+            if (ex?.statusCode == org.springframework.http.HttpStatus.NOT_FOUND) {
+                return null
+            }
+            throw e
         }
     }
 
@@ -798,8 +799,7 @@ class BeatmapApiImpl(
                 }
             }
                 .retrieve()
-                .bodyToMono(BeatmapsetSearch::class.java)
-
+                .body<BeatmapsetSearch>()!!
         }
     }
 
@@ -864,7 +864,7 @@ class BeatmapApiImpl(
                         val index = tried.get() * quantity + i
 
                         map[index] = search
-                }
+                    }
 
                 tried.getAndIncrement()
 
@@ -891,7 +891,7 @@ class BeatmapApiImpl(
     }
 
     // 给同一张图的成绩添加完整的谱面
-    override fun applyBeatmapExtendForSameScore(scores: Collection<LazerScore>, beatmap: Beatmap) {
+    override fun applyBeatmapExtendForSameScore(scores: List<LazerScore>, beatmap: Beatmap) {
         if (scores.isEmpty()) return
 
         beatmapDao.saveExtendedBeatmap(beatmap)
@@ -905,7 +905,7 @@ class BeatmapApiImpl(
         applyBeatmapExtendFromAPI(listOf(score))
     }
 
-    override fun applyBeatmapExtendFromAPI(scores: Collection<LazerScore>) {
+    override fun applyBeatmapExtendFromAPI(scores: List<LazerScore>) {
         val ids = scores.map { it.beatmapID }.toSet()
 
         val extends = getBeatmaps(ids)
@@ -941,7 +941,7 @@ class BeatmapApiImpl(
         extended.beatmapset?.let { score.beatmapset = it }
     }
 
-    override fun applyBeatmapExtend(scores: Collection<LazerScore>) {
+    override fun applyBeatmapExtend(scores: List<LazerScore>) {
         val existSet = scores.mapNotNull { s ->
             beatmapDao.extendBeatmap(s)
         }.toSet()
@@ -967,7 +967,7 @@ class BeatmapApiImpl(
                 } else {
                     t.rankDate.replace(".000Z", "Z")
                 }
-            } catch (_: WebClientResponseException) {
+            } catch (e: Exception) {
                 ""
             }
         } else {
@@ -985,7 +985,7 @@ class BeatmapApiImpl(
         }
     }
 
-    override fun applyBeatmapsetRankedTime(beatmapsets: Collection<Beatmapset>) {
+    override fun applyBeatmapsetRankedTime(beatmapsets: List<Beatmapset>) {
         val l = getBeatmapsetRankedTimeMap()
 
         beatmapsets.forEach {
@@ -998,19 +998,20 @@ class BeatmapApiImpl(
     }
 
     private val beatmapTagLibraryFromAPI: JsonNode
-        get() = request { client -> client.get()
-            .uri {
-                it.path("tags").build()
-            }.headers(base::insertHeader)
-            .retrieve()
-            .bodyToMono(JsonNode::class.java)
+        get() = request { client ->
+            client.get()
+                .uri {
+                    it.path("tags").build()
+                }.headers(base::insertHeader)
+                .retrieve()
+                .body<JsonNode>()!!
         }
 
-                /*
-            .map { JacksonUtil.parseObjectList(it["tags"], Tag::class.java) }
-            .flatten()
+    /*
+.map { JacksonUtil.parseObjectList(it["tags"], Tag::class.java) }
+.flatten()
 
-                 */
+     */
 
     override fun updateBeatmapTagLibraryDatabase() {
         val tags = JacksonUtil.parseObjectList(beatmapTagLibraryFromAPI["tags"], Tag::class.java)
@@ -1076,8 +1077,9 @@ class BeatmapApiImpl(
                     set.trackID,
                     set.discussionLocked,
                     set.rating,
-                    set.ratings.toTypedArray())
-        }
+                    set.ratings.toTypedArray()
+                )
+            }
 
         log.info("自动更新扩展谱面：已更新 $result($result2) 张谱面。")
 
@@ -1085,12 +1087,11 @@ class BeatmapApiImpl(
     }
 
     private fun getBeatmapsetWithRankedTimeLibrary(): List<BeatmapsetWithRankTime> {
-        return proxyClient.get()
+        val json = proxyClient.get()
             .uri("https://mapranktimes.vercel.app/api/beatmapsets")
             .retrieve()
-            .bodyToFlux(BeatmapsetWithRankTime::class.java)
-            .collectList()
-            .block()!!
+            .body<JsonNode>()!!
+        return JacksonUtil.parseObjectList(json, BeatmapsetWithRankTime::class.java)
     }
 
 
@@ -1098,59 +1099,62 @@ class BeatmapApiImpl(
         return proxyClient.get()
             .uri("https://mapranktimes.vercel.app/api/beatmapsets/{sid}", beatmapsetID)
             .retrieve()
-            .bodyToMono(BeatmapsetWithRankTime::class.java)
-            .block()!!
+            .body<BeatmapsetWithRankTime>()!!
     }
 
     /**
      * 错误包装
      */
-    private fun <T> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
+    private fun <T : Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
         return try {
             base.request(isBackground, request)
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<WebClientException>()
+            val ex = e.findCauseOfType<RestClientResponseException>()
 
-            when (ex) {
-                is WebClientResponseException.BadRequest -> {
+            when {
+                ex == null -> {
+                    throw NetworkException.BeatmapException.Undefined(e)
+                }
+
+                ex.statusCode == org.springframework.http.HttpStatus.BAD_REQUEST -> {
                     throw NetworkException.BeatmapException.BadRequest()
                 }
 
-                is WebClientResponseException.Unauthorized -> {
+                ex.statusCode == org.springframework.http.HttpStatus.UNAUTHORIZED -> {
                     throw NetworkException.BeatmapException.Unauthorized()
                 }
 
-                is WebClientResponseException.Forbidden -> {
+                ex.statusCode == org.springframework.http.HttpStatus.FORBIDDEN -> {
                     throw NetworkException.BeatmapException.Forbidden()
                 }
 
-                is WebClientResponseException.NotFound -> {
+                ex.statusCode == org.springframework.http.HttpStatus.NOT_FOUND -> {
                     throw NetworkException.BeatmapException.NotFound()
                 }
 
-                is WebClientResponseException.TooManyRequests -> {
+                ex.statusCode == org.springframework.http.HttpStatus.TOO_MANY_REQUESTS -> {
                     throw NetworkException.BeatmapException.TooManyRequests()
                 }
 
-                is WebClientResponseException.InternalServerError -> {
+                ex.statusCode == org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR -> {
                     throw NetworkException.BeatmapException.InternalServerError()
                 }
 
-                is WebClientResponseException.BadGateway -> {
+                ex.statusCode == org.springframework.http.HttpStatus.BAD_GATEWAY -> {
                     throw NetworkException.BeatmapException.BadGateWay()
                 }
 
-                is WebClientResponseException.ServiceUnavailable -> {
+                ex.statusCode == org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE -> {
                     throw NetworkException.BeatmapException.ServiceUnavailable()
                 }
-            }
 
-            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                throw NetworkException.BeatmapException.GatewayTimeout()
-            } else if (e.findCauseOfType<ExecutionException>() != null) {
-                throw NetworkException.BeatmapException.RequestTimeout()
-            } else {
-                throw NetworkException.BeatmapException.Undefined(e)
+                e.findCauseOfType<java.net.SocketException>() != null -> {
+                    throw NetworkException.BeatmapException.GatewayTimeout()
+                }
+
+                else -> {
+                    throw NetworkException.BeatmapException.Undefined(e)
+                }
             }
         }
     }

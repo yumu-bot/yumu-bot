@@ -15,10 +15,12 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.JacksonUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.client.body
 import org.springframework.web.util.UriBuilder
 import java.io.IOException
 import java.net.URLEncoder
@@ -29,10 +31,12 @@ import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 
-@Service("PP_PLUS_SEV") class PerformancePlusService(
+@Service("PP_PLUS_SEV")
+class PerformancePlusService(
     config: FileConfig,
     private val performancePlusLiteRepository: PerformancePlusLiteRepository,
-    private val webClient: WebClient,
+    @field:Qualifier("restClient")
+    private val restClient: RestClient,
     private val beatmapApiService: OsuBeatmapApiService
 ) {
     private val osuPath: Path = Path.of(config.osuFilePath)
@@ -52,10 +56,10 @@ import java.util.concurrent.ConcurrentHashMap
             result.difficulty = p.toStats()
             return result
         }
-        return webClient.get().uri { u: UriBuilder ->
-                u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/calculation")
-                    .queryParam("BeatmapId", beatmapID).queryParamIfPresent("Mods", mods).build()
-            }.retrieve().bodyToMono(PPPlus::class.java).block()
+        return restClient.get().uri { u: UriBuilder ->
+            u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/calculation")
+                .queryParam("BeatmapId", beatmapID).queryParamIfPresent("Mods", mods).build()
+        }.retrieve().body<PPPlus>()
     }
 
     fun clearCache(beatmapId: String?) {
@@ -69,7 +73,8 @@ import java.util.concurrent.ConcurrentHashMap
         }
     }
 
-    @Throws(TipsException::class) fun calculateUserPerformance(bps: List<LazerScore>): PPPlus.Stats {
+    @Throws(TipsException::class)
+    fun calculateUserPerformance(bps: List<LazerScore>): PPPlus.Stats {
         val ppPlus = getScorePerformancePlus(bps)
 
         var aim = 0.0
@@ -116,7 +121,8 @@ import java.util.concurrent.ConcurrentHashMap
         return PPPlus.Stats(aim, jumpAim, flowAim, precision, speed, stamina, accuracy, total)
     }
 
-    @Throws(TipsException::class) fun getScorePerformancePlus(scores: Iterable<LazerScore>): List<PPPlus> {
+    @Throws(TipsException::class)
+    fun getScorePerformancePlus(scores: Iterable<LazerScore>): List<PPPlus> {
         val scoreIDs = scores.map { it.scoreID }
         val ppPlusList = performancePlusLiteRepository.findScorePPPlus(scoreIDs)
         val ppPlusMap = ppPlusList.associateBy { it.id }
@@ -154,7 +160,7 @@ import java.util.concurrent.ConcurrentHashMap
 
         try {
             result = getScorePerformancePlus(body)
-        } catch (e: WebClientResponseException) {
+        } catch (e: RestClientResponseException) {
             val n = findErrorBid(body)
             getMapPerformancePlus(n.toLong(), listOf<LazerMod>())
             beatmapApiService.refreshBeatmapFileFromDirectory(n.toLong())
@@ -192,21 +198,28 @@ import java.util.concurrent.ConcurrentHashMap
     }
 
     // beatmapId 居然要 String ??? [https://difficalcy.syrin.me/api-reference/difficalcy-osu/#post-apibatchcalculation](啥玩意)
-    @JvmRecord internal data class ScorePerformancePlus(
+    @JvmRecord
+    internal data class ScorePerformancePlus(
         @field:JsonProperty("beatmapId") @param:JsonProperty(
             "beatmapId"
         ) val beatmapId: String, val mods: List<LazerMod>, val combo: Int, val misses: Int, val mehs: Int, val oks: Int
     )
 
     private fun getScorePerformancePlus(body: List<ScorePerformancePlus>): List<PPPlus>? {
-        return webClient.post().uri { u: UriBuilder ->
+        val node = restClient
+            .post()
+            .uri { u: UriBuilder ->
                 u.scheme(API_SCHEME).host(API_HOST).port(API_PORT).path("/api/batch/calculation").build()
-            }.contentType(MediaType.APPLICATION_JSON).bodyValue(JacksonUtil.toJson(body)).retrieve()
-            .bodyToMono(JsonNode::class.java).map { node: JsonNode? ->
-                JacksonUtil.parseObjectList(
-                    node, PPPlus::class.java
-                )
-            }.block()
+            }
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(JacksonUtil.toJson(body))
+            .retrieve()
+            .body<JsonNode>()
+            ?: return null
+
+        return JacksonUtil.parseObjectList(
+            node, PPPlus::class.java
+        )
     }
 
     private fun checkFile(beatmapId: Long) {
@@ -272,7 +285,8 @@ import java.util.concurrent.ConcurrentHashMap
         private var API_HOST = "localhost"
         private var API_PORT = "46880"
 
-        @JvmStatic fun runDevelopment() {
+        @JvmStatic
+        fun runDevelopment() {
             API_SCHEME = "https"
             API_HOST = "ppp.365246692.xyz"
             API_PORT = "443"

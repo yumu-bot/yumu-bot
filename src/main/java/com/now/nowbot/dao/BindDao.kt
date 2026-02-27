@@ -28,7 +28,7 @@ import org.springframework.dao.IncorrectResultSizeDataAccessException
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import org.springframework.util.ObjectUtils
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.HttpClientErrorException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
@@ -503,7 +503,7 @@ class BindDao(
         try {
             refreshOldUserTokenOne(userApiService)
         } catch (e: RuntimeException) {
-            if (e !is WebClientResponseException.Unauthorized) {
+            if (e !is HttpClientErrorException.Unauthorized) {
                 log.error("更新用户出现异常", e)
             }
             // 已经 log
@@ -606,7 +606,7 @@ class BindDao(
                 refreshOldUserToken(u, osuGetService)
                 if (u.updateCount > 0) bindUserMapper.clearUpdateCount(u.id)
                 errCount = 0
-            } catch (_: WebClientResponseException.Unauthorized) {
+            } catch (_: HttpClientErrorException.Unauthorized) {
                 // 绑定被取消或者过期, 不再尝试
                 log.info("绑定 {} 失败：取消绑定", u.osuName)
                 bindUserMapper.backupBindByOsuID(u.id)

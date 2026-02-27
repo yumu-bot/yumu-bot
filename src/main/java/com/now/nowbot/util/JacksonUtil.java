@@ -47,7 +47,6 @@ public class JacksonUtil {
                 // 默认使用驼峰转下划线命名
                 .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
                 .registerModules(ktMode)
-                .registerModules(new JavaTimeModule())
         ;
     }
 

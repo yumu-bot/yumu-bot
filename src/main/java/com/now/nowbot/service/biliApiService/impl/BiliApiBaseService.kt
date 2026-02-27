@@ -3,10 +3,12 @@ package com.now.nowbot.service.biliApiService.impl
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.client.RestClient
 
 @Service
-class BiliApiBaseService(val webClient: WebClient, @param:Qualifier("biliApiWebClient") val biliApiWebClient: WebClient) {
+class BiliApiBaseService(
+    @param:Qualifier("biliApiRestClient") val biliApiWebClient: RestClient
+) {
 
     fun hasToken(): Boolean {
         return accessToken.isNullOrBlank().not()

@@ -6,23 +6,26 @@ import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.model.osu.OsuUser
 import com.now.nowbot.model.ppminus.PPMinus
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
-import com.now.nowbot.util.DataUtil.findCauseOfType
-import io.netty.channel.unix.Errors
+import io.netty.handler.timeout.ReadTimeoutException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientException
-import org.springframework.web.reactive.function.client.WebClientResponseException.BadRequest
-import org.springframework.web.reactive.function.client.WebClientResponseException.InternalServerError
+import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpClientErrorException.BadRequest
+import org.springframework.web.client.HttpServerErrorException.InternalServerError
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.body
 import java.net.SocketException
-import java.util.concurrent.ExecutionException
 
 @Service("NOWBOT_IMAGE")
-class ImageService(private val webClient: WebClient) {
+class ImageService(
+    @field:Qualifier("restClient")
+    private val restClient: RestClient
+) {
     /**
      * @param name 面板的内部编号，并非功能编号
      */
@@ -206,33 +209,25 @@ class ImageService(private val webClient: WebClient) {
 
     private fun doPost(path: String, entity: HttpEntity<*>): ByteArray {
 
-        val request = webClient.post().uri(IMAGE_PATH + path).headers { it.addAll(entity.headers) }
+        val request = restClient.post().uri(IMAGE_PATH + path).headers { it.addAll(entity.headers) }
         if (entity.hasBody()) {
-            request.bodyValue(entity.body!!)
+            request.body(entity.body!!)
         }
 
         // 在这里封好可能出现的（已知原因的）错误，确保错误不会传递下去
         return try {
-            request.retrieve().bodyToMono(ByteArray::class.java).block()!!
+            request.retrieve().body<ByteArray>()!!
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<WebClientException>()
-
-            when {
-                ex is BadRequest ->
-                    throw NetworkException.RenderModuleException.BadRequest()
-
-                ex is InternalServerError ->
-                    throw NetworkException.RenderModuleException.InternalServerError()
-
-                ex != null -> throw NetworkException.RenderModuleException.BadGateway()
-            }
-
-            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                throw NetworkException.RenderModuleException.GatewayTimeout()
-            } else if (e.findCauseOfType<ExecutionException>() != null) {
+            if (e is BadRequest || e.cause is BadRequest) {
+                throw NetworkException.RenderModuleException.BadRequest()
+            } else if (e is ReadTimeoutException || e.cause is ReadTimeoutException) {
                 throw NetworkException.RenderModuleException.RequestTimeout()
-            } else if (e.findCauseOfType<SocketException>() != null) {
+            } else if (e is InternalServerError || e.cause is InternalServerError) {
+                throw NetworkException.RenderModuleException.InternalServerError()
+            } else if (e is SocketException || e.cause is SocketException) {
                 throw NetworkException.RenderModuleException.ServiceUnavailable()
+            } else if (e is HttpClientErrorException) {
+                throw NetworkException.RenderModuleException.BadGateway()
             } else {
                 log.error("渲染模块：未识别的错误", e)
                 throw NetworkException.RenderModuleException.Undefined(e)

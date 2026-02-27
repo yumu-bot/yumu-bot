@@ -1,20 +1,17 @@
 package com.now.nowbot.service.osuApiService.impl
 
-import com.now.nowbot.model.multiplayer.RoomInfo
 import com.now.nowbot.model.match.Match
 import com.now.nowbot.model.match.MatchLobby
 import com.now.nowbot.model.multiplayer.Room
+import com.now.nowbot.model.multiplayer.RoomInfo
 import com.now.nowbot.model.multiplayer.RoomLeaderBoard
 import com.now.nowbot.service.osuApiService.OsuMatchApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.DataUtil.findCauseOfType
-import io.netty.channel.unix.Errors
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientException
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import reactor.core.publisher.Mono
-import java.util.concurrent.ExecutionException
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.client.body
 
 @Service
 class MatchApiImpl(
@@ -32,7 +29,7 @@ class MatchApiImpl(
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(MatchLobby::class.java)
+                .body<MatchLobby>()!!
         }
     }
 
@@ -80,7 +77,7 @@ class MatchApiImpl(
                 .uri("rooms/${roomID}/events")
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(Room::class.java)
+                .body<Room>()!!
         }
     }
 
@@ -90,7 +87,7 @@ class MatchApiImpl(
                 .uri("rooms/${roomID}")
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(RoomInfo::class.java)
+                .body<RoomInfo>()!!
         }
     }
 
@@ -100,7 +97,7 @@ class MatchApiImpl(
                 .uri("rooms/${roomID}/leaderboard")
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(RoomLeaderBoard::class.java)
+                .body<RoomLeaderBoard>()!!
         }
     }
 
@@ -110,7 +107,7 @@ class MatchApiImpl(
                 .uri("matches/${matchID}")
                 .headers(base::insertHeader)
                 .retrieve()
-            .bodyToMono(Match::class.java)
+            .body<Match>()!!
         }
     }
 
@@ -126,59 +123,62 @@ class MatchApiImpl(
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToMono(Match::class.java)
+                .body<Match>()!!
         }
     }
 
     /**
      * 错误包装
      */
-    private fun <T> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
+    private fun <T: Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
         return try {
             base.request(isBackground, request)
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<WebClientException>()
+            val ex = e.findCauseOfType<RestClientResponseException>()
 
-            when (ex) {
-                is WebClientResponseException.BadRequest -> {
+            when {
+                ex == null -> {
+                    throw NetworkException.MatchException.Undefined(e)
+                }
+                ex.statusCode == org.springframework.http.HttpStatus.BAD_REQUEST -> {
                     throw NetworkException.MatchException.BadRequest()
                 }
 
-                is WebClientResponseException.Unauthorized -> {
+                ex.statusCode == org.springframework.http.HttpStatus.UNAUTHORIZED -> {
                     throw NetworkException.MatchException.Unauthorized()
                 }
 
-                is WebClientResponseException.Forbidden -> {
+                ex.statusCode == org.springframework.http.HttpStatus.FORBIDDEN -> {
                     throw NetworkException.MatchException.Forbidden()
                 }
 
-                is WebClientResponseException.NotFound -> {
+                ex.statusCode == org.springframework.http.HttpStatus.NOT_FOUND -> {
                     throw NetworkException.MatchException.NotFound()
                 }
 
-                is WebClientResponseException.TooManyRequests -> {
+                ex.statusCode == org.springframework.http.HttpStatus.TOO_MANY_REQUESTS -> {
                     throw NetworkException.MatchException.TooManyRequests()
                 }
 
-                is WebClientResponseException.InternalServerError -> {
+                ex.statusCode == org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR -> {
                     throw NetworkException.MatchException.InternalServerError()
                 }
 
-                is WebClientResponseException.BadGateway -> {
+                ex.statusCode == org.springframework.http.HttpStatus.BAD_GATEWAY -> {
                     throw NetworkException.MatchException.BadGateway()
                 }
 
-                is WebClientResponseException.ServiceUnavailable -> {
+                ex.statusCode == org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE -> {
                     throw NetworkException.MatchException.ServiceUnavailable()
                 }
-            }
 
-            if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                throw NetworkException.MatchException.GatewayTimeout()
-            } else if (e.findCauseOfType<ExecutionException>() != null) {
-                throw NetworkException.MatchException.RequestTimeout()
-            } else {
-                throw NetworkException.MatchException.Undefined(e)
+                e.findCauseOfType<java.net.SocketException>() != null -> {
+                    throw NetworkException.MatchException.GatewayTimeout()
+                }
+                
+                else -> {
+                    throw NetworkException.MatchException.Undefined(e)
+                }
             }
         }
     }

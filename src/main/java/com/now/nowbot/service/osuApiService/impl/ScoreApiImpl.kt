@@ -1,5 +1,6 @@
 package com.now.nowbot.service.osuApiService.impl
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.now.nowbot.config.NowbotConfig
 import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.model.BindUser
@@ -12,34 +13,26 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.throwable.botRuntimeException.NetworkException
 import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.DataUtil.findCauseOfType
-import io.netty.channel.unix.Errors
+import com.now.nowbot.util.JacksonUtil
 import okio.IOException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientException
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.client.body
 import org.springframework.web.util.UriBuilder
-import reactor.core.publisher.Mono
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.*
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.RejectedExecutionException
-import kotlin.text.Charsets
+import java.util.function.Function
 import kotlin.text.HexFormat
-import kotlin.text.isBlank
-import kotlin.text.isNullOrBlank
-import kotlin.text.replace
-import kotlin.text.split
-import kotlin.text.toByteArray
 import kotlin.text.toHexString
-import kotlin.text.toLongOrNull
 
 @Service
 class ScoreApiImpl(
@@ -97,11 +90,10 @@ class ScoreApiImpl(
             Files.readAllBytes(path.resolve(hex))
         } else {
             try {
-                val image = base.osuApiWebClient.get()
+                val image = base.osuApiRestClient.get()
                     .uri(url)
                     .retrieve()
-                    .bodyToMono(ByteArray::class.java)
-                    .block()!!
+                    .body<ByteArray>()!!
 
                 if (Files.isDirectory(path) && Files.isWritable(path)) {
                     Files.write(path.resolve(hex), image)
@@ -177,20 +169,22 @@ class ScoreApiImpl(
         return request { client ->
             client.get().uri {
                 it.path("scores/{scoreID}").build(scoreID)
-            }.headers(base::insertHeader).retrieve().bodyToMono(LazerScore::class.java)
+            }.headers(base::insertHeader).retrieve().body<LazerScore>()!!
         }
     }
 
     override fun getBeatmapScore(bid: Long, uid: Long, mode: OsuMode?): BeatmapUserScore? {
         return retryOn404<BeatmapUserScore>(
-            { it
+            { uriBuilder: UriBuilder ->
+                uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", 0)
                     .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
                     .build(bid, uid)
             },
             { base.insertHeader(this) },
-            { it
+            { uriBuilder: UriBuilder ->
+                uriBuilder
                     .path("beatmaps/{bid}/scores/users/{uid}")
                     .queryParam("legacy_only", 1)
                     .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
@@ -238,22 +232,26 @@ class ScoreApiImpl(
         mods: Collection<LazerMod?>,
     ): BeatmapUserScore? {
 
-        fun buildUri(mode: OsuMode? = null) = { builder: UriBuilder ->
-            builder.path("beatmaps/{bid}/scores/users/{uid}")
-                .queryParam("legacy_only", 0)
-                .apply {
-                    if (OsuMode.isNotDefaultOrNull(mode)) {
-                        queryParam("mode", OsuMode.getQueryName(mode))
-                    }
-                    LazerMod.setMods(this, mods)
-                }
-                .build(bid, uid)
-        }
+        val uri = Function { n: Int ->
+            Function { uriBuilder: UriBuilder ->
+                uriBuilder
+                    .path("beatmaps/{bid}/scores/users/{uid}")
+                    .queryParam("legacy_only", n)
 
+                if (OsuMode.isNotDefaultOrNull(mode)) {
+                    uriBuilder.queryParam("mode", OsuMode.getQueryName(mode))
+                }
+
+                LazerMod.setMods(uriBuilder, mods)
+                uriBuilder.build(bid, uid)
+            }
+        }
         return retryOn404<BeatmapUserScore>(
-            uri = buildUri(mode),
-            headers = { base.insertHeader(this) },
-            retry = buildUri(null)
+            uri.apply(0),
+            {
+                base.insertHeader(this)
+            },
+            uri.apply(1),
         )
     }
 
@@ -266,70 +264,58 @@ class ScoreApiImpl(
         if (user.isTokenAvailable == null) {
             return getBeatmapScore(bid, user.userID, mode, mods)
         }
-
-        fun buildUri(mode: OsuMode? = null) = { builder: UriBuilder ->
-            builder.path("beatmaps/{bid}/scores/users/{uid}")
-                .queryParam("legacy_only", 0)
-                .apply {
-                    if (OsuMode.isNotDefaultOrNull(mode)) {
-                        queryParam("mode", OsuMode.getQueryName(mode))
-                    }
-                    LazerMod.setMods(this, mods)
-                }
-                .build(bid, user.userID)
+        val uri = Function { n: Int ->
+            Function { uriBuilder: UriBuilder ->
+                uriBuilder
+                    .path("beatmaps/{bid}/scores/users/{uid}")
+                    .queryParam("legacy_only", n)
+                    .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                LazerMod.setMods(uriBuilder, mods)
+                uriBuilder.build(bid, user.userID)
+            }
         }
-
         return retryOn404<BeatmapUserScore>(
-            uri = buildUri(mode),
-            headers = { base.insertHeader(this, user) },
-            retry = buildUri(null)
+            uri.apply(0),
+            {
+                base.insertHeader(this, user)
+            },
+            uri.apply(1),
         )
     }
 
-    data class BeatmapScoreResponse(val scores: List<LazerScore>)
-
     override fun getBeatmapScores(bid: Long, user: BindUser, mode: OsuMode?): List<LazerScore> {
-        if (user.isTokenAvailable == null) {
-            getBeatmapScores(bid, user.userID, mode)
-        }
+        if (user.isTokenAvailable == null) getBeatmapScores(bid, user.userID, mode)
 
-        fun buildUri(mode: OsuMode? = null) = { builder: UriBuilder ->
-            builder.path("beatmaps/{bid}/scores/users/{uid}/all")
-                .queryParam("legacy_only", 0)
-                .apply {
-                    if (OsuMode.isNotDefaultOrNull(mode)) {
-                        queryParam("mode", OsuMode.getQueryName(mode))
-                    }
+        val json = request { client ->
+            client.get()
+                .uri {
+                    it.path("beatmaps/{bid}/scores/users/{uid}/all")
+                        .queryParam("legacy_only", 0)
+                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                        .build(bid, user.userID)
+                }.headers { headers ->
+                    base.insertHeader(headers, user)
                 }
-                .build(bid, user.userID)
+                .retrieve()
+                .body<JsonNode>()!!
         }
-
-        return retryOn404<BeatmapScoreResponse>(
-            uri = buildUri(mode),
-            headers = { base.insertHeader(this, user) },
-            retry = buildUri(null)
-        ).scores
+        return JacksonUtil.parseObjectList(json["scores"], LazerScore::class.java)
     }
 
     override fun getBeatmapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore> {
-
-
-        fun buildUri(mode: OsuMode? = null) = { builder: UriBuilder ->
-            builder.path("beatmaps/{bid}/scores/users/{uid}/all")
-                .queryParam("legacy_only", 0)
-                .apply {
-                    if (OsuMode.isNotDefaultOrNull(mode)) {
-                        queryParam("mode", OsuMode.getQueryName(mode))
-                    }
+        val json = request { client ->
+            client.get()
+                .uri {
+                    it.path("beatmaps/{bid}/scores/users/{uid}/all")
+                        .queryParam("legacy_only", 0)
+                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
+                        .build(bid, uid)
                 }
-                .build(bid, uid)
+                .headers(base::insertHeader)
+                .retrieve()
+                .body<JsonNode>()!!
         }
-
-        return retryOn404<BeatmapScoreResponse>(
-            uri = buildUri(mode),
-            headers = { base.insertHeader(this) },
-            retry = buildUri(null)
-        ).scores
+        return JacksonUtil.parseObjectList(json["scores"], LazerScore::class.java)
     }
 
     override fun getLeaderBoardScore(
@@ -340,7 +326,7 @@ class ScoreApiImpl(
         type: String?,
         legacy: Boolean
     ): List<LazerScore> {
-        return request { client -> client.get()
+        val json = request { client -> client.get()
             .uri {
                 it.path("beatmaps/{bid}/scores")
                     .queryParam("legacy_only", if (legacy) 1 else 0)
@@ -358,8 +344,9 @@ class ScoreApiImpl(
                 }
             }
             .retrieve()
-            .bodyToMono(BeatmapScoreResponse::class.java)
-        }.scores
+            .body<JsonNode>()!!
+        }
+        return JacksonUtil.parseObjectList(json["scores"], LazerScore::class.java)
     }
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -414,7 +401,7 @@ class ScoreApiImpl(
                                 }
                                 .headers(base::insertHeader)
                                 .retrieve()
-                                .bodyToMono(ByteArray::class.java)
+                                .body<ByteArray>()!!
                         }
                     } catch (e: Exception) {
                         log.error("异步下载谱面图片：任务失败\n", e)
@@ -435,26 +422,25 @@ class ScoreApiImpl(
     }
 
     override fun getReplay(score: LazerScore): Replay? {
-        if (!score.replay || score.scoreID <= 0L) {
-            return null
-        }
-
-        val byte: ByteBuffer? = try {
-            request { client ->
-                client.get()
-                    .uri {
-                        it.path("scores/{score}/download")
-                            .build(score.scoreID)
-                    }
-                    .headers(base::insertHeader)
-                    .retrieve()
-                    .bodyToMono(ByteBuffer::class.java)
+        if (score.replay && score.scoreID > 0L) {
+            return try {
+                request { client ->
+                    val buf = client.get()
+                        .uri {
+                            it.path("scores/{score}/download")
+                                .build(score.scoreID)
+                        }
+                        .headers(base::insertHeader)
+                        .retrieve()
+                        .body<ByteBuffer>()!!
+                    Replay(buf)
+                }
+            } catch (_: Exception) {
+                return null
             }
-        } catch (_: Exception) {
-            return null
         }
 
-        return Replay(byte ?: return null)
+        return null
     }
 
     private fun getBests(
@@ -475,11 +461,7 @@ class ScoreApiImpl(
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToFlux(LazerScore::class.java)
-                .collectList()
-            //.doOnNext(scoreDao::saveScoreAsync)
-            // 这里使用的是 netty 的线程，这些线程通常只负责网络并发；
-            // 如果将其用于数据库的读写，会直接卡死请求
+                .body<List<LazerScore>>()!!
         }
 
         scoreDao.saveScoreAsync(bests)
@@ -510,8 +492,7 @@ class ScoreApiImpl(
                     base.insertHeader(headers, user)
                 }
                 .retrieve()
-                .bodyToFlux(LazerScore::class.java)
-                .collectList()
+                .body<List<LazerScore>>()!!
         }
 
         scoreDao.saveScoreAsync(recents)
@@ -541,8 +522,7 @@ class ScoreApiImpl(
                 }
                 .headers(base::insertHeader)
                 .retrieve()
-                .bodyToFlux(LazerScore::class.java)
-                .collectList()
+                .body<List<LazerScore>>()!!
         }
 
         scoreDao.saveScoreAsync(recents)
@@ -554,105 +534,94 @@ class ScoreApiImpl(
     /**
      * 错误包装
      */
-    private fun <T> request(isBackground: Boolean = false, request: (WebClient) -> Mono<T>): T {
+    private fun <T: Any> request(isBackground: Boolean = false, request: (RestClient) -> T): T {
         return try {
             base.request(isBackground, request)
         } catch (e: Throwable) {
-            val ex = e.findCauseOfType<WebClientException>()
+            val ex = e.findCauseOfType<RestClientResponseException>()
 
-            when (ex) {
-                is WebClientResponseException.BadRequest -> {
+            when {
+                ex == null -> {
+                    throw NetworkException.ScoreException.Undefined(e)
+                }
+
+                ex.statusCode == org.springframework.http.HttpStatus.BAD_REQUEST -> {
                     throw NetworkException.ScoreException.BadRequest()
                 }
 
-                is WebClientResponseException.Unauthorized -> {
+                ex.statusCode == org.springframework.http.HttpStatus.UNAUTHORIZED -> {
                     throw NetworkException.ScoreException.Unauthorized()
                 }
 
-                is WebClientResponseException.Forbidden -> {
+                ex.statusCode == org.springframework.http.HttpStatus.FORBIDDEN -> {
                     throw NetworkException.ScoreException.Forbidden()
                 }
 
-                is WebClientResponseException.NotFound -> {
+                ex.statusCode == org.springframework.http.HttpStatus.NOT_FOUND -> {
                     throw NetworkException.ScoreException.NotFound()
                 }
 
-                is WebClientResponseException.TooManyRequests -> {
+                ex.statusCode == org.springframework.http.HttpStatus.TOO_MANY_REQUESTS -> {
                     throw NetworkException.ScoreException.TooManyRequests()
                 }
 
-                is WebClientResponseException.InternalServerError -> {
+                ex.statusCode == org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR -> {
                     throw NetworkException.ScoreException.InternalServerError()
                 }
 
-                is WebClientResponseException.BadGateway -> {
+                ex.statusCode == org.springframework.http.HttpStatus.BAD_GATEWAY -> {
                     throw NetworkException.ScoreException.BadGateway()
                 }
 
-                is WebClientResponseException.UnprocessableEntity -> {
+                ex.statusCode == org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY -> {
                     throw NetworkException.ScoreException.UnprocessableEntity()
                 }
 
-                is WebClientResponseException.ServiceUnavailable -> {
+                ex.statusCode == org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE -> {
                     throw NetworkException.ScoreException.ServiceUnavailable()
                 }
-            }
 
-            if (e.findCauseOfType<RejectedExecutionException>() != null) {
-                throw NetworkException.ScoreException.TooManyRequests()
-            } else if (e.findCauseOfType<Errors.NativeIoException>() != null) {
-                throw NetworkException.ScoreException.GatewayTimeout()
-            } else if (e.findCauseOfType<ExecutionException>() != null) {
-                throw NetworkException.ScoreException.RequestTimeout()
-            } else {
-                throw NetworkException.ScoreException.Undefined(e)
-            }
-        }
-    }
-
-    private inline fun <reified T : Any> retryOn404(
-        noinline uri: (UriBuilder) -> URI,
-        noinline headers: HttpHeaders.() -> Unit,
-        noinline retry: (UriBuilder) -> URI,
-    ): T {
-        return request { client ->
-            client.get()
-                .uri(uri)
-                .headers(headers)
-                .exchangeToMono { response ->
-                    val contentType = response.headers().contentType().orElse(null)
-
-                    // 1. 如果返回的是 HTML（通常是 200 错误页），直接判定为需要 Retry
-                    if (contentType?.includes(org.springframework.http.MediaType.TEXT_HTML) == true) {
-                        return@exchangeToMono response.releaseBody().then(doRetry<T>(client, retry, headers))
-                    }
-
-                    // 2. 正常读取 Body 并在解析失败时切换
-                    response.bodyToMono(T::class.java)
-                        .flatMap { result ->
-                            // 逻辑判定：例如 result 里的 scores 为空，可能也是一种 404 的表现
-                            if (result is BeatmapScoreResponse && result.scores.isEmpty()) {
-                                doRetry<T>(client, retry, headers)
-                            } else {
-                                Mono.just(result)
-                            }
-                        }
-                        .onErrorResume {
-                            // 3. 如果反序列化失败（说明 Body 不是预期的 JSON），切换到备用请求
-                            log.warn("响应解析失败，尝试备用路径: ${it.message}")
-                            doRetry<T>(client, retry, headers)
-                        }
+                e.findCauseOfType<RejectedExecutionException>() != null -> {
+                    throw NetworkException.ScoreException.TooManyRequests()
                 }
+                
+                e.findCauseOfType<java.net.SocketException>() != null -> {
+                    throw NetworkException.ScoreException.GatewayTimeout()
+                }
+
+                else -> {
+                    throw NetworkException.ScoreException.Undefined(e)
+                }
+            }
         }
     }
 
-    // 提取重试逻辑
-    private inline fun <reified T : Any> doRetry(client: WebClient, noinline retry: (UriBuilder) -> URI, noinline headers: HttpHeaders.() -> Unit): Mono<T> {
-        return client.get()
-            .uri(retry)
-            .headers(headers)
-            .retrieve()
-            .bodyToMono(T::class.java) // 这里不再用 generic，直接按 T 解析
+    private inline fun <reified T: Any> retryOn404(
+        uri: Function<UriBuilder, URI>,
+        crossinline headers: HttpHeaders.() -> Unit,
+        retry: Function<UriBuilder, URI>,
+    ): T {
+        return try {
+            request { client ->
+                client.get()
+                    .uri(uri)
+                    .headers {
+                        h -> headers(h)
+                    }
+                    .retrieve()
+                    .body<T>()!!
+            }
+        } catch (_: NetworkException.ScoreException.NotFound) {
+            request { client ->
+                client.get()
+                    .uri(retry)
+                    .headers {
+                        h -> headers(h)
+                    }
+                    .retrieve()
+                    .body<T>()!!
+            }
+        }
     }
 
     companion object {

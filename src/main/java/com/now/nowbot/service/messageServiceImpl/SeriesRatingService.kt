@@ -22,9 +22,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.lang.NonNull
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.client.RestClientResponseException
 import java.nio.charset.StandardCharsets
-import java.util.*
 import java.util.regex.Matcher
 import kotlin.math.round
 
@@ -477,7 +476,7 @@ class SeriesRatingService(
                         m.toString(),
                     )
                 }
-            } catch (e: WebClientResponseException.TooManyRequests) {
+            } catch (e: RestClientResponseException) {
                 failTimes++
                 if (failTimes > 3) {
                     log.error("SRA 查询次数超限", e)
@@ -496,12 +495,6 @@ class SeriesRatingService(
                     )
                 }
             } catch (e: HttpClientErrorException.NotFound) {
-                log.error("SRA 对局找不到", e)
-
-                event.reply(
-                    m.toString().format(MRAException.Type.RATING_Series_NotFound.message)
-                )
-            } catch (e: WebClientResponseException.NotFound) {
                 log.error("SRA 对局找不到", e)
 
                 event.reply(
