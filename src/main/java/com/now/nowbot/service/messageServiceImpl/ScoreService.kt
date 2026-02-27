@@ -1,5 +1,6 @@
 package com.now.nowbot.service.messageServiceImpl
 
+import com.now.nowbot.dao.ScoreDao
 import com.now.nowbot.dao.ServiceCallStatisticsDao
 import com.now.nowbot.entity.ServiceCallStatistic
 import com.now.nowbot.model.enums.OsuMode
@@ -45,6 +46,7 @@ import kotlin.time.toDuration
     private val calculateApiService: OsuCalculateApiService,
     private val imageService: ImageService,
     private val dao: ServiceCallStatisticsDao,
+    private val scoreDao: ScoreDao,
     private val restrict: NewbieRestrictService,
 ) : MessageService<ScoreParam>, TencentMessageService<ScoreParam> {
 
@@ -243,7 +245,20 @@ import kotlin.time.toDuration
         val scores: List<LazerScore>
 
         if (!map.hasLeaderBoard) {
-            throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
+            if (userID != null) {
+
+                mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+                user = userApiService.getOsuUser(userID, mode)
+            } else {
+                mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+
+                user = InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, InstructionObject(mode), AtomicBoolean(true), messageText, "score")
+            }
+
+            val mods: List<LazerMod> = getMod(matcher)
+
+            return getFromDatabase(user, map, mode, mods, event)
+            // throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
         }
 
         if (userID != null) {
@@ -314,11 +329,14 @@ import kotlin.time.toDuration
 
         val map: Beatmap = beatmapApiService.getBeatmap(recent.beatmapID)
 
-        if (!map.hasLeaderBoard) {
-            throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
-        }
-
         val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
+
+        if (!map.hasLeaderBoard) {
+            val mods: List<LazerMod> = getMod(matcher)
+
+            return getFromDatabase(user, map, mode, mods, event)
+            // throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
+        }
 
         val scores = scoreApiService.getBeatmapScores(recent.beatmapID, user.userID, mode)
 
@@ -328,14 +346,23 @@ import kotlin.time.toDuration
     private fun getFromBefore(beforeBeatmapID: Long, userID: Long?, inputMode: InstructionObject<OsuMode>, event: MessageEvent, messageText: String, matcher: Matcher): ScoreData {
         val map = beatmapApiService.getBeatmap(beforeBeatmapID)
 
-        if (!map.hasLeaderBoard) {
-            throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
-        }
-
         val mode = OsuMode.getConvertableMode(inputMode.data, map.mode)
 
         val user: OsuUser
         val scores: List<LazerScore>
+
+        if (!map.hasLeaderBoard) {
+            user = if (userID != null) {
+                userApiService.getOsuUser(userID, mode)
+            } else {
+                InstructionUtil.getUserWithoutRangeWithBackoff(event, matcher, InstructionObject(mode), AtomicBoolean(true), messageText, "score")
+            }
+
+            val mods: List<LazerMod> = getMod(matcher)
+
+            return getFromDatabase(user, map, mode, mods, event)
+            // throw NoSuchElementException.UnrankedBeatmapScore(map.previewName)
+        }
 
         if (userID != null) {
             val async = AsyncMethodExecutor.awaitPairCallableExecute(
@@ -368,7 +395,7 @@ import kotlin.time.toDuration
         val maps = (set.beatmaps ?: listOf()).dropWhile { it.beatmapID == map.beatmapID }
 
         if (maps.size >= 16) {
-            receipt.recall()
+            receipt.recallIn(10 * 1000)
             event.reply("""
                 检测到此谱面含有大量难度。
                 因此，只会尝试查询主难度往下 16 个难度内的成绩。
@@ -417,6 +444,42 @@ import kotlin.time.toDuration
 
         return ScoreData(user, better.beatmap, listOf(better), mode)
     }
+
+    private fun getFromDatabase(user: OsuUser, beatmap: Beatmap, mode: OsuMode, mods: List<LazerMod>, event: MessageEvent): ScoreData {
+        val receipt = event.reply("""
+            谱面 ${beatmap.previewName} 没有榜，无法通过官网获取成绩。
+            正在查询数据库中存储的成绩。
+            这可能需要一段时间。
+        """.trimIndent())
+
+        val scores = scoreDao.getBeatmapScores(user, beatmap, mode)
+
+        if (scores.isEmpty()) {
+            receipt.recallIn(10 * 1000)
+            throw NoSuchElementException.DatabaseBeatmapScore(beatmap.previewName)
+        }
+
+        val preSelectAcronymSet = mods.map { it.acronym }.toSet()
+
+        val filtered = scores.filter { score ->
+            val scoreAcronymSet = score.mods.map { it.acronym }.toSet()
+
+            scoreAcronymSet.containsAll(preSelectAcronymSet)
+        }
+
+        if (filtered.isEmpty()) {
+            receipt.recallIn(10 * 1000)
+            throw NoSuchElementException.DatabaseBeatmapScoreWithMod(beatmap.previewName)
+        }
+
+        beatmapApiService.applyBeatmapExtend(filtered)
+        beatmapApiService.applyVersion(filtered)
+        calculateApiService.applyBeatmapChanges(filtered)
+        calculateApiService.applyStarToScores(filtered)
+
+        return ScoreData(user, beatmap, filtered, mode, mods)
+    }
+
 
     private fun ScoreParam.asyncDownloadBackground() {
         scoreApiService.asyncDownloadBackgroundFromScores(map, listOf(CoverType.COVER, CoverType.LIST))

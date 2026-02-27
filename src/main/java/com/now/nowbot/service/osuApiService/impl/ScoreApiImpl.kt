@@ -238,9 +238,9 @@ class ScoreApiImpl(
         mods: Collection<LazerMod?>,
     ): BeatmapUserScore? {
 
-        fun buildUri(legacyOnly: Int) = { builder: UriBuilder ->
+        fun buildUri(mode: OsuMode? = null) = { builder: UriBuilder ->
             builder.path("beatmaps/{bid}/scores/users/{uid}")
-                .queryParam("legacy_only", legacyOnly)
+                .queryParam("legacy_only", 0)
                 .apply {
                     if (OsuMode.isNotDefaultOrNull(mode)) {
                         queryParam("mode", OsuMode.getQueryName(mode))
@@ -251,9 +251,9 @@ class ScoreApiImpl(
         }
 
         return retryOn404<BeatmapUserScore>(
-            uri = buildUri(legacyOnly = 0),
+            uri = buildUri(mode),
             headers = { base.insertHeader(this) },
-            retry = buildUri(legacyOnly = 1)
+            retry = buildUri(null)
         )
     }
 
@@ -267,9 +267,9 @@ class ScoreApiImpl(
             return getBeatmapScore(bid, user.userID, mode, mods)
         }
 
-        fun buildUri(legacyOnly: Int) = { builder: UriBuilder ->
+        fun buildUri(mode: OsuMode? = null) = { builder: UriBuilder ->
             builder.path("beatmaps/{bid}/scores/users/{uid}")
-                .queryParam("legacy_only", legacyOnly)
+                .queryParam("legacy_only", 0)
                 .apply {
                     if (OsuMode.isNotDefaultOrNull(mode)) {
                         queryParam("mode", OsuMode.getQueryName(mode))
@@ -280,9 +280,9 @@ class ScoreApiImpl(
         }
 
         return retryOn404<BeatmapUserScore>(
-            uri = buildUri(legacyOnly = 0),
+            uri = buildUri(mode),
             headers = { base.insertHeader(this, user) },
-            retry = buildUri(legacyOnly = 1)
+            retry = buildUri(null)
         )
     }
 
@@ -293,36 +293,43 @@ class ScoreApiImpl(
             getBeatmapScores(bid, user.userID, mode)
         }
 
-        return request { client ->
-            client.get()
-                .uri {
-                    it.path("beatmaps/{bid}/scores/users/{uid}/all")
-                        .queryParam("legacy_only", 0)
-                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                        .build(bid, user.userID)
-                }.headers { headers ->
-                    base.insertHeader(headers, user)
+        fun buildUri(mode: OsuMode? = null) = { builder: UriBuilder ->
+            builder.path("beatmaps/{bid}/scores/users/{uid}/all")
+                .queryParam("legacy_only", 0)
+                .apply {
+                    if (OsuMode.isNotDefaultOrNull(mode)) {
+                        queryParam("mode", OsuMode.getQueryName(mode))
+                    }
                 }
-                .retrieve()
-                .bodyToMono(BeatmapScoreResponse::class.java)
-//                .bodyToMono(JsonNode::class.java)
-//                .map { JacksonUtil.parseObjectList(it["scores"], LazerScore::class.java) }
-        }.scores
+                .build(bid, user.userID)
+        }
+
+        return retryOn404<BeatmapScoreResponse>(
+            uri = buildUri(mode),
+            headers = { base.insertHeader(this, user) },
+            retry = buildUri(null)
+        ).scores
     }
 
     override fun getBeatmapScores(bid: Long, uid: Long, mode: OsuMode?): List<LazerScore> {
-        return request { client ->
-            client.get()
-                .uri {
-                    it.path("beatmaps/{bid}/scores/users/{uid}/all")
-                        .queryParam("legacy_only", 0)
-                        .queryParamIfPresent("mode", OsuMode.getQueryName(mode))
-                        .build(bid, uid)
+
+
+        fun buildUri(mode: OsuMode? = null) = { builder: UriBuilder ->
+            builder.path("beatmaps/{bid}/scores/users/{uid}/all")
+                .queryParam("legacy_only", 0)
+                .apply {
+                    if (OsuMode.isNotDefaultOrNull(mode)) {
+                        queryParam("mode", OsuMode.getQueryName(mode))
+                    }
                 }
-                .headers(base::insertHeader)
-                .retrieve()
-                .bodyToMono(BeatmapScoreResponse::class.java)
-        }.scores
+                .build(bid, uid)
+        }
+
+        return retryOn404<BeatmapScoreResponse>(
+            uri = buildUri(mode),
+            headers = { base.insertHeader(this) },
+            retry = buildUri(null)
+        ).scores
     }
 
     override fun getLeaderBoardScore(
@@ -608,22 +615,44 @@ class ScoreApiImpl(
         noinline headers: HttpHeaders.() -> Unit,
         noinline retry: (UriBuilder) -> URI,
     ): T {
-        // 提取公共逻辑为内部函数或变量
-        val call = { target: (UriBuilder) -> URI ->
-            request { client ->
-                client.get()
-                    .uri(target)
-                    .headers(headers)
-                    .retrieve()
-                    .bodyToMono(T::class.java)
-            }
-        }
+        return request { client ->
+            client.get()
+                .uri(uri)
+                .headers(headers)
+                .exchangeToMono { response ->
+                    val contentType = response.headers().contentType().orElse(null)
 
-        return try {
-            call(uri)
-        } catch (_: NetworkException.ScoreException.NotFound) {
-            call(retry)
+                    // 1. 如果返回的是 HTML（通常是 200 错误页），直接判定为需要 Retry
+                    if (contentType?.includes(org.springframework.http.MediaType.TEXT_HTML) == true) {
+                        return@exchangeToMono response.releaseBody().then(doRetry<T>(client, retry, headers))
+                    }
+
+                    // 2. 正常读取 Body 并在解析失败时切换
+                    response.bodyToMono(T::class.java)
+                        .flatMap { result ->
+                            // 逻辑判定：例如 result 里的 scores 为空，可能也是一种 404 的表现
+                            if (result is BeatmapScoreResponse && result.scores.isEmpty()) {
+                                doRetry<T>(client, retry, headers)
+                            } else {
+                                Mono.just(result)
+                            }
+                        }
+                        .onErrorResume {
+                            // 3. 如果反序列化失败（说明 Body 不是预期的 JSON），切换到备用请求
+                            log.warn("响应解析失败，尝试备用路径: ${it.message}")
+                            doRetry<T>(client, retry, headers)
+                        }
+                }
         }
+    }
+
+    // 提取重试逻辑
+    private inline fun <reified T : Any> doRetry(client: WebClient, noinline retry: (UriBuilder) -> URI, noinline headers: HttpHeaders.() -> Unit): Mono<T> {
+        return client.get()
+            .uri(retry)
+            .headers(headers)
+            .retrieve()
+            .bodyToMono(T::class.java) // 这里不再用 generic，直接按 T 解析
     }
 
     companion object {

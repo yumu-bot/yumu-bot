@@ -49,6 +49,15 @@ open class NoSuchElementException(message: String?): TipsRuntimeException(messag
     class Data:
         NoSuchElementException("数据是空的！")
 
+    class DatabaseBeatmapScore(name: String):
+        NoSuchElementException("谱面 $name 没有榜，也没有找到您在数据库内的成绩。")
+
+    class DatabaseBeatmapScoreWithMod(name: String):
+        NoSuchElementException("""
+            谱面 $name 没有榜，虽然找到了您在数据库内的成绩，但是不符合您输入的模组要求。
+            您可以尝试不固定模组，来获取结果。
+            """.trimIndent())
+
     class GuestDiff:
         NoSuchElementException("你没有做过客串难度谱面，别人也没有给你赠送过客串难度谱面。")
 
