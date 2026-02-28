@@ -2,6 +2,7 @@ package com.now.nowbot.model.skill
 
 import com.now.nowbot.model.osu.LazerScore
 import com.now.nowbot.util.SkillUtil
+import kotlin.math.max
 
 abstract class Dan(
     val name: String,
@@ -63,8 +64,17 @@ fun getDanFromBests(
 
     val key7Ln = getDanResult(key7Skills, DanType.JINJIN_LN)
 
-    val rice = if (key4Rice.level >= key7Rice.level) key4Rice else key7Rice
-    val ln = if (key4Ln.level >= key7Ln.level) key4Ln else key7Ln
+    val rice = if (max(key4Rice.level, 0.0) >= max(key7Rice.level, 0.0)) {
+        key4Rice
+    } else {
+        key7Rice
+    }
+
+    val ln = if (max(key4Ln.level, 0.0) >= max(key7Ln.level, 0.0)) {
+        key4Ln
+    } else {
+        key7Ln
+    }
 
     return mapOf(
         rice.name to rice,
