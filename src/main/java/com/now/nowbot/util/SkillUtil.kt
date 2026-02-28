@@ -25,7 +25,10 @@ object SkillUtil {
      */
     fun getMapSkillRating(skills: List<Double>): Double {
         val sorted = skills.take(6).sortedDescending()
-        return (0.6 * sorted[1] + 0.4 * sorted[2] + 0.2 * sorted[3])
+        return (0.6 * sorted.getOrElse(1, { 0.0 }) +
+                0.4 * sorted.getOrElse(2, { 0.0 }) +
+                0.2 * sorted.getOrElse(3, { 0.0 })
+                )
     }
 
     fun collectScoreSkills(scores: Collection<List<Double>>): List<Double> {

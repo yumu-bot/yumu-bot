@@ -19,6 +19,8 @@ interface OsuBeatmapApiService {
 
     fun getBeatmapFileString(bid: Long): String?
 
+    fun getBeatmapFileFromDirectory(bid: Long): String?
+
     fun getBeatmapFileByte(bid: Long): ByteArray?
 
     fun hasBeatmapFileFromDirectory(bid: Long): Boolean

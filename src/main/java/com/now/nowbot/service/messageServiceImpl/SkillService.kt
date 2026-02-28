@@ -21,10 +21,16 @@ import com.now.nowbot.service.osuApiService.OsuScoreApiService
 import com.now.nowbot.service.osuApiService.OsuUserApiService
 import com.now.nowbot.throwable.botRuntimeException.IllegalStateException
 import com.now.nowbot.util.*
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Matcher
+import kotlin.collections.forEach
+import kotlin.let
 import kotlin.math.sqrt
+import kotlin.time.Duration.Companion.seconds
 
 @Service("SKILL") class SkillService(
     private val scoreApiService: OsuScoreApiService,
@@ -136,9 +142,9 @@ import kotlin.math.sqrt
 
                 val async = AsyncMethodExecutor.awaitQuadCallableExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode) },
+                    { scoreApiService.getBestScoresSerial(ids.first!!, mode) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
-                    { scoreApiService.getBestScores(ids.second!!, mode) },
+                    { scoreApiService.getBestScoresSerial(ids.second!!, mode) },
                 )
 
                 me = async.first.first
@@ -166,9 +172,9 @@ import kotlin.math.sqrt
 
                 val async = AsyncMethodExecutor.awaitQuadCallableExecute(
                     { userApiService.getOsuUser(ids.first!!, mode) },
-                    { scoreApiService.getBestScores(ids.first!!, mode) },
+                    { scoreApiService.getBestScoresSerial(ids.first!!, mode) },
                     { userApiService.getOsuUser(ids.second!!, mode) },
-                    { scoreApiService.getBestScores(ids.second!!, mode) },
+                    { scoreApiService.getBestScoresSerial(ids.second!!, mode) },
                 )
 
                 me = async.first.first
@@ -248,35 +254,67 @@ import kotlin.math.sqrt
     private fun getSkillMap(bests: List<LazerScore>?): Map<Long, Skill6?> {
         if (bests.isNullOrEmpty()) return mapOf()
 
-        val actions = bests.map {
-            Callable {
-                it to beatmapApiService.getBeatmapFileString(it.beatmapID)
+        val scoreMap = bests.associateBy { it.beatmapID }
+        val allIDs = scoreMap.keys
+
+        // 1. 区分本地和在线
+        val exists = allIDs.filter { beatmapApiService.hasBeatmapFileFromDirectory(it) }
+        val notExists = allIDs.minus(exists.toSet())
+
+        val fileMap = ConcurrentHashMap<Long, String>()
+
+        // 2. 分批下载缺失的谱面
+        notExists.chunked(15).forEach { ids ->
+            val actions = ids.map { id ->
+                Callable {
+                    // 返回 Pair，方便后面 toMap
+                    id to beatmapApiService.getBeatmapFileString(id)
+                }
             }
-        }
 
-        val files: List<Pair<LazerScore, String?>> = AsyncMethodExecutor.awaitCallableExecute(actions)
+            // 每一组给 30 秒，防止网络波动
+            val result = AsyncMethodExecutor.awaitCallableExecute(actions, 30.seconds)
 
-        val actions2 = files.map {
-            val id = it.first.beatmapID
-
-            Callable {
-                try {
-                    val file = OsuFile(it.second ?: "")
-
-                    id to Skill6(
-                        file,
-                        OsuMode.MANIA,
-                        LazerMod.getModSpeedForStarCalculate(it.first.mods).toDouble()
-                    )
-                } catch (_: Exception) {
-                    id to null
+            result.forEach { (id, fileString) ->
+                if (!fileString.isNullOrEmpty()) {
+                    fileMap[id] = fileString
+                } else {
+                    log.warn("谱面 $id 下载返回内容为空")
                 }
             }
         }
 
-        val result = AsyncMethodExecutor.awaitCallableExecute(actions2).toMap()
+        // 3. 读取本地已有的谱面 (建议也加个异常处理)
+        exists.forEach { id ->
+            try {
+                val file = beatmapApiService.getBeatmapFileFromDirectory(id)
+                if (!file.isNullOrEmpty()) fileMap[id] = file
+            } catch (e: Exception) {
+                log.error("读取本地谱面 $id 失败", e)
+            }
+        }
 
-        return bests.associate { it.beatmapID to result[it.beatmapID] }
+        // 4. 统一解析 Skill (CPU密集型操作)
+        // 注意：这里不需要用 !!，没下载到的图直接标记为 null 即可
+        return bests.associate { score ->
+            val fileString = fileMap[score.beatmapID]
+            val skill = if (fileString != null) {
+                try {
+                    Skill6(
+                        OsuFile(fileString),
+                        OsuMode.MANIA,
+                        LazerMod.getModSpeedForStarCalculate(score.mods).toDouble()
+                    )
+                } catch (e: Exception) {
+                    log.error("解析谱面 ${score.beatmapID} 异常", e)
+                    null
+                }
+            } else {
+                null // 下载失败或本地没有的图
+            }
+
+            score.beatmapID to skill
+        }
     }
 
     private fun getBody(
@@ -309,7 +347,7 @@ import kotlin.math.sqrt
             calculateApiService.applyStarToScores(s10)
 
             s10.map {
-                val skills = skillMap[it.beatmapID]?.skills ?: listOf()
+                val skills = skillMap[it.beatmapID]?.skills ?: List(6) { 0.0 }
 
                 val scoreRating = SkillUtil.getMapSkillRating(skills)
 
@@ -341,6 +379,7 @@ import kotlin.math.sqrt
 
     companion object {
 
+        private val log: Logger = LoggerFactory.getLogger(SkillService::class.java)
 
         private fun nerfByAccuracy(score: LazerScore): Double {
             return when (score.mode) {

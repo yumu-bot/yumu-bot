@@ -131,11 +131,11 @@ class BeatmapApiImpl(
         return Files.isRegularFile(path)
     }
 
-    private fun getBeatmapFileFromDirectory(bid: Long): String? {
-        val path = osuDir.resolve("$bid.osu")
+    override fun getBeatmapFileFromDirectory(bid: Long): String? {
 
         if (hasBeatmapFileFromDirectory(bid)) {
             try {
+                val path = osuDir.resolve("$bid.osu")
                 return Files.readString(path, StandardCharsets.UTF_8)
             } catch (e: IOException) {
                 log.error("osu 谱面 API：读取本地谱面文件失败: ", e)

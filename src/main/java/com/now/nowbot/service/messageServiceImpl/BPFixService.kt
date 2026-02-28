@@ -28,8 +28,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
 import kotlin.math.*
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.minutes
 
 @Service("BP_FIX")
 class BPFixService(
@@ -95,7 +94,7 @@ class BPFixService(
             val async = AsyncMethodExecutor.awaitPairCallableExecute(
                 { userApiService.getOsuUser(id.data!!, mode.data!!) },
                 { scoreApiService.getBestScores(id.data!!, mode.data) },
-                1.toDuration(DurationUnit.MINUTES)
+                1.minutes
             )
 
             user = async.first
@@ -174,7 +173,7 @@ class BPFixService(
         }
 
         val fixedScores = if (fixTasks.isNotEmpty()) {
-            AsyncMethodExecutor.awaitCallableExecute(fixTasks, 1.toDuration(DurationUnit.MINUTES))
+            AsyncMethodExecutor.awaitCallableExecute(fixTasks, 1.minutes)
         } else {
             emptyList()
         }

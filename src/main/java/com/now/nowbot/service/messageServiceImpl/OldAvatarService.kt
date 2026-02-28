@@ -33,8 +33,7 @@ import org.springframework.stereotype.Service
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutionException
 import java.util.regex.Matcher
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.seconds
 
 @Service("OLD_AVATAR")
 class OldAvatarService(
@@ -291,7 +290,7 @@ class OldAvatarService(
                         Callable {
                             imageService.getPanel(mapOf("user" to u), panel)
                         }
-                    }, (30L + users.size / 2).toDuration(DurationUnit.SECONDS)
+                    }, (30L + users.size / 2).seconds
                 )
             } catch (_: ExecutionException) {
                 throw NetworkException.RenderModuleException.BadGateway()

@@ -37,12 +37,13 @@ import java.time.Duration
          * Refer https://github.com/reactor/reactor-netty/issues/1318#issuecomment-702668918
          */
         val connectionProvider = ConnectionProvider.builder("connectionProvider")
-            .maxIdleTime(Duration.ofSeconds(30))
+            .maxIdleTime(Duration.ofSeconds(25))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
 
         val httpClient = HttpClient.create(connectionProvider)
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
             .proxy {
                 val type = if (config.proxyType == "HTTP") {
                     ProxyProvider.Proxy.HTTP
@@ -51,7 +52,7 @@ import java.time.Duration
                 }
                 it.type(type).host(config.proxyHost).port(config.proxyPort)
             }
-            .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
+            .followRedirect(true).responseTimeout(Duration.ofSeconds(25))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs { clientDefaultCodecsConfigurer: ClientCodecConfigurer ->
                 clientDefaultCodecsConfigurer.defaultCodecs().jackson2JsonEncoder(
@@ -72,12 +73,13 @@ import java.time.Duration
 
     @Bean("divingFishApiWebClient") @Qualifier("divingFishApiWebClient") fun divingFishApiWebClient(builder: WebClient.Builder, divingFishConfig: DivingFishConfig, config: NowbotConfig): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider2")
-            .maxIdleTime(Duration.ofSeconds(30))
+            .maxIdleTime(Duration.ofSeconds(25))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
         val httpClient = HttpClient.create(connectionProvider)
             // 要用梯子
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
             .proxy {
                 val type = if (config.proxyType == "HTTP") {
                     ProxyProvider.Proxy.HTTP
@@ -87,7 +89,7 @@ import java.time.Duration
                 it.type(type).host(config.proxyHost).port(config.proxyPort)
             }
 
-            .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
+            .followRedirect(true).responseTimeout(Duration.ofSeconds(25))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
             it.defaultCodecs().jackson2JsonEncoder(
@@ -109,12 +111,13 @@ import java.time.Duration
 
     @Bean("lxnsApiWebClient") @Qualifier("lxnsApiWebClient") fun lxnsApiWebClient(builder: WebClient.Builder, lxnsConfig: LxnsConfig): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider5")
-            .maxIdleTime(Duration.ofSeconds(30))
+            .maxIdleTime(Duration.ofSeconds(25))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
         val httpClient = HttpClient.create(connectionProvider)
-            .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+            .followRedirect(true).responseTimeout(Duration.ofSeconds(25))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
             it.defaultCodecs().jackson2JsonEncoder(
@@ -136,12 +139,13 @@ import java.time.Duration
 
     @Bean("biliApiWebClient") @Qualifier("biliApiWebClient") fun biliApiWebClient(builder: WebClient.Builder): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider3")
-            .maxIdleTime(Duration.ofSeconds(30))
+            .maxIdleTime(Duration.ofSeconds(25))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
         val httpClient = HttpClient.create(connectionProvider) // 国内访问即可，无需设置梯子
-            .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
+            .followRedirect(true).responseTimeout(Duration.ofSeconds(25))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
             it.defaultCodecs().jackson2JsonEncoder(
@@ -163,7 +167,7 @@ import java.time.Duration
 
     @Bean("sbApiWebClient") @Qualifier("sbApiWebClient") fun sbApiWebClient(builder: WebClient.Builder, config: NowbotConfig): WebClient {
         val connectionProvider = ConnectionProvider.builder("connectionProvider4")
-            .maxIdleTime(Duration.ofSeconds(30))
+            .maxIdleTime(Duration.ofSeconds(25))
             .maxConnections(200)
             .pendingAcquireMaxCount(-1)
             .build()
@@ -178,7 +182,7 @@ import java.time.Duration
                 }
                 it.type(type).host(config.proxyHost).port(config.proxyPort)
             }
-            .followRedirect(true).responseTimeout(Duration.ofSeconds(30))
+            .followRedirect(true).responseTimeout(Duration.ofSeconds(25))
         val connector = ReactorClientHttpConnector(httpClient)
         val strategies = ExchangeStrategies.builder().codecs {
             it.defaultCodecs().jackson2JsonEncoder(
@@ -262,7 +266,7 @@ import java.time.Duration
                         ProxyProvider.Proxy.SOCKS5
                     }
             ).host(config.proxyHost).port(config.proxyPort)
-        }.responseTimeout(Duration.ofSeconds(30))
+        }.responseTimeout(Duration.ofSeconds(25))
         return builder.clientConnector(ReactorClientHttpConnector(httpClient)).build()
     }
 
@@ -276,7 +280,7 @@ import java.time.Duration
             .build()
 
         val httpClient = HttpClient.create(connectionProvider)
-            .responseTimeout(Duration.ofSeconds(30))
+            .responseTimeout(Duration.ofSeconds(25))
             .option(ChannelOption.TCP_NODELAY, true)
 
         val connector = ReactorClientHttpConnector(httpClient)

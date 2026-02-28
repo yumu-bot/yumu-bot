@@ -13,8 +13,7 @@ import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.JacksonUtil
 import com.now.nowbot.util.command.FLAG_ANY
 import org.springframework.stereotype.Service
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.minutes
 
 @Service("FETCH")
 class FetchService(
@@ -79,7 +78,7 @@ class FetchService(
     }
 
     companion object {
-        val rateLimiter = TokenBucketRateLimiter(1, 2.toDuration(DurationUnit.MINUTES))
+        val rateLimiter = TokenBucketRateLimiter(1, 2.minutes)
 
         private fun getVersionInt(maiVersion: MaiVersion): Int {
             return when(maiVersion) {

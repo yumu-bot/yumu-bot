@@ -36,8 +36,7 @@ import java.time.LocalDateTime
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Matcher
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import kotlin.time.Duration.Companion.seconds
 
 @Service("SCORE") class ScoreService(
     private val scoreApiService: OsuScoreApiService,
@@ -421,7 +420,7 @@ import kotlin.time.toDuration
             }
 
             val b4Scores = AsyncMethodExecutor
-                .awaitListCallableExecute(works)
+                .awaitCallableExecute(works)
                 .mapNotNull { it?.score }
 
             count += b4.size
@@ -431,7 +430,7 @@ import kotlin.time.toDuration
                 break
             } else if (count < beatmaps.size) {
                 // 避免大量查询卡爆
-                Thread.sleep(3.toDuration(DurationUnit.SECONDS).inWholeMilliseconds)
+                Thread.sleep(3.seconds.inWholeMilliseconds)
             }
         }
 
