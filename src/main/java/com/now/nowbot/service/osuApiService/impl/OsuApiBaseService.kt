@@ -544,12 +544,18 @@ class OsuApiBaseService(
     }
 
     fun refreshUserToken(user: BindUser, firstBind: Boolean): String {
+        val token = user.refreshToken
+
+        if (token.isNullOrBlank()) {
+            throw NetworkException.UserException.Unauthorized()
+        }
+
         val b = mapOf(
             "client_id" to oauthID.toString(),
             "client_secret" to oauthToken,
             "redirect_uri" to redirectUrl,
             "grant_type" to if (firstBind) "authorization_code" else "refresh_token",
-            (if (firstBind) "code" else "refresh_token") to user.refreshToken!!
+            (if (firstBind) "code" else "refresh_token") to token
         )
 
         val body = MultiValueMap.fromSingleValue(b)
@@ -574,7 +580,7 @@ class OsuApiBaseService(
                 }
 
                 is WebClientResponseException.Unauthorized -> {
-                    bindDao.backupBind(user.userID)
+                    bindDao.downgradeBind(user.userID)
                     log.info("更新令牌失败：令牌过期，退回到名称绑定：${user.userID}", e)
                     throw NetworkException.UserException.Unauthorized()
                 }

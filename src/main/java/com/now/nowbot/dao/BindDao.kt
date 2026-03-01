@@ -407,8 +407,8 @@ class BindDao(
         bindUserMapper.deleteAllByOsuID(uid)
     }
 
-    fun backupBind(uid: Long) {
-        bindUserMapper.backupBindByOsuID(uid)
+    fun downgradeBind(uid: Long) {
+        bindUserMapper.downgradeBind(uid)
     }
 
     fun getOsuID(name: String): Long? {
@@ -501,7 +501,7 @@ class BindDao(
         nowUpdate.set(true)
         updateUserSet.clear()
         try {
-            refreshOldUserTokenOne(userApiService)
+            refreshOldUserTokenOnce(userApiService)
         } catch (e: RuntimeException) {
             if (e !is WebClientResponseException.Unauthorized) {
                 log.error("更新用户出现异常", e)
@@ -513,15 +513,15 @@ class BindDao(
         }
     }
 
-    private fun refreshOldUserTokenOne(userApiService: OsuUserApiService) {
+    private fun refreshOldUserTokenOnce(userApiService: OsuUserApiService) {
         val now = System.currentTimeMillis()
-        var user = bindUserMapper.getOneOldBindUser(now)
+        var user = bindUserMapper.getEarliestBindUser(now)
         if (user != null) {
             val u = user
             if (updateUserSet.remove(u.id)) return
 
             if (u.refreshToken.isNullOrBlank()) {
-                bindUserMapper.backupBindByOsuID(u.osuID)
+                bindUserMapper.downgradeBind(u.osuID)
                 return
             }
 
@@ -530,18 +530,18 @@ class BindDao(
             return
         }
 
-        user = bindUserMapper.getOneOldBindUserHasWrong(now)
+        user = bindUserMapper.getEarliestSuspiciousBindUser(now)
         if (user != null) {
             val u = user
             if (updateUserSet.remove(u.id)) return
 
             if (u.refreshToken.isNullOrBlank()) {
-                bindUserMapper.backupBindByOsuID(u.osuID)
+                bindUserMapper.downgradeBind(u.osuID)
                 return
             }
             // 出错超 5 次默认无法再次更新了
             if (u.updateCount > 5) {
-                bindUserMapper.backupBindByOsuID(u.id)
+                bindUserMapper.downgradeBind(u.id)
             }
 
             // log.info("更新用户: {}", u.getOsuName());
@@ -593,13 +593,13 @@ class BindDao(
 
             if (updateUserSet.remove(u.id)) continue
             if (ObjectUtils.isEmpty(u.refreshToken)) {
-                bindUserMapper.backupBindByOsuID(u.osuID)
+                bindUserMapper.downgradeBind(u.osuID)
                 continue
             }
             // 出错超 5 次默认无法再次更新了
             if (u.updateCount > 5) {
                 // 回退到用户名绑定
-                bindUserMapper.backupBindByOsuID(u.id)
+                bindUserMapper.downgradeBind(u.id)
             }
             // log.info("更新用户 {}", u.getOsuName());
             try {
@@ -609,7 +609,7 @@ class BindDao(
             } catch (_: WebClientResponseException.Unauthorized) {
                 // 绑定被取消或者过期, 不再尝试
                 log.info("绑定 {} 失败：取消绑定", u.osuName)
-                bindUserMapper.backupBindByOsuID(u.id)
+                bindUserMapper.downgradeBind(u.id)
             } catch (e: Exception) {
                 bindUserMapper.addUpdateCount(u.id)
                 log.error("绑定 {} 第 {} 次失败：出现异常: ", u.osuName, errCount, e)

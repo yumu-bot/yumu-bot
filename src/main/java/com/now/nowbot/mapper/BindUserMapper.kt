@@ -20,7 +20,8 @@ interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificatio
     )
     fun getFirstByOsuID(osuID: Long?): OsuBindUserLite?
 
-    fun getByOsuNameLike(osuName: String?): OsuBindUserLite?
+    @Query("select u from OsuBindUserLite u where u.name ILIKE CONCAT('%', :osuName, '%') order by u.name asc")
+    fun getByOsuNameLike(osuName: String?): List<OsuBindUserLite>
 
     @Modifying @Transactional @Query(
         value = """
@@ -45,7 +46,7 @@ interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificatio
 
     @Modifying @Transactional
     @Query("update OsuBindUserLite o set o.accessToken = null , o.refreshToken = null , o.time = null, o.updateCount = 0 where o.osuID = :osuID ")
-    fun backupBindByOsuID(osuID: Long?)
+    fun downgradeBind(osuID: Long?)
 
     @Modifying @Transactional
     @Query(value = "update osu_bind_user set update_count = update_count + 1 where id=:id", nativeQuery = true)
@@ -72,10 +73,10 @@ interface BindUserMapper : JpaRepository<OsuBindUserLite, Long>, JpaSpecificatio
     fun getOldBindUserHasWrong(now: Long?): List<OsuBindUserLite>
 
     @Query("select u from OsuBindUserLite u where u.time > 5000 and u.time < :now and u.updateCount = 0 order by u.time limit 1")
-    fun getOneOldBindUser(now: Long?): OsuBindUserLite?
+    fun getEarliestBindUser(now: Long?): OsuBindUserLite?
 
     @Query("select u from OsuBindUserLite u where u.updateCount > 0 and u.time > 5000 order by u.time limit 1")
-    fun getOneOldBindUserHasWrong(now: Long?): OsuBindUserLite?
+    fun getEarliestSuspiciousBindUser(now: Long?): OsuBindUserLite?
 
     @Transactional
     fun deleteAllByOsuID(osuID: Long?) {

@@ -38,11 +38,11 @@ class OsuBeatmapMirrorApiService(
             if (sub.startsWith("osu file format")) {
                 sub
             } else {
-                log.error("谱面镜像站：谱面 $bid 文件损坏！\n谱面前 100 位是：${sub.take(100)}")
+                log.warn("谱面镜像站：谱面 $bid 文件损坏！\n谱面前 100 位是：${sub.take(100)}")
                 null
             }
         } catch (e: Exception) {
-            log.error("谱面镜像站：请求谱面 $bid 失败：${e.message}")
+            log.warn("谱面镜像站：请求谱面 $bid 失败：${e.message}")
 
             null
         }
