@@ -148,14 +148,20 @@ class BindController @Autowired constructor(var userApiService: OsuUserApiServic
         try {
             val tokenOnly = BindUser(code)
 
-            userApiService.syncUserToken(tokenOnly, isFirstTime = true)
+            val detailed = run {
+                userApiService.syncUserToken(tokenOnly, isFirstTime = true)
+                userApiService.applyBindUserDetails(tokenOnly)
+                tokenOnly
+            }
 
-            val qqBind = bindDao.bindQQ(msg.qq, tokenOnly)
+            val qqBind = bindDao.bindQQ(msg.qq, detailed)
+
             removeBind(key)
+
             sb.append("成功绑定:\n<br/>")
                 .append(msg.qq)
                 .append(" -> ")
-                .append(tokenOnly.username)
+                .append(detailed.username)
                 .append("\n<br/>")
                 .append("您的默认游戏模式为：[")
                 .append(qqBind.osuUser!!.mode.shortName).append("]。")
