@@ -636,7 +636,9 @@ class OsuApiBaseService(
         val result = BindUser(user.userID, accessToken, refreshToken, time)
 
         if (isFirstTime) {
-            bindDao.saveBind(result)
+            // 不要在这里绑定！这样会导致已经绑定过的玩家数据库里又多一份绑定信息
+            // 并且，这里的 userID 一定是 0
+            // bindDao.saveBind(result)
         } else {
             bindDao.updateToken(result)
         }

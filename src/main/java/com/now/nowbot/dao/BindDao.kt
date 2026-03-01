@@ -200,7 +200,8 @@ class BindDao(
                 bindUserMapper.deleteOutdatedByOsuID(user.osuID)
             }
 
-            bindUserLite = bindUserMapper.save(user)
+            bindUserMapper.update(user)
+            bindUserLite = user
         } else {
             val userLite = bindUserMapper.getFirstByOsuID(user.osuID)
 

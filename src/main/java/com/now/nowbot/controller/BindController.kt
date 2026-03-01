@@ -53,7 +53,7 @@ class BindController @Autowired constructor(var userApiService: OsuUserApiServic
             userApiService.applyBindUserDetails(synchronized)
             synchronized
         }.getOrElse { e ->
-            log.warn("绑定异常：无法添加玩家信息", e)
+            log.warn("绑定异常：无法获取玩家信息", e)
             return bindFailed
         }
 
@@ -107,11 +107,9 @@ class BindController @Autowired constructor(var userApiService: OsuUserApiServic
 
     @GetMapping("\${yumu.osu.callbackPath}")
     fun bind(@RequestParam("code") code: String?, @RequestParam("state") stat: String): String? {
-        val data: Array<String?> = stat.split("\\s+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        if (data.size != 2) {
-            return "噶?"
-        }
-        return saveBind(code, data[1]!!)
+        val key = stat.split("\\s+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            .getOrNull(1) ?: return "噶?"
+        return saveBind(code, key)
     }
 
     fun saveBind(code: String?, keyStr: String): String {
@@ -148,16 +146,16 @@ class BindController @Autowired constructor(var userApiService: OsuUserApiServic
 
     private fun doBind(sb: StringBuilder, code: String?, msg: BindData, key: Long): String {
         try {
-            val bd = BindUser(code)
+            val tokenOnly = BindUser(code)
 
-            userApiService.syncUserToken(bd)
+            userApiService.syncUserToken(tokenOnly, isFirstTime = true)
 
-            val qqBind = bindDao.bindQQ(msg.qq, bd)
+            val qqBind = bindDao.bindQQ(msg.qq, tokenOnly)
             removeBind(key)
             sb.append("成功绑定:\n<br/>")
                 .append(msg.qq)
                 .append(" -> ")
-                .append(bd.username)
+                .append(tokenOnly.username)
                 .append("\n<br/>")
                 .append("您的默认游戏模式为：[")
                 .append(qqBind.osuUser!!.mode.shortName).append("]。")
