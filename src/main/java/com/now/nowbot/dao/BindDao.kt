@@ -684,6 +684,10 @@ class BindDao(
         return bindUserMapper.getAllBindUserLimit50(offset).mapNotNull { fromLite(it) }
     }
 
+    fun getBindUserCount(): Long {
+        return bindUserMapper.count()
+    }
+
     fun getAllQQBindUser(qqs: Collection<Long>): List<QQBindLite.QQUser> {
         return bindQQMapper.findAllUserByQQ(qqs)
     }

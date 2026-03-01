@@ -80,25 +80,52 @@ class DailyStatisticsService(
         val count = AtomicInteger(0)
         val score = AtomicInteger(0)
 
+        val bindCount = bindDao.getBindUserCount()
+
         while (IocAllReadyRunner.APP_ALIVE) {
             // 获取一批用户
             val users = bindDao.getBindUsersLimit50(offset.get())
-            if (users.isEmpty()) break
+            if (users.isEmpty()) {
+                break
+            }
 
             try {
                 val (t, s) = collectingUsers(users)
+                val currentCount = count.addAndGet(t)
+                val currentOffset = offset.addAndGet(users.size)
+                val currentScore = score.addAndGet(s)
+                val progress = "%.2f".format((count.get() * 100.0 / bindCount).coerceIn(0.0, 100.0))
+
+                val now = System.currentTimeMillis()
+                val elapsed = now - startTime
+
+                val expect = if (currentCount > 0) {
+                    val remaining = bindCount - currentOffset
+                    val estimatedRemainingMillis = (elapsed.toDouble() / currentOffset * remaining).toLong()
+
+                    java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                        .format(java.util.Date(now + estimatedRemainingMillis))
+                } else {
+                    "计算中..."
+                }
 
                 log.info("""
                     第 ${batch.get()} 批用户已更新完成：
-                    需要更新：$t 人，总计 ${count.addAndGet(t)} 人，
-                    其中包含：$s 条成绩，总计 ${score.addAndGet(s)} 条。
+                    需要更新：$t 人，总计 $currentCount 人。
+                    其中包含：$s 条成绩，总计 $currentScore 条。
+                    进度：$progress %
+                    预期完成时间：${expect}
                     """.trimIndent())
-                offset.addAndGet(users.size)
             } catch (e: Exception) {
                 log.error("第 ${batch.get()} 批次发生异常：", e)
             }
 
             batch.getAndIncrement()
+
+            if ((batch.get() * 5) * 50 > bindCount) {
+                log.error("超出了预期的批次，可能发生了死循环，强制结束。")
+                break
+            }
         }
 
         val endTime = System.currentTimeMillis()

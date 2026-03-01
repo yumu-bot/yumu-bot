@@ -284,10 +284,6 @@ class OsuUserInfoDao(
         return infoRepository.getLast(userID, mode)
     }
 
-    fun getFromYesterday(userIDs: List<Long>): List<InfoArchive> {
-        return getFromUserIDsYesterday(userIDs)
-    }
-
     private fun getFromUserIDsYesterday(userIDs: List<Long>): List<InfoArchive> {
         val time = LocalDate.now().minusDays(1)
         return infoRepository.getFromUserIDs(userIDs, LocalDateTime.of(time, LocalTime.MIN), LocalDateTime.of(time, LocalTime.MAX))
@@ -312,7 +308,7 @@ class OsuUserInfoDao(
             val user = OsuUser()
             user.mode = archive.mode.shortName
             user.id = archive.userID
-            user.userAchievementsCount = archive.achievementsCount
+            user.userAchievementsCount = archive.achievementsCount ?: 0
             user.beatmapPlaycount = archive.beatmapPlaycount
 
             val statistics = InfoLogStatistics()
