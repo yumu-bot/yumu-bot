@@ -30,6 +30,7 @@ import com.now.nowbot.util.AsyncMethodExecutor
 import com.now.nowbot.util.Instruction
 import com.now.nowbot.util.command.FLAG_MATCHID
 import com.now.nowbot.util.command.FLAG_NAME
+import com.now.nowbot.util.command.FLAG_PAGE
 import com.now.nowbot.util.command.FLAG_QQ_ID
 import com.now.nowbot.util.command.FLAG_UID
 import org.slf4j.LoggerFactory
@@ -88,8 +89,8 @@ class MatchRecentService(
     private fun getParam(event: MessageEvent, matcher: Matcher): MatchRecentParam {
 
         // 注意，这里的 FLAG_MATCHID 不一定就是 MATCH ID
-        val nameStr = matcher.group(FLAG_NAME)?.trim() ?: ""
-        val name2Str = matcher.group(FLAG_MATCHID)?.trim() ?: ""
+        val nameStr = matcher.group(FLAG_MATCHID)?.trim() ?: ""
+        val name2Str = matcher.group(FLAG_NAME)?.trim() ?: ""
 
         val userID = (matcher.group(FLAG_UID)?.trim() ?: "").toLongOrNull()
 
@@ -99,7 +100,9 @@ class MatchRecentService(
             matcher.group(FLAG_QQ_ID)?.toLongOrNull() ?: event.sender.contactID
         }
 
-        val (maybeMatchID, name, count) = parse2Text(nameStr, name2Str)
+        val (maybeMatchID, name, maybeCount) = parse2Text(nameStr, name2Str)
+
+        val count: Int? = matcher.group(FLAG_PAGE)?.toIntOrNull() ?: maybeCount
 
         val matchID = maybeMatchID ?: dao.getLastMatchID(
             groupID = event.subject.contactID,
@@ -124,43 +127,41 @@ class MatchRecentService(
 
     // 获取玩家名、比赛编号、页码
     private fun parse2Text(text1: String, text2: String): Triple<Long?, String?, Int?> {
+        // 1. 规范化处理：利用 let 和 Elvis 操作符 (?:) 优雅地提取 t1 和 t2
+        val (t1, t2) = REG_NUMBER_WITH_1_2.find(text1.trim())?.let { matchResult ->
+            if (text2.isBlank()) {
+                matchResult.groupValues[1].trim() to matchResult.groupValues[2].trim()
+            } else null
+        } ?: (text1.trim() to text2.trim())
 
-        val t1: String
-        val t2: String
+        // 2. 预处理正则匹配结果，避免重复运算
+        val t1IsMatchId = t1.matches(REG_NUMBER_7_9)
+        val t1IsCount = t1.matches(REG_NUMBER_1_2)
 
-        val matcher = REG_NUMBER_WITH_1_2.find(text1.trim())
+        val t2IsMatchId = t2.matches(REG_NUMBER_7_9)
+        val t2IsCount = t2.matches(REG_NUMBER_1_2)
 
-        if (matcher != null && text2.isBlank()) {
-            t1 = matcher.groupValues[1].trim()
-            t2 = matcher.groupValues[2].trim()
-        } else {
-            t1 = text1.trim()
-            t2 = text2.trim()
+        // 3. 提取比赛编号 (7-9位数字)
+        val matchID = when {
+            t1IsMatchId -> t1.toLongOrNull()
+            t2IsMatchId -> t2.toLongOrNull()
+            else -> null
         }
 
-        val t179 = t1.matches(REG_NUMBER_7_9)
-        val t112 = t1.matches(REG_NUMBER_1_2)
+        // 4. 提取页码 (1-2位数字)
+        val count = when {
+            t1IsCount -> t1.toIntOrNull()
+            t2IsCount -> t2.toIntOrNull()
+            else -> null
+        }
 
-        val t279 = t2.matches(REG_NUMBER_7_9)
-        val t212 = t2.matches(REG_NUMBER_1_2)
-
-        val matchID: Long? = if (t179) {
-            t1.toLong()
-        } else if (t279) {
-            t2.toLong()
-        } else null
-
-        val count: Int? = if (t112) {
-            t1.toInt()
-        } else if (t212) {
-            t2.toInt()
-        } else null
-
-        val name: String? = if (!t179 && !t112 && text1.isNotBlank()) {
-            t1
-        } else if (!t279 && !t212 && text2.isNotBlank()) {
-            t2
-        } else null
+        // 5. 提取玩家名 (非ID且非页码，且内容不为空)
+        // 修正了原代码的 Bug: 这里使用 t1.isNotBlank() 和 t2.isNotBlank()
+        val name = when {
+            !t1IsMatchId && !t1IsCount && t1.isNotBlank() -> t1
+            !t2IsMatchId && !t2IsCount && t2.isNotBlank() -> t2
+            else -> null
+        }
 
         return Triple(matchID, name, count)
     }
@@ -303,6 +304,6 @@ class MatchRecentService(
 
         private val REG_NUMBER_7_9 = Regex("\\d{7,9}")
         private val REG_NUMBER_1_2 = Regex("\\d{1,2}")
-        private val REG_NUMBER_WITH_1_2 = Regex("(.+)\\D+(\\d{1,2})")
+        private val REG_NUMBER_WITH_1_2 = Regex("(.+)\\W+(\\d{1,2})")
     }
 }

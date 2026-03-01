@@ -215,6 +215,10 @@ class ImageService(private val webClient: WebClient) {
         return try {
             request.retrieve().bodyToMono(ByteArray::class.java).block()!!
         } catch (e: Throwable) {
+            if (e.findCauseOfType<SocketException>() != null) {
+                throw NetworkException.RenderModuleException.ServiceUnavailable()
+            }
+
             val ex = e.findCauseOfType<WebClientException>()
 
             when {
@@ -231,8 +235,6 @@ class ImageService(private val webClient: WebClient) {
                 throw NetworkException.RenderModuleException.GatewayTimeout()
             } else if (e.findCauseOfType<ExecutionException>() != null) {
                 throw NetworkException.RenderModuleException.RequestTimeout()
-            } else if (e.findCauseOfType<SocketException>() != null) {
-                throw NetworkException.RenderModuleException.ServiceUnavailable()
             } else {
                 log.error("渲染模块：未识别的错误", e)
                 throw NetworkException.RenderModuleException.Undefined(e)

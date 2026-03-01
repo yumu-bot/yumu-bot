@@ -12,12 +12,12 @@ data class TopPlays(
 )
 
 private val topPlaysDataPattern: Pattern =
-    Pattern.compile("(?s)<div\\s*class=\"u-contents js-react--ranking-top-plays\"\\s*data-props=\"(?<json>[^\"]+)\"\\s*>")
+    Pattern.compile("(?s)data-props=\"(?<json>[^\"]+)\"")
 
 fun parseTopPlays(html: String): TopPlays {
     val htmlString = html
         .substringAfter("<div class=\"ranking-page\">")
-        .substringBefore("<div class=\"ranking-page-grid\">")
+        .substringBefore("data-react=\"ranking-top-plays\"")
         .trim()
 
     val topPlaysMatcher = topPlaysDataPattern.matcher(htmlString)

@@ -657,8 +657,12 @@ enum class Instruction(val pattern: Pattern) {
 
     MATCH_RECENT(CommandPatternBuilder.create {
         appendCommandsIgnoreAll("match\\s*recents?", "mr")
-        appendModeQQUIDName()
-        appendHashCaptureGroup(FLAG_MATCHID, REG_NUMBER_SEPERATOR, MAYBE)
+        appendMode()
+        appendCaptureGroup(FLAG_MATCHID, REG_NUMBER_SEPERATOR, MORE)
+        appendQQ()
+        appendUID()
+        appendName()
+        appendHashCaptureGroup(FLAG_PAGE, REG_NUMBER_12, MAYBE)
     }),
 
     MAP_POOL(CommandPatternBuilder.create {
